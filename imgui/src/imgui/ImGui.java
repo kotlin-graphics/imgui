@@ -12,14 +12,17 @@ import imgui.internal.Context;
  * @author GBarbieri
  */
 public class ImGui {
-    
-    private static Context defaultContext = new Context();
+
+    // Default context, default font atlas.
+// New contexts always point by default to this font atlas. It can be changed by reassigning the GetIO().Fonts variable.
+    static Context defaultContext = new Context();
+    static FontAtlas defaultFontAtlas = new FontAtlas();
+
     private static Context context = defaultContext;
-    
+
     // Main
     public static IO getIO() {
-        return context.
+        return context.io;
     }
-    
-    
+
 }

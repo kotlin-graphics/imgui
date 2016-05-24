@@ -12,5 +12,6 @@ package imgui.internal;
 public interface PlotType {
 
     public final int Lines = 0;
+    
     public final int Histogram = 1;
 }

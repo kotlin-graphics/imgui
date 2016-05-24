@@ -19,6 +19,7 @@ public class Rect {
      * Upper-left.
      */
     Vec2 min;
+    
     /**
      * Lower-right.
      */
@@ -37,6 +38,10 @@ public class Rect {
     public Rect(Vec4 v) {
         min = new Vec2(v.x, v.y);
         max = new Vec2(v.z, v.w);
+    }
+
+    public Rect(float f) {
+        this(f, f, f, f);
     }
 
     public Rect(float x1, float y1, float x2, float y2) {

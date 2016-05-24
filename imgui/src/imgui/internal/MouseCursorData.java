@@ -5,16 +5,22 @@
  */
 package imgui.internal;
 
-import glm.vec._4.Vec4;
+import glm.vec._2.Vec2;
 
 /**
- * Stacked color modifier, backup of modified data so we can restore it.
+ * Mouse cursor data (used when io.MouseDrawCursor is set).
  * 
  * @author GBarbieri
  */
-public class ColMod {
+public class MouseCursorData {
+ 
+    int type;
     
-    int col;
-
-    Vec4 previousValue;
+    Vec2 hotOffset;
+    
+    Vec2 size;
+    
+    Vec2[] texUvMin = new Vec2[2];
+    
+    Vec2[] texUvMax = new Vec2[2];
 }

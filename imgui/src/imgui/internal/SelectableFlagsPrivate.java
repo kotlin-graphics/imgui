@@ -13,7 +13,10 @@ package imgui.internal;
 public interface SelectableFlagsPrivate {
    
     public static final int Menu = 1 << 3;
+    
     public static final int MenuItem = 1 << 4;
+    
     public static final int Disabled = 1 << 5;
+    
     public static final int DrawFillAvailWidth = 1 << 6;
 }

@@ -5,13 +5,22 @@
  */
 package imgui.internal;
 
+import glm.vec._2.Vec2;
+
 /**
- *
+ * Data saved in imgui.ini file.
+ * 
  * @author GBarbieri
  */
-public interface DataType {
-
-    public final int Int = 0;
-
-    public final int Float = 1;
+public class IniData {
+    
+    String name;
+    
+    int id;
+    
+    Vec2 pos;
+    
+    Vec2 size;
+    
+    boolean collapsed;
 }

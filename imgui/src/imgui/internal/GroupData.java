@@ -15,10 +15,16 @@ import glm.vec._2.Vec2;
 public class GroupData {
 
     Vec2 backupCursorPos;
+
     Vec2 backupCursorMaxPos;
+
     float backupIndentX;
+
     float backupCurrentLineHeight;
+
     float backupCurrentLineTextBaseOffset;
+
     float backupLogLinePosY;
+
     boolean advanceCursor;
 }

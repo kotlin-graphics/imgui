@@ -15,5 +15,6 @@ import glm.vec._2.Vec2;
 public class StyleMod {
 
     int var;
+
     Vec2 previousValue;
 }

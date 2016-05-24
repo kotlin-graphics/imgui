@@ -13,5 +13,6 @@ package imgui.internal;
 public interface LayoutType {
 
     public final int Vertical = 0;
+
     public final int Horizontal = 1;
 }

@@ -5,13 +5,13 @@
  */
 package imgui.internal;
 
+import java.util.Hashtable;
+
 /**
  *
  * @author GBarbieri
  */
-public interface DataType {
+public class Pair {
 
-    public final int Int = 0;
-
-    public final int Float = 1;
+    
 }

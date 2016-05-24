@@ -3,15 +3,20 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package imgui.internal;
+package imgui;
+
+import glm.vec._2.Vec2;
 
 /**
- *
+ * Vertex Layout.
+ * 
  * @author GBarbieri
  */
-public interface DataType {
+public class DrawVert {
 
-    public final int Int = 0;
-
-    public final int Float = 1;
+    Vec2 pos;
+    
+    Vec2 uv;
+    
+    Vec2 col;
 }

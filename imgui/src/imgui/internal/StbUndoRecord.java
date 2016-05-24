@@ -9,9 +9,13 @@ package imgui.internal;
  *
  * @author GBarbieri
  */
-public interface DataType {
-
-    public final int Int = 0;
-
-    public final int Float = 1;
+public class StbUndoRecord {
+ 
+    int where;
+    
+    short insertLength;
+    
+    short deleteLength;
+    
+    short charStorage;
 }

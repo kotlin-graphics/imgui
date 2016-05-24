@@ -3,15 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package imgui.internal;
+package imgui;
 
 /**
  *
  * @author GBarbieri
  */
-public interface DataType {
-
-    public final int Int = 0;
-
-    public final int Float = 1;
+public abstract interface Render {
+    
+    public abstract void renderDrawLists(DrawData drawData);
 }
