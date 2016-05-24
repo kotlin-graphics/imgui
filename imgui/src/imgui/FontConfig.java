@@ -76,7 +76,7 @@ public class FontConfig {
     /**
      * Name (strictly for debugging).
      */
-    private String name = "";
+    String name = "";
 
-    Font dstFont = null;
+    private Font dstFont = null;
 }

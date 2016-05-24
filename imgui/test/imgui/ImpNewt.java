@@ -10,8 +10,11 @@ import com.jogamp.newt.event.KeyListener;
 import com.jogamp.newt.event.MouseEvent;
 import com.jogamp.newt.event.MouseListener;
 import com.jogamp.newt.opengl.GLWindow;
+import static com.jogamp.opengl.GL.GL_ARRAY_BUFFER;
 import static com.jogamp.opengl.GL.GL_ARRAY_BUFFER_BINDING;
+import static com.jogamp.opengl.GL.GL_FLOAT;
 import static com.jogamp.opengl.GL.GL_TEXTURE_BINDING_2D;
+import static com.jogamp.opengl.GL.GL_UNSIGNED_BYTE;
 import static com.jogamp.opengl.GL2ES2.GL_FRAGMENT_SHADER;
 import static com.jogamp.opengl.GL2ES2.GL_VERTEX_SHADER;
 import static com.jogamp.opengl.GL2ES3.GL_VERTEX_ARRAY_BINDING;
@@ -27,23 +30,24 @@ import java.nio.IntBuffer;
  */
 public class ImpNewt implements MouseListener, KeyListener {
 
-    private static final String SHADERS_ROOT = "test/imgui/shaders/", SHADERS_SRC = "shader";
+    private static final String SHADERS_ROOT = "test/imgui/asset/shaders/", SHADERS_SRC = "shader";
 
     // Data
     private static GLWindow window = null;
     private static long time = 0;
     private static boolean[] mousePressed = new boolean[3];
     private static float mouseWheel;
-    private static int programName;
+    private static int programName, projUnLoc;
 
-    private interface Attribute {
+    private interface Buffer {
 
-        public static final int TEX = 0;
-        public static final int PROJ = 1;
+        public static final int VERTEX = 0;
+        public static final int ELEMENT = 1;
         public static final int MAX = 2;
     }
 
-    private static int[] location = new int[Attribute.MAX];
+    private static IntBuffer bufferName = GLBuffers.newDirectIntBuffer(Buffer.MAX),
+            vertexArrayName = GLBuffers.newDirectIntBuffer(1);
 
     public static boolean init(GLWindow window) {
 
@@ -101,6 +105,9 @@ public class ImpNewt implements MouseListener, KeyListener {
         gl3.glGetIntegerv(GL_ARRAY_BUFFER_BINDING, lastArrayBuffer);
         gl3.glGetIntegerv(GL_VERTEX_ARRAY_BINDING, lastVertexArray);
 
+        initProgram(gl3);
+        gl3.glGenBuffers(Buffer.MAX, bufferName);   // init buffers
+        initVertexArray(gl3);
     }
 
     private static void initProgram(GL3 gl3) {
@@ -123,18 +130,29 @@ public class ImpNewt implements MouseListener, KeyListener {
         vertShader.destroy(gl3);
         fragShader.destroy(gl3);
 
-        location[Attribute.TEX] = gl3.glGetUniformLocation(programName, "texture_");
-        location[Attribute.PROJ] = gl3.glGetUniformLocation(programName, "proj");
+        projUnLoc = gl3.glGetUniformLocation(programName, "proj");
 
-        gl3.glUseProgram(program);
-        {
-            /**
-             * We bind the uniform texture0UL to the Texture Image Units zero
-             * or, in other words, Semantic.Uniform.TEXTURE0.
-             */
-            gl3.glUniform1i(texture0UL, Semantic.Sampler.DIFFUSE);
-        }
+        gl3.glUseProgram(programName);
+        gl3.glUniform1i(
+                gl3.glGetUniformLocation(programName, "texture_"),
+                Semantic.Sampler.TEXTURE);
         gl3.glUseProgram(0);
+    }
+
+    private static void initVertexArray(GL3 gl3) {
+
+        gl3.glGenVertexArrays(1, vertexArrayName);
+        gl3.glBindVertexArray(vertexArrayName.get(0));
+
+        gl3.glEnableVertexAttribArray(Semantic.Attr.POSITION);
+        gl3.glEnableVertexAttribArray(Semantic.Attr.UV);
+        gl3.glEnableVertexAttribArray(Semantic.Attr.COLOR);
+
+        gl3.glBindBuffer(GL_ARRAY_BUFFER, bufferName.get(Buffer.VERTEX));
+        gl3.glVertexAttribPointer(Semantic.Attr.POSITION, 2, GL_FLOAT, false, DrawVert.SIZE, DrawVert.OFFSET_POSITION);
+        gl3.glVertexAttribPointer(Semantic.Attr.UV, 2, GL_FLOAT, false, DrawVert.SIZE, DrawVert.OFFSET_POSITION);
+        gl3.glVertexAttribPointer(Semantic.Attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.SIZE, DrawVert.OFFSET_COLOR);
+        gl3.glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     @Override

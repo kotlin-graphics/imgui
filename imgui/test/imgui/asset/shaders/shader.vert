@@ -2,10 +2,12 @@
 
 // Attributes
 #define POSITION    0
+#define UV          1
+#define COLOR       2
 
 layout (location = POSITION) in vec2 position;
-layout (location = POSITION) in vec2 uv;
-layout (location = POSITION) in vec4 color;
+layout (location = UV) in vec2 uv;
+layout (location = COLOR) in vec4 color;
 
 uniform mat4 proj;
 
