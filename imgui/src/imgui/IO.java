@@ -58,7 +58,7 @@ public class IO {
     /**
      * Map of indices into the KeysDown[512] entries array.
      */
-    public int[] keyMap = new int[Key.COUNT];
+    int[] keyMap = new int[Key.COUNT];
 
     /**
      * When holding a key/button, time before it starts repeating, in seconds (for buttons in Repeat mode, etc.).
@@ -90,7 +90,7 @@ public class IO {
      * For retina display or other situations where window coordinates are different from framebuffer coordinates.
      * User storage only, presently not used by ImGui.
      */
-    public Vec2 displayFramebufferScale = new Vec2(1.0f);
+    Vec2 displayFramebufferScale = new Vec2(1.0f);
 
     /**
      * If you use DisplaySize as a virtual space larger than your screen, set DisplayVisibleMin/Max to the visible area.

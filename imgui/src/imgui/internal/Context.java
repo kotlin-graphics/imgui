@@ -24,7 +24,7 @@ public class Context {
 
     boolean initialized = false;
 
-    public IO io;
+    private IO io;
 
     Style style;
 
@@ -310,5 +310,9 @@ public class Context {
 
         // Give it a name for debugging
         overlayDrawList.setOwnerName("##Overlay");
+    }
+
+    public IO getIo() {
+        return io;
     }
 }

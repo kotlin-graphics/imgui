@@ -22,7 +22,7 @@ public class ImGui {
 
     // Main
     public static IO getIO() {
-        return context.io;
+        return context.getIo();
     }
 
 }

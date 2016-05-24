@@ -31,17 +31,17 @@ public class DrawList {
     /**
      * Commands. Typically 1 command = 1 gpu draw call.
      */
-    ArrayList<DrawCmd> cmdBuffer;
+    ArrayList<DrawCmd> cmdBuffer = new ArrayList<>();
 
     /**
      * Index buffer. Each command consume ImDrawCmd::ElemCount of those.
      */
-    ArrayList<Short> idxBuffer;
+    ArrayList<Short> idxBuffer = new ArrayList<>();
 
     /**
      * Vertex buffer.
      */
-    ArrayList<DrawVert> vtxBuffer;
+    ArrayList<DrawVert> vtxBuffer = new ArrayList<>();
 
     /**
      * --------------------------------------------------------------------------------------------------------------------
@@ -67,14 +67,14 @@ public class DrawList {
      */
     short idxWritePtr;
 
-    ArrayList<Vec4> clipRectStack;
+    ArrayList<Vec4> clipRectStack = new ArrayList<>();
 
-    ArrayList<Integer> textureIdStack;
+    ArrayList<Integer> textureIdStack = new ArrayList<>();
 
     /**
      * Current path building.
      */
-    ArrayList<Vec2> path;
+    ArrayList<Vec2> path = new ArrayList<>();
 
     /**
      * Current channel number (0).
@@ -84,16 +84,70 @@ public class DrawList {
     /**
      * Number of active channels (1+).
      */
-    int _ChannelsCount;
+    int channelsCount;
 
     /**
      * Draw channels for columns API (not resized down so _ChannelsCount may be smaller than _Channels.Size).
      */
-    ArrayList<DrawChannel> _Channels;
+    ArrayList<DrawChannel> channels;
+
+    private final Vec4 nullClipRect = new Vec4(-8192.0f, -8192.0f, +8192.0f, +8192.0f);
 
     public void setOwnerName(String ownerName) {
         this.ownerName = ownerName;
     }
-    
+
+    public void clear() {
+
+        cmdBuffer.clear();
+        idxBuffer.clear();
+        vtxBuffer.clear();
+        vtxCurrentIdx = 0;
+        vtxWritePtr = null;
+        idxWritePtr = 0;
+        clipRectStack.clear();
+        textureIdStack.clear();
+        path.clear();
+        channelsCurrent = 0;
+        channelsCount = 1;
+        // NB: Do not clear channels so our allocations are re-used after the first frame.
+    }
+
+    public void clearFreeMemory() {
+
+        cmdBuffer.clear();
+        idxBuffer.clear();
+        vtxBuffer.clear();
+        vtxCurrentIdx = 0;
+        vtxWritePtr = null;
+        idxWritePtr = 0;
+        clipRectStack.clear();
+        textureIdStack.clear();
+        path.clear();
+        channelsCurrent = 0;
+        channelsCount = 1;
+        for (int i = 0; i < channels.size(); i++) {
+            channels.get(i).cmdBuffer.clear();
+            channels.get(i).idxBuffer.clear();
+        }
+    }
+
+    private Vec4 getCurrentClipRect() {
+        return !clipRectStack.isEmpty() ? clipRectStack.get(clipRectStack.size() - 1) : nullClipRect;
+    }
+
+    private int getCurrentTextureId() {
+        return !textureIdStack.isEmpty() ? textureIdStack.get(textureIdStack.size() - 1) : 0;
+    }
+
+    private void addDrawCmd() {
+
+        DrawCmd drawCmd = new DrawCmd();
+        drawCmd.clipRect = getCurrentClipRect();
+        drawCmd.textureId = getCurrentTextureId();
+        
+        assert (drawCmd.clipRect.x <= drawCmd.clipRect.z && drawCmd.clipRect.y <= drawCmd.clipRect.w);
+        cmdBuffer.add(drawCmd);
+    }
     
 }

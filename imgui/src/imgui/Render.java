@@ -5,11 +5,13 @@
  */
 package imgui;
 
+import com.jogamp.opengl.GL3;
+
 /**
  *
  * @author GBarbieri
  */
 public abstract interface Render {
     
-    public abstract void renderDrawLists(DrawData drawData);
+    public abstract void renderDrawLists(GL3 gl3, DrawData drawData);
 }
