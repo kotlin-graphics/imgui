@@ -22,11 +22,11 @@ import java.util.ArrayList;
  */
 public class Context {
 
-    boolean initialized = false;
+    public boolean initialized = false;
 
-    private IO io;
+    public IO io;
 
-    Style style;
+    public Style style;
 
     /**
      * (Shortcut) == FontStack.empty() ? IO.Font : FontStack.back().
@@ -130,7 +130,7 @@ public class Context {
     /**
      * .ini Settings.
      */
-    ArrayList<IniData> settings;
+    public ArrayList<IniData> settings;
 
     /**
      * Save .ini Settings on disk when time reaches zero.
@@ -310,9 +310,5 @@ public class Context {
 
         // Give it a name for debugging
         overlayDrawList.setOwnerName("##Overlay");
-    }
-
-    public IO getIo() {
-        return io;
     }
 }

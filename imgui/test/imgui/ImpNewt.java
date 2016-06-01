@@ -13,6 +13,7 @@ import com.jogamp.newt.opengl.GLWindow;
 import static com.jogamp.opengl.GL.GL_ARRAY_BUFFER;
 import static com.jogamp.opengl.GL.GL_ARRAY_BUFFER_BINDING;
 import static com.jogamp.opengl.GL.GL_FLOAT;
+import static com.jogamp.opengl.GL.GL_TEXTURE_2D;
 import static com.jogamp.opengl.GL.GL_TEXTURE_BINDING_2D;
 import static com.jogamp.opengl.GL.GL_UNSIGNED_BYTE;
 import static com.jogamp.opengl.GL2ES2.GL_FRAGMENT_SHADER;
@@ -22,6 +23,10 @@ import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.util.GLBuffers;
 import com.jogamp.opengl.util.glsl.ShaderCode;
 import com.jogamp.opengl.util.glsl.ShaderProgram;
+import imgui.DrawVert;
+import imgui.IO;
+import imgui.ImGui;
+import imgui.Key;
 import java.nio.IntBuffer;
 
 /**
@@ -75,6 +80,8 @@ public class ImpNewt implements MouseListener, KeyListener {
         io.keyMap[Key.X] = KeyEvent.VK_X;
         io.keyMap[Key.Y] = KeyEvent.VK_Y;
         io.keyMap[Key.Z] = KeyEvent.VK_Z;
+        
+        return true;
     }
 
     private static IntBuffer fontTexture = GLBuffers.newDirectIntBuffer(1);
@@ -94,6 +101,22 @@ public class ImpNewt implements MouseListener, KeyListener {
         long currentTime = System.nanoTime();
         io.deltaTime = (float) (time > 0.0 ? ((double) (currentTime - time) / 1_000_000_000) : 1.0f / 60.0f);
         time = currentTime;
+
+        // Setup inputs
+        // (we already got mouse wheel, keyboard keys & characters from mouse and key listeners)
+        if (window.hasFocus()) {
+        } else {
+            io.mousePos.set(-1);
+        }
+        
+        for (int i = 0; i < 3; i++) {
+            io.mouseDown[i] = mousePressed[i]; // || glfwGetMouseButton(g_Window, i) != 0;    // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
+            mousePressed[i] = false;
+        }
+        io.mouseWheel = mouseWheel;
+        mouseWheel = 0.0f;
+        
+        
     }
 
     private static void createDeviceObjects(GL3 gl3) {
@@ -108,6 +131,13 @@ public class ImpNewt implements MouseListener, KeyListener {
         initProgram(gl3);
         gl3.glGenBuffers(Buffer.MAX, bufferName);   // init buffers
         initVertexArray(gl3);
+
+        // createFontsTexture();
+//        
+        // Restore modified GL state
+        gl3.glBindTexture(GL_TEXTURE_2D, lastTexture.get(0));
+        gl3.glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer.get(0));
+        gl3.glBindVertexArray(lastVertexArray.get(0));
     }
 
     private static void initProgram(GL3 gl3) {
@@ -184,7 +214,7 @@ public class ImpNewt implements MouseListener, KeyListener {
 
     @Override
     public void mouseMoved(MouseEvent e) {
-
+        ImGui.getIO().mousePos.set(e.getX(), e.getY());
     }
 
     @Override

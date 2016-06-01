@@ -26,6 +26,9 @@ import static com.jogamp.opengl.GL2ES2.GL_CURRENT_PROGRAM;
 import static com.jogamp.opengl.GL2ES3.GL_VERTEX_ARRAY_BINDING;
 import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.util.GLBuffers;
+import imgui.DrawData;
+import imgui.ImGui;
+import imgui.Render;
 import java.nio.IntBuffer;
 
 /**
