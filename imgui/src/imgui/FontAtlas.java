@@ -99,10 +99,6 @@ public class FontAtlas {
         }
     }
 
-    private void addFontDefault() {
-        addFontDefault(null);
-    }
-
     private void addFontDefault(FontConfig fontCfgTemplate) {
 
         FontConfig fontCfg = fontCfgTemplate != null ? fontCfgTemplate : new FontConfig();
@@ -116,16 +112,83 @@ public class FontAtlas {
         if (fontCfg.name.isEmpty()) {
             fontCfg.name = "<default>";
         }
+
+        char[] ttfCompressedBase85 = getDefaultCompressedFontDataTTFBase85();
+    }
+
+    private Font addFontFromMemoryCompressedBase85TTF(char[] compressedTtfDataBase85, float sizePixels,
+            FontConfig fontCfg, short[] glyphRanges) {
+
+        char[] compressedTtf = decode85(compressedTtfDataBase85);
+        return addFontFromMemoryCompressedTTF(compressedTtf, sizePixels, fontCfg, glyphRanges);
+    }
+
+    private Font addFontFromMemoryCompressedTTF(char[] compressedTtfData, float sizePixels, FontConfig fontCfgTemplate,
+            short[] glyphRanges) {
+
+        int bufDecompressedSize = Stb.decompressLength(compressedTtfData);
+        return null;
+    }
+
+    /**
+     * Retrieve list of range (2 int per range, values are inclusive).
+     *
+     * @return
+     */
+    private static short[] getGlyphRangesDefault() {
+        short[] ranges = {
+            0x0020, 0x00FF, // Basic Latin + Latin Supplement
+            0,};
+        return ranges;
+    }
+
+    private static char[] decode85(char[] src) {
+
+        int dstSize = ((src.length + 4) / 5) * 4;
+        char[] dst = new char[dstSize];
+        int srcId = 0, dstId = 0, tmp;
+
+        while (srcId < src.length) {
+
+            tmp = 0;
+
+            for (int i = 4; i >= 0; i--) {
+                tmp = (i != 0 ? 85 : 1) * (decode85Byte(src[srcId + i]) + tmp);
+            }
+
+            dst[dstId + 0] = Character.toChars((tmp >> 0) & 0xFF)[0];
+            dst[dstId + 1] = Character.toChars((tmp >> 8) & 0xFF)[0];
+            dst[dstId + 2] = Character.toChars((tmp >> 16) & 0xFF)[0];
+            dst[dstId + 3] = Character.toChars((tmp >> 24) & 0xFF)[0];   // We can't assume little-endianess.
+
+            srcId += 5;
+            dstId += 4;
+        }
+        return dst;
+    }
+
+    private static int decode85Byte(char c) {
+        return c >= '\\' ? c - 36 : c - 35;
+    }
+
+    private char[] getDefaultCompressedFontDataTTFBase85() {
+        return proggyCleanTtfCompressedDataBase85.toCharArray();
     }
 
     public static void main(String[] args) {
 
-        for (int i = 0; i < 10; i++) {
-            System.out.println("" + String.format("%02x", (int) proggy_clean_ttf_compressed_data_base85.charAt(i)));
+        FontAtlas fa = new FontAtlas();
+        fa.addFontFromMemoryCompressedBase85TTF(fa.getDefaultCompressedFontDataTTFBase85(), 13.0f, null, getGlyphRangesDefault());
+
+        char[] decode = decode85(proggyCleanTtfCompressedDataBase85.toCharArray());
+
+        for (int i = 0; i < decode.length; i++) {
+            String string = String.format("%01x ", (int) decode[i]);
+            System.out.print("" + string);
         }
     }
 
-    private static String proggy_clean_ttf_compressed_data_base85
+    private static String proggyCleanTtfCompressedDataBase85
             = "7])#######hV0qs'/###[),##/l:$#Q6>##5[n42>c-TH`->>#/e>11NNV=Bv(*:.F?uu#(gRU.o0XGH`$vhLG1hxt9?W`#,5LsCp#-i>.r$<$6pD>Lb';9Crc6tgXmKVeU2cD4Eo3R/"
             + "2*>]b(MC;$jPfY.;h^`IWM9<Lh2TlS+f-s$o6Q<BWH`YiU.xfLq$N;$0iR/GX:U(jcW2p/W*q?-qmnUCI;jHSAiFWM.R*kU@C=GH?a9wp8f$e.-4^Qg1)Q-GL(lf(r/7GrRgwV%MS=C#"
             + "`8ND>Qo#t'X#(v#Y9w0#1D$CIf;W'#pWUPXOuxXuU(H9M(1<q-UE31#^-V'8IRUo7Qf./L>=Ke$$'5F%)]0^#0X@U.a<r:QLtFsLcL6##lOj)#.Y5<-R&KgLwqJfLgN&;Q?gI^#DY2uL"
