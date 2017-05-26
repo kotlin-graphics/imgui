@@ -1,0 +1,49 @@
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+// jitpack
+apply plugin: 'maven'
+group = 'com.github.kotlin-graphics'
+
+buildscript {
+
+    ext.kotlinVersion = '1.1.2-2'
+
+    repositories {
+        mavenCentral()
+        maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+    }
+}
+
+
+dependencies {
+
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+
+    compile 'com.github.kotlin-graphics:glm:7e109b2513454bcd04796451d231592318fcb639'
+
+    testCompile 'com.github.elect86:kotlintest:b31cda5fb3f38606bb08f32c22f2177a98c634aa'
+
+    def joglVersion = '2.3.2'
+    compile "org.jogamp.gluegen:gluegen-rt-main:$joglVersion"
+    compile "org.jogamp.jogl:jogl-all-main:$joglVersion"
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url 'https://jitpack.io' }
+}
+
+task packageSources(type: Jar, dependsOn: 'classes') {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts { archives packageSources }
