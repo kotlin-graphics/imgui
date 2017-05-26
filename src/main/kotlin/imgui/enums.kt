@@ -1,0 +1,335 @@
+package imgui
+
+/** Flags for ImGui::Begin()    */
+enum class WindowFlags_(val i: Int) {
+    // Default: 0
+    /** Disable title-bar   */
+    NoTitleBar(1 shl 0),
+    /** Disable user resizing with the lower-right grip */
+    NoResize(1 shl 1),
+    /** Disable user moving the window  */
+    NoMove(1 shl 2),
+    /** Disable scrollbars (window can still scroll with mouse or programatically)  */
+    NoScrollbar(1 shl 3),
+    /** Disable user vertically scrolling with mouse wheel  */
+    NoScrollWithMouse(1 shl 4),
+    /** Disable user collapsing window by double-clicking on it */
+    NoCollapse(1 shl 5),
+    /** Resize every window to its content every frame  */
+    AlwaysAutoResize(1 shl 6),
+    /** Show borders around windows and items   */
+    ShowBorders(1 shl 7),
+    /** Never load/save settings in .ini file   */
+    NoSavedSettings(1 shl 8),
+    /** Disable catching mouse or keyboard inputs   */
+    NoInputs(1 shl 9),
+    /** Has a menu-bar  */
+    MenuBar(1 shl 10),
+    /** Allow horizontal scrollbar to appear (off by default). You may use SetNextWindowContentSize(ImVec2(width),0.0f));
+     *  prior to calling Begin() to specify width. Read code in imgui_demo in the "Horizontal Scrolling" section.    */
+    HorizontalScrollbar(1 shl 11),
+    /** Disable taking focus when transitioning from hidden to visible state    */
+    NoFocusOnAppearing(1 shl 12),
+    /** Disable bringing window to front when taking focus (e.g. clicking on it or programatically giving it focus) */
+    NoBringToFrontOnFocus(1 shl 13),
+    /** Always show vertical scrollbar (even if ContentSize.y < Size.y) */
+    AlwaysVerticalScrollbar(1 shl 14),
+    /** Always show horizontal scrollbar (even if ContentSize.x < Size.x)   */
+    AlwaysHorizontalScrollbar(1 shl 15),
+    /** Ensure child windows without border uses style.WindowPadding (ignored by default for non-bordered child windows),
+     *  because more convenient)  */
+    AlwaysUseWindowPadding(1 shl 16),
+
+    // [Internal]
+
+    /** Don't use! For internal use by BeginChild() */
+    ChildWindow(1 shl 20),
+    /** Don't use! For internal use by BeginChild() */
+    ChildWindowAutoFitX(1 shl 21),
+    /** Don't use! For internal use by BeginChild() */
+    ChildWindowAutoFitY(1 shl 22),
+    /** Don't use! For internal use by ComboBox()   */
+    ComboBox(1 shl 23),
+    /** Don't use! For internal use by BeginTooltip()   */
+    Tooltip(1 shl 24),
+    /** Don't use! For internal use by BeginPopup() */
+    Popup(1 shl 25),
+    /** Don't use! For internal use by BeginPopupModal()    */
+    Modal(1 shl 26),
+    /** Don't use! For internal use by BeginMenu()  */
+    ChildMenu(1 shl 27)
+}
+
+/** Flags for ImGui::InputText()    */
+enum class InputTextFlags_(val i: Int) {
+
+    // Default: 0
+
+    /** Allow 0123456789 . + - * /      */
+    CharsDecimal(1 shl 0),
+    /** Allow 0123456789ABCDEFabcdef    */
+    CharsHexadecimal(1 shl 1),
+    /** Turn a..z into A..Z */
+    CharsUppercase(1 shl 2),
+    /** Filter out spaces), tabs    */
+    CharsNoBlank(1 shl 3),
+    /** Select entire text when first taking mouse focus    */
+    AutoSelectAll(1 shl 4),
+    /** Return 'true' when Enter is pressed (as opposed to when the value was modified) */
+    EnterReturnsTrue(1 shl 5),
+    /** Call user function on pressing TAB (for completion handling)    */
+    CallbackCompletion(1 shl 6),
+    /** Call user function on pressing Up/Down arrows (for history handling)    */
+    CallbackHistory(1 shl 7),
+    /** Call user function every time. User code may query cursor position), modify text buffer.    */
+    CallbackAlways(1 shl 8),
+    /** Call user function to filter character. Modify data->EventChar to replace/filter input), or return 1 to discard
+     *  character.  */
+    CallbackCharFilter(1 shl 9),
+    /** Pressing TAB input a '\t' character into the text field */
+    AllowTabInput(1 shl 10),
+    /** In multi-line mode), unfocus with Enter), add new line with Ctrl+Enter (default is opposite: unfocus with
+     *  Ctrl+Enter), add line with Enter).   */
+    CtrlEnterForNewLine(1 shl 11),
+    /** Disable following the cursor horizontally   */
+    NoHorizontalScroll(1 shl 12),
+    /** Insert mode */
+    AlwaysInsertMode(1 shl 13),
+    /** Read-only mode  */
+    ReadOnly(1 shl 14),
+    /** Password mode), display all characters as '*'   */
+    Password(1 shl 15),
+
+    // [Internal]
+
+    /** For internal use by InputTextMultiline()    */
+    Multiline(1 shl 20)
+}
+
+/** Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader*()   */
+enum class TreeNodeFlags_(val i: Int) {
+
+    /** Draw as selected    */
+    Selected(1 shl 0),
+    /** Full colored frame (e.g. for CollapsingHeader)  */
+    Framed(1 shl 1),
+    /** Hit testing to allow subsequent widgets to overlap this one */
+    AllowOverlapMode(1 shl 2),
+    /** Don't do a TreePush() when open (e.g. for CollapsingHeader) ( no extra indent nor pushing on ID stack   */
+    NoTreePushOnOpen(1 shl 3),
+    /** Don't automatically and temporarily open node when Logging is active (by default logging will automatically open
+     *  tree nodes) */
+    NoAutoOpenOnLog(1 shl 4),
+    /** Default node to be open */
+    DefaultOpen(1 shl 5),
+    /** Need double-click to open node  */
+    OpenOnDoubleClick(1 shl 6),
+    /** Only open when clicking on the arrow part. If OpenOnDoubleClick is also set), single-click arrow or double-click
+     *  all box to open.    */
+    OpenOnArrow(1 shl 7),
+    /** No collapsing), no arrow (use as a convenience for leaf nodes). */
+    Leaf(1 shl 8),
+    /** Display a bullet instead of arrow   */
+    Bullet(1 shl 9),
+    //SpanAllAvailWidth  ( 1 shl 10),  // FIXME: TODO: Extend hit box horizontally even if not framed
+    //NoScrollOnOpen     ( 1 shl 11),  // FIXME: TODO: Disable automatic scroll on TreePop() if node got just open and contents is not visible
+    CollapsingHeader(Framed or NoAutoOpenOnLog);
+
+    infix fun or(treeNodeFlag: TreeNodeFlags_) = i or treeNodeFlag.i
+}
+
+/** Flags for ImGui::Selectable()   */
+enum class SelectableFlags_(val i: Int) {
+
+    // Default: 0
+
+    /** Clicking this don't close parent popup window   */
+    DontClosePopups(1 shl 0),
+    /** Selectable frame can span all columns (text will still fit in current column)   */
+    SpanAllColumns(1 shl 1),
+    /** Generate press events on double clicks too  */
+    AllowDoubleClick(1 shl 2)
+}
+
+/** User fill ImGuiIO.KeyMap[] array with indices into the ImGuiIO.KeysDown[512] array  */
+enum class Key_ {
+
+    /** for tabbing through fields  */
+    Tab,
+    /** for text edit   */
+    LeftArrow,
+    /** for text edit   */
+    RightArrow,
+    /** for text edit   */
+    UpArrow,
+    /** for text edit   */
+    DownArrow,
+    PageUp,
+    PageDown,
+    /** for text edit   */
+    Home,
+    /** for text edit   */
+    End,
+    /** for text edit   */
+    Delete,
+    /** for text edit   */
+    Backspace,
+    /** for text edit   */
+    Enter,
+    /** for text edit   */
+    Escape,
+    /** for text edit CTRL+A: select all    */
+    A,
+    /** for text edit CTRL+C: copy  */
+    C,
+    /** for text edit CTRL+V: paste */
+    V,
+    /** // for text edit CTRL+X: cut    */
+    X,
+    /** for text edit CTRL+Y: redo  */
+    Y,
+    /** for text edit CTRL+Z: undo  */
+    Z,
+    COUNT;
+
+    val i = ordinal
+}
+
+/** Enumeration for PushStyleColor() / PopStyleColor()  */
+enum class Col_ {
+
+    Text,
+    TextDisabled,
+    /** Background of normal windows    */
+    WindowBg,
+    /** Background of child windows */
+    ChildWindowBg,
+    /*-* Background of popups, menus, tooltips windows  */
+    PopupBg,
+    Border,
+    BorderShadow,
+    /** Background of checkbox, radio button, plot, slider, text input  */
+    FrameBg,
+    FrameBgHovered,
+    FrameBgActive,
+    TitleBg,
+    TitleBgCollapsed,
+    TitleBgActive,
+    MenuBarBg,
+    ScrollbarBg,
+    ScrollbarGrab,
+    ScrollbarGrabHovered,
+    ScrollbarGrabActive,
+    ComboBg,
+    CheckMark,
+    SliderGrab,
+    SliderGrabActive,
+    Button,
+    ButtonHovered,
+    ButtonActive,
+    Header,
+    HeaderHovered,
+    HeaderActive,
+    Column,
+    ColumnHovered,
+    ColumnActive,
+    ResizeGrip,
+    ResizeGripHovered,
+    ResizeGripActive,
+    CloseButton,
+    CloseButtonHovered,
+    CloseButtonActive,
+    PlotLines,
+    PlotLinesHovered,
+    PlotHistogram,
+    PlotHistogramHovered,
+    TextSelectedBg,
+    /** darken entire screen when a modal window is active   */
+    ModalWindowDarkening,
+    COUNT;
+
+    val i = ordinal
+}
+
+/** Enumeration for PushStyleVar() / PopStyleVar()
+ *  NB: the enum only refers to fields of ImGuiStyle() which makes sense to be pushed/poped in UI code. Feel free to add
+ *  others. */
+enum class StyleVar_ {
+
+    /** float   */
+    Alpha,
+    /** vec2    */
+    WindowPadding,
+    /** float   */
+    WindowRounding,
+    /** vec2    */
+    WindowMinSize,
+    /** float   */
+    ChildWindowRounding,
+    /** vec2    */
+    FramePadding,
+    /** float   */
+    FrameRounding,
+    /** vec2    */
+    ItemSpacing,
+    /** vec2    */
+    ItemInnerSpacing,
+    /** float   */
+    IndentSpacing,
+    /** float   */
+    GrabMinSize,
+    /** flags ImGuiAlign_*  */
+    ButtonTextAlign,
+
+    COUNT;
+
+    val i = ordinal
+}
+
+
+/** Enumeration for ColorEditMode()
+ *  FIXME-OBSOLETE: Will be replaced by future color/picker api */
+enum class ColorEditMode_(val i: Int) {
+
+    UserSelect(-2),
+    UserSelectShowButton(-1),
+    RGB(0),
+    HSV(1),
+    HEX(2)
+}
+
+/** Enumeration for GetMouseCursor()    */
+enum class MouseCursor_(val i: Int) {
+
+    None(-1),
+    Arrow(0),
+    /** When hovering over InputText, etc.  */
+    TextInput(1),
+    /** Unused  */
+    Move(2),
+    /** Unused  */
+    ResizeNS(3),
+    /** When hovering over a column */
+    ResizeEW(4),
+    /** Unused  */
+    ResizeNESW(5),
+    /** When hovering over the bottom-right corner of a window  */
+    ResizeNWSE(6),
+
+    COUNT(7);
+}
+
+/** Condition flags for ImGui::SetWindow***(), SetNextWindow***(), SetNextTreeNode***() functions
+ *  All those functions treat 0 as a shortcut to Always    */
+enum class SetCond_(val i: Int) {
+
+    /** Set the variable    */
+    Always(1 shl 0),
+    /** Set the variable once per runtime session (only the first call with succeed)    */
+    Once(1 shl 1),
+    /** Set the variable if the window has no saved data (if doesn't exist in the .ini file)    */
+    FirstUseEver(1 shl 2),
+    /** Set the variable if the window is appearing after being hidden/inactive (or the first time) */
+    Appearing(1 shl 3)
+}
+

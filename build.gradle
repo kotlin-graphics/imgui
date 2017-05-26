@@ -27,7 +27,7 @@ dependencies {
 
     compile 'com.github.kotlin-graphics:glm:7e109b2513454bcd04796451d231592318fcb639'
 
-    testCompile 'com.github.elect86:kotlintest:b31cda5fb3f38606bb08f32c22f2177a98c634aa'
+//    testCompile 'com.github.elect86:kotlintest:b31cda5fb3f38606bb08f32c22f2177a98c634aa'
 
     def joglVersion = '2.3.2'
     compile "org.jogamp.gluegen:gluegen-rt-main:$joglVersion"
