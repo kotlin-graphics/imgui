@@ -4,7 +4,7 @@ import glm.vec2.Vec2
 import glm.vec4.Vec4
 
 
-class Style {
+object Style {
 
     /**  Global alpha applies to everything in ImGui    */
     var alpha = 1.0f
