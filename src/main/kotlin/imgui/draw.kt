@@ -1,8 +1,10 @@
 package imgui
 
 import gli.hasnt
+import glm.BYTES
 import glm.vec2.Vec2
 import glm.vec4.Vec4
+import glm.vec4.Vec4b
 import glm.glm
 import glm.i
 import glm.s
@@ -24,7 +26,7 @@ class DrawCmd {
 //    void*           UserCallbackData;       // The draw callback code can access this.
 }
 
-typealias DrawIdx = Short
+typealias DrawIdx = Int // TODO check
 
 /** Vertex layout   */
 class DrawVert {
@@ -32,6 +34,10 @@ class DrawVert {
     var pos = Vec2()
     var uv = Vec2()
     var col = 0
+
+    companion object{
+        val size = 2 * Vec2.size + Int.BYTES
+    }
 }
 
 /** Draw channels are used by the Columns API to "split" the render list into different channels while building, so
@@ -146,8 +152,8 @@ class DrawList {
 
         val uv = Context.fontTexUvWhitePixel
         primReserve(6, 4)
-        primWriteIdx(_VtxCurrentIdx.s); primWriteIdx((_VtxCurrentIdx + 1).s); primWriteIdx((_VtxCurrentIdx + 2).s)
-        primWriteIdx(_VtxCurrentIdx.s); primWriteIdx((_VtxCurrentIdx + 2).s); primWriteIdx((_VtxCurrentIdx + 3).s)
+        primWriteIdx(_VtxCurrentIdx); primWriteIdx(_VtxCurrentIdx + 1); primWriteIdx(_VtxCurrentIdx + 2)
+        primWriteIdx(_VtxCurrentIdx); primWriteIdx(_VtxCurrentIdx + 2); primWriteIdx(_VtxCurrentIdx + 3)
         primWriteVtx(a, uv, colUprLeft)
         primWriteVtx(Vec2(c.x, a.y), uv, colUprRight)
         primWriteVtx(c, uv, colBotRight)
@@ -271,5 +277,46 @@ class DrawList {
     }
 
     fun primVtx(pos: Vec2, uv: Vec2, col: Int) {
-        primWriteIdx(_VtxCurrentIdx.s); primWriteVtx(pos, uv, col); }
+        primWriteIdx(_VtxCurrentIdx); primWriteVtx(pos, uv, col); }
+}
+
+/** All draw data to render an ImGui frame  */
+class DrawData {
+
+    /** Only valid after Render() is called and before the next NewFrame() is called.   */
+    var valid = false
+    val cmdLists = mutableListOf<DrawList>()
+    var cmdListsCount = 0   // TODO remove?
+    /** For convenience, sum of all cmd_lists vtx_buffer.Size   */
+    var totalVtxCount = 0
+    /** For convenience, sum of all cmd_lists idx_buffer.Size   */
+    var totalIdxCount = 0
+
+    // Functions
+
+    /** For backward compatibility: convert all buffers from indexed to de-indexed, in case you cannot render indexed.
+     *  Note: this is slow and most likely a waste of resources. Always prefer indexed rendering!   */
+    fun deIndexAllBuffers() {
+        val newVtxBuffer = mutableListOf<DrawVert>()
+        totalVtxCount = 0
+        totalIdxCount = 0
+        cmdLists.filter { it.idxBuffer.isNotEmpty() }.forEach { cmdList ->
+            for (j in cmdList.idxBuffer.indices)
+                newVtxBuffer[j] = cmdList.vtxBuffer[cmdList.idxBuffer[j]]
+            cmdList.vtxBuffer.clear()
+            cmdList.vtxBuffer.addAll(newVtxBuffer)
+            cmdList.idxBuffer.clear()
+            totalVtxCount += cmdList.vtxBuffer.size
+        }
+    }
+
+    /** Helper to scale the ClipRect field of each ImDrawCmd. Use if your final output buffer is at a different scale
+     *  than ImGui expects, or if there is a difference between your window resolution and framebuffer resolution.  */
+    fun scaleClipRects(scale: Vec2) {
+        cmdLists.forEach {
+            it.cmdBuffer.forEach { cmd ->
+                cmd.clipRect.times_(scale.x, scale.y, scale.x, scale.y)
+            }
+        }
+    }
 }

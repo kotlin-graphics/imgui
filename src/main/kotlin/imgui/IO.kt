@@ -35,7 +35,8 @@ object IO {
 
 //    void*         UserData;                 // = NULL               // Store your own data for retrieval by callbacks.
 
-//    ImFontAtlas*  Fonts;                    // <auto>               // Load and assemble one or more fonts into a single tightly packed texture. Output to Fonts array.
+    /** Load and assemble one or more fonts into a single tightly packed texture. Output to Fonts array.    */
+    val fonts = FontAtlas()
     /** Global scale all fonts  */
     var fontGlobalScale = 1.0f
     /** Allow user scaling text of individual window with CTRL+Wheel.   */
@@ -43,7 +44,7 @@ object IO {
 //    ImFont*       FontDefault;              // = NULL               // Font to use on NewFrame(). Use NULL to uses Fonts->Fonts[0].
     /** For retina display or other situations where window coordinates are different from framebuffer coordinates.
      *  User storage only, presently not used by ImGui. */
-    var displayFramebufferScale = (1.0f)
+    var displayFramebufferScale = Vec2(1.0f)
     /** If you use DisplaySize as a virtual space larger than your screen, set DisplayVisibleMin/Max to the visible
      *  area.   */
     var displayVisibleMin = Vec2()
@@ -64,10 +65,10 @@ object IO {
     /** Rendering function, will be called in Render().
      *  Alternatively you can keep this to NULL and call GetDrawData() after Render() to get the same pointer.
      *  See example applications if you are unsure of how to implement this.    */
-//    fun renderDrawListsFn: ImDrawData* data);
-//
-//    // Optional: access OS clipboard
-//    // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
+    var renderDrawListsFn = { data: DrawData -> Unit }
+
+    // Optional: access OS clipboard
+    // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
 //    const char* (*GetClipboardTextFn)(void* user_data);
 //    void        (*SetClipboardTextFn)(void* user_data, const char* text);
 //    void*       ClipboardUserData;

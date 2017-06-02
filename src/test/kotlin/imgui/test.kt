@@ -70,12 +70,6 @@ class HelloWorld {
 
         // Make the window visible
         glfwShowWindow(window)
-
-        val fontUrl = ClassLoader.getSystemResource("ProggyClean.ttf")
-        val font = Font.createFont(Font.TRUETYPE_FONT, fontUrl.openStream()).deriveFont(Font.PLAIN, 20f)
-        val glyphs = font.createGlyphVector(FontRenderContext(null, false, false), "a")
-        val metric = glyphs.getGlyphMetrics(0)
-        val outline: Shape = glyphs.getOutline(0f, 0f)
     }
 
     fun run() {
