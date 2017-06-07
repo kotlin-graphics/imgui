@@ -1,8 +1,13 @@
 package imgui
 
 import gli.wasInit
-import glm.*
+import glm.b
+import glm.c
+import glm.i
+import glm.glm
+import glm.set
 import glm.vec2.Vec2
+import glm.vec2.operators.div
 import glm.vec2.Vec2i
 import uno.buffer.destroy
 import uno.stb.stb
@@ -164,19 +169,19 @@ class FontAtlas {
     fun getTexDataAsRGBA32(params: Triple<Int, Int, Int>): ByteBuffer {
         // Convert to RGBA32 format on demand
         // Although it is likely to be the most commonly used format, our font rendering is 1 channel / 8 bpp
-        if (texPixelsRGBA32 == null) {
-            getTexDataAsAlpha8(& pixels, NULL, NULL)
-            TexPixelsRGBA32 = (unsigned int *) ImGui ::MemAlloc((size_t)(TexWidth * TexHeight * 4))
-            const unsigned char * src = pixels
-            unsigned int * dst = TexPixelsRGBA32
-                    for (int n = TexWidth * TexHeight; n > 0; n--)
-            *dst++ = IM_COL32(255, 255, 255, (unsigned int)(*src++))
-        }
-
-        *out_pixels = (unsigned char *) TexPixelsRGBA32
-                if (out_width) * out_width = TexWidth
-        if (out_height) * out_height = TexHeight
-        if (out_bytes_per_pixel) * out_bytes_per_pixel = 4
+//        if (texPixelsRGBA32 == null) {
+//            getTexDataAsAlpha8(& pixels, NULL, NULL)
+//            TexPixelsRGBA32 = (unsigned int *) ImGui ::MemAlloc((size_t)(TexWidth * TexHeight * 4))
+//            const unsigned char * src = pixels
+//            unsigned int * dst = TexPixelsRGBA32
+//                    for (int n = TexWidth * TexHeight; n > 0; n--)
+//            *dst++ = IM_COL32(255, 255, 255, (unsigned int)(*src++))
+//        }
+//
+//        *out_pixels = (unsigned char *) TexPixelsRGBA32
+//                if (out_width) * out_width = TexWidth
+//        if (out_height) * out_height = TexHeight
+//        if (out_bytes_per_pixel) * out_bytes_per_pixel = 4
     }
 //    void                        SetTexID(void* id)  { TexID = id; }
 
@@ -200,7 +205,9 @@ class FontAtlas {
     var texPixelsRGBA32: ByteBuffer? = null
     /** Texture size calculated during Build(). */
     var texSize = Vec2i()
-//    int                         TexDesiredWidth;    // Texture width desired by user before Build(). Must be a power-of-two. If have many glyphs your graphics API have texture size restrictions you may want to increase texture width to decrease height.
+    /** Texture width desired by user before Build(). Must be a power-of-two. If have many glyphs your graphics API have
+     *  texture size restrictions you may want to increase texture width to decrease height.    */
+    var texDesiredWidth = 0
     /** Texture coordinates to a white pixel    */
     var texUvWhitePixel = Vec2()
     /** Hold all the fonts returned by AddFont*. Fonts[0] is the default font upon calling ImGui::NewFrame(), use
@@ -224,7 +231,7 @@ class FontAtlas {
         class FontTempBuildData {
 
             lateinit var fontInfo: TrueType.Fontinfo
-            val rects = mutableListOf<RectanglePacking.Rect>()
+            val rects = mutableListOf<RectPack.Rect>()
             val ranges = mutableListOf<TrueType.PackRange>()
             var rangesCount = 0
         }
@@ -235,49 +242,62 @@ class FontAtlas {
         var totalGlyphRangeCount = 0
         for (input in 0 until configData.size) {
             val cfg = configData[input]
-//            ImFontTempBuildData& tmp = tmp_array[input_i]
+            val tmp = FontTempBuildData()
 
             assert(wasInit { cfg.dstFont } && (!cfg.dstFont.isLoaded || cfg.dstFont.containerAtlas == this))
             val fontOffset = TrueType.getFontOffsetForIndex(cfg.fontData, cfg.fontNo)
             assert(fontOffset >= 0)
-            if (!initFont(& tmp . FontInfo, (unsigned char*)cfg.FontData, font_offset))
-            return false
+            if (!TrueType.initFont(tmp.fontInfo, cfg.fontData, fontOffset))
+                return false
 
             // Count glyphs
-//            if (!cfg.GlyphRanges)
-//                cfg.GlyphRanges = GetGlyphRangesDefault()
-//            for (const ImWchar* in_range = cfg.GlyphRanges; in_range[0] && in_range[1]; in_range += 2)
-//            {
-//                totalGlyphCount += (in_range[1] - in_range[0]) + 1
-//                totalGlyphRangeCount++
-//            }
+            if (cfg.glyphRanges.isEmpty())
+                cfg.glyphRanges = glyphRangesDefault
+            var inRange = 0
+            val ranges = cfg.glyphRanges
+            while (ranges[inRange].i != 0 && ranges[inRange + 1].i != 0) {
+                totalGlyphCount += (ranges[inRange + 1] - ranges[inRange]) + 1
+                totalGlyphRangeCount++
+                inRange += 2
+            }
         }
-//
-//        // Start packing. We need a known width for the skyline algorithm. Using a cheap heuristic here to decide of width. User can override TexDesiredWidth if they wish.
-//        // After packing is done, width shouldn't matter much, but some API/GPU have texture size limitations and increasing width can decrease height.
-//        TexWidth = (TexDesiredWidth > 0) ? TexDesiredWidth : (total_glyph_count > 4000) ? 4096 : (total_glyph_count > 2000) ? 2048 : (total_glyph_count > 1000) ? 1024 : 512;
-//        TexHeight = 0;
-//        const int max_tex_height = 1024 * 32;
-//        stbtt_pack_context spc;
-//        stbtt_PackBegin(& spc, NULL, TexWidth, max_tex_height, 0, 1, NULL);
-//
-//        // Pack our extra data rectangles first, so it will be on the upper-left corner of our texture (UV will have small values).
-//        ImVector<stbrp_rect> extra_rects;
-//        RenderCustomTexData(0, & extra_rects);
-//        stbtt_PackSetOversampling(& spc, 1, 1);
-//        stbrp_pack_rects((stbrp_context *) spc . pack_info, & extra_rects [0], extra_rects.Size);
-//        for (int i = 0; i < extra_rects.Size; i++)
-//        if (extra_rects[i].was_packed)
-//            TexHeight = ImMax(TexHeight, extra_rects[i].y + extra_rects[i].h);
-//
-//        // Allocate packing character data and flag packed characters buffer as non-packed (x0=y0=x1=y1=0)
-//        int buf_packedchars_n = 0, buf_rects_n = 0, buf_ranges_n = 0;
-//        stbtt_packedchar * buf_packedchars = (stbtt_packedchar *) ImGui ::MemAlloc(total_glyph_count * sizeof(stbtt_packedchar));
-//        stbrp_rect * buf_rects = (stbrp_rect *) ImGui ::MemAlloc(total_glyph_count * sizeof(stbrp_rect));
-//        stbtt_pack_range * buf_ranges = (stbtt_pack_range *) ImGui ::MemAlloc(total_glyph_range_count * sizeof(stbtt_pack_range));
-//        memset(buf_packedchars, 0, totalGlyphCount * sizeof(stbtt_packedchar));
-//        memset(buf_rects, 0, totalGlyphCount * sizeof(stbrp_rect));              // Unnecessary but let's clear this for the sake of sanity.
-//        memset(buf_ranges, 0, totalGlyphRangeCount * sizeof(stbtt_pack_range));
+
+        /*  Start packing. We need a known width for the skyline algorithm. Using a cheap heuristic here to decide of
+            width. User can override TexDesiredWidth if they wish.
+            After packing is done, width shouldn't matter much, but some API/GPU have texture size limitations and
+            increasing width can decrease height.   */
+        texSize.x = when {
+            texDesiredWidth > 0 -> texDesiredWidth
+            totalGlyphCount > 4000 -> 4096
+            totalGlyphCount > 2000 -> 2048
+            totalGlyphCount > 1000 -> 1024
+            else -> 512
+        }
+        texSize.y = 0
+        val maxTexHeight = 1024 * 32
+        val spc = TrueType.PackContext()
+        TrueType.packBegin(spc, Vec2i(texSize.x, maxTexHeight), 0, 1)
+
+        /*  Pack our extra data rectangles first, so it will be on the upper-left corner of our texture (UV will have
+            small values).  */
+        val extraRects = ArrayList<RectPack.Rect>()
+        renderCustomTexData(0, extraRects)
+        TrueType.packSetOversampling(spc, Vec2i(1))
+        RectPack.packRects(spc.packInfo, extraRects, extraRects.size)
+        for (i in 0 until extraRects.size)
+            if (extraRects[i].wasPacked)
+                texSize.y = glm.max(texSize.y, extraRects[i].y + extraRects[i].h)
+
+        // Allocate packing character data and flag packed characters buffer as non-packed (x0=y0=x1=y1=0)
+        var bufPackedcharsN = 0
+        var bufRectsN = 0
+        var bufRangesN = 0
+//        stbtt_packedchar * buf_packedchars = (stbtt_packedchar *) ImGui ::MemAlloc(total_glyph_count * sizeof(stbtt_packedchar))
+//        stbrp_rect * buf_rects = (stbrp_rect *) ImGui ::MemAlloc(total_glyph_count * sizeof(stbrp_rect))
+//        stbtt_pack_range * buf_ranges = (stbtt_pack_range *) ImGui ::MemAlloc(total_glyph_range_count * sizeof(stbtt_pack_range))
+//        memset(buf_packedchars, 0, totalGlyphCount * sizeof(stbtt_packedchar))
+//        memset(buf_rects, 0, totalGlyphCount * sizeof(stbrp_rect))              // Unnecessary but let's clear this for the sake of sanity.
+//        memset(buf_ranges, 0, totalGlyphRangeCount * sizeof(stbtt_pack_range))
 //
 //        // First font pass: pack all glyphs (no rendering at this point, we are working with rectangles in an infinitely tall texture at this point)
 //        for (int input_i = 0; input_i < ConfigData.Size; input_i++)
@@ -293,9 +313,9 @@ class FontAtlas {
 //                glyph_count += (in_range[1] - in_range[0]) + 1;
 //                glyph_ranges_count++;
 //            }
-//            tmp.Ranges = buf_ranges + buf_ranges_n;
+//            tmp.Ranges = buf_ranges + bufRangesN;
 //            tmp.RangesCount = glyph_ranges_count;
-//            buf_ranges_n += glyph_ranges_count;
+//            bufRangesN += glyph_ranges_count;
 //            for (int i = 0; i < glyph_ranges_count; i++)
 //            {
 //                const ImWchar * in_range = &cfg.GlyphRanges[i * 2];
@@ -303,13 +323,13 @@ class FontAtlas {
 //                range.font_size = cfg.SizePixels;
 //                range.first_unicode_codepoint_in_range = in_range[0];
 //                range.num_chars = (in_range[1] - in_range[0]) + 1;
-//                range.chardata_for_range = buf_packedchars + buf_packedchars_n;
-//                buf_packedchars_n += range.num_chars;
+//                range.chardata_for_range = buf_packedchars + bufPackedcharsN;
+//                bufPackedcharsN += range.num_chars;
 //            }
 //
 //            // Pack
-//            tmp.Rects = buf_rects + buf_rects_n;
-//            buf_rects_n += glyph_count;
+//            tmp.Rects = buf_rects + bufRectsN;
+//            bufRectsN += glyph_count;
 //            stbtt_PackSetOversampling(& spc, cfg.OversampleH, cfg.OversampleV);
 //            int n = stbtt_PackFontRangesGatherRects (&spc, &tmp.FontInfo, tmp.Ranges, tmp.RangesCount, tmp.Rects);
 //            stbrp_pack_rects((stbrp_context *) spc . pack_info, tmp.Rects, n);
@@ -319,9 +339,9 @@ class FontAtlas {
 //            if (tmp.Rects[i].was_packed)
 //                TexHeight = ImMax(TexHeight, tmp.Rects[i].y + tmp.Rects[i].h);
 //        }
-//        IM_ASSERT(buf_rects_n == totalGlyphCount);
-//        IM_ASSERT(buf_packedchars_n == totalGlyphCount);
-//        IM_ASSERT(buf_ranges_n == totalGlyphRangeCount);
+////        IM_ASSERT(bufRectsN == totalGlyphCount);
+//        IM_ASSERT(bufPackedcharsN == totalGlyphCount);
+//        IM_ASSERT(bufRangesN == totalGlyphRangeCount);
 //
 //        // Create texture
 //        TexHeight = ImUpperPowerOfTwo(TexHeight);
@@ -417,7 +437,87 @@ class FontAtlas {
 
         return true
     }
-//    IMGUI_API void              RenderCustomTexData(int pass, void* rects);
+
+    fun renderCustomTexData(pass: Int, rects: ArrayList<RectPack.Rect>) {
+        /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
+            The white texels on the top left are the ones we'll use everywhere in ImGui to render filled shapes.    */
+        val texDataSize = Vec2i(90, 27)
+        val textureData = ("..-         -XXXXXXX-    X    -           X           -XXXXXXX          -          XXXXXXX" +
+                "..-         -X.....X-   X.X   -          X.X          -X.....X          -          X.....X" +
+                "---         -XXX.XXX-  X...X  -         X...X         -X....X           -           X....X" +
+                "X           -  X.X  - X.....X -        X.....X        -X...X            -            X...X" +
+                "XX          -  X.X  -X.......X-       X.......X       -X..X.X           -           X.X..X" +
+                "X.X         -  X.X  -XXXX.XXXX-       XXXX.XXXX       -X.X X.X          -          X.X X.X" +
+                "X..X        -  X.X  -   X.X   -          X.X          -XX   X.X         -         X.X   XX" +
+                "X...X       -  X.X  -   X.X   -    XX    X.X    XX    -      X.X        -        X.X      " +
+                "X....X      -  X.X  -   X.X   -   X.X    X.X    X.X   -       X.X       -       X.X       " +
+                "X.....X     -  X.X  -   X.X   -  X..X    X.X    X..X  -        X.X      -      X.X        " +
+                "X......X    -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -         X.X   XX-XX   X.X         " +
+                "X.......X   -  X.X  -   X.X   -X.....................X-          X.X X.X-X.X X.X          " +
+                "X........X  -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -           X.X..X-X..X.X           " +
+                "X.........X -XXX.XXX-   X.X   -  X..X    X.X    X..X  -            X...X-X...X            " +
+                "X..........X-X.....X-   X.X   -   X.X    X.X    X.X   -           X....X-X....X           " +
+                "X......XXXXX-XXXXXXX-   X.X   -    XX    X.X    XX    -          X.....X-X.....X          " +
+                "X...X..X    ---------   X.X   -          X.X          -          XXXXXXX-XXXXXXX          " +
+                "X..X X..X   -       -XXXX.XXXX-       XXXX.XXXX       ------------------------------------" +
+                "X.X  X..X   -       -X.......X-       X.......X       -    XX           XX    -           " +
+                "XX    X..X  -       - X.....X -        X.....X        -   X.X           X.X   -           " +
+                "      X..X          -  X...X  -         X...X         -  X..X           X..X  -           " +
+                "       XX           -   X.X   -          X.X          - X...XXXXXXXXXXXXX...X -           " +
+                "------------        -    X    -           X           -X.....................X-           " +
+                "                    ----------------------------------- X...XXXXXXXXXXXXX...X -           " +
+                "                                                      -  X..X           X..X  -           " +
+                "                                                      -   X.X           X.X   -           " +
+                "                                                      -    XX           XX    -           ").toCharArray()
+
+
+        if (pass == 0) {
+            // Request rectangles
+            val r = RectPack.Rect()
+            r.w = (texDataSize.x * 2) + 1
+            r.h = texDataSize.y + 1
+            rects.add(r)
+        } else if (pass == 1) {
+            // Render/copy pixels
+            val r = rects [0]
+            var n = 0
+            for (y in 0 until texDataSize.y)
+                for (x in 0 until texDataSize.x) {
+                    val offset0 = r.x + x + (r.y + y) * texSize.x
+                    val offset1 = offset0 + 1 + texDataSize.x
+                    texPixelsAlpha8!![offset0] = if (textureData[n] == '.') 0xFF.b else 0x00.b
+                    texPixelsAlpha8!![offset1] = if (textureData[n] == 'X') 0xFF.b else 0x00.b
+                }
+            val texUvScale = Vec2(1.0f / texSize)
+            texUvWhitePixel = Vec2((r.x + 0.5f) * texUvScale.x, (r.y + 0.5f) * texUvScale.y)
+
+            // Setup mouse cursors
+            val cursorDatas = arrayOf(
+                    // Pos ........ Size ......... Offset ......
+                    arrayOf(Vec2(0, 3), Vec2(12, 19), Vec2(0)), // ImGuiMouseCursor_Arrow
+                    arrayOf(Vec2(13, 0), Vec2(7, 16), Vec2(4, 8)), // ImGuiMouseCursor_TextInput
+                    arrayOf(Vec2(31, 0), Vec2(23), Vec2(11)), // ImGuiMouseCursor_Move
+                    arrayOf(Vec2(21, 0), Vec2(9, 23), Vec2(5, 11)), // ImGuiMouseCursor_ResizeNS
+                    arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 5)), // ImGuiMouseCursor_ResizeEW
+                    arrayOf(Vec2(73, 0), Vec2(17), Vec2(9)), // ImGuiMouseCursor_ResizeNESW
+                    arrayOf(Vec2(55, 0), Vec2(17), Vec2(9))) // ImGuiMouseCursor_ResizeNWSE
+
+            for (type in 0 until MouseCursor_.Count.i) {
+                val cursorData = Context.mouseCursorData[type]
+                val pos = cursorDatas[type][0] + Vec2(r.x, r.y)
+                val size = cursorDatas[type][1]
+                cursorData.type = MouseCursor_.of(type)
+                cursorData.size = size
+                cursorData.hotOffset = cursorDatas[type][2]
+                cursorData.texUvMin[0] = pos * texUvScale
+                cursorData.texUvMax[0] = (pos + size) * texUvScale
+                pos.x += texDataSize.x + 1
+                cursorData.texUvMin[1] = pos * texUvScale
+                cursorData.texUvMax[1] = (pos + size) * texUvScale
+            }
+        }
+    }
+
 }
 
 /** Font runtime data and rendering

@@ -316,7 +316,11 @@ enum class MouseCursor_(val i: Int) {
     /** When hovering over the bottom-right corner of a window  */
     ResizeNWSE(6),
 
-    COUNT(7);
+    Count(7);
+
+    companion object {
+        fun of(i: Int) = values().first { it.i == i }
+    }
 }
 
 /** Condition flags for ImGui::SetWindow***(), SetNextWindow***(), SetNextTreeNode***() functions

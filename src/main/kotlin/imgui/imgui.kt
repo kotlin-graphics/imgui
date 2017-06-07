@@ -15,3 +15,5 @@ val IM_COL32_A_MASK   =  0xFF000000.i
 //#define IM_COL32_WHITE       IM_COL32(255,255,255,255)  // Opaque white = 0xFFFFFFFF
 //#define IM_COL32_BLACK       IM_COL32(0,0,0,255)        // Opaque black
 //#define IM_COL32_BLACK_TRANS IM_COL32(0,0,0,0)          // Transparent black = 0x00000000
+
+var _DEBUG = true
