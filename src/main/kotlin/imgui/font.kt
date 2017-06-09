@@ -9,6 +9,11 @@ import glm.set
 import glm.vec2.Vec2
 import glm.vec2.operators.div
 import glm.vec2.Vec2i
+import imgui.TrueType.packFontRangesGatherRects
+import imgui.TrueType.packFontRangesRenderIntoRects
+import imgui.TrueType.packSetOversampling
+import org.lwjgl.stb.STBTruetype
+import uno.buffer.byteBufferBig
 import uno.buffer.destroy
 import uno.stb.stb
 import java.nio.ByteBuffer
@@ -32,7 +37,7 @@ class FontConfig {
     var glyphExtraSpacing = Vec2()
     /** Pointer to a user-provided list of Unicode range (2 value per range, values are inclusive, zero-terminated
      *  list). THE ARRAY DATA NEEDS TO PERSIST AS LONG AS THE FONT IS ALIVE.    */
-    var glyphRanges = charArrayOf()
+    var glyphRanges = intArrayOf()
     /** Merge into previous ImFont, so you can combine multiple inputs font into one ImFont (e.g. ASCII font + icons +
      *  Japanese glyphs).   */
     var mergeMode = false
@@ -104,7 +109,7 @@ class FontAtlas {
     /** NBM Transfer ownership of 'ttf_data' to ImFontAtlas, unless font_cfg_template->FontDataOwnedByAtlas == false.
      *  Owned TTF buffer will be deleted after Build(). */
     fun addFontFromMemoryTTF(ttfData: CharArray, sizePixels: Float, fontCfgTemplate: FontConfig? = null,
-                             glyphRanges: CharArray = charArrayOf()): Font {
+                             glyphRanges: IntArray = intArrayOf()): Font {
 
         val fontCfg = fontCfgTemplate ?: FontConfig()
         assert(fontCfg.fontData.isEmpty())
@@ -117,7 +122,8 @@ class FontAtlas {
 
     /** 'compressed_ttf_data' still owned by caller. Compress with binary_to_compressed_c.cpp   */
     fun addFontFromMemoryCompressedTTF(compressedTtfData: CharArray, sizePixels: Float, fontCfgTemplate: FontConfig? = null,
-                                       glyphRanges: CharArray): Font {
+                                       glyphRanges: IntArray): Font {
+
         val bufDecompressedData = stb.decompress(compressedTtfData)
 
         val fontCfg = fontCfgTemplate ?: FontConfig()
@@ -129,8 +135,8 @@ class FontAtlas {
     /** 'compressed_ttf_data_base85' still owned by caller. Compress with binary_to_compressed_c.cpp with -base85
      *  paramaeter  */
     fun addFontFromMemoryCompressedBase85TTF(compressedTtfDataBase85: String, sizePixels: Float, fontCfg: FontConfig? = null,
-                                             glyphRanges: CharArray): Font {
-        val compressedTtfSize = ((compressedTtfDataBase85.length + 4) / 5) * 4
+                                             glyphRanges: IntArray): Font {
+
         val compressedTtf = decode85(compressedTtfDataBase85)
         return addFontFromMemoryCompressedTTF(compressedTtf, sizePixels, fontCfg, glyphRanges)
     }
@@ -154,7 +160,7 @@ class FontAtlas {
      * of the memory is wasted.
      * Pitch = Width * BytesPerPixels  */
     /** 1 byte per-pixel    */
-    fun getTexDataAsAlpha8(params: Triple<Int, Int, Int>): ByteBuffer {
+    fun getTexDataAsAlpha8(params: Triple<Int, Int, Int>)/*: ByteBuffer*/ {
 
         // Build atlas on demand
         if (texPixelsAlpha8 == null) {
@@ -166,7 +172,7 @@ class FontAtlas {
     }
 
     /** 4 bytes-per-pixel   */
-    fun getTexDataAsRGBA32(params: Triple<Int, Int, Int>): ByteBuffer {
+    fun getTexDataAsRGBA32(params: Triple<Int, Int, Int>)/*: ByteBuffer*/ {
         // Convert to RGBA32 format on demand
         // Although it is likely to be the most commonly used format, our font rendering is 1 channel / 8 bpp
 //        if (texPixelsRGBA32 == null) {
@@ -189,7 +195,7 @@ class FontAtlas {
      * NB: Make sure that your string are UTF-8 and NOT in your local code page. See FAQ for details.   */
 
     /** Retrieve list of range (2 int per range, values are inclusive), Basic Latin, Extended Latin  */
-    val glyphRangesDefault get() = charArrayOf(0x0020.c, 0x00FF.c) // Basic Latin + Latin Supplement
+    val glyphRangesDefault get() = intArrayOf(0x0020, 0x00FF) // Basic Latin + Latin Supplement
 //    IMGUI_API const ImWchar*    GetGlyphRangesKorean();     // Default + Korean characters
 //    IMGUI_API const ImWchar*    GetGlyphRangesJapanese();   // Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs
 //    IMGUI_API const ImWchar*    GetGlyphRangesChinese();    // Japanese + full set of about 21000 CJK Unified Ideographs
@@ -212,11 +218,11 @@ class FontAtlas {
     var texUvWhitePixel = Vec2()
     /** Hold all the fonts returned by AddFont*. Fonts[0] is the default font upon calling ImGui::NewFrame(), use
      *  ImGui::PushFont()/PopFont() to change the current font. */
-    val fonts = mutableListOf<Font>()
+    val fonts = ArrayList<Font>()
 //
     // Private
 
-    val configData = mutableListOf<FontConfig>()
+    val configData = ArrayList<FontConfig>()
 
     /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
     fun build(): Boolean {
@@ -230,19 +236,24 @@ class FontAtlas {
 
         class FontTempBuildData {
 
-            lateinit var fontInfo: TrueType.Fontinfo
-            val rects = mutableListOf<RectPack.Rect>()
-            val ranges = mutableListOf<TrueType.PackRange>()
+            var fontInfo = TrueType.FontInfo()
+            var rects = 0
+            lateinit var bufRects: Array<RectPack.Rect>
+            var ranges = 0
+            lateinit var bufRanges: Array<TrueType.PackRange>
             var rangesCount = 0
         }
-//        ImFontTempBuildData * tmp_array = (ImFontTempBuildData *) ImGui ::MemAlloc((size_t) ConfigData . Size * sizeof (ImFontTempBuildData))
+
+        val tmpArray = Array(configData.size, { FontTempBuildData() })
 
         // Initialize font information early (so we can error without any cleanup) + count glyphs
         var totalGlyphCount = 0
         var totalGlyphRangeCount = 0
-        for (input in 0 until configData.size) {
-            val cfg = configData[input]
-            val tmp = FontTempBuildData()
+
+        for (i in configData.indices) {
+
+            val cfg = configData[i]
+            val tmp = tmpArray[i]
 
             assert(wasInit { cfg.dstFont } && (!cfg.dstFont.isLoaded || cfg.dstFont.containerAtlas == this))
             val fontOffset = TrueType.getFontOffsetForIndex(cfg.fontData, cfg.fontNo)
@@ -253,12 +264,9 @@ class FontAtlas {
             // Count glyphs
             if (cfg.glyphRanges.isEmpty())
                 cfg.glyphRanges = glyphRangesDefault
-            var inRange = 0
-            val ranges = cfg.glyphRanges
-            while (ranges[inRange].i != 0 && ranges[inRange + 1].i != 0) {
-                totalGlyphCount += (ranges[inRange + 1] - ranges[inRange]) + 1
+            for (j in cfg.glyphRanges.indices step 2) {
+                totalGlyphCount += (cfg.glyphRanges[j + 1] - cfg.glyphRanges[j]) + 1
                 totalGlyphRangeCount++
-                inRange += 2
             }
         }
 
@@ -283,7 +291,7 @@ class FontAtlas {
         val extraRects = ArrayList<RectPack.Rect>()
         renderCustomTexData(0, extraRects)
         TrueType.packSetOversampling(spc, Vec2i(1))
-        RectPack.packRects(spc.packInfo, extraRects, extraRects.size)
+        RectPack.packRects(spc.packInfo, extraRects.toTypedArray(), 0, extraRects.size)
         for (i in 0 until extraRects.size)
             if (extraRects[i].wasPacked)
                 texSize.y = glm.max(texSize.y, extraRects[i].y + extraRects[i].h)
@@ -292,73 +300,71 @@ class FontAtlas {
         var bufPackedcharsN = 0
         var bufRectsN = 0
         var bufRangesN = 0
-//        stbtt_packedchar * buf_packedchars = (stbtt_packedchar *) ImGui ::MemAlloc(total_glyph_count * sizeof(stbtt_packedchar))
-//        stbrp_rect * buf_rects = (stbrp_rect *) ImGui ::MemAlloc(total_glyph_count * sizeof(stbrp_rect))
-//        stbtt_pack_range * buf_ranges = (stbtt_pack_range *) ImGui ::MemAlloc(total_glyph_range_count * sizeof(stbtt_pack_range))
-//        memset(buf_packedchars, 0, totalGlyphCount * sizeof(stbtt_packedchar))
-//        memset(buf_rects, 0, totalGlyphCount * sizeof(stbrp_rect))              // Unnecessary but let's clear this for the sake of sanity.
-//        memset(buf_ranges, 0, totalGlyphRangeCount * sizeof(stbtt_pack_range))
-//
-//        // First font pass: pack all glyphs (no rendering at this point, we are working with rectangles in an infinitely tall texture at this point)
-//        for (int input_i = 0; input_i < ConfigData.Size; input_i++)
-//        {
-//            ImFontConfig& cfg = ConfigData[input_i];
-//            ImFontTempBuildData& tmp = tmp_array[input_i];
-//
-//            // Setup ranges
-//            int glyph_count = 0;
-//            int glyph_ranges_count = 0;
-//            for (const ImWchar* in_range = cfg.GlyphRanges; in_range[0] && in_range[1]; in_range += 2)
-//            {
-//                glyph_count += (in_range[1] - in_range[0]) + 1;
-//                glyph_ranges_count++;
-//            }
-//            tmp.Ranges = buf_ranges + bufRangesN;
-//            tmp.RangesCount = glyph_ranges_count;
-//            bufRangesN += glyph_ranges_count;
-//            for (int i = 0; i < glyph_ranges_count; i++)
-//            {
-//                const ImWchar * in_range = &cfg.GlyphRanges[i * 2];
-//                stbtt_pack_range& range = tmp.Ranges[i];
-//                range.font_size = cfg.SizePixels;
-//                range.first_unicode_codepoint_in_range = in_range[0];
-//                range.num_chars = (in_range[1] - in_range[0]) + 1;
-//                range.chardata_for_range = buf_packedchars + bufPackedcharsN;
-//                bufPackedcharsN += range.num_chars;
-//            }
-//
-//            // Pack
-//            tmp.Rects = buf_rects + bufRectsN;
-//            bufRectsN += glyph_count;
-//            stbtt_PackSetOversampling(& spc, cfg.OversampleH, cfg.OversampleV);
-//            int n = stbtt_PackFontRangesGatherRects (&spc, &tmp.FontInfo, tmp.Ranges, tmp.RangesCount, tmp.Rects);
-//            stbrp_pack_rects((stbrp_context *) spc . pack_info, tmp.Rects, n);
-//
-//            // Extend texture height
-//            for (int i = 0; i < n; i++)
-//            if (tmp.Rects[i].was_packed)
-//                TexHeight = ImMax(TexHeight, tmp.Rects[i].y + tmp.Rects[i].h);
-//        }
-////        IM_ASSERT(bufRectsN == totalGlyphCount);
-//        IM_ASSERT(bufPackedcharsN == totalGlyphCount);
-//        IM_ASSERT(bufRangesN == totalGlyphRangeCount);
-//
-//        // Create texture
-//        TexHeight = ImUpperPowerOfTwo(TexHeight);
-//        TexPixelsAlpha8 = (unsigned char *) ImGui ::MemAlloc(TexWidth * TexHeight);
-//        memset(TexPixelsAlpha8, 0, TexWidth * TexHeight);
-//        spc.pixels = TexPixelsAlpha8;
-//        spc.height = TexHeight;
-//
-//        // Second pass: render characters
-//        for (int input_i = 0; input_i < ConfigData.Size; input_i++)
-//        {
-//            ImFontConfig& cfg = ConfigData[input_i];
-//            ImFontTempBuildData& tmp = tmp_array[input_i];
-//            stbtt_PackSetOversampling(& spc, cfg.OversampleH, cfg.OversampleV);
-//            stbtt_PackFontRangesRenderIntoRects(& spc, &tmp.FontInfo, tmp.Ranges, tmp.RangesCount, tmp.Rects);
-//            tmp.Rects = NULL;
-//        }
+        val bufPackedchars = Array(totalGlyphCount, { TrueType.PackedChar() })
+        val bufRects = Array(totalGlyphCount, { RectPack.Rect() })
+        val bufRanges = Array(totalGlyphRangeCount, { TrueType.PackRange() })
+
+        /*  First font pass: pack all glyphs (no rendering at this point, we are working with rectangles in an
+            infinitely tall texture at this point)  */
+        for (i in configData.indices) {
+
+            val cfg = configData[i]
+            val tmp = tmpArray[i]
+
+            // Setup ranges
+            val glyphCount = 0
+            val glyphRangesCount = 0
+            for (j in cfg.glyphRanges.indices step 2) {
+                totalGlyphCount += (cfg.glyphRanges[j + 1] - cfg.glyphRanges[j]) + 1
+                totalGlyphRangeCount++
+            }
+            tmp.ranges = bufRangesN
+            tmp.bufRanges = bufRanges
+            tmp.rangesCount = glyphRangesCount
+            bufRangesN += glyphRangesCount
+
+            for (j in 0 until glyphRangesCount) {
+
+                val range = tmp.bufRanges[tmp.ranges + j]
+                range.fontSize = cfg.sizePixels
+                range.firstUnicodeCodepointInRange = cfg.glyphRanges[i * 2]
+                range.numChars = (cfg.glyphRanges[i * 2 + 1] - cfg.glyphRanges[i * 2]) + 1
+                range.charDataForRange = bufPackedcharsN
+                range.bufCharDataForRange = bufPackedchars
+                bufPackedcharsN += range.numChars
+            }
+
+            // Pack
+            tmp.rects = bufRectsN
+            tmp.bufRects = bufRects
+            bufRectsN += glyphCount
+            packSetOversampling(spc, cfg.oversample)
+            val n = packFontRangesGatherRects(spc, tmp.fontInfo, tmp.ranges, tmp.bufRanges, tmp.rangesCount, tmp.rects, tmp.bufRects)
+            RectPack.packRects(spc.packInfo, tmp.bufRects, tmp.rects, n)
+
+            // Extend texture height
+            for (j in tmp.rects until tmp.rects + n)
+                if (tmp.bufRects[tmp.rects + j].wasPacked)
+                    texSize.y = glm.max(texSize.y, tmp.bufRects[j].y + tmp.bufRects[j].h)
+        }
+        assert(bufRectsN == totalGlyphCount)
+        assert(bufPackedcharsN == totalGlyphCount)
+        assert(bufRangesN == totalGlyphRangeCount)
+
+        // Create texture
+        texSize.y = upperPowerOfTwo(texSize.y)
+        texPixelsAlpha8 = byteBufferBig(texSize.x * texSize.y)
+        spc.pixels = texPixelsAlpha8!!
+        spc.size.y = texSize.y
+
+        // Second pass: render characters
+        for (input in 0 until configData.size)        {
+            val cfg = configData[input]
+            val tmp = tmpArray[input]
+            packSetOversampling(spc, cfg.oversample)
+            packFontRangesRenderIntoRects(spc, tmp.fontInfo, tmp.bufRanges, tmp.ranges, tmp.rangesCount, tmp.bufRects, tmp.rects)
+            tmp.Rects = NULL
+        }
 //
 //        // End packing
 //        stbtt_PackEnd(& spc);
@@ -480,7 +486,7 @@ class FontAtlas {
         } else if (pass == 1) {
             // Render/copy pixels
             val r = rects [0]
-            var n = 0
+            val n = 0
             for (y in 0 until texDataSize.y)
                 for (x in 0 until texDataSize.x) {
                     val offset0 = r.x + x + (r.y + y) * texSize.x
@@ -580,6 +586,17 @@ class Font {
 //    IMGUI_API void              AddRemapChar(ImWchar dst, ImWchar src, bool overwrite_dst = true); // Makes 'dst' character/glyph points to 'src' character/glyph. Currently needs to be called AFTER fonts have been built.
 }
 
+fun upperPowerOfTwo(v: Int): Int {
+    var _v = v - 1
+    _v = _v or (v ushr 1)
+    _v = _v or (v ushr 2)
+    _v = _v or (v ushr 4)
+    _v = _v or (v ushr 8)
+    _v = _v or (v ushr 16)
+    _v++
+    return _v
+}
+
 val proggyCleanTtfCompressedDataBase85 by lazy {
     "7])#######hV0qs'/###[),##/l:\$#Q6>##5[n42>c-TH`->>#/e>11NNV=Bv(*:.F?uu#(gRU.o0XGH`\$vhLG1hxt9?W`#,5LsCp#-i>.r\$<\$6pD>Lb';9Crc6tgXmKVeU2cD4Eo3R/" +
             "2*>]b(MC;\$jPfY.;h^`IWM9<Lh2TlS+f-s\$o6Q<BWH`YiU.xfLq\$N;\$0iR/GX:U(jcW2p/W*q?-qmnUCI;jHSAiFWM.R*kU@C=GH?a9wp8f\$e.-4^Qg1)Q-GL(lf(r/7GrRgwV%MS=C#" +
@@ -608,7 +625,7 @@ val proggyCleanTtfCompressedDataBase85 by lazy {
             "%(?A%R\$f<->Zts'^kn=-^@c4%-pY6qI%J%1IGxfLU9CP8cbPlXv);C=b),<2mOvP8up,UVf3839acAWAW-W?#ao/^#%KYo8fRULNd2.>%m]UK:n%r\$'sw]J;5pAoO_#2mO3n,'=H5(et" +
             "Hg*`+RLgv>=4U8guD\$I%D:W>-r5V*%j*W:Kvej.Lp\$<M-SGZ':+Q_k+uvOSLiEo(<aD/K<CCc`'Lx>'?;++O'>()jLR-^u68PHm8ZFWe+ej8h:9r6L*0//c&iH&R8pRbA#Kjm%upV1g:" +
             "a_#Ur7FuA#(tRh#.Y5K+@?3<-8m0\$PEn;J:rh6?I6uG<-`wMU'ircp0LaE_OtlMb&1#6T.#FDKu#1Lw%u%+GM+X'e?YLfjM[VO0MbuFp7;>Q&#WIo)0@F%q7c#4XAXN-U&VB<HFF*qL(" +
-            "\$/V,;(kXZejWO`<[5?\\?ewY(*9=%wDc;,u<'9t3W-(H1th3+G]ucQ]kLs7df(\$/*JL]@*t7Bu_G3_7mp7<iaQjO@.kLg;x3B0lqp7Hf,^Ze7-##@/c58Mo(3;knp0%)A7?-W+eI'o8)b<" +
+            "\$/V,;(kXZejWO`<[5??ewY(*9=%wDc;,u<'9t3W-(H1th3+G]ucQ]kLs7df(\$/*JL]@*t7Bu_G3_7mp7<iaQjO@.kLg;x3B0lqp7Hf,^Ze7-##@/c58Mo(3;knp0%)A7?-W+eI'o8)b<" +
             "nKnw'Ho8C=Y>pqB>0ie&jhZ[?iLR@@_AvA-iQC(=ksRZRVp7`.=+NpBC%rh&3]R:8XDmE5^V8O(x<<aG/1N\$#FX\$0V5Y6x'aErI3I\$7x%E`v<-BY,)%-?Psf*l?%C3.mM(=/M0:JxG'?" +
             "7WhH%o'a<-80g0NBxoO(GH<dM]n.+%q@jH?f.UsJ2Ggs&4<-e47&Kl+f//9@`b+?.TeN_&B8Ss?v;^Trk;f#YvJkl&w\$]>-+k?'(<S:68tq*WoDfZu';mM?8X[ma8W%*`-=;D.(nc7/;" +
             ")g:T1=^J\$&BRV(-lTmNB6xqB[@0*o.erM*<SWF]u2=st-*(6v>^](H.aREZSi,#1:[IXaZFOm<-ui#qUq2\$##Ri;u75OK#(RtaW-K-F`S+cF]uN`-KMQ%rP/Xri.LRcB##=YL3BgM/3M" +

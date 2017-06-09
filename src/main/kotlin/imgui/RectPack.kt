@@ -26,13 +26,13 @@ object RectPack {
     }
 
     class Context {
-        lateinit var size: Vec2i
+        var size = Vec2i()
         var align = 0
         var initMode = 0
-        var heuristic = HeuristicSkyline.default
+        var heuristic = HeuristicSkyline.default.i
         var numNodes = 0
-        var activeHead: Node? = null
-        var freeHead: Node? = null
+        val activeHead: Array<Node?> = arrayOf(null)
+        val freeHead: Array<Node?> = arrayOf(null)
         /** we allocate two extra nodes so optimal user-node-count is 'width' not 'width+2' */
         val extra = arrayOf(Node(), Node())
     }
@@ -41,19 +41,17 @@ object RectPack {
      *  memory allocations for them */
     class Node {
         var coord = Vec2i()
-        var x = 0
+        var x
             get() = coord.x
             set(value) {
                 coord.x = value
-                field = value
             }
-        var y = 0
+        var y
             get() = coord.y
             set(value) {
                 coord.y = value
-                field = value
             }
-        var next: Node? = null
+        val next: Array<Node?> = arrayOf(null)
     }
 
     fun initTarget(context: Context, size: Vec2i, nodes: Array<Node>, numNodes: Int) {
@@ -61,21 +59,21 @@ object RectPack {
             assert(size.x <= 0xffff && size.y <= 0xffff)
 
         for (i in 0 until numNodes - 1)
-            nodes[i].next = nodes[i + 1]
-        nodes.last().next = null
+            nodes[i].next[0] = nodes[i + 1]
+        nodes.last().next[0] = null
         context.initMode = Init.skyline.i
-        context.heuristic = HeuristicSkyline.default
-        context.freeHead = nodes[0]
-        context.activeHead = context.extra[0]
+        context.heuristic = HeuristicSkyline.default.i
+        context.freeHead[0] = nodes[0]
+        context.activeHead[0] = context.extra[0]
         context.size put size
         context.numNodes = numNodes
         setupAllowOutOfMem(context, false)
 
         // node 0 is the full width, node 1 is the sentinel (lets us not store width explicitly)
         context.extra[0].coord.put(0, 0)
-        context.extra[0].next = context.extra[1]
+        context.extra[0].next[0] = context.extra[1]
         context.extra[1].coord.put(size.x, if (LARGE_RECTS) 1 shl 30 else 65535)
-        context.extra[1].next = null
+        context.extra[1].next[0] = null
     }
 
     var LARGE_RECTS = false
@@ -100,26 +98,26 @@ object RectPack {
         }
     }
 
-    fun packRects(context: Context, rects: ArrayList<Rect>, numRects: Int) {
+    fun packRects(context: Context, rects: Array<Rect>, rectsIdx: Int, numRects: Int) {
 
         // we use the 'was_packed' field internally to allow sorting/unsorting
-        for (i in 0 until numRects) {
+        for (i in rectsIdx until rectsIdx + numRects) {
             rects[i].wasPacked = i != 0
             if (!LARGE_RECTS)
                 assert(rects[i].w <= 0xffff && rects[i].h <= 0xffff)
         }
 
         // sort according to heuristic
-        rects.sortBy { it.h }
+        rects.sortWith(rectHeightCompare)
 
-        for (i in 0 until numRects) {
+        for (i in rectsIdx until rectsIdx + numRects) {
             if (rects[i].w == 0 || rects[i].h == 0) {
                 // empty rect needs no space
                 rects[i].x = 0
                 rects[i].y = 0
             } else {
                 val fr = skylinePackRectangle(context, Vec2i(rects[i].w, rects[i].h))
-                if (fr.prevLink != null) {
+                if (fr.prevLink[0][0] != null) {
                     rects[i].x = fr.x
                     rects[i].y = fr.y
                 } else {
@@ -130,7 +128,7 @@ object RectPack {
         }
 
         // unsort
-        rects.sortBy { it.wasPacked }
+        rects.sortWith(rectOriginalOrder)
 
         // set was_packed flags
         for (i in 0 until numRects)
@@ -145,93 +143,91 @@ object RectPack {
                 1. it failed
                 2. the best node doesn't fit (we don't always check this)
                 3. we're out of memory  */
-        if (res.prevLink == null || res.y + size.y > context.size.y || context.freeHead == null) {
-            res.prevLink = null
+        if (res.prevLink[0][0] == null || res.y + size.y > context.size.y || context.freeHead[0] == null) {
+            res.prevLink[0][0] = null
             return res
         }
 
         // on success, create new node
-        val node = context.freeHead!!
-        node.x = res.x
-        node.y = res.y + size.y
+        val node = arrayOf(context.freeHead[0])
+        node[0]!!.x = res.x
+        node[0]!!.y = res.y + size.y
 
-        context.freeHead = node.next
+        context.freeHead[0] = node[0]!!.next[0]
 
         /*  insert the new node into the right starting point, and let 'cur' point to the remaining nodes needing to be
             stiched back in */
-        var cur = res.prevLink!!
-        if (cur.x < res.x) {
+        val cur = arrayOf(res.prevLink[0][0])
+        if (cur[0]!!.x < res.x) {
             // preserve the existing one, so start testing with the next one
-            val next = cur.next
-            cur.next = node
-            cur = next!!
+            val next = arrayOf(cur[0]!!.next[0])
+            cur[0]!!.next[0] = node[0]
+            cur[0] = next[0]
         } else
-            res.prevLink = node
+            res.prevLink[0][0] = node[0]
 
         // from here, traverse cur and free the nodes, until we get to one that shouldn't be freed
-        while (cur.next != null && cur.next!!.x <= res.x + size.x) {
-            val next = cur.next
+        while (cur[0]!!.next[0] != null && cur[0]!!.next[0]!!.x <= res.x + size.x) {
+            val next = arrayOf(cur[0]!!.next[0])
             // move the current node to the free list
-            cur.next = context.freeHead
-            context.freeHead = cur
-            cur = next!!
+            cur[0]!!.next[0] = context.freeHead[0]
+            context.freeHead[0] = cur[0]
+            cur[0] = next[0]
         }
 
         // stitch the list back in
-        node.next = cur
+        node[0]!!.next[0] = cur[0]
 
-        if (cur.x < res.x + size.x)
-            cur.x = res.x + size.x
+        if (cur[0]!!.x < res.x + size.x)
+            cur[0]!!.x = res.x + size.x
 
         if (_DEBUG) {
-            cur = context.activeHead!!
-            while (cur.x < context.size.x) {
-                assert(cur.x < cur.next!!.x)
-                cur = cur.next!!
+            cur[0] = context.activeHead[0]
+            while (cur[0]!!.x < context.size.x) {
+                assert(cur[0]!!.x < cur[0]!!.next[0]!!.x)
+                cur[0] = cur[0]!!.next[0]
             }
-            assert(cur.next == null)
+            assert(cur[0]!!.next[0] == null)
 
-            run {
-                var count = 0
-                var c = context.activeHead
-                while (c != null) {
-                    c = c.next
-                    ++count
-                }
-                c = context.freeHead
-                while (c != null) {
-                    c = c.next
-                    ++count
-                }
-                assert(count == context.numNodes + 2)
+            var count = 0
+            cur[0] = context.activeHead[0]
+            while (cur[0] != null) {
+                cur[0] = cur[0]!!.next[0]
+                ++count
             }
+            cur[0] = context.freeHead[0]
+            while (cur[0] != null) {
+                cur[0] = cur[0]!!.next[0]
+                ++count
+            }
+            assert(count == context.numNodes + 2)
         }
         return res
     }
 
-    class FindResult(val x: Int, val y: Int, var prevLink: Node?)
+    class FindResult(val x: Int, val y: Int, val prevLink: Array<Array<Node?>>)
 
     fun skylineFindBestPos(c: Context, size: Vec2i): FindResult {
 
         var bestWaste = 1 shl 30
         var bestX = 0
         var bestY = 1 shl 30
-        var best: Node? = null
+        val best = arrayOf(arrayOf<Node?>(null))
 
         // align to multiple of c->align
         size.x += c.align - 1
         size.x -= size.x % c.align
         assert(size.x % c.align == 0)
 
-        var node = c.activeHead
-        var prev = c.activeHead
-        while (node!!.x + size.x <= c.size.x) {
-            val (y, waste) = skylineFindMinY(c, node, node.x, size.x)
-            if (c.heuristic == HeuristicSkyline.bl_sortHeight) {
+        val node = arrayOf(c.activeHead[0])
+        val prev = arrayOf(c.activeHead)
+        while (node[0]!!.x + size.x <= c.size.x) {
+            val (y, waste) = skylineFindMinY(c, node[0]!!, node[0]!!.x, size.x)
+            if (c.heuristic == HeuristicSkyline.bl_sortHeight.i) {
                 //  actually just want to test BL, bottom left
                 if (y < bestY) {
                     bestY = y
-                    best = prev
+                    best[0] = prev[0]
                 }
             } else {
                 // best-fit
@@ -240,15 +236,15 @@ object RectPack {
                     if (y < bestY || (y == bestY && waste < bestWaste)) {
                         bestY = y
                         bestWaste = waste
-                        best = prev
+                        best[0] = prev[0]
                     }
                 }
             }
-            prev = node.next
-            node = node.next
+            prev[0] = node[0]!!.next
+            node[0] = node[0]!!.next[0]
         }
 
-        bestX = best?.x ?: 0
+        bestX = best[0][0]?.x ?: 0
 
         /*  if doing best-fit (BF), we also have to try aligning right edge to each node position
 
@@ -266,23 +262,23 @@ object RectPack {
 
             This makes BF take about 2x the time    */
 
-        if (c.heuristic == HeuristicSkyline.bf_sortHeight) {
-            var tail = c.activeHead
-            node = c.activeHead
-            prev = c.activeHead
+        if (c.heuristic == HeuristicSkyline.bf_sortHeight.i) {
+            val tail = arrayOf(c.activeHead[0])
+            node[0] = c.activeHead[0]
+            prev[0] = c.activeHead
             // find first node that's admissible
-            while (tail!!.x < size.x)
-                tail = tail.next
-            while (tail != null) {
-                val xPos = tail.x - size.x
+            while (tail[0]!!.x < size.x)
+                tail[0] = tail[0]!!.next[0]
+            while (tail[0] != null) {
+                val xPos = tail[0]!!.x - size.x
                 assert(xPos >= 0)
                 // find the left position that matches this
-                while (node!!.next!!.x <= xPos) {
-                    prev = node.next
-                    node = node.next
+                while (node[0]!!.next[0]!!.x <= xPos) {
+                    prev[0] = node[0]!!.next
+                    node[0] = node[0]!!.next[0]
                 }
-                assert(node.next!!.x > xPos && node.x <= xPos)
-                val (y, waste) = skylineFindMinY(c, node, xPos, size.x)
+                assert(node[0]!!.next[0]!!.x > xPos && node[0]!!.x <= xPos)
+                val (y, waste) = skylineFindMinY(c, node[0]!!, xPos, size.x)
                 if (y + size.y < c.size.y) {
                     if (y <= bestY) {
                         if (y < bestY || waste < bestWaste || (waste == bestWaste && xPos < bestX)) {
@@ -290,11 +286,11 @@ object RectPack {
                             assert(y <= bestY)
                             bestY = y
                             bestWaste = waste
-                            best = prev
+                            best[0] = prev[0]
                         }
                     }
                 }
-                tail = tail.next
+                tail[0] = tail[0]!!.next[0]
             }
         }
         return FindResult(bestX, bestY, best)
@@ -313,7 +309,7 @@ object RectPack {
 //        while (node.next!!.coord.x <= x0)
 //        node = node
 //        #else
-        assert(node.next!!.x > x0) // we ended up handling this in the caller for efficiency
+        assert(node.next[0]!!.x > x0) // we ended up handling this in the caller for efficiency
 
         assert(node.x <= x0)
 
@@ -327,19 +323,60 @@ object RectPack {
                 wasteArea += visitedWidth * (node.y - minY)
                 minY = node.y
                 // the first time through, visited_width might be reduced
-                visitedWidth += node.next!!.x -
+                visitedWidth += node.next[0]!!.x -
                         if (node.x < x0) x0
                         else node.x
             } else {
                 // add waste area
-                var underWidth = node.next!!.x - node.x
+                var underWidth = node.next[0]!!.x - node.x
                 if (underWidth + visitedWidth > width)
                     underWidth = width - visitedWidth
                 wasteArea += underWidth * (minY - node.y)
                 visitedWidth += underWidth
             }
-            node = node.next!!
+            node = node.next[0]!!
         }
         return minY to wasteArea
+    }
+
+    val rectHeightCompare = Comparator<Rect> { a, b ->
+        when {
+            a.h > b.h -> -1
+            a.h < b.h -> 1
+            else -> when {
+                a.w > b.w -> -1
+                a.w < b.w -> 1
+                else -> 0
+            }
+        }
+    }
+
+    val rectWidthCompare = Comparator<Rect> { a, b ->
+        when {
+            a.w > b.w -> -1
+            a.w < b.w -> 1
+            else -> when {
+                a.h > b.h -> -1
+                a.h < b.h -> 1
+                else -> 0
+            }
+        }
+    }
+
+    val rectOriginalOrder = Comparator<Rect> { a, b ->
+        when {
+            a.wasPacked < b.wasPacked -> -1
+            a.wasPacked < b.wasPacked -> 1
+            else -> 0
+        }
+    }
+
+    class PtrNode(node: Node? = null) {
+        private val _ptr = arrayOf(node)
+        var ptr
+            get() = _ptr[0]
+            set(value) {
+                _ptr[0] = value
+            }
     }
 }
