@@ -1,18 +1,19 @@
 package imgui
 
 import gli.wasInit
-import glm.b
-import glm.c
-import glm.i
-import glm.glm
-import glm.set
+import glm.*
 import glm.vec2.Vec2
 import glm.vec2.operators.div
 import glm.vec2.Vec2i
-import imgui.TrueType.packFontRangesGatherRects
-import imgui.TrueType.packFontRangesRenderIntoRects
-import imgui.TrueType.packSetOversampling
-import org.lwjgl.stb.STBTruetype
+import org.lwjgl.stb.*
+import org.lwjgl.stb.STBRectPack.stbrp_pack_rects
+import org.lwjgl.stb.STBTruetype.*
+import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.MemoryUtil.memGetAddress
+import org.lwjgl.system.Pointer.POINTER_SIZE
+//import imgui.TrueType.packFontRangesGatherRects
+//import imgui.TrueType.packFontRangesRenderIntoRects
+//import imgui.TrueType.packSetOversampling
 import uno.buffer.byteBufferBig
 import uno.buffer.destroy
 import uno.stb.stb
@@ -22,6 +23,7 @@ import java.nio.ByteBuffer
 class FontConfig {
 
     var fontData = charArrayOf()
+    lateinit var fontDataBuffer: ByteBuffer
     /** TTF data ownership taken by the container ImFontAtlas (will delete memory itself). Set to true  */
     var fontDataOwnedByAtlas = true
     /** Index of font within TTF file   */
@@ -114,6 +116,7 @@ class FontAtlas {
         val fontCfg = fontCfgTemplate ?: FontConfig()
         assert(fontCfg.fontData.isEmpty())
         fontCfg.fontData = ttfData
+        fontCfg.fontDataBuffer = byteBufferBig(ttfData.size).apply { ttfData.forEachIndexed { i, c -> this[i] = c.b } }
         fontCfg.sizePixels = sizePixels
         if (glyphRanges.isNotEmpty())
             fontCfg.glyphRanges = glyphRanges
@@ -236,11 +239,9 @@ class FontAtlas {
 
         class FontTempBuildData {
 
-            var fontInfo = TrueType.FontInfo()
-            var rects = 0
-            lateinit var bufRects: Array<RectPack.Rect>
-            var ranges = 0
-            lateinit var bufRanges: Array<TrueType.PackRange>
+            var fontInfo = STBTTFontinfo.create()
+            lateinit var rects: STBRPRect
+            lateinit var ranges: STBTTPackRange.Buffer
             var rangesCount = 0
         }
 
@@ -256,9 +257,9 @@ class FontAtlas {
             val tmp = tmpArray[i]
 
             assert(wasInit { cfg.dstFont } && (!cfg.dstFont.isLoaded || cfg.dstFont.containerAtlas == this))
-            val fontOffset = TrueType.getFontOffsetForIndex(cfg.fontData, cfg.fontNo)
+            val fontOffset = stbtt_GetFontOffsetForIndex(cfg.fontDataBuffer, cfg.fontNo)
             assert(fontOffset >= 0)
-            if (!TrueType.initFont(tmp.fontInfo, cfg.fontData, fontOffset))
+            if (!stbtt_InitFont(tmp.fontInfo, cfg.fontDataBuffer, fontOffset))
                 return false
 
             // Count glyphs
@@ -283,15 +284,16 @@ class FontAtlas {
         }
         texSize.y = 0
         val maxTexHeight = 1024 * 32
-        val spc = TrueType.PackContext()
-        TrueType.packBegin(spc, Vec2i(texSize.x, maxTexHeight), 0, 1)
+        val spc = STBTTPackContext.create()
+        nstbtt_PackBegin(spc.address(), NULL, texSize.x, maxTexHeight, 0, 1, NULL) // TODO -n
 
         /*  Pack our extra data rectangles first, so it will be on the upper-left corner of our texture (UV will have
             small values).  */
-        val extraRects = ArrayList<RectPack.Rect>()
+        val extraRects = STBRPRect.malloc(STBRPRect.SIZEOF)
         renderCustomTexData(0, extraRects)
-        TrueType.packSetOversampling(spc, Vec2i(1))
-        RectPack.packRects(spc.packInfo, extraRects.toTypedArray(), 0, extraRects.size)
+        stbtt_PackSetOversampling(spc, 1, 1)
+        val rpCtx = STBRPContext.create(memGetAddress(spc.address() + POINTER_SIZE))
+        STBRectPack.stbrp_pack_rects(rpCtx, extraRects)
         for (i in 0 until extraRects.size)
             if (extraRects[i].wasPacked)
                 texSize.y = glm.max(texSize.y, extraRects[i].y + extraRects[i].h)
@@ -300,71 +302,85 @@ class FontAtlas {
         var bufPackedcharsN = 0
         var bufRectsN = 0
         var bufRangesN = 0
-        val bufPackedchars = Array(totalGlyphCount, { TrueType.PackedChar() })
-        val bufRects = Array(totalGlyphCount, { RectPack.Rect() })
-        val bufRanges = Array(totalGlyphRangeCount, { TrueType.PackRange() })
+        val bufPackedchars = STBTTPackedchar.calloc(totalGlyphCount * STBTTPackedchar.SIZEOF)
+        val bufRects = STBRPRect.calloc(totalGlyphCount * STBRPRect.SIZEOF)
+        val bufRanges = STBTTPackRange.calloc(totalGlyphRangeCount * STBTTPackRange.SIZEOF)
 
         /*  First font pass: pack all glyphs (no rendering at this point, we are working with rectangles in an
             infinitely tall texture at this point)  */
-        for (i in configData.indices) {
+        for (input in configData.indices) {
 
-            val cfg = configData[i]
-            val tmp = tmpArray[i]
+            val cfg = configData[input]
+            val tmp = tmpArray[input]
 
             // Setup ranges
-            val glyphCount = 0
-            val glyphRangesCount = 0
+            var glyphCount = 0
+            var glyphRangesCount = 0
             for (j in cfg.glyphRanges.indices step 2) {
-                totalGlyphCount += (cfg.glyphRanges[j + 1] - cfg.glyphRanges[j]) + 1
-                totalGlyphRangeCount++
+                glyphCount += (cfg.glyphRanges[j + 1] - cfg.glyphRanges[j]) + 1
+                glyphRangesCount++
             }
-            tmp.ranges = bufRangesN
-            tmp.bufRanges = bufRanges
+            tmp.ranges = STBTTPackRange.create(
+                    bufRanges.address() + bufRectsN * glyphRangesCount,
+                    glyphRangesCount * STBTTPackRange.SIZEOF)
             tmp.rangesCount = glyphRangesCount
             bufRangesN += glyphRangesCount
-
-            for (j in 0 until glyphRangesCount) {
-
-                val range = tmp.bufRanges[tmp.ranges + j]
+            for (i in 0 until glyphRangesCount) {
+                val range = tmp.ranges[i]
                 range.fontSize = cfg.sizePixels
-                range.firstUnicodeCodepointInRange = cfg.glyphRanges[i * 2]
-                range.numChars = (cfg.glyphRanges[i * 2 + 1] - cfg.glyphRanges[i * 2]) + 1
-                range.charDataForRange = bufPackedcharsN
-                range.bufCharDataForRange = bufPackedchars
+                range.firstUnicodeCodepointInRange = cfg.glyphRanges[input * 2]
+                range.numChars = (cfg.glyphRanges[input * 2 + 1] - cfg.glyphRanges[input * 2]) + 1
+                range.chardata_for_range(STBTTPackedchar.create(bufPackedchars.address() + bufPackedcharsN, STBTTPackedchar.SIZEOF))
                 bufPackedcharsN += range.numChars
             }
 
             // Pack
-            tmp.rects = bufRectsN
-            tmp.bufRects = bufRects
+            tmp.rects = STBRPRect.create(bufRects.address() + bufRectsN * STBRPRect.SIZEOF)
             bufRectsN += glyphCount
-            packSetOversampling(spc, cfg.oversample)
-            val n = packFontRangesGatherRects(spc, tmp.fontInfo, tmp.ranges, tmp.bufRanges, tmp.rangesCount, tmp.rects, tmp.bufRects)
-            RectPack.packRects(spc.packInfo, tmp.bufRects, tmp.rects, n)
+            stbtt_PackSetOversampling(spc, cfg.oversample.x, cfg.oversample.y)
+
+//            fun check(pointer: Long): Long {
+//                if (pointer == NULL)    throw NullPointerException()
+//                return pointer
+//            }
+//
+//            fun validate(struct: Long) = check(memGetAddress(struct + STBTTPackRange.CHARDATA_FOR_RANGE))
+//            fun validate(array: Long, count: Int) {
+//                for (i in 0 until count)
+//                    validate(array + i * STBTTPackRange.SIZEOF)
+//            }
+//            val a = tmp.ranges.address()
+//            val b = tmp.ranges.remaining()
+//            validate(tmp.ranges.address(), tmp.ranges.remaining())
+            val a = bufRanges[0].first_unicode_codepoint_in_range()
+            val b = tmp.ranges[0].first_unicode_codepoint_in_range()
+
+            val n = stbtt_PackFontRangesGatherRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
+//            stbrp_pack_rects(rpCtx, tmp.rects)
 
             // Extend texture height
-            for (j in tmp.rects until tmp.rects + n)
-                if (tmp.bufRects[tmp.rects + j].wasPacked)
-                    texSize.y = glm.max(texSize.y, tmp.bufRects[j].y + tmp.bufRects[j].h)
+//            for (j in tmp.rects until tmp.rects + n)
+//                if (tmp.bufRects[tmp.rects + j].wasPacked)
+//                    texSize.y = glm.max(texSize.y, tmp.bufRects[j].y + tmp.bufRects[j].h)
         }
         assert(bufRectsN == totalGlyphCount)
-        assert(bufPackedcharsN == totalGlyphCount)
-        assert(bufRangesN == totalGlyphRangeCount)
-
-        // Create texture
-        texSize.y = upperPowerOfTwo(texSize.y)
-        texPixelsAlpha8 = byteBufferBig(texSize.x * texSize.y)
-        spc.pixels = texPixelsAlpha8!!
-        spc.size.y = texSize.y
-
-        // Second pass: render characters
-        for (input in 0 until configData.size)        {
-            val cfg = configData[input]
-            val tmp = tmpArray[input]
-            packSetOversampling(spc, cfg.oversample)
-            packFontRangesRenderIntoRects(spc, tmp.fontInfo, tmp.bufRanges, tmp.ranges, tmp.rangesCount, tmp.bufRects, tmp.rects)
-            tmp.Rects = NULL
-        }
+//        assert(bufPackedcharsN == totalGlyphCount)
+//        assert(bufRangesN == totalGlyphRangeCount)
+//
+//        // Create texture
+//        texSize.y = upperPowerOfTwo(texSize.y)
+//        texPixelsAlpha8 = byteBufferBig(texSize.x * texSize.y)
+//        spc.pixels = texPixelsAlpha8!!
+//        spc.size.y = texSize.y
+//
+//        // Second pass: render characters
+//        for (input in 0 until configData.size) {
+//            val cfg = configData[input]
+//            val tmp = tmpArray[input]
+//            packSetOversampling(spc, cfg.oversample)
+//            packFontRangesRenderIntoRects(spc, tmp.fontInfo, tmp.bufRanges, tmp.ranges, tmp.rangesCount, tmp.bufRects, tmp.rects)
+//            tmp.Rects = NULL
+//        }
 //
 //        // End packing
 //        stbtt_PackEnd(& spc);
@@ -444,7 +460,7 @@ class FontAtlas {
         return true
     }
 
-    fun renderCustomTexData(pass: Int, rects: ArrayList<RectPack.Rect>) {
+    fun renderCustomTexData(pass: Int, rects: STBRPRect.Buffer) {
         /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
             The white texels on the top left are the ones we'll use everywhere in ImGui to render filled shapes.    */
         val texDataSize = Vec2i(90, 27)
@@ -479,23 +495,21 @@ class FontAtlas {
 
         if (pass == 0) {
             // Request rectangles
-            val r = RectPack.Rect()
-            r.w = (texDataSize.x * 2) + 1
-            r.h = texDataSize.y + 1
-            rects.add(r)
+            rects.w = texDataSize.x * 2 + 1
+            rects.h = texDataSize.y + 1
         } else if (pass == 1) {
             // Render/copy pixels
             val r = rects [0]
             val n = 0
             for (y in 0 until texDataSize.y)
                 for (x in 0 until texDataSize.x) {
-                    val offset0 = r.x + x + (r.y + y) * texSize.x
+                    val offset0 = r.x() + x + (r.y() + y) * texSize.x
                     val offset1 = offset0 + 1 + texDataSize.x
                     texPixelsAlpha8!![offset0] = if (textureData[n] == '.') 0xFF.b else 0x00.b
                     texPixelsAlpha8!![offset1] = if (textureData[n] == 'X') 0xFF.b else 0x00.b
                 }
             val texUvScale = Vec2(1.0f / texSize)
-            texUvWhitePixel = Vec2((r.x + 0.5f) * texUvScale.x, (r.y + 0.5f) * texUvScale.y)
+            texUvWhitePixel = Vec2((r.x() + 0.5f) * texUvScale.x, (r.y() + 0.5f) * texUvScale.y)
 
             // Setup mouse cursors
             val cursorDatas = arrayOf(
@@ -510,7 +524,7 @@ class FontAtlas {
 
             for (type in 0 until MouseCursor_.Count.i) {
                 val cursorData = Context.mouseCursorData[type]
-                val pos = cursorDatas[type][0] + Vec2(r.x, r.y)
+                val pos = cursorDatas[type][0] + Vec2(r.x(), r.y())
                 val size = cursorDatas[type][1]
                 cursorData.type = MouseCursor_.of(type)
                 cursorData.size = size
@@ -524,6 +538,43 @@ class FontAtlas {
         }
     }
 
+    val STBRPRect.Buffer.size get() = capacity() / STBRPRect.SIZEOF
+    val STBRPRect.wasPacked get() = was_packed() != 0
+    var STBRPRect.Buffer.w
+        set(value) {
+            w(value.s)
+        }
+        get() = w().i
+    var STBRPRect.Buffer.h
+        set(value) {
+            h(value.s)
+        }
+        get() = h().i
+    var STBRPRect.y
+        set(value) {
+            y(value.s)
+        }
+        get() = y().i
+    var STBRPRect.h
+        set(value) {
+            h(value.s)
+        }
+        get() = h().i
+    var STBTTPackRange.fontSize
+        set(value) {
+            font_size(value)
+        }
+        get() = font_size()
+    var STBTTPackRange.firstUnicodeCodepointInRange
+        set(value) {
+            first_unicode_codepoint_in_range(value)
+        }
+        get() = first_unicode_codepoint_in_range()
+    var STBTTPackRange.numChars
+        set(value) {
+            num_chars(value)
+        }
+        get() = num_chars()
 }
 
 /** Font runtime data and rendering
