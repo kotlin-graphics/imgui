@@ -1,9 +1,13 @@
-package imgui
+package imgui.impl
 
+import glm_.f
 import glm_.i
-import glm_.glm
 import glm_.vec2.Vec2
 import glm_.mat4x4.Mat4
+import imgui.DrawData
+import imgui.DrawVert
+import imgui.IO
+import imgui.Key_
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.*
@@ -14,15 +18,16 @@ import org.lwjgl.opengl.GL30.*
 import uno.buffer.intBufferBig
 import uno.gl.glGetVec4i
 import uno.glf.semantic
-import uno.gln.glBindVertexArray
-import uno.gln.glUniform
-import uno.gln.glUseProgram
-import uno.gln.glVertexAttribPointer
+import uno.glfw.GlfwWindow
+import uno.glfw.glfw
+import uno.gln.*
 import uno.glsl.Program
+import imgui.set
 
 
-abstract class ImplGlfwGL3(val window: Long, installCallbacks: Boolean) {
+object GlfwGL3 {
 
+    lateinit var window: GlfwWindow
     var time = 0.0
     val mousePressed = Array(3, { false })
     var mouseWheel = 0f
@@ -36,14 +41,17 @@ abstract class ImplGlfwGL3(val window: Long, installCallbacks: Boolean) {
 
     val bufferName = intBufferBig(Buffer.MAX)
     val vaoName = intBufferBig(1)
-    var program = 0
+    lateinit var program: ProgramA
+    val fontTexture = intBufferBig(1)
 
     val mat = Mat4()
-    var matUL = 0
 
-    init {
+    fun init(window: GlfwWindow, installCallbacks: Boolean): Boolean {
+
+        GlfwGL3.window = window
 
         with(IO) {
+            // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
             keyMap[Key_.Tab] = GLFW_KEY_TAB
             keyMap[Key_.LeftArrow] = GLFW_KEY_LEFT
             keyMap[Key_.RightArrow] = GLFW_KEY_RIGHT
@@ -66,57 +74,13 @@ abstract class ImplGlfwGL3(val window: Long, installCallbacks: Boolean) {
 
             /* Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the
                same ImDrawData pointer.             */
-            renderDrawListsFn = this@ImplGlfwGL3::renderDrawLists
-
-            if (installCallbacks)
-                TODO()
+            renderDrawListsFn = this@GlfwGL3::renderDrawLists
         }
-    }
 
-    fun NewFrame() {
+        if (installCallbacks)
+            TODO()
 
-        if (textureName[0] == 0)
-            createDeviceObjects()
-
-//        ImGuiIO& io = ImGui::GetIO()
-//
-//        // Setup display size (every frame to accommodate for window resizing)
-//        int w, h
-//        int display_w, display_h
-//        glfwGetWindowSize(g_Window, & w, &h)
-//        glfwGetFramebufferSize(g_Window, & display_w, &display_h)
-//        io.DisplaySize = ImVec2((float) w, (float) h)
-//        io.DisplayFramebufferScale = ImVec2(w > 0 ?((float) display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0)
-//
-//        // Setup time step
-//        double current_time = glfwGetTime ()
-//        io.DeltaTime = g_Time > 0.0 ? (float)(current_time-g_Time) : (float)(1.0f/60.0f)
-//        g_Time = current_time
-//
-//        // Setup inputs
-//        // (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
-//        if (glfwGetWindowAttrib(g_Window, GLFW_FOCUSED)) {
-//            double mouse_x, mouse_y
-//            glfwGetCursorPos(g_Window, & mouse_x, &mouse_y)
-//            io.MousePos = ImVec2((float) mouse_x, (float) mouse_y)   // Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)
-//        } else {
-//            io.MousePos = ImVec2(-1, -1)
-//        }
-//
-//        for (int i = 0; i < 3; i++)
-//        {
-//            io.MouseDown[i] = g_MousePressed[i] || glfwGetMouseButton(g_Window, i) != 0    // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
-//            g_MousePressed[i] = false
-//        }
-//
-//        io.MouseWheel = g_MouseWheel
-//        g_MouseWheel = 0.0f
-//
-//        // Hide OS mouse cursor if ImGui is drawing it
-//        glfwSetInputMode(g_Window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL)
-//
-//        // Start the frame
-//        ImGui::NewFrame()
+        return true
     }
 
     fun createDeviceObjects(): Boolean {
@@ -127,63 +91,7 @@ abstract class ImplGlfwGL3(val window: Long, installCallbacks: Boolean) {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
 
-        val vertexSrc = """
-                #version 330
-
-                uniform mat4 mat;
-
-                layout (location = ${semantic.attr.POSITION}) in vec2 Position;
-                layout (location = ${semantic.attr.TEX_COORD}) in vec2 UV;
-                layout (location = ${semantic.attr.COLOR}) in vec4 Color;
-
-                out vec2 uv;
-                out vec4 color;
-
-                void main()
-                {
-        	        uv = UV;
-        	        color = Color;
-        	        gl_Position = mat * vec4(Position.xy, 0, 1);
-                }
-        """
-
-        val fragmentSrc = """
-                #version 330
-
-                uniform sampler2D Texture;
-
-                in vec2 uv;
-                in vec4 color;
-
-                layout (location = ${semantic.frag.COLOR}) out vec4 outColor;
-
-                void main()
-                {
-                	outColor = color * texture(Texture, uv);
-                }
-        """
-
-        program = glCreateProgram()
-        val vertex = glCreateShader(GL_VERTEX_SHADER)
-        val fragment = glCreateShader(GL_FRAGMENT_SHADER)
-        glShaderSource(vertex, vertexSrc)
-        glShaderSource(fragment, fragmentSrc)
-        glCompileShader(vertex)
-        glCompileShader(fragment)
-        glAttachShader(program, vertex)
-        glAttachShader(program, fragment)
-        glLinkProgram(program)
-        glDetachShader(program, vertex)
-        glDetachShader(program, fragment)
-        glDeleteShader(vertex)
-        glDeleteShader(fragment)
-
-        matUL = glGetUniformLocation(program, "mat")
-
-        glUseProgram(program)
-        glUniform(
-                glGetUniformLocation(program, "Texture"),
-                semantic.sampler.DIFFUSE)
+        program = ProgramA("shader")
 
         glGenBuffers(bufferName)
 
@@ -209,31 +117,79 @@ abstract class ImplGlfwGL3(val window: Long, installCallbacks: Boolean) {
         return true
     }
 
-    fun createFontsTexture(): Boolean {
-        // Build texture atlas
-//        unsigned char * pixels;
-//        int width, height;
-//        /*  Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely
-//            to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than
-//            just a GL texture id, consider calling GetTexDataAsAlpha8() instead to save on GPU memory.  */
-//        IO.fonts.getTexDataAsRGBA32(& pixels, &width, &height);
-//
-//        // Upload texture to graphics system
-//        GLint last_texture;
-//        glGetIntegerv(GL_TEXTURE_BINDING_2D, & last_texture);
-//        glGenTextures(1, & g_FontTexture);
-//        glBindTexture(GL_TEXTURE_2D, g_FontTexture);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-//
-//        // Store our identifier
-//        io.Fonts->TexID = (void *)(intptr_t)g_FontTexture;
-//
-//        // Restore state
-//        glBindTexture(GL_TEXTURE_2D, last_texture);
+    class ProgramA(shader: String) : Program("$shader.vert", "$shader.frag") {
+        val mat = glGetUniformLocation(name, "mat")
 
-        return true;
+        init {
+            glUseProgram(program)
+            glUniform(glGetUniformLocation(name, "Texture"), semantic.sampler.DIFFUSE)
+        }
+    }
+
+    fun createFontsTexture(): Boolean {
+
+        // Build texture atlas
+
+        /*  Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely
+            to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than
+            just a GL texture id, consider calling GetTexDataAsAlpha8() instead to save on GPU memory.  */
+        val (pixels, size) = IO.fonts.getTexDataAsAlpha8()
+
+        // Upload texture to graphics system
+        val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
+        initTexture2d(fontTexture) {
+            minFilter = linear
+            magFilter = linear
+            image(GL_RGBA, size, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
+        }
+
+        // Store our identifier
+        IO.fonts.texID = fontTexture[0]
+
+        // Restore state
+        glBindTexture(GL_TEXTURE_2D, lastTexture)
+
+        return true
+    }
+
+    fun newFrame() {
+
+        if (textureName[0] == 0)
+            createDeviceObjects()
+
+        // Setup display size (every frame to accommodate for window resizing)
+        IO.displaySize put window.size
+        IO.displayFramebufferScale.x = if (window.size.x > 0) window.framebufferSize.x / window.size.x.f else 0f
+        IO.displayFramebufferScale.y = if (window.size.y > 0) window.framebufferSize.y / window.size.y.f else 0f
+
+        // Setup time step
+        val currentTime = glfw.time
+        IO.deltaTime = if(time > 0.0) (currentTime- time).f else 1.0f/60.0f
+        time = currentTime
+
+        // Setup inputs
+        // (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
+        // Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)
+        if (window.focused)
+            IO.mousePos put window.cursorPos
+        else
+            IO.mousePos put -1
+
+        repeat(3)        {
+            /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
+                events that are shorter than 1 frame.   */
+            IO.mouseDown[it] = mousePressed[it] || window.mouseButton(it) != 0
+            mousePressed[it] = false
+        }
+
+        IO.mouseWheel = mouseWheel
+        mouseWheel = 0.0f
+
+        // Hide OS mouse cursor if ImGui is drawing it
+        window.cursor = if(IO.mouseDrawCursor) GlfwWindow.Cursor.Hidden else GlfwWindow.Cursor.Normal
+
+        // Start the frame
+        newFrame()
     }
 
     /** This is the main rendering function that you have to implement and provide to ImGui (via setting up

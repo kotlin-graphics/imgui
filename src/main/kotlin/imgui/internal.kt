@@ -1,6 +1,8 @@
 package imgui
 
-import glm.vec2.Vec2
+import glm_.i
+import glm_.vec2.Vec2
+import glm_.xor
 
 // Mouse cursor data (used when io.MouseDrawCursor is set)
 class MouseCursorData {
@@ -10,3 +12,4 @@ class MouseCursorData {
     var texUvMin = arrayOf(Vec2(), Vec2())
     var texUvMax = arrayOf(Vec2(), Vec2())
 }
+

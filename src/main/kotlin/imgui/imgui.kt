@@ -1,6 +1,11 @@
 package imgui
 
-import glm.i
+import glm_.glm
+import glm_.i
+import imgui.internal.clearActiveID
+import imgui.internal.focusWindow
+import imgui.internal.keepAliveID
+import imgui.internal.lengthSqr
 
 // Helpers macros to generate 32-bits encoded colors
 var IMGUI_USE_BGRA_PACKED_COLOR = false
@@ -18,4 +23,4 @@ val IM_COL32_A_MASK = 0xFF000000.i
 
 var _DEBUG = true
 
-operator fun Char.times(b: Int) = i * b
+

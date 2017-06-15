@@ -1,7 +1,9 @@
+package imgui.stb
+
 //package imgui
 //
-//import glm.i
-//import glm.vec2.Vec2i
+//import glm_.i
+//import glm_.vec2.Vec2i
 //import java.util.ArrayList
 //
 //object RectPack {

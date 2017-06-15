@@ -8,7 +8,7 @@ class stb : StringSpec() {
 
         "font" {
 
-            IO.fonts.getTexDataAsAlpha8(Triple(0, 0, 0))
+//            IO.fonts.getTexDataAsAlpha8(Triple(0, 0, 0))
 
 
         }

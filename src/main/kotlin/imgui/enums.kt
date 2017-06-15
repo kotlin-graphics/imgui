@@ -60,6 +60,10 @@ enum class WindowFlags_(val i: Int) {
     ChildMenu(1 shl 27)
 }
 
+infix fun Int.or(b: WindowFlags_) = this or b.i
+infix fun Int.has(b: WindowFlags_) = (this and b.i) != 0
+infix fun Int.hasnt(b: WindowFlags_) = (this and b.i) == 0
+
 /** Flags for ImGui::InputText()    */
 enum class InputTextFlags_(val i: Int) {
 
@@ -334,6 +338,10 @@ enum class SetCond_(val i: Int) {
     /** Set the variable if the window has no saved data (if doesn't exist in the .ini file)    */
     FirstUseEver(1 shl 2),
     /** Set the variable if the window is appearing after being hidden/inactive (or the first time) */
-    Appearing(1 shl 3)
+    Appearing(1 shl 3);
+
+    infix fun or(other: SetCond_) = i or other.i
 }
+
+infix fun Int.or(other: SetCond_) = this or other.i
 

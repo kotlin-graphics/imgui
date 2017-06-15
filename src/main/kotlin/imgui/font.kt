@@ -4,18 +4,18 @@ package imgui
 //import imgui.TrueType.packFontRangesRenderIntoRects
 //import imgui.TrueType.packSetOversampling
 import gli.wasInit
-import glm.*
-import glm.vec2.Vec2
-import glm.vec2.Vec2i
-import glm.vec2.operators.div
+import glm_.*
+import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
+import glm_.vec2.operators.div
+import imgui.stb.*
 import org.lwjgl.stb.*
 import org.lwjgl.stb.STBRectPack.stbrp_pack_rects
 import org.lwjgl.stb.STBTruetype.*
-import org.lwjgl.system.MemoryUtil.NULL
 import uno.buffer.byteBufferBig
 import uno.buffer.destroy
+import uno.convert.decode85
 import uno.stb.stb
-import imgui.stbtt_PackSetOversampling
 import java.nio.ByteBuffer
 
 
@@ -162,7 +162,7 @@ class FontAtlas {
      * of the memory is wasted.
      * Pitch = Width * BytesPerPixels  */
     /** 1 byte per-pixel    */
-    fun getTexDataAsAlpha8(params: Triple<Int, Int, Int>)/*: ByteBuffer*/ {
+    fun getTexDataAsAlpha8(): Triple<ByteBuffer, Vec2i, Int> {
 
         // Build atlas on demand
         if (texPixelsAlpha8 == null) {
@@ -170,7 +170,7 @@ class FontAtlas {
                 addFontDefault()
             build()
         }
-
+        return Triple(texPixelsAlpha8!!, texSize, 1)
     }
 
     /** 4 bytes-per-pixel   */
@@ -206,7 +206,9 @@ class FontAtlas {
 //
     // Members
     // (Access texture data via GetTexData*() calls which will setup a default font for you.)
-//    void*                       TexID;              // User data to refer to the texture once it has been uploaded to user's graphic systems. It ia passed back to you during rendering.
+    /** User data to refer to the texture once it has been uploaded to user's graphic systems. It ia passed back to you
+        during rendering.   */
+    var texID = 0
     /** 1 component per pixel, each component is unsigned 8-bit. Total size = TexWidth * TexHeight  */
     var texPixelsAlpha8: ByteBuffer? = null
     /** 4 component per pixel, each component is unsigned 8-bit. Total size = TexWidth * TexHeight * 4  */
@@ -221,13 +223,14 @@ class FontAtlas {
     /** Hold all the fonts returned by AddFont*. Fonts[0] is the default font upon calling ImGui::NewFrame(), use
      *  ImGui::PushFont()/PopFont() to change the current font. */
     val fonts = ArrayList<Font>()
-//
-    // Private
 
-    val configData = ArrayList<FontConfig>()
+
+    // Private ---------------------------------------------------------------------------------------------------------
+
+    private val configData = ArrayList<FontConfig>()
 
     /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
-    fun build(): Boolean {
+    private fun build(): Boolean {
 
         assert(configData.size > 0)
 
@@ -284,13 +287,13 @@ class FontAtlas {
         texSize.y = 0
         val maxTexHeight = 1024 * 32
         val spc = STBTTPackContext.create()
-        nstbtt_PackBegin(spc.address(), NULL, texSize.x, maxTexHeight, 0, 1, NULL) // TODO -n
+        stbtt_PackBegin(spc, null, texSize.x, maxTexHeight, 0, 1)
 
         /*  Pack our extra data rectangles first, so it will be on the upper-left corner of our texture (UV will have
             small values).  */
         val extraRects = STBRPRect.malloc(1)
         renderCustomTexData(0, extraRects)
-        STBTruetype.stbtt_PackSetOversampling(spc, 1, 1)
+        imgui.stb.stbtt_PackSetOversampling(spc, 1)
         STBRectPack.stbrp_pack_rects(spc.packInfo, extraRects)
         for (i in 0 until extraRects.size)
             if (extraRects[i].wasPacked)
@@ -318,9 +321,7 @@ class FontAtlas {
                 glyphCount += (cfg.glyphRanges[j + 1] - cfg.glyphRanges[j]) + 1
                 glyphRangesCount++
             }
-            tmp.ranges = STBTTPackRange.create(
-                    bufRanges.address() + bufRectsN * glyphRangesCount,
-                    glyphRangesCount)
+            tmp.ranges = STBTTPackRange.create(bufRanges.address() + bufRectsN * glyphRangesCount, glyphRangesCount)
             tmp.rangesCount = glyphRangesCount
             bufRangesN += glyphRangesCount
             for (i in 0 until glyphRangesCount) {
@@ -336,8 +337,8 @@ class FontAtlas {
             // Pack
             tmp.rects = STBRPRect.create(bufRects.address() + bufRectsN * STBRPRect.SIZEOF, glyphCount)
             bufRectsN += glyphCount
-            stbtt_PackSetOversampling(spc, cfg.oversample.x, cfg.oversample.y)
-            val n = stbtt_PackFontRangesGatherRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects[0])
+            imgui.stb.stbtt_PackSetOversampling(spc, cfg.oversample)
+            val n = stbtt_PackFontRangesGatherRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
             stbrp_pack_rects(spc.packInfo, tmp.rects)
             // Extend texture height
             for (i in 0 until n)
@@ -358,90 +359,86 @@ class FontAtlas {
         for (input in 0 until configData.size) {
             val cfg = configData[input]
             val tmp = tmpArray[input]
-            stbtt_PackSetOversampling(spc, cfg.oversample.x, cfg.oversample.y)
-            packFontRangesRenderIntoRects(spc, tmp.fontInfo, tmp.bufRanges, tmp.ranges, tmp.rangesCount, tmp.bufRects, tmp.rects)
-            tmp.Rects = NULL
+            imgui.stb.stbtt_PackSetOversampling(spc, cfg.oversample)
+            stbtt_PackFontRangesRenderIntoRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
+//            tmp.rects = null
         }
-//
-//        // End packing
-//        stbtt_PackEnd(& spc);
-//        ImGui::MemFree(buf_rects);
-//        buf_rects = NULL;
-//
-//        // Third pass: setup ImFont and glyphs for runtime
-//        for (int input_i = 0; input_i < ConfigData.Size; input_i++)
-//        {
-//            ImFontConfig& cfg = ConfigData[input_i];
-//            ImFontTempBuildData& tmp = tmp_array[input_i];
-//            ImFont * dst_font = cfg.DstFont; // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
-//
-//            float font_scale = stbtt_ScaleForPixelHeight (&tmp.FontInfo, cfg.SizePixels);
-//            int unscaled_ascent, unscaled_descent, unscaled_line_gap;
-//            stbtt_GetFontVMetrics(& tmp . FontInfo, &unscaled_ascent, &unscaled_descent, &unscaled_line_gap);
-//
-//            float ascent = unscaled_ascent * font_scale;
-//            float descent = unscaled_descent * font_scale;
-//            if (!cfg.MergeMode)
-//                {
-//                    dst_font ->
-//                    ContainerAtlas = this;
-//                    dst_font->ConfigData = &cfg;
-//                    dst_font->ConfigDataCount = 0;
-//                    dst_font->FontSize = cfg.SizePixels;
-//                    dst_font->Ascent = ascent;
-//                    dst_font->Descent = descent;
-//                    dst_font->Glyphs.resize(0);
-//                    dst_font->MetricsTotalSurface = 0;
-//                }
-//            dst_font->ConfigDataCount++;
-//            float off_y =(cfg.MergeMode && cfg.MergeGlyphCenterV) ? (ascent-dst_font->Ascent) * 0.5f : 0.0f;
-//
-//            dst_font->FallbackGlyph = NULL; // Always clear fallback so FindGlyph can return NULL. It will be set again in BuildLookupTable()
-//            for (int i = 0; i < tmp.RangesCount; i++)
-//            {
-//                stbtt_pack_range& range = tmp.Ranges[i];
-//                for (int char_idx = 0; char_idx < range.num_chars; char_idx += 1)
-//                {
-//                    const stbtt_packedchar & pc = range . chardata_for_range [char_idx];
-//                    if (!pc.x0 && !pc.x1 && !pc.y0 && !pc.y1)
-//                        continue;
-//
-//                    const int codepoint = range.first_unicode_codepoint_in_range + char_idx;
-//                    if (cfg.MergeMode && dst_font->FindGlyph((unsigned short)codepoint))
-//                    continue;
-//
-//                    stbtt_aligned_quad q;
-//                    float dummy_x = 0.0f, dummy_y = 0.0f;
-//                    stbtt_GetPackedQuad(range.chardata_for_range, TexWidth, TexHeight, char_idx, & dummy_x, &dummy_y, &q, 0);
-//
-//                    dst_font->Glyphs.resize(dst_font->Glyphs.Size+1);
-//                    ImFont::Glyph& glyph = dst_font->Glyphs.back();
-//                    glyph.Codepoint = (ImWchar) codepoint;
-//                    glyph.X0 = q.x0; glyph.Y0 = q.y0; glyph.X1 = q.x1; glyph.Y1 = q.y1;
-//                    glyph.U0 = q.s0; glyph.V0 = q.t0; glyph.U1 = q.s1; glyph.V1 = q.t1;
-//                    glyph.Y0 += (float)(int)(dst_font->Ascent+off_y+0.5f);
-//                    glyph.Y1 += (float)(int)(dst_font->Ascent+off_y+0.5f);
-//                    glyph.XAdvance = (pc.xadvance + cfg.GlyphExtraSpacing.x);  // Bake spacing into XAdvance
-//                    if (cfg.PixelSnapH)
-//                        glyph.XAdvance = (float)(int)(glyph.XAdvance + 0.5f);
-//                    dst_font->MetricsTotalSurface += (int)((glyph.U1-glyph.U0) * TexWidth+1.99f) * (int)((glyph.V1-glyph.V0) * TexHeight+1.99f); // +1 to account for average padding, +0.99 to round
-//                }
-//            }
-//            cfg.DstFont->BuildLookupTable();
-//        }
-//
-//        // Cleanup temporaries
-//        ImGui::MemFree(buf_packedchars);
-//        ImGui::MemFree(buf_ranges);
-//        ImGui::MemFree(tmp_array);
-//
-//        // Render into our custom data block
-//        RenderCustomTexData(1, & extra_rects);
+
+        // End packing
+        stbtt_PackEnd(spc)
+        bufRects.free()
+
+        // Third pass: setup ImFont and glyphs for runtime
+        for (input in 0 until configData.size) {
+
+            val cfg = configData[input]
+            val tmp = tmpArray[input]
+            // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
+            val dstFont = cfg.dstFont
+
+            val fontScale = stbtt_ScaleForPixelHeight(tmp.fontInfo, cfg.sizePixels)
+            val (unscaledAscent, unscaledDescent, unscaledLineGap) = imgui.stb.stbtt_GetFontVMetrics(tmp.fontInfo)
+
+            val ascent = unscaledAscent * fontScale
+            val descent = unscaledDescent * fontScale
+            if (!cfg.mergeMode) {
+                dstFont.containerAtlas = this
+                dstFont.configData.clear()
+                dstFont.configData.addAll(configData)
+                dstFont.configDataIdx = input
+                dstFont.configDataCount = 0
+                dstFont.fontSize = cfg.sizePixels
+                dstFont.ascent = ascent
+                dstFont.descent = descent
+                dstFont.glyphs.clear()
+                dstFont.metricsTotalSurface = 0
+            }
+            dstFont.configDataCount++
+            val offY = if (cfg.mergeMode && cfg.mergeGlyphCenterV) (ascent - dstFont.ascent) * 0.5f else 0.0f
+
+            // Always clear fallback so FindGlyph can return NULL. It will be set again in BuildLookupTable()
+            dstFont.fallbackGlyph = null
+            for (i in 0 until tmp.rangesCount) {
+                val range = tmp.ranges[i]
+                for (charIdx in 0 until range.numChars) {
+                    val pc = range.chardataForRange[charIdx]
+                    if (pc.x0 == 0 && pc.x1 == 0 && pc.y0 == 0 && pc.y1 == 0)
+                        continue
+
+                    val codepoint = range.firstUnicodeCodepointInRange + charIdx
+                    if (cfg.mergeMode && dstFont.findGlyph(codepoint) != null)
+                        continue
+
+                    val (_, q) = imgui.stb.stbtt_GetPackedQuad(range.chardataForRange, texSize, charIdx, false)
+
+                    dstFont.glyphs.add(Font.Glyph())
+                    val glyph = dstFont.glyphs.last()
+                    glyph.codepoint = codepoint.uc
+                    glyph.x0 = q.x0; glyph.y0 = q.y0; glyph.x1 = q.x1; glyph.y1 = q.y1
+                    glyph.u0 = q.s0; glyph.v0 = q.t0; glyph.u1 = q.s1; glyph.v1 = q.t1
+                    glyph.y0 += (dstFont.ascent + offY + 0.5f).i.f
+                    glyph.y1 += (dstFont.ascent + offY + 0.5f).i.f
+                    glyph.xAdvance = pc.xAdvance + cfg.glyphExtraSpacing.x  // Bake spacing into XAdvance
+                    if (cfg.pixelSnapH)
+                        glyph.xAdvance = (glyph.xAdvance + 0.5f).i.f
+                    dstFont.metricsTotalSurface += // +1 to account for average padding, +0.99 to round
+                            ((glyph.u1 - glyph.u0) * texSize.x + 1.99f).i * ((glyph.v1 - glyph.v0) * texSize.y + 1.99f).i
+                }
+            }
+            cfg.dstFont.buildLookupTable()
+        }
+
+        // Cleanup temporaries
+        bufPackedchars.free()
+        bufRanges.free()
+
+        // Render into our custom data block
+        renderCustomTexData(1, extraRects)
 
         return true
     }
 
-    fun renderCustomTexData(pass: Int, rects: STBRPRect.Buffer) {
+    private fun renderCustomTexData(pass: Int, rects: STBRPRect.Buffer) {
         /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
             The white texels on the top left are the ones we'll use everywhere in ImGui to render filled shapes.    */
         val texDataSize = Vec2i(90, 27)
@@ -527,9 +524,9 @@ class Font {
 
     class Glyph {
         var codepoint = ' '
-        val xAdvance = 0f
-        val x0 = 0f
-        val y0 = 0f
+        var xAdvance = 0f
+        var x0 = 0f
+        var y0 = 0f
         var x1 = 0f
         var y1 = 0f
         // Texture coordinates
@@ -539,35 +536,86 @@ class Font {
         var v1 = 0f
     }
 
-//    // Members: Hot ~62/78 bytes
-//    float                       FontSize;           // <user set>   // Height of characters, set during loading (don't change after loading)
-//    float                       Scale;              // = 1.f        // Base font scale, multiplied by the per-window font scale which you can adjust with SetFontScale()
+    // Members: Hot ~62/78 bytes
+    /** <user set>, Height of characters, set during loading (don't change after loading)   */
+    var fontSize = 0f
+    /** Base font scale, multiplied by the per-window font scale which you can adjust with SetFontScale()   */
+    var scale = 1f
 //    ImVec2                      DisplayOffset;      // = (0.f,1.f)  // Offset font rendering by xx pixels
-//    ImVector<Glyph>             Glyphs;             //              // All glyphs.
-//    ImVector<float>             IndexXAdvance;      //              // Sparse. Glyphs->XAdvance in a directly indexable way (more cache-friendly, for CalcTextSize functions which are often bottleneck in large UI).
-//    ImVector<unsigned short>    IndexLookup;        //              // Sparse. Index glyphs by Unicode code-point.
-//    const Glyph*                FallbackGlyph;      // == FindGlyph(FontFallbackChar)
-//    float                       FallbackXAdvance;   // == FallbackGlyph->XAdvance
-//    ImWchar                     FallbackChar;       // = '?'        // Replacement glyph if one isn't found. Only set via SetFallbackChar()
+    /** All glyphs. */
+    val glyphs = ArrayList<Glyph>()
+    /** Sparse. Glyphs->XAdvance in a directly indexable way (more cache-friendly, for CalcTextSize functions which are
+    often bottleneck in large UI).  */
+    val indexXAdvance = ArrayList<Float>()
+    /** Sparse. Index glyphs by Unicode code-point. */
+    val indexLookup = ArrayList<Int>()
+    /** == FindGlyph(FontFallbackChar)  */
+    var fallbackGlyph: Glyph? = null
+    /** == FallbackGlyph->XAdvance  */
+    var fallbackXAdvance = 0f
+    /** Replacement glyph if one isn't found. Only set via SetFallbackChar()    */
+    var fallbackChar = '?'
 //
 //    // Members: Cold ~18/26 bytes
-//    short                       ConfigDataCount;    // ~ 1          // Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.
-//    ImFontConfig*               ConfigData;         //              // Pointer within ContainerAtlas->ConfigData
+    /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
+    var configDataCount = 0
+    /** Pointer within ContainerAtlas->ConfigData   */
+    val configData = ArrayList<FontConfig>()
+    var configDataIdx = 0
     /** What we has been loaded into    */
     lateinit var containerAtlas: FontAtlas
-    //    float                       Ascent, Descent;    //              // Ascent: distance from top to bottom of e.g. 'A' [0..FontSize]
-//    int                         MetricsTotalSurface;//              // Total surface in pixels to get an idea of the font rasterization/texture cost (not exact, we approximate the cost of padding between glyphs)
-//
+    /** Ascent: distance from top to bottom of e.g. 'A' [0..FontSize]   */
+    var ascent = 0f
+    var descent = 0f
+    /** Total surface in pixels to get an idea of the font rasterization/texture cost (not exact, we approximate the cost of padding
+    between glyphs)    */
+    var metricsTotalSurface = 0
+
+    //
 //    // Methods
 //    IMGUI_API ImFont();
 //    IMGUI_API ~ImFont();
 //    IMGUI_API void              Clear();
-//    IMGUI_API void              BuildLookupTable();
-//    IMGUI_API const Glyph*      FindGlyph(ImWchar c) const;
-//    IMGUI_API void              SetFallbackChar(ImWchar c);
+    fun buildLookupTable() {
+
+        val maxCodepoint = glyphs.map { it.codepoint.i }.max()!!
+
+        assert(glyphs.size < 0xFFFF) // -1 is reserved
+        indexXAdvance.clear()
+        indexLookup.clear()
+        growIndex(maxCodepoint + 1)
+        glyphs.forEachIndexed { i, g ->
+            indexXAdvance[g.codepoint.i] = g.xAdvance
+            indexLookup[g.codepoint.i] = i
+        }
+
+        // Create a glyph to handle TAB
+        // FIXME: Needs proper TAB handling but it needs to be contextualized (or we could arbitrary say that each string starts at "column 0" ?)
+        if (findGlyph(' '.i) != null) {
+            if (glyphs.last().codepoint == '\t')   // So we can call this function multiple times
+                glyphs.remove(glyphs.last())
+            val tabGlyph = findGlyph(' '.i)!!
+            tabGlyph.codepoint = '\t'
+            tabGlyph.xAdvance *= 4
+            indexXAdvance[tabGlyph.codepoint.i] = tabGlyph.xAdvance
+            indexLookup[tabGlyph.codepoint.i] = glyphs.size - 1
+        }
+
+        fallbackGlyph = null
+        fallbackGlyph = findGlyph(fallbackChar.i)
+        fallbackXAdvance = fallbackGlyph?.xAdvance ?: 0f
+        for (i in 0 until maxCodepoint + 1)
+            if (indexXAdvance[i] < 0.0f)
+                indexXAdvance[i] = fallbackXAdvance
+    }
+
+    fun findGlyph(c: Int) = if (c in indexLookup.indices) glyphs[indexLookup[c]] else fallbackGlyph
+
+    //    IMGUI_API void              SetFallbackChar(ImWchar c);
 //    float                       GetCharAdvance(ImWchar c) const     { return ((int)c < IndexXAdvance.Size) ? IndexXAdvance[(int)c] : FallbackXAdvance; }
     val isLoaded get() = wasInit { containerAtlas }
-//
+
+    //
 //    // 'max_width' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.
 //    // 'wrap_width' enable automatic word-wrapping across multiple lines to fit into given width. 0.0f to disable.
 //    IMGUI_API ImVec2            CalcTextSizeA(float size, float max_width, float wrap_width, const char* text_begin, const char* text_end = NULL, const char** remaining = NULL) const; // utf8
@@ -575,8 +623,17 @@ class Font {
 //    IMGUI_API void              RenderChar(ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, unsigned short c) const;
 //    IMGUI_API void              RenderText(ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, const ImVec4& clip_rect, const char* text_begin, const char* text_end, float wrap_width = 0.0f, bool cpu_fine_clip = false) const;
 //
-//    // Private
-//    IMGUI_API void              GrowIndex(int new_size);
+    // Private
+    private fun growIndex(newSize: Int) {
+        assert(indexXAdvance.size == indexLookup.size)
+        val oldSize = indexLookup.size
+        if (newSize <= oldSize)
+            return
+        for (i in oldSize until newSize) {
+            indexXAdvance.add(-1.0f)
+            indexLookup.add(-1)
+        }
+    }
 //    IMGUI_API void              AddRemapChar(ImWchar dst, ImWchar src, bool overwrite_dst = true); // Makes 'dst' character/glyph points to 'src' character/glyph. Currently needs to be called AFTER fonts have been built.
 }
 

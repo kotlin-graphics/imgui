@@ -1,13 +1,15 @@
+package imgui.stb
+
 //package imgui
 //
 //import gli.has
 //import gli.hasnt
-//import glm.*
-//import glm.vec2.Vec2
-//import glm.vec2.operators.times
-//import glm.vec2.Vec2b
-//import glm.vec2.Vec2i
-//import glm.vec4.Vec4i
+//import glm_.*
+//import glm_.vec2.Vec2
+//import glm_.vec2.operators.times
+//import glm_.vec2.Vec2b
+//import glm_.vec2.Vec2i
+//import glm_.vec4.Vec4i
 //import org.lwjgl.stb.STBTruetype.stbtt_GetGlyphBitmapBoxSubpixel
 //import java.nio.ByteBuffer
 //
