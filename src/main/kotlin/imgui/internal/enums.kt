@@ -4,7 +4,7 @@ package imgui.internal
 // Types
 //-----------------------------------------------------------------------------
 
-enum class ButtonFlags_ {
+enum class ButtonFlags {
     /** hold to repeat  */
     Repeat,
     /** (default) return pressed on click+release on same item (default if no PressedOn** flag is set)  */
@@ -31,9 +31,14 @@ enum class ButtonFlags_ {
     val i = 1 shl ordinal
 }
 
+infix fun ButtonFlags.or(b: ButtonFlags) = i or b.i
+infix fun Int.or(b: ButtonFlags) = this or b.i
+infix fun Int.has(b: ButtonFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: ButtonFlags) = (this and b.i) == 0
+
 enum class SliderFlags_(val i: Int) { Vertical(1 shl 0) }
 
-/** NB: need to be in sync with last value of SelectableFlags_  */
+/** NB: need to be in sync with last value of SelectableFlags  */
 enum class SelectableFlagsPrivate_(val i: Int) {
     Menu(1 shl 3),
     MenuItem(1 shl 4),
@@ -42,7 +47,7 @@ enum class SelectableFlagsPrivate_(val i: Int) {
 }
 
 /** FIXME: this is in development, not exposed/functional as a generic feature yet. */
-enum class LayoutType_ {
+enum class LayoutType {
     Vertical,
     Horizontal;
 
@@ -71,3 +76,6 @@ enum class Corner(val i: Int) {
     BottomLeft(1 shl 3), // 8
     All(0x0F)
 }
+
+infix fun Corner.or(b: Corner) = i or b.i
+infix fun Corner.or(b: Int) = i or b

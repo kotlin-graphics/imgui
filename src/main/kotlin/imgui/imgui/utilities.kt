@@ -1,5 +1,15 @@
 package imgui.imgui
 
+import glm_.f
+import glm_.i
+import glm_.vec2.Vec2
+import glm_.vec4.Vec4
+import imgui.COL32_A_SHIFT
+import imgui.COL32_B_SHIFT
+import imgui.COL32_G_SHIFT
+import imgui.COL32_R_SHIFT
+import imgui.ImGui.findRenderedTextEnd
+import imgui.internal.saturate
 import imgui.Context as g
 
 //IMGUI_API bool          IsItemHovered();                                                    // was the last item hovered by mouse?
@@ -27,13 +37,48 @@ fun getFrameCount() = g.frameCount
 
 //IMGUI_API const char*   GetStyleColName(ImGuiCol idx);
 //IMGUI_API ImVec2        CalcItemRectClosestPoint(const ImVec2& pos, bool on_edge = false, float outward = +0.0f);   // utility to find the closest point the last item bounding rectangle edge. useful to visually link items
-//IMGUI_API ImVec2        CalcTextSize(const char* text, const char* text_end = NULL, bool hide_text_after_double_hash = false, float wrap_width = -1.0f);
+
+/** Calculate text size. Text can be multi-line. Optionally ignore text after a ## marker.
+ *  CalcTextSize("") should return ImVec2(0.0f, GImGui->FontSize)   */
+fun calcTextSize(text: String, textEnd: Int = text.length, hideTextAfterDoubleHash: Boolean = false, wrapWidth: Float = -1f): Vec2 {
+
+    val textDisplayEnd =
+            if (hideTextAfterDoubleHash)
+                findRenderedTextEnd(text, textEnd)  // Hide anything after a '##' string
+            else
+                textEnd
+
+    val font = g.font
+    val fontSize = g.fontSize
+    if (0 == textDisplayEnd)
+        return Vec2(0f, fontSize)
+    val textSize = font.calcTextSizeA(fontSize, Float.MAX_VALUE, wrapWidth, text, textDisplayEnd/*, NULL*/)
+
+    // Cancel out character spacing for the last character of a line (it is baked into glyph->XAdvance field)
+    val fontScale = fontSize / font.fontSize
+    val characterSpacingX = 1f * fontScale
+    if (textSize.x > 0f)
+        textSize.x -= characterSpacingX
+    textSize.x = (textSize.x + 0.95f).i.f
+
+    return textSize
+}
+
 //IMGUI_API void          CalcListClipping(int items_count, float items_height, int* out_items_display_start, int* out_items_display_end);    // calculate coarse clipping for large list of evenly sized items. Prefer using the ImGuiListClipper higher-level helper if you can.
 //
 //IMGUI_API bool          BeginChildFrame(ImGuiID id, const ImVec2& size, ImGuiWindowFlags extra_flags = 0);	// helper to create a child window / scrolling region that looks like a normal widget frame
 //IMGUI_API void          EndChildFrame();
 //
 //IMGUI_API ImVec4        ColorConvertU32ToFloat4(ImU32 in);
-//IMGUI_API ImU32         ColorConvertFloat4ToU32(const ImVec4& in);
+fun colorConvertFloat4ToU32(color: Vec4): Int {
+    var out = F32_TO_INT8_SAT(color.x) shl COL32_R_SHIFT
+    out = out or (F32_TO_INT8_SAT(color.y) shl COL32_G_SHIFT)
+    out = out or (F32_TO_INT8_SAT(color.z) shl COL32_B_SHIFT)
+    return out or (F32_TO_INT8_SAT(color.w) shl COL32_A_SHIFT)
+}
+
 //IMGUI_API void          ColorConvertRGBtoHSV(float r, float g, float b, float& out_h, float& out_s, float& out_v);
 //IMGUI_API void          ColorConvertHSVtoRGB(float h, float s, float v, float& out_r, float& out_g, float& out_b);
+
+/** Saturated, always output 0..255 */
+fun F32_TO_INT8_SAT(_val: Float) = (saturate(_val) * 255f + 0.5f).i

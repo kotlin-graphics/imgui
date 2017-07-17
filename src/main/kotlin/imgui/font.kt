@@ -7,7 +7,8 @@ import gli.wasInit
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
-import glm_.vec2.operators.div
+import glm_.vec4.Vec4
+import imgui.internal.upperPowerOfTwo
 import imgui.stb.*
 import org.lwjgl.stb.*
 import org.lwjgl.stb.STBRectPack.stbrp_pack_rects
@@ -36,18 +37,17 @@ class FontConfig {
     var pixelSnapH = false
     /** Extra spacing (in pixels) between glyphs    */
     var glyphExtraSpacing = Vec2()
+    /** Offset all glyphs from this font input  */
+    var glyphOffset = Vec2()
     /** Pointer to a user-provided list of Unicode range (2 value per range, values are inclusive, zero-terminated
      *  list). THE ARRAY DATA NEEDS TO PERSIST AS LONG AS THE FONT IS ALIVE.    */
     var glyphRanges = intArrayOf()
     /** Merge into previous ImFont, so you can combine multiple inputs font into one ImFont (e.g. ASCII font + icons +
-     *  Japanese glyphs).   */
+     *  Japanese glyphs). You may want to use GlyphOffset.y when merge font of different heights.   */
     var mergeMode = false
-    /** When merging (multiple ImFontInput for one ImFont), vertically center new glyphs instead of aligning their
-     *  baseline    */
-    var mergeGlyphCenterV = false
 
     // [Internal]
-    /** Name (strictly for debugging)   */
+    /** Name (strictly to ease debugging)   */
     var name = ""
 
     lateinit var dstFont: Font
@@ -61,8 +61,8 @@ class FontConfig {
  *  3. Upload the pixels data into a texture within your graphics system.
  *  4. Call SetTexID(my_tex_id); and pass the pointer/identifier to your texture. This value will be passed back to you
  *          during rendering to identify the texture.
- *  5. Call ClearTexData() to free textures memory on the heap.
- *  NB: If you use a 'glyph_ranges' array you need to make sure that your array persist up until the ImFont is cleared.
+ *  IMPORTANT: If you pass a 'glyph_ranges' array to AddFont*** functions, you need to make sure that your array persist
+ *  up until the ImFont is build (when calling GetTextData*** or Build()). We only copy the pointer, not the data.
  *  We only copy the pointer, not the data. */
 class FontAtlas {
 
@@ -76,7 +76,7 @@ class FontAtlas {
             fonts.add(Font())
         else
             assert(fonts.isNotEmpty())  /*  When using MergeMode make sure that a font has already been added before.
-                                            You can use ImGui::AddFontDefault() to add the default imgui font.  */
+                                You can use ImGui::GetIO().Fonts->AddFontDefault() to add the default imgui font.  */
         configData.add(fontCfg)
         if (!wasInit { fontCfg.dstFont })
             fontCfg.dstFont = fonts.last()
@@ -92,7 +92,7 @@ class FontAtlas {
     // Load embedded ProggyClean.ttf at size 13, disable oversampling
     fun addFontDefault(): Font {
         val fontCfg = FontConfig()
-        fontCfg.oversample.y = 1
+        fontCfg.oversample put 1
         fontCfg.pixelSnapH = true
         return addFontDefault(fontCfg)
     }
@@ -150,9 +150,34 @@ class FontAtlas {
         texPixelsRGBA32?.destroy()
         texPixelsRGBA32 = null
     }
-//    IMGUI_API void              ClearInputData();           // Clear the input TTF data (inc sizes, glyph ranges)
-//    IMGUI_API void              ClearFonts();               // Clear the ImGui-side font data (glyphs storage, UV coordinates)
-//    IMGUI_API void              Clear();                    // Clear all
+
+    /** Clear the input TTF data (inc sizes, glyph ranges)  */
+    fun clearInputData() {
+        for (cfg in configData)
+            if (cfg.fontData.isNotEmpty() && cfg.fontDataOwnedByAtlas)
+                cfg.fontData = charArrayOf()
+
+        // When clearing this we lose access to the font name and other information used to build the font.
+        for (font in fonts)
+            if (font.configData.isNotEmpty()) {
+                font.configData.clear()
+                font.configDataCount = 0
+            }
+        configData.clear()
+    }
+
+    /** Clear the ImGui-side font data (glyphs storage, UV coordinates) */
+    fun clearFonts() {
+        for (font in fonts) font.clear()
+        fonts.clear()
+    }
+
+    /** Clear all   */
+    fun clear() {
+        clearInputData()
+        clearTexData()
+        clearFonts()
+    }
 //
     /* Retrieve texture data
      * User is in charge of copying the pixels into graphics memory, then call SetTextureUserID()
@@ -174,28 +199,28 @@ class FontAtlas {
     }
 
     /** 4 bytes-per-pixel   */
-    fun getTexDataAsRGBA32(params: Triple<Int, Int, Int>)/*: ByteBuffer*/ {
-        // Convert to RGBA32 format on demand
-        // Although it is likely to be the most commonly used format, our font rendering is 1 channel / 8 bpp
-//        if (texPixelsRGBA32 == null) {
-//            getTexDataAsAlpha8(& pixels, NULL, NULL)
-//            TexPixelsRGBA32 = (unsigned int *) ImGui ::MemAlloc((size_t)(TexWidth * TexHeight * 4))
-//            const unsigned char * src = pixels
-//            unsigned int * dst = TexPixelsRGBA32
-//                    for (int n = TexWidth * TexHeight; n > 0; n--)
-//            *dst++ = IM_COL32(255, 255, 255, (unsigned int)(*src++))
-//        }
-//
-//        *out_pixels = (unsigned char *) TexPixelsRGBA32
-//                if (out_width) * out_width = TexWidth
-//        if (out_height) * out_height = TexHeight
-//        if (out_bytes_per_pixel) * out_bytes_per_pixel = 4
+    fun getTexDataAsRGBA32(): Triple<ByteBuffer, Vec2i, Int> {
+        /*  Convert to RGBA32 format on demand
+            Although it is likely to be the most commonly used format, our font rendering is 1 channel / 8 bpp         */
+        if (texPixelsRGBA32 == null) {
+            val (pixels, _, _) = getTexDataAsAlpha8()
+            val a = ByteArray(32768, { pixels[it] })
+            texPixelsRGBA32 = byteBufferBig(texSize.x * texSize.y * 4)
+            val dst = texPixelsRGBA32!!
+            for (n in 0 until pixels.size) {
+                dst[n * 4] = 255.b
+                dst[n * 4 + 1] = 255.b
+                dst[n * 4 + 2] = 255.b
+                dst[n * 4 + 3] = pixels[n]
+            }
+        }
+
+        return Triple(texPixelsRGBA32!!, texSize, 4)
     }
-//    void                        SetTexID(void* id)  { TexID = id; }
 
     /* Helpers to retrieve list of common Unicode ranges (2 value per range, values are inclusive)
-     * NB: Make sure that your string are UTF-8 and NOT in your local code page. See FAQ for details.   */
-
+     * NB: Make sure that your string are UTF-8 and NOT in your local code page. In C++11, you can create a UTF-8 string
+     * literally using the u8"Hello world" syntax. See FAQ for details. */
     /** Retrieve list of range (2 int per range, values are inclusive), Basic Latin, Extended Latin  */
     val glyphRangesDefault get() = intArrayOf(0x0020, 0x00FF) // Basic Latin + Latin Supplement
 //    IMGUI_API const ImWchar*    GetGlyphRangesKorean();     // Default + Korean characters
@@ -206,9 +231,9 @@ class FontAtlas {
 //
     // Members
     // (Access texture data via GetTexData*() calls which will setup a default font for you.)
-    /** User data to refer to the texture once it has been uploaded to user's graphic systems. It ia passed back to you
-        during rendering.   */
-    var texID = 0
+    /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
+    during rendering via the ImDrawCmd structure.   */
+    var texId = 0
     /** 1 component per pixel, each component is unsigned 8-bit. Total size = TexWidth * TexHeight  */
     var texPixelsAlpha8: ByteBuffer? = null
     /** 4 component per pixel, each component is unsigned 8-bit. Total size = TexWidth * TexHeight * 4  */
@@ -291,11 +316,11 @@ class FontAtlas {
 
         /*  Pack our extra data rectangles first, so it will be on the upper-left corner of our texture (UV will have
             small values).  */
-        val extraRects = STBRPRect.malloc(1)
+        val extraRects = STBRPRect.calloc(1)
         renderCustomTexData(0, extraRects)
         imgui.stb.stbtt_PackSetOversampling(spc, 1)
         STBRectPack.stbrp_pack_rects(spc.packInfo, extraRects)
-        for (i in 0 until extraRects.size)
+        for (i in 0 until extraRects.capacity())
             if (extraRects[i].wasPacked)
                 texSize.y = glm.max(texSize.y, extraRects[i].y + extraRects[i].h)
 
@@ -383,8 +408,7 @@ class FontAtlas {
             val descent = unscaledDescent * fontScale
             if (!cfg.mergeMode) {
                 dstFont.containerAtlas = this
-                dstFont.configData.clear()
-                dstFont.configData.addAll(configData)
+                dstFont.configData = configData
                 dstFont.configDataIdx = input
                 dstFont.configDataCount = 0
                 dstFont.fontSize = cfg.sizePixels
@@ -394,7 +418,7 @@ class FontAtlas {
                 dstFont.metricsTotalSurface = 0
             }
             dstFont.configDataCount++
-            val offY = if (cfg.mergeMode && cfg.mergeGlyphCenterV) (ascent - dstFont.ascent) * 0.5f else 0.0f
+            val off = Vec2(cfg.glyphOffset)
 
             // Always clear fallback so FindGlyph can return NULL. It will be set again in BuildLookupTable()
             dstFont.fallbackGlyph = null
@@ -414,10 +438,10 @@ class FontAtlas {
                     dstFont.glyphs.add(Font.Glyph())
                     val glyph = dstFont.glyphs.last()
                     glyph.codepoint = codepoint.uc
-                    glyph.x0 = q.x0; glyph.y0 = q.y0; glyph.x1 = q.x1; glyph.y1 = q.y1
+                    glyph.x0 = q.x0 + off.x; glyph.y0 = q.y0 + off.y; glyph.x1 = q.x1 + off.x; glyph.y1 = q.y1 + off.y
                     glyph.u0 = q.s0; glyph.v0 = q.t0; glyph.u1 = q.s1; glyph.v1 = q.t1
-                    glyph.y0 += (dstFont.ascent + offY + 0.5f).i.f
-                    glyph.y1 += (dstFont.ascent + offY + 0.5f).i.f
+                    glyph.y0 += (dstFont.ascent + 0.5f).i.f
+                    glyph.y1 += (dstFont.ascent + 0.5f).i.f
                     glyph.xAdvance = pc.xAdvance + cfg.glyphExtraSpacing.x  // Bake spacing into XAdvance
                     if (cfg.pixelSnapH)
                         glyph.xAdvance = (glyph.xAdvance + 0.5f).i.f
@@ -431,7 +455,7 @@ class FontAtlas {
         // Cleanup temporaries
         bufPackedchars.free()
         bufRanges.free()
-
+        val a = ByteArray(512, { texPixelsAlpha8!![it] })
         // Render into our custom data block
         renderCustomTexData(1, extraRects)
 
@@ -442,52 +466,54 @@ class FontAtlas {
         /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
             The white texels on the top left are the ones we'll use everywhere in ImGui to render filled shapes.    */
         val texDataSize = Vec2i(90, 27)
-        val textureData = ("..-         -XXXXXXX-    X    -           X           -XXXXXXX          -          XXXXXXX" +
-                "..-         -X.....X-   X.X   -          X.X          -X.....X          -          X.....X" +
-                "---         -XXX.XXX-  X...X  -         X...X         -X....X           -           X....X" +
-                "X           -  X.X  - X.....X -        X.....X        -X...X            -            X...X" +
-                "XX          -  X.X  -X.......X-       X.......X       -X..X.X           -           X.X..X" +
-                "X.X         -  X.X  -XXXX.XXXX-       XXXX.XXXX       -X.X X.X          -          X.X X.X" +
-                "X..X        -  X.X  -   X.X   -          X.X          -XX   X.X         -         X.X   XX" +
-                "X...X       -  X.X  -   X.X   -    XX    X.X    XX    -      X.X        -        X.X      " +
-                "X....X      -  X.X  -   X.X   -   X.X    X.X    X.X   -       X.X       -       X.X       " +
-                "X.....X     -  X.X  -   X.X   -  X..X    X.X    X..X  -        X.X      -      X.X        " +
-                "X......X    -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -         X.X   XX-XX   X.X         " +
-                "X.......X   -  X.X  -   X.X   -X.....................X-          X.X X.X-X.X X.X          " +
-                "X........X  -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -           X.X..X-X..X.X           " +
-                "X.........X -XXX.XXX-   X.X   -  X..X    X.X    X..X  -            X...X-X...X            " +
-                "X..........X-X.....X-   X.X   -   X.X    X.X    X.X   -           X....X-X....X           " +
-                "X......XXXXX-XXXXXXX-   X.X   -    XX    X.X    XX    -          X.....X-X.....X          " +
-                "X...X..X    ---------   X.X   -          X.X          -          XXXXXXX-XXXXXXX          " +
-                "X..X X..X   -       -XXXX.XXXX-       XXXX.XXXX       ------------------------------------" +
-                "X.X  X..X   -       -X.......X-       X.......X       -    XX           XX    -           " +
-                "XX    X..X  -       - X.....X -        X.....X        -   X.X           X.X   -           " +
-                "      X..X          -  X...X  -         X...X         -  X..X           X..X  -           " +
-                "       XX           -   X.X   -          X.X          - X...XXXXXXXXXXXXX...X -           " +
-                "------------        -    X    -           X           -X.....................X-           " +
-                "                    ----------------------------------- X...XXXXXXXXXXXXX...X -           " +
-                "                                                      -  X..X           X..X  -           " +
-                "                                                      -   X.X           X.X   -           " +
-                "                                                      -    XX           XX    -           ").toCharArray()
+        val textureData = (
+                "..-         -XXXXXXX-    X    -           X           -XXXXXXX          -          XXXXXXX" +
+                        "..-         -X.....X-   X.X   -          X.X          -X.....X          -          X.....X" +
+                        "---         -XXX.XXX-  X...X  -         X...X         -X....X           -           X....X" +
+                        "X           -  X.X  - X.....X -        X.....X        -X...X            -            X...X" +
+                        "XX          -  X.X  -X.......X-       X.......X       -X..X.X           -           X.X..X" +
+                        "X.X         -  X.X  -XXXX.XXXX-       XXXX.XXXX       -X.X X.X          -          X.X X.X" +
+                        "X..X        -  X.X  -   X.X   -          X.X          -XX   X.X         -         X.X   XX" +
+                        "X...X       -  X.X  -   X.X   -    XX    X.X    XX    -      X.X        -        X.X      " +
+                        "X....X      -  X.X  -   X.X   -   X.X    X.X    X.X   -       X.X       -       X.X       " +
+                        "X.....X     -  X.X  -   X.X   -  X..X    X.X    X..X  -        X.X      -      X.X        " +
+                        "X......X    -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -         X.X   XX-XX   X.X         " +
+                        "X.......X   -  X.X  -   X.X   -X.....................X-          X.X X.X-X.X X.X          " +
+                        "X........X  -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -           X.X..X-X..X.X           " +
+                        "X.........X -XXX.XXX-   X.X   -  X..X    X.X    X..X  -            X...X-X...X            " +
+                        "X..........X-X.....X-   X.X   -   X.X    X.X    X.X   -           X....X-X....X           " +
+                        "X......XXXXX-XXXXXXX-   X.X   -    XX    X.X    XX    -          X.....X-X.....X          " +
+                        "X...X..X    ---------   X.X   -          X.X          -          XXXXXXX-XXXXXXX          " +
+                        "X..X X..X   -       -XXXX.XXXX-       XXXX.XXXX       ------------------------------------" +
+                        "X.X  X..X   -       -X.......X-       X.......X       -    XX           XX    -           " +
+                        "XX    X..X  -       - X.....X -        X.....X        -   X.X           X.X   -           " +
+                        "      X..X          -  X...X  -         X...X         -  X..X           X..X  -           " +
+                        "       XX           -   X.X   -          X.X          - X...XXXXXXXXXXXXX...X -           " +
+                        "------------        -    X    -           X           -X.....................X-           " +
+                        "                    ----------------------------------- X...XXXXXXXXXXXXX...X -           " +
+                        "                                                      -  X..X           X..X  -           " +
+                        "                                                      -   X.X           X.X   -           " +
+                        "                                                      -    XX           XX    -           ").toCharArray()
 
 
         if (pass == 0) {
             // Request rectangles
-            rects.w = texDataSize.x * 2 + 1
-            rects.h = texDataSize.y + 1
+            rects[0].w = texDataSize.x * 2 + 1
+            rects[0].h = texDataSize.y + 1
         } else if (pass == 1) {
             // Render/copy pixels
-            val r = rects [0]
-            val n = 0
+            val r = rects[0]
+            var n = 0
             for (y in 0 until texDataSize.y)
                 for (x in 0 until texDataSize.x) {
-                    val offset0 = r.x() + x + (r.y() + y) * texSize.x
+                    val offset0 = r.x + x + (r.y + y) * texSize.x
                     val offset1 = offset0 + 1 + texDataSize.x
                     texPixelsAlpha8!![offset0] = if (textureData[n] == '.') 0xFF.b else 0x00.b
                     texPixelsAlpha8!![offset1] = if (textureData[n] == 'X') 0xFF.b else 0x00.b
+                    n++
                 }
-            val texUvScale = Vec2(1.0f / texSize)
-            texUvWhitePixel = Vec2((r.x() + 0.5f) * texUvScale.x, (r.y() + 0.5f) * texUvScale.y)
+            val texUvScale = Vec2(1f / texSize.x, 1f / texSize.y)
+            texUvWhitePixel = Vec2((r.x + 0.5f) * texUvScale.x, (r.y + 0.5f) * texUvScale.y)
 
             // Setup mouse cursors
             val cursorDatas = arrayOf(
@@ -500,11 +526,11 @@ class FontAtlas {
                     arrayOf(Vec2(73, 0), Vec2(17), Vec2(9)), // ImGuiMouseCursor_ResizeNESW
                     arrayOf(Vec2(55, 0), Vec2(17), Vec2(9))) // ImGuiMouseCursor_ResizeNWSE
 
-            for (type in 0 until MouseCursor_.Count.i) {
+            for (type in 0 until MouseCursor.Count.i) {
                 val cursorData = Context.mouseCursorData[type]
-                val pos = cursorDatas[type][0] + Vec2(r.x(), r.y())
+                val pos = cursorDatas[type][0] + Vec2(r.x, r.y)
                 val size = cursorDatas[type][1]
-                cursorData.type = MouseCursor_.of(type)
+                cursorData.type = MouseCursor.of(type)
                 cursorData.size = size
                 cursorData.hotOffset = cursorDatas[type][2]
                 cursorData.texUvMin[0] = pos * texUvScale
@@ -534,6 +560,19 @@ class Font {
         var v0 = 0f
         var u1 = 0f
         var v1 = 0f
+
+        infix fun put(other: Glyph) {
+            codepoint = other.codepoint
+            xAdvance = other.xAdvance
+            x0 = other.x0
+            y0 = other.y0
+            x1 = other.x1
+            y1 = other.y1
+            u0 = other.u0
+            v0 = other.v0
+            u1 = other.u1
+            v1 = other.v1
+        }
     }
 
     // Members: Hot ~62/78 bytes
@@ -541,7 +580,8 @@ class Font {
     var fontSize = 0f
     /** Base font scale, multiplied by the per-window font scale which you can adjust with SetFontScale()   */
     var scale = 1f
-//    ImVec2                      DisplayOffset;      // = (0.f,1.f)  // Offset font rendering by xx pixels
+    /** Offset font rendering by xx pixels  */
+    var displayOffset = Vec2(0f, 1f)
     /** All glyphs. */
     val glyphs = ArrayList<Glyph>()
     /** Sparse. Glyphs->XAdvance in a directly indexable way (more cache-friendly, for CalcTextSize functions which are
@@ -560,12 +600,14 @@ class Font {
     /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
     var configDataCount = 0
     /** Pointer within ContainerAtlas->ConfigData   */
-    val configData = ArrayList<FontConfig>()
+    var configData = ArrayList<FontConfig>()
+
     var configDataIdx = 0
     /** What we has been loaded into    */
     lateinit var containerAtlas: FontAtlas
     /** Ascent: distance from top to bottom of e.g. 'A' [0..FontSize]   */
     var ascent = 0f
+
     var descent = 0f
     /** Total surface in pixels to get an idea of the font rasterization/texture cost (not exact, we approximate the cost of padding
     between glyphs)    */
@@ -575,7 +617,23 @@ class Font {
 //    // Methods
 //    IMGUI_API ImFont();
 //    IMGUI_API ~ImFont();
-//    IMGUI_API void              Clear();
+
+    fun clear() {
+        fontSize = 0f
+        displayOffset = Vec2(0.0f, 1.0f)
+        glyphs.clear()
+        indexXAdvance.clear()
+        indexLookup.clear()
+        fallbackGlyph = null
+        fallbackXAdvance = 0f
+        configDataCount = 0
+        configData.clear()
+//        containerAtlas = NULL TODO check
+        ascent = 0f
+        descent = 0f
+        metricsTotalSurface = 0
+    }
+
     fun buildLookupTable() {
 
         val maxCodepoint = glyphs.map { it.codepoint.i }.max()!!
@@ -591,10 +649,11 @@ class Font {
 
         // Create a glyph to handle TAB
         // FIXME: Needs proper TAB handling but it needs to be contextualized (or we could arbitrary say that each string starts at "column 0" ?)
-        if (findGlyph(' '.i) != null) {
-            if (glyphs.last().codepoint == '\t')   // So we can call this function multiple times
-                glyphs.remove(glyphs.last())
-            val tabGlyph = findGlyph(' '.i)!!
+        if (findGlyph(' ') != null) {
+            if (glyphs.last().codepoint != '\t')   // So we can call this function multiple times
+                glyphs.add(Glyph())
+            val tabGlyph = glyphs.last()
+            tabGlyph put findGlyph(' ')!!
             tabGlyph.codepoint = '\t'
             tabGlyph.xAdvance *= 4
             indexXAdvance[tabGlyph.codepoint.i] = tabGlyph.xAdvance
@@ -602,27 +661,287 @@ class Font {
         }
 
         fallbackGlyph = null
-        fallbackGlyph = findGlyph(fallbackChar.i)
+        fallbackGlyph = findGlyph(fallbackChar)
         fallbackXAdvance = fallbackGlyph?.xAdvance ?: 0f
         for (i in 0 until maxCodepoint + 1)
-            if (indexXAdvance[i] < 0.0f)
+            if (indexXAdvance[i] < 0f)
                 indexXAdvance[i] = fallbackXAdvance
     }
 
+    fun findGlyph(c: Char) = findGlyph(c.i)
     fun findGlyph(c: Int) = if (c in indexLookup.indices) glyphs[indexLookup[c]] else fallbackGlyph
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
 //    float                       GetCharAdvance(ImWchar c) const     { return ((int)c < IndexXAdvance.Size) ? IndexXAdvance[(int)c] : FallbackXAdvance; }
     val isLoaded get() = wasInit { containerAtlas }
 
-    //
-//    // 'max_width' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.
-//    // 'wrap_width' enable automatic word-wrapping across multiple lines to fit into given width. 0.0f to disable.
-//    IMGUI_API ImVec2            CalcTextSizeA(float size, float max_width, float wrap_width, const char* text_begin, const char* text_end = NULL, const char** remaining = NULL) const; // utf8
-//    IMGUI_API const char*       CalcWordWrapPositionA(float scale, const char* text, const char* text_end, float wrap_width) const;
-//    IMGUI_API void              RenderChar(ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, unsigned short c) const;
-//    IMGUI_API void              RenderText(ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, const ImVec4& clip_rect, const char* text_begin, const char* text_end, float wrap_width = 0.0f, bool cpu_fine_clip = false) const;
+
+    /*  'maxWidth' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.
+        'wrapWidth' enable automatic word-wrapping across multiple lines to fit into given width. 0.0f to disable. */
+    fun calcTextSizeA(size: Float, maxWidth: Float, wrapWidth: Float, text: String, textEnd: Int = text.length
+            /*, const char** remaining = NULL*/): Vec2 { // utf8
+
+        val lineHeight = size
+        val scale = size / fontSize
+
+        val textSize = Vec2(0)
+        var lineWidth = 0f
+
+        val wordWrapEnabled = wrapWidth > 0f
+//        const char * word_wrap_eol = NULL
+
+        var s = 0
+        while (s < textEnd) {
+//            if (wordWrapEnabled) {
+//                /*  Calculate how far we can render. Requires two passes on the string data but keeps the code simple
+//                    and not intrusive for what's essentially an uncommon feature.   */
+//                if (!wordW_wrap_eol) {
+//                    word_wrap_eol = CalcWordWrapPositionA(scale, s, text_end, wrap_width - lineWidth)
+//                    if (word_wrap_eol == s) // Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height discontinuity.
+//                        word_wrap_eol++    // +1 may not be a character start point in UTF-8 but it's ok because we use s >= word_wrap_eol below
+//                }
 //
+//                if (s >= word_wrap_eol) {
+//                    if (textSize.x < lineWidth)
+//                        textSize.x = lineWidth
+//                    textSize.y += lineHeight
+//                    lineWidth = 0.0f
+//                    word_wrap_eol = NULL
+//
+//                    // Wrapping skips upcoming blanks
+//                    while (s < text_end) {
+//                        const char c = * s
+//                        if (ImCharIsSpace(c)) {
+//                            s++; } else if (c == '\n') {
+//                            s++; break; } else {
+//                            break; }
+//                    }
+//                    continue
+//                }
+//            }
+
+            // Decode and advance source
+            val prevS = s
+            val c = text[s]
+            if (c < 0x80)
+                s += 1
+            else {
+//                s += ImTextCharFromUtf8(& c, s, text_end) TODO
+                if (c.i == 0x0) break   // Malformed UTF-8?
+            }
+
+            if (c < 32) {
+                if (c == '\n') {
+                    textSize.x = glm.max(textSize.x, lineWidth)
+                    textSize.y += lineHeight
+                    lineWidth = 0f
+                    continue
+                }
+                if (c == '\r') continue
+            }
+
+            val charWidth = (if (c < indexXAdvance.size) indexXAdvance[c.i] else fallbackXAdvance) * scale
+            if (lineWidth + charWidth >= maxWidth) {
+                s = prevS
+                break
+            }
+            lineWidth += charWidth
+        }
+
+        if (textSize.x < lineWidth)
+            textSize.x = lineWidth
+
+        if (lineWidth > 0 || textSize.y == 0.0f)
+            textSize.y += lineHeight
+
+//        if (remaining) TODO
+//        *remaining = s
+
+        return textSize
+    }
+
+    //    IMGUI_API const char*       CalcWordWrapPositionA(float scale, const char* text, const char* text_end, float wrap_width) const;
+//    IMGUI_API void              RenderChar(ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, unsigned short c) const;
+
+    //    const ImVec4& clipRect, const char* text, const char* textEnd, float wrapWidth = 0.0f, bool cpuFineClip = false) const;
+    fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: String, textEnd: Int = text.length,
+                   wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
+
+        // Align to be pixel perfect
+        pos.x = pos.x.i.f + displayOffset.x
+        pos.y = pos.y.i.f + displayOffset.y
+        var (x, y) = pos
+        if (y > clipRect.w) return
+
+        val scale = size / fontSize
+        val lineHeight = fontSize * scale
+        val wordWrapEnabled = wrapWidth > 0f
+//        const char * word_wrap_eol = NULL
+
+        // Skip non-visible lines
+        var s = 0
+        if (!wordWrapEnabled && y + lineHeight < clipRect.y)
+            while (s < textEnd && text[s] != '\n')  // Fast-forward to next line
+                s++
+
+        // Reserve vertices for remaining worse case (over-reserving is useful and easily amortized)
+        val vtxCountMax = (textEnd - s) * 4
+        val idxCountMax = (textEnd - s) * 6
+        val idxExpectedSize = drawList.idxBuffer.size + idxCountMax
+        drawList.primReserve(idxCountMax, vtxCountMax)
+
+        var vtxWrite = drawList._vtxWritePtr
+        var idxWrite = drawList._idxWritePtr
+        var vtxCurrentIdx = drawList._vtxCurrentIdx
+
+        while (s < textEnd) {
+            if (wordWrapEnabled) {
+                TODO()
+//                // Calculate how far we can render. Requires two passes on the string data but keeps the code simple and not intrusive for what's essentially an uncommon feature.
+//                if (!word_wrap_eol) {
+//                    word_wrap_eol = CalcWordWrapPositionA(scale, s, text_end, wrap_width - (x - pos.x))
+//                    if (word_wrap_eol == s) // Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height discontinuity.
+//                        word_wrap_eol++    // +1 may not be a character start point in UTF-8 but it's ok because we use s >= word_wrap_eol below
+//                }
+//
+//                if (s >= word_wrap_eol) {
+//                    x = pos.x
+//                    y += lineHeight
+//                    word_wrap_eol = NULL
+//
+//                    // Wrapping skips upcoming blanks
+//                    while (s < text_end) {
+//                        const char c = * s
+//                                if (ImCharIsSpace(c)) {
+//                                    s++; } else if (c == '\n') {
+//                                    s++; break; } else {
+//                                    break; }
+//                    }
+//                    continue
+//                }
+            }
+
+            // Decode and advance source
+            val c = text[s]
+            if (c < 0x80)
+                s += 1
+            else {
+//                s += textCharFromUtf8(& c, s, text_end) TODO
+//                if (c == 0) // Malformed UTF-8?
+//                    break
+            }
+
+            if (c < 32) {
+                if (c == '\n') {
+                    x = pos.x
+                    y += lineHeight
+
+                    if (y > clipRect.w) break
+
+                    if (!wordWrapEnabled && y + lineHeight < clipRect.y)
+                        while (s < textEnd && text[s] != '\n')  // Fast-forward to next line
+                            s++
+                    continue
+                }
+                if (c == '\r') continue
+            }
+
+            var charWidth = 0f
+            val glyph = findGlyph(c)
+
+            if (glyph != null) {
+                charWidth = glyph.xAdvance * scale
+
+                // Arbitrarily assume that both space and tabs are empty glyphs as an optimization
+                if (c != ' ' && c != '\t') {
+                    /*  We don't do a second finer clipping test on the Y axis as we've already skipped anything before
+                        clipRect.y and exit once we pass clipRect.w    */
+                    var x1 = x + glyph.x0 * scale
+                    var x2 = x + glyph.x1 * scale
+                    var y1 = y + glyph.y0 * scale
+                    var y2 = y + glyph.y1 * scale
+                    if (x1 <= clipRect.z && x2 >= clipRect.x) {
+                        // Render a character
+                        var u1 = glyph.u0
+                        var v1 = glyph.v0
+                        var u2 = glyph.u1
+                        var v2 = glyph.v1
+
+                        /*  CPU side clipping used to fit text in their frame when the frame is too small. Only does
+                            clipping for axis aligned quads.    */
+                        if (cpuFineClip) {
+                            if (x1 < clipRect.x) {
+                                u1 += (1f - (x2 - clipRect.x) / (x2 - x1)) * (u2 - u1)
+                                x1 = clipRect.x
+                            }
+                            if (y1 < clipRect.y) {
+                                v1 += (1f - (y2 - clipRect.y) / (y2 - y1)) * (v2 - v1)
+                                y1 = clipRect.y
+                            }
+                            if (x2 > clipRect.z) {
+                                u2 = u1 + ((clipRect.z - x1) / (x2 - x1)) * (u2 - u1)
+                                x2 = clipRect.z
+                            }
+                            if (y2 > clipRect.w) {
+                                v2 = v1 + ((clipRect.w - y1) / (y2 - y1)) * (v2 - v1)
+                                y2 = clipRect.w
+                            }
+                            if (y1 >= y2) {
+                                x += charWidth
+                                continue
+                            }
+                        }
+
+                        /*  We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a
+                            debug builds. Inlined here:   */
+                        with(drawList) {
+                            idxBuffer[idxWrite + 0] = vtxCurrentIdx
+                            idxBuffer[idxWrite + 1] = vtxCurrentIdx + 1
+                            idxBuffer[idxWrite + 2] = vtxCurrentIdx + 2
+                            idxBuffer[idxWrite + 3] = vtxCurrentIdx
+                            idxBuffer[idxWrite + 4] = vtxCurrentIdx + 2
+                            idxBuffer[idxWrite + 5] = vtxCurrentIdx + 3
+                            vtxBuffer[vtxWrite + 0].pos.x = x1
+                            vtxBuffer[vtxWrite + 0].pos.y = y1
+                            vtxBuffer[vtxWrite + 0].col = col
+                            vtxBuffer[vtxWrite + 0].uv.x = u1
+                            vtxBuffer[vtxWrite + 0].uv.y = v1
+                            vtxBuffer[vtxWrite + 1].pos.x = x2
+                            vtxBuffer[vtxWrite + 1].pos.y = y1
+                            vtxBuffer[vtxWrite + 1].col = col
+                            vtxBuffer[vtxWrite + 1].uv.x = u2
+                            vtxBuffer[vtxWrite + 1].uv.y = v1
+                            vtxBuffer[vtxWrite + 2].pos.x = x2
+                            vtxBuffer[vtxWrite + 2].pos.y = y2
+                            vtxBuffer[vtxWrite + 2].col = col
+                            vtxBuffer[vtxWrite + 2].uv.x = u2
+                            vtxBuffer[vtxWrite + 2].uv.y = v2
+                            vtxBuffer[vtxWrite + 3].pos.x = x1
+                            vtxBuffer[vtxWrite + 3].pos.y = y2
+                            vtxBuffer[vtxWrite + 3].col = col
+                            vtxBuffer[vtxWrite + 3].uv.x = u1
+                            vtxBuffer[vtxWrite + 3].uv.y = v2
+                            vtxWrite += 4
+                            vtxCurrentIdx += 4
+                            idxWrite += 6
+                        }
+                    }
+                }
+            }
+            x += charWidth
+        }
+
+        // Give back unused vertices
+        for (i in 0 until vtxWrite - drawList.vtxBuffer.size)
+            drawList.vtxBuffer.remove(drawList.vtxBuffer.last())
+        for (i in 0 until idxWrite - drawList.idxBuffer.size)
+            drawList.idxBuffer.remove(drawList.idxBuffer.last())
+        drawList.cmdBuffer.last().elemCount -= (idxExpectedSize - drawList.idxBuffer.size)
+        drawList._vtxWritePtr = vtxWrite
+        drawList._idxWritePtr = idxWrite
+        drawList._vtxCurrentIdx = drawList.vtxBuffer.size
+    }
+
     // Private
     private fun growIndex(newSize: Int) {
         assert(indexXAdvance.size == indexLookup.size)
@@ -635,17 +954,6 @@ class Font {
         }
     }
 //    IMGUI_API void              AddRemapChar(ImWchar dst, ImWchar src, bool overwrite_dst = true); // Makes 'dst' character/glyph points to 'src' character/glyph. Currently needs to be called AFTER fonts have been built.
-}
-
-fun upperPowerOfTwo(v: Int): Int {
-    var _v = v - 1
-    _v = _v or (v ushr 1)
-    _v = _v or (v ushr 2)
-    _v = _v or (v ushr 4)
-    _v = _v or (v ushr 8)
-    _v = _v or (v ushr 16)
-    _v++
-    return _v
 }
 
 val proggyCleanTtfCompressedDataBase85 by lazy {

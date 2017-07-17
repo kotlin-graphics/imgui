@@ -8,6 +8,7 @@ import glm_.vec2.Vec2bool
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.keepAliveId
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -21,6 +22,7 @@ class Rect {
     var max = Vec2(-Float.MAX_VALUE, -Float.MAX_VALUE)
 
     constructor()
+
     constructor(min: Vec2i, max: Vec2) {
         this.min put min
         this.max = max
@@ -34,6 +36,11 @@ class Rect {
     constructor(v: Vec4) {
         min.put(v.x, v.y)
         max.put(v.z, v.w)
+    }
+
+    constructor(r: Rect) {
+        min put r.min
+        max put r.max
     }
 
     constructor(x1: Float, y1: Float, x2: Float, y2: Float) {
@@ -52,7 +59,7 @@ class Rect {
     /** Bottom-left */
     val bl get() = Vec2(min.x, max.y)
     /** Bottom-right    */
-    val br = max
+    val br get() = max
 
     infix fun contains(p: Vec2) = p.x >= min.x && p.y >= min.y && p.x < max.x && p.y < max.y
     infix fun contains(r: Rect) = r.min.x >= min.x && r.min.y >= min.y && r.max.x < max.x && r.max.y < max.y
@@ -115,6 +122,23 @@ class Rect {
         else if (p.y < min.y) p.y = min.y
         return p
     }
+
+    fun put(x1: Float, y1: Float, x2: Float, y2: Float) {
+        min.put(x1, y1)
+        max.put(x2, y2)
+    }
+
+    infix fun put(vec4: Vec4) {
+        min.put(vec4.x, vec4.y)
+        max.put(vec4.z, vec4.w)
+    }
+
+    infix fun put(rect: Rect) {
+        min put rect.min
+        max put rect.max
+    }
+
+    override fun toString() = "min: $min, max: $max"
 }
 
 /** Stacked color modifier, backup of modified data so we can restore it    */
@@ -258,14 +282,14 @@ class TextEditState {
 class IniData {
     var name = ""
     var id = 0
-    var pos = Vec2()
+    var pos = Vec2i()
     var size = Vec2()
     var collapsed = false
 }
 
 // Mouse cursor data (used when io.MouseDrawCursor is set)
 class MouseCursorData {
-    var type = MouseCursor_.None
+    var type = MouseCursor.None
     var hotOffset = Vec2()
     var size = Vec2()
     val texUvMin = Array(2, { Vec2() })
@@ -329,9 +353,9 @@ class DrawContext {
 
     val childWindows = ArrayList<Window>()
 
-    var stateStorage: Storage? = null
+    var stateStorage = mutableMapOf<Int, Float>()
 
-    var layoutType = LayoutType_.Vertical
+    var layoutType = LayoutType.Vertical
 
 
     // We store the current settings outside of the vectors to increase memory locality (reduce cache misses).
@@ -357,7 +381,7 @@ class DrawContext {
 
     val groupStack = Stack<GroupData>()
 
-    var colorEditMode = ColorEditMode_.RGB
+    var colorEditMode = ColorEditMode.RGB
     /** Store size of various stacks for asserting  */
     val stackSizesBackup = IntArray(6)
 
@@ -393,10 +417,10 @@ class DrawContext {
 
 /** Windows data    */
 class Window(
-        val name: String
+        var name: String
 ) {
     /** == ImHash(Name) */
-    var id = hash(name, 0).also { idStack.add(it) }
+    val id: Int
     /** See enum ImGuiWindowFlags_  */
     var flags = 0
     /** Order within immediate parent window, if we are a child window. Otherwise 0.    */
@@ -409,7 +433,7 @@ class Window(
     var size = Vec2()
     /** Size when non collapsed */
     var sizeFull = Vec2()
-    /** // Size of contents (== extents reach of the drawing cursor) from previous frame    */
+    /** Size of contents (== extents reach of the drawing cursor) from previous frame    */
     var sizeContents = Vec2()
     /** Size of contents explicitly set by the user via SetNextWindowContentSize()  */
     var sizeContentsExplicit = Vec2()
@@ -420,7 +444,7 @@ class Window(
     effect  */
     var windowPadding = Vec2()
     /** == window->GetID("#MOVE")   */
-    var moveId = getId("#MOVE")
+    var moveId: Int
 
     var scroll = Vec2()
     /** target scroll position. stored as cursor position with scrolling canceled out, so the highest point is always
@@ -457,11 +481,11 @@ class Window(
 
     var hiddenFrames = 0
     /** bit ImGuiSetCond_*** specify if SetWindowPos() call will succeed with this particular flag. */
-    var setWindowPosAllowFlags = SetCond_.Always or SetCond_.Once or SetCond_.FirstUseEver or SetCond_.Appearing
+    var setWindowPosAllowFlags = SetCond.Always or SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing
     /** bit ImGuiSetCond_*** specify if SetWindowSize() call will succeed with this particular flag.    */
-    var setWindowSizeAllowFlags = SetCond_.Always or SetCond_.Once or SetCond_.FirstUseEver or SetCond_.Appearing
+    var setWindowSizeAllowFlags = SetCond.Always or SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing
     /** bit ImGuiSetCond_*** specify if SetWindowCollapsed() call will succeed with this particular flag.   */
-    var setWindowCollapsedAllowFlags = SetCond_.Always or SetCond_.Once or SetCond_.FirstUseEver or SetCond_.Appearing
+    var setWindowCollapsedAllowFlags = SetCond.Always or SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing
 
     var setWindowPosCenterWanted = false
 
@@ -469,7 +493,14 @@ class Window(
     /** Temporary per-window data, reset at the beginning of the frame  */
     var dc = DrawContext()
     /** ID stack. ID are hashes seeded with the value at the top of the stack   */
-    val idStack = ArrayList<Int>()
+    val idStack = Stack<Int>()
+
+    init {
+        id = hash(name, 0)
+        idStack.add(id)
+        moveId = getId("#MOVE")
+    }
+
     /** = DrawList->clip_rect_stack.back(). Scissoring / clipping rectangle. x1, y1, x2, y2.    */
     var clipRect = Rect()
     /** = WindowRect just after setup in Begin(). == window->Rect() for root window.    */
@@ -478,9 +509,11 @@ class Window(
     var lastFrameActive = -1
 
     var itemWidthDefault = 0f
+
     /** Simplified columns storage for menu items   */
-    //    ImGuiSimpleColumns      MenuColumns
-//    ImGuiStorage            StateStorage;
+    val menuColumns = SimpleColumns()
+
+    var stateStorage = mutableMapOf<Int, Float>()
     /** Scale multiplier per-window */
     var fontWindowScale = 1f
 
@@ -513,7 +546,7 @@ class Window(
     fun getId(str: String, end: Int = str.length): Int {
         val seed = idStack.last()
         val id = hash(str, str.length - end, seed)
-        keepAliveID(id)
+        keepAliveId(id)
         return id
     }
 
@@ -525,11 +558,17 @@ class Window(
 
     fun rect() = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
     fun calcFontSize() = Context.fontBaseSize * fontWindowScale
-    fun titleBarHeight() = if (flags has WindowFlags_.NoTitleBar) 0f else calcFontSize() + Style.framePadding.y * 2f
+    fun titleBarHeight() = if (flags has WindowFlags.NoTitleBar) 0f else calcFontSize() + Style.framePadding.y * 2f
     fun titleBarRect() = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight()))
-    fun menuBarHeight() = if (flags has WindowFlags_.MenuBar) calcFontSize() + Style.framePadding.y * 2f else 0f
+    fun menuBarHeight() = if (flags has WindowFlags.MenuBar) calcFontSize() + Style.framePadding.y * 2f else 0f
     fun menuBarRect(): Rect {
         val y1 = pos.y + titleBarHeight()
         return Rect(pos.x.f, y1, pos.x + sizeFull.x, y1 + menuBarHeight())
+    }
+
+    /** JVM Specific, for the deconstructor    */
+    fun clear() {
+        drawList.clear()
+        name = ""
     }
 }

@@ -90,13 +90,13 @@ object Context {
 
     var setNextWindowCollapsedVal = false
 
-    var setNextWindowPosCond = 0
+    var setNextWindowPosCond = SetCond.Null
 
-    var setNextWindowSizeCond = SetCond_.Always
+    var setNextWindowSizeCond = SetCond.Always
 
-    var setNextWindowContentSizeCond = 0
+    var setNextWindowContentSizeCond = SetCond.Null
 
-    var setNextWindowCollapsedCond = 0
+    var setNextWindowCollapsedCond = SetCond.Null
     /** Valid if 'SetNextWindowSizeConstraint' is true  */
     var setNextWindowSizeConstraintRect = Rect()
 
@@ -118,17 +118,17 @@ object Context {
     /** Main ImDrawData instance to pass render information to the user */
     var renderDrawData = DrawData()
 
-    val renderDrawLists = Array(3, { DrawList() })
+    val renderDrawLists = Array(3, { ArrayList<DrawList>() })
 
     var modalWindowDarkeningRatio = 0f
     /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
     var overlayDrawList = DrawList().apply {
-        _ownerName = "##Overlay"; // Give it a name for debugging
+        _ownerName = "##Overlay" // Give it a name for debugging
     }
 
-    var mouseCursor = MouseCursor_.Arrow
+    var mouseCursor = MouseCursor.Arrow
 
-    val mouseCursorData = Array(MouseCursor_.Count.i, { MouseCursorData() })
+    val mouseCursorData = Array(MouseCursor.Count.i, { MouseCursorData() })
 
     //------------------------------------------------------------------
     // Widget state
@@ -165,9 +165,10 @@ object Context {
     // Logging
     //------------------------------------------------------------------
 
-//    bool                    LogEnabled;
+    var logEnabled = false
 //    FILE*                   LogFile;                            // If != NULL log to stdout/ file
-//    ImGuiTextBuffer*        LogClipboard;                       // Else log to clipboard. This is pointer so our GImGui static constructor doesn't call heap allocators.
+    /** Else log to clipboard. This is pointer so our GImGui static constructor doesn't call heap allocators.   */
+    lateinit var logClipboard: StringBuilder
 //    int                     LogStartDepth;
 //    int                     LogAutoExpandMaxDepth;
 
@@ -215,7 +216,7 @@ object IO {
     /** Distance threshold before considering we are dragging   */
     var mouseDragThreshold = 6.0f
     /** Map of indices into the KeysDown[512] entries array */
-    var keyMap = IntArray(Key_.COUNT.i, { -1 })
+    var keyMap = IntArray(Key.COUNT.i, { -1 })
     /** When holding a key/button, time before it starts repeating, in seconds (for buttons in Repeat mode, etc.).  */
     var keyRepeatDelay = 0.250f
     /** When holding a key/button, rate at which it repeats, in seconds.    */
@@ -256,7 +257,7 @@ object IO {
     /** Rendering function, will be called in Render().
      *  Alternatively you can keep this to NULL and call GetDrawData() after Render() to get the same pointer.
      *  See example applications if you are unsure of how to implement this.    */
-    var renderDrawListsFn = { data: DrawData -> Unit }
+    var renderDrawListsFn: ((DrawData) -> Unit)? = null
 
     // Optional: access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
@@ -298,10 +299,21 @@ object IO {
     var keySuper = false
     /** Keyboard keys that are pressed (in whatever storage order you naturally have access to keyboard data)   */
     val keysDown = BooleanArray(512)
-//    ImWchar     InputCharacters[16+1];      // List of characters input (translated by user from keypress+keyboard state). Fill using AddInputCharacter() helper.
-//
-//    // Functions
-//    IMGUI_API void AddInputCharacter(ImWchar c);                        // Add new character into InputCharacters[]
+    /** List of characters input (translated by user from keypress+keyboard state). Fill using AddInputCharacter()
+     *  helper. */
+    val inputCharacters = CharArray(16)
+
+    // Functions
+
+    /** Add new character into InputCharacters[]
+     *  Pass in translated ASCII characters for text input.
+     *  - with glfw you can get those from the callback set in glfwSetCharCallback()
+     *  - on Windows you can get those using ToAscii+keyboard state, or via the WM_CHAR message */
+    fun addInputCharacter(c: Char) {
+        val n = strlenW(inputCharacters)
+        if (n + 1 < inputCharacters.size)
+            inputCharacters[n] = c
+    }
 //    IMGUI_API void AddInputCharactersUTF8(const char* utf8_chars);      // Add new characters into InputCharacters[] from an UTF-8 string
 //    inline void    ClearInputCharacters() { InputCharacters[0] = 0; }   // Clear the text input buffer manually
 
@@ -365,7 +377,7 @@ object IO {
     val keysDownDurationPrev = FloatArray(512, { -1f })
 }
 
-operator fun IntArray.set(index: Key_, value: Int) {
+operator fun IntArray.set(index: Key, value: Int) {
     this[index.i] = value
 }
 
@@ -377,7 +389,7 @@ object Style {
     /** Padding within a window */
     var windowPadding = Vec2(8)
     /** Minimum window size */
-    var windowMinSize = Vec2(32)
+    var windowMinSize = Vec2i(32)
     /** Radius of window corners rounding. Set to 0.0f to have rectangular windows  */
     var windowRounding = 9.0f
     /** Alignment for title bar text    */

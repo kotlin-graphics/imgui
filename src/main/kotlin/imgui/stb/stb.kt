@@ -37,8 +37,6 @@ var STBRPRect.h
     get() = h().i
 
 
-val STBRPRect.Buffer.size get() = capacity() / STBRPRect.SIZEOF
-
 var STBRPRect.Buffer.x
     set(value) {
         x(value.s)

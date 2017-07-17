@@ -1,7 +1,7 @@
 package imgui
 
 /** Flags for ImGui::Begin()    */
-enum class WindowFlags_(val i: Int) {
+enum class WindowFlags(val i: Int) {
     // Default: 0
     /** Disable title-bar   */
     NoTitleBar(1 shl 0),
@@ -18,7 +18,7 @@ enum class WindowFlags_(val i: Int) {
     /** Resize every window to its content every frame  */
     AlwaysAutoResize(1 shl 6),
     /** Show borders around windows and items   */
-    ShowBorders(1 shl 7),
+    showBorders(1 shl 7),
     /** Never load/save settings in .ini file   */
     NoSavedSettings(1 shl 8),
     /** Disable catching mouse or keyboard inputs   */
@@ -57,15 +57,17 @@ enum class WindowFlags_(val i: Int) {
     /** Don't use! For internal use by BeginPopupModal()    */
     Modal(1 shl 26),
     /** Don't use! For internal use by BeginMenu()  */
-    ChildMenu(1 shl 27)
+    ChildMenu(1 shl 27);
+
+    infix fun or(b: WindowFlags) = i or b.i
 }
 
-infix fun Int.or(b: WindowFlags_) = this or b.i
-infix fun Int.has(b: WindowFlags_) = (this and b.i) != 0
-infix fun Int.hasnt(b: WindowFlags_) = (this and b.i) == 0
+infix fun Int.or(b: WindowFlags) = this or b.i
+infix fun Int.has(b: WindowFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: WindowFlags) = (this and b.i) == 0
 
 /** Flags for ImGui::InputText()    */
-enum class InputTextFlags_(val i: Int) {
+enum class InputTextFlags(val i: Int) {
 
     // Default: 0
 
@@ -111,7 +113,7 @@ enum class InputTextFlags_(val i: Int) {
 }
 
 /** Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader*()   */
-enum class TreeNodeFlags_(val i: Int) {
+enum class TreeNodeFlags(val i: Int) {
 
     /** Draw as selected    */
     Selected(1 shl 0),
@@ -139,11 +141,11 @@ enum class TreeNodeFlags_(val i: Int) {
     //NoScrollOnOpen     ( 1 shl 11),  // FIXME: TODO: Disable automatic scroll on TreePop() if node got just open and contents is not visible
     CollapsingHeader(Framed or NoAutoOpenOnLog);
 
-    infix fun or(treeNodeFlag: TreeNodeFlags_) = i or treeNodeFlag.i
+    infix fun or(treeNodeFlag: TreeNodeFlags) = i or treeNodeFlag.i
 }
 
 /** Flags for ImGui::Selectable()   */
-enum class SelectableFlags_(val i: Int) {
+enum class SelectableFlags(val i: Int) {
 
     // Default: 0
 
@@ -156,7 +158,7 @@ enum class SelectableFlags_(val i: Int) {
 }
 
 /** User fill ImGuiIO.KeyMap[] array with indices into the ImGuiIO.KeysDown[512] array  */
-enum class Key_ {
+enum class Key {
 
     /** for tabbing through fields  */
     Tab,
@@ -200,7 +202,7 @@ enum class Key_ {
 }
 
 /** Enumeration for PushStyleColor() / PopStyleColor()  */
-enum class Col_ {
+enum class Col {
 
     Text,
     TextDisabled,
@@ -255,10 +257,12 @@ enum class Col_ {
     val i = ordinal
 }
 
-/** Enumeration for PushStyleVar() / PopStyleVar()
- *  NB: the enum only refers to fields of ImGuiStyle() which makes sense to be pushed/poped in UI code. Feel free to add
- *  others. */
-enum class StyleVar_ {
+/** Enumeration for PushStyleVar() / PopStyleVar() to temporarily modify the ImGuiStyle structure.
+ *  NB: the enum only refers to fields of ImGuiStyle which makes sense to be pushed/poped inside UI code.
+ *  During initialization, feel free to just poke into ImGuiStyle directly.
+ *  NB: if changing this enum, you need to update the associated internal table GStyleVarInfo[] accordingly. This is
+ *  where we link enum values to members offset/type.   */
+enum class StyleVar {
 
     /** float   */
     Alpha,
@@ -282,7 +286,7 @@ enum class StyleVar_ {
     IndentSpacing,
     /** float   */
     GrabMinSize,
-    /** flags ImGuiAlign_*  */
+    /** vec2  */
     ButtonTextAlign,
 
     COUNT;
@@ -293,7 +297,7 @@ enum class StyleVar_ {
 
 /** Enumeration for ColorEditMode()
  *  FIXME-OBSOLETE: Will be replaced by future color/picker api */
-enum class ColorEditMode_(val i: Int) {
+enum class ColorEditMode(val i: Int) {
 
     UserSelect(-2),
     UserSelectShowButton(-1),
@@ -303,7 +307,7 @@ enum class ColorEditMode_(val i: Int) {
 }
 
 /** Enumeration for GetMouseCursor()    */
-enum class MouseCursor_(val i: Int) {
+enum class MouseCursor(val i: Int) {
 
     None(-1),
     Arrow(0),
@@ -329,8 +333,9 @@ enum class MouseCursor_(val i: Int) {
 
 /** Condition flags for ImGui::SetWindow***(), SetNextWindow***(), SetNextTreeNode***() functions
  *  All those functions treat 0 as a shortcut to Always    */
-enum class SetCond_(val i: Int) {
+enum class SetCond(val i: Int) {
 
+    Null(0),
     /** Set the variable    */
     Always(1 shl 0),
     /** Set the variable once per runtime session (only the first call with succeed)    */
@@ -340,8 +345,9 @@ enum class SetCond_(val i: Int) {
     /** Set the variable if the window is appearing after being hidden/inactive (or the first time) */
     Appearing(1 shl 3);
 
-    infix fun or(other: SetCond_) = i or other.i
+    infix fun or(other: SetCond) = i or other.i
 }
 
-infix fun Int.or(other: SetCond_) = this or other.i
-
+infix fun Int.or(other: SetCond) = this or other.i
+infix fun Int.has(b: SetCond) = (this and b.i) != 0
+infix fun Int.hasnt(b: SetCond) = (this and b.i) == 0
