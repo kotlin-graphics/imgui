@@ -168,7 +168,7 @@ interface imgui_internal {
         window.dc.currentLineHeight = 0f
     }
 
-//IMGUI_API void          ItemSize(const ImRect& bb, float text_offset_y = 0.0f);
+    fun itemSize(bb: Rect, textOffsetY: Float = 0f) = itemSize(bb.size, textOffsetY)
 
     /** Declare item bounding box for clipping and interaction.
      *  Note that the size can be different than the one provided to ItemSize(). Typically, widgets that spread over
@@ -224,7 +224,26 @@ interface imgui_internal {
         }
         return false
     }
-//IMGUI_API bool          FocusableItemRegister(ImGuiWindow* window, bool is_active, bool tab_stop = true);      // Return true if focus is requested
+
+    /** Return true if focus is requested   */
+    fun focusableItemRegister(window: Window, isActive: Boolean, tabStop: Boolean = true): Boolean {
+
+        val allowKeyboardFocus = window.dc.allowKeyboardFocus
+        window.focusIdxAllCounter++
+        if (allowKeyboardFocus)
+            window.focusIdxTabCounter++
+
+        // Process keyboard input at this point: TAB, Shift-TAB switch focus
+        // We can always TAB out of a widget that doesn't allow tabbing in.
+        if (tabStop && window.focusIdxAllRequestNext == Int.MAX_VALUE && window.focusIdxTabRequestNext == Int.MAX_VALUE && isActive
+                && isKeyPressedMap(Key.Tab))
+        // Modulo on index will be applied at the end of frame once we've got the total counter of items.
+            window.focusIdxTabRequestNext = window.focusIdxTabCounter + (if (IO.keyShift) (if (allowKeyboardFocus) -1 else 0) else +1)
+
+        if (window.focusIdxAllCounter == window.focusIdxAllRequestCurrent) return true
+
+        return allowKeyboardFocus && window.focusIdxTabCounter == window.focusIdxTabRequestCurrent
+    }
 //IMGUI_API void          FocusableItemUnregister(ImGuiWindow* window);
 //IMGUI_API ImVec2        CalcItemSize(ImVec2 size, float default_x, float default_y);
 
@@ -247,7 +266,26 @@ interface imgui_internal {
 //// NB: All position are in absolute pixels coordinates (not window coordinates)
 //// FIXME: All those functions are a mess and needs to be refactored into something decent. AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION.
 //// We need: a sort of symbol library, preferably baked into font atlas when possible + decent text rendering helpers.
-//IMGUI_API void          RenderText(ImVec2 pos, const char* text, const char* text_end = NULL, bool hide_text_after_hash = true);
+
+    /** Internal ImGui functions to render text
+     *  RenderText***() functions calls ImDrawList::AddText() calls ImBitmapFont::RenderText()  */
+    fun renderText(pos: Vec2, text: String, textEnd: Int = text.length, hideTextAfterHash: Boolean = true) {
+
+        val window = getCurrentWindow()
+
+        // Hide anything after a '##' string
+        val textDisplayEnd =
+                if (hideTextAfterHash)
+                    findRenderedTextEnd(text, textEnd)
+                else
+                    if (textEnd == 0) text.length else textEnd
+
+        if (textDisplayEnd > 0) {
+            window.drawList.addText(g.font, g.fontSize, pos, getColorU32(Col.Text), text, textDisplayEnd)
+            if (g.logEnabled)
+                logRenderedText(pos, text, textDisplayEnd)
+        }
+    }
 
     fun renderTextWrapped(pos: Vec2, text: String, textEnd: Int, wrapWidth: Float) {
 
@@ -346,6 +384,7 @@ interface imgui_internal {
 
     /** Find the optional ## from which we stop displaying text.    */
     fun findRenderedTextEnd(text: String, textEnd: Int = text.length): Int {
+        val textEnd = if (textEnd == 0) text.length else textEnd
         var textDisplayEnd = 0
         while (textDisplayEnd < textEnd && (text[textDisplayEnd + 0] != '#' || text[textDisplayEnd + 1] != '#'))
             textDisplayEnd++
@@ -453,7 +492,117 @@ interface imgui_internal {
         return pressed
     }
 
-//IMGUI_API bool          SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v_min, float v_max, float power, int decimal_precision, ImGuiSliderFlags flags = 0);
+
+    fun sliderBehavior(frameBb: Rect, id: Int, v: FloatArray, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
+                       flags: Int = 0): Boolean {
+
+        val window = getCurrentWindow()
+
+        // Draw frame
+        renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, Style.frameRounding)
+
+        val isNonLinear = (power < 1.0f - 0.00001f) || (power > 1.0f + 0.00001f)
+        val isHorizontal = flags hasnt SliderFlags.Vertical
+
+        val grabPadding = 2f
+        val sliderSz = (if (isHorizontal) frameBb.width else frameBb.height) - grabPadding * 2f
+        val grabSz =
+                if (decimalPrecision > 0)
+                    glm.min(Style.grabMinSize, sliderSz)
+                else
+                    glm.min(
+                            glm.max(1f * (sliderSz / ((if (vMin < vMax) vMax - vMin else vMin - vMax) + 1f)), Style.grabMinSize),
+                            sliderSz)  // Integer sliders, if possible have the grab size represent 1 unit
+        val sliderUsableSz = sliderSz - grabSz
+        val sliderUsablePosMin = (if (isHorizontal) frameBb.min.x else frameBb.min.y) + grabPadding + grabSz * 0.5f
+        val sliderUsablePosMax = (if (isHorizontal) frameBb.max.x else frameBb.max.y) - grabPadding - grabSz * 0.5f
+
+        // For logarithmic sliders that cross over sign boundary we want the exponential increase to be symmetric around 0.0f
+        var linearZeroPos = 0f   // 0.0->1.0f
+        if (vMin * vMax < 0f) {
+            // Different sign
+            val linearDistMinTo0 = glm.pow(glm.abs(0f - vMin), 1f / power)
+            val linearDistMaxTo0 = glm.pow(glm.abs(vMax - 0f), 1f / power)
+            linearZeroPos = linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
+        } else  // Same sign
+            linearZeroPos = if (vMin < 0f) 1f else 0f
+
+        // Process clicking on the slider
+        var valueChanged = false
+        if (g.activeId == id)
+
+            if (IO.mouseDown[0]) {
+
+                val mouseAbsPos = if (isHorizontal) IO.mousePos.x else IO.mousePos.y
+                var clickedT =
+                        if (sliderUsableSz > 0f)
+                            glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f)
+                        else 0f
+                if (!isHorizontal)
+                    clickedT = 1f - clickedT
+
+                var newValue =
+                        if (isNonLinear) {
+                            // Account for logarithmic scale on both sides of the zero
+                            if (clickedT < linearZeroPos) {
+                                // Negative: rescale to the negative range before powering
+                                var a = 1f - (clickedT / linearZeroPos)
+                                a = glm.pow(a, power)
+                                lerp(glm.min(vMax, 0f), vMin, a)
+                            } else {
+                                // Positive: rescale to the positive range before powering
+                                var a =
+                                        if (glm.abs(linearZeroPos - 1f) > 1e-6f)
+                                            (clickedT - linearZeroPos) / (1f - linearZeroPos)
+                                        else clickedT
+                                a = glm.pow(a, power)
+                                lerp(glm.max(vMin, 0.0f), vMax, a)
+                            }
+                        } else lerp(vMin, vMax, clickedT) // Linear slider
+                // Round past decimal precision
+                newValue = roundScalar(newValue, decimalPrecision)
+                if (v[0] != newValue) {
+                    v[0] = newValue
+                    valueChanged = true
+                }
+            } else clearActiveId()
+        // Calculate slider grab positioning
+        var grabT = sliderBehaviorCalcRatioFromValue(v[0], vMin, vMax, power, linearZeroPos)
+        // Draw
+        if (!isHorizontal)
+            grabT = 1f - grabT
+        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+        val grabBb =
+                if (isHorizontal)
+                    Rect(Vec2(grabPos - grabSz * 0.5f, frameBb.min.y + grabPadding),
+                            Vec2(grabPos + grabSz * 0.5f, frameBb.max.y - grabPadding))
+                else
+                    Rect(Vec2(frameBb.min.x + grabPadding, grabPos - grabSz * 0.5f),
+                            Vec2(frameBb.max.x - grabPadding, grabPos + grabSz * 0.5f))
+        val col = getColorU32(if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab)
+        window.drawList.addRectFilled(grabBb.min, grabBb.max, col, Style.grabRounding)
+
+        return valueChanged
+    }
+
+    fun sliderBehaviorCalcRatioFromValue(v: Float, vMin: Float, vMax: Float, power: Float, linearZeroPos: Float): Float {
+
+        if (vMin == vMax) return 0f
+
+        val isNonLinear = power < 1f - 0.00001f || power > 1f + 0.00001f
+        val vClamped = if (vMin < vMax) glm.clamp(v, vMin, vMax) else glm.clamp(v, vMax, vMin)
+        if (isNonLinear)
+            if (vClamped < 0f) {
+                val f = 1f - (vClamped - vMin) / (glm.min(0f, vMax) - vMin)
+                return (1f - glm.pow(f, 1f / power)) * linearZeroPos
+            } else {
+                val f = (vClamped - glm.max(0f, vMin)) / (vMax - glm.max(0f, vMin))
+                return linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
+            }
+        // Linear slider
+        return (vClamped - vMin) / (vMax - vMin)
+    }
+
 //IMGUI_API bool          SliderFloatN(const char* label, float* v, int components, float v_min, float v_max, const char* display_format, float power);
 //IMGUI_API bool          SliderIntN(const char* label, int* v, int components, int v_min, int v_max, const char* display_format);
 //
@@ -465,7 +614,11 @@ interface imgui_internal {
 //IMGUI_API bool          InputFloatN(const char* label, float* v, int components, int decimal_precision, ImGuiInputTextFlags extra_flags);
 //IMGUI_API bool          InputIntN(const char* label, int* v, int components, ImGuiInputTextFlags extra_flags);
 //IMGUI_API bool          InputScalarEx(const char* label, ImGuiDataType data_type, void* data_ptr, void* step_ptr, void* step_fast_ptr, const char* scalar_format, ImGuiInputTextFlags extra_flags);
-//IMGUI_API bool          InputScalarAsWidgetReplacement(const ImRect& aabb, const char* label, ImGuiDataType data_type, void* data_ptr, ImGuiID id, int decimal_precision);
+
+    /** Create text input in place of a slider (when CTRL+Clicking on slider)   */
+    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: Any, id: Int, decimalPrecision: Int): Boolean {
+        TODO()
+    }
 //
 //IMGUI_API bool          TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* label, const char* label_end = NULL);
 //IMGUI_API bool          TreeNodeBehaviorIsOpen(ImGuiID id, ImGuiTreeNodeFlags flags = 0);                     // Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging
@@ -473,7 +626,37 @@ interface imgui_internal {
 //
 //IMGUI_API void          PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2 graph_size);
 //
-//IMGUI_API int           ParseFormatPrecision(const char* fmt, int default_value);
-//IMGUI_API float         RoundScalar(float value, int decimal_precision);
+
+    /** Parse display precision back from the display format string */
+    fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
+
+        var precision = defaultPrecision
+        if (fmt.contains('.')) {
+            val s = fmt.substringAfter('.')
+            if (s.isNotEmpty()) {
+                precision = s[0].i
+                if (precision < 0 || precision > 10)
+                    precision = defaultPrecision
+            }
+        }
+        return precision
+    }
+
+    fun roundScalar(value: Float, decimalPrecision: Int): Float {
+
+        /*  Round past decimal precision
+            So when our value is 1.99999 with a precision of 0.001 we'll end up rounding to 2.0
+            FIXME: Investigate better rounding methods  */
+        val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
+        val minStep = if (decimalPrecision in 0..9) minSteps[decimalPrecision] else glm.pow(10f, -decimalPrecision.f)
+        val negative = value < 0f
+        var value = glm.abs(value)
+        val remainder = value % minStep
+        if (remainder <= minStep * 0.5f)
+            value -= remainder
+        else
+            value += minStep - remainder
+        return if (negative) -value else value
+    }
 
 }

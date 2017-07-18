@@ -29,6 +29,7 @@ object ImGui :
         imgui_colums,
         imgui_id,
         imgui_widgets,
+        imgui_widgetsSliders,
         imgui_tooltips,
         // menus popus logging clipping
         imgui_clipping,

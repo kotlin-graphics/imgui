@@ -506,9 +506,9 @@ interface imgui_window {
                 dc.groupOffsetX = 0f
                 dc.columnsOffsetX = 0.0f
                 dc.cursorStartPos = Vec2(dc.indentX + dc.columnsOffsetX, titleBarHeight() + menuBarHeight() + windowPadding.y - scroll.y) + pos
-                dc.cursorPos = dc.cursorStartPos
-                dc.cursorPosPrevLine = dc.cursorPos
-                dc.cursorMaxPos = dc.cursorStartPos
+                dc.cursorPos put dc.cursorStartPos
+                dc.cursorPosPrevLine put dc.cursorPos
+                dc.cursorMaxPos put dc.cursorStartPos
                 dc.prevLineHeight = 0f
                 dc.currentLineHeight = 0f
                 dc.prevLineTextBaseOffset = 0f
@@ -679,7 +679,13 @@ interface imgui_window {
             mx.x = getColumnOffset(window.dc.columnsCurrent + 1) - window.windowPadding.x
         return mx
     }
-//IMGUI_API ImVec2        GetContentRegionAvail();                                            // == GetContentRegionMax() - GetCursorPos()
+
+    /** == GetContentRegionMax() - GetCursorPos()   */
+    fun getContentRegionAvail(): Vec2 {
+        val window = getCurrentWindowRead()!!
+        return getContentRegionMax() - (window.dc.cursorPos - window.pos)
+    }
+
 //IMGUI_API float         GetContentRegionAvailWidth();                                       //
 //IMGUI_API ImVec2        GetWindowContentRegionMin();                                        // content boundaries min (roughly (0,0)-Scroll), in window coordinates
 //IMGUI_API ImVec2        GetWindowContentRegionMax();                                        // content boundaries max (roughly (0,0)+Size-Scroll) where Size can be override with SetNextWindowContentSize(), in window coordinates

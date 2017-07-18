@@ -1,8 +1,13 @@
 package imgui.imgui
 
+import glm_.f
+import glm_.glm
+import glm_.i
 import imgui.Col
-import imgui.Style
+import imgui.ImGui.getContentRegionAvail
 import imgui.ImGui.getCurrentWindow
+import imgui.ImGui.getCurrentWindowRead
+import imgui.Style
 
 
 interface imgui_parametersStacks {
@@ -37,7 +42,19 @@ interface imgui_parametersStacks {
             dc.itemWidth = if (dc.itemWidthStack.empty()) itemWidthDefault else dc.itemWidthStack.last()
         }
     }
-//IMGUI_API float         CalcItemWidth();                                                    // width of item given pushed settings and current cursor position
+
+    /** width of item given pushed settings and current cursor position */
+    fun calcItemWidth(): Float {
+
+        val window = getCurrentWindowRead()!!
+        var w = window.dc.itemWidth
+        if (w < 0f) {
+            // Align to a right-side limit. We include 1 frame padding in the calculation because this is how the width is always used (we add 2 frame padding to it), but we could move that responsibility to the widget as well.
+            val widthToRightEdge = getContentRegionAvail().x
+            w = glm.max(1f, widthToRightEdge + w)
+        }
+        return w.i.f
+    }
 //IMGUI_API void          PushTextWrapPos(float wrap_pos_x = 0.0f);                           // word-wrapping for Text*() commands. < 0.0f: no wrapping; 0.0f: wrap to end of window (or column); > 0.0f: wrap at 'wrap_pos_x' position in window local space
 //IMGUI_API void          PopTextWrapPos();
 //IMGUI_API void          PushAllowKeyboardFocus(bool v);                                     // allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets

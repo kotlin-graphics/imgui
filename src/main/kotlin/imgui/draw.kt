@@ -381,14 +381,14 @@ class DrawList {
 
                 // Add vertexes
                 for (i in 0 until points.size) {
-                    vtxBuffer[_vtxWritePtr + 0].pos = points[i]
-                    vtxBuffer[_vtxWritePtr + 0].uv = uv
+                    vtxBuffer[_vtxWritePtr + 0].pos put points[i]
+                    vtxBuffer[_vtxWritePtr + 0].uv put uv
                     vtxBuffer[_vtxWritePtr + 0].col = col
-                    vtxBuffer[_vtxWritePtr + 1].pos = tempNormals[tempPoints + i * 2 + 0]
-                    vtxBuffer[_vtxWritePtr + 1].uv = uv
+                    vtxBuffer[_vtxWritePtr + 1].pos put tempNormals[tempPoints + i * 2 + 0]
+                    vtxBuffer[_vtxWritePtr + 1].uv put uv
                     vtxBuffer[_vtxWritePtr + 1].col = colTrans
-                    vtxBuffer[_vtxWritePtr + 2].pos = tempNormals[tempPoints + i * 2 + 1]
-                    vtxBuffer[_vtxWritePtr + 2].uv = uv
+                    vtxBuffer[_vtxWritePtr + 2].pos put tempNormals[tempPoints + i * 2 + 1]
+                    vtxBuffer[_vtxWritePtr + 2].uv put uv
                     vtxBuffer[_vtxWritePtr + 2].col = colTrans
                     _vtxWritePtr += 3
                 }
@@ -452,17 +452,17 @@ class DrawList {
 
                 // Add vertexes
                 for (i in 0 until points.size) {
-                    vtxBuffer[_vtxWritePtr + 0].pos = tempNormals[tempPoints + i * 4 + 0]
-                    vtxBuffer[_vtxWritePtr + 0].uv = uv
+                    vtxBuffer[_vtxWritePtr + 0].pos put tempNormals[tempPoints + i * 4 + 0]
+                    vtxBuffer[_vtxWritePtr + 0].uv put uv
                     vtxBuffer[_vtxWritePtr + 0].col = colTrans
-                    vtxBuffer[_vtxWritePtr + 1].pos = tempNormals[tempPoints + i * 4 + 1]
-                    vtxBuffer[_vtxWritePtr + 1].uv = uv
+                    vtxBuffer[_vtxWritePtr + 1].pos put tempNormals[tempPoints + i * 4 + 1]
+                    vtxBuffer[_vtxWritePtr + 1].uv put uv
                     vtxBuffer[_vtxWritePtr + 1].col = col
-                    vtxBuffer[_vtxWritePtr + 2].pos = tempNormals[tempPoints + i * 4 + 2]
-                    vtxBuffer[_vtxWritePtr + 2].uv = uv
+                    vtxBuffer[_vtxWritePtr + 2].pos put tempNormals[tempPoints + i * 4 + 2]
+                    vtxBuffer[_vtxWritePtr + 2].uv put uv
                     vtxBuffer[_vtxWritePtr + 2].col = col
-                    vtxBuffer[_vtxWritePtr + 3].pos = tempNormals[tempPoints + i * 4 + 3]
-                    vtxBuffer[_vtxWritePtr + 3].uv = uv
+                    vtxBuffer[_vtxWritePtr + 3].pos put tempNormals[tempPoints + i * 4 + 3]
+                    vtxBuffer[_vtxWritePtr + 3].uv put uv
                     vtxBuffer[_vtxWritePtr + 3].col = colTrans
                     _vtxWritePtr += 4
                 }
@@ -484,19 +484,19 @@ class DrawList {
                 val d = diff * (thickness * 0.5f)
                 vtxBuffer[_vtxWritePtr + 0].pos.x = p1.x + d.y
                 vtxBuffer[_vtxWritePtr + 0].pos.y = p1.y - d.x
-                vtxBuffer[_vtxWritePtr + 0].uv = uv
+                vtxBuffer[_vtxWritePtr + 0].uv put uv
                 vtxBuffer[_vtxWritePtr + 0].col = col
                 vtxBuffer[_vtxWritePtr + 1].pos.x = p2.x + d.y
                 vtxBuffer[_vtxWritePtr + 1].pos.y = p2.y - d.x
-                vtxBuffer[_vtxWritePtr + 1].uv = uv
+                vtxBuffer[_vtxWritePtr + 1].uv put uv
                 vtxBuffer[_vtxWritePtr + 1].col = col
                 vtxBuffer[_vtxWritePtr + 2].pos.x = p2.x - d.y
                 vtxBuffer[_vtxWritePtr + 2].pos.y = p2.y + d.x
-                vtxBuffer[_vtxWritePtr + 2].uv = uv
+                vtxBuffer[_vtxWritePtr + 2].uv put uv
                 vtxBuffer[_vtxWritePtr + 2].col = col
                 vtxBuffer[_vtxWritePtr + 3].pos.x = p1.x - d.y
                 vtxBuffer[_vtxWritePtr + 3].pos.y = p1.y + d.x
-                vtxBuffer[_vtxWritePtr + 3].uv = uv
+                vtxBuffer[_vtxWritePtr + 3].uv put uv
                 vtxBuffer[_vtxWritePtr + 3].col = col
                 _vtxWritePtr += 4
 
@@ -567,10 +567,10 @@ class DrawList {
 
                 // Add vertices
                 vtxBuffer[_vtxWritePtr + 0].pos = points[i1] - dm
-                vtxBuffer[_vtxWritePtr + 0].uv = uv
+                vtxBuffer[_vtxWritePtr + 0].uv put uv
                 vtxBuffer[_vtxWritePtr + 0].col = col        // Inner
                 vtxBuffer[_vtxWritePtr + 1].pos = points[i1] + dm
-                vtxBuffer[_vtxWritePtr + 1].uv = uv
+                vtxBuffer[_vtxWritePtr + 1].uv put uv
                 vtxBuffer[_vtxWritePtr + 1].col = colTrans  // Outer
                 _vtxWritePtr += 2
 
@@ -592,8 +592,8 @@ class DrawList {
             val vtxCount = points.size
             primReserve(idxCount, vtxCount)
             for (i in 0 until vtxCount) {
-                vtxBuffer[_vtxWritePtr].pos = points[i]
-                vtxBuffer[_vtxWritePtr].uv = uv
+                vtxBuffer[_vtxWritePtr].pos put points[i]
+                vtxBuffer[_vtxWritePtr].uv put uv
                 vtxBuffer[_vtxWritePtr].col = col
                 _vtxWritePtr++
             }
@@ -901,10 +901,10 @@ class DrawList {
         val idx = _vtxCurrentIdx
         idxBuffer[_idxWritePtr + 0] = idx; idxBuffer[_idxWritePtr + 1] = idx + 1; idxBuffer[_idxWritePtr + 2] = idx + 2
         idxBuffer[_idxWritePtr + 3] = idx; idxBuffer[_idxWritePtr + 4] = idx + 2; idxBuffer[_idxWritePtr + 5] = idx + 3
-        vtxBuffer[_vtxWritePtr + 0].pos = a; vtxBuffer[_vtxWritePtr + 0].uv = uv; vtxBuffer[_vtxWritePtr + 0].col = col
-        vtxBuffer[_vtxWritePtr + 1].pos = a; vtxBuffer[_vtxWritePtr + 1].uv = uv; vtxBuffer[_vtxWritePtr + 1].col = col
-        vtxBuffer[_vtxWritePtr + 2].pos = a; vtxBuffer[_vtxWritePtr + 2].uv = uv; vtxBuffer[_vtxWritePtr + 2].col = col
-        vtxBuffer[_vtxWritePtr + 3].pos = a; vtxBuffer[_vtxWritePtr + 3].uv = uv; vtxBuffer[_vtxWritePtr + 3].col = col
+        vtxBuffer[_vtxWritePtr + 0].pos put a; vtxBuffer[_vtxWritePtr + 0].uv put uv; vtxBuffer[_vtxWritePtr + 0].col = col
+        vtxBuffer[_vtxWritePtr + 1].pos put b; vtxBuffer[_vtxWritePtr + 1].uv put uv; vtxBuffer[_vtxWritePtr + 1].col = col
+        vtxBuffer[_vtxWritePtr + 2].pos put c; vtxBuffer[_vtxWritePtr + 2].uv put uv; vtxBuffer[_vtxWritePtr + 2].col = col
+        vtxBuffer[_vtxWritePtr + 3].pos put d; vtxBuffer[_vtxWritePtr + 3].uv put uv; vtxBuffer[_vtxWritePtr + 3].col = col
         _vtxWritePtr += 4
         _vtxCurrentIdx += 4
         _idxWritePtr += 6
@@ -918,10 +918,10 @@ class DrawList {
         val idx = _vtxCurrentIdx
         idxBuffer[_idxWritePtr + 0] = idx; idxBuffer[_idxWritePtr + 1] = idx + 1; idxBuffer[_idxWritePtr + 2] = idx + 2
         idxBuffer[_idxWritePtr + 3] = idx; idxBuffer[_idxWritePtr + 4] = idx + 2; idxBuffer[_idxWritePtr + 5] = idx + 3
-        vtxBuffer[_vtxWritePtr + 0].pos = a; vtxBuffer[_vtxWritePtr + 0].uv = uvA; vtxBuffer[_vtxWritePtr + 0].col = col
-        vtxBuffer[_vtxWritePtr + 1].pos = b; vtxBuffer[_vtxWritePtr + 1].uv = uvB; vtxBuffer[_vtxWritePtr + 1].col = col
-        vtxBuffer[_vtxWritePtr + 2].pos = c; vtxBuffer[_vtxWritePtr + 2].uv = uvC; vtxBuffer[_vtxWritePtr + 2].col = col
-        vtxBuffer[_vtxWritePtr + 3].pos = d; vtxBuffer[_vtxWritePtr + 3].uv = uvD; vtxBuffer[_vtxWritePtr + 3].col = col
+        vtxBuffer[_vtxWritePtr + 0].pos put a; vtxBuffer[_vtxWritePtr + 0].uv put uvA; vtxBuffer[_vtxWritePtr + 0].col = col
+        vtxBuffer[_vtxWritePtr + 1].pos put b; vtxBuffer[_vtxWritePtr + 1].uv put uvB; vtxBuffer[_vtxWritePtr + 1].col = col
+        vtxBuffer[_vtxWritePtr + 2].pos put c; vtxBuffer[_vtxWritePtr + 2].uv put uvC; vtxBuffer[_vtxWritePtr + 2].col = col
+        vtxBuffer[_vtxWritePtr + 3].pos put d; vtxBuffer[_vtxWritePtr + 3].uv put uvD; vtxBuffer[_vtxWritePtr + 3].col = col
         _vtxWritePtr += 4
         _vtxCurrentIdx += 4
         _idxWritePtr += 6
@@ -931,10 +931,10 @@ class DrawList {
         val idx = _vtxCurrentIdx
         idxBuffer[_idxWritePtr + 0] = idx; idxBuffer[_idxWritePtr + 1] = idx + 1; idxBuffer[_idxWritePtr + 2] = idx + 2
         idxBuffer[_idxWritePtr + 3] = idx; idxBuffer[_idxWritePtr + 4] = idx + 2; idxBuffer[_idxWritePtr + 5] = idx + 3
-        vtxBuffer[_vtxWritePtr + 0].pos = a; vtxBuffer[_vtxWritePtr + 0].uv = uvA; vtxBuffer[_vtxWritePtr + 0].col = col
-        vtxBuffer[_vtxWritePtr + 1].pos = b; vtxBuffer[_vtxWritePtr + 1].uv = uvB; vtxBuffer[_vtxWritePtr + 1].col = col
-        vtxBuffer[_vtxWritePtr + 2].pos = c; vtxBuffer[_vtxWritePtr + 2].uv = uvC; vtxBuffer[_vtxWritePtr + 2].col = col
-        vtxBuffer[_vtxWritePtr + 3].pos = d; vtxBuffer[_vtxWritePtr + 3].uv = uvD; vtxBuffer[_vtxWritePtr + 3].col = col
+        vtxBuffer[_vtxWritePtr + 0].pos put a; vtxBuffer[_vtxWritePtr + 0].uv put uvA; vtxBuffer[_vtxWritePtr + 0].col = col
+        vtxBuffer[_vtxWritePtr + 1].pos put b; vtxBuffer[_vtxWritePtr + 1].uv put uvB; vtxBuffer[_vtxWritePtr + 1].col = col
+        vtxBuffer[_vtxWritePtr + 2].pos put c; vtxBuffer[_vtxWritePtr + 2].uv put uvC; vtxBuffer[_vtxWritePtr + 2].col = col
+        vtxBuffer[_vtxWritePtr + 3].pos put d; vtxBuffer[_vtxWritePtr + 3].uv put uvD; vtxBuffer[_vtxWritePtr + 3].col = col
         _vtxWritePtr += 4
         _vtxCurrentIdx += 4
         _idxWritePtr += 6

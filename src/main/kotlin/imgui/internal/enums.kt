@@ -36,7 +36,9 @@ infix fun Int.or(b: ButtonFlags) = this or b.i
 infix fun Int.has(b: ButtonFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: ButtonFlags) = (this and b.i) == 0
 
-enum class SliderFlags_(val i: Int) { Vertical(1 shl 0) }
+enum class SliderFlags(val i: Int) { Vertical(1 shl 0) }
+
+infix fun Int.hasnt(b: SliderFlags) = (this and b.i) == 0
 
 /** NB: need to be in sync with last value of SelectableFlags  */
 enum class SelectableFlagsPrivate_(val i: Int) {

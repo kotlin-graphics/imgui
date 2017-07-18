@@ -1,7 +1,6 @@
 package imgui
 
 
-import glm_.vec2.Vec2
 import imgui.impl.GlfwGL3
 import org.lwjgl.glfw.GLFW.glfwPollEvents
 import org.lwjgl.opengl.GL
@@ -55,32 +54,41 @@ class HelloWorld {
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
         //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 
-        val clearColor = Color(114, 144, 154)
-
-        window.loop {
-
-            glfwPollEvents()
-            GlfwGL3.newFrame()
-
-            with(ImGui) {
-                text("Hello, world!")
-//                setNextWindowSize(Vec2(200, 100), SetCond.FirstUseEver)
-//                begin("Another Window", false)
-////            text("Hello")
-//                end()
-            }
-
-            // Rendering
-            glViewport(window.framebufferSize)
-            glClearColor(clearColor.value)  // TODO gln
-            glClear(GL_COLOR_BUFFER_BIT)
-            ImGui.render()
-            window.swapBuffers()
-        }
+        while (window.open)
+            loop()
 
         GlfwGL3.shutdown()
 
         window.destroy()
         glfw.terminate()
+    }
+
+    val clearColor = Color(114, 144, 154)
+
+    fun loop() {
+
+
+        glfwPollEvents()
+        GlfwGL3.newFrame()
+
+        with(ImGui) {
+            text("Hello, world!")
+            sliderFloat("float", f, 0f, 1f)
+//                setNextWindowSize(Vec2(200, 100), SetCond.FirstUseEver)
+//                begin("Another Window", false)
+////            text("Hello")
+//                end()
+        }
+
+        // Rendering
+        glViewport(window.framebufferSize)
+        glClearColor(clearColor.value)  // TODO gln
+        glClear(GL_COLOR_BUFFER_BIT)
+        ImGui.render()
+        window.swapBuffers()
+    }
+
+    companion object {
+        val f = FloatArray(1)
     }
 }

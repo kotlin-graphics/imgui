@@ -46,7 +46,7 @@ fun calcTextSize(text: String, textEnd: Int = text.length, hideTextAfterDoubleHa
             if (hideTextAfterDoubleHash)
                 findRenderedTextEnd(text, textEnd)  // Hide anything after a '##' string
             else
-                textEnd
+                if (textEnd == 0) text.length else textEnd
 
     val font = g.font
     val fontSize = g.fontSize

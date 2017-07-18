@@ -29,8 +29,8 @@ class Rect {
     }
 
     constructor(min: Vec2, max: Vec2) {
-        this.min = min
-        this.max = max
+        this.min = Vec2(min)
+        this.max = Vec2(max)
     }
 
     constructor(v: Vec4) {
