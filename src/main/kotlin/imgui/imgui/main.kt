@@ -319,7 +319,7 @@ interface imgui_main {
     /** NB: behavior of ImGui after Shutdown() is not tested/guaranteed at the moment. This function is merely here to
     free heap allocations, nothing to do here on JVM     */
     fun shutdown() {
-/*
+
         /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
             (which would happen if we never called NewFrame)         */
 //        if (IO.fonts) // Testing for NULL to allow user to NULLify in case of running Shutdown() on multiple contexts. Bit hacky.
@@ -349,28 +349,28 @@ interface imgui_main {
         g.currentPopupStack.clear()
 //        g.setNextWindowSizeConstraintCallback = NULL
 //        g.setNextWindowSizeConstraintCallbackUserData = NULL
-        for (int i = 0; i < IM_ARRAYSIZE(g.RenderDrawLists); i++)
-        g.RenderDrawLists[i].clear()
-        g.OverlayDrawList.ClearFreeMemory()
-        g.ColorEditModeStorage.Clear()
-        if (g.PrivateClipboard) {
-            ImGui::MemFree(g.PrivateClipboard)
-            g.PrivateClipboard = NULL
-        }
-        g.InputTextState.Text.clear()
-        g.InputTextState.InitialText.clear()
-        g.InputTextState.TempTextBuffer.clear()
+//        for (int i = 0; i < IM_ARRAYSIZE(g.RenderDrawLists); i++)
+//        g.RenderDrawLists[i].clear()
+//        g.OverlayDrawList.ClearFreeMemory()
+//        g.ColorEditModeStorage.Clear()
+//        if (g.PrivateClipboard) {
+//            ImGui::MemFree(g.PrivateClipboard)
+//            g.PrivateClipboard = NULL
+//        }
+//        g.InputTextState.Text.clear()
+//        g.InputTextState.InitialText.clear()
+//        g.InputTextState.TempTextBuffer.clear()
+//
+//        if (g.LogFile && g.LogFile != stdout) {
+//            fclose(g.LogFile)
+//            g.LogFile = NULL
+//        }
+//        if (g.LogClipboard) {
+//            g.LogClipboard->~ImGuiTextBuffer()
+//            ImGui::MemFree(g.LogClipboard)
+//        }
 
-        if (g.LogFile && g.LogFile != stdout) {
-            fclose(g.LogFile)
-            g.LogFile = NULL
-        }
-        if (g.LogClipboard) {
-            g.LogClipboard->~ImGuiTextBuffer()
-            ImGui::MemFree(g.LogClipboard)
-        }
-
-        g.Initialized = false*/
+        g.initialized = false
     }
 
 //    IMGUI_API void          ShowUserGuide();                            // help block
