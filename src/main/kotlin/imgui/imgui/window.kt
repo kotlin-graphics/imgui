@@ -50,8 +50,8 @@ interface imgui_window {
     window is created and probably not what you want! might obsolete this API eventually.   */
     fun begin(name: String, pOpen: Boolean?, sizeOnFirstUse: Vec2, bgAlpha: Float = -1.0f, flags: Int = 0): Pair<Boolean, Boolean?> {
 
-        assert(name.isNotEmpty())                        // Window name required
-        assert(g.initialized)                       // Forgot to call ImGui::NewFrame()
+        assert(name.isNotEmpty())   // Window name required
+        assert(g.initialized)       // Forgot to call ImGui::NewFrame()
         // Called ImGui::Render() or ImGui::EndFrame() and haven't called ImGui::NewFrame() again yet
         assert(g.frameCountEnded != g.frameCount)
 
@@ -388,7 +388,7 @@ interface imgui_window {
                 renderFrame(titleBarRect.tl, titleBarRect.br, getColorU32(Col.TitleBgCollapsed), true, windowRounding)
             else {
                 var resizeCol = 0
-                var resizeCornerSize = glm.max(g.fontSize * 1.35f, windowRounding + 1.0f + g.fontSize * 0.2f)
+                val resizeCornerSize = glm.max(g.fontSize * 1.35f, windowRounding + 1.0f + g.fontSize * 0.2f)
                 if (flags hasnt WindowFlags.AlwaysAutoResize && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 &&
                         flags hasnt WindowFlags.NoResize) {
                     // Manual resize

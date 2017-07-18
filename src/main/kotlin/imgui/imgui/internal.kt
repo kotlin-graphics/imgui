@@ -285,7 +285,7 @@ interface imgui_internal {
         var needClipping = (pos.x + textSize.x >= clipMax.x) || (pos.y + textSize.y >= clipMax.y)
         clipRect?.let {
             // If we had no explicit clipping rectangle then pos==clipMin
-            needClipping = needClipping || (pos.x < clipMin.x) || (pos.y < clipMin.y)
+            needClipping = needClipping || (pos.x < clipMin.x || pos.y < clipMin.y)
         }
 
         // Align whole block. We should defer that to the better rendering function when we'll have support for individual line alignment.

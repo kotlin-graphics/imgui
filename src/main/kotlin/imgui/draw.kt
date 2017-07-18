@@ -274,7 +274,7 @@ class DrawList {
 
         assert(font.containerAtlas.texId == _textureIdStack.last())  // Use high-level ImGui::PushFont() or low-level ImDrawList::PushTextureId() to change font.
 
-        val clipRect = _clipRectStack.last()
+        val clipRect = Vec4(_clipRectStack.last())
         cpuFineClipRect?.let {
             clipRect.x = glm.max(clipRect.x, cpuFineClipRect.x)
             clipRect.y = glm.max(clipRect.y, cpuFineClipRect.y)
@@ -635,10 +635,14 @@ class DrawList {
         }
     }
 
+    companion object {
+        private var circleVtxBuilds = false
+        private val circleVtx = Array(12, { Vec2() })
+        /** Large values that are easy to encode in a few bits+shift    */
+        private val nullClipRect = Vec4(-8192.0f, -8192.0f, +8192.0f, +8192.0f)
+    }
     /** Use precomputed angles for a 12 steps circle    */
     fun pathArcToFast(centre: Vec2, radius: Float, aMin: Int, aMax: Int) {
-        val circleVtx = Array(12, { Vec2() })
-        var circleVtxBuilds = false
         val circleVtxCount = circleVtx.size
         if (!circleVtxBuilds) {
             for (i in 0 until circleVtxCount) {
@@ -757,7 +761,7 @@ class DrawList {
                 _channels[i].clear()
             if (_channels[i].cmdBuffer.isEmpty()) {
                 val drawCmd = DrawCmd()
-                drawCmd.clipRect = _clipRectStack.last()
+                drawCmd.clipRect = Vec4(_clipRectStack.last())
                 drawCmd.textureId = _textureIdStack.last()
                 _channels[i].cmdBuffer.add(drawCmd)
             }
@@ -998,11 +1002,6 @@ class DrawList {
     // Macros
     val currentClipRect get() = if (_clipRectStack.isNotEmpty()) _clipRectStack.last()!! else nullClipRect
     val currentTextureId get() = if (_textureIdStack.isNotEmpty()) _textureIdStack.last()!! else null
-
-    companion object {
-        /** Large values that are easy to encode in a few bits+shift    */
-        val nullClipRect = Vec4(-8192.0f, -8192.0f, +8192.0f, +8192.0f)
-    }
 }
 
 

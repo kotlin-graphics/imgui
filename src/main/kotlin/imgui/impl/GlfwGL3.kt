@@ -277,8 +277,6 @@ object GlfwGL3 {
 
             var idxBufferOffset = 0L
             for (cmd in cmdList.cmdBuffer) {
-//            run {
-                val cmd = cmdList.cmdBuffer[0]
                 if (cmd.userCallback != null)
                     cmd.userCallback!!(cmdList, cmd)
                 else {

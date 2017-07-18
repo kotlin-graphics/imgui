@@ -932,10 +932,10 @@ class Font {
         }
 
         // Give back unused vertices
-        for (i in 0 until vtxWrite - drawList.vtxBuffer.size)
-            drawList.vtxBuffer.remove(drawList.vtxBuffer.last())
-        for (i in 0 until idxWrite - drawList.idxBuffer.size)
-            drawList.idxBuffer.remove(drawList.idxBuffer.last())
+        while (drawList.vtxBuffer.size > vtxWrite)
+            drawList.vtxBuffer.removeAt(drawList.vtxBuffer.lastIndex)
+        while(drawList.idxBuffer.size > idxWrite)
+            drawList.idxBuffer.removeAt(drawList.idxBuffer.lastIndex)
         drawList.cmdBuffer.last().elemCount -= (idxExpectedSize - drawList.idxBuffer.size)
         drawList._vtxWritePtr = vtxWrite
         drawList._idxWritePtr = idxWrite
