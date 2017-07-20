@@ -1002,6 +1002,44 @@ class DrawList {
     // Macros
     val currentClipRect get() = if (_clipRectStack.isNotEmpty()) _clipRectStack.last()!! else nullClipRect
     val currentTextureId get() = if (_textureIdStack.isNotEmpty()) _textureIdStack.last()!! else null
+
+    infix fun addTo(renderList: ArrayList<DrawList>) {
+
+        if (cmdBuffer.empty()) return
+
+        // Remove trailing command if unused
+        val lastCmd = cmdBuffer.last()
+        if (lastCmd.elemCount == 0 && lastCmd.userCallback == null) {
+            cmdBuffer.pop()
+            if (cmdBuffer.empty()) return
+        }
+
+        /*  Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx,
+            _VtxWritePtr etc. May trigger for you if you are using PrimXXX functions incorrectly.   */
+        assert(vtxBuffer.isEmpty() || _vtxWritePtr == vtxBuffer.size)
+        assert(idxBuffer.isEmpty() || _idxWritePtr == idxBuffer.size)
+        assert(_vtxCurrentIdx == vtxBuffer.size)
+
+        /*  Check that draw_list doesn't use more vertices than indexable in a single draw call
+                (default ImDrawIdx = 2 bytes = 64K vertices per windows)
+            If this assert triggers because you are drawing lots of stuff manually, you can:
+                A) Add '#define ImDrawIdx unsigned int' in imconfig.h to set the index size to 4 bytes. You'll need to
+                    handle the 4-bytes indices to your renderer.
+                    For example, the OpenGL example code detect index size at compile-time by doing:
+                        glDrawElements(GL_TRIANGLES,
+                                       cmd.elemCount,
+                                       if(DrawIdx.BYTES == Short.Bytes) GL_UNSIGNED_SHORT else GL_UNSIGNED_INT,
+                                       idx_buffer_offset)
+                   Your own engine or render API may use different parameters or function calls to specify index sizes.
+                   2 and 4 bytes indices are generally supported by most API.
+               B) If for some reason you cannot use 4 bytes indices or don't want to, a workaround is to call
+                    BeginChild()/EndChild() before reaching the 64K limit to split your draw commands in multiple draw lists. */
+        assert(_vtxCurrentIdx <= (1L shl (Int.BYTES * 8))) // Too many vertices in same Im See comment above.
+
+        renderList.add(this)
+        IO.metricsRenderVertices += vtxBuffer.size
+        IO.metricsRenderIndices += idxBuffer.size
+    }
 }
 
 

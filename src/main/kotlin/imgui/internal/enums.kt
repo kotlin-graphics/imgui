@@ -66,7 +66,7 @@ enum class PlotType {
 enum class DataType {
     Int,
     Float,
-    Float2;
+    Vec2;
 
     val i = ordinal
 }

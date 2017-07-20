@@ -1,6 +1,6 @@
 package imgui.imgui
 
-import imgui.ImGui.getCurrentWindow
+import imgui.ImGui.currentWindow
 
 
 /** ID scopes
@@ -10,13 +10,15 @@ import imgui.ImGui.getCurrentWindow
  *  the use of labels/IDs" in the FAQ for more details. **/
 interface imgui_id {
 
-//    IMGUI_API void          PushID(const char* str_id);                                         // push identifier into the ID stack. IDs are hash of the *entire* stack!
+    /** push identifier into the ID stack. IDs are hash of the *entire* stack!  */
+    fun pushId(strId:String) = currentWindow.run { idStack.add(getId(strId)) }
+
 //    IMGUI_API void          PushID(const char* str_id_begin, const char* str_id_end);
 //    IMGUI_API void          PushID(const void* ptr_id);
 
-    fun pushId(id: Int) = getCurrentWindow().idStack.push(id)
+    fun pushId(id: Int) = currentWindow.idStack.push(id)
 
-    fun popId() =  getCurrentWindow().idStack.pop()
+    fun popId() =  currentWindow.idStack.pop()
 
 //    IMGUI_API ImGuiID       GetID(const char* str_id);                                          // calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself. otherwise rarely needed
 //    IMGUI_API ImGuiID       GetID(const char* str_id_begin, const char* str_id_end);

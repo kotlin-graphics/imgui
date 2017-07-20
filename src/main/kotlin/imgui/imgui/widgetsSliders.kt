@@ -3,10 +3,9 @@ package imgui.imgui
 import glm_.vec2.Vec2
 import imgui.IO
 import imgui.ImGui.calcItemWidth
+import imgui.ImGui.currentWindow
 import imgui.ImGui.focusWindow
 import imgui.ImGui.focusableItemRegister
-import imgui.ImGui.getCurrentWindow
-import imgui.ImGui.inputScalarAsWidgetReplacement
 import imgui.ImGui.isHovered
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
@@ -33,7 +32,7 @@ interface imgui_widgetsSliders {
      *  "Gold: %.0f"   Gold: 1  */
     fun sliderFloat(label: String, v: FloatArray, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f): Boolean {
 
-        val window = getCurrentWindow()
+        val window = currentWindow
         if (window.skipItems) return false
 
 
@@ -68,8 +67,9 @@ interface imgui_widgetsSliders {
                 g.scalarAsInputTextId = 0
             }
         }
-        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
-            return inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, v, id, decimalPrecision)
+
+        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) TODO()
+//            return inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, v, id, decimalPrecision)
 
         itemSize(totalBb, Style.framePadding.y)
 
@@ -77,7 +77,7 @@ interface imgui_widgetsSliders {
         val valueChanged = sliderBehavior(frameBb, id, v, vMin, vMax, power, decimalPrecision)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = String.format(displayFormat, v[0])
+        val value = displayFormat.format(Style.locale, v[0])
         renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f, 0.5f))
 
         if (labelSize.x > 0.0f)

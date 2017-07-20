@@ -1,22 +1,42 @@
 package imgui.imgui
 
+import glm_.f
+import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
+import imgui.ColorEditMode
+import imgui.ImGui.beginGroup
+import imgui.ImGui.buttonBehavior
+import imgui.ImGui.buttonEx
+import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcWrapWidthForPos
-import imgui.ImGui.getCurrentWindow
+import imgui.ImGui.dragInt
+import imgui.ImGui.endGroup
+import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.getColorU32
+import imgui.ImGui.currentWindow
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.popId
+import imgui.ImGui.popItemWidth
+import imgui.ImGui.pushId
+import imgui.ImGui.pushItemWidth
+import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextWrapped
+import imgui.ImGui.sameLine
+import imgui.ImGui.setTooltip
+import imgui.Style
+import imgui.internal.ButtonFlags
 import imgui.internal.Rect
 import imgui.Context as g
 
 
 interface imgui_widgets {
 
-    fun text(fmt: String) = textV(fmt)
+    fun text(fmt: String) {
 
-    fun textV(fmt: String) {
-
-        val window = getCurrentWindow()
+        val window = currentWindow
         if (window.skipItems) return
 
         val textEnd = fmt.length
@@ -33,7 +53,7 @@ interface imgui_widgets {
      *  recommended for long chunks of text */
     fun textUnformatted(text: String, textEnd: Int = text.length) {
 
-        val window = getCurrentWindow()
+        val window = currentWindow
         if (window.skipItems) return
 
         var textBegin = 0
@@ -118,7 +138,7 @@ interface imgui_widgets {
             val textPos = Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + window.dc.currentLineTextBaseOffset)
             val bb = Rect(textPos, textPos + textSize)
             itemSize(textSize)
-            if (!itemAdd(bb, null)) return
+            if (!itemAdd(bb)) return
 
             // Render (we don't hide text after ## in this end-user function)
             renderTextWrapped(bb.min, text, textEnd, wrapWidth)
@@ -142,9 +162,173 @@ interface imgui_widgets {
 //    IMGUI_API bool          Combo(const char* label, int* current_item, const char* const* items, int items_count, int height_in_items = -1);
 //    IMGUI_API bool          Combo(const char* label, int* current_item, const char* items_separated_by_zeros, int height_in_items = -1);      // separate items with \0, end item-list with \0\0
 //    IMGUI_API bool          Combo(const char* label, int* current_item, bool (*items_getter)(void* data, int idx, const char** out_text), void* data, int items_count, int height_in_items = -1);
-//    IMGUI_API bool          ColorButton(const ImVec4& col, bool small_height = false, bool outline_border = true);
-//    IMGUI_API bool          ColorEdit3(const char* label, float col[3]);                            // Hint: 'float col[3]' function argument is same as 'float* col'. You can pass address of first element out of a contiguous set, e.g. &myvector.x
-//    IMGUI_API bool          ColorEdit4(const char* label, float col[4], bool show_alpha = true);    // "
+
+    /** A little colored square. Return true when clicked.
+     *  FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip. */
+    fun colorButton(col: Vec4, smallHeight: Boolean = false, outlineBorder: Boolean = true): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId("#colorbutton")
+        val squareSize = g.fontSize
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(squareSize + Style.framePadding.y * 2,
+                squareSize + (if (smallHeight) 0f else Style.framePadding.y * 2)))
+        itemSize(bb, if (smallHeight) 0f else Style.framePadding.y)
+        if (!itemAdd(bb, id)) return false
+
+
+        val (pressed, hovered, held) = buttonBehavior(bb, id)
+        renderFrame(bb.min, bb.max, getColorU32(col), outlineBorder, Style.frameRounding)
+
+        if (hovered)
+            setTooltip("Color:\n(%.2f,%.2f,%.2f,%.2f)\n#%02X%02X%02X%02X", col.x, col.y, col.z, col.w,
+                    F32_TO_INT8_SAT(col.x), F32_TO_INT8_SAT(col.y), F32_TO_INT8_SAT(col.z), F32_TO_INT8_SAT(col.w))
+
+        return pressed
+    }
+
+    /** Hint: 'float col[3]' function argument is same as 'float* col'. You can pass address of first element out of a
+     *  contiguous set, e.g. &myvector.x
+     *  IMPORTANT: col must be a float array[3]     */
+    fun colorEdit3(label: String, col: FloatArray): Boolean {
+
+        val col4 = floatArrayOf(*col, 1f)
+        val valueChanged = colorEdit4(label, col4, false)
+        col[0] = col4[0]
+        col[1] = col4[1]
+        col[2] = col4[2]
+        return valueChanged
+    }
+
+    /** Hint: 'float col[4]' function argument is same as 'float* col'. You can pass address of first element out of a
+     *  contiguous set, e.g. &myvector.x
+     *  IMPORTANT: col must be a float array[4]     */
+    fun colorEdit4(label: String, col: FloatArray, showAlpha: Boolean = true): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId(label)
+        val wFull = calcItemWidth()
+        val squareSz = (g.fontSize + Style.framePadding.y * 2f)
+
+        val editMode =
+                if (window.dc.colorEditMode == ColorEditMode.UserSelect || window.dc.colorEditMode == ColorEditMode.UserSelectShowButton)
+                    ColorEditMode.of((g.colorEditModeStorage[id]?.i ?: 0) % 3)
+                else window.dc.colorEditMode
+
+        val f = col.copyOf()
+        if (editMode == ColorEditMode.HSV)
+            colorConvertRGBtoHSV(f, f)
+
+        val i = IntArray(4, { F32_TO_INT8_UNBOUND(f[it]) })
+
+        val components = if (showAlpha) 4 else 3
+        var valueChanged = false
+
+        beginGroup()
+        pushId(label)
+
+        val hsv = editMode == ColorEditMode.HSV
+        when (editMode) {
+
+            ColorEditMode.RGB, ColorEditMode.HSV -> {
+                // RGB/HSV 0..255 Sliders
+                val wItemsAll = wFull - (squareSz + Style.itemInnerSpacing.x)
+                val wItemOne = glm.max(1f, ((wItemsAll - Style.itemInnerSpacing.x * (components - 1)) / components.f).i.f)
+                val wItemLast = glm.max(1f, (wItemsAll - (wItemOne + Style.itemInnerSpacing.x) * (components - 1)).i.f)
+
+                val hidePrefix = wItemOne <= calcTextSize("M:999").x
+                val ids = listOf("##X", "##Y", "##Z", "##W")
+                val fmtTable = listOf(
+                        listOf("%3.0f", "%3.0f", "%3.0f", "%3.0f"),
+                        listOf("R:%3.0f", "G:%3.0f", "B:%3.0f", "A:%3.0f"),
+                        listOf("H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f"))
+                val fmt = if (hidePrefix) fmtTable[0] else if (hsv) fmtTable[2] else fmtTable[1]
+
+                pushItemWidth(wItemOne)
+                for (n in 0 until components) {
+                    if (n > 0)
+                        sameLine(0f, Style.itemInnerSpacing.x)
+                    if (n + 1 == components)
+                        pushItemWidth(wItemLast)
+                    val int = intArrayOf(i[n])
+                    valueChanged = valueChanged or dragInt(ids[n], int, 1f, 0, 255, fmt[n])
+                    i[n] = int[0]
+                }
+                popItemWidth()
+                popItemWidth()
+            }
+
+            ColorEditMode.HEX -> {
+                // RGB Hexadecimal Input
+                val wSliderAll = wFull - squareSz
+                val value =
+                        if (showAlpha) "#%02X%02X%02X%02X".format(Style.locale, i[0], i[1], i[2], i[3])
+                        else "#%02X%02X%02X".format(Style.locale, i[0], i[1], i[2])
+                pushItemWidth(wSliderAll - Style.itemInnerSpacing.x)
+                TODO()
+//                if (inputText("##Text", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+//                {
+//                    valueChanged |= true
+//                    char* p = buf
+//                    while (*p == '#' || ImCharIsSpace(*p))
+//                    p++
+//                    i[0] = i[1] = i[2] = i[3] = 0
+//                    if (alpha)
+//                        sscanf(p, "%02X%02X%02X%02X", (unsigned int*)&i[0], (unsigned int*)&i[1], (unsigned int*)&i[2], (unsigned int*)&i[3]) // Treat at unsigned (%X is unsigned)
+//                    else
+//                    sscanf(p, "%02X%02X%02X", (unsigned int*)&i[0], (unsigned int*)&i[1], (unsigned int*)&i[2])
+//                }
+//                PopItemWidth()
+            }
+            else -> Unit
+        }
+
+        sameLine(0f, Style.itemInnerSpacing.x)
+
+        val colDisplay = Vec4(col[0], col[1], col[2], 1.0f)
+        if (colorButton(colDisplay))
+            g.colorEditModeStorage[id] = ((editMode.i + 1) % 3).f // Don't set local copy of 'editMode' right away!
+
+        // Recreate our own tooltip over's ColorButton() one because we want to display correct alpha here
+        if (isItemHovered())
+            setTooltip("Color:\n(%.2f,%.2f,%.2f,%.2f)\n#%02X%02X%02X%02X", col[0], col[1], col[2], col[3],
+                    F32_TO_INT8_SAT(col[0]), F32_TO_INT8_SAT(col[1]), F32_TO_INT8_SAT(col[2]), F32_TO_INT8_SAT(col[3]))
+
+        if (window.dc.colorEditMode == ColorEditMode.UserSelectShowButton) {
+            sameLine(0f, Style.itemInnerSpacing.x)
+            val buttonTitles = arrayOf("RGB", "HSV", "HEX")
+            if (buttonEx(buttonTitles[editMode.i], Vec2(), ButtonFlags.DontClosePopups.i))
+                g.colorEditModeStorage[id] = ((editMode.i + 1) % 3).f // Don't set local copy of 'editMode' right away!
+        }
+
+        val labelDisplayEnd = findRenderedTextEnd(label)
+        if (labelDisplayEnd != 0) {
+            sameLine(0f, if (window.dc.colorEditMode == ColorEditMode.UserSelectShowButton) -1f else Style.itemInnerSpacing.x)
+            textUnformatted(label, labelDisplayEnd)
+        }
+
+        // Convert back
+        for (n in 0 until 4)
+            f[n] = i[n] / 255f
+        if (editMode == ColorEditMode.HSV)
+            colorConvertHSVtoRGB(f, f)
+
+        if (valueChanged) {
+            col[0] = f[0]
+            col[1] = f[1]
+            col[2] = f[2]
+            if (showAlpha)
+                col[3] = f[3]
+        }
+
+        popId()
+        endGroup()
+
+        return valueChanged
+    }
 //    IMGUI_API void          ColorEditMode(ImGuiColorEditMode mode);                                 // FIXME-OBSOLETE: This is inconsistent with most of the API and will be obsoleted/replaced.
 //    IMGUI_API void          PlotLines(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));
 //    IMGUI_API void          PlotLines(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));

@@ -1,6 +1,5 @@
 package imgui
 
-import gli.hasnt
 import glm_.BYTES
 import glm_.f
 import glm_.glm
@@ -8,9 +7,8 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.ImGui.buttonBehavior
-import imgui.ImGui.getCurrentWindowRead
+import imgui.ImGui.currentWindowRead
 import imgui.ImGui.setHoveredId
-import imgui.imgui.isKeyPressed
 import imgui.internal.*
 import java.io.File
 import java.nio.file.Files
@@ -27,7 +25,7 @@ fun getDraggedColumnOffset(columnIndex: Int): Float {
         of an auto-resizing window creates a feedback loop because we store normalized positions. So while dragging we
         enforce absolute positioning.   */
 
-    val window = getCurrentWindowRead()!!
+    val window = currentWindowRead!!
     /*  We cannot drag column 0. If you get this assert you may have a conflict between the ID of your columns and
         another widgets.    */
     assert(columnIndex > 0)
@@ -40,84 +38,11 @@ fun getDraggedColumnOffset(columnIndex: Int): Float {
     return x.i.f
 }
 
-fun isKeyPressedMap(key: Key, repeat: Boolean = true) = isKeyPressed(key, repeat)
-
-fun getDefaultFont() = IO.fontDefault ?: IO.fonts.fonts[0]
-fun setCurrentFont(font: Font) {
-    assert(font.isLoaded)    // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
-    assert(font.scale > 0.0f)
-    g.font = font
-    g.fontBaseSize = IO.fontGlobalScale * g.font.fontSize * g.font.scale
-    g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
-    g.fontTexUvWhitePixel = g.font.containerAtlas.texUvWhitePixel
-}
+val defaultFont get() = IO.fontDefault ?: IO.fonts.fonts[0]
 
 //-----------------------------------------------------------------------------
 // Internal API exposed in imgui_internal.h
 //-----------------------------------------------------------------------------
-
-fun setCurrentWindow(window: Window?) {
-    g.currentWindow = window
-    window?.let { g.fontSize = it.calcFontSize() }
-}
-
-fun setWindowScrollY(window: Window, newScrollY: Float) {
-    window.dc.cursorMaxPos.y += window.scroll.y
-    window.scroll.y = newScrollY
-    window.dc.cursorMaxPos.y -= window.scroll.y
-}
-
-fun setWindowPos(window: Window, pos: Vec2, cond: SetCond) {
-    // Test condition (NB: bit 0 is always true) and clear flags for next time
-    if (cond != SetCond.Null && window.setWindowPosAllowFlags hasnt cond)
-        return
-    window.setWindowPosAllowFlags =
-            window.setWindowPosAllowFlags and (SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing).inv()
-    window.setWindowPosCenterWanted = false
-
-    // Set
-    val oldPos = Vec2(window.pos)
-    window.posF put pos // TODO glm .f on vec
-    window.pos put pos
-    // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least
-    // offset the cursor
-    window.dc.cursorPos plus_ (window.pos - oldPos)
-    window.dc.cursorMaxPos plus (window.pos - oldPos) // And more importantly we need to adjust this so size calculation doesn't get affected.
-}
-
-fun setWindowSize(window: Window, size: Vec2, cond: SetCond) {
-    // Test condition (NB: bit 0 is always true) and clear flags for next time
-    if (cond != SetCond.Null && window.setWindowSizeAllowFlags hasnt cond)
-        return
-    window.setWindowSizeAllowFlags =
-            window.setWindowSizeAllowFlags and (SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing).inv()
-
-    // Set
-    if (size.x > 0.0f) {
-        window.autoFitFrames.x = 0
-        window.sizeFull.x = size.x
-    } else {
-        window.autoFitFrames.x = 2
-        window.autoFitOnlyGrows = false
-    }
-    if (size.y > 0.0f) {
-        window.autoFitFrames.y = 0
-        window.sizeFull.y = size.y
-    } else {
-        window.autoFitFrames.y = 2
-        window.autoFitOnlyGrows = false
-    }
-}
-
-fun setWindowCollapsed(window: Window, collapsed: Boolean, cond: SetCond) {
-    // Test condition (NB: bit 0 is always true) and clear flags for next time
-    if (cond != SetCond.Null && window.setWindowCollapsedAllowFlags hasnt cond)
-        return
-    window.setWindowCollapsedAllowFlags =
-            window.setWindowCollapsedAllowFlags and (SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing).inv()
-    // Set
-    window.collapsed = collapsed
-}
 
 /** Find window given position, search front-to-back
 FIXME: Note that we have a lag here because WindowRectClipped is updated in Begin() so windows moved by user via
@@ -195,34 +120,6 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
         g.windows.add(this)
 }
 
-fun applySizeFullWithConstraint(window: Window, newSize: Vec2) {
-
-    if (g.setNextWindowSizeConstraint) {
-        // Using -1,-1 on either X/Y axis to preserve the current size.
-        val cr = g.setNextWindowSizeConstraintRect
-        newSize.x = if (cr.min.x >= 0 && cr.max.x >= 0) glm.clamp(newSize.x, cr.min.x, cr.max.x) else window.sizeFull.x
-        newSize.y = if (cr.min.y >= 0 && cr.max.y >= 0) glm.clamp(newSize.y, cr.min.y, cr.max.y) else window.sizeFull.y
-        TODO()
-//        if (g.setNextWindowSizeConstraintCallback)        {
-//            ImGuiSizeConstraintCallbackData data
-//            data.UserData = g.SetNextWindowSizeConstraintCallbackUserData
-//            data.Pos = window->Pos
-//            data.CurrentSize = window->SizeFull
-//            data.DesiredSize = newSize
-//            g.SetNextWindowSizeConstraintCallback(&data)
-//            newSize = data.DesiredSize
-//        }
-    }
-    if (window.flags hasnt (WindowFlags.ChildWindow or WindowFlags.AlwaysAutoResize))
-        newSize max_ Style.windowMinSize
-    window.sizeFull put newSize
-}
-
-// An active popup disable hovering on other windows (apart from its own children)
-fun isWindowContentHoverable(window: Window): Boolean {
-    val rootWindow = g.focusedWindow?.rootWindow ?: return true
-    return !(rootWindow.flags has WindowFlags.Popup && rootWindow.wasActive && rootWindow != window.rootWindow)
-}
 
 //static void             ClearSetNextWindowData();
 
@@ -396,64 +293,6 @@ fun scrollbar(window: Window, horizontal: Boolean) {
                 grabCol, Style.scrollbarRounding)
 }
 
-fun addDrawListToRenderList(outRenderList: ArrayList<DrawList>, drawList: DrawList) {
-
-    if (drawList.cmdBuffer.empty()) return
-
-    // Remove trailing command if unused
-    val lastCmd = drawList.cmdBuffer.last()
-    if (lastCmd.elemCount == 0 && lastCmd.userCallback == null) {
-        drawList.cmdBuffer.pop()
-        if (drawList.cmdBuffer.empty()) return
-    }
-
-    /*  Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx,
-        _VtxWritePtr etc. May trigger for you if you are using PrimXXX functions incorrectly.   */
-    assert(drawList.vtxBuffer.isEmpty() || drawList._vtxWritePtr == drawList.vtxBuffer.size)
-    assert(drawList.idxBuffer.isEmpty() || drawList._idxWritePtr == drawList.idxBuffer.size)
-    assert(drawList._vtxCurrentIdx == drawList.vtxBuffer.size)
-
-    /*  Check that draw_list doesn't use more vertices than indexable in a single draw call
-            (default ImDrawIdx = 2 bytes = 64K vertices per windows)
-        If this assert triggers because you are drawing lots of stuff manually, you can:
-            A) Add '#define ImDrawIdx unsigned int' in imconfig.h to set the index size to 4 bytes. You'll need to
-                handle the 4-bytes indices to your renderer.
-                For example, the OpenGL example code detect index size at compile-time by doing:
-                    glDrawElements(GL_TRIANGLES,
-                                   cmd.elemCount,
-                                   if(DrawIdx.BYTES == Short.Bytes) GL_UNSIGNED_SHORT else GL_UNSIGNED_INT,
-                                   idx_buffer_offset)
-               Your own engine or render API may use different parameters or function calls to specify index sizes.
-               2 and 4 bytes indices are generally supported by most API.
-           B) If for some reason you cannot use 4 bytes indices or don't want to, a workaround is to call
-                BeginChild()/EndChild() before reaching the 64K limit to split your draw commands in multiple draw lists. */
-    assert(drawList._vtxCurrentIdx <= (1L shl (Int.BYTES * 8))) // Too many vertices in same ImDrawList. See comment above.
-
-    outRenderList.add(drawList)
-    IO.metricsRenderVertices += drawList.vtxBuffer.size
-    IO.metricsRenderIndices += drawList.idxBuffer.size
-}
-
-fun addWindowToRenderList(outRenderList: ArrayList<DrawList>, window: Window) {
-    addDrawListToRenderList(outRenderList, window.drawList)
-    window.dc.childWindows.filter { it.active }  // clipped children may have been marked not active
-            .filter { it.flags hasnt WindowFlags.Popup || it.hiddenFrames == 0 }
-            .forEach { addWindowToRenderList(outRenderList, it) }
-}
-
-fun addWindowToSortedBuffer(outSortedWindows: ArrayList<Window>, window: Window) {
-    outSortedWindows.add(window)
-    if (window.active) {
-        val count = window.dc.childWindows.size
-        if (count > 1)
-            window.dc.childWindows.sortWith(childWindowComparer)
-        window.dc.childWindows.filter { it.active }.forEach { addWindowToSortedBuffer(outSortedWindows, it) }
-    }
-}
-
-// FIXME: Add a more explicit sort order in the window structure.
-val childWindowComparer = compareBy<Window>({ it.flags has WindowFlags.Popup }, { it.flags has WindowFlags.Tooltip },
-        { it.flags has WindowFlags.ComboBox }, { it.indexWithinParent })
 
 fun findWindowSettings(name: String): IniData? {
     val id = hash(name, 0)
@@ -615,12 +454,121 @@ fun findBestPopupWindowPos(basePos: Vec2, window: Window, rInner: Rect): Vec2 {
     }
 }
 
-//static bool             InputTextFilterCharacter(unsigned int* p_char, ImGuiInputTextFlags flags, ImGuiTextEditCallback callback, void* user_data);
+// Return false to discard a character.
+//fun inputTextFilterCharacter(unsigned int* p_char, ImGuiInputTextFlags flags, ImGuiTextEditCallback callback, void* user_data): Boolean{
+//
+//    unsigned int c = *p_char;
+//
+//    if (c < 128 && c != ' ' && !isprint((int)(c & 0xFF)))
+//    {
+//        bool pass = false;
+//        pass |= (c == '\n' && (flags & ImGuiInputTextFlags_Multiline));
+//        pass |= (c == '\t' && (flags & ImGuiInputTextFlags_AllowTabInput));
+//        if (!pass)
+//            return false;
+//    }
+//
+//    if (c >= 0xE000 && c <= 0xF8FF) // Filter private Unicode range. I don't imagine anybody would want to input them. GLFW on OSX seems to send private characters for special keys like arrow keys.
+//        return false;
+//
+//    if (flags & (ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_CharsNoBlank))
+//    {
+//        if (flags & ImGuiInputTextFlags_CharsDecimal)
+//        if (!(c >= '0' && c <= '9') && (c != '.') && (c != '-') && (c != '+') && (c != '*') && (c != '/'))
+//            return false;
+//
+//        if (flags & ImGuiInputTextFlags_CharsHexadecimal)
+//        if (!(c >= '0' && c <= '9') && !(c >= 'a' && c <= 'f') && !(c >= 'A' && c <= 'F'))
+//            return false;
+//
+//        if (flags & ImGuiInputTextFlags_CharsUppercase)
+//        if (c >= 'a' && c <= 'z')
+//        *p_char = (c += (unsigned int)('A'-'a'));
+//
+//        if (flags & ImGuiInputTextFlags_CharsNoBlank)
+//        if (ImCharIsSpace(c))
+//            return false;
+//    }
+//
+//    if (flags & ImGuiInputTextFlags_CallbackCharFilter)
+//    {
+//        ImGuiTextEditCallbackData callback_data;
+//        memset(&callback_data, 0, sizeof(ImGuiTextEditCallbackData));
+//        callback_data.EventFlag = ImGuiInputTextFlags_CallbackCharFilter;
+//        callback_data.EventChar = (ImWchar)c;
+//        callback_data.Flags = flags;
+//        callback_data.UserData = user_data;
+//        if (callback(&callback_data) != 0)
+//        return false;
+//        *p_char = callback_data.EventChar;
+//        if (!callback_data.EventChar)
+//            return false;
+//    }
+//
+//    return true;
+//}
 //static int              InputTextCalcTextLenAndLineCount(const char* text_begin, const char** out_text_end);
-//static ImVec2           InputTextCalcTextSizeW(const ImWchar* text_begin, const ImWchar* text_end, const ImWchar** remaining = NULL, ImVec2* out_offset = NULL, bool stop_on_new_line = false);
+
+fun inputTextCalcTextSizeW(text: String, textEnd: Int, /*const ImWchar** remaining = NULL, */ outOffset: Vec2? = null,
+                           stopOnNewLine: Boolean = false): Vec2 {
+
+    val font = g.font
+    val lineHeight = g.fontSize
+    val scale = lineHeight / font.fontSize
+
+    val textSize = Vec2()
+    var lineWidth = 0f
+
+    var s = 0
+    while (s < textEnd) {
+        val c = text[s++]
+        if (c == '\n') {
+            textSize.x = glm.max(textSize.x, lineWidth)
+            textSize.y += lineHeight
+            lineWidth = 0f
+            if (stopOnNewLine)
+                break
+            continue
+        }
+        if (c == '\r') continue
+
+        val charWidth = font.getCharAdvance(c) * scale
+        lineWidth += charWidth
+    }
+
+    if (textSize.x < lineWidth)
+        textSize.x = lineWidth
+
+    // offset allow for the possibility of sitting after a trailing \n
+    outOffset?.let {
+        it.x = lineWidth
+        it.y = textSize.y + lineHeight
+    }
+
+    if (lineWidth > 0 || textSize.y == 0f)  // whereas size.y will ignore the trailing \n
+        textSize.y += lineHeight
+
+//    if (remaining) TODO check if needed
+//    *remaining = s
+
+    return textSize
+}
 //
 //static inline void      DataTypeFormatString(ImGuiDataType data_type, void* data_ptr, const char* display_format, char* buf, int buf_size);
-//static inline void      DataTypeFormatString(ImGuiDataType data_type, void* data_ptr, int decimal_precision, char* buf, int buf_size);
+
+/** JVM Imgui, dataTypeFormatString replacement */
+fun FloatArray.format(dataType: DataType, decimalPrecision: Int) = when (dataType) {
+
+    DataType.Int ->
+        if (decimalPrecision < 0) "%d".format(Style.locale, this[0])
+        else "%.${decimalPrecision}d".format(Style.locale, this[0])
+    DataType.Float ->
+        /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
+            non-significant digits?         */
+        if (decimalPrecision < 0) "%f".format(Style.locale, this[0])
+        else "%.${decimalPrecision}f".format(Style.locale, this[0])
+    else -> throw Error("unsupported format data type")
+}
 //static void             DataTypeApplyOp(ImGuiDataType data_type, int op, void* value1, const void* value2);
 //static bool             DataTypeApplyOpFromText(const char* buf, const char* initial_value_buf, ImGuiDataType data_type, void* data_ptr, const char* scalar_format);
 

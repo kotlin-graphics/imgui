@@ -1,16 +1,20 @@
 package imgui.imgui
 
-import imgui.ImGui
-import imgui.WindowFlags
-import imgui.or
-import imgui.ImGui.getCurrentWindowRead
-import imgui.has
+import imgui.*
+import imgui.ImGui.currentWindowRead
+import java.util.*
+import imgui.Context as g
 
 /** Tooltips    */
 interface imgui_tooltips {
 
-//    IMGUI_API void          SetTooltip(const char* fmt, ...) IM_PRINTFARGS(1);                  // set tooltip under mouse-cursor, typically use with ImGui::IsHovered(). last call wins
-//    IMGUI_API void          SetTooltipV(const char* fmt, va_list args);
+    /** set tooltip under mouse-cursor, typically use with ImGui::IsHovered(). last call wins
+     *
+     * Tooltip is stored and turned into a BeginTooltip()/EndTooltip() sequence at the end of the frame.
+     * Each call override previous value.*/
+    fun setTooltip(fmt: String, vararg values: Any) {
+        g.tooltip = fmt.format(Style.locale, *values)
+    }
 
     /** use to create full-featured tooltip windows that aren't just text   */
     fun beginTooltip()    {
@@ -20,7 +24,7 @@ interface imgui_tooltips {
     }
 
     fun endTooltip() {
-        assert(getCurrentWindowRead()!!.flags has WindowFlags.Tooltip)   // Mismatched BeginTooltip()/EndTooltip() calls
+        assert(currentWindowRead!!.flags has WindowFlags.Tooltip)   // Mismatched BeginTooltip()/EndTooltip() calls
         ImGui.end()
     }
 }

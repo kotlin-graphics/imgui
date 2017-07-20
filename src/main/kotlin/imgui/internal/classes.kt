@@ -1,5 +1,6 @@
 package imgui.internal
 
+import gli.hasnt
 import glm_.f
 import glm_.glm
 import glm_.i
@@ -9,8 +10,10 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.keepAliveId
+import imgui.stb.stb
 import java.util.*
 import kotlin.collections.ArrayList
+import imgui.Context as g
 
 
 /** 2D axis aligned bounding-box
@@ -142,32 +145,12 @@ class Rect {
 }
 
 /** Stacked color modifier, backup of modified data so we can restore it    */
-class ColMod {
-    var col = 0
-    var backupValue = 0
-}
+class ColMod(val col: Col, val backupValue: Vec4)
 
 /** Stacked style modifier, backup of modified data so we can restore it. Data type inferred from the variable. */
-class StyleMod {
-    var varIdx = 0
-    val backupInt = IntArray(2)
-    val backupFloat = FloatArray(2)
-
-    constructor(idx: Int, v: Int) {
-        varIdx = idx
-        backupInt[0] = v
-    }
-
-    constructor(idx: Int, v: Float) {
-        varIdx = idx
-        backupFloat[0] = v
-    }
-
-    constructor(idx: Int, v: Vec2) {
-        varIdx = idx
-        backupFloat[0] = v.x
-        backupFloat[1] = v.y
-    }
+class StyleMod(val idx: StyleVar) {
+    var ints = IntArray(2)
+    val floats = FloatArray(2)
 }
 
 /* Stacked data for BeginGroup()/EndGroup() */
@@ -252,7 +235,7 @@ class TextEditState {
 
     var scrollX = 0f
 
-//    var stbState = STB_TexteditState
+    val stbState = stb.TexteditState()
 
     var cursorAnim = 0f
 
@@ -263,18 +246,92 @@ class TextEditState {
 
     /** After a user-input the cursor stays on for a while without blinking */
     fun cursorAnimReset() {
-        cursorAnim = -0.30f
+        cursorAnim = -0.3f
     }
 
-    //    fun cursorClamp() { StbState.cursor = ImMin(StbState.cursor, CurLenW); StbState.select_start = ImMin(StbState.select_start, CurLenW); StbState.select_end = ImMin(StbState.select_end, CurLenW); }
-//    fun hasSelection() { return StbState.select_start != StbState.select_end; }
+    fun cursorClamp() = with(stbState) {
+        cursor = glm.min(cursor, curLenW)
+        selectStart = glm.min(selectStart, curLenW)
+        selectEnd = glm.min(selectEnd, curLenW)
+    }
+
+    //    fun hasSelection() { return StbState.select_start != StbState.select_end; }
 //    fun clearSelection(){ StbState.select_start = StbState.select_end = StbState.cursor; }
-//    fun selectAll(){ StbState.select_start = 0; StbState.select_end = CurLenW; StbState.cursor = StbState.select_end; StbState.has_preferred_x = false; }
+
+    fun selectAll() {
+        stbState.selectStart = 0
+        stbState.selectEnd = curLenW
+        stbState.cursor = stbState.selectEnd
+        stbState.hasPreferredX = false
+    }
+
     fun onKeyPressed(key: Int) {
         TODO()
 //        stb_textedit_key(this, &StbState, key);
 //        CursorFollow = true;
 //        CursorAnimReset();
+    }
+
+    fun click(x: Float, y: Float) = with(stbState) {
+        cursor = locateCoord(x, y)
+        selectStart = cursor
+        selectEnd = cursor
+        hasPreferredX = false
+    }
+
+    /** traverse the layout to locate the nearest character to a display position   */
+    fun locateCoord(x: Float, y: Float): Int {
+        val r = stb.TexteditRow()
+        val n = curLenW
+        var baseY = 0f
+        var prevX = 0f
+        var i = 0
+
+        // search rows to find one that straddles 'y'
+        while (i < n) {
+            r.layout(this, i)
+            if (r.numChars <= 0)
+                return n
+
+            if (i == 0 && y < baseY + r.yMin)
+                return 0
+
+            if (y < baseY + r.yMax)
+                break
+
+            i += r.numChars
+            baseY += r.baselineYDelta
+        }
+
+        // below all text, return 'after' last character
+        if (i >= n)
+            return n
+
+        // check if it's before the beginning of the line
+        if (x < r.x0)
+            return i
+
+        // check if it's before the end of the line
+        if (x < r.x1) {
+            // search characters in row for one that straddles 'x'
+            prevX = r.x0
+            for (k in 0 until r.numChars) {
+                val w = width(i, k)
+                if (x < prevX + w) {
+                    return if (x < prevX + w / 2) k + i else k + i + 1
+                }
+                prevX += w
+            }
+            // shouldn't happen, but if it does, fall through to end-of-line case
+        }
+
+        // if the last character is a newline, return that. otherwise return 'after' the last character
+        return if (text[i + r.numChars - 1] == '\n') i + r.numChars - 1 else i + r.numChars
+    }
+
+    fun width(lineStartIdx: Int, charIdx: Int): Float {
+        val c = text[lineStartIdx + charIdx]
+        return if (c == '\n') -1f else g.font.getCharAdvance(c) * (g.fontSize / g.font.fontSize)
     }
 }
 
@@ -551,13 +608,13 @@ class Window(
     }
 
     //    ImGuiID     GetID(const void* ptr);
-    fun getIDNoKeepAlive(str: String, strEnd: Int = str.length): Int {
+    fun getIdNoKeepAlive(str: String, strEnd: Int = str.length): Int {
         val seed = idStack.last()
         return hash(str, str.length - strEnd, seed)
     }
 
     fun rect() = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
-    fun calcFontSize() = Context.fontBaseSize * fontWindowScale
+    fun calcFontSize() = g.fontBaseSize * fontWindowScale
     fun titleBarHeight() = if (flags has WindowFlags.NoTitleBar) 0f else calcFontSize() + Style.framePadding.y * 2f
     fun titleBarRect() = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight()))
     fun menuBarHeight() = if (flags has WindowFlags.MenuBar) calcFontSize() + Style.framePadding.y * 2f else 0f
@@ -566,9 +623,122 @@ class Window(
         return Rect(pos.x.f, y1, pos.x + sizeFull.x, y1 + menuBarHeight())
     }
 
+    // _______________________________________ JVM _______________________________________
+
     /** JVM Specific, for the deconstructor    */
     fun clear() {
         drawList.clear()
         name = ""
     }
+
+    fun setCurrent() {
+        g.currentWindow = this
+        g.fontSize = calcFontSize()
+    }
+
+    fun setScrollY(newScrollY: Float) {
+        dc.cursorMaxPos.y += scroll.y
+        scroll.y = newScrollY
+        dc.cursorMaxPos.y -= scroll.y
+    }
+
+    fun setPos(pos: Vec2, cond: SetCond) {
+        // Test condition (NB: bit 0 is always true) and clear flags for next time
+        if (cond != SetCond.Null && setWindowPosAllowFlags hasnt cond)
+            return
+        setWindowPosAllowFlags = setWindowPosAllowFlags and (SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing).inv()
+        setWindowPosCenterWanted = false
+
+        // Set
+        val oldPos = Vec2(pos)
+        posF put pos // TODO glm .f on vec
+        pos put pos
+        // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least
+        // offset the cursor
+        dc.cursorPos plus_ (pos - oldPos)
+        dc.cursorMaxPos plus (pos - oldPos) // And more importantly we need to adjust this so size calculation doesn't get affected.
+    }
+
+    fun setSize(size: Vec2, cond: SetCond) {
+        // Test condition (NB: bit 0 is always true) and clear flags for next time
+        if (cond != SetCond.Null && setWindowSizeAllowFlags hasnt cond)
+            return
+        setWindowSizeAllowFlags = setWindowSizeAllowFlags and (SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing).inv()
+
+        // Set
+        if (size.x > 0f) {
+            autoFitFrames.x = 0
+            sizeFull.x = size.x
+        } else {
+            autoFitFrames.x = 2
+            autoFitOnlyGrows = false
+        }
+        if (size.y > 0f) {
+            autoFitFrames.y = 0
+            sizeFull.y = size.y
+        } else {
+            autoFitFrames.y = 2
+            autoFitOnlyGrows = false
+        }
+    }
+
+    fun setCollapsed(collapsed: Boolean, cond: SetCond) {
+        // Test condition (NB: bit 0 is always true) and clear flags for next time
+        if (cond != SetCond.Null && setWindowCollapsedAllowFlags hasnt cond)
+            return
+        setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags and (SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing).inv()
+        // Set
+        this.collapsed = collapsed
+    }
+
+    /** An active popup disable hovering on other windows (apart from its own children) */
+    val isContentHoverable: Boolean get() {
+        val rootWindow = g.focusedWindow?.rootWindow ?: return true
+        return !(rootWindow.flags has WindowFlags.Popup && rootWindow.wasActive && rootWindow != this.rootWindow)
+    }
+
+    fun applySizeFullWithConstraint(newSize: Vec2) {
+
+        if (g.setNextWindowSizeConstraint) {
+            // Using -1,-1 on either X/Y axis to preserve the current size.
+            val cr = g.setNextWindowSizeConstraintRect
+            newSize.x = if (cr.min.x >= 0 && cr.max.x >= 0) glm.clamp(newSize.x, cr.min.x, cr.max.x) else sizeFull.x
+            newSize.y = if (cr.min.y >= 0 && cr.max.y >= 0) glm.clamp(newSize.y, cr.min.y, cr.max.y) else sizeFull.y
+            TODO()
+//        if (g.setNextWindowSizeConstraintCallback)        {
+//            ImGuiSizeConstraintCallbackData data
+//            data.UserData = g.SetNextWindowSizeConstraintCallbackUserData
+//            data.Pos = window->Pos
+//            data.CurrentSize = window->SizeFull
+//            data.DesiredSize = newSize
+//            g.SetNextWindowSizeConstraintCallback(&data)
+//            newSize = data.DesiredSize
+//        }
+        }
+        if (flags hasnt (WindowFlags.ChildWindow or WindowFlags.AlwaysAutoResize))
+            newSize max_ Style.windowMinSize
+        sizeFull put newSize
+    }
+
+
+    infix fun addTo(renderList: ArrayList<DrawList>) {
+        drawList addTo renderList
+        dc.childWindows.filter { it.active }  // clipped children may have been marked not active
+                .filter { it.flags hasnt WindowFlags.Popup || it.hiddenFrames == 0 }
+                .forEach { it to renderList }
+    }
+
+    infix fun addTo_(sortedWindows: ArrayList<Window>) {
+        sortedWindows.add(this)
+        if (active) {
+            val count = dc.childWindows.size
+            if (count > 1)
+                dc.childWindows.sortWith(childWindowComparer)
+            dc.childWindows.filter { active }.forEach { it addTo_ sortedWindows }
+        }
+    }
+
+    // FIXME: Add a more explicit sort order in the window structure.
+    private val childWindowComparer = compareBy<Window>({ it.flags has WindowFlags.Popup }, { it.flags has WindowFlags.Tooltip },
+            { it.flags has WindowFlags.ComboBox }, { it.indexWithinParent })
 }

@@ -4,12 +4,12 @@ package imgui
 import imgui.impl.GlfwGL3
 import org.lwjgl.glfw.GLFW.glfwPollEvents
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
-import org.lwjgl.opengl.GL11.glClear
+import org.lwjgl.opengl.GL11.*
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
 import uno.gln.glClearColor
 import uno.gln.glViewport
+import java.util.*
 
 fun main(args: Array<String>) {
     HelloWorld().run()
@@ -63,8 +63,6 @@ class HelloWorld {
         glfw.terminate()
     }
 
-    val clearColor = Color(114, 144, 154)
-
     fun loop() {
 
 
@@ -74,6 +72,7 @@ class HelloWorld {
         with(ImGui) {
             text("Hello, world!")
             sliderFloat("float", f, 0f, 1f)
+            colorEdit3("clear color", clearColor)
 //                setNextWindowSize(Vec2(200, 100), SetCond.FirstUseEver)
 //                begin("Another Window", false)
 ////            text("Hello")
@@ -82,7 +81,7 @@ class HelloWorld {
 
         // Rendering
         glViewport(window.framebufferSize)
-        glClearColor(clearColor.value)  // TODO gln
+        glClearColor(clearColor[0], clearColor[1], clearColor[2], 1f)  // TODO gln
         glClear(GL_COLOR_BUFFER_BIT)
         ImGui.render()
         window.swapBuffers()
@@ -90,5 +89,6 @@ class HelloWorld {
 
     companion object {
         val f = FloatArray(1)
+        val clearColor = Color(114, 144, 154).run { floatArrayOf(value.x, value.y, value.z) }
     }
 }

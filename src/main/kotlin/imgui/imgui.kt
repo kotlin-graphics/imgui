@@ -25,10 +25,11 @@ object ImGui :
         imgui_main,
         imgui_window,
         imgui_parametersStacks,
-        // cursor
+        imgui_cursorLayout,
         imgui_colums,
         imgui_id,
         imgui_widgets,
+        imgui_widgetsDrag,
         imgui_widgetsSliders,
         imgui_tooltips,
         // menus popus logging clipping

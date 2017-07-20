@@ -6,9 +6,9 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.buttonBehavior
+import imgui.ImGui.currentWindowRead
 import imgui.Context as g
-import imgui.ImGui.getCurrentWindow
-import imgui.ImGui.getCurrentWindowRead
+import imgui.ImGui.currentWindow
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemSize
 import imgui.ImGui.popClipRect
@@ -21,12 +21,10 @@ import imgui.internal.Rect
  *  lacking.    */
 interface imgui_colums {
 
-//    IMGUI_API void          Columns(int count = 1, const char* id = NULL, bool border = true);
-
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with Columns(1).  */
     fun columns(columnsCount: Int = 1, id: String = "", border: Boolean = true) {
 
-        with(getCurrentWindow()) {
+        with(currentWindow) {
             assert(columnsCount >= 1)
 
             if (dc.columnsCount != 1) {
@@ -108,15 +106,18 @@ interface imgui_colums {
         }
     }
 
-//    IMGUI_API void          NextColumn();                                                       // next column
-//    IMGUI_API int           GetColumnIndex();                                                   // get current column index
+    /** next column */
+//    IMGUI_API void          NextColumn();
+
+    /** get current column index    */
+    val columnIndex get() = currentWindowRead!!.dc.columnsCurrent
 
     /** get position of column line (in pixels, from the left side of the contents region). pass -1 to use current
      *  column, otherwise 0..GetcolumnsCount() inclusive. column 0 is usually 0.0f and not resizable unless you call
      *  this    */
     fun getColumnOffset(columnIndex: Int = -1): Float {
 
-        val window = getCurrentWindowRead()!!
+        val window = currentWindowRead!!
         var columnIndex = columnIndex
         if (columnIndex < 0)
             columnIndex = window.dc.columnsCurrent
@@ -136,7 +137,7 @@ interface imgui_colums {
     /** set position of column line (in pixels, from the left side of the contents region). pass -1 to use current
      *  column  */
     fun setColumnOffset(columnIndex: Int, offset: Float) {
-        val window = getCurrentWindow()
+        val window = currentWindow
         var columnIndex = columnIndex
         if (columnIndex < 0)
             columnIndex = window.dc.columnsCurrent
@@ -150,5 +151,7 @@ interface imgui_colums {
     }
 
 //    IMGUI_API float         GetColumnWidth(int column_index = -1);                              // column width (== GetColumnOffset(GetColumnIndex()+1) - GetColumnOffset(GetColumnOffset())
-//    IMGUI_API int           GetColumnsCount();                                                  // number of columns (what was passed to Columns())
+
+    /** number of columns (what was passed to Columns())    */
+    val columnsCount get() = currentWindowRead!!.dc.columnsCount
 }

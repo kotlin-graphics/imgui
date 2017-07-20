@@ -1,7 +1,6 @@
 package imgui.imgui
 
 import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.clearActiveId
@@ -31,7 +30,7 @@ interface imgui_main {
             g.initialized = true
         }
 
-        setCurrentFont(getDefaultFont())
+        defaultFont.setCurrent()
         assert(g.font.isLoaded)
 
         g.time += IO.deltaTime
@@ -206,14 +205,14 @@ interface imgui_main {
             } else if (window.flags hasnt WindowFlags.NoScrollWithMouse) {
                 // Scroll
                 val scrollLines = if (window.flags has WindowFlags.ComboBox) 3 else 5
-                setWindowScrollY(window, window.scroll.y - IO.mouseWheel * window.calcFontSize() * scrollLines)
+                window.setScrollY(window.scroll.y - IO.mouseWheel * window.calcFontSize() * scrollLines)
             }
         }
 
         /*  Pressing TAB activate widget focus
             NB: Don't discard FocusedWindow if it isn't active, so that a window that go on/off programatically won't lose
             its keyboard focus.     */
-        if (g.activeId == 0 && g.focusedWindow != null && g.focusedWindow!!.active && isKeyPressedMap(Key.Tab, false))
+        if (g.activeId == 0 && g.focusedWindow != null && g.focusedWindow!!.active && Key.Tab.isPressed(false))
             g.focusedWindow!!.focusIdxTabRequestNext = 0
 
         // Mark all windows as not visible
@@ -269,12 +268,11 @@ interface imgui_main {
                 if (it.active && it.hiddenFrames <= 0 && it.flags hasnt WindowFlags.ChildWindow) {
                     // FIXME: Generalize this with a proper layering system so e.g. user can draw in specific layers, below text, ..
                     IO.metricsActiveWindows++
-                    if (it.flags has WindowFlags.Popup)
-                        addWindowToRenderList(g.renderDrawLists[1], it)
-                    else if (it.flags has WindowFlags.Tooltip)
-                        addWindowToRenderList(g.renderDrawLists[2], it)
-                    else
-                        addWindowToRenderList(g.renderDrawLists[0], it)
+                    it addTo when {
+                        it.flags has WindowFlags.Popup -> g.renderDrawLists[1]
+                        it.flags has WindowFlags.Tooltip -> g.renderDrawLists[2]
+                        else -> g.renderDrawLists[0]
+                    }
                 }
             }
 
@@ -300,7 +298,7 @@ interface imgui_main {
                 g.overlayDrawList.popTextureId()
             }
             if (g.overlayDrawList.vtxBuffer.isNotEmpty())
-                addDrawListToRenderList(g.renderDrawLists[0], g.overlayDrawList)
+                g.overlayDrawList addTo g.renderDrawLists[0]
 
             // Setup draw data
             g.renderDrawData.valid = true

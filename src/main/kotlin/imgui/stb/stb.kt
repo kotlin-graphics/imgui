@@ -1,186 +1,143 @@
 package imgui.stb
 
-import glm_.BYTES
-import glm_.i
-import glm_.s
-import glm_.vec2.Vec2
-import glm_.vec2.Vec2i
-import org.lwjgl.stb.*
-import org.lwjgl.system.MemoryUtil.*
-import org.lwjgl.system.Pointer.POINTER_SIZE
+import imgui.inputTextCalcTextSizeW
+import imgui.internal.TextEditState
 
+object stb {
 
-val STBRPRect.wasPacked get() = was_packed() != 0
+    val TEXTEDIT_UNDOSTATECOUNT = 99
+    val TEXTEDIT_UNDOCHARCOUNT = 999
 
-var STBRPRect.x
-    set(value) {
-        x(value.s)
+    class UndoRecord {
+        var where = 0
+        var insertLength = 0
+        var deleteLength = 0
+        var charStorage = 0
     }
-    get() = x().i
 
-var STBRPRect.y
-    set(value) {
-        y(value.s)
+    class UndoState {
+        val undoRec = Array(TEXTEDIT_UNDOSTATECOUNT, { UndoRecord() })
+        val undoChar = CharArray(TEXTEDIT_UNDOCHARCOUNT)
+        var undoPoint = 0
+        var redoPoint = 0
+        var undoCharPoint = 0
+        var redoCharPoint = 0
+
+        fun clear() {
+            undoPoint = 0
+            undoCharPoint = 0
+            redoPoint = TEXTEDIT_UNDOSTATECOUNT
+            redoCharPoint = TEXTEDIT_UNDOCHARCOUNT
+        }
     }
-    get() = y().i
 
-var STBRPRect.w
-    set(value) {
-        w(value.s)
+    class TexteditState {
+
+        /** position of the text cursor within the string   */
+        var cursor = 0
+
+        /*  selection start and end point in characters; if equal, no selection.
+            note that start may be less than or greater than end (e.g. when dragging the mouse, start is where the
+            initial click was, and you can drag in either direction)    */
+
+        /** selection start point   */
+        var selectStart = 0
+
+        /** selection end point   */
+        var selectEnd = 0
+
+        /** each textfield keeps its own insert mode state. to keep an app-wide insert mode, copy this value in/out of
+         *  the app state   */
+        var insertMode = false
+
+        /** not implemented yet */
+        var cursorAtEndOfLine = false
+        var initialized = false
+        var hasPreferredX = false
+        var singleLine = false
+        var padding1 = '\u0000'
+        var padding2 = '\u0000'
+        var padding3 = '\u0000'
+        /** this determines where the cursor up/down tries to seek to along x   */
+        var preferredX = 0f
+        val undostate = UndoState()
+
+        /** reset the state to default  */
+        fun clear(isSingleLine: Boolean) {
+
+            undostate.clear()
+            selectStart = 0
+            selectEnd = 0
+            cursor = 0
+            hasPreferredX = false
+            preferredX = 0f
+            cursorAtEndOfLine = false
+            initialized = true
+            singleLine = isSingleLine
+            insertMode = false
+        }
     }
-    get() = w().i
 
-var STBRPRect.h
-    set(value) {
-        h(value.s)
+    /** Result of layout query, used by stb_textedit to determine where the text in each row is.
+     *  result of layout query  */
+    class TexteditRow     {
+        /** starting x location */
+        var x0 = 0f
+        /** end x location (allows for align=right, etc)    */
+        var x1 = 0f
+        /** position of baseline relative to previous row's baseline    */
+        var baselineYDelta = 0f
+        /** height of row above baseline    */
+        var yMin = 0f
+        /** height of row below baseline   */
+        var yMax = 0f
+
+        var numChars = 0
+
+        fun layout(obj:TextEditState, lineStartIdx:Int)        {
+            TODO()
+            val text = obj.text
+//            val text_remaining = NULL;
+//            val size = inputTextCalcTextSizeW(text + lineStartIdx, text + obj->CurLenW, &text_remaining, NULL, true);
+//            r->x0 = 0.0f;
+//            r->x1 = size.x;
+//            r->baseline_y_delta = size.y;
+//            r->ymin = 0.0f;
+//            r->ymax = size.y;
+//            r->num_chars = (int)(text_remaining - (text + line_start_idx));
+        }
     }
-    get() = h().i
 
+    /*  We don't use an enum so we can build even with conflicting symbols (if another user of stb_textedit.h leak their 
+        STB_TEXTEDIT_K_* symbols)     */
+    /** keyboard input to move cursor left  */
+    val TEXTEDIT_K_LEFT = 0x10000
+    /** keyboard input to move cursor right */
+    val TEXTEDIT_K_RIGHT = 0x10001
+    /** keyboard input to move cursor up    */
+    val TEXTEDIT_K_UP = 0x10002
+    /** keyboard input to move cursor down  */
+    val TEXTEDIT_K_DOWN = 0x10003
+    /** keyboard input to move cursor to start of line  */
+    val TEXTEDIT_K_LINESTART = 0x10004
+    /** keyboard input to move cursor to end of line    */
+    val TEXTEDIT_K_LINEEND = 0x10005
+    /** keyboard input to move cursor to start of text  */
+    val TEXTEDIT_K_TEXTSTART = 0x10006
+    /** keyboard input to move cursor to end of text    */
+    val TEXTEDIT_K_TEXTEND = 0x10007
+    /** keyboard input to delete selection or character under cursor    */
+    val TEXTEDIT_K_DELETE = 0x10008
+    /** keyboard input to delete selection or character left of cursor  */
+    val TEXTEDIT_K_BACKSPACE = 0x10009
+    /** keyboard input to perform undo  */
+    val TEXTEDIT_K_UNDO = 0x1000A
+    /** keyboard input to perform redo  */
+    val TEXTEDIT_K_REDO = 0x1000B
+    /** keyboard input to move cursor left one word */
+    val TEXTEDIT_K_WORDLEFT = 0x1000C
+    /** keyboard input to move cursor right one word    */
+    val TEXTEDIT_K_WORDRIGHT = 0x1000D
 
-var STBRPRect.Buffer.x
-    set(value) {
-        x(value.s)
-    }
-    get() = x().i
-
-var STBRPRect.Buffer.y
-    set(value) {
-        y(value.s)
-    }
-    get() = y().i
-
-var STBRPRect.Buffer.w
-    set(value) {
-        w(value.s)
-    }
-    get() = w().i
-
-var STBRPRect.Buffer.h
-    set(value) {
-        h(value.s)
-    }
-    get() = h().i
-
-
-var STBTTPackRange.fontSize
-    set(value) {
-        font_size(value)
-    }
-    get() = font_size()
-
-var STBTTPackRange.firstUnicodeCodepointInRange
-    set(value) {
-        first_unicode_codepoint_in_range(value)
-    }
-    get() = first_unicode_codepoint_in_range()
-
-var STBTTPackRange.numChars
-    set(value) {
-        num_chars(value)
-    }
-    get() = num_chars()
-
-var STBTTPackRange.chardataForRange: STBTTPackedchar.Buffer
-    set(value) {
-        chardata_for_range(value)
-    }
-    get() = chardata_for_range()
-
-
-val STBTTPackedchar.x0 get() = x0().i
-val STBTTPackedchar.x1 get() = x1().i
-val STBTTPackedchar.y0 get() = y0().i
-val STBTTPackedchar.y1 get() = y1().i
-val STBTTPackedchar.xAdvance get() = xadvance()
-
-var STBTTPackContext.packInfo: STBRPContext
-    get() {
-        if (!gli.wasInit { Private.rpCtx })
-            imgui.stb.Private.rpCtx = STBRPContext.create(memGetAddress(address() + org.lwjgl.system.Pointer.POINTER_SIZE))
-        return imgui.stb.Private.rpCtx
-    }
-    set(value) {
-        imgui.stb.Private.rpCtx = value
-    }
-var STBTTPackContext.pixels: java.nio.ByteBuffer
-    get() = imgui.stb.Private.pixels
-    set(value) {
-        memPutAddress(address() + 2 * POINTER_SIZE + 6 * Int.BYTES, memAddress(value))
-        imgui.stb.Private.pixels = value
-    }
-var STBTTPackContext.height
-    get() = memGetInt(address() + 2 * POINTER_SIZE + Int.BYTES)
-    set(value) = memPutInt(address() + 2 * POINTER_SIZE + Int.BYTES, value)
-
-private object Private {
-
-    lateinit var rpCtx: STBRPContext
-    lateinit var pixels: java.nio.ByteBuffer
+    val TEXTEDIT_K_SHIFT = 0x20000
 }
-
-
-fun stbtt_PackSetOversampling(spc: STBTTPackContext, oversample: Vec2i)
-        = STBTruetype.stbtt_PackSetOversampling(spc, oversample.x, oversample.y)
-
-fun stbtt_PackSetOversampling(spc: STBTTPackContext, oversample: Int)
-        = STBTruetype.stbtt_PackSetOversampling(spc, oversample, oversample)
-
-fun stbtt_GetFontVMetrics(info: STBTTFontinfo): Triple<Int, Int, Int> {
-    val ascent = IntArray(1)
-    val descent = IntArray(1)
-    val lineGap = IntArray(1)
-    STBTruetype.stbtt_GetFontVMetrics(info, ascent, descent, lineGap)
-    return Triple(ascent[0], descent[0], lineGap[0])
-}
-
-
-fun stbtt_GetPackedQuad(chardata: STBTTPackedchar.Buffer, p: Vec2i, charIndex: Int, alignToInteger: Boolean)
-        : Pair<Vec2, STBTTAlignedQuad> {
-
-    val q = STBTTAlignedQuad.create()
-    val xPos = FloatArray(1)
-    val yPos = FloatArray(1)
-
-    STBTruetype.stbtt_GetPackedQuad(chardata, p.x, p.y, charIndex, xPos, yPos, q, alignToInteger)
-
-    return Vec2(xPos[0], yPos[0]) to q
-}
-
-val STBTTAlignedQuad.x0 get() = x0()
-val STBTTAlignedQuad.y0 get() = y0()
-val STBTTAlignedQuad.x1 get() = x1()
-val STBTTAlignedQuad.y1 get() = y1()
-val STBTTAlignedQuad.s0 get() = s0()
-val STBTTAlignedQuad.s1 get() = s1()
-val STBTTAlignedQuad.t0 get() = t0()
-val STBTTAlignedQuad.t1 get() = t1()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

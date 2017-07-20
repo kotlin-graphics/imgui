@@ -134,11 +134,13 @@ object Context {
     // Widget state
     //------------------------------------------------------------------
 
-//    ImGuiTextEditState      InputTextState;
-//    ImFont                  InputTextPasswordFont;
+    var inputTextState = TextEditState()
+
+    var inputTextPasswordFont = Font()
     /** Temporary text input when CTRL+clicking on a slider, etc.   */
     var scalarAsInputTextId = 0
-//    ImGuiStorage            ColorEditModeStorage;               // Store user selection of color edit mode
+    /** Store user selection of color edit mode */
+    val colorEditModeStorage = mutableMapOf<Int, Float>()
     /** Currently dragged value, always float, not rounded by end-user precision settings   */
     var dragCurrentValue = 0f
 
@@ -480,4 +482,11 @@ object Style {
             Vec4(1.00f, 0.60f, 0.00f, 1.00f), // PlotHistogramHovered
             Vec4(0.00f, 0.00f, 1.00f, 0.35f), // TextSelectedBg
             Vec4(0.20f, 0.20f, 0.20f, 0.35f))   // ModalWindowDarkening
+
+    /** JVM IMGUI   */
+    val locale = Locale.US
 }
+
+// for Style.colors
+operator fun Array<Vec4>.get(idx: Col) = this[idx.i]
+operator fun Array<Vec4>.set(idx: Col, vec: Vec4) { this[idx.i] put vec }

@@ -11,11 +11,14 @@ import imgui.ImGui.buttonBehavior
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.closeButton
 import imgui.ImGui.columns
+import imgui.ImGui.currentWindow
+import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
-import imgui.ImGui.getCurrentWindowRead
+import imgui.ImGui.itemAdd
+import imgui.ImGui.itemSize
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.renderCollapseTriangle
@@ -67,7 +70,7 @@ interface imgui_window {
             windowIsNew = true
         }
 
-        val currentFrame = getFrameCount()
+        val currentFrame = frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
         if (firstBeginOfTheFrame)
             window.flags = flags
@@ -77,7 +80,7 @@ interface imgui_window {
         // Add to stack
         val parentWindow = g.currentWindowStack.lastOrNull()
         g.currentWindowStack.add(window)
-        setCurrentWindow(window)
+        window.setCurrent()
         checkStacksSize(window, true)
         assert(parentWindow != null || flags hasnt WindowFlags.ChildWindow)
 
@@ -107,7 +110,7 @@ interface imgui_window {
                 window.setWindowPosAllowFlags =
                         window.setWindowPosAllowFlags and (SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing).inv()
             } else
-                setWindowPos(window, g.setNextWindowPosVal, g.setNextWindowPosCond)
+                window.setPos(g.setNextWindowPosVal, g.setNextWindowPosCond)
 
             window.dc.cursorPos put backupCursorPos
             g.setNextWindowPosCond = SetCond.Null
@@ -116,7 +119,7 @@ interface imgui_window {
             if (!windowWasActive || windowAppearingAfterBeingHidden)
                 window.setWindowSizeAllowFlags = window.setWindowSizeAllowFlags or SetCond.Appearing
             windowSizeSetByApi = window.setWindowSizeAllowFlags has g.setNextWindowSizeCond
-            setWindowSize(window, g.setNextWindowSizeVal, g.setNextWindowSizeCond)
+            window.setSize(g.setNextWindowSizeVal, g.setNextWindowSizeCond)
             g.setNextWindowSizeCond = SetCond.Null
         }
         if (g.setNextWindowContentSizeCond != SetCond.Null) {
@@ -127,7 +130,7 @@ interface imgui_window {
         if (g.setNextWindowCollapsedCond != SetCond.Null) {
             if (!windowWasActive || windowAppearingAfterBeingHidden)
                 window.setWindowCollapsedAllowFlags = window.setWindowCollapsedAllowFlags or SetCond.Appearing
-            setWindowCollapsed(window, g.setNextWindowCollapsedVal, g.setNextWindowCollapsedCond)
+            window.setCollapsed(g.setNextWindowCollapsedVal, g.setNextWindowCollapsedCond)
             g.setNextWindowCollapsedCond = SetCond.Null
         }
         if (g.setNextWindowFocus) {
@@ -221,9 +224,9 @@ interface imgui_window {
                 }
             }
 
-            // Lock window padding so that altering the showBorders flag for children doesn't have side-effects.
+            // Lock window padding so that altering the ShowBorders flag for children doesn't have side-effects.
             if (flags has WindowFlags.ChildWindow &&
-                    flags hasnt (WindowFlags.AlwaysUseWindowPadding or WindowFlags.showBorders or WindowFlags.ComboBox or WindowFlags.Popup))
+                    flags hasnt (WindowFlags.AlwaysUseWindowPadding or WindowFlags.ShowBorders or WindowFlags.ComboBox or WindowFlags.Popup))
                 window.windowPadding put 0f
             else
                 window.windowPadding put Style.windowPadding
@@ -271,7 +274,7 @@ interface imgui_window {
             }
 
             // Apply minimum/maximum window size constraints and final size
-            applySizeFullWithConstraint(window, window.sizeFull)
+            window.applySizeFullWithConstraint(window.sizeFull)
             window.size put if (window.collapsed) window.titleBarRect().size else window.sizeFull
 
             // POSITION
@@ -295,7 +298,7 @@ interface imgui_window {
             windowPosCenter = windowPosCenter || (flags has WindowFlags.Modal && !windowPosSetByApi && windowAppearingAfterBeingHidden)
             if (windowPosCenter)
             // Center (any sort of window)
-                setWindowPos(window, glm.max(Style.displaySafeAreaPadding, fullscreenRect.center - window.sizeFull * 0.5f), SetCond.Null)
+                window.setPos(glm.max(Style.displaySafeAreaPadding, fullscreenRect.center - window.sizeFull * 0.5f), SetCond.Null)
             else if (flags has WindowFlags.ChildMenu) {
                 /*  Child menus typically request _any_ position within the parent menu item, and then our
                 FindBestPopupWindowPos() function will move the new menu outside the parent bounds.
@@ -403,13 +406,13 @@ interface imgui_window {
 
                     if (g.hoveredWindow == window && held && IO.mouseDoubleClicked[0]) {
                         // Manual auto-fit when double-clicking
-                        applySizeFullWithConstraint(window, sizeAutoFit)
+                        window.applySizeFullWithConstraint(sizeAutoFit)
                         if (flags hasnt WindowFlags.NoSavedSettings)
                             markIniSettingsDirty()
                         clearActiveId()
                     } else if (held) {
                         // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
-                        applySizeFullWithConstraint(window, (IO.mousePos - g.activeIdClickOffset + resizeRect.size) - window.pos)
+                        window.applySizeFullWithConstraint((IO.mousePos - g.activeIdClickOffset + resizeRect.size) - window.pos)
                         if (flags hasnt WindowFlags.NoSavedSettings)
                             markIniSettingsDirty()
                     }
@@ -427,7 +430,7 @@ interface imgui_window {
                                 && flags hasnt WindowFlags.NoScrollbar && flags has WindowFlags.HorizontalScrollbar)
                 window.scrollbarSizes.x = if (window.scrollbar.y) Style.scrollbarSize else 0f
                 window.scrollbarSizes.y = if (window.scrollbar.x) Style.scrollbarSize else 0f
-                window.borderSize = if (flags has WindowFlags.showBorders) 1f else 0f
+                window.borderSize = if (flags has WindowFlags.ShowBorders) 1f else 0f
 
                 // Window background, Default Alpha
                 val bgColorIdx = when {
@@ -436,7 +439,7 @@ interface imgui_window {
                     flags has WindowFlags.ChildWindow -> Col.ChildWindowBg
                     else -> Col.WindowBg
                 }
-                val bgColor = Style.colors[bgColorIdx.i]
+                val bgColor = Style.colors[bgColorIdx]
                 if (bgAlpha >= 0f)
                     bgColor.w = bgAlpha
                 bgColor.w *= Style.alpha
@@ -457,7 +460,7 @@ interface imgui_window {
                 // Menu bar
                 if (flags has WindowFlags.MenuBar) {
                     val menuBarRect = window.menuBarRect()
-                    if (flags has WindowFlags.showBorders)
+                    if (flags has WindowFlags.ShowBorders)
                         window.drawList.addLine(menuBarRect.bl, menuBarRect.br, getColorU32(Col.Border))
                     window.drawList.addRectFilled(menuBarRect.tl, menuBarRect.br, getColorU32(Col.MenuBarBg),
                             if (flags has WindowFlags.NoTitleBar) windowRounding else 0f, Corner.TopLeft or Corner.TopRight)
@@ -481,7 +484,7 @@ interface imgui_window {
                 }
 
                 // Borders
-                if (flags has WindowFlags.showBorders) {
+                if (flags has WindowFlags.ShowBorders) {
                     window.drawList.addRect(Vec2(1) + window.pos, window.size + window.pos + 1, getColorU32(Col.BorderShadow),
                             windowRounding)
                     // TODO check if window.posF is fine instead window.pos
@@ -662,76 +665,236 @@ interface imgui_window {
             if (flags has WindowFlags.Popup)
                 g.currentPopupStack.pop()
             checkStacksSize(this, false)
-            setCurrentWindow(g.currentWindowStack.lastOrNull())
+            val last = g.currentWindowStack.lastOrNull()
+            if (last != null) last.setCurrent()
+            else g.currentWindow = null
         }
     }
-//IMGUI_API bool          BeginChild(const char* str_id, const ImVec2& size = ImVec2(0,0), bool border = false, ImGuiWindowFlags extra_flags = 0);    // begin a scrolling region. size==0.0f: use remaining window size, size<0.0f: use remaining window size minus abs(size). size>0.0f: fixed size. each axis can use a different mode, e.g. ImVec2(0,400).
-//IMGUI_API bool          BeginChild(ImGuiID id, const ImVec2& size = ImVec2(0,0), bool border = false, ImGuiWindowFlags extra_flags = 0);            // "
-//IMGUI_API void          EndChild();
+//IMGUI_API bool          BeginChild(const char* str_id, const ImVec2& size = ImVec2(0,0), bool border = false, ImGuiWindowFlags extra_flags = 0);
+
+    /** begin a scrolling region. size==0.0f: use remaining window size, size<0.0f: use remaining window size minus
+     *  abs(size). size>0.0f: fixed size. each axis can use a different mode, e.g. ImVec2(0,400).   */
+    fun beginChild(id: Int, sizeArg: Vec2 = Vec2(), border: Boolean = false, extraFlags: Int = 0) =
+            beginChildEx("", id, sizeArg, border, extraFlags)
+
+    fun beginChildEx(name: String, id: Int, sizeArg: Vec2, border: Boolean, extraFlags: Int): Boolean {
+
+        val window = currentWindow
+        var flags = WindowFlags.NoTitleBar or WindowFlags.NoResize or WindowFlags.NoSavedSettings or WindowFlags.ChildWindow
+
+        val contentAvail = contentRegionAvail
+        val size = glm.floor(sizeArg)
+        if (size.x <= 0f) {
+            if (size.x == 0f)
+                flags = flags or WindowFlags.ChildWindowAutoFitX
+            // Arbitrary minimum zero-ish child size of 4.0f (0.0f causing too much issues)
+            size.x = glm.max(contentAvail.x, 4f) - glm.abs(size.x)
+        }
+        if (size.y <= 0f) {
+            if (size.y == 0f)
+                flags = flags or WindowFlags.ChildWindowAutoFitY
+            size.y = glm.max(contentAvail.y, 4f) - glm.abs(size.y)
+        }
+        if (border)
+            flags = flags or WindowFlags.ShowBorders
+        flags = flags or extraFlags
+
+        val title =
+                if (name.isNotEmpty())
+                    "%s.%s.%08X".format(Style.locale, window.name, name, id)
+                else
+                    "%s.%08X".format(Style.locale, window.name, id)
+
+        val (ret, _) = ImGui.begin(title, null, size, -1f, flags)
+
+        if (window.flags hasnt WindowFlags.ShowBorders)
+            ImGui.currentWindow.flags = ImGui.currentWindow.flags and WindowFlags.ShowBorders.i.inv()
+
+        return ret
+    }
+
+    fun endChild() {
+
+        var window = currentWindow
+
+        assert(window.flags has WindowFlags.ChildWindow)   // Mismatched BeginChild()/EndChild() callss
+        if (window.flags has WindowFlags.ComboBox || window.beginCount > 1)
+            ImGui.end()
+        else {
+            /*  When using auto-filling child window, we don't provide full width/height to ItemSize so that it doesn't
+                feed back into automatic size-fitting.             */
+            val sz = Vec2(windowSize)
+            // Arbitrary minimum zero-ish child size of 4.0f causes less trouble than a 0.0f
+            if (window.flags has WindowFlags.ChildWindowAutoFitX)
+                sz.x = glm.max(4f, sz.x)
+            if (window.flags has WindowFlags.ChildWindowAutoFitY)
+                sz.y = glm.max(4f, sz.y)
+
+            ImGui.end()
+
+            window = currentWindow // TODO check if needed
+            val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + sz)
+            itemSize(sz)
+            itemAdd(bb)
+        }
+    }
 
     /** current content boundaries (typically window boundaries including scrolling, or current column boundaries), in
-     *  windows coordinates */
-    fun getContentRegionMax(): Vec2 { // In window space (not screen space!)
-
-        val window = getCurrentWindowRead()!!
-        val mx = Vec2(window.contentsRegionRect.max)
-        if (window.dc.columnsCount != 1)
-            mx.x = getColumnOffset(window.dc.columnsCurrent + 1) - window.windowPadding.x
+     *  windows coordinates
+     *  In window space (not screen space!) */
+    val contentRegionMax: Vec2 get() = with(currentWindowRead!!) {
+        val mx = Vec2(contentsRegionRect.max)
+        if (dc.columnsCount != 1)
+            mx.x = getColumnOffset(dc.columnsCurrent + 1) - windowPadding.x
         return mx
     }
 
     /** == GetContentRegionMax() - GetCursorPos()   */
-    fun getContentRegionAvail(): Vec2 {
-        val window = getCurrentWindowRead()!!
-        return getContentRegionMax() - (window.dc.cursorPos - window.pos)
+    val contentRegionAvail get() = with(currentWindowRead!!) { contentRegionMax - (dc.cursorPos - pos) }
+
+    val contentRegionAvailWidth get() = contentRegionAvail.x
+    /** content boundaries min (roughly (0,0)-Scroll), in window coordinates    */
+    val windowContentRegionMin get() = currentWindowRead!!.contentsRegionRect.min
+    /** content boundaries max (roughly (0,0)+Size-Scroll) where Size can be override with SetNextWindowContentSize(),
+     * in window coordinates    */
+    val windowContentRegionMax get() = currentWindowRead!!.contentsRegionRect.max
+
+    val windowContentRegionWidth get() = with(currentWindowRead!!) { contentsRegionRect.max.x - contentsRegionRect.min.x }
+    /** get rendering command-list if you want to append your own draw primitives   */
+    val windowDrawList get() = currentWindow.drawList
+    /** get current window position in screen space (useful if you want to do your own drawing via the DrawList api)    */
+    val windowPos get() = g.currentWindow!!.pos
+
+    /** get current window size */
+    val windowSize get() = currentWindowRead!!.size
+
+    val windowWidth get() = g.currentWindow!!.size.x
+
+    val windowHeight get() = g.currentWindow!!.size.y
+
+    val isWindowCollapsed get() = g.currentWindow!!.collapsed
+    /** per-window font scale. Adjust IO.FontGlobalScale if you want to scale all windows   */
+    fun setWindowFontScale(scale: Float) = with(currentWindow) {
+        fontWindowScale = scale
+        g.fontSize = calcFontSize()
     }
 
-//IMGUI_API float         GetContentRegionAvailWidth();                                       //
-//IMGUI_API ImVec2        GetWindowContentRegionMin();                                        // content boundaries min (roughly (0,0)-Scroll), in window coordinates
-//IMGUI_API ImVec2        GetWindowContentRegionMax();                                        // content boundaries max (roughly (0,0)+Size-Scroll) where Size can be override with SetNextWindowContentSize(), in window coordinates
-//IMGUI_API float         GetWindowContentRegionWidth();                                      //
-//IMGUI_API ImDrawList*   GetWindowDrawList();                                                // get rendering command-list if you want to append your own draw primitives
-//IMGUI_API ImVec2        GetWindowPos();                                                     // get current window position in screen space (useful if you want to do your own drawing via the DrawList api)
-//IMGUI_API ImVec2        GetWindowSize();                                                    // get current window size
-//IMGUI_API float         GetWindowWidth();
-//IMGUI_API float         GetWindowHeight();
-//IMGUI_API bool          IsWindowCollapsed();
-//IMGUI_API void          SetWindowFontScale(float scale);                                    // per-window font scale. Adjust IO.FontGlobalScale if you want to scale all windows
-//
-//IMGUI_API void          SetNextWindowPos(const ImVec2& pos, ImGuiSetCond cond = 0);         // set next window position. call before Begin()
-//IMGUI_API void          SetNextWindowPosCenter(ImGuiSetCond cond = 0);                      // set next window position to be centered on screen. call before Begin()
+    /** set next window position. call before Begin()   */
+    fun setNextWindowPos(pos: Vec2, cond: SetCond = SetCond.Always) {
+        g.setNextWindowPosVal put pos
+        g.setNextWindowPosCond = cond
+    }
+
+    fun setNextWindowPosCenter(cond: SetCond = SetCond.Always) {                      // set next window position to be centered on screen. call before Begin()
+        g.setNextWindowPosVal put -Float.MAX_VALUE
+        g.setNextWindowPosCond = cond
+    }
 
     /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
-    fun setNextWindowSize(size: Vec2, cond: SetCond? = null) {
+    fun setNextWindowSize(size: Vec2, cond: SetCond = SetCond.Always) {
         g.setNextWindowSizeVal = size
-        g.setNextWindowSizeCond = cond ?: SetCond.Always
+        g.setNextWindowSizeCond = cond
     }
+
 //IMGUI_API void          SetNextWindowSizeConstraints(const ImVec2& size_min, const ImVec2& size_max, ImGuiSizeConstraintCallback custom_callback = NULL, void* custom_callback_data = NULL); // set next window size limits. use -1,-1 on either X/Y axis to preserve the current size. Use callback to apply non-trivial programmatic constraints.
-//IMGUI_API void          SetNextWindowContentSize(const ImVec2& size);                       // set next window content size (enforce the range of scrollbars). set axis to 0.0f to leave it automatic. call before Begin()
-//IMGUI_API void          SetNextWindowContentWidth(float width);                             // set next window content width (enforce the range of horizontal scrollbar). call before Begin()
-//IMGUI_API void          SetNextWindowCollapsed(bool collapsed, ImGuiSetCond cond = 0);      // set next window collapsed state. call before Begin()
-//IMGUI_API void          SetNextWindowFocus();                                               // set next window to be focused / front-most. call before Begin()
-//IMGUI_API void          SetWindowPos(const ImVec2& pos, ImGuiSetCond cond = 0);             // (not recommended) set current window position - call within Begin()/End(). prefer using SetNextWindowPos(), as this may incur tearing and side-effects.
-//IMGUI_API void          SetWindowSize(const ImVec2& size, ImGuiSetCond cond = 0);           // (not recommended) set current window size - call within Begin()/End(). set to ImVec2(0,0) to force an auto-fit. prefer using SetNextWindowSize(), as this may incur tearing and minor side-effects.
-//IMGUI_API void          SetWindowCollapsed(bool collapsed, ImGuiSetCond cond = 0);          // (not recommended) set current window collapsed state. prefer using SetNextWindowCollapsed().
+
+    /** set next window content size (enforce the range of scrollbars). set axis to 0.0f to leave it automatic. call
+     *  before Begin() */
+    fun setNextWindowContentSize(size: Vec2) {
+        g.setNextWindowContentSizeVal put size
+        g.setNextWindowContentSizeCond = SetCond.Always
+    }
+
+    /** set next window content width (enforce the range of horizontal scrollbar). call before Begin()  */
+    fun setNextWindowContentWidth(width: Float) {
+        g.setNextWindowContentSizeVal = Vec2(width,
+                if (g.setNextWindowContentSizeCond != SetCond.Null) g.setNextWindowContentSizeVal.y else 0f)
+        g.setNextWindowContentSizeCond = SetCond.Always
+    }
+
+    /** set next window collapsed state. call before Begin()    */
+    fun setNextWindowCollapsed(collapsed: Boolean, cond: SetCond = SetCond.Always) {
+        g.setNextWindowCollapsedVal = collapsed
+        g.setNextWindowCollapsedCond = cond
+    }
+
+    /** set next window to be focused / front-most. call before Begin() */
+    fun setNextWindowFocus() {
+        g.setNextWindowFocus = true
+    }
+
+    /** (not recommended) set current window position - call within Begin()/End(). prefer using SetNextWindowPos(),
+     *  as this may incur tearing and side-effects. */
+    fun setWindowPos(pos: Vec2, cond: SetCond = SetCond.Null) = currentWindowRead!!.setPos(pos, cond)
+
+    /** (not recommended) set current window size - call within Begin()/End(). set to ImVec2(0,0) to force an auto-fit.
+     *  prefer using SetNextWindowSize(), as this may incur tearing and minor side-effects. */
+    fun setWindowSize(size: Vec2, cond: SetCond = SetCond.Null) = g.currentWindow!!.setSize(size, cond)
+
+    /** (not recommended) set current window collapsed state. prefer using SetNextWindowCollapsed().    */
+    fun setWindowCollapsed(collapsed: Boolean, cond: SetCond = SetCond.Null) = g.currentWindow!!.setCollapsed(collapsed, cond)
 
     /** (not recommended) set current window to be focused / front-most. prefer using SetNextWindowFocus(). */
     fun setWindowFocus() = focusWindow(g.currentWindow)
 
-//IMGUI_API void          SetWindowPos(const char* name, const ImVec2& pos, ImGuiSetCond cond = 0);      // set named window position.
-//IMGUI_API void          SetWindowSize(const char* name, const ImVec2& size, ImGuiSetCond cond = 0);    // set named window size. set axis to 0.0f to force an auto-fit on this axis.
-//IMGUI_API void          SetWindowCollapsed(const char* name, bool collapsed, ImGuiSetCond cond = 0);   // set named window collapsed state
-//IMGUI_API void          SetWindowFocus(const char* name);                                              // set named window to be focused / front-most. use NULL to remove focus.
-//
-//IMGUI_API float         GetScrollX();                                                       // get scrolling amount [0..GetScrollMaxX()]
-//IMGUI_API float         GetScrollY();                                                       // get scrolling amount [0..GetScrollMaxY()]
-//IMGUI_API float         GetScrollMaxX();                                                    // get maximum scrolling amount ~~ ContentSize.X - WindowSize.X
-//IMGUI_API float         GetScrollMaxY();                                                    // get maximum scrolling amount ~~ ContentSize.Y - WindowSize.Y
-//IMGUI_API void          SetScrollX(float scroll_x);                                         // set scrolling amount [0..GetScrollMaxX()]
-//IMGUI_API void          SetScrollY(float scroll_y);                                         // set scrolling amount [0..GetScrollMaxY()]
-//IMGUI_API void          SetScrollHere(float center_y_ratio = 0.5f);                         // adjust scrolling amount to make current cursor position visible. center_y_ratio=0.0: top, 0.5: center, 1.0: bottom.
-//IMGUI_API void          SetScrollFromPosY(float pos_y, float center_y_ratio = 0.5f);        // adjust scrolling amount to make given position valid. use GetCursorPos() or GetCursorStartPos()+offset to get valid positions.
-//IMGUI_API void          SetKeyboardFocusHere(int offset = 0);                               // focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget. Use negative 'offset' to access previous widgets.
+    /** set named window position.  */
+    fun setWindowPos(name: String, pos: Vec2, cond: SetCond = SetCond.Null) = findWindowByName(name)?.setPos(pos, cond)
+
+    /** set named window size. set axis to 0.0f to force an auto-fit on this axis.  */
+    fun setWindowSize(name: String, size: Vec2, cond: SetCond = SetCond.Null) = findWindowByName(name)?.setSize(size, cond)
+
+    /** set named window collapsed state    */
+    fun setWindowCollapsed(name: String, collapsed: Boolean, cond: SetCond = SetCond.Null) = findWindowByName(name)?.setCollapsed(collapsed, cond)
+
+    /** set named window to be focused / front-most. use NULL to remove focus.  */
+    fun setWindowFocus(name: String) = focusWindow(findWindowByName(name))
+
+    /** scrolling amount [0..GetScrollMaxX()]   */
+    var scrollX get() = g.currentWindow!!.scroll.x
+        set(value) = with(currentWindow) { scrollTarget.x = scrollX; scrollTargetCenterRatio.x = 0f }
+
+    /** scrolling amount [0..GetScrollMaxY()]   */
+    var scrollY get() = g.currentWindow!!.scroll.y
+        set(value) = with(currentWindow) {
+            // title bar height canceled out when using ScrollTargetRelY
+            scrollTarget.y = value + titleBarHeight() + menuBarHeight()
+            scrollTargetCenterRatio.y = 0f
+        }
+
+    /** get maximum scrolling amount ~~ ContentSize.X - WindowSize.X    */
+    val scrollMaxX get() = with(currentWindowRead!!) { sizeContents.x - sizeFull.x - scrollbarSizes.x }
+
+    /** get maximum scrolling amount ~~ ContentSize.Y - WindowSize.Y    */
+    val scrollMaxY get() = with(currentWindowRead!!) { sizeContents.y - sizeFull.y - scrollbarSizes.y }
+
+    /** adjust scrolling amount to make current cursor position visible.
+     *  centerYRatio = 0.0: top, 0.5: center, 1.0: bottom.    */
+    fun setScrollHere(centerYRatio: Float = 0.5f) = with(currentWindow) {
+        // Precisely aim above, in the middle or below the last line.
+        val targetY = dc.cursorPosPrevLine.y + (dc.prevLineHeight * centerYRatio) + (Style.itemSpacing.y * (centerYRatio - 0.5f) * 2f)
+        setScrollFromPosY(targetY - pos.y, centerYRatio)
+    }
+
+    /** adjust scrolling amount to make given position valid. use GetCursorPos() or GetCursorStartPos()+offset to get
+     *  valid positions.    */
+    fun setScrollFromPosY(posY: Float, centerYRatio: Float = 0.5f) = with(currentWindow) {
+        /*  We store a target position so centering can occur on the next frame when we are guaranteed to have a known
+            window size         */
+        assert(centerYRatio in 0f..1f)
+        scrollTarget.y = (posY + scroll.y).i.f
+        /*  Minor hack to make "scroll to top" take account of WindowPadding,
+            else it would scroll to (WindowPadding.y - ItemSpacing.y)         */
+        if (centerYRatio <= 0f && scrollTarget.y <= windowPadding.y)
+            scrollTarget.y = 0f
+        scrollTargetCenterRatio.y = centerYRatio
+    }
+
+    /** focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget.
+     *  Use negative 'offset' to access previous widgets.   */
+    fun setKeyboardFocusHere(offset: Int = 0) = with(currentWindow) {
+        focusIdxAllRequestNext = focusIdxAllCounter + 1 + offset
+        focusIdxTabRequestNext = Int.MAX_VALUE
+    }
 //IMGUI_API void          SetStateStorage(ImGuiStorage* tree);                                // replace tree state storage with our own (if you want to manipulate it yourself, typically clear subsection of it)
 //IMGUI_API ImGuiStorage* GetStateStorage();
 

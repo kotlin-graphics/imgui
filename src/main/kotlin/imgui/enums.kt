@@ -18,7 +18,7 @@ enum class WindowFlags(val i: Int) {
     /** Resize every window to its content every frame  */
     AlwaysAutoResize(1 shl 6),
     /** Show borders around windows and items   */
-    showBorders(1 shl 7),
+    ShowBorders(1 shl 7),
     /** Never load/save settings in .ini file   */
     NoSavedSettings(1 shl 8),
     /** Disable catching mouse or keyboard inputs   */
@@ -112,6 +112,11 @@ enum class InputTextFlags(val i: Int) {
     Multiline(1 shl 20)
 }
 
+infix fun InputTextFlags.or(b: InputTextFlags) = i or b.i
+infix fun Int.or(b: InputTextFlags) = this or b.i
+infix fun Int.has(b: InputTextFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: InputTextFlags) = (this and b.i) == 0
+
 /** Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader*()   */
 enum class TreeNodeFlags(val i: Int) {
 
@@ -170,7 +175,9 @@ enum class Key {
     UpArrow,
     /** for text edit   */
     DownArrow,
+
     PageUp,
+
     PageDown,
     /** for text edit   */
     Home,
@@ -199,6 +206,27 @@ enum class Key {
     COUNT;
 
     val i = ordinal
+
+    /** uses user's key indices as stored in the keys_down[] array. if repeat=true.
+     *  uses io.KeyRepeatDelay / KeyRepeatRate  */
+    fun isPressed(repeat: Boolean = true): Boolean {
+        if (i < 0) return false
+        assert(i in 0 until IO.keysDown.size)
+        val t = IO.keysDownDuration[i]
+        if (t == 0f)
+            return true
+
+        if (repeat && t > IO.keyRepeatDelay) {
+            val delay = IO.keyRepeatDelay
+            val rate = IO.keyRepeatRate
+            if ((((t - delay) % rate) > rate * 0.5f) != ((t - delay - IO.deltaTime) % rate) > rate * 0.5f)
+                return true
+        }
+        return false
+    }
+
+    /** map ImGuiKey_* values into user's key index. == io.KeyMap[key]   */
+    val index get() = i
 }
 
 /** Enumeration for PushStyleColor() / PopStyleColor()  */
@@ -303,7 +331,11 @@ enum class ColorEditMode(val i: Int) {
     UserSelectShowButton(-1),
     RGB(0),
     HSV(1),
-    HEX(2)
+    HEX(2);
+
+    companion object {
+        fun of(i: Int) = values().first { it.i == i }
+    }
 }
 
 /** Enumeration for GetMouseCursor()    */

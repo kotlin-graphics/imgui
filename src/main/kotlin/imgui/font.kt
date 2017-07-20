@@ -18,6 +18,7 @@ import uno.buffer.destroy
 import uno.convert.decode85
 import uno.stb.stb
 import java.nio.ByteBuffer
+import imgui.Context as g
 
 
 class FontConfig {
@@ -527,7 +528,7 @@ class FontAtlas {
                     arrayOf(Vec2(55, 0), Vec2(17), Vec2(9))) // ImGuiMouseCursor_ResizeNWSE
 
             for (type in 0 until MouseCursor.Count.i) {
-                val cursorData = Context.mouseCursorData[type]
+                val cursorData = g.mouseCursorData[type]
                 val pos = cursorDatas[type][0] + Vec2(r.x, r.y)
                 val size = cursorDatas[type][1]
                 cursorData.type = MouseCursor.of(type)
@@ -672,7 +673,9 @@ class Font {
     fun findGlyph(c: Int) = if (c in indexLookup.indices) glyphs[indexLookup[c]] else fallbackGlyph
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
-//    float                       GetCharAdvance(ImWchar c) const     { return ((int)c < IndexXAdvance.Size) ? IndexXAdvance[(int)c] : FallbackXAdvance; }
+
+    fun getCharAdvance(c:Char) = if(c < indexXAdvance.size) indexXAdvance[c.i] else fallbackXAdvance
+
     val isLoaded get() = wasInit { containerAtlas }
 
 
@@ -954,6 +957,15 @@ class Font {
         }
     }
 //    IMGUI_API void              AddRemapChar(ImWchar dst, ImWchar src, bool overwrite_dst = true); // Makes 'dst' character/glyph points to 'src' character/glyph. Currently needs to be called AFTER fonts have been built.
+
+    fun setCurrent() {
+        assert(isLoaded)    // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
+        assert(scale > 0.0f)
+        g.font = this
+        g.fontBaseSize = IO.fontGlobalScale * g.font.fontSize * g.font.scale
+        g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
+        g.fontTexUvWhitePixel = g.font.containerAtlas.texUvWhitePixel
+    }
 }
 
 val proggyCleanTtfCompressedDataBase85 by lazy {
