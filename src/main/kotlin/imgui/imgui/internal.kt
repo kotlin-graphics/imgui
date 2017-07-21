@@ -12,12 +12,12 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.contentRegionMax
 import imgui.ImGui.endGroup
 import imgui.ImGui.getColorU32
-import imgui.ImGui.textLineHeight
 import imgui.ImGui.pushFont
+import imgui.ImGui.textLineHeight
 import imgui.internal.*
 import imgui.stb.stb
-import imgui.Context as g
 import kotlin.apply
+import imgui.Context as g
 
 // We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
 // If this ever crash because g.CurrentWindow is NULL it means that either
@@ -1118,7 +1118,7 @@ interface imgui_internal {
 //                    valueChanged = true
 //                }
 //            }
-    }
+        }
 //
 //        // Render
 //        // Select which buffer we are going to display. When ImGuiInputTextFlags_NoLiveEdit is set 'buf' might still be the old value. We set buf to NULL to prevent accidental usage from now on.
@@ -1297,24 +1297,23 @@ interface imgui_internal {
 //        return enterPressed
 //        else
 //        return valueChanged
-    return false
-}
+        return false
+    }
 //IMGUI_API bool          InputFloatN(const char* label, float* v, int components, int decimal_precision, ImGuiInputTextFlags extra_flags);
 //IMGUI_API bool          InputIntN(const char* label, int* v, int components, ImGuiInputTextFlags extra_flags);
 //IMGUI_API bool          InputScalarEx(const char* label, ImGuiDataType data_type, void* data_ptr, void* step_ptr, void* step_fast_ptr, const char* scalar_format, ImGuiInputTextFlags extra_flags);
 
-/** Create text input in place of a slider (when CTRL+Clicking on slider)   */
-fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: FloatArray, id: Int, decimalPrecision: Int): Boolean {
+    /** Create text input in place of a slider (when CTRL+Clicking on slider)   */
+    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: FloatArray, id: Int, decimalPrecision: Int): Boolean {
 
-    val window = currentWindow
+        val window = currentWindow
 
-    // Our replacement widget will override the focus ID (registered previously to allow for a TAB focus to happen)
-    setActiveId(g.scalarAsInputTextId, window)
-    setHoveredId(0)
-    focusableItemUnregister(window)
+        // Our replacement widget will override the focus ID (registered previously to allow for a TAB focus to happen)
+        setActiveId(g.scalarAsInputTextId, window)
+        setHoveredId(0)
+        focusableItemUnregister(window)
 
-    val value = data.format(dataType, decimalPrecision)
-    print(data)
+        val value = data.format(dataType, decimalPrecision)
 //    val textValueChanged = inputTextEx(label, value, aabb.size, InputTextFlags.CharsDecimal or InputTextFlags.AutoSelectAll)
 //    if (g.ScalarAsInputTextId == 0) {
 //        // First frame
@@ -1327,8 +1326,8 @@ fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType
 //    }
 //    if (textValueChanged)
 //        return DataTypeApplyOpFromText(buf, GImGui->InputTextState.InitialText.begin(), data_type, data_ptr, NULL)
-    return false
-}
+        return false
+    }
 //
 //IMGUI_API bool          TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* label, const char* label_end = NULL);
 //IMGUI_API bool          TreeNodeBehaviorIsOpen(ImGuiID id, ImGuiTreeNodeFlags flags = 0);                     // Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging
@@ -1337,36 +1336,36 @@ fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType
 //IMGUI_API void          PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2 graph_size);
 //
 
-/** Parse display precision back from the display format string */
-fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
+    /** Parse display precision back from the display format string */
+    fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
 
-    var precision = defaultPrecision
-    if (fmt.contains('.')) {
-        val s = fmt.substringAfter('.')
-        if (s.isNotEmpty()) {
-//            precision = s[0]. parse
-            if (precision < 0 || precision > 10)
-                precision = defaultPrecision
+        var precision = defaultPrecision
+        if (fmt.contains('.')) {
+            val s = fmt.substringAfter('.')
+            if (s.isNotEmpty()) {
+                precision = Character.getNumericValue(s[0])
+                if (precision < 0 || precision > 10)
+                    precision = defaultPrecision
+            }
         }
+        return precision
     }
-    return precision
-}
 
-fun roundScalar(value: Float, decimalPrecision: Int): Float {
+    fun roundScalar(value: Float, decimalPrecision: Int): Float {
 
-    /*  Round past decimal precision
-        So when our value is 1.99999 with a precision of 0.001 we'll end up rounding to 2.0
-        FIXME: Investigate better rounding methods  */
-    val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
-    val minStep = if (decimalPrecision in 0..9) minSteps[decimalPrecision] else glm.pow(10f, -decimalPrecision.f)
-    val negative = value < 0f
-    var value = glm.abs(value)
-    val remainder = value % minStep
-    if (remainder <= minStep * 0.5f)
-        value -= remainder
-    else
-        value += minStep - remainder
-    return if (negative) -value else value
-}
+        /*  Round past decimal precision
+            So when our value is 1.99999 with a precision of 0.001 we'll end up rounding to 2.0
+            FIXME: Investigate better rounding methods  */
+        val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
+        val minStep = if (decimalPrecision in 0..9) minSteps[decimalPrecision] else glm.pow(10f, -decimalPrecision.f)
+        val negative = value < 0f
+        var value = glm.abs(value)
+        val remainder = value % minStep
+        if (remainder <= minStep * 0.5f)
+            value -= remainder
+        else
+            value += minStep - remainder
+        return if (negative) -value else value
+    }
 
 }
