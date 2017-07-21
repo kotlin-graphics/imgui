@@ -126,7 +126,8 @@ fun hash(data: String, dataSize: Int, seed: Int = 0): Int {
 //IMGUI_API void*         ImFileLoadToMemory(const char* filename, const char* file_open_mode, int* out_file_size = NULL, int padding_bytes = 0);
 //IMGUI_API FILE*         ImFileOpen(const char* filename, const char* file_open_mode);
 //IMGUI_API bool          ImIsPointInTriangle(const ImVec2& p, const ImVec2& a, const ImVec2& b, const ImVec2& c);
-//static inline bool      ImCharIsSpace(int c)            { return c == ' ' || c == '\t' || c == 0x3000; }
+
+fun isSpace(c: Char)  = c == ' ' || c == '\t' || c.i == 0x3000
 
 fun upperPowerOfTwo(v: Int): Int {
     var v = v - 1
@@ -153,7 +154,13 @@ fun strlenW(str: CharArray): Int {
     while (str[n] != 0.c) n++
     return n
 }
-//IMGUI_API const ImWchar*ImStrbolW(const ImWchar* buf_mid_line, const ImWchar* buf_begin); // Find beginning-of-line
+
+/** Find beginning-of-line  */
+fun String.beginOfLine(midLine: Int): Int {
+    var midLine = midLine
+    while (midLine > 0 && this[midLine - 1] != '\n') midLine--
+    return midLine
+}
 //IMGUI_API const char*   ImStristr(const char* haystack, const char* haystack_end, const char* needle, const char* needle_end);
 //IMGUI_API int           ImFormatString(char* buf, int buf_size, const char* fmt, ...) IM_PRINTFARGS(3);
 //IMGUI_API int           ImFormatStringV(char* buf, int buf_size, const char* fmt, va_list args);

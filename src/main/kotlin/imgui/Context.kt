@@ -134,7 +134,7 @@ object Context {
     // Widget state
     //------------------------------------------------------------------
 
-    var inputTextState = TextEditState()
+    var inputTextState = textEdit()
 
     var inputTextPasswordFont = Font()
     /** Temporary text input when CTRL+clicking on a slider, etc.   */

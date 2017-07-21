@@ -1,6 +1,5 @@
 package imgui
 
-import glm_.BYTES
 import glm_.f
 import glm_.glm
 import glm_.i
@@ -509,7 +508,7 @@ fun findBestPopupWindowPos(basePos: Vec2, window: Window, rInner: Rect): Vec2 {
 //}
 //static int              InputTextCalcTextLenAndLineCount(const char* text_begin, const char** out_text_end);
 
-fun inputTextCalcTextSizeW(text: String, textEnd: Int, /*const ImWchar** remaining = NULL, */ outOffset: Vec2? = null,
+fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = null, outOffset: Vec2? = null,
                            stopOnNewLine: Boolean = false): Vec2 {
 
     val font = g.font
@@ -532,7 +531,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, /*const ImWchar** remaini
         }
         if (c == '\r') continue
 
-        val charWidth = font.getCharAdvance(c) * scale
+        val charWidth = font.getCharAdvance_(c) * scale
         lineWidth += charWidth
     }
 
@@ -548,8 +547,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, /*const ImWchar** remaini
     if (lineWidth > 0 || textSize.y == 0f)  // whereas size.y will ignore the trailing \n
         textSize.y += lineHeight
 
-//    if (remaining) TODO check if needed
-//    *remaining = s
+    remaining?.set(0, s)
 
     return textSize
 }

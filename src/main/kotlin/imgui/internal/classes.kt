@@ -10,7 +10,6 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.keepAliveId
-import imgui.stb.stb
 import java.util.*
 import kotlin.collections.ArrayList
 import imgui.Context as g
@@ -212,127 +211,6 @@ class SimpleColumns {
 
 
     fun calcExtraSpace(availW: Float) = glm.max(0f, availW - width)
-}
-
-/** Internal state of the currently focused/edited text input box   */
-class TextEditState {
-
-    /** widget id owning the text state */
-    var id = 0
-    /** edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer. so we copy
-    into own buffer.    */
-    val text = ArrayList<Char>()
-    /** backup of end-user buffer at the time of focus (in UTF-8, unaltered)    */
-    val initialText = ArrayList<Char>()
-
-    val tempTextBuffer = ArrayList<Char>()
-    /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
-    var curLenA = 0
-
-    var curLenW = 0
-    /** end-user buffer size    */
-    var bufSizeA = 0
-
-    var scrollX = 0f
-
-    val stbState = stb.TexteditState()
-
-    var cursorAnim = 0f
-
-    var cursorFollow = false
-
-    var selectedAllMouseLock = false
-
-
-    /** After a user-input the cursor stays on for a while without blinking */
-    fun cursorAnimReset() {
-        cursorAnim = -0.3f
-    }
-
-    fun cursorClamp() = with(stbState) {
-        cursor = glm.min(cursor, curLenW)
-        selectStart = glm.min(selectStart, curLenW)
-        selectEnd = glm.min(selectEnd, curLenW)
-    }
-
-    //    fun hasSelection() { return StbState.select_start != StbState.select_end; }
-//    fun clearSelection(){ StbState.select_start = StbState.select_end = StbState.cursor; }
-
-    fun selectAll() {
-        stbState.selectStart = 0
-        stbState.selectEnd = curLenW
-        stbState.cursor = stbState.selectEnd
-        stbState.hasPreferredX = false
-    }
-
-    fun onKeyPressed(key: Int) {
-        TODO()
-//        stb_textedit_key(this, &StbState, key);
-//        CursorFollow = true;
-//        CursorAnimReset();
-    }
-
-    fun click(x: Float, y: Float) = with(stbState) {
-        cursor = locateCoord(x, y)
-        selectStart = cursor
-        selectEnd = cursor
-        hasPreferredX = false
-    }
-
-    /** traverse the layout to locate the nearest character to a display position   */
-    fun locateCoord(x: Float, y: Float): Int {
-        val r = stb.TexteditRow()
-        val n = curLenW
-        var baseY = 0f
-        var prevX = 0f
-        var i = 0
-
-        // search rows to find one that straddles 'y'
-        while (i < n) {
-            r.layout(this, i)
-            if (r.numChars <= 0)
-                return n
-
-            if (i == 0 && y < baseY + r.yMin)
-                return 0
-
-            if (y < baseY + r.yMax)
-                break
-
-            i += r.numChars
-            baseY += r.baselineYDelta
-        }
-
-        // below all text, return 'after' last character
-        if (i >= n)
-            return n
-
-        // check if it's before the beginning of the line
-        if (x < r.x0)
-            return i
-
-        // check if it's before the end of the line
-        if (x < r.x1) {
-            // search characters in row for one that straddles 'x'
-            prevX = r.x0
-            for (k in 0 until r.numChars) {
-                val w = width(i, k)
-                if (x < prevX + w) {
-                    return if (x < prevX + w / 2) k + i else k + i + 1
-                }
-                prevX += w
-            }
-            // shouldn't happen, but if it does, fall through to end-of-line case
-        }
-
-        // if the last character is a newline, return that. otherwise return 'after' the last character
-        return if (text[i + r.numChars - 1] == '\n') i + r.numChars - 1 else i + r.numChars
-    }
-
-    fun width(lineStartIdx: Int, charIdx: Int): Float {
-        val c = text[lineStartIdx + charIdx]
-        return if (c == '\n') -1f else g.font.getCharAdvance(c) * (g.fontSize / g.font.fontSize)
-    }
 }
 
 // Data saved in imgui.ini file
@@ -728,13 +606,13 @@ class Window(
                 .forEach { it to renderList }
     }
 
-    infix fun addTo_(sortedWindows: ArrayList<Window>) {
-        sortedWindows.add(this)
+    fun addToSortedBuffer() {
+        g.windowsSortBuffer.add(this)
         if (active) {
             val count = dc.childWindows.size
             if (count > 1)
                 dc.childWindows.sortWith(childWindowComparer)
-            dc.childWindows.filter { active }.forEach { it addTo_ sortedWindows }
+            dc.childWindows.filter { active }.forEach { it.addToSortedBuffer() }
         }
     }
 

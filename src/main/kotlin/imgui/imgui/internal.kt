@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import gli.has
 import gli.hasnt
 import glm_.f
 import glm_.glm
@@ -12,7 +13,9 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.contentRegionMax
 import imgui.ImGui.endGroup
 import imgui.ImGui.getColorU32
+import imgui.ImGui.popFont
 import imgui.ImGui.pushFont
+import imgui.ImGui.scrollMaxY
 import imgui.ImGui.textLineHeight
 import imgui.internal.*
 import imgui.stb.stb
@@ -115,7 +118,7 @@ interface imgui_internal {
         g.windowsSortBuffer.clear()
         g.windows.forEach {
             if (!it.active || it.flags hasnt WindowFlags.ChildWindow)  // if a child is active its parent will add it
-                it addTo_ g.windowsSortBuffer
+                it.addToSortedBuffer()
         }
         assert(g.windows.size == g.windowsSortBuffer.size)  // we done something wrong
         g.windows.clear()
@@ -240,7 +243,7 @@ interface imgui_internal {
         // Process keyboard input at this point: TAB, Shift-TAB switch focus
         // We can always TAB out of a widget that doesn't allow tabbing in.
         if (tabStop && window.focusIdxAllRequestNext == Int.MAX_VALUE && window.focusIdxTabRequestNext == Int.MAX_VALUE && isActive
-                && Key.Tab.isPressed())
+                && Key.Tab.isPressed)
         // Modulo on index will be applied at the end of frame once we've got the total counter of items.
             window.focusIdxTabRequestNext = window.focusIdxTabCounter + (if (IO.keyShift) (if (allowKeyboardFocus) -1 else 0) else +1)
 
@@ -730,7 +733,7 @@ interface imgui_internal {
 //IMGUI_API bool          DragIntN(const char* label, int* v, int components, float v_speed, int v_min, int v_max, const char* display_format);
 
 
-    fun inputTextEx(label: String, buf: CharArray, bufSize: Int, sizeArg: Vec2, flags: Int
+    fun inputTextEx(label: String, buf: Array<String>, sizeArg: Vec2, flags: Int
             /*, ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean {
 
         val window = currentWindow
@@ -742,7 +745,7 @@ interface imgui_internal {
         assert((flags has InputTextFlags.CallbackCompletion) xor (flags has InputTextFlags.AllowTabInput))
 
         val isMultiline = flags has InputTextFlags.Multiline
-        val isEditable = flags has InputTextFlags.ReadOnly
+        val isEditable = flags hasnt InputTextFlags.ReadOnly
         val isPassword = flags has InputTextFlags.Password
 
         if (isMultiline) // Open group before calling GetID() because groups tracks id created during their spawn
@@ -810,14 +813,17 @@ interface imgui_internal {
                     Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
                 val prevLenW = editState.curLenW
-                // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
-                editState.text.add('\u0000')
-                // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
-                editState.initialText.add('\u0000')
-                for (i in 0 until bufSize) editState.initialText.add(buf[i])
+                // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
+//                editState.text.add('\u0000')
+                // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
+//                editState.initialText.add('\u0000')
+                editState.initialText = buf[0]
                 var bufEnd = 0
-                editState.curLenW = buf.size //TODO check ImTextStrFromUtf8(editState.Text.Data, editState.Text.Size, buf, NULL, & buf_end)
-                editState.curLenA = buf.size //TODO check (int)(bufEnd - buf) // We can't get the result from ImFormatString() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
+                editState.curLenW = buf[0].length
+                editState.text = buf[0]
+                /*  We can't get the result from ImFormatString() above because it is not UTF-8 aware.
+                    Here we'll cut off malformed UTF-8.                 */
+                editState.curLenA = buf[0].length //TODO check (int)(bufEnd - buf)
                 editState.cursorAnimReset()
 
                 /*  Preserve cursor position and undo/redo stack if we come back to same widget
@@ -831,12 +837,12 @@ interface imgui_internal {
                 else {
                     editState.id = id
                     editState.scrollX = 0f
-                    editState.stbState.clear(!isMultiline)
+                    editState.state.clear(!isMultiline)
                     if (!isMultiline && focusRequestedByCode)
                         selectAll = true
                 }
                 if (flags has InputTextFlags.AlwaysInsertMode)
-                    editState.stbState.insertMode = true
+                    editState.state.insertMode = true
                 if (!isMultiline && (focusRequestedByTab || (userClicked && IO.keyCtrl)))
                     selectAll = true
             }
@@ -854,16 +860,16 @@ interface imgui_internal {
 
             if (!isEditable && !g.activeIdIsJustActivated) {
 
-                // When read-only we always use the live data passed to the function
-                editState.text.add('\u0000')
                 TODO()
+                // When read-only we always use the live data passed to the function
+//                editState.text.add('\u0000')
 //                const char* buf_end = NULL
 //                        editState.CurLenW = ImTextStrFromUtf8(editState.Text.Data, editState.Text.Size, buf, NULL, &buf_end)
 //                editState.CurLenA = (int)(buf_end - buf)
 //                editState.CursorClamp()
             }
 
-            editState.bufSizeA = bufSize
+            editState.bufSizeA = buf[0].length
 
             /*  Although we are active we don't prevent mouse from hovering other elements unless we are interacting
                 right now with the widget.
@@ -887,9 +893,8 @@ interface imgui_internal {
                 editState.onKeyPressed(stb.TEXTEDIT_K_WORDLEFT)
                 editState.onKeyPressed(stb.TEXTEDIT_K_WORDRIGHT or stb.TEXTEDIT_K_SHIFT)
             } else if (IO.mouseClicked[0] && !editState.selectedAllMouseLock) {
-                TODO()
-//                stb.texteditClick(editState, & editState . StbState, mouse_x, mouse_y)
-//                editState.CursorAnimReset()
+                editState.texteditClick(mouseX, mouseY)
+                editState.cursorAnimReset()
             } else if (IO.mouseDown[0] && !editState.selectedAllMouseLock && (IO.mouseDelta.x != 0f || IO.mouseDelta.y != 0f)) {
                 TODO()
 //                stb_textedit_drag(& editState, &editState.StbState, mouse_x, mouse_y)
@@ -929,127 +934,155 @@ interface imgui_internal {
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
             val isStartendKeyDown = IO.osxBehaviors && IO.keySuper && !IO.keyCtrl && !IO.keyAlt
 
-//            when {
-//                Key.LeftArrow.isPressed() -> editState.onKeyPressed(
-//                        when {
-//                            isStartendKeyDown -> stb.TEXTEDIT_K_LINESTART
-//                            isWordmoveKeyDown -> stb.TEXTEDIT_K_WORDLEFT
-//                            else -> stb.TEXTEDIT_K_LEFT
-//                        } or kMask)
-//                Key.RightArrow.isPressed() -> editState.onKeyPressed(
-//                        when {
-//                            isStartendKeyDown -> stb.TEXTEDIT_K_LINEEND
-//                            isWordmoveKeyDown -> stb.TEXTEDIT_K_WORDRIGHT
-//                            else -> stb.TEXTEDIT_K_RIGHT
-//                        } or kMask)
-//                Key.UpArrow.isPressed() && isMultiline ->
-//                    if (IO.keyCtrl)
-//                        drawWindow.setScrollY(glm.max(drawWindow.scroll.y - g.fontSize, 0f))
-//                    else
-//                        editState.onKeyPressed((if (isStartendKeyDown) stb.TEXTEDIT_K_TEXTSTART else stb.TEXTEDIT_K_UP) or kMask)
-//                Key.DownArrow.isPressed() && isMultiline ->
-//                    if (IO.keyCtrl)
-//                        drawWindow.setScrollY(), glm.min(drawWindow.scroll.y + g.fontSize, getScrollMaxY())); else editState.OnKeyPressed((isStartendKeyDown ? STB_TEXTEDIT_K_TEXTEND : STB_TEXTEDIT_K_DOWN
-//                    )
-//                    | kMask
-//                    )
-//            }
-//            else if (IsKeyPressedMap(ImGuiKey_Home)) {
-//                editState.OnKeyPressed(io.KeyCtrl ? STB_TEXTEDIT_K_TEXTSTART | kMask : STB_TEXTEDIT_K_LINESTART | kMask)
-//            } else if (IsKeyPressedMap(ImGuiKey_End)) {
-//                editState.OnKeyPressed(io.KeyCtrl ? STB_TEXTEDIT_K_TEXTEND | kMask : STB_TEXTEDIT_K_LINEEND | kMask)
-//            } else if (IsKeyPressedMap(ImGuiKey_Delete) && isEditable) {
-//                editState.OnKeyPressed(STB_TEXTEDIT_K_DELETE | kMask)
-//            } else if (IsKeyPressedMap(ImGuiKey_Backspace) && isEditable) {
-//                if (!editState.HasSelection()) {
-//                    if (isWordmoveKeyDown) editState.OnKeyPressed(STB_TEXTEDIT_K_WORDLEFT| STB_TEXTEDIT_K_SHIFT)
-//                    else if (io.OSXBehaviors && io.KeySuper && !io.KeyAlt && !io.KeyCtrl) editState.OnKeyPressed(STB_TEXTEDIT_K_LINESTART| STB_TEXTEDIT_K_SHIFT)
-//                }
-//                editState.OnKeyPressed(STB_TEXTEDIT_K_BACKSPACE | kMask)
-//            } else if (IsKeyPressedMap(ImGuiKey_Enter)) {
-//                bool ctrl_enter_for_new_line =(flags & ImGuiInputTextFlags_CtrlEnterForNewLine) != 0
-//                if (!isMultiline || (ctrl_enter_for_new_line && !io.KeyCtrl) || (!ctrl_enter_for_new_line && io.KeyCtrl)) {
-//                    ClearActiveID()
-//                    enterPressed = true
-//                } else if (isEditable) {
-//                    unsigned int c = '\n' // Insert new line
+            when {
+                Key.LeftArrow.isPressed -> editState.onKeyPressed(
+                        when {
+                            isStartendKeyDown -> stb.TEXTEDIT_K_LINESTART
+                            isWordmoveKeyDown -> stb.TEXTEDIT_K_WORDLEFT
+                            else -> stb.TEXTEDIT_K_LEFT
+                        } or kMask)
+                Key.RightArrow.isPressed -> editState.onKeyPressed(
+                        when {
+                            isStartendKeyDown -> stb.TEXTEDIT_K_LINEEND
+                            isWordmoveKeyDown -> stb.TEXTEDIT_K_WORDRIGHT
+                            else -> stb.TEXTEDIT_K_RIGHT
+                        } or kMask)
+                Key.UpArrow.isPressed && isMultiline ->
+                    if (IO.keyCtrl)
+                        drawWindow.setScrollY(glm.max(drawWindow.scroll.y - g.fontSize, 0f))
+                    else
+                        editState.onKeyPressed((if (isStartendKeyDown) stb.TEXTEDIT_K_TEXTSTART else stb.TEXTEDIT_K_UP) or kMask)
+                Key.DownArrow.isPressed && isMultiline ->
+                    if (IO.keyCtrl)
+                        drawWindow.setScrollY(glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY))
+                    else
+                        editState.onKeyPressed((if (isStartendKeyDown) stb.TEXTEDIT_K_TEXTEND else stb.TEXTEDIT_K_DOWN) or kMask)
+                Key.Home.isPressed -> editState.onKeyPressed((if (IO.keyCtrl) stb.TEXTEDIT_K_TEXTSTART else stb.TEXTEDIT_K_LINESTART) or kMask)
+                Key.End.isPressed -> editState.onKeyPressed((if (IO.keyCtrl) stb.TEXTEDIT_K_TEXTEND else stb.TEXTEDIT_K_LINEEND) or kMask)
+                Key.Delete.isPressed && isEditable -> editState.onKeyPressed(stb.TEXTEDIT_K_DELETE or kMask)
+                Key.Backspace.isPressed && isEditable -> {
+                    if (!editState.hasSelection) {
+                        if (isWordmoveKeyDown)
+                            editState.onKeyPressed(stb.TEXTEDIT_K_WORDLEFT or stb.TEXTEDIT_K_SHIFT)
+                        else if (IO.osxBehaviors && IO.keySuper && !IO.keyAlt && !IO.keyCtrl)
+                            editState.onKeyPressed(stb.TEXTEDIT_K_LINESTART or stb.TEXTEDIT_K_SHIFT)
+                    }
+                    editState.onKeyPressed(stb.TEXTEDIT_K_BACKSPACE or kMask)
+                }
+                Key.Enter.isPressed -> {
+                    val ctrlEnterForNewLine = flags has InputTextFlags.CtrlEnterForNewLine
+                    if (!isMultiline || (ctrlEnterForNewLine && !IO.keyCtrl) || (!ctrlEnterForNewLine && IO.keyCtrl)) {
+                        clearActiveId()
+                        enterPressed = true
+                    } else if (isEditable) {
+                        val c = '\n' // Insert new line
+                        TODO()
+//                        if (inputTextFilterCharacter(& c, flags, callback, user_data))
+//                        editState.OnKeyPressed((int) c)
+                    }
+                }
+                flags has InputTextFlags.AllowTabInput && Key.Tab.isPressed && !IO.keyCtrl && !IO.keyShift && !IO.keyAlt && isEditable -> {
+                    val c = '\t' // Insert TAB
+                    TODO()
 //                    if (InputTextFilterCharacter(& c, flags, callback, user_data))
 //                    editState.OnKeyPressed((int) c)
-//                }
-//            } else if ((flags & ImGuiInputTextFlags_AllowTabInput) && IsKeyPressedMap(ImGuiKey_Tab) && !io.KeyCtrl && !io.KeyShift && !io.KeyAlt && is_editable) {
-//                unsigned int c = '\t' // Insert TAB
-//                if (InputTextFilterCharacter(& c, flags, callback, user_data))
-//                editState.OnKeyPressed((int) c)
-//            }
-//            else if (IsKeyPressedMap(ImGuiKey_Escape)) {
-//                ClearActiveID(); cancelEdit = true; } else if (isShortcutKeyOnly && IsKeyPressedMap(ImGuiKey_Z) && isEditable) {
-//                editState.OnKeyPressed(STB_TEXTEDIT_K_UNDO); editState.ClearSelection(); } else if (isShortcutKeyOnly && IsKeyPressedMap(ImGuiKey_Y) && isEditable) {
-//                editState.OnKeyPressed(STB_TEXTEDIT_K_REDO); editState.ClearSelection(); } else if (isShortcutKeyOnly && IsKeyPressedMap(ImGuiKey_A)) {
-//                editState.SelectAll(); editState.CursorFollow = true; } else if (isShortcutKeyOnly && !isPassword && ((IsKeyPressedMap(ImGuiKey_X) && isEditable) || IsKeyPressedMap(ImGuiKey_C)) && (!isMultiline || editState.HasSelection())) {
-//                // Cut, Copy
-//                const bool cut = IsKeyPressedMap(ImGuiKey_X)
-//                if (cut && !editState.HasSelection())
-//                    editState.SelectAll()
+                }
+                Key.Escape.isPressed -> {
+                    clearActiveId()
+                    cancelEdit = true
+                }
+                isShortcutKeyOnly -> when {
+
+                    Key.Z.isPressed && isEditable -> {
+                        editState.onKeyPressed(stb.TEXTEDIT_K_UNDO)
+                        editState.clearSelection()
+                    }
+                    Key.Y.isPressed && isEditable -> {
+                        editState.onKeyPressed(stb.TEXTEDIT_K_REDO)
+                        editState.clearSelection()
+                    }
+                    Key.A.isPressed -> {
+                        editState.selectAll()
+                        editState.cursorFollow = true
+                    }
+                    !isPassword && ((Key.X.isPressed && isEditable) || Key.C.isPressed) && (!isMultiline || editState.hasSelection) -> {
+                        // Cut, Copy
+                        val cut = Key.X.isPressed
+                        if (cut && !editState.hasSelection)
+                            editState.selectAll()
+
+                        TODO()
+//                        if (IO.setClipboardTextFn) {
+//                            val ib =
+//                                    if (editState.hasSelection) glm.min(editState.state.selectStart, editState.state.selectEnd)
+//                                    else 0
+//                            val ie =
+//                                    if(editState.hasSelection) glm.max(editState.state.selectStart, editState.state.selectEnd)
+//                                    else editState.curLenW
+//                            editState.TempTextBuffer.resize((ie - ib) * 4 + 1)
+//                            ImTextStrToUtf8(editState.TempTextBuffer.Data, editState.TempTextBuffer.Size, editState.Text.Data + ib, editState.Text.Data + ie)
+//                            SetClipboardText(editState.TempTextBuffer.Data)
+//                        }
 //
-//                if (io.SetClipboardTextFn) {
-//                    const int ib = editState.HasSelection() ? ImMin(editState.StbState.select_start, editState.StbState.select_end) : 0
-//                    const int ie = editState.HasSelection() ? ImMax(editState.StbState.select_start, editState.StbState.select_end) : editState.CurLenW
-//                    editState.TempTextBuffer.resize((ie - ib) * 4 + 1)
-//                    ImTextStrToUtf8(editState.TempTextBuffer.Data, editState.TempTextBuffer.Size, editState.Text.Data + ib, editState.Text.Data + ie)
-//                    SetClipboardText(editState.TempTextBuffer.Data)
-//                }
-//
-//                if (cut) {
-//                    editState.CursorFollow = true
-//                    stb_textedit_cut(& editState, &editState.StbState)
-//                }
-//            } else if (isShortcutKeyOnly && IsKeyPressedMap(ImGuiKey_V) && isEditable) {
-//                // Paste
-//                if (const char * clipboard = GetClipboardText ()) {
-//                    // Filter pasted buffer
-//                    const int clipboard_len = (int) strlen (clipboard)
-//                    ImWchar * clipboard_filtered = (ImWchar *) ImGui ::MemAlloc((clipboard_len + 1) * sizeof(ImWchar))
-//                    int clipboard_filtered_len = 0
-//                    for (const char* s = clipboard; *s; )
-//                    {
-//                        unsigned int c
-//                        s += ImTextCharFromUtf8(& c, s, NULL)
-//                        if (c == 0)
-//                            break
-//                        if (c >= 0x10000 || !InputTextFilterCharacter(& c, flags, callback, user_data))
-//                        continue
-//                        clipboard_filtered[clipboard_filtered_len++] = (ImWchar) c
-//                    }
-//                    clipboard_filtered[clipboard_filtered_len] = 0
-//                    if (clipboard_filtered_len > 0) // If everything was filtered, ignore the pasting operation
-//                    {
-//                        stb_textedit_paste(& editState, &editState.StbState, clipboard_filtered, clipboard_filtered_len)
-//                        editState.CursorFollow = true
-//                    }
-//                    ImGui::MemFree(clipboard_filtered)
-//                }
-//            }
-//        }
-//
-//            if (cancelEdit) {
-//                // Restore initial value
-//                if (isEditable) {
-//                    ImStrncpy(buf, editState.InitialText.Data, buf_size)
-//                    valueChanged = true
-//                }
-//            } else {
-//                // Apply new value immediately - copy modified buffer back
-//                // Note that as soon as the input box is active, the in-widget value gets priority over any underlying modification of the input buffer
-//                // FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above incorrect.
-//                // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
-//                if (isEditable) {
-//                    editState.TempTextBuffer.resize(editState.Text.Size * 4)
-//                    ImTextStrToUtf8(editState.TempTextBuffer.Data, editState.TempTextBuffer.Size, editState.Text.Data, NULL)
-//                }
-//
-//                // User callback
-//                if ((flags & (ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackAlways)) != 0)
-//                {
+//                        if (cut) {
+//                            editState.CursorFollow = true
+//                            stb_textedit_cut(& editState, &editState.StbState)
+//                        }
+                    }
+                    Key.V.isPressed && isEditable -> {
+                        TODO()
+
+//                        val clipboard = getClipboardText ()
+//                        // Paste
+//                        if (clipboard) {
+//                            // Filter pasted buffer
+//                            const int clipboard_len = (int) strlen (clipboard)
+//                            ImWchar * clipboard_filtered = (ImWchar *) ImGui ::MemAlloc((clipboard_len + 1) * sizeof(ImWchar))
+//                            int clipboard_filtered_len = 0
+//                            for (const char* s = clipboard; *s; )
+//                            {
+//                                unsigned int c
+//                                s += ImTextCharFromUtf8(& c, s, NULL)
+//                                if (c == 0)
+//                                    break
+//                                if (c >= 0x10000 || !InputTextFilterCharacter(& c, flags, callback, user_data))
+//                                continue
+//                                clipboard_filtered[clipboard_filtered_len++] = (ImWchar) c
+//                            }
+//                            clipboard_filtered[clipboard_filtered_len] = 0
+//                            if (clipboard_filtered_len > 0) // If everything was filtered, ignore the pasting operation
+//                            {
+//                                stb_textedit_paste(& editState, &editState.StbState, clipboard_filtered, clipboard_filtered_len)
+//                                editState.CursorFollow = true
+//                            }
+//                            ImGui::MemFree(clipboard_filtered)
+//                        }
+                    }
+                }
+            }
+
+            if (cancelEdit) {
+                // Restore initial value
+                if (isEditable) {
+                    TODO()
+//                        ImStrncpy(buf, editState.InitialText.Data, buf_size)
+//                        valueChanged = true
+                }
+            } else {
+                /*  Apply new value immediately - copy modified buffer back
+                    Note that as soon as the input box is active, the in-widget value gets priority over any
+                    underlying modification of the input buffer
+                    FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above
+                    incorrect.
+                    FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from
+                    the stb_textedit callbacks. */
+                if (isEditable)
+                    editState.tempTextBuffer = editState.text.toCharArray()
+
+                // User callback
+                if (flags has (InputTextFlags.CallbackCompletion or InputTextFlags.CallbackHistory or InputTextFlags.CallbackAlways)) {
+
+                    TODO()
 //                    IM_ASSERT(callback != NULL)
 //
 //                    // The reason we specify the usage semantic (Completion/History) is that Completion needs to disable keyboard TABBING at the moment.
@@ -1110,194 +1143,191 @@ interface imgui_internal {
 //                            editState.CursorAnimReset()
 //                        }
 //                    }
-//                }
-//
-//                // Copy back to user buffer
-//                if (isEditable && strcmp(editState.TempTextBuffer.Data, buf) != 0) {
-//                    ImStrncpy(buf, editState.TempTextBuffer.Data, buf_size)
-//                    valueChanged = true
-//                }
-//            }
+                }
+
+                // Copy back to user buffer
+                if (isEditable && String(editState.tempTextBuffer) != buf[0]) {
+                    buf[0] = String(editState.tempTextBuffer)
+                    valueChanged = true
+                }
+            }
         }
-//
-//        // Render
-//        // Select which buffer we are going to display. When ImGuiInputTextFlags_NoLiveEdit is set 'buf' might still be the old value. We set buf to NULL to prevent accidental usage from now on.
-//        const char* buf_display = (g.ActiveId == id && isEditable) ? editState.TempTextBuffer.Data : buf; buf = NULL
-//
-//        if (!isMultiline)
-//            RenderFrame(frameBb.Min, frameBb.Max, GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding)
-//
-//        const ImVec4 clip_rect(frameBb.Min.x, frameBb.Min.y, frameBb.Min.x + size.x, frameBb.Min.y + size.y) // Not using frameBb.Max because we have adjusted size
-//        ImVec2 render_pos = is_multiline ? drawWindow->DC.CursorPos : frameBb.Min + style.FramePadding
-//        ImVec2 text_size(0.f, 0.f)
-//        const bool is_currently_scrolling = (editState.Id == id && isMultiline && g.ActiveId == drawWindow->GetIDNoKeepAlive("#SCROLLY"))
-//        if (g.ActiveId == id || is_currently_scrolling)
-//        {
-//            editState.CursorAnim += io.DeltaTime
-//
-//            // This is going to be messy. We need to:
-//            // - Display the text (this alone can be more easily clipped)
-//            // - Handle scrolling, highlight selection, display cursor (those all requires some form of 1d->2d cursor position calculation)
-//            // - Measure text height (for scrollbar)
-//            // We are attempting to do most of that in **one main pass** to minimize the computation cost (non-negligible for large amount of text) + 2nd pass for selection rendering (we could merge them by an extra refactoring effort)
-//            // FIXME: This should occur on buf_display but we'd need to maintain cursor/select_start/select_end for UTF-8.
-//            const ImWchar* text_begin = editState.Text.Data
-//                    ImVec2 cursor_offset, select_start_offset;
-//
-//            {
-//                // Count lines + find lines numbers straddling 'cursor' and 'select_start' position.
-//                const ImWchar* searches_input_ptr[2]
-//                searches_input_ptr[0] = text_begin + editState.StbState.cursor
-//                searches_input_ptr[1] = NULL
-//                int searches_remaining = 1
-//                int searches_result_line_number[2] = { -1, -999 }
-//                if (editState.StbState.select_start != editState.StbState.select_end)
-//                {
-//                    searches_input_ptr[1] = text_begin + ImMin(editState.StbState.select_start, editState.StbState.select_end)
-//                    searches_result_line_number[1] = -1
-//                    searches_remaining++
-//                }
-//
-//                // Iterate all lines to find our line numbers
-//                // In multi-line mode, we never exit the loop until all lines are counted, so add one extra to the searches_remaining counter.
-//                searches_remaining += isMultiline ? 1 : 0
-//                int line_count = 0
-//                for (const ImWchar* s = text_begin; *s != 0; s++)
-//                if (*s == '\n')
-//                {
-//                    line_count++
-//                    if (searches_result_line_number[0] == -1 && s >= searches_input_ptr[0]) { searches_result_line_number[0] = line_count; if (--searches_remaining <= 0) break; }
-//                    if (searches_result_line_number[1] == -1 && s >= searches_input_ptr[1]) { searches_result_line_number[1] = line_count; if (--searches_remaining <= 0) break; }
-//                }
-//                line_count++
-//                if (searches_result_line_number[0] == -1) searches_result_line_number[0] = line_count
-//                if (searches_result_line_number[1] == -1) searches_result_line_number[1] = line_count
-//
-//                // Calculate 2d position by finding the beginning of the line and measuring distance
-//                cursor_offset.x = InputTextCalcTextSizeW(ImStrbolW(searches_input_ptr[0], text_begin), searches_input_ptr[0]).x
-//                cursor_offset.y = searches_result_line_number[0] * g.FontSize
-//                if (searches_result_line_number[1] >= 0)
-//                {
-//                    select_start_offset.x = InputTextCalcTextSizeW(ImStrbolW(searches_input_ptr[1], text_begin), searches_input_ptr[1]).x
-//                    select_start_offset.y = searches_result_line_number[1] * g.FontSize
-//                }
-//
-//                // Store text height (note that we haven't calculated text width at all, see GitHub issues #383, #1224)
-//                if (isMultiline)
-//                    text_size = ImVec2(size.x, line_count * g.FontSize)
-//            }
-//
-//            // Scroll
-//            if (editState.CursorFollow)
-//            {
-//                // Horizontal scroll in chunks of quarter width
-//                if (!(flags & ImGuiInputTextFlags_NoHorizontalScroll))
-//                {
-//                    const float scroll_increment_x = size.x * 0.25f
-//                    if (cursor_offset.x < editState.ScrollX)
-//                        editState.ScrollX = (float)(int)ImMax(0.0f, cursor_offset.x - scroll_increment_x)
-//                    else if (cursor_offset.x - size.x >= editState.ScrollX)
-//                    editState.ScrollX = (float)(int)(cursor_offset.x - size.x + scroll_increment_x)
-//                }
-//                else
-//                {
-//                    editState.ScrollX = 0.0f
-//                }
-//
-//                // Vertical scroll
-//                if (isMultiline)
-//                {
-//                    float scroll_y = drawWindow->Scroll.y
-//                    if (cursor_offset.y - g.FontSize < scroll_y)
-//                        scroll_y = ImMax(0.0f, cursor_offset.y - g.FontSize)
-//                    else if (cursor_offset.y - size.y >= scroll_y)
-//                        scroll_y = cursor_offset.y - size.y
-//                    drawWindow->DC.CursorPos.y += (drawWindow->Scroll.y - scroll_y)   // To avoid a frame of lag
-//                    drawWindow->Scroll.y = scroll_y
-//                    render_pos.y = drawWindow->DC.CursorPos.y
-//                }
-//            }
-//            editState.CursorFollow = false
-//            const ImVec2 render_scroll = ImVec2(editState.ScrollX, 0.0f)
-//
-//            // Draw selection
-//            if (editState.StbState.select_start != editState.StbState.select_end)
-//            {
-//                const ImWchar* text_selected_begin = text_begin + ImMin(editState.StbState.select_start, editState.StbState.select_end)
-//                const ImWchar* text_selected_end = text_begin + ImMax(editState.StbState.select_start, editState.StbState.select_end)
-//
-//                float bg_offy_up = is_multiline ? 0.0f : -1.0f    // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.
-//                float bg_offy_dn = is_multiline ? 0.0f : 2.0f
-//                ImU32 bg_color = GetColorU32(ImGuiCol_TextSelectedBg)
-//                ImVec2 rect_pos = render_pos + select_start_offset - render_scroll
-//                for (const ImWchar* p = text_selected_begin; p < text_selected_end; )
-//                {
-//                    if (rect_pos.y > clip_rect.w + g.FontSize)
-//                        break
-//                    if (rect_pos.y < clip_rect.y)
-//                    {
-//                        while (p < text_selected_end)
-//                            if (*p++ == '\n')
-//                        break
-//                    }
-//                    else
-//                    {
-//                        ImVec2 rect_size = InputTextCalcTextSizeW(p, text_selected_end, &p, NULL, true)
-//                        if (rect_size.x <= 0.0f) rect_size.x = (float)(int)(g.Font->GetCharAdvance((unsigned short)' ') * 0.50f) // So we can see selected empty lines
-//                        ImRect rect(rect_pos + ImVec2(0.0f, bg_offy_up - g.FontSize), rect_pos +ImVec2(rect_size.x, bg_offy_dn))
-//                        rect.Clip(clip_rect)
-//                        if (rect.Overlaps(clip_rect))
-//                            drawWindow->DrawList->AddRectFilled(rect.Min, rect.Max, bg_color)
-//                    }
-//                    rect_pos.x = render_pos.x - render_scroll.x
-//                    rect_pos.y += g.FontSize
-//                }
-//            }
-//
-//            drawWindow->DrawList->AddText(g.Font, g.FontSize, render_pos - render_scroll, GetColorU32(ImGuiCol_Text), buf_display, buf_display + editState.CurLenA, 0.0f, is_multiline ? NULL : &clip_rect)
-//
-//            // Draw blinking cursor
-//            bool cursor_is_visible = (g.InputTextState.CursorAnim <= 0.0f) || fmodf(g.InputTextState.CursorAnim, 1.20f) <= 0.80f
-//            ImVec2 cursor_screen_pos = render_pos + cursor_offset - render_scroll
-//            ImRect cursor_screen_rect(cursor_screen_pos.x, cursor_screen_pos.y-g.FontSize+0.5f, cursor_screen_pos.x+1.0f, cursor_screen_pos.y-1.5f)
-//            if (cursor_is_visible && cursor_screen_rect.Overlaps(clip_rect))
-//                drawWindow->DrawList->AddLine(cursor_screen_rect.Min, cursor_screen_rect.GetBL(), GetColorU32(ImGuiCol_Text))
-//
-//            // Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor. Bit of an extra nicety.)
-//            if (isEditable)
-//                g.OsImePosRequest = ImVec2(cursor_screen_pos.x - 1, cursor_screen_pos.y - g.FontSize)
-//        }
-//        else
-//        {
-//            // Render text only
+
+        // ------------------------- Render -------------------------
+        /*  Select which buffer we are going to display. When ImGuiInputTextFlags_NoLiveEdit is set 'buf' might still
+            be the old value. We set buf to NULL to prevent accidental usage from now on.         */
+        val bufDisplay = if (g.activeId == id && isEditable) editState.tempTextBuffer else buf[0].toCharArray();
+        buf[0] = ""
+
+        if (!isMultiline)
+            renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, Style.frameRounding)
+
+        val clipRect = Vec4(frameBb.min, frameBb.min + size) // Not using frameBb.Max because we have adjusted size
+        val renderPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + Style.framePadding
+        val textSize = Vec2()
+        val isCurrentlyScrolling = editState.id == id && isMultiline && g.activeId == drawWindow.getIdNoKeepAlive("#SCROLLY")
+        if (g.activeId == id || isCurrentlyScrolling) {
+
+            editState.cursorAnim += IO.deltaTime
+
+            /*  This is going to be messy. We need to:
+                    - Display the text (this alone can be more easily clipped)
+                    - Handle scrolling, highlight selection, display cursor (those all requires some form of 1d->2d
+                        cursor position calculation)
+                    - Measure text height (for scrollbar)
+                We are attempting to do most of that in **one main pass** to minimize the computation cost
+                (non-negligible for large amount of text) + 2nd pass for selection rendering (we could merge them by an
+                extra refactoring effort)   */
+            // FIXME: This should occur on bufDisplay but we'd need to maintain cursor/select_start/select_end for UTF-8.
+            val text = editState.text
+            val cursorOffset = Vec2()
+            val selectStartOffset = Vec2()
+
+            run {
+                // Count lines + find lines numbers straddling 'cursor' and 'select_start' position.
+                val searchesInputPtr = intArrayOf(0 + editState.state.cursor, -1)
+                var searchesRemaining = 1
+                val searchesResultLineNumber = intArrayOf(-1, -999)
+                if (editState.state.selectStart != editState.state.selectEnd) {
+                    searchesInputPtr[1] = glm.min(editState.state.selectStart, editState.state.selectEnd)
+                    searchesResultLineNumber[1] = -1
+                    searchesRemaining++
+                }
+
+                // Iterate all lines to find our line numbers
+                // In multi-line mode, we never exit the loop until all lines are counted, so add one extra to the searchesRemaining counter.
+                if (isMultiline) searchesRemaining++
+                var lineCount = 0
+                for (s in text.indices)
+                    if (text[s] == '\n') {
+                        lineCount++
+                        if (searchesResultLineNumber[0] == -1 && s >= searchesInputPtr[0]) {
+                            searchesResultLineNumber[0] = lineCount
+                            if (--searchesRemaining <= 0) break
+                        }
+                        if (searchesResultLineNumber[1] == -1 && s >= searchesInputPtr[1]) {
+                            searchesResultLineNumber[1] = lineCount
+                            if (--searchesRemaining <= 0) break
+                        }
+                    }
+                lineCount++
+                if (searchesResultLineNumber[0] == -1) searchesResultLineNumber[0] = lineCount
+                if (searchesResultLineNumber[1] == -1) searchesResultLineNumber[1] = lineCount
+
+                // Calculate 2d position by finding the beginning of the line and measuring distance
+                cursorOffset.x = inputTextCalcTextSizeW(text.substring(text.beginOfLine(searchesInputPtr[0])), searchesInputPtr[0]).x
+                cursorOffset.y = searchesResultLineNumber[0] * g.fontSize
+                if (searchesResultLineNumber[1] >= 0) {
+                    selectStartOffset.x = inputTextCalcTextSizeW(text.substring(text.beginOfLine(searchesInputPtr[1])), searchesInputPtr[1]).x
+                    selectStartOffset.y = searchesResultLineNumber[1] * g.fontSize
+                }
+
+                // Store text height (note that we haven't calculated text width at all, see GitHub issues #383, #1224)
+                if (isMultiline)
+                    textSize.put(size.x, lineCount * g.fontSize)
+            }
+
+            // Scroll
+            if (editState.cursorFollow) {
+                // Horizontal scroll in chunks of quarter width
+                if (flags hasnt InputTextFlags.NoHorizontalScroll) {
+                    val scrollIncrementX = size.x * 0.25f
+                    if (cursorOffset.x < editState.scrollX)
+                        editState.scrollX = (glm.max(0f, cursorOffset.x - scrollIncrementX)).i.f
+                    else if (cursorOffset.x - size.x >= editState.scrollX)
+                        editState.scrollX = (cursorOffset.x - size.x + scrollIncrementX).i.f
+                } else
+                    editState.scrollX = 0f
+
+                // Vertical scroll
+                if (isMultiline) {
+                    var scrollY = drawWindow.scroll.y
+                    if (cursorOffset.y - g.fontSize < scrollY)
+                        scrollY = glm.max(0f, cursorOffset.y - g.fontSize)
+                    else if (cursorOffset.y - size.y >= scrollY)
+                        scrollY = cursorOffset.y - size.y
+                    drawWindow.dc.cursorPos.y += drawWindow.scroll.y - scrollY   // To avoid a frame of lag
+                    drawWindow.scroll.y = scrollY
+                    renderPos.y = drawWindow.dc.cursorPos.y
+                }
+            }
+            editState.cursorFollow = false
+            val renderScroll = Vec2(editState.scrollX, 0f)
+
+            // Draw selection
+            if (editState.state.selectStart != editState.state.selectEnd) {
+
+                val textSelectedBegin = glm.min(editState.state.selectStart, editState.state.selectEnd)
+                val textSelectedEnd = glm.max(editState.state.selectStart, editState.state.selectEnd)
+
+                // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.
+                val bgOffYUp = if (isMultiline) 0f else -1f
+                val bgOffYDn = if (isMultiline) 0f else 2f
+                val bgColor = getColorU32(Col.TextSelectedBg)
+                val rectPos = renderPos + selectStartOffset - renderScroll
+                var p = textSelectedBegin
+                while (p < textSelectedEnd) {
+                    if (rectPos.y > clipRect.w + g.fontSize) break
+                    if (rectPos.y < clipRect.y) {
+                        while (p < textSelectedEnd)
+                            if (text[p++] == '\n')
+                                break
+                    } else {
+                        val rectSize = inputTextCalcTextSizeW(text.substring(p), textSelectedEnd, stopOnNewLine = true)
+                        // So we can see selected empty lines
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_(' ') * 0.5f).i.f
+                        val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
+                        val clipRect_ = Rect(clipRect)
+                        rect.clip(clipRect_)
+                        if (rect.overlaps(clipRect_))
+                            drawWindow.drawList.addRectFilled(rect.min, rect.max, bgColor)
+                    }
+                    rectPos.x = renderPos.x - renderScroll.x
+                    rectPos.y += g.fontSize
+                }
+            }
+
+            drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, getColorU32(Col.Text),
+                    String(bufDisplay), editState.curLenA, 0f, if (isMultiline) null else clipRect)
+
+            // Draw blinking cursor
+            val cursorIsVisible = g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
+            val cursorScreenPos = renderPos + cursorOffset - renderScroll
+            val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
+            if (cursorIsVisible && cursorScreenRect.overlaps(Rect(clipRect)))
+                drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, getColorU32(Col.Text))
+
+            /*  Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor.
+                Bit of an extra nicety.)             */
+            if (isEditable)
+                g.osImePosRequest = Vec2(cursorScreenPos.x - 1, cursorScreenPos.y - g.fontSize)
+        } else {
+            TODO()
+            // Render text only
 //            const char* buf_end = NULL
-//                    if (isMultiline)
-//                        text_size = ImVec2(size.x, InputTextCalcTextLenAndLineCount(buf_display, &buf_end) * g.FontSize) // We don't need width
-//            drawWindow->DrawList->AddText(g.Font, g.FontSize, render_pos, GetColorU32(ImGuiCol_Text), buf_display, buf_end, 0.0f, is_multiline ? NULL : &clip_rect)
-//        }
-//
-//        if (isMultiline)
-//        {
-//            Dummy(text_size + ImVec2(0.0f, g.FontSize)) // Always add room to scroll an extra line
+//            if (isMultiline)
+//                textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay, & buf_end) * g.FontSize) // We don't need width
+//            drawWindow->DrawList->AddText(g.Font, g.FontSize, renderPos, GetColorU32(ImGuiCol_Text), bufDisplay, buf_end, 0.0f, is_multiline ? NULL : &clipRect)
+        }
+
+        if (isMultiline) {
+            TODO()
+//            dummy(textSize + ImVec2(0.0f, g.FontSize)) // Always add room to scroll an extra line
 //            EndChildFrame()
 //            EndGroup()
-//        }
-//
-//        if (isPassword)
-//            PopFont()
-//
-//        // Log as text
-//        if (g.LogEnabled && !isPassword)
-//            LogRenderedText(render_pos, buf_display, NULL)
-//
-//        if (labelSize.x > 0)
-//            RenderText(ImVec2(frameBb.Max.x + style.ItemInnerSpacing.x, frameBb.Min.y + style.FramePadding.y), label)
-//
-//        if ((flags & ImGuiInputTextFlags_EnterReturnsTrue) != 0)
-//        return enterPressed
-//        else
-//        return valueChanged
-        return false
+        }
+
+        if (isPassword)
+            popFont()
+
+        // Log as text
+        if (g.logEnabled && !isPassword)
+            logRenderedText(renderPos, String(bufDisplay))
+
+        if (labelSize.x > 0)
+            renderText(Vec2(frameBb.max.x + Style.itemInnerSpacing.x, frameBb.min.y + Style.framePadding.y), label)
+
+        return if (flags has InputTextFlags.EnterReturnsTrue) enterPressed else valueChanged
     }
 //IMGUI_API bool          InputFloatN(const char* label, float* v, int components, int decimal_precision, ImGuiInputTextFlags extra_flags);
 //IMGUI_API bool          InputIntN(const char* label, int* v, int components, ImGuiInputTextFlags extra_flags);
@@ -1313,19 +1343,18 @@ interface imgui_internal {
         setHoveredId(0)
         focusableItemUnregister(window)
 
-        val value = data.format(dataType, decimalPrecision)
-//    val textValueChanged = inputTextEx(label, value, aabb.size, InputTextFlags.CharsDecimal or InputTextFlags.AutoSelectAll)
-//    if (g.ScalarAsInputTextId == 0) {
-//        // First frame
-//        IM_ASSERT(g.ActiveId == id)    // InputText ID expected to match the Slider ID (else we'd need to store them both, which is also possible)
-//        g.ScalarAsInputTextId = g.ActiveId
-//        SetHoveredID(id)
-//    } else if (g.ActiveId != g.ScalarAsInputTextId) {
-//        // Release
-//        g.ScalarAsInputTextId = 0
-//    }
-//    if (textValueChanged)
-//        return DataTypeApplyOpFromText(buf, GImGui->InputTextState.InitialText.begin(), data_type, data_ptr, NULL)
+        val value = arrayOf(data.format(dataType, decimalPrecision))
+        val textValueChanged = inputTextEx(label, value, aabb.size, InputTextFlags.CharsDecimal or InputTextFlags.AutoSelectAll)
+        if (g.scalarAsInputTextId == 0) {
+            /*  First frame
+                InputText ID expected to match the Slider ID (else we'd need to store them both, which is also possible)             */
+            assert(g.activeId == id)
+            g.scalarAsInputTextId = g.activeId
+            setHoveredId(id)
+        } else if (g.activeId != g.scalarAsInputTextId)
+            g.scalarAsInputTextId = 0   // Release
+        if (textValueChanged)
+            TODO()//return dataTypeApplyOpFromText(buf, GImGui->InputTextState.InitialText.begin(), data_type, data_ptr, NULL)
         return false
     }
 //

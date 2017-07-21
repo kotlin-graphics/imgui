@@ -1,7 +1,6 @@
 package imgui.stb
 
-import imgui.inputTextCalcTextSizeW
-import imgui.internal.TextEditState
+import imgui.textEdit
 
 object stb {
 
@@ -13,6 +12,14 @@ object stb {
         var insertLength = 0
         var deleteLength = 0
         var charStorage = 0
+
+        constructor()
+        constructor(undoRecord: UndoRecord) {
+            where = undoRecord.where
+            insertLength = undoRecord.insertLength
+            deleteLength = undoRecord.deleteLength
+            charStorage = undoRecord.charStorage
+        }
     }
 
     class UndoState {
@@ -76,11 +83,88 @@ object stb {
             singleLine = isSingleLine
             insertMode = false
         }
+
+        val hasSelection get() = selectStart != selectEnd
+
+
+        /** make the selection/cursor state valid if client altered the string  */
+        fun clamp(str: textEdit) {
+            val n = str.curLenW
+            if (hasSelection) {
+                if (selectStart > n) selectStart = n
+                if (selectEnd > n) selectEnd = n
+                // if clamping forced them to be equal, move the cursor to match
+                if (selectStart == selectEnd)
+                    cursor = selectStart
+            }
+            if (cursor > n) cursor = n
+        }
+
+        /** delete characters while updating undo   */
+        fun delete(str: textEdit, where:Int, len:Int)        {
+            stb_text_makeundo_delete(str, state, where, len);
+            STB_TEXTEDIT_DELETECHARS(str, where, len);
+            state->has_preferred_x = 0;
+        }
+
+        /** delete the section  */
+        fun deleteSelection(str: textEdit)        {
+            clamp(str)
+            if (hasSelection) {
+                if (selectStart < selectEnd) {
+                    delete(str, state, state->select_start, state->select_end - state->select_start)
+                    state->select_end = state->cursor = state->select_start
+                } else {
+                    stb_textedit_delete(str, state, state->select_end, state->select_start - state->select_end)
+                    state->select_start = state->cursor = state->select_end
+                }
+                state->has_preferred_x = 0
+            }
+        }
+
+        /** canoncialize the selection so start <= end  */
+        fun sortSelection() {
+            if (selectEnd < selectStart) {
+                val temp = selectEnd
+                selectEnd = selectStart
+                selectStart = temp
+            }
+        }
+
+        /** move cursor to first character of selection */
+        fun moveToFirst() {
+            if (hasSelection) {
+                sortSelection()
+                cursor = selectStart
+                selectEnd = selectStart
+                hasPreferredX = false
+            }
+        }
+
+        // move cursor to last character of selection
+        fun moveToLast(str: textEdit) {
+            if (hasSelection) {
+                sortSelection()
+                clamp(str)
+                cursor = selectEnd
+                selectStart = selectEnd
+                hasPreferredX = false
+            }
+        }
+
+        // update selection and cursor to match each other
+        fun prepSelectionAtCursor() {
+            if (!hasSelection) {
+                selectStart = cursor
+                selectEnd = cursor
+            } else
+                cursor = selectEnd
+        }
     }
 
     /** Result of layout query, used by stb_textedit to determine where the text in each row is.
      *  result of layout query  */
-    class TexteditRow     {
+    class TexteditRow {
         /** starting x location */
         var x0 = 0f
         /** end x location (allows for align=right, etc)    */
@@ -93,19 +177,20 @@ object stb {
         var yMax = 0f
 
         var numChars = 0
+    }
 
-        fun layout(obj:TextEditState, lineStartIdx:Int)        {
-            TODO()
-            val text = obj.text
-//            val text_remaining = NULL;
-//            val size = inputTextCalcTextSizeW(text + lineStartIdx, text + obj->CurLenW, &text_remaining, NULL, true);
-//            r->x0 = 0.0f;
-//            r->x1 = size.x;
-//            r->baseline_y_delta = size.y;
-//            r->ymin = 0.0f;
-//            r->ymax = size.y;
-//            r->num_chars = (int)(text_remaining - (text + line_start_idx));
-        }
+    class FindState    {
+        // position of n'th character
+        var x = 0f
+        var y = 0f
+        /** height of line   */
+        var height = 0f
+        /** first char of row   */
+        var firstChar = 0
+        /** first char length   */
+        var length = 0
+        /** first char of previous row  */
+        var prevFirst = 0
     }
 
     /*  We don't use an enum so we can build even with conflicting symbols (if another user of stb_textedit.h leak their 

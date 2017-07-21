@@ -13,6 +13,25 @@ import imgui.Context as g
 //IMGUI_API int           GetKeyIndex(ImGuiKey imgui_key);
 //IMGUI_API bool          IsKeyDown(int user_key_index);                                      // is key being held. == io.KeysDown[user_key_index]. note that imgui doesn't know the semantic of each entry of io.KeyDown[]. Use your own indices/enums according to how your backend/engine stored them into KeyDown[]!
 
+/** uses user's key indices as stored in the keys_down[] array. if repeat=true.
+ *  uses io.KeyRepeatDelay / KeyRepeatRate  */
+fun isKeyPressed(userKeyIndex: Int, repeat: Boolean): Boolean {
+
+    if (userKeyIndex < 0) return false
+    assert(userKeyIndex in 0 until IO.keysDown.size)
+    val t = IO.keysDownDuration[userKeyIndex]
+    if (t == 0f)
+        return true
+
+    if (repeat && t > IO.keyRepeatDelay) {
+        val delay = IO.keyRepeatDelay
+        val rate = IO.keyRepeatRate
+        if ((((t - delay) % rate) > rate * 0.5f) != ((t - delay - IO.deltaTime) % rate) > rate * 0.5f)
+            return true
+    }
+    return false
+}
+
 //IMGUI_API bool          IsKeyReleased(int user_key_index);                                  // was key released (went from Down to !Down)..
 //IMGUI_API bool          IsMouseDown(int button);                                            // is mouse button held
 

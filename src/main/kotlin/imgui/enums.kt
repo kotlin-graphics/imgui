@@ -1,5 +1,7 @@
 package imgui
 
+import imgui.imgui.isKeyPressed
+
 /** Flags for ImGui::Begin()    */
 enum class WindowFlags(val i: Int) {
     // Default: 0
@@ -207,23 +209,9 @@ enum class Key {
 
     val i = ordinal
 
-    /** uses user's key indices as stored in the keys_down[] array. if repeat=true.
-     *  uses io.KeyRepeatDelay / KeyRepeatRate  */
-    fun isPressed(repeat: Boolean = true): Boolean {
-        if (i < 0) return false
-        assert(i in 0 until IO.keysDown.size)
-        val t = IO.keysDownDuration[i]
-        if (t == 0f)
-            return true
+    fun isPressed(repeat: Boolean) = isKeyPressed(IO.keyMap[i], repeat)
 
-        if (repeat && t > IO.keyRepeatDelay) {
-            val delay = IO.keyRepeatDelay
-            val rate = IO.keyRepeatRate
-            if ((((t - delay) % rate) > rate * 0.5f) != ((t - delay - IO.deltaTime) % rate) > rate * 0.5f)
-                return true
-        }
-        return false
-    }
+    val isPressed get() = isPressed(true)
 
     /** map ImGuiKey_* values into user's key index. == io.KeyMap[key]   */
     val index get() = i
