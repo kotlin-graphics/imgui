@@ -1,14 +1,14 @@
 package imgui
 
-import glm_.f
-import glm_.glm
-import glm_.i
+import gli.has
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.setHoveredId
 import imgui.internal.*
+import uno.kotlin.isPrintable
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -453,60 +453,69 @@ fun findBestPopupWindowPos(basePos: Vec2, window: Window, rInner: Rect): Vec2 {
     }
 }
 
-// Return false to discard a character.
-//fun inputTextFilterCharacter(unsigned int* p_char, ImGuiInputTextFlags flags, ImGuiTextEditCallback callback, void* user_data): Boolean{
-//
-//    unsigned int c = *p_char;
-//
-//    if (c < 128 && c != ' ' && !isprint((int)(c & 0xFF)))
-//    {
-//        bool pass = false;
-//        pass |= (c == '\n' && (flags & ImGuiInputTextFlags_Multiline));
-//        pass |= (c == '\t' && (flags & ImGuiInputTextFlags_AllowTabInput));
-//        if (!pass)
-//            return false;
-//    }
-//
-//    if (c >= 0xE000 && c <= 0xF8FF) // Filter private Unicode range. I don't imagine anybody would want to input them. GLFW on OSX seems to send private characters for special keys like arrow keys.
-//        return false;
-//
-//    if (flags & (ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_CharsNoBlank))
-//    {
-//        if (flags & ImGuiInputTextFlags_CharsDecimal)
-//        if (!(c >= '0' && c <= '9') && (c != '.') && (c != '-') && (c != '+') && (c != '*') && (c != '/'))
-//            return false;
-//
-//        if (flags & ImGuiInputTextFlags_CharsHexadecimal)
-//        if (!(c >= '0' && c <= '9') && !(c >= 'a' && c <= 'f') && !(c >= 'A' && c <= 'F'))
-//            return false;
-//
-//        if (flags & ImGuiInputTextFlags_CharsUppercase)
-//        if (c >= 'a' && c <= 'z')
-//        *p_char = (c += (unsigned int)('A'-'a'));
-//
-//        if (flags & ImGuiInputTextFlags_CharsNoBlank)
-//        if (ImCharIsSpace(c))
-//            return false;
-//    }
-//
-//    if (flags & ImGuiInputTextFlags_CallbackCharFilter)
-//    {
-//        ImGuiTextEditCallbackData callback_data;
-//        memset(&callback_data, 0, sizeof(ImGuiTextEditCallbackData));
-//        callback_data.EventFlag = ImGuiInputTextFlags_CallbackCharFilter;
-//        callback_data.EventChar = (ImWchar)c;
-//        callback_data.Flags = flags;
-//        callback_data.UserData = user_data;
-//        if (callback(&callback_data) != 0)
-//        return false;
-//        *p_char = callback_data.EventChar;
+/** Return false to discard a character.    */
+fun inputTextFilterCharacter(pChar: IntArray, flags: Int/*, ImGuiTextEditCallback callback, void* user_data*/): Boolean {
+
+    var c = pChar[0].c
+
+    if (c < 128 && c != ' ' && !c.isPrintable) {
+        var pass = false
+        pass = pass or (c == '\n' && flags has InputTextFlags.Multiline)
+        pass = pass or (c == '\t' && flags has InputTextFlags.AllowTabInput)
+        if (!pass) return false
+    }
+
+    /*  Filter private Unicode range. I don't imagine anybody would want to input them. GLFW on OSX seems to send
+        private characters for special keys like arrow keys.     */
+    if (c >= 0xE000 && c <= 0xF8FF) return false
+
+    if (flags has (InputTextFlags.CharsDecimal or InputTextFlags.CharsHexadecimal or InputTextFlags.CharsUppercase or
+            InputTextFlags.CharsNoBlank)) {
+
+        if (flags has InputTextFlags.CharsDecimal)
+            if (!(c in '0'..'9') && (c != '.') && (c != '-') && (c != '+') && (c != '*') && (c != '/')) return false
+
+        if (flags has InputTextFlags.CharsHexadecimal)
+            if (!(c in '0'..'9') && !(c in 'a'..'f') && !(c in 'A'..'F')) return false
+
+        if (flags has InputTextFlags.CharsUppercase && c in 'a'..'z') {
+            c += 'A' - 'a'
+            pChar[0] = c.i
+        }
+
+        if (flags has InputTextFlags.CharsNoBlank && c.isSpace) return false
+    }
+
+    if (flags has InputTextFlags.CallbackCharFilter) {
+        TODO()
+//        ImGuiTextEditCallbackData callback_data
+//                memset(& callback_data, 0, sizeof(ImGuiTextEditCallbackData))
+//        callback_data.EventFlag = ImGuiInputTextFlags_CallbackCharFilter
+//        callback_data.EventChar = (ImWchar) c
+//                callback_data.Flags = flags
+//        callback_data.UserData = user_data
+//        if (callback(& callback_data) != 0)
+//        return false
+//        *p_char = callback_data.EventChar
 //        if (!callback_data.EventChar)
-//            return false;
-//    }
-//
-//    return true;
-//}
-//static int              InputTextCalcTextLenAndLineCount(const char* text_begin, const char** out_text_end);
+//            return false
+    }
+    return true
+}
+
+fun inputTextCalcTextLenAndLineCount(text: String, outTextEnd: IntArray): Int {
+
+    var lineCount = 0
+    var s = 0
+    while (s < text.length) // We are only matching for \n so we can ignore UTF-8 decoding
+        if (text[s++] == '\n')
+            lineCount++
+    s--
+    if (text[s] != '\n' && text[s] != '\r')
+        lineCount++
+    outTextEnd[0] = s
+    return lineCount
+}
 
 fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = null, outOffset: Vec2? = null,
                            stopOnNewLine: Boolean = false): Vec2 {
@@ -531,7 +540,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
         }
         if (c == '\r') continue
 
-        val charWidth = font.getCharAdvance_(c) * scale
+        val charWidth: Float = font.getCharAdvance_(c) * scale  //TODO check
         lineWidth += charWidth
     }
 
@@ -555,20 +564,90 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
 //static inline void      DataTypeFormatString(ImGuiDataType data_type, void* data_ptr, const char* display_format, char* buf, int buf_size);
 
 /** JVM Imgui, dataTypeFormatString replacement */
-fun FloatArray.format(dataType: DataType, decimalPrecision: Int) = when (dataType) {
+fun Array<out Number>.format(dataType: DataType, decimalPrecision: Int) = when (dataType) {
 
     DataType.Int ->
-        if (decimalPrecision < 0) "%d".format(Style.locale, this[0])
-        else "%.${decimalPrecision}d".format(Style.locale, this[0])
+        if (decimalPrecision < 0) "%d".format(Style.locale, this[0] as Int)
+        else "%.${decimalPrecision}d".format(Style.locale, this[0] as Int)
     DataType.Float ->
         /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
             non-significant digits?         */
-        if (decimalPrecision < 0) "%f".format(Style.locale, this[0])
-        else "%.${decimalPrecision}f".format(Style.locale, this[0])
+        if (decimalPrecision < 0) "%f".format(Style.locale, this[0] as Float)
+        else "%.${decimalPrecision}f".format(Style.locale, this[0] as Float)
     else -> throw Error("unsupported format data type")
 }
 //static void             DataTypeApplyOp(ImGuiDataType data_type, int op, void* value1, const void* value2);
-//static bool             DataTypeApplyOpFromText(const char* buf, const char* initial_value_buf, ImGuiDataType data_type, void* data_ptr, const char* scalar_format);
+
+/** User can input math operators (e.g. +100) to edit a numerical values.   */
+fun dataTypeApplyOpFromText(buf: String, initialValueBuf: String, dataType: DataType, data: Array<out Number>, scalarFormat: String? = null)
+        : Boolean {
+
+    var s = 0
+    while (s in buf.indices && buf[s].isSpace) s++
+
+    /*  We don't support '-' op because it would conflict with inputing negative value.
+        Instead you can use +-100 to subtract from an existing value     */
+    var op = buf[s]
+    if (op == '+' || op == '*' || op == '/') {
+        s++
+        while (buf[s].isSpace) s++
+    } else
+        op = 0.c
+
+    if (buf[s] == 0.c) return false
+
+    return when (dataType) {
+
+        DataType.Int -> {
+            val scalarFormat = scalarFormat ?: "%d"
+            val v = data as Array<Int>
+            TODO()
+//                    const int old_v = * v
+//                    int arg0 = * v
+//            if (op && sscanf(initial_value_buf, scalar_format, & arg0) < 1)
+//            return false
+//
+//            // Store operand in a float so we can use fractional value for multipliers (*1.1), but constant always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision
+//            float arg1 = 0.0f
+//            if (op == '+') {
+//                if (sscanf(buf, "%f", & arg1) == 1) *v = (int)(arg0+arg1);
+//            }                // Add (use "+-" to subtract)
+//            else if (op == '*') {
+//                if (sscanf(buf, "%f", & arg1) == 1) *v = (int)(arg0 * arg1);
+//            }                // Multiply
+//            else if (op == '/') {
+//                if (sscanf(buf, "%f", & arg1) == 1 && arg1 != 0.0f) *v = (int)(arg0 / arg1);
+//            }// Divide
+//            else {
+//                if (sscanf(buf, scalar_format, & arg0) == 1) *v = arg0;
+//            }                     // Assign constant
+//            (old_v != * v)
+        }
+        DataType.Float -> {
+            // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in
+            val scalarFormat = scalarFormat ?: "%f"
+            val v = data as Array<Float>
+            val oldV = v[0]
+            val arg0 = v[0]
+//            TODO if (op && sscanf(initial_value_buf, scalar_format, & arg0) < 1)
+//            return false
+
+            val arg1 = buf.format(scalarFormat).f
+//            TODO if (sscanf(buf, scalar_format, & arg1) < 1)
+//            return false
+            when (op) {
+                '+' -> v[0] = arg0 + arg1   // Add (use "+-" to subtract)
+                '*' -> v[0] = arg0 * arg1   // Multiply
+                '/' -> {
+                    if (arg1 != 0f) v[0] = arg0 / arg1  // Divide
+                }
+                else -> v[0] = arg1 // Assign constant
+            }
+            oldV != v[0]
+        }
+        else -> false
+    }
+}
 
 //-----------------------------------------------------------------------------
 // Platform dependent default implementations

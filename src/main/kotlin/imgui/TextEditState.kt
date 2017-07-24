@@ -1,6 +1,7 @@
 package imgui
 
 import gli.has
+import glm_.c
 import glm_.glm
 import imgui.internal.isSpace
 
@@ -58,8 +59,8 @@ class TextEditState {
 
     fun onKeyPressed(key: Int) {
         key(key)
-        CursorFollow = true
-        CursorAnimReset()
+        cursorFollow = true
+        cursorAnimReset()
     }
 
 
@@ -83,7 +84,7 @@ class TextEditState {
 
     fun layout(r: Row, lineStartIdx: Int) {
         val textRemaining = IntArray(1)
-        val size = inputTextCalcTextSizeW(text + lineStartIdx, curLenW, textRemaining, null, true)
+        val size = inputTextCalcTextSizeW(String(text, lineStartIdx, text.size - lineStartIdx), curLenW, textRemaining, null, true)
         with(r) {
             r.x0 = 0f
             r.x1 = size.x
@@ -94,7 +95,7 @@ class TextEditState {
         }
     }
 
-    val Char.isSeparator get() = isSpace(this) || this == ',' || this == ';' || this == '(' || this == ')' ||
+    val Char.isSeparator get() = this.isSpace || this == ',' || this == ';' || this == '(' || this == ')' ||
             this == '{' || this == '}' || this == '[' || this == ']' || this == '|'
 
     fun isWordBoundaryFromRight(idx: Int) = if (idx > 0) text[idx - 1].isSeparator && !text[idx].isSeparator else true
@@ -117,25 +118,25 @@ class TextEditState {
         var dst = pos
 
         // We maintain our buffer length in both UTF-8 and wchar formats
-        curLenA -= textCountUtf8BytesFromStr(dst, dst + n)
+        curLenA -= n //TODO check textCountUtf8BytesFromStr(dst, dst + n)
         curLenW -= n
 
         // Offset remaining text
         for (c in pos + n until text.size)
             text[dst++] = text[c]
-//        *dst = '\0'
+        text[dst] = '\u0000'
     }
 
     fun insertChars(pos: Int, newText: CharArray, ptr: Int, newTextLen: Int): Boolean {
 
         val textLen = curLenW
         assert(pos <= textLen)
-        if (newTextLen + textLen + 1 > text.size)
-            return false
+//        if (newTextLen + textLen + 1 > text.size) text.size is 33 on C, doesnt mean the same thing here
+//            return false
 
-        val newTextLenUtf8 = textCountUtf8BytesFromStr(new_text, new_text + newTextLen)
-        if (newTextLenUtf8 + curLenA + 1 > bufSizeA)
-            return false
+        val newTextLenUtf8 = newTextLen //TODO check textCountUtf8BytesFromStr(new_text, new_text + newTextLen)
+//        if (newTextLenUtf8 + curLenA + 1 > bufSizeA) bufSizeA is 33 on C, doesnt mean the same thing here
+//            return false
 
         if (pos != textLen)
             TODO()  //memmove(text + pos + new_text_len, text + pos, (size_t)(text_len - pos) * sizeof(ImWchar));
@@ -203,6 +204,7 @@ class TextEditState {
             val tmp = Array(len, { UndoRecord(src[pSrc + it]) })
             for (i in 0 until len) dst[pDst + i] = tmp[i]
         }
+        val GETWIDTH_NEWLINE = -1f
     }
 
     class UndoRecord {
@@ -591,7 +593,7 @@ class TextEditState {
 
     fun makeundoDelete(where: Int, length: Int) = state.undostate.createundo(where, length, 0)?.let {
         for (i in 0 until length)
-            state.undostate.undoChar[i] = getChar(where + i)
+            state.undostate.undoChar[it + i] = getChar(where + i)
     }
 
     fun makeundoReplace(where: Int, oldLength: Int, newLength: Int) = state.undostate.createundo(where, oldLength, newLength)?.let {
@@ -790,325 +792,267 @@ class TextEditState {
     }
 
     /** API key: process a keyboard input   */
-    fun key(key: Int): Unit = when (key) {
-
+    fun key(key: Int): Unit = with(state) {
+        when (key) {
 //            K.INSERT:            state->insert_mode = !state->insert_mode
-
-        K.UNDO -> {
-            undo()
-            state.hasPreferredX = false
-        }
-        K.REDO -> {
-            redo()
-            state.hasPreferredX = false
-        }
-        K.LEFT -> {
-            if (hasSelection)   // if currently there's a selection, move cursor to start of selection
-                moveToFirst()
-            else if (state.cursor > 0)
-                --state.cursor
-            state.hasPreferredX = false
-        }
-        K.RIGHT -> {
-            if (hasSelection)   // if currently there's a selection, move cursor to end of selection
-                moveToLast()
-            else
-                ++state.cursor
-            clamp()
-            state.hasPreferredX = false
-        }
-        K.LEFT or K.SHIFT -> {
-            clamp()
-            prepSelectionAtCursor()
-            // move selection left
-            if (state.selectEnd > 0)
-                --state.selectEnd
-            state.cursor = state.selectEnd
-            state.hasPreferredX = false
-        }
-        K.WORDLEFT ->
-            if (hasSelection) moveToFirst()
-            else {
-                state.cursor = moveWordLeft(state.cursor)
-                clamp()
+            K.UNDO -> {
+                undo()
+                hasPreferredX = false
             }
-        K.WORDLEFT or K.SHIFT -> {
-            if (!hasSelection)
+            K.REDO -> {
+                redo()
+                hasPreferredX = false
+            }
+            K.LEFT -> {
+                if (hasSelection)   // if currently there's a selection, move cursor to start of selection
+                    moveToFirst()
+                else if (cursor > 0)
+                    --cursor
+                hasPreferredX = false
+            }
+            K.RIGHT -> {
+                if (hasSelection)   // if currently there's a selection, move cursor to end of selection
+                    moveToLast()
+                else
+                    ++cursor
+                clamp()
+                hasPreferredX = false
+            }
+            K.LEFT or K.SHIFT -> {
+                clamp()
                 prepSelectionAtCursor()
-            state.cursor = moveWordLeft(state.cursor)
-            state.selectEnd = state.cursor
-            clamp()
-        }
-        K.WORDRIGHT ->
-            if (hasSelection) moveToLast()
-            else {
-                state.cursor = moveWordRight(state.cursor)
-                clamp()
+                // move selection left
+                if (selectEnd > 0)
+                    --selectEnd
+                cursor = selectEnd
+                hasPreferredX = false
             }
-        K.WORDRIGHT or K.SHIFT -> {
-            if (!hasSelection) prepSelectionAtCursor()
-            state.cursor = moveWordRight(state.cursor)
-            state.selectEnd = state.cursor
-            clamp()
-        }
-        K.RIGHT or K.SHIFT -> {
-            prepSelectionAtCursor()
-            ++state.selectEnd   // move selection right
-            clamp()
-            state.cursor = state.selectEnd
-            state.hasPreferredX = false
-        }
-        K.DOWN, K.DOWN or K.SHIFT -> {
-            val find = FindState()
-            val row = Row()
-            var i = 0
-            val sel = key has K.SHIFT
-
-            if (state.singleLine)
-                key(K.RIGHT or (key and K.SHIFT))   // on windows, up&down in single-line behave like left&right
-
-            if (sel) prepSelectionAtCursor()
-            else if (hasSelection) moveToLast()
-
-            // compute current position of cursor point
-            clamp()
-            findCharpos(find, state.cursor, state.singleLine)
-
-            // now find character position down a row
-            if (find.length != 0) {
-                val goalX = if (state.hasPreferredX) state.preferredX else find.x
-                var x = 0f
-                val start = find.firstChar + find.length
-                state.cursor = start
-                layout(row, state.cursor)
-                x = row.x0
-                for (i in 0 until row.numChars) {
-                    val dx = getWidth(start, i)
-                    if (dx == STB_TEXTEDIT_GETWIDTH_NEWLINE)
-                        break
-                    x += dx
-                    if (x > goalX)
-                        break
-                    ++state.cursor
+            K.WORDLEFT ->
+                if (hasSelection) moveToFirst()
+                else {
+                    cursor = moveWordLeft(cursor)
+                    clamp()
                 }
+            K.WORDLEFT or K.SHIFT -> {
+                if (!hasSelection)
+                    prepSelectionAtCursor()
+                cursor = moveWordLeft(cursor)
+                selectEnd = cursor
                 clamp()
-
-                state.hasPreferredX = true
-                state.preferredX = goalX
-
-                if (sel)
-                    state.selectEnd = state.cursor
             }
-            Unit
-        }
-        K.UP, K.UP or K.SHIFT -> {
-            val find = FindState()
-            val row = Row()
-            var i = 0
-            val sel = key has K.SHIFT
-
-            if (state.singleLine)
-                key(K.LEFT or (key and K.SHIFT))    // on windows, up&down become left&right
-
-            if (sel) prepSelectionAtCursor()
-            else if (hasSelection) moveToFirst()
-
-            // compute current position of cursor point
-            clamp()
-            findCharpos(find, state.cursor, state.singleLine)
-
-            // can only go up if there's a previous row
-            if (find.prevFirst != find.firstChar) {
-                // now find character position up a row
-                val goalX = if (state.hasPreferredX) state.preferredX else find.x
-                var x = 0f
-                state.cursor = find.prevFirst
-                layout(row, state.cursor)
-                x = row.x0
-                for (i in 0 until row.numChars) {
-                    val dx = getWidth(find.prevFirst, i)
-                    if (dx == STB_TEXTEDIT_GETWIDTH_NEWLINE)
-                        break
-                    x += dx
-                    if (x > goalX)
-                        break
-                    ++state.cursor
+            K.WORDRIGHT ->
+                if (hasSelection) moveToLast()
+                else {
+                    cursor = moveWordRight(cursor)
+                    clamp()
                 }
+            K.WORDRIGHT or K.SHIFT -> {
+                if (!hasSelection) prepSelectionAtCursor()
+                cursor = moveWordRight(cursor)
+                selectEnd = cursor
                 clamp()
-
-                state.hasPreferredX = true
-                state.preferredX = goalX
-
-                if (sel)
-                    state.selectEnd = state.cursor
             }
-            Unit
-        }
-        K.DELETE, K.DELETE or K.SHIFT -> {
-            if (hasSelection) deleteSelection()
-            else if (state.cursor < stringLen)
-                delete(state.cursor, 1)
-            state.hasPreferredX = false
-        }
-        K.BACKSPACE, K.BACKSPACE or K.SHIFT -> {
-            if (hasSelection) deleteSelection()
-            else {
+            K.RIGHT or K.SHIFT -> {
+                prepSelectionAtCursor()
+                ++selectEnd   // move selection right
                 clamp()
-                if (state.cursor > 0) {
-                    delete(state.cursor - 1, 1)
-                    --state.cursor
+                cursor = selectEnd
+                hasPreferredX = false
+            }
+            K.DOWN, K.DOWN or K.SHIFT -> {
+                val find = FindState()
+                val row = Row()
+                var i = 0
+                val sel = key has K.SHIFT
+
+                if (singleLine)
+                    key(K.RIGHT or (key and K.SHIFT))   // on windows, up&down in single-line behave like left&right
+
+                if (sel) prepSelectionAtCursor()
+                else if (hasSelection) moveToLast()
+
+                // compute current position of cursor point
+                clamp()
+                findCharpos(find, cursor, singleLine)
+
+                // now find character position down a row
+                if (find.length != 0) {
+                    val goalX = if (hasPreferredX) preferredX else find.x
+                    var x = 0f
+                    val start = find.firstChar + find.length
+                    cursor = start
+                    layout(row, cursor)
+                    x = row.x0
+                    for (i in 0 until row.numChars) {
+                        val dx = getWidth(start, i)
+                        if (dx == GETWIDTH_NEWLINE)
+                            break
+                        x += dx
+                        if (x > goalX)
+                            break
+                        ++cursor
+                    }
+                    clamp()
+
+                    hasPreferredX = true
+                    preferredX = goalX
+
+                    if (sel) selectEnd = cursor
+                }
+                Unit
+            }
+            K.UP, K.UP or K.SHIFT -> {
+                val find = FindState()
+                val row = Row()
+                var i = 0
+                val sel = key has K.SHIFT
+
+                if (singleLine)
+                    key(K.LEFT or (key and K.SHIFT))    // on windows, up&down become left&right
+
+                if (sel) prepSelectionAtCursor()
+                else if (hasSelection) moveToFirst()
+
+                // compute current position of cursor point
+                clamp()
+                findCharpos(find, cursor, singleLine)
+
+                // can only go up if there's a previous row
+                if (find.prevFirst != find.firstChar) {
+                    // now find character position up a row
+                    val goalX = if (hasPreferredX) preferredX else find.x
+                    var x = 0f
+                    cursor = find.prevFirst
+                    layout(row, cursor)
+                    x = row.x0
+                    for (i in 0 until row.numChars) {
+                        val dx = getWidth(find.prevFirst, i)
+                        if (dx == GETWIDTH_NEWLINE)
+                            break
+                        x += dx
+                        if (x > goalX)
+                            break
+                        ++cursor
+                    }
+                    clamp()
+
+                    hasPreferredX = true
+                    preferredX = goalX
+
+                    if (sel) selectEnd = cursor
+                }
+                Unit
+            }
+            K.DELETE, K.DELETE or K.SHIFT -> {
+                if (hasSelection) deleteSelection()
+                else if (cursor < stringLen)
+                    delete(cursor, 1)
+                hasPreferredX = false
+            }
+            K.BACKSPACE, K.BACKSPACE or K.SHIFT -> {
+                if (hasSelection) deleteSelection()
+                else {
+                    clamp()
+                    if (cursor > 0) {
+                        delete(cursor - 1, 1)
+                        --cursor
+                    }
+                }
+                hasPreferredX = false
+            }
+            K.TEXTSTART -> {
+                cursor = 0
+                selectStart = 0
+                selectEnd = 0
+                hasPreferredX = false
+            }
+            K.TEXTEND -> {
+                cursor = stringLen
+                selectStart = 0
+                selectEnd = 0
+                hasPreferredX = false
+            }
+            K.TEXTSTART or K.SHIFT -> {
+                prepSelectionAtCursor()
+                cursor = 0
+                selectEnd = 0
+                hasPreferredX = false
+            }
+            K.TEXTEND or K.SHIFT -> {
+                prepSelectionAtCursor()
+                cursor = stringLen
+                selectEnd = cursor
+                hasPreferredX = false
+            }
+            K.LINESTART -> {
+                clamp()
+                moveToFirst()
+                if (singleLine)
+                    cursor = 0
+                else while (cursor > 0 && getChar(cursor - 1) != '\n')
+                    --cursor
+                hasPreferredX = false
+            }
+            K.LINEEND -> {
+                val n = stringLen
+                clamp()
+                moveToFirst()
+                if (singleLine)
+                    cursor = n
+                else while (cursor < n && getChar(cursor) != 'n')
+                    ++cursor
+                hasPreferredX = false
+            }
+            K.LINESTART or K.SHIFT -> {
+                clamp()
+                prepSelectionAtCursor()
+                if (singleLine)
+                    cursor = 0
+                else while (cursor > 0 && getChar(cursor - 1) != '\n')
+                    --cursor
+                selectEnd = cursor
+                state.hasPreferredX = false
+            }
+            K.LINEEND or K.SHIFT -> {
+                val n = stringLen
+                clamp()
+                prepSelectionAtCursor()
+                if (singleLine)
+                    cursor = n
+                else while (cursor < n && getChar(cursor) != '\n')
+                    ++cursor
+                selectEnd = cursor
+                hasPreferredX = false
+            }
+            else -> {
+                val c = keyToText(key)
+                if (c > 0) {
+                    val ch = c.c
+
+                    // can't add newline in single-line mode
+                    if (ch == '\n' && singleLine)
+                        return@with
+
+                    if (insertMode && !hasSelection && cursor < stringLen) {
+                        makeundoReplace(cursor, 1, 1)
+                        deleteChars(cursor, 1)
+                        if (insertChars(cursor, charArrayOf(ch), 0, 1)) {
+                            ++cursor
+                            hasPreferredX = false
+                        }
+                    } else {
+                        deleteSelection() // implicity clamps
+                        if (insertChars(cursor, charArrayOf(ch), 0, 1)) {
+                            makeundoInsert(cursor, 1)
+                            ++cursor
+                            hasPreferredX = false
+                        }
+                    }
                 }
             }
-            state.hasPreferredX = false
-        }
-        K.TEXTSTART2 :
-            #endif
-        case STB_TEXTEDIT_K_TEXTSTART :
-                state -> cursor = state
-        -> select_start = state
-        -> select_end = 0
-        state -> has_preferred_x = 0
-        break
-//
-//            #ifdef STB_TEXTEDIT_K_TEXTEND2
-//                case STB_TEXTEDIT_K_TEXTEND2 :
-//            #endif
-//        case STB_TEXTEDIT_K_TEXTEND :
-//                state -> cursor = STB_TEXTEDIT_STRINGLEN(str)
-//        state -> select_start = state
-//        -> select_end = 0
-//        state -> has_preferred_x = 0
-//        break
-//
-//            #ifdef STB_TEXTEDIT_K_TEXTSTART2
-//                case STB_TEXTEDIT_K_TEXTSTART2 | STB_TEXTEDIT_K_SHIFT :
-//            #endif
-//        case STB_TEXTEDIT_K_TEXTSTART | STB_TEXTEDIT_K_SHIFT :
-//                stb_textedit_prep_selection_at_cursor (state)
-//                state -> cursor = state
-//        -> select_end = 0
-//        state -> has_preferred_x = 0
-//        break
-//
-//            #ifdef STB_TEXTEDIT_K_TEXTEND2
-//                case STB_TEXTEDIT_K_TEXTEND2 | STB_TEXTEDIT_K_SHIFT :
-//            #endif
-//        case STB_TEXTEDIT_K_TEXTEND | STB_TEXTEDIT_K_SHIFT :
-//                stb_textedit_prep_selection_at_cursor (state)
-//                state -> cursor = state
-//        -> select_end = STB_TEXTEDIT_STRINGLEN(str)
-//        state -> has_preferred_x = 0
-//        break
-//
-//
-//            #ifdef STB_TEXTEDIT_K_LINESTART2
-//                case STB_TEXTEDIT_K_LINESTART2 :
-//            #endif
-//        case STB_TEXTEDIT_K_LINESTART :
-//                stb_textedit_clamp (str, state)
-//            stb_textedit_move_to_first(state)
-//        if (state -> single_line
-//            )
-//            state
-//        -> cursor = 0
-//        else while (state -> cursor > 0 && STB_TEXTEDIT_GETCHAR(str, state
-//        -> cursor - 1
-//            )
-//            != STB_TEXTEDIT_NEWLINE
-//            )
-//            --state
-//        -> cursor
-//        state -> has_preferred_x = 0
-//        break
-//
-//            #ifdef STB_TEXTEDIT_K_LINEEND2
-//                case STB_TEXTEDIT_K_LINEEND2 :
-//            #endif
-//        case STB_TEXTEDIT_K_LINEEND : {
-//            int n = STB_TEXTEDIT_STRINGLEN (str)
-//            stb_textedit_clamp(str, state)
-//            stb_textedit_move_to_first(state)
-//            if (state->single_line)
-//            state->cursor = n
-//            else while (state->cursor < n && STB_TEXTEDIT_GETCHAR(str, state->cursor) != STB_TEXTEDIT_NEWLINE)
-//            ++state->cursor
-//            state->has_preferred_x = 0
-//            break
-//        }
-//
-//            #ifdef STB_TEXTEDIT_K_LINESTART2
-//                case STB_TEXTEDIT_K_LINESTART2 | STB_TEXTEDIT_K_SHIFT :
-//            #endif
-//        case STB_TEXTEDIT_K_LINESTART | STB_TEXTEDIT_K_SHIFT :
-//                stb_textedit_clamp (str, state)
-//            stb_textedit_prep_selection_at_cursor(state)
-//        if (state -> single_line
-//            )
-//            state
-//        -> cursor = 0
-//        else while (state -> cursor > 0 && STB_TEXTEDIT_GETCHAR(str, state
-//        -> cursor - 1
-//            )
-//            != STB_TEXTEDIT_NEWLINE
-//            )
-//            --state
-//        -> cursor
-//        state -> select_end = state
-//        -> cursor
-//        state -> has_preferred_x = 0
-//        break
-//
-//            #ifdef STB_TEXTEDIT_K_LINEEND2
-//                case STB_TEXTEDIT_K_LINEEND2 | STB_TEXTEDIT_K_SHIFT :
-//            #endif
-//        case STB_TEXTEDIT_K_LINEEND | STB_TEXTEDIT_K_SHIFT : {
-//            int n = STB_TEXTEDIT_STRINGLEN (str)
-//            stb_textedit_clamp(str, state)
-//            stb_textedit_prep_selection_at_cursor(state)
-//            if (state->single_line)
-//            state->cursor = n
-//            else while (state->cursor < n && STB_TEXTEDIT_GETCHAR(str, state->cursor) != STB_TEXTEDIT_NEWLINE)
-//            ++state->cursor
-//            state->select_end = state->cursor
-//            state->has_preferred_x = 0
-//            break
-//        }
-//
-//                default : {
-//            int c = STB_TEXTEDIT_KEYTOTEXT (key)
-//            if (c > 0) {
-//                STB_TEXTEDIT_CHARTYPE ch =(STB_TEXTEDIT_CHARTYPE) c
-//
-//                        // can't add newline in single-line mode
-//                        if (c == '\n' && state->single_line)
-//                break
-//
-//                if (state->insert_mode && !STB_TEXT_HAS_SELECTION(state) && state->cursor < STB_TEXTEDIT_STRINGLEN(str)) {
-//                    stb_text_makeundo_replace(str, state, state->cursor, 1, 1)
-//                    STB_TEXTEDIT_DELETECHARS(str, state->cursor, 1)
-//                    if (STB_TEXTEDIT_INSERTCHARS(str, state->cursor, &ch, 1)) {
-//                    ++state->cursor
-//                    state->has_preferred_x = 0
-//                }
-//                } else {
-//                    stb_textedit_delete_selection(str, state) // implicity clamps
-//                    if (STB_TEXTEDIT_INSERTCHARS(str, state->cursor, &ch, 1)) {
-//                    stb_text_makeundo_insert(state, state->cursor, 1)
-//                    ++state->cursor
-//                    state->has_preferred_x = 0
-//                }
-//                }
-//            }
-//            break
-//        }
-//
 //// @TODO:
 ////    STB_TEXTEDIT_K_PGUP      - move cursor up a page
 ////    STB_TEXTEDIT_K_PGDOWN    - move cursor down a page
+        }
     }
-
-
-    val STB_TEXTEDIT_GETWIDTH_NEWLINE = -1f
-
-
 }

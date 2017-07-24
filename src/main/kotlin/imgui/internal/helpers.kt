@@ -127,7 +127,7 @@ fun hash(data: String, dataSize: Int, seed: Int = 0): Int {
 //IMGUI_API FILE*         ImFileOpen(const char* filename, const char* file_open_mode);
 //IMGUI_API bool          ImIsPointInTriangle(const ImVec2& p, const ImVec2& a, const ImVec2& b, const ImVec2& c);
 
-fun isSpace(c: Char)  = c == ' ' || c == '\t' || c.i == 0x3000
+val Char.isSpace get() = this == ' ' || this == '\t' || this.i == 0x3000
 
 fun upperPowerOfTwo(v: Int): Int {
     var v = v - 1
@@ -156,7 +156,7 @@ fun strlenW(str: CharArray): Int {
 }
 
 /** Find beginning-of-line  */
-fun String.beginOfLine(midLine: Int): Int {
+fun CharArray.beginOfLine(midLine: Int): Int {
     var midLine = midLine
     while (midLine > 0 && this[midLine - 1] != '\n') midLine--
     return midLine

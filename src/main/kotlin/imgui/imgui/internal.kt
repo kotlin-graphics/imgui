@@ -17,8 +17,8 @@ import imgui.ImGui.popFont
 import imgui.ImGui.pushFont
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.textLineHeight
+import imgui.TextEditState.K
 import imgui.internal.*
-import imgui.stb.stb
 import kotlin.apply
 import imgui.Context as g
 
@@ -664,7 +664,7 @@ interface imgui_internal {
 //IMGUI_API bool          SliderFloatN(const char* label, float* v, int components, float v_min, float v_max, const char* display_format, float power);
 //IMGUI_API bool          SliderIntN(const char* label, int* v, int components, int v_min, int v_max, const char* display_format);
 
-    fun dragBehavior(frameBb: Rect, id: Int, v: FloatArray, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
+    fun dragBehavior(frameBb: Rect, id: Int, v: Array<Float>, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
                      power: Float): Boolean {
 
         // Draw frame
@@ -820,7 +820,7 @@ interface imgui_internal {
                 editState.initialText = buf[0]
                 var bufEnd = 0
                 editState.curLenW = buf[0].length
-                editState.text = buf[0]
+                editState.text = buf[0].toCharArray()
                 /*  We can't get the result from ImFormatString() above because it is not UTF-8 aware.
                     Here we'll cut off malformed UTF-8.                 */
                 editState.curLenA = buf[0].length //TODO check (int)(bufEnd - buf)
@@ -890,10 +890,10 @@ interface imgui_internal {
                 editState.selectedAllMouseLock = true
             } else if (hovered && osxDoubleClickSelectsWords && IO.mouseDoubleClicked[0]) {
                 // Select a word only, OS X style (by simulating keystrokes)
-                editState.onKeyPressed(stb.TEXTEDIT_K_WORDLEFT)
-                editState.onKeyPressed(stb.TEXTEDIT_K_WORDRIGHT or stb.TEXTEDIT_K_SHIFT)
+                editState.onKeyPressed(K.WORDLEFT)
+                editState.onKeyPressed(K.WORDRIGHT or K.SHIFT)
             } else if (IO.mouseClicked[0] && !editState.selectedAllMouseLock) {
-                editState.texteditClick(mouseX, mouseY)
+                editState.click(mouseX, mouseY)
                 editState.cursorAnimReset()
             } else if (IO.mouseDown[0] && !editState.selectedAllMouseLock && (IO.mouseDelta.x != 0f || IO.mouseDelta.y != 0f)) {
                 TODO()
@@ -911,13 +911,14 @@ interface imgui_internal {
                     is Alt+Ctrl - to input certain characters.  */
                 if (!(IO.keyCtrl && !IO.keyAlt) && isEditable)
                     for (n in IO.inputCharacters.indices) {
-                        val c = IO.inputCharacters[n].i
-                        if (c == 0) break
+                        var c = IO.inputCharacters[n].i
+                        if (c == 0) continue
                         // Insert character if they pass filtering
-                        TODO()
-//                        if (!inputTextFilterCharacter(& c, flags, callback, user_data))
-//                        continue
-//                        editState.OnKeyPressed((int) c)
+                        val pChar = intArrayOf(c)
+                        if (!inputTextFilterCharacter(pChar, flags/*, callback, user_data*/))
+                            continue
+                        c = pChar[0]
+                        editState.onKeyPressed(c)
                     }
 
                 // Consume characters
@@ -926,7 +927,7 @@ interface imgui_internal {
 
             // Handle various key-presses
             var cancelEdit = false
-            val kMask = if (IO.keyShift) stb.TEXTEDIT_K_SHIFT else 0
+            val kMask = if (IO.keyShift) K.SHIFT else 0
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
             val isShortcutKeyOnly = (if (IO.osxBehaviors) IO.keySuper && !IO.keyCtrl else IO.keyCtrl && !IO.keySuper) && !IO.keyAlt && !IO.keyShift
             // OS X style: Text editing cursor movement using Alt instead of Ctrl
@@ -937,37 +938,37 @@ interface imgui_internal {
             when {
                 Key.LeftArrow.isPressed -> editState.onKeyPressed(
                         when {
-                            isStartendKeyDown -> stb.TEXTEDIT_K_LINESTART
-                            isWordmoveKeyDown -> stb.TEXTEDIT_K_WORDLEFT
-                            else -> stb.TEXTEDIT_K_LEFT
+                            isStartendKeyDown -> K.LINESTART
+                            isWordmoveKeyDown -> K.WORDLEFT
+                            else -> K.LEFT
                         } or kMask)
                 Key.RightArrow.isPressed -> editState.onKeyPressed(
                         when {
-                            isStartendKeyDown -> stb.TEXTEDIT_K_LINEEND
-                            isWordmoveKeyDown -> stb.TEXTEDIT_K_WORDRIGHT
-                            else -> stb.TEXTEDIT_K_RIGHT
+                            isStartendKeyDown -> K.LINEEND
+                            isWordmoveKeyDown -> K.WORDRIGHT
+                            else -> K.RIGHT
                         } or kMask)
                 Key.UpArrow.isPressed && isMultiline ->
                     if (IO.keyCtrl)
                         drawWindow.setScrollY(glm.max(drawWindow.scroll.y - g.fontSize, 0f))
                     else
-                        editState.onKeyPressed((if (isStartendKeyDown) stb.TEXTEDIT_K_TEXTSTART else stb.TEXTEDIT_K_UP) or kMask)
+                        editState.onKeyPressed((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
                 Key.DownArrow.isPressed && isMultiline ->
                     if (IO.keyCtrl)
                         drawWindow.setScrollY(glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY))
                     else
-                        editState.onKeyPressed((if (isStartendKeyDown) stb.TEXTEDIT_K_TEXTEND else stb.TEXTEDIT_K_DOWN) or kMask)
-                Key.Home.isPressed -> editState.onKeyPressed((if (IO.keyCtrl) stb.TEXTEDIT_K_TEXTSTART else stb.TEXTEDIT_K_LINESTART) or kMask)
-                Key.End.isPressed -> editState.onKeyPressed((if (IO.keyCtrl) stb.TEXTEDIT_K_TEXTEND else stb.TEXTEDIT_K_LINEEND) or kMask)
-                Key.Delete.isPressed && isEditable -> editState.onKeyPressed(stb.TEXTEDIT_K_DELETE or kMask)
+                        editState.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
+                Key.Home.isPressed -> editState.onKeyPressed((if (IO.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
+                Key.End.isPressed -> editState.onKeyPressed((if (IO.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
+                Key.Delete.isPressed && isEditable -> editState.onKeyPressed(K.DELETE or kMask)
                 Key.Backspace.isPressed && isEditable -> {
                     if (!editState.hasSelection) {
                         if (isWordmoveKeyDown)
-                            editState.onKeyPressed(stb.TEXTEDIT_K_WORDLEFT or stb.TEXTEDIT_K_SHIFT)
+                            editState.onKeyPressed(K.WORDLEFT or K.SHIFT)
                         else if (IO.osxBehaviors && IO.keySuper && !IO.keyAlt && !IO.keyCtrl)
-                            editState.onKeyPressed(stb.TEXTEDIT_K_LINESTART or stb.TEXTEDIT_K_SHIFT)
+                            editState.onKeyPressed(K.LINESTART or K.SHIFT)
                     }
-                    editState.onKeyPressed(stb.TEXTEDIT_K_BACKSPACE or kMask)
+                    editState.onKeyPressed(K.BACKSPACE or kMask)
                 }
                 Key.Enter.isPressed -> {
                     val ctrlEnterForNewLine = flags has InputTextFlags.CtrlEnterForNewLine
@@ -994,11 +995,11 @@ interface imgui_internal {
                 isShortcutKeyOnly -> when {
 
                     Key.Z.isPressed && isEditable -> {
-                        editState.onKeyPressed(stb.TEXTEDIT_K_UNDO)
+                        editState.onKeyPressed(K.UNDO)
                         editState.clearSelection()
                     }
                     Key.Y.isPressed && isEditable -> {
-                        editState.onKeyPressed(stb.TEXTEDIT_K_REDO)
+                        editState.onKeyPressed(K.REDO)
                         editState.clearSelection()
                     }
                     Key.A.isPressed -> {
@@ -1077,7 +1078,7 @@ interface imgui_internal {
                     FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from
                     the stb_textedit callbacks. */
                 if (isEditable)
-                    editState.tempTextBuffer = editState.text.toCharArray()
+                    editState.tempTextBuffer = editState.text.clone()
 
                 // User callback
                 if (flags has (InputTextFlags.CallbackCompletion or InputTextFlags.CallbackHistory or InputTextFlags.CallbackAlways)) {
@@ -1157,7 +1158,7 @@ interface imgui_internal {
         /*  Select which buffer we are going to display. When ImGuiInputTextFlags_NoLiveEdit is set 'buf' might still
             be the old value. We set buf to NULL to prevent accidental usage from now on.         */
         val bufDisplay = if (g.activeId == id && isEditable) editState.tempTextBuffer else buf[0].toCharArray();
-        buf[0] = ""
+        //buf[0] = ""
 
         if (!isMultiline)
             renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, Style.frameRounding)
@@ -1215,10 +1216,14 @@ interface imgui_internal {
                 if (searchesResultLineNumber[1] == -1) searchesResultLineNumber[1] = lineCount
 
                 // Calculate 2d position by finding the beginning of the line and measuring distance
-                cursorOffset.x = inputTextCalcTextSizeW(text.substring(text.beginOfLine(searchesInputPtr[0])), searchesInputPtr[0]).x
+                var start = text.beginOfLine(searchesInputPtr[0])
+                var length = text.size - start
+                cursorOffset.x = inputTextCalcTextSizeW(String(text, start, length), searchesInputPtr[0]).x
                 cursorOffset.y = searchesResultLineNumber[0] * g.fontSize
                 if (searchesResultLineNumber[1] >= 0) {
-                    selectStartOffset.x = inputTextCalcTextSizeW(text.substring(text.beginOfLine(searchesInputPtr[1])), searchesInputPtr[1]).x
+                    start = text.beginOfLine(searchesInputPtr[1])
+                    length = text.size - start
+                    selectStartOffset.x = inputTextCalcTextSizeW(String(text, start, length), searchesInputPtr[1]).x
                     selectStartOffset.y = searchesResultLineNumber[1] * g.fontSize
                 }
 
@@ -1273,7 +1278,9 @@ interface imgui_internal {
                             if (text[p++] == '\n')
                                 break
                     } else {
-                        val rectSize = inputTextCalcTextSizeW(text.substring(p), textSelectedEnd, stopOnNewLine = true)
+                        val start = text.beginOfLine(p)
+                        val end = text.size - start
+                        val rectSize = inputTextCalcTextSizeW(String(text, start, end), textSelectedEnd, stopOnNewLine = true)
                         // So we can see selected empty lines
                         if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
@@ -1302,12 +1309,13 @@ interface imgui_internal {
             if (isEditable)
                 g.osImePosRequest = Vec2(cursorScreenPos.x - 1, cursorScreenPos.y - g.fontSize)
         } else {
-            TODO()
             // Render text only
-//            const char* buf_end = NULL
-//            if (isMultiline)
-//                textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay, & buf_end) * g.FontSize) // We don't need width
-//            drawWindow->DrawList->AddText(g.Font, g.FontSize, renderPos, GetColorU32(ImGuiCol_Text), bufDisplay, buf_end, 0.0f, is_multiline ? NULL : &clipRect)
+            val bufEnd = IntArray(1)
+            if (isMultiline)
+            // We don't need width
+                textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufEnd) * g.fontSize)
+            drawWindow.drawList.addText(g.font, g.fontSize, renderPos, getColorU32(Col.Text), bufDisplay.contentToString(), bufEnd[0],
+                    0f, if (isMultiline) null else clipRect)
         }
 
         if (isMultiline) {
@@ -1334,7 +1342,7 @@ interface imgui_internal {
 //IMGUI_API bool          InputScalarEx(const char* label, ImGuiDataType data_type, void* data_ptr, void* step_ptr, void* step_fast_ptr, const char* scalar_format, ImGuiInputTextFlags extra_flags);
 
     /** Create text input in place of a slider (when CTRL+Clicking on slider)   */
-    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: FloatArray, id: Int, decimalPrecision: Int): Boolean {
+    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: Array<out Number>, id: Int, decimalPrecision: Int): Boolean {
 
         val window = currentWindow
 
@@ -1354,7 +1362,7 @@ interface imgui_internal {
         } else if (g.activeId != g.scalarAsInputTextId)
             g.scalarAsInputTextId = 0   // Release
         if (textValueChanged)
-            TODO()//return dataTypeApplyOpFromText(buf, GImGui->InputTextState.InitialText.begin(), data_type, data_ptr, NULL)
+            return dataTypeApplyOpFromText(value[0], g.inputTextState.initialText, dataType, data)
         return false
     }
 //
