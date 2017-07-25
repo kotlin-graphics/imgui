@@ -30,6 +30,7 @@ object ImGui :
         imgui_id,
         imgui_widgets,
         imgui_widgetsDrag,
+        imgui_widgetsInputKeyboard,
         imgui_widgetsSliders,
         imgui_tooltips,
         // menus popus logging clipping

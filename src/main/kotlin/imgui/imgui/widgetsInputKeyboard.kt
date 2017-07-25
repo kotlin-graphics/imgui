@@ -10,13 +10,11 @@ import imgui.Context as g
 interface imgui_widgetsInputKeyboard {
 
 
-    fun inputText(label: String, buf:CharArray, bufSize: Int, flags: Int = 0
-                  /*, callback: TextEditCallback  = NULL, void* user_data = NULL*/): Boolean {
+    fun inputText(label: String, buf: CharArray, flags: Int = 0
+            /*, callback: TextEditCallback  = NULL, void* user_data = NULL*/): Boolean {
 
         assert(flags hasnt InputTextFlags.Multiline)    // call InputTextMultiline()
-
-        TODO()
-//        return inputTextEx(label, buf, bufSize, Vec2(), flags/*, callback, user_data*/)
+        return inputTextEx(label, buf, Vec2(), flags/*, callback, user_data*/)
     }
 //    IMGUI_API bool          InputTextMultiline(const char* label, char* buf, size_t buf_size, const ImVec2& size = ImVec2(0,0), ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
 //    IMGUI_API bool          InputFloat(const char* label, float* v, float step = 0.0f, float step_fast = 0.0f, int decimal_precision = -1, ImGuiInputTextFlags extra_flags = 0);

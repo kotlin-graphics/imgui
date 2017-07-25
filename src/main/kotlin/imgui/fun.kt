@@ -476,7 +476,8 @@ fun inputTextFilterCharacter(pChar: IntArray, flags: Int/*, ImGuiTextEditCallbac
             if (!(c in '0'..'9') && (c != '.') && (c != '-') && (c != '+') && (c != '*') && (c != '/')) return false
 
         if (flags has InputTextFlags.CharsHexadecimal)
-            if (!(c in '0'..'9') && !(c in 'a'..'f') && !(c in 'A'..'F')) return false
+            if (!(c in '0'..'9') && !(c in 'a'..'f') && !(c in 'A'..'F'))
+                return false
 
         if (flags has InputTextFlags.CharsUppercase && c in 'a'..'z') {
             c += 'A' - 'a'
@@ -564,26 +565,27 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
 //static inline void      DataTypeFormatString(ImGuiDataType data_type, void* data_ptr, const char* display_format, char* buf, int buf_size);
 
 /** JVM Imgui, dataTypeFormatString replacement */
-fun Array<out Number>.format(dataType: DataType, decimalPrecision: Int) = when (dataType) {
+fun Array<out Number>.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) = when (dataType) {
 
     DataType.Int ->
-        if (decimalPrecision < 0) "%d".format(Style.locale, this[0] as Int)
-        else "%.${decimalPrecision}d".format(Style.locale, this[0] as Int)
+        if (decimalPrecision < 0) "%d".format(Style.locale, this[0])
+        else "%.${decimalPrecision}d".format(Style.locale, this[0])
     DataType.Float ->
         /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
             non-significant digits?         */
-        if (decimalPrecision < 0) "%f".format(Style.locale, this[0] as Float)
-        else "%.${decimalPrecision}f".format(Style.locale, this[0] as Float)
+        if (decimalPrecision < 0) "%f".format(Style.locale, this[0])
+        else "%.${decimalPrecision}f".format(Style.locale, this[0])
     else -> throw Error("unsupported format data type")
-}
+}.toCharArray(buf)
+
 //static void             DataTypeApplyOp(ImGuiDataType data_type, int op, void* value1, const void* value2);
 
 /** User can input math operators (e.g. +100) to edit a numerical values.   */
-fun dataTypeApplyOpFromText(buf: String, initialValueBuf: String, dataType: DataType, data: Array<out Number>, scalarFormat: String? = null)
-        : Boolean {
+fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: Array<out Number>,
+                            scalarFormat: String? = null): Boolean {
 
     var s = 0
-    while (s in buf.indices && buf[s].isSpace) s++
+    while (buf[s].isSpace) s++
 
     /*  We don't support '-' op because it would conflict with inputing negative value.
         Instead you can use +-100 to subtract from an existing value     */
@@ -632,7 +634,7 @@ fun dataTypeApplyOpFromText(buf: String, initialValueBuf: String, dataType: Data
 //            TODO if (op && sscanf(initial_value_buf, scalar_format, & arg0) < 1)
 //            return false
 
-            val arg1 = buf.format(scalarFormat).f
+            val arg1 = String(buf, 0, buf.strlen).format(scalarFormat).f
 //            TODO if (sscanf(buf, scalar_format, & arg1) < 1)
 //            return false
             when (op) {

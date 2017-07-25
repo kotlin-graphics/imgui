@@ -312,7 +312,7 @@ object IO {
      *  - with glfw you can get those from the callback set in glfwSetCharCallback()
      *  - on Windows you can get those using ToAscii+keyboard state, or via the WM_CHAR message */
     fun addInputCharacter(c: Char) {
-        val n = strlenW(inputCharacters)
+        val n = inputCharacters.strlenW
         if (n + 1 < inputCharacters.size)
             inputCharacters[n] = c
     }

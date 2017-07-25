@@ -54,6 +54,8 @@ class HelloWorld {
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
         //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 
+        clearColor = Color(114, 144, 154).run { floatArrayOf(value.x, value.y, value.z) }
+
         while (window.open)
             loop()
 
@@ -62,6 +64,8 @@ class HelloWorld {
         window.destroy()
         glfw.terminate()
     }
+
+    lateinit var clearColor: FloatArray
 
     fun loop() {
 
@@ -89,6 +93,5 @@ class HelloWorld {
 
     companion object {
         val f = FloatArray(1)
-        val clearColor = Color(114, 144, 154).run { floatArrayOf(value.x, value.y, value.z) }
     }
 }

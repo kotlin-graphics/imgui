@@ -771,7 +771,7 @@ class Font {
 //    IMGUI_API void              RenderChar(ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, unsigned short c) const;
 
     //    const ImVec4& clipRect, const char* text, const char* textEnd, float wrapWidth = 0.0f, bool cpuFineClip = false) const;
-    fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: String, textEnd: Int = text.length,
+    fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: CharArray, textEnd: Int = text.size,
                    wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
 
         // Align to be pixel perfect

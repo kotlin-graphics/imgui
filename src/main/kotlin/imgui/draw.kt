@@ -9,6 +9,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.internal.invLength
+import imgui.internal.strlen
 import java.util.*
 import kotlin.collections.ArrayList
 import imgui.Context as g
@@ -254,14 +255,18 @@ class DrawList {
         pathFillConvex(col)
     }
 
-    fun addText(pos:Vec2, col:Int, text:String, textEnd: Int = text.length) = addText(g.font, g.fontSize, pos, col, text, textEnd)
+    fun addText(pos: Vec2, col: Int, text: CharArray, textEnd: Int = text.size) = addText(g.font, g.fontSize, pos, col, text, textEnd)
 
-    fun addText(font: Font, fontSize: Float, pos: Vec2, col: Int, text: String, textEnd: Int = text.length, wrapWidth: Float = 0f,
+    fun addText(font: Font, fontSize: Float, pos: Vec2, col: Int, text: CharArray, textEnd: Int = text.size, wrapWidth: Float = 0f,
                 cpuFineClipRect: Vec4? = null) {
 
         if ((col and COL32_A_MASK) == 0) return
 
-        if (0 == textEnd) return
+        var textEnd = textEnd
+        if (textEnd == 0)
+            textEnd = text.strlen
+        if (textEnd == 0)
+            return
 
         /*  IMPORTANT: This is one of the few instance of breaking the encapsulation of ImDrawList, as we pull this from
             ImGui state, but it is just SO useful.
@@ -641,6 +646,7 @@ class DrawList {
         /** Large values that are easy to encode in a few bits+shift    */
         private val nullClipRect = Vec4(-8192.0f, -8192.0f, +8192.0f, +8192.0f)
     }
+
     /** Use precomputed angles for a 12 steps circle    */
     fun pathArcToFast(centre: Vec2, radius: Float, aMin: Int, aMax: Int) {
         val circleVtxCount = circleVtx.size

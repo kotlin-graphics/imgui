@@ -19,6 +19,7 @@ import imgui.ImGui.scrollMaxY
 import imgui.ImGui.textLineHeight
 import imgui.TextEditState.K
 import imgui.internal.*
+import java.util.*
 import kotlin.apply
 import imgui.Context as g
 
@@ -303,7 +304,7 @@ interface imgui_internal {
                     if (textEnd == 0) text.length else textEnd
 
         if (textDisplayEnd > 0) {
-            window.drawList.addText(g.font, g.fontSize, pos, getColorU32(Col.Text), text, textDisplayEnd)
+            window.drawList.addText(g.font, g.fontSize, pos, getColorU32(Col.Text), text.toCharArray(), textDisplayEnd)
             if (g.logEnabled)
                 logRenderedText(pos, text, textDisplayEnd)
         }
@@ -318,7 +319,7 @@ interface imgui_internal {
             textEnd = text.length // FIXME-OPT
 
         if (textEnd > 0) {
-            window.drawList.addText(g.font, g.fontSize, pos, getColorU32(Col.Text), text, textEnd, wrapWidth)
+            window.drawList.addText(g.font, g.fontSize, pos, getColorU32(Col.Text), text.toCharArray(), textEnd, wrapWidth)
             if (g.logEnabled)
                 logRenderedText(pos, text, textEnd)
         }
@@ -355,10 +356,9 @@ interface imgui_internal {
         // Render
         if (needClipping) {
             val fineClipRect = Vec4(clipMin.x, clipMin.y, clipMax.x, clipMax.y)
-            window.drawList.addText(g.font, g.fontSize, pos, ImGui.getColorU32(Col.Text), text, textDisplayEnd, 0f, fineClipRect)
-        } else {
-            window.drawList.addText(g.font, g.fontSize, pos, ImGui.getColorU32(Col.Text), text, textDisplayEnd, 0f, null)
-        }
+            window.drawList.addText(g.font, g.fontSize, pos, getColorU32(Col.Text), text.toCharArray(), textDisplayEnd, 0f, fineClipRect)
+        } else
+            window.drawList.addText(g.font, g.fontSize, pos, getColorU32(Col.Text), text.toCharArray(), textDisplayEnd, 0f, null)
 //    if (g.logEnabled) TODO
 //        LogRenderedText(pos, text, textDisplayEnd)
     }
@@ -733,7 +733,7 @@ interface imgui_internal {
 //IMGUI_API bool          DragIntN(const char* label, int* v, int components, float v_speed, int v_min, int v_max, const char* display_format);
 
 
-    fun inputTextEx(label: String, buf: Array<String>, sizeArg: Vec2, flags: Int
+    fun inputTextEx(label: String, buf: CharArray, sizeArg: Vec2, flags: Int
             /*, ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean {
 
         val window = currentWindow
@@ -814,16 +814,16 @@ interface imgui_internal {
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
                 val prevLenW = editState.curLenW
                 // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
-//                editState.text.add('\u0000')
+                editState.text = CharArray(buf.size)
+                editState.initialText = CharArray(buf.size)
                 // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
 //                editState.initialText.add('\u0000')
-                editState.initialText = buf[0]
+                editState.initialText strncpy buf
                 var bufEnd = 0
-                editState.curLenW = buf[0].length
-                editState.text = buf[0].toCharArray()
+                editState.curLenW = editState.text.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
                 /*  We can't get the result from ImFormatString() above because it is not UTF-8 aware.
                     Here we'll cut off malformed UTF-8.                 */
-                editState.curLenA = buf[0].length //TODO check (int)(bufEnd - buf)
+                editState.curLenA = editState.curLenW //TODO check (int)(bufEnd - buf)
                 editState.cursorAnimReset()
 
                 /*  Preserve cursor position and undo/redo stack if we come back to same widget
@@ -869,7 +869,7 @@ interface imgui_internal {
 //                editState.CursorClamp()
             }
 
-            editState.bufSizeA = buf[0].length
+            editState.bufSizeA = buf.size
 
             /*  Although we are active we don't prevent mouse from hovering other elements unless we are interacting
                 right now with the widget.
@@ -1147,8 +1147,8 @@ interface imgui_internal {
                 }
 
                 // Copy back to user buffer
-                if (isEditable && String(editState.tempTextBuffer) != buf[0]) {
-                    buf[0] = String(editState.tempTextBuffer)
+                if (isEditable && !Arrays.equals(editState.tempTextBuffer, buf)) {
+                    repeat(buf.size) { buf[it] = editState.tempTextBuffer[it] }
                     valueChanged = true
                 }
             }
@@ -1157,8 +1157,8 @@ interface imgui_internal {
         // ------------------------- Render -------------------------
         /*  Select which buffer we are going to display. When ImGuiInputTextFlags_NoLiveEdit is set 'buf' might still
             be the old value. We set buf to NULL to prevent accidental usage from now on.         */
-        val bufDisplay = if (g.activeId == id && isEditable) editState.tempTextBuffer else buf[0].toCharArray();
-        //buf[0] = ""
+        val bufDisplay = if (g.activeId == id && isEditable) editState.tempTextBuffer else buf
+//        buf[0] = ""
 
         if (!isMultiline)
             renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, Style.frameRounding)
@@ -1294,8 +1294,8 @@ interface imgui_internal {
                 }
             }
 
-            drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, getColorU32(Col.Text),
-                    String(bufDisplay), editState.curLenA, 0f, if (isMultiline) null else clipRect)
+            drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, getColorU32(Col.Text), bufDisplay,
+                    editState.curLenA, 0f, if (isMultiline) null else clipRect)
 
             // Draw blinking cursor
             val cursorIsVisible = g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
@@ -1314,8 +1314,8 @@ interface imgui_internal {
             if (isMultiline)
             // We don't need width
                 textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufEnd) * g.fontSize)
-            drawWindow.drawList.addText(g.font, g.fontSize, renderPos, getColorU32(Col.Text), bufDisplay.contentToString(), bufEnd[0],
-                    0f, if (isMultiline) null else clipRect)
+            drawWindow.drawList.addText(g.font, g.fontSize, renderPos, getColorU32(Col.Text), bufDisplay, bufEnd[0], 0f,
+                    if (isMultiline) null else clipRect)
         }
 
         if (isMultiline) {
@@ -1342,7 +1342,8 @@ interface imgui_internal {
 //IMGUI_API bool          InputScalarEx(const char* label, ImGuiDataType data_type, void* data_ptr, void* step_ptr, void* step_fast_ptr, const char* scalar_format, ImGuiInputTextFlags extra_flags);
 
     /** Create text input in place of a slider (when CTRL+Clicking on slider)   */
-    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: Array<out Number>, id: Int, decimalPrecision: Int): Boolean {
+    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: Array<out Number>, id: Int,
+                                       decimalPrecision: Int): Boolean {
 
         val window = currentWindow
 
@@ -1351,8 +1352,9 @@ interface imgui_internal {
         setHoveredId(0)
         focusableItemUnregister(window)
 
-        val value = arrayOf(data.format(dataType, decimalPrecision))
-        val textValueChanged = inputTextEx(label, value, aabb.size, InputTextFlags.CharsDecimal or InputTextFlags.AutoSelectAll)
+        val buf = CharArray(32)
+        data.format(dataType, decimalPrecision, buf)
+        val textValueChanged = inputTextEx(label, buf, aabb.size, InputTextFlags.CharsDecimal or InputTextFlags.AutoSelectAll)
         if (g.scalarAsInputTextId == 0) {
             /*  First frame
                 InputText ID expected to match the Slider ID (else we'd need to store them both, which is also possible)             */
@@ -1362,7 +1364,7 @@ interface imgui_internal {
         } else if (g.activeId != g.scalarAsInputTextId)
             g.scalarAsInputTextId = 0   // Release
         if (textValueChanged)
-            return dataTypeApplyOpFromText(value[0], g.inputTextState.initialText, dataType, data)
+            return dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data)
         return false
     }
 //

@@ -149,9 +149,9 @@ fun upperPowerOfTwo(v: Int): Int {
 //IMGUI_API int           ImStrnicmp(const char* str1, const char* str2, int count);
 //IMGUI_API char*         ImStrdup(const char* str);
 
-fun strlenW(str: CharArray): Int {
+val CharArray.strlenW: Int get() {
     var n = 0
-    while (str[n] != 0.c) n++
+    while (this[n] != 0.c) n++
     return n
 }
 
@@ -181,3 +181,44 @@ fun Vec2.invLength(failValue: Float): Float {
     return failValue
 }
 
+
+// JVM IMGUI
+infix fun CharArray.strncpy(src: CharArray) = strncpy(src, size)
+
+fun CharArray.strncpy(src: CharArray, count: Int) {
+    if (count < 1) return
+    for (i in 0 until count) {
+        if (src[i] == '\u0000') break
+        this[i] = src[i]
+    }
+}
+
+fun CharArray.textStr(src: CharArray): Int {
+    var i = 0
+    while (i < size) {
+        if (src[i] == '\u0000') break
+        this[i] = src[i++]
+    }
+    return i
+}
+
+val CharArray.strlen: Int get() {
+    var i = 0
+    while (i < size && this[i] != '\u0000') i++
+    return i
+}
+
+fun String.scanHex(ints: IntArray, count: Int = ints.size, precision: Int) {
+    var c = 0
+    for (i in 0 until count) {
+        val end = glm.min((i + 1) * precision, length)
+        ints[i] =
+                if(c > end) 0
+                else {
+                    val s = substring(c, end)
+                    if (s.isEmpty()) 0
+                    else s.toInt(16)
+                }
+        c += precision
+    }
+}

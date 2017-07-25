@@ -14,7 +14,7 @@ class TextEditState {
     into own buffer.    */
     var text = charArrayOf()
     /** backup of end-user buffer at the time of focus (in UTF-8, unaltered)    */
-    var initialText = ""
+    var initialText = charArrayOf()
 
     var tempTextBuffer = charArrayOf()
     /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
@@ -131,12 +131,12 @@ class TextEditState {
 
         val textLen = curLenW
         assert(pos <= textLen)
-//        if (newTextLen + textLen + 1 > text.size) text.size is 33 on C, doesnt mean the same thing here
-//            return false
+        if (newTextLen + textLen /* + 1 TODO check*/ > text.size)
+            return false
 
         val newTextLenUtf8 = newTextLen //TODO check textCountUtf8BytesFromStr(new_text, new_text + newTextLen)
-//        if (newTextLenUtf8 + curLenA + 1 > bufSizeA) bufSizeA is 33 on C, doesnt mean the same thing here
-//            return false
+        if (newTextLenUtf8 + curLenA > bufSizeA)
+            return false
 
         if (pos != textLen)
             TODO()  //memmove(text + pos + new_text_len, text + pos, (size_t)(text_len - pos) * sizeof(ImWchar));
@@ -145,7 +145,7 @@ class TextEditState {
 
         curLenW += newTextLen
         curLenA += newTextLenUtf8
-        //text[curLenW] = '\0'
+        text[curLenW] = '\u0000'
 
         return true
     }
@@ -204,6 +204,7 @@ class TextEditState {
             val tmp = Array(len, { UndoRecord(src[pSrc + it]) })
             for (i in 0 until len) dst[pDst + i] = tmp[i]
         }
+
         val GETWIDTH_NEWLINE = -1f
     }
 

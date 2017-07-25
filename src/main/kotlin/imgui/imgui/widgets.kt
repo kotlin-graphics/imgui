@@ -11,11 +11,12 @@ import imgui.ImGui.buttonBehavior
 import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcWrapWidthForPos
+import imgui.ImGui.currentWindow
 import imgui.ImGui.dragInt
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.getColorU32
-import imgui.ImGui.currentWindow
+import imgui.ImGui.inputText
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.popId
@@ -26,9 +27,11 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.sameLine
 import imgui.ImGui.setTooltip
+import imgui.InputTextFlags
 import imgui.Style
-import imgui.internal.ButtonFlags
-import imgui.internal.Rect
+import imgui.internal.*
+import imgui.or
+import java.util.*
 import imgui.Context as g
 
 
@@ -194,7 +197,7 @@ interface imgui_widgets {
     fun colorEdit3(label: String, col: FloatArray): Boolean {
 
         val col4 = floatArrayOf(*col, 1f)
-        val valueChanged = colorEdit4(label, col4, false)
+        valueChanged = colorEdit4(label, col4, false)
         col[0] = col4[0]
         col[1] = col4[1]
         col[2] = col4[2]
@@ -209,9 +212,9 @@ interface imgui_widgets {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
-        val wFull = calcItemWidth()
-        val squareSz = (g.fontSize + Style.framePadding.y * 2f)
+        id = window.getId(label)
+        wFull = calcItemWidth()
+        squareSz = (g.fontSize + Style.framePadding.y * 2f)
 
         val editMode =
                 if (window.dc.colorEditMode == ColorEditMode.UserSelect || window.dc.colorEditMode == ColorEditMode.UserSelectShowButton)
@@ -230,22 +233,22 @@ interface imgui_widgets {
         beginGroup()
         pushId(label)
 
-        val hsv = editMode == ColorEditMode.HSV
+        hsv = editMode == ColorEditMode.HSV
         when (editMode) {
 
             ColorEditMode.RGB, ColorEditMode.HSV -> {
                 // RGB/HSV 0..255 Sliders
-                val wItemsAll = wFull - (squareSz + Style.itemInnerSpacing.x)
-                val wItemOne = glm.max(1f, ((wItemsAll - Style.itemInnerSpacing.x * (components - 1)) / components.f).i.f)
-                val wItemLast = glm.max(1f, (wItemsAll - (wItemOne + Style.itemInnerSpacing.x) * (components - 1)).i.f)
+                wItemsAll = wFull - (squareSz + Style.itemInnerSpacing.x)
+                wItemOne = glm.max(1f, ((wItemsAll - Style.itemInnerSpacing.x * (components - 1)) / components.f).i.f)
+                wItemLast = glm.max(1f, (wItemsAll - (wItemOne + Style.itemInnerSpacing.x) * (components - 1)).i.f)
 
-                val hidePrefix = wItemOne <= calcTextSize("M:999").x
-                val ids = listOf("##X", "##Y", "##Z", "##W")
-                val fmtTable = listOf(
+                hidePrefix = wItemOne <= calcTextSize("M:999").x
+                ids = listOf("##X", "##Y", "##Z", "##W")
+                fmtTable = listOf(
                         listOf("%3.0f", "%3.0f", "%3.0f", "%3.0f"),
                         listOf("R:%3.0f", "G:%3.0f", "B:%3.0f", "A:%3.0f"),
                         listOf("H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f"))
-                val fmt = if (hidePrefix) fmtTable[0] else if (hsv) fmtTable[2] else fmtTable[1]
+                fmt = if (hidePrefix) fmtTable[0] else if (hsv) fmtTable[2] else fmtTable[1]
 
                 pushItemWidth(wItemOne)
                 for (n in 0 until components) {
@@ -263,25 +266,20 @@ interface imgui_widgets {
 
             ColorEditMode.HEX -> {
                 // RGB Hexadecimal Input
-                val wSliderAll = wFull - squareSz
-                val value =
-                        if (showAlpha) "#%02X%02X%02X%02X".format(Style.locale, i[0], i[1], i[2], i[3])
-                        else "#%02X%02X%02X".format(Style.locale, i[0], i[1], i[2])
+                wSliderAll = wFull - squareSz
+                val buf = CharArray(64)
+                (if (showAlpha) "#%02X%02X%02X%02X".format(Style.locale, i[0], i[1], i[2], i[3])
+                else "#%02X%02X%02X".format(Style.locale, i[0], i[1], i[2])).toCharArray(buf)
                 pushItemWidth(wSliderAll - Style.itemInnerSpacing.x)
-                TODO()
-//                if (inputText("##Text", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
-//                {
-//                    valueChanged |= true
-//                    char* p = buf
-//                    while (*p == '#' || ImCharIsSpace(*p))
-//                    p++
-//                    i[0] = i[1] = i[2] = i[3] = 0
-//                    if (alpha)
-//                        sscanf(p, "%02X%02X%02X%02X", (unsigned int*)&i[0], (unsigned int*)&i[1], (unsigned int*)&i[2], (unsigned int*)&i[3]) // Treat at unsigned (%X is unsigned)
-//                    else
-//                    sscanf(p, "%02X%02X%02X", (unsigned int*)&i[0], (unsigned int*)&i[1], (unsigned int*)&i[2])
-//                }
-//                PopItemWidth()
+                if (inputText("##Text", buf, InputTextFlags.CharsHexadecimal or InputTextFlags.CharsUppercase)) {
+                    valueChanged = valueChanged || true
+                    var p = 0
+                    while (buf[p] == '#' || buf[p].isSpace)
+                        p++
+                    i.fill(0)
+                    String(buf, p, buf.strlen - p).scanHex(i, if (showAlpha) 4 else 3, 2)
+                }
+                popItemWidth()
             }
             else -> Unit
         }
@@ -335,4 +333,21 @@ interface imgui_widgets {
 //    IMGUI_API void          PlotHistogram(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));
 //    IMGUI_API void          PlotHistogram(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
 //    IMGUI_API void          ProgressBar(float fraction, const ImVec2& size_arg = ImVec2(-1,0), const char* overlay = NULL);
+
+    companion object {
+        // colorEdit
+        var valueChanged = false
+        var id = 0
+        var wFull = 0f
+        var squareSz = 0f
+        var hsv = false
+        var wItemsAll = 0f
+        var wItemOne = 0f
+        var wItemLast = 0f
+        var wSliderAll = 0f
+        var hidePrefix = false
+        var ids = listOf<String>()
+        var fmtTable = listOf<List<String>>()
+        var fmt = listOf<String>()
+    }
 }
