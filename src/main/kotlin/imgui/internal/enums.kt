@@ -41,6 +41,7 @@ enum class SliderFlags(val i: Int) { Vertical(1 shl 0) }
 infix fun Int.hasnt(b: SliderFlags) = (this and b.i) == 0
 
 /** NB: need to be in sync with last value of SelectableFlags  */
+@Deprecated("us")
 enum class SelectableFlagsPrivate_(val i: Int) {
     Menu(1 shl 3),
     MenuItem(1 shl 4),

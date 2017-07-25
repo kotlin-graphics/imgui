@@ -5,7 +5,11 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.ImGui.buttonBehavior
+import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
+import imgui.ImGui.focusWindow
+import imgui.ImGui.getColumnOffset
+import imgui.ImGui.pushClipRect
 import imgui.ImGui.setHoveredId
 import imgui.internal.*
 import uno.kotlin.isPrintable
@@ -363,8 +367,16 @@ fun markIniSettingsDirty() {
         g.settingsDirtyTimer = IO.iniSavingRate
 }
 
-//
-//static void             PushColumnClipRect(int column_index = -1);
+fun pushColumnClipRect(columnIndex: Int = -1) {
+    val window = currentWindow
+    var columnIndex = columnIndex
+    if (columnIndex < 0)
+        columnIndex = window.dc.columnsCurrent
+
+    val x1 = glm.floor(0.5f + window.pos.x + getColumnOffset(columnIndex) - 1f)
+    val x2 = glm.floor(0.5f + window.pos.x + getColumnOffset(columnIndex + 1) - 1f)
+    pushClipRect(Vec2(x1, -Float.MAX_VALUE), Vec2(x2, +Float.MAX_VALUE), true)
+}
 
 fun getVisibleRect(): Rect {
     if (IO.displayVisibleMin.x != IO.displayVisibleMax.x && IO.displayVisibleMin.y != IO.displayVisibleMax.y)
@@ -395,7 +407,7 @@ fun closeInactivePopups() {
             var hasFocus = false
             var m = n
             while (m < g.openPopupStack.size && !hasFocus) {
-                hasFocus = g.openPopupStack[m].window != null && g.openPopupStack[m].window!!.rootWindow == g.focusedWindow!!.rootWindow
+                hasFocus = g.openPopupStack[m].window != null && g.openPopupStack[m].window!!.rootWindow === g.focusedWindow!!.rootWindow
                 m++
             }
             if (!hasFocus)
@@ -407,9 +419,17 @@ fun closeInactivePopups() {
         TODO() //g.OpenPopupStack.resize(n)
 }
 
-//static void             ClosePopupToLevel(int remaining);
+fun closePopupToLevel(remaining: Int) {
+    if (remaining > 0)
+        focusWindow(g.openPopupStack[remaining - 1].window)
+    else
+        focusWindow(g.openPopupStack[0].parentWindow)
+    repeat(remaining) { g.openPopupStack.pop() }
+}
 //static void             ClosePopup(ImGuiID id);
-//static bool             IsPopupOpen(ImGuiID id);
+
+fun isPopupOpen(id: Int) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
+
 fun getFrontMostModalRootWindow(): Window? {
     for (n in g.openPopupStack.size - 1 downTo 0) {
         val frontMostPopup = g.openPopupStack[n].window

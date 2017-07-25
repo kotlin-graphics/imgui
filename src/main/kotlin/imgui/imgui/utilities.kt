@@ -52,16 +52,16 @@ fun setItemAllowOverlap() {
 }
 
 /** is current window hovered and hoverable (not blocked by a popup) (differentiate child windows from each others) */
-val isWindowHovered get() = g.hoveredWindow == g.currentWindow && g.hoveredRootWindow!!.isContentHoverable
+val isWindowHovered get() = g.hoveredWindow === g.currentWindow && g.hoveredRootWindow!!.isContentHoverable
 
 /** is current window focused   */
-val isWindowFocused get() = g.focusedWindow == g.currentWindow
+val isWindowFocused get() = g.focusedWindow === g.currentWindow
 
 /** is current root window focused (root = top-most parent of a child, otherwise self)  */
-val isRootWindowFocused get() = g.focusedWindow == g.currentWindow!!.rootWindow
+val isRootWindowFocused get() = g.focusedWindow === g.currentWindow!!.rootWindow
 
 /** is current root window or any of its child (including current window) focused   */
-val isRootWindowOrAnyChildFocused get() = g.focusedWindow != null && g.focusedWindow!!.rootWindow == g.currentWindow!!.rootWindow
+val isRootWindowOrAnyChildFocused get() = g.focusedWindow != null && g.focusedWindow!!.rootWindow === g.currentWindow!!.rootWindow
 
 /** is current root window or any of its child (including current window) hovered and hoverable (not blocked by a popup)    */
 val isRootWindowOrAnyChildHovered

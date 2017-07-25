@@ -4,7 +4,8 @@ import imgui.imgui.isKeyPressed
 
 /** Flags for ImGui::Begin()    */
 enum class WindowFlags(val i: Int) {
-    // Default: 0
+
+    Default(0),
     /** Disable title-bar   */
     NoTitleBar(1 shl 0),
     /** Disable user resizing with the lower-right grip */
@@ -154,15 +155,27 @@ enum class TreeNodeFlags(val i: Int) {
 /** Flags for ImGui::Selectable()   */
 enum class SelectableFlags(val i: Int) {
 
-    // Default: 0
-
+    Default(0),
     /** Clicking this don't close parent popup window   */
     DontClosePopups(1 shl 0),
     /** Selectable frame can span all columns (text will still fit in current column)   */
     SpanAllColumns(1 shl 1),
     /** Generate press events on double clicks too  */
-    AllowDoubleClick(1 shl 2)
+    AllowDoubleClick(1 shl 2),
+    /* private  */
+    Menu(1 shl 3),
+    /* private  */
+    MenuItem(1 shl 4),
+    /* private  */
+    Disabled(1 shl 5),
+    /* private  */
+    DrawFillAvailWidth(1 shl 6)
 }
+
+infix fun SelectableFlags.or(other: SelectableFlags) = i or other.i
+infix fun Int.or(other: SelectableFlags) = this or other.i
+infix fun Int.has(b: SelectableFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: SelectableFlags) = (this and b.i) == 0
 
 /** User fill ImGuiIO.KeyMap[] array with indices into the ImGuiIO.KeysDown[512] array  */
 enum class Key {

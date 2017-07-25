@@ -125,7 +125,13 @@ fun hash(data: String, dataSize: Int, seed: Int = 0): Int {
 }
 //IMGUI_API void*         ImFileLoadToMemory(const char* filename, const char* file_open_mode, int* out_file_size = NULL, int padding_bytes = 0);
 //IMGUI_API FILE*         ImFileOpen(const char* filename, const char* file_open_mode);
-//IMGUI_API bool          ImIsPointInTriangle(const ImVec2& p, const ImVec2& a, const ImVec2& b, const ImVec2& c);
+
+fun isPointInTriangle(p: Vec2, a: Vec2, b: Vec2, c: Vec2): Boolean {
+    val b1 = ((p.x - b.x) * (a.y - b.y) - (p.y - b.y) * (a.x - b.x)) < 0f
+    val b2 = ((p.x - c.x) * (b.y - c.y) - (p.y - c.y) * (b.x - c.x)) < 0f
+    val b3 = ((p.x - a.x) * (c.y - a.y) - (p.y - a.y) * (c.x - a.x)) < 0f
+    return ((b1 == b2) && (b2 == b3))
+}
 
 val Char.isSpace get() = this == ' ' || this == '\t' || this.i == 0x3000
 
@@ -213,7 +219,7 @@ fun String.scanHex(ints: IntArray, count: Int = ints.size, precision: Int) {
     for (i in 0 until count) {
         val end = glm.min((i + 1) * precision, length)
         ints[i] =
-                if(c > end) 0
+                if (c > end) 0
                 else {
                     val s = substring(c, end)
                     if (s.isEmpty()) 0

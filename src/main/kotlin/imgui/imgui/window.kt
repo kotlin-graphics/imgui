@@ -46,12 +46,12 @@ interface imgui_window {
             be set to false when the button is pressed.
         - Passing non-zero 'size' is roughly equivalent to calling SetNextWindowSize(size, ImGuiSetCond_FirstUseEver)
             prior to calling Begin().   */
-    fun begin(name: String, pOpen: Boolean? = null, flags: Int = 0) = begin(name, pOpen, Vec2(), -1.0f, flags)
+    fun begin(name: String, pOpen: BooleanArray? = null, flags: Int = 0) = begin(name, pOpen, Vec2(), -1.0f, flags)
 
     /** OBSOLETE. this is the older/longer API. the extra parameters aren't very relevant. call SetNextWindowSize() instead
     if you want to set a window size. For regular windows, 'size_on_first_use' only applies to the first time EVER the
     window is created and probably not what you want! might obsolete this API eventually.   */
-    fun begin(name: String, pOpen: Boolean?, sizeOnFirstUse: Vec2, bgAlpha: Float = -1.0f, flags: Int = 0): Pair<Boolean, Boolean?> {
+    fun begin(name: String, pOpen: BooleanArray?, sizeOnFirstUse: Vec2, bgAlpha: Float = -1.0f, flags: Int = 0): Boolean {
 
         assert(name.isNotEmpty())   // Window name required
         assert(g.initialized)       // Forgot to call ImGui::NewFrame()
@@ -89,7 +89,7 @@ interface imgui_window {
         if (flags has WindowFlags.Popup) {
             val popupRef = g.openPopupStack[g.currentPopupStack.size]
             windowWasActive = windowWasActive && window.popupId == popupRef.popupId
-            windowWasActive = windowWasActive && window == popupRef.window
+            windowWasActive = windowWasActive && window === popupRef.window
             popupRef.window = window
             g.currentPopupStack.add(popupRef)
             window.popupId = popupRef.popupId
@@ -188,7 +188,7 @@ interface imgui_window {
             detection and drawing   */
             if (flags hasnt WindowFlags.NoTitleBar && flags hasnt WindowFlags.NoCollapse) {
                 val titleBarRect = window.titleBarRect()
-                if (g.hoveredWindow == window && isMouseHoveringRect(titleBarRect) && IO.mouseDoubleClicked[0]) {
+                if (g.hoveredWindow === window && isMouseHoveringRect(titleBarRect) && IO.mouseDoubleClicked[0]) {
                     window.collapsed = !window.collapsed
                     if (flags hasnt WindowFlags.NoSavedSettings)
                         markIniSettingsDirty()
@@ -379,7 +379,7 @@ interface imgui_window {
                 window.scroll = glm.min(window.scroll, glm.max(window.sizeContents - window.sizeFull + window.scrollbarSizes, 0f))
 
             // Modal window darkens what is behind them
-            if (flags has WindowFlags.Modal && window == getFrontMostModalRootWindow())
+            if (flags has WindowFlags.Modal && window === getFrontMostModalRootWindow())
                 window.drawList.addRectFilled(fullscreenRect.min, fullscreenRect.max,
                         getColorU32(Col.ModalWindowDarkening, g.modalWindowDarkeningRatio))
 
@@ -404,7 +404,7 @@ interface imgui_window {
                     if (hovered || held)
                         g.mouseCursor = MouseCursor.ResizeNWSE
 
-                    if (g.hoveredWindow == window && held && IO.mouseDoubleClicked[0]) {
+                    if (g.hoveredWindow === window && held && IO.mouseDoubleClicked[0]) {
                         // Manual auto-fit when double-clicking
                         window.applySizeFullWithConstraint(sizeAutoFit)
                         if (flags hasnt WindowFlags.NoSavedSettings)
@@ -452,7 +452,7 @@ interface imgui_window {
                 if (flags hasnt WindowFlags.NoTitleBar)
                     window.drawList.addRectFilled(titleBarRect.tl, titleBarRect.br,
                             getColorU32(
-                                    if (g.focusedWindow != null && window.rootNonPopupWindow == g.focusedWindow!!.rootNonPopupWindow)
+                                    if (g.focusedWindow != null && window.rootNonPopupWindow === g.focusedWindow!!.rootNonPopupWindow)
                                         Col.TitleBgActive
                                     else Col.TitleBg),
                             windowRounding, Corner.TopLeft or Corner.TopRight)
@@ -553,12 +553,11 @@ interface imgui_window {
 
             // Title bar
             if (flags hasnt WindowFlags.NoTitleBar) {
-                var pOpen = pOpen
                 if (pOpen != null) {
                     val pad = 2f
                     val rad = (window.titleBarHeight() - pad * 2f) * 0.5f
                     if (closeButton(window.getId("#CLOSE"), window.rect().tr + Vec2(-pad - rad, pad + rad), rad))
-                        pOpen = false
+                        pOpen[0] = false
                 }
 
                 val textSize = calcTextSize(name, hideTextAfterDoubleHash = true)
@@ -570,11 +569,10 @@ interface imgui_window {
                 val clipRect = Rect()
                 // Match the size of CloseWindowButton()
                 clipRect.max = Vec2(
-                        window.pos.x + window.size.x - (if (pOpen ?: false) titleBarRect.height - 3 else Style.framePadding.x),
+                        window.pos.x + window.size.x - (if (pOpen != null) titleBarRect.height - 3 else Style.framePadding.x),
                         textMax.y)
                 val padLeft =
-                        if (flags hasnt WindowFlags.NoCollapse)
-                            Style.framePadding.x + g.fontSize + Style.itemInnerSpacing.x
+                        if (flags hasnt WindowFlags.NoCollapse) Style.framePadding.x + g.fontSize + Style.itemInnerSpacing.x
                         else Style.framePadding.x
                 var padRight =
                         if (pOpen != null) Style.framePadding.x + g.fontSize + Style.itemInnerSpacing.x
@@ -643,7 +641,7 @@ interface imgui_window {
 
         // Return false if we don't intend to display anything to allow user to perform an early out optimization
         window.skipItems = (window.collapsed || !window.active) && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0
-        return !window.skipItems to pOpen
+        return !window.skipItems
     }
 
     /** finish appending to current window, pop it off the window stack.    */
@@ -705,7 +703,7 @@ interface imgui_window {
                 else
                     "%s.%08X".format(Style.locale, window.name, id)
 
-        val (ret, _) = ImGui.begin(title, null, size, -1f, flags)
+        val ret = ImGui.begin(title, null, size, -1f, flags)
 
         if (window.flags hasnt WindowFlags.ShowBorders)
             ImGui.currentWindow.flags = ImGui.currentWindow.flags and WindowFlags.ShowBorders.i.inv()

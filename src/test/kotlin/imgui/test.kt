@@ -1,15 +1,14 @@
 package imgui
 
 
+import glm_.vec2.Vec2
 import imgui.impl.GlfwGL3
 import org.lwjgl.glfw.GLFW.glfwPollEvents
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
-import uno.gln.glClearColor
 import uno.gln.glViewport
-import java.util.*
 
 fun main(args: Array<String>) {
     HelloWorld().run()
@@ -66,6 +65,8 @@ class HelloWorld {
     }
 
     lateinit var clearColor: FloatArray
+    var showAnotherWindow = booleanArrayOf(false)
+    var showTestWindow = booleanArrayOf(false)
 
     fun loop() {
 
@@ -74,13 +75,36 @@ class HelloWorld {
         GlfwGL3.newFrame()
 
         with(ImGui) {
-            text("Hello, world!")
-            sliderFloat("float", f, 0f, 1f)
-            colorEdit3("clear color", clearColor)
-//                setNextWindowSize(Vec2(200, 100), SetCond.FirstUseEver)
-//                begin("Another Window", false)
-////            text("Hello")
-//                end()
+
+            /*  1. Show a simple window
+                Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically
+                called "Debug"             */
+            run {
+                text("Hello, world!")
+                sliderFloat("float", f, 0f, 1f)
+                colorEdit3("clear color", clearColor)
+                button("Test Window") { showTestWindow[0] = !showTestWindow[0] }
+                button("Another Window") { showAnotherWindow[0] = !showAnotherWindow[0] }
+                text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / IO.framerate, IO.framerate)
+            }
+
+            /*  2. Show another simple window, this time using an explicit Begin/End pair   */
+            run {
+                if (showAnotherWindow[0]) {
+                    setNextWindowSize(Vec2(200, 100), SetCond.FirstUseEver)
+                    begin("Another Window", showAnotherWindow)
+                    text("Hello")
+                    end()
+                }
+            }
+
+            /* 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow() */
+            run {
+                if (showTestWindow[0]) {
+                    setNextWindowPos(Vec2(650, 20), SetCond.FirstUseEver)
+                    showTestWindow(showTestWindow)
+                }
+            }
         }
 
         // Rendering

@@ -83,8 +83,8 @@ object GlfwGL3 {
         return true
     }
 
-    val vtxSize = 10_000
-    val idxSize = 10_000
+    val vtxSize = 50_000
+    val idxSize = 100_000
     val vtxBuffer = byteBufferBig(vtxSize)
     val idxBuffer = intBufferBig(idxSize / Int.BYTES)
 

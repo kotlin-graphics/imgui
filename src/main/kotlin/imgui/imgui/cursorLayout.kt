@@ -13,8 +13,42 @@ import imgui.Context as g
 
 interface imgui_cursorLayout {
 
-
-//    IMGUI_API void          Separator();                                                        // horizontal line
+    /** Horizontal separating line. */
+    fun separator()    {
+        TODO()
+//        ImGuiWindow* window = GetCurrentWindow();
+//        if (window->SkipItems)
+//        return;
+//
+//        if (window->DC.ColumnsCount > 1)
+//        PopClipRect();
+//
+//        float x1 = window->Pos.x;
+//        float x2 = window->Pos.x + window->Size.x;
+//        if (!window->DC.GroupStack.empty())
+//        x1 += window->DC.IndentX;
+//
+//        const ImRect bb(ImVec2(x1, window->DC.CursorPos.y), ImVec2(x2, window->DC.CursorPos.y+1.0f));
+//        ItemSize(ImVec2(0.0f, 0.0f)); // NB: we don't provide our width so that it doesn't get feed back into AutoFit, we don't provide height to not alter layout.
+//        if (!ItemAdd(bb, NULL))
+//        {
+//            if (window->DC.ColumnsCount > 1)
+//            PushColumnClipRect();
+//            return;
+//        }
+//
+//        window->DrawList->AddLine(bb.Min, ImVec2(bb.Max.x,bb.Min.y), GetColorU32(ImGuiCol_Border));
+//
+//        ImGuiContext& g = *GImGui;
+//        if (g.LogEnabled)
+//            LogText(IM_NEWLINE "--------------------------------");
+//
+//        if (window->DC.ColumnsCount > 1)
+//        {
+//            PushColumnClipRect();
+//            window->DC.ColumnsCellMinY = window->DC.CursorPos.y;
+//        }
+    }
 
     /** Call between widgets or groups to layout them horizontally
      *  Gets back to previous line and continue with horizontal layout
@@ -105,7 +139,7 @@ interface imgui_cursorLayout {
             It would be be neater if we replaced window.DC.LastItemId by e.g. 'bool LastItemIsActive', but if you
             search for LastItemId you'll notice it is only used in that context.    */
         val activeIdWithinGroup = !groupData.backupActiveIdIsAlive && g.activeIdIsAlive && g.activeId != 0 &&
-                g.activeIdWindow!!.rootWindow == window.rootWindow
+                g.activeIdWindow!!.rootWindow === window.rootWindow
         if (activeIdWithinGroup)
             window.dc.lastItemId = g.activeId
         if (activeIdWithinGroup && g.hoveredId == g.activeId) {

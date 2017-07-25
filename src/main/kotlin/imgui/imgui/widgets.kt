@@ -31,16 +31,18 @@ import imgui.InputTextFlags
 import imgui.Style
 import imgui.internal.*
 import imgui.or
-import java.util.*
 import imgui.Context as g
-
 
 interface imgui_widgets {
 
-    fun text(fmt: String) {
+    fun text(fmt: String, vararg args: Any) {
 
         val window = currentWindow
         if (window.skipItems) return
+
+        val fmt =
+                if (args.isEmpty()) fmt
+                else fmt.format(Style.locale, *args)
 
         val textEnd = fmt.length
         textUnformatted(fmt, textEnd)
@@ -153,7 +155,15 @@ interface imgui_widgets {
 //    IMGUI_API void          Bullet();                                                               // draw a small circle and keep the cursor on the same line. advance cursor x position by GetTreeNodeToLabelSpacing(), same distance that TreeNode() uses
 //    IMGUI_API void          BulletText(const char* fmt, ...) IM_PRINTFARGS(1);                      // shortcut for Bullet()+Text()
 //    IMGUI_API void          BulletTextV(const char* fmt, va_list args);
-//    IMGUI_API bool          Button(const char* label, const ImVec2& size = ImVec2(0,0));            // button
+
+    /** button  */
+    fun button(label: String, sizeArg: Vec2 = Vec2()) = buttonEx(label, sizeArg, 0)
+
+    fun button(label: String, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
+        if (buttonEx(label, sizeArg, 0))
+            block()
+    }
+
 //    IMGUI_API bool          SmallButton(const char* label);                                         // button with FramePadding=(0,0)
 //    IMGUI_API bool          InvisibleButton(const char* str_id, const ImVec2& size);
 //    IMGUI_API void          Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,0), const ImVec2& uv1 = ImVec2(1,1), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
@@ -197,7 +207,7 @@ interface imgui_widgets {
     fun colorEdit3(label: String, col: FloatArray): Boolean {
 
         val col4 = floatArrayOf(*col, 1f)
-        valueChanged = colorEdit4(label, col4, false)
+        val valueChanged = colorEdit4(label, col4, false)
         col[0] = col4[0]
         col[1] = col4[1]
         col[2] = col4[2]
@@ -212,9 +222,9 @@ interface imgui_widgets {
         val window = currentWindow
         if (window.skipItems) return false
 
-        id = window.getId(label)
-        wFull = calcItemWidth()
-        squareSz = (g.fontSize + Style.framePadding.y * 2f)
+        val id = window.getId(label)
+        val wFull = calcItemWidth()
+        val squareSz = (g.fontSize + Style.framePadding.y * 2f)
 
         val editMode =
                 if (window.dc.colorEditMode == ColorEditMode.UserSelect || window.dc.colorEditMode == ColorEditMode.UserSelectShowButton)
@@ -233,22 +243,22 @@ interface imgui_widgets {
         beginGroup()
         pushId(label)
 
-        hsv = editMode == ColorEditMode.HSV
+        val hsv = editMode == ColorEditMode.HSV
         when (editMode) {
 
             ColorEditMode.RGB, ColorEditMode.HSV -> {
                 // RGB/HSV 0..255 Sliders
-                wItemsAll = wFull - (squareSz + Style.itemInnerSpacing.x)
-                wItemOne = glm.max(1f, ((wItemsAll - Style.itemInnerSpacing.x * (components - 1)) / components.f).i.f)
-                wItemLast = glm.max(1f, (wItemsAll - (wItemOne + Style.itemInnerSpacing.x) * (components - 1)).i.f)
+                val wItemsAll = wFull - (squareSz + Style.itemInnerSpacing.x)
+                val wItemOne = glm.max(1f, ((wItemsAll - Style.itemInnerSpacing.x * (components - 1)) / components.f).i.f)
+                val wItemLast = glm.max(1f, (wItemsAll - (wItemOne + Style.itemInnerSpacing.x) * (components - 1)).i.f)
 
-                hidePrefix = wItemOne <= calcTextSize("M:999").x
-                ids = listOf("##X", "##Y", "##Z", "##W")
-                fmtTable = listOf(
+                val hidePrefix = wItemOne <= calcTextSize("M:999").x
+                val ids = listOf("##X", "##Y", "##Z", "##W")
+                val fmtTable = listOf(
                         listOf("%3.0f", "%3.0f", "%3.0f", "%3.0f"),
                         listOf("R:%3.0f", "G:%3.0f", "B:%3.0f", "A:%3.0f"),
                         listOf("H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f"))
-                fmt = if (hidePrefix) fmtTable[0] else if (hsv) fmtTable[2] else fmtTable[1]
+                val fmt = if (hidePrefix) fmtTable[0] else if (hsv) fmtTable[2] else fmtTable[1]
 
                 pushItemWidth(wItemOne)
                 for (n in 0 until components) {
@@ -266,7 +276,7 @@ interface imgui_widgets {
 
             ColorEditMode.HEX -> {
                 // RGB Hexadecimal Input
-                wSliderAll = wFull - squareSz
+                val wSliderAll = wFull - squareSz
                 val buf = CharArray(64)
                 (if (showAlpha) "#%02X%02X%02X%02X".format(Style.locale, i[0], i[1], i[2], i[3])
                 else "#%02X%02X%02X".format(Style.locale, i[0], i[1], i[2])).toCharArray(buf)
@@ -333,21 +343,4 @@ interface imgui_widgets {
 //    IMGUI_API void          PlotHistogram(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));
 //    IMGUI_API void          PlotHistogram(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
 //    IMGUI_API void          ProgressBar(float fraction, const ImVec2& size_arg = ImVec2(-1,0), const char* overlay = NULL);
-
-    companion object {
-        // colorEdit
-        var valueChanged = false
-        var id = 0
-        var wFull = 0f
-        var squareSz = 0f
-        var hsv = false
-        var wItemsAll = 0f
-        var wItemOne = 0f
-        var wItemLast = 0f
-        var wSliderAll = 0f
-        var hidePrefix = false
-        var ids = listOf<String>()
-        var fmtTable = listOf<List<String>>()
-        var fmt = listOf<String>()
-    }
 }

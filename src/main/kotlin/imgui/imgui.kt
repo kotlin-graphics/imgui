@@ -23,6 +23,7 @@ var _DEBUG = true
 object ImGui :
 
         imgui_main,
+        imgui_demoDebugInfo,
         imgui_window,
         imgui_parametersStacks,
         imgui_cursorLayout,
@@ -32,9 +33,14 @@ object ImGui :
         imgui_widgetsDrag,
         imgui_widgetsInputKeyboard,
         imgui_widgetsSliders,
+        imgui_widgetsSelectableLists,
         imgui_tooltips,
-        // menus popus logging clipping
+        imgui_menu,
+        imgui_popups,
+        imgui_logging,
         imgui_clipping,
-        imgui_log,
 
-        imgui_internal
+        imgui_internal {
+
+    val version = "1.51 WIP"
+}

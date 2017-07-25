@@ -60,7 +60,7 @@ interface imgui_internal {
                 clearActiveId()
 
         // Bring to front
-        if ((window.flags has WindowFlags.NoBringToFrontOnFocus) || g.windows.last() == window)
+        if ((window.flags has WindowFlags.NoBringToFrontOnFocus) || g.windows.last() === window)
             return
         g.windows.remove(window)
         g.windows.add(window)
@@ -199,7 +199,7 @@ interface imgui_internal {
                 background)
                 So that clicking on items with no active id such as Text() still returns true with IsItemHovered()  */
             window.dc.lastItemHoveredRect = true
-            if (g.hoveredRootWindow == window.rootWindow)
+            if (g.hoveredRootWindow === window.rootWindow)
                 if (g.activeId == 0 || (id != 0 && g.activeId == id) || g.activeIdAllowOverlap || (g.activeId == window.moveId))
                     if (window.isContentHoverable)
                         window.dc.lastItemHoveredAndUsable = true
@@ -225,7 +225,7 @@ interface imgui_internal {
 
         if (g.hoveredId == 0 || g.hoveredId == id || g.hoveredIdAllowOverlap) {
             val window = currentWindowRead!!
-            if (g.hoveredWindow == window || (flattenChilds && g.hoveredRootWindow == window.rootWindow))
+            if (g.hoveredWindow === window || (flattenChilds && g.hoveredRootWindow === window.rootWindow))
                 if ((g.activeId == 0 || g.activeId == id || g.activeIdAllowOverlap) && isMouseHoveringRect(bb))
                     if (g.hoveredRootWindow!!.isContentHoverable)
                         return true
@@ -284,8 +284,29 @@ interface imgui_internal {
         return glm.max(wrapPosX - pos.x, 1f)
     }
 
-//IMGUI_API void          OpenPopupEx(const char* str_id, bool reopen_existing);
-//
+    /** Mark popup as open (toggle toward open state).
+     *  Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within
+     *  a BeginPopup()/EndPopup() block.
+     *  Popup identifiers are relative to the current ID-stack (so OpenPopup and BeginPopup needs to be at the same
+     *  level).
+     *  One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef
+     *  to NULL)    */
+    fun openPopupEx(strId:String, reopenExisting:Boolean)    {
+
+        val window = g.currentWindow!!
+        val id = window.getId(strId)
+        val currentStackSize = g.currentPopupStack.size
+        // Tagged as new ref because constructor sets Window to NULL (we are passing the ParentWindow info here)
+        val popupRef = PopupRef(id, window, window.getId("##menus"), IO.mousePos)
+        if (g.OpenPopupStack.Size < currentStackSize + 1)
+            g.OpenPopupStack.push_back(popupRef)
+        else if (reopenExisting || g.OpenPopupStack[currentStackSize].PopupId != id)
+        {
+            g.OpenPopupStack.resize(currentStackSize+1)
+            g.OpenPopupStack[currentStackSize] = popupRef
+        }
+    }
+
 //// NB: All position are in absolute pixels coordinates (not window coordinates)
 //// FIXME: All those functions are a mess and needs to be refactored into something decent. AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION.
 //// We need: a sort of symbol library, preferably baked into font atlas when possible + decent text rendering helpers.
