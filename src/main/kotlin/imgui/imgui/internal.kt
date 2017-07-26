@@ -13,8 +13,14 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.contentRegionMax
 import imgui.ImGui.endGroup
 import imgui.ImGui.getColorU32
+import imgui.ImGui.inputText
 import imgui.ImGui.popFont
+import imgui.ImGui.popId
+import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushFont
+import imgui.ImGui.pushId
+import imgui.ImGui.pushItemWidth
+import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.textLineHeight
 import imgui.TextEditState.K
@@ -421,7 +427,7 @@ interface imgui_internal {
 
 //IMGUI_API void          RenderBullet(ImVec2 pos);
 
-    fun renderCheckMark(pos:Vec2, col:Int) {
+    fun renderCheckMark(pos: Vec2, col: Int) {
 
         val window = currentWindow
 
@@ -1378,7 +1384,57 @@ interface imgui_internal {
     }
 //IMGUI_API bool          InputFloatN(const char* label, float* v, int components, int decimal_precision, ImGuiInputTextFlags extra_flags);
 //IMGUI_API bool          InputIntN(const char* label, int* v, int components, ImGuiInputTextFlags extra_flags);
-//IMGUI_API bool          InputScalarEx(const char* label, ImGuiDataType data_type, void* data_ptr, void* step_ptr, void* step_fast_ptr, const char* scalar_format, ImGuiInputTextFlags extra_flags);
+
+    /** NB: scalar_format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
+     *  functions "display_format" argument)    */
+    fun inputScalarEx(label: String, dataType: DataType, data: Array<out Number>, step: Number?, stepFast: Number?, scalarFormat: String,
+                      extraFlags: Int): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val labelSize = calcTextSize(label, true)
+
+        beginGroup()
+        pushId(label)
+        val buttonSz = Vec2(g.fontSize) + Style.framePadding * 2f
+        step?.let { pushItemWidth(glm.max(1f, calcItemWidth() - (buttonSz.x + Style.itemInnerSpacing.x) * 2)) }
+
+        val buf = data.format(scalarFormat, CharArray(64))
+
+        var valueChanged = false
+        var extraFlags = extraFlags
+        if (extraFlags hasnt InputTextFlags.CharsHexadecimal)
+            extraFlags = extraFlags or InputTextFlags.CharsDecimal
+        extraFlags = extraFlags or InputTextFlags.AutoSelectAll
+        if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
+            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, scalarFormat)
+
+        // Step buttons
+        step?.let {
+            popItemWidth()
+            sameLine(0f, Style.itemInnerSpacing.x)
+            if (buttonEx("-", buttonSz, ButtonFlags.Repeat or ButtonFlags.DontClosePopups)) {
+                dataTypeApplyOp(dataType, '-', data, if (IO.keyCtrl && stepFast != null) stepFast else step)
+                valueChanged = true
+            }
+            sameLine(0f, Style.itemInnerSpacing.x)
+            if (buttonEx("+", buttonSz, ButtonFlags.Repeat or ButtonFlags.DontClosePopups)) {
+                dataTypeApplyOp(dataType, '+', data, if (IO.keyCtrl && stepFast != null) stepFast else step)
+                valueChanged = true
+            }
+        }
+        popId()
+
+        if (labelSize.x > 0) {
+            sameLine(0f, Style.itemInnerSpacing.x)
+            renderText(Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + Style.framePadding.y), label)
+            itemSize(labelSize, Style.framePadding.y)
+        }
+        endGroup()
+
+        return valueChanged
+    }
 
     /** Create text input in place of a slider (when CTRL+Clicking on slider)   */
     fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: Array<out Number>, id: Int,

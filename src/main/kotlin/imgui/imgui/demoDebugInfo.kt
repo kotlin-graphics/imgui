@@ -6,8 +6,10 @@ import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
+import imgui.ImGui.inputFloat
 import imgui.ImGui.menuItem
 import imgui.ImGui.separator
+import imgui.ImGui.sliderFloat
 import imgui.ImGui.text
 import imgui.SetCond
 import imgui.WindowFlags
@@ -479,11 +481,9 @@ interface imgui_demoDebugInfo {
                 for (i in 0 until 10)
                     text("Scrolling Text %d", i)
                 endChild()
-//                static float f = 0.5f
-//                static int n = 0
-//                SliderFloat("Value", & f, 0.0f, 1.0f)
-//                InputFloat("Input", & f, 0.1f)
-//                Combo("Combo", & n, "Yes\0No\0Maybe\0\0")
+                sliderFloat("Value", f, 0f, 1f)
+                inputFloat("Input", f, 0.1f)
+//                combo("Combo", & n, "Yes\0No\0Maybe\0\0")
                 endMenu()
             }
 //            if (BeginMenu("Colors")) {
@@ -501,8 +501,10 @@ interface imgui_demoDebugInfo {
 //            }
         }
 
-
         var enabled = booleanArrayOf(true)
+        var f = floatArrayOf(0.5f)
+        var n = intArrayOf(0)
+
 
         /** Demonstrate creating a window which gets auto-resized according to its content. */
         fun showExampleAppAutoResize(pOpen: BooleanArray) {

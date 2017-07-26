@@ -620,8 +620,8 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
 
     return textSize
 }
-//
-//static inline void      DataTypeFormatString(ImGuiDataType data_type, void* data_ptr, const char* display_format, char* buf, int buf_size);
+
+fun Array<out Number>.format(displayFormat: String, buf: CharArray) = displayFormat.format(Style.locale, this[0]).toCharArray(buf)
 
 /** JVM Imgui, dataTypeFormatString replacement */
 fun Array<out Number>.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) = when (dataType) {
@@ -637,7 +637,19 @@ fun Array<out Number>.format(dataType: DataType, decimalPrecision: Int, buf: Cha
     else -> throw Error("unsupported format data type")
 }.toCharArray(buf)
 
-//static void             DataTypeApplyOp(ImGuiDataType data_type, int op, void* value1, const void* value2);
+fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Array<out Number>, value2: Number) = when (dataType) {
+    DataType.Int -> (value1 as Array<Int>)[0] = when (op) {
+        '+' -> value1[0] + value2 as Int
+        '-' -> value1[0] - value2 as Int
+        else -> throw Error()
+    }
+    DataType.Float -> (value1 as Array<Float>)[0] = when (op) {
+        '+' -> value1[0] + value2 as Float
+        '-' -> value1[0] - value2 as Float
+        else -> throw Error()
+    }
+    else -> throw Error()
+}
 
 /** User can input math operators (e.g. +100) to edit a numerical values.   */
 fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: Array<out Number>,
