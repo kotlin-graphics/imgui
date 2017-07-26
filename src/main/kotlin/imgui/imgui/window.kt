@@ -83,7 +83,6 @@ interface imgui_window {
         window.setCurrent()
         checkStacksSize(window, true)
         assert(parentWindow != null || flags hasnt WindowFlags.ChildWindow)
-
         // Not using !WasActive because the implicit "Debug" window would always toggle off->on
         var windowWasActive = window.lastFrameActive == currentFrame - 1
         if (flags has WindowFlags.Popup) {
@@ -91,7 +90,7 @@ interface imgui_window {
             windowWasActive = windowWasActive && window.popupId == popupRef.popupId
             windowWasActive = windowWasActive && window === popupRef.window
             popupRef.window = window
-            g.currentPopupStack.add(popupRef)
+            g.currentPopupStack.push(popupRef)
             window.popupId = popupRef.popupId
         }
 
@@ -139,7 +138,7 @@ interface imgui_window {
         }
 
         // Update known root window (if we are a child window, otherwise window == window->RootWindow)
-        var rootIdx = g.currentWindowStack.size - 1
+        var rootIdx = g.currentWindowStack.lastIndex
         while (rootIdx > 0) {
             if (g.currentWindowStack[rootIdx].flags hasnt WindowFlags.ChildWindow)
                 break
@@ -163,7 +162,7 @@ interface imgui_window {
             window.beginCount = 0
             window.clipRect.put(-Float.MAX_VALUE, -Float.MAX_VALUE, +Float.MAX_VALUE, +Float.MAX_VALUE)
             window.lastFrameActive = currentFrame
-            val tmp = window.idStack[0]
+            val tmp = window.idStack[0] // resize 1
             window.idStack.clear()
             window.idStack.add(tmp)
 
@@ -307,12 +306,13 @@ interface imgui_window {
                 /*  We want some overlap to convey the relative depth of each popup (currently the amount of overlap it is
                 hard-coded to style.ItemSpacing.x, may need to introduce another style value).  */
                 val horizontalOverlap = Style.itemSpacing.x
-                val rectToAvoid = if (parentWindow!!.dc.menuBarAppending)
-                    Rect(-Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight(),
-                            Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight() + parentWindow.menuBarHeight())
-                else
-                    Rect(parentWindow.pos.x + horizontalOverlap, -Float.MAX_VALUE,
-                            parentWindow.pos.x + parentWindow.size.x - horizontalOverlap - parentWindow.scrollbarSizes.x, Float.MAX_VALUE)
+                val rectToAvoid =
+                        if (parentWindow!!.dc.menuBarAppending)
+                            Rect(-Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight(),
+                                    Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight() + parentWindow.menuBarHeight())
+                        else
+                            Rect(parentWindow.pos.x + horizontalOverlap, -Float.MAX_VALUE,
+                                    parentWindow.pos.x + parentWindow.size.x - horizontalOverlap - parentWindow.scrollbarSizes.x, Float.MAX_VALUE)
                 window.posF put findBestPopupWindowPos(window.posF, window, rectToAvoid)
             } else if (flags has WindowFlags.Popup && !windowPosSetByApi && windowAppearingAfterBeingHidden) {
                 val rectToAvoid = Rect(window.posF.x - 1, window.posF.y - 1, window.posF.x + 1, window.posF.y + 1)
@@ -452,7 +452,7 @@ interface imgui_window {
                 if (flags hasnt WindowFlags.NoTitleBar)
                     window.drawList.addRectFilled(titleBarRect.tl, titleBarRect.br,
                             getColorU32(
-                                    if (g.focusedWindow != null && window.rootNonPopupWindow === g.focusedWindow!!.rootNonPopupWindow)
+                                    if (g.focusedWindow != null && window.rootNonPopupWindow == g.focusedWindow!!.rootNonPopupWindow)
                                         Col.TitleBgActive
                                     else Col.TitleBg),
                             windowRounding, Corner.TopLeft or Corner.TopRight)
@@ -485,10 +485,10 @@ interface imgui_window {
 
                 // Borders
                 if (flags has WindowFlags.ShowBorders) {
-                    window.drawList.addRect(Vec2(1) + window.pos, window.size + window.pos + 1, getColorU32(Col.BorderShadow),
+                    window.drawList.addRect(Vec2(1) plus_ window.pos, (window.size + window.pos) plus_ 1, getColorU32(Col.BorderShadow),
                             windowRounding)
                     // TODO check if window.posF is fine instead window.pos
-                    window.drawList.addRect(window.posF, window.size + window.size, getColorU32(Col.Border), windowRounding)
+                    window.drawList.addRect(window.posF, window.posF + window.size, getColorU32(Col.Border), windowRounding)
                     if (flags hasnt WindowFlags.NoTitleBar)
                         window.drawList.addLine(titleBarRect.bl + Vec2(1, 0), titleBarRect.br - Vec2(1, 0), getColorU32(Col.Border))
                 }
@@ -668,7 +668,9 @@ interface imgui_window {
             else g.currentWindow = null
         }
     }
-//IMGUI_API bool          BeginChild(const char* str_id, const ImVec2& size = ImVec2(0,0), bool border = false, ImGuiWindowFlags extra_flags = 0);
+
+    fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, extraFlags: Int = 0) =
+            beginChildEx(strId, currentWindow.getId(strId), size, border, extraFlags)
 
     /** begin a scrolling region. size==0.0f: use remaining window size, size<0.0f: use remaining window size minus
      *  abs(size). size>0.0f: fixed size. each axis can use a different mode, e.g. ImVec2(0,400).   */

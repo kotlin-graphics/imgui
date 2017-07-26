@@ -2,6 +2,13 @@ package imgui.imgui
 
 import glm_.vec2.Vec2
 import imgui.ImGui
+import imgui.ImGui.beginChild
+import imgui.ImGui.beginMenu
+import imgui.ImGui.endChild
+import imgui.ImGui.endMenu
+import imgui.ImGui.menuItem
+import imgui.ImGui.separator
+import imgui.ImGui.text
 import imgui.SetCond
 import imgui.WindowFlags
 import imgui.or
@@ -59,12 +66,11 @@ interface imgui_demoDebugInfo {
         text("Dear ImGui says hello.")
 
         // Menu
-        if (beginMenuBar())        {
-            if (ImGui::BeginMenu("Menu"))
-            {
-//                ShowExampleMenuFile()
-//                ImGui::EndMenu()
-//            }
+        if (beginMenuBar()) {
+            if (beginMenu("Menu")) {
+                showExampleMenuFile()
+                endMenu()
+            }
 //            if (ImGui::BeginMenu("Examples"))
 //            {
 //                ImGui::MenuItem("Main menu bar", NULL, &show_app_main_menu_bar)
@@ -87,7 +93,7 @@ interface imgui_demoDebugInfo {
 //                ImGui::MenuItem("About ImGui", NULL, &show_app_about)
 //                ImGui::EndMenu()
 //            }
-            ImGui::EndMenuBar()
+            endMenuBar()
         }
 
         end()
@@ -441,59 +447,62 @@ interface imgui_demoDebugInfo {
         }
 
         fun showExampleMenuFile() {
-            TODO()
-//            ImGui::MenuItem("(dummy menu)", NULL, false, false);
-//            if (ImGui::MenuItem("New")) {}
-//            if (ImGui::MenuItem("Open", "Ctrl+O")) {}
-//            if (ImGui::BeginMenu("Open Recent"))
-//            {
-//                ImGui::MenuItem("fish_hat.c");
-//                ImGui::MenuItem("fish_hat.inl");
-//                ImGui::MenuItem("fish_hat.h");
-//                if (ImGui::BeginMenu("More.."))
-//                {
-//                    ImGui::MenuItem("Hello");
-//                    ImGui::MenuItem("Sailor");
-//                    if (ImGui::BeginMenu("Recurse.."))
-//                    {
-//                        ShowExampleMenuFile();
-//                        ImGui::EndMenu();
-//                    }
-//                    ImGui::EndMenu();
-//                }
-//                ImGui::EndMenu();
-//            }
-//            if (ImGui::MenuItem("Save", "Ctrl+S")) {}
-//            if (ImGui::MenuItem("Save As..")) {}
-//            ImGui::Separator();
-//            if (ImGui::BeginMenu("Options"))
-//            {
-//                static bool enabled = true;
-//                ImGui::MenuItem("Enabled", "", &enabled);
-//                ImGui::BeginChild("child", ImVec2(0, 60), true);
-//                for (int i = 0; i < 10; i++)
-//                ImGui::Text("Scrolling Text %d", i);
-//                ImGui::EndChild();
-//                static float f = 0.5f;
-//                static int n = 0;
-//                ImGui::SliderFloat("Value", &f, 0.0f, 1.0f);
-//                ImGui::InputFloat("Input", &f, 0.1f);
-//                ImGui::Combo("Combo", &n, "Yes\0No\0Maybe\0\0");
-//                ImGui::EndMenu();
-//            }
-//            if (ImGui::BeginMenu("Colors"))
-//            {
+
+            menuItem("(dummy menu)", "", false, false)
+            if (menuItem("New")) {
+            }
+            if (menuItem("Open", "Ctrl+O")) {
+            }
+            if (beginMenu("Open Recent")) {
+                menuItem("fish_hat.c")
+                menuItem("fish_hat.inl")
+                menuItem("fish_hat.h")
+                if (beginMenu("More..")) {
+                    menuItem("Hello")
+                    menuItem("Sailor")
+                    if (beginMenu("Recurse..")) {
+                        showExampleMenuFile()
+                        endMenu()
+                    }
+                    endMenu()
+                }
+                endMenu()
+            }
+            if (menuItem("Save", "Ctrl+S")) {
+            }
+            if (menuItem("Save As..")) {
+            }
+            separator()
+            if (beginMenu("Options")) {
+                menuItem("Enabled", "", enabled)
+                beginChild("child", Vec2(0, 60), true)
+                for (i in 0 until 10)
+                    text("Scrolling Text %d", i)
+                endChild()
+//                static float f = 0.5f
+//                static int n = 0
+//                SliderFloat("Value", & f, 0.0f, 1.0f)
+//                InputFloat("Input", & f, 0.1f)
+//                Combo("Combo", & n, "Yes\0No\0Maybe\0\0")
+                endMenu()
+            }
+//            if (BeginMenu("Colors")) {
 //                for (int i = 0; i < ImGuiCol_COUNT; i++)
-//                ImGui::MenuItem(ImGui::GetStyleColName((ImGuiCol)i));
-//                ImGui::EndMenu();
+//                MenuItem(GetStyleColName((ImGuiCol) i))
+//                EndMenu()
 //            }
-//            if (ImGui::BeginMenu("Disabled", false)) // Disabled
+//            if (BeginMenu("Disabled", false)) // Disabled
 //            {
-//                IM_ASSERT(0);
+//                IM_ASSERT(0)
 //            }
-//            if (ImGui::MenuItem("Checked", NULL, true)) {}
-//            if (ImGui::MenuItem("Quit", "Alt+F4")) {}
+//            if (MenuItem("Checked", NULL, true)) {
+//            }
+//            if (MenuItem("Quit", "Alt+F4")) {
+//            }
         }
+
+
+        var enabled = booleanArrayOf(true)
 
         /** Demonstrate creating a window which gets auto-resized according to its content. */
         fun showExampleAppAutoResize(pOpen: BooleanArray) {

@@ -291,20 +291,17 @@ interface imgui_internal {
      *  level).
      *  One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef
      *  to NULL)    */
-    fun openPopupEx(strId:String, reopenExisting:Boolean)    {
+    fun openPopupEx(strId: String, reopenExisting: Boolean) {
 
         val window = g.currentWindow!!
         val id = window.getId(strId)
         val currentStackSize = g.currentPopupStack.size
         // Tagged as new ref because constructor sets Window to NULL (we are passing the ParentWindow info here)
         val popupRef = PopupRef(id, window, window.getId("##menus"), IO.mousePos)
-        if (g.OpenPopupStack.Size < currentStackSize + 1)
-            g.OpenPopupStack.push_back(popupRef)
-        else if (reopenExisting || g.OpenPopupStack[currentStackSize].PopupId != id)
-        {
-            g.OpenPopupStack.resize(currentStackSize+1)
-            g.OpenPopupStack[currentStackSize] = popupRef
-        }
+        if (g.openPopupStack.size < currentStackSize + 1)
+            g.openPopupStack.push(popupRef)
+        else if (reopenExisting || g.openPopupStack[currentStackSize].popupId != id)
+            g.openPopupStack.add(popupRef)
     }
 
 //// NB: All position are in absolute pixels coordinates (not window coordinates)
@@ -423,7 +420,28 @@ interface imgui_internal {
     }
 
 //IMGUI_API void          RenderBullet(ImVec2 pos);
-//IMGUI_API void          RenderCheckMark(ImVec2 pos, ImU32 col);
+
+    fun renderCheckMark(pos:Vec2, col:Int) {
+
+        val window = currentWindow
+
+        val a = Vec2()
+        val b = Vec2()
+        val c = Vec2()
+        val startX = (g.fontSize * 0.307f + 0.5f).i.f
+        val remThird = ((g.fontSize - startX) / 3f).i.f
+        a.x = pos.x + 0.5f + startX
+        b.x = a.x + remThird
+        c.x = a.x + remThird * 3f
+        b.y = pos.y - 1f + (g.font.ascent * (g.fontSize / g.font.fontSize) + 0.5f).i.f + g.font.displayOffset.y.i.f
+        a.y = b.y - remThird
+        c.y = b.y - remThird * 2f
+
+        window.drawList.pathLineTo(a)
+        window.drawList.pathLineTo(b)
+        window.drawList.pathLineTo(c)
+        window.drawList.pathStroke(col, false)
+    }
 
     /** Find the optional ## from which we stop displaying text.    */
     fun findRenderedTextEnd(text: String, textEnd: Int = text.length): Int {

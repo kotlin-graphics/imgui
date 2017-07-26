@@ -4,12 +4,15 @@ import gli.has
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
+import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
+import imgui.ImGui.endPopup
 import imgui.ImGui.focusWindow
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.pushClipRect
+import imgui.ImGui.pushStyleVar
 import imgui.ImGui.setHoveredId
 import imgui.internal.*
 import uno.kotlin.isPrintable
@@ -124,7 +127,14 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
 }
 
 
-//static void             ClearSetNextWindowData();
+fun clearSetNextWindowData() {
+    g.setNextWindowPosCond = SetCond.Null
+    g.setNextWindowSizeCond = SetCond.Null
+    g.setNextWindowPosCond = SetCond.Null
+    g.setNextWindowPosCond = SetCond.Null
+    g.setNextWindowSizeConstraint = false
+    g.setNextWindowFocus = false
+}
 
 /** Save and compare stack sizes on Begin()/End() to detect usage errors    */
 fun checkStacksSize(window: Window, write: Boolean) {
@@ -384,8 +394,33 @@ fun getVisibleRect(): Rect {
     return Rect(0f, 0f, IO.displaySize.x.f, IO.displaySize.y.f)
 }
 
-//
-//static bool             BeginPopupEx(const char* str_id, ImGuiWindowFlags extra_flags);
+fun beginPopupEx(strId: String, extraFlags: Int): Boolean {
+
+    val window = g.currentWindow!!
+    val id = window.getId(strId)
+    if (!isPopupOpen(id)) {
+        clearSetNextWindowData() // We behave like Begin() and need to consume those values
+        return false
+    }
+
+    pushStyleVar(StyleVar.WindowRounding, 0f)
+    val flags = extraFlags or WindowFlags.Popup or WindowFlags.NoTitleBar or WindowFlags.NoMove or WindowFlags.NoResize or
+            WindowFlags.NoSavedSettings or WindowFlags.AlwaysAutoResize
+
+    val name =
+            if (flags has WindowFlags.ChildMenu)
+                "##menu_%d".format(Style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
+            else
+                "##popup_%08x".format(Style.locale, id)     // Not recycling, so we can close/open during the same frame
+
+    val isOpen = begin(name, null, flags)
+    if (window.flags hasnt WindowFlags.ShowBorders)
+        g.currentWindow!!.flags = g.currentWindow!!.flags and WindowFlags.ShowBorders.i.inv()
+    if (!isOpen) // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
+        endPopup()
+
+    return isOpen
+}
 
 fun closeInactivePopups() {
 
@@ -398,11 +433,15 @@ fun closeInactivePopups() {
     if (g.focusedWindow != null)
         while (n < g.openPopupStack.size) {
             val popup = g.openPopupStack[n]
-            if (popup.window == null)
+            if (popup.window == null) {
+                n++
                 continue
+            }
             assert(popup.window!!.flags has WindowFlags.Popup)
-            if (popup.window!!.flags has WindowFlags.ChildWindow)
+            if (popup.window!!.flags has WindowFlags.ChildWindow) {
+                n++
                 continue
+            }
 
             var hasFocus = false
             var m = n
@@ -416,7 +455,7 @@ fun closeInactivePopups() {
         }
 
     if (n < g.openPopupStack.size)   // This test is not required but it allows to set a useful breakpoint on the line below
-        TODO() //g.OpenPopupStack.resize(n)
+        repeat(g.openPopupStack.size - n) { g.openPopupStack.pop() }
 }
 
 fun closePopupToLevel(remaining: Int) {

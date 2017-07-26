@@ -13,7 +13,10 @@ import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.endGroup
+import imgui.ImGui.endPopup
+import imgui.ImGui.getColorU32
 import imgui.ImGui.isHovered
+import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popId
 import imgui.ImGui.popStyleColor
@@ -22,7 +25,9 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushId
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
+import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderCollapseTriangle
+import imgui.ImGui.renderText
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setNextWindowPos
@@ -33,7 +38,7 @@ import imgui.internal.isPointInTriangle
 import imgui.Context as g
 
 /** Menu    */
-interface imgui_menu {
+interface imgui_menus {
 
 
     /** create and append to a full screen menu-bar. only call EndMainMenuBar() if this returns true!   */
@@ -115,7 +120,8 @@ interface imgui_menu {
         if (menusetIsOpen)
             g.focusedWindow = window
 
-        // The reference position stored in popupPos will be used by Begin() to find a suitable position for the child menu (using FindBestPopupWindowPos).
+        /*  The reference position stored in popupPos will be used by Begin() to find a suitable position for the child
+            menu (using FindBestPopupWindowPos).         */
         val popupPos = Vec2()
         val pos = Vec2(window.dc.cursorPos)
         if (window.dc.layoutType == LayoutType.Horizontal) {
@@ -189,19 +195,58 @@ interface imgui_menu {
             return false
         }
 
-        menuIsOpen | = want_open
+        menuIsOpen = menuIsOpen || wantOpen
         if (wantOpen)
-            OpenPopup(label)
+            openPopup(label)
 
         if (menuIsOpen) {
-            SetNextWindowPos(popupPos, ImGuiSetCond_Always)
-            ImGuiWindowFlags flags = ImGuiWindowFlags_ShowBorders |((window->Flags & (ImGuiWindowFlags_Popup|ImGuiWindowFlags_ChildMenu)) ? ImGuiWindowFlags_ChildMenu|ImGuiWindowFlags_ChildWindow : ImGuiWindowFlags_ChildMenu)
-            menuIsOpen = BeginPopupEx(label, flags) // menuIsOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
+            setNextWindowPos(popupPos, SetCond.Always)
+            val flags = WindowFlags.ShowBorders or (
+                    if (window.flags has (WindowFlags.Popup or WindowFlags.ChildMenu)) WindowFlags.ChildMenu or WindowFlags.ChildWindow
+                    else WindowFlags.ChildMenu.i)
+            menuIsOpen = beginPopupEx(label, flags) // menuIsOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
         }
 
         return menuIsOpen
     }
-//    IMGUI_API void          EndMenu();
-//    IMGUI_API bool          MenuItem(const char* label, const char* shortcut = NULL, bool selected = false, bool enabled = true);  // return true when activated. shortcuts are displayed for convenience but not processed by ImGui at the moment
-//    IMGUI_API bool          MenuItem(const char* label, const char* shortcut, bool* p_selected, bool enabled = true);              // return true when activated + toggle (*p_selected) if p_selected != NULL
+
+    fun endMenu() = endPopup()
+
+    /** return true when activated. shortcuts are displayed for convenience but not processed by ImGui at the moment    */
+    fun menuItem(label: String, shortcut: String = "", selected: Boolean = false, enabled: Boolean = true): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val pos = Vec2(window.dc.cursorPos)
+        val labelSize = calcTextSize(label, true)
+        val shortcutSize = if (shortcut.isNotEmpty()) calcTextSize(shortcut, 0) else Vec2()
+        val w = window.menuColumns.declColumns(labelSize.x, shortcutSize.x, (g.fontSize * 1.2f).i.f) // Feedback for next frame
+        val extraW = glm.max(0f, contentRegionAvail.x - w)
+
+        val flags = SelectableFlags.MenuItem or SelectableFlags.DrawFillAvailWidth or if (enabled) 0 else SelectableFlags.Disabled.i
+        val pressed = selectable(label, false, flags, Vec2(w, 0f))
+        if (shortcutSize.x > 0f) {
+            pushStyleColor(Col.Text, Style.colors[Col.TextDisabled])
+            renderText(pos + Vec2(window.menuColumns.pos[1] + extraW, 0f), shortcut, 0, false)
+            popStyleColor()
+        }
+
+        if (selected)
+            renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.2f, 0f),
+                    getColorU32(if (enabled) Col.Text else Col.TextDisabled))
+
+        return pressed
+    }
+
+    /** return true when activated + toggle (*p_selected) if p_selected != NULL */
+    fun menuItem(label: String, shortcut: String, pSelected: BooleanArray?, enabled: Boolean = true): Boolean {
+
+        if (menuItem(label, shortcut, pSelected?.get(0) ?: false, enabled)) {
+            if (pSelected!![0])
+                pSelected[0] = !pSelected[0]
+            return true
+        }
+        return false
+    }
 }

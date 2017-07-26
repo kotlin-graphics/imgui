@@ -63,6 +63,7 @@ enum class WindowFlags(val i: Int) {
     ChildMenu(1 shl 27);
 
     infix fun or(b: WindowFlags) = i or b.i
+    infix fun or(b: Int) = i or b
 }
 
 infix fun Int.or(b: WindowFlags) = this or b.i
@@ -112,10 +113,11 @@ enum class InputTextFlags(val i: Int) {
     // [Internal]
 
     /** For internal use by InputTextMultiline()    */
-    Multiline(1 shl 20)
+    Multiline(1 shl 20);
+
+    infix fun or(b: InputTextFlags) = i or b.i
 }
 
-infix fun InputTextFlags.or(b: InputTextFlags) = i or b.i
 infix fun Int.or(b: InputTextFlags) = this or b.i
 infix fun Int.has(b: InputTextFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: InputTextFlags) = (this and b.i) == 0
@@ -169,10 +171,11 @@ enum class SelectableFlags(val i: Int) {
     /* private  */
     Disabled(1 shl 5),
     /* private  */
-    DrawFillAvailWidth(1 shl 6)
+    DrawFillAvailWidth(1 shl 6);
+
+    infix fun or(other: SelectableFlags) = i or other.i
 }
 
-infix fun SelectableFlags.or(other: SelectableFlags) = i or other.i
 infix fun Int.or(other: SelectableFlags) = this or other.i
 infix fun Int.has(b: SelectableFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: SelectableFlags) = (this and b.i) == 0

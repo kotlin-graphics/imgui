@@ -144,7 +144,9 @@ class Rect {
 }
 
 /** Stacked color modifier, backup of modified data so we can restore it    */
-class ColMod(val col: Col, val backupValue: Vec4)
+class ColMod(val col: Col, value: Vec4) {
+    val backupValue = Vec4(value)
+}
 
 /** Stacked style modifier, backup of modified data so we can restore it. Data type inferred from the variable. */
 class StyleMod(val idx: StyleVar) {
@@ -355,7 +357,7 @@ class Window(
         var name: String
 ) {
     /** == ImHash(Name) */
-    val id: Int
+    val id = hash(name, 0)
     /** See enum ImGuiWindowFlags_  */
     var flags = 0
     /** Order within immediate parent window, if we are a child window. Otherwise 0.    */
@@ -431,7 +433,6 @@ class Window(
     val idStack = Stack<Int>()
 
     init {
-        id = hash(name, 0)
         idStack.add(id)
         moveId = getId("#MOVE")
     }
@@ -452,7 +453,7 @@ class Window(
     /** Scale multiplier per-window */
     var fontWindowScale = 1f
 
-    var drawList = DrawList()
+    var drawList = DrawList().apply { _ownerName = name }
     /** If we are a child window, this is pointing to the first non-child parent window. Else point to ourself. */
     lateinit var rootWindow: Window
     /** If we are a child window, this is pointing to the first non-child non-popup parent window. Else point to ourself.   */
@@ -602,8 +603,8 @@ class Window(
     infix fun addTo(renderList: ArrayList<DrawList>) {
         drawList addTo renderList
         dc.childWindows.filter { it.active }  // clipped children may have been marked not active
-                .filter { it.flags hasnt WindowFlags.Popup || it.hiddenFrames == 0 }
-                .forEach { it to renderList }
+                .filter { it.flags hasnt WindowFlags.Popup || it.hiddenFrames <= 0 }
+                .forEach { it addTo renderList }
     }
 
     fun addToSortedBuffer() {

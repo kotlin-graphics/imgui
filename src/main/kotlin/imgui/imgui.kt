@@ -35,7 +35,7 @@ object ImGui :
         imgui_widgetsSliders,
         imgui_widgetsSelectableLists,
         imgui_tooltips,
-        imgui_menu,
+        imgui_menus,
         imgui_popups,
         imgui_logging,
         imgui_clipping,

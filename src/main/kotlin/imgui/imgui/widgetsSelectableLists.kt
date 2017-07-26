@@ -41,7 +41,7 @@ interface imgui_widgetsSelectableLists {
         val id = window.getId(label)
         val labelSize = calcTextSize(label, true)
         val size = Vec2(if (sizeArg.x != 0f) sizeArg.x else labelSize.x, if (sizeArg.y != 0f) sizeArg.y else labelSize.y)
-        val pos = window.dc.cursorPos
+        val pos = Vec2(window.dc.cursorPos)
         pos.y += window.dc.currentLineTextBaseOffset
         val bb = Rect(pos, pos + size)
         itemSize(bb)

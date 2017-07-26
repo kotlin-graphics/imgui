@@ -29,9 +29,10 @@ enum class ButtonFlags {
     AllowOverlapMode;
 
     val i = 1 shl ordinal
+
+    infix fun or(b: ButtonFlags) = i or b.i
 }
 
-infix fun ButtonFlags.or(b: ButtonFlags) = i or b.i
 infix fun Int.or(b: ButtonFlags) = this or b.i
 infix fun Int.has(b: ButtonFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: ButtonFlags) = (this and b.i) == 0
@@ -77,8 +78,8 @@ enum class Corner(val i: Int) {
     TopRight(1 shl 1), // 2
     BottomRight(1 shl 2), // 4
     BottomLeft(1 shl 3), // 8
-    All(0x0F)
-}
+    All(0x0F);
 
-infix fun Corner.or(b: Corner) = i or b.i
-infix fun Corner.or(b: Int) = i or b
+    infix fun or(b: Corner) = i or b.i
+    infix fun or(b: Int) = i or b
+}
