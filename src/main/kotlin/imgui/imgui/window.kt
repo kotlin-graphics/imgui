@@ -792,7 +792,7 @@ interface imgui_window {
 
     /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
     fun setNextWindowSize(size: Vec2, cond: SetCond = SetCond.Always) {
-        g.setNextWindowSizeVal = size
+        g.setNextWindowSizeVal put size
         g.setNextWindowSizeCond = cond
     }
 

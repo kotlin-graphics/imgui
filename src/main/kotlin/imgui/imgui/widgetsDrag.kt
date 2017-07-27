@@ -1,6 +1,7 @@
 package imgui.imgui
 
 import glm_.f
+import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.IO
@@ -72,8 +73,12 @@ interface imgui_widgetsDrag {
                 g.scalarAsInputTextId = 0
             }
         }
-        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
-            return inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, v, id, decimalPrecision)
+        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) {
+            val data = intArrayOf(glm.floatBitsToInt(v[0]))
+            val res = inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, data, id, decimalPrecision)
+            v[0] = glm.intBitsToFloat(data[0])
+            return res
+        }
 
         // Actual drag behavior
         itemSize(totalBb, Style.framePadding.y)

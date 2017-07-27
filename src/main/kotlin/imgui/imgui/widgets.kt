@@ -5,32 +5,45 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import imgui.ColorEditMode
+import imgui.*
 import imgui.ImGui.beginGroup
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcWrapWidthForPos
+import imgui.ImGui.clearActiveId
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dragInt
 import imgui.ImGui.endGroup
+import imgui.ImGui.endPopup
 import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.focusWindow
 import imgui.ImGui.getColorU32
 import imgui.ImGui.inputText
+import imgui.ImGui.isHovered
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.openPopup
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
+import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
+import imgui.ImGui.pushStyleVar
+import imgui.ImGui.renderCollapseTriangle
 import imgui.ImGui.renderFrame
+import imgui.ImGui.renderText
+import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.sameLine
+import imgui.ImGui.selectable
+import imgui.ImGui.setHoveredId
+import imgui.ImGui.setNextWindowPos
+import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.setScrollHere
 import imgui.ImGui.setTooltip
-import imgui.InputTextFlags
-import imgui.Style
+import imgui.ImGui.spacing
 import imgui.internal.*
-import imgui.or
 import imgui.Context as g
 
 interface imgui_widgets {
@@ -173,8 +186,105 @@ interface imgui_widgets {
 //    IMGUI_API bool          RadioButton(const char* label, bool active);
 //    IMGUI_API bool          RadioButton(const char* label, int* v, int v_button);
 //    IMGUI_API bool          Combo(const char* label, int* current_item, const char* const* items, int items_count, int height_in_items = -1);
-//    IMGUI_API bool          Combo(const char* label, int* current_item, const char* items_separated_by_zeros, int height_in_items = -1);      // separate items with \0, end item-list with \0\0
-//    IMGUI_API bool          Combo(const char* label, int* current_item, bool (*items_getter)(void* data, int idx, const char** out_text), void* data, int items_count, int height_in_items = -1);
+
+    /** Combo box helper allowing to pass all items in a single string.
+     *  separate items with \0, end item-list with \0\0     */
+    fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1) =
+            combo(label, currentItem, Items.singleStringGetter, itemsSeparatedByZeros,
+                    // FIXME-OPT: Avoid computing this, or at least only when combo is open
+                    itemsSeparatedByZeros.count { it == '\u0000' } - 1,
+                    heightInItems)
+
+    // Combo box function.
+    fun combo(label: String, currentItem: IntArray, itemsGetter: (String, Int) -> String?, data: String, itemsCount: Int,
+              heightInItems: Int = -1): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId(label)
+        val w = calcItemWidth()
+
+        val labelSize = calcTextSize(label, true)
+        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + Style.framePadding.y * 2f))
+        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) Style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
+        itemSize(totalBb, Style.framePadding.y)
+        if (!itemAdd(totalBb, id)) return false
+
+        val arrowSize = g.fontSize + Style.framePadding.x * 2f
+        val hovered = isHovered(frameBb, id)
+        var popupOpen = isPopupOpen(id)
+        var popupOpenedNow = false
+
+        val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
+        renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, Style.frameRounding)
+        val col = getColorU32(if (popupOpen || hovered) Col.ButtonHovered else Col.Button)
+        renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col, true, Style.frameRounding) // FIXME-ROUNDING
+        renderCollapseTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y) + Style.framePadding, true)
+
+        if (currentItem[0] in 0 until itemsCount)
+            itemsGetter(data, currentItem[0])?.let { renderTextClipped(frameBb.min + Style.framePadding, valueBb.max, it) }
+
+        if (labelSize.x > 0)
+            renderText(Vec2(frameBb.max.x + Style.itemInnerSpacing.x, frameBb.min.y + Style.framePadding.y), label)
+
+        if (hovered) {
+            setHoveredId(id)
+            if (IO.mouseClicked[0]) {
+                clearActiveId()
+                if (isPopupOpen(id)) closePopup(id)
+                else {
+                    focusWindow(window)
+                    openPopup(label)
+                    popupOpen = true
+                    popupOpenedNow = true
+                }
+            }
+        }
+
+        var valueChanged = false
+        if (isPopupOpen(id)) {
+            // Size default to hold ~7 items
+            var heightInItems = heightInItems
+            if (heightInItems < 0)
+                heightInItems = 7
+
+            val popupHeight = (labelSize.y + Style.itemSpacing.y) * glm.min(itemsCount, heightInItems) + Style.framePadding.y * 3
+            var popupY1 = frameBb.max.y
+            var popupY2 = glm.clamp(popupY1 + popupHeight, popupY1, IO.displaySize.y - Style.displaySafeAreaPadding.y)
+            if ((popupY2 - popupY1) < glm.min(popupHeight, frameBb.min.y - Style.displaySafeAreaPadding.y)) {
+                /*  Position our combo ABOVE because there's more space to fit!
+                    (FIXME: Handle in Begin() or use a shared helper. We have similar code in Begin() for popup placement)                 */
+                popupY1 = glm.clamp(frameBb.min.y - popupHeight, Style.displaySafeAreaPadding.y, frameBb.min.y)
+                popupY2 = frameBb.min.y
+            }
+            val popupRect = Rect(Vec2(frameBb.min.x, popupY1), Vec2(frameBb.max.x, popupY2))
+            setNextWindowPos(popupRect.min)
+            setNextWindowSize(popupRect.size)
+            pushStyleVar(StyleVar.WindowPadding, Style.framePadding)
+
+            val flags = WindowFlags.ComboBox or if (window.flags has WindowFlags.ShowBorders) WindowFlags.ShowBorders.i else 0
+            if (beginPopupEx(label, flags)) {
+                // Display items
+                spacing()
+                repeat(itemsCount) { i ->
+                    pushId(i)
+                    val itemSelected = i == currentItem[0]
+                    val itemText = itemsGetter(data, i) ?: "Unknown item*"
+                    if (selectable(itemText, itemSelected)) {
+                        clearActiveId()
+                        valueChanged = true
+                        currentItem[0] = i
+                    }
+                    if (itemSelected && popupOpenedNow) setScrollHere()
+                    popId()
+                }
+                endPopup()
+            }
+            popStyleVar()
+        }
+        return valueChanged
+    }
 
     /** A little colored square. Return true when clicked.
      *  FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip. */
@@ -343,4 +453,10 @@ interface imgui_widgets {
 //    IMGUI_API void          PlotHistogram(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));
 //    IMGUI_API void          PlotHistogram(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
 //    IMGUI_API void          ProgressBar(float fraction, const ImVec2& size_arg = ImVec2(-1,0), const char* overlay = NULL);
+
+    object Items {
+
+        // FIXME-OPT: we could pre-compute the indices to fasten this. But only 1 active combo means the waste is limited.
+        val singleStringGetter = { data: String, idx: Int -> data.split('\u0000').getOrNull(idx) }
+    }
 }

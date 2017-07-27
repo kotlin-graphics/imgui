@@ -20,34 +20,34 @@ import imgui.Context as g
 interface imgui_cursorLayout {
 
     /** Horizontal separating line. */
-    fun separator()    {
+    fun separator() {
 
         val window = currentWindow
-        if (window.skipItems)        return
+        if (window.skipItems) return
 
-        if (window.dc.columnsCount > 1)        popClipRect()
+        if (window.dc.columnsCount > 1) popClipRect()
 
         var x1 = window.pos.x.f
         val x2 = window.pos.x + window.size.x
         if (window.dc.groupStack.isNotEmpty())
-        x1 += window.dc.indentX
+            x1 += window.dc.indentX
 
-        val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y+1f))
+        val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
         /*  NB: we don't provide our width so that it doesn't get feed back into AutoFit, we don't provide height
             to not alter layout.         */
         itemSize(Vec2())
-        if (!itemAdd(bb))        {
+        if (!itemAdd(bb)) {
             if (window.dc.columnsCount > 1)
-            pushColumnClipRect()
+                pushColumnClipRect()
             return
         }
 
-        window.drawList.addLine(bb.min, Vec2(bb.max.x,bb.min.y), getColorU32(Col.Border))
+        window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), getColorU32(Col.Border))
 
         if (g.logEnabled)
             logText("\n--------------------------------")
 
-        if (window.dc.columnsCount > 1)        {
+        if (window.dc.columnsCount > 1) {
             pushColumnClipRect()
             window.dc.columnsCellMinY = window.dc.cursorPos.y
         }
@@ -78,7 +78,13 @@ interface imgui_cursorLayout {
         }
     }
 //    IMGUI_API void          NewLine();                                                          // undo a SameLine()
-//    IMGUI_API void          Spacing();                                                          // add vertical spacing
+
+    /** add vertical spacing    */
+    fun spacing() {
+        val window = currentWindow
+        if (window.skipItems) return
+        itemSize(Vec2())
+    }
 //    IMGUI_API void          Dummy(const ImVec2& size);                                          // add a dummy item of given size
 //    IMGUI_API void          Indent(float indent_w = 0.0f);                                      // move content position toward the right, by style.IndentSpacing or indent_w if >0
 //    IMGUI_API void          Unindent(float indent_w = 0.0f);                                    // move content position back to the left, by style.IndentSpacing or indent_w if >0

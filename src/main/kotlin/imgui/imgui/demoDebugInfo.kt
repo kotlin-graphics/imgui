@@ -4,6 +4,7 @@ import glm_.vec2.Vec2
 import imgui.ImGui
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
+import imgui.ImGui.combo
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
 import imgui.ImGui.inputFloat
@@ -482,8 +483,8 @@ interface imgui_demoDebugInfo {
                     text("Scrolling Text %d", i)
                 endChild()
                 sliderFloat("Value", f, 0f, 1f)
-                inputFloat("Input", f, 0.1f)
-//                combo("Combo", & n, "Yes\0No\0Maybe\0\0")
+                inputFloat("Input", f, 0.1f, 0f, 2)
+                combo("Combo", n, "Yes\u0000No\u0000Maybe\u0000\u0000")
                 endMenu()
             }
 //            if (BeginMenu("Colors")) {

@@ -79,8 +79,8 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
 
     if (flags has WindowFlags.NoSavedSettings) {
         // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
-        sizeFull = size
-        this.size = size
+        sizeFull put size
+        this.size put size
     } else {
         /*  Retrieve settings from .ini file
             Use SetWindowPos() or SetNextWindowPos() with the appropriate condition flag to change the initial position
@@ -105,8 +105,8 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
 
         if (settings.size.lengthSqr() > 0.00001f && flags hasnt WindowFlags.NoResize)
             size put settings.size
-        sizeFull = size
-        this.size = size
+        sizeFull put size
+        this.size put size
     }
 
     if (flags has WindowFlags.AlwaysAutoResize) {
@@ -463,9 +463,13 @@ fun closePopupToLevel(remaining: Int) {
         focusWindow(g.openPopupStack[remaining - 1].window)
     else
         focusWindow(g.openPopupStack[0].parentWindow)
-    repeat(remaining) { g.openPopupStack.pop() }
+    repeat(g.openPopupStack.size - remaining) { g.openPopupStack.pop() }
 }
-//static void             ClosePopup(ImGuiID id);
+
+fun closePopup(id: Int) {
+    if (!isPopupOpen(id)) return
+    closePopupToLevel(g.openPopupStack.lastIndex)
+}
 
 fun isPopupOpen(id: Int) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
 
@@ -600,7 +604,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance_(c) * scale  //TODO check
+        val charWidth: Float = font.getCharAdvance(c) * scale  //TODO check
         lineWidth += charWidth
     }
 
@@ -621,102 +625,106 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
     return textSize
 }
 
-fun Array<out Number>.format(displayFormat: String, buf: CharArray) = displayFormat.format(Style.locale, this[0]).toCharArray(buf)
+fun IntArray.format(dataType: DataType, displayFormat: String, buf: CharArray): CharArray {
+    val value: Number = when (dataType) {
+        DataType.Int -> this[0]
+        DataType.Float -> glm.intBitsToFloat(this[0])
+        else -> throw Error()
+    }
+    return displayFormat.format(Style.locale, value).toCharArray(buf)
+}
 
 /** JVM Imgui, dataTypeFormatString replacement */
-fun Array<out Number>.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) = when (dataType) {
+fun IntArray.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) = when (dataType) {
 
-    DataType.Int ->
-        if (decimalPrecision < 0) "%d".format(Style.locale, this[0])
-        else "%.${decimalPrecision}d".format(Style.locale, this[0])
-    DataType.Float ->
-        /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
-            non-significant digits?         */
-        if (decimalPrecision < 0) "%f".format(Style.locale, this[0])
-        else "%.${decimalPrecision}f".format(Style.locale, this[0])
+    DataType.Int -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}d".format(Style.locale, this[0])
+/*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
+    non-significant digits?         */
+    DataType.Float -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f".format(Style.locale, glm.intBitsToFloat(this[0]))
     else -> throw Error("unsupported format data type")
 }.toCharArray(buf)
 
-fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Array<out Number>, value2: Number) = when (dataType) {
-    DataType.Int -> (value1 as Array<Int>)[0] = when (op) {
-        '+' -> value1[0] + value2 as Int
-        '-' -> value1[0] - value2 as Int
+fun dataTypeApplyOp(dataType: DataType, op: Char, pA: IntArray, B: Number) = when (dataType) {
+    DataType.Int -> pA[0] = when (op) {
+        '+' -> pA[0] + B as Int
+        '-' -> pA[0] - B as Int
         else -> throw Error()
     }
-    DataType.Float -> (value1 as Array<Float>)[0] = when (op) {
-        '+' -> value1[0] + value2 as Float
-        '-' -> value1[0] - value2 as Float
+    DataType.Float -> pA[0] = glm.floatBitsToInt(when (op) {
+        '+' -> glm.intBitsToFloat(pA[0]) + B as Float
+        '-' -> glm.intBitsToFloat(pA[0]) - B as Float
         else -> throw Error()
-    }
+    })
     else -> throw Error()
 }
 
 /** User can input math operators (e.g. +100) to edit a numerical values.   */
-fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: Array<out Number>,
-                            scalarFormat: String? = null): Boolean {
+fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: IntArray, scalarFormat: String? = null)
+        : Boolean {
 
-    var s = 0
-    while (buf[s].isSpace) s++
+//    var s = 0
+//    while (buf[s].isSpace) s++
+//
+//    /*  We don't support '-' op because it would conflict with inputing negative value.
+//        Instead you can use +-100 to subtract from an existing value     */
+//    var op = buf[s]
+//    if (op == '+' || op == '*' || op == '/') {
+//        s++
+//        while (buf[s].isSpace) s++
+//    } else
+//        op = 0.c
+//
+//    if (buf[s] == 0.c) return false
 
-    /*  We don't support '-' op because it would conflict with inputing negative value.
-        Instead you can use +-100 to subtract from an existing value     */
-    var op = buf[s]
-    if (op == '+' || op == '*' || op == '/') {
-        s++
-        while (buf[s].isSpace) s++
-    } else
-        op = 0.c
-
-    if (buf[s] == 0.c) return false
-
+    val seq = String(buf).replace("\\s+", "").split(Regex("-+\\*/"))
     return when (dataType) {
 
         DataType.Int -> {
             val scalarFormat = scalarFormat ?: "%d"
-            val v = data as Array<Int>
-            TODO()
-//                    const int old_v = * v
-//                    int arg0 = * v
-//            if (op && sscanf(initial_value_buf, scalar_format, & arg0) < 1)
-//            return false
-//
-//            // Store operand in a float so we can use fractional value for multipliers (*1.1), but constant always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision
-//            float arg1 = 0.0f
-//            if (op == '+') {
-//                if (sscanf(buf, "%f", & arg1) == 1) *v = (int)(arg0+arg1);
-//            }                // Add (use "+-" to subtract)
-//            else if (op == '*') {
-//                if (sscanf(buf, "%f", & arg1) == 1) *v = (int)(arg0 * arg1);
-//            }                // Multiply
-//            else if (op == '/') {
-//                if (sscanf(buf, "%f", & arg1) == 1 && arg1 != 0.0f) *v = (int)(arg0 / arg1);
-//            }// Divide
-//            else {
-//                if (sscanf(buf, scalar_format, & arg0) == 1) *v = arg0;
-//            }                     // Assign constant
-//            (old_v != * v)
+            var v = data[0]
+            val oldV = v
+            val a = seq[0].i
+
+            if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
+
+                val op = seq[1][0]
+                /*  Store operand b in a float so we can use fractional value for multipliers (*1.1), but constant
+                    always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision  */
+                val b = seq[2].f
+                when (op) {
+                    '+' -> v = (a + b).i    // Add (use "+-" to subtract)
+                    '*' -> v = (a * b).i    // Multiply
+                    '/' -> v = (a / b).i    // Divide   TODO / 0 will throw
+                    else -> throw Error()
+                }
+            } else
+                v = a   // Assign constant
+
+            data[0] = v
+            oldV != v
         }
         DataType.Float -> {
-            // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in
+            // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
             val scalarFormat = scalarFormat ?: "%f"
-            val v = data as Array<Float>
-            val oldV = v[0]
-            val arg0 = v[0]
-//            TODO if (op && sscanf(initial_value_buf, scalar_format, & arg0) < 1)
-//            return false
+            var v = glm.intBitsToFloat(data[0])
+            val oldV = v
+            val a = seq[0].f
 
-            val arg1 = String(buf, 0, buf.strlen).format(scalarFormat).f
-//            TODO if (sscanf(buf, scalar_format, & arg1) < 1)
-//            return false
-            when (op) {
-                '+' -> v[0] = arg0 + arg1   // Add (use "+-" to subtract)
-                '*' -> v[0] = arg0 * arg1   // Multiply
-                '/' -> {
-                    if (arg1 != 0f) v[0] = arg0 / arg1  // Divide
+            if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
+
+                val op = seq[1][0]
+                val b = seq[2].f
+                when (op) {
+                    '+' -> v = a + b    // Add (use "+-" to subtract)
+                    '*' -> v = a * b    // Multiply
+                    '/' -> v = a / b    // Divide   TODO / 0 will throw
+                    else -> throw Error()
                 }
-                else -> v[0] = arg1 // Assign constant
-            }
-            oldV != v[0]
+            } else
+                v = a   // Assign constant
+
+            data[0] = glm.floatBitsToInt(v)
+            oldV != v
         }
         else -> false
     }

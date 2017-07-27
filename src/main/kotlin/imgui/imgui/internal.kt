@@ -353,8 +353,8 @@ interface imgui_internal {
     /** Default clipRect uses (pos_min,pos_max)
      *  Handle clipping on CPU immediately (vs typically let the GPU clip the triangles that are overlapping the clipping
      *  rectangle edges)    */
-    fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: String, textEnd: Int, textSizeIfKnown: Vec2?, align: Vec2 = Vec2(),
-                          clipRect: Rect? = null) {
+    fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: String, textEnd: Int = 0, textSizeIfKnown: Vec2? = null,
+                          align: Vec2 = Vec2(), clipRect: Rect? = null) {
         // Hide anything after a '##' string
         val textDisplayEnd = findRenderedTextEnd(text, textEnd)
         if (textDisplayEnd == 0) return
@@ -1327,7 +1327,7 @@ interface imgui_internal {
                         val end = text.size - start
                         val rectSize = inputTextCalcTextSizeW(String(text, start, end), textSelectedEnd, stopOnNewLine = true)
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clip(clipRect_)
@@ -1387,7 +1387,7 @@ interface imgui_internal {
 
     /** NB: scalar_format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
      *  functions "display_format" argument)    */
-    fun inputScalarEx(label: String, dataType: DataType, data: Array<out Number>, step: Number?, stepFast: Number?, scalarFormat: String,
+    fun inputScalarEx(label: String, dataType: DataType, data: IntArray, step: Number?, stepFast: Number?, scalarFormat: String,
                       extraFlags: Int): Boolean {
 
         val window = currentWindow
@@ -1400,7 +1400,7 @@ interface imgui_internal {
         val buttonSz = Vec2(g.fontSize) + Style.framePadding * 2f
         step?.let { pushItemWidth(glm.max(1f, calcItemWidth() - (buttonSz.x + Style.itemInnerSpacing.x) * 2)) }
 
-        val buf = data.format(scalarFormat, CharArray(64))
+        val buf = data.format(dataType, scalarFormat, CharArray(64))
 
         var valueChanged = false
         var extraFlags = extraFlags
@@ -1437,8 +1437,8 @@ interface imgui_internal {
     }
 
     /** Create text input in place of a slider (when CTRL+Clicking on slider)   */
-    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: Array<out Number>, id: Int,
-                                       decimalPrecision: Int): Boolean {
+    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: IntArray, id: Int, decimalPrecision: Int)
+            : Boolean {
 
         val window = currentWindow
 
