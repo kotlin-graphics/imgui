@@ -27,9 +27,11 @@ import imgui.ImGui.openPopup
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
+import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleVar
+import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.renderCollapseTriangle
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderText
@@ -64,8 +66,17 @@ interface imgui_widgets {
 //    IMGUI_API void          TextColoredV(const ImVec4& col, const char* fmt, va_list args);
 //    IMGUI_API void          TextDisabled(const char* fmt, ...) IM_PRINTFARGS(1);                    // shortcut for PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]); Text(fmt, ...); PopStyleColor();
 //    IMGUI_API void          TextDisabledV(const char* fmt, va_list args);
-//    IMGUI_API void          TextWrapped(const char* fmt, ...) IM_PRINTFARGS(1);                     // shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this won't work on an auto-resizing window if there's no other widgets to extend the window width, yoy may need to set a size using SetNextWindowSize().
-//    IMGUI_API void          TextWrappedV(const char* fmt, va_list args);
+
+    /** shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this won't work on an
+     *  auto-resizing window if there's no other widgets to extend the window width, yoy may need to set a size using
+     *  SetNextWindowSize().    */
+    fun textWrapped(fmt:String, vararg args: Any) {
+
+        val needWrap = g.currentWindow!!.dc.textWrapPos < 0f  // Keep existing wrap position is one ia already set
+        if (needWrap) pushTextWrapPos(0f)
+        text(fmt, *args)
+        if (needWrap) popTextWrapPos()
+    }
 
     /** doesn't require null terminated string if 'text_end' is specified. no copy done to any bounded stack buffer,
      *  recommended for long chunks of text */

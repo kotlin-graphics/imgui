@@ -8,6 +8,7 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
+import imgui.internal.isSpace
 import imgui.internal.upperPowerOfTwo
 import imgui.stb.*
 import org.lwjgl.stb.*
@@ -674,8 +675,8 @@ class Font {
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
 
-    fun getCharAdvance(c:Char) =
-            if(c < indexXAdvance.size)
+    fun getCharAdvance_(c: Char) =
+            if (c < indexXAdvance.size)
                 indexXAdvance[c.i]
             else
                 fallbackXAdvance
@@ -767,7 +768,90 @@ class Font {
         return textSize
     }
 
-    //    IMGUI_API const char*       CalcWordWrapPositionA(float scale, const char* text, const char* text_end, float wrap_width) const;
+    fun calcWordWrapPositionA(scale: Float, text: CharArray, ptr: Int, textEnd: Int, wrapWidth: Float): Int {
+
+        /*  Simple word-wrapping for English, not full-featured. Please submit failing cases!
+            FIXME: Much possible improvements (don't cut things like "word !", "word!!!" but cut within "word,,,,",
+            more sensible support for punctuations, support for Unicode punctuations, etc.)
+
+            For references, possible wrap point marked with ^
+            "aaa bbb, ccc,ddd. eee   fff. ggg!"
+                ^    ^    ^   ^   ^__    ^    ^
+
+            List of hardcoded separators: .,;!?'"
+
+            Skip extra blanks after a line returns (that includes not counting them in width computation)
+            e.g. "Hello    world" --> "Hello" "World"
+
+            Cut words that cannot possibly fit within one line.
+            e.g.: "The tropical fish" with ~5 characters worth of width --> "The tr" "opical" "fish"    */
+
+        var lineWidth = 0f
+        var wordWidth = 0f
+        var blankWidth = 0f
+
+        var wordEnd = ptr
+        var prevWordEnd = -1
+        var insideWord = true
+
+        var s = ptr
+        while (s < textEnd) {    // TODO remove textEnd?
+            val c = text[s]
+            val nextS =
+                    if (c < 0x80)
+                        (s + 1).c
+                    else
+                        TODO() // (s + ImTextCharFromUtf8(&c, s, text_end)).c
+            if (c == '\u0000') break
+
+            if (c < 32) {
+                if (c == '\n') {
+                    lineWidth = 0f
+                    wordWidth = 0f
+                    blankWidth = 0f
+                    insideWord = true
+                    s = nextS.i
+                    continue
+                }
+                if (c == '\r') {
+                    s = nextS.i
+                    continue
+                }
+            }
+            val charWidth = indexXAdvance.getOrElse(c.i, { fallbackXAdvance }) * scale
+            if (c.isSpace) {
+                if (insideWord) {
+                    lineWidth += blankWidth
+                    blankWidth = 0.0f
+                    wordEnd = s
+                }
+                blankWidth += charWidth
+                insideWord = false
+            } else {
+                wordWidth += charWidth
+                if (insideWord)
+                    wordEnd = nextS.i
+                else {
+                    prevWordEnd = wordEnd
+                    lineWidth += wordWidth + blankWidth
+                    wordWidth = 0f
+                    blankWidth = 0f
+                }
+                // Allow wrapping after punctuation.
+                insideWord = !(c == '.' || c == ',' || c == ';' || c == '!' || c == '?' || c == '\"')
+            }
+
+            // We ignore blank width at the end of the line (they can be skipped)
+            if (lineWidth + wordWidth >= wrapWidth) {
+                // Words that cannot possibly fit within an entire line will be cut anywhere.
+                if (wordWidth < wrapWidth)
+                    s = if (prevWordEnd < 0) prevWordEnd else wordEnd
+                break
+            }
+            s = nextS.i
+        }
+        return s
+    }
 //    IMGUI_API void              RenderChar(ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, unsigned short c) const;
 
     //    const ImVec4& clipRect, const char* text, const char* textEnd, float wrapWidth = 0.0f, bool cpuFineClip = false) const;
@@ -783,7 +867,7 @@ class Font {
         val scale = size / fontSize
         val lineHeight = fontSize * scale
         val wordWrapEnabled = wrapWidth > 0f
-//        const char * word_wrap_eol = NULL
+        var wordWrapEol = 0
 
         // Skip non-visible lines
         var s = 0
@@ -802,38 +886,43 @@ class Font {
         var vtxCurrentIdx = drawList._vtxCurrentIdx
 
         while (s < textEnd) {
-            if (wordWrapEnabled) {
-                TODO()
-//                // Calculate how far we can render. Requires two passes on the string data but keeps the code simple and not intrusive for what's essentially an uncommon feature.
-//                if (!word_wrap_eol) {
-//                    word_wrap_eol = CalcWordWrapPositionA(scale, s, text_end, wrap_width - (x - pos.x))
-//                    if (word_wrap_eol == s) // Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height discontinuity.
-//                        word_wrap_eol++    // +1 may not be a character start point in UTF-8 but it's ok because we use s >= word_wrap_eol below
-//                }
-//
-//                if (s >= word_wrap_eol) {
-//                    x = pos.x
-//                    y += lineHeight
-//                    word_wrap_eol = NULL
-//
-//                    // Wrapping skips upcoming blanks
-//                    while (s < text_end) {
-//                        const char c = * s
-//                                if (ImCharIsSpace(c)) {
-//                                    s++; } else if (c == '\n') {
-//                                    s++; break; } else {
-//                                    break; }
-//                    }
-//                    continue
-//                }
-            }
 
+            if (wordWrapEnabled) {
+
+                /*  Calculate how far we can render. Requires two passes on the string data but keeps the code simple
+                    and not intrusive for what's essentially an uncommon feature.                 */
+                if (wordWrapEol == 0) {
+                    wordWrapEol = calcWordWrapPositionA(scale, text, s, textEnd, wrapWidth - (x - pos.x))
+                    /*  Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height
+                        discontinuity.                     */
+                    if (wordWrapEol == s)
+                    //  +1 may not be a character start point in UTF-8 but it's ok because we use s >= wordWrapEol below
+                        wordWrapEol++
+                }
+
+                if (s >= wordWrapEol) {
+                    x = pos.x
+                    y += lineHeight
+                    wordWrapEol = -1
+
+                    // Wrapping skips upcoming blanks
+                    while (s < textEnd) {
+                        val c = text[s]
+                        if (c.isSpace) s++
+                        else if (c == '\n') {
+                            s++
+                            break
+                        } else break
+                    }
+                    continue
+                }
+            }
             // Decode and advance source
             val c = text[s]
-            if (c < 0x80)
-                s += 1
+            if (c < 0x80) s += 1
             else {
-//                s += textCharFromUtf8(& c, s, text_end) TODO
+                TODO()
+//                s += textCharFromUtf8(& c, s, text_end)
 //                if (c == 0) // Malformed UTF-8?
 //                    break
             }
@@ -941,7 +1030,7 @@ class Font {
         // Give back unused vertices
         while (drawList.vtxBuffer.size > vtxWrite)
             drawList.vtxBuffer.removeAt(drawList.vtxBuffer.lastIndex)
-        while(drawList.idxBuffer.size > idxWrite)
+        while (drawList.idxBuffer.size > idxWrite)
             drawList.idxBuffer.removeAt(drawList.idxBuffer.lastIndex)
         drawList.cmdBuffer.last().elemCount -= (idxExpectedSize - drawList.idxBuffer.size)
         drawList._vtxWritePtr = vtxWrite

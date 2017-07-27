@@ -604,7 +604,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance(c) * scale  //TODO check
+        val charWidth: Float = font.getCharAdvance_(c) * scale  //TODO check
         lineWidth += charWidth
     }
 

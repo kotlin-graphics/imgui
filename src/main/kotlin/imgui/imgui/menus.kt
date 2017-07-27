@@ -5,6 +5,7 @@ import glm_.f
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
 import imgui.*
 import imgui.ImGui.alignFirstTextHeightToWidgets
 import imgui.ImGui.begin
@@ -47,7 +48,7 @@ interface imgui_menus {
         setNextWindowPos(Vec2())
         setNextWindowSize(Vec2(IO.displaySize.x, g.fontBaseSize + Style.framePadding.y * 2f))
         pushStyleVar(StyleVar.WindowRounding, 0f)
-        pushStyleVar(StyleVar.WindowMinSize, Vec2())
+        pushStyleVar(StyleVar.WindowMinSize, Vec2i())
         val flags = WindowFlags.NoTitleBar or WindowFlags.NoResize or WindowFlags.NoMove or WindowFlags.NoScrollbar or
                 WindowFlags.NoSavedSettings or WindowFlags.MenuBar
         if (!begin("##MainMenuBar", null, flags) || !beginMenuBar()) {
@@ -240,11 +241,10 @@ interface imgui_menus {
     }
 
     /** return true when activated + toggle (*p_selected) if p_selected != NULL */
-    fun menuItem(label: String, shortcut: String, pSelected: BooleanArray?, enabled: Boolean = true): Boolean {
+    fun menuItem(label: String, shortcut: String = "", pSelected: BooleanArray?, enabled: Boolean = true): Boolean {
 
         if (menuItem(label, shortcut, pSelected?.get(0) ?: false, enabled)) {
-            if (pSelected!![0])
-                pSelected[0] = !pSelected[0]
+            pSelected?.let { it[0] = !it[0] }
             return true
         }
         return false

@@ -174,10 +174,40 @@ interface imgui_parametersStacks {
         }
         return w.i.f
     }
-//IMGUI_API void          PushTextWrapPos(float wrap_pos_x = 0.0f);                           // word-wrapping for Text*() commands. < 0.0f: no wrapping; 0.0f: wrap to end of window (or column); > 0.0f: wrap at 'wrap_pos_x' position in window local space
-//IMGUI_API void          PopTextWrapPos();
-//IMGUI_API void          PushAllowKeyboardFocus(bool v);                                     // allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets
-//IMGUI_API void          PopAllowKeyboardFocus();
-//IMGUI_API void          PushButtonRepeat(bool repeat);                                      // in 'repeat' mode, Button*() functions return repeated true in a typematic manner (uses io.KeyRepeatDelay/io.KeyRepeatRate for now). Note that you can call IsItemActive() after any Button() to tell if the button is held in the current frame.
-//IMGUI_API void          PopButtonRepeat();
+
+    /** word-wrapping for Text*() commands. < 0.0f: no wrapping; 0.0f: wrap to end of window (or column);
+     *  > 0.0f: wrap at 'wrapPosX' position in window local space */
+    fun pushTextWrapPos(wrapPosX: Float = 0f) = with(currentWindow.dc) {
+        textWrapPos = wrapPosX
+        textWrapPosStack.push(wrapPosX)
+    }
+
+    fun popTextWrapPos() = with(currentWindow.dc) {
+        textWrapPosStack.pop()
+        textWrapPos = textWrapPosStack.lastOrNull() ?: -1f
+    }
+
+    /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets   */
+    fun pushAllowKeyboardFocus(allowKeyboardFocus:Boolean) = with(currentWindow){
+        dc.allowKeyboardFocus = allowKeyboardFocus
+        dc.allowKeyboardFocusStack.push(allowKeyboardFocus)
+    }
+
+    fun popAllowKeyboardFocus() = with(currentWindow.dc) {
+        allowKeyboardFocusStack.pop()
+        allowKeyboardFocus = allowKeyboardFocusStack.lastOrNull() ?: true
+    }
+
+    /** in 'repeat' mode, Button*() functions return repeated true in a typematic manner
+     *  (uses io.KeyRepeatDelay/io.KeyRepeatRate for now). Note that you can call IsItemActive() after any Button() to
+     *  tell if the button is held in the current frame.    */
+    fun pushButtonRepeat(repeat:Boolean) = with(currentWindow.dc) {
+        buttonRepeat = repeat
+        buttonRepeatStack.push(repeat)
+    }
+
+    fun popButtonRepeat() = with(currentWindow.dc) {
+        buttonRepeatStack.pop()
+        buttonRepeat = buttonRepeatStack.lastOrNull() ?: false
+    }
 }

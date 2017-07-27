@@ -1,7 +1,7 @@
 package imgui.imgui
 
 import glm_.vec2.Vec2
-import imgui.ImGui
+import imgui.*
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
 import imgui.ImGui.combo
@@ -12,9 +12,6 @@ import imgui.ImGui.menuItem
 import imgui.ImGui.separator
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.text
-import imgui.SetCond
-import imgui.WindowFlags
-import imgui.or
 
 interface imgui_demoDebugInfo {
 
@@ -74,27 +71,26 @@ interface imgui_demoDebugInfo {
                 showExampleMenuFile()
                 endMenu()
             }
-//            if (ImGui::BeginMenu("Examples"))
+            if (beginMenu("Examples")) {
+                menuItem("Main menu bar", pSelected = showApp.mainMenuBar)
+                menuItem("Console", pSelected = showApp.console)
+                menuItem("Log", pSelected = showApp.log)
+//                menuItem("Simple layout", NULL, &show_app_layout)
+//                menuItem("Property editor", NULL, &show_app_property_editor)
+//                menuItem("Long text display", NULL, &show_app_long_text)
+//                menuItem("Auto-resizing window", NULL, &show_app_auto_resize)
+//                menuItem("Constrained-resizing window", NULL, &show_app_constrained_resize)
+//                menuItem("Simple overlay", NULL, &show_app_fixed_overlay)
+//                menuItem("Manipulating window title", NULL, &show_app_manipulating_window_title)
+//                menuItem("Custom rendering", NULL, &show_app_custom_rendering)
+                endMenu()
+            }
+//            if (BeginMenu("Help"))
 //            {
-//                ImGui::MenuItem("Main menu bar", NULL, &show_app_main_menu_bar)
-//                ImGui::MenuItem("Console", NULL, &show_app_console)
-//                ImGui::MenuItem("Log", NULL, &show_app_log)
-//                ImGui::MenuItem("Simple layout", NULL, &show_app_layout)
-//                ImGui::MenuItem("Property editor", NULL, &show_app_property_editor)
-//                ImGui::MenuItem("Long text display", NULL, &show_app_long_text)
-//                ImGui::MenuItem("Auto-resizing window", NULL, &show_app_auto_resize)
-//                ImGui::MenuItem("Constrained-resizing window", NULL, &show_app_constrained_resize)
-//                ImGui::MenuItem("Simple overlay", NULL, &show_app_fixed_overlay)
-//                ImGui::MenuItem("Manipulating window title", NULL, &show_app_manipulating_window_title)
-//                ImGui::MenuItem("Custom rendering", NULL, &show_app_custom_rendering)
-//                ImGui::EndMenu()
-//            }
-//            if (ImGui::BeginMenu("Help"))
-//            {
-//                ImGui::MenuItem("Metrics", NULL, &show_app_metrics)
-//                ImGui::MenuItem("Style Editor", NULL, &show_app_style_editor)
-//                ImGui::MenuItem("About ImGui", NULL, &show_app_about)
-//                ImGui::EndMenu()
+//                MenuItem("Metrics", NULL, &show_app_metrics)
+//                MenuItem("Style Editor", NULL, &show_app_style_editor)
+//                MenuItem("About ImGui", NULL, &show_app_about)
+//                EndMenu()
 //            }
             endMenuBar()
         }
@@ -426,27 +422,29 @@ interface imgui_demoDebugInfo {
     companion object {
 
         /** Demonstrate creating a fullscreen menu bar and populating it.   */
-        fun showExampleAppMainMenuBar() {
-            TODO()
-//        if (ImGui::BeginMainMenuBar())
-//        {
-//            if (ImGui::BeginMenu("File"))
-//            {
-//                ShowExampleMenuFile();
-//                ImGui::EndMenu();
-//            }
-//            if (ImGui::BeginMenu("Edit"))
-//            {
-//                if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
-//                if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
-//                ImGui::Separator();
-//                if (ImGui::MenuItem("Cut", "CTRL+X")) {}
-//                if (ImGui::MenuItem("Copy", "CTRL+C")) {}
-//                if (ImGui::MenuItem("Paste", "CTRL+V")) {}
-//                ImGui::EndMenu();
-//            }
-//            ImGui::EndMainMenuBar();
-//        }
+        fun showExampleAppMainMenuBar() = with(ImGui) {
+
+            if (beginMainMenuBar()) {
+                if (beginMenu("File")) {
+                    showExampleMenuFile()
+                    endMenu()
+                }
+                if (beginMenu("Edit")) {
+                    if (menuItem("Undo", "CTRL+Z")) {
+                    }
+                    if (menuItem("Redo", "CTRL+Y", false, false)) { // Disabled item
+                    }
+                    separator()
+                    if (menuItem("Cut", "CTRL+X")) {
+                    }
+                    if (menuItem("Copy", "CTRL+C")) {
+                    }
+                    if (menuItem("Paste", "CTRL+V")) {
+                    }
+                    endMenu()
+                }
+                endMainMenuBar()
+            }
         }
 
         fun showExampleMenuFile() {
@@ -487,25 +485,22 @@ interface imgui_demoDebugInfo {
                 combo("Combo", n, "Yes\u0000No\u0000Maybe\u0000\u0000")
                 endMenu()
             }
-//            if (BeginMenu("Colors")) {
-//                for (int i = 0; i < ImGuiCol_COUNT; i++)
-//                MenuItem(GetStyleColName((ImGuiCol) i))
-//                EndMenu()
-//            }
-//            if (BeginMenu("Disabled", false)) // Disabled
-//            {
-//                IM_ASSERT(0)
-//            }
-//            if (MenuItem("Checked", NULL, true)) {
-//            }
-//            if (MenuItem("Quit", "Alt+F4")) {
-//            }
+            if (beginMenu("Colors")) {
+                for (col in Col.values())
+                    menuItem(col.toString())
+                endMenu()
+            }
+            if (beginMenu("Disabled", false)) // Disabled
+                assert(false)
+            if (menuItem("Checked", selected = true)) {
+            }
+            if (menuItem("Quit", "Alt+F4")) {
+            }
         }
 
         var enabled = booleanArrayOf(true)
         var f = floatArrayOf(0.5f)
         var n = intArrayOf(0)
-
 
         /** Demonstrate creating a window which gets auto-resized according to its content. */
         fun showExampleAppAutoResize(pOpen: BooleanArray) {
@@ -981,16 +976,16 @@ interface imgui_demoDebugInfo {
 //            ScrollToBottom = true;
 //        }
 //
-        fun draw(title: String, pOpen: BooleanArray) {
-            TODO()
-//            ImGui::SetNextWindowSize(ImVec2(520,600), ImGuiSetCond_FirstUseEver);
-//            if (!ImGui::Begin(title, p_open))
-//            {
-//                ImGui::End();
-//                return;
-//            }
-//
-//            ImGui::TextWrapped("This example implements a console with basic coloring, completion and history. A more elaborate implementation may want to store entries along with extra data such as timestamp, emitter, etc.");
+        fun draw(title: String, pOpen: BooleanArray) = with(ImGui) {
+
+            setNextWindowSize(Vec2(520, 600), SetCond.FirstUseEver)
+            if (!begin(title, pOpen)) {
+                end()
+                return
+            }
+
+            textWrapped("This example is not yet implemented, you are welcome to contribute")
+//            textWrapped("This example implements a console with basic coloring, completion and history. A more elaborate implementation may want to store entries along with extra data such as timestamp, emitter, etc.");
 //            ImGui::TextWrapped("Enter 'HELP' for help, press TAB to use text completion.");
 //
 //            // TODO: display items starting from the bottom
