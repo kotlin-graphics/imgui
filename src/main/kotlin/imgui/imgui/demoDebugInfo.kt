@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.beginChild
@@ -12,6 +13,7 @@ import imgui.ImGui.menuItem
 import imgui.ImGui.separator
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.text
+import java.util.*
 
 interface imgui_demoDebugInfo {
 
@@ -75,7 +77,7 @@ interface imgui_demoDebugInfo {
                 menuItem("Main menu bar", pSelected = showApp.mainMenuBar)
                 menuItem("Console", pSelected = showApp.console)
                 menuItem("Log", pSelected = showApp.log)
-//                menuItem("Simple layout", NULL, &show_app_layout)
+                menuItem("Simple layout", pSelected = showApp.layout)
 //                menuItem("Property editor", NULL, &show_app_property_editor)
 //                menuItem("Long text display", NULL, &show_app_long_text)
 //                menuItem("Auto-resizing window", NULL, &show_app_auto_resize)
@@ -705,67 +707,67 @@ interface imgui_demoDebugInfo {
 
         /** Demonstrate creating a simple log window with basic filtering.  */
         fun showExampleAppLog(pOpen: BooleanArray) {
-            TODO()
-//            static ExampleAppLog log;
-//
-//            // Demo fill
-//            static float last_time = -1.0f;
-//            float time = ImGui::GetTime();
-//            if (time - last_time >= 0.3f)
-//            {
-//                const char* random_words[] = { "system", "info", "warning", "error", "fatal", "notice", "log" };
-//                log.AddLog("[%s] Hello, time is %.1f, rand() %d\n", random_words[rand() % IM_ARRAYSIZE(random_words)], time, (int)rand());
-//                last_time = time;
-//            }
-//
-//            log.Draw("Example: Log", p_open);
+
+            // Demo fill
+            val time = ImGui.time
+            if (time - lastTime >= 0.3f) {
+                val s = randomWords[rand % randomWords.size]
+                val t = "%.1f".format(Style.locale, time)
+                log.addLog("[$s] Hello, time is $t, rand() $rand\n")
+                lastTime = time
+            }
+            log.draw("Example: Log (Filter not yet implemented)", pOpen)
         }
 
+        val log = ExampleAppLog()
+        var lastTime = -1f
+        val randomWords = arrayOf("system", "info", "warning", "error", "fatal", "notice", "log")
+        val random = Random()
+        val rand get() = glm.abs(random.nextInt() / 100_000)
+
         /** Demonstrate create a window with multiple child windows.    */
-        fun showExampleAppLayout(pOpen: BooleanArray) {
-            TODO()
-//            ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiSetCond_FirstUseEver);
-//            if (ImGui::Begin("Example: Layout", p_open, ImGuiWindowFlags_MenuBar))
-//            {
-//                if (ImGui::BeginMenuBar())
-//                {
-//                    if (ImGui::BeginMenu("File"))
-//                    {
-//                        if (ImGui::MenuItem("Close")) *p_open = false;
-//                        ImGui::EndMenu();
-//                    }
-//                    ImGui::EndMenuBar();
-//                }
-//
-//                // left
-//                static int selected = 0;
-//                ImGui::BeginChild("left pane", ImVec2(150, 0), true);
-//                for (int i = 0; i < 100; i++)
-//                {
-//                    char label[128];
-//                    sprintf(label, "MyObject %d", i);
-//                    if (ImGui::Selectable(label, selected == i))
-//                        selected = i;
-//                }
-//                ImGui::EndChild();
-//                ImGui::SameLine();
-//
-//                // right
-//                ImGui::BeginGroup();
-//                ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing())); // Leave room for 1 line below us
-//                ImGui::Text("MyObject: %d", selected);
-//                ImGui::Separator();
-//                ImGui::TextWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ");
-//                ImGui::EndChild();
-//                ImGui::BeginChild("buttons");
-//                if (ImGui::Button("Revert")) {}
-//                ImGui::SameLine();
-//                if (ImGui::Button("Save")) {}
-//                ImGui::EndChild();
-//                ImGui::EndGroup();
-//            }
-//            ImGui::End();
+        fun showExampleAppLayout(pOpen: BooleanArray) = with(ImGui) {
+
+            setNextWindowSize(Vec2(500, 440), SetCond.FirstUseEver)
+            if (begin("Example: Layout", pOpen, WindowFlags.MenuBar.i)) {
+                if (beginMenuBar()) {
+                    if (beginMenu("File")) {
+                        if (menuItem("Close")) pOpen[0] = false
+                        endMenu()
+                    }
+                    endMenuBar()
+                }
+
+                // left
+                beginChild("left pane", Vec2(150, 0), true)
+                repeat(100) {
+                    if (selectable("MyObject $it", selected == it))
+                        selected = it
+                }
+                endChild()
+                sameLine()
+
+                // right
+                beginGroup()
+                beginChild("item view", Vec2(0, -itemsLineHeightWithSpacing)) // Leave room for 1 line below us
+                text("MyObject: %d", selected)
+                separator()
+                textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +
+                        "incididunt ut labore et dolore magna aliqua. ")
+                endChild()
+                beginChild("buttons")
+                if (button("Revert")) {
+                }
+                sameLine()
+                if (button("Save")) {
+                }
+                endChild()
+                endGroup()
+            }
+            end()
         }
+
+        var selected = 0
 
         /** Demonstrate create a simple property editor.    */
         fun showExampleAppPropertyEditor(pOpen: BooleanArray) {
@@ -1207,61 +1209,52 @@ interface imgui_demoDebugInfo {
      *      my_log.AddLog("Hello %d world\n", 123);
      *      my_log.Draw("title");   */
     class ExampleAppLog {
-//        ImGuiTextBuffer     Buf;
-//        ImGuiTextFilter     Filter;
-//        ImVector<int>       LineOffsets;        // Index to lines offset
-//        bool                ScrollToBottom;
-//
-//        void    Clear()     { Buf.clear(); LineOffsets.clear(); }
-//
-//        void    AddLog(const char* fmt, ...) IM_PRINTFARGS(2)
-//        {
-//            int old_size = Buf.size();
-//            va_list args;
-//            va_start(args, fmt);
-//            Buf.appendv(fmt, args);
-//            va_end(args);
-//            for (int new_size = Buf.size(); old_size < new_size; old_size++)
-//            if (Buf[old_size] == '\n')
-//                LineOffsets.push_back(old_size);
-//            ScrollToBottom = true;
-//        }
-//
-//        void    Draw(const char* title, bool* p_open = NULL)
-//        {
-//            ImGui::SetNextWindowSize(ImVec2(500,400), ImGuiSetCond_FirstUseEver);
-//            ImGui::Begin(title, p_open);
-//            if (ImGui::Button("Clear")) Clear();
-//            ImGui::SameLine();
-//            bool copy = ImGui::Button("Copy");
-//            ImGui::SameLine();
-//            Filter.Draw("Filter", -100.0f);
-//            ImGui::Separator();
-//            ImGui::BeginChild("scrolling", ImVec2(0,0), false, ImGuiWindowFlags_HorizontalScrollbar);
-//            if (copy) ImGui::LogToClipboard();
-//
+
+        val buf = StringBuilder()
+        val filter = TextFilter()// TODO
+        //        ImVector<int>       LineOffsets;        // Index to lines offset
+        var scrollToBottom = false
+
+        fun addLog(fmt: String) {
+            buf.append(fmt)
+            scrollToBottom = true
+        }
+
+        fun clear() = buf.setLength(0)
+
+        fun draw(title: String, pOpen: BooleanArray? = null) = with(ImGui) {
+
+            setNextWindowSize(Vec2(500, 400), SetCond.FirstUseEver)
+            begin(title, pOpen)
+            if (button("Clear")) clear()
+            sameLine()
+            val copy = button("Copy")
+            sameLine()
+            filter.draw("Filter", -100f)
+            separator()
+            beginChild("scrolling", Vec2(0, 0), false, WindowFlags.HorizontalScrollbar.i)
+            if (copy) logToClipboard()
+
 //            if (Filter.IsActive())
 //            {
-//                const char* buf_begin = Buf.begin();
-//                const char* line = buf_begin;
+//                const char* buf_begin = Buf.begin()
+//                const char* line = buf_begin
 //                for (int line_no = 0; line != NULL; line_no++)
 //                {
-//                    const char* line_end = (line_no < LineOffsets.Size) ? buf_begin + LineOffsets[line_no] : NULL;
+//                    const char* line_end = (line_no < LineOffsets.Size) ? buf_begin + LineOffsets[line_no] : NULL
 //                    if (Filter.PassFilter(line, line_end))
-//                        ImGui::TextUnformatted(line, line_end);
-//                    line = line_end && line_end[1] ? line_end + 1 : NULL;
+//                        ImGui::TextUnformatted(line, line_end)
+//                    line = line_end && line_end[1] ? line_end + 1 : NULL
 //                }
 //            }
 //            else
-//            {
-//                ImGui::TextUnformatted(Buf.begin());
-//            }
-//
-//            if (ScrollToBottom)
-//                ImGui::SetScrollHere(1.0f);
-//            ScrollToBottom = false;
-//            ImGui::EndChild();
-//            ImGui::End();
-//        }
+            textUnformatted(buf.toString())
+
+            if (scrollToBottom)
+                setScrollHere(1f)
+            scrollToBottom = false
+            endChild()
+            end()
+        }
     }
 }

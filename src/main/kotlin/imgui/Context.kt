@@ -4,6 +4,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.internal.*
+import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -168,11 +169,14 @@ object Context {
     //------------------------------------------------------------------
 
     var logEnabled = false
-//    FILE*                   LogFile;                            // If != NULL log to stdout/ file
+    /** If != NULL log to stdout/ file  */
+    var logFile: File? = null
     /** Else log to clipboard. This is pointer so our GImGui static constructor doesn't call heap allocators.   */
     lateinit var logClipboard: StringBuilder
-//    int                     LogStartDepth;
-//    int                     LogAutoExpandMaxDepth;
+
+    var logStartDepth = 0
+
+    var logAutoExpandMaxDepth = 2
 
 
     //------------------------------------------------------------------
@@ -489,4 +493,7 @@ object Style {
 
 // for Style.colors
 operator fun Array<Vec4>.get(idx: Col) = this[idx.i]
-operator fun Array<Vec4>.set(idx: Col, vec: Vec4) { this[idx.i] put vec }
+
+operator fun Array<Vec4>.set(idx: Col, vec: Vec4) {
+    this[idx.i] put vec
+}

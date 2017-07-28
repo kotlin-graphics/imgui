@@ -10,6 +10,7 @@ import imgui.*
 import imgui.ImGui.alignFirstTextHeightToWidgets
 import imgui.ImGui.begin
 import imgui.ImGui.beginGroup
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
@@ -241,12 +242,9 @@ interface imgui_menus {
     }
 
     /** return true when activated + toggle (*p_selected) if p_selected != NULL */
-    fun menuItem(label: String, shortcut: String = "", pSelected: BooleanArray?, enabled: Boolean = true): Boolean {
-
-        if (menuItem(label, shortcut, pSelected?.get(0) ?: false, enabled)) {
-            pSelected?.let { it[0] = !it[0] }
-            return true
-        }
-        return false
-    }
+    fun menuItem(label: String, shortcut: String = "", pSelected: BooleanArray?, enabled: Boolean = true) =
+            if (menuItem(label, shortcut, pSelected?.get(0) ?: false, enabled)) {
+                pSelected?.let { it[0] = !it[0] }
+                true
+            } else false
 }

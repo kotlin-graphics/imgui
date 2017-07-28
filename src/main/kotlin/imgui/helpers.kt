@@ -1,10 +1,9 @@
 package imgui
 
-import glm_.bool
-import glm_.f
-import glm_.i
 import glm_.vec4.Vec4
-
+import imgui.ImGui.inputText
+import imgui.ImGui.popItemWidth
+import imgui.ImGui.pushItemWidth
 
 class OnceUponAFrame {
     init {
@@ -12,9 +11,28 @@ class OnceUponAFrame {
     }
 }
 
-class TextFilter {
+class TextFilter(defaultFilter: String? = "") {
+
+    val inputBuf = CharArray(256)
+    val countGrep = 0
+
     init {
-        TODO()
+        defaultFilter?.let {
+            defaultFilter.toCharArray(inputBuf)
+        }
+    }
+
+    class TextRange
+
+    fun draw(label: String = "Filter (inc,-exc)", width: Float): Boolean {
+        if (width != 0f)
+            pushItemWidth(width)
+        val valueChanged = inputText(label, inputBuf)
+        if (width != 0.0f)
+            popItemWidth()
+//        if (valueChanged)
+//            Build()
+        return valueChanged
     }
 }
 

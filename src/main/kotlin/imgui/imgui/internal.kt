@@ -8,9 +8,12 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemWidth
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.contentRegionMax
+import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.getColorU32
 import imgui.ImGui.inputText

@@ -39,6 +39,7 @@ object ImGui :
         imgui_popups,
         imgui_logging,
         imgui_clipping,
+        imgui_utilities,
 
         imgui_internal {
 

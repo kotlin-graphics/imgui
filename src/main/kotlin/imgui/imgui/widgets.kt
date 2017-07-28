@@ -6,12 +6,17 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.F32_TO_INT8_SAT
+import imgui.ImGui.F32_TO_INT8_UNBOUND
 import imgui.ImGui.beginGroup
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemWidth
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcWrapWidthForPos
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.colorConvertHSVtoRGB
+import imgui.ImGui.colorConvertRGBtoHSV
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dragInt
 import imgui.ImGui.endGroup
@@ -20,7 +25,9 @@ import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusWindow
 import imgui.ImGui.getColorU32
 import imgui.ImGui.inputText
+import imgui.ImGui.isClippedEx
 import imgui.ImGui.isHovered
+import imgui.ImGui.isItemHovered
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.openPopup
@@ -45,6 +52,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHere
 import imgui.ImGui.setTooltip
 import imgui.ImGui.spacing
+import imgui.ImGui.textLineHeight
 import imgui.internal.*
 import imgui.Context as g
 
@@ -56,8 +64,10 @@ interface imgui_widgets {
         if (window.skipItems) return
 
         val fmt =
-                if (args.isEmpty()) fmt
-                else fmt.format(Style.locale, *args)
+                if (args.isEmpty())
+                    fmt
+                else
+                    fmt.format(Style.locale, *args)
 
         val textEnd = fmt.length
         textUnformatted(fmt, textEnd)
@@ -70,7 +80,7 @@ interface imgui_widgets {
     /** shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this won't work on an
      *  auto-resizing window if there's no other widgets to extend the window width, yoy may need to set a size using
      *  SetNextWindowSize().    */
-    fun textWrapped(fmt:String, vararg args: Any) {
+    fun textWrapped(fmt: String, vararg args: Any) {
 
         val needWrap = g.currentWindow!!.dc.textWrapPos < 0f  // Keep existing wrap position is one ia already set
         if (needWrap) pushTextWrapPos(0f)
@@ -96,69 +106,60 @@ interface imgui_widgets {
                 when word-wrapping is disabled.
                 We also don't vertically center the text within the line full height, which is unlikely to matter
                 because we are likely the biggest and only item on the line.    */
-            TODO()
-//            const char * line = text
-//                    const float line_height = GetTextLineHeight()
-//            const ImVec2 text_pos = window->DC.CursorPos+ImVec2(0.0f, window->DC.CurrentLineTextBaseOffset)
-//            const ImRect clip_rect = window->ClipRect
-//            ImVec2 text_size (0, 0)
-//
-//            if (text_pos.y <= clip_rect.Max.y) {
-//                ImVec2 pos = text_pos
-//
-//                        // Lines to skip (can't skip when logging text)
-//                        if (!g.LogEnabled) {
-//                            int lines_skippable =(int)((clip_rect.Min.y - text_pos.y) / line_height)
-//                            if (lines_skippable > 0) {
-//                                int lines_skipped = 0
-//                                while (line < text_end && lines_skipped < lines_skippable) {
-//                                    const char * line_end = strchr (line, '\n')
-//                                    if (!line_end)
-//                                        line_end = text_end
-//                                    line = line_end + 1
-//                                    lines_skipped++
-//                                }
-//                                pos.y += lines_skipped * line_height
-//                            }
-//                        }
-//
-//                // Lines to render
-//                if (line < text_end) {
-//                    ImRect line_rect (pos, pos+ImVec2(FLT_MAX, line_height))
-//                    while (line < text_end) {
-//                        const char * line_end = strchr (line, '\n')
-//                        if (IsClippedEx(line_rect, NULL, false))
-//                            break
-//
-//                        const ImVec2 line_size = CalcTextSize(line, line_end, false)
-//                        text_size.x = ImMax(text_size.x, line_size.x)
-//                        RenderText(pos, line, line_end, false)
-//                        if (!line_end)
-//                            line_end = text_end
-//                        line = line_end + 1
-//                        line_rect.Min.y += line_height
-//                        line_rect.Max.y += line_height
-//                        pos.y += line_height
-//                    }
-//
-//                    // Count remaining lines
-//                    int lines_skipped = 0
-//                    while (line < text_end) {
-//                        const char * line_end = strchr (line, '\n')
-//                        if (!line_end)
-//                            line_end = text_end
-//                        line = line_end + 1
-//                        lines_skipped++
-//                    }
-//                    pos.y += lines_skipped * line_height
-//                }
-//
-//                text_size.y += (pos - text_pos).y
-//            }
-//
-//            ImRect bb (text_pos, text_pos+text_size)
-//            ItemSize(bb)
-//            ItemAdd(bb, NULL)
+
+            var line = 0
+            val lineHeight = textLineHeight
+            val textPos = window.dc.cursorPos + Vec2(0f, window.dc.currentLineTextBaseOffset)
+            val clipRect = Rect(window.clipRect)
+            val textSize = Vec2()
+
+            if (textPos.y <= clipRect.max.y) {
+
+                val pos = Vec2(textPos)
+                // Lines to skip (can't skip when logging text)
+                if (!g.logEnabled) {
+                    val linesSkippable = ((clipRect.min.y - textPos.y) / lineHeight).i
+                    if (linesSkippable > 0) {
+                        var linesSkipped = 0
+                        while (line < textEnd && linesSkipped < linesSkippable) {
+                            val lineEnd = text.strchr(line, '\n') ?: textEnd
+                            line = lineEnd + 1
+                            linesSkipped++
+                        }
+                        pos.y += linesSkipped * lineHeight
+                    }
+                }
+                // Lines to render
+                if (line < textEnd) {
+                    val lineRect = Rect(pos, pos + Vec2(Float.MAX_VALUE, lineHeight))
+                    while (line < textEnd) {
+                        var lineEnd = text.strchr(line, '\n') ?: 0
+                        if (isClippedEx(lineRect, null, false)) break
+
+                        val pLine = text.substring(line)
+                        val lineSize = calcTextSize(pLine, lineEnd - line, false)
+                        textSize.x = glm.max(textSize.x, lineSize.x)
+                        renderText(pos, pLine, lineEnd - line, false)
+                        if (lineEnd == 0) lineEnd = textEnd
+                        line = lineEnd + 1
+                        lineRect.min.y += lineHeight
+                        lineRect.max.y += lineHeight
+                        pos.y += lineHeight
+                    }
+                    // Count remaining lines
+                    var linesSkipped = 0
+                    while (line < textEnd) {
+                        val line_end = text.strchr(line, '\n') ?: textEnd
+                        line = line_end + 1
+                        linesSkipped++
+                    }
+                    pos.y += linesSkipped * lineHeight
+                }
+                textSize.y += (pos - textPos).y
+            }
+            val bb = Rect(textPos, textPos + textSize)
+            itemSize(bb)
+            itemAdd(bb)
         } else {
             val wrapWidth = if (wrapEnabled) calcWrapWidthForPos(window.dc.cursorPos, wrapPosX) else 0f
             val textSize = calcTextSize(text, textEnd, false, wrapWidth)

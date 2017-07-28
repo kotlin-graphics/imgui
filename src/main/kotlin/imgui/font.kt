@@ -686,8 +686,8 @@ class Font {
 
     /*  'maxWidth' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.
         'wrapWidth' enable automatic word-wrapping across multiple lines to fit into given width. 0.0f to disable. */
-    fun calcTextSizeA(size: Float, maxWidth: Float, wrapWidth: Float, text: String, textEnd: Int = text.length
-            /*, const char** remaining = NULL*/): Vec2 { // utf8
+    fun calcTextSizeA(size: Float, maxWidth: Float, wrapWidth: Float, text: String, textEnd: Int = text.length,
+                      remaining: IntArray? = null): Vec2 { // utf8
 
         val lineHeight = size
         val scale = size / fontSize
@@ -696,46 +696,57 @@ class Font {
         var lineWidth = 0f
 
         val wordWrapEnabled = wrapWidth > 0f
-//        const char * word_wrap_eol = NULL
+        var wordWrapEol = -1
 
         var s = 0
         while (s < textEnd) {
-//            if (wordWrapEnabled) {
-//                /*  Calculate how far we can render. Requires two passes on the string data but keeps the code simple
-//                    and not intrusive for what's essentially an uncommon feature.   */
-//                if (!wordW_wrap_eol) {
-//                    word_wrap_eol = CalcWordWrapPositionA(scale, s, text_end, wrap_width - lineWidth)
-//                    if (word_wrap_eol == s) // Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height discontinuity.
-//                        word_wrap_eol++    // +1 may not be a character start point in UTF-8 but it's ok because we use s >= word_wrap_eol below
-//                }
-//
-//                if (s >= word_wrap_eol) {
-//                    if (textSize.x < lineWidth)
-//                        textSize.x = lineWidth
-//                    textSize.y += lineHeight
-//                    lineWidth = 0.0f
-//                    word_wrap_eol = NULL
-//
-//                    // Wrapping skips upcoming blanks
-//                    while (s < text_end) {
-//                        const char c = * s
-//                        if (ImCharIsSpace(c)) {
-//                            s++; } else if (c == '\n') {
-//                            s++; break; } else {
-//                            break; }
-//                    }
-//                    continue
-//                }
-//            }
+
+            if (wordWrapEnabled) {
+
+                /*  Calculate how far we can render. Requires two passes on the string data but keeps the code simple
+                    and not intrusive for what's essentially an uncommon feature.   */
+                if (wordWrapEol == -1) {
+                    wordWrapEol = calcWordWrapPositionA(scale, text.toCharArray(), s, textEnd, wrapWidth - lineWidth)
+                    /*  Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height
+                        discontinuity.                     */
+                    if (wordWrapEol == s)
+                    // +1 may not be a character start point in UTF-8 but it's ok because we use s >= wordWrapEol below
+                        wordWrapEol++
+                }
+
+                if (s >= wordWrapEol) {
+                    if (textSize.x < lineWidth)
+                        textSize.x = lineWidth
+                    textSize.y += lineHeight
+                    lineWidth = 0f
+                    wordWrapEol = -1
+
+                    // Wrapping skips upcoming blanks
+                    while (s < textEnd) {
+                        val c = text[s]
+                        if (c.isSpace)
+                            s++
+                        else if (c == '\n') {
+                            s++
+                            break
+                        }
+                        else break
+                    }
+                    continue
+                }
+            }
 
             // Decode and advance source
             val prevS = s
+            if (s !in text.indices)
+                print("")
             val c = text[s]
             if (c < 0x80)
                 s += 1
             else {
-//                s += ImTextCharFromUtf8(& c, s, text_end) TODO
-                if (c.i == 0x0) break   // Malformed UTF-8?
+                TODO()
+//                s += ImTextCharFromUtf8(& c, s, text_end)
+//                if (c.i == 0x0) break   // Malformed UTF-8?
             }
 
             if (c < 32) {
@@ -762,8 +773,7 @@ class Font {
         if (lineWidth > 0 || textSize.y == 0.0f)
             textSize.y += lineHeight
 
-//        if (remaining) TODO
-//        *remaining = s
+        remaining?.set(0, s)
 
         return textSize
     }
@@ -799,7 +809,7 @@ class Font {
             val c = text[s]
             val nextS =
                     if (c < 0x80)
-                        (s + 1).c
+                        s + 1
                     else
                         TODO() // (s + ImTextCharFromUtf8(&c, s, text_end)).c
             if (c == '\u0000') break
@@ -845,7 +855,7 @@ class Font {
             if (lineWidth + wordWidth >= wrapWidth) {
                 // Words that cannot possibly fit within an entire line will be cut anywhere.
                 if (wordWidth < wrapWidth)
-                    s = if (prevWordEnd < 0) prevWordEnd else wordEnd
+                    s = if (prevWordEnd != -1) prevWordEnd else wordEnd
                 break
             }
             s = nextS.i

@@ -12,6 +12,7 @@ import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
 import uno.buffer.byteBufferBig
+import uno.buffer.destroy
 import uno.buffer.intBufferBig
 import uno.gl.checkError
 import uno.gl.glGetVec4i
@@ -83,10 +84,10 @@ object GlfwGL3 {
         return true
     }
 
-    val vtxSize = 50_000
-    val idxSize = 100_000
-    val vtxBuffer = byteBufferBig(vtxSize)
-    val idxBuffer = intBufferBig(idxSize / Int.BYTES)
+    var vtxSize = 1 shl 5 // 32768
+    var idxSize = 1 shl 6 // 65536
+    var vtxBuffer = byteBufferBig(vtxSize)
+    var idxBuffer = intBufferBig(idxSize / Int.BYTES)
 
 
     fun newFrame() {
@@ -168,6 +169,50 @@ object GlfwGL3 {
         glBindVertexArray(lastVertexArray)
 
         return true
+    }
+
+    private fun checkSize(draws: ArrayList<DrawList>) {
+
+        val minVtxSize = draws.map { it.vtxBuffer.size }.sum() * DrawVert.size
+        val minIdxSize = draws.map { it.idxBuffer.size }.sum() * Int.BYTES
+
+        var newVtxSize = vtxSize
+        while (newVtxSize < minVtxSize)
+            newVtxSize = newVtxSize shl 1
+        var newIdxSize = idxSize
+        while (newIdxSize < minIdxSize)
+            newIdxSize = newIdxSize shl 1
+
+        if (newVtxSize != vtxSize || newIdxSize != idxSize) {
+
+            vtxSize = newVtxSize
+            idxSize = newIdxSize
+
+            vtxBuffer.destroy()
+            vtxBuffer = byteBufferBig(vtxSize)
+            idxBuffer.destroy()
+            idxBuffer = intBufferBig(idxSize / Int.BYTES)
+
+            withVertexArray(vaoName) {
+
+                glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
+                glBufferData(GL_ARRAY_BUFFER, vtxSize, GL_STREAM_DRAW)
+                glEnableVertexAttribArray(semantic.attr.POSITION)
+                glEnableVertexAttribArray(semantic.attr.TEX_COORD)
+                glEnableVertexAttribArray(semantic.attr.COLOR)
+
+                glVertexAttribPointer(semantic.attr.POSITION, 2, GL_FLOAT, false, DrawVert.size, 0)
+                glVertexAttribPointer(semantic.attr.TEX_COORD, 2, GL_FLOAT, false, DrawVert.size, Vec2.size)
+                glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
+
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize, GL_STREAM_DRAW)
+            }
+
+            checkError("render")
+
+            println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
+        }
     }
 
     class ProgramA(shader: String) : Program("$shader.vert", "$shader.frag") {
@@ -258,6 +303,9 @@ object GlfwGL3 {
         val ortho = glm.ortho(mat, 0f, IO.displaySize.x.f, IO.displaySize.y.f, 0f)
         glUseProgram(program)
         glUniform(program.mat, ortho)
+
+        checkSize(drawData.cmdLists)
+
         glBindVertexArray(vaoName)
 
         for (cmdList in drawData.cmdLists) {
@@ -268,9 +316,10 @@ object GlfwGL3 {
                 v.uv.to(vtxBuffer, offset + Vec2.size)
                 vtxBuffer.putInt(offset + Vec2.size * 2, v.col)
             }
+            checkError("1")
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
             glBufferSubData(GL_ARRAY_BUFFER, 0, vtxBuffer)
-
+            checkError("2")
             cmdList.idxBuffer.forEachIndexed { i, idx -> idxBuffer[i] = idx }
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
             glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBuffer)
@@ -284,7 +333,9 @@ object GlfwGL3 {
                     glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
                     glScissor(cmd.clipRect.x.i, fbSize.y - cmd.clipRect.w.i,
                             (cmd.clipRect.z - cmd.clipRect.x).i, (cmd.clipRect.w - cmd.clipRect.y).i)
+                    checkError("3")
                     glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
+                    checkError("4")
                 }
                 idxBufferOffset += cmd.elemCount * Int.BYTES
             }

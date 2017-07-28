@@ -6,6 +6,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.IO
 import imgui.ImGui.calcItemWidth
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.dragBehavior
 import imgui.ImGui.focusWindow
 import imgui.ImGui.focusableItemRegister

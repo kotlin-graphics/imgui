@@ -6,6 +6,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.buttonBehavior
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.contentRegionMax
 import imgui.ImGui.currentWindow

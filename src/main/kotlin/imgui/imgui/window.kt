@@ -8,13 +8,16 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.buttonBehavior
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.closeButton
+import imgui.ImGui.colorConvertFloat4ToU32
 import imgui.ImGui.columns
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
+import imgui.ImGui.frameCount
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.itemAdd
