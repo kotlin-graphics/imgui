@@ -675,7 +675,7 @@ class Font {
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
 
-    fun getCharAdvance_(c: Char) =
+    fun getCharAdvance(c: Char) =
             if (c < indexXAdvance.size)
                 indexXAdvance[c.i]
             else
@@ -913,7 +913,7 @@ class Font {
                 if (s >= wordWrapEol) {
                     x = pos.x
                     y += lineHeight
-                    wordWrapEol = -1
+                    wordWrapEol = 0
 
                     // Wrapping skips upcoming blanks
                     while (s < textEnd) {
