@@ -4,7 +4,7 @@ JVM port of [imgui](https://github.com/ocornut/imgui)
 
 ![Imgur](http://i.imgur.com/0tsoWEP.png)
 
-Status:
+### Status:
 
 To check what has been already ported and working, simply run the [test](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test.kt).
 
