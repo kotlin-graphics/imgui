@@ -55,9 +55,9 @@ interface imgui_demoDebugInfo {
         }
         if (showApp.about[0]) {
             begin("About ImGui", showApp.about, WindowFlags.AlwaysAutoResize.i)
-            text("jvm imgui, %s", version)
+            text("JVM ImGui, %s", version)
             separator()
-            text("Original by Omar Cornut, port by Giuseppe Barbieri and all github contributors.")
+            text("Original by Omar Cornut, ported by Giuseppe Barbieri and all github contributors.")
             text("ImGui is licensed under the MIT License, see LICENSE for more information.")
             end()
         }
@@ -106,7 +106,7 @@ interface imgui_demoDebugInfo {
             if (beginMenu("Help")) {
                 menuItem("Metrics", pSelected = showApp.metrics)
 //                MenuItem("Style Editor", NULL, &show_app_style_editor)
-//                MenuItem("About ImGui", NULL, &show_app_about)
+                menuItem("About ImGui", "", showApp.about)
                 endMenu()
             }
             endMenuBar()
