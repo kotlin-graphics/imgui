@@ -5,19 +5,32 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.beginChildFrame
+import imgui.ImGui.beginGroup
 import imgui.ImGui.buttonBehavior
+import imgui.ImGui.calcItemSize
+import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.contentRegionMax
 import imgui.ImGui.currentWindow
+import imgui.ImGui.endChildFrame
+import imgui.ImGui.endGroup
 import imgui.ImGui.getColorU32
+import imgui.ImGui.getId
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.parentWindow
 import imgui.ImGui.popClipRect
+import imgui.ImGui.popId
 import imgui.ImGui.popStyleColor
+import imgui.ImGui.pushId
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderFrame
+import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.sameLine
+import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.windowContentRegionMax
 import imgui.internal.ButtonFlags
 import imgui.internal.Rect
@@ -104,9 +117,98 @@ interface imgui_widgetsSelectableLists {
         return pressed
     }
 //    IMGUI_API bool          Selectable(const char* label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = ImVec2(0,0));
-//    IMGUI_API bool          ListBox(const char* label, int* current_item, const char* const* items, int items_count, int height_in_items = -1);
-//    IMGUI_API bool          ListBox(const char* label, int* current_item, bool (*items_getter)(void* data, int idx, const char** out_text), void* data, int items_count, int height_in_items = -1);
-//    IMGUI_API bool          ListBoxHeader(const char* label, const ImVec2& size = ImVec2(0,0)); // use if you want to reimplement ListBox() will custom data or interactions. make sure to call ListBoxFooter() afterwards.
-//    IMGUI_API bool          ListBoxHeader(const char* label, int items_count, int height_in_items = -1); // "
-//    IMGUI_API void          ListBoxFooter();                                                    // terminate the scrolling region
+
+    fun listBox(label: String, currentItem: IntArray, items: Array<String>, heightInItems: Int = -1) =
+            listBox(label, currentItem, imgui_widgets.Items.arrayGetter, items, heightInItems)
+
+    fun listBox(label: String, currentItem: IntArray, itemsGetter: (Array<String>, Int, Array<String>) -> Boolean, data: Array<String>,
+                heightInItems: Int = -1): Boolean {
+
+        val itemsCount = data.size
+        if (!listBoxHeader(label, itemsCount, heightInItems)) return false
+
+        // Assume all items have even height (= 1 line of text). If you need items of different or variable sizes you can create a custom version of ListBox() in your code without using the clipper.
+        var valueChanged = false
+        val clipper = ListClipper(itemsCount, textLineHeightWithSpacing)
+        while (clipper.step())
+            for (i in clipper.display.start until clipper.display.last) {
+                val itemSelected = booleanArrayOf(i == currentItem[0])
+                val itemText = arrayOf("")
+                if (!itemsGetter(data, i, itemText))
+                    itemText[0] = "*Unknown item*"
+
+                pushId(i)
+                if (selectable(itemText[0], itemSelected[0])) {
+                    currentItem[0] = i
+                    valueChanged = true
+                }
+                popId()
+            }
+        listBoxFooter()
+        return valueChanged
+    }
+
+    /** Helper to calculate the size of a listbox and display a label on the right.
+     *  Tip: To have a list filling the entire window width, PushItemWidth(-1) and pass an empty label "##empty"
+     *  use if you want to reimplement ListBox() will custom data or interactions. make sure to call ListBoxFooter()
+     *  afterwards. */
+    fun listBoxHeader(label: String, sizeArg: Vec2 = Vec2()): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = getId(label)
+        val labelSize = calcTextSize(label, true)
+
+        // Size default to hold ~7 items. Fractional number of items helps seeing that we can scroll down/up without looking at scrollbar.
+        val size = calcItemSize(sizeArg, calcItemWidth(), textLineHeightWithSpacing * 7.4f + Style.itemSpacing.y)
+        val frameSize = Vec2(size.x, glm.max(size.y, labelSize.y))
+        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
+        val bb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) Style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
+        window.dc.lastItemRect = bb
+
+        beginGroup()
+        if (labelSize.x > 0)
+            renderText(Vec2(frameBb.max.x + Style.itemInnerSpacing.x, frameBb.min.y + Style.framePadding.y), label)
+
+        beginChildFrame(id, frameBb.size)
+        return true
+    }
+
+    /** use if you want to reimplement ListBox() will custom data or interactions. make sure to call ListBoxFooter()
+     *  afterwards. */
+    fun listBoxHeader(label: String, itemsCount: Int, heightInItems: Int = -1): Boolean {
+
+        /*  Size default to hold ~7 items. Fractional number of items helps seeing that we can scroll down/up without
+            looking at scrollbar.
+            However we don't add +0.40f if items_count <= height_in_items. It is slightly dodgy, because it means a
+            dynamic list of items will make the widget resize occasionally when it crosses that size.
+            I am expecting that someone will come and complain about this behavior in a remote future, then we can
+            advise on a better solution.    */
+        var heightInItems = heightInItems
+        if (heightInItems < 0)
+            heightInItems = glm.min(itemsCount, 7)
+        val heightInItemsF = heightInItems + if (heightInItems < itemsCount) 0.4f else 0f
+
+        /*  We include ItemSpacing.y so that a list sized for the exact number of items doesn't make a scrollbar
+            appears. We could also enforce that by passing a flag to BeginChild().         */
+        val size = Vec2(0f, textLineHeightWithSpacing * heightInItemsF + Style.itemSpacing.y)
+        return listBoxHeader(label, size)
+    }
+
+    /** terminate the scrolling region  */
+    fun listBoxFooter() {
+
+        val parentWindow = parentWindow
+        val bb = parentWindow.dc.lastItemRect // assign is safe, itemSize() won't modify bb
+
+        endChildFrame()
+
+        /*  Redeclare item size so that it includes the label (we have stored the full size in LastItemRect)
+            We call SameLine() to restore DC.CurrentLine* data         */
+        sameLine()
+        parentWindow.dc.cursorPos put bb.min
+        itemSize(bb, Style.framePadding.y)
+        endGroup()
+    }
 }

@@ -44,7 +44,11 @@ interface imgui_internal {
     val currentWindowRead get() = g.currentWindow
 
     val currentWindow get() = g.currentWindow!!.apply { accessed = true }
-//IMGUI_API ImGuiWindow*  GetParentWindow();
+
+    val parentWindow: Window get() {
+        assert(g.currentWindowStack.size >= 2)
+        return g.currentWindowStack[g.currentWindowStack.size - 2]
+    }
 
     fun findWindowByName(name: String): Window? {
         // FIXME-OPT: Store sorted hashes -> pointers so we can do a bissection in a contiguous block
@@ -432,7 +436,7 @@ interface imgui_internal {
         window.drawList.addTriangleFilled(a, b, c, ImGui.getColorU32(Col.Text))
     }
 
-    fun renderBullet(pos:Vec2) = currentWindow.drawList.addCircleFilled(pos, g.fontSize * 0.2f, getColorU32(Col.Text), 8)
+    fun renderBullet(pos: Vec2) = currentWindow.drawList.addCircleFilled(pos, g.fontSize * 0.2f, getColorU32(Col.Text), 8)
 
     fun renderCheckMark(pos: Vec2, col: Int) {
 
@@ -1556,7 +1560,7 @@ interface imgui_internal {
                 renderCollapseTriangle(bb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY), isOpen, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
-            renderText(textPos, label, label.length,false)
+            renderText(textPos, label, label.length, false)
         }
 
         if (isOpen && flags hasnt TreeNodeFlags.NoTreePushOnOpen)

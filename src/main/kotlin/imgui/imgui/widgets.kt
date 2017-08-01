@@ -204,7 +204,7 @@ interface imgui_widgets {
         // Empty text doesn't add padding
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(x, glm.max(lineHeight, labelSize.y)))
         itemSize(bb)
-        if (!itemAdd(bb))            return
+        if (!itemAdd(bb)) return
 
         // Render
         renderBullet(bb.min + Vec2(Style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
@@ -532,9 +532,12 @@ interface imgui_widgets {
 //    IMGUI_API void          PlotHistogram(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
 //    IMGUI_API void          ProgressBar(float fraction, const ImVec2& size_arg = ImVec2(-1,0), const char* overlay = NULL);
 
+    // TODO, lambdas are so short, consider removing it
     object Items {
 
         // FIXME-OPT: we could pre-compute the indices to fasten this. But only 1 active combo means the waste is limited.
         val singleStringGetter = { data: String, idx: Int -> data.split('\u0000').getOrNull(idx) }
+
+        val arrayGetter = { data: Array<String>, idx: Int, outText: Array<String> -> outText[0] = data[idx]; true }
     }
 }

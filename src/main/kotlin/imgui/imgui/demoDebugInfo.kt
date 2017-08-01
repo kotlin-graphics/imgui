@@ -112,6 +112,12 @@ interface imgui_demoDebugInfo {
             endMenuBar()
         }
 
+
+        val listboxItems = arrayOf( "Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple",
+                "Strawberry", "Watermelon" )
+        listBox("listbox\n(single select)", listboxItemCurrent, listboxItems, 4)
+
+
         end()
     }
 
@@ -948,6 +954,8 @@ interface imgui_demoDebugInfo {
 
 
         val showClipRects = booleanArrayOf(true)
+
+        val listboxItemCurrent = intArrayOf(1)
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.

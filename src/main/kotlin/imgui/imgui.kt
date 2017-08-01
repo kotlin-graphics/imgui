@@ -28,7 +28,7 @@ object ImGui :
         imgui_parametersStacks,
         imgui_cursorLayout,
         imgui_colums,
-        imgui_id,
+        imgui_idScopes,
         imgui_widgets,
         imgui_widgetsDrag,
         imgui_widgetsInputKeyboard,
