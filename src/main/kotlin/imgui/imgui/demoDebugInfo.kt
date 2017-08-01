@@ -1,23 +1,39 @@
 package imgui.imgui
 
+import glm_.BYTES
+import glm_.f
 import glm_.glm
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
+import imgui.ImGui.bulletText
 import imgui.ImGui.combo
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
 import imgui.ImGui.inputFloat
+import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
+import imgui.ImGui.sameLine
+import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.text
+import imgui.ImGui.textColored
+import imgui.ImGui.treeNode
+import imgui.ImGui.treePop
+import imgui.ImGui.windowDrawList
+import imgui.internal.Rect
+import imgui.internal.Window
 import java.util.*
+import imgui.Context as g
 
 interface imgui_demoDebugInfo {
 
-    /** Demonstrate most ImGui features (big function!) */
+    /** Create demo/test window.
+     *  Demonstrate most ImGui features (big function!)
+     *  Call this to learn about the library! try to make it always available in your application!   */
     fun showTestWindow(pOpen: BooleanArray) = with(ImGui) {
 
         if (showApp.mainMenuBar[0]) showExampleAppMainMenuBar()
@@ -39,9 +55,9 @@ interface imgui_demoDebugInfo {
         }
         if (showApp.about[0]) {
             begin("About ImGui", showApp.about, WindowFlags.AlwaysAutoResize.i)
-            text("dear imgui, %s", version)
+            text("jvm imgui, %s", version)
             separator()
-            text("By Omar Cornut and all github contributors.")
+            text("Original by Omar Cornut, port by Giuseppe Barbieri and all github contributors.")
             text("ImGui is licensed under the MIT License, see LICENSE for more information.")
             end()
         }
@@ -65,7 +81,7 @@ interface imgui_demoDebugInfo {
         //ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);    // 2/3 of the space for widget and 1/3 for labels
         pushItemWidth(-140f)                                 // Right align, keep 140 pixels for labels
 
-        text("Dear ImGui says hello.")
+        text("JVM ImGui says hello.")
 
         // Menu
         if (beginMenuBar()) {
@@ -87,143 +103,150 @@ interface imgui_demoDebugInfo {
 //                menuItem("Custom rendering", NULL, &show_app_custom_rendering)
                 endMenu()
             }
-//            if (BeginMenu("Help"))
-//            {
-//                MenuItem("Metrics", NULL, &show_app_metrics)
+            if (beginMenu("Help")) {
+                menuItem("Metrics", pSelected = showApp.metrics)
 //                MenuItem("Style Editor", NULL, &show_app_style_editor)
 //                MenuItem("About ImGui", NULL, &show_app_about)
-//                EndMenu()
-//            }
+                endMenu()
+            }
             endMenuBar()
         }
 
         end()
     }
 
-    fun showMetricsWindow(pOpen: BooleanArray) {
-        TODO()
-//        if (ImGui::Begin("ImGui Metrics", p_open))
-//        {
-//            ImGui::Text("ImGui %s", ImGui::GetVersion());
-//            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-//            ImGui::Text("%d vertices, %d indices (%d triangles)", ImGui::GetIO().MetricsRenderVertices, ImGui::GetIO().MetricsRenderIndices, ImGui::GetIO().MetricsRenderIndices / 3);
-//            ImGui::Text("%d allocations", ImGui::GetIO().MetricsAllocs);
-//            static bool show_clip_rects = true;
-//            ImGui::Checkbox("Show clipping rectangles when hovering a ImDrawCmd", &show_clip_rects);
-//            ImGui::Separator();
-//
-//            struct Funcs
-//                    {
-//                        static void NodeDrawList(ImDrawList* draw_list, const char* label)
-//                        {
-//                            bool node_open = ImGui::TreeNode(draw_list, "%s: '%s' %d vtx, %d indices, %d cmds", label, draw_list->_OwnerName ? draw_list->_OwnerName : "", draw_list->VtxBuffer.Size, draw_list->IdxBuffer.Size, draw_list->CmdBuffer.Size);
-//                            if (draw_list == ImGui::GetWindowDrawList())
-//                            {
-//                                ImGui::SameLine();
-//                                ImGui::TextColored(ImColor(255,100,100), "CURRENTLY APPENDING"); // Can't display stats for active draw list! (we don't have the data double-buffered)
-//                                if (node_open) ImGui::TreePop();
-//                                return;
-//                            }
-//                            if (!node_open)
-//                                return;
-//
-//                            ImDrawList* overlay_draw_list = &GImGui->OverlayDrawList;   // Render additional visuals into the top-most draw list
-//                            overlay_draw_list->PushClipRectFullScreen();
-//                            int elem_offset = 0;
-//                            for (const ImDrawCmd* pcmd = draw_list->CmdBuffer.begin(); pcmd < draw_list->CmdBuffer.end(); elem_offset += pcmd->ElemCount, pcmd++)
-//                            {
-//                                if (pcmd->UserCallback)
-//                                {
-//                                    ImGui::BulletText("Callback %p, user_data %p", pcmd->UserCallback, pcmd->UserCallbackData);
-//                                    continue;
-//                                }
-//                                ImDrawIdx* idx_buffer = (draw_list->IdxBuffer.Size > 0) ? draw_list->IdxBuffer.Data : NULL;
-//                                bool pcmd_node_open = ImGui::TreeNode((void*)(pcmd - draw_list->CmdBuffer.begin()), "Draw %-4d %s vtx, tex = %p, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)", pcmd->ElemCount, draw_list->IdxBuffer.Size > 0 ? "indexed" : "non-indexed", pcmd->TextureId, pcmd->ClipRect.x, pcmd->ClipRect.y, pcmd->ClipRect.z, pcmd->ClipRect.w);
-//                                if (show_clip_rects && ImGui::IsItemHovered())
-//                                {
-//                                    ImRect clip_rect = pcmd->ClipRect;
-//                                    ImRect vtxs_rect;
-//                                    for (int i = elem_offset; i < elem_offset + (int)pcmd->ElemCount; i++)
-//                                    vtxs_rect.Add(draw_list->VtxBuffer[idx_buffer ? idx_buffer[i] : i].pos);
-//                                    clip_rect.Floor(); overlay_draw_list->AddRect(clip_rect.Min, clip_rect.Max, IM_COL32(255,255,0,255));
-//                                    vtxs_rect.Floor(); overlay_draw_list->AddRect(vtxs_rect.Min, vtxs_rect.Max, IM_COL32(255,0,255,255));
-//                                }
-//                                if (!pcmd_node_open)
-//                                    continue;
-//                                ImGuiListClipper clipper(pcmd->ElemCount/3); // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
-//                                while (clipper.Step())
-//                                    for (int prim = clipper.DisplayStart, vtx_i = elem_offset + clipper.DisplayStart*3; prim < clipper.DisplayEnd; prim++)
-//                                {
-//                                    char buf[300], *buf_p = buf;
-//                                    ImVec2 triangles_pos[3];
-//                                    for (int n = 0; n < 3; n++, vtx_i++)
-//                                    {
-//                                        ImDrawVert& v = draw_list->VtxBuffer[idx_buffer ? idx_buffer[vtx_i] : vtx_i];
-//                                        triangles_pos[n] = v.pos;
-//                                        buf_p += sprintf(buf_p, "%s %04d { pos = (%8.2f,%8.2f), uv = (%.6f,%.6f), col = %08X }\n", (n == 0) ? "vtx" : "   ", vtx_i, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col);
-//                                    }
-//                                    ImGui::Selectable(buf, false);
-//                                    if (ImGui::IsItemHovered())
-//                                        overlay_draw_list->AddPolyline(triangles_pos, 3, IM_COL32(255,255,0,255), true, 1.0f, false);  // Add triangle without AA, more readable for large-thin triangle
-//                                }
-//                                ImGui::TreePop();
-//                            }
-//                            overlay_draw_list->PopClipRect();
-//                            ImGui::TreePop();
-//                        }
-//
-//                        static void NodeWindows(ImVector<ImGuiWindow*>& windows, const char* label)
-//                        {
-//                            if (!ImGui::TreeNode(label, "%s (%d)", label, windows.Size))
-//                                return;
-//                            for (int i = 0; i < windows.Size; i++)
-//                            Funcs::NodeWindow(windows[i], "Window");
-//                            ImGui::TreePop();
-//                        }
-//
-//                        static void NodeWindow(ImGuiWindow* window, const char* label)
-//                        {
-//                            if (!ImGui::TreeNode(window, "%s '%s', %d @ 0x%p", label, window->Name, window->Active || window->WasActive, window))
-//                            return;
-//                            NodeDrawList(window->DrawList, "DrawList");
-//                            ImGui::BulletText("Pos: (%.1f,%.1f)", window->Pos.x, window->Pos.y);
-//                            ImGui::BulletText("Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window->Size.x, window->Size.y, window->SizeContents.x, window->SizeContents.y);
-//                            ImGui::BulletText("Scroll: (%.2f,%.2f)", window->Scroll.x, window->Scroll.y);
-//                            if (window->RootWindow != window) NodeWindow(window->RootWindow, "RootWindow");
-//                            if (window->DC.ChildWindows.Size > 0) NodeWindows(window->DC.ChildWindows, "ChildWindows");
-//                            ImGui::BulletText("Storage: %d bytes", window->StateStorage.Data.Size * (int)sizeof(ImGuiStorage::Pair));
-//                            ImGui::TreePop();
-//                        }
-//                    };
-//
-//            ImGuiContext& g = *GImGui;                // Access private state
-//            Funcs::NodeWindows(g.Windows, "Windows");
-//            if (ImGui::TreeNode("DrawList", "Active DrawLists (%d)", g.RenderDrawLists[0].Size))
-//            {
-//                for (int i = 0; i < g.RenderDrawLists[0].Size; i++)
-//                Funcs::NodeDrawList(g.RenderDrawLists[0][i], "DrawList");
-//                ImGui::TreePop();
-//            }
-//            if (ImGui::TreeNode("Popups", "Open Popups Stack (%d)", g.OpenPopupStack.Size))
-//            {
-//                for (int i = 0; i < g.OpenPopupStack.Size; i++)
-//                {
-//                    ImGuiWindow* window = g.OpenPopupStack[i].Window;
-//                    ImGui::BulletText("PopupID: %08x, Window: '%s'%s%s", g.OpenPopupStack[i].PopupId, window ? window->Name : "NULL", window && (window->Flags & ImGuiWindowFlags_ChildWindow) ? " ChildWindow" : "", window && (window->Flags & ImGuiWindowFlags_ChildMenu) ? " ChildMenu" : "");
-//                }
-//                ImGui::TreePop();
-//            }
-//            if (ImGui::TreeNode("Basic state"))
-//            {
-//                ImGui::Text("FocusedWindow: '%s'", g.FocusedWindow ? g.FocusedWindow->Name : "NULL");
-//                ImGui::Text("HoveredWindow: '%s'", g.HoveredWindow ? g.HoveredWindow->Name : "NULL");
-//                ImGui::Text("HoveredRootWindow: '%s'", g.HoveredRootWindow ? g.HoveredRootWindow->Name : "NULL");
-//                ImGui::Text("HoveredID: 0x%08X/0x%08X", g.HoveredId, g.HoveredIdPreviousFrame); // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
-//                ImGui::Text("ActiveID: 0x%08X/0x%08X", g.ActiveId, g.ActiveIdPreviousFrame);
-//                ImGui::TreePop();
-//            }
-//        }
-//        ImGui::End();
+    /** create metrics window. display ImGui internals: browse window list, draw commands, individual vertices, basic
+     *  internal state, etc.    */
+    fun showMetricsWindow(pOpen: BooleanArray) = with(ImGui) {
+
+        if (begin("ImGui Metrics", pOpen)) {
+            text("ImGui $version")
+            text("Application average %.3f ms/frame (%.1f FPS)", 1000f / IO.framerate, IO.framerate)
+            text("%d vertices, %d indices (%d triangles)", IO.metricsRenderVertices, IO.metricsRenderIndices, IO.metricsRenderIndices / 3)
+            text("%d allocations", IO.metricsAllocs)
+            checkbox("Show clipping rectangles when hovering a ImDrawCmd", showClipRects)
+            separator()
+
+            Funcs.nodeWindows(g.windows, "Windows")
+            if (treeNode("DrawList", "Active DrawLists (${g.renderDrawLists[0].size})")) {
+                for (i in g.renderDrawLists[0])
+                    Funcs.nodeDrawList(i, "DrawList")
+                treePop()
+            }
+            if (treeNode("Popups", "Open Popups Stack (${g.openPopupStack.size})")) {
+                for (popup in g.openPopupStack)                {
+                    val window = popup.window
+                    val childWindow = if(window != null && window.flags has WindowFlags.ChildWindow) " ChildWindow" else ""
+                    val childMenu = if(window !=null && window.flags has WindowFlags.ChildMenu) " ChildMenu" else ""
+                    bulletText("PopupID: %08x, Window: '${window?.name}'$childWindow$childMenu", popup.popupId)
+                }
+                treePop()
+            }
+            if (treeNode("Basic state")) {
+                text("FocusedWindow: '${g.focusedWindow?.name}'")
+                text("HoveredWindow: '${g.hoveredWindow?.name}'")
+                text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
+                /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
+                    information or not                 */
+                text("HoveredID: 0x%08X/0x%08X", g.hoveredId, g.hoveredIdPreviousFrame)
+                text("ActiveID: 0x%08X/0x%08X", g.activeId, g.activeIdPreviousFrame)
+                treePop()
+            }
+        }
+        end()
+    }
+
+    object Funcs {
+
+        fun nodeDrawList(drawList: DrawList, label: String) {
+
+            val nodeOpen = treeNode(drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.size} vtx, " +
+                    "${drawList.idxBuffer.size} indices, ${drawList.cmdBuffer.size} cmds")
+            if (drawList === windowDrawList) {
+                sameLine()
+                // Can't display stats for active draw list! (we don't have the data double-buffered)
+                textColored(Vec4.fromColor(255, 100, 100), "CURRENTLY APPENDING")
+                if (nodeOpen) treePop()
+                return
+            }
+            if (!nodeOpen)
+                return
+
+            val overlayDrawList = g.overlayDrawList   // Render additional visuals into the top-most draw list
+            overlayDrawList.pushClipRectFullScreen()
+            var elemOffset = 0
+            for (i in drawList.cmdBuffer.indices) {
+                val cmd = drawList.cmdBuffer[i]
+                if (cmd.userCallback != null) {
+                    TODO()
+//                        ImGui::BulletText("Callback %p, user_data %p", pcmd->UserCallback, pcmd->UserCallbackData)
+//                        continue
+                }
+                val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
+                val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
+                val cmdNodeOpen = treeNode(i, "Draw %-4d $mode vtx, tex = ${cmd.textureId}, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)",
+                        cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                if (showClipRects[0] && isItemHovered()) {
+                    val clipRect = Rect(cmd.clipRect)
+                    val vtxsRect = Rect()
+                    for (e in elemOffset until elemOffset + cmd.elemCount)
+                        vtxsRect.add(drawList.vtxBuffer[idxBuffer?.get(e) ?: e].pos)
+                    clipRect.floor(); overlayDrawList.addRect(clipRect.min, clipRect.max, COL32(255, 255, 0, 255))
+                    vtxsRect.floor(); overlayDrawList.addRect(vtxsRect.min, vtxsRect.max, COL32(255, 0, 255, 255))
+                }
+                if (!cmdNodeOpen) continue
+                // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
+                val clipper = ListClipper(cmd.elemCount / 3)
+                while (clipper.step()) {
+                    var vtxI = elemOffset + clipper.display.start * 3
+                    for (prim in clipper.display.start until clipper.display.last) {
+                        val buf = CharArray(300)
+                        var bufP = 0
+                        val trianglesPos = arrayListOf(Vec2(), Vec2(), Vec2())
+                        for (n in 0 until 3) {
+                            val v = drawList.vtxBuffer[idxBuffer?.get(vtxI) ?: vtxI]
+                            trianglesPos[n] = v.pos
+                            val name = if (n == 0) "vtx" else "   "
+                            val string = "$name %04d { pos = (%8.2f,%8.2f), uv = (%.6f,%.6f), col = %08X }\n".format(Style.locale,
+                                    vtxI, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
+                            string.toCharArray(buf, bufP)
+                            bufP += string.length
+                            vtxI++
+                        }
+                        selectable(buf.joinToString("", limit = bufP, truncated = ""), false)
+                        if (isItemHovered())
+                        // Add triangle without AA, more readable for large-thin triangle
+                            overlayDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f, false)
+                    }
+                }
+                treePop()
+                elemOffset += cmd.elemCount
+            }
+            overlayDrawList.popClipRect()
+            treePop()
+        }
+
+        fun nodeWindows(windows: ArrayList<Window>, label: String) {
+            if (!treeNode(label, "%s (%d)", label, windows.size))
+                return
+            for (i in 0 until windows.size)
+                nodeWindow(windows[i], "Window")
+            treePop()
+        }
+
+        fun nodeWindow(window: Window, label: String) {
+            val active = if(window.active or window.wasActive) "active" else "inactive"
+            if (!treeNode(window, "$label '${window.name}', $active @ 0x%X", System.identityHashCode(window)))
+                return
+            nodeDrawList(window.drawList, "DrawList")
+            bulletText("Pos: (%.1f,%.1f)", window.pos.x.f, window.pos.y.f)
+            bulletText("Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.size.x, window.size.y, window.sizeContents.x, window.sizeContents.y)
+            bulletText("Scroll: (%.2f,%.2f)", window.scroll.x, window.scroll.y)
+            if (window.rootWindow !== window) nodeWindow(window.rootWindow, "RootWindow")
+            if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
+            bulletText("Storage: %d bytes", window.stateStorage.data.size * Int.BYTES * 2)
+            treePop()
+        }
     }
 
     fun showStyleEditor() {
@@ -922,6 +945,9 @@ interface imgui_demoDebugInfo {
         var noScrollbar = false
         var noCollapse = false
         var noMenu = false
+
+
+        val showClipRects = booleanArrayOf(true)
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
@@ -1235,7 +1261,7 @@ interface imgui_demoDebugInfo {
             beginChild("scrolling", Vec2(0, 0), false, WindowFlags.HorizontalScrollbar.i)
             if (copy) logToClipboard()
 
-//            if (Filter.IsActive())
+//      TODO      if (Filter.IsActive())
 //            {
 //                const char* buf_begin = Buf.begin()
 //                const char* line = buf_begin

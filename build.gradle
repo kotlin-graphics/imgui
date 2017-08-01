@@ -27,7 +27,7 @@ dependencies {
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-    compile 'com.github.kotlin-graphics:uno-sdk:290456db201dad2bcb9d98c032e5b0d6023097c2'
+    compile 'com.github.kotlin-graphics:uno-sdk:d6e435f5ebf4eb6d47fd8f910865e3e50d5a7952'
 
     testCompile 'com.github.elect86:kotlintest:43281b7e1b'
 
@@ -59,6 +59,8 @@ dependencies {
     runtime "org.lwjgl:lwjgl-openal:${lwjglVersion}:${lwjglNatives}"
     runtime "org.lwjgl:lwjgl-opengl:${lwjglVersion}:${lwjglNatives}"
     runtime "org.lwjgl:lwjgl-stb:${lwjglVersion}:${lwjglNatives}"
+
+    compile files("${System.properties['java.home']}/../lib/tools.jar")
 }
 
 repositories {

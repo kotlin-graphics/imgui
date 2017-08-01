@@ -16,6 +16,7 @@ import imgui.ImGui.contentRegionMax
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.getColorU32
+import imgui.ImGui.indent
 import imgui.ImGui.inputText
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
@@ -25,6 +26,7 @@ import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
+import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.textLineHeight
 import imgui.TextEditState.K
 import imgui.internal.*
@@ -430,7 +432,7 @@ interface imgui_internal {
         window.drawList.addTriangleFilled(a, b, c, ImGui.getColorU32(Col.Text))
     }
 
-//IMGUI_API void          RenderBullet(ImVec2 pos);
+    fun renderBullet(pos:Vec2) = currentWindow.drawList.addCircleFilled(pos, g.fontSize * 0.2f, getColorU32(Col.Text), 8)
 
     fun renderCheckMark(pos: Vec2, col: Int) {
 
@@ -1467,11 +1469,145 @@ interface imgui_internal {
             return dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data)
         return false
     }
-//
-//IMGUI_API bool          TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* label, const char* label_end = NULL);
-//IMGUI_API bool          TreeNodeBehaviorIsOpen(ImGuiID id, ImGuiTreeNodeFlags flags = 0);                     // Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging
-//IMGUI_API void          TreePushRawID(ImGuiID id);
-//
+
+    fun treeNodeBehavior(id: Int, flags: Int, label: String): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val displayFrame = flags has TreeNodeFlags.Framed
+        val padding = if (displayFrame) Vec2(Style.framePadding) else Vec2(Style.framePadding.x, 0f)
+
+        val labelSize = calcTextSize(label, false)
+
+        // We vertically grow up to current line height up the typical widget height.
+        val textBaseOffsetY = glm.max(0f, window.dc.currentLineTextBaseOffset - padding.y) // Latch before ItemSize changes it
+        val frameHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + Style.framePadding.y * 2), labelSize.y + padding.y * 2)
+        val bb = Rect(window.dc.cursorPos, Vec2(window.pos.x + contentRegionMax.x, window.dc.cursorPos.y + frameHeight))
+        if (displayFrame) {
+            // Framed header expand a little outside the default padding
+            bb.min.x -= (window.windowPadding.x * 0.5f).i.f - 1
+            bb.max.x += (window.windowPadding.x * 0.5f).i.f - 1
+        }
+
+        val textOffsetX = g.fontSize + padding.x * if (displayFrame) 3 else 2   // Collapser arrow width + Spacing
+        val textWidth = g.fontSize + if (labelSize.x > 0f) labelSize.x + padding.x * 2 else 0f   // Include collapser
+        itemSize(Vec2(textWidth, frameHeight), textBaseOffsetY)
+
+        /*  For regular tree nodes, we arbitrary allow to click past 2 worth of ItemSpacing
+            (Ideally we'd want to add a flag for the user to specify we want want the hit test to be done up to the
+            right side of the content or not)         */
+        val interactBb = if (displayFrame) Rect(bb) else Rect(bb.min.x, bb.min.y, bb.min.x + textWidth + Style.itemSpacing.x * 2, bb.max.y)
+        var isOpen = treeNodeBehaviorIsOpen(id, flags)
+        if (!itemAdd(interactBb, id)) {
+            if (isOpen && flags hasnt TreeNodeFlags.NoTreePushOnOpen)
+                treePushRawId(id)
+            return isOpen
+        }
+
+        /*  Flags that affects opening behavior:
+                - 0(default) ..................... single-click anywhere to open
+                - OpenOnDoubleClick .............. double-click anywhere to open
+                - OpenOnArrow .................... single-click on arrow to open
+                - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
+        var buttonFlags = ButtonFlags.NoKeyModifiers or
+                if (flags has TreeNodeFlags.AllowOverlapMode) ButtonFlags.AllowOverlapMode else ButtonFlags.Repeat
+        if (flags has TreeNodeFlags.OpenOnDoubleClick)
+            buttonFlags = buttonFlags or ButtonFlags.PressedOnDoubleClick or (
+                    if (flags has TreeNodeFlags.OpenOnArrow) ButtonFlags.PressedOnClickRelease else ButtonFlags.Repeat)
+        val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
+        if (pressed && flags hasnt TreeNodeFlags.Leaf) {
+            var toggled = flags hasnt (TreeNodeFlags.OpenOnArrow or TreeNodeFlags.OpenOnDoubleClick)
+            if (flags has TreeNodeFlags.OpenOnArrow)
+                toggled = toggled or isMouseHoveringRect(interactBb.min, Vec2(interactBb.min.x + textOffsetX, interactBb.max.y))
+            if (flags has TreeNodeFlags.OpenOnDoubleClick)
+                toggled = toggled or IO.mouseDoubleClicked[0]
+            if (toggled) {
+                isOpen = !isOpen
+                window.dc.stateStorage[id] = isOpen
+            }
+        }
+        if (flags has TreeNodeFlags.AllowOverlapMode)
+            setItemAllowOverlap()
+
+        // Render
+        val col = getColorU32(if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header)
+        val textPos = bb.min + Vec2(textOffsetX, padding.y + textBaseOffsetY)
+        if (displayFrame) {
+            // Framed type
+            renderFrame(bb.min, bb.max, col, true, Style.frameRounding)
+            renderCollapseTriangle(bb.min + padding + Vec2(0f, textBaseOffsetY), isOpen, 1f)
+            if (g.logEnabled) {
+                /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
+                    range to make sure the ## aren't stripped out here.                 */
+                logRenderedText(textPos, "\n##", 3)
+                renderTextClipped(textPos, bb.max, label, label.length, labelSize)
+                logRenderedText(textPos, "#", 3)
+            } else
+                renderTextClipped(textPos, bb.max, label, label.length, labelSize)
+        } else {
+            // Unframed typed for tree nodes
+            if (hovered || flags has TreeNodeFlags.Selected)
+                renderFrame(bb.min, bb.max, col, false)
+
+            if (flags has TreeNodeFlags.Bullet)
+                TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
+            else if (flags hasnt TreeNodeFlags.Leaf)
+                renderCollapseTriangle(bb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY), isOpen, 0.7f)
+            if (g.logEnabled)
+                logRenderedText(textPos, ">")
+            renderText(textPos, label, label.length,false)
+        }
+
+        if (isOpen && flags hasnt TreeNodeFlags.NoTreePushOnOpen)
+            treePushRawId(id)
+        return isOpen
+    }
+
+    /** Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging */
+    fun treeNodeBehaviorIsOpen(id: Int, flags: Int = 0): Boolean {
+
+        if (flags has TreeNodeFlags.Leaf) return true
+
+        // We only write to the tree storage if the user clicks (or explicitely use SetNextTreeNode*** functions)
+        val window = g.currentWindow!!
+        val storage = window.dc.stateStorage
+
+        var isOpen = false
+        if (g.setNextTreeNodeOpenCond != 0) {
+            if (g.setNextTreeNodeOpenCond has SetCond.Always) {
+                isOpen = g.setNextTreeNodeOpenVal
+                storage[id] = isOpen
+            } else {
+                /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
+                    are not saved persistently.                 */
+                val storedValue = storage.int(id, -1)
+                if (storedValue == -1) {
+                    isOpen = g.setNextTreeNodeOpenVal
+                    storage[id] = isOpen
+                } else
+                    isOpen = storedValue != 0
+            }
+            g.setNextTreeNodeOpenCond = 0
+        } else
+            isOpen = storage.int(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0
+
+        /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
+            sensible behavior).
+            NB- If we are above max depth we still allow manually opened nodes to be logged.    */
+        if (g.logEnabled && flags hasnt TreeNodeFlags.NoAutoOpenOnLog && window.dc.treeDepth < g.logAutoExpandMaxDepth)
+            isOpen = true
+
+        return isOpen
+    }
+
+    fun treePushRawId(id: Int) {
+        val window = currentWindow
+        indent()
+        window.dc.treeDepth++
+        window.idStack.push(id)
+    }
+
 //IMGUI_API void          PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2 graph_size);
 //
 

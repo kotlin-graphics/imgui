@@ -33,6 +33,7 @@ object ImGui :
         imgui_widgetsDrag,
         imgui_widgetsInputKeyboard,
         imgui_widgetsSliders,
+        imgui_widgetsTrees,
         imgui_widgetsSelectableLists,
         imgui_tooltips,
         imgui_menus,
@@ -41,7 +42,9 @@ object ImGui :
         imgui_clipping,
         imgui_utilities,
 
-        imgui_internal {
+        imgui_internal,
+
+        imgui_functionalProgramming {
 
     val version = "1.51 WIP"
 }

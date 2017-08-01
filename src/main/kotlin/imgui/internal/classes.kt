@@ -290,7 +290,7 @@ class DrawContext {
 
     val childWindows = ArrayList<Window>()
 
-    var stateStorage = mutableMapOf<Int, Float>()
+    var stateStorage = Storage()
 
     var layoutType = LayoutType.Vertical
 
@@ -449,7 +449,7 @@ class Window(
     /** Simplified columns storage for menu items   */
     val menuColumns = SimpleColumns()
 
-    var stateStorage = mutableMapOf<Int, Float>()
+    var stateStorage = Storage()
     /** Scale multiplier per-window */
     var fontWindowScale = 1f
 
@@ -486,7 +486,13 @@ class Window(
         return id
     }
 
-    //    ImGuiID     GetID(const void* ptr);
+    fun getId(ptr: Any): Int {
+        val seed = idStack .last()
+        val id = System.identityHashCode(ptr)// TODO check hash(&ptr, sizeof(void*), seed)
+        keepAliveId(id)
+        return id
+    }
+
     fun getIdNoKeepAlive(str: String, strEnd: Int = str.length): Int {
         val seed = idStack.last()
         return hash(str, str.length - strEnd, seed)

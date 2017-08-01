@@ -154,6 +154,10 @@ enum class TreeNodeFlags(val i: Int) {
     infix fun or(treeNodeFlag: TreeNodeFlags) = i or treeNodeFlag.i
 }
 
+infix fun Int.or(b: TreeNodeFlags) = this or b.i
+infix fun Int.has(b: TreeNodeFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: TreeNodeFlags) = (this and b.i) == 0
+
 /** Flags for ImGui::Selectable()   */
 enum class SelectableFlags(val i: Int) {
 

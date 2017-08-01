@@ -86,8 +86,18 @@ interface imgui_cursorLayout {
         itemSize(Vec2())
     }
 //    IMGUI_API void          Dummy(const ImVec2& size);                                          // add a dummy item of given size
-//    IMGUI_API void          Indent(float indent_w = 0.0f);                                      // move content position toward the right, by style.IndentSpacing or indent_w if >0
-//    IMGUI_API void          Unindent(float indent_w = 0.0f);                                    // move content position back to the left, by style.IndentSpacing or indent_w if >0
+
+    /** move content position toward the right, by style.IndentSpacing or indent_w if >0    */
+    fun indent(indentW: Float = 0f) = with(currentWindow) {
+        dc.indentX += if (indentW > 0f) indentW else Style.indentSpacing
+        dc.cursorPos.x = pos.x + dc.indentX + dc.columnsOffsetX
+    }
+
+    /** move content position back to the left, by style.IndentSpacing or indent_w if >0    */
+    fun unindent(indentW: Float = 0f) = with(currentWindow) {
+        dc.indentX -= if (indentW > 0f) indentW else Style.indentSpacing
+        dc.cursorPos.x = pos.x + dc.indentX + dc.columnsOffsetX
+    }
 
 
     /** Lock horizontal starting position + capture group bounding box into one "item" (so you can use IsItemHovered()

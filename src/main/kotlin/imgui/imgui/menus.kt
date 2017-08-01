@@ -113,7 +113,7 @@ interface imgui_menus {
         val id = window.getId(label)
 
         val labelSize = calcTextSize(label, true)
-        val backedFocusedWindow = g.focusedWindow!!
+        val backedFocusedWindow = g.focusedWindow
 
         var pressed = false
         var menuIsOpen = isPopupOpen(id)

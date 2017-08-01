@@ -114,7 +114,27 @@ interface imgui_utilities {
         return textSize
     }
 
-//IMGUI_API void          CalcListClipping(int items_count, float items_height, int* out_items_display_start, int* out_items_display_end);    // calculate coarse clipping for large list of evenly sized items. Prefer using the ImGuiListClipper higher-level helper if you can.
+    /** calculate coarse clipping for large list of evenly sized items. Prefer using the ImGuiListClipper higher-level
+     *  helper if you can.
+     *  Helper to calculate coarse clipping of large list of evenly sized items.
+     *  NB: Prefer using the ImGuiListClipper higher-level helper if you can! Read comments and instructions there on
+     *  how those use this sort of pattern.
+     *  NB: 'items_count' is only used to clamp the result, if you don't know your count you can use INT_MAX    */
+    fun calcListClipping(itemsCount: Int, itemsHeight: Float): IntRange {
+        val window = currentWindowRead!!
+        return when {
+            g.logEnabled -> 0..itemsCount // If logging is active, do not perform any clipping
+            window.skipItems -> 0..0
+            else -> {
+                val pos = window.dc.cursorPos
+                var start = ((window.clipRect.min.y - pos.y) / itemsHeight).i
+                var end = ((window.clipRect.max.y - pos.y) / itemsHeight).i
+                start = glm.clamp(start, 0, itemsCount)
+                end = glm.clamp(end + 1, start, itemsCount)
+                start..end
+            }
+        }
+    }
 
 
     /** helper to create a child window / scrolling region that looks like a normal widget frame    */

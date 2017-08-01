@@ -83,8 +83,14 @@ class HelloWorld {
                 text("Hello, world!")
                 sliderFloat("float", f, 0f, 1f)
                 colorEdit3("clear color", clearColor)
-                button("Test Window") { showTestWindow[0] = !showTestWindow[0] }
-                button("Another Window") { showAnotherWindow[0] = !showAnotherWindow[0] }
+                //  You can write functions in the classical way, with if(cond) { code }
+                if (button("Test Window")) {
+                    showTestWindow[0] = !showTestWindow[0]
+                }
+                // or you can take advantage of functional programming and pass directly a lambda as last parameter
+                button("Another Window") {
+                    showAnotherWindow[0] = !showAnotherWindow[0]
+                }
                 text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / IO.framerate, IO.framerate)
             }
 

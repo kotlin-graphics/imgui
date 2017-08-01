@@ -79,8 +79,6 @@ interface imgui_widgetsSelectableLists {
         if (flags has SelectableFlags.Disabled) buttonFlags = buttonFlags or ButtonFlags.Disabled
         if (flags has SelectableFlags.AllowDoubleClick) buttonFlags = buttonFlags or ButtonFlags.PressedOnClickRelease or ButtonFlags.PressedOnDoubleClick
         val (pressed, hovered, held) = buttonBehavior(bbWithSpacing, id, buttonFlags)
-        if(label == "No" && pressed)
-            println("")
         var selected = selected
         if (flags has SelectableFlags.Disabled)
             selected = false

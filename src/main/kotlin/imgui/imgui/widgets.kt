@@ -33,12 +33,15 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.openPopup
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
+import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
+import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
+import imgui.ImGui.renderBullet
 import imgui.ImGui.renderCollapseTriangle
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderText
@@ -72,8 +75,13 @@ interface imgui_widgets {
         val textEnd = fmt.length
         textUnformatted(fmt, textEnd)
     }
-//    IMGUI_API void          TextColored(const ImVec4& col, const char* fmt, ...) IM_PRINTFARGS(2);  // shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();
-//    IMGUI_API void          TextColoredV(const ImVec4& col, const char* fmt, va_list args);
+
+    /** shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();   */
+    fun textColored(col: Vec4, fmt: String, vararg args: Any) {
+        pushStyleColor(Col.Text, col)
+        text(fmt, args)
+        popStyleColor()
+    }
 //    IMGUI_API void          TextDisabled(const char* fmt, ...) IM_PRINTFARGS(1);                    // shortcut for PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]); Text(fmt, ...); PopStyleColor();
 //    IMGUI_API void          TextDisabledV(const char* fmt, va_list args);
 
@@ -178,22 +186,80 @@ interface imgui_widgets {
 //    IMGUI_API void          LabelText(const char* label, const char* fmt, ...) IM_PRINTFARGS(2);    // display text+label aligned the same way as value+label widgets
 //    IMGUI_API void          LabelTextV(const char* label, const char* fmt, va_list args);
 //    IMGUI_API void          Bullet();                                                               // draw a small circle and keep the cursor on the same line. advance cursor x position by GetTreeNodeToLabelSpacing(), same distance that TreeNode() uses
-//    IMGUI_API void          BulletText(const char* fmt, ...) IM_PRINTFARGS(1);                      // shortcut for Bullet()+Text()
-//    IMGUI_API void          BulletTextV(const char* fmt, va_list args);
+
+    /** shortcut for Bullet()+Text()    */
+    fun bulletText(fmt: String, vararg args: Any) = bulletTextV(fmt, args)
+
+    /** Text with a little bullet aligned to the typical tree node. */
+    fun bulletTextV(fmt: String, args: Array<out Any>) {
+
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val text = fmt.format(Style.locale, *args)
+        val labelSize = calcTextSize(text, false)
+        val textBaseOffsetY = glm.max(0f, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
+        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + Style.framePadding.y * 2), g.fontSize)
+        val x = g.fontSize + if (labelSize.x > 0f) labelSize.x + Style.framePadding.x * 2 else 0f
+        // Empty text doesn't add padding
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(x, glm.max(lineHeight, labelSize.y)))
+        itemSize(bb)
+        if (!itemAdd(bb))            return
+
+        // Render
+        renderBullet(bb.min + Vec2(Style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
+        renderText(bb.min + Vec2(g.fontSize + Style.framePadding.x * 2, textBaseOffsetY), text, text.length, false)
+    }
 
     /** button  */
     fun button(label: String, sizeArg: Vec2 = Vec2()) = buttonEx(label, sizeArg, 0)
-
-    fun button(label: String, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
-        if (buttonEx(label, sizeArg, 0))
-            block()
-    }
 
 //    IMGUI_API bool          SmallButton(const char* label);                                         // button with FramePadding=(0,0)
 //    IMGUI_API bool          InvisibleButton(const char* str_id, const ImVec2& size);
 //    IMGUI_API void          Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,0), const ImVec2& uv1 = ImVec2(1,1), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
 //    IMGUI_API bool          ImageButton(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,0),  const ImVec2& uv1 = ImVec2(1,1), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,0), const ImVec4& tint_col = ImVec4(1,1,1,1));    // <0 frame_padding uses default frame padding settings. 0 for no padding
-//    IMGUI_API bool          Checkbox(const char* label, bool* v);
+
+    fun checkbox(label: String, v: BooleanArray): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId(label)
+        val labelSize = calcTextSize(label, true)
+
+        val checkBb = Rect(window.dc.cursorPos, window.dc.cursorPos +
+                Vec2(labelSize.y + Style.framePadding.y * 2, labelSize.y + Style.framePadding.y * 2))
+        itemSize(checkBb, Style.framePadding.y)
+
+        val totalBb = Rect(checkBb)
+        if (labelSize.x > 0)
+            sameLine(0f, Style.itemInnerSpacing.x)
+        val textBb = Rect(window.dc.cursorPos + Vec2(0, Style.framePadding.y), window.dc.cursorPos + Vec2(0, Style.framePadding.y) + labelSize)
+        if (labelSize.x > 0) {
+            itemSize(Vec2(textBb.width, checkBb.height), Style.framePadding.y)
+            glm.min(checkBb.min, textBb.min, totalBb.min)
+            glm.max(checkBb.max, textBb.max, totalBb.max)
+        }
+
+        if (!itemAdd(totalBb, id)) return false
+
+        val (pressed, hovered, held) = buttonBehavior(totalBb, id)
+        if (pressed) v[0] = !v[0]
+
+        val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
+        renderFrame(checkBb.min, checkBb.max, getColorU32(col), true, Style.frameRounding)
+        if (v[0]) {
+            val checkSz = glm.min(checkBb.width, checkBb.height)
+            val pad = glm.max(1f, (checkSz / 6f).i.f)
+            window.drawList.addRectFilled(checkBb.min + Vec2(pad), checkBb.max - Vec2(pad), getColorU32(Col.CheckMark), Style.frameRounding)
+        }
+
+        if (g.logEnabled) logRenderedText(textBb.tl, if (v[0]) "[x]" else "[ ]")
+        if (labelSize.x > 0f) renderText(textBb.tl, label)
+
+        return pressed
+    }
+
 //    IMGUI_API bool          CheckboxFlags(const char* label, unsigned int* flags, unsigned int flags_value);
 //    IMGUI_API bool          RadioButton(const char* label, bool active);
 //    IMGUI_API bool          RadioButton(const char* label, int* v, int v_button);

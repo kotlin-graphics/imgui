@@ -1,5 +1,9 @@
 package imgui
 
+import com.sun.jdi.Bootstrap
+import com.sun.jdi.VirtualMachine
+import com.sun.jdi.connect.AttachingConnector
+import com.sun.jdi.connect.Connector.Argument
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
@@ -340,7 +344,7 @@ object IO {
     on IO.DeltaTime over 120 frames */
     var framerate = 0f
     /** Number of active memory allocations */
-    var metricsAllocs = 0
+    val metricsAllocs get() = 0//TODO Debug.instanceCounts
     /** Vertices output during last call to Render()    */
     var metricsRenderVertices = 0
     /** Indices output during last call to Render() = number of triangles * 3   */
@@ -489,6 +493,35 @@ object Style {
 
     /** JVM IMGUI   */
     val locale = Locale.US
+}
+
+object Debug {
+
+    val vm: VirtualMachine
+
+    init {
+//        try {
+        var ac: AttachingConnector? = null
+        for (x in Bootstrap.virtualMachineManager().attachingConnectors()) {
+            if (x.javaClass.name.toLowerCase().indexOf("socket") != -1) {
+                ac = x
+                break
+            }
+        }
+        if (ac == null) {
+            throw Error("No socket attaching connector found")
+        }
+        val connectArgs = HashMap<String, Argument>(ac.defaultArguments())
+        connectArgs["hostname"]!!.setValue("127.0.0.1")
+        connectArgs["port"]!!.setValue(Integer.toString(3001))
+        connectArgs["timeout"]!!.setValue("3000")
+        vm = ac.attach(connectArgs)
+//        } catch (error: Exception) {
+//            errormessage = error.javaClass.name + " " + error.message
+//        }
+    }
+
+    val instanceCounts get() = vm.instanceCounts(vm.allClasses()).sum()
 }
 
 // for Style.colors
