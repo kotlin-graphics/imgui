@@ -121,7 +121,7 @@ object GlfwGL3 {
         }
 
         IO.mouseWheel = mouseWheel
-        mouseWheel = 0.0f
+        mouseWheel = 0f
 
         // Hide OS mouse cursor if ImGui is drawing it
         window.cursor = if (IO.mouseDrawCursor) GlfwWindow.Cursor.Hidden else GlfwWindow.Cursor.Normal
@@ -371,10 +371,11 @@ object GlfwGL3 {
 
     private val keyCallback = { key: Int, _: Int, action: Int, _: Int ->
         with(IO) {
-            if (action == GLFW_PRESS)
-                keysDown[key] = true
-            if (action == GLFW_RELEASE)
-                keysDown[key] = false
+            if (key in keysDown.indices)
+                if (action == GLFW_PRESS)
+                    keysDown[key] = true
+                else if (action == GLFW_RELEASE)
+                    keysDown[key] = false
 
 //        (void) mods // Modifiers are not reliable across systems
             keyCtrl = keysDown[GLFW_KEY_LEFT_CONTROL] || keysDown[GLFW_KEY_RIGHT_CONTROL]

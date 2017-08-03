@@ -65,14 +65,12 @@ interface imgui_cursorLayout {
         if (window.skipItems) return
 
         with(window) {
-            if (posX != 0f)
-                dc.cursorPos.put(
-                        pos.x - scroll.x + posX + glm.max(0f, spacingW) + dc.groupOffsetX + dc.columnsOffsetX,
-                        dc.cursorPosPrevLine.y)
-            else
-                dc.cursorPos.put(
-                        dc.cursorPosPrevLine.x + if (spacingW < 0f) Style.itemSpacing.x else spacingW,
-                        dc.cursorPosPrevLine.y)
+            dc.cursorPos.put(
+                    if (posX != 0f)
+                        pos.x - scroll.x + posX + glm.max(0f, spacingW) + dc.groupOffsetX + dc.columnsOffsetX
+                    else
+                        dc.cursorPosPrevLine.x + if (spacingW < 0f) Style.itemSpacing.x else spacingW
+                    , dc.cursorPosPrevLine.y)
             dc.currentLineHeight = dc.prevLineHeight
             dc.currentLineTextBaseOffset = dc.prevLineTextBaseOffset
         }
@@ -197,7 +195,8 @@ interface imgui_cursorLayout {
 
     /** cursor position in absolute screen coordinates [0..io.DisplaySize] (useful to work with ImDrawList API) */
     var cursorScreenPos get() = currentWindowRead!!.dc.cursorPos
-        set(value) = with(currentWindowRead!!.dc) { cursorPos put value; cursorPos max_ cursorMaxPos }
+        set(value) = with(currentWindowRead!!.dc) { cursorPos put value;
+            cursorPos max_ cursorMaxPos }
 
     /** call once if the first item on the line is a Text() item and you want to vertically lower it to match
      *  subsequent (bigger) widgets */

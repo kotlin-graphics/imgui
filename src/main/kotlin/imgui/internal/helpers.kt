@@ -85,17 +85,6 @@ import imgui.Context as g
 FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
 fun hash(data: String, dataSize: Int, seed: Int = 0): Int {
 
-    val crc32_lut = IntArray(256)
-    if (crc32_lut[1] == 0) {
-        val polynomial = 0xEDB88320.i
-        repeat(256) {
-            var crc = it
-            for (i in 0 until 8)
-                crc = (crc ushr 1) xor (-(crc and 1) and polynomial)
-            crc32_lut[it] = crc
-        }
-    }
-
     val seed = seed.inv()
     var crc = seed
     var current = 0
@@ -123,6 +112,21 @@ fun hash(data: String, dataSize: Int, seed: Int = 0): Int {
         }
     return crc.inv()
 }
+
+val crc32_lut by lazy {
+    val res = IntArray(256)
+    if (res[1] == 0) {
+        val polynomial = 0xEDB88320.i
+        repeat(256) {
+            var crc = it
+            for (i in 0 until 8)
+                crc = (crc ushr 1) xor (-(crc and 1) and polynomial)
+            res[it] = crc
+        }
+    }
+    res
+}
+
 //IMGUI_API void*         ImFileLoadToMemory(const char* filename, const char* file_open_mode, int* out_file_size = NULL, int padding_bytes = 0);
 //IMGUI_API FILE*         ImFileOpen(const char* filename, const char* file_open_mode);
 

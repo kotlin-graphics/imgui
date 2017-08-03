@@ -2,6 +2,8 @@ package imgui
 
 import glm_.i
 import imgui.imgui.*
+import imgui.internal.PopupRef
+import java.util.*
 
 // Helpers macros to generate 32-bits encoded colors
 var USE_BGRA_PACKED_COLOR = false
@@ -48,3 +50,7 @@ object ImGui :
 
     val version = "1.51 WIP"
 }
+
+var debug = 0
+
+var ptrIndices = 0 // TODO move

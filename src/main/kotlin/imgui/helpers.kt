@@ -69,7 +69,7 @@ class Storage {
 
     fun clear() = data.clear()
 
-    fun int(key: Int, defaultVal: Int = 0) = data[key] ?: defaultVal // TODO rename back
+    fun intABaaaaaaaaaaaaaaaaaaaaaasassaa(key: Int, defaultVal: Int = 0) = data[key] ?: defaultVal // TODO rename back
 
     operator fun set(key: Int, value: Int) {
         data[key] = value

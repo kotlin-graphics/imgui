@@ -165,9 +165,7 @@ interface imgui_window {
             window.beginCount = 0
             window.clipRect.put(-Float.MAX_VALUE, -Float.MAX_VALUE, +Float.MAX_VALUE, +Float.MAX_VALUE)
             window.lastFrameActive = currentFrame
-            val tmp = window.idStack[0] // resize 1
-            window.idStack.clear()
-            window.idStack.add(tmp)
+            for(i in 1 until window.idStack.size) window.idStack.pop()  // resize 1
 
             // Clear draw list, setup texture, outer clipping rectangle
             window.drawList.clear()

@@ -5,6 +5,8 @@ package imgui.internal
 //-----------------------------------------------------------------------------
 
 enum class ButtonFlags {
+
+    Null,
     /** hold to repeat  */
     Repeat,
     /** (default) return pressed on click+release on same item (default if no PressedOn** flag is set)  */
@@ -28,7 +30,7 @@ enum class ButtonFlags {
     /** require previous frame HoveredId to either match id or be null before being usable  */
     AllowOverlapMode;
 
-    val i = 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
     infix fun or(b: ButtonFlags) = i or b.i
 }

@@ -5,7 +5,7 @@ import imgui.ImGui.popId
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.Style
-import java.util.*
+import imgui.ptrIndices
 import imgui.Context as g
 
 /** Widgets: Trees  */

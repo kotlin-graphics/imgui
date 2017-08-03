@@ -38,6 +38,7 @@ import imgui.Context as g
 // If this ever crash because g.CurrentWindow is NULL it means that either
 // - ImGui::NewFrame() has never been called, which is illegal.
 // - You are calling ImGui functions after ImGui::Render() and before the next ImGui::NewFrame(), which is also illegal.
+var dai = 0
 
 interface imgui_internal {
 
@@ -177,7 +178,8 @@ interface imgui_internal {
         // Always align ourselves on pixel boundaries
         val lineHeight = glm.max(window.dc.currentLineHeight, size.y)
         val textBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, textOffsetY)
-        window.dc.cursorPosPrevLine = Vec2(window.dc.cursorPos.x + size.x, window.dc.cursorPos.y)
+        window.dc.cursorPosPrevLine.x = window.dc.cursorPos.x + size.x
+        window.dc.cursorPosPrevLine.y = window.dc.cursorPos.y
         window.dc.cursorPos.x = (window.pos.x + window.dc.indentX + window.dc.columnsOffsetX).i.f
         window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + Style.itemSpacing.y).i.f
         window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
@@ -315,10 +317,8 @@ interface imgui_internal {
         val popupRef = PopupRef(id, window, window.getId("##menus"), IO.mousePos)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack.push(popupRef)
-        else if (reopenExisting || g.openPopupStack[currentStackSize].popupId != id) {
-            g.openPopupStack.pop()
-            g.openPopupStack.add(popupRef)
-        }
+        else if (reopenExisting || g.openPopupStack[currentStackSize].popupId != id)
+            g.openPopupStack[currentStackSize] = popupRef
     }
 
 //// NB: All position are in absolute pixels coordinates (not window coordinates)
@@ -503,8 +503,8 @@ interface imgui_internal {
                     focusWindow(window)
                     g.activeIdClickOffset = IO.mousePos - bb.min
                 }
-                if ((flags has ButtonFlags.PressedOnClick && IO.mouseClicked[0]) || (flags has ButtonFlags.PressedOnDoubleClick &&
-                        IO.mouseDoubleClicked[0])) {
+                if ((flags has ButtonFlags.PressedOnClick && IO.mouseClicked[0]) ||
+                        (flags has ButtonFlags.PressedOnDoubleClick && IO.mouseDoubleClicked[0])) {
                     pressed = true
                     clearActiveId()
                     focusWindow(window)
@@ -519,7 +519,8 @@ interface imgui_internal {
                 /*  'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
                 Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing
                 finer RepeatDelay/RepeatRate settings.  */
-                if (flags has ButtonFlags.Repeat && g.activeId == id && IO.mouseDownDuration[0] > 0f && isMouseClicked(0, true))
+                if (flags has ButtonFlags.Repeat && g.activeId == id && IO.mouseDownDuration[0] > 0f &&
+                        isMouseClicked(0, true))
                     pressed = true
             }
         }
@@ -529,7 +530,7 @@ interface imgui_internal {
                 held = true
             else {
                 if (hovered && flags has ButtonFlags.PressedOnClickRelease)
-                // Repeat mode trumps <on release>
+                    // Repeat mode trumps <on release>
                     if (!(flags has ButtonFlags.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay))
                         pressed = true
                 clearActiveId()
@@ -720,7 +721,7 @@ interface imgui_internal {
 //IMGUI_API bool          SliderFloatN(const char* label, float* v, int components, float v_min, float v_max, const char* display_format, float power);
 //IMGUI_API bool          SliderIntN(const char* label, int* v, int components, int v_min, int v_max, const char* display_format);
 
-    fun dragBehavior(frameBb: Rect, id: Int, v: Array<Float>, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
+    fun dragBehavior(frameBb: Rect, id: Int, v: FloatArray, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
                      power: Float): Boolean {
 
         // Draw frame
@@ -1503,6 +1504,7 @@ interface imgui_internal {
             right side of the content or not)         */
         val interactBb = if (displayFrame) Rect(bb) else Rect(bb.min.x, bb.min.y, bb.min.x + textWidth + Style.itemSpacing.x * 2, bb.max.y)
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
+
         if (!itemAdd(interactBb, id)) {
             if (isOpen && flags hasnt TreeNodeFlags.NoTreePushOnOpen)
                 treePushRawId(id)
@@ -1515,10 +1517,10 @@ interface imgui_internal {
                 - OpenOnArrow .................... single-click on arrow to open
                 - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
         var buttonFlags = ButtonFlags.NoKeyModifiers or
-                if (flags has TreeNodeFlags.AllowOverlapMode) ButtonFlags.AllowOverlapMode else ButtonFlags.Repeat
+                if (flags has TreeNodeFlags.AllowOverlapMode) ButtonFlags.AllowOverlapMode else ButtonFlags.Null
         if (flags has TreeNodeFlags.OpenOnDoubleClick)
             buttonFlags = buttonFlags or ButtonFlags.PressedOnDoubleClick or (
-                    if (flags has TreeNodeFlags.OpenOnArrow) ButtonFlags.PressedOnClickRelease else ButtonFlags.Repeat)
+                    if (flags has TreeNodeFlags.OpenOnArrow) ButtonFlags.PressedOnClickRelease else ButtonFlags.Null)
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
         if (pressed && flags hasnt TreeNodeFlags.Leaf) {
             var toggled = flags hasnt (TreeNodeFlags.OpenOnArrow or TreeNodeFlags.OpenOnDoubleClick)
@@ -1585,7 +1587,7 @@ interface imgui_internal {
             } else {
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
-                val storedValue = storage.int(id, -1)
+                val storedValue = storage.intABaaaaaaaaaaaaaaaaaaaaaasassaa(id, -1)
                 if (storedValue == -1) {
                     isOpen = g.setNextTreeNodeOpenVal
                     storage[id] = isOpen
@@ -1594,7 +1596,7 @@ interface imgui_internal {
             }
             g.setNextTreeNodeOpenCond = 0
         } else
-            isOpen = storage.int(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0
+            isOpen = storage.intABaaaaaaaaaaaaaaaaaaaaaasassaa(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).
@@ -1613,7 +1615,7 @@ interface imgui_internal {
     }
 
 //IMGUI_API void          PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2 graph_size);
-//
+
 
     /** Parse display precision back from the display format string */
     fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
@@ -1646,5 +1648,4 @@ interface imgui_internal {
             value += minStep - remainder
         return if (negative) -value else value
     }
-
 }

@@ -12,7 +12,6 @@ import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
-
 object Context {
 
     var initialized = false
@@ -24,7 +23,6 @@ object Context {
     var fontBaseSize = 0f
     /** (Shortcut) == Font->TexUvWhitePixel */
     var fontTexUvWhitePixel = Vec2()
-
 
     var time = 0.0f
 
@@ -212,39 +210,39 @@ object IO {
     /** Display size, in pixels. For clamping windows positions.    */
     var displaySize = Vec2i(-1)
     /** Time elapsed since last frame, in seconds.  */
-    var deltaTime = 1.0f / 60.0f
+    var deltaTime = 1f / 60f
     /** Maximum time between saving positions/sizes to .ini file, in seconds.   */
-    var iniSavingRate = 5.0f
+    var iniSavingRate = 5f
     /** Path to .ini file. NULL to disable .ini saving. */
     var iniFilename = "imgui.ini"
     /** Path to .log file (default parameter to ImGui::LogToFile when no file is specified).    */
     var logFilename = "imgui_log.txt"
     /** Time for a double-click, in seconds.    */
-    var mouseDoubleClickTime = 0.30f
+    var mouseDoubleClickTime = 0.3f
     /** Distance threshold to stay in to validate a double-click, in pixels.    */
-    var mouseDoubleClickMaxDist = 6.0f
+    var mouseDoubleClickMaxDist = 6f
     /** Distance threshold before considering we are dragging   */
-    var mouseDragThreshold = 6.0f
+    var mouseDragThreshold = 6f
     /** Map of indices into the KeysDown[512] entries array */
     var keyMap = IntArray(Key.COUNT.i, { -1 })
     /** When holding a key/button, time before it starts repeating, in seconds (for buttons in Repeat mode, etc.).  */
-    var keyRepeatDelay = 0.250f
+    var keyRepeatDelay = 0.25f
     /** When holding a key/button, rate at which it repeats, in seconds.    */
-    var keyRepeatRate = 0.050f
+    var keyRepeatRate = 0.05f
 
 //    void*         UserData;                 // = NULL               // Store your own data for retrieval by callbacks.
 
     /** Load and assemble one or more fonts into a single tightly packed texture. Output to Fonts array.    */
     val fonts = FontAtlas()
     /** Global scale all fonts  */
-    var fontGlobalScale = 1.0f
+    var fontGlobalScale = 1f
     /** Allow user scaling text of individual window with CTRL+Wheel.   */
     var fontAllowUserScaling = false
     /** Font to use on NewFrame(). Use NULL to uses Fonts->Fonts[0].    */
     var fontDefault: Font? = null
     /** For retina display or other situations where window coordinates are different from framebuffer coordinates.
      *  User storage only, presently not used by ImGui. */
-    var displayFramebufferScale = Vec2(1.0f)
+    var displayFramebufferScale = Vec2(1f)
     /** If you use DisplaySize as a virtual space larger than your screen, set DisplayVisibleMin/Max to the visible
      *  area.   */
     var displayVisibleMin = Vec2()

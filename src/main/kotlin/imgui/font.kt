@@ -729,8 +729,7 @@ class Font {
                         else if (c == '\n') {
                             s++
                             break
-                        }
-                        else break
+                        } else break
                     }
                     continue
                 }
@@ -738,8 +737,6 @@ class Font {
 
             // Decode and advance source
             val prevS = s
-            if (s !in text.indices)
-                print("")
             val c = text[s]
             if (c < 0x80)
                 s += 1
@@ -1038,9 +1035,9 @@ class Font {
         }
 
         // Give back unused vertices
-        while (drawList.vtxBuffer.size > vtxWrite)
+        for (i in vtxWrite until drawList.vtxBuffer.size)
             drawList.vtxBuffer.removeAt(drawList.vtxBuffer.lastIndex)
-        while (drawList.idxBuffer.size > idxWrite)
+        for (i in idxWrite until drawList.idxBuffer.size)
             drawList.idxBuffer.removeAt(drawList.idxBuffer.lastIndex)
         drawList.cmdBuffer.last().elemCount -= (idxExpectedSize - drawList.idxBuffer.size)
         drawList._vtxWritePtr = vtxWrite

@@ -455,7 +455,7 @@ fun closeInactivePopups() {
         }
 
     if (n < g.openPopupStack.size)   // This test is not required but it allows to set a useful breakpoint on the line below
-        repeat(g.openPopupStack.size - n) { g.openPopupStack.pop() }
+        for(i in n until g.openPopupStack.size) g.openPopupStack.pop()  // resize(n)
 }
 
 fun closePopupToLevel(remaining: Int) {
@@ -463,7 +463,7 @@ fun closePopupToLevel(remaining: Int) {
         focusWindow(g.openPopupStack[remaining - 1].window)
     else
         focusWindow(g.openPopupStack[0].parentWindow)
-    repeat(g.openPopupStack.size - remaining) { g.openPopupStack.pop() }
+    for(i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
 }
 
 fun closePopup(id: Int) {

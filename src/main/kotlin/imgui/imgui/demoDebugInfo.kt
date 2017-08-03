@@ -6,23 +6,47 @@ import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.alignFirstTextHeightToWidgets
+import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
+import imgui.ImGui.beginMenuBar
+import imgui.ImGui.beginTooltip
+import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
+import imgui.ImGui.columns
 import imgui.ImGui.combo
+import imgui.ImGui.dragFloat
+import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
+import imgui.ImGui.endMenuBar
+import imgui.ImGui.endTooltip
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.listBox
 import imgui.ImGui.menuItem
+import imgui.ImGui.nextColumn
+import imgui.ImGui.popId
+import imgui.ImGui.popItemWidth
+import imgui.ImGui.popStyleVar
+import imgui.ImGui.popTextWrapPos
+import imgui.ImGui.pushId
+import imgui.ImGui.pushItemWidth
+import imgui.ImGui.pushStyleVar
+import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.text
 import imgui.ImGui.textColored
+import imgui.ImGui.textDisabled
+import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
+import imgui.ImGui.version
 import imgui.ImGui.windowDrawList
 import imgui.internal.Rect
 import imgui.internal.Window
@@ -34,7 +58,7 @@ interface imgui_demoDebugInfo {
     /** Create demo/test window.
      *  Demonstrate most ImGui features (big function!)
      *  Call this to learn about the library! try to make it always available in your application!   */
-    fun showTestWindow(pOpen: BooleanArray) = with(ImGui) {
+    fun showTestWindow(pOpen: BooleanArray) {
 
         if (showApp.mainMenuBar[0]) showExampleAppMainMenuBar()
         if (showApp.console[0]) showExampleAppConsole(showApp.console)
@@ -94,7 +118,7 @@ interface imgui_demoDebugInfo {
                 menuItem("Console", pSelected = showApp.console)
                 menuItem("Log", pSelected = showApp.log)
                 menuItem("Simple layout", pSelected = showApp.layout)
-//                menuItem("Property editor", NULL, &show_app_property_editor)
+                menuItem("Property editor", pSelected = showApp.propertyEditor)
 //                menuItem("Long text display", NULL, &show_app_long_text)
 //                menuItem("Auto-resizing window", NULL, &show_app_auto_resize)
 //                menuItem("Constrained-resizing window", NULL, &show_app_constrained_resize)
@@ -113,8 +137,8 @@ interface imgui_demoDebugInfo {
         }
 
 
-        val listboxItems = arrayOf( "Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple",
-                "Strawberry", "Watermelon" )
+        val listboxItems = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple",
+                "Strawberry", "Watermelon")
         listBox("listbox\n(single select)", listboxItemCurrent, listboxItems, 4)
 
 
@@ -140,10 +164,10 @@ interface imgui_demoDebugInfo {
                 treePop()
             }
             if (treeNode("Popups", "Open Popups Stack (${g.openPopupStack.size})")) {
-                for (popup in g.openPopupStack)                {
+                for (popup in g.openPopupStack) {
                     val window = popup.window
-                    val childWindow = if(window != null && window.flags has WindowFlags.ChildWindow) " ChildWindow" else ""
-                    val childMenu = if(window !=null && window.flags has WindowFlags.ChildMenu) " ChildMenu" else ""
+                    val childWindow = if (window != null && window.flags has WindowFlags.ChildWindow) " ChildWindow" else ""
+                    val childMenu = if (window != null && window.flags has WindowFlags.ChildMenu) " ChildMenu" else ""
                     bulletText("PopupID: %08x, Window: '${window?.name}'$childWindow$childMenu", popup.popupId)
                 }
                 treePop()
@@ -233,7 +257,7 @@ interface imgui_demoDebugInfo {
         }
 
         fun nodeWindows(windows: ArrayList<Window>, label: String) {
-            if (!treeNode(label, "%s (%d)", label, windows.size))
+            if (!treeNode(label, "$label (${windows.size})"))
                 return
             for (i in 0 until windows.size)
                 nodeWindow(windows[i], "Window")
@@ -241,7 +265,7 @@ interface imgui_demoDebugInfo {
         }
 
         fun nodeWindow(window: Window, label: String) {
-            val active = if(window.active or window.wasActive) "active" else "inactive"
+            val active = if (window.active or window.wasActive) "active" else "inactive"
             if (!treeNode(window, "$label '${window.name}', $active @ 0x%X", System.identityHashCode(window)))
                 return
             nodeDrawList(window.drawList, "DrawList")
@@ -253,6 +277,47 @@ interface imgui_demoDebugInfo {
             bulletText("Storage: %d bytes", window.stateStorage.data.size * Int.BYTES * 2)
             treePop()
         }
+
+        fun showDummyObject(prefix: String, uid: Int) {
+//            println("showDummyObject $prefix _$uid")
+            //  Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
+            pushId(uid)
+            /*  Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree
+                lines equal high.             */
+            alignFirstTextHeightToWidgets()
+            val nodeOpen = treeNode("Object", "${prefix}_$uid")
+            nextColumn()
+            alignFirstTextHeightToWidgets()
+            text("my sailor is rich")
+            nextColumn()
+            if (nodeOpen) {
+                for (i in 0..7) {
+                    pushId(i) // Use field index as identifier.
+                    if (i < 2)
+                        showDummyObject("Child", 424242)
+                    else {
+                        alignFirstTextHeightToWidgets()
+                        // Here we use a Selectable (instead of Text) to highlight on hover
+                        //Text("Field_%d", i);
+                        bullet()
+                        selectable("Field_$i")
+                        nextColumn()
+                        pushItemWidth(-1f)
+                        if (i >= 5)
+                            inputFloat("##value", dummyMembers, i, 1f)
+                        else
+                            dragFloat("##value", dummyMembers, i, 0.01f)
+                        popItemWidth()
+                        nextColumn()
+                    }
+                    popId()
+                }
+                treePop()
+            }
+            popId()
+        }
+
+        val dummyMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f, 0f, 0f, 0f)
     }
 
     fun showStyleEditor() {
@@ -451,6 +516,17 @@ interface imgui_demoDebugInfo {
     }
 
     companion object {
+
+        fun showHelpMarker(desc: String) {
+            textDisabled("(?)")
+            if (isItemHovered()) {
+                beginTooltip()
+                pushTextWrapPos(450f)
+                textUnformatted(desc)
+                popTextWrapPos()
+                endTooltip()
+            }
+        }
 
         /** Demonstrate creating a fullscreen menu bar and populating it.   */
         fun showExampleAppMainMenuBar() = with(ImGui) {
@@ -800,75 +876,31 @@ interface imgui_demoDebugInfo {
 
         /** Demonstrate create a simple property editor.    */
         fun showExampleAppPropertyEditor(pOpen: BooleanArray) {
-            TODO()
-//            ImGui::SetNextWindowSize(ImVec2(430,450), ImGuiSetCond_FirstUseEver);
-//            if (!ImGui::Begin("Example: Property editor", p_open))
-//            {
-//                ImGui::End();
-//                return;
-//            }
-//
-//            ShowHelpMarker("This example shows how you may implement a property editor using two columns.\nAll objects/fields data are dummies here.\nRemember that in many simple cases, you can use ImGui::SameLine(xxx) to position\nyour cursor horizontally instead of using the Columns() API.");
-//
-//            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2,2));
-//            ImGui::Columns(2);
-//            ImGui::Separator();
-//
-//            struct funcs
-//                    {
-//                        static void ShowDummyObject(const char* prefix, int uid)
-//                        {
-//                            ImGui::PushID(uid);                      // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
-//                            ImGui::AlignFirstTextHeightToWidgets();  // Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree lines equal high.
-//                            bool node_open = ImGui::TreeNode("Object", "%s_%u", prefix, uid);
-//                            ImGui::NextColumn();
-//                            ImGui::AlignFirstTextHeightToWidgets();
-//                            ImGui::Text("my sailor is rich");
-//                            ImGui::NextColumn();
-//                            if (node_open)
-//                            {
-//                                static float dummy_members[8] = { 0.0f,0.0f,1.0f,3.1416f,100.0f,999.0f };
-//                                for (int i = 0; i < 8; i++)
-//                                {
-//                                    ImGui::PushID(i); // Use field index as identifier.
-//                                    if (i < 2)
-//                                    {
-//                                        ShowDummyObject("Child", 424242);
-//                                    }
-//                                    else
-//                                    {
-//                                        ImGui::AlignFirstTextHeightToWidgets();
-//                                        // Here we use a Selectable (instead of Text) to highlight on hover
-//                                        //ImGui::Text("Field_%d", i);
-//                                        char label[32];
-//                                        sprintf(label, "Field_%d", i);
-//                                        ImGui::Bullet();
-//                                        ImGui::Selectable(label);
-//                                        ImGui::NextColumn();
-//                                        ImGui::PushItemWidth(-1);
-//                                        if (i >= 5)
-//                                            ImGui::InputFloat("##value", &dummy_members[i], 1.0f);
-//                                        else
-//                                        ImGui::DragFloat("##value", &dummy_members[i], 0.01f);
-//                                        ImGui::PopItemWidth();
-//                                        ImGui::NextColumn();
-//                                    }
-//                                    ImGui::PopID();
-//                                }
-//                                ImGui::TreePop();
-//                            }
-//                            ImGui::PopID();
-//                        }
-//                    };
-//
-//            // Iterate dummy objects with dummy members (all the same data)
-//            for (int obj_i = 0; obj_i < 3; obj_i++)
-//            funcs::ShowDummyObject("Object", obj_i);
-//
-//            ImGui::Columns(1);
-//            ImGui::Separator();
-//            ImGui::PopStyleVar();
-//            ImGui::End();
+
+            setNextWindowSize(Vec2(430, 450), SetCond.FirstUseEver)
+            if (!begin("Example: Property editor", pOpen)) {
+                end()
+                return
+            }
+
+            showHelpMarker("This example shows how you may implement a property editor using two columns.\n" +
+                    "All objects/fields data are dummies here.\n" +
+                    "Remember that in many simple cases, you can use ImGui::SameLine(xxx) to position\n" +
+                    "your cursor horizontally instead of using the Columns() API.")
+
+            pushStyleVar(StyleVar.FramePadding, Vec2(2))
+            columns(2)
+            separator()
+
+
+            // Iterate dummy objects with dummy members (all the same data)
+            for (objI in 0..2)
+                Funcs.showDummyObject("Object", objI)
+
+            columns(1)
+            separator()
+            popStyleVar()
+            end()
         }
 
         /** Demonstrate/test rendering huge amount of text, and the incidence of clipping.  */

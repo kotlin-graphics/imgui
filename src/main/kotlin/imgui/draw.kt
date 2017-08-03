@@ -27,6 +27,15 @@ typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 /** Typically, 1 command = 1 gpu draw call (unless command is a callback)   */
 class DrawCmd {
 
+    constructor()
+
+    constructor(drawCmd: DrawCmd) {
+        elemCount = drawCmd.elemCount
+        clipRect put drawCmd.clipRect
+        textureId = drawCmd.textureId
+        userCallback = drawCmd.userCallback
+    }
+
     /** Number of indices (multiple of 3) to be rendered as triangles. Vertices are stored in the callee ImDrawList's
      *  vtx_buffer[] array, indices in idx_buffer[].    */
     var elemCount = 0
@@ -38,6 +47,13 @@ class DrawCmd {
     /** If != NULL, call the function instead of rendering the vertices. clip_rect and texture_id will be set normally. */
     var userCallback: DrawCallback? = null
 //    void*           UserCallbackData;       // The draw callback code can access this.
+
+    infix fun put(drawCmd: DrawCmd) {
+        elemCount = drawCmd.elemCount
+        clipRect put drawCmd.clipRect
+        textureId = drawCmd.textureId
+        userCallback = drawCmd.userCallback
+    }
 }
 
 typealias DrawIdx = Int // TODO check
@@ -87,7 +103,7 @@ class DrawList {
     /** Commands. Typically 1 command = 1 GPU draw call.    */
     var cmdBuffer = Stack<DrawCmd>()
     /** Index buffer. Each command consume ImDrawCmd::ElemCount of those    */
-    var idxBuffer = ArrayList<DrawIdx>()
+    var idxBuffer = Stack<DrawIdx>()
     /** Vertex buffer.  */
     var vtxBuffer = ArrayList<DrawVert>()
 
@@ -750,10 +766,11 @@ class DrawList {
     // -----------------------------------------------------------------------------------------------------------------
 
     fun channelsSplit(channelsCount: Int) {
+
         assert(_channelsCurrent == 0 && _channelsCount == 1)
         val oldChannelsCount = _channels.size
-        for (i in oldChannelsCount until channelsCount)
-            _channels.add(DrawChannel())
+        if (oldChannelsCount < channelsCount)
+            for (i in oldChannelsCount until channelsCount) _channels.add(DrawChannel())   // resize(channelsCount)
         _channelsCount = channelsCount
 
         /*  _Channels[] (24 bytes each) hold storage that we'll swap with this->_CmdBuffer/_IdxBuffer
@@ -793,40 +810,36 @@ class DrawList {
             newCmdBufferCount += ch.cmdBuffer.size
             newIdxBufferCount += ch.idxBuffer.size
         }
-        for (i in 0 until newCmdBufferCount)
-            cmdBuffer.add(DrawCmd())
-        for (i in 0 until newIdxBufferCount)
-            idxBuffer.add(0)
+        for (i in 0 until newCmdBufferCount) cmdBuffer.add(DrawCmd())   // resize(cmdBuffer.size + newCmdBufferCount)
+        for (i in 0 until newIdxBufferCount) idxBuffer.add(0)           // resize(idxBuffer.size + newIdxBufferCount)
 
-        val cmdWrite = cmdBuffer.size - newCmdBufferCount
+        var cmdWrite = cmdBuffer.size - newCmdBufferCount
         _idxWritePtr = idxBuffer.size - newIdxBufferCount
-//        for (i in 1 until _channelsCount) { TODO
-//            val ch = _channels[i]
-//            for (j in ch.cmdBuffer.indices) {
-//
-//                memcpy(cmdWrite, ch.CmdBuffer.Data, sz * sizeof(ImDrawCmd)); cmdWrite += sz;
-//            }
-//            if (int sz = ch . IdxBuffer . Size) {
-//                memcpy(_IdxWritePtr, ch.IdxBuffer.Data, sz * sizeof(ImDrawIdx)); _IdxWritePtr += sz; }
-//        }
-//        AddDrawCmd()
-//        _ChannelsCount = 1
+
+        for (i in 1 until _channelsCount) {
+            val ch = _channels[i]
+            for (i in ch.cmdBuffer.indices) {
+                cmdBuffer[cmdWrite] = DrawCmd(ch.cmdBuffer[i])
+                cmdWrite++
+            }
+            for (i in ch.idxBuffer.indices) {
+                idxBuffer[_idxWritePtr] = ch.idxBuffer[i]
+                _idxWritePtr++
+            }
+        }
+        addDrawCmd()
+        _channelsCount = 1
     }
 
     fun channelsSetCurrent(idx: Int) {
 
         assert(idx < _channelsCount)
         if (_channelsCurrent == idx) return
-        _channels[_channelsCurrent].clear()
-        _channels[_channelsCurrent].cmdBuffer.addAll(cmdBuffer)
-        _channels[_channelsCurrent].idxBuffer.addAll(idxBuffer)
+        _channels[_channelsCurrent].cmdBuffer = cmdBuffer
+        _channels[_channelsCurrent].idxBuffer = idxBuffer
         _channelsCurrent = idx
-        cmdBuffer.clear()
-        for (i in cmdBuffer.indices)
-            cmdBuffer.add(_channels[_channelsCurrent].cmdBuffer[i])
-        idxBuffer.clear()
-        for (i in idxBuffer.indices)
-            idxBuffer.add(_channels[_channelsCurrent].idxBuffer[i])
+        cmdBuffer = _channels[_channelsCurrent].cmdBuffer
+        idxBuffer = _channels[_channelsCurrent].idxBuffer
         _idxWritePtr = idxBuffer.size
     }
 
@@ -881,21 +894,17 @@ class DrawList {
 
         cmdBuffer.last().elemCount += idxCount
 
-        val vtxBufferSize = vtxBuffer.size
-        for (i in 0 until vtxCount)
-            if (vtxCount > 0)
-                vtxBuffer.add(DrawVert())
-            else if (vtxCount < 0)
-                vtxBuffer.remove(vtxBuffer.last())
-        _vtxWritePtr = vtxBufferSize
+        val vtxBufferOldSize = vtxBuffer.size
+        for (v in 0 until vtxCount) // TODO check negative
+            if (vtxCount > 0) vtxBuffer.add(DrawVert())
+            else vtxBuffer.removeAt(vtxBuffer.lastIndex)
+        _vtxWritePtr = vtxBufferOldSize
 
-        val idxBufferSize = idxBuffer.size
+        val idxBufferOldSize = idxBuffer.size
         for (i in 0 until idxCount)
-            if (idxCount > 0)
-                idxBuffer.add(0)
-            else if (idxCount < 0)
-                idxBuffer.remove(idxBuffer.last())
-        _idxWritePtr = idxBufferSize
+            if (idxCount > 0) idxBuffer.add(0)
+            else idxBuffer.removeAt(idxBuffer.lastIndex)
+        _idxWritePtr = idxBufferOldSize
     }
 
     /** Fully unrolled with inline call to keep our debug builds decently fast.

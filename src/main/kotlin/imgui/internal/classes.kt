@@ -479,16 +479,16 @@ class Window(
     /** "   */
     var focusIdxTabRequestNext = Int.MAX_VALUE
 
-    fun getId(str: String, end: Int = str.length): Int {
+    fun getId(str: String, end: Int = 0): Int {
         val seed = idStack.last()
-        val id = hash(str, str.length - end, seed)
+        val id = hash(str, end, seed)
         keepAliveId(id)
         return id
     }
 
     fun getId(ptr: Any): Int {
-        val seed = idStack .last()
-        val id = System.identityHashCode(ptr)// TODO check hash(&ptr, sizeof(void*), seed)
+        val seed = idStack.last()
+        val id = System.identityHashCode(++ptrIndices)
         keepAliveId(id)
         return id
     }

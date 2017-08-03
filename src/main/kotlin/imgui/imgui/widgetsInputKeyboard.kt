@@ -21,13 +21,16 @@ interface imgui_widgetsInputKeyboard {
     }
 //    IMGUI_API bool          InputTextMultiline(const char* label, char* buf, size_t buf_size, const ImVec2& size = ImVec2(0,0), ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
 
-    fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1, extraFlags: Int = 0)
-            : Boolean {
+    fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1, extraFlags: Int = 0) =
+            inputFloat(label, v, 0, step, stepFast, decimalPrecision, extraFlags)
 
-        val pInt = intArrayOf(glm.floatBitsToInt(v[0]))
+    fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1,
+                   extraFlags: Int = 0): Boolean {
+
+        val pInt = intArrayOf(glm.floatBitsToInt(v[ptr]))
         val fmt = "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f"
         val res = inputScalarEx(label, DataType.Float, pInt, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, fmt, extraFlags)
-        v[0] = glm.intBitsToFloat(pInt[0])
+        v[ptr] = glm.intBitsToFloat(pInt[0])
         return res
     }
 //    IMGUI_API bool          InputFloat2(const char* label, float v[2], int decimal_precision = -1, ImGuiInputTextFlags extra_flags = 0);

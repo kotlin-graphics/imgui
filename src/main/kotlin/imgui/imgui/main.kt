@@ -14,6 +14,8 @@ interface imgui_main {
     /** start a new ImGui frame, you can submit any command from this point until NewFrame()/Render().  */
     fun newFrame() {
 
+        ptrIndices = 0
+
         // Check user data
         assert(IO.deltaTime >= 0.0f)               // Need a positive DeltaTime (zero is tolerated but will cause some timing issues)
         assert(IO.displaySize.x >= 0.0f && IO.displaySize.y >= 0.0f)

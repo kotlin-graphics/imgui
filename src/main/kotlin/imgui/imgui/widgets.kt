@@ -61,7 +61,9 @@ import imgui.Context as g
 
 interface imgui_widgets {
 
-    fun text(fmt: String, vararg args: Any) {
+    fun text(fmt: String, vararg args: Any) = textV(fmt, args)
+
+    fun textV(fmt: String, args: Array<out Any>) {
 
         val window = currentWindow
         if (window.skipItems) return
@@ -82,8 +84,18 @@ interface imgui_widgets {
         text(fmt, args)
         popStyleColor()
     }
-//    IMGUI_API void          TextDisabled(const char* fmt, ...) IM_PRINTFARGS(1);                    // shortcut for PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]); Text(fmt, ...); PopStyleColor();
-//    IMGUI_API void          TextDisabledV(const char* fmt, va_list args);
+
+    /** shortcut for:
+     *      pushStyleColor(Col.Text, Style.colors[Col.TextDisabled])
+     *      text(fmt, ...)
+     *      popStyleColor() */
+    fun textDisabled(fmt: String, vararg args: Any) = textDisabledV(fmt, args)
+
+    fun textDisabledV(fmt: String, args: Array<out Any>) {
+        pushStyleColor(Col.Text, Style.colors[Col.TextDisabled])
+        textV(fmt, args)
+        popStyleColor()
+    }
 
     /** shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this won't work on an
      *  auto-resizing window if there's no other widgets to extend the window width, yoy may need to set a size using
@@ -103,11 +115,9 @@ interface imgui_widgets {
         val window = currentWindow
         if (window.skipItems) return
 
-        var textBegin = 0
-
         val wrapPosX = window.dc.textWrapPos
         val wrapEnabled = wrapPosX >= 0f
-        if (textEnd - textBegin > 2000 && !wrapEnabled) {
+        if (textEnd > 2000 && !wrapEnabled) {
             /*  Long text!
                 Perform manual coarse clipping to optimize for long multi-line text
                 From this point we will only compute the width of lines that are visible. Optimization only available
@@ -185,7 +195,26 @@ interface imgui_widgets {
 
 //    IMGUI_API void          LabelText(const char* label, const char* fmt, ...) IM_PRINTFARGS(2);    // display text+label aligned the same way as value+label widgets
 //    IMGUI_API void          LabelTextV(const char* label, const char* fmt, va_list args);
-//    IMGUI_API void          Bullet();                                                               // draw a small circle and keep the cursor on the same line. advance cursor x position by GetTreeNodeToLabelSpacing(), same distance that TreeNode() uses
+
+    /** draw a small circle and keep the cursor on the same line. advance cursor x position
+     *  by GetTreeNodeToLabelSpacing(), same distance that TreeNode() uses  */
+    fun bullet() {
+
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + Style.framePadding.y * 2), g.fontSize)
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(g.fontSize, lineHeight))
+        itemSize(bb)
+        if (!itemAdd(bb)) {
+            sameLine(0f, Style.framePadding.x * 2)
+            return
+        }
+
+        // Render and stay on same line
+        renderBullet(bb.min + Vec2(Style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
+        sameLine(0f, Style.framePadding.x * 2)
+    }
 
     /** shortcut for Bullet()+Text()    */
     fun bulletText(fmt: String, vararg args: Any) = bulletTextV(fmt, args)

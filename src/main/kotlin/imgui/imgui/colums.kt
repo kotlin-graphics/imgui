@@ -6,16 +6,19 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.buttonBehavior
-import imgui.ImGui.currentWindowRead
-import imgui.Context as g
 import imgui.ImGui.currentWindow
+import imgui.ImGui.currentWindowRead
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemSize
+import imgui.ImGui.keepAliveId
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
+import imgui.ImGui.pushItemWidth
+import imgui.internal.ColumnData
 import imgui.internal.Rect
+import imgui.Context as g
 
 /** You can also use SameLine(pos_x) for simplified columning. The columns API is still work-in-progress and rather
  *  lacking.    */
@@ -25,6 +28,7 @@ interface imgui_colums {
     fun columns(columnsCount: Int = 1, id: String = "", border: Boolean = true) {
 
         with(currentWindow) {
+
             assert(columnsCount >= 1)
 
             if (dc.columnsCount != 1) {
@@ -89,25 +93,54 @@ interface imgui_colums {
 
             if (dc.columnsCount != 1) {
                 // Cache column offsets
-                TODO()
-//                dc.columnsData.resize(columns_count + 1)
-//                for (int column_index = 0; column_index < columns_count + 1; column_index++)
-//                {
-//                    const ImGuiID column_id = window->DC.ColumnsSetId+ImGuiID(column_index)
-//                    KeepAliveID(column_id)
-//                    const float default_t = column_index / (float) window->DC.ColumnsCount
-//                    const float t = window->DC.StateStorage->GetFloat(column_id, default_t)      // Cheaply store our floating point value inside the integer (could store a union into the map?)
-//                    window->DC.ColumnsData[column_index].OffsetNorm = t
-//                }
-//                window->DrawList->ChannelsSplit(window->DC.ColumnsCount)
-//                PushColumnClipRect()
-//                PushItemWidth(GetColumnWidth() * 0.65f)
+                if (columnsCount + 1 > dc.columnsData.size)     // resize(columnsCount + 1)
+                    for (i in dc.columnsData.size until columnsCount + 1) dc.columnsData.add(ColumnData())
+                else
+                    for (i in columnsCount + 1 until dc.columnsData.size ) dc.columnsData.removeAt(dc.columnsData.lastIndex)
+                for (columnIndex in 0..columnsCount) {
+                    val columnId = dc.columnsSetId + columnIndex
+                    keepAliveId(columnId)
+                    val defaultT = columnIndex / dc.columnsCount.f
+                    // Cheaply store our floating point value inside the integer (could store a union into the map?)
+                    val t = dc.stateStorage.float(columnId, defaultT)
+                    dc.columnsData[columnIndex].offsetNorm = t
+                }
+                drawList.channelsSplit(dc.columnsCount)
+                pushColumnClipRect()
+                pushItemWidth(getColumnWidth() * 0.65f)
             } else dc.columnsData.clear()
         }
     }
 
     /** next column */
-//    IMGUI_API void          NextColumn();
+    fun nextColumn() {
+
+        val window = currentWindow
+        if (window.skipItems || window.dc.columnsCount <= 1) return
+
+        popItemWidth()
+        popClipRect()
+
+        with(window) {
+            dc.columnsCellMaxY = glm.max(dc.columnsCellMaxY, dc.cursorPos.y)
+            if (++dc.columnsCurrent < dc.columnsCount) {
+                // Columns 1+ cancel out IndentX
+                dc.columnsOffsetX = getColumnOffset(dc.columnsCurrent) - dc.indentX + Style.itemSpacing.x
+                drawList.channelsSetCurrent(dc.columnsCurrent)
+            } else {
+                dc.columnsCurrent = 0
+                dc.columnsOffsetX = 0f
+                dc.columnsCellMinY = dc.columnsCellMaxY
+                drawList.channelsSetCurrent(0)
+            }
+            dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
+            dc.cursorPos.y = dc.columnsCellMinY
+            dc.currentLineHeight = 0f
+            dc.currentLineTextBaseOffset = 0f
+        }
+        pushColumnClipRect()
+        pushItemWidth(getColumnWidth() * 0.65f)  // FIXME: Move on columns setup
+    }
 
     /** get current column index    */
     val columnIndex get() = currentWindowRead!!.dc.columnsCurrent
@@ -150,7 +183,16 @@ interface imgui_colums {
         window.dc.stateStorage[columnId] = t
     }
 
-//    IMGUI_API float         GetColumnWidth(int column_index = -1);                              // column width (== GetColumnOffset(GetColumnIndex()+1) - GetColumnOffset(GetColumnOffset())
+    /** column width (== GetColumnOffset(GetColumnIndex()+1) - GetColumnOffset(GetColumnOffset())   */
+    fun getColumnWidth(columnIndex: Int = -1): Float {
+
+        val window = currentWindowRead!!
+        var columnIndex = columnIndex
+        if (columnIndex < 0)
+            columnIndex = window.dc.columnsCurrent;
+
+        return getColumnOffset(columnIndex + 1) - getColumnOffset(columnIndex)
+    }
 
     /** number of columns (what was passed to Columns())    */
     val columnsCount get() = currentWindowRead!!.dc.columnsCount
