@@ -223,9 +223,8 @@ object GlfwGL3 {
         }
     }
 
+    /** Build texture atlas */
     private fun createFontsTexture(): Boolean {
-
-        // Build texture atlas
 
         /*  Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely
             to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than
@@ -235,17 +234,11 @@ object GlfwGL3 {
         // Upload texture to graphics system
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
 
-//        initTexture2d(fontTexture) {
-//            minFilter = linear
-//            magFilter = linear
-//            image(GL_RGBA, size, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
-//        }
-
-        glGenTextures(fontTexture)
-        glBindTexture(GL_TEXTURE_2D, fontTexture)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
+        initTexture2d(fontTexture) {
+            minFilter = linear
+            magFilter = linear
+            image(GL_RGBA, size, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
+        }
 
         // Store our identifier
         IO.fonts.texId = fontTexture[0]
@@ -316,10 +309,8 @@ object GlfwGL3 {
                 v.uv.to(vtxBuffer, offset + Vec2.size)
                 vtxBuffer.putInt(offset + Vec2.size * 2, v.col)
             }
-            checkError("1")
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
             glBufferSubData(GL_ARRAY_BUFFER, 0, vtxBuffer)
-            checkError("2")
             cmdList.idxBuffer.forEachIndexed { i, idx -> idxBuffer[i] = idx }
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
             glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBuffer)
@@ -333,9 +324,7 @@ object GlfwGL3 {
                     glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
                     glScissor(cmd.clipRect.x.i, fbSize.y - cmd.clipRect.w.i,
                             (cmd.clipRect.z - cmd.clipRect.x).i, (cmd.clipRect.w - cmd.clipRect.y).i)
-                    checkError("3")
                     glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
-                    checkError("4")
                 }
                 idxBufferOffset += cmd.elemCount * Int.BYTES
             }

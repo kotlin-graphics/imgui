@@ -1,6 +1,7 @@
 package imgui.imgui
 
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.openPopupEx
@@ -16,7 +17,27 @@ interface imgui_popups {
      *  current ID-stack (so OpenPopup and BeginPopup needs to be at the same level).   */
     fun openPopup(strId: String) = openPopupEx(strId, false)
 //    IMGUI_API bool          BeginPopup(const char* str_id);                                     // return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returned true!
-//    IMGUI_API bool          BeginPopupModal(const char* name, bool* p_open = NULL, ImGuiWindowFlags extra_flags = 0);               // modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside)
+
+    /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside) */
+    fun beginPopupModal(name: String, pOpen: BooleanArray? = null, extraFlags: Int = 0): Boolean {
+
+        val window = g.currentWindow!!
+        val id = window.getId(name)
+        if (!isPopupOpen(id)) {
+            clearSetNextWindowData() // We behave like Begin() and need to consume those values
+            return false
+        }
+
+        val flags = extraFlags or WindowFlags.Popup or WindowFlags.Modal or WindowFlags.NoCollapse or WindowFlags.NoSavedSettings
+        val isOpen = begin(name, pOpen, flags)
+        // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
+        if (!isOpen || (pOpen != null && !pOpen.get(0))) {
+            endPopup()
+            if (isOpen) closePopup(id)
+            return false
+        }
+        return isOpen
+    }
 //    IMGUI_API bool          BeginPopupContextItem(const char* str_id, int mouse_button = 1);                                        // helper to open and begin popup when clicked on last item. read comments in .cpp!
 //    IMGUI_API bool          BeginPopupContextWindow(bool also_over_items = true, const char* str_id = NULL, int mouse_button = 1);  // helper to open and begin popup when clicked on current window.
 //    IMGUI_API bool          BeginPopupContextVoid(const char* str_id = NULL, int mouse_button = 1);                                 // helper to open and begin popup when clicked in void (no window).

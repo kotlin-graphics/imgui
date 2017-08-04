@@ -5,7 +5,8 @@ import imgui.ImGui.popId
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.Style
-import imgui.ptrIndices
+import imgui.TreeNodeFlags
+import imgui.or
 import imgui.Context as g
 
 /** Widgets: Trees  */
@@ -13,9 +14,9 @@ interface imgui_widgetsTrees {
 
     /** if returning 'true' the node is open and the tree id is pushed into the id stack. user is responsible for
      *  calling TreePop().  */
-    fun treeNode(label:String):Boolean {
+    fun treeNode(label: String): Boolean {
         val window = currentWindow
-        if (window.skipItems)        return false
+        if (window.skipItems) return false
         return treeNodeBehavior(window.getId(label), 0, label)
     }
 
@@ -63,6 +64,19 @@ interface imgui_widgetsTrees {
 //    IMGUI_API void          TreeAdvanceToLabelPos();                                                // advance cursor x position by GetTreeNodeToLabelSpacing()
 //    IMGUI_API float         GetTreeNodeToLabelSpacing();                                            // horizontal distance preceding label when using TreeNode*() or Bullet() == (g.FontSize + style.FramePadding.x*2) for a regular unframed TreeNode
 //    IMGUI_API void          SetNextTreeNodeOpen(bool is_open, ImGuiSetCond cond = 0);               // set next TreeNode/CollapsingHeader open state.
-//    IMGUI_API bool          CollapsingHeader(const char* label, ImGuiTreeNodeFlags flags = 0);      // if returning 'true' the header is open. doesn't indent nor push on ID stack. user doesn't have to call TreePop().
+
+    /** CollapsingHeader returns true when opened but do not indent nor push into the ID stack (because of the
+     *  ImGuiTreeNodeFlags_NoTreePushOnOpen flag).
+     *  This is basically the same as calling
+     *      treeNodeEx(label, TreeNodeFlags.CollapsingHeader | TreeNodeFlags.NoTreePushOnOpen)
+     *  You can remove the _NoTreePushOnOpen flag if you want behavior closer to normal TreeNode().
+     *  If returning 'true' the header is open. doesn't indent nor push on ID stack. user doesn't have to call TreePop().   */
+    fun collapsingHeader(label: String, flags: Int = 0): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        return treeNodeBehavior(window.getId(label), flags or TreeNodeFlags.CollapsingHeader or TreeNodeFlags.NoTreePushOnOpen, label)
+    }
 //    IMGUI_API bool          CollapsingHeader(const char* label, bool* p_open, ImGuiTreeNodeFlags flags = 0); // when 'p_open' isn't NULL, display an additional small close button on upper right of the header
 }

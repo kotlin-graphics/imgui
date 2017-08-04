@@ -135,7 +135,7 @@ interface imgui_parametersStacks {
     fun getColorU32(idx: Col, alphaMul: Float = 1f) = getColorU32(idx.i, alphaMul)
 
     fun getColorU32(idx: Int, alphaMul: Float = 1f): Int {
-        val c = Style.colors[idx]
+        val c = Vec4(Style.colors[idx])
         c.w *= Style.alpha * alphaMul
         return colorConvertFloat4ToU32(c)
     }

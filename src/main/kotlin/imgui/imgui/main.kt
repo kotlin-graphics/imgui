@@ -148,11 +148,11 @@ interface imgui_main {
             var window = g.hoveredRootWindow
             while (window != null && window != modalWindow)
                 window = window.parentWindow
-            if (window == null)
+            if (window == null) {
                 g.hoveredWindow = null
-            g.hoveredRootWindow = null
-        } else
-            g.modalWindowDarkeningRatio = 0.0f
+                g.hoveredRootWindow = null
+            }
+        } else g.modalWindowDarkeningRatio = 0f
 
         /** Are we using inputs? Tell user so they can capture/discard the inputs away from the rest of their application.
         When clicking outside of a window we assume the click is owned by the application and won't request capture.
