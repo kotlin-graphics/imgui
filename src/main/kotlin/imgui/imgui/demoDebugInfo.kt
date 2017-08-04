@@ -3,6 +3,7 @@ package imgui.imgui
 import glm_.BYTES
 import glm_.f
 import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -10,7 +11,6 @@ import imgui.ImGui.alignFirstTextHeightToWidgets
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
-import imgui.ImGui.beginPopupModal
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
@@ -24,7 +24,6 @@ import imgui.ImGui.dragFloat
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
-import imgui.ImGui.endPopup
 import imgui.ImGui.endTooltip
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
@@ -47,7 +46,9 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.sliderFloat
+import imgui.ImGui.sliderInt
 import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textColored
@@ -126,9 +127,9 @@ interface imgui_demoDebugInfo {
                 menuItem("Log", pSelected = showApp.log)
                 menuItem("Simple layout", pSelected = showApp.layout)
                 menuItem("Property editor", pSelected = showApp.propertyEditor)
-//                menuItem("Long text display", NULL, &show_app_long_text)
-//                menuItem("Auto-resizing window", NULL, &show_app_auto_resize)
-//                menuItem("Constrained-resizing window", NULL, &show_app_constrained_resize)
+                menuItem("Long text display", "", showApp.longText)
+                menuItem("Auto-resizing window", "", showApp.autoResize)
+//                menuItem("Constrained-resizing window", "", showApp.constrainedResize)
 //                menuItem("Simple overlay", NULL, &show_app_fixed_overlay)
 //                menuItem("Manipulating window title", NULL, &show_app_manipulating_window_title)
 //                menuItem("Custom rendering", NULL, &show_app_custom_rendering)
@@ -1207,7 +1208,9 @@ interface imgui_demoDebugInfo {
 
                 textWrapped("Modal windows are like popups but the user cannot close them by clicking outside the window.")
 
-                if(button("Delete..")) { openPopup("Delete?") }
+                if (button("Delete..")) {
+                    openPopup("Delete?")
+                }
                 popupModal("Delete?", null, WindowFlags.AlwaysAutoResize.i) {
 
                     text("All those beautiful files will be deleted.\nThis operation cannot be undone!\n\n")
@@ -1728,58 +1731,60 @@ interface imgui_demoDebugInfo {
 
         /** Demonstrate creating a window which gets auto-resized according to its content. */
         fun showExampleAppAutoResize(pOpen: BooleanArray) {
-            TODO()
-//            if (!ImGui::Begin("Example: Auto-resizing window", p_open, ImGuiWindowFlags_AlwaysAutoResize))
-//            {
-//                ImGui::End();
-//                return;
-//            }
-//
-//            static int lines = 10;
-//            ImGui::Text("Window will resize every-frame to the size of its content.\nNote that you probably don't want to query the window size to\noutput your content because that would create a feedback loop.");
-//            ImGui::SliderInt("Number of lines", &lines, 1, 20);
-//            for (int i = 0; i < lines; i++)
-//            ImGui::Text("%*sThis is line %d", i*4, "", i); // Pad with space to extend size horizontally
-//            ImGui::End();
+
+            if (!begin("Example: Auto-resizing window", pOpen, WindowFlags.AlwaysAutoResize.i)) {
+                end()
+                return
+            }
+
+            text("Window will resize every-frame to the size of its content.\nNote that you probably don't want to " +
+                    "query the window size to\noutput your content because that would create a feedback loop.")
+            sliderInt("Number of lines", lines, 1, 20)
+            for (i in 0 until lines[0])
+                text(" ".repeat(i * 4) + "This is line $i") // Pad with space to extend size horizontally
+            end()
         }
+
+        var lines = intArrayOf(10)
 
         /** Demonstrate creating a window with custom resize constraints.   */
         fun showExampleAppConstrainedResize(pOpen: BooleanArray) {
-            TODO()
-//            struct CustomConstraints // Helper functions to demonstrate programmatic constraints
-//                    {
-//                        static void Square(ImGuiSizeConstraintCallbackData* data) { data->DesiredSize = ImVec2(IM_MAX(data->DesiredSize.x, data->DesiredSize.y), IM_MAX(data->DesiredSize.x, data->DesiredSize.y)); }
-//                        static void Step(ImGuiSizeConstraintCallbackData* data)   { float step = (float)(int)(intptr_t)data->UserData; data->DesiredSize = ImVec2((int)(data->DesiredSize.x / step + 0.5f) * step, (int)(data->DesiredSize.y / step + 0.5f) * step); }
-//                    };
-//
-//            static int type = 0;
-//            if (type == 0) ImGui::SetNextWindowSizeConstraints(ImVec2(-1, 0),    ImVec2(-1, FLT_MAX));      // Vertical only
-//            if (type == 1) ImGui::SetNextWindowSizeConstraints(ImVec2(0, -1),    ImVec2(FLT_MAX, -1));      // Horizontal only
-//            if (type == 2) ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(FLT_MAX, FLT_MAX)); // Width > 100, Height > 100
-//            if (type == 3) ImGui::SetNextWindowSizeConstraints(ImVec2(300, 0),   ImVec2(400, FLT_MAX));     // Width 300-400
-//            if (type == 4) ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0),     ImVec2(FLT_MAX, FLT_MAX), CustomConstraints::Square);          // Always Square
-//            if (type == 5) ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0),     ImVec2(FLT_MAX, FLT_MAX), CustomConstraints::Step, (void*)100);// Fixed Step
-//
-//            if (ImGui::Begin("Example: Constrained Resize", p_open))
-//            {
-//                const char* desc[] =
-//                        {
-//                            "Resize vertical only",
-//                            "Resize horizontal only",
-//                            "Width > 100, Height > 100",
-//                            "Width 300-400",
-//                            "Custom: Always Square",
-//                            "Custom: Fixed Steps (100)",
-//                        };
-//                ImGui::Combo("Constraint", &type, desc, IM_ARRAYSIZE(desc));
-//                if (ImGui::Button("200x200")) ImGui::SetWindowSize(ImVec2(200,200)); ImGui::SameLine();
-//                if (ImGui::Button("500x500")) ImGui::SetWindowSize(ImVec2(500,500)); ImGui::SameLine();
-//                if (ImGui::Button("800x200")) ImGui::SetWindowSize(ImVec2(800,200));
+
+            when (type) {
+                0 -> setNextWindowSizeConstraints(Vec2(-1, 0), Vec2(-1, Float.MAX_VALUE))      // Vertical only
+                1 -> setNextWindowSizeConstraints(Vec2(0, -1), Vec2(Float.MAX_VALUE, -1))      // Horizontal only
+                2 -> setNextWindowSizeConstraints(Vec2(100), Vec2(Float.MAX_VALUE)) // Width > 100, Height > 100
+                3 -> setNextWindowSizeConstraints(Vec2(300, 0), Vec2(400, Float.MAX_VALUE))     // Width 300-400
+                4 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.square)          // Always Square
+                5 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.step, 100)// Fixed Step
+            }
+
+            if (begin("Example: Constrained Resize", pOpen)) {
+                val desc = arrayOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
+                        "Width 300-400", "Custom: Always Square", "Custom: Fixed Steps (100)")
+//                combo("Constraint", type, desc, IM_ARRAYSIZE(desc))
+//                if (ImGui::Button("200x200")) ImGui::SetWindowSize(ImVec2(200, 200)); ImGui::SameLine()
+//                if (ImGui::Button("500x500")) ImGui::SetWindowSize(ImVec2(500, 500)); ImGui::SameLine()
+//                if (ImGui::Button("800x200")) ImGui::SetWindowSize(ImVec2(800, 200))
 //                for (int i = 0; i < 10; i++)
-//                ImGui::Text("Hello, sailor! Making this line long enough for the example.");
-//            }
-//            ImGui::End();
+//                ImGui::Text("Hello, sailor! Making this line long enough for the example.")
+            }
+            end()
         }
+
+        // Helper functions to demonstrate programmatic constraints
+        object CustomConstraints {
+            val square: SizeConstraintCallback = { _: Any, _: Vec2, _: Vec2, desiredSize: Vec2 ->
+                desiredSize put glm.max(desiredSize.x, desiredSize.y)
+            }
+            val step: SizeConstraintCallback = { userData: Any, pos: Vec2, currenSize: Vec2, desiredSize: Vec2 ->
+                val step = (userData as Int).f
+                desiredSize.x = (desiredSize.x / step + 0.5f).i * step
+                desiredSize.y = (desiredSize.y / step + 0.5f).i * step
+            }
+        }
+
+        var type = 0
 
         /** Demonstrate creating a simple static window with no decoration. */
         fun showExampleAppFixedOverlay(pOpen: BooleanArray) {
@@ -2022,14 +2027,13 @@ interface imgui_demoDebugInfo {
 
         /** Demonstrate/test rendering huge amount of text, and the incidence of clipping.  */
         fun showExampleAppLongText(pOpen: BooleanArray) {
-            TODO()
-//            ImGui::SetNextWindowSize(ImVec2(520,600), ImGuiSetCond_FirstUseEver);
-//            if (!ImGui::Begin("Example: Long text display", p_open))
-//            {
-//                ImGui::End();
-//                return;
-//            }
-//
+
+            setNextWindowSize(Vec2(520, 600), SetCond.FirstUseEver)
+            if (!begin("Example: Long text display, to implement", pOpen)) {
+                end()
+                return
+            }
+
 //            static int test_type = 0;
 //            static ImGuiTextBuffer log;
 //            static int lines = 0;
@@ -2071,7 +2075,7 @@ interface imgui_demoDebugInfo {
 //                break;
 //            }
 //            ImGui::EndChild();
-//            ImGui::End();
+            end()
         }
 
         object showApp {

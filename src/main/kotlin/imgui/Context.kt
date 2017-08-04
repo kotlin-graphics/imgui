@@ -103,8 +103,9 @@ object Context {
     /** Valid if 'SetNextWindowSizeConstraint' is true  */
     var setNextWindowSizeConstraintRect = Rect()
 
-//    ImGuiSizeConstraintCallback SetNextWindowSizeConstraintCallback;
-//    void*                       SetNextWindowSizeConstraintCallbackUserData;
+    var setNextWindowSizeConstraintCallback: SizeConstraintCallback? = null
+
+    var setNextWindowSizeConstraintCallbackUserData: Any? = null
 
     var setNextWindowSizeConstraint = false
 

@@ -1,9 +1,8 @@
 package imgui
 
 import glm_.i
+import glm_.vec2.Vec2
 import imgui.imgui.*
-import imgui.internal.PopupRef
-import java.util.*
 
 // Helpers macros to generate 32-bits encoded colors
 var USE_BGRA_PACKED_COLOR = false
@@ -54,3 +53,6 @@ object ImGui :
 var debug = 0
 
 var ptrIndices = 0 // TODO move
+
+
+typealias SizeConstraintCallback = (userData: Any, pos: Vec2, currenSize: Vec2, desiredSize: Vec2) -> Unit

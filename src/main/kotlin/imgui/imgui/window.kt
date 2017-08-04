@@ -797,7 +797,17 @@ interface imgui_window {
         g.setNextWindowSizeCond = cond
     }
 
-//IMGUI_API void          SetNextWindowSizeConstraints(const ImVec2& size_min, const ImVec2& size_max, ImGuiSizeConstraintCallback custom_callback = NULL, void* custom_callback_data = NULL); // set next window size limits. use -1,-1 on either X/Y axis to preserve the current size. Use callback to apply non-trivial programmatic constraints.
+    /** set next window size limits. use -1,-1 on either X/Y axis to preserve the current size. Use callback to apply
+     *  non-trivial programmatic constraints.   */
+    fun setNextWindowSizeConstraints(sizeMin:Vec2, sizeMax:Vec2, customCallback: SizeConstraintCallback? = null,
+                                     customCallbackUserData: Any? = null) {
+
+        g.setNextWindowSizeConstraint = true
+        g.setNextWindowSizeConstraintRect.min put sizeMin
+        g.setNextWindowSizeConstraintRect.min put sizeMax
+        g.setNextWindowSizeConstraintCallback = customCallback
+        g.setNextWindowSizeConstraintCallbackUserData = customCallbackUserData
+    }
 
     /** set next window content size (enforce the range of scrollbars). set axis to 0.0f to leave it automatic. call
      *  before Begin() */

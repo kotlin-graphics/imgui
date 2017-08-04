@@ -1,5 +1,8 @@
 package imgui.imgui
 
+import glm_.f
+import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
 import imgui.IO
 import imgui.ImGui.calcItemWidth
@@ -17,7 +20,6 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.setHoveredId
 import imgui.ImGui.sliderBehavior
 import imgui.Style
-import imgui.internal.DataType
 import imgui.internal.Rect
 import imgui.Context as g
 
@@ -36,7 +38,6 @@ interface imgui_widgetsSliders {
         val window = currentWindow
         if (window.skipItems) return false
 
-
         val id = window.getId(label)
         val w = calcItemWidth()
 
@@ -53,6 +54,8 @@ interface imgui_widgetsSliders {
         val hovered = isHovered(frameBb, id)
         if (hovered)
             setHoveredId(id)
+
+        var displayFormat = if(displayFormat.isEmpty()) "%.3f" else displayFormat
 
         val decimalPrecision = parseFormatPrecision(displayFormat, 3)
 
@@ -90,7 +93,15 @@ interface imgui_widgetsSliders {
 //    IMGUI_API bool          SliderFloat3(const char* label, float v[3], float v_min, float v_max, const char* display_format = "%.3f", float power = 1.0f);
 //    IMGUI_API bool          SliderFloat4(const char* label, float v[4], float v_min, float v_max, const char* display_format = "%.3f", float power = 1.0f);
 //    IMGUI_API bool          SliderAngle(const char* label, float* v_rad, float v_degrees_min = -360.0f, float v_degrees_max = +360.0f);
-//    IMGUI_API bool          SliderInt(const char* label, int* v, int v_min, int v_max, const char* display_format = "%.0f");
+
+    fun sliderInt(label: String, v: IntArray, vMin: Int, vMax: Int, displayFormat: String = "%.0f"): Boolean {
+
+        var displayFormat = if (displayFormat.isEmpty()) "%.0f" else displayFormat
+        val vF = floatArrayOf(v[0].f)
+        val valueChanged = sliderFloat(label, vF, vMin.f, vMax.f, displayFormat, 1f)
+        v[0] = vF[0].i
+        return valueChanged
+    }
 //    IMGUI_API bool          SliderInt2(const char* label, int v[2], int v_min, int v_max, const char* display_format = "%.0f");
 //    IMGUI_API bool          SliderInt3(const char* label, int v[3], int v_min, int v_max, const char* display_format = "%.0f");
 //    IMGUI_API bool          SliderInt4(const char* label, int v[4], int v_min, int v_max, const char* display_format = "%.0f");

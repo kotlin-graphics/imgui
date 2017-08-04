@@ -5,7 +5,7 @@ import imgui.imgui.isKeyPressed
 /** Flags for ImGui::Begin()    */
 enum class WindowFlags(val i: Int) {
 
-    Default(0),
+    Null(0),
     /** Disable title-bar   */
     NoTitleBar(1 shl 0),
     /** Disable user resizing with the lower-right grip */
