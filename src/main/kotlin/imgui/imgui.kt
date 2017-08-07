@@ -2,6 +2,7 @@ package imgui
 
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
 import imgui.imgui.*
 
 // Helpers macros to generate 32-bits encoded colors
@@ -55,4 +56,4 @@ var debug = 0
 var ptrIndices = 0 // TODO move
 
 
-typealias SizeConstraintCallback = (userData: Any, pos: Vec2, currenSize: Vec2, desiredSize: Vec2) -> Unit
+typealias SizeConstraintCallback = (userData: Any, pos: Vec2i, currenSize: Vec2, desiredSize: Vec2) -> Unit

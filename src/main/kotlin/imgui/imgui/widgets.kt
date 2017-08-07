@@ -298,9 +298,13 @@ interface imgui_widgets {
      *  separate items with \0, end item-list with \0\0     */
     fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1) =
             combo(label, currentItem, Items.singleStringGetter, itemsSeparatedByZeros,
-                    // FIXME-OPT: Avoid computing this, or at least only when combo is open
-                    itemsSeparatedByZeros.count { it == '\u0000' } - 1,
+                    itemsSeparatedByZeros.count { it == '\u0000' } - 1, // FIXME-OPT: Avoid computing this, or at least only when combo is open
                     heightInItems)
+
+    fun combo(label: String, currentItem: IntArray, items: Array<String>, heightInItems: Int = -1): Boolean {
+        val itemsSeparatedByZeros = items.map { "$it\u0000" }.joinToString(separator = "") + "\u0000"
+        return combo(label, currentItem, Items.singleStringGetter, itemsSeparatedByZeros, items.size, heightInItems)
+    }
 
     // Combo box function.
     fun combo(label: String, currentItem: IntArray, itemsGetter: (String, Int) -> String?, data: String, itemsCount: Int,

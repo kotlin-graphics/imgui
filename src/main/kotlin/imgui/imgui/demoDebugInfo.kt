@@ -5,6 +5,7 @@ import glm_.f
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.alignFirstTextHeightToWidgets
@@ -45,8 +46,10 @@ import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
+import imgui.ImGui.setWindowSize
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderInt
 import imgui.ImGui.spacing
@@ -129,7 +132,7 @@ interface imgui_demoDebugInfo {
                 menuItem("Property editor", pSelected = showApp.propertyEditor)
                 menuItem("Long text display", "", showApp.longText)
                 menuItem("Auto-resizing window", "", showApp.autoResize)
-//                menuItem("Constrained-resizing window", "", showApp.constrainedResize)
+                menuItem("Constrained-resizing window", "", showApp.constrainedResize)
 //                menuItem("Simple overlay", NULL, &show_app_fixed_overlay)
 //                menuItem("Manipulating window title", NULL, &show_app_manipulating_window_title)
 //                menuItem("Custom rendering", NULL, &show_app_custom_rendering)
@@ -1750,7 +1753,7 @@ interface imgui_demoDebugInfo {
         /** Demonstrate creating a window with custom resize constraints.   */
         fun showExampleAppConstrainedResize(pOpen: BooleanArray) {
 
-            when (type) {
+            when (type[0]) {
                 0 -> setNextWindowSizeConstraints(Vec2(-1, 0), Vec2(-1, Float.MAX_VALUE))      // Vertical only
                 1 -> setNextWindowSizeConstraints(Vec2(0, -1), Vec2(Float.MAX_VALUE, -1))      // Horizontal only
                 2 -> setNextWindowSizeConstraints(Vec2(100), Vec2(Float.MAX_VALUE)) // Width > 100, Height > 100
@@ -1762,43 +1765,45 @@ interface imgui_demoDebugInfo {
             if (begin("Example: Constrained Resize", pOpen)) {
                 val desc = arrayOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
                         "Width 300-400", "Custom: Always Square", "Custom: Fixed Steps (100)")
-//                combo("Constraint", type, desc, IM_ARRAYSIZE(desc))
-//                if (ImGui::Button("200x200")) ImGui::SetWindowSize(ImVec2(200, 200)); ImGui::SameLine()
-//                if (ImGui::Button("500x500")) ImGui::SetWindowSize(ImVec2(500, 500)); ImGui::SameLine()
-//                if (ImGui::Button("800x200")) ImGui::SetWindowSize(ImVec2(800, 200))
-//                for (int i = 0; i < 10; i++)
-//                ImGui::Text("Hello, sailor! Making this line long enough for the example.")
+                combo("Constraint", type, desc)
+                button("200x200") { setWindowSize(Vec2(200)); sameLine() }
+                button("500x500") { setWindowSize(Vec2(500)); sameLine() }
+                button("800x200") {
+                    setWindowSize(Vec2(800, 200))
+                    for (i in 0 until 10)
+                        text("Hello, sailor! Making this line long enough for the example.")
+                }
             }
             end()
         }
 
         // Helper functions to demonstrate programmatic constraints
         object CustomConstraints {
-            val square: SizeConstraintCallback = { _: Any, _: Vec2, _: Vec2, desiredSize: Vec2 ->
+            val square: SizeConstraintCallback = { _: Any, _: Vec2i, _: Vec2, desiredSize: Vec2 ->
                 desiredSize put glm.max(desiredSize.x, desiredSize.y)
             }
-            val step: SizeConstraintCallback = { userData: Any, pos: Vec2, currenSize: Vec2, desiredSize: Vec2 ->
+            val step: SizeConstraintCallback = { userData: Any, _: Vec2i, _: Vec2, desiredSize: Vec2 ->
                 val step = (userData as Int).f
                 desiredSize.x = (desiredSize.x / step + 0.5f).i * step
                 desiredSize.y = (desiredSize.y / step + 0.5f).i * step
             }
         }
 
-        var type = 0
+        var type = intArrayOf(0)
 
         /** Demonstrate creating a simple static window with no decoration. */
         fun showExampleAppFixedOverlay(pOpen: BooleanArray) {
-            TODO()
-//            ImGui::SetNextWindowPos(ImVec2(10,10));
-//            if (!ImGui::Begin("Example: Fixed Overlay", p_open, ImVec2(0,0), 0.3f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings))
-//            {
-//                ImGui::End();
-//                return;
-//            }
-//            ImGui::Text("Simple overlay\non the top-left side of the screen.");
-//            ImGui::Separator();
-//            ImGui::Text("Mouse Position: (%.1f,%.1f)", ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y);
-//            ImGui::End();
+
+            setNextWindowPos(Vec2(10))
+            val flags = WindowFlags.NoTitleBar or WindowFlags.NoResize or WindowFlags.NoMove or WindowFlags.NoSavedSettings
+            if (!begin("Example: Fixed Overlay", pOpen, Vec2(), 0.3f, flags)) {
+                end()
+                return
+            }
+            text("Simple overlay\non the top-left side of the screen.")
+            separator()
+            text("Mouse Position: (%.1f,%.1f)", IO.mousePos.x, IO.mousePos.y)
+            end()
         }
 
         /** Demonstrate using "##" and "###" in identifiers to manipulate ID generation.

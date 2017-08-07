@@ -165,7 +165,7 @@ interface imgui_window {
             window.beginCount = 0
             window.clipRect.put(-Float.MAX_VALUE, -Float.MAX_VALUE, +Float.MAX_VALUE, +Float.MAX_VALUE)
             window.lastFrameActive = currentFrame
-            for(i in 1 until window.idStack.size) window.idStack.pop()  // resize 1
+            for (i in 1 until window.idStack.size) window.idStack.pop()  // resize 1
 
             // Clear draw list, setup texture, outer clipping rectangle
             window.drawList.clear()
@@ -799,14 +799,14 @@ interface imgui_window {
 
     /** set next window size limits. use -1,-1 on either X/Y axis to preserve the current size. Use callback to apply
      *  non-trivial programmatic constraints.   */
-    fun setNextWindowSizeConstraints(sizeMin:Vec2, sizeMax:Vec2, customCallback: SizeConstraintCallback? = null,
+    fun setNextWindowSizeConstraints(sizeMin: Vec2, sizeMax: Vec2, customCallback: SizeConstraintCallback? = null,
                                      customCallbackUserData: Any? = null) {
 
         g.setNextWindowSizeConstraint = true
         g.setNextWindowSizeConstraintRect.min put sizeMin
         g.setNextWindowSizeConstraintRect.min put sizeMax
-        g.setNextWindowSizeConstraintCallback = customCallback
-        g.setNextWindowSizeConstraintCallbackUserData = customCallbackUserData
+//        g.setNextWindowSizeConstraintCallback = customCallback
+//        g.setNextWindowSizeConstraintCallbackUserData = customCallbackUserData
     }
 
     /** set next window content size (enforce the range of scrollbars). set axis to 0.0f to leave it automatic. call

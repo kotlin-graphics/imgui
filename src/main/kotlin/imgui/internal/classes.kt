@@ -589,16 +589,9 @@ class Window(
             val cr = g.setNextWindowSizeConstraintRect
             newSize.x = if (cr.min.x >= 0 && cr.max.x >= 0) glm.clamp(newSize.x, cr.min.x, cr.max.x) else sizeFull.x
             newSize.y = if (cr.min.y >= 0 && cr.max.y >= 0) glm.clamp(newSize.y, cr.min.y, cr.max.y) else sizeFull.y
-            TODO()
-//        if (g.setNextWindowSizeConstraintCallback)        {
-//            ImGuiSizeConstraintCallbackData data
-//            data.UserData = g.SetNextWindowSizeConstraintCallbackUserData
-//            data.Pos = window->Pos
-//            data.CurrentSize = window->SizeFull
-//            data.DesiredSize = newSize
-//            g.SetNextWindowSizeConstraintCallback(&data)
-//            newSize = data.DesiredSize
-//        }
+            g.setNextWindowSizeConstraintCallback?.let {
+//                it(g.setNextWindowSizeConstraintCallbackUserData!!, pos, sizeFull, newSize)
+            }
         }
         if (flags hasnt (WindowFlags.ChildWindow or WindowFlags.AlwaysAutoResize))
             newSize max_ Style.windowMinSize
