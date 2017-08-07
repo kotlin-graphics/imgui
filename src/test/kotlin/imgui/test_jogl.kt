@@ -1,47 +1,56 @@
 package imgui
 
-
+import com.jogamp.newt.event.WindowAdapter
+import com.jogamp.newt.event.WindowEvent
+import com.jogamp.newt.opengl.GLWindow
+import com.jogamp.opengl.GL.GL_COLOR_BUFFER_BIT
+import com.jogamp.opengl.GLAutoDrawable
+import com.jogamp.opengl.GLCapabilities
+import com.jogamp.opengl.GLEventListener
+import com.jogamp.opengl.GLProfile
+import com.jogamp.opengl.util.Animator
 import glm_.vec2.Vec2
-import imgui.impl.GlfwGL3
-import org.lwjgl.glfw.GLFW.glfwPollEvents
-import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11.*
-import uno.glfw.GlfwWindow
-import uno.glfw.glfw
-import uno.gln.glViewport
+import imgui.impl.JoglGL3
+import uno.gln.jogl.glViewport
 
 fun main(args: Array<String>) {
-    HelloWorld().run()
+    HelloWorld_jogl().setup()
 }
 
-class HelloWorld {
+class HelloWorld_jogl : GLEventListener {
 
-    val window: GlfwWindow
+    val window: GLWindow = run {
 
-    init {
+        val glProfile = GLProfile.get(GLProfile.GL3)
+        val glCapabilities = GLCapabilities(glProfile)
 
-        with(glfw) {
-            init()
-            windowHint {
-                context.version = "3.3"
-                profile = "core"
-            }
+        GLWindow.create(glCapabilities).apply {
+            title = "ImGui Jogl OpenGL3 example"
+            setSize(1280, 720)
         }
-
-        window = GlfwWindow(1280, 720, "ImGui OpenGL3 example")
-
-        with(window) {
-            makeContextCurrent()
-            show()
-        }
-
-        GL.createCapabilities()
     }
 
-    fun run() {
+    val animator = Animator()
+
+    fun setup() {
+
+        window.addGLEventListener(this)
+        window.isVisible = true
+
+        animator.add(window)
+        animator.start()
+
+        window.addWindowListener(object : WindowAdapter() {
+            override fun windowDestroyed(e: WindowEvent) {
+                animator.stop(); System.exit(0); }
+        })
+    }
+
+
+    override fun init(drawable: GLAutoDrawable) {
 
         // Setup ImGui binding
-        GlfwGL3.init(window, true)
+        JoglGL3.init(window, true)
 
         // Load Fonts
         // (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)
@@ -52,27 +61,15 @@ class HelloWorld {
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyClean.ttf", 13.0f);
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
         //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-
-        clearColor = Color(114, 144, 154).run { floatArrayOf(value.x, value.y, value.z) }
-
-        while (window.open)
-            loop()
-
-        GlfwGL3.shutdown()
-
-        window.destroy()
-        glfw.terminate()
     }
 
-    lateinit var clearColor: FloatArray
+    val clearColor = floatArrayOf(114 / 255f, 144 / 255f, 154 / 255f)
     var showAnotherWindow = booleanArrayOf(false)
     var showTestWindow = booleanArrayOf(false)
 
-    fun loop() {
+    override fun display(drawable: GLAutoDrawable) = with(drawable.gl.gL3) {
 
-
-        glfwPollEvents()
-        GlfwGL3.newFrame()
+        JoglGL3.newFrame(this)
 
         with(ImGui) {
 
@@ -114,11 +111,16 @@ class HelloWorld {
         }
 
         // Rendering
-        glViewport(window.framebufferSize)
+        glViewport(window.x, window.y)
         glClearColor(clearColor[0], clearColor[1], clearColor[2], 1f)  // TODO gln
         glClear(GL_COLOR_BUFFER_BIT)
         ImGui.render()
-        window.swapBuffers()
+    }
+
+    override fun reshape(drawable: GLAutoDrawable, x: Int, y: Int, width: Int, height: Int) {}
+
+    override fun dispose(drawable: GLAutoDrawable) {
+        JoglGL3.shutdown(drawable.gl.gL3)
     }
 
     companion object {

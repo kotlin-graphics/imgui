@@ -1,33 +1,29 @@
 package imgui.impl
 
+import com.jogamp.newt.event.KeyEvent
+import com.jogamp.newt.event.KeyListener
+import com.jogamp.newt.event.MouseEvent
+import com.jogamp.newt.event.MouseListener
+import com.jogamp.newt.opengl.GLWindow
+import com.jogamp.opengl.GL2ES3.*
+import com.jogamp.opengl.GL3
 import glm_.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
 import imgui.*
-import org.lwjgl.glfw.GLFW.*
-import org.lwjgl.opengl.GL11.*
-import org.lwjgl.opengl.GL13.*
-import org.lwjgl.opengl.GL14.*
-import org.lwjgl.opengl.GL15.*
-import org.lwjgl.opengl.GL20.*
-import org.lwjgl.opengl.GL30.*
 import uno.buffer.byteBufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
-import uno.gl.checkError
-import uno.gl.glGetVec4i
 import uno.glf.semantic
-import uno.glfw.GlfwWindow
-import uno.glfw.glfw
-import uno.gln.*
+import uno.gln.jogl.*
 import uno.glsl.Program
 
+object JoglGL3 {
 
-object GlfwGL3 {
-
-    lateinit var window: GlfwWindow
+    lateinit var window: GLWindow
     var time = 0.0
-    val mousePressed = Array(3, { false })
+    val mousePressed = BooleanArray(3)
     var mouseWheel = 0f
 
     object Buffer {
@@ -43,42 +39,40 @@ object GlfwGL3 {
 
     val mat = Mat4()
 
-    fun init(window: GlfwWindow, installCallbacks: Boolean): Boolean {
+    fun init(window: GLWindow, installCallbacks: Boolean): Boolean {
 
         this.window = window
 
         with(IO) {
             // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
-            keyMap[Key.Tab] = GLFW_KEY_TAB
-            keyMap[Key.LeftArrow] = GLFW_KEY_LEFT
-            keyMap[Key.RightArrow] = GLFW_KEY_RIGHT
-            keyMap[Key.UpArrow] = GLFW_KEY_UP
-            keyMap[Key.DownArrow] = GLFW_KEY_DOWN
-            keyMap[Key.PageUp] = GLFW_KEY_PAGE_UP
-            keyMap[Key.PageDown] = GLFW_KEY_PAGE_DOWN
-            keyMap[Key.Home] = GLFW_KEY_HOME
-            keyMap[Key.End] = GLFW_KEY_END
-            keyMap[Key.Delete] = GLFW_KEY_DELETE
-            keyMap[Key.Backspace] = GLFW_KEY_BACKSPACE
-            keyMap[Key.Enter] = GLFW_KEY_ENTER
-            keyMap[Key.Escape] = GLFW_KEY_ESCAPE
-            keyMap[Key.A] = GLFW_KEY_A
-            keyMap[Key.C] = GLFW_KEY_C
-            keyMap[Key.V] = GLFW_KEY_V
-            keyMap[Key.X] = GLFW_KEY_X
-            keyMap[Key.Y] = GLFW_KEY_Y
-            keyMap[Key.Z] = GLFW_KEY_Z
+            keyMap[Key.Tab] = KeyEvent.VK_TAB.i
+            keyMap[Key.LeftArrow] = KeyEvent.VK_LEFT.i
+            keyMap[Key.RightArrow] = KeyEvent.VK_RIGHT.i
+            keyMap[Key.UpArrow] = KeyEvent.VK_UP.i
+            keyMap[Key.DownArrow] = KeyEvent.VK_DOWN.i
+            keyMap[Key.PageUp] = KeyEvent.VK_PAGE_UP.i
+            keyMap[Key.PageDown] = KeyEvent.VK_PAGE_DOWN.i
+            keyMap[Key.Home] = KeyEvent.VK_HOME.i
+            keyMap[Key.End] = KeyEvent.VK_END.i
+            keyMap[Key.Delete] = KeyEvent.VK_DELETE.i
+            keyMap[Key.Backspace] = KeyEvent.VK_BACK_SPACE.i
+            keyMap[Key.Enter] = KeyEvent.VK_ENTER.i
+            keyMap[Key.Escape] = KeyEvent.VK_ESCAPE.i
+            keyMap[Key.A] = KeyEvent.VK_A.i
+            keyMap[Key.C] = KeyEvent.VK_C.i
+            keyMap[Key.V] = KeyEvent.VK_V.i
+            keyMap[Key.X] = KeyEvent.VK_X.i
+            keyMap[Key.Y] = KeyEvent.VK_Y.i
+            keyMap[Key.Z] = KeyEvent.VK_Z.i
 
             /* Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the
                same ImDrawData pointer.             */
-            renderDrawListsFn = this@GlfwGL3::renderDrawLists
+            renderDrawListsFn = this@JoglGL3::renderDrawLists
         }
 
         if (installCallbacks) {
-            window.mouseButtonCallback = mouseButtonCallback
-            window.scrollCallback = scrollCallback
-            window.keyCallback = keyCallback
-            window.charCallback = charCallback
+            window.addMouseListener(mouseCallback)
+            window.addKeyListener(keyCallback)
         }
 
         return true
@@ -89,48 +83,52 @@ object GlfwGL3 {
     var vtxBuffer = byteBufferBig(vtxSize)
     var idxBuffer = intBufferBig(idxSize / Int.BYTES)
 
+    val cursorPos = Vec2i()
+    lateinit var gl: GL3
 
-    fun newFrame() {
+    fun newFrame(gl: GL3) {
+
+        this.gl = gl
 
         if (fontTexture[0] == 0)
-            createDeviceObjects()
+            createDeviceObjects(gl)
 
         // Setup display size (every frame to accommodate for window resizing)
-        IO.displaySize put window.size
-        IO.displayFramebufferScale.x = if (window.size.x > 0) window.framebufferSize.x / window.size.x.f else 0f
-        IO.displayFramebufferScale.y = if (window.size.y > 0) window.framebufferSize.y / window.size.y.f else 0f
+        IO.displaySize.x = window.width
+        IO.displaySize.y = window.height
+        IO.displayFramebufferScale.x = 1f //if (window.width > 0) window.framebufferSize.x / window.size.x.f else 0f
+        IO.displayFramebufferScale.y = 1f //if (window.height > 0) window.framebufferSize.y / window.size.y.f else 0f
 
         // Setup time step
-        val currentTime = glfw.time
-        IO.deltaTime = if (time > 0.0) (currentTime - time).f else 1.0f / 60.0f
+        val currentTime = System.nanoTime() / 1e9
+        IO.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         time = currentTime
 
         // Setup inputs
         // (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
         // Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)
-        if (window.focused)
-            IO.mousePos put window.cursorPos
+        if (window.hasFocus())
+            IO.mousePos put cursorPos
         else
             IO.mousePos put -1
 
         repeat(3) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
-            IO.mouseDown[it] = mousePressed[it] || window.mouseButton(it) != 0
-            mousePressed[it] = false
+            IO.mouseDown[it] = mousePressed[it]
         }
 
         IO.mouseWheel = mouseWheel
         mouseWheel = 0f
 
         // Hide OS mouse cursor if ImGui is drawing it
-        window.cursor = if (IO.mouseDrawCursor) GlfwWindow.Cursor.Hidden else GlfwWindow.Cursor.Normal
+        window.isPointerVisible = !IO.mouseDrawCursor
 
         // Start the frame
         ImGui.newFrame()
     }
 
-    private fun createDeviceObjects(): Boolean {
+    private fun createDeviceObjects(gl: GL3): Boolean = with(gl) {
 
         // Backup GL state
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
@@ -138,29 +136,29 @@ object GlfwGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
 
-        program = ProgramA("shader")
+        program = ProgramA(gl, "shader")
 
         glGenBuffers(bufferName)
 
         glGenVertexArrays(vaoName)
         withVertexArray(vaoName) {
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-            glBufferData(GL_ARRAY_BUFFER, vtxSize, GL_STREAM_DRAW)
+            glBufferData(GL_ARRAY_BUFFER, vtxSize.L, null, GL_STREAM_DRAW)
             glEnableVertexAttribArray(semantic.attr.POSITION)
             glEnableVertexAttribArray(semantic.attr.TEX_COORD)
             glEnableVertexAttribArray(semantic.attr.COLOR)
 
             glVertexAttribPointer(semantic.attr.POSITION, 2, GL_FLOAT, false, DrawVert.size, 0)
-            glVertexAttribPointer(semantic.attr.TEX_COORD, 2, GL_FLOAT, false, DrawVert.size, Vec2.size)
-            glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
+            glVertexAttribPointer(semantic.attr.TEX_COORD, 2, GL_FLOAT, false, DrawVert.size, Vec2.size.L)
+            glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size.L)
 
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize, GL_STREAM_DRAW)
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize.L, null, GL_STREAM_DRAW)
         }
 
         checkError("createDeviceObject")
 
-        createFontsTexture()
+        createFontsTexture(gl)
 
         // Restore modified GL state
         glUseProgram(lastProgram)
@@ -171,7 +169,7 @@ object GlfwGL3 {
         return true
     }
 
-    private fun checkSize(draws: ArrayList<DrawList>) {
+    private fun checkSize(gl: GL3, draws: ArrayList<DrawList>) = with(gl) {
 
         val minVtxSize = draws.map { it.vtxBuffer.size }.sum() * DrawVert.size
         val minIdxSize = draws.map { it.idxBuffer.size }.sum() * Int.BYTES
@@ -196,17 +194,17 @@ object GlfwGL3 {
             withVertexArray(vaoName) {
 
                 glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-                glBufferData(GL_ARRAY_BUFFER, vtxSize, GL_STREAM_DRAW)
+                glBufferData(GL_ARRAY_BUFFER, vtxSize.L, null, GL_STREAM_DRAW)
                 glEnableVertexAttribArray(semantic.attr.POSITION)
                 glEnableVertexAttribArray(semantic.attr.TEX_COORD)
                 glEnableVertexAttribArray(semantic.attr.COLOR)
 
                 glVertexAttribPointer(semantic.attr.POSITION, 2, GL_FLOAT, false, DrawVert.size, 0)
-                glVertexAttribPointer(semantic.attr.TEX_COORD, 2, GL_FLOAT, false, DrawVert.size, Vec2.size)
-                glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
+                glVertexAttribPointer(semantic.attr.TEX_COORD, 2, GL_FLOAT, false, DrawVert.size, Vec2.size.L)
+                glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size.L)
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize, GL_STREAM_DRAW)
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize.L, null, GL_STREAM_DRAW)
             }
 
             checkError("render")
@@ -215,16 +213,16 @@ object GlfwGL3 {
         }
     }
 
-    class ProgramA(shader: String) : Program("$shader.vert", "$shader.frag") {
-        val mat = glGetUniformLocation(name, "mat")
+    class ProgramA(gl: GL3, shader: String) : Program(gl, shader) {
+        val mat = gl.glGetUniformLocation(name, "mat")
 
         init {
-            usingProgram(name) { glUniform(glGetUniformLocation(name, "Texture"), semantic.sampler.DIFFUSE) }
+            gl.usingProgram(name) { "Texture".unit = semantic.sampler.DIFFUSE }
         }
     }
 
     /** Build texture atlas */
-    private fun createFontsTexture(): Boolean {
+    private fun createFontsTexture(gl: GL3): Boolean = with(gl) {
 
         /*  Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely
             to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than
@@ -232,7 +230,7 @@ object GlfwGL3 {
         val (pixels, size) = IO.fonts.getTexDataAsRGBA32()
 
         // Upload texture to graphics system
-        val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
+        val lastTexture = gl.glGetInteger(GL_TEXTURE_BINDING_2D)
 
         initTexture2d(fontTexture) {
             minFilter = linear
@@ -255,7 +253,7 @@ object GlfwGL3 {
      *  'RenderDrawListsFn' in the ImGuiIO structure)
      *  If text or lines are blurry when integrating ImGui in your engine:
      *      - in your Render function, try translating your projection matrix by (0.5f,0.5f) or (0.375f,0.375f) */
-    fun renderDrawLists(drawData: DrawData) {
+    fun renderDrawLists(drawData: DrawData) = with(gl) {
 
         /** Avoid rendering when minimized, scale coordinates for retina displays
          *  (screen coordinates != framebuffer coordinates) */
@@ -297,7 +295,7 @@ object GlfwGL3 {
         glUseProgram(program)
         glUniform(program.mat, ortho)
 
-        checkSize(drawData.cmdLists)
+        checkSize(this, drawData.cmdLists)
 
         glBindVertexArray(vaoName)
 
@@ -349,39 +347,62 @@ object GlfwGL3 {
         glScissor(lastScissorBox)
     }
 
-    private val mouseButtonCallback = { button: Int, action: Int, _: Int ->
-        if (action == GLFW_PRESS && button >= 0 && button < 3)
-            mousePressed[button] = true
-    }
+    private object mouseCallback : MouseListener {
 
-    private val scrollCallback = { _: Double, yOffset: Double ->
-        mouseWheel += yOffset.f // Use fractional mouse wheel, 1.0 unit 5 lines.
-    }
+        override fun mouseReleased(e: MouseEvent) {
+            if (e.button in MouseEvent.BUTTON1..MouseEvent.BUTTON3)
+                mousePressed[e.button.i - 1] = false
+        }
 
-    private val keyCallback = { key: Int, _: Int, action: Int, _: Int ->
-        with(IO) {
-            if (key in keysDown.indices)
-                if (action == GLFW_PRESS)
-                    keysDown[key] = true
-                else if (action == GLFW_RELEASE)
-                    keysDown[key] = false
+        override fun mouseMoved(e: MouseEvent) {
+            cursorPos.put(e.x, e.y)
+        }
 
-//        (void) mods // Modifiers are not reliable across systems
-            keyCtrl = keysDown[GLFW_KEY_LEFT_CONTROL] || keysDown[GLFW_KEY_RIGHT_CONTROL]
-            keyShift = keysDown[GLFW_KEY_LEFT_SHIFT] || keysDown[GLFW_KEY_RIGHT_SHIFT]
-            keyAlt = keysDown[GLFW_KEY_LEFT_ALT] || keysDown[GLFW_KEY_RIGHT_ALT]
-            keySuper = keysDown[GLFW_KEY_LEFT_SUPER] || keysDown[GLFW_KEY_RIGHT_SUPER]
+        override fun mouseEntered(e: MouseEvent) {}
+
+        override fun mouseDragged(e: MouseEvent) {
+            cursorPos.put(e.x, e.y)
+        }
+
+        override fun mouseClicked(e: MouseEvent) {}
+
+        override fun mouseExited(e: MouseEvent) {}
+
+        override fun mousePressed(e: MouseEvent) {
+            if (e.button in MouseEvent.BUTTON1..MouseEvent.BUTTON3)
+                mousePressed[e.button.i - 1] = true
+        }
+
+        override fun mouseWheelMoved(e: MouseEvent) {
+            mouseWheel += e.rotation[1] // Use fractional mouse wheel, 1.0 unit 5 lines.
         }
     }
 
-    private val charCallback = { c: Int -> if (c in 1..65535) IO.addInputCharacter(c.c) }
+    private object keyCallback : KeyListener {
+        //        (void) mods // Modifiers are not reliable across systems
+        override fun keyPressed(e: KeyEvent) = with(IO) {
+            if (e.keyCode <= keysDown.size) keysDown[e.keyCode.i] = true
+            if (e.keyCode == KeyEvent.VK_WINDOWS) keySuper = true
+            keyCtrl = e.isControlDown
+            keyShift = e.isShiftDown
+            keyAlt = e.isAltDown
+        }
 
-    fun shutdown() {
-        invalidateDeviceObjects()
+        override fun keyReleased(e: KeyEvent) = with(IO) {
+            if (e.keyCode <= keysDown.size) keysDown[e.keyCode.i] = false
+            if (e.keyCode == KeyEvent.VK_WINDOWS) keySuper = false
+            keyCtrl = e.isControlDown
+            keyShift = e.isShiftDown
+            keyAlt = e.isAltDown
+        }
+    }
+
+    fun shutdown(gl: GL3) {
+        invalidateDeviceObjects(gl)
         ImGui.shutdown()
     }
 
-    private fun invalidateDeviceObjects() {
+    private fun invalidateDeviceObjects(gl: GL3) = with(gl) {
 
         glDeleteVertexArrays(vaoName)
         glDeleteBuffers(bufferName)
