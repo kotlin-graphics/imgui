@@ -358,7 +358,7 @@ object LwjglGL3 {
 
     private val keyCallback = { key: Int, _: Int, action: Int, _: Int ->
         with(IO) {
-            if (key <= keysDown.size)
+            if (key in keysDown.indices)
                 if (action == GLFW_PRESS)
                     keysDown[key] = true
                 else if (action == GLFW_RELEASE)

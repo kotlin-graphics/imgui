@@ -109,6 +109,15 @@ class HelloWorld_lwjgl {
                     showTestWindow(showTestWindow)
                 }
             }
+
+            /*val buf = CharArray(256)
+
+            text("Hello, world %d", 123)
+            button("OK"){
+                // react
+            }
+            inputText("string", buf)
+            sliderFloat("float", f, 0f, 1f)*/
         }
 
         // Rendering
