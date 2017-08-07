@@ -6,6 +6,6 @@ JVM port of [imgui](https://github.com/ocornut/imgui)
 
 ### Status:
 
-To check what has been already ported and working, simply run the [test](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test.kt).
+To check what has been already ported and working, simply run one of the tests: [lwjgl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test_lwjgl.kt) or [jogl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test_jogl.kt).
 
-You should refer to it also to learn how to use the imgui library.
+You should refer to those also to learn how to use the imgui library.
