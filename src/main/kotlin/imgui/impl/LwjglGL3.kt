@@ -115,7 +115,6 @@ object LwjglGL3 {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
             IO.mouseDown[it] = mousePressed[it] || window.mouseButton(it) != 0
-            println(IO.mouseDown[0])
             mousePressed[it] = false
         }
 

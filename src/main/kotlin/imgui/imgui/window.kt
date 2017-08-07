@@ -805,8 +805,8 @@ interface imgui_window {
         g.setNextWindowSizeConstraint = true
         g.setNextWindowSizeConstraintRect.min put sizeMin
         g.setNextWindowSizeConstraintRect.min put sizeMax
-//        g.setNextWindowSizeConstraintCallback = customCallback
-//        g.setNextWindowSizeConstraintCallbackUserData = customCallbackUserData
+        g.setNextWindowSizeConstraintCallback = customCallback
+        g.setNextWindowSizeConstraintCallbackUserData = customCallbackUserData
     }
 
     /** set next window content size (enforce the range of scrollbars). set axis to 0.0f to leave it automatic. call
