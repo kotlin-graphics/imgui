@@ -23,7 +23,7 @@ with(ImGui) {
 ```
 
 ### Java
-```Java
+```java
 ImGui imgui = ImGui.INSTANCE;
 imgui.text("Hello, world %d", 123);
 if(imgui.button("OK")) {
