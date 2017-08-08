@@ -903,7 +903,7 @@ class DrawList {
         val idxBufferOldSize = idxBuffer.size
         for (i in 0 until idxCount)
             if (idxCount > 0) idxBuffer.add(0)
-            else idxBuffer.removeAt(idxBuffer.lastIndex)
+           else idxBuffer.removeAt(idxBuffer.lastIndex)
         _idxWritePtr = idxBufferOldSize
     }
 

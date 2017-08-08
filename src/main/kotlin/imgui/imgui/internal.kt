@@ -1587,7 +1587,7 @@ interface imgui_internal {
             } else {
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
-                val storedValue = storage.intABaaaaaaaaaaaaaaaaaaaaaasassaaa(id, -1)
+                val storedValue = storage.int(id, -1)
                 if (storedValue == -1) {
                     isOpen = g.setNextTreeNodeOpenVal
                     storage[id] = isOpen
@@ -1596,7 +1596,7 @@ interface imgui_internal {
             }
             g.setNextTreeNodeOpenCond = 0
         } else
-            isOpen = storage.intABaaaaaaaaaaaaaaaaaaaaaasassaaa(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0
+            isOpen = storage.int(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).

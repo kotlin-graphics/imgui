@@ -399,6 +399,8 @@ object JoglGL3 {
 
     fun shutdown(gl: GL3) {
         invalidateDeviceObjects(gl)
+        window.removeMouseListener(mouseCallback)
+        window.removeKeyListener(keyCallback)
         ImGui.shutdown()
     }
 
