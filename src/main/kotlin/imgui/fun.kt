@@ -4,8 +4,10 @@ import gli.has
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
+import imgui.Context.style
 import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
+import imgui.ImGui.calcItemWidth
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endPopup
@@ -24,7 +26,17 @@ import imgui.Context as g
 
 fun logRenderedText(refPos: Vec2, text: String, textEnd: Int = 0): Nothing = TODO()
 
-//static void             PushMultiItemsWidths(int components, float w_full = 0.0f);
+fun pushMultiItemsWidths(components: Int, wFull: Float = 0f) {
+
+    val window = currentWindow
+    val wFull = if (wFull <= 0f) calcItemWidth() else wFull
+    val wItemOne = glm.max(1f, ((wFull - (style.itemInnerSpacing.x) * (components - 1)) / components.f).i.f)
+    val wItemLast = glm.max(1f, (wFull - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
+    window.dc.itemWidthStack.push(wItemLast)
+    for (i in 0 until components - 1)
+        window.dc.itemWidthStack.push(wItemOne)
+    window.dc.itemWidth = window.dc.itemWidthStack.last()
+}
 
 fun getDraggedColumnOffset(columnIndex: Int): Float {
     /*  Active (dragged) column always follow mouse. The reason we need this is that dragging a column to the right edge
@@ -38,8 +50,8 @@ fun getDraggedColumnOffset(columnIndex: Int): Float {
     assert(g.activeId == window.dc.columnsSetId + columnIndex)
 
     var x = IO.mousePos.x - g.activeIdClickOffset.x - window.pos.x
-    x = glm.clamp(x, ImGui.getColumnOffset(columnIndex - 1) + Style.columnsMinSpacing,
-            ImGui.getColumnOffset(columnIndex + 1) - Style.columnsMinSpacing)
+    x = glm.clamp(x, ImGui.getColumnOffset(columnIndex - 1) + style.columnsMinSpacing,
+            ImGui.getColumnOffset(columnIndex + 1) - style.columnsMinSpacing)
 
     return x.i.f
 }
@@ -65,7 +77,7 @@ fun findHoveredWindow(pos: Vec2, excludingChilds: Boolean): Window? {
             continue
 
         // Using the clipped AABB so a child window will typically be clipped by its parent.
-        val bb = Rect(window.windowRectClipped.min - Style.touchExtraPadding, window.windowRectClipped.max + Style.touchExtraPadding)
+        val bb = Rect(window.windowRectClipped.min - style.touchExtraPadding, window.windowRectClipped.max + style.touchExtraPadding)
         if (bb contains pos)
             return window
     }
@@ -201,21 +213,21 @@ fun scrollbar(window: Window, horizontal: Boolean) {
 
     // Render background
     val otherScrollbar = if (horizontal) window.scrollbar.y else window.scrollbar.x
-    val otherScrollbarSizeW = if (otherScrollbar) Style.scrollbarSize else 0f
+    val otherScrollbarSizeW = if (otherScrollbar) style.scrollbarSize else 0f
     val windowRect = window.rect()
     val borderSize = window.borderSize
     val bb =
             if (horizontal)
-                Rect(window.pos.x + borderSize, windowRect.max.y - Style.scrollbarSize,
+                Rect(window.pos.x + borderSize, windowRect.max.y - style.scrollbarSize,
                         windowRect.max.x - otherScrollbarSizeW - borderSize, windowRect.max.y - borderSize)
             else
-                Rect(windowRect.max.x - Style.scrollbarSize, window.pos.y + borderSize,
+                Rect(windowRect.max.x - style.scrollbarSize, window.pos.y + borderSize,
                         windowRect.max.x - borderSize, windowRect.max.y - otherScrollbarSizeW - borderSize)
     if (!horizontal)
         bb.min.y += window.titleBarHeight() + if (window.flags has WindowFlags.MenuBar) window.menuBarHeight() else 0f
     if (bb.width <= 0f || bb.height <= 0f) return
 
-    val windowRounding = if (window.flags has WindowFlags.ChildWindow) Style.childWindowRounding else Style.windowRounding
+    val windowRounding = if (window.flags has WindowFlags.ChildWindow) style.childWindowRounding else style.windowRounding
     val windowRoundingCorners =
             if (horizontal)
                 Corner.BottomLeft or if (otherScrollbar) Corner.All else Corner.BottomRight
@@ -238,7 +250,7 @@ fun scrollbar(window: Window, horizontal: Boolean) {
     /*  The grabable box size generally represent the amount visible (vs the total scrollable amount)
         But we maintain a minimum size in pixel to allow for the user to still aim inside.  */
     val grabHPixels = glm.min(
-            glm.max(scrollbarSizeV * saturate(winSizeAvailV / glm.max(winSizeContentsV, winSizeAvailV)), Style.grabMinSize),
+            glm.max(scrollbarSizeV * saturate(winSizeAvailV / glm.max(winSizeContentsV, winSizeAvailV)), style.grabMinSize),
             scrollbarSizeV)
     val grabHNorm = grabHPixels / scrollbarSizeV
 
@@ -298,12 +310,12 @@ fun scrollbar(window: Window, horizontal: Boolean) {
         window.drawList.addRectFilled(
                 Vec2(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y),
                 Vec2(lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, bb.max.y),
-                grabCol, Style.scrollbarRounding)
+                grabCol, style.scrollbarRounding)
     else
         window.drawList.addRectFilled(
                 Vec2(bb.min.x, lerp(bb.min.y, bb.max.y, grabVNorm)),
                 Vec2(bb.max.x, lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels),
-                grabCol, Style.scrollbarRounding)
+                grabCol, style.scrollbarRounding)
 }
 
 
@@ -335,7 +347,7 @@ fun loadIniSettingsFromDisk(iniFilename: String?) {
             settings = findWindowSettings(name) ?: addWindowSettings(name)
         } else if (settings != null) when {
             it.startsWith("Pos") -> settings!!.pos.put(it.substring(4).split(","))
-            it.startsWith("Size") -> settings!!.size put glm.max(Vec2i(it.substring(5).split(",")), Style.windowMinSize)
+            it.startsWith("Size") -> settings!!.size put glm.max(Vec2i(it.substring(5).split(",")), style.windowMinSize)
             it.startsWith("Collapsed") -> settings!!.collapsed = it.substring(10).toBoolean()
         }
     }
@@ -409,9 +421,9 @@ fun beginPopupEx(strId: String, extraFlags: Int): Boolean {
 
     val name =
             if (flags has WindowFlags.ChildMenu)
-                "##menu_%d".format(Style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
+                "##menu_%d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
             else
-                "##popup_%08x".format(Style.locale, id)     // Not recycling, so we can close/open during the same frame
+                "##popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
 
     val isOpen = begin(name, null, flags)
     if (window.flags hasnt WindowFlags.ShowBorders)
@@ -455,7 +467,7 @@ fun closeInactivePopups() {
         }
 
     if (n < g.openPopupStack.size)   // This test is not required but it allows to set a useful breakpoint on the line below
-        for(i in n until g.openPopupStack.size) g.openPopupStack.pop()  // resize(n)
+        for (i in n until g.openPopupStack.size) g.openPopupStack.pop()  // resize(n)
 }
 
 fun closePopupToLevel(remaining: Int) {
@@ -463,7 +475,7 @@ fun closePopupToLevel(remaining: Int) {
         focusWindow(g.openPopupStack[remaining - 1].window)
     else
         focusWindow(g.openPopupStack[0].parentWindow)
-    for(i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
+    for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
 }
 
 fun closePopup(id: Int) {
@@ -488,7 +500,7 @@ fun findBestPopupWindowPos(basePos: Vec2, window: Window, rInner: Rect): Vec2 {
 
     /*  Clamp into visible area while not overlapping the cursor. Safety padding is optional if our popup size won't fit
         without it. */
-    val safePadding = Style.displaySafeAreaPadding
+    val safePadding = style.displaySafeAreaPadding
     val rOuter = Rect(getVisibleRect())
     rOuter.reduce(Vec2(if (size.x - rOuter.width > safePadding.x * 2) safePadding.x else 0f,
             if (size.y - rOuter.height > safePadding.y * 2) safePadding.y else 0f))
@@ -604,7 +616,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance(c) * scale  //TODO check
+        val charWidth: Float = font.getCharAdvance_A(c) * scale  //TODO rename back
         lineWidth += charWidth
     }
 
@@ -631,16 +643,16 @@ fun IntArray.format(dataType: DataType, displayFormat: String, buf: CharArray): 
         DataType.Float -> glm.intBitsToFloat(this[0])
         else -> throw Error()
     }
-    return displayFormat.format(Style.locale, value).toCharArray(buf)
+    return displayFormat.format(style.locale, value).toCharArray(buf)
 }
 
 /** JVM Imgui, dataTypeFormatString replacement */
 fun IntArray.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) = when (dataType) {
 
-    DataType.Int -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}d".format(Style.locale, this[0])
+    DataType.Int -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}d".format(style.locale, this[0])
 /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
     non-significant digits?         */
-    DataType.Float -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f".format(Style.locale, glm.intBitsToFloat(this[0]))
+    DataType.Float -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f".format(style.locale, glm.intBitsToFloat(this[0]))
     else -> throw Error("unsupported format data type")
 }.toCharArray(buf)
 

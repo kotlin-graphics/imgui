@@ -8,6 +8,7 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
+import imgui.Context.style
 import imgui.internal.invLength
 import imgui.internal.strlen
 import java.util.*
@@ -326,7 +327,7 @@ class DrawList {
         if (points.size < 2) return
 
         val uv = g.fontTexUvWhitePixel
-        val antiAliased = antiAliased && Style.antiAliasedLines
+        val antiAliased = antiAliased && style.antiAliasedLines
         //if (ImGui::GetIO().KeyCtrl) antiAliased = false; // Debug
 
         var count = points.size
@@ -536,7 +537,7 @@ class DrawList {
     fun addConvexPolyFilled(points: ArrayList<Vec2>, col: Int, antiAliased: Boolean) {
 
         val uv = g.fontTexUvWhitePixel
-        val antiAliased = antiAliased && Style.antiAliasedShapes
+        val antiAliased = antiAliased && style.antiAliasedShapes
         //if (ImGui::GetIO().KeyCtrl) antiAliased = false; // Debug
 
         if (antiAliased) {
@@ -690,7 +691,7 @@ class DrawList {
 //        val p1 = _path.last()
 //        if (numSegments == 0)
 //            // Auto-tessellated
-//            pathBezierToCasteljau(&_Path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, GImGui->Style.CurveTessellationTol, 0)
+//            pathBezierToCasteljau(&_Path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, GImGui->style.CurveTessellationTol, 0)
 //        else
 //        {
 //            float t_step = 1.0f / (float)num_segments;

@@ -2,7 +2,7 @@ package imgui.imgui
 
 import imgui.*
 import imgui.ImGui.currentWindowRead
-import java.util.*
+import imgui.Context.style
 import imgui.Context as g
 
 /** Tooltips    */
@@ -13,7 +13,7 @@ interface imgui_tooltips {
      * Tooltip is stored and turned into a BeginTooltip()/EndTooltip() sequence at the end of the frame.
      * Each call override previous value.*/
     fun setTooltip(fmt: String, vararg values: Any) {
-        g.tooltip = fmt.format(Style.locale, *values)
+        g.tooltip = fmt.format(style.locale, *values)
     }
 
     /** use to create full-featured tooltip windows that aren't just text   */

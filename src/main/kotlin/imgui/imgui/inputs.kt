@@ -4,8 +4,7 @@ import glm_.glm
 import glm_.vec2.Vec2
 import imgui.IO
 import imgui.ImGui.currentWindowRead
-import imgui.Key
-import imgui.Style
+import imgui.Context.style
 import imgui.internal.Rect
 import imgui.Context as g
 
@@ -58,7 +57,7 @@ fun isMouseClicked(button: Int, repeat: Boolean = false): Boolean {
 
 /** Test if mouse cursor is hovering given rectangle
  *  NB- Rectangle is clipped by our current clip setting
- *  NB- Expand the rectangle to be generous on imprecise inputs systems (g.Style.TouchExtraPadding)
+ *  NB- Expand the rectangle to be generous on imprecise inputs systems (g.style.TouchExtraPadding)
  *  is mouse hovering given bounding rect (in screen space). clipped by current clipping settings. disregarding of
  *  consideration of focus/window ordering/blocked by a popup.  */
 fun isMouseHoveringRect(r: Rect, clip: Boolean = true) = isMouseHoveringRect(r.min, r.max, clip)
@@ -73,7 +72,7 @@ fun isMouseHoveringRect(rMin: Vec2, rMax: Vec2, clip: Boolean = true): Boolean {
         rectClipped.clip(window.clipRect)
 
     // Expand for touch input
-    val rectForTouch = Rect(rectClipped.min - Style.touchExtraPadding, rectClipped.max + Style.touchExtraPadding)
+    val rectForTouch = Rect(rectClipped.min - style.touchExtraPadding, rectClipped.max + style.touchExtraPadding)
     return rectForTouch.contains(IO.mousePos)
 }
 //IMGUI_API bool          IsMouseDragging(int button = 0, float lock_threshold = -1.0f);      // is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold

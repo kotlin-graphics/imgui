@@ -11,6 +11,7 @@ import imgui.ImGui.findRenderedTextEnd
 import imgui.internal.Rect
 import imgui.internal.saturate
 import imgui.Context as g
+import imgui.Context.style
 
 
 interface imgui_utilities {
@@ -140,9 +141,9 @@ interface imgui_utilities {
     /** helper to create a child window / scrolling region that looks like a normal widget frame    */
     fun beginChildFrame(id: Int, size: Vec2, extraFlags: Int = 0): Boolean {
 
-        ImGui.pushStyleColor(Col.ChildWindowBg, Style.colors[Col.FrameBg])
-        ImGui.pushStyleVar(StyleVar.ChildWindowRounding, Style.frameRounding)
-        ImGui.pushStyleVar(StyleVar.WindowPadding, Style.framePadding)
+        ImGui.pushStyleColor(Col.ChildWindowBg, style.colors[Col.FrameBg])
+        ImGui.pushStyleVar(StyleVar.ChildWindowRounding, style.frameRounding)
+        ImGui.pushStyleVar(StyleVar.WindowPadding, style.framePadding)
         return ImGui.beginChild(id, size, g.currentWindow!!.flags has WindowFlags.ShowBorders,
                 WindowFlags.NoMove or WindowFlags.AlwaysUseWindowPadding or extraFlags)
     }

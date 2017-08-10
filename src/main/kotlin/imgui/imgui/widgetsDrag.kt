@@ -4,13 +4,14 @@ import glm_.f
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
+import imgui.Context.style
 import imgui.IO
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.currentWindow
 import imgui.ImGui.dragBehavior
 import imgui.ImGui.focusWindow
 import imgui.ImGui.focusableItemRegister
-import imgui.ImGui.currentWindow
 import imgui.ImGui.inputScalarAsWidgetReplacement
 import imgui.ImGui.isHovered
 import imgui.ImGui.itemAdd
@@ -20,7 +21,6 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setHoveredId
-import imgui.Style
 import imgui.internal.DataType
 import imgui.internal.Rect
 import imgui.Context as g
@@ -37,8 +37,8 @@ interface imgui_widgetsDrag {
                   power: Float = 1f) = dragFloat(label, v, 0, vSpeed, vMin, vMax, displayFormat, power)
 
     /** If vMin >= vMax we have no bound  */
-    fun dragFloat(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
-                  power: Float = 1f): Boolean {
+    fun dragFloat(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
+                  displayFormat: String = "%.3f", power: Float = 1f): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -47,13 +47,13 @@ interface imgui_widgetsDrag {
         val w = calcItemWidth()
 
         val labelSize = calcTextSize(label, 0, true)
-        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + Style.framePadding.y * 2f))
-        val innerBb = Rect(frameBb.min + Style.framePadding, frameBb.max - Style.framePadding)
-        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) Style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
+        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
+        val innerBb = Rect(frameBb.min + style.framePadding, frameBb.max - style.framePadding)
+        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
         // NB- we don't call ItemSize() yet because we may turn into a text edit box below
         if (!itemAdd(totalBb, id)) {
-            itemSize(totalBb, Style.framePadding.y)
+            itemSize(totalBb, style.framePadding.y)
             return false
         }
 
@@ -61,8 +61,7 @@ interface imgui_widgetsDrag {
         if (hovered)
             setHoveredId(id)
 
-//        if (!displayFormat) TODO
-//            displayFormat = "%.3f"
+        val displayFormat = if (displayFormat.isEmpty()) "%.3f" else displayFormat
         val decimalPrecision = parseFormatPrecision(displayFormat, 3)
 
         // Tabbing or CTRL-clicking on Drag turns it into an input box
@@ -78,22 +77,22 @@ interface imgui_widgetsDrag {
             }
         }
         if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) {
-            val data = intArrayOf(glm.floatBitsToInt(v[0]))
+            val data = intArrayOf(glm.floatBitsToInt(v[ptr]))
             val res = inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, data, id, decimalPrecision)
-            v[0] = glm.intBitsToFloat(data[0])
+            v[ptr] = glm.intBitsToFloat(data[0])
             return res
         }
 
         // Actual drag behavior
-        itemSize(totalBb, Style.framePadding.y)
-        val valueChanged = dragBehavior(frameBb, id, v, vSpeed, vMin, vMax, decimalPrecision, power)
+        itemSize(totalBb, style.framePadding.y)
+        val valueChanged = dragBehavior(frameBb, id, v, ptr, vSpeed, vMin, vMax, decimalPrecision, power)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = displayFormat.format(Style.locale, v[0])
+        val value = displayFormat.format(style.locale, v[ptr])
         renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
-            renderText(Vec2(frameBb.max.x + Style.itemInnerSpacing.x, innerBb.min.y), label)
+            renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, innerBb.min.y), label)
 
         return valueChanged
     }

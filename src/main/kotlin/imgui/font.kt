@@ -675,7 +675,7 @@ class Font {
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
 
-    fun getCharAdvance(c: Char) =
+    fun getCharAdvance_A(c: Char) =
             if (c < indexXAdvance.size)
                 indexXAdvance[c.i]
             else

@@ -4,7 +4,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.popId
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
-import imgui.Style
+import imgui.Context.style
 import imgui.TreeNodeFlags
 import imgui.or
 import imgui.Context as g
@@ -38,7 +38,7 @@ interface imgui_widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val label = fmt.format(Style.locale, *args)
+        val label = fmt.format(style.locale, *args)
 
         return treeNodeBehavior(window.getId(strId), flags, label)
     }
@@ -48,7 +48,7 @@ interface imgui_widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val label = fmt.format(Style.locale, *args)
+        val label = fmt.format(style.locale, *args)
 
         return treeNodeBehavior(window.getId(ptrId), flags, label)
     }

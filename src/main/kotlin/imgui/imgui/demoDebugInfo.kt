@@ -8,6 +8,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.Context.style
 import imgui.ImGui.alignFirstTextHeightToWidgets
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
@@ -18,7 +19,6 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
-import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columns
 import imgui.ImGui.combo
 import imgui.ImGui.dragFloat
@@ -29,8 +29,6 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.listBox
-import imgui.ImGui.menu
-import imgui.ImGui.menuBar
 import imgui.ImGui.menuItem
 import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
@@ -38,7 +36,6 @@ import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.popTextWrapPos
-import imgui.ImGui.popupModal
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleVar
@@ -51,6 +48,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.setWindowSize
 import imgui.ImGui.sliderFloat
+import imgui.ImGui.sliderFloat2
 import imgui.ImGui.sliderInt
 import imgui.ImGui.spacing
 import imgui.ImGui.text
@@ -58,13 +56,21 @@ import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
+import imgui.ImGui.time
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.version
-import imgui.ImGui.window
 import imgui.ImGui.windowDrawList
-import imgui.ImGui.withStyleVar
-import imgui.ImGui.withWindow
+import imgui.ImGui.windowWidth
+import imgui.functionalProgramming.button
+import imgui.functionalProgramming.collapsingHeader
+import imgui.functionalProgramming.menu
+import imgui.functionalProgramming.menuBar
+import imgui.functionalProgramming.popupModal
+import imgui.functionalProgramming.treeNode
+import imgui.functionalProgramming.window
+import imgui.functionalProgramming.withStyleVar
+import imgui.functionalProgramming.withWindow
 import imgui.internal.Rect
 import imgui.internal.Window
 import java.util.*
@@ -89,11 +95,9 @@ interface imgui_demoDebugInfo {
         if (showApp.manipulatingWindowTitle[0]) showExampleAppManipulatingWindowTitle(showApp.manipulatingWindowTitle)
         if (showApp.customRendering[0]) showExampleAppCustomRendering(showApp.customRendering)
         if (showApp.metrics[0]) ImGui.showMetricsWindow(showApp.metrics)
-        if (showApp.styleEditor[0]) {
-            begin("Style Editor", pOpen = showApp.styleEditor)
-            showStyleEditor()
-            end()
-        }
+        if (showApp.styleEditor[0])
+            window("Style Editor", pOpen = showApp.styleEditor) { showStyleEditor() }
+
         if (showApp.about[0])
             withWindow("About ImGui", showApp.about, WindowFlags.AlwaysAutoResize.i) {
                 text("JVM ImGui, %s", version)
@@ -126,21 +130,21 @@ interface imgui_demoDebugInfo {
         menuBar {
             menu("Menu") { showExampleMenuFile() }
             menu("Examples") {
-                menuItem("Main menu bar", pSelected = showApp.mainMenuBar)
-                menuItem("Console", pSelected = showApp.console)
-                menuItem("Log", pSelected = showApp.log)
-                menuItem("Simple layout", pSelected = showApp.layout)
-                menuItem("Property editor", pSelected = showApp.propertyEditor)
+                menuItem("Main menu bar", "", showApp.mainMenuBar)
+                menuItem("Console", "", showApp.console)
+                menuItem("Log", "", showApp.log)
+                menuItem("Simple layout", "", showApp.layout)
+                menuItem("Property editor", "", showApp.propertyEditor)
                 menuItem("Long text display", "", showApp.longText)
                 menuItem("Auto-resizing window", "", showApp.autoResize)
                 menuItem("Constrained-resizing window", "", showApp.constrainedResize)
                 menuItem("Simple overlay", "", showApp.fixedOverlay)
-//                menuItem("Manipulating window title", NULL, &show_app_manipulating_window_title)
-//                menuItem("Custom rendering", NULL, &show_app_custom_rendering)
+                menuItem("Manipulating window title", "", showApp.manipulatingWindowTitle)
+                menuItem("Custom rendering", "", showApp.customRendering)
             }
             menu("Help") {
-                menuItem("Metrics", pSelected = showApp.metrics)
-//                MenuItem("Style Editor", NULL, &show_app_style_editor)
+                menuItem("Metrics", "", showApp.metrics)
+                menuItem("Style Editor", "", showApp.styleEditor)
                 menuItem("About ImGui", "", showApp.about)
             }
         }
@@ -1245,6 +1249,7 @@ interface imgui_demoDebugInfo {
                 }
             }
         }
+        
         end()
     }
 
@@ -1340,7 +1345,7 @@ interface imgui_demoDebugInfo {
                             val v = drawList.vtxBuffer[idxBuffer?.get(vtxI) ?: vtxI]
                             trianglesPos[n] = v.pos
                             val name = if (n == 0) "vtx" else "   "
-                            val string = "$name %04d { pos = (%8.2f,%8.2f), uv = (%.6f,%.6f), col = %08X }\n".format(Style.locale,
+                            val string = "$name %04d { pos = (%8.2f,%8.2f), uv = (%.6f,%.6f), col = %08X }\n".format(style.locale,
                                     vtxI, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
                             string.toCharArray(buf, bufP)
                             bufP += string.length
@@ -1423,56 +1428,59 @@ interface imgui_demoDebugInfo {
         val dummyMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f, 0f, 0f, 0f)
     }
 
-    fun showStyleEditor() {
-        TODO()
-//        ImGuiStyle& style = ImGui::GetStyle();
-//
-//        // You can pass in a reference ImGuiStyle structure to compare to, revert to and save to (else it compares to the default style)
-//        const ImGuiStyle default_style; // Default style
-//        if (ImGui::Button("Revert Style"))
-//            style = ref ? *ref : default_style;
-//
-//        if (ref)
-//        {
-//            ImGui::SameLine();
-//            if (ImGui::Button("Save Style"))
-//            *ref = style;
-//        }
-//
-//        ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.55f);
-//
-//        if (ImGui::TreeNode("Rendering"))
-//        {
-//            ImGui::Checkbox("Anti-aliased lines", &style.AntiAliasedLines);
-//            ImGui::Checkbox("Anti-aliased shapes", &style.AntiAliasedShapes);
-//            ImGui::PushItemWidth(100);
-//            ImGui::DragFloat("Curve Tessellation Tolerance", &style.CurveTessellationTol, 0.02f, 0.10f, FLT_MAX, NULL, 2.0f);
-//            if (style.CurveTessellationTol < 0.0f) style.CurveTessellationTol = 0.10f;
-//            ImGui::DragFloat("Global Alpha", &style.Alpha, 0.005f, 0.20f, 1.0f, "%.2f"); // Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets). But application code could have a toggle to switch between zero and non-zero.
-//            ImGui::PopItemWidth();
-//            ImGui::TreePop();
-//        }
-//
-//        if (ImGui::TreeNode("Settings"))
-//        {
-//            ImGui::SliderFloat2("WindowPadding", (float*)&style.WindowPadding, 0.0f, 20.0f, "%.0f");
-//            ImGui::SliderFloat("WindowRounding", &style.WindowRounding, 0.0f, 16.0f, "%.0f");
-//            ImGui::SliderFloat("ChildWindowRounding", &style.ChildWindowRounding, 0.0f, 16.0f, "%.0f");
-//            ImGui::SliderFloat2("FramePadding", (float*)&style.FramePadding, 0.0f, 20.0f, "%.0f");
-//            ImGui::SliderFloat("FrameRounding", &style.FrameRounding, 0.0f, 16.0f, "%.0f");
-//            ImGui::SliderFloat2("ItemSpacing", (float*)&style.ItemSpacing, 0.0f, 20.0f, "%.0f");
-//            ImGui::SliderFloat2("ItemInnerSpacing", (float*)&style.ItemInnerSpacing, 0.0f, 20.0f, "%.0f");
-//            ImGui::SliderFloat2("TouchExtraPadding", (float*)&style.TouchExtraPadding, 0.0f, 10.0f, "%.0f");
-//            ImGui::SliderFloat("IndentSpacing", &style.IndentSpacing, 0.0f, 30.0f, "%.0f");
-//            ImGui::SliderFloat("ScrollbarSize", &style.ScrollbarSize, 1.0f, 20.0f, "%.0f");
-//            ImGui::SliderFloat("ScrollbarRounding", &style.ScrollbarRounding, 0.0f, 16.0f, "%.0f");
-//            ImGui::SliderFloat("GrabMinSize", &style.GrabMinSize, 1.0f, 20.0f, "%.0f");
-//            ImGui::SliderFloat("GrabRounding", &style.GrabRounding, 0.0f, 16.0f, "%.0f");
-//            ImGui::Text("Alignment");
-//            ImGui::SliderFloat2("WindowTitleAlign", (float*)&style.WindowTitleAlign, 0.0f, 1.0f, "%.2f");
-//            ImGui::SliderFloat2("ButtonTextAlign", (float*)&style.ButtonTextAlign, 0.0f, 1.0f, "%.2f"); ImGui::SameLine(); ShowHelpMarker("Alignment applies when a button is larger than its text content.");
-//            ImGui::TreePop();
-//        }
+    fun showStyleEditor(ref: Style? = null) {
+
+        /*  You can pass in a reference ImGuiStyle structure to compare to, revert to and save to
+            (else it compares to the default style)         */
+        val defaultStyle = Style()  // Default style
+        button("Revert Style") {
+            style = ref ?: defaultStyle
+        }
+
+        ref?.let {
+            sameLine()
+            button("Save Style") {
+                TODO()//*ref = style
+            }
+        }
+
+        pushItemWidth(windowWidth * 0.55f)
+
+        treeNode("Rendering") {
+            checkbox("Anti-aliased lines", bool.apply { this[0] = style.antiAliasedLines })
+            style.antiAliasedLines = bool[0]
+            checkbox("Anti-aliased shapes", bool.apply { this[0] = style.antiAliasedShapes })
+            style.antiAliasedShapes = bool[0]
+            pushItemWidth(100f)
+            dragFloat("Curve Tessellation Tolerance", Companion.f.apply { this[1] = style.curveTessellationTol }, 1,
+                    0.02f, 0.1f, Float.MAX_VALUE, "", 2f)
+            style.curveTessellationTol = Companion.f[1]
+            if (style.curveTessellationTol < 0f) style.curveTessellationTol = 0.1f
+            /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
+                But application code could have a toggle to switch between zero and non-zero.             */
+            dragFloat("Global Alpha", Companion.f.apply { this[2] = style.alpha }, 2, 0.005f, 0.2f, 1f, "%.2f")
+            style.alpha = Companion.f[2]
+            popItemWidth()
+        }
+
+        treeNode("Settings")        {
+            sliderFloat2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
+//            SliderFloat("WindowRounding", &style.WindowRounding, 0.0f, 16.0f, "%.0f");
+//            SliderFloat("ChildWindowRounding", &style.ChildWindowRounding, 0.0f, 16.0f, "%.0f");
+//            SliderFloat2("FramePadding", (float*)&style.FramePadding, 0.0f, 20.0f, "%.0f");
+//            SliderFloat("FrameRounding", &style.FrameRounding, 0.0f, 16.0f, "%.0f");
+//            SliderFloat2("ItemSpacing", (float*)&style.ItemSpacing, 0.0f, 20.0f, "%.0f");
+//            SliderFloat2("ItemInnerSpacing", (float*)&style.ItemInnerSpacing, 0.0f, 20.0f, "%.0f");
+//            SliderFloat2("TouchExtraPadding", (float*)&style.TouchExtraPadding, 0.0f, 10.0f, "%.0f");
+//            SliderFloat("IndentSpacing", &style.IndentSpacing, 0.0f, 30.0f, "%.0f");
+//            SliderFloat("ScrollbarSize", &style.ScrollbarSize, 1.0f, 20.0f, "%.0f");
+//            SliderFloat("ScrollbarRounding", &style.ScrollbarRounding, 0.0f, 16.0f, "%.0f");
+//            SliderFloat("GrabMinSize", &style.GrabMinSize, 1.0f, 20.0f, "%.0f");
+//            SliderFloat("GrabRounding", &style.GrabRounding, 0.0f, 16.0f, "%.0f");
+//            Text("Alignment");
+//            SliderFloat2("WindowTitleAlign", (float*)&style.WindowTitleAlign, 0.0f, 1.0f, "%.2f");
+//            SliderFloat2("ButtonTextAlign", (float*)&style.ButtonTextAlign, 0.0f, 1.0f, "%.2f"); SameLine(); ShowHelpMarker("Alignment applies when a button is larger than its text content.");
+        }
 //
 //        if (ImGui::TreeNode("Colors"))
 //        {
@@ -1489,7 +1497,7 @@ interface imgui_demoDebugInfo {
 //                {
 //                    const ImVec4& col = style.Colors[i];
 //                    const char* name = ImGui::GetStyleColName(i);
-//                    if (!output_only_modified || memcmp(&col, (ref ? &ref->Colors[i] : &default_style.Colors[i]), sizeof(ImVec4)) != 0)
+//                    if (!output_only_modified || memcmp(&col, (ref ? &ref->Colors[i] : &defaultStyle.Colors[i]), sizeof(ImVec4)) != 0)
 //                    ImGui::LogText("style.Colors[ImGuiCol_%s]%*s= ImVec4(%.2ff, %.2ff, %.2ff, %.2ff);" IM_NEWLINE, name, 22 - (int)strlen(name), "", col.x, col.y, col.z, col.w);
 //                }
 //                ImGui::LogFinish();
@@ -1518,9 +1526,9 @@ interface imgui_demoDebugInfo {
 //                    continue;
 //                ImGui::PushID(i);
 //                ImGui::ColorEdit4(name, (float*)&style.Colors[i], true);
-//                if (memcmp(&style.Colors[i], (ref ? &ref->Colors[i] : &default_style.Colors[i]), sizeof(ImVec4)) != 0)
+//                if (memcmp(&style.Colors[i], (ref ? &ref->Colors[i] : &defaultStyle.Colors[i]), sizeof(ImVec4)) != 0)
 //                {
-//                    ImGui::SameLine(); if (ImGui::Button("Revert")) style.Colors[i] = ref ? ref->Colors[i] : default_style.Colors[i];
+//                    ImGui::SameLine(); if (ImGui::Button("Revert")) style.Colors[i] = ref ? ref->Colors[i] : defaultStyle.Colors[i];
 //                    if (ref) { ImGui::SameLine(); if (ImGui::Button("Save")) ref->Colors[i] = style.Colors[i]; }
 //                }
 //                ImGui::PopID();
@@ -1614,8 +1622,7 @@ interface imgui_demoDebugInfo {
 //            ImGui::SetWindowFontScale(window_scale);
 //            ImGui::TreePop();
 //        }
-//
-//        ImGui::PopItemWidth();
+        popItemWidth()
     }
 
     fun showUserGuide() {
@@ -1730,8 +1737,14 @@ interface imgui_demoDebugInfo {
         }
 
         var enabled = booleanArrayOf(true)
-        var f = floatArrayOf(0.5f)
+        /**
+         * [0] = sliderFloat for showExampleMenuFile()
+         * [1] = "Curve Tessellation Tolerance" for showStyleEditor()
+         * [2] = "Global Alpha" for showStyleEditor()
+         */
+        var f = floatArrayOf(0.5f, 0f, 0f)
         var n = intArrayOf(0)
+        var bool = BooleanArray(1)
 
         /** Demonstrate creating a window which gets auto-resized according to its content. */
         fun showExampleAppAutoResize(pOpen: BooleanArray) {
@@ -1808,43 +1821,46 @@ interface imgui_demoDebugInfo {
          *  Read section "How can I have multiple widgets with the same label? Can I have widget without a label? (Yes).
          *  A primer on the purpose of labels/IDs." about ID.   */
         fun showExampleAppManipulatingWindowTitle(p: BooleanArray) {
-            TODO()
-            // By default, Windows are uniquely identified by their title.
-            // You can use the "##" and "###" markers to manipulate the display/ID.
+
+            /*  By default, Windows are uniquely identified by their title.
+                You can use the "##" and "###" markers to manipulate the display/ID.
+             */
 
             // Using "##" to display same title but have unique identifier.
-//            ImGui::SetNextWindowPos(ImVec2(100,100), ImGuiSetCond_FirstUseEver);
-//            ImGui::Begin("Same title as another window##1");
-//            ImGui::Text("This is window 1.\nMy title is the same as window 2, but my identifier is unique.");
-//            ImGui::End();
-//
-//            ImGui::SetNextWindowPos(ImVec2(100,200), ImGuiSetCond_FirstUseEver);
-//            ImGui::Begin("Same title as another window##2");
-//            ImGui::Text("This is window 2.\nMy title is the same as window 1, but my identifier is unique.");
-//            ImGui::End();
-//
-//            // Using "###" to display a changing title but keep a static identifier "AnimatedTitle"
-//            char buf[128];
-//            sprintf(buf, "Animated title %c %d###AnimatedTitle", "|/-\\"[(int)(ImGui::GetTime()/0.25f)&3], rand());
-//            ImGui::SetNextWindowPos(ImVec2(100,300), ImGuiSetCond_FirstUseEver);
-//            ImGui::Begin(buf);
-//            ImGui::Text("This window has a changing title.");
-//            ImGui::End();
+            setNextWindowPos(Vec2(100), SetCond.FirstUseEver)
+            window("Same title as another window##1") {
+                text("This is window 1.\nMy title is the same as window 2, but my identifier is unique.")
+            }
+
+            setNextWindowPos(Vec2(100, 200), SetCond.FirstUseEver)
+            window("Same title as another window##2") {
+                text("This is window 2.\nMy title is the same as window 1, but my identifier is unique.")
+            }
+
+            // Using "###" to display a changing title but keep a static identifier "AnimatedTitle"
+            val title = "Animated title ${"|/-\\"[(time / 0.25f).i and 3]} ${glm_.detail.Random.int}###AnimatedTitle"
+            setNextWindowPos(Vec2(100, 300), SetCond.FirstUseEver)
+            window(title) { text("This window has a changing title.") }
         }
 
         /** Demonstrate using the low-level ImDrawList to draw custom shapes.   */
         fun showExampleAppCustomRendering(pOpen: BooleanArray) {
-//            ImGui::SetNextWindowSize(ImVec2(350,560), ImGuiSetCond_FirstUseEver);
-//            if (!ImGui::Begin("Example: Custom rendering", p_open))
-//            {
-//                ImGui::End();
-//                return;
-//            }
-//
-//            // Tip: If you do a lot of custom rendering, you probably want to use your own geometrical types and benefit of overloaded operators, etc.
-//            // Define IM_VEC2_CLASS_EXTRA in imconfig.h to create implicit conversions between your types and ImVec2/ImVec4.
-//            // ImGui defines overloaded operators but they are internal to imgui.cpp and not exposed outside (to avoid messing with your types)
-//            // In this example we are not using the maths operators!
+
+            setNextWindowSize(Vec2(350, 560), SetCond.FirstUseEver)
+            if (!begin("Example: Custom rendering", pOpen)) {
+                end()
+                return
+            }
+
+            text("TODO")
+
+            /*  Tip: If you do a lot of custom rendering, you probably want to use your own geometrical types and
+                benefit of overloaded operators, etc.
+                Define IM_VEC2_CLASS_EXTRA in imconfig.h to create implicit conversions between your types and
+                ImVec2/ImVec4.
+                ImGui defines overloaded operators but they are internal to imgui.cpp and not exposed outside
+                (to avoid messing with your types)
+                In this example we are not using the maths operators!   */
 //            ImDrawList* draw_list = ImGui::GetWindowDrawList();
 //
 //            // Primitives
@@ -1928,7 +1944,7 @@ interface imgui_demoDebugInfo {
 //                if (adding_preview)
 //                    points.pop_back();
 //            }
-//            ImGui::End();
+            end()
         }
 
         fun showExampleAppConsole(pOpen: BooleanArray) = console.draw("Example: Console", pOpen)
@@ -1942,7 +1958,7 @@ interface imgui_demoDebugInfo {
             val time = ImGui.time
             if (time - lastTime >= 0.3f) {
                 val s = randomWords[rand % randomWords.size]
-                val t = "%.1f".format(Style.locale, time)
+                val t = "%.1f".format(style.locale, time)
                 log.addLog("[$s] Hello, time is $t, rand() $rand\n")
                 lastTime = time
             }
@@ -2032,7 +2048,7 @@ interface imgui_demoDebugInfo {
         fun showExampleAppLongText(pOpen: BooleanArray) {
 
             setNextWindowSize(Vec2(520, 600), SetCond.FirstUseEver)
-            if (!begin("Example: Long text display, to implement", pOpen)) {
+            if (!begin("Example: Long text display, TODO", pOpen)) {
                 end()
                 return
             }

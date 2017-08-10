@@ -58,6 +58,7 @@ import imgui.ImGui.spacing
 import imgui.ImGui.textLineHeight
 import imgui.internal.*
 import imgui.Context as g
+import imgui.Context.style
 
 interface imgui_widgets {
 
@@ -72,7 +73,7 @@ interface imgui_widgets {
                 if (args.isEmpty())
                     fmt
                 else
-                    fmt.format(Style.locale, *args)
+                    fmt.format(style.locale, *args)
 
         val textEnd = fmt.length
         textUnformatted(fmt, textEnd)
@@ -86,13 +87,13 @@ interface imgui_widgets {
     }
 
     /** shortcut for:
-     *      pushStyleColor(Col.Text, Style.colors[Col.TextDisabled])
+     *      pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
      *      text(fmt, ...)
      *      popStyleColor() */
     fun textDisabled(fmt: String, vararg args: Any) = textDisabledV(fmt, args)
 
     fun textDisabledV(fmt: String, args: Array<out Any>) {
-        pushStyleColor(Col.Text, Style.colors[Col.TextDisabled])
+        pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
         textV(fmt, args)
         popStyleColor()
     }
@@ -203,17 +204,17 @@ interface imgui_widgets {
         val window = currentWindow
         if (window.skipItems) return
 
-        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + Style.framePadding.y * 2), g.fontSize)
+        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), g.fontSize)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(g.fontSize, lineHeight))
         itemSize(bb)
         if (!itemAdd(bb)) {
-            sameLine(0f, Style.framePadding.x * 2)
+            sameLine(0f, style.framePadding.x * 2)
             return
         }
 
         // Render and stay on same line
-        renderBullet(bb.min + Vec2(Style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
-        sameLine(0f, Style.framePadding.x * 2)
+        renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
+        sameLine(0f, style.framePadding.x * 2)
     }
 
     /** shortcut for Bullet()+Text()    */
@@ -225,19 +226,19 @@ interface imgui_widgets {
         val window = currentWindow
         if (window.skipItems) return
 
-        val text = fmt.format(Style.locale, *args)
+        val text = fmt.format(style.locale, *args)
         val labelSize = calcTextSize(text, false)
         val textBaseOffsetY = glm.max(0f, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
-        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + Style.framePadding.y * 2), g.fontSize)
-        val x = g.fontSize + if (labelSize.x > 0f) labelSize.x + Style.framePadding.x * 2 else 0f
+        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), g.fontSize)
+        val x = g.fontSize + if (labelSize.x > 0f) labelSize.x + style.framePadding.x * 2 else 0f
         // Empty text doesn't add padding
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(x, glm.max(lineHeight, labelSize.y)))
         itemSize(bb)
         if (!itemAdd(bb)) return
 
         // Render
-        renderBullet(bb.min + Vec2(Style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
-        renderText(bb.min + Vec2(g.fontSize + Style.framePadding.x * 2, textBaseOffsetY), text, text.length, false)
+        renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
+        renderText(bb.min + Vec2(g.fontSize + style.framePadding.x * 2, textBaseOffsetY), text, text.length, false)
     }
 
     /** button  */
@@ -257,15 +258,15 @@ interface imgui_widgets {
         val labelSize = calcTextSize(label, true)
 
         val checkBb = Rect(window.dc.cursorPos, window.dc.cursorPos +
-                Vec2(labelSize.y + Style.framePadding.y * 2, labelSize.y + Style.framePadding.y * 2))
-        itemSize(checkBb, Style.framePadding.y)
+                Vec2(labelSize.y + style.framePadding.y * 2, labelSize.y + style.framePadding.y * 2))
+        itemSize(checkBb, style.framePadding.y)
 
         val totalBb = Rect(checkBb)
         if (labelSize.x > 0)
-            sameLine(0f, Style.itemInnerSpacing.x)
-        val textBb = Rect(window.dc.cursorPos + Vec2(0, Style.framePadding.y), window.dc.cursorPos + Vec2(0, Style.framePadding.y) + labelSize)
+            sameLine(0f, style.itemInnerSpacing.x)
+        val textBb = Rect(window.dc.cursorPos + Vec2(0, style.framePadding.y), window.dc.cursorPos + Vec2(0, style.framePadding.y) + labelSize)
         if (labelSize.x > 0) {
-            itemSize(Vec2(textBb.width, checkBb.height), Style.framePadding.y)
+            itemSize(Vec2(textBb.width, checkBb.height), style.framePadding.y)
             glm.min(checkBb.min, textBb.min, totalBb.min)
             glm.max(checkBb.max, textBb.max, totalBb.max)
         }
@@ -276,11 +277,11 @@ interface imgui_widgets {
         if (pressed) v[0] = !v[0]
 
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
-        renderFrame(checkBb.min, checkBb.max, getColorU32(col), true, Style.frameRounding)
+        renderFrame(checkBb.min, checkBb.max, getColorU32(col), true, style.frameRounding)
         if (v[0]) {
             val checkSz = glm.min(checkBb.width, checkBb.height)
             val pad = glm.max(1f, (checkSz / 6f).i.f)
-            window.drawList.addRectFilled(checkBb.min + Vec2(pad), checkBb.max - Vec2(pad), getColorU32(Col.CheckMark), Style.frameRounding)
+            window.drawList.addRectFilled(checkBb.min + Vec2(pad), checkBb.max - Vec2(pad), getColorU32(Col.CheckMark), style.frameRounding)
         }
 
         if (g.logEnabled) logRenderedText(textBb.tl, if (v[0]) "[x]" else "[ ]")
@@ -317,27 +318,27 @@ interface imgui_widgets {
         val w = calcItemWidth()
 
         val labelSize = calcTextSize(label, true)
-        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + Style.framePadding.y * 2f))
-        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) Style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
-        itemSize(totalBb, Style.framePadding.y)
+        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
+        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
+        itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id)) return false
 
-        val arrowSize = g.fontSize + Style.framePadding.x * 2f
+        val arrowSize = g.fontSize + style.framePadding.x * 2f
         val hovered = isHovered(frameBb, id)
         var popupOpen = isPopupOpen(id)
         var popupOpenedNow = false
 
         val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
-        renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, Style.frameRounding)
+        renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, style.frameRounding)
         val col = getColorU32(if (popupOpen || hovered) Col.ButtonHovered else Col.Button)
-        renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col, true, Style.frameRounding) // FIXME-ROUNDING
-        renderCollapseTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y) + Style.framePadding, true)
+        renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col, true, style.frameRounding) // FIXME-ROUNDING
+        renderCollapseTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y) + style.framePadding, true)
 
         if (currentItem[0] in 0 until itemsCount)
-            itemsGetter(data, currentItem[0])?.let { renderTextClipped(frameBb.min + Style.framePadding, valueBb.max, it) }
+            itemsGetter(data, currentItem[0])?.let { renderTextClipped(frameBb.min + style.framePadding, valueBb.max, it) }
 
         if (labelSize.x > 0)
-            renderText(Vec2(frameBb.max.x + Style.itemInnerSpacing.x, frameBb.min.y + Style.framePadding.y), label)
+            renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
         if (hovered) {
             setHoveredId(id)
@@ -360,19 +361,19 @@ interface imgui_widgets {
             if (heightInItems < 0)
                 heightInItems = 7
 
-            val popupHeight = (labelSize.y + Style.itemSpacing.y) * glm.min(itemsCount, heightInItems) + Style.framePadding.y * 3
+            val popupHeight = (labelSize.y + style.itemSpacing.y) * glm.min(itemsCount, heightInItems) + style.framePadding.y * 3
             var popupY1 = frameBb.max.y
-            var popupY2 = glm.clamp(popupY1 + popupHeight, popupY1, IO.displaySize.y - Style.displaySafeAreaPadding.y)
-            if ((popupY2 - popupY1) < glm.min(popupHeight, frameBb.min.y - Style.displaySafeAreaPadding.y)) {
+            var popupY2 = glm.clamp(popupY1 + popupHeight, popupY1, IO.displaySize.y - style.displaySafeAreaPadding.y)
+            if ((popupY2 - popupY1) < glm.min(popupHeight, frameBb.min.y - style.displaySafeAreaPadding.y)) {
                 /*  Position our combo ABOVE because there's more space to fit!
                     (FIXME: Handle in Begin() or use a shared helper. We have similar code in Begin() for popup placement)                 */
-                popupY1 = glm.clamp(frameBb.min.y - popupHeight, Style.displaySafeAreaPadding.y, frameBb.min.y)
+                popupY1 = glm.clamp(frameBb.min.y - popupHeight, style.displaySafeAreaPadding.y, frameBb.min.y)
                 popupY2 = frameBb.min.y
             }
             val popupRect = Rect(Vec2(frameBb.min.x, popupY1), Vec2(frameBb.max.x, popupY2))
             setNextWindowPos(popupRect.min)
             setNextWindowSize(popupRect.size)
-            pushStyleVar(StyleVar.WindowPadding, Style.framePadding)
+            pushStyleVar(StyleVar.WindowPadding, style.framePadding)
 
             val flags = WindowFlags.ComboBox or if (window.flags has WindowFlags.ShowBorders) WindowFlags.ShowBorders.i else 0
             if (beginPopupEx(label, flags)) {
@@ -406,14 +407,14 @@ interface imgui_widgets {
 
         val id = window.getId("#colorbutton")
         val squareSize = g.fontSize
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(squareSize + Style.framePadding.y * 2,
-                squareSize + (if (smallHeight) 0f else Style.framePadding.y * 2)))
-        itemSize(bb, if (smallHeight) 0f else Style.framePadding.y)
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(squareSize + style.framePadding.y * 2,
+                squareSize + (if (smallHeight) 0f else style.framePadding.y * 2)))
+        itemSize(bb, if (smallHeight) 0f else style.framePadding.y)
         if (!itemAdd(bb, id)) return false
 
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
-        renderFrame(bb.min, bb.max, getColorU32(col), outlineBorder, Style.frameRounding)
+        renderFrame(bb.min, bb.max, getColorU32(col), outlineBorder, style.frameRounding)
 
         if (hovered)
             setTooltip("Color:\n(%.2f,%.2f,%.2f,%.2f)\n#%02X%02X%02X%02X", col.x, col.y, col.z, col.w,
@@ -445,7 +446,7 @@ interface imgui_widgets {
 
         val id = window.getId(label)
         val wFull = calcItemWidth()
-        val squareSz = (g.fontSize + Style.framePadding.y * 2f)
+        val squareSz = (g.fontSize + style.framePadding.y * 2f)
 
         val editMode =
                 if (window.dc.colorEditMode == ColorEditMode.UserSelect || window.dc.colorEditMode == ColorEditMode.UserSelectShowButton)
@@ -469,9 +470,9 @@ interface imgui_widgets {
 
             ColorEditMode.RGB, ColorEditMode.HSV -> {
                 // RGB/HSV 0..255 Sliders
-                val wItemsAll = wFull - (squareSz + Style.itemInnerSpacing.x)
-                val wItemOne = glm.max(1f, ((wItemsAll - Style.itemInnerSpacing.x * (components - 1)) / components.f).i.f)
-                val wItemLast = glm.max(1f, (wItemsAll - (wItemOne + Style.itemInnerSpacing.x) * (components - 1)).i.f)
+                val wItemsAll = wFull - (squareSz + style.itemInnerSpacing.x)
+                val wItemOne = glm.max(1f, ((wItemsAll - style.itemInnerSpacing.x * (components - 1)) / components.f).i.f)
+                val wItemLast = glm.max(1f, (wItemsAll - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
 
                 val hidePrefix = wItemOne <= calcTextSize("M:999").x
                 val ids = listOf("##X", "##Y", "##Z", "##W")
@@ -484,7 +485,7 @@ interface imgui_widgets {
                 pushItemWidth(wItemOne)
                 for (n in 0 until components) {
                     if (n > 0)
-                        sameLine(0f, Style.itemInnerSpacing.x)
+                        sameLine(0f, style.itemInnerSpacing.x)
                     if (n + 1 == components)
                         pushItemWidth(wItemLast)
                     val int = intArrayOf(i[n])
@@ -499,9 +500,9 @@ interface imgui_widgets {
                 // RGB Hexadecimal Input
                 val wSliderAll = wFull - squareSz
                 val buf = CharArray(64)
-                (if (showAlpha) "#%02X%02X%02X%02X".format(Style.locale, i[0], i[1], i[2], i[3])
-                else "#%02X%02X%02X".format(Style.locale, i[0], i[1], i[2])).toCharArray(buf)
-                pushItemWidth(wSliderAll - Style.itemInnerSpacing.x)
+                (if (showAlpha) "#%02X%02X%02X%02X".format(style.locale, i[0], i[1], i[2], i[3])
+                else "#%02X%02X%02X".format(style.locale, i[0], i[1], i[2])).toCharArray(buf)
+                pushItemWidth(wSliderAll - style.itemInnerSpacing.x)
                 if (inputText("##Text", buf, InputTextFlags.CharsHexadecimal or InputTextFlags.CharsUppercase)) {
                     valueChanged = valueChanged || true
                     var p = 0
@@ -515,7 +516,7 @@ interface imgui_widgets {
             else -> Unit
         }
 
-        sameLine(0f, Style.itemInnerSpacing.x)
+        sameLine(0f, style.itemInnerSpacing.x)
 
         val colDisplay = Vec4(col[0], col[1], col[2], 1.0f)
         if (colorButton(colDisplay))
@@ -527,7 +528,7 @@ interface imgui_widgets {
                     F32_TO_INT8_SAT(col[0]), F32_TO_INT8_SAT(col[1]), F32_TO_INT8_SAT(col[2]), F32_TO_INT8_SAT(col[3]))
 
         if (window.dc.colorEditMode == ColorEditMode.UserSelectShowButton) {
-            sameLine(0f, Style.itemInnerSpacing.x)
+            sameLine(0f, style.itemInnerSpacing.x)
             val buttonTitles = arrayOf("RGB", "HSV", "HEX")
             if (buttonEx(buttonTitles[editMode.i], Vec2(), ButtonFlags.DontClosePopups.i))
                 g.colorEditModeStorage[id] = ((editMode.i + 1) % 3).f // Don't set local copy of 'editMode' right away!
@@ -535,7 +536,7 @@ interface imgui_widgets {
 
         val labelDisplayEnd = findRenderedTextEnd(label)
         if (labelDisplayEnd != 0) {
-            sameLine(0f, if (window.dc.colorEditMode == ColorEditMode.UserSelectShowButton) -1f else Style.itemInnerSpacing.x)
+            sameLine(0f, if (window.dc.colorEditMode == ColorEditMode.UserSelectShowButton) -1f else style.itemInnerSpacing.x)
             textUnformatted(label, labelDisplayEnd)
         }
 

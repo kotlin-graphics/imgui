@@ -12,6 +12,7 @@ import com.jogamp.opengl.util.Animator
 import glm_.vec2.Vec2
 import imgui.impl.JoglGL3
 import uno.gln.jogl.glViewport
+import imgui.functionalProgramming.button
 
 fun main(args: Array<String>) {
     HelloWorld_jogl().setup()
@@ -78,7 +79,7 @@ class HelloWorld_jogl : GLEventListener {
                 called "Debug"             */
             run {
                 text("Hello, world!")
-                sliderFloat("float", f, 0f, 1f)
+//                sliderFloat("float", f, 0f, 1f)
                 colorEdit3("clear color", clearColor)
                 //  You can write functions in the classical way, with if(cond) { code }
                 if (button("Test Window")) {

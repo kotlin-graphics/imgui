@@ -44,9 +44,7 @@ object ImGui :
         imgui_clipping,
         imgui_utilities,
 
-        imgui_internal,
-
-        imgui_functionalProgramming {
+        imgui_internal {
 
     val version = "1.51 WIP"
 }

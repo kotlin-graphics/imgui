@@ -16,6 +16,8 @@ object Context {
 
     var initialized = false
 
+    var style = Style()
+
     lateinit var font: Font
     /** (Shortcut) == FontBaseSize * g.CurrentWindow->FontWindowScale == window->FontSize() */
     var fontSize = 0f
@@ -391,7 +393,7 @@ operator fun IntArray.set(index: Key, value: Int) {
 }
 
 
-object Style {
+class Style {
 
     /**  Global alpha applies to everything in ImGui    */
     var alpha = 1.0f
@@ -540,7 +542,7 @@ object Debug {
     private var cachedInstanceCounts = countInstances()
 }
 
-// for Style.colors
+/** for style.colors    */
 operator fun Array<Vec4>.get(idx: Col) = this[idx.i]
 
 operator fun Array<Vec4>.set(idx: Col, vec: Vec4) {

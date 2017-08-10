@@ -30,6 +30,7 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
 import imgui.internal.*
 import imgui.Context as g
+import imgui.Context.style
 
 
 interface imgui_window {
@@ -230,26 +231,26 @@ interface imgui_window {
                     flags hasnt (WindowFlags.AlwaysUseWindowPadding or WindowFlags.ShowBorders or WindowFlags.ComboBox or WindowFlags.Popup))
                 window.windowPadding put 0f
             else
-                window.windowPadding put Style.windowPadding
+                window.windowPadding put style.windowPadding
 
             // Calculate auto-fit size
             val sizeAutoFit: Vec2
             if (flags has WindowFlags.Tooltip)
             // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
-                sizeAutoFit = window.sizeContents + window.windowPadding - Vec2(0f, Style.itemSpacing.y)
+                sizeAutoFit = window.sizeContents + window.windowPadding - Vec2(0f, style.itemSpacing.y)
             else {
                 sizeAutoFit = window.sizeContents + window.windowPadding
-                sizeAutoFit.x = glm.clamp(sizeAutoFit.x, Style.windowMinSize.x.f,
-                        glm.max(Style.windowMinSize.x.f, IO.displaySize.x - Style.displaySafeAreaPadding.x))
-                sizeAutoFit.y = glm.clamp(sizeAutoFit.y, Style.windowMinSize.y.f,
-                        glm.max(Style.windowMinSize.y.f, IO.displaySize.y - Style.displaySafeAreaPadding.y))
+                sizeAutoFit.x = glm.clamp(sizeAutoFit.x, style.windowMinSize.x.f,
+                        glm.max(style.windowMinSize.x.f, IO.displaySize.x - style.displaySafeAreaPadding.x))
+                sizeAutoFit.y = glm.clamp(sizeAutoFit.y, style.windowMinSize.y.f,
+                        glm.max(style.windowMinSize.y.f, IO.displaySize.y - style.displaySafeAreaPadding.y))
 
                 // Handling case of auto fit window not fitting in screen on one axis, we are growing auto fit size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
                 if (sizeAutoFit.x < window.sizeContents.x && flags hasnt WindowFlags.NoScrollbar && flags has WindowFlags.HorizontalScrollbar)
-                    sizeAutoFit.y += Style.scrollbarSize
+                    sizeAutoFit.y += style.scrollbarSize
                 if (sizeAutoFit.y < window.sizeContents.y && flags hasnt WindowFlags.NoScrollbar)
-                    sizeAutoFit.x += Style.scrollbarSize
-                sizeAutoFit.y = glm.max(sizeAutoFit.y - Style.itemSpacing.y, 0f)
+                    sizeAutoFit.x += style.scrollbarSize
+                sizeAutoFit.y = glm.max(sizeAutoFit.y - style.itemSpacing.y, 0f)
             }
 
             // Handle automatic resize
@@ -299,7 +300,7 @@ interface imgui_window {
             windowPosCenter = windowPosCenter || (flags has WindowFlags.Modal && !windowPosSetByApi && windowAppearingAfterBeingHidden)
             if (windowPosCenter)
             // Center (any sort of window)
-                window.setPos(glm.max(Style.displaySafeAreaPadding, fullscreenRect.center - window.sizeFull * 0.5f), SetCond.Null)
+                window.setPos(glm.max(style.displaySafeAreaPadding, fullscreenRect.center - window.sizeFull * 0.5f), SetCond.Null)
             else if (flags has WindowFlags.ChildMenu) {
                 /*  Child menus typically request _any_ position within the parent menu item, and then our
                 FindBestPopupWindowPos() function will move the new menu outside the parent bounds.
@@ -307,7 +308,7 @@ interface imgui_window {
                 assert(windowPosSetByApi)
                 /*  We want some overlap to convey the relative depth of each popup (currently the amount of overlap it is
                 hard-coded to style.ItemSpacing.x, may need to introduce another style value).  */
-                val horizontalOverlap = Style.itemSpacing.x
+                val horizontalOverlap = style.itemSpacing.x
                 val rectToAvoid =
                         if (parentWindow!!.dc.menuBarAppending)
                             Rect(-Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight(),
@@ -337,7 +338,7 @@ interface imgui_window {
                 /*  Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized
                 window when initializing or minimizing. */
                 if (!windowPosSetByApi && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 && IO.displaySize.x > 0f && IO.displaySize.y > 0f) {
-                    val padding = glm.max(Style.displayWindowPadding, Style.displaySafeAreaPadding)
+                    val padding = glm.max(style.displayWindowPadding, style.displaySafeAreaPadding)
                     window.posF put (glm.max(window.posF + window.size, padding) - window.size)
                     window.posF.x = glm.min(window.posF.x, (IO.displaySize.x - padding.x).f)
                     window.posF.y = glm.min(window.posF.y, (IO.displaySize.y - padding.y).f)
@@ -387,7 +388,7 @@ interface imgui_window {
 
             // Draw window + handle manual resize
             val titleBarRect = window.titleBarRect()
-            val windowRounding = if (flags has WindowFlags.ChildWindow) Style.childWindowRounding else Style.windowRounding
+            val windowRounding = if (flags has WindowFlags.ChildWindow) style.childWindowRounding else style.windowRounding
             if (window.collapsed)
             // Draw title bar only
                 renderFrame(titleBarRect.tl, titleBarRect.br, getColorU32(Col.TitleBgCollapsed), true, windowRounding)
@@ -425,13 +426,13 @@ interface imgui_window {
 
                 // Scrollbars
                 window.scrollbar.y = flags has WindowFlags.AlwaysVerticalScrollbar ||
-                        ((window.sizeContents.y > window.size.y + Style.itemSpacing.y) && flags hasnt WindowFlags.NoScrollbar)
+                        ((window.sizeContents.y > window.size.y + style.itemSpacing.y) && flags hasnt WindowFlags.NoScrollbar)
                 window.scrollbar.x = flags has WindowFlags.AlwaysHorizontalScrollbar ||
                         ((window.sizeContents.x >
-                                window.size.x - (if (window.scrollbar.y) Style.scrollbarSize else 0f) - window.windowPadding.x)
+                                window.size.x - (if (window.scrollbar.y) style.scrollbarSize else 0f) - window.windowPadding.x)
                                 && flags hasnt WindowFlags.NoScrollbar && flags has WindowFlags.HorizontalScrollbar)
-                window.scrollbarSizes.x = if (window.scrollbar.y) Style.scrollbarSize else 0f
-                window.scrollbarSizes.y = if (window.scrollbar.x) Style.scrollbarSize else 0f
+                window.scrollbarSizes.x = if (window.scrollbar.y) style.scrollbarSize else 0f
+                window.scrollbarSizes.y = if (window.scrollbar.x) style.scrollbarSize else 0f
                 window.borderSize = if (flags has WindowFlags.ShowBorders) 1f else 0f
 
                 // Window background, Default Alpha
@@ -441,10 +442,10 @@ interface imgui_window {
                     flags has WindowFlags.ChildWindow -> Col.ChildWindowBg
                     else -> Col.WindowBg
                 }
-                val bgColor = Vec4(Style.colors[bgColorIdx])
+                val bgColor = Vec4(style.colors[bgColorIdx])
                 if (bgAlpha >= 0f)
                     bgColor.w = bgAlpha
-                bgColor.w *= Style.alpha
+                bgColor.w *= style.alpha
                 if (bgColor.w > 0f)
                     window.drawList.addRectFilled(Vec2(0, window.titleBarHeight()) + window.pos, window.size + window.pos,
                             colorConvertFloat4ToU32(bgColor), windowRounding,
@@ -519,7 +520,7 @@ interface imgui_window {
                 dc.prevLineTextBaseOffset = 0f
                 dc.currentLineTextBaseOffset = 0f
                 dc.menuBarAppending = false
-                dc.menuBarOffsetX = glm.max(windowPadding.x, Style.itemSpacing.x)
+                dc.menuBarOffsetX = glm.max(windowPadding.x, style.itemSpacing.x)
                 dc.logLinePosY = dc.cursorPos.y - 9999f
                 dc.childWindows.clear()
                 dc.layoutType = LayoutType.Vertical
@@ -540,7 +541,7 @@ interface imgui_window {
                 dc.stateStorage = stateStorage
                 dc.groupStack.clear()
                 dc.colorEditMode = ColorEditMode.UserSelect
-                menuColumns.update(3, Style.itemSpacing.x, !windowWasActive)
+                menuColumns.update(3, style.itemSpacing.x, !windowWasActive)
 
                 if (autoFitFrames.x > 0)
                     autoFitFrames.x--
@@ -564,27 +565,27 @@ interface imgui_window {
 
                 val textSize = calcTextSize(name, hideTextAfterDoubleHash = true)
                 if (flags hasnt WindowFlags.NoCollapse)
-                    renderCollapseTriangle(Style.framePadding + window.pos, !window.collapsed, 1f)
+                    renderCollapseTriangle(style.framePadding + window.pos, !window.collapsed, 1f)
 
                 val textMin = Vec2(window.pos)
-                val textMax = Vec2(window.size.x, Style.framePadding.y * 2 + textSize.y) + window.pos
+                val textMax = Vec2(window.size.x, style.framePadding.y * 2 + textSize.y) + window.pos
                 val clipRect = Rect()
                 // Match the size of CloseWindowButton()
                 clipRect.max = Vec2(
-                        window.pos.x + window.size.x - (if (pOpen != null) titleBarRect.height - 3 else Style.framePadding.x),
+                        window.pos.x + window.size.x - (if (pOpen != null) titleBarRect.height - 3 else style.framePadding.x),
                         textMax.y)
                 val padLeft =
-                        if (flags hasnt WindowFlags.NoCollapse) Style.framePadding.x + g.fontSize + Style.itemInnerSpacing.x
-                        else Style.framePadding.x
+                        if (flags hasnt WindowFlags.NoCollapse) style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
+                        else style.framePadding.x
                 var padRight =
-                        if (pOpen != null) Style.framePadding.x + g.fontSize + Style.itemInnerSpacing.x
-                        else Style.framePadding.x
-                if (Style.windowTitleAlign.x > 0f)
-                    padRight = lerp(padRight, padLeft, Style.windowTitleAlign.x)
+                        if (pOpen != null) style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
+                        else style.framePadding.x
+                if (style.windowTitleAlign.x > 0f)
+                    padRight = lerp(padRight, padLeft, style.windowTitleAlign.x)
                 textMin.x += padLeft
                 textMax.x -= padRight
                 clipRect.min = Vec2(textMin.x, window.pos.y)
-                renderTextClipped(textMin, textMax, name, name.length, textSize, Style.windowTitleAlign, clipRect)
+                renderTextClipped(textMin, textMax, name, name.length, textSize, style.windowTitleAlign, clipRect)
             }
 
             // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
@@ -638,7 +639,7 @@ interface imgui_window {
             if (window.collapsed)
                 window.active = false
         }
-        if (Style.alpha <= 0f)
+        if (style.alpha <= 0f)
             window.active = false
 
         // Return false if we don't intend to display anything to allow user to perform an early out optimization
@@ -703,9 +704,9 @@ interface imgui_window {
 
         val title =
                 if (name.isNotEmpty())
-                    "%s.%s.%08X".format(Style.locale, window.name, name, id)
+                    "%s.%s.%08X".format(style.locale, window.name, name, id)
                 else
-                    "%s.%08X".format(Style.locale, window.name, id)
+                    "%s.%08X".format(style.locale, window.name, id)
 
         val ret = ImGui.begin(title, null, size, -1f, flags)
 
@@ -883,7 +884,7 @@ interface imgui_window {
      *  centerYRatio = 0.0: top, 0.5: center, 1.0: bottom.    */
     fun setScrollHere(centerYRatio: Float = 0.5f) = with(currentWindow) {
         // Precisely aim above, in the middle or below the last line.
-        val targetY = dc.cursorPosPrevLine.y + (dc.prevLineHeight * centerYRatio) + (Style.itemSpacing.y * (centerYRatio - 0.5f) * 2f)
+        val targetY = dc.cursorPosPrevLine.y + (dc.prevLineHeight * centerYRatio) + (style.itemSpacing.y * (centerYRatio - 0.5f) * 2f)
         setScrollFromPosY(targetY - pos.y, centerYRatio)
     }
 

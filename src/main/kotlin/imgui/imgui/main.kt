@@ -11,17 +11,23 @@ import imgui.Context as g
 
 interface imgui_main {
 
+    val style get() = g.style
+
+    /** Same value as passed to your RenderDrawListsFn() function. valid after Render() and
+     *  until the next call to NewFrame()   */
+    val drawData get() = if (g.renderDrawData.valid) g.renderDrawData else null
+
     /** start a new ImGui frame, you can submit any command from this point until NewFrame()/Render().  */
     fun newFrame() {
 
         ptrIndices = 0
 
         // Check user data
-        assert(IO.deltaTime >= 0.0f)               // Need a positive DeltaTime (zero is tolerated but will cause some timing issues)
-        assert(IO.displaySize.x >= 0.0f && IO.displaySize.y >= 0.0f)
+        assert(IO.deltaTime >= 0f)               // Need a positive DeltaTime (zero is tolerated but will cause some timing issues)
+        assert(IO.displaySize.x >= 0f && IO.displaySize.y >= 0f)
         assert(IO.fonts.fonts.size > 0)           // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
         assert(IO.fonts.fonts[0].isLoaded)     // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
-        assert(Style.curveTessellationTol > 0.0f)  // Invalid style setting
+        assert(style.curveTessellationTol > 0f)  // Invalid style setting
 
         if (!g.initialized) {
             // Initialize on first frame TODO
@@ -260,7 +266,7 @@ interface imgui_main {
         /*  Skip render altogether if alpha is 0.0
             Note that vertex buffers have been created and are wasted, so it is best practice that you don't create
             windows in the first place, or consistently respond to Begin() returning false. */
-        if (Style.alpha > 0f) {
+        if (style.alpha > 0f) {
             // Gather windows to render
             IO.metricsActiveWindows = 0
             IO.metricsRenderIndices = 0

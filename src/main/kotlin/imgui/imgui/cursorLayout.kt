@@ -11,7 +11,7 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logText
 import imgui.ImGui.popClipRect
-import imgui.Style
+import imgui.Context.style
 import imgui.internal.GroupData
 import imgui.internal.Rect
 import imgui.pushColumnClipRect
@@ -69,7 +69,7 @@ interface imgui_cursorLayout {
                     if (posX != 0f)
                         pos.x - scroll.x + posX + glm.max(0f, spacingW) + dc.groupOffsetX + dc.columnsOffsetX
                     else
-                        dc.cursorPosPrevLine.x + if (spacingW < 0f) Style.itemSpacing.x else spacingW
+                        dc.cursorPosPrevLine.x + if (spacingW < 0f) style.itemSpacing.x else spacingW
                     , dc.cursorPosPrevLine.y)
             dc.currentLineHeight = dc.prevLineHeight
             dc.currentLineTextBaseOffset = dc.prevLineTextBaseOffset
@@ -87,13 +87,13 @@ interface imgui_cursorLayout {
 
     /** move content position toward the right, by style.IndentSpacing or indent_w if >0    */
     fun indent(indentW: Float = 0f) = with(currentWindow) {
-        dc.indentX += if (indentW > 0f) indentW else Style.indentSpacing
+        dc.indentX += if (indentW > 0f) indentW else style.indentSpacing
         dc.cursorPos.x = pos.x + dc.indentX + dc.columnsOffsetX
     }
 
     /** move content position back to the left, by style.IndentSpacing or indent_w if >0    */
     fun unindent(indentW: Float = 0f) = with(currentWindow) {
-        dc.indentX -= if (indentW > 0f) indentW else Style.indentSpacing
+        dc.indentX -= if (indentW > 0f) indentW else style.indentSpacing
         dc.cursorPos.x = pos.x + dc.indentX + dc.columnsOffsetX
     }
 
@@ -132,7 +132,7 @@ interface imgui_cursorLayout {
         val groupData = window.dc.groupStack.last()
 
         val groupBb = Rect(groupData.backupCursorPos, window.dc.cursorMaxPos)
-        groupBb.max.y -= Style.itemSpacing.y      // Cancel out last vertical spacing because we are adding one ourselves.
+        groupBb.max.y -= style.itemSpacing.y      // Cancel out last vertical spacing because we are adding one ourselves.
         groupBb.max = glm.max(groupBb.min, groupBb.max)
 
         with(window.dc) {
@@ -205,7 +205,7 @@ interface imgui_cursorLayout {
         if (window.skipItems) return
         /*  Declare a dummy item size to that upcoming items that are smaller will center-align on the newly expanded
             line height.         */
-        itemSize(Vec2(0f, g.fontSize + Style.framePadding.y * 2), Style.framePadding.y)
+        itemSize(Vec2(0f, g.fontSize + style.framePadding.y * 2), style.framePadding.y)
         sameLine(0f, 0f)
     }
 
@@ -213,10 +213,10 @@ interface imgui_cursorLayout {
     val textLineHeight get() = g.fontSize
 
     /** distance (in pixels) between 2 consecutive lines of text == GetWindowFontSize() + GetStyle().ItemSpacing.y  */
-    val textLineHeightWithSpacing get() = g.fontSize + Style.itemSpacing.y
+    val textLineHeightWithSpacing get() = g.fontSize + style.itemSpacing.y
 
     /** distance (in pixels) between 2 consecutive lines of standard height widgets ==
      *  GetWindowFontSize() + GetStyle().FramePadding.y*2 + GetStyle().ItemSpacing.y    */
-    val itemsLineHeightWithSpacing get() = g.fontSize + Style.framePadding.y * 2f + Style.itemSpacing.y
+    val itemsLineHeightWithSpacing get() = g.fontSize + style.framePadding.y * 2f + style.itemSpacing.y
 
 }

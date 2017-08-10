@@ -14,6 +14,7 @@ import imgui.ImGui.currentWindowRead
 import imgui.internal.ColMod
 import imgui.internal.StyleMod
 import imgui.Context as g
+import imgui.Context.style
 
 
 interface imgui_parametersStacks {
@@ -35,14 +36,14 @@ interface imgui_parametersStacks {
 
     fun pushStyleColor(idx: Col, col: Vec4) {
 
-        val backup = ColMod(idx, Style.colors[idx])
+        val backup = ColMod(idx, style.colors[idx])
         g.colorModifiers.push(backup)
-        Style.colors[idx] = col
+        style.colors[idx] = col
     }
 
     fun popStyleColor(count: Int = 1) = repeat(count) {
         val backup = g.colorModifiers.pop()
-        Style.colors[backup.col] put backup.backupValue
+        style.colors[backup.col] put backup.backupValue
     }
 
     /** It'll throw error if wrong correspondence between idx and value type    */
@@ -51,52 +52,52 @@ interface imgui_parametersStacks {
         g.styleModifiers.push(StyleMod(idx).also {
             when (idx) {
                 StyleVar.Alpha -> {
-                    it.floats[0] = Style.alpha
-                    Style.alpha = value as Float
+                    it.floats[0] = style.alpha
+                    style.alpha = value as Float
                 }
                 StyleVar.WindowPadding -> {
-                    Style.windowPadding to it.floats
-                    Style.windowPadding put (value as Vec2)
+                    style.windowPadding to it.floats
+                    style.windowPadding put (value as Vec2)
                 }
                 StyleVar.WindowRounding -> {
-                    it.floats[0] = Style.windowRounding
-                    Style.windowRounding = value as Float
+                    it.floats[0] = style.windowRounding
+                    style.windowRounding = value as Float
                 }
                 StyleVar.WindowMinSize -> {
-                    Style.windowMinSize to it.ints
-                    Style.windowMinSize put (value as Vec2i)
+                    style.windowMinSize to it.ints
+                    style.windowMinSize put (value as Vec2i)
                 }
                 StyleVar.ChildWindowRounding -> {
-                    it.floats[0] = Style.childWindowRounding
-                    Style.childWindowRounding = value as Float
+                    it.floats[0] = style.childWindowRounding
+                    style.childWindowRounding = value as Float
                 }
                 StyleVar.FramePadding -> {
-                    Style.framePadding to it.floats
-                    Style.framePadding put (value as Vec2)
+                    style.framePadding to it.floats
+                    style.framePadding put (value as Vec2)
                 }
                 StyleVar.FrameRounding -> {
-                    it.floats[0] = Style.frameRounding
-                    Style.frameRounding = value as Float
+                    it.floats[0] = style.frameRounding
+                    style.frameRounding = value as Float
                 }
                 StyleVar.ItemSpacing -> {
-                    Style.itemSpacing to it.floats
-                    Style.itemSpacing put (value as Vec2)
+                    style.itemSpacing to it.floats
+                    style.itemSpacing put (value as Vec2)
                 }
                 StyleVar.ItemInnerSpacing -> {
-                    Style.itemInnerSpacing to it.floats
-                    Style.itemInnerSpacing put (value as Vec2)
+                    style.itemInnerSpacing to it.floats
+                    style.itemInnerSpacing put (value as Vec2)
                 }
                 StyleVar.IndentSpacing -> {
-                    it.floats[0] = Style.indentSpacing
-                    Style.indentSpacing = value as Float
+                    it.floats[0] = style.indentSpacing
+                    style.indentSpacing = value as Float
                 }
                 StyleVar.GrabMinSize -> {
-                    it.floats[0] = Style.grabMinSize
-                    Style.grabMinSize = value as Float
+                    it.floats[0] = style.grabMinSize
+                    style.grabMinSize = value as Float
                 }
                 StyleVar.ButtonTextAlign -> {
-                    Style.buttonTextAlign to it.floats
-                    Style.buttonTextAlign put (value as Vec2)
+                    style.buttonTextAlign to it.floats
+                    style.buttonTextAlign put (value as Vec2)
                 }
                 else -> Unit
             }
@@ -106,18 +107,18 @@ interface imgui_parametersStacks {
     fun popStyleVar(count: Int = 1) = repeat(count) {
         val backup = g.styleModifiers.pop()
         when (backup.idx) {
-            StyleVar.Alpha -> Style.alpha = backup.floats[0]
-            StyleVar.WindowPadding -> Style.windowPadding put backup.floats
-            StyleVar.WindowRounding -> Style.windowRounding = backup.floats[0]
-            StyleVar.WindowMinSize -> Style.windowMinSize put backup.ints
-            StyleVar.ChildWindowRounding -> Style.childWindowRounding = backup.floats[0]
-            StyleVar.FramePadding -> Style.framePadding put backup.floats
-            StyleVar.FrameRounding -> Style.frameRounding = backup.floats[0]
-            StyleVar.ItemSpacing -> Style.itemSpacing put backup.floats
-            StyleVar.ItemInnerSpacing -> Style.itemInnerSpacing put backup.floats
-            StyleVar.IndentSpacing -> Style.indentSpacing = backup.floats[0]
-            StyleVar.GrabMinSize -> Style.grabMinSize = backup.floats[0]
-            StyleVar.ButtonTextAlign -> Style.buttonTextAlign put backup.floats
+            StyleVar.Alpha -> style.alpha = backup.floats[0]
+            StyleVar.WindowPadding -> style.windowPadding put backup.floats
+            StyleVar.WindowRounding -> style.windowRounding = backup.floats[0]
+            StyleVar.WindowMinSize -> style.windowMinSize put backup.ints
+            StyleVar.ChildWindowRounding -> style.childWindowRounding = backup.floats[0]
+            StyleVar.FramePadding -> style.framePadding put backup.floats
+            StyleVar.FrameRounding -> style.frameRounding = backup.floats[0]
+            StyleVar.ItemSpacing -> style.itemSpacing put backup.floats
+            StyleVar.ItemInnerSpacing -> style.itemInnerSpacing put backup.floats
+            StyleVar.IndentSpacing -> style.indentSpacing = backup.floats[0]
+            StyleVar.GrabMinSize -> style.grabMinSize = backup.floats[0]
+            StyleVar.ButtonTextAlign -> style.buttonTextAlign put backup.floats
             else -> Unit
         }
     }
@@ -135,15 +136,15 @@ interface imgui_parametersStacks {
     fun getColorU32(idx: Col, alphaMul: Float = 1f) = getColorU32(idx.i, alphaMul)
 
     fun getColorU32(idx: Int, alphaMul: Float = 1f): Int {
-        val c = Vec4(Style.colors[idx])
-        c.w *= Style.alpha * alphaMul
+        val c = Vec4(style.colors[idx])
+        c.w *= style.alpha * alphaMul
         return colorConvertFloat4ToU32(c)
     }
 
     /** retrieve given color with style alpha applied   */
     fun getColorU32(col: Vec4): Int {
         val c = Vec4(col)
-        c.w *= Style.alpha
+        c.w *= style.alpha
         return colorConvertFloat4ToU32(c)
     }
 

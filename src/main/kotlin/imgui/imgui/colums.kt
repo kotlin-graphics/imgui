@@ -19,6 +19,7 @@ import imgui.ImGui.pushItemWidth
 import imgui.internal.ColumnData
 import imgui.internal.Rect
 import imgui.Context as g
+import imgui.Context.style
 
 /** You can also use SameLine(pos_x) for simplified columning. The columns API is still work-in-progress and rather
  *  lacking.    */
@@ -84,7 +85,7 @@ interface imgui_colums {
 
             val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else size.x
             dc.columnsMinX = dc.indentX // Lock our horizontal range
-            dc.columnsMaxX = contentRegionWidth - scroll.x - if (flags has WindowFlags.NoScrollbar) 0f else Style.scrollbarSize// - window->WindowPadding().x;
+            dc.columnsMaxX = contentRegionWidth - scroll.x - if (flags has WindowFlags.NoScrollbar) 0f else style.scrollbarSize// - window->WindowPadding().x;
             dc.columnsStartPosY = dc.cursorPos.y
             dc.columnsCellMaxY = dc.cursorPos.y
             dc.columnsCellMinY = dc.cursorPos.y
@@ -125,7 +126,7 @@ interface imgui_colums {
             dc.columnsCellMaxY = glm.max(dc.columnsCellMaxY, dc.cursorPos.y)
             if (++dc.columnsCurrent < dc.columnsCount) {
                 // Columns 1+ cancel out IndentX
-                dc.columnsOffsetX = getColumnOffset(dc.columnsCurrent) - dc.indentX + Style.itemSpacing.x
+                dc.columnsOffsetX = getColumnOffset(dc.columnsCurrent) - dc.indentX + style.itemSpacing.x
                 drawList.channelsSetCurrent(dc.columnsCurrent)
             } else {
                 dc.columnsCurrent = 0

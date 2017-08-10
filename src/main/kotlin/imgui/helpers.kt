@@ -8,7 +8,7 @@ import imgui.ImGui.calcListClipping
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.cursorPosY
-import imgui.ImGui.end
+import imgui.Context.style
 import imgui.ImGui.inputText
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
@@ -69,7 +69,7 @@ class Storage {
 
     fun clear() = data.clear()
 
-    fun int(key: Int, defaultVal: Int = 0) = data[key] ?: defaultVal // TODO rename back
+    fun intaaaaaaaaaaaa(key: Int, defaultVal: Int = 0) = data[key] ?: defaultVal // TODO rename back
 
     operator fun set(key: Int, value: Int) {
         data[key] = value
@@ -275,7 +275,7 @@ class ListClipper {
             cursorPosPrevLine.y = cursorPos.y - lineHeight
             /*  If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a
                 fourth step to let user process and display the last item in their list.             */
-            prevLineHeight = lineHeight - Style.itemSpacing.y
+            prevLineHeight = lineHeight - style.itemSpacing.y
             if (columnsCount > 1)
                 columnsCellMinY = cursorPos.y   // Setting this so that cell Y position are set properly
         }

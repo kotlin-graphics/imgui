@@ -35,6 +35,7 @@ import imgui.ImGui.windowContentRegionMax
 import imgui.internal.ButtonFlags
 import imgui.internal.Rect
 import imgui.internal.or
+import imgui.Context.style
 
 /** Widgets: Selectable / Lists */
 interface imgui_widgetsSelectableLists {
@@ -72,10 +73,10 @@ interface imgui_widgetsSelectableLists {
             bbWithSpacing.max.x += windowPadding.x
 
         // Selectables are tightly packed together, we extend the box to cover spacing between selectable.
-        val spacingL = (Style.itemSpacing.x * 0.5f).i.f
-        val spacingU = (Style.itemSpacing.y * 0.5f).i.f
-        val spacingR = Style.itemSpacing.x - spacingL
-        val spacingD = Style.itemSpacing.y - spacingU
+        val spacingL = (style.itemSpacing.x * 0.5f).i.f
+        val spacingU = (style.itemSpacing.y * 0.5f).i.f
+        val spacingR = style.itemSpacing.x - spacingL
+        val spacingD = style.itemSpacing.y - spacingU
         bbWithSpacing.min.x -= spacingL
         bbWithSpacing.min.y -= spacingU
         bbWithSpacing.max.x += spacingR
@@ -107,7 +108,7 @@ interface imgui_widgetsSelectableLists {
             bbWithSpacing.max.x -= contentRegionMax.x - maxX
         }
 
-        if (flags has SelectableFlags.Disabled) pushStyleColor(Col.Text, Style.colors[Col.TextDisabled])
+        if (flags has SelectableFlags.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
         renderTextClipped(bb.min, bbWithSpacing.max, label, 0, labelSize, Vec2())
         if (flags has SelectableFlags.Disabled) popStyleColor()
 
@@ -161,15 +162,15 @@ interface imgui_widgetsSelectableLists {
         val labelSize = calcTextSize(label, true)
 
         // Size default to hold ~7 items. Fractional number of items helps seeing that we can scroll down/up without looking at scrollbar.
-        val size = calcItemSize(sizeArg, calcItemWidth(), textLineHeightWithSpacing * 7.4f + Style.itemSpacing.y)
+        val size = calcItemSize(sizeArg, calcItemWidth(), textLineHeightWithSpacing * 7.4f + style.itemSpacing.y)
         val frameSize = Vec2(size.x, glm.max(size.y, labelSize.y))
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
-        val bb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) Style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
+        val bb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
         window.dc.lastItemRect = bb
 
         beginGroup()
         if (labelSize.x > 0)
-            renderText(Vec2(frameBb.max.x + Style.itemInnerSpacing.x, frameBb.min.y + Style.framePadding.y), label)
+            renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
         beginChildFrame(id, frameBb.size)
         return true
@@ -192,7 +193,7 @@ interface imgui_widgetsSelectableLists {
 
         /*  We include ItemSpacing.y so that a list sized for the exact number of items doesn't make a scrollbar
             appears. We could also enforce that by passing a flag to BeginChild().         */
-        val size = Vec2(0f, textLineHeightWithSpacing * heightInItemsF + Style.itemSpacing.y)
+        val size = Vec2(0f, textLineHeightWithSpacing * heightInItemsF + style.itemSpacing.y)
         return listBoxHeader(label, size)
     }
 
@@ -208,7 +209,7 @@ interface imgui_widgetsSelectableLists {
             We call SameLine() to restore DC.CurrentLine* data         */
         sameLine()
         parentWindow.dc.cursorPos put bb.min
-        itemSize(bb, Style.framePadding.y)
+        itemSize(bb, style.framePadding.y)
         endGroup()
     }
 }

@@ -8,6 +8,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.Context.style
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemWidth
@@ -27,7 +28,9 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.setItemAllowOverlap
+import imgui.ImGui.sliderFloat
 import imgui.ImGui.textLineHeight
+import imgui.ImGui.textUnformatted
 import imgui.TextEditState.K
 import imgui.internal.*
 import java.util.*
@@ -46,10 +49,11 @@ interface imgui_internal {
 
     val currentWindow get() = g.currentWindow!!.apply { accessed = true }
 
-    val parentWindow: Window get() {
-        assert(g.currentWindowStack.size >= 2)
-        return g.currentWindowStack[g.currentWindowStack.size - 2]
-    }
+    val parentWindow: Window
+        get() {
+            assert(g.currentWindowStack.size >= 2)
+            return g.currentWindowStack[g.currentWindowStack.size - 2]
+        }
 
     fun findWindowByName(name: String): Window? {
         // FIXME-OPT: Store sorted hashes -> pointers so we can do a bissection in a contiguous block
@@ -181,7 +185,7 @@ interface imgui_internal {
         window.dc.cursorPosPrevLine.x = window.dc.cursorPos.x + size.x
         window.dc.cursorPosPrevLine.y = window.dc.cursorPos.y
         window.dc.cursorPos.x = (window.pos.x + window.dc.indentX + window.dc.columnsOffsetX).i.f
-        window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + Style.itemSpacing.y).i.f
+        window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + style.itemSpacing.y).i.f
         window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
         window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y)
 
@@ -530,7 +534,7 @@ interface imgui_internal {
                 held = true
             else {
                 if (hovered && flags has ButtonFlags.PressedOnClickRelease)
-                    // Repeat mode trumps <on release>
+                // Repeat mode trumps <on release>
                     if (!(flags has ButtonFlags.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay))
                         pressed = true
                 clearActiveId()
@@ -557,12 +561,12 @@ interface imgui_internal {
         val pos = Vec2(window.dc.cursorPos)
         /*  Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky,
             since it shouldn't be a flag)         */
-        if (flags has ButtonFlags.AlignTextBaseLine && Style.framePadding.y < window.dc.currentLineTextBaseOffset)
-            pos.y += window.dc.currentLineTextBaseOffset - Style.framePadding.y
-        val size = calcItemSize(sizeArg, labelSize.x + Style.framePadding.x * 2f, labelSize.y + Style.framePadding.y * 2f)
+        if (flags has ButtonFlags.AlignTextBaseLine && style.framePadding.y < window.dc.currentLineTextBaseOffset)
+            pos.y += window.dc.currentLineTextBaseOffset - style.framePadding.y
+        val size = calcItemSize(sizeArg, labelSize.x + style.framePadding.x * 2f, labelSize.y + style.framePadding.y * 2f)
 
         val bb = Rect(pos, pos + size)
-        itemSize(bb, Style.framePadding.y)
+        itemSize(bb, style.framePadding.y)
         if (!itemAdd(bb, id)) return false
 
         var flags = flags
@@ -571,9 +575,9 @@ interface imgui_internal {
 
         // Render
         val col = getColorU32(if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button)
-        renderFrame(bb.min, bb.max, col, true, Style.frameRounding)
-        renderTextClipped(bb.min + Style.framePadding, bb.max - Style.framePadding, label, 0, labelSize,
-                Style.buttonTextAlign, bb)
+        renderFrame(bb.min, bb.max, col, true, style.frameRounding)
+        renderTextClipped(bb.min + style.framePadding, bb.max - style.framePadding, label, 0, labelSize,
+                style.buttonTextAlign, bb)
 
         // Automatically close popups
         //if (pressed && !(flags & ImGuiButtonFlags_DontClosePopups) && (window->Flags & ImGuiWindowFlags_Popup))
@@ -609,12 +613,16 @@ interface imgui_internal {
 
 
     fun sliderBehavior(frameBb: Rect, id: Int, v: FloatArray, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
+                       flags: Int = 0) = sliderBehavior(frameBb, id, v, 0, vMin, vMax, power, decimalPrecision, flags)
+
+    fun sliderBehavior(frameBb: Rect, id: Int, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
                        flags: Int = 0): Boolean {
 
         val window = currentWindow
 
+//        println("Draw frame, ${v[ptr]}")
         // Draw frame
-        renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, Style.frameRounding)
+        renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, style.frameRounding)
 
         val isNonLinear = (power < 1.0f - 0.00001f) || (power > 1.0f + 0.00001f)
         val isHorizontal = flags hasnt SliderFlags.Vertical
@@ -623,10 +631,10 @@ interface imgui_internal {
         val sliderSz = (if (isHorizontal) frameBb.width else frameBb.height) - grabPadding * 2f
         val grabSz =
                 if (decimalPrecision > 0)
-                    glm.min(Style.grabMinSize, sliderSz)
+                    glm.min(style.grabMinSize, sliderSz)
                 else
                     glm.min(
-                            glm.max(1f * (sliderSz / ((if (vMin < vMax) vMax - vMin else vMin - vMax) + 1f)), Style.grabMinSize),
+                            glm.max(1f * (sliderSz / ((if (vMin < vMax) vMax - vMin else vMin - vMax) + 1f)), style.grabMinSize),
                             sliderSz)  // Integer sliders, if possible have the grab size represent 1 unit
         val sliderUsableSz = sliderSz - grabSz
         val sliderUsablePosMin = (if (isHorizontal) frameBb.min.x else frameBb.min.y) + grabPadding + grabSz * 0.5f
@@ -676,13 +684,13 @@ interface imgui_internal {
                         } else lerp(vMin, vMax, clickedT) // Linear slider
                 // Round past decimal precision
                 newValue = roundScalar(newValue, decimalPrecision)
-                if (v[0] != newValue) {
-                    v[0] = newValue
+                if (v[ptr] != newValue) {
+                    v[ptr] = newValue
                     valueChanged = true
                 }
             } else clearActiveId()
         // Calculate slider grab positioning
-        var grabT = sliderBehaviorCalcRatioFromValue(v[0], vMin, vMax, power, linearZeroPos)
+        var grabT = sliderBehaviorCalcRatioFromValue(v[ptr], vMin, vMax, power, linearZeroPos)
         // Draw
         if (!isHorizontal)
             grabT = 1f - grabT
@@ -695,7 +703,7 @@ interface imgui_internal {
                     Rect(Vec2(frameBb.min.x + grabPadding, grabPos - grabSz * 0.5f),
                             Vec2(frameBb.max.x - grabPadding, grabPos + grabSz * 0.5f))
         val col = getColorU32(if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab)
-        window.drawList.addRectFilled(grabBb.min, grabBb.max, col, Style.grabRounding)
+        window.drawList.addRectFilled(grabBb.min, grabBb.max, col, style.grabRounding)
 
         return valueChanged
     }
@@ -718,10 +726,33 @@ interface imgui_internal {
         return (vClamped - vMin) / (vMax - vMin)
     }
 
-//IMGUI_API bool          SliderFloatN(const char* label, float* v, int components, float v_min, float v_max, const char* display_format, float power);
+    fun sliderFloatN(label: String, v: FloatArray, vMin: Float, vMax: Float, displayFormat: String, power: Float): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(v.size)
+        for (i in v.indices)        {
+            pushId(i)
+            println(i)
+            valueChanged = valueChanged || sliderFloat("##v", v, i, vMin, vMax, displayFormat, power)
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+        return valueChanged
+    }
+
 //IMGUI_API bool          SliderIntN(const char* label, int* v, int components, int v_min, int v_max, const char* display_format);
 
-    fun dragBehavior(frameBb: Rect, id: Int, v: FloatArray, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
+    fun dragBehavior(frameBb: Rect, id: Int, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
                      power: Float): Boolean {
 
         // Draw frame
@@ -729,7 +760,7 @@ interface imgui_internal {
                 if (g.activeId == id) Col.FrameBgActive
                 else if (g.hoveredId == id) Col.FrameBgHovered
                 else Col.FrameBg)
-        renderFrame(frameBb.min, frameBb.max, frameCol, true, Style.frameRounding)
+        renderFrame(frameBb.min, frameBb.max, frameCol, true, style.frameRounding)
 
         var valueChanged = false
 
@@ -740,7 +771,7 @@ interface imgui_internal {
 
                 if (g.activeIdIsJustActivated) {
                     // Lock current value on click
-                    g.dragCurrentValue = v[0]
+                    g.dragCurrentValue = v[ptr]
                     g.dragLastMouseDelta put 0f
                 }
 
@@ -777,8 +808,8 @@ interface imgui_internal {
 
                 // Round to user desired precision, then apply
                 vCur = roundScalar(vCur, decimalPrecision)
-                if (v[0] != vCur) {
-                    v[0] = vCur
+                if (v[ptr] != vCur) {
+                    v[ptr] = vCur
                     valueChanged = true
                 }
             } else
@@ -811,9 +842,9 @@ interface imgui_internal {
         val labelSize = calcTextSize(label, 0, true)
         val size = calcItemSize(sizeArg, calcItemWidth(),
                 // Arbitrary default of 8 lines high for multi-line
-                (if (isMultiline) textLineHeight * 8f else labelSize.y) + Style.framePadding.y * 2f)
+                (if (isMultiline) textLineHeight * 8f else labelSize.y) + style.framePadding.y * 2f)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) Style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
+        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
         var drawWindow = window
         if (isMultiline) {
@@ -825,7 +856,7 @@ interface imgui_internal {
             drawWindow = currentWindow
             size.x -= drawWindow.scrollbarSizes.x
         } else {
-            itemSize(totalBb, Style.framePadding.y)
+            itemSize(totalBb, style.framePadding.y)
             if (!itemAdd(totalBb, id)) return false
         }
 
@@ -934,10 +965,10 @@ interface imgui_internal {
             g.activeIdAllowOverlap = !IO.mouseDown[0]
 
             // Edit in progress
-            val mouseX = IO.mousePos.x - frameBb.min.x - Style.framePadding.x + editState.scrollX
+            val mouseX = IO.mousePos.x - frameBb.min.x - style.framePadding.x + editState.scrollX
             val mouseY =
                     if (isMultiline)
-                        IO.mousePos.y - drawWindow.dc.cursorPos.y - Style.framePadding.y
+                        IO.mousePos.y - drawWindow.dc.cursorPos.y - style.framePadding.y
                     else g.fontSize * 0.5f
 
             // OS X style: Double click selects by word instead of selecting whole text
@@ -1218,10 +1249,10 @@ interface imgui_internal {
 //        buf[0] = ""
 
         if (!isMultiline)
-            renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, Style.frameRounding)
+            renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, style.frameRounding)
 
         val clipRect = Vec4(frameBb.min, frameBb.min + size) // Not using frameBb.Max because we have adjusted size
-        val renderPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + Style.framePadding
+        val renderPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + style.framePadding
         val textSize = Vec2()
         val isCurrentlyScrolling = editState.id == id && isMultiline && g.activeId == drawWindow.getIdNoKeepAlive("#SCROLLY")
         if (g.activeId == id || isCurrentlyScrolling) {
@@ -1339,7 +1370,7 @@ interface imgui_internal {
                         val end = text.size - start
                         val rectSize = inputTextCalcTextSizeW(String(text, start, end), textSelectedEnd, stopOnNewLine = true)
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_A(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clip(clipRect_)
@@ -1390,7 +1421,7 @@ interface imgui_internal {
             logRenderedText(renderPos, String(bufDisplay))
 
         if (labelSize.x > 0)
-            renderText(Vec2(frameBb.max.x + Style.itemInnerSpacing.x, frameBb.min.y + Style.framePadding.y), label)
+            renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
         return if (flags has InputTextFlags.EnterReturnsTrue) enterPressed else valueChanged
     }
@@ -1409,8 +1440,8 @@ interface imgui_internal {
 
         beginGroup()
         pushId(label)
-        val buttonSz = Vec2(g.fontSize) + Style.framePadding * 2f
-        step?.let { pushItemWidth(glm.max(1f, calcItemWidth() - (buttonSz.x + Style.itemInnerSpacing.x) * 2)) }
+        val buttonSz = Vec2(g.fontSize) + style.framePadding * 2f
+        step?.let { pushItemWidth(glm.max(1f, calcItemWidth() - (buttonSz.x + style.itemInnerSpacing.x) * 2)) }
 
         val buf = data.format(dataType, scalarFormat, CharArray(64))
 
@@ -1425,12 +1456,12 @@ interface imgui_internal {
         // Step buttons
         step?.let {
             popItemWidth()
-            sameLine(0f, Style.itemInnerSpacing.x)
+            sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("-", buttonSz, ButtonFlags.Repeat or ButtonFlags.DontClosePopups)) {
                 dataTypeApplyOp(dataType, '-', data, if (IO.keyCtrl && stepFast != null) stepFast else step)
                 valueChanged = true
             }
-            sameLine(0f, Style.itemInnerSpacing.x)
+            sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("+", buttonSz, ButtonFlags.Repeat or ButtonFlags.DontClosePopups)) {
                 dataTypeApplyOp(dataType, '+', data, if (IO.keyCtrl && stepFast != null) stepFast else step)
                 valueChanged = true
@@ -1439,9 +1470,9 @@ interface imgui_internal {
         popId()
 
         if (labelSize.x > 0) {
-            sameLine(0f, Style.itemInnerSpacing.x)
-            renderText(Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + Style.framePadding.y), label)
-            itemSize(labelSize, Style.framePadding.y)
+            sameLine(0f, style.itemInnerSpacing.x)
+            renderText(Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + style.framePadding.y), label)
+            itemSize(labelSize, style.framePadding.y)
         }
         endGroup()
 
@@ -1481,13 +1512,13 @@ interface imgui_internal {
         if (window.skipItems) return false
 
         val displayFrame = flags has TreeNodeFlags.Framed
-        val padding = if (displayFrame) Vec2(Style.framePadding) else Vec2(Style.framePadding.x, 0f)
+        val padding = if (displayFrame) Vec2(style.framePadding) else Vec2(style.framePadding.x, 0f)
 
         val labelSize = calcTextSize(label, false)
 
         // We vertically grow up to current line height up the typical widget height.
         val textBaseOffsetY = glm.max(0f, window.dc.currentLineTextBaseOffset - padding.y) // Latch before ItemSize changes it
-        val frameHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + Style.framePadding.y * 2), labelSize.y + padding.y * 2)
+        val frameHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
         val bb = Rect(window.dc.cursorPos, Vec2(window.pos.x + contentRegionMax.x, window.dc.cursorPos.y + frameHeight))
         if (displayFrame) {
             // Framed header expand a little outside the default padding
@@ -1502,7 +1533,7 @@ interface imgui_internal {
         /*  For regular tree nodes, we arbitrary allow to click past 2 worth of ItemSpacing
             (Ideally we'd want to add a flag for the user to specify we want want the hit test to be done up to the
             right side of the content or not)         */
-        val interactBb = if (displayFrame) Rect(bb) else Rect(bb.min.x, bb.min.y, bb.min.x + textWidth + Style.itemSpacing.x * 2, bb.max.y)
+        val interactBb = if (displayFrame) Rect(bb) else Rect(bb.min.x, bb.min.y, bb.min.x + textWidth + style.itemSpacing.x * 2, bb.max.y)
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
 
         if (!itemAdd(interactBb, id)) {
@@ -1541,7 +1572,7 @@ interface imgui_internal {
         val textPos = bb.min + Vec2(textOffsetX, padding.y + textBaseOffsetY)
         if (displayFrame) {
             // Framed type
-            renderFrame(bb.min, bb.max, col, true, Style.frameRounding)
+            renderFrame(bb.min, bb.max, col, true, style.frameRounding)
             renderCollapseTriangle(bb.min + padding + Vec2(0f, textBaseOffsetY), isOpen, 1f)
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
@@ -1587,7 +1618,7 @@ interface imgui_internal {
             } else {
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
-                val storedValue = storage.int(id, -1)
+                val storedValue = storage.intaaaaaaaaaaaa(id, -1)
                 if (storedValue == -1) {
                     isOpen = g.setNextTreeNodeOpenVal
                     storage[id] = isOpen
@@ -1596,7 +1627,7 @@ interface imgui_internal {
             }
             g.setNextTreeNodeOpenCond = 0
         } else
-            isOpen = storage.int(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0
+            isOpen = storage.intaaaaaaaaaaaa(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).

@@ -38,6 +38,7 @@ import imgui.internal.LayoutType
 import imgui.internal.Rect
 import imgui.internal.isPointInTriangle
 import imgui.Context as g
+import imgui.Context.style
 
 /** Menu    */
 interface imgui_menus {
@@ -47,7 +48,7 @@ interface imgui_menus {
     fun beginMainMenuBar(): Boolean {
 
         setNextWindowPos(Vec2())
-        setNextWindowSize(Vec2(IO.displaySize.x, g.fontBaseSize + Style.framePadding.y * 2f))
+        setNextWindowSize(Vec2(IO.displaySize.x, g.fontBaseSize + style.framePadding.y * 2f))
         pushStyleVar(StyleVar.WindowRounding, 0f)
         pushStyleVar(StyleVar.WindowMinSize, Vec2i())
         val flags = WindowFlags.NoTitleBar or WindowFlags.NoResize or WindowFlags.NoMove or WindowFlags.NoScrollbar or
@@ -57,7 +58,7 @@ interface imgui_menus {
             popStyleVar(2)
             return false
         }
-        g.currentWindow!!.dc.menuBarOffsetX += Style.displaySafeAreaPadding.x
+        g.currentWindow!!.dc.menuBarOffsetX += style.displaySafeAreaPadding.x
         return true
     }
 
@@ -81,7 +82,7 @@ interface imgui_menus {
         val rect = Rect(window.menuBarRect())
         pushClipRect(Vec2(glm.floor(rect.min.x + 0.5f), glm.floor(rect.min.y + window.borderSize + 0.5f)),
                 Vec2(glm.floor(rect.max.x + 0.5f), glm.floor(rect.max.y + 0.5f)), false)
-        window.dc.cursorPos = Vec2(rect.min.x + window.dc.menuBarOffsetX, rect.min.y)// + g.Style.FramePadding.y);
+        window.dc.cursorPos = Vec2(rect.min.x + window.dc.menuBarOffsetX, rect.min.y)// + g.style.FramePadding.y);
         window.dc.layoutType = LayoutType.Horizontal
         window.dc.menuBarAppending = true
         alignFirstTextHeightToWidgets()
@@ -127,22 +128,22 @@ interface imgui_menus {
         val popupPos = Vec2()
         val pos = Vec2(window.dc.cursorPos)
         if (window.dc.layoutType == LayoutType.Horizontal) {
-            popupPos.put(pos.x - window.windowPadding.x, pos.y - Style.framePadding.y + window.menuBarHeight())
-            window.dc.cursorPos.x += (Style.itemSpacing.x * 0.5f).i.f
-            pushStyleVar(StyleVar.ItemSpacing, Style.itemSpacing * 2f)
+            popupPos.put(pos.x - window.windowPadding.x, pos.y - style.framePadding.y + window.menuBarHeight())
+            window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
+            pushStyleVar(StyleVar.ItemSpacing, style.itemSpacing * 2f)
             val w = labelSize.x
             val flags = SelectableFlags.Menu or SelectableFlags.DontClosePopups or if (enabled) 0 else SelectableFlags.Disabled.i
             pressed = selectable(label, menuIsOpen, flags, Vec2(w, 0f))
             popStyleVar()
             sameLine()
-            window.dc.cursorPos.x += (Style.itemSpacing.x * 0.5f).i.f
+            window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
         } else {
-            popupPos.put(pos.x, pos.y - Style.windowPadding.y)
+            popupPos.put(pos.x, pos.y - style.windowPadding.y)
             val w = window.menuColumns.declColumns(labelSize.x, 0f, (g.fontSize * 1.2f).i.f) // Feedback to next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
             val flags = SelectableFlags.Menu or SelectableFlags.DontClosePopups or SelectableFlags.DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) 0 else SelectableFlags.Disabled.i, Vec2(w, 0f))
-            if (!enabled) pushStyleColor(Col.Text, Style.colors[Col.TextDisabled])
+            if (!enabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
             renderCollapseTriangle(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.2f, 0f), false)
             if (!enabled) popStyleColor()
         }
@@ -229,7 +230,7 @@ interface imgui_menus {
         val flags = SelectableFlags.MenuItem or SelectableFlags.DrawFillAvailWidth or if (enabled) 0 else SelectableFlags.Disabled.i
         val pressed = selectable(label, false, flags, Vec2(w, 0f))
         if (shortcutSize.x > 0f) {
-            pushStyleColor(Col.Text, Style.colors[Col.TextDisabled])
+            pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
             renderText(pos + Vec2(window.menuColumns.pos[1] + extraW, 0f), shortcut, 0, false)
             popStyleColor()
         }

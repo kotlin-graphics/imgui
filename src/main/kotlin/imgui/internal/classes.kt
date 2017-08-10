@@ -13,6 +13,7 @@ import imgui.ImGui.keepAliveId
 import java.util.*
 import kotlin.collections.ArrayList
 import imgui.Context as g
+import imgui.Context.style
 
 
 /** 2D axis aligned bounding-box
@@ -500,9 +501,9 @@ class Window(
 
     fun rect() = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
     fun calcFontSize() = g.fontBaseSize * fontWindowScale
-    fun titleBarHeight() = if (flags has WindowFlags.NoTitleBar) 0f else calcFontSize() + Style.framePadding.y * 2f
+    fun titleBarHeight() = if (flags has WindowFlags.NoTitleBar) 0f else calcFontSize() + style.framePadding.y * 2f
     fun titleBarRect() = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight()))
-    fun menuBarHeight() = if (flags has WindowFlags.MenuBar) calcFontSize() + Style.framePadding.y * 2f else 0f
+    fun menuBarHeight() = if (flags has WindowFlags.MenuBar) calcFontSize() + style.framePadding.y * 2f else 0f
     fun menuBarRect(): Rect {
         val y1 = pos.y + titleBarHeight()
         return Rect(pos.x.f, y1, pos.x + sizeFull.x, y1 + menuBarHeight())
@@ -594,7 +595,7 @@ class Window(
             }
         }
         if (flags hasnt (WindowFlags.ChildWindow or WindowFlags.AlwaysAutoResize))
-            newSize max_ Style.windowMinSize
+            newSize max_ style.windowMinSize
         sizeFull put newSize
     }
 
