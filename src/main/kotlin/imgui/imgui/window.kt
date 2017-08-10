@@ -6,6 +6,7 @@ import glm_.f
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
@@ -440,7 +441,7 @@ interface imgui_window {
                     flags has WindowFlags.ChildWindow -> Col.ChildWindowBg
                     else -> Col.WindowBg
                 }
-                val bgColor = Style.colors[bgColorIdx]
+                val bgColor = Vec4(Style.colors[bgColorIdx])
                 if (bgAlpha >= 0f)
                     bgColor.w = bgAlpha
                 bgColor.w *= Style.alpha

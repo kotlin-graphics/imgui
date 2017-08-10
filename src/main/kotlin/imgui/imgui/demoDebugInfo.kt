@@ -61,6 +61,7 @@ import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.version
+import imgui.ImGui.window
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.withStyleVar
 import imgui.ImGui.withWindow
@@ -133,7 +134,7 @@ interface imgui_demoDebugInfo {
                 menuItem("Long text display", "", showApp.longText)
                 menuItem("Auto-resizing window", "", showApp.autoResize)
                 menuItem("Constrained-resizing window", "", showApp.constrainedResize)
-//                menuItem("Simple overlay", NULL, &show_app_fixed_overlay)
+                menuItem("Simple overlay", "", showApp.fixedOverlay)
 //                menuItem("Manipulating window title", NULL, &show_app_manipulating_window_title)
 //                menuItem("Custom rendering", NULL, &show_app_custom_rendering)
             }
@@ -1762,7 +1763,7 @@ interface imgui_demoDebugInfo {
                 5 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.step, 100)// Fixed Step
             }
 
-            if (begin("Example: Constrained Resize", pOpen)) {
+            window("Example: Constrained Resize", pOpen) {
                 val desc = arrayOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
                         "Width 300-400", "Custom: Always Square", "Custom: Fixed Steps (100)")
                 combo("Constraint", type, desc)
@@ -1772,7 +1773,6 @@ interface imgui_demoDebugInfo {
                 for (i in 0 until 10)
                     text("Hello, sailor! Making this line long enough for the example.")
             }
-            end()
         }
 
         // Helper functions to demonstrate programmatic constraints
