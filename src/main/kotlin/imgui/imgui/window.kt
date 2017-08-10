@@ -804,7 +804,7 @@ interface imgui_window {
 
         g.setNextWindowSizeConstraint = true
         g.setNextWindowSizeConstraintRect.min put sizeMin
-        g.setNextWindowSizeConstraintRect.min put sizeMax
+        g.setNextWindowSizeConstraintRect.max put sizeMax
         g.setNextWindowSizeConstraintCallback = customCallback
         g.setNextWindowSizeConstraintCallbackUserData = customCallbackUserData
     }

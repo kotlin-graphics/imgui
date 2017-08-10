@@ -1768,21 +1768,19 @@ interface imgui_demoDebugInfo {
                 combo("Constraint", type, desc)
                 button("200x200") { setWindowSize(Vec2(200)); sameLine() }
                 button("500x500") { setWindowSize(Vec2(500)); sameLine() }
-                button("800x200") {
-                    setWindowSize(Vec2(800, 200))
-                    for (i in 0 until 10)
-                        text("Hello, sailor! Making this line long enough for the example.")
-                }
+                button("800x200") { setWindowSize(Vec2(800, 200)) }
+                for (i in 0 until 10)
+                    text("Hello, sailor! Making this line long enough for the example.")
             }
             end()
         }
 
         // Helper functions to demonstrate programmatic constraints
         object CustomConstraints {
-            val square: SizeConstraintCallback = { _: Any, _: Vec2i, _: Vec2, desiredSize: Vec2 ->
+            val square: SizeConstraintCallback = { _: Any?, _: Vec2i, _: Vec2, desiredSize: Vec2 ->
                 desiredSize put glm.max(desiredSize.x, desiredSize.y)
             }
-            val step: SizeConstraintCallback = { userData: Any, _: Vec2i, _: Vec2, desiredSize: Vec2 ->
+            val step: SizeConstraintCallback = { userData: Any?, _: Vec2i, _: Vec2, desiredSize: Vec2 ->
                 val step = (userData as Int).f
                 desiredSize.x = (desiredSize.x / step + 0.5f).i * step
                 desiredSize.y = (desiredSize.y / step + 0.5f).i * step

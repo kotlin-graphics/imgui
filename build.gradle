@@ -9,7 +9,7 @@ group = 'com.github.kotlin-graphics'
 
 buildscript {
 
-    ext.kotlinVersion = '1.2-M1'
+    ext.kotlinVersion = '1.2-M2'
 
     repositories {
         mavenCentral()
@@ -27,7 +27,7 @@ dependencies {
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-    compile 'com.github.kotlin-graphics:uno-sdk:1f1a8cf4d1dc9cb11abf222c477e912a4d26d6e3'
+    compile 'com.github.kotlin-graphics:uno-sdk:5eaad17fb0b197b240fb86ccaa700c83b74c0b05'
 
     testCompile 'com.github.elect86:kotlintest:43281b7e1b'
 
