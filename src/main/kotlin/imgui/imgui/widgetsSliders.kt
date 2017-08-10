@@ -39,7 +39,7 @@ interface imgui_widgetsSliders {
     fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f)
             : Boolean {
 
-        println("sliderFloat $ptr")
+//        println("sliderFloat $ptr") TODO clean
         val window = currentWindow
         if (window.skipItems) return false
 

@@ -1249,7 +1249,7 @@ interface imgui_demoDebugInfo {
                 }
             }
         }
-        
+
         end()
     }
 
@@ -1463,12 +1463,15 @@ interface imgui_demoDebugInfo {
             popItemWidth()
         }
 
-        treeNode("Settings")        {
+        treeNode("Settings") {
             sliderFloat2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
-//            SliderFloat("WindowRounding", &style.WindowRounding, 0.0f, 16.0f, "%.0f");
-//            SliderFloat("ChildWindowRounding", &style.ChildWindowRounding, 0.0f, 16.0f, "%.0f");
-//            SliderFloat2("FramePadding", (float*)&style.FramePadding, 0.0f, 20.0f, "%.0f");
-//            SliderFloat("FrameRounding", &style.FrameRounding, 0.0f, 16.0f, "%.0f");
+            sliderFloat("WindowRounding", Companion.f.apply { this[3] = style.windowRounding }, 3,0f, 16f, "%.0f")
+            style.windowRounding = Companion.f[3]
+            sliderFloat("ChildWindowRounding", Companion.f.apply { this[4] = style.childWindowRounding }, 4,0f, 16f, "%.0f")
+            style.childWindowRounding = Companion.f[4]
+            sliderFloat2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
+            sliderFloat("FrameRounding", Companion.f.apply { this[5] = style.frameRounding}, 5, 0f, 16f, "%.0f")
+            style.frameRounding = Companion.f[5]
 //            SliderFloat2("ItemSpacing", (float*)&style.ItemSpacing, 0.0f, 20.0f, "%.0f");
 //            SliderFloat2("ItemInnerSpacing", (float*)&style.ItemInnerSpacing, 0.0f, 20.0f, "%.0f");
 //            SliderFloat2("TouchExtraPadding", (float*)&style.TouchExtraPadding, 0.0f, 10.0f, "%.0f");
@@ -1741,10 +1744,13 @@ interface imgui_demoDebugInfo {
          * [0] = sliderFloat for showExampleMenuFile()
          * [1] = "Curve Tessellation Tolerance" for showStyleEditor()
          * [2] = "Global Alpha" for showStyleEditor()
+         * [3] = "style.windowRounding" for showStyleEditor()
+         * [4] = "style.childWindowRounding" for showStyleEditor()
+         * [5] = "style.frameRounding" for showStyleEditor()
          */
-        var f = floatArrayOf(0.5f, 0f, 0f)
-        var n = intArrayOf(0)
-        var bool = BooleanArray(1)
+        val f = FloatArray(6, { if (it == 0) 0.5f else 0f })
+        val n = intArrayOf(0)
+        val bool = BooleanArray(1)
 
         /** Demonstrate creating a window which gets auto-resized according to its content. */
         fun showExampleAppAutoResize(pOpen: BooleanArray) {
@@ -1762,7 +1768,7 @@ interface imgui_demoDebugInfo {
             end()
         }
 
-        var lines = intArrayOf(10)
+        val lines = intArrayOf(10)
 
         /** Demonstrate creating a window with custom resize constraints.   */
         fun showExampleAppConstrainedResize(pOpen: BooleanArray) {
