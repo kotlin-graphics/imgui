@@ -11,9 +11,9 @@ interface imgui_logging {
 //    IMGUI_API void          LogToFile(int max_depth = -1, const char* filename = NULL);         // start logging to file
 
     /** start logging ImGui output to OS clipboard   */
-    fun logToClipboard(maxDepth:Int = -1)    {
+    fun logToClipboard(maxDepth: Int = -1) {
 
-        if (g.logEnabled)            return
+        if (g.logEnabled) return
 
         val window = currentWindowRead!!
 
@@ -26,7 +26,27 @@ interface imgui_logging {
 
 
     /** stop logging (close file, etc.) */
-    fun logFinish(): Nothing = TODO()
+    fun logFinish() {
+
+        if (!g.logEnabled) return
+
+        TODO()
+//        LogText(IM_NEWLINE);
+//        g.LogEnabled = false;
+//        if (g.LogFile != NULL)
+//        {
+//            if (g.LogFile == stdout)
+//                fflush(g.LogFile);
+//            else
+//                fclose(g.LogFile);
+//            g.LogFile = NULL;
+//        }
+//        if (g.LogClipboard->size() > 1)
+//        {
+//            SetClipboardText(g.LogClipboard->begin());
+//            g.LogClipboard->clear();
+//        }
+    }
 //    IMGUI_API void          LogButtons();                                                       // helper to display buttons for logging to tty/file/clipboard
 
     /** pass text data straight to log (without being displayed)    */

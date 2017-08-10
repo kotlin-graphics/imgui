@@ -299,7 +299,7 @@ interface imgui_widgets {
      *  separate items with \0, end item-list with \0\0     */
     fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1) =
             combo(label, currentItem, Items.singleStringGetter, itemsSeparatedByZeros,
-                    itemsSeparatedByZeros.count { it == '\u0000' } - 1, // FIXME-OPT: Avoid computing this, or at least only when combo is open
+                    itemsSeparatedByZeros.split('\u0000').filter { it.isNotEmpty() }.count(), // FIXME-OPT: Avoid computing this, or at least only when combo is open
                     heightInItems)
 
     fun combo(label: String, currentItem: IntArray, items: Array<String>, heightInItems: Int = -1): Boolean {
@@ -570,7 +570,7 @@ interface imgui_widgets {
     object Items {
 
         // FIXME-OPT: we could pre-compute the indices to fasten this. But only 1 active combo means the waste is limited.
-        val singleStringGetter = { data: String, idx: Int -> data.split('\u0000').getOrNull(idx) }
+        val singleStringGetter = { data: String, idx: Int -> data.split('\u0000')[idx] }
 
         val arrayGetter = { data: Array<String>, idx: Int, outText: Array<String> -> outText[0] = data[idx]; true }
     }

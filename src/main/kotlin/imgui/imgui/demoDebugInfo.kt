@@ -29,6 +29,9 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.listBox
+import imgui.ImGui.logFinish
+import imgui.ImGui.logText
+import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
 import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
@@ -69,6 +72,7 @@ import imgui.functionalProgramming.menuBar
 import imgui.functionalProgramming.popupModal
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.window
+import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
 import imgui.functionalProgramming.withWindow
 import imgui.internal.Rect
@@ -1452,61 +1456,64 @@ interface imgui_demoDebugInfo {
             checkbox("Anti-aliased shapes", bool.apply { this[0] = style.antiAliasedShapes })
             style.antiAliasedShapes = bool[0]
             pushItemWidth(100f)
-            dragFloat("Curve Tessellation Tolerance", Companion.f.apply { this[1] = style.curveTessellationTol }, 1,
+            dragFloat("Curve Tessellation Tolerance", pF.apply { this[1] = style.curveTessellationTol }, 1,
                     0.02f, 0.1f, Float.MAX_VALUE, "", 2f)
-            style.curveTessellationTol = Companion.f[1]
+            style.curveTessellationTol = pF[1]
             if (style.curveTessellationTol < 0f) style.curveTessellationTol = 0.1f
             /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
                 But application code could have a toggle to switch between zero and non-zero.             */
-            dragFloat("Global Alpha", Companion.f.apply { this[2] = style.alpha }, 2, 0.005f, 0.2f, 1f, "%.2f")
-            style.alpha = Companion.f[2]
+            dragFloat("Global Alpha", pF.apply { this[2] = style.alpha }, 2, 0.005f, 0.2f, 1f, "%.2f")
+            style.alpha = pF[2]
             popItemWidth()
         }
 
         treeNode("Settings") {
             sliderFloat2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
-            sliderFloat("WindowRounding", Companion.f.apply { this[3] = style.windowRounding }, 3,0f, 16f, "%.0f")
-            style.windowRounding = Companion.f[3]
-            sliderFloat("ChildWindowRounding", Companion.f.apply { this[4] = style.childWindowRounding }, 4,0f, 16f, "%.0f")
-            style.childWindowRounding = Companion.f[4]
+            sliderFloat("WindowRounding", pF.apply { this[3] = style.windowRounding }, 3, 0f, 16f, "%.0f")
+            style.windowRounding = pF[3]
+            sliderFloat("ChildWindowRounding", pF.apply { this[4] = style.childWindowRounding }, 4, 0f, 16f, "%.0f")
+            style.childWindowRounding = pF[4]
             sliderFloat2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
-            sliderFloat("FrameRounding", Companion.f.apply { this[5] = style.frameRounding}, 5, 0f, 16f, "%.0f")
-            style.frameRounding = Companion.f[5]
-//            SliderFloat2("ItemSpacing", (float*)&style.ItemSpacing, 0.0f, 20.0f, "%.0f");
-//            SliderFloat2("ItemInnerSpacing", (float*)&style.ItemInnerSpacing, 0.0f, 20.0f, "%.0f");
-//            SliderFloat2("TouchExtraPadding", (float*)&style.TouchExtraPadding, 0.0f, 10.0f, "%.0f");
-//            SliderFloat("IndentSpacing", &style.IndentSpacing, 0.0f, 30.0f, "%.0f");
-//            SliderFloat("ScrollbarSize", &style.ScrollbarSize, 1.0f, 20.0f, "%.0f");
-//            SliderFloat("ScrollbarRounding", &style.ScrollbarRounding, 0.0f, 16.0f, "%.0f");
-//            SliderFloat("GrabMinSize", &style.GrabMinSize, 1.0f, 20.0f, "%.0f");
-//            SliderFloat("GrabRounding", &style.GrabRounding, 0.0f, 16.0f, "%.0f");
-//            Text("Alignment");
-//            SliderFloat2("WindowTitleAlign", (float*)&style.WindowTitleAlign, 0.0f, 1.0f, "%.2f");
-//            SliderFloat2("ButtonTextAlign", (float*)&style.ButtonTextAlign, 0.0f, 1.0f, "%.2f"); SameLine(); ShowHelpMarker("Alignment applies when a button is larger than its text content.");
+            sliderFloat("FrameRounding", pF.apply { this[5] = style.frameRounding }, 5, 0f, 16f, "%.0f")
+            style.frameRounding = pF[5]
+            sliderFloat2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
+            sliderFloat2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
+            sliderFloat2("TouchExtraPadding", style.touchExtraPadding, 0f, 10f, "%.0f")
+            sliderFloat("IndentSpacing", pF.apply { this[6] = style.indentSpacing }, 6, 0f, 30f, "%.0f")
+            style.indentSpacing = pF[6]
+            sliderFloat("ScrollbarSize", pF.apply { this[7] = style.scrollbarSize }, 7, 1f, 20f, "%.0f")
+            style.scrollbarSize = pF[7]
+            sliderFloat("ScrollbarRounding", pF.apply { this[8] = style.scrollbarRounding }, 8, 0.0f, 16.0f, "%.0f")
+            style.scrollbarRounding = pF[8]
+            sliderFloat("GrabMinSize", pF.apply { this[9] = style.grabMinSize }, 9, 1f, 20f, "%.0f")
+            style.grabMinSize = pF[9]
+            sliderFloat("GrabRounding", pF.apply { this[10] = style.grabRounding }, 10, 0f, 16f, "%.0f")
+            style.grabRounding = pF[10]
+            text("Alignment")
+            sliderFloat2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
+            sliderFloat2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f")
+            sameLine()
+            showHelpMarker("Alignment applies when a button is larger than its text content.")
         }
-//
-//        if (ImGui::TreeNode("Colors"))
-//        {
-//            static int output_dest = 0;
-//            static bool output_only_modified = false;
-//            if (ImGui::Button("Copy Colors"))
-//            {
-//                if (output_dest == 0)
-//                    ImGui::LogToClipboard();
-//                else
-//                    ImGui::LogToTTY();
-//                ImGui::LogText("ImGuiStyle& style = ImGui::GetStyle();" IM_NEWLINE);
-//                for (int i = 0; i < ImGuiCol_COUNT; i++)
-//                {
-//                    const ImVec4& col = style.Colors[i];
-//                    const char* name = ImGui::GetStyleColName(i);
-//                    if (!output_only_modified || memcmp(&col, (ref ? &ref->Colors[i] : &defaultStyle.Colors[i]), sizeof(ImVec4)) != 0)
-//                    ImGui::LogText("style.Colors[ImGuiCol_%s]%*s= ImVec4(%.2ff, %.2ff, %.2ff, %.2ff);" IM_NEWLINE, name, 22 - (int)strlen(name), "", col.x, col.y, col.z, col.w);
-//                }
-//                ImGui::LogFinish();
-//            }
-//            ImGui::SameLine(); ImGui::PushItemWidth(120); ImGui::Combo("##output_type", &output_dest, "To Clipboard\0To TTY\0"); ImGui::PopItemWidth();
-//            ImGui::SameLine(); ImGui::Checkbox("Only Modified Fields", &output_only_modified);
+
+        treeNode("Colors") {
+
+            button("Copy Colors") {
+                if (outputDest[0] == 0)
+                    logToClipboard()
+                else
+                    TODO() //logToTTY()
+                //logText("ImGuiStyle& style = ImGui::GetStyle();" IM_NEWLINE); TODO
+                for (i in Col.values()) {
+                    val col = style.colors[i]
+                    val name = i.name
+                    if (!outputOnlyModified[0] || col != (ref?.colors?.get(i) ?: defaultStyle.colors[i]))
+                        TODO()//logText("style.Colors[ImGuiCol_%s]%*s= ImVec4(%.2ff, %.2ff, %.2ff, %.2ff);" IM_NEWLINE, name, 22 - (int)strlen(name), "", col.x, col.y, col.z, col.w);
+                }
+                logFinish()
+            }
+            sameLine(); withItemWidth(120f){ combo("##output_type", outputDest, "To Clipboard\u0000To TTY\u0000") }
+            sameLine(); checkbox("Only Modified Fields", outputOnlyModified)
 //
 //            static ImGuiColorEditMode edit_mode = ImGuiColorEditMode_RGB;
 //            ImGui::RadioButton("RGB", &edit_mode, ImGuiColorEditMode_RGB);
@@ -1538,9 +1545,7 @@ interface imgui_demoDebugInfo {
 //            }
 //            ImGui::PopItemWidth();
 //            ImGui::EndChild();
-//
-//            ImGui::TreePop();
-//        }
+        }
 //
 //        if (ImGui::TreeNode("Fonts", "Fonts (%d)", ImGui::GetIO().Fonts->Fonts.Size))
 //        {
@@ -1721,8 +1726,8 @@ interface imgui_demoDebugInfo {
                 for (i in 0 until 10)
                     text("Scrolling Text %d", i)
                 endChild()
-                sliderFloat("Value", f, 0f, 1f)
-                inputFloat("Input", f, 0.1f, 0f, 2)
+                sliderFloat("Value", pF, 0f, 1f)
+                inputFloat("Input", pF, 0.1f, 0f, 2)
                 combo("Combo", n, "Yes\u0000No\u0000Maybe\u0000\u0000")
                 endMenu()
             }
@@ -1747,8 +1752,13 @@ interface imgui_demoDebugInfo {
          * [3] = "style.windowRounding" for showStyleEditor()
          * [4] = "style.childWindowRounding" for showStyleEditor()
          * [5] = "style.frameRounding" for showStyleEditor()
+         * [6] = "style.indentSpacing" for showStyleEditor()
+         * [7] = "style.scrollbarSize" for showStyleEditor()
+         * [8] = "style.scrollbarRounding" for showStyleEditor()
+         * [9] = "style.grabMinSize" for showStyleEditor()
+         * [10] = "style.grabRounding" for showStyleEditor()
          */
-        val f = FloatArray(6, { if (it == 0) 0.5f else 0f })
+        val pF = FloatArray(11, { if (it == 0) 0.5f else 0f })
         val n = intArrayOf(0)
         val bool = BooleanArray(1)
 
@@ -2136,6 +2146,9 @@ interface imgui_demoDebugInfo {
         val listboxItemCurrent = intArrayOf(1)
 
         val dontAskMeNextTime = booleanArrayOf(false)
+
+        val outputDest = intArrayOf(0)
+        val outputOnlyModified = booleanArrayOf(false)
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
