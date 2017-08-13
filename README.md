@@ -65,4 +65,4 @@ You should refer to those also to learn how to use the imgui library.
 ### Bugs:
 
 - copy/cut/undo/redo text
-- window resize constrains
+- ~window resize constrains~
