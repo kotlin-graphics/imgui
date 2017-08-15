@@ -22,7 +22,8 @@ class OnceUponAFrame {
 class TextFilter(defaultFilter: String? = "") {
 
     val inputBuf = CharArray(256)
-    val countGrep = 0
+    val filters = ArrayList<String>()
+    var countGrep = 0
 
     init {
         defaultFilter?.let {
@@ -32,6 +33,7 @@ class TextFilter(defaultFilter: String? = "") {
 
     class TextRange
 
+    /** Helper calling InputText+Build   */
     fun draw(label: String = "Filter (inc,-exc)", width: Float): Boolean {
         if (width != 0f)
             pushItemWidth(width)
@@ -41,6 +43,23 @@ class TextFilter(defaultFilter: String? = "") {
 //        if (valueChanged)
 //            Build()
         return valueChanged
+    }
+
+    fun passFilter(text: String, textEnd: Int = 0): Boolean {
+
+        if (filters.isEmpty()) return true
+
+        for (f in filters) {
+            if (f.isEmpty()) continue
+            if (f[0] == '-') {
+                // Subtract
+                if (text.contains(f))
+                    return false
+            } else if (text.contains(f))   // Grep
+                return true
+        }
+        // Implicit * grep
+        return countGrep == 0
     }
 }
 
@@ -225,7 +244,7 @@ class ListClipper {
         else -> {
             /*  Step 3: the clipper validate that we have reached the expected Y position (corresponding to element
                 DisplayEnd), advance the cursor to the end of the list and then returns 'false' to end the loop.             */
-            if(stepNo == 3)
+            if (stepNo == 3)
                 end()
             false
         }
@@ -255,7 +274,7 @@ class ListClipper {
     /** Automatically called on the last call of Step() that returns false. */
     fun end() {
 
-        if (itemsCount < 0)            return
+        if (itemsCount < 0) return
         /*  In theory here we should assert that ImGui::GetCursorPosY() == StartPosY + DisplayEnd * ItemsHeight,
             but it feels saner to just seek at the end and not assert/crash the user.         */
         if (itemsCount < Int.MAX_VALUE)

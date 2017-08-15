@@ -19,6 +19,8 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
+import imgui.ImGui.colorEditMode
+import imgui.ImGui.colorEditVec4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
 import imgui.ImGui.dragFloat
@@ -30,7 +32,6 @@ import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.listBox
 import imgui.ImGui.logFinish
-import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
 import imgui.ImGui.nextColumn
@@ -43,6 +44,7 @@ import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
+import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
@@ -51,7 +53,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.setWindowSize
 import imgui.ImGui.sliderFloat
-import imgui.ImGui.sliderFloat2
+import imgui.ImGui.sliderFloatVec2
 import imgui.ImGui.sliderInt
 import imgui.ImGui.spacing
 import imgui.ImGui.text
@@ -79,6 +81,7 @@ import imgui.internal.Rect
 import imgui.internal.Window
 import java.util.*
 import imgui.Context as g
+
 
 interface imgui_demoDebugInfo {
 
@@ -1468,17 +1471,17 @@ interface imgui_demoDebugInfo {
         }
 
         treeNode("Settings") {
-            sliderFloat2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
+            sliderFloatVec2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
             sliderFloat("WindowRounding", pF.apply { this[3] = style.windowRounding }, 3, 0f, 16f, "%.0f")
             style.windowRounding = pF[3]
             sliderFloat("ChildWindowRounding", pF.apply { this[4] = style.childWindowRounding }, 4, 0f, 16f, "%.0f")
             style.childWindowRounding = pF[4]
-            sliderFloat2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
+            sliderFloatVec2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
             sliderFloat("FrameRounding", pF.apply { this[5] = style.frameRounding }, 5, 0f, 16f, "%.0f")
             style.frameRounding = pF[5]
-            sliderFloat2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
-            sliderFloat2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
-            sliderFloat2("TouchExtraPadding", style.touchExtraPadding, 0f, 10f, "%.0f")
+            sliderFloatVec2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
+            sliderFloatVec2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
+            sliderFloatVec2("TouchExtraPadding", style.touchExtraPadding, 0f, 10f, "%.0f")
             sliderFloat("IndentSpacing", pF.apply { this[6] = style.indentSpacing }, 6, 0f, 30f, "%.0f")
             style.indentSpacing = pF[6]
             sliderFloat("ScrollbarSize", pF.apply { this[7] = style.scrollbarSize }, 7, 1f, 20f, "%.0f")
@@ -1490,8 +1493,8 @@ interface imgui_demoDebugInfo {
             sliderFloat("GrabRounding", pF.apply { this[10] = style.grabRounding }, 10, 0f, 16f, "%.0f")
             style.grabRounding = pF[10]
             text("Alignment")
-            sliderFloat2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
-            sliderFloat2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f")
+            sliderFloatVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
+            sliderFloatVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f")
             sameLine()
             showHelpMarker("Alignment applies when a button is larger than its text content.")
         }
@@ -1512,39 +1515,36 @@ interface imgui_demoDebugInfo {
                 }
                 logFinish()
             }
-            sameLine(); withItemWidth(120f){ combo("##output_type", outputDest, "To Clipboard\u0000To TTY\u0000") }
+            sameLine(); withItemWidth(120f) { combo("##output_type", outputDest, "To Clipboard\u0000To TTY\u0000") }
             sameLine(); checkbox("Only Modified Fields", outputOnlyModified)
-//
-//            static ImGuiColorEditMode edit_mode = ImGuiColorEditMode_RGB;
-//            ImGui::RadioButton("RGB", &edit_mode, ImGuiColorEditMode_RGB);
-//            ImGui::SameLine();
-//            ImGui::RadioButton("HSV", &edit_mode, ImGuiColorEditMode_HSV);
-//            ImGui::SameLine();
-//            ImGui::RadioButton("HEX", &edit_mode, ImGuiColorEditMode_HEX);
-//            //ImGui::Text("Tip: Click on colored square to change edit mode.");
-//
-//            static ImGuiTextFilter filter;
-//            filter.Draw("Filter colors", 200);
-//
-//            ImGui::BeginChild("#colors", ImVec2(0, 300), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-//            ImGui::PushItemWidth(-160);
-//            ImGui::ColorEditMode(edit_mode);
-//            for (int i = 0; i < ImGuiCol_COUNT; i++)
-//            {
-//                const char* name = ImGui::GetStyleColName(i);
-//                if (!filter.PassFilter(name))
-//                    continue;
-//                ImGui::PushID(i);
-//                ImGui::ColorEdit4(name, (float*)&style.Colors[i], true);
-//                if (memcmp(&style.Colors[i], (ref ? &ref->Colors[i] : &defaultStyle.Colors[i]), sizeof(ImVec4)) != 0)
-//                {
-//                    ImGui::SameLine(); if (ImGui::Button("Revert")) style.Colors[i] = ref ? ref->Colors[i] : defaultStyle.Colors[i];
-//                    if (ref) { ImGui::SameLine(); if (ImGui::Button("Save")) ref->Colors[i] = style.Colors[i]; }
-//                }
-//                ImGui::PopID();
-//            }
-//            ImGui::PopItemWidth();
-//            ImGui::EndChild();
+
+            radioButton("RGB", editMode, ColorEditMode.RGB.i)
+            sameLine()
+            radioButton("HSV", editMode, ColorEditMode.HSV.i)
+            sameLine()
+            radioButton("HEX", editMode, ColorEditMode.HEX.i)
+            //ImGui::Text("Tip: Click on colored square to change edit mode.");
+
+            filter.draw("Filter colors TODO", 200f)
+
+            beginChild("#colors", Vec2(0, 300), true, WindowFlags.AlwaysVerticalScrollbar.i)
+            pushItemWidth(-160f)
+            colorEditMode(ColorEditMode.of(editMode[0]))
+            for (i in 0 until Col.COUNT.i) {
+                val name = Col.values()[i].name
+                if (!filter.passFilter(name)) // TODO fix bug
+                    continue
+                pushId(i)
+                colorEditVec4(name, style.colors[i], true)
+                if (style.colors[i] != (ref?.colors?.get(i) ?: defaultStyle.colors[i])) {
+                    sameLine()
+                    if (button("Revert")) style.colors[i] put (ref?.colors?.get(i) ?: defaultStyle.colors[i])
+                    ref?.let { sameLine(); if (button("Save")) it.colors[i] = style.colors[i]; }
+                }
+                popId()
+            }
+            popItemWidth()
+            endChild()
         }
 //
 //        if (ImGui::TreeNode("Fonts", "Fonts (%d)", ImGui::GetIO().Fonts->Fonts.Size))
@@ -2149,6 +2149,10 @@ interface imgui_demoDebugInfo {
 
         val outputDest = intArrayOf(0)
         val outputOnlyModified = booleanArrayOf(false)
+
+        var editMode = intArrayOf(ColorEditMode.RGB.i)
+
+        val filter = TextFilter()
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.

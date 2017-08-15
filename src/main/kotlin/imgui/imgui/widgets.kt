@@ -291,8 +291,62 @@ interface imgui_widgets {
     }
 
 //    IMGUI_API bool          CheckboxFlags(const char* label, unsigned int* flags, unsigned int flags_value);
-//    IMGUI_API bool          RadioButton(const char* label, bool active);
-//    IMGUI_API bool          RadioButton(const char* label, int* v, int v_button);
+
+    fun radioButton(label: String, active: Boolean): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId(label)
+        val labelSize = calcTextSize(label, true)
+
+        val checkBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(labelSize.y + style.framePadding.y * 2 - 1, labelSize.y + style.framePadding.y * 2 - 1))
+        itemSize(checkBb, style.framePadding.y)
+
+        val totalBb = Rect(checkBb)
+        if (labelSize.x > 0)
+            sameLine(0f, style.itemInnerSpacing.x)
+        val textBb = Rect(window.dc.cursorPos + Vec2(0, style.framePadding.y), window.dc.cursorPos + Vec2(0, style.framePadding.y) + labelSize)
+        if (labelSize.x > 0) {
+            itemSize(Vec2(textBb.width, checkBb.height), style.framePadding.y)
+            totalBb.add(textBb)
+        }
+
+        if (!itemAdd(totalBb, id)) return false
+
+        val center = Vec2(checkBb.center)
+        center.x = (center.x + 0.5f).i.f
+        center.y = (center.y + 0.5f).i.f
+        val radius = checkBb.height * 0.5f
+
+        val (pressed, hovered, held) = buttonBehavior(totalBb, id)
+
+        val col = getColorU32(if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg)
+        window.drawList.addCircleFilled(center, radius, col, 16)
+        if (active) {
+            val checkSz = glm.min(checkBb.width, checkBb.height)
+            val pad = glm.max(1f, (checkSz / 6f).i.f)
+            window.drawList.addCircleFilled(center, radius - pad, getColorU32(Col.CheckMark), 16)
+        }
+
+        if (window.flags has WindowFlags.ShowBorders) {
+            window.drawList.addCircle(center + Vec2(1), radius, getColorU32(Col.BorderShadow), 16)
+            window.drawList.addCircle(center, radius, getColorU32(Col.Border), 16)
+        }
+
+        if (g.logEnabled)
+            logRenderedText(textBb.tl, if (active) "(x)" else "( )")
+        if (labelSize.x > 0.0f)
+            renderText(textBb.tl, label)
+
+        return pressed
+    }
+
+    fun radioButton(label: String, v: IntArray, vButton: Int): Boolean {
+        val pressed = radioButton(label, v[0] == vButton)
+        if (pressed) v[0] = vButton
+        return pressed
+    }
 //    IMGUI_API bool          Combo(const char* label, int* current_item, const char* const* items, int items_count, int height_in_items = -1);
 
     /** Combo box helper allowing to pass all items in a single string.
@@ -559,7 +613,22 @@ interface imgui_widgets {
 
         return valueChanged
     }
-//    IMGUI_API void          ColorEditMode(ImGuiColorEditMode mode);                                 // FIXME-OBSOLETE: This is inconsistent with most of the API and will be obsoleted/replaced.
+
+    fun colorEditVec4(label: String, col: Vec4, showAlpha: Boolean = true): Boolean {
+        val col4 = floatArrayOf(col.x, col.y, col.z, col.w)
+        val valueChanged = colorEdit4(label, col4, showAlpha)
+        col.x = col4[0]
+        col.y = col4[1]
+        col.z = col4[2]
+        col.w = col4[3]
+        return valueChanged
+    }
+
+    /** FIXME-OBSOLETE: This is inconsistent with most of the API and will be obsoleted/replaced.   */
+    fun colorEditMode(mode:ColorEditMode) {
+        currentWindow.dc.colorEditMode = mode
+    }
+
 //    IMGUI_API void          PlotLines(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));
 //    IMGUI_API void          PlotLines(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
 //    IMGUI_API void          PlotHistogram(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));

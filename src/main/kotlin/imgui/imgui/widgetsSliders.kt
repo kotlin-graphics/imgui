@@ -95,7 +95,7 @@ interface imgui_widgetsSliders {
         return valueChanged
     }
 
-    fun sliderFloat2(label: String, v: Vec2, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f):Boolean{
+    fun sliderFloatVec2(label: String, v: Vec2, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f):Boolean{
         v2[0] = v.x
         v2[1] = v.y
         val res = sliderFloatN(label, v2, vMin, vMax, displayFormat, power)
