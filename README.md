@@ -52,6 +52,21 @@ _A common misunderstanding is to think that immediate mode gui == immediate mode
 
 ImGui allows you create elaborate tools as well as very short-lived ones. On the extreme side of short-liveness: using the Edit&Continue feature of modern compilers you can add a few widgets to tweaks variables while your application is running, and remove the code a minute later! ImGui is not just for tweaking values. You can use it to trace a running algorithm by just emitting text commands. You can use it along with your own reflection data to browse your dataset live. You can use it to expose the internals of a subsystem in your engine, to create a logger, an inspection tool, a profiler, a debugger, an entire game making editor/framework, etc.  
 
+### Gallery
+-------
+
+See the [Screenshots Thread](https://github.com/ocornut/imgui/issues/123) for some user creations.
+
+### References
+----------
+
+The Immediate Mode GUI paradigm may at first appear unusual to some users. This is mainly because "Retained Mode" GUIs have been so widespread and predominant. The following links can give you a better understanding about how Immediate Mode GUIs works. 
+- [Johannes 'johno' Norneby's article](http://www.johno.se/book/imgui.html).
+- [A presentation by Rickard Gustafsson and Johannes Algelind](http://www.cse.chalmers.se/edu/year/2011/course/TDA361/Advanced%20Computer%20Graphics/IMGUI.pdf).
+- [Jari Komppa's tutorial on building an ImGui library](http://iki.fi/sol/imgui/).
+- [Casey Muratori's original video that popularized the concept](https://mollyrocket.com/861).
+- [Nicolas Guillemot's CppCon'16 flashtalk about Dear ImGui](https://www.youtube.com/watch?v=LSRJ1jZq90k).
+- [Thierry Excoffier's Zero Memory Widget](http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/).
 
 ### Status:
 
@@ -67,3 +82,16 @@ You should refer to those also to learn how to use the imgui library.
 - copy/cut/undo/redo text
 - ~window resize constrains~
 - text filters
+
+### Credits
+-------
+
+Developed by [Omar Cornut](http://www.miracleworld.net) and every direct or indirect contributors to the GitHub. The early version of this library was developed with the support of [Media Molecule](http://www.mediamolecule.com) and first used internally on the game [Tearaway](http://tearaway.mediamolecule.com). 
+
+Omar first discovered imgui principles at [Q-Games](http://www.q-games.com) where Atman had dropped his own simple imgui implementation in the codebase, which Omar spent quite some time improving and thinking about. It turned out that Atman was exposed to the concept directly by working with Casey. When Omar moved to Media Molecule he rewrote a new library trying to overcome the flaws and limitations of the first one he's worked with. It became this library and since then Omar has spent an unreasonable amount of time iterating on it. 
+
+Embeds [ProggyClean.ttf](http://upperbounds.net) font by Tristan Grimmer (MIT license).
+
+Embeds [stb_textedit.h, stb_truetype.h, stb_rectpack.h](https://github.com/nothings/stb/) by Sean Barrett (public domain).
+
+Inspiration, feedback, and testing for early versions: Casey Muratori, Atman Binstock, Mikko Mononen, Emmanuel Briney, Stefan Kamoda, Anton Mikhailov, Matt Willis. And everybody posting feedback, questions and patches on the GitHub.
