@@ -74,6 +74,7 @@ import imgui.functionalProgramming.menuBar
 import imgui.functionalProgramming.popupModal
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.window
+import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
 import imgui.functionalProgramming.withWindow
@@ -1515,8 +1516,10 @@ interface imgui_demoDebugInfo {
                 }
                 logFinish()
             }
-            sameLine(); withItemWidth(120f) { combo("##output_type", outputDest, "To Clipboard\u0000To TTY\u0000") }
-            sameLine(); checkbox("Only Modified Fields", outputOnlyModified)
+            sameLine()
+            withItemWidth(120f) { combo("##output_type", outputDest, "To Clipboard\u0000To TTY\u0000") }
+            sameLine()
+            checkbox("Only Modified Fields", outputOnlyModified)
 
             radioButton("RGB", editMode, ColorEditMode.RGB.i)
             sameLine()
@@ -1534,14 +1537,17 @@ interface imgui_demoDebugInfo {
                 val name = Col.values()[i].name
                 if (!filter.passFilter(name)) // TODO fix bug
                     continue
-                pushId(i)
-                colorEditVec4(name, style.colors[i], true)
-                if (style.colors[i] != (ref?.colors?.get(i) ?: defaultStyle.colors[i])) {
-                    sameLine()
-                    if (button("Revert")) style.colors[i] put (ref?.colors?.get(i) ?: defaultStyle.colors[i])
-                    ref?.let { sameLine(); if (button("Save")) it.colors[i] = style.colors[i]; }
+                withId(i) {
+                    colorEditVec4(name, style.colors[i], true)
+                    if (style.colors[i] != (ref?.colors?.get(i) ?: defaultStyle.colors[i])) {
+                        sameLine()
+                        button("Revert") { style.colors[i] put (ref?.colors?.get(i) ?: defaultStyle.colors[i]) }
+                        ref?.let {
+                            sameLine()
+                            button("Save") { it.colors[i] = style.colors[i] }
+                        }
+                    }
                 }
-                popId()
             }
             popItemWidth()
             endChild()

@@ -10,8 +10,10 @@ import imgui.ImGui.end
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
+import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
+import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.treeNode
@@ -88,5 +90,11 @@ object functionalProgramming {
         pushItemWidth(itemWidth)
         block()
         popItemWidth()
+    }
+
+    inline fun withId(id: Int, block: () -> Unit) {
+        pushId(id)
+        block()
+        popId()
     }
 }
