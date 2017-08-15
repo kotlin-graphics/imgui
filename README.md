@@ -66,3 +66,4 @@ You should refer to those also to learn how to use the imgui library.
 
 - copy/cut/undo/redo text
 - ~window resize constrains~
+- text filters
