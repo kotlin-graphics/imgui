@@ -8,6 +8,7 @@ Monthly donations via Patreon:
 One-off donations via PayPal:
 <br>[![PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DJ88XMNUFG4FE)
 
+----------
 
 This is the Kotlin port of [dear imgui](https://github.com/ocornut/imgui) (AKA ImGui), a bloat-free graphical user interface library in C++. It outputs optimized vertex buffers that you can render anytime in your 3D-pipeline enabled application. It is fast, portable, renderer agnostic and self-contained (few dependencies).
 
@@ -67,6 +68,27 @@ The Immediate Mode GUI paradigm may at first appear unusual to some users. This 
 - [Casey Muratori's original video that popularized the concept](https://mollyrocket.com/861).
 - [Nicolas Guillemot's CppCon'16 flashtalk about Dear ImGui](https://www.youtube.com/watch?v=LSRJ1jZq90k).
 - [Thierry Excoffier's Zero Memory Widget](http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/).
+
+### How to get it
+
+[Gradle, Maven, Sbt, Leiningen](https://jitpack.io/#kotlin-graphics/imgui)
+
+- Add it in your root build.gradle at the end of repositories:
+
+	    allprojects {
+		    repositories {
+			        ...
+			        maven { url 'https://jitpack.io' }
+		    }
+	    }
+    
+- Add the dependency
+
+	    dependencies {
+	        compile 'com.github.kotlin-graphics:imgui:-SNAPSHOT'
+	    }
+
+
 
 ### Status:
 
