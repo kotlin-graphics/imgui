@@ -5,11 +5,13 @@ import imgui.ImGui.begin
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
 import imgui.ImGui.beginPopupModal
+import imgui.ImGui.beginTooltip
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.end
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
+import imgui.ImGui.endTooltip
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
@@ -109,5 +111,11 @@ object functionalProgramming {
         pushId(id)
         block()
         popId()
+    }
+
+    inline fun tooltip(block: () -> Unit) {
+        beginTooltip()
+        block()
+        endTooltip()
     }
 }

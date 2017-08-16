@@ -83,7 +83,17 @@ interface imgui_cursorLayout {
         if (window.skipItems) return
         itemSize(Vec2())
     }
-//    IMGUI_API void          Dummy(const ImVec2& size);                                          // add a dummy item of given size
+
+    /** add a dummy item of given size  */
+    fun dummy(size: Vec2) {
+
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
+        itemSize(bb)
+        itemAdd(bb)
+    }
 
     /** move content position toward the right, by style.IndentSpacing or indent_w if >0    */
     fun indent(indentW: Float = 0f) = with(currentWindow) {
@@ -170,21 +180,24 @@ interface imgui_cursorLayout {
     }
 
     /** cursor position is relative to window position  */
-    var cursorPos get() = with(currentWindowRead!!) { dc.cursorPos - pos + scroll }
+    var cursorPos
+        get() = with(currentWindowRead!!) { dc.cursorPos - pos + scroll }
         set(value) = with(currentWindowRead!!) {
             dc.cursorPos put (pos - scroll + value)
             dc.cursorMaxPos = glm.max(dc.cursorMaxPos, dc.cursorPos)
         }
 
     /** cursor position is relative to window position  */
-    var cursorPosX get() = with(currentWindowRead!!) { dc.cursorPos.x - pos.x + scroll.x }
+    var cursorPosX
+        get() = with(currentWindowRead!!) { dc.cursorPos.x - pos.x + scroll.x }
         set(value) = with(currentWindowRead!!) {
             dc.cursorPos.x = pos.x - scroll.x + value
             dc.cursorMaxPos.x = glm.max(dc.cursorMaxPos.x, dc.cursorPos.x)
         }
 
     /** cursor position is relative to window position  */
-    var cursorPosY get() = with(currentWindowRead!!) { dc.cursorPos.y - pos.y + scroll.y }
+    var cursorPosY
+        get() = with(currentWindowRead!!) { dc.cursorPos.y - pos.y + scroll.y }
         set(value) = with(currentWindowRead!!) {
             dc.cursorPos.y = pos.y - scroll.y + value
             dc.cursorMaxPos.y = glm.max(dc.cursorMaxPos.y, dc.cursorPos.y)
@@ -194,9 +207,12 @@ interface imgui_cursorLayout {
     val cursorStartPos get() = with(currentWindowRead!!) { dc.cursorStartPos - pos }
 
     /** cursor position in absolute screen coordinates [0..io.DisplaySize] (useful to work with ImDrawList API) */
-    var cursorScreenPos get() = currentWindowRead!!.dc.cursorPos
-        set(value) = with(currentWindowRead!!.dc) { cursorPos put value;
-            cursorPos max_ cursorMaxPos }
+    var cursorScreenPos
+        get() = currentWindowRead!!.dc.cursorPos
+        set(value) = with(currentWindowRead!!.dc) {
+            cursorPos put value
+            cursorPos max_ cursorMaxPos
+        }
 
     /** call once if the first item on the line is a Text() item and you want to vertically lower it to match
      *  subsequent (bigger) widgets */

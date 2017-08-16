@@ -5,6 +5,7 @@ package imgui
 //import imgui.TrueType.packSetOversampling
 import gli.wasInit
 import glm_.*
+import glm_.detail.Random.float
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
@@ -671,7 +672,13 @@ class Font {
     }
 
     fun findGlyph(c: Char) = findGlyph(c.i)
-    fun findGlyph(c: Int) = if (c in indexLookup.indices) glyphs[indexLookup[c]] else fallbackGlyph
+    fun findGlyph(c: Int): Glyph? {
+        if (c < indexLookup.size) {
+            val i = indexLookup[c]
+            if (i != -1) return glyphs[i]
+        }
+        return fallbackGlyph
+    }
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
 
@@ -859,7 +866,20 @@ class Font {
         }
         return s
     }
-//    IMGUI_API void              RenderChar(ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, unsigned short c) const;
+
+    fun renderChar(drawList:DrawList, size:Float, pos:Vec2, col:Int, c:Char) {
+        if (c == ' ' || c == '\t' || c == '\n' || c == '\r') // Match behavior of RenderText(), those 4 codepoints are hard-coded.
+            return
+        findGlyph(c)?.let {
+            val scale = if(size >= 0f) size / fontSize else 1f
+            val x = pos.x.i.f + displayOffset.x
+            val y = pos.y.i.f + displayOffset.y
+            val posTl = Vec2(x + it.x0 * scale, y + it.y0 * scale)
+            val posBr = Vec2(x + it.x1 * scale, y + it.y1 * scale)
+            drawList.primReserve(6, 4)
+            drawList.primRectUV(posTl, posBr, Vec2(it.u0, it.v0), Vec2(it.u1, it.v1), col)
+        }
+    }
 
     //    const ImVec4& clipRect, const char* text, const char* textEnd, float wrapWidth = 0.0f, bool cpuFineClip = false) const;
     fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: CharArray, textEnd: Int = text.size,

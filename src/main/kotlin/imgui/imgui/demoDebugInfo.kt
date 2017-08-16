@@ -1,9 +1,6 @@
 package imgui.imgui
 
-import glm_.BYTES
-import glm_.f
-import glm_.glm
-import glm_.i
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
@@ -23,11 +20,14 @@ import imgui.ImGui.colorEditMode
 import imgui.ImGui.colorEditVec4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
+import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
+import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
 import imgui.ImGui.endTooltip
+import imgui.ImGui.getColorU32
 import imgui.ImGui.image
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
@@ -79,6 +79,7 @@ import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.menuBar
 import imgui.functionalProgramming.popupModal
 import imgui.functionalProgramming.smallButton
+import imgui.functionalProgramming.tooltip
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.window
 import imgui.functionalProgramming.withId
@@ -1581,7 +1582,7 @@ interface imgui_demoDebugInfo {
                 pushFont(font)
                 text("The quick brown fox jumps over the lazy dog")
                 popFont()
-                if (treeNode("Details")) {
+                treeNode("Details") {
                     val scale = floatArrayOf(font.scale)
                     dragFloat("Font scale", scale, 0.005f, 0.3f, 2f, "%.1f")   // Scale only this font
                     font.scale = scale[0]
@@ -1596,59 +1597,57 @@ interface imgui_demoDebugInfo {
                     text("Fallback character: '${font.fallbackChar}' (${font.fallbackChar.i})")
                     val side = glm.sqrt(font.metricsTotalSurface.f).i
                     text("Texture surface: ${font.metricsTotalSurface} pixels (approx) ~ ${side}x$side")
-                    for (cfgI in font.configData.indices)                    {
+                    for (cfgI in font.configData.indices) {
                         val cfg = font.configData[cfgI]
                         bulletText("Input $cfgI: '${cfg.name}', Oversample: ${cfg.oversample}, PixelSnapH: ${cfg.pixelSnapH}")
                     }
-//                    if (ImGui::TreeNode("Glyphs", "Glyphs (%d)", font->Glyphs.Size))
-//                    {
-//                        // Display all glyphs of the fonts in separate pages of 256 characters
-//                        const ImFont::Glyph* glyph_fallback = font->FallbackGlyph; // Forcefully/dodgily make FindGlyph() return NULL on fallback, which isn't the default behavior.
-//                        font->FallbackGlyph = NULL;
-//                        for (int base = 0; base < 0x10000; base += 256)
-//                        {
-//                            int count = 0;
-//                            for (int n = 0; n < 256; n++)
-//                            count += font->FindGlyph((ImWchar)(base + n)) ? 1 : 0;
-//                            if (count > 0 && ImGui::TreeNode((void*)(intptr_t)base, "U+%04X..U+%04X (%d %s)", base, base+255, count, count > 1 ? "glyphs" : "glyph"))
-//                            {
-//                                float cell_spacing = style.ItemSpacing.y;
-//                                ImVec2 cell_size(font->FontSize * 1, font->FontSize * 1);
-//                                ImVec2 base_pos = ImGui::GetCursorScreenPos();
-//                                ImDrawList* draw_list = ImGui::GetWindowDrawList();
-//                                for (int n = 0; n < 256; n++)
-//                                {
-//                                    ImVec2 cell_p1(base_pos.x + (n % 16) * (cell_size.x + cell_spacing), base_pos.y + (n / 16) * (cell_size.y + cell_spacing));
-//                                    ImVec2 cell_p2(cell_p1.x + cell_size.x, cell_p1.y + cell_size.y);
-//                                    const ImFont::Glyph* glyph = font->FindGlyph((ImWchar)(base+n));;
-//                                    draw_list->AddRect(cell_p1, cell_p2, glyph ? IM_COL32(255,255,255,100) : IM_COL32(255,255,255,50));
-//                                    font->RenderChar(draw_list, cell_size.x, cell_p1, ImGui::GetColorU32(ImGuiCol_Text), (ImWchar)(base+n)); // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions available to generate a string.
-//                                    if (glyph && ImGui::IsMouseHoveringRect(cell_p1, cell_p2))
-//                                    {
-//                                        ImGui::BeginTooltip();
-//                                        ImGui::Text("Codepoint: U+%04X", base+n);
-//                                        ImGui::Separator();
-//                                        ImGui::Text("XAdvance+1: %.1f", glyph->XAdvance);
-//                                        ImGui::Text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph->X0, glyph->Y0, glyph->X1, glyph->Y1);
-//                                        ImGui::Text("UV: (%.3f,%.3f)->(%.3f,%.3f)", glyph->U0, glyph->V0, glyph->U1, glyph->V1);
-//                                        ImGui::EndTooltip();
-//                                    }
-//                                }
-//                                ImGui::Dummy(ImVec2((cell_size.x + cell_spacing) * 16, (cell_size.y + cell_spacing) * 16));
-//                                ImGui::TreePop();
-//                            }
-//                        }
-//                        font->FallbackGlyph = glyph_fallback;
-//                        ImGui::TreePop();
-//                    }
-                    treePop()
+                    treeNode("Glyphs", "Glyphs (${font.glyphs.size})") {
+                        // Display all glyphs of the fonts in separate pages of 256 characters
+                        // Forcefully/dodgily make FindGlyph() return NULL on fallback, which isn't the default behavior.
+                        val glyphFallback = font.fallbackGlyph
+                        font.fallbackGlyph = null
+                        for (base in 0 until 0x10000 step 256) {
+                            val count = (0 until 256).sumBy { if (font.findGlyph((base + it).c) != null) 1 else 0 }
+                            val s = if (count > 1) "glyphs" else "glyph"
+                            if (count > 0 && treeNode(base, "U+%04X..U+%04X ($count $s)", base, base + 255)) {
+                                val cellSpacing = style.itemSpacing.y
+                                val cellSize = Vec2(font.fontSize)
+                                val basePos = Vec2(cursorScreenPos)
+                                val drawList = windowDrawList
+                                for (n in 0 until 256) {
+                                    val cellP1 = Vec2(basePos.x + (n % 16) * (cellSize.x + cellSpacing),
+                                            basePos.y + (n / 16) * (cellSize.y + cellSpacing))
+                                    val cellP2 = Vec2(cellP1.x + cellSize.x, cellP1.y + cellSize.y)
+                                    val glyph = font.findGlyph((base + n).c)
+                                    drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if (glyph != null) 100 else 50))
+                                    /*  We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion
+                                        functions available to generate a string.                                     */
+                                    font.renderChar(drawList, cellSize.x, cellP1, getColorU32(Col.Text), (base + n).c)
+                                    if (glyph != null && isMouseHoveringRect(cellP1, cellP2))
+                                        tooltip {
+                                            text("Codepoint: U+%04X", base + n)
+                                            separator()
+                                            text("XAdvance+1: %.1f", glyph.xAdvance)
+                                            text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph.x0, glyph.y0, glyph.x1, glyph.y1)
+                                            text("UV: (%.3f,%.3f)->(%.3f,%.3f)", glyph.u0, glyph.v0, glyph.u1, glyph.v1)
+                                        }
+                                }
+                                dummy(Vec2((cellSize.x + cellSpacing) * 16, (cellSize.y + cellSpacing) * 16))
+                                treePop()
+                            }
+                        }
+                        font.fallbackGlyph = glyphFallback
+                    }
                 }
             }
-//            ImGui::DragFloat("this window scale", &window_scale, 0.005f, 0.3f, 2.0f, "%.1f");              // scale only this window
-//            ImGui::DragFloat("global scale", &ImGui::GetIO().FontGlobalScale, 0.005f, 0.3f, 2.0f, "%.1f"); // scale everything
+            val pF = floatArrayOf(windowScale)
+            dragFloat("this window scale", pF, 0.005f, 0.3f, 2f, "%.1f")    // scale only this window
+            windowScale = pF[0]
+            pF[0] = IO.fontGlobalScale
+            dragFloat("global scale", pF, 0.005f, 0.3f, 2f, "%.1f") // scale everything
+            IO.fontGlobalScale = pF[0]
             popItemWidth()
             setWindowFontScale(windowScale)
-            treePop()
         }
         popItemWidth()
     }
