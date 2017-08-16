@@ -26,6 +26,11 @@ object functionalProgramming {
             block()
     }
 
+    inline fun smallButton(label: String, block: () -> Unit) {
+        if (ImGui.smallButton(label))
+            block()
+    }
+
     inline fun withWindow(name: String, pOpen: BooleanArray? = null, flags: Int = 0, block: (Boolean) -> Unit) =
             withWindow(name, pOpen, Vec2(), -1.0f, flags, block)
 
@@ -63,11 +68,19 @@ object functionalProgramming {
     }
 
     inline fun collapsingHeader(label: String, flags: Int = 0, block: () -> Unit) {
-        if (collapsingHeader(label, flags)) block()
+        if (collapsingHeader(label, flags))
+            block()
     }
 
     inline fun treeNode(label: String, block: () -> Unit) {
         if (treeNode(label)) {
+            block()
+            treePop()
+        }
+    }
+
+    inline fun treeNode(strId: String, fmt: String, block: () -> Unit) {
+        if(treeNode(strId, fmt)) {
             block()
             treePop()
         }

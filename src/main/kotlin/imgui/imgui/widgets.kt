@@ -244,9 +244,36 @@ interface imgui_widgets {
     /** button  */
     fun button(label: String, sizeArg: Vec2 = Vec2()) = buttonEx(label, sizeArg, 0)
 
-//    IMGUI_API bool          SmallButton(const char* label);                                         // button with FramePadding=(0,0)
+    /** button with FramePadding = (0,0)
+     *  Small buttons fits within text without additional vertical spacing.     */
+    fun smallButton(label: String): Boolean {
+        val backupPaddingY = style.framePadding.y
+        style.framePadding.y = 0f
+        val pressed = buttonEx(label, Vec2(), ButtonFlags.AlignTextBaseLine.i)
+        style.framePadding.y = backupPaddingY
+        return pressed
+    }
 //    IMGUI_API bool          InvisibleButton(const char* str_id, const ImVec2& size);
-//    IMGUI_API void          Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,0), const ImVec2& uv1 = ImVec2(1,1), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
+
+
+    fun image(userTextureId: Int, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(1), tintCol: Vec4 = Vec4(1),
+              borderCol: Vec4 = Vec4()) {
+
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
+        if (borderCol.w > 0f)
+            bb.max plus_ 2
+        itemSize(bb)
+        if (!itemAdd(bb)) return
+
+        if (borderCol.w > 0f) {
+            window.drawList.addRect(bb.min, bb.max, getColorU32(borderCol), 0f)
+            window.drawList.addImage(userTextureId, bb.min + 1, bb.max - 1, uv0, uv1, getColorU32(tintCol))
+        } else
+            window.drawList.addImage(userTextureId, bb.min, bb.max, uv0, uv1, getColorU32(tintCol))
+    }
 //    IMGUI_API bool          ImageButton(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,0),  const ImVec2& uv1 = ImVec2(1,1), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,0), const ImVec4& tint_col = ImVec4(1,1,1,1));    // <0 frame_padding uses default frame padding settings. 0 for no padding
 
     fun checkbox(label: String, v: BooleanArray): Boolean {
@@ -625,7 +652,7 @@ interface imgui_widgets {
     }
 
     /** FIXME-OBSOLETE: This is inconsistent with most of the API and will be obsoleted/replaced.   */
-    fun colorEditMode(mode:ColorEditMode) {
+    fun colorEditMode(mode: ColorEditMode) {
         currentWindow.dc.colorEditMode = mode
     }
 

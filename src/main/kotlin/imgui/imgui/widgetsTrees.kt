@@ -5,6 +5,8 @@ import imgui.ImGui.popId
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.Context.style
+import imgui.ImGui.indent
+import imgui.ImGui.pushId
 import imgui.TreeNodeFlags
 import imgui.or
 import imgui.Context as g
@@ -53,7 +55,15 @@ interface imgui_widgetsTrees {
         return treeNodeBehavior(window.getId(ptrId), flags, label)
     }
 //    IMGUI_API void          TreePush(const char* str_id = NULL);                                    // ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for layout purpose
-//    IMGUI_API void          TreePush(const void* ptr_id = NULL);                                    // "
+
+    /** ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for
+     *  layout purpose  */
+    fun treePush(ptrId: Any? =null) {
+        val window = currentWindow
+        indent()
+        window.dc.treeDepth++
+        pushId(ptrId ?: "#TreePush")
+    }
 
     /** ~ Unindent()+PopId()    */
     fun treePop() {

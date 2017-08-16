@@ -28,6 +28,7 @@ import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
 import imgui.ImGui.endTooltip
+import imgui.ImGui.image
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.listBox
@@ -36,10 +37,12 @@ import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
 import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
+import imgui.ImGui.popFont
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.popTextWrapPos
+import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleVar
@@ -51,10 +54,12 @@ import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
+import imgui.ImGui.setWindowFontScale
 import imgui.ImGui.setWindowSize
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderFloatVec2
 import imgui.ImGui.sliderInt
+import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textColored
@@ -64,6 +69,7 @@ import imgui.ImGui.textWrapped
 import imgui.ImGui.time
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
+import imgui.ImGui.treePush
 import imgui.ImGui.version
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
@@ -72,6 +78,7 @@ import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.menuBar
 import imgui.functionalProgramming.popupModal
+import imgui.functionalProgramming.smallButton
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.window
 import imgui.functionalProgramming.withId
@@ -1552,38 +1559,47 @@ interface imgui_demoDebugInfo {
             popItemWidth()
             endChild()
         }
-//
-//        if (ImGui::TreeNode("Fonts", "Fonts (%d)", ImGui::GetIO().Fonts->Fonts.Size))
-//        {
-//            ImGui::SameLine(); ShowHelpMarker("Tip: Load fonts with io.Fonts->AddFontFromFileTTF()\nbefore calling io.Fonts->GetTex* functions.");
-//            ImFontAtlas* atlas = ImGui::GetIO().Fonts;
-//            if (ImGui::TreeNode("Atlas texture", "Atlas texture (%dx%d pixels)", atlas->TexWidth, atlas->TexHeight))
-//            {
-//                ImGui::Image(atlas->TexID, ImVec2((float)atlas->TexWidth, (float)atlas->TexHeight), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
-//                ImGui::TreePop();
-//            }
-//            ImGui::PushItemWidth(100);
-//            for (int i = 0; i < atlas->Fonts.Size; i++)
-//            {
-//                ImFont* font = atlas->Fonts[i];
-//                ImGui::BulletText("Font %d: \'%s\', %.2f px, %d glyphs", i, font->ConfigData ? font->ConfigData[0].Name : "", font->FontSize, font->Glyphs.Size);
-//                ImGui::TreePush((void*)(intptr_t)i);
-//                ImGui::SameLine(); if (ImGui::SmallButton("Set as default")) ImGui::GetIO().FontDefault = font;
-//                ImGui::PushFont(font);
-//                ImGui::Text("The quick brown fox jumps over the lazy dog");
-//                ImGui::PopFont();
-//                if (ImGui::TreeNode("Details"))
-//                {
-//                    ImGui::DragFloat("Font scale", &font->Scale, 0.005f, 0.3f, 2.0f, "%.1f");   // Scale only this font
-//                    ImGui::SameLine(); ShowHelpMarker("Note than the default embedded font is NOT meant to be scaled.\n\nFont are currently rendered into bitmaps at a given size at the time of building the atlas. You may oversample them to get some flexibility with scaling. You can also render at multiple sizes and select which one to use at runtime.\n\n(Glimmer of hope: the atlas system should hopefully be rewritten in the future to make scaling more natural and automatic.)");
-//                    ImGui::Text("Ascent: %f, Descent: %f, Height: %f", font->Ascent, font->Descent, font->Ascent - font->Descent);
-//                    ImGui::Text("Fallback character: '%c' (%d)", font->FallbackChar, font->FallbackChar);
-//                    ImGui::Text("Texture surface: %d pixels (approx) ~ %dx%d", font->MetricsTotalSurface, (int)sqrtf((float)font->MetricsTotalSurface), (int)sqrtf((float)font->MetricsTotalSurface));
-//                    for (int config_i = 0; config_i < font->ConfigDataCount; config_i++)
-//                    {
-//                        ImFontConfig* cfg = &font->ConfigData[config_i];
-//                        ImGui::BulletText("Input %d: \'%s\', Oversample: (%d,%d), PixelSnapH: %d", config_i, cfg->Name, cfg->OversampleH, cfg->OversampleV, cfg->PixelSnapH);
-//                    }
+
+        treeNode("Fonts", "Fonts (${IO.fonts.fonts.size})") {
+
+            sameLine()
+            showHelpMarker("Tip: Load fonts with io.Fonts->AddFontFromFileTTF()\nbefore calling io.Fonts->GetTex* functions.")
+            val atlas = IO.fonts
+            treeNode("Atlas texture", "Atlas texture (${atlas.texSize.x}x${atlas.texSize.y} pixels)") {
+                image(atlas.texId, Vec2(atlas.texSize), Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255),
+                        Vec4.fromColor(255, 255, 255, 128))
+            }
+            pushItemWidth(100f)
+            for (i in 0 until atlas.fonts.size) {
+
+                val font = atlas.fonts[i]
+                val name = font.configData.getOrNull(0)?.name ?: ""
+                bulletText("Font $i: '$name', %.2f px, ${font.glyphs.size} glyphs", font.fontSize)
+                treePush(i)
+                sameLine()
+                smallButton("Set as default") { IO.fontDefault = font }
+                pushFont(font)
+                text("The quick brown fox jumps over the lazy dog")
+                popFont()
+                if (treeNode("Details")) {
+                    val scale = floatArrayOf(font.scale)
+                    dragFloat("Font scale", scale, 0.005f, 0.3f, 2f, "%.1f")   // Scale only this font
+                    font.scale = scale[0]
+                    sameLine()
+                    showHelpMarker("""
+                        |Note than the default embedded font is NOT meant to be scaled.
+                        |
+                        |Font are currently rendered into bitmaps at a given size at the time of building the atlas. You may oversample them to get some flexibility with scaling. You can also render at multiple sizes and select which one to use at runtime.
+                        |
+                        |(Glimmer of hope: the atlas system should hopefully be rewritten in the future to make scaling more natural and automatic.)""".trimMargin())
+                    text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
+                    text("Fallback character: '${font.fallbackChar}' (${font.fallbackChar.i})")
+                    val side = glm.sqrt(font.metricsTotalSurface.f).i
+                    text("Texture surface: ${font.metricsTotalSurface} pixels (approx) ~ ${side}x$side")
+                    for (cfgI in font.configData.indices)                    {
+                        val cfg = font.configData[cfgI]
+                        bulletText("Input $cfgI: '${cfg.name}', Oversample: ${cfg.oversample}, PixelSnapH: ${cfg.pixelSnapH}")
+                    }
 //                    if (ImGui::TreeNode("Glyphs", "Glyphs (%d)", font->Glyphs.Size))
 //                    {
 //                        // Display all glyphs of the fonts in separate pages of 256 characters
@@ -1625,17 +1641,15 @@ interface imgui_demoDebugInfo {
 //                        font->FallbackGlyph = glyph_fallback;
 //                        ImGui::TreePop();
 //                    }
-//                    ImGui::TreePop();
-//                }
-//                ImGui::TreePop();
-//            }
-//            static float window_scale = 1.0f;
+                    treePop()
+                }
+            }
 //            ImGui::DragFloat("this window scale", &window_scale, 0.005f, 0.3f, 2.0f, "%.1f");              // scale only this window
 //            ImGui::DragFloat("global scale", &ImGui::GetIO().FontGlobalScale, 0.005f, 0.3f, 2.0f, "%.1f"); // scale everything
-//            ImGui::PopItemWidth();
-//            ImGui::SetWindowFontScale(window_scale);
-//            ImGui::TreePop();
-//        }
+            popItemWidth()
+            setWindowFontScale(windowScale)
+            treePop()
+        }
         popItemWidth()
     }
 
@@ -2159,6 +2173,8 @@ interface imgui_demoDebugInfo {
         var editMode = intArrayOf(ColorEditMode.RGB.i)
 
         val filter = TextFilter()
+
+        var windowScale = 1f
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
