@@ -85,7 +85,7 @@ The Immediate Mode GUI paradigm may at first appear unusual to some users. This 
 - Add the dependency
 
 	    dependencies {
-	        compile 'com.github.kotlin-graphics:imgui:-SNAPSHOT'
+	        compile 'com.github.kotlin-graphics:imgui:-SNAPSHOT' // or commit or release (v1.51.b0)
 	    }
 
 
