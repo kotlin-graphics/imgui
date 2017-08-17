@@ -116,7 +116,14 @@ interface imgui_widgetsSelectableLists {
             closeCurrentPopup()
         return pressed
     }
-//    IMGUI_API bool          Selectable(const char* label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = ImVec2(0,0));
+
+    fun selectable(label: String, pSelected: BooleanArray, ptr: Int, flags: Int = 0, size: Vec2 = Vec2()): Boolean {
+        if (selectable(label, pSelected[ptr], flags, size)) {
+            pSelected[ptr] = !pSelected[ptr]
+            return true
+        }
+        return false
+    }
 
     fun listBox(label: String, currentItem: IntArray, items: Array<String>, heightInItems: Int = -1) =
             listBox(label, currentItem, imgui_widgets.Items.arrayGetter, items, heightInItems)

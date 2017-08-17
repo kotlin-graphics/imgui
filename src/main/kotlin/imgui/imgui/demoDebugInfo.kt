@@ -105,6 +105,7 @@ import imgui.internal.Window
 import java.util.*
 import imgui.Context as g
 import glm_.vec2.operators.div
+import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.newLine
 
 
@@ -371,37 +372,28 @@ interface imgui_demoDebugInfo {
 
             treeNode("Selectables") {
                 treeNode("Basic") {
-//                    selectable("1. I am selectable", selectedArray, 0)
-//                    ImGui::Selectable("2. I am selectable", & selected [1])
-//                    ImGui::Text("3. I am not selectable")
-//                    ImGui::Selectable("4. I am selectable", & selected [2])
-//                    if (ImGui::Selectable("5. I am double clickable", selected[3], ImGuiSelectableFlags_AllowDoubleClick))
-//                        if (ImGui::IsMouseDoubleClicked(0))
-//                            selected[3] = !selected[3];
+                    selectable("1. I am selectable", selectedArray, 0)
+                    selectable("2. I am selectable", selectedArray, 1)
+                    text("3. I am not selectable")
+                    selectable("4. I am selectable", selectedArray, 2)
+                    if (selectable("5. I am double clickable", selectedArray[3], SelectableFlags.AllowDoubleClick.i))
+                        if (isMouseDoubleClicked(0))
+                            selectedArray[3] = !selectedArray[3]
                 }
-//                if (ImGui::TreeNode("Rendering more text into the same block"))
-//                {
-//                    static bool selected[3] = { false, false, false };
-//                    ImGui::Selectable("main.c", &selected[0]);    ImGui::SameLine(300); ImGui::Text(" 2,345 bytes");
-//                    ImGui::Selectable("Hello.cpp", &selected[1]); ImGui::SameLine(300); ImGui::Text("12,345 bytes");
-//                    ImGui::Selectable("Hello.h", &selected[2]);   ImGui::SameLine(300); ImGui::Text(" 2,345 bytes");
-//                    ImGui::TreePop();
-//                }
-//                if (ImGui::TreeNode("In columns"))
-//                {
-//                    ImGui::Columns(3, NULL, false);
-//                    static bool selected[16] = { 0 };
-//                    for (int i = 0; i < 16; i++)
-//                    {
-//                        char label[32]; sprintf(label, "Item %d", i);
-//                        if (ImGui::Selectable(label, &selected[i])) {}
-//                        ImGui::NextColumn();
-//                    }
-//                    ImGui::Columns(1);
-//                    ImGui::TreePop();
-//                }
-//                if (ImGui::TreeNode("Grid"))
-//                {
+                treeNode("Rendering more text into the same block") {
+                    selectable("main.c", selectedArray, 3); sameLine(300f); text(" 2,345 bytes")
+                    selectable("Hello.cpp", selectedArray, 4); sameLine(300f); text("12,345 bytes")
+                    selectable("Hello.h", selectedArray, 5); sameLine(300f); text(" 2,345 bytes")
+                }
+                treeNode("In columns") {
+                    columns(3, "", false)
+                    for (i in 0..15) {
+                        if (selectable("Item $i", selectedArray, 3 + 4 + i)) Unit
+                        nextColumn()
+                    }
+                    columns(1)
+                }
+//                treeNode("Grid") {
 //                    static bool selected[16] = { true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true };
 //                    for (int i = 0; i < 16; i++)
 //                    {
@@ -2175,7 +2167,7 @@ interface imgui_demoDebugInfo {
 
         var pressedCount = 0
 
-        val selectedArray = booleanArrayOf(false, true, false, false)
+        val selectedArray = BooleanArray(4 + 3 + 16, { it == 1 })
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.

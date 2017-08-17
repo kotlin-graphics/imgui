@@ -1,6 +1,7 @@
 package imgui.imgui
 
 import glm_.glm
+import glm_.s
 import glm_.vec2.Vec2
 import imgui.IO
 import imgui.ImGui.currentWindowRead
@@ -52,7 +53,10 @@ interface imgui_inputs {
         }
         return false
     }
-//IMGUI_API bool          IsMouseDoubleClicked(int button);                                   // did mouse button double-clicked. a double-click returns false in IsMouseClicked(). uses io.MouseDoubleClickTime.
+
+    /** did mouse button double-clicked. a double-click returns false in IsMouseClicked(). uses io.MouseDoubleClickTime.    */
+    fun isMouseDoubleClicked(button: Int) = IO.mouseDoubleClicked[button]
+
 //IMGUI_API bool          IsMouseReleased(int button);                                        // did mouse button released (went from Down to !Down)
 //IMGUI_API bool          IsMouseHoveringWindow();                                            // is mouse hovering current window ("window" in API names always refer to current window). disregarding of any consideration of being blocked by a popup. (unlike IsWindowHovered() this will return true even if the window is blocked because of a popup)
 //IMGUI_API bool          IsMouseHoveringAnyWindow();                                         // is mouse hovering any visible window
