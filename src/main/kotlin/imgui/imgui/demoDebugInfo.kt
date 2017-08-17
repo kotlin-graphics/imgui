@@ -1,6 +1,5 @@
 package imgui.imgui
 
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type.Text
 import gli.has
 import glm_.*
 import glm_.vec2.Vec2
@@ -18,7 +17,6 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
-import imgui.ImGui.collapsingHeader
 import imgui.ImGui.colorEditMode
 import imgui.ImGui.colorEditVec4
 import imgui.ImGui.columns
@@ -33,9 +31,9 @@ import imgui.ImGui.endMenu
 import imgui.ImGui.endTooltip
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
+import imgui.ImGui.imageButton
 import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
-import imgui.ImGui.inputText
 import imgui.ImGui.isItemClicked
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseHoveringRect
@@ -106,6 +104,8 @@ import imgui.internal.Rect
 import imgui.internal.Window
 import java.util.*
 import imgui.Context as g
+import glm_.vec2.operators.div
+import imgui.ImGui.newLine
 
 
 interface imgui_demoDebugInfo {
@@ -342,7 +342,7 @@ interface imgui_demoDebugInfo {
                 textWrapped("Below we are displaying the font texture (which is the only texture we have access to in this " +
                         "demo). Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. Hover " +
                         "the texture for a zoomed view!")
-                val texScreenPos = cursorScreenPos
+                val texScreenPos = Vec2(cursorScreenPos)
                 val texSize = Vec2(IO.fonts.texSize)
                 val texId = IO.fonts.texId
                 text("%.0fx%.0f", texSize.x, texSize.y)
@@ -357,35 +357,28 @@ interface imgui_demoDebugInfo {
                         val uv1 = (focus + focusSz) / texSize
                         image(texId, Vec2(128), uv0, uv1, Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
                     }
-//                ImGui::TextWrapped("And now some textured buttons..");
-//                static int pressed_count = 0;
-//                for (int i = 0; i < 8; i++)
-//                {
-//                    ImGui::PushID(i);
-//                    int frame_padding = -1 + i;     // -1 = uses default padding
-//                    if (ImGui::ImageButton(texId, ImVec2(32,32), ImVec2(0,0), ImVec2(32.0f/tex_w,32/tex_h), frame_padding, ImColor(0,0,0,255)))
-//                        pressed_count += 1;
-//                    ImGui::PopID();
-//                    ImGui::SameLine();
-//                }
-//                ImGui::NewLine();
-//                ImGui::Text("Pressed %d times.", pressed_count);
+                textWrapped("And now some textured buttons..")
+                for (i in 0..7)
+                    withId(i) {
+                        val framePadding = -1 + i  // -1 = uses default padding
+                        if (imageButton(texId, Vec2(32, 32), Vec2(), 32 / texSize, framePadding, Vec4.fromColor(0, 0, 0, 255)))
+                            pressedCount++
+                        sameLine()
+                    }
+                newLine()
+                text("Pressed $pressedCount times.")
             }
-//
-//            if (ImGui::TreeNode("Selectables"))
-//            {
-//                if (ImGui::TreeNode("Basic"))
-//                {
-//                    static bool selected[4] = { false, true, false, false };
-//                    ImGui::Selectable("1. I am selectable", &selected[0]);
-//                    ImGui::Selectable("2. I am selectable", &selected[1]);
-//                    ImGui::Text("3. I am not selectable");
-//                    ImGui::Selectable("4. I am selectable", &selected[2]);
+
+            treeNode("Selectables") {
+                treeNode("Basic") {
+//                    selectable("1. I am selectable", selectedArray, 0)
+//                    ImGui::Selectable("2. I am selectable", & selected [1])
+//                    ImGui::Text("3. I am not selectable")
+//                    ImGui::Selectable("4. I am selectable", & selected [2])
 //                    if (ImGui::Selectable("5. I am double clickable", selected[3], ImGuiSelectableFlags_AllowDoubleClick))
 //                        if (ImGui::IsMouseDoubleClicked(0))
 //                            selected[3] = !selected[3];
-//                    ImGui::TreePop();
-//                }
+                }
 //                if (ImGui::TreeNode("Rendering more text into the same block"))
 //                {
 //                    static bool selected[3] = { false, false, false };
@@ -426,8 +419,7 @@ interface imgui_demoDebugInfo {
 //                    }
 //                    ImGui::TreePop();
 //                }
-//                ImGui::TreePop();
-//            }
+            }
 //
 //            if (ImGui::TreeNode("Filtered Text Input"))
 //            {
@@ -2180,6 +2172,10 @@ interface imgui_demoDebugInfo {
         val wrapWidth = floatArrayOf(200f)
 
         val buf = CharArray(32).apply { "\u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e".toCharArray(this) }
+
+        var pressedCount = 0
+
+        val selectedArray = booleanArrayOf(false, true, false, false)
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.

@@ -274,7 +274,41 @@ interface imgui_widgets {
         } else
             window.drawList.addImage(userTextureId, bb.min, bb.max, uv0, uv1, getColorU32(tintCol))
     }
-//    IMGUI_API bool          ImageButton(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,0),  const ImVec2& uv1 = ImVec2(1,1), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,0), const ImVec4& tint_col = ImVec4(1,1,1,1));    // <0 frame_padding uses default frame padding settings. 0 for no padding
+
+    /** frame_padding < 0: uses FramePadding from style (default)
+     *  frame_padding = 0: no framing/padding
+     *  frame_padding > 0: set framing size
+     *  The color used are the button colors.   */
+    fun imageButton(userTextureId: Int, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(), framePadding: Int = -1, bgCol: Vec4 = Vec4(),
+                    tintCol:Vec4 = Vec4(1)):Boolean {
+
+        val window = currentWindow
+        if (window.skipItems)        return false
+
+        /*  Default to using texture ID as ID. User can still push string/integer prefixes.
+            We could hash the size/uv to create a unique ID but that would prevent the user from animating UV.         */
+        pushId(userTextureId)
+        val id = window.getId("#image")
+        popId()
+
+        val padding = if(framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size + padding*2)
+        val imageBb = Rect(window.dc.cursorPos + padding, window.dc.cursorPos + padding + size)
+        itemSize(bb)
+        if (!itemAdd(bb, id))
+        return false
+
+        val (pressed, hovered, held) = buttonBehavior(bb, id)
+
+        // Render
+        val col = if(hovered && held) Col.ButtonActive else if(hovered) Col.ButtonHovered else Col.Button
+        renderFrame(bb.min, bb.max, col.u32, true, glm.clamp(glm.min(padding.x, padding.y), 0f, style.frameRounding))
+        if (bgCol.w > 0f)
+            window.drawList.addRectFilled(imageBb.min, imageBb.max, getColorU32(bgCol))
+        window.drawList.addImage(userTextureId, imageBb.min, imageBb.max, uv0, uv1, getColorU32(tintCol))
+
+        return pressed
+    }
 
     fun checkbox(label: String, v: BooleanArray): Boolean {
 

@@ -74,7 +74,17 @@ interface imgui_cursorLayout {
             dc.currentLineTextBaseOffset = dc.prevLineTextBaseOffset
         }
     }
-//    IMGUI_API void          NewLine();                                                          // undo a SameLine()
+
+    /** undo a sameLine()   */
+    fun newLine() {
+        val window = currentWindow
+        if (window.skipItems) return
+        // In the event that we are on a line with items that is smaller that FontSize high, we will preserve its height.
+        itemSize(when {
+            window.dc.currentLineHeight > 0f -> Vec2()
+            else -> Vec2(0f, g.fontSize)
+        })
+    }
 
     /** add vertical spacing    */
     fun spacing() {
