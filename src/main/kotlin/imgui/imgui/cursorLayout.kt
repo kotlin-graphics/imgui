@@ -4,14 +4,13 @@ import glm_.f
 import glm_.glm
 import glm_.vec2.Vec2
 import imgui.Col
+import imgui.Context.style
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
-import imgui.ImGui.getColorU32
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logText
 import imgui.ImGui.popClipRect
-import imgui.Context.style
 import imgui.internal.GroupData
 import imgui.internal.Rect
 import imgui.pushColumnClipRect
@@ -42,7 +41,7 @@ interface imgui_cursorLayout {
             return
         }
 
-        window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), getColorU32(Col.Border))
+        window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Border.u32)
 
         if (g.logEnabled)
             logText("\n--------------------------------")

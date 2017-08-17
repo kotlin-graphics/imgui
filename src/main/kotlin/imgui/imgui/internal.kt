@@ -16,7 +16,6 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.contentRegionMax
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
-import imgui.ImGui.getColorU32
 import imgui.ImGui.indent
 import imgui.ImGui.inputText
 import imgui.ImGui.popFont
@@ -343,7 +342,7 @@ interface imgui_internal {
                     if (textEnd == 0) text.length else textEnd
 
         if (textDisplayEnd > 0) {
-            window.drawList.addText(g.font, g.fontSize, pos, getColorU32(Col.Text), text.toCharArray(), textDisplayEnd)
+            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd)
             if (g.logEnabled)
                 logRenderedText(pos, text, textDisplayEnd)
         }
@@ -358,7 +357,7 @@ interface imgui_internal {
             textEnd = text.length // FIXME-OPT
 
         if (textEnd > 0) {
-            window.drawList.addText(g.font, g.fontSize, pos, getColorU32(Col.Text), text.toCharArray(), textEnd, wrapWidth)
+            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textEnd, wrapWidth)
             if (g.logEnabled)
                 logRenderedText(pos, text, textEnd)
         }
@@ -395,9 +394,9 @@ interface imgui_internal {
         // Render
         if (needClipping) {
             val fineClipRect = Vec4(clipMin.x, clipMin.y, clipMax.x, clipMax.y)
-            window.drawList.addText(g.font, g.fontSize, pos, getColorU32(Col.Text), text.toCharArray(), textDisplayEnd, 0f, fineClipRect)
+            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, fineClipRect)
         } else
-            window.drawList.addText(g.font, g.fontSize, pos, getColorU32(Col.Text), text.toCharArray(), textDisplayEnd, 0f, null)
+            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, null)
 //    if (g.logEnabled) TODO
 //        LogRenderedText(pos, text, textDisplayEnd)
     }
@@ -409,8 +408,8 @@ interface imgui_internal {
 
         window.drawList.addRectFilled(pMin, pMax, fillCol, rounding)
         if (border && window.flags has WindowFlags.ShowBorders) {
-            window.drawList.addRect(pMin + 1, pMax + 1, ImGui.getColorU32(Col.BorderShadow), rounding)
-            window.drawList.addRect(pMin, pMax, ImGui.getColorU32(Col.Border), rounding)
+            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding)
+            window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding)
         }
     }
 
@@ -437,10 +436,10 @@ interface imgui_internal {
             c = center + Vec2(-0.500f, -0.866f) * r
         }
 
-        window.drawList.addTriangleFilled(a, b, c, ImGui.getColorU32(Col.Text))
+        window.drawList.addTriangleFilled(a, b, c, Col.Text.u32)
     }
 
-    fun renderBullet(pos: Vec2) = currentWindow.drawList.addCircleFilled(pos, g.fontSize * 0.2f, getColorU32(Col.Text), 8)
+    fun renderBullet(pos: Vec2) = currentWindow.drawList.addCircleFilled(pos, g.fontSize * 0.2f, Col.Text.u32, 8)
 
     fun renderCheckMark(pos: Vec2, col: Int) {
 
@@ -574,8 +573,8 @@ interface imgui_internal {
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 
         // Render
-        val col = getColorU32(if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button)
-        renderFrame(bb.min, bb.max, col, true, style.frameRounding)
+        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
         renderTextClipped(bb.min + style.framePadding, bb.max - style.framePadding, label, 0, labelSize,
                 style.buttonTextAlign, bb)
 
@@ -597,15 +596,14 @@ interface imgui_internal {
         val (pressed, hovered, held) = buttonBehavior(bb, id)
 
         // Render
-        val col = ImGui.getColorU32(if (held && hovered) Col.CloseButtonActive else if (hovered) Col.CloseButtonHovered else Col.CloseButton)
+        val col = if (held && hovered) Col.CloseButtonActive else if (hovered) Col.CloseButtonHovered else Col.CloseButton
         val center = bb.center
-        window.drawList.addCircleFilled(center, glm.max(2f, radius), col, 12)
+        window.drawList.addCircleFilled(center, glm.max(2f, radius), col.u32, 12)
 
         val crossExtent = (radius * 0.7071f) - 1f
         if (hovered) {
-            window.drawList.addLine(center + crossExtent, center - crossExtent, ImGui.getColorU32(Col.Text))
-            window.drawList.addLine(center + Vec2(crossExtent, -crossExtent), center + Vec2(-crossExtent, crossExtent),
-                    ImGui.getColorU32(Col.Text))
+            window.drawList.addLine(center + crossExtent, center - crossExtent, Col.Text.u32)
+            window.drawList.addLine(center + Vec2(crossExtent, -crossExtent), center + Vec2(-crossExtent, crossExtent), Col.Text.u32)
         }
 
         return pressed
@@ -622,7 +620,7 @@ interface imgui_internal {
 
 //        println("Draw frame, ${v[ptr]}")
         // Draw frame
-        renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, style.frameRounding)
+        renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
 
         val isNonLinear = (power < 1.0f - 0.00001f) || (power > 1.0f + 0.00001f)
         val isHorizontal = flags hasnt SliderFlags.Vertical
@@ -702,8 +700,8 @@ interface imgui_internal {
                 else
                     Rect(Vec2(frameBb.min.x + grabPadding, grabPos - grabSz * 0.5f),
                             Vec2(frameBb.max.x - grabPadding, grabPos + grabSz * 0.5f))
-        val col = getColorU32(if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab)
-        window.drawList.addRectFilled(grabBb.min, grabBb.max, col, style.grabRounding)
+        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
+        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
 
         return valueChanged
     }
@@ -735,7 +733,7 @@ interface imgui_internal {
         beginGroup()
         pushId(label)
         pushMultiItemsWidths(v.size)
-        for (i in v.indices)        {
+        for (i in v.indices) {
             pushId(i)
 //            println(i) TODO clean
             valueChanged = valueChanged || sliderFloat("##v", v, i, vMin, vMax, displayFormat, power)
@@ -757,11 +755,12 @@ interface imgui_internal {
                      power: Float): Boolean {
 
         // Draw frame
-        val frameCol = getColorU32(
-                if (g.activeId == id) Col.FrameBgActive
-                else if (g.hoveredId == id) Col.FrameBgHovered
-                else Col.FrameBg)
-        renderFrame(frameBb.min, frameBb.max, frameCol, true, style.frameRounding)
+        val frameCol = when (id) {
+            g.activeId -> Col.FrameBgActive
+            g.hoveredId -> Col.FrameBgHovered
+            else -> Col.FrameBg
+        }
+        renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
         var valueChanged = false
 
@@ -1250,7 +1249,7 @@ interface imgui_internal {
 //        buf[0] = ""
 
         if (!isMultiline)
-            renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, style.frameRounding)
+            renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
 
         val clipRect = Vec4(frameBb.min, frameBb.min + size) // Not using frameBb.Max because we have adjusted size
         val renderPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + style.framePadding
@@ -1357,7 +1356,7 @@ interface imgui_internal {
                 // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.
                 val bgOffYUp = if (isMultiline) 0f else -1f
                 val bgOffYDn = if (isMultiline) 0f else 2f
-                val bgColor = getColorU32(Col.TextSelectedBg)
+                val bgColor = Col.TextSelectedBg.u32
                 val rectPos = renderPos + selectStartOffset - renderScroll
                 var p = textSelectedBegin
                 while (p < textSelectedEnd) {
@@ -1383,7 +1382,7 @@ interface imgui_internal {
                 }
             }
 
-            drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, getColorU32(Col.Text), bufDisplay,
+            drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, Col.Text.u32, bufDisplay,
                     editState.curLenA, 0f, if (isMultiline) null else clipRect)
 
             // Draw blinking cursor
@@ -1391,7 +1390,7 @@ interface imgui_internal {
             val cursorScreenPos = renderPos + cursorOffset - renderScroll
             val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
             if (cursorIsVisible && cursorScreenRect.overlaps(Rect(clipRect)))
-                drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, getColorU32(Col.Text))
+                drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
             /*  Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor.
                 Bit of an extra nicety.)             */
@@ -1403,7 +1402,7 @@ interface imgui_internal {
             if (isMultiline)
             // We don't need width
                 textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufEnd) * g.fontSize)
-            drawWindow.drawList.addText(g.font, g.fontSize, renderPos, getColorU32(Col.Text), bufDisplay, bufEnd[0], 0f,
+            drawWindow.drawList.addText(g.font, g.fontSize, renderPos, Col.Text.u32, bufDisplay, bufEnd[0], 0f,
                     if (isMultiline) null else clipRect)
         }
 
@@ -1569,11 +1568,11 @@ interface imgui_internal {
             setItemAllowOverlap()
 
         // Render
-        val col = getColorU32(if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header)
+        val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
         val textPos = bb.min + Vec2(textOffsetX, padding.y + textBaseOffsetY)
         if (displayFrame) {
             // Framed type
-            renderFrame(bb.min, bb.max, col, true, style.frameRounding)
+            renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
             renderCollapseTriangle(bb.min + padding + Vec2(0f, textBaseOffsetY), isOpen, 1f)
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
@@ -1586,7 +1585,7 @@ interface imgui_internal {
         } else {
             // Unframed typed for tree nodes
             if (hovered || flags has TreeNodeFlags.Selected)
-                renderFrame(bb.min, bb.max, col, false)
+                renderFrame(bb.min, bb.max, col.u32, false)
 
             if (flags has TreeNodeFlags.Bullet)
                 TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
@@ -1619,7 +1618,7 @@ interface imgui_internal {
             } else {
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
-                val storedValue = storage.intaaaaaaaaaaaaaaa(id, -1)
+                val storedValue = storage.inta(id, -1)
                 if (storedValue == -1) {
                     isOpen = g.setNextTreeNodeOpenVal
                     storage[id] = isOpen
@@ -1628,7 +1627,7 @@ interface imgui_internal {
             }
             g.setNextTreeNodeOpenCond = 0
         } else
-            isOpen = storage.intaaaaaaaaaaaaaaa(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
+            isOpen = storage.inta(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).

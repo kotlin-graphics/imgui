@@ -27,7 +27,6 @@ import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
 import imgui.ImGui.endTooltip
-import imgui.ImGui.getColorU32
 import imgui.ImGui.image
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
@@ -59,7 +58,6 @@ import imgui.ImGui.setWindowSize
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderFloatVec2
 import imgui.ImGui.sliderInt
-import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textColored
@@ -1622,7 +1620,7 @@ interface imgui_demoDebugInfo {
                                     drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if (glyph != null) 100 else 50))
                                     /*  We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion
                                         functions available to generate a string.                                     */
-                                    font.renderChar(drawList, cellSize.x, cellP1, getColorU32(Col.Text), (base + n).c)
+                                    font.renderChar(drawList, cellSize.x, cellP1, Col.Text.u32, (base + n).c)
                                     if (glyph != null && isMouseHoveringRect(cellP1, cellP2))
                                         tooltip {
                                             text("Codepoint: U+%04X", base + n)

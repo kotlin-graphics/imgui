@@ -236,7 +236,7 @@ fun scrollbar(window: Window, horizontal: Boolean) {
                         if (window.flags has WindowFlags.NoTitleBar && window.flags hasnt WindowFlags.MenuBar)
                             Corner.TopRight
                         else Corner.All) or if (otherScrollbar) Corner.All else Corner.BottomRight
-    window.drawList.addRectFilled(bb.min, bb.max, ImGui.getColorU32(Col.ScrollbarBg), windowRounding, windowRoundingCorners)
+    window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, windowRounding, windowRoundingCorners)
     bb.reduce(Vec2(
             glm.clamp(((bb.max.x - bb.min.x - 2.0f) * 0.5f).i.f, 0.0f, 3.0f),
             glm.clamp(((bb.max.y - bb.min.y - 2.0f) * 0.5f).i.f, 0.0f, 3.0f)))
@@ -305,7 +305,7 @@ fun scrollbar(window: Window, horizontal: Boolean) {
     }
 
     // Render
-    val grabCol = ImGui.getColorU32(if (held) Col.ScrollbarGrabActive else if (hovered) Col.ScrollbarGrabHovered else Col.ScrollbarGrab)
+    val grabCol = (if (held) Col.ScrollbarGrabActive else if (hovered) Col.ScrollbarGrabHovered else Col.ScrollbarGrab).u32
     if (horizontal)
         window.drawList.addRectFilled(
                 Vec2(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y),

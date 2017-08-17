@@ -304,11 +304,11 @@ interface imgui_widgets {
         if (pressed) v[0] = !v[0]
 
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
-        renderFrame(checkBb.min, checkBb.max, getColorU32(col), true, style.frameRounding)
+        renderFrame(checkBb.min, checkBb.max, col.u32, true, style.frameRounding)
         if (v[0]) {
             val checkSz = glm.min(checkBb.width, checkBb.height)
             val pad = glm.max(1f, (checkSz / 6f).i.f)
-            window.drawList.addRectFilled(checkBb.min + Vec2(pad), checkBb.max - Vec2(pad), getColorU32(Col.CheckMark), style.frameRounding)
+            window.drawList.addRectFilled(checkBb.min + Vec2(pad), checkBb.max - Vec2(pad), Col.CheckMark.u32, style.frameRounding)
         }
 
         if (g.logEnabled) logRenderedText(textBb.tl, if (v[0]) "[x]" else "[ ]")
@@ -348,17 +348,17 @@ interface imgui_widgets {
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
 
-        val col = getColorU32(if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg)
-        window.drawList.addCircleFilled(center, radius, col, 16)
+        val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
+        window.drawList.addCircleFilled(center, radius, col.u32, 16)
         if (active) {
             val checkSz = glm.min(checkBb.width, checkBb.height)
             val pad = glm.max(1f, (checkSz / 6f).i.f)
-            window.drawList.addCircleFilled(center, radius - pad, getColorU32(Col.CheckMark), 16)
+            window.drawList.addCircleFilled(center, radius - pad, Col.CheckMark.u32, 16)
         }
 
         if (window.flags has WindowFlags.ShowBorders) {
-            window.drawList.addCircle(center + Vec2(1), radius, getColorU32(Col.BorderShadow), 16)
-            window.drawList.addCircle(center, radius, getColorU32(Col.Border), 16)
+            window.drawList.addCircle(center + Vec2(1), radius, Col.BorderShadow.u32, 16)
+            window.drawList.addCircle(center, radius, Col.Border.u32, 16)
         }
 
         if (g.logEnabled)
@@ -410,9 +410,9 @@ interface imgui_widgets {
         var popupOpenedNow = false
 
         val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
-        renderFrame(frameBb.min, frameBb.max, getColorU32(Col.FrameBg), true, style.frameRounding)
-        val col = getColorU32(if (popupOpen || hovered) Col.ButtonHovered else Col.Button)
-        renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col, true, style.frameRounding) // FIXME-ROUNDING
+        renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
+        val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
+        renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, true, style.frameRounding) // FIXME-ROUNDING
         renderCollapseTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y) + style.framePadding, true)
 
         if (currentItem[0] in 0 until itemsCount)

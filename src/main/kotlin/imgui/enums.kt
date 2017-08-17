@@ -291,6 +291,8 @@ enum class Col {
     COUNT;
 
     val i = ordinal
+
+    val u32 get() = ImGui.getColorU32(i, alphaMul = 1f)
 }
 
 /** Enumeration for PushStyleVar() / PopStyleVar() to temporarily modify the ImGuiStyle structure.

@@ -391,9 +391,9 @@ interface imgui_window {
             val windowRounding = if (flags has WindowFlags.ChildWindow) style.childWindowRounding else style.windowRounding
             if (window.collapsed)
             // Draw title bar only
-                renderFrame(titleBarRect.tl, titleBarRect.br, getColorU32(Col.TitleBgCollapsed), true, windowRounding)
+                renderFrame(titleBarRect.tl, titleBarRect.br, Col.TitleBgCollapsed.u32, true, windowRounding)
             else {
-                var resizeCol = 0
+                var resizeCol = Col.Text
                 val resizeCornerSize = glm.max(g.fontSize * 1.35f, windowRounding + 1.0f + g.fontSize * 0.2f)
                 if (flags hasnt WindowFlags.AlwaysAutoResize && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 &&
                         flags hasnt WindowFlags.NoResize) {
@@ -402,7 +402,7 @@ interface imgui_window {
                     val resizeRect = Rect(br - resizeCornerSize * 0.75f, br)
                     val resizeId = window.getId("#RESIZE")
                     val (_, hovered, held) = buttonBehavior(resizeRect, resizeId, ButtonFlags.FlattenChilds)
-                    resizeCol = getColorU32(if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip)
+                    resizeCol = if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip
 
                     if (hovered || held)
                         g.mouseCursor = MouseCursor.ResizeNWSE
@@ -454,18 +454,17 @@ interface imgui_window {
                 // Title bar
                 if (flags hasnt WindowFlags.NoTitleBar)
                     window.drawList.addRectFilled(titleBarRect.tl, titleBarRect.br,
-                            getColorU32(
-                                    if (g.focusedWindow != null && window.rootNonPopupWindow == g.focusedWindow!!.rootNonPopupWindow)
-                                        Col.TitleBgActive
-                                    else Col.TitleBg),
+                            (if (g.focusedWindow != null && window.rootNonPopupWindow == g.focusedWindow!!.rootNonPopupWindow)
+                                Col.TitleBgActive
+                            else Col.TitleBg).u32,
                             windowRounding, Corner.TopLeft or Corner.TopRight)
 
                 // Menu bar
                 if (flags has WindowFlags.MenuBar) {
                     val menuBarRect = window.menuBarRect()
                     if (flags has WindowFlags.ShowBorders)
-                        window.drawList.addLine(menuBarRect.bl, menuBarRect.br, getColorU32(Col.Border))
-                    window.drawList.addRectFilled(menuBarRect.tl, menuBarRect.br, getColorU32(Col.MenuBarBg),
+                        window.drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32)
+                    window.drawList.addRectFilled(menuBarRect.tl, menuBarRect.br, Col.MenuBarBg.u32,
                             if (flags has WindowFlags.NoTitleBar) windowRounding else 0f, Corner.TopLeft or Corner.TopRight)
                 }
 
@@ -483,17 +482,17 @@ interface imgui_window {
                     window.drawList.pathLineTo(br + Vec2(-window.borderSize, -resizeCornerSize))
                     window.drawList.pathArcToFast(Vec2(br.x - windowRounding - window.borderSize, br.y - windowRounding - window.borderSize),
                             windowRounding, 0, 3)
-                    window.drawList.pathFillConvex(resizeCol)
+                    window.drawList.pathFillConvex(resizeCol.u32)
                 }
 
                 // Borders
                 if (flags has WindowFlags.ShowBorders) {
-                    window.drawList.addRect(Vec2(1) plus_ window.pos, (window.size + window.pos) plus_ 1, getColorU32(Col.BorderShadow),
+                    window.drawList.addRect(Vec2(1) plus_ window.pos, (window.size + window.pos) plus_ 1, Col.BorderShadow.u32,
                             windowRounding)
                     // TODO check if window.posF is fine instead window.pos
-                    window.drawList.addRect(window.posF, window.posF + window.size, getColorU32(Col.Border), windowRounding)
+                    window.drawList.addRect(window.posF, window.posF + window.size, Col.Border.u32, windowRounding)
                     if (flags hasnt WindowFlags.NoTitleBar)
-                        window.drawList.addLine(titleBarRect.bl + Vec2(1, 0), titleBarRect.br - Vec2(1, 0), getColorU32(Col.Border))
+                        window.drawList.addLine(titleBarRect.bl + Vec2(1, 0), titleBarRect.br - Vec2(1, 0), Col.Border.u32)
                 }
             }
 
@@ -745,12 +744,13 @@ interface imgui_window {
     /** current content boundaries (typically window boundaries including scrolling, or current column boundaries), in
      *  windows coordinates
      *  In window space (not screen space!) */
-    val contentRegionMax: Vec2 get() = with(currentWindowRead!!) {
-        val mx = Vec2(contentsRegionRect.max)
-        if (dc.columnsCount != 1)
-            mx.x = getColumnOffset(dc.columnsCurrent + 1) - windowPadding.x
-        return mx
-    }
+    val contentRegionMax: Vec2
+        get() = with(currentWindowRead!!) {
+            val mx = Vec2(contentsRegionRect.max)
+            if (dc.columnsCount != 1)
+                mx.x = getColumnOffset(dc.columnsCurrent + 1) - windowPadding.x
+            return mx
+        }
 
     /** == GetContentRegionMax() - GetCursorPos()   */
     val contentRegionAvail get() = with(currentWindowRead!!) { contentRegionMax - (dc.cursorPos - pos) }
@@ -863,11 +863,13 @@ interface imgui_window {
     fun setWindowFocus(name: String) = focusWindow(findWindowByName(name))
 
     /** scrolling amount [0..GetScrollMaxX()]   */
-    var scrollX get() = g.currentWindow!!.scroll.x
+    var scrollX
+        get() = g.currentWindow!!.scroll.x
         set(value) = with(currentWindow) { scrollTarget.x = scrollX; scrollTargetCenterRatio.x = 0f }
 
     /** scrolling amount [0..GetScrollMaxY()]   */
-    var scrollY get() = g.currentWindow!!.scroll.y
+    var scrollY
+        get() = g.currentWindow!!.scroll.y
         set(value) = with(currentWindow) {
             // title bar height canceled out when using ScrollTargetRelY
             scrollTarget.y = value + titleBarHeight() + menuBarHeight()

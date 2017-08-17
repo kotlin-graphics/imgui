@@ -7,6 +7,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
+import imgui.Context.style
 import imgui.ImGui.alignFirstTextHeightToWidgets
 import imgui.ImGui.begin
 import imgui.ImGui.beginGroup
@@ -16,7 +17,6 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
-import imgui.ImGui.getColorU32
 import imgui.ImGui.isHovered
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
@@ -38,7 +38,6 @@ import imgui.internal.LayoutType
 import imgui.internal.Rect
 import imgui.internal.isPointInTriangle
 import imgui.Context as g
-import imgui.Context.style
 
 /** Menu    */
 interface imgui_menus {
@@ -236,8 +235,7 @@ interface imgui_menus {
         }
 
         if (selected)
-            renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.2f, 0f),
-                    getColorU32(if (enabled) Col.Text else Col.TextDisabled))
+            renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.2f, 0f), (if (enabled) Col.Text else Col.TextDisabled).u32)
 
         return pressed
     }

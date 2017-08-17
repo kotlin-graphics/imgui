@@ -5,6 +5,7 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.Context.style
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
 import imgui.ImGui.buttonBehavior
@@ -16,7 +17,6 @@ import imgui.ImGui.contentRegionMax
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
-import imgui.ImGui.getColorU32
 import imgui.ImGui.getId
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
@@ -35,7 +35,6 @@ import imgui.ImGui.windowContentRegionMax
 import imgui.internal.ButtonFlags
 import imgui.internal.Rect
 import imgui.internal.or
-import imgui.Context.style
 
 /** Widgets: Selectable / Lists */
 interface imgui_widgetsSelectableLists {
@@ -99,8 +98,8 @@ interface imgui_widgetsSelectableLists {
 
         // Render
         if (hovered || selected) {
-            val col = getColorU32(if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header)
-            renderFrame(bbWithSpacing.min, bbWithSpacing.max, col, false, 0f)
+            val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
+            renderFrame(bbWithSpacing.min, bbWithSpacing.max, col.u32, false, 0f)
         }
 
         if (flags has SelectableFlags.SpanAllColumns && window.dc.columnsCount > 1) {
