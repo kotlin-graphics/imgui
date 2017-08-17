@@ -1,5 +1,7 @@
 package imgui.imgui
 
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type.Text
+import gli.has
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
@@ -16,10 +18,12 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
+import imgui.ImGui.collapsingHeader
 import imgui.ImGui.colorEditMode
 import imgui.ImGui.colorEditVec4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
+import imgui.ImGui.cursorPos
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
@@ -27,13 +31,21 @@ import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
 import imgui.ImGui.endTooltip
+import imgui.ImGui.fontSize
 import imgui.ImGui.image
+import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
+import imgui.ImGui.inputText
+import imgui.ImGui.isItemClicked
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.itemRectMax
+import imgui.ImGui.itemRectMin
 import imgui.ImGui.listBox
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
+import imgui.ImGui.mousePos
 import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
 import imgui.ImGui.popFont
@@ -58,16 +70,21 @@ import imgui.ImGui.setWindowSize
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderFloatVec2
 import imgui.ImGui.sliderInt
+import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
+import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
 import imgui.ImGui.treeNode
+import imgui.ImGui.treeNodeExV
+import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.treePush
+import imgui.ImGui.unindent
 import imgui.ImGui.version
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
@@ -83,6 +100,7 @@ import imgui.functionalProgramming.window
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
+import imgui.functionalProgramming.withTextWrapPos
 import imgui.functionalProgramming.withWindow
 import imgui.internal.Rect
 import imgui.internal.Window
@@ -192,189 +210,167 @@ interface imgui_demoDebugInfo {
 
         collapsingHeader("Widgets") {
 
-            //            if (ImGui::TreeNode("Trees"))
-//            {
-//                if (ImGui::TreeNode("Basic trees"))
-//                {
-//                    for (int i = 0; i < 5; i++)
-//                    if (ImGui::TreeNode((void*)(intptr_t)i, "Child %d", i))
-//                    {
-//                        ImGui::Text("blah blah");
-//                        ImGui::SameLine();
-//                        if (ImGui::SmallButton("print")) printf("Child %d pressed", i);
-//                        ImGui::TreePop();
-//                    }
-//                    ImGui::TreePop();
-//                }
-//
-//                if (ImGui::TreeNode("Advanced, with Selectable nodes"))
-//                {
-//                    ShowHelpMarker("This is a more standard looking tree with selectable nodes.\nClick to select, CTRL+Click to toggle, click on arrows or double-click to open.");
-//                    static bool align_label_with_current_x_position = false;
-//                    ImGui::Checkbox("Align label with current X position)", &align_label_with_current_x_position);
-//                    ImGui::Text("Hello!");
-//                    if (align_label_with_current_x_position)
-//                        ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
-//
-//                    static int selection_mask = (1 << 2); // Dumb representation of what may be user-side selection state. You may carry selection state inside or outside your objects in whatever format you see fit.
-//                    int node_clicked = -1;                // Temporary storage of what node we have clicked to process selection at the end of the loop. May be a pointer to your own node type, etc.
-//                    ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, ImGui::GetFontSize()*3); // Increase spacing to differentiate leaves from expanded contents.
-//                    for (int i = 0; i < 6; i++)
-//                    {
-//                        // Disable the default open on single-click behavior and pass in Selected flag according to our selection state.
-//                        ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ((selection_mask & (1 << i)) ? ImGuiTreeNodeFlags_Selected : 0);
-//                        if (i < 3)
-//                        {
-//                            // Node
-//                            bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, "Selectable Node %d", i);
-//                            if (ImGui::IsItemClicked())
-//                                node_clicked = i;
-//                            if (node_open)
-//                            {
-//                                ImGui::Text("Blah blah\nBlah Blah");
-//                                ImGui::TreePop();
-//                            }
-//                        }
-//                        else
-//                        {
-//                            // Leaf: The only reason we have a TreeNode at all is to allow selection of the leaf. Otherwise we can use BulletText() or TreeAdvanceToLabelPos()+Text().
-//                            ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Selectable Leaf %d", i);
-//                            if (ImGui::IsItemClicked())
-//                                node_clicked = i;
-//                        }
-//                    }
-//                    if (node_clicked != -1)
-//                    {
-//                        // Update selection state. Process outside of tree loop to avoid visual inconsistencies during the clicking-frame.
-//                        if (ImGui::GetIO().KeyCtrl)
-//                            selection_mask ^= (1 << node_clicked);          // CTRL+click to toggle
-//                        else //if (!(selection_mask & (1 << node_clicked))) // Depending on selection behavior you want, this commented bit preserve selection when clicking on item that is part of the selection
-//                        selection_mask = (1 << node_clicked);           // Click to single-select
-//                    }
-//                    ImGui::PopStyleVar();
-//                    if (align_label_with_current_x_position)
-//                        ImGui::Indent(ImGui::GetTreeNodeToLabelSpacing());
-//                    ImGui::TreePop();
-//                }
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Collapsing Headers"))
-//            {
-//                static bool closable_group = true;
-//                if (ImGui::CollapsingHeader("Header"))
-//                {
-//                    ImGui::Checkbox("Enable extra group", &closable_group);
-//                    for (int i = 0; i < 5; i++)
-//                    ImGui::Text("Some content %d", i);
-//                }
-//                if (ImGui::CollapsingHeader("Header with a close button", &closable_group))
-//                {
-//                    for (int i = 0; i < 5; i++)
-//                    ImGui::Text("More content %d", i);
-//                }
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Bullets"))
-//            {
-//                ImGui::BulletText("Bullet point 1");
-//                ImGui::BulletText("Bullet point 2\nOn multiple lines");
-//                ImGui::Bullet(); ImGui::Text("Bullet point 3 (two calls)");
-//                ImGui::Bullet(); ImGui::SmallButton("Button");
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Colored Text"))
-//            {
-//                // Using shortcut. You can use PushStyleColor()/PopStyleColor() for more flexibility.
-//                ImGui::TextColored(ImVec4(1.0f,0.0f,1.0f,1.0f), "Pink");
-//                ImGui::TextColored(ImVec4(1.0f,1.0f,0.0f,1.0f), "Yellow");
-//                ImGui::TextDisabled("Disabled");
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Word Wrapping"))
-//            {
-//                // Using shortcut. You can use PushTextWrapPos()/PopTextWrapPos() for more flexibility.
-//                ImGui::TextWrapped("This text should automatically wrap on the edge of the window. The current implementation for text wrapping follows simple rules suitable for English and possibly other languages.");
-//                ImGui::Spacing();
-//
-//                static float wrap_width = 200.0f;
-//                ImGui::SliderFloat("Wrap width", &wrap_width, -20, 600, "%.0f");
-//
-//                ImGui::Text("Test paragraph 1:");
-//                ImVec2 pos = ImGui::GetCursorScreenPos();
-//                ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(pos.x + wrap_width, pos.y), ImVec2(pos.x + wrap_width + 10, pos.y + ImGui::GetTextLineHeight()), IM_COL32(255,0,255,255));
-//                ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + wrap_width);
-//                ImGui::Text("The lazy dog is a good dog. This paragraph is made to fit within %.0f pixels. Testing a 1 character word. The quick brown fox jumps over the lazy dog.", wrap_width);
-//                ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(255,255,0,255));
-//                ImGui::PopTextWrapPos();
-//
-//                ImGui::Text("Test paragraph 2:");
-//                pos = ImGui::GetCursorScreenPos();
-//                ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(pos.x + wrap_width, pos.y), ImVec2(pos.x + wrap_width + 10, pos.y + ImGui::GetTextLineHeight()), IM_COL32(255,0,255,255));
-//                ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + wrap_width);
-//                ImGui::Text("aaaaaaaa bbbbbbbb, c cccccccc,dddddddd. d eeeeeeee   ffffffff. gggggggg!hhhhhhhh");
-//                ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(255,255,0,255));
-//                ImGui::PopTextWrapPos();
-//
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("UTF-8 Text"))
-//            {
-//                // UTF-8 test with Japanese characters
-//                // (needs a suitable font, try Arial Unicode or M+ fonts http://mplus-fonts.sourceforge.jp/mplus-outline-fonts/index-en.html)
-//                // Most compiler appears to support UTF-8 in source code (with Visual Studio you need to save your file as 'UTF-8 without signature')
-//                // However for the sake for maximum portability here we are *not* including raw UTF-8 character in this source file, instead we encode the string with hexadecimal constants.
-//                // In your own application be reasonable and use UTF-8 in source or retrieve the data from file system!
-//                // Note that characters values are preserved even if the font cannot be displayed, so you can safely copy & paste garbled characters into another application.
-//                ImGui::TextWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.Font->LoadFromFileTTF() manually to load extra character ranges.");
-//                ImGui::Text("Hiragana: \xe3\x81\x8b\xe3\x81\x8d\xe3\x81\x8f\xe3\x81\x91\xe3\x81\x93 (kakikukeko)");
-//                ImGui::Text("Kanjis: \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e (nihongo)");
-//                static char buf[32] = "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e";
-//                ImGui::InputText("UTF-8 input", buf, IM_ARRAYSIZE(buf));
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Images"))
-//            {
-//                ImGui::TextWrapped("Below we are displaying the font texture (which is the only texture we have access to in this demo). Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. Hover the texture for a zoomed view!");
-//                ImVec2 tex_screen_pos = ImGui::GetCursorScreenPos();
-//                float tex_w = (float)ImGui::GetIO().Fonts->TexWidth;
-//                float tex_h = (float)ImGui::GetIO().Fonts->TexHeight;
-//                ImTextureID tex_id = ImGui::GetIO().Fonts->TexID;
-//                ImGui::Text("%.0fx%.0f", tex_w, tex_h);
-//                ImGui::Image(tex_id, ImVec2(tex_w, tex_h), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
-//                if (ImGui::IsItemHovered())
-//                {
-//                    ImGui::BeginTooltip();
-//                    float focus_sz = 32.0f;
-//                    float focus_x = ImGui::GetMousePos().x - tex_screen_pos.x - focus_sz * 0.5f; if (focus_x < 0.0f) focus_x = 0.0f; else if (focus_x > tex_w - focus_sz) focus_x = tex_w - focus_sz;
-//                    float focus_y = ImGui::GetMousePos().y - tex_screen_pos.y - focus_sz * 0.5f; if (focus_y < 0.0f) focus_y = 0.0f; else if (focus_y > tex_h - focus_sz) focus_y = tex_h - focus_sz;
-//                    ImGui::Text("Min: (%.2f, %.2f)", focus_x, focus_y);
-//                    ImGui::Text("Max: (%.2f, %.2f)", focus_x + focus_sz, focus_y + focus_sz);
-//                    ImVec2 uv0 = ImVec2((focus_x) / tex_w, (focus_y) / tex_h);
-//                    ImVec2 uv1 = ImVec2((focus_x + focus_sz) / tex_w, (focus_y + focus_sz) / tex_h);
-//                    ImGui::Image(tex_id, ImVec2(128,128), uv0, uv1, ImColor(255,255,255,255), ImColor(255,255,255,128));
-//                    ImGui::EndTooltip();
-//                }
+            treeNode("Trees") {
+
+                treeNode("Basic trees") {
+
+                    for (i in 0..4)
+                        treeNode(i, "Child $i") {
+                            text("blah blah")
+                            sameLine()
+                            smallButton("print") { println("Child $i pressed") }
+                        }
+                }
+
+                treeNode("Advanced, with Selectable nodes") {
+
+                    showHelpMarker("""|This is a more standard looking tree with selectable nodes.
+                        |Click to select, CTRL+Click to toggle, click on arrows or double-click to open.""".trimMargin())
+                    checkbox("Align label with current X position)", alignLabelWithCurrentXposition)
+                    text("Hello!")
+                    if (alignLabelWithCurrentXposition[0]) unindent(treeNodeToLabelSpacing)
+
+                    /*  Temporary storage of what node we have clicked to process selection at the end of the loop.
+                        May be a pointer to your own node type, etc.                     */
+                    var nodeClicked = -1
+                    // Increase spacing to differentiate leaves from expanded contents.
+                    withStyleVar(StyleVar.IndentSpacing, fontSize * 3) {
+                        for (i in 0..5) {
+                            /*  Disable the default open on single-click behavior and pass in Selected flag according
+                                to our selection state.                             */
+                            val nodeFlags = TreeNodeFlags.OpenOnArrow or TreeNodeFlags.OpenOnDoubleClick or
+                                    if (selectionMask has (1 shl i)) TreeNodeFlags.Selected else TreeNodeFlags.Null
+                            if (i < 3) {    // Node
+                                val nodeOpen = treeNodeExV(i, nodeFlags, "Selectable Node $i")
+                                if (isItemClicked()) nodeClicked = i
+                                if (nodeOpen) {
+                                    text("Blah blah\nBlah Blah")
+                                    treePop()
+                                }
+                            } else {
+                                /*  Leaf: The only reason we have a TreeNode at all is to allow selection of the leaf.
+                                    Otherwise we can use BulletText() or TreeAdvanceToLabelPos()+Text().                                 */
+                                treeNodeExV(i, nodeFlags or TreeNodeFlags.Leaf or TreeNodeFlags.NoTreePushOnOpen, "Selectable Leaf $i")
+                                if (isItemClicked()) nodeClicked = i
+                            }
+                        }
+                        if (nodeClicked != -1) {
+                            /*  Update selection state. Process outside of tree loop to avoid visual inconsistencies during
+                                the clicking-frame.                         */
+                            if (IO.keyCtrl)
+                                selectionMask = selectionMask xor (1 shl nodeClicked)   // CTRL+click to toggle
+                            /*  Depending on selection behavior you want, this commented bit preserve selection when
+                                clicking on item that is part of the selection                         */
+                            else //if (!(selectionMask & (1 << nodeClicked)))
+                                selectionMask = (1 shl nodeClicked) // Click to single-select
+                        }
+                    }
+                    if (alignLabelWithCurrentXposition[0]) indent(treeNodeToLabelSpacing)
+                }
+            }
+
+            treeNode("Collapsing Headers") {
+                collapsingHeader("Header") {
+                    checkbox("Enable extra group", closableGroup)
+                    for (i in 0..4) text("Some content $i")
+                }
+                collapsingHeader("Header with a close button", closableGroup) {
+                    for (i in 0..4) text("More content $i")
+                }
+            }
+
+            treeNode("Bullets") {
+                bulletText("Bullet point 1")
+                bulletText("Bullet point 2\nOn multiple lines")
+                bullet(); text("Bullet point 3 (two calls)")
+                bullet(); smallButton("Button")
+            }
+
+            treeNode("Colored Text") {
+                // Using shortcut. You can use PushStyleColor()/PopStyleColor() for more flexibility.
+                textColored(Vec4(1f, 0f, 1f, 1f), "Pink")
+                textColored(Vec4(1f, 1f, 0f, 1f), "Yellow")
+                textDisabled("Disabled")
+            }
+
+            treeNode("Word Wrapping") {
+                // Using shortcut. You can use PushTextWrapPos()/PopTextWrapPos() for more flexibility.
+                textWrapped("This text should automatically wrap on the edge of the window. The current implementation for text " +
+                        "wrapping follows simple rules suitable for English and possibly other languages.")
+                spacing()
+
+                sliderFloat("Wrap width", wrapWidth, -20f, 600f, "%.0f")
+
+                text("Test paragraph 1:")
+                val pos = cursorScreenPos   // only consumed, safe to pass reference
+                windowDrawList.addRectFilled(Vec2(pos.x + wrapWidth[0], pos.y), Vec2(pos.x + wrapWidth[0] + 10, pos.y + textLineHeight),
+                        COL32(255, 0, 255, 255))
+                withTextWrapPos(cursorPos.x + wrapWidth[0]) {
+                    text("The lazy dog is a good dog. This paragraph is made to fit within %.0f pixels. " +
+                            "Testing a 1 character word. The quick brown fox jumps over the lazy dog.", wrapWidth[0])
+                    windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
+                }
+
+                text("Test paragraph 2:")
+                windowDrawList.addRectFilled(Vec2(pos.x + wrapWidth[0], pos.y), Vec2(pos.x + wrapWidth[0] + 10,
+                        pos.y + textLineHeight), COL32(255, 0, 255, 255))
+                withTextWrapPos(cursorPos.x + wrapWidth[0]) {
+                    text("aaaaaaaa bbbbbbbb, c cccccccc,dddddddd. d eeeeeeee   ffffffff. gggggggg!hhhhhhhh")
+                    windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
+                }
+            }
+
+            treeNode("UTF-8 Text TODO") {
+                /*  UTF-8 test with Japanese characters
+                    (needs a suitable font, try Arial Unicode or M+ fonts
+                    http://mplus-fonts.sourceforge.jp/mplus-outline-fonts/index-en.html)
+                    Most compiler appears to support UTF-8 in source code (with Visual Studio you need to save your file as
+                    'UTF-8 without signature')
+                    However for the sake for maximum portability here we are *not* including raw UTF-8 character in this source file,
+                    instead we encode the string with hexadecimal constants.
+                    In your own application be reasonable and use UTF-8 in source or retrieve the data from file system!
+                    Note that characters values are preserved even if the font cannot be displayed, so you can safely copy & paste
+                    garbled characters into another application.    */
+                textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. " +
+                        "Call io.Font->LoadFromFileTTF() manually to load extra character ranges.")
+//    TODO            text("Hiragana: \u00e3\u0081\u008b\u00e3\u0081\u008d\u00e3\u0081\u008f\u00e3\u0081\u0091\u00e3\u0081\u0093 (kakikukeko)")
+//                text("Kanjis: \u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e (nihongo)")
+//                inputText("UTF-8 input", buf, buf.size)
+            }
+
+            treeNode("Images") {
+                textWrapped("Below we are displaying the font texture (which is the only texture we have access to in this " +
+                        "demo). Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. Hover " +
+                        "the texture for a zoomed view!")
+                val texScreenPos = cursorScreenPos
+                val texSize = Vec2(IO.fonts.texSize)
+                val texId = IO.fonts.texId
+                text("%.0fx%.0f", texSize.x, texSize.y)
+                image(texId, texSize, Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
+                if (isItemHovered())
+                    tooltip {
+                        val focusSz = 32f
+                        val focus = glm.clamp(mousePos - texScreenPos - focusSz * 0.5f, Vec2(), texSize - focusSz)
+                        text("Min: (%.2f, %.2f)", focus.x, focus.y)
+                        text("Max: (%.2f, %.2f)", focus.x + focusSz, focus.y + focusSz)
+                        val uv0 = focus / texSize
+                        val uv1 = (focus + focusSz) / texSize
+                        image(texId, Vec2(128), uv0, uv1, Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
+                    }
 //                ImGui::TextWrapped("And now some textured buttons..");
 //                static int pressed_count = 0;
 //                for (int i = 0; i < 8; i++)
 //                {
 //                    ImGui::PushID(i);
 //                    int frame_padding = -1 + i;     // -1 = uses default padding
-//                    if (ImGui::ImageButton(tex_id, ImVec2(32,32), ImVec2(0,0), ImVec2(32.0f/tex_w,32/tex_h), frame_padding, ImColor(0,0,0,255)))
+//                    if (ImGui::ImageButton(texId, ImVec2(32,32), ImVec2(0,0), ImVec2(32.0f/tex_w,32/tex_h), frame_padding, ImColor(0,0,0,255)))
 //                        pressed_count += 1;
 //                    ImGui::PopID();
 //                    ImGui::SameLine();
 //                }
 //                ImGui::NewLine();
 //                ImGui::Text("Pressed %d times.", pressed_count);
-//                ImGui::TreePop();
-//            }
+            }
 //
 //            if (ImGui::TreeNode("Selectables"))
 //            {
@@ -1821,7 +1817,7 @@ interface imgui_demoDebugInfo {
             }
         }
 
-        // Helper functions to demonstrate programmatic constraints
+        /** Helper functions to demonstrate programmatic constraints    */
         object CustomConstraints {
             val square: SizeConstraintCallback = { _: Any?, _: Vec2i, _: Vec2, desiredSize: Vec2 ->
                 desiredSize put glm.max(desiredSize.x, desiredSize.y)
@@ -2172,6 +2168,18 @@ interface imgui_demoDebugInfo {
         val filter = TextFilter()
 
         var windowScale = 1f
+
+        val alignLabelWithCurrentXposition = booleanArrayOf(false)
+
+        /** Dumb representation of what may be user-side selection state. You may carry selection state inside or
+         *  outside your objects in whatever format you see fit.    */
+        var selectionMask = 1 shl 2
+
+        val closableGroup = booleanArrayOf(true)
+
+        val wrapWidth = floatArrayOf(200f)
+
+        val buf = CharArray(32).apply { "\u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e".toCharArray(this) }
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.

@@ -6,12 +6,13 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.Context.style
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.isMouseClicked
 import imgui.internal.Rect
 import imgui.internal.saturate
 import imgui.Context as g
-import imgui.Context.style
 
 
 interface imgui_utilities {

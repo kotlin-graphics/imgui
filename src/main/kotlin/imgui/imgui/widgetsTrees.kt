@@ -1,12 +1,16 @@
 package imgui.imgui
 
+import glm_.glm
+import glm_.vec2.Vec2
 import imgui.ImGui.currentWindow
 import imgui.ImGui.popId
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.Context.style
+import imgui.ImGui.closeButton
 import imgui.ImGui.indent
 import imgui.ImGui.pushId
+import imgui.SetCond
 import imgui.TreeNodeFlags
 import imgui.or
 import imgui.Context as g
@@ -58,7 +62,7 @@ interface imgui_widgetsTrees {
 
     /** ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for
      *  layout purpose  */
-    fun treePush(ptrId: Any? =null) {
+    fun treePush(ptrId: Any? = null) {
         val window = currentWindow
         indent()
         window.dc.treeDepth++
@@ -71,9 +75,21 @@ interface imgui_widgetsTrees {
         currentWindow.dc.treeDepth--
         popId()
     }
-//    IMGUI_API void          TreeAdvanceToLabelPos();                                                // advance cursor x position by GetTreeNodeToLabelSpacing()
-//    IMGUI_API float         GetTreeNodeToLabelSpacing();                                            // horizontal distance preceding label when using TreeNode*() or Bullet() == (g.FontSize + style.FramePadding.x*2) for a regular unframed TreeNode
-//    IMGUI_API void          SetNextTreeNodeOpen(bool is_open, ImGuiSetCond cond = 0);               // set next TreeNode/CollapsingHeader open state.
+
+    /** advance cursor x position by treeNodeToLabelSpacing    */
+    fun treeAdvanceToLabelPos() {
+        g.currentWindow!!.dc.cursorPos.x += treeNodeToLabelSpacing
+    }
+
+    /** horizontal distance preceding label when using TreeNode*() or Bullet() == (g.FontSize + style.FramePadding.x*2)
+     *  for a regular unframed TreeNode */
+    val treeNodeToLabelSpacing get() = g.fontSize + style.framePadding.x * 2f
+
+    /** set next TreeNode/CollapsingHeader open state.  */
+    fun setNextTreeNodeOpen(isOpen: Boolean, cond: SetCond = SetCond.Always) {
+        g.setNextTreeNodeOpenVal = isOpen
+        g.setNextTreeNodeOpenCond = cond.i
+    }
 
     /** CollapsingHeader returns true when opened but do not indent nor push into the ID stack (because of the
      *  ImGuiTreeNodeFlags_NoTreePushOnOpen flag).
@@ -88,5 +104,25 @@ interface imgui_widgetsTrees {
 
         return treeNodeBehavior(window.getId(label), flags or TreeNodeFlags.CollapsingHeader or TreeNodeFlags.NoTreePushOnOpen, label)
     }
-//    IMGUI_API bool          CollapsingHeader(const char* label, bool* p_open, ImGuiTreeNodeFlags flags = 0); // when 'p_open' isn't NULL, display an additional small close button on upper right of the header
+
+    /** when 'pOpen' isn't NULL, display an additional small close button on upper right of the header */
+    fun collapsingHeader(label: String, pOpen: BooleanArray?, flags: Int = 0): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        if(pOpen!= null && !pOpen[0]) return false
+
+        val id = window.getId(label)
+        val isOpen = treeNodeBehavior(id, flags or TreeNodeFlags.CollapsingHeader or TreeNodeFlags.NoTreePushOnOpen or
+                if (pOpen != null) TreeNodeFlags.AllowOverlapMode else TreeNodeFlags.Null, label)
+        if (pOpen != null) {
+            // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
+            val buttonSz = g.fontSize * 0.5f
+            if (closeButton(window.getId(id + 1), Vec2(glm.min(window.dc.lastItemRect.max.x, window.clipRect.max.x) -
+                    style.framePadding.x - buttonSz, window.dc.lastItemRect.min.y + style.framePadding.y + buttonSz), buttonSz))
+            pOpen[0] = false
+        }
+        return isOpen
+    }
 }

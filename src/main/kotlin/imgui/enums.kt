@@ -1,6 +1,6 @@
 package imgui
 
-import imgui.imgui.isKeyPressed
+import imgui.ImGui.isKeyPressed
 
 /** Flags for ImGui::Begin()    */
 enum class WindowFlags(val i: Int) {
@@ -125,6 +125,7 @@ infix fun Int.hasnt(b: InputTextFlags) = (this and b.i) == 0
 /** Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader*()   */
 enum class TreeNodeFlags(val i: Int) {
 
+    Null(0),
     /** Draw as selected    */
     Selected(1 shl 0),
     /** Full colored frame (e.g. for CollapsingHeader)  */

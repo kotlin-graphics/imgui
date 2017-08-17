@@ -16,8 +16,11 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.contentRegionMax
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
+import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.indent
 import imgui.ImGui.inputText
+import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
@@ -522,8 +525,7 @@ interface imgui_internal {
                 /*  'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
                 Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing
                 finer RepeatDelay/RepeatRate settings.  */
-                if (flags has ButtonFlags.Repeat && g.activeId == id && IO.mouseDownDuration[0] > 0f &&
-                        isMouseClicked(0, true))
+                if (flags has ButtonFlags.Repeat && g.activeId == id && IO.mouseDownDuration[0] > 0f && isMouseClicked(0, true))
                     pressed = true
             }
         }
@@ -1618,7 +1620,7 @@ interface imgui_internal {
             } else {
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
-                val storedValue = storage.inta(id, -1)
+                val storedValue = storage.intaa(id, -1)
                 if (storedValue == -1) {
                     isOpen = g.setNextTreeNodeOpenVal
                     storage[id] = isOpen
@@ -1627,7 +1629,7 @@ interface imgui_internal {
             }
             g.setNextTreeNodeOpenCond = 0
         } else
-            isOpen = storage.inta(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
+            isOpen = storage.intaa(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).

@@ -15,9 +15,11 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
+import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleVar
+import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 
@@ -74,6 +76,11 @@ object functionalProgramming {
             block()
     }
 
+    inline fun collapsingHeader(label: String, pOpen: BooleanArray?, flags: Int = 0, block: () -> Unit) {
+        if (collapsingHeader(label, pOpen, flags))
+            block()
+    }
+
     inline fun treeNode(label: String, block: () -> Unit) {
         if (treeNode(label)) {
             block()
@@ -83,6 +90,13 @@ object functionalProgramming {
 
     inline fun treeNode(strId: String, fmt: String, block: () -> Unit) {
         if(treeNode(strId, fmt)) {
+            block()
+            treePop()
+        }
+    }
+
+    inline fun treeNode(ptrId: Any, fmt: String, block: () -> Unit) {
+        if(treeNode(ptrId, fmt)) {
             block()
             treePop()
         }
@@ -117,5 +131,11 @@ object functionalProgramming {
         beginTooltip()
         block()
         endTooltip()
+    }
+
+    inline fun withTextWrapPos(wrapPosX: Float = 0f, block: () -> Unit) {
+        pushTextWrapPos(wrapPosX)
+        block()
+        popTextWrapPos()
     }
 }

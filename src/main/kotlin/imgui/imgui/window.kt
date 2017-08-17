@@ -8,6 +8,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.Context.style
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.clearActiveId
@@ -21,6 +22,7 @@ import imgui.ImGui.focusWindow
 import imgui.ImGui.frameCount
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
+import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.popClipRect
@@ -30,7 +32,6 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
 import imgui.internal.*
 import imgui.Context as g
-import imgui.Context.style
 
 
 interface imgui_window {

@@ -43,6 +43,7 @@ object ImGui :
         imgui_logging,
         imgui_clipping,
         imgui_utilities,
+        imgui_inputs,
 
         imgui_internal {
 
