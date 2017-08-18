@@ -370,51 +370,52 @@ interface imgui_demoDebugInfo {
                 text("Pressed $pressedCount times.")
             }
 
+            var offset = 0
             treeNode("Selectables") {
                 treeNode("Basic") {
-                    selectable("1. I am selectable", selectedArray, 0)
-                    selectable("2. I am selectable", selectedArray, 1)
+                    selectable("1. I am selectable", selected, 0)
+                    selectable("2. I am selectable", selected, 1)
                     text("3. I am not selectable")
-                    selectable("4. I am selectable", selectedArray, 2)
-                    if (selectable("5. I am double clickable", selectedArray[3], SelectableFlags.AllowDoubleClick.i))
+                    selectable("4. I am selectable", selected, 2)
+                    if (selectable("5. I am double clickable", selected[3], SelectableFlags.AllowDoubleClick.i))
                         if (isMouseDoubleClicked(0))
-                            selectedArray[3] = !selectedArray[3]
+                            selected[3] = !selected[3]
                 }
+                offset += 4
                 treeNode("Rendering more text into the same block") {
-                    selectable("main.c", selectedArray, 3); sameLine(300f); text(" 2,345 bytes")
-                    selectable("Hello.cpp", selectedArray, 4); sameLine(300f); text("12,345 bytes")
-                    selectable("Hello.h", selectedArray, 5); sameLine(300f); text(" 2,345 bytes")
+                    selectable("main.c", selected, offset+0); sameLine(300f); text(" 2,345 bytes")
+                    selectable("Hello.cpp", selected, offset+1); sameLine(300f); text("12,345 bytes")
+                    selectable("Hello.h", selected, offset+2); sameLine(300f); text(" 2,345 bytes")
                 }
+                offset += 3
                 treeNode("In columns") {
                     columns(3, "", false)
                     for (i in 0..15) {
-                        if (selectable("Item $i", selectedArray, 3 + 4 + i)) Unit
+                        if (selectable("Item $i", selected, offset + i)) Unit
                         nextColumn()
                     }
                     columns(1)
                 }
-//                treeNode("Grid") {
-//                    static bool selected[16] = { true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true };
-//                    for (int i = 0; i < 16; i++)
-//                    {
-//                        ImGui::PushID(i);
-//                        if (ImGui::Selectable("Sailor", &selected[i], 0, ImVec2(50,50)))
-//                        {
-//                            int x = i % 4, y = i / 4;
-//                            if (x > 0) selected[i - 1] ^= 1;
-//                            if (x < 3) selected[i + 1] ^= 1;
-//                            if (y > 0) selected[i - 4] ^= 1;
-//                            if (y < 3) selected[i + 4] ^= 1;
-//                        }
-//                        if ((i % 4) < 3) ImGui::SameLine();
-//                        ImGui::PopID();
-//                    }
-//                    ImGui::TreePop();
-//                }
+                offset += 16
+                treeNode("Grid") {
+                    for (i in 0..15)
+                        withId(offset + i) {
+                            if (selectable("Sailor", selected, offset + i, 0, Vec2(50))) {
+                                val x = i % 4
+                                val y = i / 4
+                                when {
+                                    x > 0 -> selected[offset + i - 1] = selected[offset + i - 1] xor true
+                                    x < 3 -> selected[offset + i + 1] = selected[offset + i + 1] xor true
+                                    y > 0 -> selected[offset + i - 4] = selected[offset + i + 1] xor true
+                                    y < 3 -> selected[offset + i + 4] = selected[offset + i + 1] xor true
+                                }
+                            }
+                            if ((i % 4) < 3) sameLine()
+                        }
+                }
             }
-//
-//            if (ImGui::TreeNode("Filtered Text Input"))
-//            {
+
+            treeNode("Filtered Text Input TODO") {
 //                static char buf1[64] = ""; ImGui::InputText("default", buf1, 64);
 //                static char buf2[64] = ""; ImGui::InputText("decimal", buf2, 64, ImGuiInputTextFlags_CharsDecimal);
 //                static char buf3[64] = ""; ImGui::InputText("hexadecimal", buf3, 64, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
@@ -428,9 +429,7 @@ interface imgui_demoDebugInfo {
 //                ImGui::InputText("password", bufpass, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
 //                ImGui::SameLine(); ShowHelpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
 //                ImGui::InputText("password (clear)", bufpass, 64, ImGuiInputTextFlags_CharsNoBlank);
-//
-//                ImGui::TreePop();
-//            }
+            }
 //
 //            if (ImGui::TreeNode("Multi-line Text Input"))
 //            {
@@ -2000,8 +1999,8 @@ interface imgui_demoDebugInfo {
                 // left
                 beginChild("left pane", Vec2(150, 0), true)
                 repeat(100) {
-                    if (selectable("MyObject $it", selected == it))
-                        selected = it
+                    if (selectable("MyObject $it", selectedChild == it))
+                        selectedChild = it
                 }
                 endChild()
                 sameLine()
@@ -2026,7 +2025,7 @@ interface imgui_demoDebugInfo {
             end()
         }
 
-        var selected = 0
+        var selectedChild = 0
 
         /** Demonstrate create a simple property editor.    */
         fun showExampleAppPropertyEditor(pOpen: BooleanArray) {
@@ -2167,7 +2166,9 @@ interface imgui_demoDebugInfo {
 
         var pressedCount = 0
 
-        val selectedArray = BooleanArray(4 + 3 + 16, { it == 1 })
+        val selected = BooleanArray(4 + 3 + 16 + 16, { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 })
+
+//        { true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true };
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
