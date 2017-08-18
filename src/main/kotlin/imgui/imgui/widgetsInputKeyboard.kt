@@ -7,6 +7,7 @@ import imgui.ImGui.inputTextEx
 import imgui.InputTextFlags
 import imgui.hasnt
 import imgui.internal.DataType
+import imgui.or
 import imgui.Context as g
 
 /** Widgets: Input with Keyboard    */
@@ -19,7 +20,10 @@ interface imgui_widgetsInputKeyboard {
         assert(flags hasnt InputTextFlags.Multiline)    // call InputTextMultiline()
         return inputTextEx(label, buf, Vec2(), flags/*, callback, user_data*/)
     }
-//    IMGUI_API bool          InputTextMultiline(const char* label, char* buf, size_t buf_size, const ImVec2& size = ImVec2(0,0), ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
+
+    fun inputTextMultiline(label: String, buf: CharArray, size: Vec2 = Vec2(), flags: Int = 0
+            /*,ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/) =
+            inputTextEx(label, buf, size, flags or InputTextFlags.Multiline/*, callback, user_data*/)
 
     fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1, extraFlags: Int = 0) =
             inputFloat(label, v, 0, step, stepFast, decimalPrecision, extraFlags)

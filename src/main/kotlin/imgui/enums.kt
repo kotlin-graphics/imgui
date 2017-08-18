@@ -74,7 +74,7 @@ infix fun Int.hasnt(b: WindowFlags) = (this and b.i) == 0
 enum class InputTextFlags(val i: Int) {
 
     // Default: 0
-
+    Null(0),
     /** Allow 0123456789 . + - * /      */
     CharsDecimal(1 shl 0),
     /** Allow 0123456789ABCDEFabcdef    */

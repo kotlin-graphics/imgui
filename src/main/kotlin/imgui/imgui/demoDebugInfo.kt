@@ -105,6 +105,7 @@ import imgui.internal.Window
 import java.util.*
 import imgui.Context as g
 import glm_.vec2.operators.div
+import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.newLine
 
@@ -383,9 +384,9 @@ interface imgui_demoDebugInfo {
                 }
                 offset += 4
                 treeNode("Rendering more text into the same block") {
-                    selectable("main.c", selected, offset+0); sameLine(300f); text(" 2,345 bytes")
-                    selectable("Hello.cpp", selected, offset+1); sameLine(300f); text("12,345 bytes")
-                    selectable("Hello.h", selected, offset+2); sameLine(300f); text(" 2,345 bytes")
+                    selectable("main.c", selected, offset + 0); sameLine(300f); text(" 2,345 bytes")
+                    selectable("Hello.cpp", selected, offset + 1); sameLine(300f); text("12,345 bytes")
+                    selectable("Hello.h", selected, offset + 2); sameLine(300f); text(" 2,345 bytes")
                 }
                 offset += 3
                 treeNode("In columns") {
@@ -416,7 +417,7 @@ interface imgui_demoDebugInfo {
             }
 
             treeNode("Filtered Text Input TODO") {
-//                static char buf1[64] = ""; ImGui::InputText("default", buf1, 64);
+                //                static char buf1[64] = ""; ImGui::InputText("default", buf1, 64);
 //                static char buf2[64] = ""; ImGui::InputText("decimal", buf2, 64, ImGuiInputTextFlags_CharsDecimal);
 //                static char buf3[64] = ""; ImGui::InputText("hexadecimal", buf3, 64, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
 //                static char buf4[64] = ""; ImGui::InputText("uppercase", buf4, 64, ImGuiInputTextFlags_CharsUppercase);
@@ -430,28 +431,14 @@ interface imgui_demoDebugInfo {
 //                ImGui::SameLine(); ShowHelpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
 //                ImGui::InputText("password (clear)", bufpass, 64, ImGuiInputTextFlags_CharsNoBlank);
             }
-//
-//            if (ImGui::TreeNode("Multi-line Text Input"))
-//            {
-//                static bool read_only = false;
-//                static char text[1024*16] =
-//                        "/*\n"
-//                " The Pentium F00F bug, shorthand for F0 0F C7 C8,\n"
-//                " the hexadecimal encoding of one offending instruction,\n"
-//                " more formally, the invalid operand with locked CMPXCHG8B\n"
-//                " instruction bug, is a design flaw in the majority of\n"
-//                " Intel Pentium, Pentium MMX, and Pentium OverDrive\n"
-//                " processors (all in the P5 microarchitecture).\n"
-//                "*/\n\n"
-//                "label:\n"
-//                "\tlock cmpxchg8b eax\n";
-//
-//                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0,0));
-//                ImGui::Checkbox("Read-only", &read_only);
-//                ImGui::PopStyleVar();
-//                ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(-1.0f, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_AllowTabInput | (read_only ? ImGuiInputTextFlags_ReadOnly : 0));
-//                ImGui::TreePop();
-//            }
+
+            treeNode("Multi-line Text Input TODO") {
+                withStyleVar(StyleVar.FramePadding, Vec2()) {
+                    checkbox("Read-only", readOnly)
+                }
+                val flags = InputTextFlags.AllowTabInput or if(readOnly[0]) InputTextFlags.ReadOnly else InputTextFlags.Null
+//                inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
+            }
 //
 //            static bool a=false;
 //            if (ImGui::Button("Button")) { printf("Clicked\n"); a ^= 1; }
@@ -2168,7 +2155,21 @@ interface imgui_demoDebugInfo {
 
         val selected = BooleanArray(4 + 3 + 16 + 16, { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 })
 
-//        { true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true };
+        val readOnly = booleanArrayOf(false)
+
+        val textMultiline = CharArray(1024 * 16).also {
+            ("""/*
+                The Pentium F00F bug, shorthand for F0 0F C7 C8,
+                the hexadecimal encoding of one offending instruction,
+                     more formally, the invalid operand with locked CMPXCHG8B
+                     instruction bug, is a design flaw in the majority of
+                     Intel Pentium, Pentium MMX, and Pentium OverDrive
+                     processors (all in the P5 microarchitecture).
+                    */
+
+                    label""".trimMargin() +
+                    "\tlock cmpxchg8b eax\n").toCharArray(it)
+        }
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.

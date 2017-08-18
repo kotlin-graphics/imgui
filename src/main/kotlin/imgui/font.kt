@@ -38,7 +38,7 @@ class FontConfig {
     /** Align every glyph to pixel boundary. Useful e.g. if you are merging a non-pixel aligned font with the default
      *  font. If enabled, you can set OversampleH/V to 1.   */
     var pixelSnapH = false
-    /** Extra spacing (in pixels) between glyphs    */
+    /** Extra spacing (in pixels) between glyphs. Only X axis is supported for now.    */
     var glyphExtraSpacing = Vec2()
     /** Offset all glyphs from this font input  */
     var glyphOffset = Vec2()

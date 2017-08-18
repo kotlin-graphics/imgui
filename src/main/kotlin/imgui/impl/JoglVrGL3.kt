@@ -23,6 +23,7 @@ import uno.glsl.Program
 object JoglVrGL3 {
 
     lateinit var window: GLWindow
+    val texSize = Vec2i()
     var time = 0.0
     val mousePressed = BooleanArray(3)
     var mouseWheel = 0f
@@ -40,9 +41,10 @@ object JoglVrGL3 {
 
     val mat = Mat4()
 
-    fun init(window: GLWindow, installCallbacks: Boolean): Boolean {
+    fun init(window: GLWindow, texSize: Vec2i, installCallbacks: Boolean): Boolean {
 
         this.window = window
+        this.texSize put texSize
 
         with(IO) {
             // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
@@ -72,8 +74,8 @@ object JoglVrGL3 {
         }
 
         if (installCallbacks) {
-            window.addMouseListener(mouseCallback)
-            window.addKeyListener(keyCallback)
+//            window.addMouseListener(mouseCallback)
+//            window.addKeyListener(keyCallback)
         }
 
         return true
@@ -95,8 +97,7 @@ object JoglVrGL3 {
             createDeviceObjects(gl)
 
         // Setup display size (every frame to accommodate for window resizing)
-        IO.displaySize.x = window.width
-        IO.displaySize.y = window.height
+        IO.displaySize put texSize
         IO.displayFramebufferScale.x = 1f //if (window.width > 0) window.framebufferSize.x / window.size.x.f else 0f
         IO.displayFramebufferScale.y = 1f //if (window.height > 0) window.framebufferSize.y / window.size.y.f else 0f
 
@@ -105,13 +106,13 @@ object JoglVrGL3 {
         IO.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         time = currentTime
 
-        // Setup inputs
-        // (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
-        // Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)
-        if (window.hasFocus())
-            IO.mousePos put cursorPos
-        else
-            IO.mousePos put -1
+        /*  Setup inputs
+            (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
+            Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)   */
+//        if (window.hasFocus())
+//            IO.mousePos put cursorPos
+//        else
+//            IO.mousePos put -1
 
         repeat(3) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
@@ -123,7 +124,7 @@ object JoglVrGL3 {
         mouseWheel = 0f
 
         // Hide OS mouse cursor if ImGui is drawing it
-        window.isPointerVisible = !IO.mouseDrawCursor
+//        window.isPointerVisible = !IO.mouseDrawCursor
 
         // Start the frame
         ImGui.newFrame()
