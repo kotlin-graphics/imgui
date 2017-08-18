@@ -164,7 +164,7 @@ interface imgui_window {
         if (firstBeginOfTheFrame) {
 
             window.active = true
-            window.indexWithinParent = 0
+            window.orderWithinParent = 0
             window.beginCount = 0
             window.clipRect.put(-Float.MAX_VALUE, -Float.MAX_VALUE, +Float.MAX_VALUE, +Float.MAX_VALUE)
             window.lastFrameActive = currentFrame
@@ -284,7 +284,7 @@ interface imgui_window {
 
             // Position child window
             if (flags has WindowFlags.ChildWindow) {
-                window.indexWithinParent = parentWindow!!.dc.childWindows.size
+                window.orderWithinParent = parentWindow!!.dc.childWindows.size
                 parentWindow.dc.childWindows.add(window)
             }
             if (flags has WindowFlags.ChildWindow && flags hasnt WindowFlags.Popup) {

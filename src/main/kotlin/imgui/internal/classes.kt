@@ -362,7 +362,7 @@ class Window(
     /** See enum ImGuiWindowFlags_  */
     var flags = 0
     /** Order within immediate parent window, if we are a child window. Otherwise 0.    */
-    var indexWithinParent = 0
+    var orderWithinParent = 0
 
     var posF = Vec2()
     /** Position rounded-up to nearest pixel    */
@@ -619,5 +619,5 @@ class Window(
 
     // FIXME: Add a more explicit sort order in the window structure.
     private val childWindowComparer = compareBy<Window>({ it.flags has WindowFlags.Popup }, { it.flags has WindowFlags.Tooltip },
-            { it.flags has WindowFlags.ComboBox }, { it.indexWithinParent })
+            { it.flags has WindowFlags.ComboBox }, { it.orderWithinParent })
 }
