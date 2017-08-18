@@ -78,9 +78,6 @@ interface imgui_utilities {
     /** test if rectangle (in screen space) is visible / not clipped. to perform coarse clipping on user's side.    */
     fun isRectVisible(rectMin: Vec2, rectMax: Vec2) = currentWindowRead!!.clipRect.overlaps(Rect(rectMin, rectMax))
 
-    /** is given position hovering any active imgui window  */
-    fun isPosHoveringAnyWindow(pos: Vec2) = findHoveredWindow(pos, false) != null
-
     val time get() = g.time
 
     val frameCount get() = g.frameCount
