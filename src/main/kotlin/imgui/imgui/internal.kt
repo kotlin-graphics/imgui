@@ -99,13 +99,6 @@ interface imgui_internal {
         assert(g.initialized)                       // Forgot to call ImGui::NewFrame()
         assert(g.frameCountEnded != g.frameCount)   // ImGui::EndFrame() called multiple times, or forgot to call ImGui::NewFrame() again
 
-        // Render tooltip
-        if (g.tooltip.isNotEmpty() && g.tooltip[0] != '\u0000') {
-            ImGui.beginTooltip()
-            ImGui.textUnformatted(g.tooltip)
-            ImGui.endTooltip()
-        }
-
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
 //        if (IO.imeSetInputScreenPosFn && ImLengthSqr(g.OsImePosRequest - g.OsImePosSet) > 0.0001f) { TODO
 //            g.IO.ImeSetInputScreenPosFn((int) g . OsImePosRequest . x, (int) g . OsImePosRequest . y)

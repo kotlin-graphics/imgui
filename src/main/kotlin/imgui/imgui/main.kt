@@ -43,7 +43,7 @@ interface imgui_main {
 
         g.time += IO.deltaTime
         g.frameCount += 1
-        g.tooltip = ""
+        g.tooltipOverrideCount = 0
         g.overlayDrawList.clear()
         g.overlayDrawList.pushTextureId(IO.fonts.texId)
         g.overlayDrawList.pushClipRectFullScreen()

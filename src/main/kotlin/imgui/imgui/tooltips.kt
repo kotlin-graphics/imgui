@@ -1,30 +1,46 @@
 package imgui.imgui
 
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.currentWindowRead
-import imgui.Context.style
+import imgui.ImGui.end
+import imgui.ImGui.findWindowByName
+import imgui.ImGui.style
+import imgui.ImGui.textV
 import imgui.Context as g
 
 /** Tooltips    */
 interface imgui_tooltips {
 
-    /** set tooltip under mouse-cursor, typically use with ImGui::IsHovered(). last call wins
-     *
-     * Tooltip is stored and turned into a BeginTooltip()/EndTooltip() sequence at the end of the frame.
-     * Each call override previous value.*/
-    fun setTooltip(fmt: String, vararg values: Any) {
-        g.tooltip = fmt.format(style.locale, *values)
+    /** Not exposed publicly as BeginTooltip() because bool parameters are evil. Let's see if other needs arise first.  */
+    fun beginTooltipEx(overridePreviousTooltip: Boolean) {
+
+        var windowName = "##Tooltip%02d".format(style.locale, g.tooltipOverrideCount)
+        if (overridePreviousTooltip)
+            findWindowByName(windowName)?.let {
+                if (it.active) {
+                    // Hide previous tooltips. We can't easily "reset" the content of a window so we create a new one.
+                    it.hiddenFrames = 1
+                    windowName = "##Tooltip%02d".format(++g.tooltipOverrideCount)
+                }
+            }
+        begin(windowName, null, WindowFlags.Tooltip or WindowFlags.NoTitleBar or WindowFlags.NoMove or
+                WindowFlags.NoResize or WindowFlags.NoSavedSettings or WindowFlags.AlwaysAutoResize)
     }
 
-    /** use to create full-featured tooltip windows that aren't just text   */
-    fun beginTooltip()    {
-        val flags = WindowFlags.Tooltip or WindowFlags.NoTitleBar or WindowFlags.NoMove or WindowFlags.NoResize or
-                WindowFlags.NoSavedSettings or WindowFlags.AlwaysAutoResize
-        ImGui.begin("##Tooltip", null, flags)
+    fun setTooltipV(fmt: String, args: Array<out Any>) {
+        beginTooltipEx(true)
+        textV(fmt, args)
+        endTooltip()
     }
+
+    fun setTooltip(fmt: String, vararg args: Any)  = setTooltipV(fmt, args)
+
+    /** begin/append a tooltip window. to create full-featured tooltip (with any kind of contents). */
+    fun beginTooltip() = beginTooltipEx(false)
 
     fun endTooltip() {
         assert(currentWindowRead!!.flags has WindowFlags.Tooltip)   // Mismatched BeginTooltip()/EndTooltip() calls
-        ImGui.end()
+        end()
     }
 }

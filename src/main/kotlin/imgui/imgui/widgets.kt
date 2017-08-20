@@ -6,6 +6,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.Context.style
 import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.F32_TO_INT8_UNBOUND
 import imgui.ImGui.beginGroup
@@ -58,7 +59,6 @@ import imgui.ImGui.spacing
 import imgui.ImGui.textLineHeight
 import imgui.internal.*
 import imgui.Context as g
-import imgui.Context.style
 
 interface imgui_widgets {
 
@@ -82,7 +82,7 @@ interface imgui_widgets {
     /** shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();   */
     fun textColored(col: Vec4, fmt: String, vararg args: Any) {
         pushStyleColor(Col.Text, col)
-        text(fmt, args)
+        text(fmt, *args)
         popStyleColor()
     }
 

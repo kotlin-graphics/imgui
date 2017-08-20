@@ -160,7 +160,7 @@ object Context {
     /** Distance between mouse and center of grab box, normalized in parent space. Use storage? */
     var scrollbarClickDeltaToGrabCenter = Vec2()
 
-    var tooltip = ""
+    var tooltipOverrideCount = 0
     /** If no custom clipboard handler is defined   */
     var privateClipboard = ""
     /** Cursor position request to the OS Input Method Editor   */
