@@ -162,7 +162,7 @@ interface imgui_utilities {
 
     /** Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
      *  Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv  */
-    fun colorConvertRGBtoHSV(rgb: FloatArray, hsv: FloatArray) {
+    fun colorConvertRGBtoHSV(rgb: FloatArray, hsv: FloatArray = FloatArray(3)):FloatArray {
 
         var k = 0f
         var (r, g, b) = rgb
@@ -179,22 +179,25 @@ interface imgui_utilities {
         hsv[0] = glm.abs(k + (g - b) / (6f * chroma + 1e-20f))
         hsv[1] = chroma / (r + 1e-20f)
         hsv[2] = r
+        return hsv
     }
+    fun FloatArray.rgbToHSV() = colorConvertRGBtoHSV(this, this)
 
     /** Convert hsv floats ([0-1],[0-1],[0-1]) to rgb floats ([0-1],[0-1],[0-1]), from Foley & van Dam p593
      *  also http://en.wikipedia.org/wiki/HSL_and_HSV   */
-    fun colorConvertHSVtoRGB(hsv: FloatArray, rgb: FloatArray) {
+    fun colorConvertHSVtoRGB(hsv: FloatArray, rgb: FloatArray = FloatArray(3)) = colorConvertHSVtoRGB(hsv[0], hsv[1], hsv[2], rgb)
 
-        var (h, s, v) = hsv
+    fun colorConvertHSVtoRGB(h: Float, s:Float, v: Float, rgb: FloatArray = FloatArray(3)): FloatArray {
+
         if (s == 0f) {
             // gray
             rgb[0] = v
             rgb[1] = v
             rgb[2] = v
-            return
+            return rgb
         }
 
-        h = glm.mod(h, 1f) / (60f / 360f)
+        val h = glm.mod(h, 1f) / (60f / 360f)
         val i = h.i
         val f = h - i.f
         val p = v * (1f - s)
@@ -215,7 +218,10 @@ interface imgui_utilities {
             else -> {
                 rgb[0] = v; rgb[1] = p; rgb[2] = q; }
         }
+        return rgb
     }
+
+    fun FloatArray.hsvToRGB() = colorConvertHSVtoRGB(this, this)
 
     /** Unsaturated, for display purpose    */
     fun F32_TO_INT8_UNBOUND(_val: Float) = (_val * 255f + if (_val >= 0) 0.5f else -0.5f).i

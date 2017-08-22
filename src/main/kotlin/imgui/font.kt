@@ -378,7 +378,7 @@ class FontAtlas {
         assert(bufRangesN == totalGlyphRangeCount)
 
         // Create texture
-        texSize.y = upperPowerOfTwo(texSize.y)
+        texSize.y = texSize.y.upperPowerOfTwo
         texPixelsAlpha8 = byteBufferBig(texSize.x * texSize.y)
         spc.pixels = texPixelsAlpha8!!
         spc.height = texSize.y

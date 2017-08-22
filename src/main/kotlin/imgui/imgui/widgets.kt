@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import gli.has
 import glm_.f
 import glm_.glm
 import glm_.i
@@ -10,27 +11,36 @@ import imgui.Context.style
 import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.F32_TO_INT8_UNBOUND
 import imgui.ImGui.beginGroup
+import imgui.ImGui.beginPopup
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.buttonEx
+import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcWrapWidthForPos
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.colorConvertFloat4ToU32
 import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorConvertRGBtoHSV
 import imgui.ImGui.currentWindow
+import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragInt
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusWindow
+import imgui.ImGui.fontSize
 import imgui.ImGui.getColorU32
+import imgui.ImGui.hsvToRGB
 import imgui.ImGui.inputText
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.isHovered
+import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.isMouseClicked
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
@@ -48,6 +58,7 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
+import imgui.ImGui.rgbToHSV
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setHoveredId
@@ -57,7 +68,10 @@ import imgui.ImGui.setScrollHere
 import imgui.ImGui.setTooltip
 import imgui.ImGui.spacing
 import imgui.ImGui.textLineHeight
+import imgui.ImGui.windowDrawList
+import imgui.imgui.imgui_tooltips.Companion.colorTooltip
 import imgui.internal.*
+import imgui.set
 import imgui.Context as g
 
 interface imgui_widgets {
@@ -253,7 +267,24 @@ interface imgui_widgets {
         style.framePadding.y = backupPaddingY
         return pressed
     }
-//    IMGUI_API bool          InvisibleButton(const char* str_id, const ImVec2& size);
+
+    /** Tip: use ImGui::PushID()/PopID() to push indices or pointers in the ID stack.
+     *  Then you can keep 'str_id' empty or the same for all your buttons (instead of creating a string based on a
+     *  non-string id)  */
+    fun invisibleButton(strId: String, sizeArg: Vec2): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId(strId)
+        val size = calcItemSize(sizeArg, 0f, 0f)
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
+        itemSize(bb)
+        if (!itemAdd(bb, id)) return false
+
+        val (pressed, _, _) = buttonBehavior(bb, id)
+
+        return pressed
+    }
 
 
     fun image(userTextureId: Int, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(1), tintCol: Vec4 = Vec4(1),
@@ -280,10 +311,10 @@ interface imgui_widgets {
      *  frame_padding > 0: set framing size
      *  The color used are the button colors.   */
     fun imageButton(userTextureId: Int, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(), framePadding: Int = -1, bgCol: Vec4 = Vec4(),
-                    tintCol:Vec4 = Vec4(1)):Boolean {
+                    tintCol: Vec4 = Vec4(1)): Boolean {
 
         val window = currentWindow
-        if (window.skipItems)        return false
+        if (window.skipItems) return false
 
         /*  Default to using texture ID as ID. User can still push string/integer prefixes.
             We could hash the size/uv to create a unique ID but that would prevent the user from animating UV.         */
@@ -291,17 +322,17 @@ interface imgui_widgets {
         val id = window.getId("#image")
         popId()
 
-        val padding = if(framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size + padding*2)
+        val padding = if (framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size + padding * 2)
         val imageBb = Rect(window.dc.cursorPos + padding, window.dc.cursorPos + padding + size)
         itemSize(bb)
         if (!itemAdd(bb, id))
-        return false
+            return false
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
 
         // Render
-        val col = if(hovered && held) Col.ButtonActive else if(hovered) Col.ButtonHovered else Col.Button
+        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
         renderFrame(bb.min, bb.max, col.u32, true, glm.clamp(glm.min(padding.x, padding.y), 0f, style.frameRounding))
         if (bgCol.w > 0f)
             window.drawList.addRectFilled(imageBb.min, imageBb.max, getColorU32(bgCol))
@@ -538,135 +569,168 @@ interface imgui_widgets {
         return pressed
     }
 
-    /** Hint: 'float col[3]' function argument is same as 'float* col'. You can pass address of first element out of a
-     *  contiguous set, e.g. &myvector.x
-     *  IMPORTANT: col must be a float array[3]     */
-    fun colorEdit3(label: String, col: FloatArray): Boolean {
+    /** click on colored squared to open a color picker, right-click for options.
+     *  Hint: 'float col[3]' function argument is same as 'float* col'.
+     *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
+    fun colorEdit3(label: String, col: FloatArray, flags: Int = 0): Boolean {
 
         val col4 = floatArrayOf(*col, 1f)
-        val valueChanged = colorEdit4(label, col4, false)
+        val valueChanged = colorEdit4(label, col4, flags and ColorEditFlags.Alpha.inv())
         col[0] = col4[0]
         col[1] = col4[1]
         col[2] = col4[2]
         return valueChanged
     }
 
-    /** Hint: 'float col[4]' function argument is same as 'float* col'. You can pass address of first element out of a
-     *  contiguous set, e.g. &myvector.x
-     *  IMPORTANT: col must be a float array[4]     */
-    fun colorEdit4(label: String, col: FloatArray, showAlpha: Boolean = true): Boolean {
+    /** Edit colors components (each component in 0.0f..1.0f range)
+     *  Click on colored square to open a color picker (unless ImGuiColorEditFlags_NoPicker is set).
+     *  Use CTRL-Click to input value and TAB to go to next item.
+     *  0x01 = ImGuiColorEditFlags_Alpha = very dodgily backward compatible with 'bool show_alpha=true' */
+    fun colorEdit4(label: String, col: FloatArray, flags: Int = ColorEditFlags.Alpha.i): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
         val id = window.getId(label)
         val wFull = calcItemWidth()
-        val squareSz = (g.fontSize + style.framePadding.y * 2f)
+        val squareSzWithSpacing = if (flags has ColorEditFlags.NoColorSquare) 0f else g.fontSize + style.framePadding.y * 2f + style.itemInnerSpacing.x
 
-        val editMode =
-                if (window.dc.colorEditMode == ColorEditMode.UserSelect || window.dc.colorEditMode == ColorEditMode.UserSelectShowButton)
-                    ColorEditMode.of((g.colorEditModeStorage[id]?.i ?: 0) % 3)
-                else window.dc.colorEditMode
+        val flags = when {
+        // If no mode is specified, defaults to RGB
+            flags hasnt ColorEditFlags.ModeMask_ -> flags or ColorEditFlags.RGB
+        // If we're not showing any slider there's no point in querying color mode, nor showing the options menu, nor doing any HSV conversions
+            flags has ColorEditFlags.NoSliders -> (flags and ColorEditFlags.ModeMask_.inv()) or ColorEditFlags.RGB or ColorEditFlags.NoOptions
+        // Read back edit mode from persistent storage
+            flags hasnt ColorEditFlags.NoOptions -> (flags and ColorEditFlags.ModeMask_.inv()) or
+                    ((g.colorEditModeStorage[id] ?: (flags and ColorEditFlags.ModeMask_)) and ColorEditFlags.ModeMask_)
+            else -> flags
+        }
 
-        val f = col.copyOf()
-        if (editMode == ColorEditMode.HSV)
-            colorConvertRGBtoHSV(f, f)
+        // Check that exactly one of RGB/HSV/HEX is set
+        assert((flags and ColorEditFlags.ModeMask_).isPowerOfTwo)
+
+        val f = floatArrayOf(*col)
+        if (flags has ColorEditFlags.HSV)
+            f.rgbToHSV()
 
         val i = IntArray(4, { F32_TO_INT8_UNBOUND(f[it]) })
 
-        val components = if (showAlpha) 4 else 3
+        val alpha = flags has ColorEditFlags.Alpha
         var valueChanged = false
+        val components = if (alpha) 4 else 3
 
         beginGroup()
         pushId(label)
 
-        val hsv = editMode == ColorEditMode.HSV
-        when (editMode) {
+        if (flags has (ColorEditFlags.RGB or ColorEditFlags.HSV) && flags hasnt ColorEditFlags.NoSliders) {
 
-            ColorEditMode.RGB, ColorEditMode.HSV -> {
-                // RGB/HSV 0..255 Sliders
-                val wItemsAll = wFull - (squareSz + style.itemInnerSpacing.x)
-                val wItemOne = glm.max(1f, ((wItemsAll - style.itemInnerSpacing.x * (components - 1)) / components.f).i.f)
-                val wItemLast = glm.max(1f, (wItemsAll - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
+            // RGB/HSV 0..255 Sliders
+            val wItemsAll = wFull - squareSzWithSpacing
+            val wItemOne = glm.max(1f, ((wItemsAll - style.itemInnerSpacing.x * (components - 1)) / components).i.f)
+            val wItemLast = glm.max(1f, (wItemsAll - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
 
-                val hidePrefix = wItemOne <= calcTextSize("M:999").x
-                val ids = listOf("##X", "##Y", "##Z", "##W")
-                val fmtTable = listOf(
-                        listOf("%3.0f", "%3.0f", "%3.0f", "%3.0f"),
-                        listOf("R:%3.0f", "G:%3.0f", "B:%3.0f", "A:%3.0f"),
-                        listOf("H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f"))
-                val fmt = if (hidePrefix) fmtTable[0] else if (hsv) fmtTable[2] else fmtTable[1]
+            val hidePrefix = wItemOne <= calcTextSize("M:999").x
+            val ids = arrayOf("##X", "##Y", "##Z", "##W")
+            val fmtTable = arrayOf(
+                    arrayOf("%3.0f", "%3.0f", "%3.0f", "%3.0f"),             // Short display
+                    arrayOf("R:%3.0f", "G:%3.0f", "B:%3.0f", "A:%3.0f"),     // Long display for RGBA
+                    arrayOf("H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f"))     // Long display for HSVV
+            val fmt = if (hidePrefix) fmtTable[0] else if (flags has ColorEditFlags.HSV) fmtTable[2] else fmtTable[1]
 
-                pushItemWidth(wItemOne)
-                for (n in 0 until components) {
-                    if (n > 0)
-                        sameLine(0f, style.itemInnerSpacing.x)
-                    if (n + 1 == components)
-                        pushItemWidth(wItemLast)
-                    val int = intArrayOf(i[n])
-                    valueChanged = valueChanged or dragInt(ids[n], int, 1f, 0, 255, fmt[n])
-                    i[n] = int[0]
-                }
-                popItemWidth()
-                popItemWidth()
+            pushItemWidth(wItemOne)
+            pushItemWidth(wItemOne)
+            for (n in 0 until components) {
+                if (n > 0)
+                    sameLine(0f, style.itemInnerSpacing.x)
+                if (n + 1 == components)
+                    pushItemWidth(wItemLast)
+                val int = intArrayOf(i[n])
+                valueChanged = valueChanged or dragInt(ids[n], int, 1f, 0, 255, fmt[n])
+                i[n] = int[0]
             }
+            popItemWidth()
+            popItemWidth()
 
-            ColorEditMode.HEX -> {
-                // RGB Hexadecimal Input
-                val wSliderAll = wFull - squareSz
-                val buf = CharArray(64)
-                (if (showAlpha) "#%02X%02X%02X%02X".format(style.locale, i[0], i[1], i[2], i[3])
-                else "#%02X%02X%02X".format(style.locale, i[0], i[1], i[2])).toCharArray(buf)
-                pushItemWidth(wSliderAll - style.itemInnerSpacing.x)
-                if (inputText("##Text", buf, InputTextFlags.CharsHexadecimal or InputTextFlags.CharsUppercase)) {
-                    valueChanged = valueChanged || true
-                    var p = 0
-                    while (buf[p] == '#' || buf[p].isSpace)
-                        p++
-                    i.fill(0)
-                    String(buf, p, buf.strlen - p).scanHex(i, if (showAlpha) 4 else 3, 2)
-                }
-                popItemWidth()
+        } else if (flags has ColorEditFlags.HEX && flags hasnt ColorEditFlags.NoSliders) {
+            // RGB Hexadecimal Input
+            val wSliderAll = wFull - squareSzWithSpacing
+            val buf = CharArray(64)
+            (if (alpha)
+                "#%02X%02X%02X%02X".format(style.locale, i[0], i[1], i[2], i[3])
+            else
+                "#%02X%02X%02X".format(style.locale, i[0], i[1], i[2])).toCharArray(buf)
+            pushItemWidth(wSliderAll)
+            if (inputText("##Text", buf, InputTextFlags.CharsHexadecimal or InputTextFlags.CharsUppercase)) {
+                valueChanged = valueChanged || true
+                var p = 0
+                while (buf[p] == '#' || buf[p].isSpace)
+                    p++
+                i.fill(0)
+                String(buf, p, buf.strlen - p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
             }
-            else -> Unit
-        }
-
-        sameLine(0f, style.itemInnerSpacing.x)
-
-        val colDisplay = Vec4(col[0], col[1], col[2], 1.0f)
-        if (colorButton(colDisplay))
-            g.colorEditModeStorage[id] = ((editMode.i + 1) % 3).f // Don't set local copy of 'editMode' right away!
-
-        // Recreate our own tooltip over's ColorButton() one because we want to display correct alpha here
-        if (isItemHovered())
-            setTooltip("Color:\n(%.2f,%.2f,%.2f,%.2f)\n#%02X%02X%02X%02X", col[0], col[1], col[2], col[3],
-                    F32_TO_INT8_SAT(col[0]), F32_TO_INT8_SAT(col[1]), F32_TO_INT8_SAT(col[2]), F32_TO_INT8_SAT(col[3]))
-
-        if (window.dc.colorEditMode == ColorEditMode.UserSelectShowButton) {
-            sameLine(0f, style.itemInnerSpacing.x)
-            val buttonTitles = arrayOf("RGB", "HSV", "HEX")
-            if (buttonEx(buttonTitles[editMode.i], Vec2(), ButtonFlags.DontClosePopups.i))
-                g.colorEditModeStorage[id] = ((editMode.i + 1) % 3).f // Don't set local copy of 'editMode' right away!
+            popItemWidth()
         }
 
         val labelDisplayEnd = findRenderedTextEnd(label)
-        if (labelDisplayEnd != 0) {
-            sameLine(0f, if (window.dc.colorEditMode == ColorEditMode.UserSelectShowButton) -1f else style.itemInnerSpacing.x)
+
+        var pickerActive = false
+        if (flags hasnt ColorEditFlags.NoColorSquare) {
+            if (flags hasnt ColorEditFlags.NoSliders)
+                sameLine(0f, style.itemInnerSpacing.x)
+
+            val colDisplay = Vec4(col[0], col[1], col[2], 1f)
+            if (colorButton(colDisplay)) {
+                if (flags hasnt ColorEditFlags.NoPicker) {
+                    openPopup("picker")
+                    setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
+                }
+            } else if (flags hasnt ColorEditFlags.NoOptions && isItemHovered() && isMouseClicked(1))
+                openPopup("context")
+
+            if (beginPopup("picker")) {
+                pickerActive = true
+                if (0 != labelDisplayEnd)
+                    textUnformatted(label, labelDisplayEnd)
+                pushItemWidth(256f + (if (alpha) 2 else 1) * style.itemInnerSpacing.x)
+                valueChanged = valueChanged or colorPicker4("##picker", col, (flags and ColorEditFlags.Alpha) or
+                        (ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX))
+                popItemWidth()
+                endPopup()
+            }
+            if (flags hasnt ColorEditFlags.NoOptions && beginPopup("context")) {
+                // FIXME-LOCALIZATION
+//                if (menuItem("Edit as RGB", "", flags has ColorEditFlags.RGB))
+//                    g.colorEditModeStorage.set(id, ColorEditFlags.RGB)
+//                if (menuItem("Edit as HSV", "", flags has ColorEditFlags.HSV))
+//                    g.colorEditModeStorage.set(id, ColorEditFlags.HSV)
+//                if (menuItem("Edit as Hexadecimal", "", flags has ColorEditFlags.HEX))
+//                    g.colorEditModeStorage.set(id, ColorEditFlags.HEX)
+                endPopup()
+            }
+
+            // Recreate our own tooltip over's ColorButton() one because we want to display correct alpha here
+            if (isItemHovered())
+                colorTooltip(col, flags)
+        }
+
+        if (0 != labelDisplayEnd) {
+            sameLine(0f, style.itemInnerSpacing.x)
             textUnformatted(label, labelDisplayEnd)
         }
 
         // Convert back
-        for (n in 0 until 4)
-            f[n] = i[n] / 255f
-        if (editMode == ColorEditMode.HSV)
-            colorConvertHSVtoRGB(f, f)
-
-        if (valueChanged) {
-            col[0] = f[0]
-            col[1] = f[1]
-            col[2] = f[2]
-            if (showAlpha)
-                col[3] = f[3]
+        if (!pickerActive) {
+            for (n in 0..3)
+                f[n] = i[n] / 255f
+            if (flags has ColorEditFlags.HSV)
+                f.hsvToRGB()
+            if (valueChanged) {
+                col[0] = f[0]
+                col[1] = f[1]
+                col[2] = f[2]
+                if (alpha)
+                    col[3] = f[3]
+            }
         }
 
         popId()
@@ -675,9 +739,9 @@ interface imgui_widgets {
         return valueChanged
     }
 
-    fun colorEditVec4(label: String, col: Vec4, showAlpha: Boolean = true): Boolean {
+    fun colorEditVec4(label: String, col: Vec4, flags: Int = ColorEditFlags.Alpha.i): Boolean {
         val col4 = floatArrayOf(col.x, col.y, col.z, col.w)
-        val valueChanged = colorEdit4(label, col4, showAlpha)
+        val valueChanged = colorEdit4(label, col4, flags)
         col.x = col4[0]
         col.y = col4[1]
         col.z = col4[2]
@@ -685,9 +749,143 @@ interface imgui_widgets {
         return valueChanged
     }
 
-    /** FIXME-OBSOLETE: This is inconsistent with most of the API and will be obsoleted/replaced.   */
-    fun colorEditMode(mode: ColorEditMode) {
-        currentWindow.dc.colorEditMode = mode
+    /** ColorPicker v2.50 WIP, see https://github.com/ocornut/imgui/issues/346
+     *  TODO:
+     *  -   Missing color square
+     *  -   English strings in context menu (see FIXME-LOCALIZATION)    */
+    fun colorPicker4(label: String, col: FloatArray, flags: Int = ColorEditFlags.Alpha.i): Boolean {
+
+        val drawList = windowDrawList
+
+        pushId(label)
+        beginGroup()
+
+        // Setup
+        val alpha = flags has ColorEditFlags.Alpha
+        val pickerPos = cursorScreenPos // consume only, safe passing reference
+        val barsWidth = fontSize * 1f     // Arbitrary smallish width of Hue/Alpha picking bars
+        // Saturation/Value picking box
+        val svPickerSize = glm.max(barsWidth * 2, calcItemWidth() - (if (alpha) 2 else 1) * (barsWidth + style.itemInnerSpacing.x))
+        val bar0PosX = pickerPos.x + svPickerSize + style.itemInnerSpacing.x
+        val bar1PosX = bar0PosX + barsWidth + style.itemInnerSpacing.x
+
+        // Recreate our own tooltip over's ColorButton() one because we want to display correct alpha here
+        //if (IsItemHovered())
+        //    ColorTooltip(col, flags);
+
+        var (h, s, v) = colorConvertRGBtoHSV(col)
+
+        // Color matrix logic
+        var valueChanged = false
+        var hsvChanged = false
+        invisibleButton("sv", Vec2(svPickerSize))
+        if (isItemActive) {
+            s = saturate((IO.mousePos.x - pickerPos.x) / (svPickerSize - 1))
+            v = 1f - saturate((IO.mousePos.y - pickerPos.y) / (svPickerSize - 1))
+            valueChanged = true
+            hsvChanged = true
+        }
+
+        // Hue bar logic
+        cursorScreenPos = Vec2(bar0PosX, pickerPos.y)
+        invisibleButton("hue", Vec2(barsWidth, svPickerSize))
+        if (isItemActive) {
+            h = saturate((IO.mousePos.y - pickerPos.y) / (svPickerSize - 1))
+            valueChanged = true
+            hsvChanged = true
+        }
+
+        // Alpha bar logic
+        if (alpha) {
+            cursorScreenPos = Vec2(bar1PosX, pickerPos.y)
+            invisibleButton("alpha", Vec2(barsWidth, svPickerSize))
+            if (isItemActive) {
+                col[3] = 1f - saturate((IO.mousePos.y - pickerPos.y) / (svPickerSize - 1))
+                valueChanged = true
+            }
+        }
+
+        val labelDisplayEnd = findRenderedTextEnd(label)
+        if (0 != labelDisplayEnd) {
+            sameLine(0f, style.itemInnerSpacing.x)
+            textUnformatted(label, labelDisplayEnd)
+        }
+
+        // Convert back color to RGB
+        if (hsvChanged)
+            colorConvertHSVtoRGB(if (h >= 1f) h - 10 * 1e-6f else h, if (s > 0f) s else 10 * 1e-6f, if (v > 0f) v else 1e-6f, col)
+
+        // R,G,B and H,S,V slider color editor
+        var flags = flags
+        if (flags hasnt ColorEditFlags.NoSliders) {
+            if (flags hasnt ColorEditFlags.ModeMask_)
+                flags = ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX
+            pushItemWidth((if (alpha) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
+            val subFlags = (if (alpha) ColorEditFlags.Alpha else ColorEditFlags.Null) or ColorEditFlags.NoPicker or
+                    ColorEditFlags.NoOptions or ColorEditFlags.NoColorSquare
+            if (flags has ColorEditFlags.RGB)
+                valueChanged = valueChanged or colorEdit4("##rgb", col, subFlags or ColorEditFlags.RGB)
+            if (flags has ColorEditFlags.HSV)
+                valueChanged = valueChanged or colorEdit4("##hsv", col, subFlags or ColorEditFlags.HSV)
+            if (flags has ColorEditFlags.HEX)
+                valueChanged = valueChanged or colorEdit4("##hex", col, subFlags or ColorEditFlags.HEX)
+            popItemWidth()
+        }
+
+        // Try to cancel hue wrap (after ColorEdit), if any
+        if (valueChanged) {
+            val (newH, newS, newV) = colorConvertRGBtoHSV(col)
+            if (newH <= 0 && h > 0) {
+                if (newV <= 0 && v != newV)
+                    colorConvertHSVtoRGB(h, s, if (newV <= 0) v * 0.5f else newV, col)
+                else if (newS <= 0)
+                    colorConvertHSVtoRGB(h, if (newS <= 0) s * 0.5f else newS, newV, col)
+            }
+        }
+
+        // Render hue bar
+        val hueColorF = Vec4(1)
+        val rgb = colorConvertHSVtoRGB(h, 1f, 1f)
+        hueColorF.x = rgb[0]
+        hueColorF.y = rgb[1]
+        hueColorF.z = rgb[2]
+        val hueColors = intArrayOf(COL32(255, 0, 0, 255), COL32(255, 255, 0, 255), COL32(0, 255, 0, 255),
+                COL32(0, 255, 255, 255), COL32(0, 0, 255, 255), COL32(255, 0, 255, 255), COL32(255, 0, 0, 255))
+        for (i in 0..5) {
+            drawList.addRectFilledMultiColor(
+                    Vec2(bar0PosX, pickerPos.y + i * (svPickerSize / 6)),
+                    Vec2(bar0PosX + barsWidth, pickerPos.y + (i + 1) * (svPickerSize / 6)),
+                    hueColors[i], hueColors[i], hueColors[i + 1], hueColors[i + 1])
+        }
+        val bar0LineY = (pickerPos.y + h * svPickerSize + 0.5f).i.f
+        drawList.addLine(Vec2(bar0PosX - 1, bar0LineY), Vec2(bar0PosX + barsWidth + 1, bar0LineY), COL32_WHITE)
+
+        // Render alpha bar
+        if (alpha) {
+            val alpha = saturate(col[3])
+            val bar1LineY = (pickerPos.y + (1f - alpha) * svPickerSize + 0.5f).i.f
+            drawList.addRectFilledMultiColor(Vec2(bar1PosX, pickerPos.y), Vec2(bar1PosX + barsWidth, pickerPos.y + svPickerSize),
+                    COL32_WHITE, COL32_WHITE, COL32_BLACK, COL32_BLACK)
+            drawList.addLine(Vec2(bar1PosX - 1, bar1LineY), Vec2(bar1PosX + barsWidth + 1, bar1LineY), COL32_WHITE)
+        }
+
+        // Render color matrix
+        val hueColor32 = colorConvertFloat4ToU32(hueColorF)
+        drawList.addRectFilledMultiColor(pickerPos, pickerPos + Vec2(svPickerSize), COL32_WHITE, hueColor32, hueColor32, COL32_WHITE)
+        drawList.addRectFilledMultiColor(pickerPos, pickerPos + Vec2(svPickerSize), COL32_BLACK_TRANS, COL32_BLACK_TRANS, COL32_BLACK, COL32_BLACK)
+
+        // Render cross-hair
+        val CROSSHAIR_SIZE = 7f
+        val p = Vec2((pickerPos.x + s * svPickerSize + 0.5f).i.f, (pickerPos.y + (1 - v) * svPickerSize + 0.5f).i.f)
+        drawList.addLine(Vec2(p.x - CROSSHAIR_SIZE, p.y), Vec2(p.x - 2, p.y), COL32_WHITE)
+        drawList.addLine(Vec2(p.x + CROSSHAIR_SIZE, p.y), Vec2(p.x + 2, p.y), COL32_WHITE)
+        drawList.addLine(Vec2(p.x, p.y + CROSSHAIR_SIZE), Vec2(p.x, p.y + 2), COL32_WHITE)
+        drawList.addLine(Vec2(p.x, p.y - CROSSHAIR_SIZE), Vec2(p.x, p.y - 2), COL32_WHITE)
+
+        endGroup()
+        popId()
+
+        return valueChanged
     }
 
 //    IMGUI_API void          PlotLines(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));

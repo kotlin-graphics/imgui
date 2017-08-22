@@ -540,7 +540,6 @@ interface imgui_window {
                 dc.treeDepth = 0
                 dc.stateStorage = stateStorage
                 dc.groupStack.clear()
-                dc.colorEditMode = ColorEditMode.UserSelect
                 menuColumns.update(3, style.itemSpacing.x, !windowWasActive)
 
                 if (autoFitFrames.x > 0)

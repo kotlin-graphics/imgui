@@ -6,6 +6,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.or
 import imgui.Context.style
 import imgui.ImGui.alignFirstTextHeightToWidgets
 import imgui.ImGui.begin
@@ -17,7 +18,6 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
-import imgui.ImGui.colorEditMode
 import imgui.ImGui.colorEditVec4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
@@ -105,7 +105,6 @@ import imgui.internal.Window
 import java.util.*
 import imgui.Context as g
 import glm_.vec2.operators.div
-import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.newLine
 
@@ -1509,24 +1508,23 @@ interface imgui_demoDebugInfo {
             sameLine()
             checkbox("Only Modified Fields", outputOnlyModified)
 
-            radioButton("RGB", editMode, ColorEditMode.RGB.i)
+            radioButton("RGB", colorEditFlags, ColorEditFlags.RGB.i)
             sameLine()
-            radioButton("HSV", editMode, ColorEditMode.HSV.i)
+            radioButton("HSV", colorEditFlags, ColorEditFlags.HSV.i)
             sameLine()
-            radioButton("HEX", editMode, ColorEditMode.HEX.i)
+            radioButton("HEX", colorEditFlags, ColorEditFlags.HEX.i)
             //ImGui::Text("Tip: Click on colored square to change edit mode.");
 
             filter.draw("Filter colors TODO", 200f)
 
             beginChild("#colors", Vec2(0, 300), true, WindowFlags.AlwaysVerticalScrollbar.i)
             pushItemWidth(-160f)
-            colorEditMode(ColorEditMode.of(editMode[0]))
             for (i in 0 until Col.COUNT.i) {
                 val name = Col.values()[i].name
                 if (!filter.passFilter(name)) // TODO fix bug
                     continue
                 withId(i) {
-                    colorEditVec4(name, style.colors[i], true)
+                    colorEditVec4(name, style.colors[i], colorEditFlags[0] or ColorEditFlags.Alpha or ColorEditFlags.NoOptions)
                     if (style.colors[i] != (ref?.colors?.get(i) ?: defaultStyle.colors[i])) {
                         sameLine()
                         button("Revert") { style.colors[i] put (ref?.colors?.get(i) ?: defaultStyle.colors[i]) }
@@ -2149,7 +2147,7 @@ interface imgui_demoDebugInfo {
         val outputDest = intArrayOf(0)
         val outputOnlyModified = booleanArrayOf(false)
 
-        var editMode = intArrayOf(ColorEditMode.RGB.i)
+        var colorEditFlags = intArrayOf(ColorEditFlags.RGB.i)
 
         val filter = TextFilter()
 

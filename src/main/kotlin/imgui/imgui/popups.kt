@@ -16,7 +16,16 @@ interface imgui_popups {
      *  CloseCurrentPopup() is called within a BeginPopup()/EndPopup() block. popup identifiers are relative to the
      *  current ID-stack (so OpenPopup and BeginPopup needs to be at the same level).   */
     fun openPopup(strId: String) = openPopupEx(strId, false)
-//    IMGUI_API bool          BeginPopup(const char* str_id);                                     // return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returned true!
+
+    /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup()
+     *  returned true!   */
+    fun beginPopup(strId: String): Boolean {
+        if (g.openPopupStack.size <= g.currentPopupStack.size) {    // Early out for performance
+            clearSetNextWindowData()    // We behave like Begin() and need to consume those values
+            return false
+        }
+        return beginPopupEx(strId, WindowFlags.ShowBorders.i)
+    }
 
     /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside) */
     fun beginPopupModal(name: String, pOpen: BooleanArray? = null, extraFlags: Int = 0): Boolean {

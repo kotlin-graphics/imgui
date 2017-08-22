@@ -4,6 +4,7 @@ import com.sun.jdi.Bootstrap
 import com.sun.jdi.VirtualMachine
 import com.sun.jdi.connect.AttachingConnector
 import com.sun.jdi.connect.Connector.Argument
+import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
@@ -146,7 +147,7 @@ object Context {
     /** Temporary text input when CTRL+clicking on a slider, etc.   */
     var scalarAsInputTextId = 0
     /** Store user selection of color edit mode */
-    val colorEditModeStorage = mutableMapOf<Int, Float>()
+    val colorEditModeStorage = mutableMapOf<Int, Int>()
     /** Currently dragged value, always float, not rounded by end-user precision settings   */
     var dragCurrentValue = 0f
 
@@ -548,3 +549,7 @@ operator fun Array<Vec4>.get(idx: Col) = this[idx.i]
 operator fun Array<Vec4>.set(idx: Col, vec: Vec4) {
     this[idx.i] put vec
 }
+
+operator fun MutableMap<Int, Float>.set(key: Int, value: Int) = set(key, glm.intBitsToFloat(value))
+operator fun MutableMap<Int, Float>.set(key: Int, value: ColorEditFlags) = set(key, glm.intBitsToFloat(value.i))
+//operator fun MutableMap<Int, Float>.getInt(key: Int) = 0 TODO float

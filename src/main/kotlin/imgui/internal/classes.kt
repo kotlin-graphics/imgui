@@ -318,8 +318,6 @@ class DrawContext {
     val buttonRepeatStack = Stack<Boolean>()
 
     val groupStack = Stack<GroupData>()
-
-    var colorEditMode = ColorEditMode.RGB
     /** Store size of various stacks for asserting  */
     val stackSizesBackup = IntArray(6)
 

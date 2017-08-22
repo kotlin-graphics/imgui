@@ -15,9 +15,9 @@ val COL32_A_SHIFT = 24
 val COL32_A_MASK = 0xFF000000.i
 
 fun COL32(r: Int, g: Int, b: Int, a: Int) = (a shl COL32_A_SHIFT) or (b shl COL32_B_SHIFT) or (g shl COL32_G_SHIFT) or (r shl COL32_R_SHIFT)
-//#define IM_COL32_WHITE       IM_COL32(255,255,255,255)  // Opaque white = 0xFFFFFFFF
-//#define IM_COL32_BLACK       IM_COL32(0,0,0,255)        // Opaque black
-//#define IM_COL32_BLACK_TRANS IM_COL32(0,0,0,0)          // Transparent black = 0x00000000
+val COL32_WHITE = COL32(255, 255, 255, 255) // Opaque white = 0xFFFFFFFF
+val COL32_BLACK = COL32(0, 0, 0, 255)       // Opaque black
+val COL32_BLACK_TRANS = COL32(0, 0, 0, 0)   // Transparent black = 0x00000000
 
 var _DEBUG = true
 

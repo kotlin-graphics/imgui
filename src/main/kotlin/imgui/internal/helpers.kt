@@ -138,17 +138,18 @@ fun isPointInTriangle(p: Vec2, a: Vec2, b: Vec2, c: Vec2): Boolean {
 }
 
 val Char.isSpace get() = this == ' ' || this == '\t' || this.i == 0x3000
-
-fun upperPowerOfTwo(v: Int): Int {
-    var v = v - 1
-    v = v or (v ushr 1)
-    v = v or (v ushr 2)
-    v = v or (v ushr 4)
-    v = v or (v ushr 8)
-    v = v or (v ushr 16)
-    v++
-    return v
-}
+val Int.isPowerOfTwo get() = this != 0 && (this and (this - 1)) == 0
+val Int.upperPowerOfTwo: Int
+    get() {
+        var v = this - 1
+        v = v or (v ushr 1)
+        v = v or (v ushr 2)
+        v = v or (v ushr 4)
+        v = v or (v ushr 8)
+        v = v or (v ushr 16)
+        v++
+        return v
+    }
 
 
 // -----------------------------------------------------------------------------------------------------------------
@@ -159,11 +160,12 @@ fun upperPowerOfTwo(v: Int): Int {
 //IMGUI_API int           ImStrnicmp(const char* str1, const char* str2, int count);
 //IMGUI_API char*         ImStrdup(const char* str);
 
-val CharArray.strlenW: Int get() {
-    var n = 0
-    while (this[n] != 0.c) n++
-    return n
-}
+val CharArray.strlenW: Int
+    get() {
+        var n = 0
+        while (this[n] != 0.c) n++
+        return n
+    }
 
 /** Find beginning-of-line  */
 fun CharArray.beginOfLine(midLine: Int): Int {
@@ -212,11 +214,12 @@ fun CharArray.textStr(src: CharArray): Int {
     return i
 }
 
-val CharArray.strlen: Int get() {
-    var i = 0
-    while (i < size && this[i] != '\u0000') i++
-    return i
-}
+val CharArray.strlen: Int
+    get() {
+        var i = 0
+        while (i < size && this[i] != '\u0000') i++
+        return i
+    }
 
 fun String.scanHex(ints: IntArray, count: Int = ints.size, precision: Int) {
     var c = 0

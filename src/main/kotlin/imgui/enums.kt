@@ -333,21 +333,34 @@ enum class StyleVar {
     val i = ordinal
 }
 
+/** Enumeration for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4()   */
+enum class ColorEditFlags(val i: Int) {
+    Null(0),
+    /** ColorEdit/ColorPicker: show/edit Alpha component. Must be 0x01 for compatibility with old API taking bool   */
+    Alpha(1 shl 0),
+    /** ColorEdit: Choose one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose any
+     * combination or RGB/HSX/HEX. */
+    RGB(1 shl 1),
+    HSV(1 shl 2),
+    HEX(1 shl 3),
+    /** ColorEdit: Disable picker when clicking on colored square   */
+    NoPicker(1 shl 4),
+    /** ColorEdit: Disable toggling options menu when right-clicking colored square */
+    NoOptions(1 shl 5),
+    /** ColorEdit: Disable colored square   */
+    NoColorSquare(1 shl 6),
+    /** ColorEdit: Disable sliders, show only a button. ColorPicker: Disable all RGB/HSV/HEX sliders.   */
+    NoSliders(1 shl 7),
+    ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX);
 
-/** Enumeration for ColorEditMode()
- *  FIXME-OBSOLETE: Will be replaced by future color/picker api */
-enum class ColorEditMode(val i: Int) {
-
-    UserSelect(-2),
-    UserSelectShowButton(-1),
-    RGB(0),
-    HSV(1),
-    HEX(2);
-
-    companion object {
-        fun of(i: Int) = values().first { it.i == i }
-    }
+    fun inv() = i.inv()
 }
+
+infix fun ColorEditFlags.or(other: ColorEditFlags) = i or other.i
+infix fun Int.and(other: ColorEditFlags) = this and other.i
+infix fun Int.or(other: ColorEditFlags) = this or other.i
+infix fun Int.has(b: ColorEditFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: ColorEditFlags) = (this and b.i) == 0
 
 /** Enumeration for GetMouseCursor()    */
 enum class MouseCursor(val i: Int) {
