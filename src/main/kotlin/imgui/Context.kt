@@ -218,7 +218,7 @@ object IO {
     /** Maximum time between saving positions/sizes to .ini file, in seconds.   */
     var iniSavingRate = 5f
     /** Path to .ini file. NULL to disable .ini saving. */
-    var iniFilename = "imgui.ini"
+    var iniFilename: String? = "imgui.ini"
     /** Path to .log file (default parameter to ImGui::LogToFile when no file is specified).    */
     var logFilename = "imgui_log.txt"
     /** Time for a double-click, in seconds.    */
@@ -526,17 +526,18 @@ object Debug {
         }
     }
 
-    val instanceCounts get() = when {
-        vm != null -> {
-            val now = System.nanoTime()
-            if ((now - lastUpdate) > updateInterval * 1e9) {
-                cachedInstanceCounts = countInstances()
-                lastUpdate = now
+    val instanceCounts
+        get() = when {
+            vm != null -> {
+                val now = System.nanoTime()
+                if ((now - lastUpdate) > updateInterval * 1e9) {
+                    cachedInstanceCounts = countInstances()
+                    lastUpdate = now
+                }
+                cachedInstanceCounts
             }
-            cachedInstanceCounts
+            else -> -1
         }
-        else -> -1
-    }
 
     private fun countInstances() = vm?.instanceCounts(vm?.allClasses())?.sum() ?: -1
 

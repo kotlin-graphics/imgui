@@ -10,9 +10,10 @@ import com.jogamp.opengl.GLEventListener
 import com.jogamp.opengl.GLProfile
 import com.jogamp.opengl.util.Animator
 import glm_.vec2.Vec2
+import imgui.functionalProgramming.button
 import imgui.impl.JoglGL3
 import uno.gln.jogl.glViewport
-import imgui.functionalProgramming.button
+
 
 fun main(args: Array<String>) {
     HelloWorld_jogl().setup()
@@ -75,7 +76,7 @@ class HelloWorld_jogl : GLEventListener {
         with(ImGui) {
 
             /*  1. Show a simple window
-                Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically
+                Tip: if we don't call ImGui.begin()/ImGui.end() the widgets appears in a window automatically
                 called "Debug"             */
             run {
                 text("Hello, world!")
@@ -92,7 +93,7 @@ class HelloWorld_jogl : GLEventListener {
                 text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / IO.framerate, IO.framerate)
             }
 
-            /*  2. Show another simple window, this time using an explicit Begin/End pair   */
+            /*  2. Show another simple window, this time using an explicit begin/end pair   */
             run {
                 if (showAnotherWindow[0]) {
                     setNextWindowSize(Vec2(200, 100), SetCond.FirstUseEver)
@@ -102,12 +103,22 @@ class HelloWorld_jogl : GLEventListener {
                 }
             }
 
-            /* 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow() */
+            /* 3. Show the ImGui test window. Most of the sample code is in ImGui.showTestWindow() */
             run {
                 if (showTestWindow[0]) {
                     setNextWindowPos(Vec2(650, 20), SetCond.FirstUseEver)
                     showTestWindow(showTestWindow)
                 }
+            }
+
+            run {
+                setNextWindowSize(glm_.vec2.Vec2(200f, 100f), SetCond.FirstUseEver)
+                begin("Another Window", null, WindowFlags.NoTitleBar.i or WindowFlags.NoResize.i)
+                selectable("Navigate")
+                selectable("Scene")
+                selectable("Camera")
+                selectable("Reset")
+                end()
             }
         }
 

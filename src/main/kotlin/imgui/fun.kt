@@ -340,17 +340,18 @@ fun loadIniSettingsFromDisk(iniFilename: String?) {
     if (iniFilename == null) return
 
     var settings: IniData? = null
-
-    Files.lines(Paths.get(iniFilename)).filter { it.isNotEmpty() }.forEach {
-        if (it[0] == '[' && it.last() == ']') {
-            val name = it.substring(1, it.lastIndex)
-            settings = findWindowSettings(name) ?: addWindowSettings(name)
-        } else if (settings != null) when {
-            it.startsWith("Pos") -> settings!!.pos.put(it.substring(4).split(","))
-            it.startsWith("Size") -> settings!!.size put glm.max(Vec2i(it.substring(5).split(",")), style.windowMinSize)
-            it.startsWith("Collapsed") -> settings!!.collapsed = it.substring(10).toBoolean()
+    val file = Paths.get(iniFilename).toFile()
+    if (file.exists())
+        file.readLines().filter { it.isNotEmpty() }.forEach {
+            if (it[0] == '[' && it.last() == ']') {
+                val name = it.substring(1, it.lastIndex)
+                settings = findWindowSettings(name) ?: addWindowSettings(name)
+            } else if (settings != null) when {
+                it.startsWith("Pos") -> settings!!.pos.put(it.substring(4).split(","))
+                it.startsWith("Size") -> settings!!.size put glm.max(Vec2i(it.substring(5).split(",")), style.windowMinSize)
+                it.startsWith("Collapsed") -> settings!!.collapsed = it.substring(10).toBoolean()
+            }
         }
-    }
 }
 
 fun saveIniSettingsToDisk(iniFilename: String?) {

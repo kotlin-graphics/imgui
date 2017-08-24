@@ -8,6 +8,7 @@ import glm_.vec2.Vec2i
 import org.lwjgl.stb.*
 import org.lwjgl.system.MemoryUtil.*
 import org.lwjgl.system.Pointer.POINTER_SIZE
+import java.nio.ByteBuffer
 
 
 val STBRPRect.wasPacked get() = was_packed() != 0
@@ -95,18 +96,18 @@ val STBTTPackedchar.xAdvance get() = xadvance()
 
 var STBTTPackContext.packInfo: STBRPContext
     get() {
-        if (!gli.wasInit { Private.rpCtx })
-            imgui.stb.Private.rpCtx = STBRPContext.create(memGetAddress(address() + org.lwjgl.system.Pointer.POINTER_SIZE))
-        return imgui.stb.Private.rpCtx
+        if (Private.rpCtx == null)
+            Private.rpCtx = STBRPContext.create(memGetAddress(address() + org.lwjgl.system.Pointer.POINTER_SIZE))
+        return Private.rpCtx!!
     }
     set(value) {
-        imgui.stb.Private.rpCtx = value
+        Private.rpCtx = value
     }
-var STBTTPackContext.pixels: java.nio.ByteBuffer
-    get() = imgui.stb.Private.pixels
+var STBTTPackContext.pixels: ByteBuffer
+    get() = Private.pixels!!
     set(value) {
         memPutAddress(address() + 2 * POINTER_SIZE + 6 * Int.BYTES, memAddress(value))
-        imgui.stb.Private.pixels = value
+        Private.pixels = value
     }
 var STBTTPackContext.height
     get() = memGetInt(address() + 2 * POINTER_SIZE + Int.BYTES)
@@ -114,10 +115,14 @@ var STBTTPackContext.height
 
 private object Private {
 
-    lateinit var rpCtx: STBRPContext
-    lateinit var pixels: java.nio.ByteBuffer
+    var rpCtx: STBRPContext? = null
+    var pixels: ByteBuffer? = null
 }
 
+fun stbClear() {
+    Private.rpCtx = null
+    Private.pixels = null
+}
 
 fun stbtt_PackSetOversampling(spc: STBTTPackContext, oversample: Vec2i)
         = STBTruetype.stbtt_PackSetOversampling(spc, oversample.x, oversample.y)

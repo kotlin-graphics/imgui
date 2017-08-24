@@ -92,7 +92,7 @@ class FontAtlas {
         return fontCfg.dstFont
     }
 
-    // Load embedded ProggyClean.ttf at size 13, disable oversampling
+    /** Load embedded ProggyClean.ttf at size 13, disable oversampling  */
     fun addFontDefault(): Font {
         val fontCfg = FontConfig()
         fontCfg.oversample put 1
@@ -180,6 +180,7 @@ class FontAtlas {
         clearInputData()
         clearTexData()
         clearFonts()
+        stbClear()
     }
 //
     /* Retrieve texture data

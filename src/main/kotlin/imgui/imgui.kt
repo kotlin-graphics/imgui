@@ -56,3 +56,8 @@ var ptrIndices = 0 // TODO move
 
 
 typealias SizeConstraintCallback = (userData: Any?, pos: Vec2i, currenSize: Vec2, desiredSize: Vec2) -> Unit
+
+// dummy main
+fun main(args: Array<String>) {
+
+}

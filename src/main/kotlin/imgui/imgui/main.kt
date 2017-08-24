@@ -336,8 +336,7 @@ interface imgui_main {
 
         saveIniSettingsToDisk(IO.iniFilename)
 
-        for (window in g.windows)
-            window.clear()
+        for (window in g.windows) window.clear()
         g.windows.clear()
         g.windowsSortBuffer.clear()
         g.currentWindow = null
@@ -353,28 +352,21 @@ interface imgui_main {
         g.fontStack.clear()
         g.openPopupStack.clear()
         g.currentPopupStack.clear()
-//        g.setNextWindowSizeConstraintCallback = NULL
-//        g.setNextWindowSizeConstraintCallbackUserData = NULL
-//        for (int i = 0; i < IM_ARRAYSIZE(g.RenderDrawLists); i++)
-//        g.RenderDrawLists[i].clear()
-//        g.OverlayDrawList.ClearFreeMemory()
-//        g.ColorEditModeStorage.Clear()
-//        if (g.PrivateClipboard) {
-//            ImGui::MemFree(g.PrivateClipboard)
-//            g.PrivateClipboard = NULL
-//        }
-//        g.InputTextState.Text.clear()
-//        g.InputTextState.InitialText.clear()
-//        g.InputTextState.TempTextBuffer.clear()
-//
-//        if (g.LogFile && g.LogFile != stdout) {
+        g.setNextWindowSizeConstraintCallback = null
+        g.setNextWindowSizeConstraintCallbackUserData = null
+        g.renderDrawLists.forEach { it.clear() }
+        g.overlayDrawList.clearFreeMemory()
+        g.colorEditModeStorage.clear()
+        g.privateClipboard = ""
+        g.inputTextState.text = charArrayOf()
+        g.inputTextState.initialText = charArrayOf()
+        g.inputTextState.tempTextBuffer = charArrayOf()
+
+//        if (g.logFile != null && g.logFile != stdout) { TODO
 //            fclose(g.LogFile)
 //            g.LogFile = NULL
 //        }
-//        if (g.LogClipboard) {
-//            g.LogClipboard->~ImGuiTextBuffer()
-//            ImGui::MemFree(g.LogClipboard)
-//        }
+        g.logClipboard.setLength(0)
 
         g.initialized = false
     }
