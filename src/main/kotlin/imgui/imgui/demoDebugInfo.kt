@@ -575,6 +575,44 @@ interface imgui_demoDebugInfo {
 //            //ImGui::ListBox("##listbox2", &listbox_item_current2, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
 //            //ImGui::PopItemWidth();
 //
+//            if (ImGui::TreeNode("Color/Picker Widgets"))
+//                {
+//                        static ImVec4 color = ImColor(114, 144, 154);
+//
+//                        ImGui::Text("Color widget:");
+//                        ImGui::SameLine(); ShowHelpMarker("Click on the colored square to open a color picker.\nRight-click on the colored square to show options.\nCTRL+click on individual component to input value.\n");
+//                        ImGui::ColorEdit3("MyColor##1", (float*)&color, ImGuiColorEditFlags_HSV);
+//
+//                        ImGui::Text("Color widget w/ Alpha:");
+//                        ImGui::ColorEdit4("MyColor##2", (float*)&color);
+//
+//                        ImGui::Text("Color button only:");
+//                        ImGui::ColorEdit4("MyColor##3", (float*)&color, ImGuiColorEditFlags_NoInputs|ImGuiColorEditFlags_NoLabel);
+//
+//                        ImGui::Text("Color picker:");
+//                        static bool alpha = false;
+//                        static bool label = true;
+//                        static int inputs_mode = 0;
+//                        static float width = 200.0f;
+//                        ImGui::Checkbox("With Alpha", &alpha);
+//                        ImGui::Checkbox("With Label", &label);
+//                        ImGui::Combo("Mode", &inputs_mode, "All Inputs\0No Inputs\0RGB Input\0HSV Input\0HEX Input\0");
+//                        ImGui::DragFloat("Width", &width, 1.0f, 1.0f, 999.0f);
+//                        ImGui::PushItemWidth(width);
+//                        ImGuiColorEditFlags flags = (label ? 0 : ImGuiColorEditFlags_NoLabel);
+//                        if (inputs_mode == 1) flags |= ImGuiColorEditFlags_NoInputs;
+//                        if (inputs_mode == 2) flags |= ImGuiColorEditFlags_RGB;
+//                        if (inputs_mode == 3) flags |= ImGuiColorEditFlags_HSV;
+//                        if (inputs_mode == 4) flags |= ImGuiColorEditFlags_HEX;
+//                        if (alpha)
+//                                ImGui::ColorPicker4("MyColor##4", (float*)&color, flags);
+//                        else
+//                            ImGui::ColorPicker3("MyColor##4", (float*)&color, flags);
+//                        ImGui::PopItemWidth();
+//
+//                        ImGui::TreePop();
+//                    }
+//
 //            if (ImGui::TreeNode("Range Widgets"))
 //            {
 //                ImGui::Unindent();
@@ -1195,7 +1233,7 @@ interface imgui_demoDebugInfo {
 //                }
 //
 //                static ImVec4 color = ImColor(0.8f, 0.5f, 1.0f, 1.0f);
-//                ImGui::ColorButton(color);
+//                ImGui::ColorButton("##color", color);
 //                if (ImGui::BeginPopupContextItem("color context menu"))
 //                {
 //                    ImGui::Text("Edit color");
@@ -1525,7 +1563,7 @@ interface imgui_demoDebugInfo {
                 if (!filter.passFilter(name)) // TODO fix bug
                     continue
                 withId(i) {
-                    colorEditVec4(name, style.colors[i], colorEditFlags[0] or ColorEditFlags.Alpha or ColorEditFlags.NoOptions)
+                    colorEditVec4(name, style.colors[i], colorEditFlags[0] or ColorEditFlags.NoOptions)
                     if (style.colors[i] != (ref?.colors?.get(i) ?: defaultStyle.colors[i])) {
                         sameLine()
                         button("Revert") { style.colors[i] put (ref?.colors?.get(i) ?: defaultStyle.colors[i]) }
