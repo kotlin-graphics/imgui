@@ -185,7 +185,7 @@ interface imgui_cursorLayout {
 
         window.dc.groupStack.pop() // TODO last() on top -> pop?
 
-        //window->DrawList->AddRect(groupBb.Min, groupBb.Max, IM_COL32(255,0,255,255));   // Debug
+        //window->DrawList->AddRect(groupBb.Min, groupBb.Max, IM_COL32(255,0,255,255));   // [Debug]
     }
 
     /** cursor position is relative to window position  */

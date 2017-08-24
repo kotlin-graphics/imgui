@@ -1257,7 +1257,7 @@ interface imgui_demoDebugInfo {
             text("Application average %.3f ms/frame (%.1f FPS)", 1000f / IO.framerate, IO.framerate)
             text("%d vertices, %d indices (%d triangles)", IO.metricsRenderVertices, IO.metricsRenderIndices, IO.metricsRenderIndices / 3)
             text("%d allocations", IO.metricsAllocs)
-            checkbox("Show clipping rectangles when hovering a ImDrawCmd", showClipRects)
+            checkbox("Show clipping rectangles when hovering an ImDrawCmd", showClipRects)
             separator()
 
             Funcs.nodeWindows(g.windows, "Windows")

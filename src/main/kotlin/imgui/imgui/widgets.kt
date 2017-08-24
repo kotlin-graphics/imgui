@@ -751,7 +751,9 @@ interface imgui_widgets {
     /** ColorPicker v2.50 WIP, see https://github.com/ocornut/imgui/issues/346
      *  TODO:
      *  -   Missing color square
-     *  -   English strings in context menu (see FIXME-LOCALIZATION)    */
+     *  -   English strings in context menu (see FIXME-LOCALIZATION)
+     *  Note: we adjust item height based on item widget, which may cause a flickering feedback loop (if automatic
+     *  height makes a vertical scrollbar appears, affecting automatic width..)  */
     fun colorPicker4(label: String, col: FloatArray, flags: Int = ColorEditFlags.Alpha.i): Boolean {
 
         val drawList = windowDrawList
