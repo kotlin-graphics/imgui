@@ -71,7 +71,6 @@ import imgui.ImGui.textLineHeight
 import imgui.ImGui.windowDrawList
 import imgui.imgui.imgui_tooltips.Companion.colorTooltip
 import imgui.internal.*
-import imgui.set
 import imgui.Context as g
 
 interface imgui_widgets {
@@ -699,12 +698,12 @@ interface imgui_widgets {
             }
             if (flags hasnt ColorEditFlags.NoOptions && beginPopup("context")) {
                 // FIXME-LOCALIZATION
-//                if (menuItem("Edit as RGB", "", flags has ColorEditFlags.RGB))
-//                    g.colorEditModeStorage.set(id, ColorEditFlags.RGB)
-//                if (menuItem("Edit as HSV", "", flags has ColorEditFlags.HSV))
-//                    g.colorEditModeStorage.set(id, ColorEditFlags.HSV)
-//                if (menuItem("Edit as Hexadecimal", "", flags has ColorEditFlags.HEX))
-//                    g.colorEditModeStorage.set(id, ColorEditFlags.HEX)
+                if (menuItem("Edit as RGB", "", flags has ColorEditFlags.RGB)) //TODO set bug
+                    g.colorEditModeStorage.set(id, ColorEditFlags.RGB.i)
+                if (menuItem("Edit as HSV", "", flags has ColorEditFlags.HSV))
+                    g.colorEditModeStorage.set(id, ColorEditFlags.HSV.i)
+                if (menuItem("Edit as Hexadecimal", "", flags has ColorEditFlags.HEX))
+                    g.colorEditModeStorage.set(id, ColorEditFlags.HEX.i)
                 endPopup()
             }
 
@@ -819,10 +818,10 @@ interface imgui_widgets {
         var flags = flags
         if (flags hasnt ColorEditFlags.NoSliders) {
             if (flags hasnt ColorEditFlags.ModeMask_)
-                flags = ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX
             pushItemWidth((if (alpha) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
             val subFlags = (if (alpha) ColorEditFlags.Alpha else ColorEditFlags.Null) or ColorEditFlags.NoPicker or
                     ColorEditFlags.NoOptions or ColorEditFlags.NoColorSquare
+            flags = flags or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX
             if (flags has ColorEditFlags.RGB)
                 valueChanged = valueChanged or colorEdit4("##rgb", col, subFlags or ColorEditFlags.RGB)
             if (flags has ColorEditFlags.HSV)

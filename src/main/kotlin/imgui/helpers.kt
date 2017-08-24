@@ -283,20 +283,23 @@ class ListClipper {
         stepNo = 3
     }
 
-    fun setCursorPosYAndSetupDummyPrevLine(posY: Float, lineHeight: Float) {
-        /*  Set cursor position and a few other things so that SetScrollHere() and Columns() can work when seeking
-            cursor.
-            FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would stumble
-            on the same issue. Consider moving within SetCursorXXX functions?   */
-        cursorPosY = posY
-        with(currentWindow.dc) {
-            // Setting those fields so that SetScrollHere() can properly function after the end of our clipper usage.
-            cursorPosPrevLine.y = cursorPos.y - lineHeight
-            /*  If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a
-                fourth step to let user process and display the last item in their list.             */
-            prevLineHeight = lineHeight - style.itemSpacing.y
-            if (columnsCount > 1)
-                columnsCellMinY = cursorPos.y   // Setting this so that cell Y position are set properly
+    companion object {
+
+        fun setCursorPosYAndSetupDummyPrevLine(posY: Float, lineHeight: Float) {
+            /*  Set cursor position and a few other things so that SetScrollHere() and Columns() can work when seeking
+                cursor.
+                FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would stumble
+                on the same issue. Consider moving within SetCursorXXX functions?   */
+            cursorPosY = posY
+            with(currentWindow.dc) {
+                // Setting those fields so that SetScrollHere() can properly function after the end of our clipper usage.
+                cursorPosPrevLine.y = cursorPos.y - lineHeight
+                /*  If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a
+                    fourth step to let user process and display the last item in their list.             */
+                prevLineHeight = lineHeight - style.itemSpacing.y
+                if (columnsCount > 1)
+                    columnsCellMinY = cursorPos.y   // Setting this so that cell Y position are set properly
+            }
         }
     }
 }

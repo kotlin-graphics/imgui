@@ -15,6 +15,7 @@ import imgui.ImGui.clearActiveId
 import imgui.ImGui.closeButton
 import imgui.ImGui.colorConvertFloat4ToU32
 import imgui.ImGui.columns
+import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findWindowByName
@@ -679,42 +680,6 @@ interface imgui_window {
     fun beginChild(id: Int, sizeArg: Vec2 = Vec2(), border: Boolean = false, extraFlags: Int = 0) =
             beginChildEx("", id, sizeArg, border, extraFlags)
 
-    fun beginChildEx(name: String, id: Int, sizeArg: Vec2, border: Boolean, extraFlags: Int): Boolean {
-
-        val window = currentWindow
-        var flags = WindowFlags.NoTitleBar or WindowFlags.NoResize or WindowFlags.NoSavedSettings or WindowFlags.ChildWindow
-
-        val contentAvail = contentRegionAvail
-        val size = glm.floor(sizeArg)
-        if (size.x <= 0f) {
-            if (size.x == 0f)
-                flags = flags or WindowFlags.ChildWindowAutoFitX
-            // Arbitrary minimum zero-ish child size of 4.0f (0.0f causing too much issues)
-            size.x = glm.max(contentAvail.x, 4f) - glm.abs(size.x)
-        }
-        if (size.y <= 0f) {
-            if (size.y == 0f)
-                flags = flags or WindowFlags.ChildWindowAutoFitY
-            size.y = glm.max(contentAvail.y, 4f) - glm.abs(size.y)
-        }
-        if (border)
-            flags = flags or WindowFlags.ShowBorders
-        flags = flags or extraFlags
-
-        val title =
-                if (name.isNotEmpty())
-                    "%s.%s.%08X".format(style.locale, window.name, name, id)
-                else
-                    "%s.%08X".format(style.locale, window.name, id)
-
-        val ret = ImGui.begin(title, null, size, -1f, flags)
-
-        if (window.flags hasnt WindowFlags.ShowBorders)
-            ImGui.currentWindow.flags = ImGui.currentWindow.flags and WindowFlags.ShowBorders.i.inv()
-
-        return ret
-    }
-
     fun endChild() {
 
         var window = currentWindow
@@ -913,4 +878,43 @@ interface imgui_window {
 //IMGUI_API void          SetStateStorage(ImGuiStorage* tree);                                // replace tree state storage with our own (if you want to manipulate it yourself, typically clear subsection of it)
 //IMGUI_API ImGuiStorage* GetStateStorage();
 
+
+    companion object {
+
+        fun beginChildEx(name: String, id: Int, sizeArg: Vec2, border: Boolean, extraFlags: Int): Boolean {
+
+            val window = currentWindow
+            var flags = WindowFlags.NoTitleBar or WindowFlags.NoResize or WindowFlags.NoSavedSettings or WindowFlags.ChildWindow
+
+            val contentAvail = contentRegionAvail
+            val size = glm.floor(sizeArg)
+            if (size.x <= 0f) {
+                if (size.x == 0f)
+                    flags = flags or WindowFlags.ChildWindowAutoFitX
+                // Arbitrary minimum zero-ish child size of 4.0f (0.0f causing too much issues)
+                size.x = glm.max(contentAvail.x, 4f) - glm.abs(size.x)
+            }
+            if (size.y <= 0f) {
+                if (size.y == 0f)
+                    flags = flags or WindowFlags.ChildWindowAutoFitY
+                size.y = glm.max(contentAvail.y, 4f) - glm.abs(size.y)
+            }
+            if (border)
+                flags = flags or WindowFlags.ShowBorders
+            flags = flags or extraFlags
+
+            val title =
+                    if (name.isNotEmpty())
+                        "%s.%s.%08X".format(style.locale, window.name, name, id)
+                    else
+                        "%s.%08X".format(style.locale, window.name, id)
+
+            val ret = ImGui.begin(title, null, size, -1f, flags)
+
+            if (window.flags hasnt WindowFlags.ShowBorders)
+                ImGui.currentWindow.flags = ImGui.currentWindow.flags and WindowFlags.ShowBorders.i.inv()
+
+            return ret
+        }
+    }
 }
