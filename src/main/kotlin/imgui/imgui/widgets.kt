@@ -767,6 +767,7 @@ interface imgui_widgets {
         val barsWidth = fontSize * 1f     // Arbitrary smallish width of Hue/Alpha picking bars
         // Saturation/Value picking box
         val svPickerSize = glm.max(barsWidth * 2, calcItemWidth() - (if (alpha) 2 else 1) * (barsWidth + style.itemInnerSpacing.x))
+        val barsLineExtrude = glm.min(2f, style.itemInnerSpacing.x * 0.5f)
         val bar0PosX = pickerPos.x + svPickerSize + style.itemInnerSpacing.x
         val bar1PosX = bar0PosX + barsWidth + style.itemInnerSpacing.x
 
@@ -859,7 +860,7 @@ interface imgui_widgets {
                     hueColors[i], hueColors[i], hueColors[i + 1], hueColors[i + 1])
         }
         val bar0LineY = (pickerPos.y + h * svPickerSize + 0.5f).i.f
-        drawList.addLine(Vec2(bar0PosX - 1, bar0LineY), Vec2(bar0PosX + barsWidth + 1, bar0LineY), COL32_WHITE)
+        drawList.addLine(Vec2(bar0PosX - barsLineExtrude, bar0LineY), Vec2(bar0PosX + barsWidth + barsLineExtrude, bar0LineY), COL32_WHITE)
 
         // Render alpha bar
         if (alpha) {
@@ -867,7 +868,7 @@ interface imgui_widgets {
             val bar1LineY = (pickerPos.y + (1f - alpha) * svPickerSize + 0.5f).i.f
             drawList.addRectFilledMultiColor(Vec2(bar1PosX, pickerPos.y), Vec2(bar1PosX + barsWidth, pickerPos.y + svPickerSize),
                     COL32_WHITE, COL32_WHITE, COL32_BLACK, COL32_BLACK)
-            drawList.addLine(Vec2(bar1PosX - 1, bar1LineY), Vec2(bar1PosX + barsWidth + 1, bar1LineY), COL32_WHITE)
+            drawList.addLine(Vec2(bar1PosX - barsLineExtrude, bar1LineY), Vec2(bar1PosX + barsWidth + barsLineExtrude, bar1LineY), COL32_WHITE)
         }
 
         // Render color matrix
