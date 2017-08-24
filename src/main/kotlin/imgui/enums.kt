@@ -349,8 +349,8 @@ enum class ColorEditFlags(val i: Int) {
     NoOptions(1 shl 5),
     /** ColorEdit: Disable colored square   */
     NoColorSquare(1 shl 6),
-    /** ColorEdit: Disable sliders, show only a button. ColorPicker: Disable all RGB/HSV/HEX sliders.   */
-    NoSliders(1 shl 7),
+    /** ColorEdit: Disable inputs sliders/text edit, show only a button. ColorPicker: Disable all RGB/HSV/HEX sliders.   */
+    NoInputs(1 shl 7),
     ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX);
 
     fun inv() = i.inv()

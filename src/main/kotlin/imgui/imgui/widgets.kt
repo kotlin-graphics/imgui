@@ -598,7 +598,7 @@ interface imgui_widgets {
         // If no mode is specified, defaults to RGB
             flags hasnt ColorEditFlags.ModeMask_ -> flags or ColorEditFlags.RGB
         // If we're not showing any slider there's no point in querying color mode, nor showing the options menu, nor doing any HSV conversions
-            flags has ColorEditFlags.NoSliders -> (flags and ColorEditFlags.ModeMask_.inv()) or ColorEditFlags.RGB or ColorEditFlags.NoOptions
+            flags has ColorEditFlags.NoInputs -> (flags and ColorEditFlags.ModeMask_.inv()) or ColorEditFlags.RGB or ColorEditFlags.NoOptions
         // Read back edit mode from persistent storage
             flags hasnt ColorEditFlags.NoOptions -> (flags and ColorEditFlags.ModeMask_.inv()) or
                     ((g.colorEditModeStorage[id] ?: (flags and ColorEditFlags.ModeMask_)) and ColorEditFlags.ModeMask_)
@@ -621,7 +621,7 @@ interface imgui_widgets {
         beginGroup()
         pushId(label)
 
-        if (flags has (ColorEditFlags.RGB or ColorEditFlags.HSV) && flags hasnt ColorEditFlags.NoSliders) {
+        if (flags has (ColorEditFlags.RGB or ColorEditFlags.HSV) && flags hasnt ColorEditFlags.NoInputs) {
 
             // RGB/HSV 0..255 Sliders
             val wItemsAll = wFull - squareSzWithSpacing
@@ -650,7 +650,7 @@ interface imgui_widgets {
             popItemWidth()
             popItemWidth()
 
-        } else if (flags has ColorEditFlags.HEX && flags hasnt ColorEditFlags.NoSliders) {
+        } else if (flags has ColorEditFlags.HEX && flags hasnt ColorEditFlags.NoInputs) {
             // RGB Hexadecimal Input
             val wSliderAll = wFull - squareSzWithSpacing
             val buf = CharArray(64)
@@ -674,7 +674,7 @@ interface imgui_widgets {
 
         var pickerActive = false
         if (flags hasnt ColorEditFlags.NoColorSquare) {
-            if (flags hasnt ColorEditFlags.NoSliders)
+            if (flags hasnt ColorEditFlags.NoInputs)
                 sameLine(0f, style.itemInnerSpacing.x)
 
             val colDisplay = Vec4(col[0], col[1], col[2], 1f)
@@ -819,7 +819,7 @@ interface imgui_widgets {
 
         // R,G,B and H,S,V slider color editor
         var flags = flags
-        if (flags hasnt ColorEditFlags.NoSliders) {
+        if (flags hasnt ColorEditFlags.NoInputs) {
             if (flags hasnt ColorEditFlags.ModeMask_)
             pushItemWidth((if (alpha) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
             val subFlags = (if (alpha) ColorEditFlags.Alpha else ColorEditFlags.Null) or ColorEditFlags.NoPicker or
