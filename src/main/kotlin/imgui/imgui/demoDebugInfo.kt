@@ -1375,6 +1375,7 @@ interface imgui_demoDebugInfo {
             bulletText("Pos: (%.1f,%.1f)", window.pos.x.f, window.pos.y.f)
             bulletText("Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.size.x, window.size.y, window.sizeContents.x, window.sizeContents.y)
             bulletText("Scroll: (%.2f,%.2f)", window.scroll.x, window.scroll.y)
+            bulletText("Active: ${window.active}, Accessed: ${window.accessed}")
             if (window.rootWindow !== window) nodeWindow(window.rootWindow, "RootWindow")
             if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
             bulletText("Storage: %d bytes", window.stateStorage.data.size * Int.BYTES * 2)

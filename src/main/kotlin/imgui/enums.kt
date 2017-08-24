@@ -336,13 +336,13 @@ enum class StyleVar {
 /** Enumeration for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4()   */
 enum class ColorEditFlags(val i: Int) {
     Null(0),
-    /** ColorEdit/ColorPicker: show/edit Alpha component. Must be 0x01 for compatibility with old API taking bool   */
-    Alpha(1 shl 0),
     /** ColorEdit: Choose one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose any
      * combination or RGB/HSX/HEX. */
-    RGB(1 shl 1),
-    HSV(1 shl 2),
-    HEX(1 shl 3),
+    RGB(1 shl 0),
+    HSV(1 shl 1),
+    HEX(1 shl 2),
+    /** ColorEdit/ColorPicker: show/edit Alpha component.   */
+    NoAlpha(1 shl 3),
     /** ColorEdit: Disable picker when clicking on colored square   */
     NoPicker(1 shl 4),
     /** ColorEdit: Disable toggling options menu when right-clicking colored square */
@@ -351,6 +351,10 @@ enum class ColorEditFlags(val i: Int) {
     NoColorSquare(1 shl 6),
     /** ColorEdit: Disable inputs sliders/text edit, show only a button. ColorPicker: Disable all RGB/HSV/HEX sliders.   */
     NoInputs(1 shl 7),
+    /** ColorEdit, ColorButton: Disable tooltip when hovering the color square. */
+    NoTooltip(1 shl 8),
+    /** ColorEdit: Disable display of inline text label, however the label is still shown in tooltip and picker */
+    NoLabel(1 shl 9),
     ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX);
 
     fun inv() = i.inv()

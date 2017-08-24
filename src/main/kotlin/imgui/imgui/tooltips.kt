@@ -36,25 +36,6 @@ interface imgui_tooltips {
             begin(windowName, null, WindowFlags.Tooltip or WindowFlags.NoTitleBar or WindowFlags.NoMove or
                     WindowFlags.NoResize or WindowFlags.NoSavedSettings or WindowFlags.AlwaysAutoResize)
         }
-
-        fun colorTooltip(col: FloatArray, flags: Int) {
-
-            val cr = F32_TO_INT8_SAT(col[0])
-            val cg = F32_TO_INT8_SAT(col[1])
-            val cb = F32_TO_INT8_SAT(col[2])
-            val ca = if (flags has ColorEditFlags.Alpha) F32_TO_INT8_SAT(col[3]) else 255
-            beginTooltipEx(true)
-            val window = currentWindow
-            val sz = Vec2(g.fontSize * 3)
-            window.drawList.addRectFilled(window.dc.cursorPos, window.dc.cursorPos + sz, COL32(cr, cg, cb, 255))
-            dummy(sz)
-            sameLine()
-            if (flags has ColorEditFlags.Alpha)
-                text("#%02X%02X%02X%02X\nR:$cr, G:$cg, B:$cb, A:$ca\n(%.3f, %.3f, %.3f, %.3f)", cr, cg, cb, ca, col[0], col[1], col[2], col[3])
-            else
-                text("#%02X%02X%02X\nR: $cr, G: $cg, B: $cb\n(%.3f, %.3f, %.3f)", cr, cg, cb, col[0], col[1], col[2])
-            endTooltip()
-        }
     }
 
     fun setTooltipV(fmt: String, args: Array<out Any>) {

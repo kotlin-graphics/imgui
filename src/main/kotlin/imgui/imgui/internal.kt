@@ -9,13 +9,16 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
+import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.contentRegionMax
+import imgui.ImGui.dummy
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
+import imgui.ImGui.endTooltip
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.indent
 import imgui.ImGui.inputText
@@ -29,12 +32,15 @@ import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
+import imgui.ImGui.separator
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.sliderFloat
+import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.TextEditState.K
 import imgui.internal.*
+import java.awt.SystemColor.text
 import java.util.*
 import kotlin.apply
 import imgui.Context as g
@@ -1501,6 +1507,31 @@ interface imgui_internal {
         return false
     }
 
+    /** Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.   */
+    fun colorTooltip(text: String, col: FloatArray, flags: Int) {
+
+        val cr = F32_TO_INT8_SAT(col[0])
+        val cg = F32_TO_INT8_SAT(col[1])
+        val cb = F32_TO_INT8_SAT(col[2])
+        val ca = if (flags has ColorEditFlags.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
+        imgui_tooltips.beginTooltipEx(true)
+        val window = currentWindow
+        val textEnd = if (text.isEmpty()) findRenderedTextEnd(text) else 0
+        if (textEnd > 0) {
+            textUnformatted(text, textEnd)
+            separator()
+        }
+        val sz = Vec2(g.fontSize * 3)
+        window.drawList.addRectFilled(window.dc.cursorPos, window.dc.cursorPos + sz, COL32(cr, cg, cb, 255))
+        dummy(sz)
+        sameLine()
+        if (flags has ColorEditFlags.NoAlpha)
+            text("#%02X%02X%02X\nR: $cr, G: $cg, B: $cb\n(%.3f, %.3f, %.3f, %.3f)", cr, cg, cb, col[0], col[1], col[2])
+        else
+            text("#%02X%02X%02X%02X\nR:$cr, G:$cg, B:$cb, A:$ca\n(%.3f, %.3f, %.3f)", cr, cg, cb, ca, col[0], col[1], col[2], col[3])
+        endTooltip()
+    }
+
     fun treeNodeBehavior(id: Int, flags: Int, label: String): Boolean {
 
         val window = currentWindow
@@ -1673,5 +1704,9 @@ interface imgui_internal {
         else
             value += minStep - remainder
         return if (negative) -value else value
+    }
+
+    companion object {
+        val colorSquareSize get() = g.fontSize + style.framePadding.y * 2f
     }
 }
