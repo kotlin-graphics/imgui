@@ -436,18 +436,12 @@ interface imgui_internal {
             for (y in 0 until yCount)
                 for (x in (y and 1) xor 1 until xCount step 2) {
                     var roundingCornersFlags = 0
-                    if (y == 0)
-                        roundingCornersFlags = roundingCornersFlags or when (x) {
-                            0 -> Corner.TopLeft
-                            xCount - 1 -> Corner.TopRight
-                            else -> Corner.Null
-                        }
-                    else if (y == yCount - 1)
-                        roundingCornersFlags = roundingCornersFlags or when (x) {
-                            0 -> Corner.BottomLeft
-                            xCount - 1 -> Corner.BottomRight
-                            else -> Corner.Null
-                        }
+                    if (y == 0) {
+                        if (x == 0) roundingCornersFlags = roundingCornersFlags or Corner.TopLeft
+                        else if (x == xCount - 1) roundingCornersFlags = roundingCornersFlags or Corner.TopRight
+                    } else if (y == yCount - 1)
+                        if (x == 0) roundingCornersFlags = roundingCornersFlags or Corner.BottomLeft
+                        else if (x == xCount - 1) roundingCornersFlags = roundingCornersFlags or Corner.BottomRight
                     roundingCornersFlags = roundingCornersFlags and roundingCornerFlagsParent
                     val p1 = Vec2(pMin.x + x * gridStep, pMin.y + y * gridStep)
                     val p2 = Vec2(glm.min(p1.x + gridStep, pMax.x), glm.min(p1.y + gridStep, pMax.y))
