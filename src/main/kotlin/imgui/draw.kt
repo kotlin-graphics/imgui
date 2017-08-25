@@ -9,6 +9,8 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.Context.style
+import imgui.internal.Corner
+import imgui.internal.has
 import imgui.internal.invLength
 import imgui.internal.strlen
 import java.util.*
@@ -736,10 +738,16 @@ class DrawList {
 
     /** rounding_corners_flags: 4-bits corresponding to which corner to round   */
     fun pathRect(a: Vec2, b: Vec2, rounding: Float = 0f, roundingCorners: Int = 0.inv()) {
+
+        val cornersTop = Corner.TopLeft or Corner.TopRight
+        val cornersBottom = Corner.BottomLeft or Corner.BottomRight
+        val cornersLeft = Corner.TopLeft or Corner.BottomLeft
+        val cornersRight = Corner.TopRight or Corner.BottomRight
+
         var r = rounding
-        var cond = ((roundingCorners and (1 or 2)) == (1 or 2)) || ((roundingCorners and (4 or 8)) == (4 or 8))
+        var cond = ((roundingCorners and cornersTop)  == cornersTop) || ((roundingCorners and cornersBottom) == cornersBottom)
         r = glm.min(r, glm.abs(b.x - a.x) * (if (cond) 0.5f else 1f) - 1f)
-        cond = ((roundingCorners and (1 or 8)) == (1 or 8)) || ((roundingCorners and (2 or 4)) == (2 or 4))
+        cond = ((roundingCorners and cornersLeft) == cornersLeft) || ((roundingCorners and cornersRight)  == cornersRight)
         r = glm.min(r, glm.abs(b.y - a.y) * (if (cond) 0.5f else 1f) - 1f)
 
         if (r <= 0f || roundingCorners == 0) {
@@ -748,10 +756,10 @@ class DrawList {
             pathLineTo(b)
             pathLineTo(Vec2(a.x, b.y))
         } else {
-            val r0 = if (roundingCorners has 1) r else 0f
-            val r1 = if (roundingCorners has 2) r else 0f
-            val r2 = if (roundingCorners has 4) r else 0f
-            val r3 = if (roundingCorners has 8) r else 0f
+            val r0 = if (roundingCorners has Corner.TopLeft) r else 0f
+            val r1 = if (roundingCorners has Corner.TopRight) r else 0f
+            val r2 = if (roundingCorners has Corner.BottomRight) r else 0f
+            val r3 = if (roundingCorners has Corner.BottomLeft) r else 0f
             pathArcToFast(Vec2(a.x + r0, a.y + r0), r0, 6, 9)
             pathArcToFast(Vec2(b.x - r1, a.y + r1), r1, 9, 12)
             pathArcToFast(Vec2(b.x - r2, b.y - r2), r2, 0, 3)

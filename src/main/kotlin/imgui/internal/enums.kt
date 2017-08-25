@@ -85,3 +85,5 @@ enum class Corner(val i: Int) {
     infix fun or(b: Corner) = i or b.i
     infix fun or(b: Int) = i or b
 }
+
+infix fun Int.has(b: Corner) = (this and b.i) != 0
