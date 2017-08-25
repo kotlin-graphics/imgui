@@ -23,11 +23,13 @@ interface imgui_main {
         ptrIndices = 0
 
         // Check user data
-        assert(IO.deltaTime >= 0f)               // Need a positive DeltaTime (zero is tolerated but will cause some timing issues)
+        assert(IO.deltaTime >= 0f)  // Need a positive DeltaTime (zero is tolerated but will cause some timing issues)
         assert(IO.displaySize.x >= 0f && IO.displaySize.y >= 0f)
-        assert(IO.fonts.fonts.size > 0)           // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
-        assert(IO.fonts.fonts[0].isLoaded)     // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
+        assert(IO.fonts.fonts.size > 0) // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
+        assert(IO.fonts.fonts[0].isLoaded)  // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
         assert(style.curveTessellationTol > 0f)  // Invalid style setting
+        // Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)
+        assert(style.alpha in 0f..1f)
 
         if (!g.initialized) {
             // Initialize on first frame TODO

@@ -148,6 +148,15 @@ interface imgui_parametersStacks {
         return colorConvertFloat4ToU32(c)
     }
 
+    /** retrieve given color with style alpha applied    */
+    fun getColorU32(col: Int): Int {
+        val styleAlpha = style.alpha
+        if (styleAlpha >= 1f) return col
+        var a = (col and COL32_A_MASK) ushr COL32_A_SHIFT
+        a = (a * styleAlpha).i // We don't need to clamp 0..255 because Style.Alpha is in 0..1 range.
+        return (col and COL32_A_MASK.inv()) or (a shl COL32_A_SHIFT)
+    }
+
 // Parameters stacks (current window)
 
     /** width of items for the common item+label case, pixels. 0.0f = default to ~2/3 of windows width, >0.0f: width in
@@ -190,26 +199,26 @@ interface imgui_parametersStacks {
     }
 
     /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets   */
-    fun pushAllowKeyboardFocus(allowKeyboardFocus:Boolean) = with(currentWindow){
+    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = with(currentWindow) {
         dc.allowKeyboardFocus = allowKeyboardFocus
         dc.allowKeyboardFocusStack.push(allowKeyboardFocus)
     }
 
     fun popAllowKeyboardFocus() = with(currentWindow.dc) {
         allowKeyboardFocusStack.pop()
-        allowKeyboardFocus = allowKeyboardFocusStack.lastOrNull() ?: true
+        allowKeyboardFocus = allowKeyboardFocusStack.lastOrNull() != false
     }
 
     /** in 'repeat' mode, Button*() functions return repeated true in a typematic manner
      *  (uses io.KeyRepeatDelay/io.KeyRepeatRate for now). Note that you can call IsItemActive() after any Button() to
      *  tell if the button is held in the current frame.    */
-    fun pushButtonRepeat(repeat:Boolean) = with(currentWindow.dc) {
+    fun pushButtonRepeat(repeat: Boolean) = with(currentWindow.dc) {
         buttonRepeat = repeat
         buttonRepeatStack.push(repeat)
     }
 
     fun popButtonRepeat() = with(currentWindow.dc) {
         buttonRepeatStack.pop()
-        buttonRepeat = buttonRepeatStack.lastOrNull() ?: false
+        buttonRepeat = buttonRepeatStack.lastOrNull() == true
     }
 }
