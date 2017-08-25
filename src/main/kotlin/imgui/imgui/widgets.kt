@@ -687,7 +687,7 @@ interface imgui_widgets {
             val colDisplay = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f) // 1.0f
             if (colorButton("##ColorButton", colDisplay, flags)) {
                 if (flags hasnt ColorEditFlags.NoPicker) {
-                    g.colorPickerRef.put(col[0], col[1], col[2], if (alpha) col[3] else 1f)
+//                    g.colorPickerRef.put(col[0], col[1], col[2], if (alpha) col[3] else 1f)
                     openPopup("picker")
                     setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
                 }
