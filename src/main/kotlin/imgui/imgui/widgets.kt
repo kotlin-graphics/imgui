@@ -833,7 +833,8 @@ interface imgui_widgets {
             if (flags hasnt ColorEditFlags.ModeMask_)
                 flags = flags or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX
             pushItemWidth((if (alpha) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
-            val subFlags = (flags and ColorEditFlags.NoAlpha) or ColorEditFlags.NoPicker or ColorEditFlags.NoOptions or ColorEditFlags.NoColorSquare
+            val subFlags = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.NoColorSquare)) or ColorEditFlags.NoPicker or
+                    ColorEditFlags.NoOptions or ColorEditFlags.NoTooltip
             if (flags has ColorEditFlags.RGB)
                 valueChanged = valueChanged or colorEdit4("##rgb", col, subFlags or ColorEditFlags.RGB)
             if (flags has ColorEditFlags.HSV)

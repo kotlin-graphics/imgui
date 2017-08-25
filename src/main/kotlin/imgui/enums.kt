@@ -335,25 +335,30 @@ enum class StyleVar {
 
 /** Enumeration for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4()   */
 enum class ColorEditFlags(val i: Int) {
+
     Null(0),
-    /** ColorEdit: Choose one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose any
-     * combination or RGB/HSX/HEX. */
+    /** ColorEdit: Default to one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose
+     *  any combination or RGB/HSX/HEX. */
     RGB(1 shl 0),
+    /** ColorEdit: Default to one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose
+     *  any combination or RGB/HSX/HEX. */
     HSV(1 shl 1),
+    /** ColorEdit: Default to one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose
+     *  any combination or RGB/HSX/HEX. */
     HEX(1 shl 2),
-    /** ColorEdit/ColorPicker: show/edit Alpha component.   */
+    /** ColorEdit, ColorPicker: show/edit Alpha component.   */
     NoAlpha(1 shl 3),
     /** ColorEdit: Disable picker when clicking on colored square   */
     NoPicker(1 shl 4),
     /** ColorEdit: Disable toggling options menu when right-clicking colored square */
     NoOptions(1 shl 5),
-    /** ColorEdit: Disable colored square   */
+    /** ColorEdit, ColorPicker: Disable colored square. */
     NoColorSquare(1 shl 6),
-    /** ColorEdit: Disable inputs sliders/text edit, show only a button. ColorPicker: Disable all RGB/HSV/HEX sliders.   */
+    /** ColorEdit, ColorPicker: Disable inputs sliders/text widgets, show only the colored square.  */
     NoInputs(1 shl 7),
-    /** ColorEdit, ColorButton: Disable tooltip when hovering the color square. */
+    /** ColorEdit, ColorButton: Disable tooltip when hovering the colored square. */
     NoTooltip(1 shl 8),
-    /** ColorEdit: Disable display of inline text label, however the label is still shown in tooltip and picker */
+    /** ColorEdit: Disable display of inline text label (however the label is still used in tooltip and picker) */
     NoLabel(1 shl 9),
     ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX);
 
