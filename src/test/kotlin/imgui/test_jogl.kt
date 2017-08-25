@@ -42,6 +42,7 @@ class HelloWorld_jogl : GLEventListener {
         animator.add(window)
         animator.start()
 
+
         window.addWindowListener(object : WindowAdapter() {
             override fun windowDestroyed(e: WindowEvent) {
                 animator.stop(); System.exit(0); }
@@ -53,6 +54,8 @@ class HelloWorld_jogl : GLEventListener {
 
         // Setup ImGui binding
         JoglGL3.init(window, true)
+
+        drawable.gl.swapInterval = 1    // Enable vsync
 
         // Load Fonts
         // (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)

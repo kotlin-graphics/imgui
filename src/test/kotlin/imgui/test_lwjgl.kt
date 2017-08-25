@@ -33,6 +33,7 @@ class HelloWorld_lwjgl {
 
         with(window) {
             makeContextCurrent()
+            glfw.swapInterval = 1   // Enable vsync
             show()
         }
 
