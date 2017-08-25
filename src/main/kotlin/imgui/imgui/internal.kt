@@ -415,6 +415,13 @@ interface imgui_internal {
         }
     }
 
+    fun renderFrameBorder(pMin: Vec2, pMax: Vec2, rounding: Float = 0f) = with(currentWindow){
+        if (flags has WindowFlags.ShowBorders) {
+            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding)
+            drawList.addRect(pMin, pMax, Col.Border.u32, rounding)
+        }
+    }
+
     /** Render a triangle to denote expanded/collapsed state    */
     fun renderCollapseTriangle(pMin: Vec2, isOpen: Boolean, scale: Float = 1.0f) {
 

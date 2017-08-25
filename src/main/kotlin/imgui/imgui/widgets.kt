@@ -56,6 +56,7 @@ import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderCollapseTriangle
 import imgui.ImGui.renderFrame
+import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
@@ -563,8 +564,7 @@ interface imgui_widgets {
         if (!itemAdd(bb, id)) return false
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
-        window.drawList.addRectFilled(bb.min, bb.max, getColorU32(col), style.frameRounding)
-        //window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(border_col), style.FrameRounding);
+        renderFrame(bb.min, bb.max, getColorU32(col), true, style.frameRounding)
 
         if (hovered && flags hasnt ColorEditFlags.NoTooltip) {
             val pF = floatArrayOf(col.x)
@@ -866,14 +866,16 @@ interface imgui_widgets {
                     hueColors[i], hueColors[i], hueColors[i + 1], hueColors[i + 1])
         }
         val bar0LineY = (pickerPos.y + h * svPickerSize + 0.5f).i.f
+        renderFrameBorder(Vec2(bar0PosX, pickerPos.y), Vec2(bar0PosX + barsWidth, pickerPos.y + svPickerSize), 0f)
         drawList.addLine(Vec2(bar0PosX - barsLineExtrude, bar0LineY), Vec2(bar0PosX + barsWidth + barsLineExtrude, bar0LineY), COL32_WHITE)
 
         // Render alpha bar
         if (alphaBar) {
             val alpha = saturate(col[3])
             val bar1LineY = (pickerPos.y + (1f - alpha) * svPickerSize + 0.5f).i.f
-            drawList.addRectFilledMultiColor(Vec2(bar1PosX, pickerPos.y), Vec2(bar1PosX + barsWidth, pickerPos.y + svPickerSize),
-                    COL32_WHITE, COL32_WHITE, COL32_BLACK, COL32_BLACK)
+            val bar1Bb = Rect(bar1PosX, pickerPos.y, bar1PosX + barsWidth, pickerPos.y + svPickerSize)
+            drawList.addRectFilledMultiColor(bar1Bb.min, bar1Bb.max, COL32_WHITE, COL32_WHITE, COL32_BLACK, COL32_BLACK)
+            renderFrameBorder(bar1Bb.min, bar1Bb.max, 0f)
             drawList.addLine(Vec2(bar1PosX - barsLineExtrude, bar1LineY), Vec2(bar1PosX + barsWidth + barsLineExtrude, bar1LineY), COL32_WHITE)
         }
 
@@ -881,6 +883,7 @@ interface imgui_widgets {
         val hueColor32 = colorConvertFloat4ToU32(hueColorF)
         drawList.addRectFilledMultiColor(pickerPos, pickerPos + Vec2(svPickerSize), COL32_WHITE, hueColor32, hueColor32, COL32_WHITE)
         drawList.addRectFilledMultiColor(pickerPos, pickerPos + Vec2(svPickerSize), COL32_BLACK_TRANS, COL32_BLACK_TRANS, COL32_BLACK, COL32_BLACK)
+        renderFrameBorder(pickerPos, pickerPos + Vec2(svPickerSize), 0f)
 
         // Render cross-hair
         val CROSSHAIR_SIZE = 7f
