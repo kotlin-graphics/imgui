@@ -338,33 +338,35 @@ enum class ColorEditFlags(val i: Int) {
 
     Null(0),
     /** ColorEdit: Default to one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose
-     *  any combination or RGB/HSX/HEX. */
+     *  any combination or RGB/HSV/HEX. */
     RGB(1 shl 0),
     /** ColorEdit: Default to one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose
-     *  any combination or RGB/HSX/HEX. */
+     *  any combination or RGB/HSV/HEX. */
     HSV(1 shl 1),
     /** ColorEdit: Default to one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose
-     *  any combination or RGB/HSX/HEX. */
+     *  any combination or RGB/HSV/HEX. */
     HEX(1 shl 2),
-    /** ColorEdit, ColorPicker: show/edit Alpha component.   */
-    NoAlpha(1 shl 3),
+    /** ColorEdit, ColorPicker: display values formatted as 0.0f..1.0f floats instead of 0..255 integers. No round-trip
+     *  of value via integers.  */
+    Float(1 shl 3),
+    /** ColorPicker: Show vertical alpha bar/gradient.  */
+    AlphaBar(1 shl 4),
+    /** ColorEdit, ColorPicker: show/edit Alpha component.  */
+    NoAlpha(1 shl 5),
     /** ColorEdit: Disable picker when clicking on colored square   */
-    NoPicker(1 shl 4),
+    NoPicker(1 shl 6),
     /** ColorEdit: Disable toggling options menu when right-clicking colored square */
-    NoOptions(1 shl 5),
+    NoOptions(1 shl 7),
     /** ColorEdit, ColorPicker: Disable colored square. */
-    NoColorSquare(1 shl 6),
+    NoColorSquare(1 shl 8),
     /** ColorEdit, ColorPicker: Disable inputs sliders/text widgets, show only the colored square.  */
-    NoInputs(1 shl 7),
-    /** ColorEdit, ColorButton: Disable tooltip when hovering the colored square. */
-    NoTooltip(1 shl 8),
-    /** ColorEdit: Disable display of inline text label (however the label is still used in tooltip and picker) */
-    NoLabel(1 shl 9),
-    /** ColorPicker: Show vertical alpha bar/gradient   */
-    AlphaBar(1 shl 10),
+    NoInputs(1 shl 9),
+    /** ColorEdit, ColorButton: Disable tooltip when hovering the colored square.   */
+    NoTooltip(1 shl 10),
+    /** ColorEdit: Disable display of inline text label (the label is still used in tooltip and picker) */
+    NoLabel(1 shl 11),
     ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX),
-    StoredMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.Float),
-    Float(1 shl 11);
+    StoredMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.Float);
 
     fun inv() = i.inv()
 }
