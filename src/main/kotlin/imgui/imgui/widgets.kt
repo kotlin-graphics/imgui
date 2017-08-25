@@ -597,16 +597,17 @@ interface imgui_widgets {
 
     /** Edit colors components (each component in 0.0f..1.0f range)
      *  Click on colored square to open a color picker (unless ImGuiColorEditFlags_NoPicker is set).
-     *  // Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.   */
+     *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
+     *  FIXME-OPT: Need to add coarse clipping for the entire widget.   */
     fun colorEdit4(label: String, col: FloatArray, flags: Int = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
         val id = window.getId(label)
-        val wFull = calcItemWidth()
         val wExtra = if (flags has ColorEditFlags.NoColorSquare) 0f else colorSquareSize + style.itemInnerSpacing.x
-        val wItemsAll = wFull - wExtra
+        val wItemsAll = calcItemWidth() - wExtra
+        val labelDisplayEnd = findRenderedTextEnd(label)
 
         val alpha = flags hasnt ColorEditFlags.NoAlpha
         val components = if (alpha) 4 else 3
@@ -616,13 +617,12 @@ interface imgui_widgets {
             flags hasnt ColorEditFlags.ModeMask_ -> flags or ColorEditFlags.RGB
         // If we're not showing any slider there's no point in querying color mode, nor showing the options menu, nor doing any HSV conversions
             flags has ColorEditFlags.NoInputs -> (flags and ColorEditFlags.ModeMask_.inv()) or ColorEditFlags.RGB or ColorEditFlags.NoOptions
-        // Read back edit mode from persistent storage
+        // Read back edit mode from persistent storage, check that exactly one of RGB/HSV/HEX is set
             flags hasnt ColorEditFlags.NoOptions -> (flags and ColorEditFlags.StoredMask_.inv()) or
                     ((g.colorEditModeStorage[id] ?: (flags and ColorEditFlags.StoredMask_)) and ColorEditFlags.StoredMask_)
             else -> flags
         }
 
-        // Check that exactly one of RGB/HSV/HEX is set
         assert((flags and ColorEditFlags.ModeMask_).isPowerOfTwo)
 
         val f = floatArrayOf(col[0], col[1], col[2], if (alpha) col[3] else 1f)
@@ -689,8 +689,6 @@ interface imgui_widgets {
             }
             popItemWidth()
         }
-
-        val labelDisplayEnd = findRenderedTextEnd(label)
 
         var pickerActive = false
         if (flags hasnt ColorEditFlags.NoColorSquare) {
