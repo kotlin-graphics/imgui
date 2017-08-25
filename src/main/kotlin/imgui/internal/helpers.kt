@@ -185,6 +185,7 @@ fun Vec2.lengthSqr() = x * x + y * y
 fun saturate(f: Float) = if (f < 0f) 0f else if (f > 1f) 1f else f
 
 fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
+fun lerp(a: Int, b: Int, t: Float) = (a + (b - a) * t).i
 
 fun Vec2.invLength(failValue: Float): Float {
     val d = x * x + y * y

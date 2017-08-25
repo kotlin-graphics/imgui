@@ -427,13 +427,12 @@ interface imgui_internal {
                                              roundingCornerFlagsParent: Int = 0.inv()) {
         val window = currentWindow
         if (((col and COL32_A_MASK) ushr COL32_A_SHIFT) < 0xFF) {
-            // We use rounding+1 here which is counterintuitive but it inhibit mosts of the edge artifacts with overlayed rounded shapes
-            val colBg1 = getColorU32(COL32(204, 204, 204, 255))
-            val colBg2 = getColorU32(COL32(128, 128, 128, 255))
-            window.drawList.addRectFilled(pMin, pMax, colBg1, rounding + 1, roundingCornerFlagsParent)
+            val colBg1 = getColorU32(alphaBlendColor(COL32(204, 204, 204, 255), col))
+            val colBg2 = getColorU32(alphaBlendColor(COL32(128, 128, 128, 255), col))
+            window.drawList.addRectFilled(pMin, pMax, colBg1, rounding, roundingCornerFlagsParent)
             val xCount = ((pMax.x - pMin.x) / gridStep + 0.99f).i
             val yCount = ((pMax.y - pMin.y) / gridStep + 0.99f).i
-            for (y in 0 until yCount) {
+            for (y in 0 until yCount)
                 for (x in (y and 1) xor 1 until xCount step 2) {
                     var roundingCornersFlags = 0
                     if (y == 0)
@@ -451,11 +450,10 @@ interface imgui_internal {
                     roundingCornersFlags = roundingCornersFlags and roundingCornerFlagsParent
                     val p1 = Vec2(pMin.x + x * gridStep, pMin.y + y * gridStep)
                     val p2 = Vec2(glm.min(p1.x + gridStep, pMax.x), glm.min(p1.y + gridStep, pMax.y))
-                    window.drawList.addRectFilled(p1, p2, colBg2, if (roundingCornersFlags != 0) rounding + 1 else 0f, roundingCornersFlags)
+                    window.drawList.addRectFilled(p1, p2, colBg2, if (roundingCornersFlags != 0) rounding else 0f, roundingCornersFlags)
                 }
-            }
-        }
-        window.drawList.addRectFilled(pMin, pMax, col, rounding, roundingCornerFlagsParent)
+        } else
+            window.drawList.addRectFilled(pMin, pMax, col, rounding, roundingCornerFlagsParent)
     }
 
     /** Render a triangle to denote expanded/collapsed state    */
@@ -1750,6 +1748,15 @@ interface imgui_internal {
     }
 
     companion object {
+
         val colorSquareSize get() = g.fontSize + style.framePadding.y * 2f
+
+        fun alphaBlendColor(colA: Int, colB: Int): Int {
+            val t = ((colB ushr COL32_A_SHIFT) and 0xFF) / 255f
+            val r = lerp((colA ushr COL32_R_SHIFT) and 0xFF, (colB ushr COL32_R_SHIFT) and 0xFF, t)
+            val g = lerp((colA ushr COL32_G_SHIFT) and 0xFF, (colB ushr COL32_G_SHIFT) and 0xFF, t)
+            val b = lerp((colA ushr COL32_B_SHIFT) and 0xFF, (colB ushr COL32_B_SHIFT) and 0xFF, t)
+            return COL32(r, g, b, 0xFF)
+        }
     }
 }
