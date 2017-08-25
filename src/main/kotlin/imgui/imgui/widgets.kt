@@ -565,25 +565,28 @@ interface imgui_widgets {
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
 
+        var flags = flags
+        if (flags has ColorEditFlags.NoAlpha)
+            flags = flags and (ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf).inv()
+
         val colWithoutAlpha = Vec4(col.x, col.y, col.z, 1f)
-        val gridStep = glm.min(size.x, size.y) / 2f
+        val gridStep = glm.min(size.x, size.y) / 2.99f
         val rounding = glm.min(style.frameRounding, gridStep * 0.5f)
-        if (flags has ColorEditFlags.HalfAlphaPreview && flags hasnt (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)
-                && col.w < 1f) {
+        if (flags has ColorEditFlags.AlphaPreviewHalf && col.w < 1f) {
             val midX = ((bb.min.x + bb.max.x) * 0.5f + 0.5f).i.f
             renderColorRectWithAlphaCheckerboard(Vec2(bb.min.x + gridStep, bb.min.y), bb.max, getColorU32(col), gridStep,
                     Vec2(-gridStep, 0f), rounding, Corner.TopRight or Corner.BottomRight)
             window.drawList.addRectFilled(bb.min, Vec2(midX, bb.max.y), getColorU32(colWithoutAlpha), rounding,
                     Corner.TopLeft or Corner.BottomLeft)
         } else {
-            val c = if (flags has (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)) colWithoutAlpha else col
-            renderColorRectWithAlphaCheckerboard(bb.min, bb.max, getColorU32(c), gridStep, Vec2(), rounding)
+            val c = getColorU32(if (flags has ColorEditFlags.AlphaPreview) col else colWithoutAlpha)
+            renderColorRectWithAlphaCheckerboard(bb.min, bb.max, c, gridStep, Vec2(), rounding)
         }
         renderFrameBorder(bb.min, bb.max, rounding)
 
         if (hovered && flags hasnt ColorEditFlags.NoTooltip) {
             val pF = floatArrayOf(col.x)
-            colorTooltip(descId, pF, flags and (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview or ColorEditFlags.HalfAlphaPreview))
+            colorTooltip(descId, pF, flags and (ColorEditFlags.NoAlpha or ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf))
             col.x = pF[0]
         }
 
@@ -712,7 +715,7 @@ interface imgui_widgets {
                     separator()
                 }
                 val squareSz = colorSquareSize
-                val pickerFlags = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.HalfAlphaPreview or ColorEditFlags.Float)) or
+                val pickerFlags = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.AlphaBar or ColorEditFlags.Float)) or
                         (ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX) or ColorEditFlags.NoLabel
                 pushItemWidth(squareSz * 12f)
                 valueChanged = valueChanged or colorPicker4("##picker", col, pickerFlags)

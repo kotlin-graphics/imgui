@@ -451,7 +451,7 @@ interface imgui_demoDebugInfo {
                 withStyleVar(StyleVar.FramePadding, Vec2()) {
                     checkbox("Read-only", readOnly)
                 }
-                val flags = InputTextFlags.AllowTabInput or if(readOnly[0]) InputTextFlags.ReadOnly else InputTextFlags.Null
+                val flags = InputTextFlags.AllowTabInput or if (readOnly[0]) InputTextFlags.ReadOnly else InputTextFlags.Null
 //                inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
             }
 //
@@ -583,7 +583,7 @@ interface imgui_demoDebugInfo {
 //                        static bool alpha_half_preview = false;
 //                        ImGui::Checkbox("With Alpha Preview", &alpha_preview);
 //                        ImGui::Checkbox("With Half Alpha Preview", &alpha_half_preview);
-//                        int alpha_flags = alpha_half_preview ? ImGuiColorEditFlags_HalfAlphaPreview : (alpha_preview ? 0 : ImGuiColorEditFlags_NoAlphaPreview);
+//                        int alpha_flags = alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0);
 //
 //                        ImGui::Text("Color widget:");
 //                        ImGui::SameLine(); ShowHelpMarker("Click on the colored square to open a color picker.\nRight-click on the colored square to show options.\nCTRL+click on individual component to input value.\n");
@@ -1561,12 +1561,15 @@ interface imgui_demoDebugInfo {
             sameLine()
             checkbox("Only Modified Fields", outputOnlyModified)
 
-            radioButton("RGB", colorEditFlags, ColorEditFlags.RGB.i)
-            sameLine()
-            radioButton("HSV", colorEditFlags, ColorEditFlags.HSV.i)
-            sameLine()
-            radioButton("HEX", colorEditFlags, ColorEditFlags.HEX.i)
+            radioButton("RGB", colorFlags, ColorEditFlags.RGB.i); sameLine()
+            radioButton("HSV", colorFlags, ColorEditFlags.HSV.i); sameLine()
+            radioButton("HEX", colorFlags, ColorEditFlags.HEX.i)
             //ImGui::Text("Tip: Click on colored square to change edit mode.");
+
+//            static ImGuiColorEditFlags alpha_flags = 0; TODO (also 10 loc below)
+//            ImGui::RadioButton("Opaque", &alpha_flags, 0); ImGui::SameLine();
+//            ImGui::RadioButton("Alpha", &alpha_flags, ImGuiColorEditFlags_AlphaPreview); ImGui::SameLine();
+//            ImGui::RadioButton("Half", &alpha_flags, ImGuiColorEditFlags_AlphaPreviewHalf);
 
             filter.draw("Filter colors TODO", 200f)
 
@@ -1577,7 +1580,7 @@ interface imgui_demoDebugInfo {
                 if (!filter.passFilter(name)) // TODO fix bug
                     continue
                 withId(i) {
-                    colorEditVec4(name, style.colors[i], colorEditFlags[0] or ColorEditFlags.NoOptions or ColorEditFlags.AlphaBar)
+                    colorEditVec4(name, style.colors[i], colorFlags[0] or ColorEditFlags.NoOptions or ColorEditFlags.AlphaBar) // | alpha_flags); TODO
                     if (style.colors[i] != (ref?.colors?.get(i) ?: defaultStyle.colors[i])) {
                         sameLine()
                         button("Revert") { style.colors[i] put (ref?.colors?.get(i) ?: defaultStyle.colors[i]) }
@@ -2200,7 +2203,7 @@ interface imgui_demoDebugInfo {
         val outputDest = intArrayOf(0)
         val outputOnlyModified = booleanArrayOf(false)
 
-        var colorEditFlags = intArrayOf(ColorEditFlags.RGB.i)
+        var colorFlags = intArrayOf(ColorEditFlags.RGB.i)
 
         val filter = TextFilter()
 

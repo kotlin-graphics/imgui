@@ -1567,7 +1567,7 @@ interface imgui_internal {
         val cr = F32_TO_INT8_SAT(col[0])
         val cg = F32_TO_INT8_SAT(col[1])
         val cb = F32_TO_INT8_SAT(col[2])
-        val ca = if (flags has (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)) 255 else F32_TO_INT8_SAT(col[3])
+        val ca = if (flags has ColorEditFlags.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
         beginTooltipEx(true)
 
         val textEnd = if (text.isEmpty()) findRenderedTextEnd(text) else 0
@@ -1576,7 +1576,7 @@ interface imgui_internal {
             separator()
         }
         val sz = Vec2(g.fontSize * 3)
-        val f = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.HalfAlphaPreview)) or ColorEditFlags.NoTooltip
+        val f = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf)) or ColorEditFlags.NoTooltip
         colorButton("##preview", Vec4(col), f, sz)
         sameLine()
         if (flags has ColorEditFlags.NoAlpha)

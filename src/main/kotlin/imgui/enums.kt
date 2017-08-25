@@ -349,26 +349,27 @@ enum class ColorEditFlags(val i: Int) {
     /** ColorEdit, ColorPicker, ColorButton: display values formatted as 0.0f..1.0f floats instead of 0..255 integers.
      *  No round-trip of value via integers.  */
     Float(1 shl 3),
-    /** ColorPicker: Show vertical alpha bar/gradient.  */
+    /** ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker. */
     AlphaBar(1 shl 4),
+    /** ColorEdit, ColorPicker, ColorButton: display preview as a transparent color over a checkerboard, instead of opaque. */
+    AlphaPreview(1 shl 5),
+    /** ColorEdit, ColorPicker, ColorButton: display half opaque / half checkerboard    */
+    AlphaPreviewHalf(1 shl 6),
     /** ColorEdit, ColorPicker, ColorButton: completely ignore Alpha component (read 3 components). */
-    NoAlpha(1 shl 5),
-    /** ColorEdit, ColorPicker, ColorButton: do not display transparent colors over a checkerboard, always display the
-     *  preview as opaque.  */
-    NoAlphaPreview(1 shl 6),
+    NoAlpha(1 shl 7),
     /** ColorEdit: disable picker when clicking on colored square.  */
-    NoPicker(1 shl 7),
+    NoPicker(1 shl 8),
     /** ColorEdit: disable toggling options menu when right-clicking on colored square. */
-    NoOptions(1 shl 8),
+    NoOptions(1 shl 9),
     /** ColorEdit, ColorPicker: disable colored square. */
-    NoColorSquare(1 shl 9),
+    NoColorSquare(1 shl 10),
     /** ColorEdit, ColorPicker: disable inputs sliders/text widgets, show only the colored square.  */
-    NoInputs(1 shl 10),
+    NoInputs(1 shl 12),
     /** ColorEdit, ColorButton: disable tooltip when hovering the colored square.   */
-    NoTooltip(1 shl 11),
+    NoTooltip(1 shl 13),
     /** ColorEdit, ColorPicker: disable display of inline text label (the label is still used in tooltip and picker).   */
-    NoLabel(1 shl 12),
-    HalfAlphaPreview(1 shl 13),
+    NoLabel(1 shl 14),
+    NoRefColor(1 shl 15),
     ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX),
     StoredMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.Float);
 
