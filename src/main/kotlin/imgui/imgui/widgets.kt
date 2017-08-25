@@ -603,8 +603,8 @@ interface imgui_widgets {
         // If we're not showing any slider there's no point in querying color mode, nor showing the options menu, nor doing any HSV conversions
             flags has ColorEditFlags.NoInputs -> (flags and ColorEditFlags.ModeMask_.inv()) or ColorEditFlags.RGB or ColorEditFlags.NoOptions
         // Read back edit mode from persistent storage
-            flags hasnt ColorEditFlags.NoOptions -> (flags and ColorEditFlags.ModeMask_.inv()) or
-                    ((g.colorEditModeStorage[id] ?: (flags and ColorEditFlags.ModeMask_)) and ColorEditFlags.ModeMask_)
+            flags hasnt ColorEditFlags.NoOptions -> (flags and ColorEditFlags.StoredMask_.inv()) or
+                    ((g.colorEditModeStorage[id] ?: (flags and ColorEditFlags.StoredMask_)) and ColorEditFlags.StoredMask_)
             else -> flags
         }
 
