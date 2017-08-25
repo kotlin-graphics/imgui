@@ -896,9 +896,9 @@ interface imgui_widgets {
         drawList.addRectFilledMultiColor(pickerPos, pickerPos + Vec2(svPickerSize), COL32_BLACK_TRANS, COL32_BLACK_TRANS, COL32_BLACK, COL32_BLACK)
         renderFrameBorder(pickerPos, pickerPos + Vec2(svPickerSize), 0f)
 
-        // Render cross-hair
+        // Render cross-hair (clamp S/V within 0..1 range because floating points colors may lead HSV values to be out of range)
         val CROSSHAIR_SIZE = 7f
-        val p = Vec2((pickerPos.x + s * svPickerSize + 0.5f).i.f, (pickerPos.y + (1 - v) * svPickerSize + 0.5f).i.f)
+        val p = Vec2((pickerPos.x + saturate(s) * svPickerSize + 0.5f).i.f, (pickerPos.y + saturate(1 - v) * svPickerSize + 0.5f).i.f)
         drawList.addLine(Vec2(p.x - CROSSHAIR_SIZE, p.y), Vec2(p.x - 2, p.y), COL32_WHITE)
         drawList.addLine(Vec2(p.x + CROSSHAIR_SIZE, p.y), Vec2(p.x + 2, p.y), COL32_WHITE)
         drawList.addLine(Vec2(p.x, p.y + CROSSHAIR_SIZE), Vec2(p.x, p.y + 2), COL32_WHITE)
