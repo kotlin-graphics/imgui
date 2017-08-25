@@ -103,11 +103,11 @@ interface imgui_widgetsDrag {
 
     /** If v_min >= v_max we have no bound
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
-    fun dragInt(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f"): Boolean {
+    fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f"): Boolean {
 
-        val vF = floatArrayOf(v[0].f)
+        val vF = floatArrayOf(v[ptr].f)
         val valueChanged = dragFloat(label, vF, vSpeed, vMin.f, vMax.f, displayFormat)
-        v[0] = vF[0].i
+        v[ptr] = vF[0].i
         return valueChanged
     }
 //    IMGUI_API bool          DragInt2(const char* label, int v[2], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* display_format = "%.0f");

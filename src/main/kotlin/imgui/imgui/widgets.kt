@@ -25,6 +25,7 @@ import imgui.ImGui.colorConvertRGBtoHSV
 import imgui.ImGui.colorTooltip
 import imgui.ImGui.currentWindow
 import imgui.ImGui.cursorScreenPos
+import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
@@ -617,6 +618,7 @@ interface imgui_widgets {
         val i = IntArray(4, { F32_TO_INT8_UNBOUND(f[it]) })
 
         var valueChanged = false
+        var valueChangedAsFloat = false
 
         beginGroup()
         pushId(label)
@@ -629,13 +631,16 @@ interface imgui_widgets {
 
             val hidePrefix = wItemOne <= calcTextSize("M:999").x
             val ids = arrayOf("##X", "##Y", "##Z", "##W")
-            val fmtTable = arrayOf(
+            val fmtTableInt = arrayOf(
                     arrayOf("%3.0f", "%3.0f", "%3.0f", "%3.0f"),             // Short display
                     arrayOf("R:%3.0f", "G:%3.0f", "B:%3.0f", "A:%3.0f"),     // Long display for RGBA
-                    arrayOf("H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f"))     // Long display for HSVV
-            val fmt = if (hidePrefix) fmtTable[0] else if (flags has ColorEditFlags.HSV) fmtTable[2] else fmtTable[1]
+                    arrayOf("H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f"))     // Long display for HSVA
+            val fmtTableFloat = arrayOf(
+                    arrayOf("%0.3f", "%0.3f", "%0.3f", "%0.3f"), // Short display
+                    arrayOf("R:%0.3f", "G:%0.3f", "B:%0.3f", "A:%0.3f"), // Long display for RGBA
+                    arrayOf("H:%0.3f", "S:%0.3f", "V:%0.3f", "A:%0.3f"))  // Long display for HSVA
+            val fmtIdx = if (hidePrefix) 0 else if (flags has ColorEditFlags.HSV) 2 else 1
 
-            pushItemWidth(wItemOne)
             pushItemWidth(wItemOne)
             for (n in 0 until components) {
                 if (n > 0)
@@ -643,8 +648,11 @@ interface imgui_widgets {
                 if (n + 1 == components)
                     pushItemWidth(wItemLast)
                 val int = intArrayOf(i[n])
-                valueChanged = valueChanged or dragInt(ids[n], int, 1f, 0, 255, fmt[n])
-                i[n] = int[0]
+                if (flags has ColorEditFlags.Float) {
+                    valueChangedAsFloat = valueChangedAsFloat or dragFloat(ids[n], f, n, 1f / 255f, 0f, 1f, fmtTableFloat[fmtIdx][n])
+                    valueChanged = valueChanged or valueChangedAsFloat
+                } else
+                    valueChanged = valueChanged or dragInt(ids[n], i, n, 1f, 0, 255, fmtTableInt[fmtIdx][n])
             }
             popItemWidth()
             popItemWidth()
@@ -690,9 +698,11 @@ interface imgui_widgets {
                     textUnformatted(label, labelDisplayEnd)
                     separator()
                 }
-                pushItemWidth(colorSquareSize * 12f)
-                valueChanged = valueChanged or colorPicker4("##picker", col, (flags and ColorEditFlags.NoAlpha) or
-                        (ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX))
+                val squareSz = colorSquareSize
+                val pickerFlags = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.Float)) or
+                        (ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX) or ColorEditFlags.NoLabel
+                pushItemWidth(squareSz * 12f)
+                valueChanged = valueChanged or colorPicker4("##picker", col, pickerFlags)
                 popItemWidth()
                 endPopup()
             }
@@ -719,8 +729,9 @@ interface imgui_widgets {
 
         // Convert back
         if (!pickerActive) {
-            for (n in 0..3)
-                f[n] = i[n] / 255f
+            if (!valueChangedAsFloat)
+                for (n in 0..3)
+                    f[n] = i[n] / 255f
             if (flags has ColorEditFlags.HSV)
                 f.hsvToRGB()
             if (valueChanged) {
@@ -829,8 +840,8 @@ interface imgui_widgets {
             if (flags hasnt ColorEditFlags.ModeMask_)
                 flags = flags or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX
             pushItemWidth((if (alphaBar) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
-            val subFlags = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.NoColorSquare)) or ColorEditFlags.NoPicker or
-                    ColorEditFlags.NoOptions or ColorEditFlags.NoTooltip
+            val subFlags = (flags and (ColorEditFlags.Float or ColorEditFlags.NoAlpha or ColorEditFlags.NoColorSquare)) or
+                    ColorEditFlags.NoPicker or ColorEditFlags.NoOptions or ColorEditFlags.NoTooltip
             if (flags has ColorEditFlags.RGB)
                 valueChanged = valueChanged or colorEdit4("##rgb", col, subFlags or ColorEditFlags.RGB)
             if (flags has ColorEditFlags.HSV)

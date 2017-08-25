@@ -362,7 +362,9 @@ enum class ColorEditFlags(val i: Int) {
     NoLabel(1 shl 9),
     /** ColorPicker: Show vertical alpha bar/gradient   */
     AlphaBar(1 shl 10),
-    ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX);
+    /** ColorEdit, ColorPicker: display values formatted as 0.0f..1.0f floats instead of 0..255 integers    */
+    ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX),
+    Float(1 shl 11);
 
     fun inv() = i.inv()
 }
