@@ -368,6 +368,7 @@ enum class ColorEditFlags(val i: Int) {
     NoTooltip(1 shl 11),
     /** ColorEdit, ColorPicker: disable display of inline text label (the label is still used in tooltip and picker).   */
     NoLabel(1 shl 12),
+    HalfAlphaPreview(1 shl 13),
     ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX),
     StoredMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.Float);
 

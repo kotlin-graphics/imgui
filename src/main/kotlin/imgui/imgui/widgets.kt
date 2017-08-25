@@ -1,6 +1,7 @@
 package imgui.imgui
 
 import gli.has
+import gli.hasnt
 import glm_.f
 import glm_.glm
 import glm_.i
@@ -563,8 +564,21 @@ interface imgui_widgets {
         if (!itemAdd(bb, id)) return false
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
-        val gridStep = glm.min(g.fontSize, glm.min(size.x, size.y) * 0.5f)
-        val col = if(flags has (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)) Vec4(col.x, col.y, col.z, 1f) else col
+
+        val midX = ((bb.min.x + bb.max.x) * 0.5f).i.f
+        val gridStep = glm.max((bb.max.x - midX) * 0.5f, glm.min(size.x, size.y) * 0.5f)
+        val colWithoutAlpha = Vec4(col.x, col.y, col.z, 1f)
+        if (flags has ColorEditFlags.HalfAlphaPreview && flags hasnt (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)
+                && col.w < 1f) {
+            window.drawList.addRectFilled(bb.min, Vec2(midX, bb.max.y), getColorU32(colWithoutAlpha), style.frameRounding,
+                    Corner.TopLeft or Corner.BottomLeft)
+            renderColorRectWithAlphaCheckerboard(Vec2(midX, bb.min.y), bb.max, getColorU32(col), gridStep, style.frameRounding,
+                    Corner.TopRight or Corner.BottomRight)
+        } else {
+            val c = if (flags has (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)) colWithoutAlpha else col
+            renderColorRectWithAlphaCheckerboard(bb.min, bb.max, getColorU32(c), gridStep, style.frameRounding)
+        }
+
         renderColorRectWithAlphaCheckerboard(bb.min, bb.max, getColorU32(col), gridStep, style.frameRounding)
         renderFrameBorder(bb.min, bb.max, style.frameRounding)
 
