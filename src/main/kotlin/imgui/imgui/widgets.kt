@@ -262,7 +262,7 @@ interface imgui_widgets {
     /** button  */
     fun button(label: String, sizeArg: Vec2 = Vec2()) = buttonEx(label, sizeArg, 0)
 
-    /** button with FramePadding = (0,0)
+    /** button with FramePadding = (0,0) to easily embed in text
      *  Small buttons fits within text without additional vertical spacing.     */
     fun smallButton(label: String): Boolean {
         val backupPaddingY = style.framePadding.y
@@ -548,7 +548,7 @@ interface imgui_widgets {
         return valueChanged
     }
 
-    /** A little colored square. Return true when clicked.
+    /**  display a colored square/button, hover for details, return true when pressed.
      *  FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip.
      *  'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.    */
     fun colorButton(descId: String, col: Vec4, flags: Int = 0, size: Vec2 = Vec2()): Boolean {
@@ -580,7 +580,7 @@ interface imgui_widgets {
         return pressed
     }
 
-    /** click on colored squared to open a color picker, right-click for options.
+    /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
      *  Hint: 'float col[3]' function argument is same as 'float* col'.
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
     fun colorEdit3(label: String, col: FloatArray, flags: Int = 0) = colorEdit4(label, col, flags or ColorEditFlags.NoAlpha)
