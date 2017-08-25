@@ -584,7 +584,7 @@ interface imgui_widgets {
 
         if (hovered && flags hasnt ColorEditFlags.NoTooltip) {
             val pF = floatArrayOf(col.x)
-            colorTooltip(descId, pF, flags and (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview))
+            colorTooltip(descId, pF, flags and (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview or ColorEditFlags.HalfAlphaPreview))
             col.x = pF[0]
         }
 

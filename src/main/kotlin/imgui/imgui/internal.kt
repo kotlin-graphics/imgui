@@ -14,6 +14,7 @@ import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.colorButton
 import imgui.ImGui.contentRegionMax
 import imgui.ImGui.dummy
 import imgui.ImGui.endChildFrame
@@ -1556,15 +1557,15 @@ interface imgui_internal {
         val cb = F32_TO_INT8_SAT(col[2])
         val ca = if (flags has (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)) 255 else F32_TO_INT8_SAT(col[3])
         beginTooltipEx(true)
-        val window = currentWindow
+
         val textEnd = if (text.isEmpty()) findRenderedTextEnd(text) else 0
         if (textEnd > 0) {
             textUnformatted(text, textEnd)
             separator()
         }
         val sz = Vec2(g.fontSize * 3)
-        renderColorRectWithAlphaCheckerboard(window.dc.cursorPos, window.dc.cursorPos + sz, COL32(cr, cg, cb, ca), g.fontSize, style.frameRounding)
-        dummy(sz)
+        val f = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.HalfAlphaPreview)) or ColorEditFlags.NoTooltip
+        colorButton("##preview", Vec4(col), f, sz)
         sameLine()
         if (flags has ColorEditFlags.NoAlpha)
             text("#%02X%02X%02X\nR: $cr, G: $cg, B: $cb\n(%.3f, %.3f, %.3f, %.3f)", cr, cg, cb, col[0], col[1], col[2])
