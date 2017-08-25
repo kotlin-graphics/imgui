@@ -1543,7 +1543,7 @@ interface imgui_internal {
         val cr = F32_TO_INT8_SAT(col[0])
         val cg = F32_TO_INT8_SAT(col[1])
         val cb = F32_TO_INT8_SAT(col[2])
-        val ca = if (flags has ColorEditFlags.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
+        val ca = if (flags has (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)) 255 else F32_TO_INT8_SAT(col[3])
         beginTooltipEx(true)
         val window = currentWindow
         val textEnd = if (text.isEmpty()) findRenderedTextEnd(text) else 0
@@ -1552,7 +1552,7 @@ interface imgui_internal {
             separator()
         }
         val sz = Vec2(g.fontSize * 3)
-        renderColorRectWithAlphaGrid(window.dc.cursorPos, window.dc.cursorPos + sz, IM_COL32(cr, cg, cb, ca), g.FontSize, g.Style.FrameRounding)
+        renderColorRectWithAlphaGrid(window.dc.cursorPos, window.dc.cursorPos + sz, COL32(cr, cg, cb, ca), g.fontSize, style.frameRounding)
         dummy(sz)
         sameLine()
         if (flags has ColorEditFlags.NoAlpha)

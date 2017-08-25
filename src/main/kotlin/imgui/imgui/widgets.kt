@@ -568,12 +568,13 @@ interface imgui_widgets {
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
         val gridStep = glm.min(g.fontSize, glm.min(size.x, size.y) * 0.5f)
+        val col = if(flags has (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)) Vec4(col.x, col.y, col.z, 1f) else col
         renderColorRectWithAlphaGrid(bb.min, bb.max, getColorU32(col), gridStep, style.frameRounding)
         renderFrameBorder(bb.min, bb.max, style.frameRounding)
 
         if (hovered && flags hasnt ColorEditFlags.NoTooltip) {
             val pF = floatArrayOf(col.x)
-            colorTooltip(descId, pF, flags and ColorEditFlags.NoAlpha)
+            colorTooltip(descId, pF, flags and (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview))
             col.x = pF[0]
         }
 

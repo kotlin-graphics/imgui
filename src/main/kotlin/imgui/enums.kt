@@ -333,7 +333,7 @@ enum class StyleVar {
     val i = ordinal
 }
 
-/** Enumeration for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4()   */
+/** Enumeration for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()   */
 enum class ColorEditFlags(val i: Int) {
 
     Null(0),
@@ -346,25 +346,28 @@ enum class ColorEditFlags(val i: Int) {
     /** ColorEdit: Default to one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose
      *  any combination or RGB/HSV/HEX. */
     HEX(1 shl 2),
-    /** ColorEdit, ColorPicker: display values formatted as 0.0f..1.0f floats instead of 0..255 integers. No round-trip
-     *  of value via integers.  */
+    /** ColorEdit, ColorPicker, ColorButton: display values formatted as 0.0f..1.0f floats instead of 0..255 integers.
+     *  No round-trip of value via integers.  */
     Float(1 shl 3),
     /** ColorPicker: Show vertical alpha bar/gradient.  */
     AlphaBar(1 shl 4),
-    /** ColorEdit, ColorPicker: show/edit Alpha component.  */
+    /** ColorEdit, ColorPicker, ColorButton: completely ignore Alpha component (read 3 components). */
     NoAlpha(1 shl 5),
-    /** ColorEdit: Disable picker when clicking on colored square   */
-    NoPicker(1 shl 6),
-    /** ColorEdit: Disable toggling options menu when right-clicking colored square */
-    NoOptions(1 shl 7),
-    /** ColorEdit, ColorPicker: Disable colored square. */
-    NoColorSquare(1 shl 8),
-    /** ColorEdit, ColorPicker: Disable inputs sliders/text widgets, show only the colored square.  */
-    NoInputs(1 shl 9),
-    /** ColorEdit, ColorButton: Disable tooltip when hovering the colored square.   */
-    NoTooltip(1 shl 10),
-    /** ColorEdit: Disable display of inline text label (the label is still used in tooltip and picker) */
-    NoLabel(1 shl 11),
+    /** ColorEdit, ColorPicker, ColorButton: do not display transparent colors over a checkerboard, always display the
+     *  preview as opaque.  */
+    NoAlphaPreview(1 shl 6),
+    /** ColorEdit: disable picker when clicking on colored square.  */
+    NoPicker(1 shl 7),
+    /** ColorEdit: disable toggling options menu when right-clicking on colored square. */
+    NoOptions(1 shl 8),
+    /** ColorEdit, ColorPicker: disable colored square. */
+    NoColorSquare(1 shl 9),
+    /** ColorEdit, ColorPicker: disable inputs sliders/text widgets, show only the colored square.  */
+    NoInputs(1 shl 10),
+    /** ColorEdit, ColorButton: disable tooltip when hovering the colored square.   */
+    NoTooltip(1 shl 11),
+    /** ColorEdit, ColorPicker: disable display of inline text label (the label is still used in tooltip and picker).   */
+    NoLabel(1 shl 12),
     ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX),
     StoredMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.Float);
 
