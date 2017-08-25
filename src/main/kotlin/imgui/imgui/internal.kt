@@ -42,7 +42,6 @@ import imgui.ImGui.textUnformatted
 import imgui.TextEditState.K
 import imgui.imgui.imgui_tooltips.Companion.beginTooltipEx
 import imgui.internal.*
-import java.awt.SystemColor.text
 import java.util.*
 import kotlin.apply
 import imgui.Context as g
@@ -424,25 +423,39 @@ interface imgui_internal {
         }
     }
 
-    fun renderColorRectWithAlphaGrid(pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float, rounding: Float = 0f) {
+    fun renderColorRectWithAlphaCheckerboard(pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float, rounding: Float = 0f,
+                                             roundingCornerFlagsParent: Int = 0.inv()) {
         val window = currentWindow
         if (((col and COL32_A_MASK) ushr COL32_A_SHIFT) < 0xFF) {
+            // We use rounding+1 here which is counterintuitive but it inhibit mosts of the edge artifacts with overlayed rounded shapes
             val colBg1 = getColorU32(COL32(204, 204, 204, 255))
             val colBg2 = getColorU32(COL32(128, 128, 128, 255))
-            window.drawList.addRectFilled(pMin, pMax, colBg1, rounding)
-            var yi = 0
-            var y = pMin.y
-            while (y < pMax.y) {
-                var x = pMin.x + (if (yi has 1) gridStep else 0f)
-                while (x < pMax.x) {
-                    window.drawList.addRectFilled(Vec2(x, y), glm.min(Vec2(x + gridStep, y + gridStep), pMax), colBg2, 0f)
-                    x += gridStep * 2
+            window.drawList.addRectFilled(pMin, pMax, colBg1, rounding + 1, roundingCornerFlagsParent)
+            val xCount = ((pMax.x - pMin.x) / gridStep + 0.99f).i
+            val yCount = ((pMax.y - pMin.y) / gridStep + 0.99f).i
+            for (y in 0 until yCount) {
+                for (x in (y and 1) xor 1 until xCount step 2) {
+                    var roundingCornersFlags = 0
+                    if (y == 0)
+                        roundingCornersFlags = roundingCornersFlags or when (x) {
+                            0 -> Corner.TopLeft
+                            xCount - 1 -> Corner.TopRight
+                            else -> Corner.Null
+                        }
+                    else if (y == yCount - 1)
+                        roundingCornersFlags = roundingCornersFlags or when (x) {
+                            0 -> Corner.BottomLeft
+                            xCount - 1 -> Corner.BottomRight
+                            else -> Corner.Null
+                        }
+                    roundingCornersFlags = roundingCornersFlags and roundingCornerFlagsParent
+                    val p1 = Vec2(pMin.x + x * gridStep, pMin.y + y * gridStep)
+                    val p2 = Vec2(glm.min(p1.x + gridStep, pMax.x), glm.min(p1.y + gridStep, pMax.y))
+                    window.drawList.addRectFilled(p1, p2, colBg2, if (roundingCornersFlags != 0) rounding + 1 else 0f, roundingCornersFlags)
                 }
-                y += gridStep
-                yi++
             }
         }
-        window.drawList.addRectFilled(pMin, pMax, col, rounding)
+        window.drawList.addRectFilled(pMin, pMax, col, rounding, roundingCornerFlagsParent)
     }
 
     /** Render a triangle to denote expanded/collapsed state    */
@@ -1552,7 +1565,7 @@ interface imgui_internal {
             separator()
         }
         val sz = Vec2(g.fontSize * 3)
-        renderColorRectWithAlphaGrid(window.dc.cursorPos, window.dc.cursorPos + sz, COL32(cr, cg, cb, ca), g.fontSize, style.frameRounding)
+        renderColorRectWithAlphaCheckerboard(window.dc.cursorPos, window.dc.cursorPos + sz, COL32(cr, cg, cb, ca), g.fontSize, style.frameRounding)
         dummy(sz)
         sameLine()
         if (flags has ColorEditFlags.NoAlpha)

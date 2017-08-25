@@ -8,7 +8,6 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
-import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.F32_TO_INT8_UNBOUND
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginPopup
@@ -31,7 +30,6 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusWindow
-import imgui.ImGui.fontSize
 import imgui.ImGui.getColorU32
 import imgui.ImGui.hsvToRGB
 import imgui.ImGui.inputText
@@ -56,7 +54,7 @@ import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderCollapseTriangle
-import imgui.ImGui.renderColorRectWithAlphaGrid
+import imgui.ImGui.renderColorRectWithAlphaCheckerboard
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderText
@@ -70,10 +68,8 @@ import imgui.ImGui.setHoveredId
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHere
-import imgui.ImGui.setTooltip
 import imgui.ImGui.spacing
 import imgui.ImGui.textLineHeight
-import imgui.ImGui.windowDrawList
 import imgui.imgui.imgui_internal.Companion.colorSquareSize
 import imgui.internal.*
 import imgui.Context as g
@@ -569,7 +565,7 @@ interface imgui_widgets {
         val (pressed, hovered, held) = buttonBehavior(bb, id)
         val gridStep = glm.min(g.fontSize, glm.min(size.x, size.y) * 0.5f)
         val col = if(flags has (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)) Vec4(col.x, col.y, col.z, 1f) else col
-        renderColorRectWithAlphaGrid(bb.min, bb.max, getColorU32(col), gridStep, style.frameRounding)
+        renderColorRectWithAlphaCheckerboard(bb.min, bb.max, getColorU32(col), gridStep, style.frameRounding)
         renderFrameBorder(bb.min, bb.max, style.frameRounding)
 
         if (hovered && flags hasnt ColorEditFlags.NoTooltip) {
@@ -772,12 +768,10 @@ interface imgui_widgets {
         return true
     }
 
-    /** ColorPicker v2.60 WIP, see https://github.com/ocornut/imgui/issues/346
-     *  TODO:
-     *  -   Missing color square
-     *  -   English strings in context menu (see FIXME-LOCALIZATION)
-     *  Note: we adjust item height based on item widget, which may cause a flickering feedback loop (if automatic
-     *  height makes a vertical scrollbar appears, affecting automatic width..)  */
+    /** ColorPicker
+     *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
+     *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
+     *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)   */
     fun colorPicker4(label: String, col: FloatArray, flags: Int = 0): Boolean {
 
         val window = currentWindow

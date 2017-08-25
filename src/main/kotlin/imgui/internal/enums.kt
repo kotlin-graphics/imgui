@@ -76,6 +76,7 @@ enum class DataType {
 }
 
 enum class Corner(val i: Int) {
+    Null(0),
     TopLeft(1 shl 0), // 1
     TopRight(1 shl 1), // 2
     BottomRight(1 shl 2), // 4
@@ -86,4 +87,5 @@ enum class Corner(val i: Int) {
     infix fun or(b: Int) = i or b
 }
 
+infix fun Int.or(b: Corner) = this or b.i
 infix fun Int.has(b: Corner) = (this and b.i) != 0
