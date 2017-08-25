@@ -560,7 +560,7 @@ interface imgui_widgets {
         if (size.y == 0f)
             size.y = defaultSize
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        itemSize(bb, glm.min((size.y - g.fontSize) * 0.5f, style.framePadding.y))
+        itemSize(bb)//, glm.min((size.y - g.fontSize) * 0.5f, style.framePadding.y))
         if (!itemAdd(bb, id)) return false
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
