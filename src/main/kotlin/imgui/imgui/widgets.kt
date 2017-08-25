@@ -563,7 +563,7 @@ interface imgui_widgets {
         if (size.y == 0f)
             size.y = defaultSize
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        itemSize(bb)
+        itemSize(bb, glm.min((size.y - g.fontSize) * 0.5f, style.framePadding.y))
         if (!itemAdd(bb, id)) return false
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
@@ -687,10 +687,10 @@ interface imgui_widgets {
             if (flags hasnt ColorEditFlags.NoInputs)
                 sameLine(0f, style.itemInnerSpacing.x)
 
-            val colDisplay = Vec4(col[0], col[1], col[2], if(alpha) col[3] else 1f) // 1.0f
+            val colDisplay = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f) // 1.0f
             if (colorButton("##ColorButton", colDisplay, flags)) {
                 if (flags hasnt ColorEditFlags.NoPicker) {
-                    g.colorPickerRef.put(col[0], col[1], col[2], if(alpha) col[3] else 1f)
+                    g.colorPickerRef.put(col[0], col[1], col[2], if (alpha) col[3] else 1f)
                     openPopup("picker")
                     setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
                 }
