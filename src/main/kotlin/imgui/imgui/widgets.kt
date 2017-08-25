@@ -560,27 +560,26 @@ interface imgui_widgets {
         if (size.y == 0f)
             size.y = defaultSize
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        itemSize(bb)//, glm.min((size.y - g.fontSize) * 0.5f, style.framePadding.y))
+        itemSize(bb)
         if (!itemAdd(bb, id)) return false
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
 
-        val midX = ((bb.min.x + bb.max.x) * 0.5f).i.f
-        val gridStep = glm.max((bb.max.x - midX) * 0.5f, glm.min(size.x, size.y) * 0.5f)
         val colWithoutAlpha = Vec4(col.x, col.y, col.z, 1f)
+        val gridStep = glm.min(size.x, size.y) / 2f
+        val rounding = glm.min(style.frameRounding, gridStep * 0.5f)
         if (flags has ColorEditFlags.HalfAlphaPreview && flags hasnt (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)
                 && col.w < 1f) {
-            window.drawList.addRectFilled(bb.min, Vec2(midX, bb.max.y), getColorU32(colWithoutAlpha), style.frameRounding,
+            val midX = ((bb.min.x + bb.max.x) * 0.5f + 0.5f).i.f
+            renderColorRectWithAlphaCheckerboard(Vec2(bb.min.x + gridStep, bb.min.y), bb.max, getColorU32(col), gridStep,
+                    Vec2(-gridStep, 0f), rounding, Corner.TopRight or Corner.BottomRight)
+            window.drawList.addRectFilled(bb.min, Vec2(midX, bb.max.y), getColorU32(colWithoutAlpha), rounding,
                     Corner.TopLeft or Corner.BottomLeft)
-            renderColorRectWithAlphaCheckerboard(Vec2(midX, bb.min.y), bb.max, getColorU32(col), gridStep, style.frameRounding,
-                    Corner.TopRight or Corner.BottomRight)
         } else {
             val c = if (flags has (ColorEditFlags.NoAlpha or ColorEditFlags.NoAlphaPreview)) colWithoutAlpha else col
-            renderColorRectWithAlphaCheckerboard(bb.min, bb.max, getColorU32(c), gridStep, style.frameRounding)
+            renderColorRectWithAlphaCheckerboard(bb.min, bb.max, getColorU32(c), gridStep, Vec2(), rounding)
         }
-
-        renderColorRectWithAlphaCheckerboard(bb.min, bb.max, getColorU32(col), gridStep, style.frameRounding)
-        renderFrameBorder(bb.min, bb.max, style.frameRounding)
+        renderFrameBorder(bb.min, bb.max, rounding)
 
         if (hovered && flags hasnt ColorEditFlags.NoTooltip) {
             val pF = floatArrayOf(col.x)
