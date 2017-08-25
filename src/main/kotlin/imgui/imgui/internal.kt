@@ -19,6 +19,7 @@ import imgui.ImGui.dummy
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endTooltip
+import imgui.ImGui.getColorU32
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.indent
 import imgui.ImGui.inputText
@@ -39,6 +40,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.TextEditState.K
+import imgui.imgui.imgui_tooltips.Companion.beginTooltipEx
 import imgui.internal.*
 import java.awt.SystemColor.text
 import java.util.*
@@ -415,11 +417,32 @@ interface imgui_internal {
         }
     }
 
-    fun renderFrameBorder(pMin: Vec2, pMax: Vec2, rounding: Float = 0f) = with(currentWindow){
+    fun renderFrameBorder(pMin: Vec2, pMax: Vec2, rounding: Float = 0f) = with(currentWindow) {
         if (flags has WindowFlags.ShowBorders) {
             drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding)
             drawList.addRect(pMin, pMax, Col.Border.u32, rounding)
         }
+    }
+
+    fun renderColorRectWithAlphaGrid(pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float, rounding: Float = 0f) {
+        val window = currentWindow
+        if (((col and COL32_A_MASK) ushr COL32_A_SHIFT) < 0xFF) {
+            val colBg1 = getColorU32(COL32(204, 204, 204, 255))
+            val colBg2 = getColorU32(COL32(128, 128, 128, 255))
+            window.drawList.addRectFilled(pMin, pMax, colBg1, rounding)
+            var yi = 0
+            var y = pMin.y
+            while (y < pMax.y) {
+                var x = pMin.x + (if (yi has 1) gridStep else 0f)
+                while (x < pMax.x) {
+                    window.drawList.addRectFilled(Vec2(x, y), glm.min(Vec2(x + gridStep, y + gridStep), pMax), colBg2, 0f)
+                    x += gridStep * 2
+                }
+                y += gridStep
+                yi++
+            }
+        }
+        window.drawList.addRectFilled(pMin, pMax, col, rounding)
     }
 
     /** Render a triangle to denote expanded/collapsed state    */
@@ -1521,7 +1544,7 @@ interface imgui_internal {
         val cg = F32_TO_INT8_SAT(col[1])
         val cb = F32_TO_INT8_SAT(col[2])
         val ca = if (flags has ColorEditFlags.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
-        imgui_tooltips.beginTooltipEx(true)
+        beginTooltipEx(true)
         val window = currentWindow
         val textEnd = if (text.isEmpty()) findRenderedTextEnd(text) else 0
         if (textEnd > 0) {
@@ -1529,7 +1552,7 @@ interface imgui_internal {
             separator()
         }
         val sz = Vec2(g.fontSize * 3)
-        window.drawList.addRectFilled(window.dc.cursorPos, window.dc.cursorPos + sz, COL32(cr, cg, cb, 255))
+        renderColorRectWithAlphaGrid(window.dc.cursorPos, window.dc.cursorPos + sz, IM_COL32(cr, cg, cb, ca), g.FontSize, g.Style.FrameRounding)
         dummy(sz)
         sameLine()
         if (flags has ColorEditFlags.NoAlpha)

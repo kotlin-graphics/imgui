@@ -56,6 +56,7 @@ import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderCollapseTriangle
+import imgui.ImGui.renderColorRectWithAlphaGrid
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderText
@@ -556,16 +557,19 @@ interface imgui_widgets {
         if (window.skipItems) return false
 
         val id = window.getId(descId)
+        val defaultSize = colorSquareSize
         if (size.x == 0f)
-            size.x = colorSquareSize
+            size.x = defaultSize
         if (size.y == 0f)
-            size.y = colorSquareSize
+            size.y = defaultSize
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         itemSize(bb)
         if (!itemAdd(bb, id)) return false
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
-        renderFrame(bb.min, bb.max, getColorU32(col), true, style.frameRounding)
+        val gridStep = glm.min(g.fontSize, glm.min(size.x, size.y) * 0.5f)
+        renderColorRectWithAlphaGrid(bb.min, bb.max, getColorU32(col), gridStep, style.frameRounding)
+        renderFrameBorder(bb.min, bb.max, style.frameRounding)
 
         if (hovered && flags hasnt ColorEditFlags.NoTooltip) {
             val pF = floatArrayOf(col.x)
@@ -683,9 +687,10 @@ interface imgui_widgets {
             if (flags hasnt ColorEditFlags.NoInputs)
                 sameLine(0f, style.itemInnerSpacing.x)
 
-            val colDisplay = Vec4(col[0], col[1], col[2], 1f)
+            val colDisplay = Vec4(col[0], col[1], col[2], if(alpha) col[3] else 1f) // 1.0f
             if (colorButton("##ColorButton", colDisplay, flags)) {
                 if (flags hasnt ColorEditFlags.NoPicker) {
+                    g.colorPickerRef.put(col[0], col[1], col[2], if(alpha) col[3] else 1f)
                     openPopup("picker")
                     setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
                 }

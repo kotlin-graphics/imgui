@@ -148,6 +148,8 @@ object Context {
     var scalarAsInputTextId = 0
     /** Store user selection of color edit mode */
     val colorEditModeStorage = mutableMapOf<Int, Int>()
+
+    val colorPickerRef = Vec4()
     /** Currently dragged value, always float, not rounded by end-user precision settings   */
     var dragCurrentValue = 0f
 
