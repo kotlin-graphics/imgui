@@ -715,7 +715,7 @@ interface imgui_widgets {
                     separator()
                 }
                 val squareSz = colorSquareSize
-                val pickerFlags = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.Float)) or
+                val pickerFlags = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.HalfAlphaPreview or ColorEditFlags.Float)) or
                         (ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX) or ColorEditFlags.NoLabel
                 pushItemWidth(squareSz * 12f)
                 valueChanged = valueChanged or colorPicker4("##picker", col, pickerFlags)

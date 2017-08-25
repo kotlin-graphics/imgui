@@ -1574,7 +1574,7 @@ interface imgui_demoDebugInfo {
                 if (!filter.passFilter(name)) // TODO fix bug
                     continue
                 withId(i) {
-                    colorEditVec4(name, style.colors[i], colorEditFlags[0] or ColorEditFlags.NoOptions)
+                    colorEditVec4(name, style.colors[i], colorEditFlags[0] or ColorEditFlags.NoOptions or ColorEditFlags.AlphaBar)
                     if (style.colors[i] != (ref?.colors?.get(i) ?: defaultStyle.colors[i])) {
                         sameLine()
                         button("Revert") { style.colors[i] put (ref?.colors?.get(i) ?: defaultStyle.colors[i]) }
