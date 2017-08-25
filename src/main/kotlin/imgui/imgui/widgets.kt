@@ -770,18 +770,14 @@ interface imgui_widgets {
         beginGroup()
 
         // Setup
-        val alpha = flags hasnt ColorEditFlags.NoAlpha
+        val alphaBar = flags has ColorEditFlags.AlphaBar && flags hasnt ColorEditFlags.NoAlpha
         val pickerPos = window.dc.cursorPos // consume only, safe passing reference
         val barsWidth = colorSquareSize     // Arbitrary smallish width of Hue/Alpha picking bars
         val barsLineExtrude = glm.min(2f, style.itemInnerSpacing.x * 0.5f)
         // Saturation/Value picking box
-        val svPickerSize = glm.max(barsWidth * 1, calcItemWidth() - (if (alpha) 2 else 1) * (barsWidth + style.itemInnerSpacing.x))
+        val svPickerSize = glm.max(barsWidth * 1, calcItemWidth() - (if (alphaBar) 2 else 1) * (barsWidth + style.itemInnerSpacing.x))
         val bar0PosX = pickerPos.x + svPickerSize + style.itemInnerSpacing.x
         val bar1PosX = bar0PosX + barsWidth + style.itemInnerSpacing.x
-
-        // Recreate our own tooltip over's ColorButton() one because we want to display correct alpha here
-        //if (IsItemHovered())
-        //    ColorTooltip(col, flags);
 
         var (h, s, v) = colorConvertRGBtoHSV(col)
 
@@ -806,7 +802,7 @@ interface imgui_widgets {
         }
 
         // Alpha bar logic
-        if (alpha) {
+        if (alphaBar) {
             cursorScreenPos = Vec2(bar1PosX, pickerPos.y)
             invisibleButton("alpha", Vec2(barsWidth, svPickerSize))
             if (isItemActive) {
@@ -832,7 +828,7 @@ interface imgui_widgets {
         if (flags hasnt ColorEditFlags.NoInputs) {
             if (flags hasnt ColorEditFlags.ModeMask_)
                 flags = flags or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX
-            pushItemWidth((if (alpha) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
+            pushItemWidth((if (alphaBar) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
             val subFlags = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.NoColorSquare)) or ColorEditFlags.NoPicker or
                     ColorEditFlags.NoOptions or ColorEditFlags.NoTooltip
             if (flags has ColorEditFlags.RGB)
@@ -873,7 +869,7 @@ interface imgui_widgets {
         drawList.addLine(Vec2(bar0PosX - barsLineExtrude, bar0LineY), Vec2(bar0PosX + barsWidth + barsLineExtrude, bar0LineY), COL32_WHITE)
 
         // Render alpha bar
-        if (alpha) {
+        if (alphaBar) {
             val alpha = saturate(col[3])
             val bar1LineY = (pickerPos.y + (1f - alpha) * svPickerSize + 0.5f).i.f
             drawList.addRectFilledMultiColor(Vec2(bar1PosX, pickerPos.y), Vec2(bar1PosX + barsWidth, pickerPos.y + svPickerSize),

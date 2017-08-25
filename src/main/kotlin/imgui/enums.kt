@@ -360,6 +360,8 @@ enum class ColorEditFlags(val i: Int) {
     NoTooltip(1 shl 8),
     /** ColorEdit: Disable display of inline text label (however the label is still used in tooltip and picker) */
     NoLabel(1 shl 9),
+    /** ColorPicker: Show vertical alpha bar/gradient   */
+    AlphaBar(1 shl 10),
     ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX);
 
     fun inv() = i.inv()
