@@ -598,10 +598,11 @@ interface imgui_widgets {
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
     fun colorEdit3(label: String, col: FloatArray, flags: Int = 0) = colorEdit4(label, col, flags or ColorEditFlags.NoAlpha)
 
-    /** Edit colors components (each component in 0.0f..1.0f range)
-     *  Click on colored square to open a color picker (unless ImGuiColorEditFlags_NoPicker is set).
-     *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
-     *  FIXME-OPT: Need to add coarse clipping for the entire widget.   */
+    /** Edit colors components (each component in 0.0f..1.0f range).
+     *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ImGuiColorEditFlags_NoAlpha
+     *  flag is set.
+     *  With typical options: Left-click on colored square to open color picker. Right-click to open option menu.
+     *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
     fun colorEdit4(label: String, col: FloatArray, flags: Int = 0): Boolean {
 
         val window = currentWindow
@@ -859,12 +860,14 @@ interface imgui_widgets {
         // R,G,B and H,S,V slider color editor
         var flags = flags
         if (flags hasnt ColorEditFlags.NoInputs) {
-            if (flags hasnt ColorEditFlags.ModeMask_)
-                flags = flags or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX
             pushItemWidth((if (alphaBar) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
             val subFlagsToForward = ColorEditFlags.Float or ColorEditFlags.NoAlpha or ColorEditFlags.NoColorSquare or
                     ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf
-            val subFlags = (flags and subFlagsToForward) or ColorEditFlags.NoPicker or ColorEditFlags.NoOptions
+            var subFlags = (flags and subFlagsToForward) or ColorEditFlags.NoPicker or ColorEditFlags.NoOptions or ColorEditFlags.NoOptions
+            if (flags hasnt ColorEditFlags.ModeMask_)
+                flags = flags or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX
+            if ((flags and ColorEditFlags.ModeMask_) == ColorEditFlags.ModeMask_.i)
+                subFlags = subFlags or ColorEditFlags.NoOptions
             if (flags has ColorEditFlags.RGB)
                 valueChanged = valueChanged or colorEdit4("##rgb", col, subFlags or ColorEditFlags.RGB)
             if (flags has ColorEditFlags.HSV)
