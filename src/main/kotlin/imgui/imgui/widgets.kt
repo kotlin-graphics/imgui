@@ -699,10 +699,11 @@ interface imgui_widgets {
             if (flags hasnt ColorEditFlags.NoInputs)
                 sameLine(0f, style.itemInnerSpacing.x)
 
-            val colDisplay = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f) // 1.0f
-            if (colorButton("##ColorButton", colDisplay, flags)) {
+            val colVec4 = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f) // 1.0f
+            if (colorButton("##ColorButton", colVec4, flags)) {
                 if (flags hasnt ColorEditFlags.NoPicker) {
-                    g.colorPickerRef.put(col[0], col[1], col[2], if (alpha) col[3] else 1f)
+                    // Store current color and open a picker
+                    g.colorPickerRef put colVec4
                     openPopup("picker")
                     setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
                 }
@@ -721,7 +722,7 @@ interface imgui_widgets {
                 var pickerFlags = (flags and pickerFlagsToForward) or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.NoLabel
                 if (flags hasnt ColorEditFlags.NoRefColor)
                     pickerFlags = pickerFlags or ColorEditFlags.NoColorSquare
-                pushItemWidth(squareSz * 12f)
+                pushItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
                 valueChanged = valueChanged or colorPicker4("##picker", col, pickerFlags)
                 popItemWidth()
                 if (flags hasnt ColorEditFlags.NoRefColor) {
@@ -729,13 +730,12 @@ interface imgui_widgets {
                     beginGroup()
                     text("Current")
                     var fl = ColorEditFlags.NoTooltip or ColorEditFlags.AlphaPreviewHalf
-                    colorButton("##current", colDisplay, fl, Vec2(squareSz * 3, squareSz * 2))
+                    colorButton("##current", colVec4, fl, Vec2(squareSz * 3, squareSz * 2))
                     text("Original")
                     fl = ColorEditFlags.NoTooltip or ColorEditFlags.AlphaPreviewHalf
                     if (colorButton("##original", g.colorPickerRef, fl, Vec2(squareSz * 3, squareSz * 2))) {
-                        for(j in 0 .. 2) col[j] = g.colorPickerRef[j]
-                        if(alpha) col[3] = g.colorPickerRef[3]
-                        valueChanged = false
+                        for (j in 0 until components) col[j] = g.colorPickerRef[j]
+                        valueChanged = true
                     }
                     endGroup()
                 }
