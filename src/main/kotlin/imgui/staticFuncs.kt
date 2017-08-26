@@ -417,7 +417,7 @@ fun beginPopupEx(strId: String, extraFlags: Int): Boolean {
     }
 
     pushStyleVar(StyleVar.WindowRounding, 0f)
-    val flags = extraFlags or WindowFlags.Popup or WindowFlags.NoTitleBar or WindowFlags.NoMove or WindowFlags.NoResize or
+    val flags = extraFlags or WindowFlags.Popup or WindowFlags.NoTitleBar or WindowFlags.NoResize or
             WindowFlags.NoSavedSettings or WindowFlags.AlwaysAutoResize
 
     val name =

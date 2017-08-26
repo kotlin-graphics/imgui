@@ -455,9 +455,13 @@ interface imgui_demoDebugInfo {
 //                inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
             }
 //
-//            static bool a=false;
-//            if (ImGui::Button("Button")) { printf("Clicked\n"); a ^= 1; }
-//            if (a)
+//            static bool my_toggle = false;
+//            if (ImGui::Button("Button"))
+//                {
+//                        printf("Clicked\n");
+//                        my_toggle = !my_toggle;
+//                    }
+//            if (my_toggle)
 //            {
 //                ImGui::SameLine();
 //                ImGui::Text("Thanks for clicking me!");
