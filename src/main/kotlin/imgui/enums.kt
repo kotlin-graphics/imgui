@@ -369,11 +369,10 @@ enum class ColorEditFlags(val i: Int) {
     NoTooltip(1 shl 13),
     /** ColorEdit, ColorPicker: disable display of inline text label (the label is still used in tooltip and picker).   */
     NoLabel(1 shl 14),
-    NoRefColor(1 shl 15),
+    /** ColorPicker: disable bigger color preview on right side of the picker, use small colored square instead */
+    NoSidePreview   (1 shl 15),
     ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX),
     StoredMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.Float);
-
-    fun inv() = i.inv()
 }
 
 infix fun ColorEditFlags.or(other: ColorEditFlags) = i or other.i
@@ -381,6 +380,7 @@ infix fun Int.and(other: ColorEditFlags) = this and other.i
 infix fun Int.or(other: ColorEditFlags) = this or other.i
 infix fun Int.has(b: ColorEditFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: ColorEditFlags) = (this and b.i) == 0
+infix fun Int.wo(b: ColorEditFlags) = this and b.i.inv()
 
 /** Enumeration for GetMouseCursor()    */
 enum class MouseCursor(val i: Int) {

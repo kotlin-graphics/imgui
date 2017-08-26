@@ -89,3 +89,11 @@ enum class Corner(val i: Int) {
 
 infix fun Int.or(b: Corner) = this or b.i
 infix fun Int.has(b: Corner) = (this and b.i) != 0
+
+enum class Dir(val i: Int) {
+    None(-1),
+    Left(0),
+    Right(1),
+    Up(2),
+    Down(3)
+}
