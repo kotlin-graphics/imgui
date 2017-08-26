@@ -1561,17 +1561,13 @@ interface imgui_demoDebugInfo {
             sameLine()
             checkbox("Only Modified Fields", outputOnlyModified)
 
-            radioButton("RGB", colorFlags, ColorEditFlags.RGB.i); sameLine()
-            radioButton("HSV", colorFlags, ColorEditFlags.HSV.i); sameLine()
-            radioButton("HEX", colorFlags, ColorEditFlags.HEX.i)
-            //ImGui::Text("Tip: Click on colored square to change edit mode.");
+            text("Tip: Left-click on colored square to open color picker,\nRight-click to open edit options menu.")
 
 //            static ImGuiColorEditFlags alpha_flags = 0; TODO (also 10 loc below)
 //            ImGui::RadioButton("Opaque", &alpha_flags, 0); ImGui::SameLine();
 //            ImGui::RadioButton("Alpha", &alpha_flags, ImGuiColorEditFlags_AlphaPreview); ImGui::SameLine();
-//            ImGui::RadioButton("Half", &alpha_flags, ImGuiColorEditFlags_AlphaPreviewHalf);
-
-            filter.draw("Filter colors TODO", 200f)
+//
+//            radioButton("Both", alphaFlags, ColorEditFlags.AlphaPreviewHalf)
 
             beginChild("#colors", Vec2(0, 300), true, WindowFlags.AlwaysVerticalScrollbar.i)
             pushItemWidth(-160f)
@@ -1580,7 +1576,7 @@ interface imgui_demoDebugInfo {
                 if (!filter.passFilter(name)) // TODO fix bug
                     continue
                 withId(i) {
-                    colorEditVec4(name, style.colors[i], colorFlags[0] or ColorEditFlags.NoOptions or ColorEditFlags.AlphaBar) // | alpha_flags); TODO
+                    colorEditVec4(name, style.colors[i], ColorEditFlags.AlphaBar.i) // | alpha_flags); TODO
                     if (style.colors[i] != (ref?.colors?.get(i) ?: defaultStyle.colors[i])) {
                         sameLine()
                         button("Revert") { style.colors[i] put (ref?.colors?.get(i) ?: defaultStyle.colors[i]) }

@@ -607,7 +607,7 @@ interface imgui_widgets {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
+        val storageId = window.id   // Store options on a per window basis
         val wExtra = if (flags has ColorEditFlags.NoColorSquare) 0f else colorSquareSize + style.itemInnerSpacing.x
         val wItemsAll = calcItemWidth() - wExtra
         val labelDisplayEnd = findRenderedTextEnd(label)
@@ -616,13 +616,13 @@ interface imgui_widgets {
         val components = if (alpha) 4 else 3
 
         val flags = when {
-        // If no mode is specified, defaults to RGB
-            flags hasnt ColorEditFlags.ModeMask_ -> flags or ColorEditFlags.RGB
         // If we're not showing any slider there's no point in querying color mode, nor showing the options menu, nor doing any HSV conversions
             flags has ColorEditFlags.NoInputs -> (flags and ColorEditFlags.ModeMask_.inv()) or ColorEditFlags.RGB or ColorEditFlags.NoOptions
+        // If no mode is specified, defaults to RGB
+            flags hasnt ColorEditFlags.ModeMask_ -> flags or ColorEditFlags.RGB
         // Read back edit mode from persistent storage, check that exactly one of RGB/HSV/HEX is set
             flags hasnt ColorEditFlags.NoOptions -> (flags and ColorEditFlags.StoredMask_.inv()) or
-                    ((g.colorEditModeStorage[id] ?: (flags and ColorEditFlags.StoredMask_)) and ColorEditFlags.StoredMask_)
+                    ((g.colorEditModeStorage[storageId] ?: (flags and ColorEditFlags.StoredMask_)) and ColorEditFlags.StoredMask_)
             else -> flags
         }
 
@@ -725,11 +725,11 @@ interface imgui_widgets {
             if (flags hasnt ColorEditFlags.NoOptions && beginPopup("context")) {
                 // FIXME-LOCALIZATION
                 if (menuItem("Edit as RGB", "", flags has ColorEditFlags.RGB)) //TODO set bug
-                    g.colorEditModeStorage.set(id, ColorEditFlags.RGB.i)
+                    g.colorEditModeStorage.set(storageId, ColorEditFlags.RGB.i)
                 if (menuItem("Edit as HSV", "", flags has ColorEditFlags.HSV))
-                    g.colorEditModeStorage.set(id, ColorEditFlags.HSV.i)
+                    g.colorEditModeStorage.set(storageId, ColorEditFlags.HSV.i)
                 if (menuItem("Edit as Hexadecimal", "", flags has ColorEditFlags.HEX))
-                    g.colorEditModeStorage.set(id, ColorEditFlags.HEX.i)
+                    g.colorEditModeStorage.set(storageId, ColorEditFlags.HEX.i)
                 endPopup()
             }
 
