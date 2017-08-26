@@ -337,40 +337,42 @@ enum class StyleVar {
 enum class ColorEditFlags(val i: Int) {
 
     Null(0),
-    /** ColorEdit: Default to one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose
-     *  any combination or RGB/HSV/HEX. */
-    RGB(1 shl 0),
-    /** ColorEdit: Default to one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose
-     *  any combination or RGB/HSV/HEX. */
-    HSV(1 shl 1),
-    /** ColorEdit: Default to one among RGB/HSV/HEX. User can still use the options menu to change. ColorPicker: Choose
-     *  any combination or RGB/HSV/HEX. */
-    HEX(1 shl 2),
+    /** ColorEdit: default to one among RGB/HSV/HEX. User can still use the options menu to change.
+     *  ColorPicker: Choose any combination or RGB/HSV/HEX. */
+    RGB(1 shl 1),
+    /** ColorEdit: default to one among RGB/HSV/HEX. User can still use the options menu to change.
+     *  ColorPicker: Choose any combination or RGB/HSV/HEX. */
+    HSV(1 shl 2),
+    /** ColorEdit: default to one among RGB/HSV/HEX. User can still use the options menu to change.
+     *  ColorPicker: Choose any combination or RGB/HSV/HEX. */
+    HEX(1 shl 3),
     /** ColorEdit, ColorPicker, ColorButton: display values formatted as 0.0f..1.0f floats instead of 0..255 integers.
-     *  No round-trip of value via integers.  */
-    Float(1 shl 3),
+     *  No round-trip of value via integers.    */
+    Float(1 shl 4),
+    /** ColorEdit: disable 0.0f..1.0f limits (note: you probably want to use ColorEdit:Float flag as well). */
+    HDR(1 shl 5),
     /** ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker. */
-    AlphaBar(1 shl 4),
+    AlphaBar(1 shl 6),
     /** ColorEdit, ColorPicker, ColorButton: display preview as a transparent color over a checkerboard, instead of opaque. */
-    AlphaPreview(1 shl 5),
-    /** ColorEdit, ColorPicker, ColorButton: display half opaque / half checkerboard    */
-    AlphaPreviewHalf(1 shl 6),
-    /** ColorEdit, ColorPicker, ColorButton: completely ignore Alpha component (read 3 components). */
-    NoAlpha(1 shl 7),
+    AlphaPreview(1 shl 7),
+    /** ColorEdit, ColorPicker, ColorButton: display half opaque / half checkerboard, instead of opaque.    */
+    AlphaPreviewHalf(1 shl 8),
+    /** ColorEdit, ColorPicker, ColorButton: completely ignore Alpha component (read 3 components from the input pointer).  */
+    NoAlpha(1 shl 9),
     /** ColorEdit: disable picker when clicking on colored square.  */
-    NoPicker(1 shl 8),
-    /** ColorEdit: disable toggling options menu when right-clicking on colored square. */
-    NoOptions(1 shl 9),
-    /** ColorEdit, ColorPicker: disable colored square. */
-    NoColorSquare(1 shl 10),
-    /** ColorEdit, ColorPicker: disable inputs sliders/text widgets, show only the colored square.  */
-    NoInputs(1 shl 12),
-    /** ColorEdit, ColorButton: disable tooltip when hovering the colored square.   */
-    NoTooltip(1 shl 13),
-    /** ColorEdit, ColorPicker: disable display of inline text label (the label is still used in tooltip and picker).   */
-    NoLabel(1 shl 14),
-    /** ColorPicker: disable bigger color preview on right side of the picker, use small colored square instead */
-    NoSidePreview   (1 shl 15),
+    NoPicker(1 shl 10),
+    /** ColorEdit: disable toggling options menu when right-clicking on inputs/small preview.   */
+    NoOptions(1 shl 11),
+    /** ColorEdit, ColorPicker: disable colored square preview next to the inputs. (e.g. to show only the inputs)   */
+    NoSmallPreview(1 shl 12),
+    /** ColorEdit, ColorPicker: disable inputs sliders/text widgets (e.g. to show only the small preview colored square).   */
+    NoInputs(1 shl 13),
+    /** ColorEdit, ColorPicker, ColorButton: disable tooltip when hovering the preview. */
+    NoTooltip(1 shl 14),
+    /** ColorEdit, ColorPicker: disable display of inline text label (the label is still forwarded to the tooltip and picker).  */
+    NoLabel(1 shl 15),
+    /** ColorPicker: disable bigger color preview on right side of the picker, use small colored square preview instead.    */
+    NoSidePreview(1 shl 16),
     ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX),
     StoredMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.Float);
 }
@@ -381,6 +383,7 @@ infix fun Int.or(other: ColorEditFlags) = this or other.i
 infix fun Int.has(b: ColorEditFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: ColorEditFlags) = (this and b.i) == 0
 infix fun Int.wo(b: ColorEditFlags) = this and b.i.inv()
+infix fun Int.wo(b: Int) = this and b.inv()
 
 /** Enumeration for GetMouseCursor()    */
 enum class MouseCursor(val i: Int) {

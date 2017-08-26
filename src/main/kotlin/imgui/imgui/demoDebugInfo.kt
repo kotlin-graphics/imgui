@@ -583,25 +583,68 @@ interface imgui_demoDebugInfo {
 //                        static bool alpha_half_preview = false;
 //                        ImGui::Checkbox("With Alpha Preview", &alpha_preview);
 //                        ImGui::Checkbox("With Half Alpha Preview", &alpha_half_preview);
-//                        int alpha_preview_flags = alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0);
+//                        int misc_flags = (hdr ? ImGuiColorEditFlags_HDR : 0) | (alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0));
 //
 //                        ImGui::Text("Color widget:");
 //                        ImGui::SameLine(); ShowHelpMarker("Click on the colored square to open a color picker.\nRight-click on the colored square to show options.\nCTRL+click on individual component to input value.\n");
 //                        ImGui::ColorEdit3("MyColor##1", (float*)&color, ImGuiColorEditFlags_HSV);
 //
 //                        ImGui::Text("Color widget with Alpha:");
-//                        ImGui::ColorEdit4("MyColor##2", (float*)&color, alpha_preview_flags);
+//                        ImGui::ColorEdit4("MyColor##2", (float*)&color, misc_flags);
 //
 //                        ImGui::Text("Color widget with Float Display:");
-//                        ImGui::ColorEdit4("MyColor##2f", (float*)&color, ImGuiColorEditFlags_Float | alpha_preview_flags);
+//                        ImGui::ColorEdit4("MyColor##2f", (float*)&color, ImGuiColorEditFlags_Float | misc_flags);
 //
 //                        ImGui::Text("Color button with Picker:");
 //                        ImGui::SameLine(); ShowHelpMarker("With the ImGuiColorEditFlags_NoInputs flag you can hide all the slider/text inputs.\nWith the ImGuiColorEditFlags_NoLabel flag you can pass a non-empty label which will only be used for the tooltip and picker popup.");
-//                        ImGui::ColorEdit4("MyColor##3", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | alpha_preview_flags);
+//                        ImGui::ColorEdit4("MyColor##3", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | misc_flags);
 //
 //                        ImGui::Text("Color button only:");
-//                        ImGui::ColorButton("MyColor##3b", *(ImVec4*)&color, alpha_preview_flags, ImVec2(80,80));
+//                        ImGui::ColorButton("MyColor##3b", *(ImVec4*)&color, misc_flags, ImVec2(80,80));
 //
+//            ImGui::Text("Color button with Custom Picker Popup:");
+//            static bool saved_palette_inited = false;
+//            static ImVec4 saved_palette[32];
+//            static ImVec4 backup_color;
+//            if (!saved_palette_inited)
+//                    for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+//                    ImGui::ColorConvertHSVtoRGB(n / 31.0f, 0.8f, 0.8f, saved_palette[n].x, saved_palette[n].y, saved_palette[n].z);
+//            bool open_popup = ImGui::ColorButton("MyColor##3b", color, misc_flags);
+//            ImGui::SameLine();
+//            open_popup |= ImGui::Button("Palette");
+//            if (open_popup)
+//                {
+//                        ImGui::OpenPopup("mypicker");
+//                        backup_color = color;
+//                    }
+//            if (ImGui::BeginPopup("mypicker"))
+//                {
+//                        // FIXME: Adding a drag and drop example here would be perfect!
+//                        ImGui::Text("MY CUSTOM COLOR PICKER WITH AN AMAZING PALETTE!");
+//                        ImGui::Separator();
+//                        ImGui::ColorPicker4("##picker", (float*)&color, misc_flags | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+//                        ImGui::SameLine();
+//                        ImGui::BeginGroup();
+//                        ImGui::Text("Current");
+//                        ImGui::ColorButton("##current", color, ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(60,40));
+//                        ImGui::Text("Previous");
+//                        if (ImGui::ColorButton("##previous", backup_color, ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(60,40)))
+//                            color = backup_color;
+//                        ImGui::Separator();
+//                        ImGui::Text("Palette");
+//                        for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+//                        {
+//                                ImGui::PushID(n);
+//                                if ((n % 8) != 0)
+//                                        ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
+//                                if (ImGui::ColorButton("##palette", saved_palette[n], ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip, ImVec2(20,20)))
+//                                    color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, color.w); // Preserve alpha!
+//                                ImGui::PopID();
+//                            }
+//                        ImGui::EndGroup();
+//                        ImGui::EndPopup();
+//                    }
+////
 //                        ImGui::Text("Color picker:");
 //                        static bool alpha = true;
 //                        static bool alpha_bar = true;
@@ -615,19 +658,19 @@ interface imgui_demoDebugInfo {
 //                        ImGui::Checkbox("With Alpha Bar", &alpha_bar);
 //                        ImGui::Checkbox("With Side Preview", &side_preview);
 //                        if (side_preview)
-//                       {
-//                        ImGui::Checkbox("With Ref Color", &ref_color);
-//                               if (ref_color)
 //                        {
-//                          ImGui::SameLine();
-//                            ImGui::ColorEdit4("##RefColor", &ref_color_v.x, ImGuiColorEditFlags_NoInputs | alpha_preview_flags);
-//                                           }
-//                       }
+//                           ImGui::Checkbox("With Ref Color", &ref_color);
+//                           if (ref_color)
+//                           {
+//                              ImGui::SameLine();
+//                              ImGui::ColorEdit4("##RefColor", &ref_color_v.x, ImGuiColorEditFlags_NoInputs | misc_flags);
+//                           }
+//                        }
 //                        ImGui::Combo("Mode", &inputs_mode, "All Inputs\0No Inputs\0RGB Input\0HSV Input\0HEX Input\0");
 //                        ImGui::SameLine(); ShowHelpMarker("User can right-click the inputs and override edit mode.");
-            //ImGui::DragFloat("Width", &width, 1.0f, 1.0f, 999.0f);
-            //ImGui::PushItemWidth(width);
-//            ImGuiColorEditFlags flags = alpha_preview_flags;
+            //            ImGui::DragFloat("Width", &width, 1.0f, 1.0f, 999.0f);
+            //            ImGui::PushItemWidth(width);
+//                        ImGuiColorEditFlags flags = misc_flags;
 //                        if (!alpha) flags |= ImGuiColorEditFlags_NoAlpha; // This is by default if you call ColorPicker3() instead of ColorPicker4()
 //                        if (alpha_bar) flags |= ImGuiColorEditFlags_AlphaBar;
 //                        if (!side_preview) flags |= ImGuiColorEditFlags_NoSidePreview;
@@ -636,7 +679,7 @@ interface imgui_demoDebugInfo {
 //                        if (inputs_mode == 3) flags |= ImGuiColorEditFlags_HSV;
 //                        if (inputs_mode == 4) flags |= ImGuiColorEditFlags_HEX;
 //                        ImGui::ColorPicker4("MyColor##4", (float*)&color, flags, ref_color ? &ref_color_v.x : NULL);
-            //ImGui::PopItemWidth();
+            //            ImGui::PopItemWidth();
 //
 //                        ImGui::TreePop();
 //                    }

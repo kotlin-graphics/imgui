@@ -581,7 +581,10 @@ interface imgui_widgets {
             val c = getColorU32(if (flags has ColorEditFlags.AlphaPreview) col else colWithoutAlpha)
             renderColorRectWithAlphaCheckerboard(bb.min, bb.max, c, gridStep, Vec2(), rounding)
         }
-        renderFrameBorder(bb.min, bb.max, rounding)
+        if (window.flags has WindowFlags.ShowBorders)
+            renderFrameBorder(bb.min, bb.max, rounding)
+        else
+            window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
 
         if (hovered && flags hasnt ColorEditFlags.NoTooltip) {
             val pF = floatArrayOf(col.x)
@@ -608,11 +611,12 @@ interface imgui_widgets {
         if (window.skipItems) return false
 
         val storageId = window.id   // Store options on a per window basis
-        val wExtra = if (flags has ColorEditFlags.NoColorSquare) 0f else colorSquareSize + style.itemInnerSpacing.x
+        val wExtra = if (flags has ColorEditFlags.NoSmallPreview) 0f else colorSquareSize + style.itemInnerSpacing.x
         val wItemsAll = calcItemWidth() - wExtra
         val labelDisplayEnd = findRenderedTextEnd(label)
 
         val alpha = flags hasnt ColorEditFlags.NoAlpha
+        val hdr = flags has ColorEditFlags.HDR
         val components = if (alpha) 4 else 3
 
         val flags = when {
@@ -666,10 +670,10 @@ interface imgui_widgets {
                     pushItemWidth(wItemLast)
                 val int = intArrayOf(i[n])
                 if (flags has ColorEditFlags.Float) {
-                    valueChangedAsFloat = valueChangedAsFloat or dragFloat(ids[n], f, n, 1f / 255f, 0f, 1f, fmtTableFloat[fmtIdx][n])
+                    valueChangedAsFloat = valueChangedAsFloat or dragFloat(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n])
                     valueChanged = valueChanged or valueChangedAsFloat
                 } else
-                    valueChanged = valueChanged or dragInt(ids[n], i, n, 1f, 0, 255, fmtTableInt[fmtIdx][n])
+                    valueChanged = valueChanged or dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n])
             }
             popItemWidth()
             popItemWidth()
@@ -678,9 +682,9 @@ interface imgui_widgets {
             // RGB Hexadecimal Input
             val buf = CharArray(64)
             (if (alpha)
-                "#%02X%02X%02X%02X".format(style.locale, i[0], i[1], i[2], i[3])
+                "#%02X%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255), glm.clamp(i[3], 0, 255))
             else
-                "#%02X%02X%02X".format(style.locale, i[0], i[1], i[2])).toCharArray(buf)
+                "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))).toCharArray(buf)
             pushItemWidth(wItemsAll)
             if (inputText("##Text", buf, InputTextFlags.CharsHexadecimal or InputTextFlags.CharsUppercase)) {
                 valueChanged = valueChanged || true
@@ -694,7 +698,7 @@ interface imgui_widgets {
         }
 
         var pickerActive = false
-        if (flags hasnt ColorEditFlags.NoColorSquare) {
+        if (flags hasnt ColorEditFlags.NoSmallPreview) {
             if (flags hasnt ColorEditFlags.NoInputs)
                 sameLine(0f, style.itemInnerSpacing.x)
 
@@ -716,8 +720,8 @@ interface imgui_widgets {
                     separator()
                 }
                 val squareSz = colorSquareSize
-                var pickerFlagsToForward = ColorEditFlags.Float or ColorEditFlags.NoAlpha or ColorEditFlags.AlphaBar    // | ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_AlphaPreviewHalf;
-                var pickerFlags = (flags and pickerFlagsToForward) or (ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX) or
+                val pickerFlagsToForward = ColorEditFlags.Float or ColorEditFlags.HDR or ColorEditFlags.NoAlpha or ColorEditFlags.AlphaBar    // | ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_AlphaPreviewHalf;
+                val pickerFlags = (flags and pickerFlagsToForward) or (ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX) or
                         ColorEditFlags.NoLabel or ColorEditFlags.AlphaPreviewHalf
                 pushItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
                 val pF = floatArrayOf(g.colorPickerRef.x)
@@ -804,7 +808,7 @@ interface imgui_widgets {
 
         var flags = flags
         if (flags hasnt ColorEditFlags.NoSidePreview)
-            flags = flags or ColorEditFlags.NoColorSquare
+            flags = flags or ColorEditFlags.NoSmallPreview
 
         // Setup
         val alphaBar = flags has ColorEditFlags.AlphaBar && flags hasnt ColorEditFlags.NoAlpha
@@ -821,6 +825,7 @@ interface imgui_widgets {
         // Color matrix logic
         var valueChanged = false
         var hsvChanged = false
+        var valueChangedFromMatrix = false
         invisibleButton("sv", Vec2(svPickerSize))
         if (isItemActive) {
             s = saturate((IO.mousePos.x - pickerPos.x) / (svPickerSize - 1))
@@ -866,14 +871,14 @@ interface imgui_widgets {
             val squareSz = colorSquareSize
             if (flags has ColorEditFlags.NoLabel)
                 text("Current")
-            val f = flags and (ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf)
+            val f = flags and (ColorEditFlags.HDR or ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf or ColorEditFlags.NoTooltip)
             colorButton("##current", colV4, f, Vec2(squareSz * 3, squareSz * 2))
             refCol?.let {
                 text("Original")
-                val refColV4 = Vec4 (it[0], it[1], it[2], if(flags has ColorEditFlags.NoAlpha) 1f else it[3])
-                if (colorButton("##original", refColV4, f, Vec2(squareSz * 3, squareSz * 2)))                {
-                    for(i in 0 .. 2 ) col[i] = it[i]
-                    if(flags has ColorEditFlags.NoAlpha) col[3] = it[3]
+                val refColV4 = Vec4(it[0], it[1], it[2], if (flags has ColorEditFlags.NoAlpha) 1f else it[3])
+                if (colorButton("##original", refColV4, f, Vec2(squareSz * 3, squareSz * 2))) {
+                    for (i in 0..2) col[i] = it[i]
+                    if (flags has ColorEditFlags.NoAlpha) col[3] = it[3]
                     valueChanged = true
                 }
             }
@@ -887,7 +892,7 @@ interface imgui_widgets {
         // R,G,B and H,S,V slider color editor
         if (flags hasnt ColorEditFlags.NoInputs) {
             pushItemWidth((if (alphaBar) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
-            val subFlagsToForward = ColorEditFlags.Float or ColorEditFlags.NoAlpha or ColorEditFlags.NoColorSquare or
+            val subFlagsToForward = ColorEditFlags.Float or ColorEditFlags.HDR or ColorEditFlags.NoAlpha or ColorEditFlags.NoSmallPreview or
                     ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf
             var subFlags = (flags and subFlagsToForward) or ColorEditFlags.NoPicker or ColorEditFlags.NoOptions or ColorEditFlags.NoOptions
             if (flags hasnt ColorEditFlags.ModeMask_)
@@ -933,10 +938,12 @@ interface imgui_widgets {
         renderArrowsForVerticalBar(drawList, Vec2(bar0PosX - 1, bar0LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f)
 
         // Render alpha bar
+        val col32NoAlpha = colorConvertFloat4ToU32(Vec4(col[0], col[1], col[2], 1f))
         if (alphaBar) {
             val alpha = saturate(col[3])
             val bar1Bb = Rect(bar1PosX, pickerPos.y, bar1PosX + barsWidth, pickerPos.y + svPickerSize)
-            drawList.addRectFilledMultiColor(bar1Bb.min, bar1Bb.max, COL32_WHITE, COL32_WHITE, COL32_BLACK, COL32_BLACK)
+            renderColorRectWithAlphaCheckerboard(bar1Bb.min, bar1Bb.max, COL32(0, 0, 0, 0), bar1Bb.width / 2f, Vec2(0, 0))
+            drawList.addRectFilledMultiColor(bar1Bb.min, bar1Bb.max, col32NoAlpha, col32NoAlpha, col32NoAlpha wo COL32_A_MASK, col32NoAlpha wo COL32_A_MASK)
             val bar1LineY = (pickerPos.y + (1f - alpha) * svPickerSize + 0.5f).i.f
             renderFrameBorder(bar1Bb.min, bar1Bb.max, 0f)
             renderArrowsForVerticalBar(drawList, Vec2(bar1PosX - 1, bar1LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f)
@@ -948,13 +955,14 @@ interface imgui_widgets {
         drawList.addRectFilledMultiColor(pickerPos, pickerPos + Vec2(svPickerSize), COL32_BLACK_TRANS, COL32_BLACK_TRANS, COL32_BLACK, COL32_BLACK)
         renderFrameBorder(pickerPos, pickerPos + Vec2(svPickerSize), 0f)
 
-        // Render cross-hair (clamp S/V within 0..1 range because floating points colors may lead HSV values to be out of range)
-        val CROSSHAIR_SIZE = 7f
+        // Render cursor/preview circle  (clamp S/V within 0..1 range because floating points colors may lead HSV values to be out of range)
         val p = Vec2((pickerPos.x + saturate(s) * svPickerSize + 0.5f).i.f, (pickerPos.y + saturate(1 - v) * svPickerSize + 0.5f).i.f)
-        drawList.addLine(Vec2(p.x - CROSSHAIR_SIZE, p.y), Vec2(p.x - 2, p.y), COL32_WHITE)
-        drawList.addLine(Vec2(p.x + CROSSHAIR_SIZE, p.y), Vec2(p.x + 2, p.y), COL32_WHITE)
-        drawList.addLine(Vec2(p.x, p.y + CROSSHAIR_SIZE), Vec2(p.x, p.y + 2), COL32_WHITE)
-        drawList.addLine(Vec2(p.x, p.y - CROSSHAIR_SIZE), Vec2(p.x, p.y - 2), COL32_WHITE)
+        p.x = glm.clamp(p.x, pickerPos.x + 2, pickerPos.x + svPickerSize - 2)
+        p.y = glm.clamp(p.y, pickerPos.y + 2, pickerPos.y + svPickerSize - 2)
+        val r = if (valueChangedFromMatrix) 10f else 6f
+        drawList.addCircleFilled(p, r, col32NoAlpha, 12)
+        drawList.addCircle(p, r + 1, COL32(128, 128, 128, 255), 12)
+        drawList.addCircle(p, r, COL32_WHITE, 12)
 
         endGroup()
         popId()

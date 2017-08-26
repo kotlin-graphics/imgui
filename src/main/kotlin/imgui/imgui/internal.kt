@@ -327,12 +327,9 @@ interface imgui_internal {
             g.openPopupStack[currentStackSize] = popupRef
     }
 
-//// NB: All position are in absolute pixels coordinates (not window coordinates)
-//// FIXME: All those functions are a mess and needs to be refactored into something decent. AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION.
-//// We need: a sort of symbol library, preferably baked into font atlas when possible + decent text rendering helpers.
-
-    /** Internal ImGui functions to render text
-     *  RenderText***() functions calls ImDrawList::AddText() calls ImBitmapFont::RenderText()  */
+    /** NB: All position are in absolute pixels coordinates (never using window coordinates internally)
+     *  AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND
+     *  BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT. */
     fun renderText(pos: Vec2, text: String, textEnd: Int = text.length, hideTextAfterHash: Boolean = true) {
 
         val window = currentWindow
