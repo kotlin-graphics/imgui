@@ -702,7 +702,7 @@ interface imgui_widgets {
             val colDisplay = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f) // 1.0f
             if (colorButton("##ColorButton", colDisplay, flags)) {
                 if (flags hasnt ColorEditFlags.NoPicker) {
-//                    g.colorPickerRef.put(col[0], col[1], col[2], if (alpha) col[3] else 1f)
+                    g.colorPickerRef.put(col[0], col[1], col[2], if (alpha) col[3] else 1f)
                     openPopup("picker")
                     setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
                 }
@@ -718,10 +718,27 @@ interface imgui_widgets {
                 val squareSz = colorSquareSize
                 val pickerFlagsToForward = ColorEditFlags.Float or ColorEditFlags.NoAlpha or ColorEditFlags.AlphaBar or
                         ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf
-                val pickerFlags = (flags and pickerFlagsToForward) or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.NoLabel
+                var pickerFlags = (flags and pickerFlagsToForward) or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.NoLabel
+                if (flags hasnt ColorEditFlags.NoRefColor)
+                    pickerFlags = pickerFlags or ColorEditFlags.NoColorSquare
                 pushItemWidth(squareSz * 12f)
                 valueChanged = valueChanged or colorPicker4("##picker", col, pickerFlags)
                 popItemWidth()
+                if (flags hasnt ColorEditFlags.NoRefColor) {
+                    sameLine()
+                    beginGroup()
+                    text("Current")
+                    var fl = ColorEditFlags.NoTooltip or ColorEditFlags.AlphaPreviewHalf
+                    colorButton("##current", colDisplay, fl, Vec2(squareSz * 3, squareSz * 2))
+                    text("Original")
+                    fl = ColorEditFlags.NoTooltip or ColorEditFlags.AlphaPreviewHalf
+                    if (colorButton("##original", g.colorPickerRef, fl, Vec2(squareSz * 3, squareSz * 2))) {
+                        for(j in 0 .. 2) col[j] = g.colorPickerRef[j]
+                        if(alpha) col[3] = g.colorPickerRef[3]
+                        valueChanged = false
+                    }
+                    endGroup()
+                }
                 endPopup()
             }
 
