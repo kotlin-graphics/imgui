@@ -715,21 +715,29 @@ interface imgui_widgets {
                     separator()
                 }
                 val squareSz = colorSquareSize
-                val pickerFlags = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.AlphaBar or ColorEditFlags.Float)) or
-                        (ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX) or ColorEditFlags.NoLabel
+                val pickerFlagsToForward = ColorEditFlags.Float or ColorEditFlags.NoAlpha or ColorEditFlags.AlphaBar or
+                        ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf
+                val pickerFlags = (flags and pickerFlagsToForward) or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.NoLabel
                 pushItemWidth(squareSz * 12f)
                 valueChanged = valueChanged or colorPicker4("##picker", col, pickerFlags)
                 popItemWidth()
                 endPopup()
             }
+
+            // Context menu: display and store options. Don't apply to 'flags' this frame.
             if (flags hasnt ColorEditFlags.NoOptions && beginPopup("context")) {
-                // FIXME-LOCALIZATION
-                if (menuItem("Edit as RGB", "", flags has ColorEditFlags.RGB)) //TODO set bug
-                    g.colorEditModeStorage.set(storageId, ColorEditFlags.RGB.i)
-                if (menuItem("Edit as HSV", "", flags has ColorEditFlags.HSV))
-                    g.colorEditModeStorage.set(storageId, ColorEditFlags.HSV.i)
-                if (menuItem("Edit as Hexadecimal", "", flags has ColorEditFlags.HEX))
-                    g.colorEditModeStorage.set(storageId, ColorEditFlags.HEX.i)
+                var newFlags = -1
+                if (radioButton("RGB", flags has ColorEditFlags.RGB))
+                    newFlags = (flags and ColorEditFlags.ModeMask_.inv()) or ColorEditFlags.RGB
+                if (radioButton("HSV", flags has ColorEditFlags.HSV))
+                    newFlags = (flags and ColorEditFlags.ModeMask_.inv()) or ColorEditFlags.HSV
+                if (radioButton("HEX", flags has ColorEditFlags.HEX))
+                    newFlags = (flags and ColorEditFlags.ModeMask_.inv()) or ColorEditFlags.HEX
+                separator()
+                if (radioButton("0..255", flags hasnt ColorEditFlags.Float)) newFlags = flags and ColorEditFlags.Float.inv()
+                if (radioButton("0.00..1.00", flags has ColorEditFlags.Float)) newFlags = flags or ColorEditFlags.Float
+                if (newFlags != -1)
+                    g.colorEditModeStorage[storageId] = newFlags and ColorEditFlags.StoredMask_
                 endPopup()
             }
 
@@ -854,8 +862,9 @@ interface imgui_widgets {
             if (flags hasnt ColorEditFlags.ModeMask_)
                 flags = flags or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX
             pushItemWidth((if (alphaBar) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
-            val subFlags = (flags and (ColorEditFlags.Float or ColorEditFlags.NoAlpha or ColorEditFlags.NoColorSquare)) or
-                    ColorEditFlags.NoPicker or ColorEditFlags.NoOptions or ColorEditFlags.NoTooltip
+            val subFlagsToForward = ColorEditFlags.Float or ColorEditFlags.NoAlpha or ColorEditFlags.NoColorSquare or
+                    ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf
+            val subFlags = (flags and subFlagsToForward) or ColorEditFlags.NoPicker or ColorEditFlags.NoOptions
             if (flags has ColorEditFlags.RGB)
                 valueChanged = valueChanged or colorEdit4("##rgb", col, subFlags or ColorEditFlags.RGB)
             if (flags has ColorEditFlags.HSV)
