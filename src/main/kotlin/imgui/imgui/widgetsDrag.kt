@@ -33,6 +33,9 @@ import imgui.Context as g
 interface imgui_widgetsDrag {
 
 
+    /** For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every functions, note that a 'float v[X]' function
+     *  argument is the same as 'float* v', the array syntax is just a way to document the number of elements that are
+     *  expected to be accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x */
     fun dragFloat(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
                   power: Float = 1f) = dragFloat(label, v, 0, vSpeed, vMin, vMax, displayFormat, power)
 

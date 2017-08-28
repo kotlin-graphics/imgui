@@ -79,7 +79,7 @@ interface imgui_main {
             IO.mouseDoubleClicked[i] = false
             if (IO.mouseClicked[i]) {
                 if (g.time - IO.mouseClickedTime[i] < IO.mouseDoubleClickTime) {
-                    if ((IO.mousePos - IO.mouseClickedPos[i]).lengthSqr() < IO.mouseDoubleClickMaxDist * IO.mouseDoubleClickMaxDist)
+                    if ((IO.mousePos - IO.mouseClickedPos[i]).lengthSqr < IO.mouseDoubleClickMaxDist * IO.mouseDoubleClickMaxDist)
                         IO.mouseDoubleClicked[i] = true
                     IO.mouseClickedTime[i] = -Float.MAX_VALUE   // so the third click isn't turned into a double-click
                 } else
@@ -87,7 +87,7 @@ interface imgui_main {
                 IO.mouseClickedPos[i] put IO.mousePos
                 IO.mouseDragMaxDistanceSqr[i] = 0f
             } else if (IO.mouseDown[i])
-                IO.mouseDragMaxDistanceSqr[i] = glm.max(IO.mouseDragMaxDistanceSqr[i], (IO.mousePos - IO.mouseClickedPos[i]).lengthSqr())
+                IO.mouseDragMaxDistanceSqr[i] = glm.max(IO.mouseDragMaxDistanceSqr[i], (IO.mousePos - IO.mouseClickedPos[i]).lengthSqr)
         }
         for (i in IO.keysDownDuration.indices)
             IO.keysDownDurationPrev[i] = IO.keysDownDuration[i]
@@ -251,7 +251,7 @@ interface imgui_main {
         closeInactivePopups()
 
         // Create implicit window - we will only render it if the user has added something to it.
-        ImGui.setNextWindowSize(Vec2(400, 400), SetCond.FirstUseEver)
+        ImGui.setNextWindowSize(Vec2(400, 400), Cond.FirstUseEver)
         ImGui.begin("Debug")
     }
 
@@ -358,7 +358,6 @@ interface imgui_main {
         g.setNextWindowSizeConstraintCallbackUserData = null
         g.renderDrawLists.forEach { it.clear() }
         g.overlayDrawList.clearFreeMemory()
-        g.colorEditModeStorage.clear()
         g.privateClipboard = ""
         g.inputTextState.text = charArrayOf()
         g.inputTextState.initialText = charArrayOf()

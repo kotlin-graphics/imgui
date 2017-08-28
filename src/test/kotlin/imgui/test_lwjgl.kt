@@ -97,7 +97,7 @@ class HelloWorld_lwjgl {
             /*  2. Show another simple window, this time using an explicit Begin/End pair   */
             run {
                 if (showAnotherWindow[0]) {
-                    setNextWindowSize(Vec2(200, 100), SetCond.FirstUseEver)
+                    setNextWindowSize(Vec2(200, 100), Cond.FirstUseEver)
                     begin("Another Window", showAnotherWindow)
                     text("Hello")
                     end()
@@ -107,7 +107,7 @@ class HelloWorld_lwjgl {
             /* 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow() */
             run {
                 if (showTestWindow[0]) {
-                    setNextWindowPos(Vec2(650, 20), SetCond.FirstUseEver)
+                    setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
                     showTestWindow(showTestWindow)
                 }
             }

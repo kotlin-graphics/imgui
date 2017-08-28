@@ -99,7 +99,7 @@ class HelloWorld_jogl : GLEventListener {
             /*  2. Show another simple window, this time using an explicit begin/end pair   */
             run {
                 if (showAnotherWindow[0]) {
-                    setNextWindowSize(Vec2(200, 100), SetCond.FirstUseEver)
+                    setNextWindowSize(Vec2(200, 100), Cond.FirstUseEver)
                     begin("Another Window", showAnotherWindow)
                     text("Hello")
                     end()
@@ -109,13 +109,13 @@ class HelloWorld_jogl : GLEventListener {
             /* 3. Show the ImGui test window. Most of the sample code is in ImGui.showTestWindow() */
             run {
                 if (showTestWindow[0]) {
-                    setNextWindowPos(Vec2(650, 20), SetCond.FirstUseEver)
+                    setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
                     showTestWindow(showTestWindow)
                 }
             }
 
             run {
-                setNextWindowSize(glm_.vec2.Vec2(200f, 100f), SetCond.FirstUseEver)
+                setNextWindowSize(glm_.vec2.Vec2(200f, 100f), Cond.FirstUseEver)
                 begin("Another Window", null, WindowFlags.NoTitleBar.i or WindowFlags.NoResize.i)
                 selectable("Navigate")
                 selectable("Scene")

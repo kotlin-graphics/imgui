@@ -20,6 +20,7 @@ import imgui.internal.ColumnData
 import imgui.internal.Rect
 import imgui.Context as g
 import imgui.Context.style
+import imgui.internal.lerp
 
 /** You can also use SameLine(pos_x) for simplified columning. The columns API is still work-in-progress and rather
  *  lacking.    */
@@ -50,7 +51,8 @@ interface imgui_colums {
                 for (i in 1 until dc.columnsCount) {
                     var x = pos.x + getColumnOffset(i)
                     val columnId = dc.columnsSetId + i
-                    val columnRect = Rect(Vec2(x - 4, y1), Vec2(x + 4, y2))
+                    val columnW = 4f
+                    val columnRect = Rect(Vec2(x - columnW, y1), Vec2(x + columnW, y2))
                     if (isClippedEx(columnRect, columnId, false))
                         continue
 
@@ -65,7 +67,7 @@ interface imgui_colums {
 
                     if (held) {
                         if (g.activeIdIsJustActivated)
-                            g.activeIdClickOffset.x -= 4   // Store from center of column line (we used a 8 wide rect for columns clicking)
+                            g.activeIdClickOffset.x -= columnW   // Store from center of column line (we used a 8 wide rect for columns clicking)
                         x = getDraggedColumnOffset(i)
                         setColumnOffset(i, x)
                     }
@@ -84,7 +86,7 @@ interface imgui_colums {
             dc.columnsShowBorders = border
 
             val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else size.x
-            dc.columnsMinX = dc.indentX // Lock our horizontal range
+            dc.columnsMinX = dc.indentX - style.itemSpacing.x   // Lock our horizontal range
             dc.columnsMaxX = contentRegionWidth - scroll.x - if (flags has WindowFlags.NoScrollbar) 0f else style.scrollbarSize// - window->WindowPadding().x;
             dc.columnsStartPosY = dc.cursorPos.y
             dc.columnsCellMaxY = dc.cursorPos.y
@@ -164,7 +166,7 @@ interface imgui_colums {
 
         assert(columnIndex < window.dc.columnsData.size)
         val t = window.dc.columnsData[columnIndex].offsetNorm
-        val xOffset = window.dc.columnsMinX + t * (window.dc.columnsMaxX - window.dc.columnsMinX)
+        val xOffset = lerp(window.dc.columnsMinX, window.dc.columnsMaxX, t)
         return xOffset.i.f
     }
 

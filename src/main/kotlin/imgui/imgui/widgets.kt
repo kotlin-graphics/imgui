@@ -2,6 +2,8 @@ package imgui.imgui
 
 import gli.has
 import glm_.f
+import glm_.func.cos
+import glm_.func.sin
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -17,10 +19,12 @@ import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcWrapWidthForPos
+import imgui.ImGui.checkboxFlags
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.colorConvertFloat4ToU32
 import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorConvertRGBtoHSV
+import imgui.ImGui.colorPicker4
 import imgui.ImGui.colorTooltip
 import imgui.ImGui.currentWindow
 import imgui.ImGui.cursorScreenPos
@@ -51,6 +55,7 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
+import imgui.ImGui.radioButton
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderCollapseTriangle
 import imgui.ImGui.renderColorRectWithAlphaCheckerboard
@@ -70,7 +75,6 @@ import imgui.ImGui.setScrollHere
 import imgui.ImGui.spacing
 import imgui.ImGui.textLineHeight
 import imgui.imgui.imgui_internal.Companion.colorSquareSize
-import imgui.imgui.imgui_widgets.Items.renderArrowsForVerticalBar
 import imgui.internal.*
 import imgui.Context as g
 
@@ -382,7 +386,18 @@ interface imgui_widgets {
         return pressed
     }
 
-//    IMGUI_API bool          CheckboxFlags(const char* label, unsigned int* flags, unsigned int flags_value);
+    fun checkboxFlags(label: String, flags: IntArray, flagsValue: Int): Boolean {
+        val v = booleanArrayOf((flags[0] and flagsValue) == flagsValue)
+        val pressed = checkbox(label, v)
+        if (pressed) {
+            if (v[0])
+                flags[0] = flags[0] or flagsValue
+            else
+                flags[0] = flags[0] wo flagsValue
+        }
+
+        return pressed
+    }
 
     fun radioButton(label: String, active: Boolean): Boolean {
 
@@ -544,7 +559,7 @@ interface imgui_widgets {
         return valueChanged
     }
 
-    /**  display a colored square/button, hover for details, return true when pressed.
+    /**  A little colored square. Return true when clicked.
      *  FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip.
      *  'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.    */
     fun colorButton(descId: String, col: Vec4, flags: Int = 0, size: Vec2 = Vec2()): Boolean {
@@ -595,14 +610,29 @@ interface imgui_widgets {
         return pressed
     }
 
+    /** initialize current options (generally on application startup) if you want to select a default format, picker
+     *  type, etc. User will be able to change many settings, unless you pass the _NoOptions flag to your calls.    */
+    fun setColorEditOptions(flags: Int) {
+        var flags = flags
+        if (flags hasnt ColorEditFlags._InputsMask)
+            flags = flags or (ColorEditFlags._OptionsDefault and ColorEditFlags._InputsMask)
+        if (flags hasnt ColorEditFlags._DataTypeMask)
+            flags = flags or (ColorEditFlags._OptionsDefault and ColorEditFlags._DataTypeMask)
+        if (flags hasnt ColorEditFlags._PickerMask)
+            flags = flags or (ColorEditFlags._OptionsDefault and ColorEditFlags._PickerMask)
+        assert((flags and ColorEditFlags._InputsMask).isPowerOfTwo)     // Check only 1 option is selected
+        assert((flags and ColorEditFlags._DataTypeMask).isPowerOfTwo)   // Check only 1 option is selected
+        assert((flags and ColorEditFlags._PickerMask).isPowerOfTwo)     // Check only 1 option is selected
+        g.colorEditOptions = flags
+    }
+
     /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
      *  Hint: 'float col[3]' function argument is same as 'float* col'.
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
     fun colorEdit3(label: String, col: FloatArray, flags: Int = 0) = colorEdit4(label, col, flags or ColorEditFlags.NoAlpha)
 
     /** Edit colors components (each component in 0.0f..1.0f range).
-     *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ImGuiColorEditFlags_NoAlpha
-     *  flag is set.
+     *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ColorEditFlags.NoAlpha flag is set.
      *  With typical options: Left-click on colored square to open color picker. Right-click to open option menu.
      *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
     fun colorEdit4(label: String, col: FloatArray, flags: Int = 0): Boolean {
@@ -618,20 +648,31 @@ interface imgui_widgets {
         val alpha = flags hasnt ColorEditFlags.NoAlpha
         val hdr = flags has ColorEditFlags.HDR
         val components = if (alpha) 4 else 3
+        val flagsUntouched = flags
 
-        val flags = when {
-        // If we're not showing any slider there's no point in querying color mode, nor showing the options menu, nor doing any HSV conversions
-            flags has ColorEditFlags.NoInputs -> (flags wo ColorEditFlags.ModeMask_) or ColorEditFlags.RGB or ColorEditFlags.NoOptions
-        // If no mode is specified, defaults to RGB
-            flags hasnt ColorEditFlags.ModeMask_ -> flags or ColorEditFlags.RGB
-        // Read back edit mode from persistent storage, check that exactly one of RGB/HSV/HEX is set
-            flags hasnt ColorEditFlags.NoOptions -> (flags wo ColorEditFlags.StoredMask_) or
-                    ((g.colorEditModeStorage[storageId] ?: (flags and ColorEditFlags.StoredMask_)) and ColorEditFlags.StoredMask_)
-            else -> flags
-        }
+        beginGroup()
+        pushId(label)
 
-        assert((flags and ColorEditFlags.ModeMask_).isPowerOfTwo)
+        var flags = flags
 
+        // If we're not showing any slider there's no point in doing any HSV conversions
+        if (flags has ColorEditFlags.NoInputs)
+            flags = (flags wo ColorEditFlags._InputsMask) or ColorEditFlags.RGB or ColorEditFlags.NoOptions
+
+        // Context menu: display and modify options (before defaults are applied)
+        if (flags hasnt ColorEditFlags.NoOptions)
+            colorEditOptionsPopup(flags)
+
+        // Read stored options
+        if (flags hasnt ColorEditFlags._InputsMask)
+            flags = flags or (g.colorEditOptions and ColorEditFlags._InputsMask)
+        if (flags hasnt ColorEditFlags._DataTypeMask)
+            flags = flags or (g.colorEditOptions and ColorEditFlags._DataTypeMask)
+        if (flags hasnt ColorEditFlags._PickerMask)
+            flags = flags or (g.colorEditOptions and ColorEditFlags._PickerMask)
+        flags = flags or (g.colorEditOptions wo (ColorEditFlags._InputsMask or ColorEditFlags._DataTypeMask or ColorEditFlags._PickerMask))
+
+        // Convert to the formats we need
         val f = floatArrayOf(col[0], col[1], col[2], if (alpha) col[3] else 1f)
         if (flags has ColorEditFlags.HSV)
             f.rgbToHSV()
@@ -640,9 +681,6 @@ interface imgui_widgets {
 
         var valueChanged = false
         var valueChangedAsFloat = false
-
-        beginGroup()
-        pushId(label)
 
         if (flags has (ColorEditFlags.RGB or ColorEditFlags.HSV) && flags hasnt ColorEditFlags.NoInputs) {
 
@@ -731,24 +769,6 @@ interface imgui_widgets {
                 endPopup()
             }
         }
-        // Context menu: display and store options. Don't apply to 'flags' this frame.
-        if (flags hasnt ColorEditFlags.NoOptions && beginPopup("context")) {
-            var newFlags = -1
-            if (radioButton("RGB", flags has ColorEditFlags.RGB))
-                newFlags = (flags wo ColorEditFlags.ModeMask_) or ColorEditFlags.RGB
-            if (radioButton("HSV", flags has ColorEditFlags.HSV))
-                newFlags = (flags wo ColorEditFlags.ModeMask_) or ColorEditFlags.HSV
-            if (radioButton("HEX", flags has ColorEditFlags.HEX))
-                newFlags = (flags wo ColorEditFlags.ModeMask_) or ColorEditFlags.HEX
-            separator()
-            if (radioButton("0..255", flags hasnt ColorEditFlags.Float))
-                newFlags = flags wo ColorEditFlags.Float
-            if (radioButton("0.00..1.00", flags has ColorEditFlags.Float))
-                newFlags = flags or ColorEditFlags.Float
-            if (newFlags != -1)
-                g.colorEditModeStorage[storageId] = newFlags and ColorEditFlags.StoredMask_
-            endPopup()
-        }
 
         if (0 != labelDisplayEnd && flags hasnt ColorEditFlags.NoLabel) {
             sameLine(0f, style.itemInnerSpacing.x)
@@ -810,37 +830,95 @@ interface imgui_widgets {
         if (flags hasnt ColorEditFlags.NoSidePreview)
             flags = flags or ColorEditFlags.NoSmallPreview
 
+        // Context menu: display and store options.
+        if (flags hasnt ColorEditFlags.NoOptions)
+            colorPickerOptionsPopup(flags, col)
+
+        // Read stored options
+        if (flags hasnt ColorEditFlags._PickerMask)
+            flags = flags or (if (g.colorEditOptions has ColorEditFlags._PickerMask) g.colorEditOptions else ColorEditFlags._OptionsDefault.i) and ColorEditFlags._PickerMask
+        assert((flags and ColorEditFlags._PickerMask).isPowerOfTwo) // Check that only 1 is selected
+        if (flags hasnt ColorEditFlags.NoOptions)
+            flags = flags or (g.colorEditOptions and ColorEditFlags.AlphaBar)
+
         // Setup
         val alphaBar = flags has ColorEditFlags.AlphaBar && flags hasnt ColorEditFlags.NoAlpha
         val pickerPos = window.dc.cursorPos // consume only, safe passing reference
-        val barsWidth = colorSquareSize     // Arbitrary smallish width of Hue/Alpha picking bars
+        val barsWidth = colorSquareSize     // Arbitrary smallish width of Hue/Alpha picking bars TODO check
         // Saturation/Value picking box
         val svPickerSize = glm.max(barsWidth * 1, calcItemWidth() - (if (alphaBar) 2 else 1) * (barsWidth + style.itemInnerSpacing.x))
         val bar0PosX = pickerPos.x + svPickerSize + style.itemInnerSpacing.x
         val bar1PosX = bar0PosX + barsWidth + style.itemInnerSpacing.x
         val barsTrianglesHalfSz = (barsWidth * 0.2f).i.f
 
+        val wheelThickness = svPickerSize * 0.08f
+        val wheelROuter = svPickerSize * 0.50f
+        val wheelRInner = wheelROuter - wheelThickness
+        val wheelCenter = Vec2(pickerPos.x + (svPickerSize + barsWidth) * 0.5f, pickerPos.y + svPickerSize * 0.5f)
+
+        // Note: the triangle is displayed rotated with trianglePa pointing to Hue, but most coordinates stays unrotated for logic.
+        val triangleR = wheelRInner - (svPickerSize * 0.027f).i
+        val trianglePa = Vec2(triangleR, 0f)   // Hue point.
+        val trianglePb = Vec2(triangleR * -0.5f, triangleR * -0.866025f) // Black point.
+        val trianglePc = Vec2(triangleR * -0.5f, triangleR * +0.866025f) // White point.
+
         var (h, s, v) = colorConvertRGBtoHSV(col)
 
-        // Color matrix logic
         var valueChanged = false
-        var hsvChanged = false
-        var valueChangedFromMatrix = false
-        invisibleButton("sv", Vec2(svPickerSize))
-        if (isItemActive) {
-            s = saturate((IO.mousePos.x - pickerPos.x) / (svPickerSize - 1))
-            v = 1f - saturate((IO.mousePos.y - pickerPos.y) / (svPickerSize - 1))
-            valueChanged = true
-            hsvChanged = true
-        }
+        var valueChangedH = false
+        var valueChangedSv = false
 
-        // Hue bar logic
-        cursorScreenPos = Vec2(bar0PosX, pickerPos.y)
-        invisibleButton("hue", Vec2(barsWidth, svPickerSize))
-        if (isItemActive) {
-            h = saturate((IO.mousePos.y - pickerPos.y) / (svPickerSize - 1))
-            valueChanged = true
-            hsvChanged = true
+        if (flags has ColorEditFlags.PickerHueWheel) {
+            // Hue wheel + SV triangle logic
+            invisibleButton("hsv", Vec2(svPickerSize + style.itemInnerSpacing.x + barsWidth, svPickerSize))
+            if (isItemActive) {
+                val initialOff = IO.mouseClickedPos[0] - wheelCenter
+                val currentOff = IO.mousePos - wheelCenter
+                val initialDist2 = initialOff.lengthSqr
+                if (initialDist2 >= (wheelRInner - 1) * (wheelRInner - 1) && initialDist2 <= (wheelROuter + 1) * (wheelROuter + 1)) {
+                    // Interactive with Hue wheel
+                    h = glm.atan(currentOff.y, currentOff.x) / glm.PIf * 0.5f
+                    if (h < 0f)
+                        h += 1f
+                    valueChanged = true
+                    valueChangedH = true
+                }
+                val cosHueAngle = glm.cos(-h * 2f * glm.PIf)
+                val sinHueAngle = glm.sin(-h * 2f * glm.PIf)
+                if (triangleContainsPoint(trianglePa, trianglePb, trianglePc, initialOff.rotate_(cosHueAngle, sinHueAngle))) { // TODO check
+                    // Interacting with SV triangle
+                    val currentOffUnrotated = currentOff.rotate_(cosHueAngle, sinHueAngle)
+                    if (!triangleContainsPoint(trianglePa, trianglePb, trianglePc, currentOffUnrotated))
+                        currentOffUnrotated put triangleClosestPoint(trianglePa, trianglePb, trianglePc, currentOffUnrotated)
+                    val (uu, vv, ww) = triangleBarycentricCoords(trianglePa, trianglePb, trianglePc, currentOffUnrotated)
+                    v = glm.clamp(1f - vv, 0.0001f, 1f)
+                    s = glm.clamp(uu / v, 0.0001f, 1f)
+                    valueChangedSv = true
+                    valueChanged = true
+                }
+            }
+            if (flags hasnt ColorEditFlags.NoOptions && isItemHovered() && isMouseClicked(1))
+                openPopup("context")
+
+        } else if (flags has ColorEditFlags.PickerHueBar) {
+            // SV rectangle logic
+            invisibleButton("sv", Vec2(svPickerSize))
+            if (isItemActive) {
+                s = saturate((IO.mousePos.x - pickerPos.x) / (svPickerSize - 1))
+                v = 1f - saturate((IO.mousePos.y - pickerPos.y) / (svPickerSize - 1))
+                valueChangedSv = true
+                valueChanged = true
+            }
+            if (flags hasnt ColorEditFlags.NoOptions && isItemHovered() && isMouseClicked(1))
+                openPopup("context")
+            // Hue bar logic
+            cursorScreenPos.put(bar0PosX, pickerPos.y)
+            invisibleButton("hue", Vec2(barsWidth, svPickerSize))
+            if (isItemActive) {
+                h = saturate((IO.mousePos.y - pickerPos.y) / (svPickerSize - 1))
+                valueChangedH = true
+                valueChanged = true
+            }
         }
 
         // Alpha bar logic
@@ -878,7 +956,7 @@ interface imgui_widgets {
                 val refColV4 = Vec4(it[0], it[1], it[2], if (flags has ColorEditFlags.NoAlpha) 1f else it[3])
                 if (colorButton("##original", refColV4, f, Vec2(squareSz * 3, squareSz * 2))) {
                     for (i in 0..2) col[i] = it[i]
-                    if (flags has ColorEditFlags.NoAlpha) col[3] = it[3]
+                    if (flags hasnt ColorEditFlags.NoAlpha) col[3] = it[3]
                     valueChanged = true
                 }
             }
@@ -886,24 +964,20 @@ interface imgui_widgets {
         }
 
         // Convert back color to RGB
-        if (hsvChanged)
+        if (valueChangedH || valueChangedSv)
             colorConvertHSVtoRGB(if (h >= 1f) h - 10 * 1e-6f else h, if (s > 0f) s else 10 * 1e-6f, if (v > 0f) v else 1e-6f, col)
 
         // R,G,B and H,S,V slider color editor
         if (flags hasnt ColorEditFlags.NoInputs) {
             pushItemWidth((if (alphaBar) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
-            val subFlagsToForward = ColorEditFlags.Float or ColorEditFlags.HDR or ColorEditFlags.NoAlpha or ColorEditFlags.NoSmallPreview or
-                    ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf
-            var subFlags = (flags and subFlagsToForward) or ColorEditFlags.NoPicker or ColorEditFlags.NoOptions or ColorEditFlags.NoOptions
-            if (flags hasnt ColorEditFlags.ModeMask_)
-                flags = flags or ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX
-            if ((flags and ColorEditFlags.ModeMask_) == ColorEditFlags.ModeMask_.i)
-                subFlags = subFlags or ColorEditFlags.NoOptions
-            if (flags has ColorEditFlags.RGB)
+            val subFlagsToForward = ColorEditFlags._DataTypeMask or ColorEditFlags.HDR or ColorEditFlags.NoAlpha or ColorEditFlags.NoOptions or
+                    ColorEditFlags.NoSmallPreview or ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf
+            var subFlags = (flags and subFlagsToForward) or ColorEditFlags.NoPicker
+            if (flags has ColorEditFlags.RGB || flags hasnt ColorEditFlags._InputsMask)
                 valueChanged = valueChanged or colorEdit4("##rgb", col, subFlags or ColorEditFlags.RGB)
-            if (flags has ColorEditFlags.HSV)
+            if (flags has ColorEditFlags.HSV || flags hasnt ColorEditFlags._InputsMask)
                 valueChanged = valueChanged or colorEdit4("##hsv", col, subFlags or ColorEditFlags.HSV)
-            if (flags has ColorEditFlags.HEX)
+            if (flags has ColorEditFlags.HEX || flags hasnt ColorEditFlags._InputsMask)
                 valueChanged = valueChanged or colorEdit4("##hex", col, subFlags or ColorEditFlags.HEX)
             popItemWidth()
         }
@@ -919,50 +993,94 @@ interface imgui_widgets {
             }
         }
 
-        // Render hue bar
         val hueColorF = Vec4(1)
-        val rgb = colorConvertHSVtoRGB(h, 1f, 1f)
-        hueColorF.x = rgb[0]
-        hueColorF.y = rgb[1]
-        hueColorF.z = rgb[2]
-        val hueColors = intArrayOf(COL32(255, 0, 0, 255), COL32(255, 255, 0, 255), COL32(0, 255, 0, 255),
+        colorConvertHSVtoRGB(h, 1f, 1f).apply { hueColorF.x = this[0]; hueColorF.y = this[1]; hueColorF.z = this[0] }
+        val hueColor32 = colorConvertFloat4ToU32(hueColorF)
+        val col32NoAlpha = colorConvertFloat4ToU32(Vec4(col[0], col[1], col[2], 1f))
+
+        val hueColors = arrayOf(COL32(255, 0, 0, 255), COL32(255, 255, 0, 255), COL32(0, 255, 0, 255),
                 COL32(0, 255, 255, 255), COL32(0, 0, 255, 255), COL32(255, 0, 255, 255), COL32(255, 0, 0, 255))
-        for (i in 0..5) {
-            drawList.addRectFilledMultiColor(
-                    Vec2(bar0PosX, pickerPos.y + i * (svPickerSize / 6)),
-                    Vec2(bar0PosX + barsWidth, pickerPos.y + (i + 1) * (svPickerSize / 6)),
-                    hueColors[i], hueColors[i], hueColors[i + 1], hueColors[i + 1])
+        val svCursorPos = Vec2()
+
+        if (flags has ColorEditFlags.PickerHueWheel) {
+            // Render Hue Wheel
+            val aeps = 1.5f / wheelROuter   // Half a pixel arc length in radians (2pi cancels out).
+            val segmentPerArc = glm.max(4, (wheelROuter / 12).i)
+            for (n in 0..5) {
+                val a0 = n / 6f * 2f * glm.PIf - aeps
+                val a1 = (n + 1f) / 6f * 2f * glm.PIf + aeps
+                val vertStartIdx = drawList._vtxCurrentIdx
+                drawList.pathArcTo(wheelCenter, (wheelRInner + wheelROuter) * 0.5f, a0, a1, segmentPerArc)
+                drawList.pathStroke(COL32_WHITE, false, wheelThickness)
+
+                // Paint colors over existing vertices
+                val gradientP0 = Vec2(wheelCenter.x + a0.cos * wheelRInner, wheelCenter.y + a0.sin * wheelRInner)
+                val gradientP1 = Vec2(wheelCenter.x + a1.cos * wheelRInner, wheelCenter.y + a1.sin * wheelRInner)
+                paintVertsLinearGradientKeepAlpha(drawList, drawList._vtxWritePtr - (drawList._vtxCurrentIdx - vertStartIdx),
+                        drawList._vtxWritePtr, gradientP0, gradientP1, hueColors[n], hueColors[n + 1])
+            }
+
+            // Render Cursor + preview on Hue Wheel
+            val cosHueAngle = glm.cos(h * 2f * glm.PIf)
+            val sinHueAngle = glm.sin(h * 2f * glm.PIf)
+            val hueCursorPos = Vec2(wheelCenter.x + cosHueAngle * (wheelRInner + wheelROuter) * 0.5f,
+                    wheelCenter.y + sinHueAngle * (wheelRInner + wheelROuter) * 0.5f)
+            val hueCursorRad = wheelThickness * if (valueChangedH) 0.65f else 0.55f
+            val hueCursorSegments = glm.clamp((hueCursorRad / 1.4f).i, 9, 32)
+            drawList.addCircleFilled(hueCursorPos, hueCursorRad, hueColor32, hueCursorSegments)
+            drawList.addCircle(hueCursorPos, hueCursorRad + 1, COL32(128, 128, 128, 255), hueCursorSegments)
+            drawList.addCircle(hueCursorPos, hueCursorRad, COL32_WHITE, hueCursorSegments)
+
+            // Render SV triangle (rotated according to hue)
+            val tra = wheelCenter + trianglePa.rotate(cosHueAngle, sinHueAngle)
+            val trb = wheelCenter + trianglePb.rotate(cosHueAngle, sinHueAngle)
+            val trc = wheelCenter + trianglePc.rotate(cosHueAngle, sinHueAngle)
+            val uvWhite = g.fontTexUvWhitePixel
+            drawList.primReserve(6, 6)
+            drawList.primVtx(tra, uvWhite, hueColor32)
+            drawList.primVtx(trb, uvWhite, hueColor32)
+            drawList.primVtx(trc, uvWhite, COL32_WHITE)
+            drawList.primVtx(tra, uvWhite, COL32_BLACK_TRANS)
+            drawList.primVtx(trb, uvWhite, COL32_BLACK)
+            drawList.primVtx(trc, uvWhite, COL32_BLACK_TRANS)
+            drawList.addTriangle(tra, trb, trc, COL32(128, 128, 128, 255), 1.5f)
+            svCursorPos put trc.lerp(tra, saturate(s)).lerp(trb, saturate(1 - v))
+        } else if (flags has ColorEditFlags.PickerHueBar) {
+            // Render SV Square
+            drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_WHITE, hueColor32, hueColor32, COL32_WHITE)
+            drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_BLACK_TRANS, COL32_BLACK_TRANS, COL32_BLACK, COL32_BLACK)
+            renderFrameBorder(pickerPos, pickerPos + svPickerSize, 0f)
+            // Sneakily prevent the circle to stick out too much
+            svCursorPos.x = glm.clamp((pickerPos.x + saturate(s) * svPickerSize + 0.5f).i.f, pickerPos.x + 2, pickerPos.x + svPickerSize - 2)
+            svCursorPos.y = glm.clamp((pickerPos.y + saturate(1 - v) * svPickerSize + 0.5f).i.f, pickerPos.y + 2, pickerPos.y + svPickerSize - 2)
+
+            // Render Hue Bar
+            for (i in 0..5) {
+                val a = Vec2(bar0PosX, pickerPos.y + i * (svPickerSize / 6))
+                val c = Vec2(bar0PosX + barsWidth, pickerPos.y + (i + 1) * (svPickerSize / 6))
+                drawList.addRectFilledMultiColor(a, c, hueColors[i], hueColors[i], hueColors[i + 1], hueColors[i + 1])
+            }
+            val bar0LineY = (pickerPos.y + h * svPickerSize + 0.5f).i.f
+            renderFrameBorder(Vec2(bar0PosX, pickerPos.y), Vec2(bar0PosX + barsWidth, pickerPos.y + svPickerSize), 0f)
+            renderArrowsForVerticalBar(drawList, Vec2(bar0PosX - 1, bar0LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f)
         }
-        val bar0LineY = (pickerPos.y + h * svPickerSize + 0.5f).i.f
-        renderFrameBorder(Vec2(bar0PosX, pickerPos.y), Vec2(bar0PosX + barsWidth, pickerPos.y + svPickerSize), 0f)
-        renderArrowsForVerticalBar(drawList, Vec2(bar0PosX - 1, bar0LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f)
+
+        // Render cursor/preview circle (clamp S/V within 0..1 range because floating points colors may lead HSV values to be out of range)
+        val svCursorRad = if (valueChangedSv) 10f else 6f
+        drawList.addCircleFilled(svCursorPos, svCursorRad, col32NoAlpha, 12)
+        drawList.addCircle(svCursorPos, svCursorRad + 1, COL32(128, 128, 128, 255), 12)
+        drawList.addCircle(svCursorPos, svCursorRad, COL32_WHITE, 12)
 
         // Render alpha bar
-        val col32NoAlpha = colorConvertFloat4ToU32(Vec4(col[0], col[1], col[2], 1f))
         if (alphaBar) {
             val alpha = saturate(col[3])
             val bar1Bb = Rect(bar1PosX, pickerPos.y, bar1PosX + barsWidth, pickerPos.y + svPickerSize)
-            renderColorRectWithAlphaCheckerboard(bar1Bb.min, bar1Bb.max, COL32(0, 0, 0, 0), bar1Bb.width / 2f, Vec2(0, 0))
+            renderColorRectWithAlphaCheckerboard(bar1Bb.min, bar1Bb.max, COL32(0, 0, 0, 0), bar1Bb.width / 2f, Vec2())
             drawList.addRectFilledMultiColor(bar1Bb.min, bar1Bb.max, col32NoAlpha, col32NoAlpha, col32NoAlpha wo COL32_A_MASK, col32NoAlpha wo COL32_A_MASK)
-            val bar1LineY = (pickerPos.y + (1f - alpha) * svPickerSize + 0.5f).i.f
+            val bar1LineY = (pickerPos.y + (1f - alpha) * svPickerSize + 0.5f)
             renderFrameBorder(bar1Bb.min, bar1Bb.max, 0f)
             renderArrowsForVerticalBar(drawList, Vec2(bar1PosX - 1, bar1LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f)
         }
-
-        // Render color matrix
-        val hueColor32 = colorConvertFloat4ToU32(hueColorF)
-        drawList.addRectFilledMultiColor(pickerPos, pickerPos + Vec2(svPickerSize), COL32_WHITE, hueColor32, hueColor32, COL32_WHITE)
-        drawList.addRectFilledMultiColor(pickerPos, pickerPos + Vec2(svPickerSize), COL32_BLACK_TRANS, COL32_BLACK_TRANS, COL32_BLACK, COL32_BLACK)
-        renderFrameBorder(pickerPos, pickerPos + Vec2(svPickerSize), 0f)
-
-        // Render cursor/preview circle  (clamp S/V within 0..1 range because floating points colors may lead HSV values to be out of range)
-        val p = Vec2((pickerPos.x + saturate(s) * svPickerSize + 0.5f).i.f, (pickerPos.y + saturate(1 - v) * svPickerSize + 0.5f).i.f)
-        p.x = glm.clamp(p.x, pickerPos.x + 2, pickerPos.x + svPickerSize - 2)
-        p.y = glm.clamp(p.y, pickerPos.y + 2, pickerPos.y + svPickerSize - 2)
-        val r = if (valueChangedFromMatrix) 10f else 6f
-        drawList.addCircleFilled(p, r, col32NoAlpha, 12)
-        drawList.addCircle(p, r + 1, COL32(128, 128, 128, 255), 12)
-        drawList.addCircle(p, r, COL32_WHITE, 12)
 
         endGroup()
         popId()
@@ -978,12 +1096,12 @@ interface imgui_widgets {
 
     // TODO, lambdas are so short, consider removing it
     object Items {
-
         // FIXME-OPT: we could pre-compute the indices to fasten this. But only 1 active combo means the waste is limited.
         val singleStringGetter = { data: String, idx: Int -> data.split('\u0000')[idx] }
-
         val arrayGetter = { data: Array<String>, idx: Int, outText: Array<String> -> outText[0] = data[idx]; true }
+    }
 
+    companion object {
         /** 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
         fun renderArrow(drawList: DrawList, pos: Vec2, halfSz: Vec2, direction: Dir, col: Int) = when (direction) {
             Dir.Right -> drawList.addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
@@ -998,6 +1116,83 @@ interface imgui_widgets {
             renderArrow(drawList, Vec2(pos.x + halfSz.x, pos.y), halfSz, Dir.Right, COL32_WHITE)
             renderArrow(drawList, Vec2(pos.x + barW - halfSz.x - 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Left, COL32_BLACK)
             renderArrow(drawList, Vec2(pos.x + barW - halfSz.x, pos.y), halfSz, Dir.Left, COL32_WHITE)
+        }
+
+        fun paintVertsLinearGradientKeepAlpha(drawList: DrawList, vertStart: Int, vertEnd: Int, gradientP0: Vec2, gradientP1: Vec2, col0: Int, col1: Int) {
+            val gradientExtent = gradientP1 - gradientP0
+            val gradientInvLength = gradientExtent.invLength(0f)
+            for (v in vertStart until vertEnd) {
+                val vert = drawList.vtxBuffer[v]
+                val d = (vert.pos - gradientP0) dot gradientExtent
+                val t = glm.min(glm.sqrt(glm.max(d, 0f)) * gradientInvLength, 1f)
+                val r = lerp((col0 ushr COL32_R_SHIFT) and 0xFF, (col1 ushr COL32_R_SHIFT) and 0xFF, t)
+                val g = lerp((col0 ushr COL32_G_SHIFT) and 0xFF, (col1 ushr COL32_G_SHIFT) and 0xFF, t)
+                val b = lerp((col0 ushr COL32_B_SHIFT) and 0xFF, (col1 ushr COL32_B_SHIFT) and 0xFF, t)
+                vert.col = (r shl COL32_R_SHIFT) or (g shl COL32_G_SHIFT) or (b shl COL32_B_SHIFT) or (vert.col and COL32_A_MASK)
+            }
+        }
+
+        fun colorEditOptionsPopup(flags: Int) {
+            val allowOptInputs = flags hasnt ColorEditFlags._InputsMask
+            val allowOptDatatype = flags hasnt ColorEditFlags._DataTypeMask
+            if ((!allowOptInputs && !allowOptDatatype) || !beginPopup("context")) return
+            var opts = g.colorEditOptions
+            if (allowOptInputs) {
+                if (radioButton("RGB", opts has ColorEditFlags.RGB))
+                    opts = (opts wo ColorEditFlags._InputsMask) or ColorEditFlags.RGB
+                if (radioButton("HSV", opts has ColorEditFlags.HSV))
+                    opts = (opts wo ColorEditFlags._InputsMask) or ColorEditFlags.HSV
+                if (radioButton("HEX", opts has ColorEditFlags.HEX))
+                    opts = (opts wo ColorEditFlags._InputsMask) or ColorEditFlags.HEX
+            }
+            if (allowOptDatatype) {
+                if (allowOptInputs) separator()
+                if (radioButton("0..255", opts has ColorEditFlags.Uint8))
+                    opts = (opts wo ColorEditFlags._DataTypeMask) or ColorEditFlags.Uint8
+                if (radioButton("0.00..1.00", opts has ColorEditFlags.Float))
+                    opts = (opts wo ColorEditFlags._DataTypeMask) or ColorEditFlags.Float
+            }
+            g.colorEditOptions = opts
+            endPopup()
+        }
+
+        fun colorPickerOptionsPopup(flags: Int, refCol: FloatArray) {
+            val allowOptPicker = flags hasnt ColorEditFlags._PickerMask
+            val allowOptAlphaBar = flags hasnt ColorEditFlags.NoAlpha && flags hasnt ColorEditFlags.AlphaBar
+            if ((!allowOptPicker && !allowOptAlphaBar) || !beginPopup("context")) return
+            if (allowOptPicker) {
+                // FIXME: Picker size copied from main picker function
+                val pickerSize = Vec2(g.fontSize * 8, glm.max(g.fontSize * 8 - (colorSquareSize + style.itemInnerSpacing.x), 1f))
+                pushItemWidth(pickerSize.x)
+                for (pickerType in 0..1) {
+                    // Draw small/thumbnail version of each picker type (over an invisible button for selection)
+                    if (pickerType > 0) separator()
+                    pushId(pickerType)
+                    var pickerFlags = ColorEditFlags.NoInputs or ColorEditFlags.NoOptions or ColorEditFlags.NoLabel or
+                            ColorEditFlags.NoSidePreview or (flags and ColorEditFlags.NoAlpha)
+                    if (pickerType == 0) pickerFlags = pickerFlags or ColorEditFlags.PickerHueBar
+                    if (pickerType == 1) pickerFlags = pickerFlags or ColorEditFlags.PickerHueWheel
+                    val backupPos = Vec2(cursorScreenPos)
+                    if (selectable("##selectable", false, 0, pickerSize)) // By default, Selectable() is closing popup
+                        g.colorEditOptions = (g.colorEditOptions wo ColorEditFlags._PickerMask) or (pickerFlags and ColorEditFlags._PickerMask)
+                    cursorScreenPos = backupPos
+                    val dummyRefCol = Vec4()
+                    for (i in 0..2) dummyRefCol[i] = refCol[i]
+                    if (pickerFlags hasnt ColorEditFlags.NoAlpha) dummyRefCol[3] = refCol[3]
+                    val pF = floatArrayOf(dummyRefCol.x)
+                    colorPicker4("##dummypicker", pF, pickerFlags)
+                    dummyRefCol.x = pF[0]
+                    popId()
+                }
+                popItemWidth()
+            }
+            if (allowOptAlphaBar) {
+                if (allowOptPicker) separator()
+                val pI = intArrayOf(g.colorEditOptions)
+                checkboxFlags("Alpha Bar", pI, ColorEditFlags.AlphaBar.i)
+                g.colorEditOptions = pI[0]
+            }
+            endPopup()
         }
     }
 }

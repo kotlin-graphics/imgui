@@ -96,13 +96,13 @@ object Context {
 
     var setNextWindowCollapsedVal = false
 
-    var setNextWindowPosCond = SetCond.Null
+    var setNextWindowPosCond = Cond.Null
 
-    var setNextWindowSizeCond = SetCond.Always
+    var setNextWindowSizeCond = Cond.Always
 
-    var setNextWindowContentSizeCond = SetCond.Null
+    var setNextWindowContentSizeCond = Cond.Null
 
-    var setNextWindowCollapsedCond = SetCond.Null
+    var setNextWindowCollapsedCond = Cond.Null
     /** Valid if 'SetNextWindowSizeConstraint' is true  */
     var setNextWindowSizeConstraintRect = Rect()
 
@@ -146,8 +146,8 @@ object Context {
     var inputTextPasswordFont = Font()
     /** Temporary text input when CTRL+clicking on a slider, etc.   */
     var scalarAsInputTextId = 0
-    /** Store user selection of color edit mode */
-    val colorEditModeStorage = mutableMapOf<Int, Int>()
+    /** Store user options for color edit widgets   */
+    var colorEditOptions = ColorEditFlags._OptionsDefault.i
 
     val colorPickerRef = Vec4()
     /** Currently dragged value, always float, not rounded by end-user precision settings   */

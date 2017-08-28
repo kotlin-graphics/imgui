@@ -337,46 +337,59 @@ enum class StyleVar {
 enum class ColorEditFlags(val i: Int) {
 
     Null(0),
-    /** ColorEdit: default to one among RGB/HSV/HEX. User can still use the options menu to change.
-     *  ColorPicker: Choose any combination or RGB/HSV/HEX. */
-    RGB(1 shl 1),
-    /** ColorEdit: default to one among RGB/HSV/HEX. User can still use the options menu to change.
-     *  ColorPicker: Choose any combination or RGB/HSV/HEX. */
-    HSV(1 shl 2),
-    /** ColorEdit: default to one among RGB/HSV/HEX. User can still use the options menu to change.
-     *  ColorPicker: Choose any combination or RGB/HSV/HEX. */
-    HEX(1 shl 3),
-    /** ColorEdit, ColorPicker, ColorButton: display values formatted as 0.0f..1.0f floats instead of 0..255 integers.
-     *  No round-trip of value via integers.    */
-    Float(1 shl 4),
-    /** ColorEdit: disable 0.0f..1.0f limits (note: you probably want to use ColorEdit:Float flag as well). */
-    HDR(1 shl 5),
-    /** ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker. */
-    AlphaBar(1 shl 6),
-    /** ColorEdit, ColorPicker, ColorButton: display preview as a transparent color over a checkerboard, instead of opaque. */
-    AlphaPreview(1 shl 7),
-    /** ColorEdit, ColorPicker, ColorButton: display half opaque / half checkerboard, instead of opaque.    */
-    AlphaPreviewHalf(1 shl 8),
-    /** ColorEdit, ColorPicker, ColorButton: completely ignore Alpha component (read 3 components from the input pointer).  */
-    NoAlpha(1 shl 9),
+    /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (read 3 components from the input pointer). */
+    NoAlpha(1 shl 1),
     /** ColorEdit: disable picker when clicking on colored square.  */
-    NoPicker(1 shl 10),
+    NoPicker(1 shl 2),
     /** ColorEdit: disable toggling options menu when right-clicking on inputs/small preview.   */
-    NoOptions(1 shl 11),
+    NoOptions(1 shl 3),
     /** ColorEdit, ColorPicker: disable colored square preview next to the inputs. (e.g. to show only the inputs)   */
-    NoSmallPreview(1 shl 12),
+    NoSmallPreview(1 shl 4),
     /** ColorEdit, ColorPicker: disable inputs sliders/text widgets (e.g. to show only the small preview colored square).   */
-    NoInputs(1 shl 13),
+    NoInputs(1 shl 5),
     /** ColorEdit, ColorPicker, ColorButton: disable tooltip when hovering the preview. */
-    NoTooltip(1 shl 14),
+    NoTooltip(1 shl 6),
     /** ColorEdit, ColorPicker: disable display of inline text label (the label is still forwarded to the tooltip and picker).  */
-    NoLabel(1 shl 15),
+    NoLabel(1 shl 7),
     /** ColorPicker: disable bigger color preview on right side of the picker, use small colored square preview instead.    */
-    NoSidePreview(1 shl 16),
-    ModeMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX),
-    StoredMask_(ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX or ColorEditFlags.Float);
+    NoSidePreview(1 shl 8),
+
+    /*  User Options (right-click on widget to change some of them). You can set application defaults using
+        SetColorEditOptions(). The idea is that you probably don't want to override them in most of your calls,
+        let the user choose and/or call SetColorEditOptions() during startup.     */
+    /** ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker. */
+    AlphaBar(1 shl 9),
+    /** ColorEdit, ColorPicker, ColorButton: display preview as a transparent color over a checkerboard, instead of opaque. */
+    AlphaPreview(1 shl 10),
+    /** ColorEdit, ColorPicker, ColorButton: display half opaque / half checkerboard, instead of opaque.    */
+    AlphaPreviewHalf(1 shl 11),
+    /** (WIP) ColorEdit: Currently only disable 0.0f..1.0f limits in RGBA edition (note: you probably want to use
+     *  ColorEditFlags.Float flag as well). */
+    HDR(1 shl 12),
+    /** [Inputs] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
+    RGB(1 shl 13),
+    /** [Inputs] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
+    HSV(1 shl 14),
+    /** [Inputs] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
+    HEX(1 shl 15),
+    /** [DataType] ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0..255.   */
+    Uint8(1 shl 16),
+    /** [DataType] ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0.0f..1.0f floats instead of 0..255 integers.
+     *  No round-trip of value via integers.    */
+    Float(1 shl 17),
+    /** [PickerMode] ColorPicker: bar for Hue, rectangle for Sat/Value. */
+    PickerHueBar(1 shl 18),
+    /** [PickerMode] ColorPicker: wheel for Hue, triangle for Sat/Value.    */
+    PickerHueWheel(1 shl 19),
+    // Internals/Masks
+    _InputsMask(RGB or HSV or HEX),
+    _DataTypeMask(Uint8 or Float),
+    _PickerMask(PickerHueWheel or PickerHueBar),
+    /** Change application default using SetColorEditOptions()  */
+    _OptionsDefault(Uint8 or RGB or PickerHueBar)
 }
 
+infix fun ColorEditFlags.and(other: ColorEditFlags) = i and other.i
 infix fun ColorEditFlags.or(other: ColorEditFlags) = i or other.i
 infix fun Int.and(other: ColorEditFlags) = this and other.i
 infix fun Int.or(other: ColorEditFlags) = this or other.i
@@ -412,7 +425,7 @@ enum class MouseCursor(val i: Int) {
 
 /** Condition flags for ImGui::SetWindow***(), SetNextWindow***(), SetNextTreeNode***() functions
  *  All those functions treat 0 as a shortcut to Always    */
-enum class SetCond(val i: Int) {
+enum class Cond(val i: Int) {
 
     Null(0),
     /** Set the variable    */
@@ -424,9 +437,10 @@ enum class SetCond(val i: Int) {
     /** Set the variable if the window is appearing after being hidden/inactive (or the first time) */
     Appearing(1 shl 3);
 
-    infix fun or(other: SetCond) = i or other.i
+    infix fun or(other: Cond) = i or other.i
 }
 
-infix fun Int.or(other: SetCond) = this or other.i
-infix fun Int.has(b: SetCond) = (this and b.i) != 0
-infix fun Int.hasnt(b: SetCond) = (this and b.i) == 0
+infix fun Int.or(other: Cond) = this or other.i
+infix fun Int.has(b: Cond) = (this and b.i) != 0
+infix fun Int.hasnt(b: Cond) = (this and b.i) == 0
+infix fun Int.wo(b: Cond) = this and b.i.inv()

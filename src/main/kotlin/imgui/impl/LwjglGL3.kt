@@ -11,7 +11,7 @@ import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
-import uno.buffer.byteBufferBig
+import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
 import uno.glf.semantic
@@ -84,7 +84,7 @@ object LwjglGL3 {
 
     var vtxSize = 1 shl 5 // 32768
     var idxSize = 1 shl 6 // 65536
-    var vtxBuffer = byteBufferBig(vtxSize)
+    var vtxBuffer = bufferBig(vtxSize)
     var idxBuffer = intBufferBig(idxSize / Int.BYTES)
 
 
@@ -187,7 +187,7 @@ object LwjglGL3 {
             idxSize = newIdxSize
 
             vtxBuffer.destroy()
-            vtxBuffer = byteBufferBig(vtxSize)
+            vtxBuffer = bufferBig(vtxSize)
             idxBuffer.destroy()
             idxBuffer = intBufferBig(idxSize / Int.BYTES)
 
@@ -268,14 +268,14 @@ object LwjglGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastElementArrayBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
+        val lastViewport = glGetVec4i(GL_VIEWPORT)
+        val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
         val lastBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
         val lastBlendDstRgb = glGetInteger(GL_BLEND_DST_RGB)
         val lastBlendSrcAlpha = glGetInteger(GL_BLEND_SRC_ALPHA)
         val lastBlendDstAlpha = glGetInteger(GL_BLEND_DST_ALPHA)
         val lastBlendEquationRgb = glGetInteger(GL_BLEND_EQUATION_RGB)
         val lastBlendEquationAlpha = glGetInteger(GL_BLEND_EQUATION_ALPHA)
-        val lastViewport = glGetVec4i(GL_VIEWPORT)
-        val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
         val lastEnableBlend = glIsEnabled(GL_BLEND)
         val lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)

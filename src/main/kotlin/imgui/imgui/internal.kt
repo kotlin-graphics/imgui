@@ -423,7 +423,7 @@ interface imgui_internal {
     /** NB: This is rather brittle and will show artifact when rounding this enabled if rounded corners overlap multiple cells.
      *  Caller currently responsible for avoiding that.
      *  I spent a non reasonable amount of time trying to getting this right for ColorButton with rounding + anti-aliasing +
-     *  ImGuiColorEditFlags.HalfAlphaPreview flag + various grid sizes and offsets, and eventually gave up...
+     *  ColorEditFlags.HalfAlphaPreview flag + various grid sizes and offsets, and eventually gave up...
      *  probably more reasonable to disable rounding alltogether.   */
     fun renderColorRectWithAlphaCheckerboard(pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float, gridOff: Vec2, rounding: Float = 0f,
                                              roundingCornerFlags: Int = 0.inv()) {
@@ -498,21 +498,14 @@ interface imgui_internal {
 
         val window = currentWindow
 
-        val a = Vec2()
-        val b = Vec2()
-        val c = Vec2()
         val startX = (g.fontSize * 0.307f + 0.5f).i.f
         val remThird = ((g.fontSize - startX) / 3f).i.f
-        a.x = pos.x + 0.5f + startX
-        b.x = a.x + remThird
-        c.x = a.x + remThird * 3f
-        b.y = pos.y - 1f + (g.font.ascent * (g.fontSize / g.font.fontSize) + 0.5f).i.f + g.font.displayOffset.y.i.f
-        a.y = b.y - remThird
-        c.y = b.y - remThird * 2f
-
-        window.drawList.pathLineTo(a)
+        val b = Vec2(
+                pos.x + 0.5f + startX + remThird,
+                pos.y - 1f + (g.font.ascent * (g.fontSize / g.font.fontSize) + 0.5f).i.f + g.font.displayOffset.y.i.f)
+        window.drawList.pathLineTo(b - remThird)
         window.drawList.pathLineTo(b)
-        window.drawList.pathLineTo(c)
+        window.drawList.pathLineTo(Vec2(b.x + remThird * 2, b.y - remThird * 2))
         window.drawList.pathStroke(col, false)
     }
 
@@ -1531,7 +1524,8 @@ interface imgui_internal {
         return valueChanged
     }
 
-    /** Create text input in place of a slider (when CTRL+Clicking on slider)   */
+    /** Create text input in place of a slider (when CTRL+Clicking on slider)
+     *  FIXME: Logic is messy and confusing. */
     fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: IntArray, id: Int, decimalPrecision: Int)
             : Boolean {
 
@@ -1545,9 +1539,8 @@ interface imgui_internal {
         val buf = CharArray(32)
         data.format(dataType, decimalPrecision, buf)
         val textValueChanged = inputTextEx(label, buf, aabb.size, InputTextFlags.CharsDecimal or InputTextFlags.AutoSelectAll)
-        if (g.scalarAsInputTextId == 0) {
-            /*  First frame
-                InputText ID expected to match the Slider ID (else we'd need to store them both, which is also possible)             */
+        if (g.scalarAsInputTextId == 0) {   // First frame we started displaying the InputText widget
+            // InputText ID expected to match the Slider ID (else we'd need to store them both, which is also possible)
             assert(g.activeId == id)
             g.scalarAsInputTextId = g.activeId
             setHoveredId(id)
@@ -1689,7 +1682,7 @@ interface imgui_internal {
 
         var isOpen = false
         if (g.setNextTreeNodeOpenCond != 0) {
-            if (g.setNextTreeNodeOpenCond has SetCond.Always) {
+            if (g.setNextTreeNodeOpenCond has Cond.Always) {
                 isOpen = g.setNextTreeNodeOpenVal
                 storage[id] = isOpen
             } else {

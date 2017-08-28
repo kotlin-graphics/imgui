@@ -10,7 +10,7 @@ import imgui.Context.style
 import imgui.ImGui.closeButton
 import imgui.ImGui.indent
 import imgui.ImGui.pushId
-import imgui.SetCond
+import imgui.Cond
 import imgui.TreeNodeFlags
 import imgui.or
 import imgui.Context as g
@@ -86,7 +86,7 @@ interface imgui_widgetsTrees {
     val treeNodeToLabelSpacing get() = g.fontSize + style.framePadding.x * 2f
 
     /** set next TreeNode/CollapsingHeader open state.  */
-    fun setNextTreeNodeOpen(isOpen: Boolean, cond: SetCond = SetCond.Always) {
+    fun setNextTreeNodeOpen(isOpen: Boolean, cond: Cond = Cond.Always) {
         g.setNextTreeNodeOpenVal = isOpen
         g.setNextTreeNodeOpenCond = cond.i
     }

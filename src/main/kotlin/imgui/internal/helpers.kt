@@ -130,11 +130,53 @@ val crc32_lut by lazy {
 //IMGUI_API void*         ImFileLoadToMemory(const char* filename, const char* file_open_mode, int* out_file_size = NULL, int padding_bytes = 0);
 //IMGUI_API FILE*         ImFileOpen(const char* filename, const char* file_open_mode);
 
-fun isPointInTriangle(p: Vec2, a: Vec2, b: Vec2, c: Vec2): Boolean {
+
+// Helpers: Geometry
+
+fun lineClosestPoint(a: Vec2, b: Vec2, p: Vec2): Vec2 {
+    val ap = p - a
+    var abDir = b - a
+    val abLen = glm.sqrt(abDir.x * abDir.x + abDir.y * abDir.y)
+    abDir *= 1f / abLen
+    val dot = ap.x * abDir.x + ap.y * abDir.y
+    return when {
+        dot < 0f -> a
+        dot > abLen -> b
+        else -> a + abDir * dot
+    }
+}
+
+fun triangleContainsPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Boolean {
     val b1 = ((p.x - b.x) * (a.y - b.y) - (p.y - b.y) * (a.x - b.x)) < 0f
     val b2 = ((p.x - c.x) * (b.y - c.y) - (p.y - c.y) * (b.x - c.x)) < 0f
     val b3 = ((p.x - a.x) * (c.y - a.y) - (p.y - a.y) * (c.x - a.x)) < 0f
     return ((b1 == b2) && (b2 == b3))
+}
+
+fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2, outU: Float = 0f, outV: Float = 0f, outW: Float = 0f): FloatArray {
+    val v0 = b - a
+    val v1 = c - a
+    val v2 = p - a
+    val denom = v0.x * v1.y - v1.x * v0.y
+    return floatArrayOf(
+            (v2.x * v1.y - v1.x * v2.y) / denom,
+            (v0.x * v2.y - v2.x * v0.y) / denom,
+            1f - outV - outW)
+}
+
+fun triangleClosestPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Vec2 {
+    val projAB = lineClosestPoint(a, b, p)
+    val projBC = lineClosestPoint(b, c, p)
+    val projCA = lineClosestPoint(c, a, p)
+    val dist2AB = (p - projAB).lengthSqr
+    val dist2BC = (p - projBC).lengthSqr
+    val dist2CA = (p - projCA).lengthSqr
+    val m = glm.min(dist2AB, glm.min(dist2BC, dist2CA))
+    return when (m) {
+        dist2AB -> projAB
+        dist2BC -> projBC
+        else -> projCA
+    }
 }
 
 val Char.isSpace get() = this == ' ' || this == '\t' || this.i == 0x3000
@@ -180,12 +222,13 @@ fun CharArray.beginOfLine(midLine: Int): Int {
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: Math
 // -----------------------------------------------------------------------------------------------------------------
-fun Vec2.lengthSqr() = x * x + y * y
+val Vec2.lengthSqr get() = x * x + y * y
 
 fun saturate(f: Float) = if (f < 0f) 0f else if (f > 1f) 1f else f
 
 fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float) = (a + (b - a) * t).i
+fun Vec2.lerp(b: Vec2, t: Float) = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
 
 fun Vec2.invLength(failValue: Float): Float {
     val d = x * x + y * y
@@ -193,6 +236,9 @@ fun Vec2.invLength(failValue: Float): Float {
         return 1f / glm.sqrt(d)
     return failValue
 }
+
+fun Vec2.rotate_(cosA: Float, sinA: Float) = put(x * cosA - y * sinA, x * sinA + y * cosA)
+fun Vec2.rotate(cosA: Float, sinA: Float) = Vec2(x * cosA - y * sinA, x * sinA + y * cosA)
 
 
 // JVM IMGUI

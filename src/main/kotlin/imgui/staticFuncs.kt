@@ -19,7 +19,6 @@ import imgui.ImGui.setHoveredId
 import imgui.internal.*
 import uno.kotlin.isPrintable
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Paths
 import imgui.Context as g
 
@@ -104,9 +103,9 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
         if (settings == null)
             settings = addWindowSettings(name)
         else {
-            setWindowPosAllowFlags = setWindowPosAllowFlags and SetCond.FirstUseEver.i.inv()
-            setWindowSizeAllowFlags = setWindowSizeAllowFlags and SetCond.FirstUseEver.i.inv()
-            setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags and SetCond.FirstUseEver.i.inv()
+            setWindowPosAllowFlags = setWindowPosAllowFlags wo Cond.FirstUseEver
+            setWindowSizeAllowFlags = setWindowSizeAllowFlags wo Cond.FirstUseEver
+            setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags wo Cond.FirstUseEver
         }
 
         if (settings.pos.x != Int.MAX_VALUE) {
@@ -115,7 +114,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
             collapsed = settings.collapsed
         }
 
-        if (settings.size.lengthSqr() > 0.00001f && flags hasnt WindowFlags.NoResize)
+        if (settings.size.lengthSqr > 0.00001f && flags hasnt WindowFlags.NoResize)
             size put settings.size
         sizeFull put size
         this.size put size
@@ -140,10 +139,10 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
 
 
 fun clearSetNextWindowData() {
-    g.setNextWindowPosCond = SetCond.Null
-    g.setNextWindowSizeCond = SetCond.Null
-    g.setNextWindowPosCond = SetCond.Null
-    g.setNextWindowPosCond = SetCond.Null
+    g.setNextWindowPosCond = Cond.Null
+    g.setNextWindowSizeCond = Cond.Null
+    g.setNextWindowPosCond = Cond.Null
+    g.setNextWindowPosCond = Cond.Null
     g.setNextWindowSizeConstraint = false
     g.setNextWindowFocus = false
 }
@@ -244,10 +243,10 @@ fun scrollbar(window: Window, horizontal: Boolean) {
     // V denote the main axis of the scrollbar
     val scrollbarSizeV = if (horizontal) bb.width else bb.height
     var scrollV = if (horizontal) window.scroll.x else window.scroll.y
-    val winSizeAvailV = (if (horizontal) window.size.x else window.size.y) - otherScrollbarSizeW
+    val winSizeAvailV = (if (horizontal) window.sizeFull.x else window.sizeFull.y) - otherScrollbarSizeW
     val winSizeContentsV = if (horizontal) window.sizeContents.x else window.sizeContents.y
 
-    /*  The grabable box size generally represent the amount visible (vs the total scrollable amount)
+    /*  The grabbable box size generally represent the amount visible (vs the total scrollable amount)
         But we maintain a minimum size in pixel to allow for the user to still aim inside.  */
     val grabHPixels = glm.min(
             glm.max(scrollbarSizeV * saturate(winSizeAvailV / glm.max(winSizeContentsV, winSizeAvailV)), style.grabMinSize),
@@ -363,9 +362,12 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
     for (window in g.windows) {
 
         if (window.flags has WindowFlags.NoSavedSettings) continue
-        val settings = findWindowSettings(window.name)!!
-        settings.pos = window.pos
-        settings.size = window.sizeFull
+        /** This will only return NULL in the rare instance where the window was first created with
+         *  WindowFlags.NoSavedSettings then had the flag disabled later on.
+         *  We don't bind settings in this case (bug #1000).    */
+        val settings = findWindowSettings(window.name) ?: continue
+        settings.pos put window.pos
+        settings.size put window.sizeFull
         settings.collapsed = window.collapsed
     }
 

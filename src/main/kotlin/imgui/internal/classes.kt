@@ -416,12 +416,12 @@ class Window(
     var autoPosLastDirection = -1
 
     var hiddenFrames = 0
-    /** bit ImGuiSetCond_*** specify if SetWindowPos() call will succeed with this particular flag. */
-    var setWindowPosAllowFlags = SetCond.Always or SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing
-    /** bit ImGuiSetCond_*** specify if SetWindowSize() call will succeed with this particular flag.    */
-    var setWindowSizeAllowFlags = SetCond.Always or SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing
-    /** bit ImGuiSetCond_*** specify if SetWindowCollapsed() call will succeed with this particular flag.   */
-    var setWindowCollapsedAllowFlags = SetCond.Always or SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing
+    /** store condition flags for next SetWindowPos() call. */
+    var setWindowPosAllowFlags = Cond.Null.i
+    /** store condition flags for next SetWindowSize() call.    */
+    var setWindowSizeAllowFlags = Cond.Null.i
+    /** store condition flags for next SetWindowCollapsed() call.   */
+    var setWindowCollapsedAllowFlags = Cond.Null.i
 
     var setWindowPosCenterWanted = false
 
@@ -478,6 +478,7 @@ class Window(
     /** "   */
     var focusIdxTabRequestNext = Int.MAX_VALUE
 
+    /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
     fun getId(str: String, end: Int = 0): Int {
         val seed = idStack.last()
         val id = hash(str, end, seed)
@@ -526,11 +527,11 @@ class Window(
         dc.cursorMaxPos.y -= scroll.y
     }
 
-    fun setPos(pos: Vec2, cond: SetCond) {
+    fun setPos(pos: Vec2, cond: Cond) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != SetCond.Null && setWindowPosAllowFlags hasnt cond)
+        if (cond != Cond.Null && setWindowPosAllowFlags hasnt cond)
             return
-        setWindowPosAllowFlags = setWindowPosAllowFlags and (SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing).inv()
+        setWindowPosAllowFlags = setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
         setWindowPosCenterWanted = false
 
         // Set
@@ -543,11 +544,11 @@ class Window(
         dc.cursorMaxPos plus (pos - oldPos) // And more importantly we need to adjust this so size calculation doesn't get affected.
     }
 
-    fun setSize(size: Vec2, cond: SetCond) {
+    fun setSize(size: Vec2, cond: Cond) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != SetCond.Null && setWindowSizeAllowFlags hasnt cond)
+        if (cond != Cond.Null && setWindowSizeAllowFlags hasnt cond)
             return
-        setWindowSizeAllowFlags = setWindowSizeAllowFlags and (SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing).inv()
+        setWindowSizeAllowFlags = setWindowSizeAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
 
         // Set
         if (size.x > 0f) {
@@ -566,17 +567,18 @@ class Window(
         }
     }
 
-    fun setCollapsed(collapsed: Boolean, cond: SetCond) {
+    fun setCollapsed(collapsed: Boolean, cond: Cond) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != SetCond.Null && setWindowCollapsedAllowFlags hasnt cond)
+        if (cond != Cond.Null && setWindowCollapsedAllowFlags hasnt cond)
             return
-        setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags and (SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing).inv()
+        setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
         // Set
         this.collapsed = collapsed
     }
 
     /** An active popup disable hovering on other windows (apart from its own children) */
     val isContentHoverable: Boolean get() {
+        // FIXME-OPT: This could be cached/stored within the window.
         val rootWindow = g.focusedWindow?.rootWindow ?: return true
         return !(rootWindow.flags has WindowFlags.Popup && rootWindow.wasActive && rootWindow != this.rootWindow)
     }

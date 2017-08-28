@@ -28,11 +28,8 @@ import imgui.Context as g
 interface imgui_widgetsSliders {
 
 
-    /** Use power!=1.0 for logarithmic sliders.
-     *  Adjust displayFormat to decorate the value with a prefix or a suffix.
-     *  "%.3f"         1.234
-     *  "%5.2f secs"   01.23 secs
-     *  "Gold: %.0f"   Gold: 1  */
+    /** adjust display_format to decorate the value with a prefix or a suffix for in-slider labels or unit display.
+     *  Use power!=1.0 for logarithmic sliders  */
     fun sliderFloat(label: String, v: FloatArray, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f) =
             sliderFloat(label, v, 0, vMin, vMax, displayFormat, power)
 

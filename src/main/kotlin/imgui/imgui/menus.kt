@@ -36,7 +36,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.internal.LayoutType
 import imgui.internal.Rect
-import imgui.internal.isPointInTriangle
+import imgui.internal.triangleContainsPoint
 import imgui.Context as g
 
 /** Menu    */
@@ -171,7 +171,7 @@ interface imgui_menus {
                         FIXME: Multiply by fb_scale?                     */
                     tb.y = ta.y + glm.max((tb.y - extra) - ta.y, -100f)
                     tc.y = ta.y + glm.min((tc.y + extra) - ta.y, +100f)
-                    movingWithinOpenedTriangle = isPointInTriangle(IO.mousePos, ta, tb, tc)
+                    movingWithinOpenedTriangle = triangleContainsPoint(ta, tb, tc, IO.mousePos)
                     //window->DrawList->PushClipRectFullScreen(); window->DrawList->AddTriangleFilled(ta, tb, tc, movingWithinOpenedTriangle ? IM_COL32(0,128,0,128) : IM_COL32(128,0,0,128)); window->DrawList->PopClipRect(); // Debug
                 }
 
@@ -202,7 +202,7 @@ interface imgui_menus {
             openPopup(label)
 
         if (menuIsOpen) {
-            setNextWindowPos(popupPos, SetCond.Always)
+            setNextWindowPos(popupPos, Cond.Always)
             val flags = WindowFlags.ShowBorders or (
                     if (window.flags has (WindowFlags.Popup or WindowFlags.ChildMenu)) WindowFlags.ChildMenu or WindowFlags.ChildWindow
                     else WindowFlags.ChildMenu.i)

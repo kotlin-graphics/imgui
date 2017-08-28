@@ -51,7 +51,7 @@ interface imgui_window {
             even if false is returned.
         - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
             be set to false when the button is pressed.
-        - Passing non-zero 'size' is roughly equivalent to calling SetNextWindowSize(size, ImGuiSetCond_FirstUseEver)
+        - Passing non-zero 'size' is roughly equivalent to calling SetNextWindowSize(size, Cond.FirstUseEver)
             prior to calling Begin().   */
     fun begin(name: String, pOpen: BooleanArray? = null, flags: Int = 0) = begin(name, pOpen, Vec2(), -1.0f, flags)
 
@@ -106,38 +106,38 @@ interface imgui_window {
         // Process SetNextWindow***() calls
         var windowPosSetByApi = false
         var windowSizeSetByApi = false
-        if (g.setNextWindowPosCond != SetCond.Null) {
+        if (g.setNextWindowPosCond != Cond.Null) {
             val backupCursorPos = Vec2(window.dc.cursorPos)   // FIXME: not sure of the exact reason of this saving/restore anymore :( need to look into that.
             if (!windowWasActive || windowAppearingAfterBeingHidden)
-                window.setWindowPosAllowFlags = window.setWindowPosAllowFlags or SetCond.Appearing
+                window.setWindowPosAllowFlags = window.setWindowPosAllowFlags or Cond.Appearing
             windowPosSetByApi = window.setWindowPosAllowFlags has g.setNextWindowPosCond
-            if (windowPosSetByApi && (g.setNextWindowPosVal - Vec2(-Float.MAX_VALUE)).lengthSqr() < 0.001f) {
+            if (windowPosSetByApi && (g.setNextWindowPosVal - Vec2(-Float.MAX_VALUE)).lengthSqr < 0.001f) {
                 window.setWindowPosCenterWanted = true                            // May be processed on the next frame if this is our first frame and we are measuring size
                 window.setWindowPosAllowFlags =
-                        window.setWindowPosAllowFlags and (SetCond.Once or SetCond.FirstUseEver or SetCond.Appearing).inv()
+                        window.setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
             } else
                 window.setPos(g.setNextWindowPosVal, g.setNextWindowPosCond)
 
             window.dc.cursorPos put backupCursorPos
-            g.setNextWindowPosCond = SetCond.Null
+            g.setNextWindowPosCond = Cond.Null
         }
         if (g.setNextWindowSizeCond.i != 0) {
             if (!windowWasActive || windowAppearingAfterBeingHidden)
-                window.setWindowSizeAllowFlags = window.setWindowSizeAllowFlags or SetCond.Appearing
+                window.setWindowSizeAllowFlags = window.setWindowSizeAllowFlags or Cond.Appearing
             windowSizeSetByApi = window.setWindowSizeAllowFlags has g.setNextWindowSizeCond
             window.setSize(g.setNextWindowSizeVal, g.setNextWindowSizeCond)
-            g.setNextWindowSizeCond = SetCond.Null
+            g.setNextWindowSizeCond = Cond.Null
         }
-        if (g.setNextWindowContentSizeCond != SetCond.Null) {
+        if (g.setNextWindowContentSizeCond != Cond.Null) {
             window.sizeContentsExplicit put g.setNextWindowContentSizeVal
-            g.setNextWindowContentSizeCond = SetCond.Null
+            g.setNextWindowContentSizeCond = Cond.Null
         } else if (firstBeginOfTheFrame)
             window.sizeContentsExplicit put 0f
-        if (g.setNextWindowCollapsedCond != SetCond.Null) {
+        if (g.setNextWindowCollapsedCond != Cond.Null) {
             if (!windowWasActive || windowAppearingAfterBeingHidden)
-                window.setWindowCollapsedAllowFlags = window.setWindowCollapsedAllowFlags or SetCond.Appearing
+                window.setWindowCollapsedAllowFlags = window.setWindowCollapsedAllowFlags or Cond.Appearing
             window.setCollapsed(g.setNextWindowCollapsedVal, g.setNextWindowCollapsedCond)
-            g.setNextWindowCollapsedCond = SetCond.Null
+            g.setNextWindowCollapsedCond = Cond.Null
         }
         if (g.setNextWindowFocus) {
             setWindowFocus()
@@ -302,7 +302,7 @@ interface imgui_window {
             windowPosCenter = windowPosCenter || (flags has WindowFlags.Modal && !windowPosSetByApi && windowAppearingAfterBeingHidden)
             if (windowPosCenter)
             // Center (any sort of window)
-                window.setPos(glm.max(style.displaySafeAreaPadding, fullscreenRect.center - window.sizeFull * 0.5f), SetCond.Null)
+                window.setPos(glm.max(style.displaySafeAreaPadding, fullscreenRect.center - window.sizeFull * 0.5f), Cond.Null)
             else if (flags has WindowFlags.ChildMenu) {
                 /*  Child menus typically request _any_ position within the parent menu item, and then our
                 FindBestPopupWindowPos() function will move the new menu outside the parent bounds.
@@ -376,12 +376,14 @@ interface imgui_window {
             if (window.scrollTarget.y < Float.MAX_VALUE) {
                 val centerRatio = window.scrollTargetCenterRatio.y
                 window.scroll.y = window.scrollTarget.y - ((1f - centerRatio) * (window.titleBarHeight() + window.menuBarHeight())) -
-                        (centerRatio * window.sizeFull.y)
+                        (centerRatio * (window.sizeFull.y - window.scrollbarSizes.y))
                 window.scrollTarget.y = Float.MAX_VALUE
             }
             window.scroll = glm.max(window.scroll, 0f)
-            if (!window.collapsed && !window.skipItems)
-                window.scroll = glm.min(window.scroll, glm.max(window.sizeContents - window.sizeFull + window.scrollbarSizes, 0f))
+            if (!window.collapsed && !window.skipItems) {
+                window.scroll.x = glm.min(window.scroll.x, scrollMaxX)
+                window.scroll.y = glm.min(window.scroll.y, scrollMaxY)
+            }
 
             // Modal window darkens what is behind them
             if (flags has WindowFlags.Modal && window === getFrontMostModalRootWindow())
@@ -433,6 +435,8 @@ interface imgui_window {
                         ((window.sizeContents.x >
                                 window.size.x - (if (window.scrollbar.y) style.scrollbarSize else 0f) - window.windowPadding.x)
                                 && flags hasnt WindowFlags.NoScrollbar && flags has WindowFlags.HorizontalScrollbar)
+                if (window.scrollbar.x && !window.scrollbar.y)
+                    window.scrollbar.y = (window.sizeContents.y > window.size.y + style.itemSpacing.y - style.scrollbarSize) && flags hasnt WindowFlags.NoScrollbar
                 window.scrollbarSizes.x = if (window.scrollbar.y) style.scrollbarSize else 0f
                 window.scrollbarSizes.y = if (window.scrollbar.x) style.scrollbarSize else 0f
                 window.borderSize = if (flags has WindowFlags.ShowBorders) 1f else 0f
@@ -748,18 +752,18 @@ interface imgui_window {
     }
 
     /** set next window position. call before Begin()   */
-    fun setNextWindowPos(pos: Vec2, cond: SetCond = SetCond.Always) {
+    fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always) {
         g.setNextWindowPosVal put pos
         g.setNextWindowPosCond = cond
     }
 
-    fun setNextWindowPosCenter(cond: SetCond = SetCond.Always) {                      // set next window position to be centered on screen. call before Begin()
+    fun setNextWindowPosCenter(cond: Cond = Cond.Always) {                      // set next window position to be centered on screen. call before Begin()
         g.setNextWindowPosVal put -Float.MAX_VALUE
         g.setNextWindowPosCond = cond
     }
 
     /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
-    fun setNextWindowSize(size: Vec2, cond: SetCond = SetCond.Always) {
+    fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Always) {
         g.setNextWindowSizeVal put size
         g.setNextWindowSizeCond = cond
     }
@@ -780,18 +784,18 @@ interface imgui_window {
      *  before Begin() */
     fun setNextWindowContentSize(size: Vec2) {
         g.setNextWindowContentSizeVal put size
-        g.setNextWindowContentSizeCond = SetCond.Always
+        g.setNextWindowContentSizeCond = Cond.Always
     }
 
     /** set next window content width (enforce the range of horizontal scrollbar). call before Begin()  */
     fun setNextWindowContentWidth(width: Float) {
         g.setNextWindowContentSizeVal = Vec2(width,
-                if (g.setNextWindowContentSizeCond != SetCond.Null) g.setNextWindowContentSizeVal.y else 0f)
-        g.setNextWindowContentSizeCond = SetCond.Always
+                if (g.setNextWindowContentSizeCond != Cond.Null) g.setNextWindowContentSizeVal.y else 0f)
+        g.setNextWindowContentSizeCond = Cond.Always
     }
 
     /** set next window collapsed state. call before Begin()    */
-    fun setNextWindowCollapsed(collapsed: Boolean, cond: SetCond = SetCond.Always) {
+    fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Always) {
         g.setNextWindowCollapsedVal = collapsed
         g.setNextWindowCollapsedCond = cond
     }
@@ -803,26 +807,26 @@ interface imgui_window {
 
     /** (not recommended) set current window position - call within Begin()/End(). prefer using SetNextWindowPos(),
      *  as this may incur tearing and side-effects. */
-    fun setWindowPos(pos: Vec2, cond: SetCond = SetCond.Null) = currentWindowRead!!.setPos(pos, cond)
+    fun setWindowPos(pos: Vec2, cond: Cond = Cond.Null) = currentWindowRead!!.setPos(pos, cond)
 
     /** (not recommended) set current window size - call within Begin()/End(). set to ImVec2(0,0) to force an auto-fit.
      *  prefer using SetNextWindowSize(), as this may incur tearing and minor side-effects. */
-    fun setWindowSize(size: Vec2, cond: SetCond = SetCond.Null) = g.currentWindow!!.setSize(size, cond)
+    fun setWindowSize(size: Vec2, cond: Cond = Cond.Null) = g.currentWindow!!.setSize(size, cond)
 
     /** (not recommended) set current window collapsed state. prefer using SetNextWindowCollapsed().    */
-    fun setWindowCollapsed(collapsed: Boolean, cond: SetCond = SetCond.Null) = g.currentWindow!!.setCollapsed(collapsed, cond)
+    fun setWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Null) = g.currentWindow!!.setCollapsed(collapsed, cond)
 
     /** (not recommended) set current window to be focused / front-most. prefer using SetNextWindowFocus(). */
     fun setWindowFocus() = focusWindow(g.currentWindow)
 
     /** set named window position.  */
-    fun setWindowPos(name: String, pos: Vec2, cond: SetCond = SetCond.Null) = findWindowByName(name)?.setPos(pos, cond)
+    fun setWindowPos(name: String, pos: Vec2, cond: Cond = Cond.Null) = findWindowByName(name)?.setPos(pos, cond)
 
     /** set named window size. set axis to 0.0f to force an auto-fit on this axis.  */
-    fun setWindowSize(name: String, size: Vec2, cond: SetCond = SetCond.Null) = findWindowByName(name)?.setSize(size, cond)
+    fun setWindowSize(name: String, size: Vec2, cond: Cond = Cond.Null) = findWindowByName(name)?.setSize(size, cond)
 
     /** set named window collapsed state    */
-    fun setWindowCollapsed(name: String, collapsed: Boolean, cond: SetCond = SetCond.Null) = findWindowByName(name)?.setCollapsed(collapsed, cond)
+    fun setWindowCollapsed(name: String, collapsed: Boolean, cond: Cond = Cond.Null) = findWindowByName(name)?.setCollapsed(collapsed, cond)
 
     /** set named window to be focused / front-most. use NULL to remove focus.  */
     fun setWindowFocus(name: String) = focusWindow(findWindowByName(name))
@@ -842,17 +846,18 @@ interface imgui_window {
         }
 
     /** get maximum scrolling amount ~~ ContentSize.X - WindowSize.X    */
-    val scrollMaxX get() = with(currentWindowRead!!) { sizeContents.x - sizeFull.x - scrollbarSizes.x }
+    val scrollMaxX get() = with(currentWindowRead!!) { glm.max(0f, sizeContents.x - (sizeFull.x - scrollbarSizes.x)) }
 
     /** get maximum scrolling amount ~~ ContentSize.Y - WindowSize.Y    */
-    val scrollMaxY get() = with(currentWindowRead!!) { sizeContents.y - sizeFull.y - scrollbarSizes.y }
+    val scrollMaxY get() = with(currentWindowRead!!) { glm.max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y)) }
 
     /** adjust scrolling amount to make current cursor position visible.
      *  centerYRatio = 0.0: top, 0.5: center, 1.0: bottom.    */
     fun setScrollHere(centerYRatio: Float = 0.5f) = with(currentWindow) {
+        var targetY = dc.cursorPosPrevLine.y - pos.y  // Top of last item, in window space
         // Precisely aim above, in the middle or below the last line.
-        val targetY = dc.cursorPosPrevLine.y + (dc.prevLineHeight * centerYRatio) + (style.itemSpacing.y * (centerYRatio - 0.5f) * 2f)
-        setScrollFromPosY(targetY - pos.y, centerYRatio)
+        targetY += (dc.prevLineHeight * centerYRatio) + style.itemSpacing.y * (centerYRatio - 0.5f) * 2f
+        setScrollFromPosY(targetY, centerYRatio)
     }
 
     /** adjust scrolling amount to make given position valid. use GetCursorPos() or GetCursorStartPos()+offset to get

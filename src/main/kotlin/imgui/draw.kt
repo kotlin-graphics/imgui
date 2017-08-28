@@ -340,7 +340,7 @@ class DrawList {
         if (antiAliased) {
             // Anti-aliased stroke
             val AA_SIZE = 1f
-            val colTrans = col and COL32(255, 255, 255, 0)
+            val colTrans = col wo COL32_A_MASK
 
             val idxCount = count * if (thickLine) 18 else 12
             val vtxCount = points.size * if (thickLine) 4 else 3
@@ -545,7 +545,7 @@ class DrawList {
         if (antiAliased) {
             // Anti-aliased Fill
             val AA_SIZE = 1f
-            val colTrans = col and COL32(255, 255, 255, 0)
+            val colTrans = col wo COL32_A_MASK
             val idxCount = (points.size - 2) * 3 + points.size * 6
             val vtxCount = points.size * 2
             primReserve(idxCount, vtxCount)

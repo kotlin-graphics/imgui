@@ -5,7 +5,6 @@ package imgui
 //import imgui.TrueType.packSetOversampling
 import gli.wasInit
 import glm_.*
-import glm_.detail.Random.float
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
@@ -15,7 +14,7 @@ import imgui.stb.*
 import org.lwjgl.stb.*
 import org.lwjgl.stb.STBRectPack.stbrp_pack_rects
 import org.lwjgl.stb.STBTruetype.*
-import uno.buffer.byteBufferBig
+import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.convert.decode85
 import uno.stb.stb
@@ -118,7 +117,7 @@ class FontAtlas {
         val fontCfg = fontCfgTemplate ?: FontConfig()
         assert(fontCfg.fontData.isEmpty())
         fontCfg.fontData = ttfData
-        fontCfg.fontDataBuffer = byteBufferBig(ttfData.size).apply { ttfData.forEachIndexed { i, c -> this[i] = c.b } }
+        fontCfg.fontDataBuffer = bufferBig(ttfData.size).apply { ttfData.forEachIndexed { i, c -> this[i] = c.b } }
         fontCfg.sizePixels = sizePixels
         if (glyphRanges.isNotEmpty())
             fontCfg.glyphRanges = glyphRanges
@@ -209,7 +208,7 @@ class FontAtlas {
         if (texPixelsRGBA32 == null) {
             val (pixels, _, _) = getTexDataAsAlpha8()
             val a = ByteArray(32768, { pixels[it] })
-            texPixelsRGBA32 = byteBufferBig(texSize.x * texSize.y * 4)
+            texPixelsRGBA32 = bufferBig(texSize.x * texSize.y * 4)
             val dst = texPixelsRGBA32!!
             for (n in 0 until pixels.size) {
                 dst[n * 4] = 255.b
@@ -380,7 +379,7 @@ class FontAtlas {
 
         // Create texture
         texSize.y = texSize.y.upperPowerOfTwo
-        texPixelsAlpha8 = byteBufferBig(texSize.x * texSize.y)
+        texPixelsAlpha8 = bufferBig(texSize.x * texSize.y)
         spc.pixels = texPixelsAlpha8!!
         spc.height = texSize.y
 
@@ -465,6 +464,56 @@ class FontAtlas {
 
         return true
     }
+
+//    // Helpers to build glyph ranges from text data. Feed all your application strings/characters to it then call BuildRanges().
+//    +    struct GlyphRangesBuilder
+//    +    {
+//        +        ImVector<unsigned char> UsedChars;  // Store 1-bit per Unicode code point (0=unused, 1=used)
+//        +        GlyphRangesBuilder()                { UsedChars.resize(0x10000 / 8); memset(UsedChars.Data, 0, 0x10000 / 8); }
+//        +        bool           GetBit(int n)        { return (UsedChars[n >> 3] & (1 << (n & 7))) != 0; }
+//        +        void           SetBit(int n)        { UsedChars[n >> 3] |= 1 << (n & 7); }  // Set bit 'c' in the array
+//        +        void           AddChar(ImWchar c)   { SetBit(c); }                          // Add character
+//        +        IMGUI_API void AddText(const char* text, const char* text_end = NULL);      // Add string (each character of the UTF-8 string are added)
+//        +        IMGUI_API void AddRanges(const ImWchar* ranges);                            // Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault) to force add all of ASCII/Latin+Ext
+//        +        IMGUI_API void BuildRanges(ImVector<ImWchar>* out_ranges);                  // Output new ranges
+//        +    };
+//    //-----------------------------------------------------------------------------
+//    +// ImFontAtlas::GlyphRangesBuilder
+//    +//-----------------------------------------------------------------------------
+//    +
+//    +void ImFontAtlas::GlyphRangesBuilder::AddText(const char* text, const char* text_end)
+//    +{
+//        +    while (text_end ? (text < text_end) : *text)
+//        +    {
+//            +        unsigned int c = 0;
+//            +        int c_len = ImTextCharFromUtf8(&c, text, text_end);
+//            +        text += c_len;
+//            +        if (c_len == 0)
+//                +            break;
+//            +        if (c < 0x10000)
+//                +            AddChar((ImWchar)c);
+//            +    }
+//        +}
+//    +
+//    +void ImFontAtlas::GlyphRangesBuilder::AddRanges(const ImWchar* ranges)
+//    +{
+//        +    for (; ranges[0]; ranges += 2)
+//        +        for (ImWchar c = ranges[0]; c <= ranges[1]; c++)
+//        +            AddChar(c);
+//        +}
+//    +
+//    +void ImFontAtlas::GlyphRangesBuilder::BuildRanges(ImVector<ImWchar>* out_ranges)
+//    +{
+//        +    for (int n = 0; n < 0x10000; n++)
+//        +        if (GetBit(n))
+//            +        {
+//                +            out_ranges->push_back((ImWchar)n);
+//                +            while (n < 0x10000 && GetBit(n + 1))
+//                    +                n++;
+//                +            out_ranges->push_back((ImWchar)n);
+//                +        }
+//        +    out_ranges->push_back(0);
+//        +}
 
     private fun renderCustomTexData(pass: Int, rects: STBRPRect.Buffer) {
         /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
