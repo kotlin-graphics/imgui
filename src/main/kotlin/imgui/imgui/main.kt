@@ -57,7 +57,8 @@ interface imgui_main {
         g.renderDrawData.totalVtxCount = 0
         g.renderDrawData.cmdListsCount = 0
 
-        // Update inputs state
+
+        // Update mouse inputs state
         if (IO.mousePos.x < 0 && IO.mousePos.y < 0)
             IO.mousePos put -9999.0f
         // if mouse just appeared or disappeared (negative coordinate) we cancel out movement in MouseDelta
@@ -123,7 +124,7 @@ interface imgui_main {
                 if (g.movedWindow!!.flags hasnt WindowFlags.NoMove) {
                     g.movedWindow!!.posF plus_ IO.mouseDelta
                     if (g.movedWindow!!.flags hasnt WindowFlags.NoSavedSettings && (IO.mouseDelta.x != 0.0f || IO.mouseDelta.y != 0.0f))
-                        markIniSettingsDirty()
+                        markIniSettingsDirty(g.movedWindow!!)
                 }
                 focusWindow(g.movedWindow)
             } else {
@@ -199,20 +200,18 @@ interface imgui_main {
         // Scale & Scrolling
         if (g.hoveredWindow != null && IO.mouseWheel != 0f && !g.hoveredWindow!!.collapsed) {
             val window = g.hoveredWindow!!
-            if (IO.keyCtrl) {
-                if (IO.fontAllowUserScaling) {
-                    // Zoom / Scale window
-                    val newFontScale = glm.clamp(window.fontWindowScale + IO.mouseWheel * 0.10f, 0.50f, 2.50f)
-                    val scale = newFontScale / window.fontWindowScale
-                    window.fontWindowScale = newFontScale
+            if (IO.keyCtrl && IO.fontAllowUserScaling) {
+                // Zoom / Scale window
+                val newFontScale = glm.clamp(window.fontWindowScale + IO.mouseWheel * 0.10f, 0.50f, 2.50f)
+                val scale = newFontScale / window.fontWindowScale
+                window.fontWindowScale = newFontScale
 
-                    val offset = window.size * (1.0f - scale) * (IO.mousePos - window.pos) / window.size
-                    window.pos plus_ offset
-                    window.posF plus_ offset
-                    window.size times_ scale
-                    window.sizeFull times_ scale
-                }
-            } else if (window.flags hasnt WindowFlags.NoScrollWithMouse) {
+                val offset = window.size * (1.0f - scale) * (IO.mousePos - window.pos) / window.size
+                window.pos plus_ offset
+                window.posF plus_ offset
+                window.size times_ scale
+                window.sizeFull times_ scale
+            } else if (!IO.keyCtrl && window.flags hasnt WindowFlags.NoScrollWithMouse) {
                 // Scroll
                 val scrollLines = if (window.flags has WindowFlags.ComboBox) 3 else 5
                 window.setScrollY(window.scroll.y - IO.mouseWheel * window.calcFontSize() * scrollLines)
@@ -222,8 +221,8 @@ interface imgui_main {
         /*  Pressing TAB activate widget focus
             NB: Don't discard FocusedWindow if it isn't active, so that a window that go on/off programatically won't lose
             its keyboard focus.     */
-        if (g.activeId == 0 && g.focusedWindow != null && g.focusedWindow!!.active && Key.Tab.isPressed(false))
-            g.focusedWindow!!.focusIdxTabRequestNext = 0
+        if (g.activeId == 0 && g.navWindow != null && g.navWindow!!.active && Key.Tab.isPressed(false))
+            g.navWindow!!.focusIdxTabRequestNext = 0
 
         // Mark all windows as not visible
         var i = 0
@@ -236,7 +235,7 @@ interface imgui_main {
         }
 
         // Closing the focused window restore focus to the first active root window in descending z-order
-        if (g.focusedWindow != null && !g.focusedWindow!!.wasActive)
+        if (g.navWindow != null && !g.navWindow!!.wasActive)
             for (i in g.windows.size - 1 downTo 0)
                 if (g.windows[i].wasActive && g.windows[i].flags hasnt WindowFlags.ChildWindow) {
                     focusWindow(g.windows[i])
@@ -343,7 +342,7 @@ interface imgui_main {
         g.windowsSortBuffer.clear()
         g.currentWindow = null
         g.currentWindowStack.clear()
-        g.focusedWindow = null
+        g.navWindow = null
         g.hoveredWindow = null
         g.hoveredRootWindow = null
         g.activeIdWindow = null

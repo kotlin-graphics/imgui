@@ -24,6 +24,7 @@ import imgui.ImGui.parentWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popId
 import imgui.ImGui.popStyleColor
+import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.pushId
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderFrame
@@ -49,7 +50,7 @@ interface imgui_widgetsSelectableLists {
         val window = currentWindow
         if (window.skipItems) return false
 
-        if (flags has SelectableFlags.SpanAllColumns && window.dc.columnsCount > 1)
+        if (flags has SelectableFlags.SpanAllColumns && window.dc.columnsCount > 1)  // FIXME-OPT: Avoid if vertically clipped.
             popClipRect()
 
         val id = window.getId(label)
@@ -136,6 +137,7 @@ interface imgui_widgetsSelectableLists {
 
         // Assume all items have even height (= 1 line of text). If you need items of different or variable sizes you can create a custom version of ListBox() in your code without using the clipper.
         var valueChanged = false
+        // We know exactly our line height here so we pass it as a minor optimization, but generally you don't need to.
         val clipper = ListClipper(itemsCount, textLineHeightWithSpacing)
         while (clipper.step())
             for (i in clipper.display.start until clipper.display.last) {

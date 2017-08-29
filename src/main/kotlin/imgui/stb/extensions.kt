@@ -139,16 +139,14 @@ fun stbtt_GetFontVMetrics(info: STBTTFontinfo): Triple<Int, Int, Int> {
 }
 
 
-fun stbtt_GetPackedQuad(chardata: STBTTPackedchar.Buffer, p: Vec2i, charIndex: Int, alignToInteger: Boolean)
-        : Pair<Vec2, STBTTAlignedQuad> {
+fun stbtt_GetPackedQuad(chardata: STBTTPackedchar.Buffer, p: Vec2i, charIndex: Int, pos:Vec2, q: STBTTAlignedQuad, alignToInteger: Boolean) {
 
-    val q = STBTTAlignedQuad.create()
     val xPos = FloatArray(1)
     val yPos = FloatArray(1)
 
     STBTruetype.stbtt_GetPackedQuad(chardata, p.x, p.y, charIndex, xPos, yPos, q, alignToInteger)
 
-    return Vec2(xPos[0], yPos[0]) to q
+    pos.put(xPos[0], yPos[0])
 }
 
 val STBTTAlignedQuad.x0 get() = x0()

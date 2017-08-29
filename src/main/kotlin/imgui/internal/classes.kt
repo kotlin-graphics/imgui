@@ -95,14 +95,14 @@ class Rect {
         max.y += amount.y
     }
 
-    infix fun reduce(amount: Vec2) {
-        min.x += amount.x
-        min.y += amount.y
-        max.x -= amount.x
-        max.y -= amount.y
+    infix fun translate(v: Vec2) {
+        min.x += v.x
+        min.y += v.y
+        max.x -= v.x
+        max.y -= v.y
     }
 
-    infix fun clip(clip: Rect) {
+    infix fun clipWith(clip: Rect) {
         if (min.x < clip.min.x) min.x = clip.min.x
         if (min.y < clip.min.y) min.y = clip.min.y
         if (max.x > clip.max.x) max.x = clip.max.x
@@ -172,6 +172,7 @@ class GroupData {
 class ColumnData {
     /** Column start offset, normalized 0.0 (far left) -> 1.0 (far right)   */
     var offsetNorm = 0f
+    val clipRect = Rect()
     //float     IndentX;
 }
 
@@ -339,12 +340,14 @@ class DrawContext {
     var columnsMaxX = 0f
 
     var columnsStartPosY = 0f
+    /** Backup of CursorMaxPos  */
+    var columnsStartMaxPosX = 0f
 
     var columnsCellMinY = 0f
 
     var columnsCellMaxY = 0f
 
-    var columnsShowBorders = true
+    var columnsFlags = 0
 
     var columnsSetId = 0
 
@@ -412,6 +415,8 @@ class Window(
     var autoFitFrames = Vec2i(-1)
 
     var autoFitOnlyGrows = false
+
+    var autoFitChildAxes = 0x00
 
     var autoPosLastDirection = -1
 
@@ -522,6 +527,8 @@ class Window(
     }
 
     fun setScrollY(newScrollY: Float) {
+        /*  SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need
+            to apply our change to it.         */
         dc.cursorMaxPos.y += scroll.y
         scroll.y = newScrollY
         dc.cursorMaxPos.y -= scroll.y
@@ -576,11 +583,11 @@ class Window(
         this.collapsed = collapsed
     }
 
-    /** An active popup disable hovering on other windows (apart from its own children) */
     val isContentHoverable: Boolean get() {
-        // FIXME-OPT: This could be cached/stored within the window.
-        val rootWindow = g.focusedWindow?.rootWindow ?: return true
-        return !(rootWindow.flags has WindowFlags.Popup && rootWindow.wasActive && rootWindow != this.rootWindow)
+        /*  An active popup disable hovering on other windows (apart from its own children)
+            FIXME-OPT: This could be cached/stored within the window.         */
+        val focusedRootWindow = g.navWindow?.rootWindow ?: return true
+        return !(focusedRootWindow.flags has WindowFlags.Popup && focusedRootWindow.wasActive && focusedRootWindow != rootWindow)
     }
 
     fun applySizeFullWithConstraint(newSize: Vec2) {

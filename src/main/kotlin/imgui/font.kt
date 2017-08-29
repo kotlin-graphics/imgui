@@ -5,7 +5,6 @@ package imgui
 //import imgui.TrueType.packSetOversampling
 import gli.wasInit
 import glm_.*
-import glm_.detail.Random.float
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
@@ -15,6 +14,7 @@ import imgui.stb.*
 import org.lwjgl.stb.*
 import org.lwjgl.stb.STBRectPack.stbrp_pack_rects
 import org.lwjgl.stb.STBTruetype.*
+import org.lwjgl.system.MemoryUtil
 import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.convert.decode85
@@ -106,9 +106,10 @@ class FontAtlas {
     fun addFontDefault(fontCfg: FontConfig): Font {
 
         if (fontCfg.name.isEmpty()) fontCfg.name = "ProggyClean.ttf, 13px"
+        if (fontCfg.sizePixels <= 0f) fontCfg.sizePixels = 13.0f
 
         val ttfCompressedBase85 = proggyCleanTtfCompressedDataBase85
-        return addFontFromMemoryCompressedBase85TTF(ttfCompressedBase85, 13.0f, fontCfg, glyphRangesDefault)
+        return addFontFromMemoryCompressedBase85TTF(ttfCompressedBase85, fontCfg.sizePixels, fontCfg, glyphRangesDefault)
     }
 
     //    IMGUI_API ImFont*           AddFontFromFileTTF(const char* filename, float size_pixels, const ImFontConfig* font_cfg = NULL, const ImWchar* glyph_ranges = NULL);
@@ -240,7 +241,7 @@ class FontAtlas {
     // (Access texture data via GetTexData*() calls which will setup a default font for you.)
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the ImDrawCmd structure.   */
-    var texId = 0
+    var texId = -1
     /** 1 component per pixel, each component is unsigned 8-bit. Total size = TexWidth * TexHeight  */
     var texPixelsAlpha8: ByteBuffer? = null
     /** 4 component per pixel, each component is unsigned 8-bit. Total size = TexWidth * TexHeight * 4  */
@@ -259,216 +260,29 @@ class FontAtlas {
     val fonts = ArrayList<Font>()
 
 
-    // Private ---------------------------------------------------------------------------------------------------------
+    // [Private] Members -----------------------------------------------------------------------------------------------
 
+    /** Rectangles for packing custom texture data into the atlas.  */
+    private val customRects = ArrayList<CustomRect>()
+    /** Internal data   */
     private val configData = ArrayList<FontConfig>()
 
     /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
-    private fun build(): Boolean {
+    private fun build() = buildWithStbTrueType()
 
-        assert(configData.size > 0)
+    private fun customRectRegister(id: Int, width: Int, height: Int): Int {
+        assert(width in 1..0xFFFF)
+        assert(height in 1..0xFFFF)
+        val r = CustomRect(id, width, height)
+        customRects.add(r)
+        return customRects.lastIndex    // Return index
+    }
 
-//        TexID = NULL
-//        TexWidth = TexHeight = 0
-//        TexUvWhitePixel = ImVec2(0, 0)
-        clearTexData()
-
-        class FontTempBuildData {
-
-            var fontInfo = STBTTFontinfo.create()
-            lateinit var rects: STBRPRect.Buffer
-            lateinit var ranges: STBTTPackRange.Buffer
-            var rangesCount = 0
-        }
-
-        val tmpArray = Array(configData.size, { FontTempBuildData() })
-
-        // Initialize font information early (so we can error without any cleanup) + count glyphs
-        var totalGlyphCount = 0
-        var totalGlyphRangeCount = 0
-
-        for (i in configData.indices) {
-
-            val cfg = configData[i]
-            val tmp = tmpArray[i]
-
-            assert(wasInit { cfg.dstFont } && (!cfg.dstFont.isLoaded || cfg.dstFont.containerAtlas == this))
-            val fontOffset = stbtt_GetFontOffsetForIndex(cfg.fontDataBuffer, cfg.fontNo)
-            assert(fontOffset >= 0)
-            if (!stbtt_InitFont(tmp.fontInfo, cfg.fontDataBuffer, fontOffset))
-                return false
-
-            // Count glyphs
-            if (cfg.glyphRanges.isEmpty())
-                cfg.glyphRanges = glyphRangesDefault
-            for (j in cfg.glyphRanges.indices step 2) {
-                totalGlyphCount += (cfg.glyphRanges[j + 1] - cfg.glyphRanges[j]) + 1
-                totalGlyphRangeCount++
-            }
-        }
-
-        /*  Start packing. We need a known width for the skyline algorithm. Using a cheap heuristic here to decide of
-            width. User can override TexDesiredWidth and TexGlyphPadding if they wish.
-            After packing is done, width shouldn't matter much, but some API/GPU have texture size limitations and
-            increasing width can decrease height.   */
-        texSize.x = when {
-            texDesiredWidth > 0 -> texDesiredWidth
-            totalGlyphCount > 4000 -> 4096
-            totalGlyphCount > 2000 -> 2048
-            totalGlyphCount > 1000 -> 1024
-            else -> 512
-        }
-        texSize.y = 0
-        val maxTexHeight = 1024 * 32
-        val spc = STBTTPackContext.create()
-        stbtt_PackBegin(spc, null, texSize.x, maxTexHeight, 0, texGlyphPadding)
-
-        /*  Pack our extra data rectangles first, so it will be on the upper-left corner of our texture (UV will have
-            small values).  */
-        val extraRects = STBRPRect.calloc(1)
-        renderCustomTexData(0, extraRects)
-        imgui.stb.stbtt_PackSetOversampling(spc, 1)
-        STBRectPack.stbrp_pack_rects(spc.packInfo, extraRects)
-        for (i in 0 until extraRects.capacity())
-            if (extraRects[i].wasPacked)
-                texSize.y = glm.max(texSize.y, extraRects[i].y + extraRects[i].h)
-
-        // Allocate packing character data and flag packed characters buffer as non-packed (x0=y0=x1=y1=0)
-        var bufPackedcharsN = 0
-        var bufRectsN = 0
-        var bufRangesN = 0
-        val bufPackedchars = STBTTPackedchar.calloc(totalGlyphCount)
-        val bufRects = STBRPRect.calloc(totalGlyphCount)
-        val bufRanges = STBTTPackRange.calloc(totalGlyphRangeCount)
-
-        /*  First font pass: pack all glyphs (no rendering at this point, we are working with rectangles in an
-            infinitely tall texture at this point)  */
-        for (input in configData.indices) {
-
-            val cfg = configData[input]
-            val tmp = tmpArray[input]
-
-            // Setup ranges
-            var glyphCount = 0
-            var glyphRangesCount = 0
-            for (j in cfg.glyphRanges.indices step 2) {
-                glyphCount += (cfg.glyphRanges[j + 1] - cfg.glyphRanges[j]) + 1
-                glyphRangesCount++
-            }
-            tmp.ranges = STBTTPackRange.create(bufRanges.address() + bufRectsN * glyphRangesCount, glyphRangesCount)
-            tmp.rangesCount = glyphRangesCount
-            bufRangesN += glyphRangesCount
-            for (i in 0 until glyphRangesCount) {
-                val range = tmp.ranges[i]
-                range.fontSize = cfg.sizePixels
-                range.firstUnicodeCodepointInRange = cfg.glyphRanges[input * 2]
-                range.numChars = (cfg.glyphRanges[input * 2 + 1] - cfg.glyphRanges[input * 2]) + 1
-                range.chardataForRange =
-                        STBTTPackedchar.create(bufPackedchars.address() + bufPackedcharsN * STBTTPackedchar.SIZEOF, range.numChars)
-                bufPackedcharsN += range.numChars
-            }
-
-            // Pack
-            tmp.rects = STBRPRect.create(bufRects.address() + bufRectsN * STBRPRect.SIZEOF, glyphCount)
-            bufRectsN += glyphCount
-            imgui.stb.stbtt_PackSetOversampling(spc, cfg.oversample)
-            val n = stbtt_PackFontRangesGatherRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
-            stbrp_pack_rects(spc.packInfo, tmp.rects)
-            // Extend texture height
-            for (i in 0 until n)
-                if (tmp.rects[i].wasPacked)
-                    texSize.y = glm.max(texSize.y, tmp.rects[i].y + tmp.rects[i].h)
-        }
-        assert(bufRectsN == totalGlyphCount)
-        assert(bufPackedcharsN == totalGlyphCount)
-        assert(bufRangesN == totalGlyphRangeCount)
-
-        // Create texture
-        texSize.y = texSize.y.upperPowerOfTwo
-        texPixelsAlpha8 = bufferBig(texSize.x * texSize.y)
-        spc.pixels = texPixelsAlpha8!!
-        spc.height = texSize.y
-
-        // Second pass: render characters
-        for (input in 0 until configData.size) {
-            val cfg = configData[input]
-            val tmp = tmpArray[input]
-            imgui.stb.stbtt_PackSetOversampling(spc, cfg.oversample)
-            stbtt_PackFontRangesRenderIntoRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
-//            tmp.rects = null
-        }
-
-        // End packing
-        stbtt_PackEnd(spc)
-        bufRects.free()
-
-        // Third pass: setup ImFont and glyphs for runtime
-        for (input in 0 until configData.size) {
-
-            val cfg = configData[input]
-            val tmp = tmpArray[input]
-            // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
-            val dstFont = cfg.dstFont
-
-            val fontScale = stbtt_ScaleForPixelHeight(tmp.fontInfo, cfg.sizePixels)
-            val (unscaledAscent, unscaledDescent, unscaledLineGap) = imgui.stb.stbtt_GetFontVMetrics(tmp.fontInfo)
-
-            val ascent = unscaledAscent * fontScale
-            val descent = unscaledDescent * fontScale
-            if (!cfg.mergeMode) {
-                dstFont.containerAtlas = this
-                dstFont.configData = configData
-                dstFont.configDataIdx = input
-                dstFont.configDataCount = 0
-                dstFont.fontSize = cfg.sizePixels
-                dstFont.ascent = ascent
-                dstFont.descent = descent
-                dstFont.glyphs.clear()
-                dstFont.metricsTotalSurface = 0
-            }
-            dstFont.configDataCount++
-            val off = Vec2(cfg.glyphOffset)
-
-            // Always clear fallback so FindGlyph can return NULL. It will be set again in BuildLookupTable()
-            dstFont.fallbackGlyph = null
-            for (i in 0 until tmp.rangesCount) {
-                val range = tmp.ranges[i]
-                for (charIdx in 0 until range.numChars) {
-                    val pc = range.chardataForRange[charIdx]
-                    if (pc.x0 == 0 && pc.x1 == 0 && pc.y0 == 0 && pc.y1 == 0)
-                        continue
-
-                    val codepoint = range.firstUnicodeCodepointInRange + charIdx
-                    if (cfg.mergeMode && dstFont.findGlyph(codepoint) != null)
-                        continue
-
-                    val (_, q) = imgui.stb.stbtt_GetPackedQuad(range.chardataForRange, texSize, charIdx, false)
-
-                    dstFont.glyphs.add(Font.Glyph())
-                    val glyph = dstFont.glyphs.last()
-                    glyph.codepoint = codepoint.uc
-                    glyph.x0 = q.x0 + off.x; glyph.y0 = q.y0 + off.y; glyph.x1 = q.x1 + off.x; glyph.y1 = q.y1 + off.y
-                    glyph.u0 = q.s0; glyph.v0 = q.t0; glyph.u1 = q.s1; glyph.v1 = q.t1
-                    glyph.y0 += (dstFont.ascent + 0.5f).i.f
-                    glyph.y1 += (dstFont.ascent + 0.5f).i.f
-                    glyph.xAdvance = pc.xAdvance + cfg.glyphExtraSpacing.x  // Bake spacing into XAdvance
-                    if (cfg.pixelSnapH)
-                        glyph.xAdvance = (glyph.xAdvance + 0.5f).i.f
-                    dstFont.metricsTotalSurface += // +1 to account for average padding, +0.99 to round
-                            ((glyph.u1 - glyph.u0) * texSize.x + 1.99f).i * ((glyph.v1 - glyph.v0) * texSize.y + 1.99f).i
-                }
-            }
-            cfg.dstFont.buildLookupTable()
-        }
-
-        // Cleanup temporaries
-        bufPackedchars.free()
-        bufRanges.free()
-        val a = ByteArray(512, { texPixelsAlpha8!![it] })
-        // Render into our custom data block
-        renderCustomTexData(1, extraRects)
-
-        return true
+    private fun customRectCalcUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
+        assert(texSize.x > 0 && texSize.y > 0)   // Font atlas needs to be built before we can calculate UV coordinates
+        assert(rect.isPacked)                // Make sure the rectangle has been packed
+        outUvMin.put(rect.x / texSize.x, rect.y / texSize.y)
+        outUvMax.put((rect.x + rect.width) / texSize.x, (rect.y + rect.height) / texSize.y)
     }
 
 //    // Helpers to build glyph ranges from text data. Feed all your application strings/characters to it then call BuildRanges().
@@ -520,12 +334,327 @@ class FontAtlas {
 //                +        }
 //        +    out_ranges->push_back(0);
 //        +}
+    /** [Private] User rectangle for packing custom texture data into the atlas.   */
+    private class CustomRect {
 
-    private fun renderCustomTexData(pass: Int, rects: STBRPRect.Buffer) {
-        /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
-            The white texels on the top left are the ones we'll use everywhere in ImGui to render filled shapes.    */
-        val texDataSize = Vec2i(90, 27)
-        val textureData = (
+        // Input
+
+        /** User ID. <0x10000 for font mapped data (WIP/UNSUPPORTED), >=0x10000 for other texture data */
+        var id = 0xFFFFFFFF.i
+        /** Desired rectangle width */
+        var width = 0
+        /** Desired rectangle height */
+        var height = 0
+
+        // Output
+
+        /** Packed width position in Atlas  */
+        var x = 0xFFFF
+        /** Packed height position in Atlas  */
+        var y = 0xFFFF
+
+        constructor()
+        constructor(id: Int, width: Int, height: Int) {
+            this.id = id
+            this.width = width
+            this.height = height
+        }
+
+        val isPacked get() = x != 0xFFFF
+    }
+
+    fun buildWithStbTrueType(): Boolean {
+
+        assert(configData.size > 0)
+
+        texId = -1
+        texSize put 0
+        texUvWhitePixel put 0
+        clearTexData()
+
+        // Count glyphs/ranges
+        var totalGlyphsCount = 0
+        var totalRangesCount = 0
+        for (cfg in configData) {
+            if (cfg.glyphRanges.isEmpty())
+                cfg.glyphRanges = glyphRangesDefault.clone()
+            for (i in cfg.glyphRanges.indices step 2) {
+                totalGlyphsCount += (cfg.glyphRanges[i + 1] - cfg.glyphRanges[i]) + 1
+                totalRangesCount++
+            }
+        }
+
+        /*  We need a width for the skyline algorithm. Using a dumb heuristic here to decide of width. User can override
+            texDesiredWidth and texGlyphPadding if they wish. Width doesn't really matter much, but some API/GPU have
+            texture size limitations and increasing width can decrease height.  */
+        texSize.x = when {
+            texDesiredWidth > 0 -> texDesiredWidth
+            totalGlyphsCount > 4000 -> 4096
+            totalGlyphsCount > 2000 -> 2048
+            totalGlyphsCount > 1000 -> 1024
+            else -> 512
+        }
+        texSize.y = 0
+
+        // Start packing
+        val maxTexHeight = 1024 * 32
+        val spc = STBTTPackContext.create()
+        stbtt_PackBegin(spc, null, texSize.x, maxTexHeight, 0, texGlyphPadding, MemoryUtil.NULL)
+
+        /*  Pack our extra data rectangles first, so it will be on the upper-left corner of our texture (UV will have
+            small values).  */
+        buildPackCustomRects(spc.packInfo)
+
+        // Initialize font information (so we can error without any cleanup)
+        class FontTempBuildData {
+
+            var fontInfo = STBTTFontinfo.create()
+            lateinit var rects: STBRPRect.Buffer
+            lateinit var ranges: STBTTPackRange.Buffer
+            var rangesCount = 0
+        }
+
+        val tmpArray = Array(configData.size, { FontTempBuildData() })
+        for (i in configData.indices) {
+
+            val cfg = configData[i]
+            val tmp = tmpArray[i]
+            assert(wasInit { cfg.dstFont } && (!cfg.dstFont.isLoaded || cfg.dstFont.containerAtlas == this))
+
+            val fontOffset = stbtt_GetFontOffsetForIndex(cfg.fontDataBuffer, cfg.fontNo)
+            assert(fontOffset >= 0)
+            if (!stbtt_InitFont(tmp.fontInfo, cfg.fontDataBuffer, fontOffset))
+                return false
+        }
+
+        // Allocate packing character data and flag packed characters buffer as non-packed (x0=y0=x1=y1=0)
+        var (bufPackedcharsN, bufRectsN, bufRangesN) = Triple(0, 0, 0)
+        val bufPackedchars = STBTTPackedchar.calloc(totalGlyphsCount)
+        val bufRects = STBRPRect.calloc(totalGlyphsCount)
+        val bufRanges = STBTTPackRange.calloc(totalRangesCount)
+
+        /*  First font pass: pack all glyphs (no rendering at this point, we are working with rectangles in an
+            infinitely tall texture at this point)  */
+        for (input in configData.indices) {
+
+            val cfg = configData[input]
+            val tmp = tmpArray[input]
+
+            // Setup ranges
+            var fontGlyphsCount = 0
+            var fontRangesCount = 0
+            for (i in cfg.glyphRanges.indices step 2) {
+                fontGlyphsCount += (cfg.glyphRanges[i + 1] - cfg.glyphRanges[i]) + 1
+                fontRangesCount++
+            }
+            tmp.ranges = STBTTPackRange.create(bufRanges.address() + bufRectsN * fontRangesCount, fontRangesCount)
+            tmp.rangesCount = fontRangesCount
+            bufRangesN += fontRangesCount
+            for (i in 0 until fontRangesCount) {
+                val inRange = IntArray(2, { cfg.glyphRanges[i * 2 + it] })
+                val range = tmp.ranges[i]
+                range.fontSize = cfg.sizePixels
+                range.firstUnicodeCodepointInRange = inRange[0]
+                range.numChars = (inRange[1] - inRange[0]) + 1
+                val address = bufPackedchars.address() + bufPackedcharsN * STBTTPackedchar.SIZEOF
+                range.chardataForRange = STBTTPackedchar.create(address, range.numChars)
+                bufPackedcharsN += range.numChars
+            }
+
+            // Pack
+            tmp.rects = STBRPRect.create(bufRects.address() + bufRectsN * STBRPRect.SIZEOF, fontGlyphsCount)
+            bufRectsN += fontGlyphsCount
+            imgui.stb.stbtt_PackSetOversampling(spc, cfg.oversample)
+            val n = stbtt_PackFontRangesGatherRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
+            assert(n == fontGlyphsCount)
+            stbrp_pack_rects(spc.packInfo, tmp.rects)
+
+            // Extend texture height
+            for (i in 0 until n) if (tmp.rects[i].wasPacked)
+                texSize.y = glm.max(texSize.y, tmp.rects[i].y + tmp.rects[i].h)
+        }
+        assert(bufRectsN == totalGlyphsCount)
+        assert(bufPackedcharsN == totalGlyphsCount)
+        assert(bufRangesN == totalRangesCount)
+
+        // Create texture
+        texSize.y = texSize.y.upperPowerOfTwo
+        texPixelsAlpha8 = bufferBig(texSize.x * texSize.y)
+        spc.pixels = texPixelsAlpha8!!
+        spc.height = texSize.y
+
+        // Second pass: render characters
+        for (input in 0 until configData.size) {
+            val cfg = configData[input]
+            val tmp = tmpArray[input]
+            imgui.stb.stbtt_PackSetOversampling(spc, cfg.oversample)
+            stbtt_PackFontRangesRenderIntoRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
+            tmp.rects.free()
+        }
+
+        // End packing
+        stbtt_PackEnd(spc)
+        bufRects.free()
+
+        // Third pass: setup ImFont and glyphs for runtime
+        for (input in 0 until configData.size) {
+
+            val cfg = configData[input]
+            val tmp = tmpArray[input]
+            // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
+            val dstFont = cfg.dstFont
+
+            val fontScale = stbtt_ScaleForPixelHeight(tmp.fontInfo, cfg.sizePixels)
+            val (unscaledAscent, unscaledDescent, unscaledLineGap) = imgui.stb.stbtt_GetFontVMetrics(tmp.fontInfo)
+
+            val ascent = unscaledAscent * fontScale
+            val descent = unscaledDescent * fontScale
+            buildSetupFont(dstFont, cfg, ascent, descent)
+            val off = Vec2(cfg.glyphOffset.x, cfg.glyphOffset.y + (dstFont.ascent + 0.5f).i.f)
+
+            // Always clear fallback so FindGlyph can return NULL. It will be set again in BuildLookupTable()
+            dstFont.fallbackGlyph = null
+            for (i in 0 until tmp.rangesCount) {
+
+                val range = tmp.ranges[i]
+                for (charIdx in 0 until range.numChars) {
+
+                    val pc = range.chardataForRange[charIdx]
+                    if (pc.x0 == 0 && pc.x1 == 0 && pc.y0 == 0 && pc.y1 == 0) continue
+
+                    val codepoint = range.firstUnicodeCodepointInRange + charIdx
+                    if (cfg.mergeMode && dstFont.findGlyph(codepoint) != null) continue
+
+                    val q = STBTTAlignedQuad.create()
+                    stbtt_GetPackedQuad(range.chardataForRange, texSize, charIdx, Vec2(), q, false)
+
+                    val glyph = Font.Glyph()
+                    dstFont.glyphs.add(glyph)
+                    glyph.codepoint = codepoint.uc
+                    glyph.x0 = q.x0 + off.x
+                    glyph.y0 = q.y0 + off.y
+                    glyph.x1 = q.x1 + off.x
+                    glyph.y1 = q.y1 + off.y
+                    glyph.u0 = q.s0
+                    glyph.v0 = q.t0
+                    glyph.u1 = q.s1
+                    glyph.v1 = q.t1
+                    glyph.xAdvance = pc.xAdvance + cfg.glyphExtraSpacing.x  // Bake spacing into XAdvance
+
+                    if (cfg.pixelSnapH)
+                        glyph.xAdvance = (glyph.xAdvance + 0.5f).i.f
+                    // +1 to account for average padding, +0.99 to round
+                    dstFont.metricsTotalSurface +=
+                            ((glyph.u1 - glyph.u0) * texSize.x + 1.99f).i * ((glyph.v1 - glyph.v0) * texSize.y + 1.99f).i
+                }
+            }
+            cfg.dstFont.buildLookupTable()
+        }
+
+        // Cleanup temporaries
+        bufPackedchars.free()
+        bufRanges.free()
+
+        // Render into our custom data block
+        buildRenderDefaultTexData()
+
+        return true
+    }
+
+    fun buildRegisterDefaultCustomRects() {
+        /*  FIXME-WIP: We should register in the constructor (but cannot because our static instances may not have
+            allocator ready by the time they initialize). This needs to be fixed because we can expose CustomRects.         */
+        if (customRects.isEmpty())
+            customRectRegister(DefaultTexData.id, DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
+    }
+
+    fun buildSetupFont(font: Font, fontConfig: FontConfig, ascent: Float, descent: Float) {
+        if (!fontConfig.mergeMode) with(font) {
+            containerAtlas = this@FontAtlas
+            configData.add(fontConfig)
+            configDataCount = 0
+            fontSize = fontConfig.sizePixels
+            this.ascent = ascent
+            this.descent = descent
+            glyphs.clear()
+            metricsTotalSurface = 0
+        }
+        font.configDataCount++
+    }
+
+    fun buildPackCustomRects(packContext: STBRPContext) {
+
+        val userRects = customRects
+        val packRects = STBRPRect.calloc(userRects.size)    // calloc -> all 0
+        for (i in userRects.indices) {
+            packRects[i].w = userRects[i].width
+            packRects[i].h = userRects[i].height
+        }
+        stbrp_pack_rects(packContext, packRects)
+        for (i in userRects.indices)
+            if (packRects[i].wasPacked) {
+                userRects[i].x = packRects[i].x
+                userRects[i].y = packRects[i].y
+                assert(packRects[i].w == userRects[i].width && packRects[i].h == userRects[i].height)
+                texSize.y = glm.max(texSize.y, packRects[i].y + packRects[i].h)
+            }
+    }
+
+    fun buildRenderDefaultTexData() {
+
+        val r = customRects[0]
+        assert(r.id == DefaultTexData.id)
+        assert(r.width == DefaultTexData.wHalf * 2 + 1)
+        assert(r.height == DefaultTexData.h)
+        assert(r.isPacked)
+        assert(texPixelsAlpha8 != null)
+
+        // Render/copy pixels
+        var n = 0
+        for (y in 0 until DefaultTexData.h)
+            for (x in 0 until DefaultTexData.wHalf) {
+                val offset0 = r.x + x + (r.y + y) * texSize.x
+                val offset1 = offset0 + DefaultTexData.wHalf + 1
+                texPixelsAlpha8!![offset0] = if (DefaultTexData.pixels[n] == '.') 0xFF.b else 0x00.b
+                texPixelsAlpha8!![offset1] = if (DefaultTexData.pixels[n] == 'X') 0xFF.b else 0x00.b
+                n++
+            }
+        val texUvScale = Vec2(1f / texSize.x, 1f / texSize.y)
+        texUvWhitePixel = Vec2((r.x + 0.5f) * texUvScale.x, (r.y + 0.5f) * texUvScale.y)
+
+        // Setup mouse cursors
+        val cursorDatas = arrayOf(
+                // Pos ........ Size ......... Offset ......
+                arrayOf(Vec2(0, 3), Vec2(12, 19), Vec2(0)),         // MouseCursor.Arrow
+                arrayOf(Vec2(13, 0), Vec2(7, 16), Vec2(4, 8)),   // MouseCursor.TextInput
+                arrayOf(Vec2(31, 0), Vec2(23), Vec2(11)),              // MouseCursor.Move
+                arrayOf(Vec2(21, 0), Vec2(9, 23), Vec2(5, 11)),  // MouseCursor.ResizeNS
+                arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 5)), // MouseCursor.ResizeEW
+                arrayOf(Vec2(73, 0), Vec2(17), Vec2(9)),               // MouseCursor.ResizeNESW
+                arrayOf(Vec2(55, 0), Vec2(17), Vec2(9)))               // MouseCursor.ResizeNWSE
+
+        for (type in 0 until MouseCursor.Count.i) {
+            val cursorData = g.mouseCursorData[type]
+            val pos = cursorDatas[type][0] + Vec2(r.x, r.y)
+            val size = cursorDatas[type][1]
+            cursorData.type = MouseCursor.of(type)
+            cursorData.size = size
+            cursorData.hotOffset = cursorDatas[type][2]
+            cursorData.texUvMin[0] = pos * texUvScale
+            cursorData.texUvMax[0] = (pos + size) * texUvScale
+            pos.x += DefaultTexData.wHalf + 1
+            cursorData.texUvMin[1] = pos * texUvScale
+            cursorData.texUvMax[1] = (pos + size) * texUvScale
+        }
+    }
+
+    // A work of art lies ahead! (. = white layer, X = black layer, others are blank)
+// The white texels on the top left are the ones we'll use everywhere in ImGui to render filled shapes.
+    object DefaultTexData {
+        val wHalf = 90
+        val h = 27
+        val id = 0xF0000
+        val pixels = (
                 "..-         -XXXXXXX-    X    -           X           -XXXXXXX          -          XXXXXXX" +
                         "..-         -X.....X-   X.X   -          X.X          -X.....X          -          X.....X" +
                         "---         -XXX.XXX-  X...X  -         X...X         -X....X           -           X....X" +
@@ -553,52 +682,6 @@ class FontAtlas {
                         "                                                      -  X..X           X..X  -           " +
                         "                                                      -   X.X           X.X   -           " +
                         "                                                      -    XX           XX    -           ").toCharArray()
-
-
-        if (pass == 0) {
-            // Request rectangles
-            rects[0].w = texDataSize.x * 2 + 1
-            rects[0].h = texDataSize.y + 1
-        } else if (pass == 1) {
-            // Render/copy pixels
-            val r = rects[0]
-            var n = 0
-            for (y in 0 until texDataSize.y)
-                for (x in 0 until texDataSize.x) {
-                    val offset0 = r.x + x + (r.y + y) * texSize.x
-                    val offset1 = offset0 + 1 + texDataSize.x
-                    texPixelsAlpha8!![offset0] = if (textureData[n] == '.') 0xFF.b else 0x00.b
-                    texPixelsAlpha8!![offset1] = if (textureData[n] == 'X') 0xFF.b else 0x00.b
-                    n++
-                }
-            val texUvScale = Vec2(1f / texSize.x, 1f / texSize.y)
-            texUvWhitePixel = Vec2((r.x + 0.5f) * texUvScale.x, (r.y + 0.5f) * texUvScale.y)
-
-            // Setup mouse cursors
-            val cursorDatas = arrayOf(
-                    // Pos ........ Size ......... Offset ......
-                    arrayOf(Vec2(0, 3), Vec2(12, 19), Vec2(0)), // ImGuiMouseCursor_Arrow
-                    arrayOf(Vec2(13, 0), Vec2(7, 16), Vec2(4, 8)), // ImGuiMouseCursor_TextInput
-                    arrayOf(Vec2(31, 0), Vec2(23), Vec2(11)), // ImGuiMouseCursor_Move
-                    arrayOf(Vec2(21, 0), Vec2(9, 23), Vec2(5, 11)), // ImGuiMouseCursor_ResizeNS
-                    arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 5)), // ImGuiMouseCursor_ResizeEW
-                    arrayOf(Vec2(73, 0), Vec2(17), Vec2(9)), // ImGuiMouseCursor_ResizeNESW
-                    arrayOf(Vec2(55, 0), Vec2(17), Vec2(9))) // ImGuiMouseCursor_ResizeNWSE
-
-            for (type in 0 until MouseCursor.Count.i) {
-                val cursorData = g.mouseCursorData[type]
-                val pos = cursorDatas[type][0] + Vec2(r.x, r.y)
-                val size = cursorDatas[type][1]
-                cursorData.type = MouseCursor.of(type)
-                cursorData.size = size
-                cursorData.hotOffset = cursorDatas[type][2]
-                cursorData.texUvMin[0] = pos * texUvScale
-                cursorData.texUvMax[0] = (pos + size) * texUvScale
-                pos.x += texDataSize.x + 1
-                cursorData.texUvMin[1] = pos * texUvScale
-                cursorData.texUvMax[1] = (pos + size) * texUvScale
-            }
-        }
     }
 }
 
@@ -658,8 +741,9 @@ class Font {
 //    // Members: Cold ~18/26 bytes
     /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
     var configDataCount = 0
+
     /** Pointer within ContainerAtlas->ConfigData   */
-    var configData = ArrayList<FontConfig>()
+    val configData = ArrayList<FontConfig>()
 
     var configDataIdx = 0
     /** What we has been loaded into    */
@@ -924,11 +1008,11 @@ class Font {
         return s
     }
 
-    fun renderChar(drawList:DrawList, size:Float, pos:Vec2, col:Int, c:Char) {
+    fun renderChar(drawList: DrawList, size: Float, pos: Vec2, col: Int, c: Char) {
         if (c == ' ' || c == '\t' || c == '\n' || c == '\r') // Match behavior of RenderText(), those 4 codepoints are hard-coded.
             return
         findGlyph(c)?.let {
-            val scale = if(size >= 0f) size / fontSize else 1f
+            val scale = if (size >= 0f) size / fontSize else 1f
             val x = pos.x.i.f + displayOffset.x
             val y = pos.y.i.f + displayOffset.y
             drawList.primReserve(6, 4)
@@ -1145,7 +1229,7 @@ class Font {
     }
 }
 
-val proggyCleanTtfCompressedDataBase85 by lazy {
+private val proggyCleanTtfCompressedDataBase85 by lazy {
     "7])#######hV0qs'/###[),##/l:\$#Q6>##5[n42>c-TH`->>#/e>11NNV=Bv(*:.F?uu#(gRU.o0XGH`\$vhLG1hxt9?W`#,5LsCp#-i>.r\$<\$6pD>Lb';9Crc6tgXmKVeU2cD4Eo3R/" +
             "2*>]b(MC;\$jPfY.;h^`IWM9<Lh2TlS+f-s\$o6Q<BWH`YiU.xfLq\$N;\$0iR/GX:U(jcW2p/W*q?-qmnUCI;jHSAiFWM.R*kU@C=GH?a9wp8f\$e.-4^Qg1)Q-GL(lf(r/7GrRgwV%MS=C#" +
             "`8ND>Qo#t'X#(v#Y9w0#1D\$CIf;W'#pWUPXOuxXuU(H9M(1<q-UE31#^-V'8IRUo7Qf./L>=Ke\$\$'5F%)]0^#0X@U.a<r:QLtFsLcL6##lOj)#.Y5<-R&KgLwqJfLgN&;Q?gI^#DY2uL" +

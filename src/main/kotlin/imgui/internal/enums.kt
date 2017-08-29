@@ -43,6 +43,22 @@ enum class SliderFlags(val i: Int) { Vertical(1 shl 0) }
 
 infix fun Int.hasnt(b: SliderFlags) = (this and b.i) == 0
 
+enum class ColumnsFlags(val i: Int) {
+
+    /** Disable column dividers */
+    NoBorder(1 shl 0),
+    /** Disable resizing columns when clicking on the dividers  */
+    NoResize(1 shl 1),
+    /** Disable column width preservation when adjusting columns    */
+    NoPreserveWidths(1 shl 2),
+    /** Disable forcing columns to fit within window    */
+    NoForceWithinWindow(1 shl 3)
+}
+
+infix fun Int.has(b: ColumnsFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: ColumnsFlags) = (this and b.i) == 0
+
+
 /** NB: need to be in sync with last value of SelectableFlags  */
 @Deprecated("us")
 enum class SelectableFlagsPrivate_(val i: Int) {

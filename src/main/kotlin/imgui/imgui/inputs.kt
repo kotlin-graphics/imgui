@@ -1,7 +1,6 @@
 package imgui.imgui
 
 import glm_.glm
-import glm_.s
 import glm_.vec2.Vec2
 import imgui.IO
 import imgui.ImGui.currentWindowRead
@@ -62,8 +61,7 @@ interface imgui_inputs {
     fun isMouseDoubleClicked(button: Int) = IO.mouseDoubleClicked[button]
 
 //IMGUI_API bool          IsMouseReleased(int button);                                        // did mouse button released (went from Down to !Down)
-//IMGUI_API bool          IsMouseHoveringWindow();                                            // is mouse hovering current window ("window" in API names always refer to current window). disregarding of any consideration of being blocked by a popup. (unlike IsWindowHovered() this will return true even if the window is blocked because of a popup)
-//IMGUI_API bool          IsMouseHoveringAnyWindow();                                         // is mouse hovering any visible window
+//IMGUI_API bool          IsMouseDragging(int button = 0, float lock_threshold = -1.0f);      // is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold
 
     /** Test if mouse cursor is hovering given rectangle
      *  NB- Rectangle is clipped by our current clip setting
@@ -79,13 +77,12 @@ interface imgui_inputs {
         // Clip
         val rectClipped = Rect(rMin, rMax)
         if (clip)
-            rectClipped.clip(window.clipRect)
+            rectClipped.clipWith(window.clipRect)
 
         // Expand for touch input
         val rectForTouch = Rect(rectClipped.min - style.touchExtraPadding, rectClipped.max + style.touchExtraPadding)
         return rectForTouch.contains(IO.mousePos)
     }
-//IMGUI_API bool          IsMouseDragging(int button = 0, float lock_threshold = -1.0f);      // is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold
 
     /** shortcut to IO.mousePos provided by user, to be consistent with other calls */
     val mousePos get() = IO.mousePos

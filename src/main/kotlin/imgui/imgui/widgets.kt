@@ -21,7 +21,7 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcWrapWidthForPos
 import imgui.ImGui.checkboxFlags
 import imgui.ImGui.clearActiveId
-import imgui.ImGui.colorConvertFloat4ToU32
+import imgui.ImGui.u32
 import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorConvertRGBtoHSV
 import imgui.ImGui.colorPicker4
@@ -40,8 +40,9 @@ import imgui.ImGui.inputText
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.isHovered
 import imgui.ImGui.isItemActive
-import imgui.ImGui.isItemHovered
+import imgui.ImGui.isItemRectHovered
 import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isPopupOpen
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.openPopup
@@ -488,7 +489,6 @@ interface imgui_widgets {
         val arrowSize = g.fontSize + style.framePadding.x * 2f
         val hovered = isHovered(frameBb, id)
         var popupOpen = isPopupOpen(id)
-        var popupOpenedNow = false
 
         val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
@@ -502,19 +502,23 @@ interface imgui_widgets {
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
+        var popupToggled = false
         if (hovered) {
             setHoveredId(id)
             if (IO.mouseClicked[0]) {
                 clearActiveId()
-                if (isPopupOpen(id)) closePopup(id)
-                else {
-                    focusWindow(window)
-                    openPopup(label)
-                    popupOpen = true
-                    popupOpenedNow = true
-                }
+                popupToggled = true
             }
         }
+
+        if (popupToggled)
+            if (isPopupOpen(id))
+                closePopup(id)
+            else {
+                focusWindow(window)
+                openPopup(label)
+                popupOpen = true
+            }
 
         var valueChanged = false
         if (isPopupOpen(id)) {
@@ -538,8 +542,9 @@ interface imgui_widgets {
             pushStyleVar(StyleVar.WindowPadding, style.framePadding)
 
             val flags = WindowFlags.ComboBox or if (window.flags has WindowFlags.ShowBorders) WindowFlags.ShowBorders.i else 0
-            if (beginPopupEx(label, flags)) {
+            if (beginPopupEx(id, flags)) {
                 // Display items
+                // FIXME-OPT: Use clipper
                 spacing()
                 repeat(itemsCount) { i ->
                     pushId(i)
@@ -550,7 +555,7 @@ interface imgui_widgets {
                         valueChanged = true
                         currentItem[0] = i
                     }
-                    if (itemSelected && popupOpenedNow) setScrollHere()
+                    if (itemSelected && popupToggled) setScrollHere()
                     popId()
                 }
                 endPopup()
@@ -749,7 +754,7 @@ interface imgui_widgets {
                     openPopup("picker")
                     setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
                 }
-            } else if (flags hasnt ColorEditFlags.NoOptions && isItemHovered() && isMouseClicked(1))
+            } else if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered() && isMouseClicked(1))
                 openPopup("context")
 
             if (beginPopup("picker")) {
@@ -898,7 +903,7 @@ interface imgui_widgets {
                     valueChanged = true
                 }
             }
-            if (flags hasnt ColorEditFlags.NoOptions && isItemHovered() && isMouseClicked(1))
+            if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered() && isMouseClicked(1))
                 openPopup("context")
 
         } else if (flags has ColorEditFlags.PickerHueBar) {
@@ -910,7 +915,7 @@ interface imgui_widgets {
                 valueChangedSv = true
                 valueChanged = true
             }
-            if (flags hasnt ColorEditFlags.NoOptions && isItemHovered() && isMouseClicked(1))
+            if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered() && isMouseClicked(1))
                 openPopup("context")
             // Hue bar logic
             cursorScreenPos.put(bar0PosX, pickerPos.y)
@@ -996,8 +1001,8 @@ interface imgui_widgets {
 
         val hueColorF = Vec4(1)
         colorConvertHSVtoRGB(h, 1f, 1f).apply { hueColorF.x = this[0]; hueColorF.y = this[1]; hueColorF.z = this[0] }
-        val hueColor32 = colorConvertFloat4ToU32(hueColorF)
-        val col32NoAlpha = colorConvertFloat4ToU32(Vec4(col[0], col[1], col[2], 1f))
+        val hueColor32 = hueColorF.u32
+        val col32NoAlpha = Vec4(col[0], col[1], col[2], 1f).u32
 
         val hueColors = arrayOf(COL32(255, 0, 0, 255), COL32(255, 255, 0, 255), COL32(0, 255, 0, 255),
                 COL32(0, 255, 255, 255), COL32(0, 0, 255, 255), COL32(255, 0, 255, 255), COL32(255, 0, 0, 255))

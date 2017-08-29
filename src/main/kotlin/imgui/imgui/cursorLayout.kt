@@ -11,9 +11,9 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logText
 import imgui.ImGui.popClipRect
+import imgui.ImGui.pushColumnClipRect
 import imgui.internal.GroupData
 import imgui.internal.Rect
-import imgui.pushColumnClipRect
 import imgui.Context as g
 
 interface imgui_cursorLayout {

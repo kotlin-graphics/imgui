@@ -46,11 +46,7 @@ enum class WindowFlags(val i: Int) {
     // [Internal]
 
     /** Don't use! For internal use by BeginChild() */
-    ChildWindow(1 shl 20),
-    /** Don't use! For internal use by BeginChild() */
-    ChildWindowAutoFitX(1 shl 21),
-    /** Don't use! For internal use by BeginChild() */
-    ChildWindowAutoFitY(1 shl 22),
+    ChildWindow(1 shl 22),
     /** Don't use! For internal use by ComboBox()   */
     ComboBox(1 shl 23),
     /** Don't use! For internal use by BeginTooltip()   */
@@ -69,6 +65,7 @@ enum class WindowFlags(val i: Int) {
 infix fun Int.or(b: WindowFlags) = this or b.i
 infix fun Int.has(b: WindowFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: WindowFlags) = (this and b.i) == 0
+infix fun Int.wo(b: WindowFlags) = this and b.i.inv()
 
 /** Flags for ImGui::InputText()    */
 enum class InputTextFlags(val i: Int) {

@@ -7,9 +7,15 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
+import imgui.ImGui.beginChild
 import imgui.ImGui.currentWindowRead
+import imgui.ImGui.endChild
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.isMouseClicked
+import imgui.ImGui.popStyleColor
+import imgui.ImGui.popStyleVar
+import imgui.ImGui.pushStyleColor
+import imgui.ImGui.pushStyleVar
 import imgui.internal.Rect
 import imgui.internal.saturate
 import imgui.Context as g
@@ -18,21 +24,17 @@ import imgui.Context as g
 interface imgui_utilities {
 
     /** was the last item hovered by mouse? */
-    fun isItemHovered() = currentWindowRead!!.dc.lastItemHoveredAndUsable
-
-    /** was the last item hovered by mouse? even if another item is active or window is blocked by popup while we are
-     *  hovering this   */
-    val isItemHoveredRect get() = currentWindowRead!!.dc.lastItemHoveredAndUsable
+    fun isItemRectHovered() = currentWindowRead!!.dc.lastItemHoveredAndUsable
 
     /** was the last item active? (e.g. button being held, text field being edited- items that don't interact will always
      *  return false)   */
     val isItemActive get() = if (g.activeId != 0) g.activeId == currentWindowRead!!.dc.lastItemId else false
 
     /** was the last item clicked? (e.g. button/node just clicked on)   */
-    fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemHovered()
+    fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemRectHovered()
 
     /** was the last item visible? (aka not out of sight due to clipping/scrolling.)    */
-    val isItemVisible get() = with(currentWindowRead!!) { Rect(clipRect).overlaps(dc.lastItemRect) }
+    val isItemVisible get() = with(currentWindowRead!!) { clipRect.overlaps(dc.lastItemRect) }
 
     val isAnyItemHovered get() = g.hoveredId != 0 || g.hoveredIdPreviousFrame != 0
 
@@ -56,17 +58,21 @@ interface imgui_utilities {
             g.activeIdAllowOverlap = true
     }
 
+    /** is current window focused   */
+    val isWindowFocused get() = g.navWindow === g.currentWindow
+
     /** is current window hovered and hoverable (not blocked by a popup) (differentiate child windows from each others) */
     val isWindowHovered get() = g.hoveredWindow === g.currentWindow && g.hoveredRootWindow!!.isContentHoverable
 
-    /** is current window focused   */
-    val isWindowFocused get() = g.focusedWindow === g.currentWindow
+    /** is current window rectnagle hovered, disregarding of any consideration of being blocked by a popup.
+     *  (unlike IsWindowHovered() this will return true even if the window is blocked because of a popup)   */
+    val isWindowRectHovered get() = g.hoveredWindow === g.currentWindow
 
     /** is current root window focused (root = top-most parent of a child, otherwise self)  */
-    val isRootWindowFocused get() = g.focusedWindow === g.currentWindow!!.rootWindow
+    val isRootWindowFocused get() = g.navWindow === g.currentWindow!!.rootWindow
 
     /** is current root window or any of its child (including current window) focused   */
-    val isRootWindowOrAnyChildFocused get() = g.focusedWindow != null && g.focusedWindow!!.rootWindow === g.currentWindow!!.rootWindow
+    val isRootWindowOrAnyChildFocused get() = g.navWindow != null && g.navWindow!!.rootWindow === g.currentWindow!!.rootWindow
 
     /** is current root window or any of its child (including current window) hovered and hoverable (not blocked by a popup)    */
     val isRootWindowOrAnyChildHovered
@@ -82,7 +88,7 @@ interface imgui_utilities {
 
     val frameCount get() = g.frameCount
 
-//IMGUI_API const char*   GetStyleColName(ImGuiCol idx);
+//IMGUI_API const char*   GetStyleColorName(ImGuiCol idx);
 //IMGUI_API ImVec2        CalcItemRectClosestPoint(const ImVec2& pos, bool on_edge = false, float outward = +0.0f);   // utility to find the closest point the last item bounding rectangle edge. useful to visually link items
 
     /** Calculate text size. Text can be multi-line. Optionally ignore text after a ## marker.
@@ -139,30 +145,40 @@ interface imgui_utilities {
     /** helper to create a child window / scrolling region that looks like a normal widget frame    */
     fun beginChildFrame(id: Int, size: Vec2, extraFlags: Int = 0): Boolean {
 
-        ImGui.pushStyleColor(Col.ChildWindowBg, style.colors[Col.FrameBg])
-        ImGui.pushStyleVar(StyleVar.ChildWindowRounding, style.frameRounding)
-        ImGui.pushStyleVar(StyleVar.WindowPadding, style.framePadding)
-        return ImGui.beginChild(id, size, g.currentWindow!!.flags has WindowFlags.ShowBorders,
+        pushStyleColor(Col.ChildWindowBg, style.colors[Col.FrameBg])
+        pushStyleVar(StyleVar.ChildWindowRounding, style.frameRounding)
+        pushStyleVar(StyleVar.WindowPadding, style.framePadding)
+        return beginChild(id, size, g.currentWindow!!.flags has WindowFlags.ShowBorders,
                 WindowFlags.NoMove or WindowFlags.AlwaysUseWindowPadding or extraFlags)
     }
 
     fun endChildFrame() {
-        ImGui.endChild()
-        ImGui.popStyleVar(2)
-        ImGui.popStyleColor()
+        endChild()
+        popStyleVar(2)
+        popStyleColor()
     }
 
-    //IMGUI_API ImVec4        ColorConvertU32ToFloat4(ImU32 in);
-    fun colorConvertFloat4ToU32(color: Vec4): Int {
-        var out = F32_TO_INT8_SAT(color.x) shl COL32_R_SHIFT
-        out = out or (F32_TO_INT8_SAT(color.y) shl COL32_G_SHIFT)
-        out = out or (F32_TO_INT8_SAT(color.z) shl COL32_B_SHIFT)
-        return out or (F32_TO_INT8_SAT(color.w) shl COL32_A_SHIFT)
-    }
+    val Int.vec4: Vec4
+        get() {
+            val s = 1f / 255f
+            return Vec4(
+                    ((this ushr COL32_R_SHIFT) and 0xFF) * s,
+                    ((this ushr COL32_G_SHIFT) and 0xFF) * s,
+                    ((this ushr COL32_B_SHIFT) and 0xFF) * s,
+                    ((this ushr COL32_A_SHIFT) and 0xFF) * s)
+        }
+
+    val Vec4.u32: Int
+        get () {
+            var out = F32_TO_INT8_SAT(x) shl COL32_R_SHIFT
+            out = out or (F32_TO_INT8_SAT(y) shl COL32_G_SHIFT)
+            out = out or (F32_TO_INT8_SAT(z) shl COL32_B_SHIFT)
+            return out or (F32_TO_INT8_SAT(w) shl COL32_A_SHIFT)
+        }
 
     /** Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
      *  Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv  */
-    fun colorConvertRGBtoHSV(rgb: FloatArray, hsv: FloatArray = FloatArray(3)):FloatArray {
+    fun colorConvertRGBtoHSV(rgb: FloatArray, hsv: FloatArray = FloatArray(3)): FloatArray {
 
         var k = 0f
         var (r, g, b) = rgb
@@ -181,13 +197,14 @@ interface imgui_utilities {
         hsv[2] = r
         return hsv
     }
+
     fun FloatArray.rgbToHSV() = colorConvertRGBtoHSV(this, this)
 
     /** Convert hsv floats ([0-1],[0-1],[0-1]) to rgb floats ([0-1],[0-1],[0-1]), from Foley & van Dam p593
      *  also http://en.wikipedia.org/wiki/HSL_and_HSV   */
     fun colorConvertHSVtoRGB(hsv: FloatArray, rgb: FloatArray = FloatArray(3)) = colorConvertHSVtoRGB(hsv[0], hsv[1], hsv[2], rgb)
 
-    fun colorConvertHSVtoRGB(h: Float, s:Float, v: Float, rgb: FloatArray = FloatArray(3)): FloatArray {
+    fun colorConvertHSVtoRGB(h: Float, s: Float, v: Float, rgb: FloatArray = FloatArray(3)): FloatArray {
 
         if (s == 0f) {
             // gray

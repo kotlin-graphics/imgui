@@ -20,26 +20,32 @@ import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endTooltip
 import imgui.ImGui.getColorU32
+import imgui.ImGui.getColumnOffset
+import imgui.ImGui.getColumnWidth
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.indent
 import imgui.ImGui.inputText
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
+import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.separator
+import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.TextEditState.K
+import imgui.imgui.imgui_colums.Companion.pixelsToOffsetNorm
 import imgui.imgui.imgui_tooltips.Companion.beginTooltipEx
 import imgui.internal.*
 import java.util.*
@@ -50,8 +56,6 @@ import imgui.Context as g
 // If this ever crash because g.CurrentWindow is NULL it means that either
 // - ImGui::NewFrame() has never been called, which is illegal.
 // - You are calling ImGui functions after ImGui::Render() and before the next ImGui::NewFrame(), which is also illegal.
-var dai = 0
-
 interface imgui_internal {
 
     val currentWindowRead get() = g.currentWindow
@@ -74,7 +78,7 @@ interface imgui_internal {
     fun focusWindow(window: Window?) {
 
         // Always mark the window we passed as focused. This is used for keyboard interactions such as tabbing.
-        g.focusedWindow = window
+        g.navWindow = window
 
         // Passing NULL allow to disable keyboard focus
         if (window == null) return
@@ -123,7 +127,7 @@ interface imgui_internal {
         // Click to focus window and start moving (after we're done with all our widgets)
         if (g.activeId == 0 && g.hoveredId == 0 && IO.mouseClicked[0]) {
             // Unless we just made a popup appear
-            if (!(g.focusedWindow != null && !g.focusedWindow!!.wasActive && g.focusedWindow!!.active)) {
+            if (!(g.navWindow != null && !g.navWindow!!.wasActive && g.navWindow!!.active)) {
                 if (g.hoveredRootWindow != null) {
                     focusWindow(g.hoveredWindow)
                     if (g.hoveredWindow!!.flags hasnt WindowFlags.NoMove) {
@@ -131,7 +135,7 @@ interface imgui_internal {
                         g.movedWindowMoveId = g.hoveredRootWindow!!.moveId
                         setActiveId(g.movedWindowMoveId, g.hoveredRootWindow)
                     }
-                } else if (g.focusedWindow != null && getFrontMostModalRootWindow() == null)
+                } else if (g.navWindow != null && getFrontMostModalRootWindow() == null)
                     focusWindow(null)   // Clicking on void disable focus
             }
         }
@@ -234,7 +238,6 @@ interface imgui_internal {
     fun isClippedEx(bb: Rect, id: Int?, clipEvenWhenLogged: Boolean): Boolean {
 
         val window = currentWindowRead!!
-
         if (!bb.overlaps(window.clipRect))
             if (id == null || id != g.activeId)
                 if (clipEvenWhenLogged || !g.logEnabled)
@@ -314,10 +317,9 @@ interface imgui_internal {
      *  level).
      *  One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef
      *  to NULL)    */
-    fun openPopupEx(strId: String, reopenExisting: Boolean) {
+    fun openPopupEx(id: Int, reopenExisting: Boolean) {
 
         val window = g.currentWindow!!
-        val id = window.getId(strId)
         val currentStackSize = g.currentPopupStack.size
         // Tagged as new ref because constructor sets Window to NULL (we are passing the ParentWindow info here)
         val popupRef = PopupRef(id, window, window.getId("##menus"), IO.mousePos)
@@ -326,6 +328,139 @@ interface imgui_internal {
         else if (reopenExisting || g.openPopupStack[currentStackSize].popupId != id)
             g.openPopupStack[currentStackSize] = popupRef
     }
+
+
+    // New Columns API
+
+    /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
+    fun beginColumns(id: String?, columnsCount: Int, flags: Int) {
+
+        with(ImGui.currentWindow) {
+
+            assert(columnsCount > 1)
+            assert(dc.columnsCount == 1) // Nested columns are currently not supported
+
+            /*  Differentiate column ID with an arbitrary prefix for cases where users name their columns set the same
+                as another widget.
+                In addition, when an identifier isn't explicitly provided we include the number of columns in the hash
+                to make it uniquer. */
+            pushId(0x11223347 + if (id != null) 0 else columnsCount)
+            dc.columnsSetId = getId(id ?: "columns")
+            popId()
+
+            // Set state for first column
+            dc.columnsCurrent = 0
+            dc.columnsCount = columnsCount
+            dc.columnsFlags = flags
+
+            val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else size.x - scrollbarSizes.x
+            dc.columnsMinX = dc.indentX - style.itemSpacing.x // Lock our horizontal range
+            //window->DC.ColumnsMaxX = contentRegionWidth - window->Scroll.x -((window->Flags & ImGuiWindowFlags_NoScrollbar) ? 0 : g.Style.ScrollbarSize);// - window->WindowPadding().x;
+            dc.columnsMaxX = contentRegionWidth - scroll.x
+            dc.columnsStartPosY = dc.cursorPos.y
+            dc.columnsStartMaxPosX = dc.cursorMaxPos.x
+            dc.columnsCellMaxY = dc.cursorPos.y
+            dc.columnsCellMinY = dc.cursorPos.y
+            dc.columnsOffsetX = 0f
+            dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
+
+            // Cache column offsets
+            dc.columnsData.add(ColumnData())
+            for (columnIndex in 0..columnsCount) {
+
+                val columnId = dc.columnsSetId + columnIndex
+                ImGui.keepAliveId(columnId)
+                val defaultT = columnIndex / dc.columnsCount.f
+                var t = dc.stateStorage.float(columnId, defaultT)
+                if (dc.columnsFlags hasnt ColumnsFlags.NoForceWithinWindow)
+                    t = glm.min(t, pixelsToOffsetNorm(this, dc.columnsMaxX - style.columnsMinSpacing * (dc.columnsCount - columnIndex)))
+                dc.columnsData[columnIndex].offsetNorm = t
+            }
+
+            // Cache clipping rectangles
+            for (columnIndex in 0 until columnsCount) {
+                val clipX1 = glm.floor(0.5f + pos.x + getColumnOffset(columnIndex) - 1f)
+                val clipX2 = glm.floor(0.5f + pos.x + getColumnOffset(columnIndex + 1) - 1f)
+                dc.columnsData[columnIndex].clipRect.put(clipX1, -Float.MAX_VALUE, clipX2, Float.MAX_VALUE)
+                dc.columnsData[columnIndex].clipRect.clipWith(clipRect)
+            }
+            drawList.channelsSplit(dc.columnsCount)
+            pushColumnClipRect()
+            pushItemWidth(getColumnWidth() * 0.65f)
+        }
+    }
+
+    fun endColumns() = with(currentWindow) {
+
+        assert(dc.columnsCount > 1)
+
+        popItemWidth()
+        popClipRect()
+        drawList.channelsMerge()
+
+        dc.columnsCellMaxY = glm.max(dc.columnsCellMaxY, dc.cursorPos.y)
+        dc.cursorPos.y = dc.columnsCellMaxY
+        dc.cursorMaxPos.x = glm.max(dc.columnsStartMaxPosX, dc.columnsMaxX)  // Columns don't grow parent
+
+        // Draw columns borders and handle resize
+        if (dc.columnsFlags hasnt ColumnsFlags.NoBorder && !skipItems) {
+
+            val y1 = dc.columnsStartPosY
+            val y2 = dc.cursorPos.y
+            var draggingColumn = -1
+            for (i in 1 until dc.columnsCount) {
+
+                val x = pos.x + getColumnOffset(i)
+                val columnId = dc.columnsSetId + i
+                val columnW = 4f // Width for interaction
+                val columnRect = Rect(x - columnW, y1, x + columnW, y2)
+                if (isClippedEx(columnRect, columnId, false)) continue
+
+                var hovered = false
+                var held = false
+                if (dc.columnsFlags hasnt ColumnsFlags.NoResize) {
+
+                    val (_, b, c) = buttonBehavior(columnRect, columnId)
+                    hovered = b
+                    held = c
+                    if (hovered || held)
+                        g.mouseCursor = MouseCursor.ResizeEW
+                    if (held && g.activeIdIsJustActivated)
+                    /*  Store from center of column line (we used a 8 wide rect for columns clicking). This is used by
+                        GetDraggedColumnOffset().                     */
+                        g.activeIdClickOffset.x -= columnW
+                    if (held)
+                        draggingColumn = i
+                }
+
+                // Draw column
+                val col = getColorU32(if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator)
+                val xi = x.i.f
+                drawList.addLine(Vec2(xi, y1 + 1f), Vec2(xi, y2), col)
+            }
+
+            // Apply dragging after drawing the column lines, so our rendered lines are in sync with how items were displayed during the frame.
+            if (draggingColumn != -1)
+                setColumnOffset(draggingColumn, getDraggedColumnOffset(draggingColumn))
+        }
+
+        dc.columnsSetId = 0
+        dc.columnsCurrent = 0
+        dc.columnsCount = 1
+        dc.columnsFlags = 0
+        dc.columnsData.clear()
+        dc.columnsOffsetX = 0f
+        dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
+    }
+
+    fun pushColumnClipRect(columnIndex: Int = 1) {
+
+        val window = currentWindowRead!!
+        val columnIndex = if (columnIndex < 0) window.dc.columnsCurrent else columnIndex
+
+        pushClipRect(window.dc.columnsData[columnIndex].clipRect.min, window.dc.columnsData[columnIndex].clipRect.max, false)
+    }
+
 
     /** NB: All position are in absolute pixels coordinates (never using window coordinates internally)
      *  AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND
@@ -531,6 +666,7 @@ interface imgui_internal {
             return BooleanArray(3)
         }
 
+        // Default behavior requires click+release on same spot
         if (flags hasnt (ButtonFlags.PressedOnClickRelease or ButtonFlags.PressedOnClick or ButtonFlags.PressedOnRelease or
                 ButtonFlags.PressedOnDoubleClick))
             flags = flags or ButtonFlags.PressedOnClickRelease
@@ -695,18 +831,26 @@ interface imgui_internal {
 
         // Process clicking on the slider
         var valueChanged = false
-        if (g.activeId == id)
+        if (g.activeId == id) {
+
+            var setNewValue = false
+            var clickedT = 0f
 
             if (IO.mouseDown[0]) {
 
                 val mouseAbsPos = if (isHorizontal) IO.mousePos.x else IO.mousePos.y
-                var clickedT =
+                clickedT =
                         if (sliderUsableSz > 0f)
                             glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f)
                         else 0f
                 if (!isHorizontal)
                     clickedT = 1f - clickedT
 
+                setNewValue = true
+            } else
+                clearActiveId()
+
+            if (setNewValue) {
                 var newValue =
                         if (isNonLinear) {
                             // Account for logarithmic scale on both sides of the zero
@@ -731,10 +875,11 @@ interface imgui_internal {
                     v[ptr] = newValue
                     valueChanged = true
                 }
-            } else clearActiveId()
-        // Calculate slider grab positioning
-        var grabT = sliderBehaviorCalcRatioFromValue(v[ptr], vMin, vMax, power, linearZeroPos)
+            }
+        }
+
         // Draw
+        var grabT = sliderBehaviorCalcRatioFromValue(v[ptr], vMin, vMax, power, linearZeroPos)
         if (!isHorizontal)
             grabT = 1f - grabT
         val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -820,28 +965,30 @@ interface imgui_internal {
                     g.dragLastMouseDelta put 0f
                 }
 
+                var vSpeed = vSpeed
+                if (vSpeed == 0f && (vMax - vMin) != 0f && (vMax - vMin) < Float.MAX_VALUE)
+                    vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
+
                 var vCur = g.dragCurrentValue
                 val mouseDragDelta = getMouseDragDelta(0, 1f)
                 if (glm.abs(mouseDragDelta.x - g.dragLastMouseDelta.x) > 0f) {
                     var speed = vSpeed
-                    if (speed == 0f && (vMax - vMin) != 0f && (vMax - vMin) < Float.MAX_VALUE)
-                        speed = (vMax - vMin) * g.dragSpeedDefaultRatio
                     if (IO.keyShift && g.dragSpeedScaleFast >= 0f)
                         speed *= g.dragSpeedScaleFast
                     if (IO.keyAlt && g.dragSpeedScaleSlow >= 0f)
                         speed *= g.dragSpeedScaleSlow
 
-                    val delta = (mouseDragDelta.x - g.dragLastMouseDelta.x) * speed
+                    val adjustDelta = (mouseDragDelta.x - g.dragLastMouseDelta.x) * speed
                     if (glm.abs(power - 1f) > 0.001f) {
                         // Logarithmic curve on both side of 0.0
                         val v0_abs = if (vCur >= 0f) vCur else -vCur
                         val v0_sign = if (vCur >= 0f) 1f else -1f
-                        val v1 = glm.pow(v0_abs, 1f / power) + delta * v0_sign
+                        val v1 = glm.pow(v0_abs, 1f / power) + adjustDelta * v0_sign
                         val v1_abs = if (v1 >= 0f) v1 else -v1
                         val v1_sign = if (v1 >= 0f) 1f else -1f              // Crossed sign line
                         vCur = glm.pow(v1_abs, power) * v0_sign * v1_sign   // Reapply sign
                     } else
-                        vCur += delta
+                        vCur += adjustDelta
 
                     g.dragLastMouseDelta.x = mouseDragDelta.x
 
@@ -1418,7 +1565,7 @@ interface imgui_internal {
                         if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_A(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
-                        rect.clip(clipRect_)
+                        rect.clipWith(clipRect_)
                         if (rect.overlaps(clipRect_))
                             drawWindow.drawList.addRectFilled(rect.min, rect.max, bgColor)
                     }
@@ -1738,8 +1885,7 @@ interface imgui_internal {
         /*  Round past decimal precision
             So when our value is 1.99999 with a precision of 0.001 we'll end up rounding to 2.0
             FIXME: Investigate better rounding methods  */
-        val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
-        val minStep = if (decimalPrecision in 0..9) minSteps[decimalPrecision] else glm.pow(10f, -decimalPrecision.f)
+        val minStep = getMinimumStepAtDecimalPrecision(decimalPrecision)
         val negative = value < 0f
         var value = glm.abs(value)
         val remainder = value % minStep
@@ -1760,6 +1906,11 @@ interface imgui_internal {
             val g = lerp((colA ushr COL32_G_SHIFT) and 0xFF, (colB ushr COL32_G_SHIFT) and 0xFF, t)
             val b = lerp((colA ushr COL32_B_SHIFT) and 0xFF, (colB ushr COL32_B_SHIFT) and 0xFF, t)
             return COL32(r, g, b, 0xFF)
+        }
+
+        fun getMinimumStepAtDecimalPrecision(decimalPrecision: Int): Float {
+            val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
+            return if (decimalPrecision in 0..9) minSteps[decimalPrecision] else glm.pow(10f, -decimalPrecision.f)
         }
     }
 }

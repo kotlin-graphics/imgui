@@ -7,7 +7,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.colorConvertFloat4ToU32
+import imgui.ImGui.u32
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
@@ -15,6 +15,7 @@ import imgui.internal.ColMod
 import imgui.internal.StyleMod
 import imgui.Context as g
 import imgui.Context.style
+import imgui.ImGui.vec4
 
 
 interface imgui_parametersStacks {
@@ -32,6 +33,14 @@ interface imgui_parametersStacks {
         g.currentWindow!!.drawList.popTextureId()
         g.fontStack.pop()
         (g.fontStack.lastOrNull() ?: defaultFont).setCurrent()
+    }
+
+    /** FIXME: This may incur a round-trip (if the end user got their data from a float4) but eventually we aim to store
+     *  the in-flight colors as ImU32   */
+    fun pushStyleColor(idx: Col, col: Int) {
+        val backup = ColMod(idx, style.colors[idx])
+        g.colorModifiers.push(backup)
+        g.style.colors[idx] = col.vec4
     }
 
     fun pushStyleColor(idx: Col, col: Vec4) {
@@ -123,6 +132,10 @@ interface imgui_parametersStacks {
         }
     }
 
+    /** retrieve style color as stored in ImGuiStyle structure. use to feed back into PushStyleColor(), otherwhise use
+     *  GetColorU32() to get style color + style alpha. */
+    fun getStyleColorVec4(idx: Col): Vec4 = Vec4(style.colors[idx])
+
     /** get current font    */
     val font get() = g.font
 
@@ -138,14 +151,14 @@ interface imgui_parametersStacks {
     fun getColorU32(idx: Int, alphaMul: Float = 1f): Int {
         val c = Vec4(style.colors[idx])
         c.w *= style.alpha * alphaMul
-        return colorConvertFloat4ToU32(c)
+        return c.u32
     }
 
     /** retrieve given color with style alpha applied   */
     fun getColorU32(col: Vec4): Int {
         val c = Vec4(col)
         c.w *= style.alpha
-        return colorConvertFloat4ToU32(c)
+        return c.u32
     }
 
     /** retrieve given color with style alpha applied    */

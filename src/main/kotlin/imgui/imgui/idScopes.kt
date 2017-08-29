@@ -1,6 +1,7 @@
 package imgui.imgui
 
 import imgui.ImGui.currentWindow
+import imgui.ImGui.currentWindowRead
 import imgui.Context as g
 
 /** ID scopes
@@ -12,12 +13,12 @@ interface imgui_idScopes {
 
 
     /** push identifier into the ID stack. IDs are hash of the *entire* stack!  */
-    fun pushId(strId: String) = with(currentWindow) { idStack.push(getId(strId)) }
+    fun pushId(strId: String) = with(currentWindowRead!!) { idStack.push(getId(strId)) }
 
     /** Includes Int IDs as well    */
-    fun pushId(ptrId: Any) = with(currentWindow) { idStack.push(getId(ptrId)) }
+    fun pushId(ptrId: Any) = with(currentWindowRead!!) { idStack.push(getId(ptrId)) }
 
-    fun popId() = currentWindow.idStack.pop()
+    fun popId() = currentWindowRead!!.idStack.pop()
 
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage
      *  yourself. otherwise rarely needed   */

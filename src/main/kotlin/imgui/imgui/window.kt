@@ -13,8 +13,6 @@ import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.closeButton
-import imgui.ImGui.colorConvertFloat4ToU32
-import imgui.ImGui.columns
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
@@ -31,6 +29,8 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.renderCollapseTriangle
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.endColumns
+import imgui.ImGui.u32
 import imgui.internal.*
 import imgui.Context as g
 
@@ -194,8 +194,7 @@ interface imgui_window {
                 val titleBarRect = window.titleBarRect()
                 if (g.hoveredWindow === window && isMouseHoveringRect(titleBarRect) && IO.mouseDoubleClicked[0]) {
                     window.collapsed = !window.collapsed
-                    if (flags hasnt WindowFlags.NoSavedSettings)
-                        markIniSettingsDirty()
+                    markIniSettingsDirty(window)
                     focusWindow(window)
                 }
             } else window.collapsed = false
@@ -272,8 +271,7 @@ interface imgui_window {
                         window.sizeFull.x = if (window.autoFitOnlyGrows) glm.max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
                     if (window.autoFitFrames.y > 0)
                         window.sizeFull.y = if (window.autoFitOnlyGrows) glm.max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
-                    if (flags hasnt WindowFlags.NoSavedSettings)
-                        markIniSettingsDirty()
+                    markIniSettingsDirty(window)
                 }
             }
 
@@ -414,14 +412,12 @@ interface imgui_window {
                     if (g.hoveredWindow === window && held && IO.mouseDoubleClicked[0]) {
                         // Manual auto-fit when double-clicking
                         window.applySizeFullWithConstraint(sizeAutoFit)
-                        if (flags hasnt WindowFlags.NoSavedSettings)
-                            markIniSettingsDirty()
+                        markIniSettingsDirty(window)
                         clearActiveId()
                     } else if (held) {
                         // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
                         window.applySizeFullWithConstraint((IO.mousePos - g.activeIdClickOffset + resizeRect.size) - window.pos)
-                        if (flags hasnt WindowFlags.NoSavedSettings)
-                            markIniSettingsDirty()
+                        markIniSettingsDirty(window)
                     }
 
                     window.size put window.sizeFull
@@ -455,13 +451,13 @@ interface imgui_window {
                 bgColor.w *= style.alpha
                 if (bgColor.w > 0f)
                     window.drawList.addRectFilled(Vec2(0, window.titleBarHeight()) + window.pos, window.size + window.pos,
-                            colorConvertFloat4ToU32(bgColor), windowRounding,
+                            bgColor.u32, windowRounding,
                             if (flags has WindowFlags.NoTitleBar) Corner.All.i else Corner.BottomLeft or Corner.BottomRight)
 
                 // Title bar
                 if (flags hasnt WindowFlags.NoTitleBar)
                     window.drawList.addRectFilled(titleBarRect.tl, titleBarRect.br,
-                            (if (g.focusedWindow != null && window.rootNonPopupWindow == g.focusedWindow!!.rootNonPopupWindow)
+                            (if (g.navWindow != null && window.rootNonPopupWindow == g.navWindow!!.rootNonPopupWindow)
                                 Col.TitleBgActive
                             else Col.TitleBg).u32,
                             windowRounding, Corner.TopLeft or Corner.TopRight)
@@ -541,6 +537,7 @@ interface imgui_window {
                 dc.columnsCurrent = 0
                 dc.columnsCount = 1
                 dc.columnsStartPosY = dc.cursorPos.y
+                dc.columnsStartMaxPosX = dc.cursorMaxPos.y
                 dc.columnsCellMaxY = dc.columnsStartPosY
                 dc.columnsCellMinY = dc.columnsStartPosY
                 dc.treeDepth = 0
@@ -595,7 +592,7 @@ interface imgui_window {
 
             // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
             window.windowRectClipped put window.rect()
-            window.windowRectClipped.clip(window.clipRect)
+            window.windowRectClipped.clipWith(window.clipRect)
 
             // Pressing CTRL+C while holding on a window copy its content to the clipboard
             // This works but 1. doesn't handle multiple Begin/End pairs, 2. recursing into another Begin/End pair - so we need to work that out and add better logging scope.
@@ -658,7 +655,7 @@ interface imgui_window {
         with(g.currentWindow!!) {
 
             if (dc.columnsCount != 1) // close columns set if any is open
-                columns(1, "#CLOSECOLUMNS")
+                endColumns()
             popClipRect()   // inner window clip rectangle
 
             // Stop logging
@@ -697,15 +694,15 @@ interface imgui_window {
                 feed back into automatic size-fitting.             */
             val sz = Vec2(windowSize)
             // Arbitrary minimum zero-ish child size of 4.0f causes less trouble than a 0.0f
-            if (window.flags has WindowFlags.ChildWindowAutoFitX)
+            if (window.autoFitChildAxes has 0x01)
                 sz.x = glm.max(4f, sz.x)
-            if (window.flags has WindowFlags.ChildWindowAutoFitY)
+            if (window.autoFitChildAxes has 0x02)
                 sz.y = glm.max(4f, sz.y)
 
-            ImGui.end()
+            end()
 
-            window = currentWindow // TODO check if needed
-            val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + sz)
+            val parentWindow = currentWindow
+            val bb = Rect(parentWindow.dc.cursorPos, parentWindow.dc.cursorPos + sz)
             itemSize(sz)
             itemAdd(bb)
         }
@@ -889,36 +886,32 @@ interface imgui_window {
 
         fun beginChildEx(name: String, id: Int, sizeArg: Vec2, border: Boolean, extraFlags: Int): Boolean {
 
-            val window = currentWindow
+            val parentWindow = currentWindow
             var flags = WindowFlags.NoTitleBar or WindowFlags.NoResize or WindowFlags.NoSavedSettings or WindowFlags.ChildWindow
 
             val contentAvail = contentRegionAvail
             val size = glm.floor(sizeArg)
-            if (size.x <= 0f) {
-                if (size.x == 0f)
-                    flags = flags or WindowFlags.ChildWindowAutoFitX
-                // Arbitrary minimum zero-ish child size of 4.0f (0.0f causing too much issues)
+            val autoFitAxes = (if (size.x == 0f) 0x01 else 0x00) or (if (size.y == 0f) 0x02 else 0x00)
+            if (size.x <= 0f)   // Arbitrary minimum zero-ish child size of 4.0f (0.0f causing too much issues)
                 size.x = glm.max(contentAvail.x, 4f) - glm.abs(size.x)
-            }
-            if (size.y <= 0f) {
-                if (size.y == 0f)
-                    flags = flags or WindowFlags.ChildWindowAutoFitY
+            if (size.y <= 0f)
                 size.y = glm.max(contentAvail.y, 4f) - glm.abs(size.y)
-            }
             if (border)
                 flags = flags or WindowFlags.ShowBorders
             flags = flags or extraFlags
 
             val title =
                     if (name.isNotEmpty())
-                        "%s.%s.%08X".format(style.locale, window.name, name, id)
+                        "%s.%s.%08X".format(style.locale, parentWindow.name, name, id)
                     else
-                        "%s.%08X".format(style.locale, window.name, id)
+                        "%s.%08X".format(style.locale, parentWindow.name, id)
 
             val ret = ImGui.begin(title, null, size, -1f, flags)
 
-            if (window.flags hasnt WindowFlags.ShowBorders)
-                ImGui.currentWindow.flags = ImGui.currentWindow.flags and WindowFlags.ShowBorders.i.inv()
+            val childWindow = currentWindow
+            childWindow.autoFitChildAxes = autoFitAxes
+            if (parentWindow.flags hasnt WindowFlags.ShowBorders)
+                childWindow.flags = childWindow.flags wo WindowFlags.ShowBorders
 
             return ret
         }

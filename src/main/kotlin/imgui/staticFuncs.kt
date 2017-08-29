@@ -13,8 +13,10 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endPopup
 import imgui.ImGui.focusWindow
 import imgui.ImGui.getColumnOffset
+import imgui.ImGui.isPopupOpen
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushStyleVar
+import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setHoveredId
 import imgui.internal.*
 import uno.kotlin.isPrintable
@@ -49,10 +51,11 @@ fun getDraggedColumnOffset(columnIndex: Int): Float {
     assert(g.activeId == window.dc.columnsSetId + columnIndex)
 
     var x = IO.mousePos.x - g.activeIdClickOffset.x - window.pos.x
-    x = glm.clamp(x, ImGui.getColumnOffset(columnIndex - 1) + style.columnsMinSpacing,
-            ImGui.getColumnOffset(columnIndex + 1) - style.columnsMinSpacing)
+    x = glm.max(x, getColumnOffset(columnIndex - 1) + style.columnsMinSpacing)
+    if (window.dc.columnsFlags has ColumnsFlags.NoPreserveWidths)
+        x = glm.min(x, getColumnOffset(columnIndex + 1) - style.columnsMinSpacing)
 
-    return x.i.f
+    return x
 }
 
 val defaultFont get() = IO.fontDefault ?: IO.fonts.fonts[0]
@@ -139,6 +142,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
 
 
 fun clearSetNextWindowData() {
+    // FIXME-OPT
     g.setNextWindowPosCond = Cond.Null
     g.setNextWindowSizeCond = Cond.Null
     g.setNextWindowPosCond = Cond.Null
@@ -236,21 +240,22 @@ fun scrollbar(window: Window, horizontal: Boolean) {
                             Corner.TopRight
                         else Corner.All) or if (otherScrollbar) Corner.All else Corner.BottomRight
     window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, windowRounding, windowRoundingCorners)
-    bb.reduce(Vec2(
-            glm.clamp(((bb.max.x - bb.min.x - 2.0f) * 0.5f).i.f, 0.0f, 3.0f),
-            glm.clamp(((bb.max.y - bb.min.y - 2.0f) * 0.5f).i.f, 0.0f, 3.0f)))
+    bb.expand(Vec2(
+            -glm.clamp(((bb.max.x - bb.min.x - 2.0f) * 0.5f).i.f, 0.0f, 3.0f),
+            -glm.clamp(((bb.max.y - bb.min.y - 2.0f) * 0.5f).i.f, 0.0f, 3.0f)))
 
-    // V denote the main axis of the scrollbar
+    // V denote the main, longer axis of the scrollbar (= height for a vertical scrollbar)
     val scrollbarSizeV = if (horizontal) bb.width else bb.height
     var scrollV = if (horizontal) window.scroll.x else window.scroll.y
     val winSizeAvailV = (if (horizontal) window.sizeFull.x else window.sizeFull.y) - otherScrollbarSizeW
     val winSizeContentsV = if (horizontal) window.sizeContents.x else window.sizeContents.y
 
-    /*  The grabbable box size generally represent the amount visible (vs the total scrollable amount)
+    /*  Calculate the height of our grabbable box. It generally represent the amount visible (vs the total scrollable amount)
         But we maintain a minimum size in pixel to allow for the user to still aim inside.  */
-    val grabHPixels = glm.min(
-            glm.max(scrollbarSizeV * saturate(winSizeAvailV / glm.max(winSizeContentsV, winSizeAvailV)), style.grabMinSize),
-            scrollbarSizeV)
+    // Adding this assert to check if the ImMax(XXX,1.0f) is still needed. PLEASE CONTACT ME if this triggers.
+    assert(glm.max(winSizeContentsV, winSizeAvailV) > 0f)
+    val winSizeV = glm.max(glm.max(winSizeContentsV, winSizeAvailV), 1f)
+    val grabHPixels = glm.clamp(scrollbarSizeV * (winSizeAvailV / winSizeV), style.grabMinSize, scrollbarSizeV)
     val grabHNorm = grabHPixels / scrollbarSizeV
 
     // Handle input right away. None of the code of Begin() is relying on scrolling position before calling Scrollbar().
@@ -283,7 +288,7 @@ fun scrollbar(window: Window, horizontal: Boolean) {
             It is ok to modify Scroll here because we are being called in Begin() after the calculation of SizeContents
             and before setting up our starting position */
         val scrollVNorm = saturate((clickedVNorm - clickDeltaToGrabCenterV - grabHNorm * 0.5f) / (1f - grabHNorm))
-        scrollV = (0.5f + scrollVNorm * scrollMax).i.f  //(winSizeContentsV - win_size_v));
+        scrollV = (0.5f + scrollVNorm * scrollMax).i.f  //(winSizeContentsV - winSizeV));
         if (horizontal)
             window.scroll.x = scrollV
         else
@@ -387,20 +392,10 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
     }
 }
 
-fun markIniSettingsDirty() {
-    if (g.settingsDirtyTimer <= 0f)
-        g.settingsDirtyTimer = IO.iniSavingRate
-}
-
-fun pushColumnClipRect(columnIndex: Int = -1) {
-    val window = currentWindow
-    var columnIndex = columnIndex
-    if (columnIndex < 0)
-        columnIndex = window.dc.columnsCurrent
-
-    val x1 = glm.floor(0.5f + window.pos.x + getColumnOffset(columnIndex) - 1f)
-    val x2 = glm.floor(0.5f + window.pos.x + getColumnOffset(columnIndex + 1) - 1f)
-    pushClipRect(Vec2(x1, -Float.MAX_VALUE), Vec2(x2, +Float.MAX_VALUE), true)
+fun markIniSettingsDirty(window: Window) {
+    if (window.flags hasnt WindowFlags.NoSavedSettings)
+        if (g.settingsDirtyTimer <= 0f)
+            g.settingsDirtyTimer = IO.iniSavingRate
 }
 
 fun getVisibleRect(): Rect {
@@ -409,10 +404,9 @@ fun getVisibleRect(): Rect {
     return Rect(0f, 0f, IO.displaySize.x.f, IO.displaySize.y.f)
 }
 
-fun beginPopupEx(strId: String, extraFlags: Int): Boolean {
+fun beginPopupEx(id: Int, extraFlags: Int): Boolean {
 
     val window = g.currentWindow!!
-    val id = window.getId(strId)
     if (!isPopupOpen(id)) {
         clearSetNextWindowData() // We behave like Begin() and need to consume those values
         return false
@@ -445,7 +439,7 @@ fun closeInactivePopups() {
     /*  When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it.
         Don't close our own child popup windows */
     var n = 0
-    if (g.focusedWindow != null)
+    if (g.navWindow != null)
         while (n < g.openPopupStack.size) {
             val popup = g.openPopupStack[n]
             if (popup.window == null) {
@@ -461,7 +455,7 @@ fun closeInactivePopups() {
             var hasFocus = false
             var m = n
             while (m < g.openPopupStack.size && !hasFocus) {
-                hasFocus = g.openPopupStack[m].window != null && g.openPopupStack[m].window!!.rootWindow === g.focusedWindow!!.rootWindow
+                hasFocus = g.openPopupStack[m].window != null && g.openPopupStack[m].window!!.rootWindow === g.navWindow!!.rootWindow
                 m++
             }
             if (!hasFocus)
@@ -486,8 +480,6 @@ fun closePopup(id: Int) {
     closePopupToLevel(g.openPopupStack.lastIndex)
 }
 
-fun isPopupOpen(id: Int) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
-
 fun getFrontMostModalRootWindow(): Window? {
     for (n in g.openPopupStack.size - 1 downTo 0) {
         val frontMostPopup = g.openPopupStack[n].window
@@ -505,8 +497,8 @@ fun findBestPopupWindowPos(basePos: Vec2, window: Window, rInner: Rect): Vec2 {
         without it. */
     val safePadding = style.displaySafeAreaPadding
     val rOuter = Rect(getVisibleRect())
-    rOuter.reduce(Vec2(if (size.x - rOuter.width > safePadding.x * 2) safePadding.x else 0f,
-            if (size.y - rOuter.height > safePadding.y * 2) safePadding.y else 0f))
+    rOuter.expand(Vec2(if (size.x - rOuter.width > safePadding.x * 2) -safePadding.x else 0f,
+            if (size.y - rOuter.height > safePadding.y * 2) -safePadding.y else 0f))
     val basePosClamped = glm.clamp(basePos, rOuter.min, rOuter.max - size)
 
     var n = if (window.autoPosLastDirection != -1) -1 else 0

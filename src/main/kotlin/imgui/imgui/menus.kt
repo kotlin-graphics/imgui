@@ -18,6 +18,7 @@ import imgui.ImGui.end
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.isHovered
+import imgui.ImGui.isPopupOpen
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popId
@@ -113,14 +114,15 @@ interface imgui_menus {
         val id = window.getId(label)
 
         val labelSize = calcTextSize(label, true)
-        val backedFocusedWindow = g.focusedWindow
 
-        var pressed = false
+        val pressed: Boolean
         var menuIsOpen = isPopupOpen(id)
         val menusetIsOpen = window.flags hasnt WindowFlags.Popup && g.openPopupStack.size > g.currentPopupStack.size &&
                 g.openPopupStack[g.currentPopupStack.size].parentMenuSet == window.getId("##menus")
+        val backedNavWindow = g.navWindow!!
         if (menusetIsOpen)
-            g.focusedWindow = window
+        // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent)
+            g.navWindow = window
 
         /*  The reference position stored in popupPos will be used by Begin() to find a suitable position for the child
             menu (using FindBestPopupWindowPos).         */
@@ -149,7 +151,7 @@ interface imgui_menus {
 
         val hovered = enabled && isHovered(window.dc.lastItemRect, id)
         if (menusetIsOpen)
-            g.focusedWindow = backedFocusedWindow
+            g.navWindow = backedNavWindow
 
         var wantOpen = false
         var wantClose = false
@@ -178,7 +180,7 @@ interface imgui_menus {
             wantClose = (menuIsOpen && !hovered && g.hoveredWindow === window && g.hoveredIdPreviousFrame != 0 &&
                     g.hoveredIdPreviousFrame != id && !movingWithinOpenedTriangle)
             wantOpen = (!menuIsOpen && hovered && !movingWithinOpenedTriangle) || (!menuIsOpen && hovered && pressed)
-        } else if (menuIsOpen && pressed && menusetIsOpen) {    // menu-bar: click open menu to close
+        } else if (menuIsOpen && pressed && menusetIsOpen) {    // Menu bar: click an open menu again to close it
             wantClose = true
             wantOpen = false
             menuIsOpen = false
@@ -206,7 +208,8 @@ interface imgui_menus {
             val flags = WindowFlags.ShowBorders or (
                     if (window.flags has (WindowFlags.Popup or WindowFlags.ChildMenu)) WindowFlags.ChildMenu or WindowFlags.ChildWindow
                     else WindowFlags.ChildMenu.i)
-            menuIsOpen = beginPopupEx(label, flags) // menuIsOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
+            // menuIsOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
+            menuIsOpen = beginPopupEx(id, flags)
         }
 
         return menuIsOpen

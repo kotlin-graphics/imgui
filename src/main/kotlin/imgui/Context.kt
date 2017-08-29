@@ -20,9 +20,9 @@ object Context {
     var style = Style()
 
     lateinit var font: Font
-    /** (Shortcut) == FontBaseSize * g.CurrentWindow->FontWindowScale == window->FontSize() */
+    /** (Shortcut) == FontBaseSize * g.CurrentWindow->FontWindowScale == window->FontSize(). Text height for current window. */
     var fontSize = 0f
-    /** (Shortcut) == IO.FontGlobalScale * Font->Scale * Font->FontSize. Size of characters.    */
+    /** (Shortcut) == IO.FontGlobalScale * Font->Scale * Font->FontSize. Base text height.    */
     var fontBaseSize = 0f
     /** (Shortcut) == Font->TexUvWhitePixel */
     var fontTexUvWhitePixel = Vec2()
@@ -38,12 +38,12 @@ object Context {
     val windows = ArrayList<Window>()
 
     val windowsSortBuffer = ArrayList<Window>()
-    /** Being drawn into    */
-    var currentWindow: Window? = null
 
     val currentWindowStack = Stack<Window>()
+    /** Being drawn into    */
+    var currentWindow: Window? = null
     /** Will catch keyboard inputs  */
-    var focusedWindow: Window? = null
+    var navWindow: Window? = null
     /** Will catch mouse inputs */
     var hoveredWindow: Window? = null
     /** Will catch mouse inputs (for focus/move only)   */
@@ -58,11 +58,11 @@ object Context {
     var activeId = 0
 
     var activeIdPreviousFrame = 0
-
+    /** Active widget has been seen this frame   */
     var activeIdIsAlive = false
     /** Set at the time of activation for one frame */
     var activeIdIsJustActivated = false
-    /** Set only by active widget   */
+    /** Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)   */
     var activeIdAllowOverlap = false
     /** Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior) */
     var activeIdClickOffset = Vec2(-1)
@@ -456,7 +456,7 @@ class Style {
             Vec4(0.00f, 0.00f, 0.00f, 0.70f), // WindowBg
             Vec4(0.00f, 0.00f, 0.00f, 0.00f), // ChildWindowBg
             Vec4(0.05f, 0.05f, 0.10f, 0.90f), // PopupBg
-            Vec4(0.70f, 0.70f, 0.70f, 0.22f), // Border
+            Vec4(0.70f, 0.70f, 0.70f, 0.40f), // Border
             Vec4(0.00f, 0.00f, 0.00f, 0.00f), // BorderShadow
             Vec4(0.80f, 0.80f, 0.80f, 0.30f), // FrameBg: background of checkbox, radio button, plot, slider, text input
             Vec4(0.90f, 0.80f, 0.80f, 0.40f), // FrameBgHovered

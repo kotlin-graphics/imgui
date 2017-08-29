@@ -21,7 +21,6 @@ import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.colorEditVec4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
-import imgui.ImGui.cursorPos
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
@@ -35,11 +34,8 @@ import imgui.ImGui.imageButton
 import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemClicked
-import imgui.ImGui.isItemHovered
+import imgui.ImGui.isItemRectHovered
 import imgui.ImGui.isMouseHoveringRect
-import imgui.ImGui.itemRectMax
-import imgui.ImGui.itemRectMin
-import imgui.ImGui.listBox
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
@@ -72,7 +68,6 @@ import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
-import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
@@ -80,7 +75,6 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeExV
 import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
-import imgui.ImGui.treePush
 import imgui.ImGui.unindent
 import imgui.ImGui.version
 import imgui.ImGui.windowDrawList
@@ -97,7 +91,6 @@ import imgui.functionalProgramming.window
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
-import imgui.functionalProgramming.withTextWrapPos
 import imgui.functionalProgramming.withWindow
 import imgui.internal.Rect
 import imgui.internal.Window
@@ -148,7 +141,7 @@ interface imgui_demoDebugInfo {
 
         if (showApp.about[0])
             withWindow("About ImGui", showApp.about, WindowFlags.AlwaysAutoResize.i) {
-                text("JVM ImGui, %s", version)
+                text("JVM ImGui, $version")
                 separator()
                 text("Original by Omar Cornut, ported by Giuseppe Barbieri and all github contributors.")
                 text("ImGui is licensed under the MIT License, see LICENSE for more information.")
@@ -250,9 +243,9 @@ interface imgui_demoDebugInfo {
 //                        {
 //                                if (i > 0) ImGui::SameLine();
 //                                ImGui::PushID(i);
-//                                ImGui::PushStyleColor(ImGuiCol_Button, ImColor::HSV(i/7.0f, 0.6f, 0.6f));
-//                                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor::HSV(i/7.0f, 0.7f, 0.7f));
-//                                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImColor::HSV(i/7.0f, 0.8f, 0.8f));
+//                                ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(i/7.0f, 0.6f, 0.6f));
+//                                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(i/7.0f, 0.7f, 0.7f));
+//                                ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(i/7.0f, 0.8f, 0.8f));
 //                                ImGui::Button("Click");
 //                                ImGui::PopStyleColor(3);
 //                                ImGui::PopID();
@@ -490,7 +483,7 @@ interface imgui_demoDebugInfo {
                 val texId = IO.fonts.texId
                 text("%.0fx%.0f", texSize.x, texSize.y)
                 image(texId, texSize, Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
-                if (isItemHovered())
+                if (isItemRectHovered())
                     tooltip {
                         val focusSz = 32f
                         val focus = glm.clamp(mousePos - texScreenPos - focusSz * 0.5f, Vec2(), texSize - focusSz)
@@ -822,10 +815,10 @@ interface imgui_demoDebugInfo {
 //                {
 //                    if (i > 0) ImGui::SameLine();
 //                    ImGui::PushID(i);
-//                    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImColor::HSV(i/7.0f, 0.5f, 0.5f));
-//                    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImColor::HSV(i/7.0f, 0.6f, 0.5f));
-//                    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImColor::HSV(i/7.0f, 0.7f, 0.5f));
-//                    ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImColor::HSV(i/7.0f, 0.9f, 0.9f));
+//                    ImGui::PushStyleColor(ImGuiCol_FrameBg, (ImVec4)ImColor::HSV(i/7.0f, 0.5f, 0.5f));
+//                    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, (ImVec4)ImColor::HSV(i/7.0f, 0.6f, 0.5f));
+//                    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, (ImVec4)ImColor::HSV(i/7.0f, 0.7f, 0.5f));
+//                    ImGui::PushStyleColor(ImGuiCol_SliderGrab, (ImVec4)ImColor::HSV(i/7.0f, 0.9f, 0.9f));
 //                    ImGui::VSliderFloat("##v", ImVec2(18,160), &values[i], 0.0f, 1.0f, "");
 //                    if (ImGui::IsItemActive() || ImGui::IsItemHovered())
 //                        ImGui::SetTooltip("%.3f", values[i]);
@@ -1181,9 +1174,9 @@ interface imgui_demoDebugInfo {
 //                        char num_buf[16];
 //                        const char* label = (!(n%15)) ? "FizzBuzz" : (!(n%3)) ? "Fizz" : (!(n%5)) ? "Buzz" : (sprintf(num_buf, "%d", n), num_buf);
 //                        float hue = n*0.05f;
-//                        ImGui::PushStyleColor(ImGuiCol_Button, ImColor::HSV(hue, 0.6f, 0.6f));
-//                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor::HSV(hue, 0.7f, 0.7f));
-//                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImColor::HSV(hue, 0.8f, 0.8f));
+//                        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(hue, 0.6f, 0.6f));
+//                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(hue, 0.7f, 0.7f));
+//                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(hue, 0.8f, 0.8f));
 //                        ImGui::Button(label, ImVec2(40.0f + sinf((float)(line + n)) * 20.0f, 0.0f));
 //                        ImGui::PopStyleColor(3);
 //                        ImGui::PopID();
@@ -1421,32 +1414,6 @@ interface imgui_demoDebugInfo {
 //                ImGui::TreePop();
 //            }
 //
-//            // Scrolling columns
-//            /*
-//            if (ImGui::TreeNode("Scrolling"))
-//            {
-//                ImGui::BeginChild("##header", ImVec2(0, ImGui::GetTextLineHeightWithSpacing()+ImGui::GetStyle().ItemSpacing.y));
-//                ImGui::Columns(3);
-//                ImGui::Text("ID"); ImGui::NextColumn();
-//                ImGui::Text("Name"); ImGui::NextColumn();
-//                ImGui::Text("Path"); ImGui::NextColumn();
-//                ImGui::Columns(1);
-//                ImGui::Separator();
-//                ImGui::EndChild();
-//                ImGui::BeginChild("##scrollingregion", ImVec2(0, 60));
-//                ImGui::Columns(3);
-//                for (int i = 0; i < 10; i++)
-//                {
-//                    ImGui::Text("%04d", i); ImGui::NextColumn();
-//                    ImGui::Text("Foobar"); ImGui::NextColumn();
-//                    ImGui::Text("/path/foobar/%04d/", i); ImGui::NextColumn();
-//                }
-//                ImGui::Columns(1);
-//                ImGui::EndChild();
-//                ImGui::TreePop();
-//            }
-//            */
-//
 //            // Create multiple items in a same cell before switching to next column
 //            if (ImGui::TreeNode("Mixed items"))
 //            {
@@ -1495,20 +1462,65 @@ interface imgui_demoDebugInfo {
 //
 //            if (ImGui::TreeNode("Borders"))
 //            {
+//                // NB: Future columns API should allow automatic horizontal borders.
 //                static bool h_borders = true;
 //                static bool v_borders = true;
 //                ImGui::Checkbox("horizontal", &h_borders);
 //                ImGui::SameLine();
 //                ImGui::Checkbox("vertical", &v_borders);
 //                ImGui::Columns(4, NULL, v_borders);
-//                if (h_borders) ImGui::Separator();
-//                for (int i = 0; i < 8; i++)
+//                for (int i = 0; i < 4*3; i++)
 //                {
+//                    if (h_borders && ImGui::GetColumnIndex() == 0)
+//                        ImGui::Separator();
 //                    ImGui::Text("%c%c%c", 'a'+i, 'a'+i, 'a'+i);
+//                    ImGui::Text("Width %.2f\nOffset %.2f", ImGui::GetColumnWidth(), ImGui::GetColumnOffset());
 //                    ImGui::NextColumn();
 //                }
 //                ImGui::Columns(1);
 //                if (h_borders) ImGui::Separator();
+//        ImGui::TreePop();
+//        +        }
+//    +
+//    +        // Scrolling columns
+//    +        /*
+//+        if (ImGui::TreeNode("Vertical Scrolling"))
+//+        {
+//+            ImGui::BeginChild("##header", ImVec2(0, ImGui::GetTextLineHeightWithSpacing()+ImGui::GetStyle().ItemSpacing.y));
+//+            ImGui::Columns(3);
+//+            ImGui::Text("ID"); ImGui::NextColumn();
+//+            ImGui::Text("Name"); ImGui::NextColumn();
+//+            ImGui::Text("Path"); ImGui::NextColumn();
+//+            ImGui::Columns(1);
+//+            ImGui::Separator();
+//+            ImGui::EndChild();
+//+            ImGui::BeginChild("##scrollingregion", ImVec2(0, 60));
+//+            ImGui::Columns(3);
+//+            for (int i = 0; i < 10; i++)
+//+            {
+//+                ImGui::Text("%04d", i); ImGui::NextColumn();
+//+                ImGui::Text("Foobar"); ImGui::NextColumn();
+//+                ImGui::Text("/path/foobar/%04d/", i); ImGui::NextColumn();
+//+            }
+//+            ImGui::Columns(1);
+//+            ImGui::EndChild();
+//+            ImGui::TreePop();
+//+        }
+//+        */
+//    +
+//    +        if (ImGui::TreeNode("Horizontal Scrolling"))
+//    +        {
+//        +            ImGui::SetNextWindowContentWidth(1500);
+//        +            ImGui::BeginChild("##scrollingregion", ImVec2(0, 120), false, ImGuiWindowFlags_HorizontalScrollbar);
+//        +            ImGui::Columns(10);
+//        +            for (int i = 0; i < 20; i++)
+//        +                for (int j = 0; j < 10; j++)
+//        +                {
+//            +                    ImGui::Text("Line %d Column %d...", i, j);
+//            +                    ImGui::NextColumn();
+//            +                }
+//        +            ImGui::Columns(1);
+//        +            ImGui::EndChild();
 //                ImGui::TreePop();
 //            }
 //
@@ -1686,14 +1698,14 @@ interface imgui_demoDebugInfo {
                 treePop()
             }
             if (treeNode("Basic state")) {
-                text("FocusedWindow: '${g.focusedWindow?.name}'")
                 text("HoveredWindow: '${g.hoveredWindow?.name}'")
                 text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
                 /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
                     information or not                 */
-                text("HoveredID: 0x%08X/0x%08X", g.hoveredId, g.hoveredIdPreviousFrame)
-                text("ActiveID: 0x%08X/0x%08X", g.activeId, g.activeIdPreviousFrame)
+                text("HoveredId: 0x%08X/0x%08X", g.hoveredId, g.hoveredIdPreviousFrame)
+                text("ActiveId: 0x%08X/0x%08X", g.activeId, g.activeIdPreviousFrame)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
+                text("NavWindow: '${g.navWindow?.name}'")
                 treePop()
             }
         }
@@ -1730,7 +1742,7 @@ interface imgui_demoDebugInfo {
                 val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
                 val cmdNodeOpen = treeNode(i, "Draw %-4d $mode vtx, tex = ${cmd.textureId}, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)",
                         cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
-                if (showClipRects[0] && isItemHovered()) {
+                if (showClipRects[0] && isItemRectHovered()) {
                     val clipRect = Rect(cmd.clipRect)
                     val vtxsRect = Rect()
                     for (e in elemOffset until elemOffset + cmd.elemCount)
@@ -1758,7 +1770,7 @@ interface imgui_demoDebugInfo {
                             vtxI++
                         }
                         selectable(buf.joinToString("", limit = bufP, truncated = ""), false)
-                        if (isItemHovered())
+                        if (isItemRectHovered())
                         // Add triangle without AA, more readable for large-thin triangle
                             overlayDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f, false)
                     }
@@ -1951,10 +1963,9 @@ interface imgui_demoDebugInfo {
             endChild()
         }
 
-        treeNode("Fonts", "Fonts (${IO.fonts.fonts.size})") {
-
-            sameLine()
-            showHelpMarker("Tip: Load fonts with io.Fonts->AddFontFromFileTTF()\nbefore calling io.Fonts->GetTex* functions.")
+        val fontsOpened = treeNode("Fonts", "Fonts (${IO.fonts.fonts.size})")
+        sameLine(); showHelpMarker("Tip: Load fonts with io.Fonts->AddFontFromFileTTF()\nbefore calling io.Fonts->GetTex* functions.")
+        if (fontsOpened){
             val atlas = IO.fonts
             treeNode("Atlas texture", "Atlas texture (${atlas.texSize.x}x${atlas.texSize.y} pixels)") {
                 image(atlas.texId, Vec2(atlas.texSize), Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255),
@@ -1965,16 +1976,15 @@ interface imgui_demoDebugInfo {
 
                 val font = atlas.fonts[i]
                 val name = font.configData.getOrNull(0)?.name ?: ""
-                bulletText("Font $i: '$name', %.2f px, ${font.glyphs.size} glyphs", font.fontSize)
-                treePush(i)
-                sameLine()
-                smallButton("Set as default") { IO.fontDefault = font }
-                pushFont(font)
-                text("The quick brown fox jumps over the lazy dog")
-                popFont()
-                treeNode("Details") {
+                val fontDetailsOpened = bulletText("Font $i: '$name', %.2f px, ${font.glyphs.size} glyphs", font.fontSize)
+                sameLine(); smallButton("Set as default") { IO.fontDefault = font }
+                if(fontsOpened) {
+                    pushFont(font)
+                    text("The quick brown fox jumps over the lazy dog")
+                    popFont()
                     val scale = floatArrayOf(font.scale)
-                    dragFloat("Font scale", scale, 0.005f, 0.3f, 2f, "%.1f")   // Scale only this font
+                    // Scale only this font
+                    dragFloat("Font scale", scale, 0.005f, 0.3f, 2f, "%.1f")
                     font.scale = scale[0]
                     sameLine()
                     showHelpMarker("""
@@ -2067,7 +2077,7 @@ interface imgui_demoDebugInfo {
 
         fun showHelpMarker(desc: String) {
             textDisabled("(?)")
-            if (isItemHovered()) {
+            if (isItemRectHovered()) {
                 beginTooltip()
                 pushTextWrapPos(450f)
                 textUnformatted(desc)
