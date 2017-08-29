@@ -413,10 +413,10 @@ object JoglVrGL3 {
 
         glDeleteProgram(program)
 
-        if (fontTexture[0] != 0) {
+        if (fontTexture[0] >= 0) {
             glDeleteTextures(fontTexture)
-            fontTexture[0] = 0
-            IO.fonts.texId = 0
+            IO.fonts.texId = -1
+            fontTexture[0] = -1
         }
     }
 }

@@ -367,6 +367,8 @@ class FontAtlas {
 
         assert(configData.size > 0)
 
+        buildRegisterDefaultCustomRects()
+
         texId = -1
         texSize put 0
         texUvWhitePixel put 0

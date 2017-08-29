@@ -14,6 +14,7 @@ import org.lwjgl.opengl.GL30.*
 import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
+import uno.buffer.intBufferOf
 import uno.glf.semantic
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
@@ -37,7 +38,7 @@ object LwjglGL3 {
     val bufferName = intBufferBig(Buffer.MAX)
     val vaoName = intBufferBig(1)
     lateinit var program: ProgramA
-    val fontTexture = intBufferBig(1)
+    val fontTexture = intBufferOf(-1)
 
     val mat = Mat4()
 
@@ -90,7 +91,7 @@ object LwjglGL3 {
 
     fun newFrame() {
 
-        if (fontTexture[0] == 0)
+        if (fontTexture[0] < 0)
             createDeviceObjects()
 
         // Setup display size (every frame to accommodate for window resizing)
@@ -386,9 +387,10 @@ object LwjglGL3 {
 
         glDeleteProgram(program)
 
-        if (fontTexture[0] != 0) {
+        if (fontTexture[0] >= 0) {
             glDeleteTextures(fontTexture)
-            IO.fonts.texId = 0
+            IO.fonts.texId = -1
+            fontTexture[0] = -1
         }
     }
 }
