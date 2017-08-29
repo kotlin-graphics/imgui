@@ -61,7 +61,7 @@ interface imgui_colums {
                         g.mouseCursor = MouseCursor.ResizeEW
 
                     // Draw before resize so our items positioning are in sync with the line being drawn
-                    val col = if (held) Col.ColumnActive else if (hovered) Col.ColumnHovered else Col.Column
+                    val col = if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator
                     val xi = x.i.f
                     drawList.addLine(Vec2(xi, y1 + 1f), Vec2(xi, y2), col.u32)
 

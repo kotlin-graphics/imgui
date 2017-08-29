@@ -1,6 +1,5 @@
 package imgui
 
-import gli.has
 import gli.hasnt
 import glm_.BYTES
 import glm_.f
@@ -667,7 +666,7 @@ class DrawList {
     }
 
     /** Use precomputed angles for a 12 steps circle    */
-    fun pathArcToFast(centre: Vec2, radius: Float, aMin: Int, aMax: Int) {
+    fun pathArcToFast(centre: Vec2, radius: Float, aMinOf12: Int, aMaxOf12: Int) {
         val circleVtxCount = circleVtx.size
         if (!circleVtxBuilds) {
             for (i in 0 until circleVtxCount) {
@@ -678,11 +677,11 @@ class DrawList {
             circleVtxBuilds = true
         }
 
-        if (aMin > aMax) return
+        if (aMinOf12 > aMaxOf12) return
         if (radius == 0f)
             _path.add(centre)
         else
-            for (a in aMin..aMax) {
+            for (a in aMinOf12..aMaxOf12) {
                 val c = circleVtx[a % circleVtxCount]
                 _path.add(Vec2(centre.x + c.x * radius, centre.y + c.y * radius))
             }

@@ -353,6 +353,7 @@ interface imgui_widgets {
         val id = window.getId(label)
         val labelSize = calcTextSize(label, true)
 
+        // We want a square shape to we use Y twice
         val checkBb = Rect(window.dc.cursorPos, window.dc.cursorPos +
                 Vec2(labelSize.y + style.framePadding.y * 2, labelSize.y + style.framePadding.y * 2))
         itemSize(checkBb, style.framePadding.y)

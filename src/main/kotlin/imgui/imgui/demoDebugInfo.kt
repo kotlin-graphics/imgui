@@ -1375,6 +1375,8 @@ interface imgui_demoDebugInfo {
 
 //        if (ImGui::CollapsingHeader("Columns"))
 //        {
+//            ImGui::PushID("Columns");
+//
 //            // Basic columns
 //            if (ImGui::TreeNode("Basic"))
 //            {
@@ -1523,6 +1525,7 @@ interface imgui_demoDebugInfo {
 //            ImGui::Separator();
 //            ImGui::TreePop();
 //        }
+//        ImGui::PopID();
 //    }
 //
 //    if (ImGui::CollapsingHeader("Filtering"))
@@ -1852,6 +1855,7 @@ interface imgui_demoDebugInfo {
 
         treeNode("Rendering") {
             checkbox("Anti-aliased lines", bool.apply { this[0] = style.antiAliasedLines })
+            //TODO ImGui::SameLine(); ShowHelpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.");
             style.antiAliasedLines = bool[0]
             checkbox("Anti-aliased shapes", bool.apply { this[0] = style.antiAliasedShapes })
             style.antiAliasedShapes = bool[0]

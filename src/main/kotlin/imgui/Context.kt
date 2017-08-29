@@ -456,7 +456,7 @@ class Style {
             Vec4(0.00f, 0.00f, 0.00f, 0.70f), // WindowBg
             Vec4(0.00f, 0.00f, 0.00f, 0.00f), // ChildWindowBg
             Vec4(0.05f, 0.05f, 0.10f, 0.90f), // PopupBg
-            Vec4(0.70f, 0.70f, 0.70f, 0.65f), // Border
+            Vec4(0.70f, 0.70f, 0.70f, 0.22f), // Border
             Vec4(0.00f, 0.00f, 0.00f, 0.00f), // BorderShadow
             Vec4(0.80f, 0.80f, 0.80f, 0.30f), // FrameBg: background of checkbox, radio button, plot, slider, text input
             Vec4(0.90f, 0.80f, 0.80f, 0.40f), // FrameBgHovered
@@ -479,9 +479,9 @@ class Style {
             Vec4(0.40f, 0.40f, 0.90f, 0.45f), // Header
             Vec4(0.45f, 0.45f, 0.90f, 0.80f), // HeaderHovered
             Vec4(0.53f, 0.53f, 0.87f, 0.80f), // HeaderActive
-            Vec4(0.50f, 0.50f, 0.50f, 1.00f), // Column
-            Vec4(0.70f, 0.60f, 0.60f, 1.00f), // ColumnHovered
-            Vec4(0.90f, 0.70f, 0.70f, 1.00f), // ColumnActive
+            Vec4(0.50f, 0.50f, 0.50f, 1.00f), // Separator
+            Vec4(0.60f, 0.60f, 0.70f, 1.00f), // SeparatorHovered
+            Vec4(0.70f, 0.70f, 0.90f, 1.00f), // SeparatorActive
             Vec4(1.00f, 1.00f, 1.00f, 0.30f), // ResizeGrip
             Vec4(1.00f, 1.00f, 1.00f, 0.60f), // ResizeGripHovered
             Vec4(1.00f, 1.00f, 1.00f, 0.90f), // ResizeGripActive

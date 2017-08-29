@@ -448,6 +448,7 @@ interface imgui_window {
                     flags has WindowFlags.ChildWindow -> Col.ChildWindowBg
                     else -> Col.WindowBg
                 }
+                // We don't use GetColorU32() because bg_alpha is assigned (not multiplied) below
                 val bgColor = Vec4(style.colors[bgColorIdx])
                 if (bgAlpha >= 0f)
                     bgColor.w = bgAlpha

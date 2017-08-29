@@ -5,6 +5,7 @@ package imgui
 //import imgui.TrueType.packSetOversampling
 import gli.wasInit
 import glm_.*
+import glm_.detail.Random.float
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
@@ -24,11 +25,14 @@ import imgui.Context as g
 
 class FontConfig {
 
+    /** TTF/OTF data    */
     var fontData = charArrayOf()
+    /** TTF/OTF data size   */
+    var fontDataSize = 0
     lateinit var fontDataBuffer: ByteBuffer
-    /** TTF data ownership taken by the container ImFontAtlas (will delete memory itself). Set to true  */
+    /** TTF/OTF data ownership taken by the container ImFontAtlas (will delete memory itself). Set to true  */
     var fontDataOwnedByAtlas = true
-    /** Index of font within TTF file   */
+    /** Index of font within TTF/OTF file   */
     var fontNo = 0
     /** Size in pixels for rasterizer   */
     var sizePixels = 0.0f
@@ -55,7 +59,7 @@ class FontConfig {
     lateinit var dstFont: Font
 }
 
-/** Load and rasterize multiple TTF fonts into a same texture.
+/** Load and rasterize multiple TTF/OTF fonts into a same texture.
  *  Sharing a texture for multiple fonts allows us to reduce the number of draw calls during rendering.
  *  We also add custom graphic data into the texture that serves for ImGui.
  *  1. (Optional) Call AddFont*** functions. If you don't call any, the default font will be loaded for you.
@@ -111,24 +115,24 @@ class FontAtlas {
 
     /** NBM Transfer ownership of 'ttf_data' to ImFontAtlas, unless font_cfg_template->FontDataOwnedByAtlas == false.
      *  Owned TTF buffer will be deleted after Build(). */
-    fun addFontFromMemoryTTF(ttfData: CharArray, sizePixels: Float, fontCfgTemplate: FontConfig? = null,
+    fun addFontFromMemoryTTF(fontData: CharArray, sizePixels: Float, fontCfgTemplate: FontConfig? = null,
                              glyphRanges: IntArray = intArrayOf()): Font {
 
         val fontCfg = fontCfgTemplate ?: FontConfig()
         assert(fontCfg.fontData.isEmpty())
-        fontCfg.fontData = ttfData
-        fontCfg.fontDataBuffer = bufferBig(ttfData.size).apply { ttfData.forEachIndexed { i, c -> this[i] = c.b } }
+        fontCfg.fontData = fontData
+        fontCfg.fontDataBuffer = bufferBig(fontData.size).apply { fontData.forEachIndexed { i, c -> this[i] = c.b } }
         fontCfg.sizePixels = sizePixels
         if (glyphRanges.isNotEmpty())
             fontCfg.glyphRanges = glyphRanges
         return addFont(fontCfg)
     }
 
-    /** 'compressed_ttf_data' still owned by caller. Compress with binary_to_compressed_c.cpp   */
-    fun addFontFromMemoryCompressedTTF(compressedTtfData: CharArray, sizePixels: Float, fontCfgTemplate: FontConfig? = null,
+    /** @param compressedFontData still owned by caller. Compress with binary_to_compressed_c.cpp   */
+    fun addFontFromMemoryCompressedTTF(compressedFontData: CharArray, sizePixels: Float, fontCfgTemplate: FontConfig? = null,
                                        glyphRanges: IntArray): Font {
 
-        val bufDecompressedData = stb.decompress(compressedTtfData)
+        val bufDecompressedData = stb.decompress(compressedFontData)
 
         val fontCfg = fontCfgTemplate ?: FontConfig()
         assert(fontCfg.fontData.isEmpty())
@@ -136,12 +140,12 @@ class FontAtlas {
         return addFontFromMemoryTTF(bufDecompressedData, sizePixels, fontCfg, glyphRanges)
     }
 
-    /** 'compressed_ttf_data_base85' still owned by caller. Compress with binary_to_compressed_c.cpp with -base85
+    /** @param compressedFontDataBase85 still owned by caller. Compress with binary_to_compressed_c.cpp with -base85
      *  paramaeter  */
-    fun addFontFromMemoryCompressedBase85TTF(compressedTtfDataBase85: String, sizePixels: Float, fontCfg: FontConfig? = null,
+    fun addFontFromMemoryCompressedBase85TTF(compressedFontDataBase85: String, sizePixels: Float, fontCfg: FontConfig? = null,
                                              glyphRanges: IntArray): Font {
 
-        val compressedTtf = decode85(compressedTtfDataBase85)
+        val compressedTtf = decode85(compressedFontDataBase85)
         return addFontFromMemoryCompressedTTF(compressedTtf, sizePixels, fontCfg, glyphRanges)
     }
 
@@ -246,6 +250,8 @@ class FontAtlas {
     /** Texture width desired by user before Build(). Must be a power-of-two. If have many glyphs your graphics API have
      *  texture size restrictions you may want to increase texture width to decrease height.    */
     var texDesiredWidth = 0
+    /** Padding between glyphs within texture in pixels. Defaults to 1. */
+    var texGlyphPadding = 1
     /** Texture coordinates to a white pixel    */
     var texUvWhitePixel = Vec2()
     /** Hold all the fonts returned by AddFont*. Fonts[0] is the default font upon calling ImGui::NewFrame(), use
@@ -302,7 +308,7 @@ class FontAtlas {
         }
 
         /*  Start packing. We need a known width for the skyline algorithm. Using a cheap heuristic here to decide of
-            width. User can override TexDesiredWidth if they wish.
+            width. User can override TexDesiredWidth and TexGlyphPadding if they wish.
             After packing is done, width shouldn't matter much, but some API/GPU have texture size limitations and
             increasing width can decrease height.   */
         texSize.x = when {
@@ -315,7 +321,7 @@ class FontAtlas {
         texSize.y = 0
         val maxTexHeight = 1024 * 32
         val spc = STBTTPackContext.create()
-        stbtt_PackBegin(spc, null, texSize.x, maxTexHeight, 0, 1)
+        stbtt_PackBegin(spc, null, texSize.x, maxTexHeight, 0, texGlyphPadding)
 
         /*  Pack our extra data rectangles first, so it will be on the upper-left corner of our texture (UV will have
             small values).  */
@@ -853,6 +859,7 @@ class Font {
         var lineWidth = 0f
         var wordWidth = 0f
         var blankWidth = 0f
+        val wrapWidth = wrapWidth / scale   // We work with unscaled widths to avoid scaling every characters
 
         var wordEnd = ptr
         var prevWordEnd = -1
@@ -882,7 +889,7 @@ class Font {
                     continue
                 }
             }
-            val charWidth = indexXAdvance.getOrElse(c.i, { fallbackXAdvance }) * scale
+            val charWidth = indexXAdvance.getOrElse(c.i, { fallbackXAdvance })
             if (c.isSpace) {
                 if (insideWord) {
                     lineWidth += blankWidth
@@ -924,10 +931,10 @@ class Font {
             val scale = if(size >= 0f) size / fontSize else 1f
             val x = pos.x.i.f + displayOffset.x
             val y = pos.y.i.f + displayOffset.y
-            val posTl = Vec2(x + it.x0 * scale, y + it.y0 * scale)
-            val posBr = Vec2(x + it.x1 * scale, y + it.y1 * scale)
             drawList.primReserve(6, 4)
-            drawList.primRectUV(posTl, posBr, Vec2(it.u0, it.v0), Vec2(it.u1, it.v1), col)
+            val a = Vec2(x + it.x0 * scale, y + it.y0 * scale)
+            val c = Vec2(x + it.x1 * scale, y + it.y1 * scale)
+            drawList.primRectUV(a, c, Vec2(it.u0, it.v0), Vec2(it.u1, it.v1), col)
         }
     }
 
