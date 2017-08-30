@@ -96,7 +96,7 @@ interface imgui_widgets {
                     else
                         fmt.format(style.locale, *args)
                 }catch (err: Exception) {
-                    println("fmt $fmt, args: $args")
+                    println("fmt $fmt, args: ${args}")
                     TODO()
                 }
 

@@ -119,7 +119,7 @@ interface imgui_menus {
         var menuIsOpen = isPopupOpen(id)
         val menusetIsOpen = window.flags hasnt WindowFlags.Popup && g.openPopupStack.size > g.currentPopupStack.size &&
                 g.openPopupStack[g.currentPopupStack.size].parentMenuSet == window.getId("##menus")
-        val backedNavWindow = g.navWindow!!
+        val backedNavWindow = g.navWindow
         if (menusetIsOpen)
         // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent)
             g.navWindow = window

@@ -2436,17 +2436,15 @@ interface imgui_demoDebugInfo {
                 // right
                 beginGroup()
                 beginChild("item view", Vec2(0, -itemsLineHeightWithSpacing)) // Leave room for 1 line below us
-                text("MyObject: %d", selected)
+                text("MyObject: $selectedChild")
                 separator()
                 textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +
                         "incididunt ut labore et dolore magna aliqua. ")
                 endChild()
                 beginChild("buttons")
-                if (button("Revert")) {
-                }
+                if (button("Revert")) Unit
                 sameLine()
-                if (button("Save")) {
-                }
+                if (button("Save")) Unit
                 endChild()
                 endGroup()
             }
