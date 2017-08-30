@@ -169,7 +169,10 @@ interface imgui_demoDebugInfo {
 
         // Menu
         menuBar {
-            menu("Menu") { showExampleMenuFile() }
+            if(beginMenu("Menu")) {
+                showExampleMenuFile()
+                endMenu()
+            }
             menu("Examples") {
                 menuItem("Main menu bar", "", showApp.mainMenuBar)
                 menuItem("Console", "", showApp.console)
@@ -1667,7 +1670,7 @@ interface imgui_demoDebugInfo {
 //        ImGui::TreePop();
 //    }
 //}
-                end()
+        end()
     }
 
     /** create metrics window. display ImGui internals: browse window list, draw commands, individual vertices, basic
@@ -1965,7 +1968,7 @@ interface imgui_demoDebugInfo {
 
         val fontsOpened = treeNode("Fonts", "Fonts (${IO.fonts.fonts.size})")
         sameLine(); showHelpMarker("Tip: Load fonts with io.Fonts->AddFontFromFileTTF()\nbefore calling io.Fonts->GetTex* functions.")
-        if (fontsOpened){
+        if (fontsOpened) {
             val atlas = IO.fonts
             treeNode("Atlas texture", "Atlas texture (${atlas.texSize.x}x${atlas.texSize.y} pixels)") {
                 image(atlas.texId, Vec2(atlas.texSize), Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255),
@@ -1978,7 +1981,7 @@ interface imgui_demoDebugInfo {
                 val name = font.configData.getOrNull(0)?.name ?: ""
                 val fontDetailsOpened = bulletText("Font $i: '$name', %.2f px, ${font.glyphs.size} glyphs", font.fontSize)
                 sameLine(); smallButton("Set as default") { IO.fontDefault = font }
-                if(fontsOpened) {
+                if (fontsOpened) {
                     pushFont(font)
                     text("The quick brown fox jumps over the lazy dog")
                     popFont()

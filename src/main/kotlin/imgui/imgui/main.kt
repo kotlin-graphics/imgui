@@ -3,9 +3,12 @@ package imgui.imgui
 import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.endFrame
 import imgui.ImGui.focusWindow
 import imgui.ImGui.keepAliveId
+import imgui.ImGui.setNextWindowSize
 import imgui.internal.lengthSqr
 import imgui.Context as g
 
@@ -250,8 +253,8 @@ interface imgui_main {
         closeInactivePopups()
 
         // Create implicit window - we will only render it if the user has added something to it.
-        ImGui.setNextWindowSize(Vec2(400, 400), Cond.FirstUseEver)
-        ImGui.begin("Debug")
+        setNextWindowSize(Vec2(400, 400), Cond.FirstUseEver)
+        begin("Debug")
     }
 
 
@@ -261,7 +264,7 @@ interface imgui_main {
         assert(g.initialized)   // Forgot to call ImGui::NewFrame()
 
         if (g.frameCountEnded != g.frameCount)
-            ImGui.endFrame()
+            endFrame()
         g.frameCountRendered = g.frameCount
 
         /*  Skip render altogether if alpha is 0.0

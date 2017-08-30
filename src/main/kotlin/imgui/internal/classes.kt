@@ -422,11 +422,11 @@ class Window(
 
     var hiddenFrames = 0
     /** store condition flags for next SetWindowPos() call. */
-    var setWindowPosAllowFlags = Cond.Null.i
+    var setWindowPosAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
     /** store condition flags for next SetWindowSize() call.    */
-    var setWindowSizeAllowFlags = Cond.Null.i
+    var setWindowSizeAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
     /** store condition flags for next SetWindowCollapsed() call.   */
-    var setWindowCollapsedAllowFlags = Cond.Null.i
+    var setWindowCollapsedAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
 
     var setWindowPosCenterWanted = false
 

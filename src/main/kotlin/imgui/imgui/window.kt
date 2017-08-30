@@ -71,11 +71,7 @@ interface imgui_window {
 
         // Find or create
         var windowIsNew = false
-        var window = findWindowByName(name)
-        if (window == null) {
-            window = createNewWindow(name, sizeOnFirstUse, flags)
-            windowIsNew = true
-        }
+        val window = findWindowByName(name) ?: createNewWindow(name, sizeOnFirstUse, flags).also { windowIsNew = true }
 
         val currentFrame = frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
@@ -513,7 +509,8 @@ interface imgui_window {
                 dc.indentX = 0f + windowPadding.x - scroll.x
                 dc.groupOffsetX = 0f
                 dc.columnsOffsetX = 0.0f
-                dc.cursorStartPos = Vec2(dc.indentX + dc.columnsOffsetX, titleBarHeight() + menuBarHeight() + windowPadding.y - scroll.y) + pos
+                dc.cursorStartPos.put(pos.x + dc.indentX + dc.columnsOffsetX,
+                        pos.y + titleBarHeight() + menuBarHeight() + windowPadding.y - scroll.y)
                 dc.cursorPos put dc.cursorStartPos
                 dc.cursorPosPrevLine put dc.cursorPos
                 dc.cursorMaxPos put dc.cursorStartPos

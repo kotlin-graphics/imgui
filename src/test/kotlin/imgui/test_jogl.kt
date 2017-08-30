@@ -83,7 +83,7 @@ class HelloWorld_jogl : GLEventListener {
                 called "Debug"             */
             run {
                 text("Hello, world!")
-//                sliderFloat("float", f, 0f, 1f)
+                sliderFloat("float", f, 0f, 1f)
                 colorEdit3("clear color", clearColor)
                 //  You can write functions in the classical way, with if(cond) { code }
                 if (button("Test Window")) {
@@ -112,16 +112,6 @@ class HelloWorld_jogl : GLEventListener {
                     setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
                     showTestWindow(showTestWindow)
                 }
-            }
-
-            run {
-                setNextWindowSize(glm_.vec2.Vec2(200f, 100f), Cond.FirstUseEver)
-                begin("Another Window", null, WindowFlags.NoTitleBar.i or WindowFlags.NoResize.i)
-                selectable("Navigate")
-                selectable("Scene")
-                selectable("Camera")
-                selectable("Reset")
-                end()
             }
         }
 

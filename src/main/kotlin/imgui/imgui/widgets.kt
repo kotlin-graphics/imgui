@@ -77,6 +77,7 @@ import imgui.ImGui.spacing
 import imgui.ImGui.textLineHeight
 import imgui.imgui.imgui_internal.Companion.colorSquareSize
 import imgui.internal.*
+import java.util.*
 import imgui.Context as g
 
 interface imgui_widgets {
@@ -89,10 +90,15 @@ interface imgui_widgets {
         if (window.skipItems) return
 
         val fmt =
-                if (args.isEmpty())
-                    fmt
-                else
-                    fmt.format(style.locale, *args)
+                try{
+                    if (args.isEmpty())
+                        fmt
+                    else
+                        fmt.format(style.locale, *args)
+                }catch (err: MissingFormatArgumentException) {
+                    println("fmt $fmt, args: $args")
+                    TODO()
+                }
 
         val textEnd = fmt.length
         textUnformatted(fmt, textEnd)
@@ -604,9 +610,9 @@ interface imgui_widgets {
             window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
 
         if (hovered && flags hasnt ColorEditFlags.NoTooltip) {
-            val pF = floatArrayOf(col.x)
+            val pF = floatArrayOf(col.x, col.y, col.z, col.w)
             colorTooltip(descId, pF, flags and (ColorEditFlags.NoAlpha or ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf))
-            col.x = pF[0]
+            col.put(pF)
         }
 
         return pressed
