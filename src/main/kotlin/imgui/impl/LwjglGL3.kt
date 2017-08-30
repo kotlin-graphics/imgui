@@ -157,8 +157,6 @@ object LwjglGL3 {
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize, GL_STREAM_DRAW)
         }
 
-        checkError("createDeviceObject")
-
         createFontsTexture()
 
         // Restore modified GL state
@@ -167,7 +165,7 @@ object LwjglGL3 {
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
         glBindVertexArray(lastVertexArray)
 
-        return true
+        return checkError("createDeviceObject")
     }
 
     private fun checkSize(draws: ArrayList<DrawList>) {
@@ -208,7 +206,7 @@ object LwjglGL3 {
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize, GL_STREAM_DRAW)
             }
 
-            checkError("render")
+            checkError("checkSize")
 
             println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
         }
@@ -245,9 +243,7 @@ object LwjglGL3 {
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)
 
-        checkError("createFontsTexture")
-
-        return true
+        return checkError("createFontsTexture")
     }
 
     /** This is the main rendering function that you have to implement and provide to ImGui (via setting up
@@ -255,7 +251,7 @@ object LwjglGL3 {
      *  If text or lines are blurry when integrating ImGui in your engine:
      *      - in your Render function, try translating your projection matrix by (0.5f,0.5f) or (0.375f,0.375f) */
     fun renderDrawLists(drawData: DrawData) {
-
+        checkError("init")
         /** Avoid rendering when minimized, scale coordinates for retina displays
          *  (screen coordinates != framebuffer coordinates) */
         val fbSize = IO.displaySize * IO.displayFramebufferScale

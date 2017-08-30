@@ -460,19 +460,15 @@ interface imgui_widgets {
 
     /** Combo box helper allowing to pass all items in a single string.
      *  separate items with \0, end item-list with \0\0     */
-    fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1) =
-            combo(label, currentItem, Items.singleStringGetter, itemsSeparatedByZeros,
-                    itemsSeparatedByZeros.split('\u0000').filter { it.isNotEmpty() }.count(), // FIXME-OPT: Avoid computing this, or at least only when combo is open
-                    heightInItems)
+    fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1):Boolean {
 
-    fun combo(label: String, currentItem: IntArray, items: Array<String>, heightInItems: Int = -1): Boolean {
-        val itemsSeparatedByZeros = items.map { "$it\u0000" }.joinToString(separator = "") + "\u0000"
-        return combo(label, currentItem, Items.singleStringGetter, itemsSeparatedByZeros, items.size, heightInItems)
+        val items = itemsSeparatedByZeros.split('\u0000').filter { it.isNotEmpty() }
+        // FIXME-OPT: Avoid computing this, or at least only when combo is open
+        return combo(label, currentItem, items, heightInItems)
     }
 
     // Combo box function.
-    fun combo(label: String, currentItem: IntArray, itemsGetter: (String, Int) -> String?, data: String, itemsCount: Int,
-              heightInItems: Int = -1): Boolean {
+    fun combo(label: String, currentItem: IntArray, items: List<String>, heightInItems: Int = -1): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -496,8 +492,8 @@ interface imgui_widgets {
         renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, true, style.frameRounding) // FIXME-ROUNDING
         renderCollapseTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y) + style.framePadding, true)
 
-        if (currentItem[0] in 0 until itemsCount)
-            itemsGetter(data, currentItem[0])?.let { renderTextClipped(frameBb.min + style.framePadding, valueBb.max, it) }
+        if (currentItem[0] in 0 until items.size)
+            items.getOrNull(currentItem[0])?.let { renderTextClipped(frameBb.min + style.framePadding, valueBb.max, it) }
 
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
@@ -527,7 +523,7 @@ interface imgui_widgets {
             if (heightInItems < 0)
                 heightInItems = 7
 
-            val popupHeight = (labelSize.y + style.itemSpacing.y) * glm.min(itemsCount, heightInItems) + style.framePadding.y * 3
+            val popupHeight = (labelSize.y + style.itemSpacing.y) * glm.min(items.size, heightInItems) + style.framePadding.y * 3
             var popupY1 = frameBb.max.y
             var popupY2 = glm.clamp(popupY1 + popupHeight, popupY1, IO.displaySize.y - style.displaySafeAreaPadding.y)
             if ((popupY2 - popupY1) < glm.min(popupHeight, frameBb.min.y - style.displaySafeAreaPadding.y)) {
@@ -546,10 +542,10 @@ interface imgui_widgets {
                 // Display items
                 // FIXME-OPT: Use clipper
                 spacing()
-                repeat(itemsCount) { i ->
+                repeat(items.size) { i ->
                     pushId(i)
                     val itemSelected = i == currentItem[0]
-                    val itemText = itemsGetter(data, i) ?: "Unknown item*"
+                    val itemText = items.getOrNull(i) ?: "Unknown item*"
                     if (selectable(itemText, itemSelected)) {
                         clearActiveId()
                         valueChanged = true

@@ -16,6 +16,7 @@ import imgui.*
 import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
+import uno.buffer.intBufferOf
 import uno.glf.semantic
 import uno.gln.jogl.*
 import uno.glsl.Program
@@ -37,7 +38,7 @@ object JoglVrGL3 {
     val bufferName = intBufferBig(Buffer.MAX)
     val vaoName = intBufferBig(1)
     lateinit var program: ProgramA
-    val fontTexture = intBufferBig(1)
+    val fontTexture = intBufferOf(-1)
 
     val mat = Mat4()
 
@@ -93,7 +94,7 @@ object JoglVrGL3 {
 
         this.gl = gl
 
-        if (fontTexture[0] == 0)
+        if (fontTexture[0] < 0)
             createDeviceObjects(gl)
 
         // Setup display size (every frame to accommodate for window resizing)

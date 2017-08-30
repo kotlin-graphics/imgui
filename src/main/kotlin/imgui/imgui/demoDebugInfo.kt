@@ -165,7 +165,7 @@ interface imgui_demoDebugInfo {
         //pushItemWidth(getWindowWidth() * 0.65f);    // 2/3 of the space for widget and 1/3 for labels
         pushItemWidth(-140f)                                 // Right align, keep 140 pixels for labels
 
-        text("JVM ImGui says hello.")
+        text("JVM ImGui says hello. ($version)")
 
         // Menu
         menuBar {
@@ -2115,18 +2115,19 @@ interface imgui_demoDebugInfo {
         fun showExampleMenuFile() {
 
             menuItem("(dummy menu)", "", false, false)
-            if (menuItem("New")) {
-            }
-            if (menuItem("Open", "Ctrl+O")) {
-            }
+            if (menuItem("New")) Unit
+            if (menuItem("Open", "Ctrl+O")) Unit
             if (beginMenu("Open Recent")) {
+
                 menuItem("fish_hat.c")
                 menuItem("fish_hat.inl")
                 menuItem("fish_hat.h")
                 if (beginMenu("More..")) {
+
                     menuItem("Hello")
                     menuItem("Sailor")
                     if (beginMenu("Recurse..")) {
+
                         showExampleMenuFile()
                         endMenu()
                     }
@@ -2213,7 +2214,7 @@ interface imgui_demoDebugInfo {
             }
 
             window("Example: Constrained Resize", pOpen) {
-                val desc = arrayOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
+                val desc = listOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
                         "Width 300-400", "Custom: Always Square", "Custom: Fixed Steps (100)")
                 combo("Constraint", type, desc)
                 button("200x200") { setWindowSize(Vec2(200)); sameLine() }

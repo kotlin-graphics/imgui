@@ -496,7 +496,7 @@ class FontAtlas {
 
         // End packing
         stbtt_PackEnd(spc)
-        bufRects.free()
+//        bufRects.free() TODO check why crashes, container is null
 
         // Third pass: setup ImFont and glyphs for runtime
         for (input in 0 until configData.size) {

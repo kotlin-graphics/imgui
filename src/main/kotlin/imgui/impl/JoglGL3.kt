@@ -15,6 +15,8 @@ import imgui.*
 import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
+import uno.buffer.intBufferOf
+import uno.gl.iBuf
 import uno.glf.semantic
 import uno.gln.jogl.*
 import uno.glsl.Program
@@ -35,7 +37,7 @@ object JoglGL3 {
     val bufferName = intBufferBig(Buffer.MAX)
     val vaoName = intBufferBig(1)
     lateinit var program: ProgramA
-    val fontTexture = intBufferBig(1)
+    val fontTexture = intBufferOf(-1)
 
     val mat = Mat4()
 
@@ -90,7 +92,7 @@ object JoglGL3 {
 
         this.gl = gl
 
-        if (fontTexture[0] == 0)
+        if (fontTexture[0] < 0)
             createDeviceObjects(gl)
 
         // Setup display size (every frame to accommodate for window resizing)
@@ -231,13 +233,11 @@ object JoglGL3 {
 
         // Upload texture to graphics system
         val lastTexture = gl.glGetInteger(GL_TEXTURE_BINDING_2D)
-
         initTexture2d(fontTexture) {
             minFilter = linear
             magFilter = linear
             image(GL_RGBA, size, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
         }
-
         // Store our identifier
         IO.fonts.texId = fontTexture[0]
 

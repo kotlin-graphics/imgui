@@ -10,6 +10,7 @@ import uno.glfw.GlfwWindow
 import uno.glfw.glfw
 import uno.gln.glViewport
 import imgui.functionalProgramming.button
+import uno.gln.checkError
 
 fun main(args: Array<String>) {
     HelloWorld_lwjgl().run()
@@ -70,9 +71,12 @@ class HelloWorld_lwjgl {
 
     fun loop() {
 
+        checkError("a")
 
         glfwPollEvents()
         LwjglGL3.newFrame()
+
+        checkError("b")
 
         with(ImGui) {
 
@@ -121,11 +125,12 @@ class HelloWorld_lwjgl {
             inputText("string", buf)
             sliderFloat("float", f, 0f, 1f)*/
         }
-
+        checkError("c")
         // Rendering
         glViewport(window.framebufferSize)
         glClearColor(clearColor[0], clearColor[1], clearColor[2], 1f)  // TODO gln
         glClear(GL_COLOR_BUFFER_BIT)
+
         ImGui.render()
         window.swapBuffers()
     }
