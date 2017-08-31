@@ -238,7 +238,7 @@ interface imgui_internal {
     fun isClippedEx(bb: Rect, id: Int?, clipEvenWhenLogged: Boolean): Boolean {
 
         val window = currentWindowRead!!
-        if (!bb.overlaps(window.clipRect))
+        if (!(bb overlaps window.clipRect))
             if (id == null || id != g.activeId)
                 if (clipEvenWhenLogged || !g.logEnabled)
                     return true
@@ -453,7 +453,7 @@ interface imgui_internal {
         dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
     }
 
-    fun pushColumnClipRect(columnIndex: Int = 1) {
+    fun pushColumnClipRect(columnIndex: Int = -1) {
 
         val window = currentWindowRead!!
         val columnIndex = if (columnIndex < 0) window.dc.columnsCurrent else columnIndex
@@ -1566,7 +1566,7 @@ interface imgui_internal {
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)
-                        if (rect.overlaps(clipRect_))
+                        if (rect overlaps clipRect_)
                             drawWindow.drawList.addRectFilled(rect.min, rect.max, bgColor)
                     }
                     rectPos.x = renderPos.x - renderScroll.x
@@ -1581,7 +1581,7 @@ interface imgui_internal {
             val cursorIsVisible = g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
             val cursorScreenPos = renderPos + cursorOffset - renderScroll
             val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
-            if (cursorIsVisible && cursorScreenRect.overlaps(Rect(clipRect)))
+            if (cursorIsVisible && cursorScreenRect overlaps Rect(clipRect))
                 drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
             /*  Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor.
@@ -1835,7 +1835,7 @@ interface imgui_internal {
             } else {
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
-                val storedValue = storage.intaaaaaaaaa(id, -1)
+                val storedValue = storage.intaaaaaaaaaaa(id, -1)
                 if (storedValue == -1) {
                     isOpen = g.setNextTreeNodeOpenVal
                     storage[id] = isOpen
@@ -1844,7 +1844,7 @@ interface imgui_internal {
             }
             g.setNextTreeNodeOpenCond = 0
         } else
-            isOpen = storage.intaaaaaaaaa(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
+            isOpen = storage.intaaaaaaaaaaa(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).

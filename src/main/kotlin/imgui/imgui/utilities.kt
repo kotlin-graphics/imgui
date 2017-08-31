@@ -34,7 +34,7 @@ interface imgui_utilities {
     fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemRectHovered()
 
     /** was the last item visible? (aka not out of sight due to clipping/scrolling.)    */
-    val isItemVisible get() = with(currentWindowRead!!) { clipRect.overlaps(dc.lastItemRect) }
+    val isItemVisible get() = with(currentWindowRead!!) { clipRect overlaps dc.lastItemRect }
 
     val isAnyItemHovered get() = g.hoveredId != 0 || g.hoveredIdPreviousFrame != 0
 
@@ -79,10 +79,10 @@ interface imgui_utilities {
         get() = g.hoveredRootWindow != null && (g.hoveredRootWindow === g.currentWindow!!.rootWindow) && g.hoveredRootWindow!!.isContentHoverable
 
     /** test if rectangle (of given size, starting from cursor position) is visible / not clipped.  */
-    fun isRectVisible(size: Vec2) = with(currentWindowRead!!) { clipRect.overlaps(Rect(dc.cursorPos, dc.cursorPos + size)) }
+    fun isRectVisible(size: Vec2) = with(currentWindowRead!!) { clipRect overlaps Rect(dc.cursorPos, dc.cursorPos + size) }
 
     /** test if rectangle (in screen space) is visible / not clipped. to perform coarse clipping on user's side.    */
-    fun isRectVisible(rectMin: Vec2, rectMax: Vec2) = currentWindowRead!!.clipRect.overlaps(Rect(rectMin, rectMax))
+    fun isRectVisible(rectMin: Vec2, rectMax: Vec2) = currentWindowRead!!.clipRect overlaps Rect(rectMin, rectMax)
 
     val time get() = g.time
 

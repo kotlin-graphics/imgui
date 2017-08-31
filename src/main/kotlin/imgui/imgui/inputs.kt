@@ -81,7 +81,7 @@ interface imgui_inputs {
 
         // Expand for touch input
         val rectForTouch = Rect(rectClipped.min - style.touchExtraPadding, rectClipped.max + style.touchExtraPadding)
-        return rectForTouch.contains(IO.mousePos)
+        return rectForTouch contains IO.mousePos
     }
 
     /** shortcut to IO.mousePos provided by user, to be consistent with other calls */
