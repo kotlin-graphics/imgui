@@ -30,11 +30,11 @@ class FontConfig {
     /** TTF/OTF data size   */
     var fontDataSize = 0
     lateinit var fontDataBuffer: ByteBuffer
-    /** TTF/OTF data ownership taken by the container ImFontAtlas (will delete memory itself). Set to true  */
+    /** TTF/OTF data ownership taken by the container ImFontAtlas (will delete memory itself).  */
     var fontDataOwnedByAtlas = true
     /** Index of font within TTF/OTF file   */
     var fontNo = 0
-    /** Size in pixels for rasterizer   */
+    /** Size in pixels for rasterizer.  */
     var sizePixels = 0.0f
     /** Rasterize at higher quality for sub-pixel positioning. We don't use sub-pixel positions on the Y axis.  */
     var oversample = Vec2i(3, 1)
@@ -43,7 +43,7 @@ class FontConfig {
     var pixelSnapH = false
     /** Extra spacing (in pixels) between glyphs. Only X axis is supported for now.    */
     var glyphExtraSpacing = Vec2()
-    /** Offset all glyphs from this font input  */
+    /** Offset all glyphs from this font input. */
     var glyphOffset = Vec2()
     /** Pointer to a user-provided list of Unicode range (2 value per range, values are inclusive, zero-terminated
      *  list). THE ARRAY DATA NEEDS TO PERSIST AS LONG AS THE FONT IS ALIVE.    */
@@ -51,12 +51,17 @@ class FontConfig {
     /** Merge into previous ImFont, so you can combine multiple inputs font into one ImFont (e.g. ASCII font + icons +
      *  Japanese glyphs). You may want to use GlyphOffset.y when merge font of different heights.   */
     var mergeMode = false
+    /** Settings for custom font rasterizer (e.g. ImGuiFreeType). Leave as zero if you aren't using one.    */
+    var rasterizerFlags = 0x00
+    /** Brighten (>1.0f) or darken (<1.0f) font output. Brightening small fonts may be a good workaround to make them
+     *  more readable.  */
+    var rasterizerMultiply = 1f
 
     // [Internal]
     /** Name (strictly to ease debugging)   */
     var name = ""
 
-    lateinit var dstFont: Font
+    var dstFont: Font? = null
 }
 
 /** Load and rasterize multiple TTF/OTF fonts into a same texture.
@@ -84,7 +89,7 @@ class FontAtlas {
             assert(fonts.isNotEmpty())  /*  When using MergeMode make sure that a font has already been added before.
                                 You can use ImGui::GetIO().Fonts->AddFontDefault() to add the default imgui font.  */
         configData.add(fontCfg)
-        if (!wasInit { fontCfg.dstFont })
+        if (fontCfg.dstFont == null)
             fontCfg.dstFont = fonts.last()
         if (!fontCfg.fontDataOwnedByAtlas)
             fontCfg.fontDataOwnedByAtlas = true
@@ -92,7 +97,7 @@ class FontAtlas {
 
         // Invalidate texture
         clearTexData()
-        return fontCfg.dstFont
+        return fontCfg.dstFont!!
     }
 
     /** Load embedded ProggyClean.ttf at size 13, disable oversampling  */
@@ -412,6 +417,7 @@ class FontAtlas {
 
             var fontInfo = STBTTFontinfo.create()
             lateinit var rects: STBRPRect.Buffer
+            var rectsCount = 0
             lateinit var ranges: STBTTPackRange.Buffer
             var rangesCount = 0
         }
@@ -421,7 +427,7 @@ class FontAtlas {
 
             val cfg = configData[i]
             val tmp = tmpArray[i]
-            assert(wasInit { cfg.dstFont } && (!cfg.dstFont.isLoaded || cfg.dstFont.containerAtlas == this))
+            assert(with(cfg.dstFont!!) { !isLoaded || containerAtlas == this@FontAtlas })
 
             val fontOffset = stbtt_GetFontOffsetForIndex(cfg.fontDataBuffer, cfg.fontNo)
             assert(fontOffset >= 0)
@@ -465,6 +471,7 @@ class FontAtlas {
 
             // Pack
             tmp.rects = STBRPRect.create(bufRects.address() + bufRectsN * STBRPRect.SIZEOF, fontGlyphsCount)
+            tmp.rectsCount = fontGlyphsCount
             bufRectsN += fontGlyphsCount
             imgui.stb.stbtt_PackSetOversampling(spc, cfg.oversample)
             val n = stbtt_PackFontRangesGatherRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
@@ -491,6 +498,14 @@ class FontAtlas {
             val tmp = tmpArray[input]
             imgui.stb.stbtt_PackSetOversampling(spc, cfg.oversample)
             stbtt_PackFontRangesRenderIntoRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
+            if (cfg.rasterizerMultiply != 1f) {
+                val multiplyTable = buildMultiplyCalcLookupTable(cfg.rasterizerMultiply)
+                for (i in 0 until tmp.rects.capacity()) {
+                    val r = tmp.rects[i]
+                    if (r.wasPacked)
+                        buildMultiplyRectAlpha8(multiplyTable, spc.pixels, r, spc.strideInBytes)
+                }
+            }
             tmp.rects.free()
         }
 
@@ -504,7 +519,7 @@ class FontAtlas {
             val cfg = configData[input]
             val tmp = tmpArray[input]
             // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
-            val dstFont = cfg.dstFont
+            val dstFont = cfg.dstFont!!
 
             val fontScale = stbtt_ScaleForPixelHeight(tmp.fontInfo, cfg.sizePixels)
             val (unscaledAscent, unscaledDescent, unscaledLineGap) = imgui.stb.stbtt_GetFontVMetrics(tmp.fontInfo)
@@ -550,7 +565,7 @@ class FontAtlas {
                             ((glyph.u1 - glyph.u0) * texSize.x + 1.99f).i * ((glyph.v1 - glyph.v0) * texSize.y + 1.99f).i
                 }
             }
-            cfg.dstFont.buildLookupTable()
+            cfg.dstFont!!.buildLookupTable()
         }
 
         // Cleanup temporaries
@@ -650,8 +665,24 @@ class FontAtlas {
         }
     }
 
-    // A work of art lies ahead! (. = white layer, X = black layer, others are blank)
-// The white texels on the top left are the ones we'll use everywhere in ImGui to render filled shapes.
+    fun buildMultiplyCalcLookupTable(inBrightenFactor: Float) = CharArray(256, {
+        val value = (i * inBrightenFactor).i
+        (if (value > 255) 255 else (value and 0xFF)).c
+    })
+
+    fun buildMultiplyRectAlpha8(table: CharArray, pixels: ByteBuffer, rect: STBRPRect, stride: Int) {
+        var ptr = rect.x + rect.y * stride
+        var j = rect.h
+        while (j > 0) {
+            for (i in 0 until rect.w)
+                pixels[ptr + i] = table[pixels[ptr + i].i].b
+            j--
+            ptr += stride
+        }
+    }
+
+    /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
+        The white texels on the top left are the ones we'll use everywhere in ImGui to render filled shapes.     */
     object DefaultTexData {
         val wHalf = 90
         val h = 27

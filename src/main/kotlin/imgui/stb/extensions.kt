@@ -112,6 +112,9 @@ var STBTTPackContext.pixels: ByteBuffer
 var STBTTPackContext.height
     get() = memGetInt(address() + 2 * POINTER_SIZE + Int.BYTES)
     set(value) = memPutInt(address() + 2 * POINTER_SIZE + Int.BYTES, value)
+var STBTTPackContext.strideInBytes
+    get() = memGetInt(address() + 2 * POINTER_SIZE + Int.BYTES * 2)
+    set(value) = memPutInt(address() + 2 * POINTER_SIZE + Int.BYTES * 2, value)
 
 private object Private {
 

@@ -115,6 +115,15 @@ interface imgui_internal {
         g.windows.add(window)
     }
 
+    fun initialize() {
+
+        g.logClipboard = StringBuilder()
+
+        assert(g.settings.isEmpty())
+        loadIniSettingsFromDisk(IO.iniFilename)
+        g.initialized = true
+    }
+
     /** Ends the ImGui frame. Automatically called by Render()! you most likely don't need to ever call that yourself
      *  directly. If you don't need to render you can call EndFrame() but you'll have wasted CPU already. If you don't
      *  need to render, don't create any windows instead!

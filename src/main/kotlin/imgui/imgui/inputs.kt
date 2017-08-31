@@ -5,6 +5,7 @@ import glm_.vec2.Vec2
 import imgui.IO
 import imgui.ImGui.currentWindowRead
 import imgui.Context.style
+import imgui.MOUSE_INVALID
 import imgui.internal.Rect
 import imgui.Context as g
 
@@ -83,6 +84,9 @@ interface imgui_inputs {
         val rectForTouch = Rect(rectClipped.min - style.touchExtraPadding, rectClipped.max + style.touchExtraPadding)
         return rectForTouch contains IO.mousePos
     }
+
+    /** We typically use ImVec2(-FLT_MAX,-FLT_MAX) to denote an invalid mouse position  */
+    fun isMousePosValid(mousePos: Vec2? = null) = (mousePos ?: IO.mousePos) greaterThan MOUSE_INVALID
 
     /** shortcut to IO.mousePos provided by user, to be consistent with other calls */
     val mousePos get() = IO.mousePos

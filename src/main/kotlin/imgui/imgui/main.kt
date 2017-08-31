@@ -7,6 +7,8 @@ import imgui.ImGui.begin
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.endFrame
 import imgui.ImGui.focusWindow
+import imgui.ImGui.initialize
+import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
 import imgui.ImGui.setNextWindowSize
 import imgui.internal.lengthSqr
@@ -34,14 +36,8 @@ interface imgui_main {
         // Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)
         assert(style.alpha in 0f..1f)
 
-        if (!g.initialized) {
-            // Initialize on first frame TODO
-            g.logClipboard = StringBuilder()
-
-            assert(g.settings.isEmpty())
-            loadIniSettingsFromDisk(IO.iniFilename)
-            g.initialized = true
-        }
+        // Initialize on first frame
+        if (!g.initialized) initialize()
 
         defaultFont.setCurrent()
         assert(g.font.isLoaded)
@@ -64,10 +60,10 @@ interface imgui_main {
         /*  Update mouse inputs state
             If mouse just appeared or disappeared (usually denoted by -Float.MAX_VALUE component, but in reality we test
             for -256000.0f) we cancel out movement in MouseDelta         */
-        if (IO.mousePos lessThan MOUSE_INVALID || IO.mousePosPrev lessThan MOUSE_INVALID)
-            IO.mouseDelta put 0f
-        else
+        if (isMousePosValid(IO.mousePos) && isMousePosValid(IO.mousePosPrev))
             IO.mouseDelta = IO.mousePos - IO.mousePosPrev
+        else
+            IO.mouseDelta put 0f
         IO.mousePosPrev put IO.mousePos
 
         for (i in IO.mouseDown.indices) {
@@ -325,8 +321,7 @@ interface imgui_main {
         }
     }
 
-    /** NB: behavior of ImGui after Shutdown() is not tested/guaranteed at the moment. This function is merely here to
-    free heap allocations, nothing to do here on JVM     */
+    /** This function is merely here to free heap allocations.     */
     fun shutdown() {
 
         /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
@@ -334,7 +329,7 @@ interface imgui_main {
 //        if (IO.fonts) // Testing for NULL to allow user to NULLify in case of running Shutdown() on multiple contexts. Bit hacky.
         IO.fonts.clear()
 
-        // Cleanup of other data are conditional on actually having used ImGui.
+        // Cleanup of other data are conditional on actually having initialize ImGui.
         if (!g.initialized) return
 
         saveIniSettingsToDisk(IO.iniFilename)
