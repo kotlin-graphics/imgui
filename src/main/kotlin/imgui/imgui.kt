@@ -47,7 +47,7 @@ object ImGui :
 
         imgui_internal {
 
-    val version = "1.51"
+    val version = "1.52 WIP"
 }
 
 var debug = 0
