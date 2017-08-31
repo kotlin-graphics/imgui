@@ -53,10 +53,25 @@ import java.util.*
 import kotlin.apply
 import imgui.Context as g
 
-// We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
-// If this ever crash because g.CurrentWindow is NULL it means that either
-// - ImGui::NewFrame() has never been called, which is illegal.
-// - You are calling ImGui functions after ImGui::Render() and before the next ImGui::NewFrame(), which is also illegal.
+fun main(args: Array<String>) {
+
+    fun c() = null
+
+    fun b() = Unit
+
+    fun a() {
+        val a = c() ?: b().also { return }
+        println("a")
+    }
+
+    a()
+}
+
+/** We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
+ *  If this ever crash because g.CurrentWindow is NULL it means that either
+ *      - ImGui::NewFrame() has never been called, which is illegal.
+ *      - You are calling ImGui functions after ImGui::Render() and before the next ImGui::NewFrame(), which is also
+ *          illegal.   */
 interface imgui_internal {
 
     val currentWindowRead get() = g.currentWindow
@@ -1835,7 +1850,7 @@ interface imgui_internal {
             } else {
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
-                val storedValue = storage.intaaaaaaaaaaa(id, -1)
+                val storedValue = storage.int(id, -1)
                 if (storedValue == -1) {
                     isOpen = g.setNextTreeNodeOpenVal
                     storage[id] = isOpen
@@ -1844,7 +1859,7 @@ interface imgui_internal {
             }
             g.setNextTreeNodeOpenCond = 0
         } else
-            isOpen = storage.intaaaaaaaaaaa(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
+            isOpen = storage.int(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).
