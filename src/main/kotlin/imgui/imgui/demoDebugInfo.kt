@@ -527,7 +527,7 @@ interface imgui_demoDebugInfo {
                 }
                 offset += 3
                 treeNode("In columns") {
-                    columns(3, "", false)
+                    columns(3, null, false)
                     for (i in 0..15) {
                         if (selectable("Item $i", selected, offset + i)) Unit
                         nextColumn()
@@ -1967,7 +1967,7 @@ interface imgui_demoDebugInfo {
         }
 
         val fontsOpened = treeNode("Fonts", "Fonts (${IO.fonts.fonts.size})")
-        sameLine(); showHelpMarker("Tip: Load fonts with io.Fonts->AddFontFromFileTTF()\nbefore calling io.Fonts->GetTex* functions.")
+        sameLine(); showHelpMarker("Tip: Load fonts with IO.fonts.addFontFromFileTTF()\nbefore calling IO.fonts.getTex* functions.")
         if (fontsOpened) {
             val atlas = IO.fonts
             treeNode("Atlas texture", "Atlas texture (${atlas.texSize.x}x${atlas.texSize.y} pixels)") {

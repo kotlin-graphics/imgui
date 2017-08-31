@@ -16,6 +16,7 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.colorButton
 import imgui.ImGui.contentRegionMax
+import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endTooltip
@@ -122,7 +123,7 @@ interface imgui_internal {
             if (!it.accessed) it.active = false
         }
 
-        ImGui.end()
+        end()
 
         // Click to focus window and start moving (after we're done with all our widgets)
         if (g.activeId == 0 && g.hoveredId == 0 && IO.mouseClicked[0]) {
@@ -175,8 +176,7 @@ interface imgui_internal {
     }
 
     fun keepAliveId(id: Int) {
-        if (g.activeId == id)
-            g.activeIdIsAlive = true
+        if (g.activeId == id) g.activeIdIsAlive = true
     }
 
     /** Advance cursor given item size for layout.  */
@@ -335,7 +335,7 @@ interface imgui_internal {
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
     fun beginColumns(id: String?, columnsCount: Int, flags: Int) {
 
-        with(ImGui.currentWindow) {
+        with(currentWindow) {
 
             assert(columnsCount > 1)
             assert(dc.columnsCount == 1) // Nested columns are currently not supported
@@ -365,11 +365,11 @@ interface imgui_internal {
             dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
 
             // Cache column offsets
-            dc.columnsData.add(ColumnData())
+            for (i in 0..columnsCount) dc.columnsData.add(ColumnData())
             for (columnIndex in 0..columnsCount) {
 
                 val columnId = dc.columnsSetId + columnIndex
-                ImGui.keepAliveId(columnId)
+                keepAliveId(columnId)
                 val defaultT = columnIndex / dc.columnsCount.f
                 var t = dc.stateStorage.float(columnId, defaultT)
                 if (dc.columnsFlags hasnt ColumnsFlags.NoForceWithinWindow)
@@ -1835,7 +1835,7 @@ interface imgui_internal {
             } else {
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
-                val storedValue = storage.intaaaaa(id, -1)
+                val storedValue = storage.intaaaaaaaaa(id, -1)
                 if (storedValue == -1) {
                     isOpen = g.setNextTreeNodeOpenVal
                     storage[id] = isOpen
@@ -1844,7 +1844,7 @@ interface imgui_internal {
             }
             g.setNextTreeNodeOpenCond = 0
         } else
-            isOpen = storage.intaaaaa(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
+            isOpen = storage.intaaaaaaaaa(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).

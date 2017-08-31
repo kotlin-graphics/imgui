@@ -106,8 +106,7 @@ interface imgui_colums {
 
         assert(columnIndex < window.dc.columnsData.size)
         val t = window.dc.columnsData[columnIndex].offsetNorm
-        val xOffset = lerp(window.dc.columnsMinX, window.dc.columnsMaxX, t)
-        return xOffset.i.f
+        return lerp(window.dc.columnsMinX, window.dc.columnsMaxX, t) // xOffset
     }
 
     /** set position of column line (in pixels, from the left side of the contents region). pass -1 to use current column  */

@@ -90,15 +90,15 @@ interface imgui_widgets {
         if (window.skipItems) return
 
         val fmt =
-                try{
+//                try{
                     if (args.isEmpty())
                         fmt
                     else
                         fmt.format(style.locale, *args)
-                }catch (err: Exception) {
-                    println("fmt $fmt, args: ${args}")
-                    TODO()
-                }
+//                }catch (err: Exception) {
+//                    println("fmt $fmt, args: ${args}")
+//                    TODO()
+//                }
 
         val textEnd = fmt.length
         textUnformatted(fmt, textEnd)

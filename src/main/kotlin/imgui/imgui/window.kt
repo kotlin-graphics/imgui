@@ -711,8 +711,7 @@ interface imgui_window {
     val contentRegionMax: Vec2
         get() = with(currentWindowRead!!) {
             val mx = Vec2(contentsRegionRect.max)
-            if (dc.columnsCount != 1)
-                mx.x = getColumnOffset(dc.columnsCurrent + 1) - windowPadding.x
+            if (dc.columnsCount != 1) mx.x = getColumnOffset(dc.columnsCurrent + 1) - windowPadding.x
             return mx
         }
 
