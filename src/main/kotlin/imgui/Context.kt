@@ -294,7 +294,7 @@ object IO {
 //    //------------------------------------------------------------------
 
     /** Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)  */
-    var mousePos = Vec2(-1)
+    var mousePos = Vec2(-Float.MAX_VALUE)
     /** Mouse buttons: left, right, middle + extras. ImGui itself mostly only uses left button (BeginPopupContext** are
     using right button). Others buttons allows us to track if the mouse is being used by your application +
     available to user as a convenience via IsMouse** API.   */
@@ -365,7 +365,7 @@ object IO {
     //------------------------------------------------------------------
 
     /** Previous mouse position temporary storage (nb: not for public use, set to MousePos in NewFrame())   */
-    var mousePosPrev = Vec2(-1)
+    var mousePosPrev = Vec2(-Float.MAX_VALUE)
     /** Mouse button went from !Down to Down    */
     val mouseClicked = BooleanArray(5)
     /** Position at time of clicking    */

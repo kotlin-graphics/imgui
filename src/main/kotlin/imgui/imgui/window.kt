@@ -333,7 +333,7 @@ interface imgui_window {
             if (flags hasnt WindowFlags.ChildWindow && flags hasnt WindowFlags.Tooltip) {
                 /*  Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized
                 window when initializing or minimizing. */
-                if (!windowPosSetByApi && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 && IO.displaySize.x > 0f && IO.displaySize.y > 0f) {
+                if (!windowPosSetByApi && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 && IO.displaySize greaterThan 0) {
                     val padding = glm.max(style.displayWindowPadding, style.displaySafeAreaPadding)
                     window.posF put (glm.max(window.posF + window.size, padding) - window.size)
                     window.posF.x = glm.min(window.posF.x, (IO.displaySize.x - padding.x).f)
@@ -629,7 +629,7 @@ interface imgui_window {
             assert(flags has WindowFlags.NoTitleBar)
             window.collapsed = parentWindow?.collapsed ?: false
 
-            if (flags hasnt WindowFlags.AlwaysAutoResize && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0) // TODO vec2 <= i?
+            if (flags hasnt WindowFlags.AlwaysAutoResize && window.autoFitFrames lessThanEqual 0)
                 window.collapsed = window.collapsed || (window.windowRectClipped.min.x >= window.windowRectClipped.max.x
                         || window.windowRectClipped.min.y >= window.windowRectClipped.max.y)
 

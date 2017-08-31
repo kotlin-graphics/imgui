@@ -21,6 +21,7 @@ val COL32_BLACK_TRANS = COL32(0, 0, 0, 0)   // Transparent black = 0x00000000
 
 var _DEBUG = true
 
+val MOUSE_INVALID = -256000f
 
 object ImGui :
 

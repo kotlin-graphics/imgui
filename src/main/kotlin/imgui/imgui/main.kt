@@ -27,7 +27,7 @@ interface imgui_main {
 
         // Check user data
         assert(IO.deltaTime >= 0f)  // Need a positive DeltaTime (zero is tolerated but will cause some timing issues)
-        assert(IO.displaySize.x >= 0f && IO.displaySize.y >= 0f)
+        assert(IO.displaySize greaterThanEqual 0)
         assert(IO.fonts.fonts.size > 0) // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
         assert(IO.fonts.fonts[0].isLoaded)  // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
         assert(style.curveTessellationTol > 0f)  // Invalid style setting
@@ -61,11 +61,10 @@ interface imgui_main {
         g.renderDrawData.cmdListsCount = 0
 
 
-        // Update mouse inputs state
-        if (IO.mousePos.x < 0 && IO.mousePos.y < 0)
-            IO.mousePos put -9999.0f
-        // if mouse just appeared or disappeared (negative coordinate) we cancel out movement in MouseDelta
-        if ((IO.mousePos.x < 0 && IO.mousePos.y < 0) || (IO.mousePosPrev.x < 0 && IO.mousePosPrev.y < 0))
+        /*  Update mouse inputs state
+            If mouse just appeared or disappeared (usually denoted by -Float.MAX_VALUE component, but in reality we test
+            for -256000.0f) we cancel out movement in MouseDelta         */
+        if (IO.mousePos lessThan MOUSE_INVALID || IO.mousePosPrev lessThan MOUSE_INVALID)
             IO.mouseDelta put 0f
         else
             IO.mouseDelta = IO.mousePos - IO.mousePosPrev
@@ -126,7 +125,7 @@ interface imgui_main {
             if (IO.mouseDown[0]) {
                 if (g.movedWindow!!.flags hasnt WindowFlags.NoMove) {
                     g.movedWindow!!.posF plus_ IO.mouseDelta
-                    if (g.movedWindow!!.flags hasnt WindowFlags.NoSavedSettings && (IO.mouseDelta.x != 0.0f || IO.mouseDelta.y != 0.0f))
+                    if (g.movedWindow!!.flags hasnt WindowFlags.NoSavedSettings && IO.mouseDelta notEqual 0f)
                         markIniSettingsDirty(g.movedWindow!!)
                 }
                 focusWindow(g.movedWindow)

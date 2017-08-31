@@ -399,7 +399,7 @@ fun markIniSettingsDirty(window: Window) {
 }
 
 fun getVisibleRect(): Rect {
-    if (IO.displayVisibleMin.x != IO.displayVisibleMax.x && IO.displayVisibleMin.y != IO.displayVisibleMax.y)
+    if (IO.displayVisibleMin != IO.displayVisibleMax)
         return Rect(IO.displayVisibleMin, IO.displayVisibleMax)
     return Rect(0f, 0f, IO.displaySize.x.f, IO.displaySize.y.f)
 }

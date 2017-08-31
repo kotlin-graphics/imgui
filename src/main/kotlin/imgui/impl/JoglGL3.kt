@@ -112,7 +112,7 @@ object JoglGL3 {
         if (window.hasFocus())
             IO.mousePos put cursorPos
         else
-            IO.mousePos put -1
+            IO.mousePos put -Float.MAX_VALUE
 
         repeat(3) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
@@ -258,7 +258,7 @@ object JoglGL3 {
         /** Avoid rendering when minimized, scale coordinates for retina displays
          *  (screen coordinates != framebuffer coordinates) */
         val fbSize = IO.displaySize * IO.displayFramebufferScale
-        if (fbSize.x == 0 || fbSize.y == 0) return
+        if (fbSize equal 0) return
         drawData.scaleClipRects(IO.displayFramebufferScale)
 
         // Backup GL state
