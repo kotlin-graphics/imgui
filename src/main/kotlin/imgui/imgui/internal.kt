@@ -610,8 +610,8 @@ interface imgui_internal {
                             if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Corner.TopRight
                         }
                         if (y2 >= pMax.y) {
-                            if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Corner.BottomLeft
-                            if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Corner.BottomRight
+                            if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Corner.BotLeft
+                            if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Corner.BotRight
                         }
                         roundingCornersFlagsCell = roundingCornersFlagsCell and roundingCornerFlags
                         val r = if (roundingCornersFlagsCell != 0) rounding else 0f
@@ -833,7 +833,7 @@ interface imgui_internal {
         val grabPadding = 2f
         val sliderSz = (if (isHorizontal) frameBb.width else frameBb.height) - grabPadding * 2f
         val grabSz =
-                if (decimalPrecision > 0)
+                if (decimalPrecision != 0)
                     glm.min(style.grabMinSize, sliderSz)
                 else
                     glm.min(
@@ -1901,6 +1901,8 @@ interface imgui_internal {
                     precision = defaultPrecision
             }
         }
+        if(fmt.contains('e', ignoreCase = true))    // Maximum precision with scientific notation
+            precision = -1
         return precision
     }
 
@@ -1909,6 +1911,7 @@ interface imgui_internal {
         /*  Round past decimal precision
             So when our value is 1.99999 with a precision of 0.001 we'll end up rounding to 2.0
             FIXME: Investigate better rounding methods  */
+        if (decimalPrecision < 0) return value
         val minStep = getMinimumStepAtDecimalPrecision(decimalPrecision)
         val negative = value < 0f
         var value = glm.abs(value)

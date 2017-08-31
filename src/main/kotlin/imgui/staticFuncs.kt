@@ -14,9 +14,7 @@ import imgui.ImGui.endPopup
 import imgui.ImGui.focusWindow
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.isPopupOpen
-import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushStyleVar
-import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setHoveredId
 import imgui.internal.*
 import uno.kotlin.isPrintable
@@ -233,12 +231,12 @@ fun scrollbar(window: Window, horizontal: Boolean) {
     val windowRounding = if (window.flags has WindowFlags.ChildWindow) style.childWindowRounding else style.windowRounding
     val windowRoundingCorners =
             if (horizontal)
-                Corner.BottomLeft or if (otherScrollbar) Corner.All else Corner.BottomRight
+                Corner.BotLeft or if (otherScrollbar) Corner.All else Corner.BotRight
             else
                 (
                         if (window.flags has WindowFlags.NoTitleBar && window.flags hasnt WindowFlags.MenuBar)
                             Corner.TopRight
-                        else Corner.All) or if (otherScrollbar) Corner.All else Corner.BottomRight
+                        else Corner.All) or if (otherScrollbar) Corner.All else Corner.BotRight
     window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, windowRounding, windowRoundingCorners)
     bb.expand(Vec2(
             -glm.clamp(((bb.max.x - bb.min.x - 2.0f) * 0.5f).i.f, 0.0f, 3.0f),

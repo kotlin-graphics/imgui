@@ -650,8 +650,10 @@ class DrawList {
     fun pathStroke(col: Int, closed: Boolean, thickness: Float = 1.0f) = addPolyline(_path, col, closed, thickness, true).also { pathClear() }
 
     fun pathArcTo(centre: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 10) {
-        if (radius == 0f)
+        if (radius == 0f) {
             _path.add(centre)
+            return
+        }
         for (i in 0..numSegments) {
             val a = aMin + (i.f / numSegments) * (aMax - aMin)
             _path.add(Vec2(centre.x + glm.cos(a) * radius, centre.y + glm.sin(a) * radius))
@@ -677,14 +679,14 @@ class DrawList {
             circleVtxBuilds = true
         }
 
-        if (aMinOf12 > aMaxOf12) return
-        if (radius == 0f)
+        if (radius == 0f || aMinOf12 > aMaxOf12) {
             _path.add(centre)
-        else
-            for (a in aMinOf12..aMaxOf12) {
-                val c = circleVtx[a % circleVtxCount]
-                _path.add(Vec2(centre.x + c.x * radius, centre.y + c.y * radius))
-            }
+            return
+        }
+        for (a in aMinOf12..aMaxOf12) {
+            val c = circleVtx[a % circleVtxCount]
+            _path.add(Vec2(centre.x + c.x * radius, centre.y + c.y * radius))
+        }
     }
 
 //    fun pathBezierCurveTo(p1: Vec2, p2: Vec2, p3: Vec2, numSegments: Int = 0) {
@@ -739,30 +741,29 @@ class DrawList {
     fun pathRect(a: Vec2, b: Vec2, rounding: Float = 0f, roundingCorners: Int = 0.inv()) {
 
         val cornersTop = Corner.TopLeft or Corner.TopRight
-        val cornersBottom = Corner.BottomLeft or Corner.BottomRight
-        val cornersLeft = Corner.TopLeft or Corner.BottomLeft
-        val cornersRight = Corner.TopRight or Corner.BottomRight
+        val cornersBottom = Corner.BotLeft or Corner.BotRight
+        val cornersLeft = Corner.TopLeft or Corner.BotLeft
+        val cornersRight = Corner.TopRight or Corner.BotRight
 
-        var r = rounding
-        var cond = ((roundingCorners and cornersTop)  == cornersTop) || ((roundingCorners and cornersBottom) == cornersBottom)
-        r = glm.min(r, glm.abs(b.x - a.x) * (if (cond) 0.5f else 1f) - 1f)
-        cond = ((roundingCorners and cornersLeft) == cornersLeft) || ((roundingCorners and cornersRight)  == cornersRight)
-        r = glm.min(r, glm.abs(b.y - a.y) * (if (cond) 0.5f else 1f) - 1f)
+        var cond = ((roundingCorners and cornersTop) == cornersTop) || ((roundingCorners and cornersBottom) == cornersBottom)
+        var rounding = glm.min(rounding, glm.abs(b.x - a.x) * (if (cond) 0.5f else 1f) - 1f)
+        cond = ((roundingCorners and cornersLeft) == cornersLeft) || ((roundingCorners and cornersRight) == cornersRight)
+        rounding = glm.min(rounding, glm.abs(b.y - a.y) * (if (cond) 0.5f else 1f) - 1f)
 
-        if (r <= 0f || roundingCorners == 0) {
+        if (rounding <= 0f || roundingCorners == 0) {
             pathLineTo(a)
             pathLineTo(Vec2(b.x, a.y))
             pathLineTo(b)
             pathLineTo(Vec2(a.x, b.y))
         } else {
-            val r0 = if (roundingCorners has Corner.TopLeft) r else 0f
-            val r1 = if (roundingCorners has Corner.TopRight) r else 0f
-            val r2 = if (roundingCorners has Corner.BottomRight) r else 0f
-            val r3 = if (roundingCorners has Corner.BottomLeft) r else 0f
-            pathArcToFast(Vec2(a.x + r0, a.y + r0), r0, 6, 9)
-            pathArcToFast(Vec2(b.x - r1, a.y + r1), r1, 9, 12)
-            pathArcToFast(Vec2(b.x - r2, b.y - r2), r2, 0, 3)
-            pathArcToFast(Vec2(a.x + r3, b.y - r3), r3, 3, 6)
+            val roundingTL = if (roundingCorners has Corner.TopLeft) rounding else 0f
+            val roundingTR = if (roundingCorners has Corner.TopRight) rounding else 0f
+            val roundingBR = if (roundingCorners has Corner.BotRight) rounding else 0f
+            val roundingBL = if (roundingCorners has Corner.BotLeft) rounding else 0f
+            pathArcToFast(Vec2(a.x + roundingTL, a.y + roundingTL), roundingTL, 6, 9)
+            pathArcToFast(Vec2(b.x - roundingTR, a.y + roundingTR), roundingTR, 9, 12)
+            pathArcToFast(Vec2(b.x - roundingBR, b.y - roundingBR), roundingBR, 0, 3)
+            pathArcToFast(Vec2(a.x + roundingBL, b.y - roundingBL), roundingBL, 3, 6)
         }
     }
 
@@ -911,7 +912,7 @@ class DrawList {
         val idxBufferOldSize = idxBuffer.size
         for (i in 0 until idxCount)
             if (idxCount > 0) idxBuffer.add(0)
-           else idxBuffer.removeAt(idxBuffer.lastIndex)
+            else idxBuffer.removeAt(idxBuffer.lastIndex)
         _idxWritePtr = idxBufferOldSize
     }
 

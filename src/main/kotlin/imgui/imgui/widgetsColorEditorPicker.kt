@@ -556,9 +556,9 @@ interface imgui_widgetsColorEditorPicker {
         if (flags has ColorEditFlags.AlphaPreviewHalf && col.w < 1f) {
             val midX = ((bb.min.x + bb.max.x) * 0.5f + 0.5f).i.f
             renderColorRectWithAlphaCheckerboard(Vec2(bb.min.x + gridStep, bb.min.y), bb.max, getColorU32(col), gridStep,
-                    Vec2(-gridStep, 0f), rounding, Corner.TopRight or Corner.BottomRight)
+                    Vec2(-gridStep, 0f), rounding, Corner.TopRight or Corner.BotRight)
             window.drawList.addRectFilled(bb.min, Vec2(midX, bb.max.y), getColorU32(colWithoutAlpha), rounding,
-                    Corner.TopLeft or Corner.BottomLeft)
+                    Corner.TopLeft or Corner.BotLeft)
         } else {
             val c = getColorU32(if (flags has ColorEditFlags.AlphaPreview) col else colWithoutAlpha)
             renderColorRectWithAlphaCheckerboard(bb.min, bb.max, c, gridStep, Vec2(), rounding)

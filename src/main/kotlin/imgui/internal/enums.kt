@@ -95,8 +95,8 @@ enum class Corner(val i: Int) {
     Null(0),
     TopLeft(1 shl 0), // 1
     TopRight(1 shl 1), // 2
-    BottomRight(1 shl 2), // 4
-    BottomLeft(1 shl 3), // 8
+    BotRight(1 shl 2), // 4
+    BotLeft(1 shl 3), // 8
     All(0x0F);
 
     infix fun or(b: Corner) = i or b.i

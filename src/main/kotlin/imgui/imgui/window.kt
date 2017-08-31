@@ -448,7 +448,7 @@ interface imgui_window {
                 if (bgColor.w > 0f)
                     window.drawList.addRectFilled(Vec2(0, window.titleBarHeight()) + window.pos, window.size + window.pos,
                             bgColor.u32, windowRounding,
-                            if (flags has WindowFlags.NoTitleBar) Corner.All.i else Corner.BottomLeft or Corner.BottomRight)
+                            if (flags has WindowFlags.NoTitleBar) Corner.All.i else Corner.BotLeft or Corner.BotRight)
 
                 // Title bar
                 if (flags hasnt WindowFlags.NoTitleBar)
