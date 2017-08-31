@@ -127,7 +127,7 @@ interface imgui_widgetsSelectableLists {
     }
 
     fun listBox(label: String, currentItem: IntArray, items: Array<String>, heightInItems: Int = -1) =
-            listBox(label, currentItem, imgui_widgets.Items.arrayGetter, items, heightInItems)
+            listBox(label, currentItem, imgui_widgetsText.Items.arrayGetter, items, heightInItems)
 
     fun listBox(label: String, currentItem: IntArray, itemsGetter: (Array<String>, Int, Array<String>) -> Boolean, data: Array<String>,
                 heightInItems: Int = -1): Boolean {

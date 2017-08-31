@@ -12,7 +12,7 @@ import imgui.Context as g
 interface imgui_idScopes {
 
 
-    /** push identifier into the ID stack. IDs are hash of the *entire* stack!  */
+    /** push identifier into the ID stack. IDs are hash of the entire stack!  */
     fun pushId(strId: String) = with(currentWindowRead!!) { idStack.push(getId(strId)) }
 
     /** Includes Int IDs as well    */
@@ -20,7 +20,7 @@ interface imgui_idScopes {
 
     fun popId() = currentWindowRead!!.idStack.pop()
 
-    /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage
+    /** calculate unique ID (hash of whole ID stack + given parameter). e.g. if you want to query into ImGuiStorage
      *  yourself. otherwise rarely needed   */
     fun getId(strId: String) = g.currentWindow!!.getId(strId)
 

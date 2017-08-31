@@ -1,0 +1,327 @@
+package imgui.imgui
+
+import glm_.glm
+import glm_.i
+import glm_.vec2.Vec2
+import glm_.vec4.Vec4
+import imgui.*
+import imgui.Context.style
+import imgui.ImGui.beginPopup
+import imgui.ImGui.calcTextSize
+import imgui.ImGui.calcWrapWidthForPos
+import imgui.ImGui.checkboxFlags
+import imgui.ImGui.colorPicker4
+import imgui.ImGui.currentWindow
+import imgui.ImGui.cursorScreenPos
+import imgui.ImGui.endPopup
+import imgui.ImGui.isClippedEx
+import imgui.ImGui.itemAdd
+import imgui.ImGui.itemSize
+import imgui.ImGui.popId
+import imgui.ImGui.popItemWidth
+import imgui.ImGui.popStyleColor
+import imgui.ImGui.popTextWrapPos
+import imgui.ImGui.pushId
+import imgui.ImGui.pushItemWidth
+import imgui.ImGui.pushStyleColor
+import imgui.ImGui.pushTextWrapPos
+import imgui.ImGui.radioButton
+import imgui.ImGui.renderBullet
+import imgui.ImGui.renderText
+import imgui.ImGui.renderTextWrapped
+import imgui.ImGui.sameLine
+import imgui.ImGui.selectable
+import imgui.ImGui.separator
+import imgui.ImGui.textLineHeight
+import imgui.imgui.imgui_internal.Companion.colorSquareSize
+import imgui.internal.*
+import imgui.Context as g
+
+interface imgui_widgetsText {
+
+    /** doesn't require null terminated string if 'text_end' is specified. no copy done to any bounded stack buffer,
+     *  recommended for long chunks of text */
+    fun textUnformatted(text: String, textEnd: Int = text.length) {
+
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val wrapPosX = window.dc.textWrapPos
+        val wrapEnabled = wrapPosX >= 0f
+        if (textEnd > 2000 && !wrapEnabled) {
+            /*  Long text!
+                Perform manual coarse clipping to optimize for long multi-line text
+                From this point we will only compute the width of lines that are visible. Optimization only available
+                when word-wrapping is disabled.
+                We also don't vertically center the text within the line full height, which is unlikely to matter
+                because we are likely the biggest and only item on the line.    */
+
+            var line = 0
+            val lineHeight = textLineHeight
+            val textPos = window.dc.cursorPos + Vec2(0f, window.dc.currentLineTextBaseOffset)
+            val clipRect = Rect(window.clipRect)
+            val textSize = Vec2()
+
+            if (textPos.y <= clipRect.max.y) {
+
+                val pos = Vec2(textPos)
+                // Lines to skip (can't skip when logging text)
+                if (!g.logEnabled) {
+                    val linesSkippable = ((clipRect.min.y - textPos.y) / lineHeight).i
+                    if (linesSkippable > 0) {
+                        var linesSkipped = 0
+                        while (line < textEnd && linesSkipped < linesSkippable) {
+                            val lineEnd = text.strchr(line, '\n') ?: textEnd
+                            line = lineEnd + 1
+                            linesSkipped++
+                        }
+                        pos.y += linesSkipped * lineHeight
+                    }
+                }
+                // Lines to render
+                if (line < textEnd) {
+                    val lineRect = Rect(pos, pos + Vec2(Float.MAX_VALUE, lineHeight))
+                    while (line < textEnd) {
+                        var lineEnd = text.strchr(line, '\n') ?: 0
+                        if (isClippedEx(lineRect, null, false)) break
+
+                        val pLine = text.substring(line)
+                        val lineSize = calcTextSize(pLine, lineEnd - line, false)
+                        textSize.x = glm.max(textSize.x, lineSize.x)
+                        renderText(pos, pLine, lineEnd - line, false)
+                        if (lineEnd == 0) lineEnd = textEnd
+                        line = lineEnd + 1
+                        lineRect.min.y += lineHeight
+                        lineRect.max.y += lineHeight
+                        pos.y += lineHeight
+                    }
+                    // Count remaining lines
+                    var linesSkipped = 0
+                    while (line < textEnd) {
+                        val line_end = text.strchr(line, '\n') ?: textEnd
+                        line = line_end + 1
+                        linesSkipped++
+                    }
+                    pos.y += linesSkipped * lineHeight
+                }
+                textSize.y += (pos - textPos).y
+            }
+            val bb = Rect(textPos, textPos + textSize)
+            itemSize(bb)
+            itemAdd(bb)
+        } else {
+            val wrapWidth = if (wrapEnabled) calcWrapWidthForPos(window.dc.cursorPos, wrapPosX) else 0f
+            val textSize = calcTextSize(text, textEnd, false, wrapWidth)
+
+            // Account of baseline offset
+            val textPos = Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + window.dc.currentLineTextBaseOffset)
+            val bb = Rect(textPos, textPos + textSize)
+            itemSize(textSize)
+            if (!itemAdd(bb)) return
+
+            // Render (we don't hide text after ## in this end-user function)
+            renderTextWrapped(bb.min, text, textEnd, wrapWidth)
+        }
+    }
+
+    fun text(fmt: String, vararg args: Any) = textV(fmt, args)
+
+    fun textV(fmt: String, args: Array<out Any>) {
+
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val fmt =
+//                try{
+                    if (args.isEmpty())
+                        fmt
+                    else
+                        fmt.format(style.locale, *args)
+//                }catch (err: Exception) {
+//                    println("fmt $fmt, args: ${args}")
+//                    TODO()
+//                }
+
+        val textEnd = fmt.length
+        textUnformatted(fmt, textEnd)
+    }
+
+    /** shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();   */
+    fun textColored(col: Vec4, fmt: String, vararg args: Any) {
+        pushStyleColor(Col.Text, col)
+        text(fmt, *args)
+        popStyleColor()
+    }
+
+    /** shortcut for:
+     *      pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
+     *      text(fmt, ...)
+     *      popStyleColor() */
+    fun textDisabled(fmt: String, vararg args: Any) = textDisabledV(fmt, args)
+
+    fun textDisabledV(fmt: String, args: Array<out Any>) {
+        pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
+        textV(fmt, args)
+        popStyleColor()
+    }
+
+    /** shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this won't work on an
+     *  auto-resizing window if there's no other widgets to extend the window width, yoy may need to set a size using
+     *  SetNextWindowSize().    */
+    fun textWrapped(fmt: String, vararg args: Any) {
+
+        val needWrap = g.currentWindow!!.dc.textWrapPos < 0f  // Keep existing wrap position is one ia already set
+        if (needWrap) pushTextWrapPos(0f)
+        text(fmt, *args)
+        if (needWrap) popTextWrapPos()
+    }
+
+//    IMGUI_API void          LabelText(const char* label, const char* fmt, ...) IM_PRINTFARGS(2);    // display text+label aligned the same way as value+label widgets
+//    IMGUI_API void          LabelTextV(const char* label, const char* fmt, va_list args);
+
+    /** shortcut for Bullet()+Text()    */
+    fun bulletText(fmt: String, vararg args: Any) = bulletTextV(fmt, args)
+
+    /** Text with a little bullet aligned to the typical tree node. */
+    fun bulletTextV(fmt: String, args: Array<out Any>) {
+
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val text = fmt.format(style.locale, *args)
+        val labelSize = calcTextSize(text, false)
+        val textBaseOffsetY = glm.max(0f, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
+        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), g.fontSize)
+        val x = g.fontSize + if (labelSize.x > 0f) labelSize.x + style.framePadding.x * 2 else 0f
+        // Empty text doesn't add padding
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(x, glm.max(lineHeight, labelSize.y)))
+        itemSize(bb)
+        if (!itemAdd(bb)) return
+
+        // Render
+        renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
+        renderText(bb.min + Vec2(g.fontSize + style.framePadding.x * 2, textBaseOffsetY), text, text.length, false)
+    }
+
+    /** draw a small circle and keep the cursor on the same line. advance cursor x position
+     *  by GetTreeNodeToLabelSpacing(), same distance that TreeNode() uses  */
+    fun bullet() {
+
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), g.fontSize)
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(g.fontSize, lineHeight))
+        itemSize(bb)
+        if (!itemAdd(bb)) {
+            sameLine(0f, style.framePadding.x * 2)
+            return
+        }
+
+        // Render and stay on same line
+        renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
+        sameLine(0f, style.framePadding.x * 2)
+    }
+
+    // TODO, lambdas are so short, consider removing it
+    object Items {
+        // FIXME-OPT: we could pre-compute the indices to fasten this. But only 1 active combo means the waste is limited.
+        val singleStringGetter = { data: String, idx: Int -> data.split('\u0000')[idx] }
+        val arrayGetter = { data: Array<String>, idx: Int, outText: Array<String> -> outText[0] = data[idx]; true }
+    }
+
+    companion object {
+        /** 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
+        fun renderArrow(drawList: DrawList, pos: Vec2, halfSz: Vec2, direction: Dir, col: Int) = when (direction) {
+            Dir.Right -> drawList.addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
+            Dir.Left -> drawList.addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y + halfSz.y), pos, col)
+            Dir.Down -> drawList.addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y - halfSz.y), pos, col)
+            Dir.Up -> drawList.addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y + halfSz.y), pos, col)
+            else -> Unit
+        }
+
+        fun renderArrowsForVerticalBar(drawList: DrawList, pos: Vec2, halfSz: Vec2, barW: Float) {
+            renderArrow(drawList, Vec2(pos.x + halfSz.x + 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Right, COL32_BLACK)
+            renderArrow(drawList, Vec2(pos.x + halfSz.x, pos.y), halfSz, Dir.Right, COL32_WHITE)
+            renderArrow(drawList, Vec2(pos.x + barW - halfSz.x - 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Left, COL32_BLACK)
+            renderArrow(drawList, Vec2(pos.x + barW - halfSz.x, pos.y), halfSz, Dir.Left, COL32_WHITE)
+        }
+
+        fun paintVertsLinearGradientKeepAlpha(drawList: DrawList, vertStart: Int, vertEnd: Int, gradientP0: Vec2, gradientP1: Vec2, col0: Int, col1: Int) {
+            val gradientExtent = gradientP1 - gradientP0
+            val gradientInvLength = gradientExtent.invLength(0f)
+            for (v in vertStart until vertEnd) {
+                val vert = drawList.vtxBuffer[v]
+                val d = (vert.pos - gradientP0) dot gradientExtent
+                val t = glm.min(glm.sqrt(glm.max(d, 0f)) * gradientInvLength, 1f)
+                val r = lerp((col0 ushr COL32_R_SHIFT) and 0xFF, (col1 ushr COL32_R_SHIFT) and 0xFF, t)
+                val g = lerp((col0 ushr COL32_G_SHIFT) and 0xFF, (col1 ushr COL32_G_SHIFT) and 0xFF, t)
+                val b = lerp((col0 ushr COL32_B_SHIFT) and 0xFF, (col1 ushr COL32_B_SHIFT) and 0xFF, t)
+                vert.col = (r shl COL32_R_SHIFT) or (g shl COL32_G_SHIFT) or (b shl COL32_B_SHIFT) or (vert.col and COL32_A_MASK)
+            }
+        }
+
+        fun colorEditOptionsPopup(flags: Int) {
+            val allowOptInputs = flags hasnt ColorEditFlags._InputsMask
+            val allowOptDatatype = flags hasnt ColorEditFlags._DataTypeMask
+            if ((!allowOptInputs && !allowOptDatatype) || !beginPopup("context")) return
+            var opts = g.colorEditOptions
+            if (allowOptInputs) {
+                if (radioButton("RGB", opts has ColorEditFlags.RGB))
+                    opts = (opts wo ColorEditFlags._InputsMask) or ColorEditFlags.RGB
+                if (radioButton("HSV", opts has ColorEditFlags.HSV))
+                    opts = (opts wo ColorEditFlags._InputsMask) or ColorEditFlags.HSV
+                if (radioButton("HEX", opts has ColorEditFlags.HEX))
+                    opts = (opts wo ColorEditFlags._InputsMask) or ColorEditFlags.HEX
+            }
+            if (allowOptDatatype) {
+                if (allowOptInputs) separator()
+                if (radioButton("0..255", opts has ColorEditFlags.Uint8))
+                    opts = (opts wo ColorEditFlags._DataTypeMask) or ColorEditFlags.Uint8
+                if (radioButton("0.00..1.00", opts has ColorEditFlags.Float))
+                    opts = (opts wo ColorEditFlags._DataTypeMask) or ColorEditFlags.Float
+            }
+            g.colorEditOptions = opts
+            endPopup()
+        }
+
+        fun colorPickerOptionsPopup(flags: Int, refCol: FloatArray) {
+            val allowOptPicker = flags hasnt ColorEditFlags._PickerMask
+            val allowOptAlphaBar = flags hasnt ColorEditFlags.NoAlpha && flags hasnt ColorEditFlags.AlphaBar
+            if ((!allowOptPicker && !allowOptAlphaBar) || !beginPopup("context")) return
+            if (allowOptPicker) {
+                // FIXME: Picker size copied from main picker function
+                val pickerSize = Vec2(g.fontSize * 8, glm.max(g.fontSize * 8 - (colorSquareSize + style.itemInnerSpacing.x), 1f))
+                pushItemWidth(pickerSize.x)
+                for (pickerType in 0..1) {
+                    // Draw small/thumbnail version of each picker type (over an invisible button for selection)
+                    if (pickerType > 0) separator()
+                    pushId(pickerType)
+                    var pickerFlags = ColorEditFlags.NoInputs or ColorEditFlags.NoOptions or ColorEditFlags.NoLabel or
+                            ColorEditFlags.NoSidePreview or (flags and ColorEditFlags.NoAlpha)
+                    if (pickerType == 0) pickerFlags = pickerFlags or ColorEditFlags.PickerHueBar
+                    if (pickerType == 1) pickerFlags = pickerFlags or ColorEditFlags.PickerHueWheel
+                    val backupPos = Vec2(cursorScreenPos)
+                    if (selectable("##selectable", false, 0, pickerSize)) // By default, Selectable() is closing popup
+                        g.colorEditOptions = (g.colorEditOptions wo ColorEditFlags._PickerMask) or (pickerFlags and ColorEditFlags._PickerMask)
+                    cursorScreenPos = backupPos
+                    val dummyRefCol = Vec4()
+                    for (i in 0..2) dummyRefCol[i] = refCol[i]
+                    if (pickerFlags hasnt ColorEditFlags.NoAlpha) dummyRefCol[3] = refCol[3]
+                    val pF = floatArrayOf(dummyRefCol.x)
+                    colorPicker4("##dummypicker", pF, pickerFlags)
+                    dummyRefCol.x = pF[0]
+                    popId()
+                }
+                popItemWidth()
+            }
+            if (allowOptAlphaBar) {
+                if (allowOptPicker) separator()
+                val pI = intArrayOf(g.colorEditOptions)
+                checkboxFlags("Alpha Bar", pI, ColorEditFlags.AlphaBar.i)
+                g.colorEditOptions = pI[0]
+            }
+            endPopup()
+        }
+    }
+}
