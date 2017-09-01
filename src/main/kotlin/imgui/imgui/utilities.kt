@@ -23,17 +23,21 @@ import imgui.Context as g
 
 interface imgui_utilities {
 
-    /** was the last item hovered by mouse? */
-    fun isItemRectHovered() = currentWindowRead!!.dc.lastItemHoveredAndUsable
+    /** Is the last item hovered by mouse (and usable)? */
+    val isItemHovered get() = currentWindowRead!!.dc.lastItemHoveredAndUsable
 
-    /** was the last item active? (e.g. button being held, text field being edited- items that don't interact will always
+    /** Is the last item hovered by mouse? even if another item is active or window is blocked by popup while we are
+     *  hovering this */
+    val isItemRectHovered get() = currentWindowRead!!.dc.lastItemHoveredRect
+
+    /** Is the last item active? (e.g. button being held, text field being edited- items that don't interact will always
      *  return false)   */
     val isItemActive get() = if (g.activeId != 0) g.activeId == currentWindowRead!!.dc.lastItemId else false
 
-    /** was the last item clicked? (e.g. button/node just clicked on)   */
-    fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemRectHovered()
+    /** Is the last item clicked? (e.g. button/node just clicked on)   */
+    fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemRectHovered
 
-    /** was the last item visible? (aka not out of sight due to clipping/scrolling.)    */
+    /** Is the last item visible? (aka not out of sight due to clipping/scrolling.)    */
     val isItemVisible get() = with(currentWindowRead!!) { clipRect overlaps dc.lastItemRect }
 
     val isAnyItemHovered get() = g.hoveredId != 0 || g.hoveredIdPreviousFrame != 0
@@ -64,7 +68,7 @@ interface imgui_utilities {
     /** is current window hovered and hoverable (not blocked by a popup) (differentiate child windows from each others) */
     val isWindowHovered get() = g.hoveredWindow === g.currentWindow && g.hoveredRootWindow!!.isContentHoverable
 
-    /** is current window rectnagle hovered, disregarding of any consideration of being blocked by a popup.
+    /** is current window rectangle hovered, disregarding of any consideration of being blocked by a popup.
      *  (unlike IsWindowHovered() this will return true even if the window is blocked because of a popup)   */
     val isWindowRectHovered get() = g.hoveredWindow === g.currentWindow
 

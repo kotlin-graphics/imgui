@@ -69,7 +69,7 @@ interface imgui_widgetsDrag {
 
         // Tabbing or CTRL-clicking on Drag turns it into an input box
         var startTextInput = false
-        val tabFocusRequested = focusableItemRegister(window, g.activeId == id)
+        val tabFocusRequested = focusableItemRegister(window, id)
         if (tabFocusRequested || (hovered && (IO.mouseClicked[0] || IO.mouseDoubleClicked[0]))) {
             setActiveId(id, window)
             focusWindow(window)

@@ -184,11 +184,10 @@ interface imgui_internal {
     }
 
     fun setActiveId(id: Int, window: Window?) {
+        g.activeIdIsJustActivated = (g.activeId != id)
         g.activeId = id
         g.activeIdAllowOverlap = false
-        g.activeIdIsJustActivated = true
-        if (id != 0)
-            g.activeIdIsAlive = true
+        g.activeIdIsAlive = g.activeIdIsAlive || id != 0
         g.activeIdWindow = window
     }
 
@@ -235,7 +234,7 @@ interface imgui_internal {
      *  drawing/interaction, which is passed to ItemAdd().  */
     fun itemAdd(bb: Rect, id: Int = 0): Boolean {
 
-        val window = currentWindow
+        val window = g.currentWindow!!
         with(window.dc) {
             lastItemId = id
             lastItemRect = Rect(bb)
@@ -244,7 +243,7 @@ interface imgui_internal {
         }
         if (isClippedEx(bb, id, false)) return false
 
-        // This is a sensible default, but widgets are free to override it after calling ItemAdd()
+        // Setting LastItemHoveredAndUsable for IsItemHovered(). This is a sensible default, but widgets are free to override it.
         if (isMouseHoveringRect(bb)) {
             /*  Matching the behavior of IsHovered() but allow if ActiveId==window->MoveID (we clicked on the window
                 background)
@@ -284,19 +283,19 @@ interface imgui_internal {
     }
 
     /** Return true if focus is requested   */
-    fun focusableItemRegister(window: Window, isActive: Boolean, tabStop: Boolean = true): Boolean {
+    fun focusableItemRegister(window: Window, id: Int, tabStop: Boolean = true): Boolean {
 
         val allowKeyboardFocus = window.dc.allowKeyboardFocus
         window.focusIdxAllCounter++
         if (allowKeyboardFocus)
             window.focusIdxTabCounter++
 
-        // Process keyboard input at this point: TAB, Shift-TAB switch focus
-        // We can always TAB out of a widget that doesn't allow tabbing in.
-        if (tabStop && window.focusIdxAllRequestNext == Int.MAX_VALUE && window.focusIdxTabRequestNext == Int.MAX_VALUE && isActive
-                && Key.Tab.isPressed)
+        /*  Process keyboard input at this point: TAB/Shift-TAB to tab out of the currently focused item.
+            Note that we can always TAB out of a widget that doesn't allow tabbing in.         */
+        if (tabStop && g.activeId == id && window.focusIdxAllRequestNext == Int.MAX_VALUE &&
+                window.focusIdxTabRequestNext == Int.MAX_VALUE && !IO.keyCtrl && Key.Tab.isPressed)
         // Modulo on index will be applied at the end of frame once we've got the total counter of items.
-            window.focusIdxTabRequestNext = window.focusIdxTabCounter + (if (IO.keyShift) (if (allowKeyboardFocus) -1 else 0) else +1)
+            window.focusIdxTabRequestNext = window.focusIdxTabCounter + if (IO.keyShift) if (allowKeyboardFocus) -1 else 0 else 1
 
         if (window.focusIdxAllCounter == window.focusIdxAllRequestCurrent) return true
 
@@ -353,6 +352,18 @@ interface imgui_internal {
             g.openPopupStack[currentStackSize] = popupRef
     }
 
+    // FIXME
+    /** return true if the popup is open    */
+    fun isPopupOpen(id: Int) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
+
+    fun calcTypematicPressedRepeatAmount(t: Float, tPrev: Float, repeatDelay: Float, repeatRate: Float) = when {
+        t == 0f -> 1
+        t <= repeatDelay || repeatRate <= 0f -> 0
+        else -> {
+            val count = ((t - repeatDelay) / repeatRate).i - ((tPrev - repeatDelay) / repeatRate).i
+            if (count > 0) count else 0
+        }
+    }
 
     // New Columns API
 
@@ -666,6 +677,55 @@ interface imgui_internal {
         window.drawList.pathLineTo(b)
         window.drawList.pathLineTo(Vec2(b.x + remThird * 2, b.y - remThird * 2))
         window.drawList.pathStroke(col, false)
+    }
+
+    /** FIXME: Cleanup and move code to ImDrawList. */
+    fun renderRectFilledRangeH(drawList: DrawList, rect: Rect, col: Int, xStartNorm: Float, xEndNorm: Float, rounding: Float) {
+        var xStartNorm = xStartNorm
+        var xEndNorm = xEndNorm
+        if (xEndNorm == xStartNorm) return
+        if (xStartNorm > xEndNorm) {
+            val tmp = xStartNorm
+            xStartNorm = xEndNorm
+            xEndNorm = tmp
+        }
+        val p0 = Vec2(lerp(rect.min.x, rect.max.x, xStartNorm), rect.min.y)
+        val p1 = Vec2(lerp(rect.min.x, rect.max.x, xEndNorm), rect.max.y)
+        if (rounding == 0f) {
+            drawList.addRectFilled(p0, p1, col, 0f)
+            return
+        }
+        val rounding = glm.clamp(glm.min((rect.max.x - rect.min.x) * 0.5f, (rect.max.y - rect.min.y) * 0.5f) - 1f, 0f, rounding)
+        val invRounding = 1f / rounding
+        val arc0B = acos01(1f - (p0.x - rect.min.x) * invRounding)
+        val arc0E = acos01(1f - (p1.x - rect.min.x) * invRounding)
+        val x0 = glm.max(p0.x, rect.min.x + rounding)
+        if (arc0B == arc0E) {
+            drawList.pathLineTo(Vec2(x0, p1.y))
+            drawList.pathLineTo(Vec2(x0, p0.y))
+        } else if (arc0B == 0f && arc0E == glm.PIf * 0.5f) {
+            drawList.pathArcToFast(Vec2(x0, p1.y - rounding), rounding, 3, 6) // BL
+            drawList.pathArcToFast(Vec2(x0, p0.y + rounding), rounding, 6, 9) // TR
+        } else {
+            drawList.pathArcTo(Vec2(x0, p1.y - rounding), rounding, glm.PIf - arc0E, glm.PIf - arc0B, 3) // BL
+            drawList.pathArcTo(Vec2(x0, p0.y + rounding), rounding, glm.PIf + arc0B, glm.PIf + arc0E, 3) // TR
+        }
+        if (p1.x > rect.min.x + rounding) {
+            val arc1B = acos01(1f - (rect.max.x - p1.x) * invRounding)
+            val arc1E = acos01(1f - (rect.max.x - p0.x) * invRounding)
+            val x1 = glm.min(p1.x, rect.max.x - rounding)
+            if (arc1B == arc1E) {
+                drawList.pathLineTo(Vec2(x1, p0.y))
+                drawList.pathLineTo(Vec2(x1, p1.y))
+            } else if (arc1B == 0f && arc1E == glm.PIf * 0.5f) {
+                drawList.pathArcToFast(Vec2(x1, p0.y + rounding), rounding, 9, 12) // TR
+                drawList.pathArcToFast(Vec2(x1, p1.y - rounding), rounding, 0, 3)  // BR
+            } else {
+                drawList.pathArcTo(Vec2(x1, p0.y + rounding), rounding, -arc1E, -arc1B, 3) // TR
+                drawList.pathArcTo(Vec2(x1, p1.y - rounding), rounding, +arc1B, +arc1E, 3) // BR
+            }
+        }
+        drawList.pathFillConvex(col)
     }
 
     /** Find the optional ## from which we stop displaying text.    */
@@ -995,14 +1055,18 @@ interface imgui_internal {
 
                 var vCur = g.dragCurrentValue
                 val mouseDragDelta = getMouseDragDelta(0, 1f)
-                if (glm.abs(mouseDragDelta.x - g.dragLastMouseDelta.x) > 0f) {
-                    var speed = vSpeed
+                var adjustDelta = 0f
+                //if (g.ActiveIdSource == ImGuiInputSource_Mouse)
+                run {
+                    adjustDelta = mouseDragDelta.x - g.dragLastMouseDelta.x
                     if (IO.keyShift && g.dragSpeedScaleFast >= 0f)
-                        speed *= g.dragSpeedScaleFast
+                        adjustDelta *= g.dragSpeedScaleFast
                     if (IO.keyAlt && g.dragSpeedScaleSlow >= 0f)
-                        speed *= g.dragSpeedScaleSlow
-
-                    val adjustDelta = (mouseDragDelta.x - g.dragLastMouseDelta.x) * speed
+                        adjustDelta *= g.dragSpeedScaleSlow
+                }
+                adjustDelta *= vSpeed
+                g.dragLastMouseDelta.x = mouseDragDelta.x
+                if (glm.abs(adjustDelta) > 0f) {
                     if (glm.abs(power - 1f) > 0.001f) {
                         // Logarithmic curve on both side of 0.0
                         val v0_abs = if (vCur >= 0f) vCur else -vCur
@@ -1013,8 +1077,6 @@ interface imgui_internal {
                         vCur = glm.pow(v1_abs, power) * v0_sign * v1_sign   // Reapply sign
                     } else
                         vCur += adjustDelta
-
-                    g.dragLastMouseDelta.x = mouseDragDelta.x
 
                     // Clamp
                     if (vMin < vMax)
@@ -1097,7 +1159,7 @@ interface imgui_internal {
 
         // Using completion callback disable keyboard tabbing
         val tabStop = flags hasnt (InputTextFlags.CallbackCompletion or InputTextFlags.AllowTabInput)
-        val focusRequested = focusableItemRegister(window, g.activeId == id, tabStop)
+        val focusRequested = focusableItemRegister(window, id, tabStop)
         val focusRequestedByCode = focusRequested && window.focusIdxAllCounter == window.focusIdxAllRequestCurrent
         val focusRequestedByTab = focusRequested && !focusRequestedByCode
 
@@ -1109,6 +1171,8 @@ interface imgui_internal {
         val userClicked = hovered && IO.mouseClicked[0]
         val userScrolled = isMultiline && g.activeId == 0 && editState.id == id &&
                 g.activeIdPreviousFrame == drawWindow.getIdNoKeepAlive("#SCROLLY")
+
+        var clearActiveId = false
 
         var selectAll = g.activeId != id && flags has InputTextFlags.AutoSelectAll
         if (focusRequested || userClicked || userScrolled) {
@@ -1154,8 +1218,7 @@ interface imgui_internal {
             focusWindow(window)
         } else if (IO.mouseClicked[0])
         // Release focus when we click outside
-            if (g.activeId == id)
-                clearActiveId()
+            clearActiveId = true
 
         var valueChanged = false
         var enterPressed = false
@@ -1199,7 +1262,7 @@ interface imgui_internal {
             } else if (IO.mouseClicked[0] && !editState.selectedAllMouseLock) {
                 editState.click(mouseX, mouseY)
                 editState.cursorAnimReset()
-            } else if (IO.mouseDown[0] && !editState.selectedAllMouseLock && (IO.mouseDelta.x != 0f || IO.mouseDelta.y != 0f)) {
+            } else if (IO.mouseDown[0] && !editState.selectedAllMouseLock && IO.mouseDelta notEqual 0f) {
                 TODO()
 //                stb_textedit_drag(& editState, &editState.StbState, mouse_x, mouse_y)
 //                editState.CursorAnimReset()
@@ -1224,16 +1287,18 @@ interface imgui_internal {
                         c = pChar[0]
                         editState.onKeyPressed(c)
                     }
-
                 // Consume characters
                 IO.inputCharacters.fill('\u0000')
             }
+        }
 
-            // Handle various key-presses
-            var cancelEdit = false
+        var cancelEdit = false
+        if (g.activeId == id && !g.activeIdIsJustActivated && !clearActiveId) {
+            // Handle key-presses
             val kMask = if (IO.keyShift) K.SHIFT else 0
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
-            val isShortcutKeyOnly = (if (IO.osxBehaviors) IO.keySuper && !IO.keyCtrl else IO.keyCtrl && !IO.keySuper) && !IO.keyAlt && !IO.keyShift
+            val superCtrl = if (IO.osxBehaviors) IO.keySuper && !IO.keyCtrl else IO.keyCtrl && !IO.keySuper
+            val isShortcutKeyOnly = superCtrl && !IO.keyAlt && !IO.keyShift
             // OS X style: Text editing cursor movement using Alt instead of Ctrl
             val isWordmoveKeyDown = if (IO.osxBehaviors) IO.keyAlt else IO.keyCtrl
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
@@ -1277,7 +1342,7 @@ interface imgui_internal {
                 Key.Enter.isPressed -> {
                     val ctrlEnterForNewLine = flags has InputTextFlags.CtrlEnterForNewLine
                     if (!isMultiline || (ctrlEnterForNewLine && !IO.keyCtrl) || (!ctrlEnterForNewLine && IO.keyCtrl)) {
-                        clearActiveId()
+                        clearActiveId = true
                         enterPressed = true
                     } else if (isEditable) {
                         val c = '\n' // Insert new line
@@ -1293,7 +1358,7 @@ interface imgui_internal {
 //                    editState.OnKeyPressed((int) c)
                 }
                 Key.Escape.isPressed -> {
-                    clearActiveId()
+                    clearActiveId = true
                     cancelEdit = true
                 }
                 isShortcutKeyOnly -> when {
@@ -1365,91 +1430,100 @@ interface imgui_internal {
                     }
                 }
             }
+        }
+        if (g.activeId == id) {
 
-            if (cancelEdit) {
-                // Restore initial value
+            if (cancelEdit)
+            // Restore initial value
                 if (isEditable) {
                     TODO()
 //                        ImStrncpy(buf, editState.InitialText.Data, buf_size)
 //                        valueChanged = true
                 }
-            } else {
-                /*  Apply new value immediately - copy modified buffer back
-                    Note that as soon as the input box is active, the in-widget value gets priority over any
-                    underlying modification of the input buffer
-                    FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above
-                    incorrect.
-                    FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from
-                    the stb_textedit callbacks. */
-                if (isEditable)
-                    editState.tempTextBuffer = editState.text.clone()
+
+            /*  When using `InputTextFlags.EnterReturnsTrue` as a special case we reapply the live buffer back to the
+                input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
+                If we didn't do that, code like `inputInt()` with `InputTextFlags.EnterReturnsTrue` would fail.
+                Also this allows the user to use `inputText()` with `InputTextFlags.EnterReturnsTrue` without
+                maintaining any user-side storage.  */
+            val applyEditBackToUserBuffer = !cancelEdit || (enterPressed && flags hasnt InputTextFlags.EnterReturnsTrue)
+            if (applyEditBackToUserBuffer) {
+                // Apply new value immediately - copy modified buffer back
+                // Note that as soon as the input box is active, the in-widget value gets priority over any underlying modification of the input buffer
+                // FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above incorrect.
+                // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
+                if (isEditable) {
+                    TODO()
+//                    edit_state.TempTextBuffer.resize(edit_state.Text.Size * 4);
+//                    ImTextStrToUtf8(edit_state.TempTextBuffer.Data, edit_state.TempTextBuffer.Size, edit_state.Text.Data, NULL);
+                }
 
                 // User callback
                 if (flags has (InputTextFlags.CallbackCompletion or InputTextFlags.CallbackHistory or InputTextFlags.CallbackAlways)) {
-
                     TODO()
-//                    IM_ASSERT(callback != NULL)
+                    //                        IM_ASSERT(callback != NULL);
 //
-//                    // The reason we specify the usage semantic (Completion/History) is that Completion needs to disable keyboard TABBING at the moment.
-//                    ImGuiInputTextFlags event_flag = 0
-//                    ImGuiKey event_key = ImGuiKey_COUNT
-//                            if ((flags & ImGuiInputTextFlags_CallbackCompletion) != 0 && IsKeyPressedMap(ImGuiKey_Tab))
-//                    {
-//                        event_flag = ImGuiInputTextFlags_CallbackCompletion
-//                        event_key = ImGuiKey_Tab
-//                    }
-//                    else if ((flags & ImGuiInputTextFlags_CallbackHistory) != 0 && IsKeyPressedMap(ImGuiKey_UpArrow))
-//                    {
-//                        event_flag = ImGuiInputTextFlags_CallbackHistory
-//                        event_key = ImGuiKey_UpArrow
-//                    }
-//                    else if ((flags & ImGuiInputTextFlags_CallbackHistory) != 0 && IsKeyPressedMap(ImGuiKey_DownArrow))
-//                    {
-//                        event_flag = ImGuiInputTextFlags_CallbackHistory
-//                        event_key = ImGuiKey_DownArrow
-//                    }
-//                    else if (flags & ImGuiInputTextFlags_CallbackAlways)
-//                    event_flag = ImGuiInputTextFlags_CallbackAlways
-//
-//                    if (event_flag) {
-//                        ImGuiTextEditCallbackData callback_data
-//                                memset(& callback_data, 0, sizeof(ImGuiTextEditCallbackData))
-//                        callback_data.EventFlag = event_flag
-//                        callback_data.Flags = flags
-//                        callback_data.UserData = user_data
-//                        callback_data.ReadOnly = !isEditable
-//
-//                        callback_data.EventKey = event_key
-//                        callback_data.Buf = editState.TempTextBuffer.Data
-//                        callback_data.BufTextLen = editState.CurLenA
-//                        callback_data.BufSize = editState.BufSizeA
-//                        callback_data.BufDirty = false
-//
-//                        // We have to convert from wchar-positions to UTF-8-positions, which can be pretty slow (an incentive to ditch the ImWchar buffer, see https://github.com/nothings/stb/issues/188)
-//                        ImWchar * text = editState.Text.Data
-//                        const int utf8_cursor_pos = callback_data.CursorPos = ImTextCountUtf8BytesFromStr(text, text + editState.StbState.cursor)
-//                        const int utf8_selection_start = callback_data.SelectionStart = ImTextCountUtf8BytesFromStr(text, text + editState.StbState.select_start)
-//                        const int utf8_selection_end = callback_data.SelectionEnd = ImTextCountUtf8BytesFromStr(text, text + editState.StbState.select_end)
-//
-//                        // Call user code
-//                        callback(& callback_data)
-//
-//                        // Read back what user may have modified
-//                        IM_ASSERT(callback_data.Buf == editState.TempTextBuffer.Data)  // Invalid to modify those fields
-//                        IM_ASSERT(callback_data.BufSize == editState.BufSizeA)
-//                        IM_ASSERT(callback_data.Flags == flags)
-//                        if (callback_data.CursorPos != utf8_cursor_pos) editState.StbState.cursor = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.CursorPos)
-//                        if (callback_data.SelectionStart != utf8_selection_start) editState.StbState.select_start = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionStart)
-//                        if (callback_data.SelectionEnd != utf8_selection_end) editState.StbState.select_end = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionEnd)
-//                        if (callback_data.BufDirty) {
-//                            IM_ASSERT(callback_data.BufTextLen == (int) strlen (callback_data.Buf)) // You need to maintain BufTextLen if you change the text!
-//                            editState.CurLenW = ImTextStrFromUtf8(editState.Text.Data, editState.Text.Size, callback_data.Buf, NULL)
-//                            editState.CurLenA = callback_data.BufTextLen  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
-//                            editState.CursorAnimReset()
+//                        // The reason we specify the usage semantic (Completion/History) is that Completion needs to disable keyboard TABBING at the moment.
+//                        ImGuiInputTextFlags event_flag = 0;
+//                        ImGuiKey event_key = ImGuiKey_COUNT;
+//                        if ((flags & ImGuiInputTextFlags_CallbackCompletion) != 0 && IsKeyPressedMap(ImGuiKey_Tab))
+//                        {
+//                            event_flag = ImGuiInputTextFlags_CallbackCompletion;
+//                            event_key = ImGuiKey_Tab;
 //                        }
-//                    }
+//                        else if ((flags & ImGuiInputTextFlags_CallbackHistory) != 0 && IsKeyPressedMap(ImGuiKey_UpArrow))
+//                        {
+//                            event_flag = ImGuiInputTextFlags_CallbackHistory;
+//                            event_key = ImGuiKey_UpArrow;
+//                        }
+//                        else if ((flags & ImGuiInputTextFlags_CallbackHistory) != 0 && IsKeyPressedMap(ImGuiKey_DownArrow))
+//                        {
+//                            event_flag = ImGuiInputTextFlags_CallbackHistory;
+//                            event_key = ImGuiKey_DownArrow;
+//                        }
+//                        else if (flags & ImGuiInputTextFlags_CallbackAlways)
+//                        event_flag = ImGuiInputTextFlags_CallbackAlways;
+//
+//                        if (event_flag)
+//                        {
+//                            ImGuiTextEditCallbackData callback_data;
+//                            memset(&callback_data, 0, sizeof(ImGuiTextEditCallbackData));
+//                            callback_data.EventFlag = event_flag;
+//                            callback_data.Flags = flags;
+//                            callback_data.UserData = user_data;
+//                            callback_data.ReadOnly = !is_editable;
+//
+//                            callback_data.EventKey = event_key;
+//                            callback_data.Buf = edit_state.TempTextBuffer.Data;
+//                            callback_data.BufTextLen = edit_state.CurLenA;
+//                            callback_data.BufSize = edit_state.BufSizeA;
+//                            callback_data.BufDirty = false;
+//
+//                            // We have to convert from wchar-positions to UTF-8-positions, which can be pretty slow (an incentive to ditch the ImWchar buffer, see https://github.com/nothings/stb/issues/188)
+//                            ImWchar* text = edit_state.Text.Data;
+//                            const int utf8_cursor_pos = callback_data.CursorPos = ImTextCountUtf8BytesFromStr(text, text + edit_state.StbState.cursor);
+//                            const int utf8_selection_start = callback_data.SelectionStart = ImTextCountUtf8BytesFromStr(text, text + edit_state.StbState.select_start);
+//                            const int utf8_selection_end = callback_data.SelectionEnd = ImTextCountUtf8BytesFromStr(text, text + edit_state.StbState.select_end);
+//
+//                            // Call user code
+//                            callback(&callback_data);
+//
+//                            // Read back what user may have modified
+//                            IM_ASSERT(callback_data.Buf == edit_state.TempTextBuffer.Data);  // Invalid to modify those fields
+//                            IM_ASSERT(callback_data.BufSize == edit_state.BufSizeA);
+//                            IM_ASSERT(callback_data.Flags == flags);
+//                            if (callback_data.CursorPos != utf8_cursor_pos)            edit_state.StbState.cursor = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.CursorPos);
+//                            if (callback_data.SelectionStart != utf8_selection_start)  edit_state.StbState.select_start = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionStart);
+//                            if (callback_data.SelectionEnd != utf8_selection_end)      edit_state.StbState.select_end = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionEnd);
+//                            if (callback_data.BufDirty)
+//                            {
+//                                IM_ASSERT(callback_data.BufTextLen == (int)strlen(callback_data.Buf)); // You need to maintain BufTextLen if you change the text!
+//                                edit_state.CurLenW = ImTextStrFromUtf8(edit_state.Text.Data, edit_state.Text.Size, callback_data.Buf, NULL);
+//                                edit_state.CurLenA = callback_data.BufTextLen;  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
+//                                edit_state.CursorAnimReset();
+//                            }
+//                        }
                 }
-
                 // Copy back to user buffer
                 if (isEditable && !Arrays.equals(editState.tempTextBuffer, buf)) {
                     repeat(buf.size) { buf[it] = editState.tempTextBuffer[it] }
@@ -1457,6 +1531,8 @@ interface imgui_internal {
                 }
             }
         }
+        // Release active ID at the end of the function (so e.g. pressing Return still does a final application of the value)
+        if (clearActiveId && g.activeId == id) clearActiveId()
 
         // ------------------------- Render -------------------------
         /*  Select which buffer we are going to display. When ImGuiInputTextFlags_NoLiveEdit is set 'buf' might still
@@ -1715,8 +1791,7 @@ interface imgui_internal {
             assert(g.activeId == id)
             g.scalarAsInputTextId = g.activeId
             setHoveredId(id)
-        } else if (g.activeId != g.scalarAsInputTextId)
-            g.scalarAsInputTextId = 0   // Release
+        }
         if (textValueChanged)
             return dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data)
         return false
@@ -1901,7 +1976,7 @@ interface imgui_internal {
                     precision = defaultPrecision
             }
         }
-        if(fmt.contains('e', ignoreCase = true))    // Maximum precision with scientific notation
+        if (fmt.contains('e', ignoreCase = true))    // Maximum precision with scientific notation
             precision = -1
         return precision
     }
@@ -1938,6 +2013,13 @@ interface imgui_internal {
         fun getMinimumStepAtDecimalPrecision(decimalPrecision: Int): Float {
             val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
             return if (decimalPrecision in 0..9) minSteps[decimalPrecision] else glm.pow(10f, -decimalPrecision.f)
+        }
+
+        fun acos01(x: Float) = when {
+            x <= 0f -> glm.PIf * 0.5f
+            x >= 1f -> 0f
+            else -> glm.acos(x)
+        //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
     }
 }

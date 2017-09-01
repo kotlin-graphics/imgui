@@ -169,7 +169,7 @@ interface imgui_demoDebugInfo {
 
         // Menu
         menuBar {
-            if(beginMenu("Menu")) {
+            if (beginMenu("Menu")) {
                 showExampleMenuFile()
                 endMenu()
             }
@@ -486,7 +486,7 @@ interface imgui_demoDebugInfo {
                 val texId = IO.fonts.texId
                 text("%.0fx%.0f", texSize.x, texSize.y)
                 image(texId, texSize, Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
-                if (isItemRectHovered())
+                if (isItemRectHovered)
                     tooltip {
                         val focusSz = 32f
                         val focus = glm.clamp(mousePos - texScreenPos - focusSz * 0.5f, Vec2(), texSize - focusSz)
@@ -1440,9 +1440,9 @@ interface imgui_demoDebugInfo {
 //                ImGui::InputFloat("blue", &bar, 0.05f, 0, 3);
 //                ImGui::NextColumn();
 //
-//                if (ImGui::CollapsingHeader("Category A")) ImGui::Text("Blah blah blah"); ImGui::NextColumn();
-//                if (ImGui::CollapsingHeader("Category B")) ImGui::Text("Blah blah blah"); ImGui::NextColumn();
-//                if (ImGui::CollapsingHeader("Category C")) ImGui::Text("Blah blah blah"); ImGui::NextColumn();
+//                if (ImGui::CollapsingHeader("Category A")) { ImGui::Text("Blah blah blah"); } ImGui::NextColumn();
+//                if (ImGui::CollapsingHeader("Category B")) { ImGui::Text("Blah blah blah"); } ImGui::NextColumn();
+//                if (ImGui::CollapsingHeader("Category C")) { ImGui::Text("Blah blah blah"); } ImGui::NextColumn();
 //                ImGui::Columns(1);
 //                ImGui::Separator();
 //                ImGui::TreePop();
@@ -1745,7 +1745,7 @@ interface imgui_demoDebugInfo {
                 val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
                 val cmdNodeOpen = treeNode(i, "Draw %-4d $mode vtx, tex = ${cmd.textureId}, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)",
                         cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
-                if (showClipRects[0] && isItemRectHovered()) {
+                if (showClipRects[0] && isItemRectHovered) {
                     val clipRect = Rect(cmd.clipRect)
                     val vtxsRect = Rect()
                     for (e in elemOffset until elemOffset + cmd.elemCount)
@@ -1773,7 +1773,7 @@ interface imgui_demoDebugInfo {
                             vtxI++
                         }
                         selectable(buf.joinToString("", limit = bufP, truncated = ""), false)
-                        if (isItemRectHovered())
+                        if (isItemRectHovered)
                         // Add triangle without AA, more readable for large-thin triangle
                             overlayDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f, false)
                     }
@@ -2080,7 +2080,7 @@ interface imgui_demoDebugInfo {
 
         fun showHelpMarker(desc: String) {
             textDisabled("(?)")
-            if (isItemRectHovered()) {
+            if (isItemRectHovered) {
                 beginTooltip()
                 pushTextWrapPos(450f)
                 textUnformatted(desc)
@@ -2220,8 +2220,8 @@ interface imgui_demoDebugInfo {
                 val desc = listOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
                         "Width 300-400", "Custom: Always Square", "Custom: Fixed Steps (100)")
                 combo("Constraint", type, desc)
-                button("200x200") { setWindowSize(Vec2(200)); sameLine() }
-                button("500x500") { setWindowSize(Vec2(500)); sameLine() }
+                button("200x200") { setWindowSize(Vec2(200)) }; sameLine()
+                button("500x500") { setWindowSize(Vec2(500)) }; sameLine()
                 button("800x200") { setWindowSize(Vec2(800, 200)) }
                 for (i in 0 until 10)
                     text("Hello, sailor! Making this line long enough for the example.")
@@ -2680,8 +2680,8 @@ interface imgui_demoDebugInfo {
 //            // TODO: display items starting from the bottom
 //
 //            if (ImGui::SmallButton("Add Dummy Text")) { AddLog("%d some text", Items.Size); AddLog("some more text"); AddLog("display very important message here!"); } ImGui::SameLine();
-//            if (ImGui::SmallButton("Add Dummy Error")) AddLog("[error] something went wrong"); ImGui::SameLine();
-//            if (ImGui::SmallButton("Clear")) ClearLog(); ImGui::SameLine();
+//            if (ImGui::SmallButton("Add Dummy Error")) { AddLog("[error] something went wrong"); } ImGui::SameLine();
+//            if (ImGui::SmallButton("Clear")) { ClearLog(); } ImGui::SameLine();
 //            bool copy_to_clipboard = ImGui::SmallButton("Copy"); ImGui::SameLine();
 //            if (ImGui::SmallButton("Scroll to bottom")) ScrollToBottom = true;
 //            //static float t = 0.0f; if (ImGui::GetTime() - t > 0.02f) { t = ImGui::GetTime(); AddLog("Spam %f", t); }
@@ -2740,7 +2740,7 @@ interface imgui_demoDebugInfo {
 //            if (ImGui::InputText("Input", InputBuf, IM_ARRAYSIZE(InputBuf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCompletion|ImGuiInputTextFlags_CallbackHistory, &TextEditCallbackStub, (void*)this))
 //            {
 //                char* input_end = InputBuf+strlen(InputBuf);
-//                while (input_end > InputBuf && input_end[-1] == ' ') input_end--; *input_end = 0;
+//                while (input_end > InputBuf && input_end[-1] == ' ') { input_end--; } *input_end = 0;
 //                if (InputBuf[0])
 //                    ExecCommand(InputBuf);
 //                strcpy(InputBuf, "");
@@ -2781,7 +2781,8 @@ interface imgui_demoDebugInfo {
 //            }
 //            else if (Stricmp(command_line, "HISTORY") == 0)
 //            {
-//                for (int i = History.Size >= 10 ? History.Size - 10 : 0; i < History.Size; i++)
+//                int first = History.Size - 10;
+//                for (int i = first > 0 ? first : 0; i < History.Size; i++)
 //                AddLog("%3d: %s\n", i, History[i]);
 //            }
 //            else

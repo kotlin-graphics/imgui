@@ -186,7 +186,7 @@ interface imgui_widgetsColorEditorPicker {
                     openPopup("picker")
                     setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
                 }
-            } else if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered() && isMouseClicked(1))
+            } else if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered && isMouseClicked(1))
                 openPopup("context")
 
             if (beginPopup("picker")) {
@@ -335,7 +335,7 @@ interface imgui_widgetsColorEditorPicker {
                     valueChanged = true
                 }
             }
-            if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered() && isMouseClicked(1))
+            if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered && isMouseClicked(1))
                 openPopup("context")
 
         } else if (flags has ColorEditFlags.PickerHueBar) {
@@ -347,7 +347,7 @@ interface imgui_widgetsColorEditorPicker {
                 valueChangedSv = true
                 valueChanged = true
             }
-            if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered() && isMouseClicked(1))
+            if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered && isMouseClicked(1))
                 openPopup("context")
             // Hue bar logic
             cursorScreenPos.put(bar0PosX, pickerPos.y)

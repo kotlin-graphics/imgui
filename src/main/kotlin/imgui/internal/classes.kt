@@ -458,12 +458,12 @@ class Window(
     var fontWindowScale = 1f
 
     var drawList = DrawList().apply { _ownerName = name }
-    /** If we are a child window, this is pointing to the first non-child parent window. Else point to ourself. */
-    lateinit var rootWindow: Window
-    /** If we are a child window, this is pointing to the first non-child non-popup parent window. Else point to ourself.   */
-    var rootNonPopupWindow: Window? = null
-    /** If we are a child window, this is pointing to our parent window. Else point to NULL.    */
+    /** Immediate parent in the window stack *regardless* of whether this window is a child window or not)  */
     var parentWindow: Window? = null
+    /** Generally point to ourself. If we are a child window, this is pointing to the first non-child parent window.    */
+    lateinit var rootWindow: Window
+    /** Generally point to ourself. Used to display TitleBgActive color and for selecting which window to use for NavWindowing  */
+    var rootNonPopupWindow: Window? = null
 
     // -----------------------------------------------------------------------------------------------------------------
     // Navigation / Focus
@@ -621,6 +621,16 @@ class Window(
             if (count > 1)
                 dc.childWindows.sortWith(childWindowComparer)
             dc.childWindows.filter { active }.forEach { it.addToSortedBuffer() }
+        }
+    }
+
+    fun addToRenderListSelectLayer() {
+        // FIXME: Generalize this with a proper layering system so e.g. user can draw in specific layers, below text, ..
+        IO.metricsActiveWindows++
+        this addTo when {
+            flags has WindowFlags.Popup -> g.renderDrawLists[1]
+            flags has WindowFlags.Tooltip -> g.renderDrawLists[2]
+            else -> g.renderDrawLists[0]
         }
     }
 

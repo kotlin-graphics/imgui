@@ -11,6 +11,7 @@ import imgui.ImGui.initialize
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
 import imgui.ImGui.setNextWindowSize
+import imgui.internal.Window
 import imgui.internal.lengthSqr
 import imgui.Context as g
 
@@ -56,6 +57,26 @@ interface imgui_main {
         g.renderDrawData.totalVtxCount = 0
         g.renderDrawData.cmdListsCount = 0
 
+        // Clear reference to active widget if the widget isn't alive anymore
+        g.hoveredIdPreviousFrame = g.hoveredId
+        g.hoveredId = 0
+        g.hoveredIdAllowOverlap = false
+        if (!g.activeIdIsAlive && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
+            clearActiveId()
+        g.activeIdPreviousFrame = g.activeId
+        g.activeIdIsAlive = false
+        g.activeIdIsJustActivated = false
+        if (g.scalarAsInputTextId != 0 && g.activeId != g.scalarAsInputTextId)
+            g.scalarAsInputTextId = 0
+
+        // Update keyboard input state
+        for (i in 0 until IO.keysDownDuration.size) IO.keysDownDurationPrev[i] = IO.keysDownDuration[i]
+        for (i in 0 until IO.keysDown.size)
+            IO.keysDownDuration[i] =
+                    if (IO.keysDown[i])
+                        if (IO.keysDownDuration[i] < 0f) 0f
+                        else IO.keysDownDuration[i] + IO.deltaTime
+                    else -1f
 
         /*  Update mouse inputs state
             If mouse just appeared or disappeared (usually denoted by -Float.MAX_VALUE component, but in reality we test
@@ -88,14 +109,6 @@ interface imgui_main {
             } else if (IO.mouseDown[i])
                 IO.mouseDragMaxDistanceSqr[i] = glm.max(IO.mouseDragMaxDistanceSqr[i], (IO.mousePos - IO.mouseClickedPos[i]).lengthSqr)
         }
-        for (i in IO.keysDownDuration.indices)
-            IO.keysDownDurationPrev[i] = IO.keysDownDuration[i]
-        for (i in IO.keysDown.indices)
-            IO.keysDownDuration[i] =
-                    if (IO.keysDown[i])
-                        if (IO.keysDownDuration[i] < 0f) 0f
-                        else IO.keysDownDuration[i] + IO.deltaTime
-                    else -1f
 
         // Calculate frame-rate for the user, as a purely luxurious feature
         g.framerateSecPerFrameAccum += IO.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
@@ -103,17 +116,8 @@ interface imgui_main {
         g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
         IO.framerate = 1.0f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
 
-        // Clear reference to active widget if the widget isn't alive anymore
-        g.hoveredIdPreviousFrame = g.hoveredId
-        g.hoveredId = 0
-        g.hoveredIdAllowOverlap = false
-        if (!g.activeIdIsAlive && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
-            clearActiveId()
-        g.activeIdPreviousFrame = g.activeId
-        g.activeIdIsAlive = false
-        g.activeIdIsJustActivated = false
-
-        // Handle user moving window (at the beginning of the frame to avoid input lag or sheering). Only valid for root windows.
+        /*  Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering).
+            Only valid for root windows.         */
         if (g.movedWindowMoveId != 0 && g.movedWindowMoveId == g.activeId) {
             keepAliveId(g.movedWindowMoveId)
             assert(g.movedWindow != null)
@@ -121,7 +125,7 @@ interface imgui_main {
             if (IO.mouseDown[0]) {
                 if (g.movedWindow!!.flags hasnt WindowFlags.NoMove) {
                     g.movedWindow!!.posF plus_ IO.mouseDelta
-                    if (g.movedWindow!!.flags hasnt WindowFlags.NoSavedSettings && IO.mouseDelta notEqual 0f)
+                    if (IO.mouseDelta notEqual 0f)
                         markIniSettingsDirty(g.movedWindow!!)
                 }
                 focusWindow(g.movedWindow)
@@ -271,17 +275,8 @@ interface imgui_main {
             IO.metricsRenderIndices = 0
             IO.metricsRenderVertices = 0
             g.renderDrawLists.forEach { it.clear() }
-            g.windows.forEach {
-                if (it.active && it.hiddenFrames <= 0 && it.flags hasnt WindowFlags.ChildWindow) {
-                    // FIXME: Generalize this with a proper layering system so e.g. user can draw in specific layers, below text, ..
-                    IO.metricsActiveWindows++
-                    it addTo when {
-                        it.flags has WindowFlags.Popup -> g.renderDrawLists[1]
-                        it.flags has WindowFlags.Tooltip -> g.renderDrawLists[2]
-                        else -> g.renderDrawLists[0]
-                    }
-                }
-            }
+            g.windows.filter { it.active && it.hiddenFrames <= 0 && it.flags hasnt WindowFlags.ChildWindow }
+                    .map(Window::addToRenderListSelectLayer)
 
             // Flatten layers
             for (i in 1 until g.renderDrawLists.size)

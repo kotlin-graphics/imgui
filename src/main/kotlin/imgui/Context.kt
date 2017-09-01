@@ -157,7 +157,7 @@ object Context {
     /** If speed == 0.0f, uses (max-min) * DragSpeedDefaultRatio    */
     var dragSpeedDefaultRatio = 1f / 100f
 
-    var dragSpeedScaleSlow = 0.01f
+    var dragSpeedScaleSlow = 1f / 100
 
     var dragSpeedScaleFast = 10f
     /** Distance between mouse and center of grab box, normalized in parent space. Use storage? */

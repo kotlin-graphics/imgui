@@ -63,7 +63,7 @@ interface imgui_widgetsSliders {
 
         // Tabbing or CTRL-clicking on Slider turns it into an input box
         var startTextInput = false
-        val tabFocusRequested = focusableItemRegister(window, g.activeId == id)
+        val tabFocusRequested = focusableItemRegister(window, id)
         if (tabFocusRequested || (hovered && IO.mouseClicked[0])) {
             setActiveId(id, window)
             focusWindow(window)
@@ -77,9 +77,8 @@ interface imgui_widgetsSliders {
         if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) TODO()
 //            return inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, v, id, decimalPrecision)
 
-        itemSize(totalBb, style.framePadding.y)
-
         // Actual slider behavior + render grab
+        itemSize(totalBb, style.framePadding.y)
         val valueChanged = sliderBehavior(frameBb, id, v, ptr, vMin, vMax, power, decimalPrecision)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.

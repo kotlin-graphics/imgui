@@ -4,6 +4,7 @@ import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
+import imgui.ImGui.isPopupOpen
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popStyleVar
 import imgui.Context as g
@@ -61,10 +62,6 @@ interface imgui_popups {
         if (window.flags hasnt WindowFlags.Modal)
             popStyleVar()
     }
-
-    // FIXME
-    /** return true if the popup is open    */
-    fun isPopupOpen(id:Int) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
 
     fun isPopupOpen(strId: String) = g.openPopupStack.size > g.currentPopupStack.size &&
             g.openPopupStack[g.currentPopupStack.size].popupId == g.currentWindow!!.getId(strId)

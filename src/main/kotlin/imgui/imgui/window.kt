@@ -149,13 +149,15 @@ interface imgui_window {
         }
         var rootNonPopupIdx = rootIdx
         while (rootNonPopupIdx > 0) {
-            if (g.currentWindowStack[rootNonPopupIdx].flags hasnt (WindowFlags.ChildWindow or WindowFlags.Popup))
+            if (g.currentWindowStack[rootNonPopupIdx].flags hasnt (WindowFlags.ChildWindow or WindowFlags.Popup)
+                    || g.currentWindowStack[rootNonPopupIdx].flags has WindowFlags.Modal)
                 break
             rootNonPopupIdx--
         }
         window.parentWindow = parentWindow
         window.rootWindow = g.currentWindowStack[rootIdx]
-        window.rootNonPopupWindow = g.currentWindowStack[rootNonPopupIdx]   // This is merely for displaying the TitleBgActive color.
+        // Used to display TitleBgActive color and for selecting which window to use for NavWindowing
+        window.rootNonPopupWindow = g.currentWindowStack[rootNonPopupIdx]
 
         // When reusing window again multiple times a frame, just append content (don't need to setup again)
         if (firstBeginOfTheFrame) {
@@ -320,13 +322,14 @@ interface imgui_window {
 
             // Position tooltip (always follows mouse)
             if (flags has WindowFlags.Tooltip && !windowPosSetByApi) {
+                val refPos = IO.mousePos    // safe
                 // FIXME: Completely hard-coded. Perhaps center on cursor hit-point instead?
-                val rectToAvoid = Rect(IO.mousePos.x - 16, IO.mousePos.y - 8, IO.mousePos.x + 24, IO.mousePos.y + 24)
-                window.posF put findBestPopupWindowPos(IO.mousePos, window, rectToAvoid)
+                val rectToAvoid = Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24, refPos.y + 24)
+                window.posF put findBestPopupWindowPos(refPos, window, rectToAvoid)
                 if (window.autoPosLastDirection == -1)
                 /*  If there's not enough room, for tooltip we prefer avoiding the cursor at all cost even if it
                 means that part of the tooltip won't be visible.    */
-                    window.posF = IO.mousePos + 2
+                    window.posF = refPos + 2
             }
 
             // Clamp position so it stays visible
@@ -363,21 +366,8 @@ interface imgui_window {
             window.focusIdxAllRequestNext = Int.MAX_VALUE
 
             // Apply scrolling
-            if (window.scrollTarget.x < Float.MAX_VALUE) {
-                window.scroll.x = window.scrollTarget.x
-                window.scrollTarget.x = Float.MAX_VALUE
-            }
-            if (window.scrollTarget.y < Float.MAX_VALUE) {
-                val centerRatio = window.scrollTargetCenterRatio.y
-                window.scroll.y = window.scrollTarget.y - ((1f - centerRatio) * (window.titleBarHeight() + window.menuBarHeight())) -
-                        (centerRatio * (window.sizeFull.y - window.scrollbarSizes.y))
-                window.scrollTarget.y = Float.MAX_VALUE
-            }
-            window.scroll = glm.max(window.scroll, 0f)
-            if (!window.collapsed && !window.skipItems) {
-                window.scroll.x = glm.min(window.scroll.x, scrollMaxX)
-                window.scroll.y = glm.min(window.scroll.y, scrollMaxY)
-            }
+            window.scroll put calcNextScrollFromScrollTargetAndClamp(window)
+            window.scrollTarget put Float.MAX_VALUE
 
             // Modal window darkens what is behind them
             if (flags has WindowFlags.Modal && window === getFrontMostModalRootWindow())
@@ -388,7 +378,7 @@ interface imgui_window {
             val titleBarRect = window.titleBarRect()
             val windowRounding = if (flags has WindowFlags.ChildWindow) style.childWindowRounding else style.windowRounding
             if (window.collapsed)
-            // Draw title bar only
+            // Title bar only
                 renderFrame(titleBarRect.tl, titleBarRect.br, Col.TitleBgCollapsed.u32, true, windowRounding)
             else {
                 var resizeCol = Col.Text
@@ -401,18 +391,19 @@ interface imgui_window {
                     val resizeId = window.getId("#RESIZE")
                     val (_, hovered, held) = buttonBehavior(resizeRect, resizeId, ButtonFlags.FlattenChilds)
                     resizeCol = if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip
-
                     if (hovered || held)
                         g.mouseCursor = MouseCursor.ResizeNWSE
 
+                    val sizeTarget = Vec2(Float.MAX_VALUE)
                     if (g.hoveredWindow === window && held && IO.mouseDoubleClicked[0]) {
-                        // Manual auto-fit when double-clicking
-                        window.applySizeFullWithConstraint(sizeAutoFit)
-                        markIniSettingsDirty(window)
+                        sizeTarget put sizeAutoFit
                         clearActiveId()
-                    } else if (held) {
-                        // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
-                        window.applySizeFullWithConstraint((IO.mousePos - g.activeIdClickOffset + resizeRect.size) - window.pos)
+                    } else if (held)
+                    // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
+                        sizeTarget put ((IO.mousePos - g.activeIdClickOffset + resizeRect.size) - window.pos)
+
+                    if (sizeTarget notEqual Float.MAX_VALUE) {
+                        window.applySizeFullWithConstraint(sizeTarget)
                         markIniSettingsDirty(window)
                     }
 
@@ -451,11 +442,10 @@ interface imgui_window {
                             if (flags has WindowFlags.NoTitleBar) Corner.All.i else Corner.BotLeft or Corner.BotRight)
 
                 // Title bar
+                val isFocused = g.navWindow?.rootNonPopupWindow == window.rootNonPopupWindow ?: false
                 if (flags hasnt WindowFlags.NoTitleBar)
                     window.drawList.addRectFilled(titleBarRect.tl, titleBarRect.br,
-                            (if (g.navWindow != null && window.rootNonPopupWindow == g.navWindow!!.rootNonPopupWindow)
-                                Col.TitleBgActive
-                            else Col.TitleBg).u32,
+                            (if (isFocused) Col.TitleBgActive else Col.TitleBg).u32,
                             windowRounding, Corner.TopLeft or Corner.TopRight)
 
                 // Menu bar
@@ -555,6 +545,7 @@ interface imgui_window {
 
             // Title bar
             if (flags hasnt WindowFlags.NoTitleBar) {
+                // Close button
                 if (pOpen != null) {
                     val pad = 2f
                     val rad = (window.titleBarHeight() - pad * 2f) * 0.5f
@@ -627,7 +618,7 @@ interface imgui_window {
         if (flags has WindowFlags.ChildWindow) {
 
             assert(flags has WindowFlags.NoTitleBar)
-            window.collapsed = parentWindow?.collapsed ?: false
+            window.collapsed = parentWindow?.collapsed == true
 
             if (flags hasnt WindowFlags.AlwaysAutoResize && window.autoFitFrames lessThanEqual 0)
                 window.collapsed = window.collapsed || (window.windowRectClipped.min.x >= window.windowRectClipped.max.x
@@ -681,11 +672,11 @@ interface imgui_window {
 
     fun endChild() {
 
-        var window = currentWindow
+        val window = currentWindow
 
         assert(window.flags has WindowFlags.ChildWindow)   // Mismatched BeginChild()/EndChild() callss
         if (window.flags has WindowFlags.ComboBox || window.beginCount > 1)
-            ImGui.end()
+            end()
         else {
             /*  When using auto-filling child window, we don't provide full width/height to ItemSize so that it doesn't
                 feed back into automatic size-fitting.             */
@@ -695,7 +686,6 @@ interface imgui_window {
                 sz.x = glm.max(4f, sz.x)
             if (window.autoFitChildAxes has 0x02)
                 sz.y = glm.max(4f, sz.y)
-
             end()
 
             val parentWindow = currentWindow

@@ -320,6 +320,24 @@ fun scrollbar(window: Window, horizontal: Boolean) {
                 grabCol, style.scrollbarRounding)
 }
 
+fun calcNextScrollFromScrollTargetAndClamp(window: Window): Vec2 {
+    val scroll = Vec2(window.scroll)
+    val crX = window.scrollTargetCenterRatio.x
+    val crY = window.scrollTargetCenterRatio.y
+    if (window.scrollTarget.x < Float.MAX_VALUE)
+        scroll.x = window.scrollTarget.x - crX * (window.sizeFull.x - window.scrollbarSizes.x)
+    if (window.scrollTarget.y < Float.MAX_VALUE)
+        scroll.y = window.scrollTarget.y - (1f - crY) * (window.titleBarHeight() + window.menuBarHeight()) -
+                crY * (window.sizeFull.y - window.scrollbarSizes.y)
+    scroll max_ 0f
+    if (!window.collapsed && !window.skipItems) {
+        // == GetScrollMaxX for that window
+        scroll.x = glm.min(scroll.x, glm.max(0f, window.sizeContents.x-(window.sizeFull.x-window.scrollbarSizes.x)))
+        // == GetScrollMaxY for that window
+        scroll.y = glm.min(scroll.y, glm.max(0f, window.sizeContents.y-(window.sizeFull.y-window.scrollbarSizes.y)))
+    }
+    return scroll
+}
 
 fun findWindowSettings(name: String): IniData? {
     val id = hash(name, 0)
@@ -489,7 +507,7 @@ fun getFrontMostModalRootWindow(): Window? {
 
 fun findBestPopupWindowPos(basePos: Vec2, window: Window, rInner: Rect): Vec2 {
 
-    val size = window.size
+    val size = window.size  // safe
 
     /*  Clamp into visible area while not overlapping the cursor. Safety padding is optional if our popup size won't fit
         without it. */

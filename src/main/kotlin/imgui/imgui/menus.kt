@@ -150,6 +150,7 @@ interface imgui_menus {
         }
 
         val hovered = enabled && isHovered(window.dc.lastItemRect, id)
+
         if (menusetIsOpen)
             g.navWindow = backedNavWindow
 

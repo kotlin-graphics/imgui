@@ -5,6 +5,7 @@ import glm_.vec2.Vec2
 import imgui.IO
 import imgui.ImGui.currentWindowRead
 import imgui.Context.style
+import imgui.ImGui.calcTypematicPressedRepeatAmount
 import imgui.MOUSE_INVALID
 import imgui.internal.Rect
 import imgui.Context as g
@@ -24,20 +25,24 @@ interface imgui_inputs {
 
         if (userKeyIndex < 0) return false
         val t = IO.keysDownDuration[userKeyIndex]
-        if (t == 0f)
-            return true
-
-        if (repeat && t > IO.keyRepeatDelay) {
-            val delay = IO.keyRepeatDelay
-            val rate = IO.keyRepeatRate
-            if ((((t - delay) % rate) > rate * 0.5f) != ((t - delay - IO.deltaTime) % rate) > rate * 0.5f)
-                return true
+        return when {
+            t == 0f -> true
+            repeat && t > IO.keyRepeatDelay -> getKeyPressedAmount(userKeyIndex, IO.keyRepeatDelay, IO.keyRepeatRate) > 0
+            else -> false
         }
-        return false
     }
 
     /** was key released (went from Down to !Down)..    */
     fun isKeyReleased(userKeyIndex: Int) = if (userKeyIndex < 0) false else IO.keysDownDurationPrev[userKeyIndex] >= 0f && !IO.keysDown[userKeyIndex]
+
+    /** Uses provided repeat rate/delay. return a count, most often 0 or 1 but might be >1 if RepeatRate is small enough
+     *  that DeltaTime > RepeatRate */
+    fun getKeyPressedAmount(keyIndex: Int, repeatDelay: Float, repeatRate: Float): Int {
+        if (keyIndex < 0) return 0
+        assert(keyIndex in 0 until IO.keysDown.size)
+        val t = IO.keysDownDuration[keyIndex]
+        return calcTypematicPressedRepeatAmount(t, t - IO.deltaTime, repeatDelay, repeatRate)
+    }
 
 //IMGUI_API bool          IsMouseDown(int button);                                            // is mouse button held
 

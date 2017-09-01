@@ -227,6 +227,7 @@ enum class Key {
 
     val i = ordinal
 
+    /** JVM implementation of IsKeyPressedMap   */
     fun isPressed(repeat: Boolean) = isKeyPressed(IO.keyMap[i], repeat)
 
     val isPressed get() = isPressed(true)
