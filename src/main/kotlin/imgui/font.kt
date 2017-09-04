@@ -479,8 +479,9 @@ class FontAtlas {
             stbrp_pack_rects(spc.packInfo, tmp.rects)
 
             // Extend texture height
-            for (i in 0 until n) if (tmp.rects[i].wasPacked)
-                texSize.y = glm.max(texSize.y, tmp.rects[i].y + tmp.rects[i].h)
+            for (r in tmp.rects)
+                if (r.wasPacked)
+                texSize.y = glm.max(texSize.y, r.y + r.h)
         }
         assert(bufRectsN == totalGlyphsCount)
         assert(bufPackedcharsN == totalGlyphsCount)
@@ -500,11 +501,9 @@ class FontAtlas {
             stbtt_PackFontRangesRenderIntoRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
             if (cfg.rasterizerMultiply != 1f) {
                 val multiplyTable = buildMultiplyCalcLookupTable(cfg.rasterizerMultiply)
-                for (i in 0 until tmp.rects.capacity()) {
-                    val r = tmp.rects[i]
+                for (r in tmp.rects)
                     if (r.wasPacked)
-                        buildMultiplyRectAlpha8(multiplyTable, spc.pixels, r, spc.strideInBytes)
-                }
+                    buildMultiplyRectAlpha8(multiplyTable, spc.pixels, r, spc.strideInBytes)
             }
             tmp.rects.free()
         }

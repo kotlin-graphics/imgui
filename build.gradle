@@ -26,12 +26,6 @@ buildscript {
 
 apply plugin: 'com.github.johnrengelman.shadow'
 
-//jar {
-//    manifest {
-//        attributes 'Main-Class': 'imgui.ImguiKt'
-//    }
-//}
-
 dependencies {
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
