@@ -73,7 +73,7 @@ interface imgui_window {
         var windowIsNew = false
         val window = findWindowByName(name) ?: createNewWindow(name, sizeOnFirstUse, flags).also { windowIsNew = true }
 
-        val currentFrame = frameCount
+        val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
         if (firstBeginOfTheFrame)
             window.flags = flags
@@ -87,24 +87,24 @@ interface imgui_window {
         checkStacksSize(window, true)
         assert(parentWindow != null || flags hasnt WindowFlags.ChildWindow)
         // Not using !WasActive because the implicit "Debug" window would always toggle off->on
-        var windowWasActive = window.lastFrameActive == currentFrame - 1
+        var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1
         if (flags has WindowFlags.Popup) {
             val popupRef = g.openPopupStack[g.currentPopupStack.size]
-            windowWasActive = windowWasActive && window.popupId == popupRef.popupId
-            windowWasActive = windowWasActive && window === popupRef.window
+            // We recycle popups so treat window as activated if popup id changed
+            windowJustActivatedByUser = windowJustActivatedByUser || window.popupId != popupRef.popupId
+            windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
             popupRef.window = window
             g.currentPopupStack.push(popupRef)
             window.popupId = popupRef.popupId
         }
 
-        val windowAppearingAfterBeingHidden = window.hiddenFrames == 1
-        window.appearing = !windowWasActive || windowAppearingAfterBeingHidden
+        val windowJustAppearingAfterBeingHidden = window.hiddenFrames == 1
+        window.appearing = windowJustActivatedByUser || windowJustAppearingAfterBeingHidden
 
         // Process SetNextWindow***() calls
         var windowPosSetByApi = false
         var windowSizeSetByApi = false
         if (g.setNextWindowPosCond != Cond.Null) {
-            val backupCursorPos = Vec2(window.dc.cursorPos)   // FIXME: not sure of the exact reason of this saving/restore anymore :( need to look into that.
             if (window.appearing)
                 window.setWindowPosAllowFlags = window.setWindowPosAllowFlags or Cond.Appearing
             windowPosSetByApi = window.setWindowPosAllowFlags has g.setNextWindowPosCond
@@ -115,7 +115,6 @@ interface imgui_window {
             } else
                 window.setPos(g.setNextWindowPosVal, g.setNextWindowPosCond)
 
-            window.dc.cursorPos put backupCursorPos
             g.setNextWindowPosCond = Cond.Null
         }
         if (g.setNextWindowSizeCond.i != 0) {
@@ -179,7 +178,7 @@ interface imgui_window {
             else
                 pushClipRect(fullscreenRect.min, fullscreenRect.max, true)
 
-            if (!windowWasActive) {
+            if (windowJustActivatedByUser) {
                 // Popup first latch mouse position, will position itself when it appears next frame
                 window.autoPosLastDirection = -1
                 if (flags has WindowFlags.Popup && !windowPosSetByApi)
@@ -215,7 +214,7 @@ interface imgui_window {
             // Hide popup/tooltip window when first appearing while we measure size (because we recycle them)
             if (window.hiddenFrames > 0)
                 window.hiddenFrames--
-            if (flags has (WindowFlags.Popup or WindowFlags.Tooltip) && !windowWasActive) {
+            if (flags has (WindowFlags.Popup or WindowFlags.Tooltip) && windowJustActivatedByUser) {
                 window.hiddenFrames = 1
                 if (flags has WindowFlags.AlwaysAutoResize) {
                     if (!windowSizeSetByApi) {
@@ -296,7 +295,7 @@ interface imgui_window {
 
             var windowPosCenter = false
             windowPosCenter = windowPosCenter || (window.setWindowPosCenterWanted && window.hiddenFrames == 0)
-            windowPosCenter = windowPosCenter || (flags has WindowFlags.Modal && !windowPosSetByApi && windowAppearingAfterBeingHidden)
+            windowPosCenter = windowPosCenter || (flags has WindowFlags.Modal && !windowPosSetByApi && windowJustAppearingAfterBeingHidden)
             if (windowPosCenter)
             // Center (any sort of window)
                 window.setPos(glm.max(style.displaySafeAreaPadding, fullscreenRect.center - window.sizeFull * 0.5f), Cond.Null)
@@ -316,7 +315,7 @@ interface imgui_window {
                             Rect(parentWindow.pos.x + horizontalOverlap, -Float.MAX_VALUE,
                                     parentWindow.pos.x + parentWindow.size.x - horizontalOverlap - parentWindow.scrollbarSizes.x, Float.MAX_VALUE)
                 window.posF put findBestPopupWindowPos(window.posF, window, rectToAvoid)
-            } else if (flags has WindowFlags.Popup && !windowPosSetByApi && windowAppearingAfterBeingHidden) {
+            } else if (flags has WindowFlags.Popup && !windowPosSetByApi && windowJustAppearingAfterBeingHidden) {
                 val rectToAvoid = Rect(window.posF.x - 1, window.posF.y - 1, window.posF.x + 1, window.posF.y + 1)
                 window.posF put findBestPopupWindowPos(window.posF, window, rectToAvoid)
             }
@@ -531,7 +530,7 @@ interface imgui_window {
                 dc.treeDepth = 0
                 dc.stateStorage = stateStorage
                 dc.groupStack.clear()
-                menuColumns.update(3, style.itemSpacing.x, !windowWasActive)
+                menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
 
                 if (autoFitFrames.x > 0)
                     autoFitFrames.x--
@@ -540,7 +539,7 @@ interface imgui_window {
             }
 
             // New windows appears in front (we need to do that AFTER setting DC.CursorStartPos so our initial navigation reference rectangle can start around there)
-            if (!windowWasActive && flags hasnt WindowFlags.NoFocusOnAppearing)
+            if (windowJustActivatedByUser && flags hasnt WindowFlags.NoFocusOnAppearing)
                 if (flags hasnt (WindowFlags.ChildWindow or WindowFlags.Tooltip) || flags has WindowFlags.Popup)
                     focusWindow(window)
 
