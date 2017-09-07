@@ -249,11 +249,11 @@ interface imgui_widgetsText {
 
         fun paintVertsLinearGradientKeepAlpha(drawList: DrawList, vertStart: Int, vertEnd: Int, gradientP0: Vec2, gradientP1: Vec2, col0: Int, col1: Int) {
             val gradientExtent = gradientP1 - gradientP0
-            val gradientInvLength = gradientExtent.invLength(0f)
+            val gradientInvLength2 = 1f / gradientExtent.lengthSqr
             for (v in vertStart until vertEnd) {
                 val vert = drawList.vtxBuffer[v]
                 val d = (vert.pos - gradientP0) dot gradientExtent
-                val t = glm.min(glm.sqrt(glm.max(d, 0f)) * gradientInvLength, 1f)
+                val t = glm.clamp(d * gradientInvLength2, 0f, 1f)
                 val r = lerp((col0 ushr COL32_R_SHIFT) and 0xFF, (col1 ushr COL32_R_SHIFT) and 0xFF, t)
                 val g = lerp((col0 ushr COL32_G_SHIFT) and 0xFF, (col1 ushr COL32_G_SHIFT) and 0xFF, t)
                 val b = lerp((col0 ushr COL32_B_SHIFT) and 0xFF, (col1 ushr COL32_B_SHIFT) and 0xFF, t)
