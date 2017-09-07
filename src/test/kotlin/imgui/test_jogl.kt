@@ -99,9 +99,8 @@ class HelloWorld_jogl : GLEventListener {
             /*  2. Show another simple window, this time using an explicit begin/end pair   */
             run {
                 if (showAnotherWindow[0]) {
-                    setNextWindowSize(Vec2(200, 100), Cond.FirstUseEver)
                     begin("Another Window", showAnotherWindow)
-                    text("Hello")
+                    text("Hello from anoter window!")
                     end()
                 }
             }

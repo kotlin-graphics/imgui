@@ -405,8 +405,10 @@ class Window(
     var accessed = false
     /** Set when collapsing window to become only title-bar */
     var collapsed = false
-    /** == Visible && !Collapsed    */
+    /** Set when items can safely be all clipped (e.g. window not visible or collapsed) */
     var skipItems = false
+    /** Set during the frame where the window is appearing (or re-appearing)    */
+    var appearing = false
     /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
     var beginCount = 0
     /** ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)   */

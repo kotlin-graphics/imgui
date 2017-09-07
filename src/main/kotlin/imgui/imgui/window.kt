@@ -98,13 +98,14 @@ interface imgui_window {
         }
 
         val windowAppearingAfterBeingHidden = window.hiddenFrames == 1
+        window.appearing = !windowWasActive || windowAppearingAfterBeingHidden
 
         // Process SetNextWindow***() calls
         var windowPosSetByApi = false
         var windowSizeSetByApi = false
         if (g.setNextWindowPosCond != Cond.Null) {
             val backupCursorPos = Vec2(window.dc.cursorPos)   // FIXME: not sure of the exact reason of this saving/restore anymore :( need to look into that.
-            if (!windowWasActive || windowAppearingAfterBeingHidden)
+            if (window.appearing)
                 window.setWindowPosAllowFlags = window.setWindowPosAllowFlags or Cond.Appearing
             windowPosSetByApi = window.setWindowPosAllowFlags has g.setNextWindowPosCond
             if (windowPosSetByApi && (g.setNextWindowPosVal - Vec2(-Float.MAX_VALUE)).lengthSqr < 0.001f) {
@@ -118,7 +119,7 @@ interface imgui_window {
             g.setNextWindowPosCond = Cond.Null
         }
         if (g.setNextWindowSizeCond.i != 0) {
-            if (!windowWasActive || windowAppearingAfterBeingHidden)
+            if (window.appearing)
                 window.setWindowSizeAllowFlags = window.setWindowSizeAllowFlags or Cond.Appearing
             windowSizeSetByApi = window.setWindowSizeAllowFlags has g.setNextWindowSizeCond
             window.setSize(g.setNextWindowSizeVal, g.setNextWindowSizeCond)
@@ -130,7 +131,7 @@ interface imgui_window {
         } else if (firstBeginOfTheFrame)
             window.sizeContentsExplicit put 0f
         if (g.setNextWindowCollapsedCond != Cond.Null) {
-            if (!windowWasActive || windowAppearingAfterBeingHidden)
+            if (window.appearing)
                 window.setWindowCollapsedAllowFlags = window.setWindowCollapsedAllowFlags or Cond.Appearing
             window.setCollapsed(g.setNextWindowCollapsedVal, g.setNextWindowCollapsedCond)
             g.setNextWindowCollapsedCond = Cond.Null
@@ -728,7 +729,10 @@ interface imgui_window {
 
     val windowHeight get() = g.currentWindow!!.size.y
 
-    val isWindowCollapsed get() = g.currentWindow!!.collapsed
+    val isWindowCollapsed get() = currentWindowRead!!.collapsed
+
+    val isWindowAppearing get() = currentWindowRead!!.appearing
+
     /** per-window font scale. Adjust IO.FontGlobalScale if you want to scale all windows   */
     fun setWindowFontScale(scale: Float) = with(currentWindow) {
         fontWindowScale = scale

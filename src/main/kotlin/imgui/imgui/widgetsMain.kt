@@ -19,6 +19,7 @@ import imgui.ImGui.focusWindow
 import imgui.ImGui.getColorU32
 import imgui.ImGui.isHovered
 import imgui.ImGui.isPopupOpen
+import imgui.ImGui.isWindowAppearing
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.openPopup
@@ -245,15 +246,15 @@ interface imgui_widgetsMain {
 
     /** Combo box helper allowing to pass all items in a single string.
      *  separate items with \0, end item-list with \0\0     */
-    fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1):Boolean {
+    fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
 
         val items = itemsSeparatedByZeros.split('\u0000').filter { it.isNotEmpty() }
         // FIXME-OPT: Avoid computing this, or at least only when combo is open
         return combo(label, currentItem, items, heightInItems)
     }
 
-    // Combo box function.
-    fun combo(label: String, currentItem: IntArray, items: List<String>, heightInItems: Int = -1): Boolean {
+    /** FIXME-WIP: New Combo API    */
+    fun beginCombo(label: String, previewValue: String?, popupOpenedHeight: Float): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -277,72 +278,81 @@ interface imgui_widgetsMain {
         renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, true, style.frameRounding) // FIXME-ROUNDING
         renderCollapseTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y) + style.framePadding, true)
 
-        if (currentItem[0] in 0 until items.size)
-            items.getOrNull(currentItem[0])?.let { renderTextClipped(frameBb.min + style.framePadding, valueBb.max, it) }
+        if (previewValue != null)
+            renderTextClipped(frameBb.min + style.framePadding, valueBb.max, previewValue)
 
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
-        var popupToggled = false
         if (hovered) {
             setHoveredId(id)
             if (IO.mouseClicked[0]) {
                 clearActiveId()
-                popupToggled = true
-            }
-        }
-
-        if (popupToggled)
-            if (isPopupOpen(id))
-                closePopup(id)
-            else {
-                focusWindow(window)
-                openPopup(label)
-                popupOpen = true
-            }
-
-        var valueChanged = false
-        if (isPopupOpen(id)) {
-            // Size default to hold ~7 items
-            var heightInItems = heightInItems
-            if (heightInItems < 0)
-                heightInItems = 7
-
-            val popupHeight = (labelSize.y + style.itemSpacing.y) * glm.min(items.size, heightInItems) + style.framePadding.y * 3
-            var popupY1 = frameBb.max.y
-            var popupY2 = glm.clamp(popupY1 + popupHeight, popupY1, IO.displaySize.y - style.displaySafeAreaPadding.y)
-            if ((popupY2 - popupY1) < glm.min(popupHeight, frameBb.min.y - style.displaySafeAreaPadding.y)) {
-                /*  Position our combo ABOVE because there's more space to fit!
-                    (FIXME: Handle in Begin() or use a shared helper. We have similar code in Begin() for popup placement)                 */
-                popupY1 = glm.clamp(frameBb.min.y - popupHeight, style.displaySafeAreaPadding.y, frameBb.min.y)
-                popupY2 = frameBb.min.y
-            }
-            val popupRect = Rect(Vec2(frameBb.min.x, popupY1), Vec2(frameBb.max.x, popupY2))
-            setNextWindowPos(popupRect.min)
-            setNextWindowSize(popupRect.size)
-            pushStyleVar(StyleVar.WindowPadding, style.framePadding)
-
-            val flags = WindowFlags.ComboBox or if (window.flags has WindowFlags.ShowBorders) WindowFlags.ShowBorders.i else 0
-            if (beginPopupEx(id, flags)) {
-                // Display items
-                // FIXME-OPT: Use clipper
-                spacing()
-                repeat(items.size) { i ->
-                    pushId(i)
-                    val itemSelected = i == currentItem[0]
-                    val itemText = items.getOrNull(i) ?: "Unknown item*"
-                    if (selectable(itemText, itemSelected)) {
-                        clearActiveId()
-                        valueChanged = true
-                        currentItem[0] = i
-                    }
-                    if (itemSelected && popupToggled) setScrollHere()
-                    popId()
+                if (isPopupOpen(id))
+                    closePopup(id)
+                else {
+                    focusWindow(window)
+                    openPopup(label)
                 }
-                endPopup()
             }
-            popStyleVar()
         }
+
+        if (!isPopupOpen(id)) return false
+
+        var popupY1 = frameBb.max.y
+        var popupY2 = glm.clamp(popupY1 + popupOpenedHeight, popupY1, IO.displaySize.y - style.displaySafeAreaPadding.y)
+        if ((popupY2 - popupY1) < glm.min(popupOpenedHeight, frameBb.min.y - style.displaySafeAreaPadding.y)) {
+            /*  Position our combo ABOVE because there's more space to fit! (FIXME: Handle in Begin() or use a shared helper.
+            We have similar code in Begin() for popup placement)         */
+            popupY1 = glm.clamp(frameBb.min.y - popupOpenedHeight, style.displaySafeAreaPadding.y, frameBb.min.y)
+            popupY2 = frameBb.min.y
+        }
+        val popupRect = Rect(Vec2(frameBb.min.x, popupY1), Vec2(frameBb.max.x, popupY2))
+        setNextWindowPos(popupRect.min)
+        setNextWindowSize(popupRect.size)
+        pushStyleVar(StyleVar.WindowPadding, style.framePadding)
+
+        val flags = WindowFlags.ComboBox or if (window.flags has WindowFlags.ShowBorders) WindowFlags.ShowBorders else WindowFlags.Null
+        if (!beginPopupEx(id, flags)) {
+            assert(false)   // This should never happen as we tested for IsPopupOpen() above
+            return false
+        }
+        spacing()
+
+        return true
+    }
+
+    fun endCombo() {
+        endPopup()
+        popStyleVar()
+    }
+
+    /** Combo box function. */
+    fun combo(label: String, currentItem: IntArray, items: List<String>, heightInItems: Int = -1): Boolean {
+
+        var previewText = items.getOrElse(currentItem[0], { "" })
+
+        // Size default to hold ~7 items
+        val heightInItems = if (heightInItems < 0) 7 else heightInItems
+        val popupOpenedHeight = (g.fontSize + style.itemSpacing.y) * glm.min(items.size, heightInItems) + style.framePadding.y * 3
+
+        if (!beginCombo(label, previewText, popupOpenedHeight)) return false
+
+        // Display items, FIXME-OPT: Use clipper
+        var valueChanged = false
+        for (i in 0 until items.size) {
+            pushId(i)
+            val itemSelected = i == currentItem[0]
+            val itemText = items.getOrElse(i, { "*Unknown item*" })
+            if (selectable(itemText, itemSelected)) {
+                valueChanged = true
+                currentItem[0] = i
+            }
+            if (itemSelected && isWindowAppearing)
+                setScrollHere()
+            popId()
+        }
+        endCombo()
         return valueChanged
     }
 

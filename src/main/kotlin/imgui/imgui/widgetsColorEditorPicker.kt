@@ -196,9 +196,10 @@ interface imgui_widgetsColorEditorPicker {
                     separator()
                 }
                 val squareSz = colorSquareSize
-                val pickerFlagsToForward = ColorEditFlags.Float or ColorEditFlags.HDR or ColorEditFlags.NoAlpha or ColorEditFlags.AlphaBar    // | ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_AlphaPreviewHalf;
-                val pickerFlags = (flags and pickerFlagsToForward) or (ColorEditFlags.RGB or ColorEditFlags.HSV or ColorEditFlags.HEX) or
-                        ColorEditFlags.NoLabel or ColorEditFlags.AlphaPreviewHalf
+                val pickerFlagsToForward = ColorEditFlags._DataTypeMask or ColorEditFlags._PickerMask or ColorEditFlags.HDR or
+                        ColorEditFlags.NoAlpha or ColorEditFlags.AlphaBar
+                val pickerFlags = (flags and pickerFlagsToForward) or ColorEditFlags._InputsMask or ColorEditFlags.NoLabel or
+                        ColorEditFlags.AlphaPreviewHalf
                 pushItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
                 val pF = floatArrayOf(g.colorPickerRef.x)
                 valueChanged = valueChanged or colorPicker4("##picker", col, pickerFlags, pF)

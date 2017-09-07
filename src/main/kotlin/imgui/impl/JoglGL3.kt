@@ -5,6 +5,7 @@ import com.jogamp.newt.event.KeyListener
 import com.jogamp.newt.event.MouseEvent
 import com.jogamp.newt.event.MouseListener
 import com.jogamp.newt.opengl.GLWindow
+import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL2ES3.*
 import com.jogamp.opengl.GL3
 import glm_.*
@@ -12,6 +13,9 @@ import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
+import org.lwjgl.opengl.GL11.GL_FILL
+import org.lwjgl.opengl.GL11.GL_POLYGON_MODE
+import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
@@ -251,8 +255,10 @@ object JoglGL3 {
 
     /** This is the main rendering function that you have to implement and provide to ImGui (via setting up
      *  'RenderDrawListsFn' in the ImGuiIO structure)
-     *  If text or lines are blurry when integrating ImGui in your engine:
-     *      - in your Render function, try translating your projection matrix by (0.5f,0.5f) or (0.375f,0.375f) */
+     *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL
+     *  state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.
+     *  If text or lines are blurry when integrating ImGui in your engine: in your Render function, try translating your
+     *  projection matrix by (0.5f,0.5f) or (0.375f,0.375f) */
     fun renderDrawLists(drawData: DrawData) = with(gl) {
 
         /** Avoid rendering when minimized, scale coordinates for retina displays
@@ -265,9 +271,11 @@ object JoglGL3 {
         val lastActiveTexture = glGetInteger(GL_ACTIVE_TEXTURE)
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
+        val lastSampler = glGetInteger(GL_SAMPLER_BINDING)
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastElementArrayBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
+        val lastPolygonMode = glGetInteger(GL_POLYGON_MODE)
         val lastViewport = glGetVec4i(GL_VIEWPORT)
         val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
         val lastBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
@@ -281,13 +289,14 @@ object JoglGL3 {
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
 
-        // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
+        // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, polygon fill
         glEnable(GL_BLEND)
         glBlendEquation(GL_FUNC_ADD)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
         glEnable(GL_SCISSOR_TEST)
+        glPolygonMode(GL.GL_FRONT_AND_BACK, GL_FILL)
 
         // Setup viewport, orthographic projection matrix
         glViewport(fbSize)
@@ -298,6 +307,7 @@ object JoglGL3 {
         checkSize(this, drawData.cmdLists)
 
         glBindVertexArray(vaoName)
+        glBindSampler(semantic.sampler.DIFFUSE, 0) // Rely on combined texture/sampler state.
 
         for (cmdList in drawData.cmdLists) {
 
@@ -333,6 +343,7 @@ object JoglGL3 {
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
+        glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
@@ -343,6 +354,7 @@ object JoglGL3 {
         if (lastEnableCullFace) glEnable(GL_CULL_FACE) else glDisable(GL_CULL_FACE)
         if (lastEnableDepthTest) glEnable(GL_DEPTH_TEST) else glDisable(GL_DEPTH_TEST)
         if (lastEnableScissorTest) glEnable(GL_SCISSOR_TEST) else glDisable(GL_SCISSOR_TEST)
+        glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode)
         glViewport(lastViewport)
         glScissor(lastScissorBox)
     }
