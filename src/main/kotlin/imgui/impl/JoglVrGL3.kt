@@ -8,6 +8,7 @@ import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.GL2ES3
 import com.jogamp.opengl.GL2ES3.*
 import com.jogamp.opengl.GL3
+import gli.wasInit
 import glm_.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
@@ -27,7 +28,8 @@ object JoglVrGL3 {
     val texSize = Vec2i()
     var time = 0.0
     val mousePressed = BooleanArray(3)
-    @JvmField var mouseWheel = 0f
+    @JvmField
+    var mouseWheel = 0f
 
     object Buffer {
         val Vertex = 0
@@ -111,7 +113,7 @@ object JoglVrGL3 {
             (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
             Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)   */
 //        if (window.hasFocus())
-            IO.mousePos put cursorPos
+        IO.mousePos put cursorPos
 //        else
 //            IO.mousePos put -Float.MAX_VALUE
 
@@ -414,7 +416,8 @@ object JoglVrGL3 {
         glDeleteVertexArrays(vaoName)
         glDeleteBuffers(bufferName)
 
-        glDeleteProgram(program)
+        if (wasInit { program })
+            glDeleteProgram(program)
 
         if (fontTexture[0] >= 0) {
             glDeleteTextures(fontTexture)

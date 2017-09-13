@@ -36,6 +36,7 @@ import imgui.ImGui.textLineHeight
 import imgui.imgui.imgui_internal.Companion.colorSquareSize
 import imgui.internal.*
 import imgui.Context as g
+import imgui.ColorEditFlags as Cef
 
 interface imgui_widgetsText {
 
@@ -262,32 +263,32 @@ interface imgui_widgetsText {
         }
 
         fun colorEditOptionsPopup(flags: Int) {
-            val allowOptInputs = flags hasnt ColorEditFlags._InputsMask
-            val allowOptDatatype = flags hasnt ColorEditFlags._DataTypeMask
+            val allowOptInputs = flags hasnt Cef._InputsMask
+            val allowOptDatatype = flags hasnt Cef._DataTypeMask
             if ((!allowOptInputs && !allowOptDatatype) || !beginPopup("context")) return
             var opts = g.colorEditOptions
             if (allowOptInputs) {
-                if (radioButton("RGB", opts has ColorEditFlags.RGB))
-                    opts = (opts wo ColorEditFlags._InputsMask) or ColorEditFlags.RGB
-                if (radioButton("HSV", opts has ColorEditFlags.HSV))
-                    opts = (opts wo ColorEditFlags._InputsMask) or ColorEditFlags.HSV
-                if (radioButton("HEX", opts has ColorEditFlags.HEX))
-                    opts = (opts wo ColorEditFlags._InputsMask) or ColorEditFlags.HEX
+                if (radioButton("RGB", opts has Cef.RGB))
+                    opts = (opts wo Cef._InputsMask) or Cef.RGB
+                if (radioButton("HSV", opts has Cef.HSV))
+                    opts = (opts wo Cef._InputsMask) or Cef.HSV
+                if (radioButton("HEX", opts has Cef.HEX))
+                    opts = (opts wo Cef._InputsMask) or Cef.HEX
             }
             if (allowOptDatatype) {
                 if (allowOptInputs) separator()
-                if (radioButton("0..255", opts has ColorEditFlags.Uint8))
-                    opts = (opts wo ColorEditFlags._DataTypeMask) or ColorEditFlags.Uint8
-                if (radioButton("0.00..1.00", opts has ColorEditFlags.Float))
-                    opts = (opts wo ColorEditFlags._DataTypeMask) or ColorEditFlags.Float
+                if (radioButton("0..255", opts has Cef.Uint8))
+                    opts = (opts wo Cef._DataTypeMask) or Cef.Uint8
+                if (radioButton("0.00..1.00", opts has Cef.Float))
+                    opts = (opts wo Cef._DataTypeMask) or Cef.Float
             }
             g.colorEditOptions = opts
             endPopup()
         }
 
         fun colorPickerOptionsPopup(flags: Int, refCol: FloatArray) {
-            val allowOptPicker = flags hasnt ColorEditFlags._PickerMask
-            val allowOptAlphaBar = flags hasnt ColorEditFlags.NoAlpha && flags hasnt ColorEditFlags.AlphaBar
+            val allowOptPicker = flags hasnt Cef._PickerMask
+            val allowOptAlphaBar = flags hasnt Cef.NoAlpha && flags hasnt Cef.AlphaBar
             if ((!allowOptPicker && !allowOptAlphaBar) || !beginPopup("context")) return
             if (allowOptPicker) {
                 // FIXME: Picker size copied from main picker function
@@ -297,17 +298,17 @@ interface imgui_widgetsText {
                     // Draw small/thumbnail version of each picker type (over an invisible button for selection)
                     if (pickerType > 0) separator()
                     pushId(pickerType)
-                    var pickerFlags = ColorEditFlags.NoInputs or ColorEditFlags.NoOptions or ColorEditFlags.NoLabel or
-                            ColorEditFlags.NoSidePreview or (flags and ColorEditFlags.NoAlpha)
-                    if (pickerType == 0) pickerFlags = pickerFlags or ColorEditFlags.PickerHueBar
-                    if (pickerType == 1) pickerFlags = pickerFlags or ColorEditFlags.PickerHueWheel
+                    var pickerFlags = Cef.NoInputs or Cef.NoOptions or Cef.NoLabel or
+                            Cef.NoSidePreview or (flags and Cef.NoAlpha)
+                    if (pickerType == 0) pickerFlags = pickerFlags or Cef.PickerHueBar
+                    if (pickerType == 1) pickerFlags = pickerFlags or Cef.PickerHueWheel
                     val backupPos = Vec2(cursorScreenPos)
                     if (selectable("##selectable", false, 0, pickerSize)) // By default, Selectable() is closing popup
-                        g.colorEditOptions = (g.colorEditOptions wo ColorEditFlags._PickerMask) or (pickerFlags and ColorEditFlags._PickerMask)
+                        g.colorEditOptions = (g.colorEditOptions wo Cef._PickerMask) or (pickerFlags and Cef._PickerMask)
                     cursorScreenPos = backupPos
                     val dummyRefCol = Vec4()
                     for (i in 0..2) dummyRefCol[i] = refCol[i]
-                    if (pickerFlags hasnt ColorEditFlags.NoAlpha) dummyRefCol[3] = refCol[3]
+                    if (pickerFlags hasnt Cef.NoAlpha) dummyRefCol[3] = refCol[3]
                     val pF = floatArrayOf(dummyRefCol.x)
                     colorPicker4("##dummypicker", pF, pickerFlags)
                     dummyRefCol.x = pF[0]
@@ -318,7 +319,7 @@ interface imgui_widgetsText {
             if (allowOptAlphaBar) {
                 if (allowOptPicker) separator()
                 val pI = intArrayOf(g.colorEditOptions)
-                checkboxFlags("Alpha Bar", pI, ColorEditFlags.AlphaBar.i)
+                checkboxFlags("Alpha Bar", pI, Cef.AlphaBar.i)
                 g.colorEditOptions = pI[0]
             }
             endPopup()

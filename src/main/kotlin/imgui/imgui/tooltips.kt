@@ -1,20 +1,14 @@
 package imgui.imgui
 
-import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.begin
-import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
-import imgui.ImGui.dummy
 import imgui.ImGui.end
-import imgui.ImGui.endTooltip
 import imgui.ImGui.findWindowByName
-import imgui.ImGui.sameLine
 import imgui.ImGui.style
-import imgui.ImGui.text
 import imgui.ImGui.textV
 import imgui.Context as g
+import imgui.WindowFlags as Wf
 
 /** Tooltips    */
 interface imgui_tooltips {
@@ -33,8 +27,7 @@ interface imgui_tooltips {
                         windowName = "##Tooltip%02d".format(++g.tooltipOverrideCount)
                     }
                 }
-            begin(windowName, null, WindowFlags.Tooltip or WindowFlags.NoTitleBar or WindowFlags.NoMove or
-                    WindowFlags.NoResize or WindowFlags.NoSavedSettings or WindowFlags.AlwaysAutoResize)
+            begin(windowName, null, Wf.Tooltip or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize)
         }
     }
 
@@ -50,7 +43,7 @@ interface imgui_tooltips {
     fun beginTooltip() = beginTooltipEx(false)
 
     fun endTooltip() {
-        assert(currentWindowRead!!.flags has WindowFlags.Tooltip)   // Mismatched BeginTooltip()/EndTooltip() calls
+        assert(currentWindowRead!!.flags has Wf.Tooltip)   // Mismatched BeginTooltip()/EndTooltip() calls
         end()
     }
 }

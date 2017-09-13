@@ -56,6 +56,9 @@ import imgui.imgui.imgui_widgetsText.Companion.paintVertsLinearGradientKeepAlpha
 import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
 import imgui.Context as g
+import imgui.WindowFlags as Wf
+import imgui.InputTextFlags as Itf
+import imgui.ColorEditFlags as Cef
 
 /** Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little colored preview square that can be
  *  left-clicked to open a picker, and right-clicked to open an option menu.)
@@ -67,7 +70,7 @@ interface imgui_widgetsColorEditorPicker {
     /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
      *  Hint: 'float col[3]' function argument is same as 'float* col'.
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
-    fun colorEdit3(label: String, col: FloatArray, flags: Int = 0) = colorEdit4(label, col, flags or ColorEditFlags.NoAlpha)
+    fun colorEdit3(label: String, col: FloatArray, flags: Int = 0) = colorEdit4(label, col, flags or Cef.NoAlpha)
 
     /** Edit colors components (each component in 0.0f..1.0f range).
      *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ColorEditFlags.NoAlpha flag is set.
@@ -79,12 +82,12 @@ interface imgui_widgetsColorEditorPicker {
         if (window.skipItems) return false
 
         val storageId = window.id   // Store options on a per window basis
-        val wExtra = if (flags has ColorEditFlags.NoSmallPreview) 0f else colorSquareSize + style.itemInnerSpacing.x
+        val wExtra = if (flags has Cef.NoSmallPreview) 0f else colorSquareSize + style.itemInnerSpacing.x
         val wItemsAll = calcItemWidth() - wExtra
         val labelDisplayEnd = findRenderedTextEnd(label)
 
-        val alpha = flags hasnt ColorEditFlags.NoAlpha
-        val hdr = flags has ColorEditFlags.HDR
+        val alpha = flags hasnt Cef.NoAlpha
+        val hdr = flags has Cef.HDR
         val components = if (alpha) 4 else 3
         val flagsUntouched = flags
 
@@ -94,25 +97,25 @@ interface imgui_widgetsColorEditorPicker {
         var flags = flags
 
         // If we're not showing any slider there's no point in doing any HSV conversions
-        if (flags has ColorEditFlags.NoInputs)
-            flags = (flags wo ColorEditFlags._InputsMask) or ColorEditFlags.RGB or ColorEditFlags.NoOptions
+        if (flags has Cef.NoInputs)
+            flags = (flags wo Cef._InputsMask) or Cef.RGB or Cef.NoOptions
 
         // Context menu: display and modify options (before defaults are applied)
-        if (flags hasnt ColorEditFlags.NoOptions)
+        if (flags hasnt Cef.NoOptions)
             colorEditOptionsPopup(flags)
 
         // Read stored options
-        if (flags hasnt ColorEditFlags._InputsMask)
-            flags = flags or (g.colorEditOptions and ColorEditFlags._InputsMask)
-        if (flags hasnt ColorEditFlags._DataTypeMask)
-            flags = flags or (g.colorEditOptions and ColorEditFlags._DataTypeMask)
-        if (flags hasnt ColorEditFlags._PickerMask)
-            flags = flags or (g.colorEditOptions and ColorEditFlags._PickerMask)
-        flags = flags or (g.colorEditOptions wo (ColorEditFlags._InputsMask or ColorEditFlags._DataTypeMask or ColorEditFlags._PickerMask))
+        if (flags hasnt Cef._InputsMask)
+            flags = flags or (g.colorEditOptions and Cef._InputsMask)
+        if (flags hasnt Cef._DataTypeMask)
+            flags = flags or (g.colorEditOptions and Cef._DataTypeMask)
+        if (flags hasnt Cef._PickerMask)
+            flags = flags or (g.colorEditOptions and Cef._PickerMask)
+        flags = flags or (g.colorEditOptions wo (Cef._InputsMask or Cef._DataTypeMask or Cef._PickerMask))
 
         // Convert to the formats we need
         val f = floatArrayOf(col[0], col[1], col[2], if (alpha) col[3] else 1f)
-        if (flags has ColorEditFlags.HSV)
+        if (flags has Cef.HSV)
             f.rgbToHSV()
 
         val i = IntArray(4, { F32_TO_INT8_UNBOUND(f[it]) })
@@ -120,7 +123,7 @@ interface imgui_widgetsColorEditorPicker {
         var valueChanged = false
         var valueChangedAsFloat = false
 
-        if (flags has (ColorEditFlags.RGB or ColorEditFlags.HSV) && flags hasnt ColorEditFlags.NoInputs) {
+        if (flags has (Cef.RGB or Cef.HSV) && flags hasnt Cef.NoInputs) {
 
             // RGB/HSV 0..255 Sliders
             val wItemOne = glm.max(1f, ((wItemsAll - style.itemInnerSpacing.x * (components - 1)) / components).i.f)
@@ -136,7 +139,7 @@ interface imgui_widgetsColorEditorPicker {
                     arrayOf("%0.3f", "%0.3f", "%0.3f", "%0.3f"), // Short display
                     arrayOf("R:%0.3f", "G:%0.3f", "B:%0.3f", "A:%0.3f"), // Long display for RGBA
                     arrayOf("H:%0.3f", "S:%0.3f", "V:%0.3f", "A:%0.3f"))  // Long display for HSVA
-            val fmtIdx = if (hidePrefix) 0 else if (flags has ColorEditFlags.HSV) 2 else 1
+            val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.HSV) 2 else 1
 
             pushItemWidth(wItemOne)
             for (n in 0 until components) {
@@ -145,7 +148,7 @@ interface imgui_widgetsColorEditorPicker {
                 if (n + 1 == components)
                     pushItemWidth(wItemLast)
                 val int = intArrayOf(i[n])
-                if (flags has ColorEditFlags.Float) {
+                if (flags has Cef.Float) {
                     valueChangedAsFloat = valueChangedAsFloat or dragFloat(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n])
                     valueChanged = valueChanged or valueChangedAsFloat
                 } else
@@ -154,7 +157,7 @@ interface imgui_widgetsColorEditorPicker {
             popItemWidth()
             popItemWidth()
 
-        } else if (flags has ColorEditFlags.HEX && flags hasnt ColorEditFlags.NoInputs) {
+        } else if (flags has Cef.HEX && flags hasnt Cef.NoInputs) {
             // RGB Hexadecimal Input
             val buf = CharArray(64)
             (if (alpha)
@@ -162,7 +165,7 @@ interface imgui_widgetsColorEditorPicker {
             else
                 "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))).toCharArray(buf)
             pushItemWidth(wItemsAll)
-            if (inputText("##Text", buf, InputTextFlags.CharsHexadecimal or InputTextFlags.CharsUppercase)) {
+            if (inputText("##Text", buf, Itf.CharsHexadecimal or Itf.CharsUppercase)) {
                 valueChanged = valueChanged || true
                 var p = 0
                 while (buf[p] == '#' || buf[p].isSpace)
@@ -174,19 +177,19 @@ interface imgui_widgetsColorEditorPicker {
         }
 
         var pickerActive = false
-        if (flags hasnt ColorEditFlags.NoSmallPreview) {
-            if (flags hasnt ColorEditFlags.NoInputs)
+        if (flags hasnt Cef.NoSmallPreview) {
+            if (flags hasnt Cef.NoInputs)
                 sameLine(0f, style.itemInnerSpacing.x)
 
             val colVec4 = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f) // 1.0f
             if (colorButton("##ColorButton", colVec4, flags)) {
-                if (flags hasnt ColorEditFlags.NoPicker) {
+                if (flags hasnt Cef.NoPicker) {
                     // Store current color and open a picker
                     g.colorPickerRef put colVec4
                     openPopup("picker")
                     setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
                 }
-            } else if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered && isMouseClicked(1))
+            } else if (flags hasnt Cef.NoOptions && isItemRectHovered && isMouseClicked(1))
                 openPopup("context")
 
             if (beginPopup("picker")) {
@@ -196,10 +199,8 @@ interface imgui_widgetsColorEditorPicker {
                     separator()
                 }
                 val squareSz = colorSquareSize
-                val pickerFlagsToForward = ColorEditFlags._DataTypeMask or ColorEditFlags._PickerMask or ColorEditFlags.HDR or
-                        ColorEditFlags.NoAlpha or ColorEditFlags.AlphaBar
-                val pickerFlags = (flags and pickerFlagsToForward) or ColorEditFlags._InputsMask or ColorEditFlags.NoLabel or
-                        ColorEditFlags.AlphaPreviewHalf
+                val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
+                val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._InputsMask or Cef.NoLabel or Cef.AlphaPreviewHalf
                 pushItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
                 val pF = floatArrayOf(g.colorPickerRef.x)
                 valueChanged = valueChanged or colorPicker4("##picker", col, pickerFlags, pF)
@@ -209,7 +210,7 @@ interface imgui_widgetsColorEditorPicker {
             }
         }
 
-        if (0 != labelDisplayEnd && flags hasnt ColorEditFlags.NoLabel) {
+        if (0 != labelDisplayEnd && flags hasnt Cef.NoLabel) {
             sameLine(0f, style.itemInnerSpacing.x)
             textUnformatted(label, labelDisplayEnd)
         }
@@ -219,7 +220,7 @@ interface imgui_widgetsColorEditorPicker {
             if (!valueChangedAsFloat)
                 for (n in 0..3)
                     f[n] = i[n] / 255f
-            if (flags has ColorEditFlags.HSV)
+            if (flags has Cef.HSV)
                 f.hsvToRGB()
             if (valueChanged) {
                 col[0] = f[0]
@@ -248,7 +249,7 @@ interface imgui_widgetsColorEditorPicker {
 
     fun colorPicker3(label: String, col: FloatArray, flags: Int = 0): Boolean {
         val col4 = floatArrayOf(*col, 1f)
-        if (!colorPicker4(label, col4, flags or ColorEditFlags.NoAlpha)) return false
+        if (!colorPicker4(label, col4, flags or Cef.NoAlpha)) return false
         col[0] = col4[0]; col[1] = col4[1]; col[2] = col4[2]
         return true
     }
@@ -266,22 +267,22 @@ interface imgui_widgetsColorEditorPicker {
         beginGroup()
 
         var flags = flags
-        if (flags hasnt ColorEditFlags.NoSidePreview)
-            flags = flags or ColorEditFlags.NoSmallPreview
+        if (flags hasnt Cef.NoSidePreview)
+            flags = flags or Cef.NoSmallPreview
 
         // Context menu: display and store options.
-        if (flags hasnt ColorEditFlags.NoOptions)
+        if (flags hasnt Cef.NoOptions)
             colorPickerOptionsPopup(flags, col)
 
         // Read stored options
-        if (flags hasnt ColorEditFlags._PickerMask)
-            flags = flags or (if (g.colorEditOptions has ColorEditFlags._PickerMask) g.colorEditOptions else ColorEditFlags._OptionsDefault.i) and ColorEditFlags._PickerMask
-        assert((flags and ColorEditFlags._PickerMask).isPowerOfTwo) // Check that only 1 is selected
-        if (flags hasnt ColorEditFlags.NoOptions)
-            flags = flags or (g.colorEditOptions and ColorEditFlags.AlphaBar)
+        if (flags hasnt Cef._PickerMask)
+            flags = flags or (if (g.colorEditOptions has Cef._PickerMask) g.colorEditOptions else Cef._OptionsDefault.i) and Cef._PickerMask
+        assert((flags and Cef._PickerMask).isPowerOfTwo) // Check that only 1 is selected
+        if (flags hasnt Cef.NoOptions)
+            flags = flags or (g.colorEditOptions and Cef.AlphaBar)
 
         // Setup
-        val alphaBar = flags has ColorEditFlags.AlphaBar && flags hasnt ColorEditFlags.NoAlpha
+        val alphaBar = flags has Cef.AlphaBar && flags hasnt Cef.NoAlpha
         val pickerPos = window.dc.cursorPos // consume only, safe passing reference
         val barsWidth = colorSquareSize     // Arbitrary smallish width of Hue/Alpha picking bars TODO check
         // Saturation/Value picking box
@@ -307,7 +308,7 @@ interface imgui_widgetsColorEditorPicker {
         var valueChangedH = false
         var valueChangedSv = false
 
-        if (flags has ColorEditFlags.PickerHueWheel) {
+        if (flags has Cef.PickerHueWheel) {
             // Hue wheel + SV triangle logic
             invisibleButton("hsv", Vec2(svPickerSize + style.itemInnerSpacing.x + barsWidth, svPickerSize))
             if (isItemActive) {
@@ -336,10 +337,10 @@ interface imgui_widgetsColorEditorPicker {
                     valueChanged = true
                 }
             }
-            if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered && isMouseClicked(1))
+            if (flags hasnt Cef.NoOptions && isItemRectHovered && isMouseClicked(1))
                 openPopup("context")
 
-        } else if (flags has ColorEditFlags.PickerHueBar) {
+        } else if (flags has Cef.PickerHueBar) {
             // SV rectangle logic
             invisibleButton("sv", Vec2(svPickerSize))
             if (isItemActive) {
@@ -348,7 +349,7 @@ interface imgui_widgetsColorEditorPicker {
                 valueChangedSv = true
                 valueChanged = true
             }
-            if (flags hasnt ColorEditFlags.NoOptions && isItemRectHovered && isMouseClicked(1))
+            if (flags hasnt Cef.NoOptions && isItemRectHovered && isMouseClicked(1))
                 openPopup("context")
             // Hue bar logic
             cursorScreenPos.put(bar0PosX, pickerPos.y)
@@ -370,32 +371,32 @@ interface imgui_widgetsColorEditorPicker {
             }
         }
 
-        if (flags hasnt ColorEditFlags.NoSidePreview) {
+        if (flags hasnt Cef.NoSidePreview) {
             sameLine(0f, style.itemInnerSpacing.x)
             beginGroup()
         }
 
-        if (flags hasnt ColorEditFlags.NoLabel) {
+        if (flags hasnt Cef.NoLabel) {
             val labelDisplayEnd = findRenderedTextEnd(label)
             if (0 != labelDisplayEnd) {
-                if (flags has ColorEditFlags.NoSidePreview)
+                if (flags has Cef.NoSidePreview)
                     sameLine(0f, style.itemInnerSpacing.x)
                 textUnformatted(label, labelDisplayEnd)
             }
         }
-        if (flags hasnt ColorEditFlags.NoSidePreview) {
-            val colV4 = Vec4(col[0], col[1], col[2], if (flags has ColorEditFlags.NoAlpha) 1f else col[3])
+        if (flags hasnt Cef.NoSidePreview) {
+            val colV4 = Vec4(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
             val squareSz = colorSquareSize
-            if (flags has ColorEditFlags.NoLabel)
+            if (flags has Cef.NoLabel)
                 text("Current")
-            val f = flags and (ColorEditFlags.HDR or ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf or ColorEditFlags.NoTooltip)
+            val f = flags and (Cef.HDR or Cef.AlphaPreview or Cef.AlphaPreviewHalf or Cef.NoTooltip)
             colorButton("##current", colV4, f, Vec2(squareSz * 3, squareSz * 2))
             refCol?.let {
                 text("Original")
-                val refColV4 = Vec4(it[0], it[1], it[2], if (flags has ColorEditFlags.NoAlpha) 1f else it[3])
+                val refColV4 = Vec4(it[0], it[1], it[2], if (flags has Cef.NoAlpha) 1f else it[3])
                 if (colorButton("##original", refColV4, f, Vec2(squareSz * 3, squareSz * 2))) {
                     for (i in 0..2) col[i] = it[i]
-                    if (flags hasnt ColorEditFlags.NoAlpha) col[3] = it[3]
+                    if (flags hasnt Cef.NoAlpha) col[3] = it[3]
                     valueChanged = true
                 }
             }
@@ -407,17 +408,17 @@ interface imgui_widgetsColorEditorPicker {
             colorConvertHSVtoRGB(if (h >= 1f) h - 10 * 1e-6f else h, if (s > 0f) s else 10 * 1e-6f, if (v > 0f) v else 1e-6f, col)
 
         // R,G,B and H,S,V slider color editor
-        if (flags hasnt ColorEditFlags.NoInputs) {
+        if (flags hasnt Cef.NoInputs) {
             pushItemWidth((if (alphaBar) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
-            val subFlagsToForward = ColorEditFlags._DataTypeMask or ColorEditFlags.HDR or ColorEditFlags.NoAlpha or ColorEditFlags.NoOptions or
-                    ColorEditFlags.NoSmallPreview or ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf
-            var subFlags = (flags and subFlagsToForward) or ColorEditFlags.NoPicker
-            if (flags has ColorEditFlags.RGB || flags hasnt ColorEditFlags._InputsMask)
-                valueChanged = valueChanged or colorEdit4("##rgb", col, subFlags or ColorEditFlags.RGB)
-            if (flags has ColorEditFlags.HSV || flags hasnt ColorEditFlags._InputsMask)
-                valueChanged = valueChanged or colorEdit4("##hsv", col, subFlags or ColorEditFlags.HSV)
-            if (flags has ColorEditFlags.HEX || flags hasnt ColorEditFlags._InputsMask)
-                valueChanged = valueChanged or colorEdit4("##hex", col, subFlags or ColorEditFlags.HEX)
+            val subFlagsToForward = Cef._DataTypeMask or Cef.HDR or Cef.NoAlpha or Cef.NoOptions or Cef.NoSmallPreview or
+                    Cef.AlphaPreview or Cef.AlphaPreviewHalf
+            val subFlags = (flags and subFlagsToForward) or Cef.NoPicker
+            if (flags has Cef.RGB || flags hasnt Cef._InputsMask)
+                valueChanged = valueChanged or colorEdit4("##rgb", col, subFlags or Cef.RGB)
+            if (flags has Cef.HSV || flags hasnt Cef._InputsMask)
+                valueChanged = valueChanged or colorEdit4("##hsv", col, subFlags or Cef.HSV)
+            if (flags has Cef.HEX || flags hasnt Cef._InputsMask)
+                valueChanged = valueChanged or colorEdit4("##hex", col, subFlags or Cef.HEX)
             popItemWidth()
         }
 
@@ -441,7 +442,7 @@ interface imgui_widgetsColorEditorPicker {
                 COL32(0, 255, 255, 255), COL32(0, 0, 255, 255), COL32(255, 0, 255, 255), COL32(255, 0, 0, 255))
         val svCursorPos = Vec2()
 
-        if (flags has ColorEditFlags.PickerHueWheel) {
+        if (flags has Cef.PickerHueWheel) {
             // Render Hue Wheel
             val aeps = 1.5f / wheelROuter   // Half a pixel arc length in radians (2pi cancels out).
             val segmentPerArc = glm.max(4, (wheelROuter / 12).i)
@@ -484,7 +485,7 @@ interface imgui_widgetsColorEditorPicker {
             drawList.primVtx(trc, uvWhite, COL32_BLACK_TRANS)
             drawList.addTriangle(tra, trb, trc, COL32(128, 128, 128, 255), 1.5f)
             svCursorPos put trc.lerp(tra, saturate(s)).lerp(trb, saturate(1 - v))
-        } else if (flags has ColorEditFlags.PickerHueBar) {
+        } else if (flags has Cef.PickerHueBar) {
             // Render SV Square
             drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_WHITE, hueColor32, hueColor32, COL32_WHITE)
             drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_BLACK_TRANS, COL32_BLACK_TRANS, COL32_BLACK, COL32_BLACK)
@@ -548,30 +549,30 @@ interface imgui_widgetsColorEditorPicker {
         val (pressed, hovered, held) = buttonBehavior(bb, id)
 
         var flags = flags
-        if (flags has ColorEditFlags.NoAlpha)
-            flags = flags and (ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf).inv()
+        if (flags has Cef.NoAlpha)
+            flags = flags and (Cef.AlphaPreview or Cef.AlphaPreviewHalf).inv()
 
         val colWithoutAlpha = Vec4(col.x, col.y, col.z, 1f)
         val gridStep = glm.min(size.x, size.y) / 2.99f
         val rounding = glm.min(style.frameRounding, gridStep * 0.5f)
-        if (flags has ColorEditFlags.AlphaPreviewHalf && col.w < 1f) {
+        if (flags has Cef.AlphaPreviewHalf && col.w < 1f) {
             val midX = ((bb.min.x + bb.max.x) * 0.5f + 0.5f).i.f
             renderColorRectWithAlphaCheckerboard(Vec2(bb.min.x + gridStep, bb.min.y), bb.max, getColorU32(col), gridStep,
                     Vec2(-gridStep, 0f), rounding, Corner.TopRight or Corner.BotRight)
             window.drawList.addRectFilled(bb.min, Vec2(midX, bb.max.y), getColorU32(colWithoutAlpha), rounding,
                     Corner.TopLeft or Corner.BotLeft)
         } else {
-            val c = getColorU32(if (flags has ColorEditFlags.AlphaPreview) col else colWithoutAlpha)
+            val c = getColorU32(if (flags has Cef.AlphaPreview) col else colWithoutAlpha)
             renderColorRectWithAlphaCheckerboard(bb.min, bb.max, c, gridStep, Vec2(), rounding)
         }
-        if (window.flags has WindowFlags.ShowBorders)
+        if (window.flags has Wf.ShowBorders)
             renderFrameBorder(bb.min, bb.max, rounding)
         else
             window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
 
-        if (hovered && flags hasnt ColorEditFlags.NoTooltip) {
+        if (hovered && flags hasnt Cef.NoTooltip) {
             val pF = floatArrayOf(col.x, col.y, col.z, col.w)
-            colorTooltip(descId, pF, flags and (ColorEditFlags.NoAlpha or ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf))
+            colorTooltip(descId, pF, flags and (Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf))
             col.put(pF)
         }
 
@@ -582,15 +583,15 @@ interface imgui_widgetsColorEditorPicker {
      *  type, etc. User will be able to change many settings, unless you pass the _NoOptions flag to your calls.    */
     fun setColorEditOptions(flags: Int) {
         var flags = flags
-        if (flags hasnt ColorEditFlags._InputsMask)
-            flags = flags or (ColorEditFlags._OptionsDefault and ColorEditFlags._InputsMask)
-        if (flags hasnt ColorEditFlags._DataTypeMask)
-            flags = flags or (ColorEditFlags._OptionsDefault and ColorEditFlags._DataTypeMask)
-        if (flags hasnt ColorEditFlags._PickerMask)
-            flags = flags or (ColorEditFlags._OptionsDefault and ColorEditFlags._PickerMask)
-        assert((flags and ColorEditFlags._InputsMask).isPowerOfTwo)     // Check only 1 option is selected
-        assert((flags and ColorEditFlags._DataTypeMask).isPowerOfTwo)   // Check only 1 option is selected
-        assert((flags and ColorEditFlags._PickerMask).isPowerOfTwo)     // Check only 1 option is selected
+        if (flags hasnt Cef._InputsMask)
+            flags = flags or (Cef._OptionsDefault and Cef._InputsMask)
+        if (flags hasnt Cef._DataTypeMask)
+            flags = flags or (Cef._OptionsDefault and Cef._DataTypeMask)
+        if (flags hasnt Cef._PickerMask)
+            flags = flags or (Cef._OptionsDefault and Cef._PickerMask)
+        assert((flags and Cef._InputsMask).isPowerOfTwo)     // Check only 1 option is selected
+        assert((flags and Cef._DataTypeMask).isPowerOfTwo)   // Check only 1 option is selected
+        assert((flags and Cef._PickerMask).isPowerOfTwo)     // Check only 1 option is selected
         g.colorEditOptions = flags
     }
 }

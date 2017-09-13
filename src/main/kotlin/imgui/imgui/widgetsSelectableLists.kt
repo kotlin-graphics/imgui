@@ -33,9 +33,11 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.windowContentRegionMax
-import imgui.internal.ButtonFlags
+import imgui.internal.ButtonFlags as Bf
 import imgui.internal.Rect
 import imgui.internal.or
+import imgui.WindowFlags as Wf
+import imgui.SelectableFlags as Sf
 
 /** Widgets: Selectable / Lists */
 interface imgui_widgetsSelectableLists {
@@ -50,7 +52,7 @@ interface imgui_widgetsSelectableLists {
         val window = currentWindow
         if (window.skipItems) return false
 
-        if (flags has SelectableFlags.SpanAllColumns && window.dc.columnsCount > 1)  // FIXME-OPT: Avoid if vertically clipped.
+        if (flags has Sf.SpanAllColumns && window.dc.columnsCount > 1)  // FIXME-OPT: Avoid if vertically clipped.
             popClipRect()
 
         val id = window.getId(label)
@@ -63,13 +65,13 @@ interface imgui_widgetsSelectableLists {
 
         // Fill horizontal space.
         val windowPadding = Vec2(window.windowPadding)
-        val maxX = if (flags has SelectableFlags.SpanAllColumns) windowContentRegionMax.x else contentRegionMax.x
+        val maxX = if (flags has Sf.SpanAllColumns) windowContentRegionMax.x else contentRegionMax.x
         val wDraw = glm.max(labelSize.x, window.pos.x + maxX - windowPadding.x - window.dc.cursorPos.x)
         val sizeDraw = Vec2(
-                if (sizeArg.x != 0f && flags hasnt SelectableFlags.DrawFillAvailWidth) sizeArg.x else wDraw,
+                if (sizeArg.x != 0f && flags hasnt Sf.DrawFillAvailWidth) sizeArg.x else wDraw,
                 if (sizeArg.y != 0f) sizeArg.y else size.y)
         val bbWithSpacing = Rect(pos, pos + sizeDraw)
-        if (sizeArg.x == 0f || flags has SelectableFlags.DrawFillAvailWidth)
+        if (sizeArg.x == 0f || flags has Sf.DrawFillAvailWidth)
             bbWithSpacing.max.x += windowPadding.x
 
         // Selectables are tightly packed together, we extend the box to cover spacing between selectable.
@@ -82,19 +84,19 @@ interface imgui_widgetsSelectableLists {
         bbWithSpacing.max.x += spacingR
         bbWithSpacing.max.y += spacingD
         if (!itemAdd(bbWithSpacing, id)) {
-            if (flags has SelectableFlags.SpanAllColumns && window.dc.columnsCount > 1)
+            if (flags has Sf.SpanAllColumns && window.dc.columnsCount > 1)
                 pushColumnClipRect()
             return false
         }
 
         var buttonFlags = 0
-        if (flags has SelectableFlags.Menu) buttonFlags = buttonFlags or ButtonFlags.PressedOnClick
-        if (flags has SelectableFlags.MenuItem) buttonFlags = buttonFlags or ButtonFlags.PressedOnClick or ButtonFlags.PressedOnRelease
-        if (flags has SelectableFlags.Disabled) buttonFlags = buttonFlags or ButtonFlags.Disabled
-        if (flags has SelectableFlags.AllowDoubleClick) buttonFlags = buttonFlags or ButtonFlags.PressedOnClickRelease or ButtonFlags.PressedOnDoubleClick
+        if (flags has Sf.Menu) buttonFlags = buttonFlags or Bf.PressedOnClick
+        if (flags has Sf.MenuItem) buttonFlags = buttonFlags or Bf.PressedOnClick or Bf.PressedOnRelease
+        if (flags has Sf.Disabled) buttonFlags = buttonFlags or Bf.Disabled
+        if (flags has Sf.AllowDoubleClick) buttonFlags = buttonFlags or Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
         val (pressed, hovered, held) = buttonBehavior(bbWithSpacing, id, buttonFlags)
         var selected = selected
-        if (flags has SelectableFlags.Disabled)
+        if (flags has Sf.Disabled)
             selected = false
 
         // Render
@@ -103,17 +105,17 @@ interface imgui_widgetsSelectableLists {
             renderFrame(bbWithSpacing.min, bbWithSpacing.max, col.u32, false, 0f)
         }
 
-        if (flags has SelectableFlags.SpanAllColumns && window.dc.columnsCount > 1) {
+        if (flags has Sf.SpanAllColumns && window.dc.columnsCount > 1) {
             pushColumnClipRect()
             bbWithSpacing.max.x -= contentRegionMax.x - maxX
         }
 
-        if (flags has SelectableFlags.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
+        if (flags has Sf.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
         renderTextClipped(bb.min, bbWithSpacing.max, label, 0, labelSize, Vec2())
-        if (flags has SelectableFlags.Disabled) popStyleColor()
+        if (flags has Sf.Disabled) popStyleColor()
 
         // Automatically close popups
-        if (pressed && flags hasnt SelectableFlags.DontClosePopups && window.flags has WindowFlags.Popup)
+        if (pressed && flags hasnt Sf.DontClosePopups && window.flags has Wf.Popup)
             closeCurrentPopup()
         return pressed
     }

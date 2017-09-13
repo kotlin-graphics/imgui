@@ -39,6 +39,8 @@ import imgui.internal.LayoutType
 import imgui.internal.Rect
 import imgui.internal.triangleContainsPoint
 import imgui.Context as g
+import imgui.WindowFlags as Wf
+import imgui.SelectableFlags as Sf
 
 /** Menu    */
 interface imgui_menus {
@@ -51,8 +53,7 @@ interface imgui_menus {
         setNextWindowSize(Vec2(IO.displaySize.x, g.fontBaseSize + style.framePadding.y * 2f))
         pushStyleVar(StyleVar.WindowRounding, 0f)
         pushStyleVar(StyleVar.WindowMinSize, Vec2i())
-        val flags = WindowFlags.NoTitleBar or WindowFlags.NoResize or WindowFlags.NoMove or WindowFlags.NoScrollbar or
-                WindowFlags.NoSavedSettings or WindowFlags.MenuBar
+        val flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
         if (!begin("##MainMenuBar", null, flags) || !beginMenuBar()) {
             end()
             popStyleVar(2)
@@ -74,7 +75,7 @@ interface imgui_menus {
 
         val window = currentWindow
         if (window.skipItems) return false
-        if (window.flags hasnt WindowFlags.MenuBar) return false
+        if (window.flags hasnt Wf.MenuBar) return false
 
         assert(!window.dc.menuBarAppending)
         beginGroup() // Save position
@@ -94,7 +95,7 @@ interface imgui_menus {
         val window = currentWindow
         if (window.skipItems) return
 
-        assert(window.flags has WindowFlags.MenuBar)
+        assert(window.flags has Wf.MenuBar)
         assert(window.dc.menuBarAppending)
         popClipRect()
         popId()
@@ -117,7 +118,7 @@ interface imgui_menus {
 
         val pressed: Boolean
         var menuIsOpen = isPopupOpen(id)
-        val menusetIsOpen = window.flags hasnt WindowFlags.Popup && g.openPopupStack.size > g.currentPopupStack.size &&
+        val menusetIsOpen = window.flags hasnt Wf.Popup && g.openPopupStack.size > g.currentPopupStack.size &&
                 g.openPopupStack[g.currentPopupStack.size].parentMenuSet == window.getId("##menus")
         val backedNavWindow = g.navWindow
         if (menusetIsOpen)
@@ -133,7 +134,7 @@ interface imgui_menus {
             window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
             pushStyleVar(StyleVar.ItemSpacing, style.itemSpacing * 2f)
             val w = labelSize.x
-            val flags = SelectableFlags.Menu or SelectableFlags.DontClosePopups or if (enabled) 0 else SelectableFlags.Disabled.i
+            val flags = Sf.Menu or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
             pressed = selectable(label, menuIsOpen, flags, Vec2(w, 0f))
             popStyleVar()
             sameLine()
@@ -142,8 +143,8 @@ interface imgui_menus {
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
             val w = window.menuColumns.declColumns(labelSize.x, 0f, (g.fontSize * 1.2f).i.f) // Feedback to next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
-            val flags = SelectableFlags.Menu or SelectableFlags.DontClosePopups or SelectableFlags.DrawFillAvailWidth
-            pressed = selectable(label, menuIsOpen, flags or if (enabled) 0 else SelectableFlags.Disabled.i, Vec2(w, 0f))
+            val flags = Sf.Menu or Sf.DontClosePopups or Sf.DrawFillAvailWidth
+            pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.Null else Sf.Disabled, Vec2(w, 0f))
             if (!enabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
             renderCollapseTriangle(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.2f, 0f), false)
             if (!enabled) popStyleColor()
@@ -156,7 +157,7 @@ interface imgui_menus {
 
         var wantOpen = false
         var wantClose = false
-        if (window.flags has (WindowFlags.Popup or WindowFlags.ChildMenu)) {
+        if (window.flags has (Wf.Popup or Wf.ChildMenu)) {
             /*  Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers,
                 so menus feels more reactive.             */
             var movingWithinOpenedTriangle = false
@@ -206,9 +207,9 @@ interface imgui_menus {
 
         if (menuIsOpen) {
             setNextWindowPos(popupPos, Cond.Always)
-            val flags = WindowFlags.ShowBorders or (
-                    if (window.flags has (WindowFlags.Popup or WindowFlags.ChildMenu)) WindowFlags.ChildMenu or WindowFlags.ChildWindow
-                    else WindowFlags.ChildMenu.i)
+            val flags = Wf.ShowBorders or (
+                    if (window.flags has (Wf.Popup or Wf.ChildMenu)) Wf.ChildMenu or Wf.ChildWindow
+                    else Wf.ChildMenu.i)
             // menuIsOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
             menuIsOpen = beginPopupEx(id, flags)
         }
@@ -230,7 +231,7 @@ interface imgui_menus {
         val w = window.menuColumns.declColumns(labelSize.x, shortcutSize.x, (g.fontSize * 1.2f).i.f) // Feedback for next frame
         val extraW = glm.max(0f, contentRegionAvail.x - w)
 
-        val flags = SelectableFlags.MenuItem or SelectableFlags.DrawFillAvailWidth or if (enabled) 0 else SelectableFlags.Disabled.i
+        val flags = Sf.MenuItem or Sf.DrawFillAvailWidth or if (enabled) Sf.Null else Sf.Disabled
         val pressed = selectable(label, false, flags, Vec2(w, 0f))
         if (shortcutSize.x > 0f) {
             pushStyleColor(Col.Text, style.colors[Col.TextDisabled])

@@ -19,6 +19,7 @@ import imgui.ImGui.pushStyleVar
 import imgui.internal.Rect
 import imgui.internal.saturate
 import imgui.Context as g
+import imgui.WindowFlags as Wf
 
 
 interface imgui_utilities {
@@ -152,8 +153,8 @@ interface imgui_utilities {
         pushStyleColor(Col.ChildWindowBg, style.colors[Col.FrameBg])
         pushStyleVar(StyleVar.ChildWindowRounding, style.frameRounding)
         pushStyleVar(StyleVar.WindowPadding, style.framePadding)
-        return beginChild(id, size, g.currentWindow!!.flags has WindowFlags.ShowBorders,
-                WindowFlags.NoMove or WindowFlags.AlwaysUseWindowPadding or extraFlags)
+        return beginChild(id, size, g.currentWindow!!.flags has Wf.ShowBorders, Wf.NoMove or Wf.AlwaysUseWindowPadding
+                or extraFlags)
     }
 
     fun endChildFrame() {

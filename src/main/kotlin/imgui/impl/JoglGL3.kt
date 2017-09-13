@@ -8,6 +8,7 @@ import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL2ES3.*
 import com.jogamp.opengl.GL3
+import gli.wasInit
 import glm_.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
@@ -20,7 +21,6 @@ import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
 import uno.buffer.intBufferOf
-import uno.gl.iBuf
 import uno.glf.semantic
 import uno.gln.jogl.*
 import uno.glsl.Program
@@ -421,7 +421,8 @@ object JoglGL3 {
         glDeleteVertexArrays(vaoName)
         glDeleteBuffers(bufferName)
 
-        glDeleteProgram(program)
+        if (wasInit { program })
+            glDeleteProgram(program)
 
         if (fontTexture[0] >= 0) {
             glDeleteTextures(fontTexture)

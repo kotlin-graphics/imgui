@@ -52,6 +52,11 @@ import imgui.internal.*
 import java.util.*
 import kotlin.apply
 import imgui.Context as g
+import imgui.WindowFlags as Wf
+import imgui.InputTextFlags as Itf
+import imgui.TreeNodeFlags as Tnf
+import imgui.ColorEditFlags as Cef
+import imgui.internal.ButtonFlags as Bf
 
 fun main(args: Array<String>) {
 
@@ -104,12 +109,12 @@ interface imgui_internal {
         val window = window.rootWindow
 
         // Steal focus on active widgets
-        if (window.flags has WindowFlags.Popup) // FIXME: This statement should be unnecessary. Need further testing before removing it..
+        if (window.flags has Wf.Popup) // FIXME: This statement should be unnecessary. Need further testing before removing it..
             if (g.activeId != 0 && g.activeIdWindow != null && g.activeIdWindow!!.rootWindow != window)
                 clearActiveId()
 
         // Bring to front
-        if ((window.flags has WindowFlags.NoBringToFrontOnFocus) || g.windows.last() === window)
+        if ((window.flags has Wf.NoBringToFrontOnFocus) || g.windows.last() === window)
             return
         g.windows.remove(window)
         g.windows.add(window)
@@ -155,7 +160,7 @@ interface imgui_internal {
             if (!(g.navWindow != null && !g.navWindow!!.wasActive && g.navWindow!!.active)) {
                 if (g.hoveredRootWindow != null) {
                     focusWindow(g.hoveredWindow)
-                    if (g.hoveredWindow!!.flags hasnt WindowFlags.NoMove) {
+                    if (g.hoveredWindow!!.flags hasnt Wf.NoMove) {
                         g.movedWindow = g.hoveredWindow
                         g.movedWindowMoveId = g.hoveredRootWindow!!.moveId
                         setActiveId(g.movedWindowMoveId, g.hoveredRootWindow)
@@ -169,7 +174,7 @@ interface imgui_internal {
             We cannot do that on FocusWindow() because childs may not exist yet         */
         g.windowsSortBuffer.clear()
         g.windows.forEach {
-            if (!it.active || it.flags hasnt WindowFlags.ChildWindow)  // if a child is active its parent will add it
+            if (!it.active || it.flags hasnt Wf.ChildWindow)  // if a child is active its parent will add it
                 it.addToSortedBuffer()
         }
         assert(g.windows.size == g.windowsSortBuffer.size)  // we done something wrong
@@ -577,14 +582,14 @@ interface imgui_internal {
         val window = currentWindow
 
         window.drawList.addRectFilled(pMin, pMax, fillCol, rounding)
-        if (border && window.flags has WindowFlags.ShowBorders) {
+        if (border && window.flags has Wf.ShowBorders) {
             window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding)
             window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding)
         }
     }
 
     fun renderFrameBorder(pMin: Vec2, pMax: Vec2, rounding: Float = 0f) = with(currentWindow) {
-        if (flags has WindowFlags.ShowBorders) {
+        if (flags has Wf.ShowBorders) {
             drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding)
             drawList.addRect(pMin, pMax, Col.Border.u32, rounding)
         }
@@ -738,28 +743,27 @@ interface imgui_internal {
     }
 
 
-    fun buttonBehavior(bb: Rect, id: Int, flags: ButtonFlags) = buttonBehavior(bb, id, flags.i)
+    fun buttonBehavior(bb: Rect, id: Int, flag: Bf) = buttonBehavior(bb, id, flag.i)
 
     fun buttonBehavior(bb: Rect, id: Int, flags: Int = 0): BooleanArray {
 
         val window = currentWindow
         var flags = flags
 
-        if (flags has ButtonFlags.Disabled) {
+        if (flags has Bf.Disabled) {
             if (g.activeId == id) clearActiveId()
             return BooleanArray(3)
         }
 
         // Default behavior requires click+release on same spot
-        if (flags hasnt (ButtonFlags.PressedOnClickRelease or ButtonFlags.PressedOnClick or ButtonFlags.PressedOnRelease or
-                ButtonFlags.PressedOnDoubleClick))
-            flags = flags or ButtonFlags.PressedOnClickRelease
+        if (flags hasnt (Bf.PressedOnClickRelease or Bf.PressedOnClick or Bf.PressedOnRelease or Bf.PressedOnDoubleClick))
+            flags = flags or Bf.PressedOnClickRelease
 
         var pressed = false
-        var hovered = isHovered(bb, id, flags has ButtonFlags.FlattenChilds)
+        var hovered = isHovered(bb, id, flags has Bf.FlattenChilds)
         if (hovered) {
             setHoveredId(id)
-            if (flags hasnt ButtonFlags.NoKeyModifiers || (!IO.keyCtrl && !IO.keyShift && !IO.keyAlt)) {
+            if (flags hasnt Bf.NoKeyModifiers || (!IO.keyCtrl && !IO.keyShift && !IO.keyAlt)) {
 
                 /*                         | CLICKING        | HOLDING with ImGuiButtonFlags_Repeat
                 PressedOnClickRelease  |  <on release>*  |  <on repeat> <on repeat> .. (NOT on release)  <-- MOST COMMON!
@@ -767,20 +771,20 @@ interface imgui_internal {
                 PressedOnClick         |  <on click>     |  <on click> <on repeat> <on repeat> ..
                 PressedOnRelease       |  <on release>   |  <on repeat> <on repeat> .. (NOT on release)
                 PressedOnDoubleClick   |  <on dclick>    |  <on dclick> <on repeat> <on repeat> ..   */
-                if (flags has ButtonFlags.PressedOnClickRelease && IO.mouseClicked[0]) {
+                if (flags has Bf.PressedOnClickRelease && IO.mouseClicked[0]) {
                     setActiveId(id, window) // Hold on ID
                     focusWindow(window)
                     g.activeIdClickOffset = IO.mousePos - bb.min
                 }
-                if ((flags has ButtonFlags.PressedOnClick && IO.mouseClicked[0]) ||
-                        (flags has ButtonFlags.PressedOnDoubleClick && IO.mouseDoubleClicked[0])) {
+                if ((flags has Bf.PressedOnClick && IO.mouseClicked[0]) ||
+                        (flags has Bf.PressedOnDoubleClick && IO.mouseDoubleClicked[0])) {
                     pressed = true
                     clearActiveId()
                     focusWindow(window)
                 }
-                if (flags has ButtonFlags.PressedOnRelease && IO.mouseReleased[0]) {
+                if (flags has Bf.PressedOnRelease && IO.mouseReleased[0]) {
                     // Repeat mode trumps <on release>
-                    if (!(flags has ButtonFlags.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay))
+                    if (!(flags has Bf.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay))
                         pressed = true
                     clearActiveId()
                 }
@@ -788,7 +792,7 @@ interface imgui_internal {
                 /*  'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
                 Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing
                 finer RepeatDelay/RepeatRate settings.  */
-                if (flags has ButtonFlags.Repeat && g.activeId == id && IO.mouseDownDuration[0] > 0f && isMouseClicked(0, true))
+                if (flags has Bf.Repeat && g.activeId == id && IO.mouseDownDuration[0] > 0f && isMouseClicked(0, true))
                     pressed = true
             }
         }
@@ -797,15 +801,15 @@ interface imgui_internal {
             if (IO.mouseDown[0])
                 held = true
             else {
-                if (hovered && flags has ButtonFlags.PressedOnClickRelease)
+                if (hovered && flags has Bf.PressedOnClickRelease)
                 // Repeat mode trumps <on release>
-                    if (!(flags has ButtonFlags.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay))
+                    if (!(flags has Bf.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay))
                         pressed = true
                 clearActiveId()
             }
         /*  AllowOverlap mode (rarely used) requires previous frame HoveredId to be null or to match. This allows using
         patterns where a later submitted widget overlaps a previous one.    */
-        if (hovered && flags has ButtonFlags.AllowOverlapMode && (g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)) {
+        if (hovered && flags has Bf.AllowOverlapMode && (g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)) {
             held = false
             pressed = false
             hovered = false
@@ -825,7 +829,7 @@ interface imgui_internal {
         val pos = Vec2(window.dc.cursorPos)
         /*  Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky,
             since it shouldn't be a flag)         */
-        if (flags has ButtonFlags.AlignTextBaseLine && style.framePadding.y < window.dc.currentLineTextBaseOffset)
+        if (flags has Bf.AlignTextBaseLine && style.framePadding.y < window.dc.currentLineTextBaseOffset)
             pos.y += window.dc.currentLineTextBaseOffset - style.framePadding.y
         val size = calcItemSize(sizeArg, labelSize.x + style.framePadding.x * 2f, labelSize.y + style.framePadding.y * 2f)
 
@@ -834,7 +838,7 @@ interface imgui_internal {
         if (!itemAdd(bb, id)) return false
 
         var flags = flags
-        if (window.dc.buttonRepeat) flags = flags or ButtonFlags.Repeat
+        if (window.dc.buttonRepeat) flags = flags or Bf.Repeat
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 
         // Render
@@ -1106,13 +1110,13 @@ interface imgui_internal {
         if (window.skipItems) return false
 
         // Can't use both together (they both use up/down keys)
-        assert((flags has InputTextFlags.CallbackHistory) xor (flags has InputTextFlags.Multiline))
+        assert((flags has Itf.CallbackHistory) xor (flags has Itf.Multiline))
         // Can't use both together (they both use tab key)
-        assert((flags has InputTextFlags.CallbackCompletion) xor (flags has InputTextFlags.AllowTabInput))
+        assert((flags has Itf.CallbackCompletion) xor (flags has Itf.AllowTabInput))
 
-        val isMultiline = flags has InputTextFlags.Multiline
-        val isEditable = flags hasnt InputTextFlags.ReadOnly
-        val isPassword = flags has InputTextFlags.Password
+        val isMultiline = flags has Itf.Multiline
+        val isEditable = flags hasnt Itf.ReadOnly
+        val isPassword = flags has Itf.Password
 
         if (isMultiline) // Open group before calling GetID() because groups tracks id created during their spawn
             beginGroup()
@@ -1158,7 +1162,7 @@ interface imgui_internal {
         val editState = g.inputTextState
 
         // Using completion callback disable keyboard tabbing
-        val tabStop = flags hasnt (InputTextFlags.CallbackCompletion or InputTextFlags.AllowTabInput)
+        val tabStop = flags hasnt (Itf.CallbackCompletion or Itf.AllowTabInput)
         val focusRequested = focusableItemRegister(window, id, tabStop)
         val focusRequestedByCode = focusRequested && window.focusIdxAllCounter == window.focusIdxAllRequestCurrent
         val focusRequestedByTab = focusRequested && !focusRequestedByCode
@@ -1174,7 +1178,7 @@ interface imgui_internal {
 
         var clearActiveId = false
 
-        var selectAll = g.activeId != id && flags has InputTextFlags.AutoSelectAll
+        var selectAll = g.activeId != id && flags has Itf.AutoSelectAll
         if (focusRequested || userClicked || userScrolled) {
             if (g.activeId != id) {
                 /*  Start edition
@@ -1209,7 +1213,7 @@ interface imgui_internal {
                     if (!isMultiline && focusRequestedByCode)
                         selectAll = true
                 }
-                if (flags has InputTextFlags.AlwaysInsertMode)
+                if (flags has Itf.AlwaysInsertMode)
                     editState.state.insertMode = true
                 if (!isMultiline && (focusRequestedByTab || (userClicked && IO.keyCtrl)))
                     selectAll = true
@@ -1340,7 +1344,7 @@ interface imgui_internal {
                     editState.onKeyPressed(K.BACKSPACE or kMask)
                 }
                 Key.Enter.isPressed -> {
-                    val ctrlEnterForNewLine = flags has InputTextFlags.CtrlEnterForNewLine
+                    val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
                     if (!isMultiline || (ctrlEnterForNewLine && !IO.keyCtrl) || (!ctrlEnterForNewLine && IO.keyCtrl)) {
                         clearActiveId = true
                         enterPressed = true
@@ -1351,7 +1355,7 @@ interface imgui_internal {
 //                        editState.OnKeyPressed((int) c)
                     }
                 }
-                flags has InputTextFlags.AllowTabInput && Key.Tab.isPressed && !IO.keyCtrl && !IO.keyShift && !IO.keyAlt && isEditable -> {
+                flags has Itf.AllowTabInput && Key.Tab.isPressed && !IO.keyCtrl && !IO.keyShift && !IO.keyAlt && isEditable -> {
                     val c = '\t' // Insert TAB
                     TODO()
 //                    if (InputTextFilterCharacter(& c, flags, callback, user_data))
@@ -1446,7 +1450,7 @@ interface imgui_internal {
                 If we didn't do that, code like `inputInt()` with `InputTextFlags.EnterReturnsTrue` would fail.
                 Also this allows the user to use `inputText()` with `InputTextFlags.EnterReturnsTrue` without
                 maintaining any user-side storage.  */
-            val applyEditBackToUserBuffer = !cancelEdit || (enterPressed && flags hasnt InputTextFlags.EnterReturnsTrue)
+            val applyEditBackToUserBuffer = !cancelEdit || (enterPressed && flags hasnt Itf.EnterReturnsTrue)
             if (applyEditBackToUserBuffer) {
                 // Apply new value immediately - copy modified buffer back
                 // Note that as soon as the input box is active, the in-widget value gets priority over any underlying modification of the input buffer
@@ -1459,7 +1463,7 @@ interface imgui_internal {
                 }
 
                 // User callback
-                if (flags has (InputTextFlags.CallbackCompletion or InputTextFlags.CallbackHistory or InputTextFlags.CallbackAlways)) {
+                if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
                     TODO()
                     //                        IM_ASSERT(callback != NULL);
 //
@@ -1615,7 +1619,7 @@ interface imgui_internal {
             // Scroll
             if (editState.cursorFollow) {
                 // Horizontal scroll in chunks of quarter width
-                if (flags hasnt InputTextFlags.NoHorizontalScroll) {
+                if (flags hasnt Itf.NoHorizontalScroll) {
                     val scrollIncrementX = size.x * 0.25f
                     if (cursorOffset.x < editState.scrollX)
                         editState.scrollX = (glm.max(0f, cursorOffset.x - scrollIncrementX)).i.f
@@ -1715,7 +1719,7 @@ interface imgui_internal {
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
-        return if (flags has InputTextFlags.EnterReturnsTrue) enterPressed else valueChanged
+        return if (flags has Itf.EnterReturnsTrue) enterPressed else valueChanged
     }
 //IMGUI_API bool          InputFloatN(const char* label, float* v, int components, int decimal_precision, ImGuiInputTextFlags extra_flags);
 //IMGUI_API bool          InputIntN(const char* label, int* v, int components, ImGuiInputTextFlags extra_flags);
@@ -1739,9 +1743,9 @@ interface imgui_internal {
 
         var valueChanged = false
         var extraFlags = extraFlags
-        if (extraFlags hasnt InputTextFlags.CharsHexadecimal)
-            extraFlags = extraFlags or InputTextFlags.CharsDecimal
-        extraFlags = extraFlags or InputTextFlags.AutoSelectAll
+        if (extraFlags hasnt Itf.CharsHexadecimal)
+            extraFlags = extraFlags or Itf.CharsDecimal
+        extraFlags = extraFlags or Itf.AutoSelectAll
         if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
             valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, scalarFormat)
 
@@ -1749,12 +1753,12 @@ interface imgui_internal {
         step?.let {
             popItemWidth()
             sameLine(0f, style.itemInnerSpacing.x)
-            if (buttonEx("-", buttonSz, ButtonFlags.Repeat or ButtonFlags.DontClosePopups)) {
+            if (buttonEx("-", buttonSz, Bf.Repeat or Bf.DontClosePopups)) {
                 dataTypeApplyOp(dataType, '-', data, if (IO.keyCtrl && stepFast != null) stepFast else step)
                 valueChanged = true
             }
             sameLine(0f, style.itemInnerSpacing.x)
-            if (buttonEx("+", buttonSz, ButtonFlags.Repeat or ButtonFlags.DontClosePopups)) {
+            if (buttonEx("+", buttonSz, Bf.Repeat or Bf.DontClosePopups)) {
                 dataTypeApplyOp(dataType, '+', data, if (IO.keyCtrl && stepFast != null) stepFast else step)
                 valueChanged = true
             }
@@ -1785,7 +1789,7 @@ interface imgui_internal {
 
         val buf = CharArray(32)
         data.format(dataType, decimalPrecision, buf)
-        val textValueChanged = inputTextEx(label, buf, aabb.size, InputTextFlags.CharsDecimal or InputTextFlags.AutoSelectAll)
+        val textValueChanged = inputTextEx(label, buf, aabb.size, Itf.CharsDecimal or Itf.AutoSelectAll)
         if (g.scalarAsInputTextId == 0) {   // First frame we started displaying the InputText widget
             // InputText ID expected to match the Slider ID (else we'd need to store them both, which is also possible)
             assert(g.activeId == id)
@@ -1803,7 +1807,7 @@ interface imgui_internal {
         val cr = F32_TO_INT8_SAT(col[0])
         val cg = F32_TO_INT8_SAT(col[1])
         val cb = F32_TO_INT8_SAT(col[2])
-        val ca = if (flags has ColorEditFlags.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
+        val ca = if (flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
         beginTooltipEx(true)
 
         val textEnd = if (text.isEmpty()) findRenderedTextEnd(text) else 0
@@ -1812,10 +1816,10 @@ interface imgui_internal {
             separator()
         }
         val sz = Vec2(g.fontSize * 3)
-        val f = (flags and (ColorEditFlags.NoAlpha or ColorEditFlags.AlphaPreview or ColorEditFlags.AlphaPreviewHalf)) or ColorEditFlags.NoTooltip
+        val f = (flags and (Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf)) or Cef.NoTooltip
         colorButton("##preview", Vec4(col), f, sz)
         sameLine()
-        if (flags has ColorEditFlags.NoAlpha)
+        if (flags has Cef.NoAlpha)
             text("#%02X%02X%02X\nR: $cr, G: $cg, B: $cb\n(%.3f, %.3f, %.3f)", cr, cg, cb, col[0], col[1], col[2])
         else
             text("#%02X%02X%02X%02X\nR:$cr, G:$cg, B:$cb, A:$ca\n(%.3f, %.3f, %.3f, %.3f)", cr, cg, cb, ca, col[0], col[1], col[2], col[3])
@@ -1827,7 +1831,7 @@ interface imgui_internal {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val displayFrame = flags has TreeNodeFlags.Framed
+        val displayFrame = flags has Tnf.Framed
         val padding = if (displayFrame) Vec2(style.framePadding) else Vec2(style.framePadding.x, 0f)
 
         val labelSize = calcTextSize(label, false)
@@ -1853,7 +1857,7 @@ interface imgui_internal {
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
 
         if (!itemAdd(interactBb, id)) {
-            if (isOpen && flags hasnt TreeNodeFlags.NoTreePushOnOpen)
+            if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushRawId(id)
             return isOpen
         }
@@ -1863,24 +1867,24 @@ interface imgui_internal {
                 - OpenOnDoubleClick .............. double-click anywhere to open
                 - OpenOnArrow .................... single-click on arrow to open
                 - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
-        var buttonFlags = ButtonFlags.NoKeyModifiers or
-                if (flags has TreeNodeFlags.AllowOverlapMode) ButtonFlags.AllowOverlapMode else ButtonFlags.Null
-        if (flags has TreeNodeFlags.OpenOnDoubleClick)
-            buttonFlags = buttonFlags or ButtonFlags.PressedOnDoubleClick or (
-                    if (flags has TreeNodeFlags.OpenOnArrow) ButtonFlags.PressedOnClickRelease else ButtonFlags.Null)
+        var buttonFlags = Bf.NoKeyModifiers or
+                if (flags has Tnf.AllowOverlapMode) Bf.AllowOverlapMode else Bf.Null
+        if (flags has Tnf.OpenOnDoubleClick)
+            buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (
+                    if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.Null)
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
-        if (pressed && flags hasnt TreeNodeFlags.Leaf) {
-            var toggled = flags hasnt (TreeNodeFlags.OpenOnArrow or TreeNodeFlags.OpenOnDoubleClick)
-            if (flags has TreeNodeFlags.OpenOnArrow)
+        if (pressed && flags hasnt Tnf.Leaf) {
+            var toggled = flags hasnt (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick)
+            if (flags has Tnf.OpenOnArrow)
                 toggled = toggled or isMouseHoveringRect(interactBb.min, Vec2(interactBb.min.x + textOffsetX, interactBb.max.y))
-            if (flags has TreeNodeFlags.OpenOnDoubleClick)
+            if (flags has Tnf.OpenOnDoubleClick)
                 toggled = toggled or IO.mouseDoubleClicked[0]
             if (toggled) {
                 isOpen = !isOpen
                 window.dc.stateStorage[id] = isOpen
             }
         }
-        if (flags has TreeNodeFlags.AllowOverlapMode)
+        if (flags has Tnf.AllowOverlapMode)
             setItemAllowOverlap()
 
         // Render
@@ -1900,19 +1904,19 @@ interface imgui_internal {
                 renderTextClipped(textPos, bb.max, label, label.length, labelSize)
         } else {
             // Unframed typed for tree nodes
-            if (hovered || flags has TreeNodeFlags.Selected)
+            if (hovered || flags has Tnf.Selected)
                 renderFrame(bb.min, bb.max, col.u32, false)
 
-            if (flags has TreeNodeFlags.Bullet)
+            if (flags has Tnf.Bullet)
                 TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
-            else if (flags hasnt TreeNodeFlags.Leaf)
+            else if (flags hasnt Tnf.Leaf)
                 renderCollapseTriangle(bb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY), isOpen, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
             renderText(textPos, label, label.length, false)
         }
 
-        if (isOpen && flags hasnt TreeNodeFlags.NoTreePushOnOpen)
+        if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushRawId(id)
         return isOpen
     }
@@ -1920,7 +1924,7 @@ interface imgui_internal {
     /** Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging */
     fun treeNodeBehaviorIsOpen(id: Int, flags: Int = 0): Boolean {
 
-        if (flags has TreeNodeFlags.Leaf) return true
+        if (flags has Tnf.Leaf) return true
 
         // We only write to the tree storage if the user clicks (or explicitely use SetNextTreeNode*** functions)
         val window = g.currentWindow!!
@@ -1943,12 +1947,12 @@ interface imgui_internal {
             }
             g.setNextTreeNodeOpenCond = 0
         } else
-            isOpen = storage.int(id, if (flags has TreeNodeFlags.DefaultOpen) 1 else 0) != 0 // TODO rename back
+            isOpen = storage.int(id, if (flags has Tnf.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).
             NB- If we are above max depth we still allow manually opened nodes to be logged.    */
-        if (g.logEnabled && flags hasnt TreeNodeFlags.NoAutoOpenOnLog && window.dc.treeDepth < g.logAutoExpandMaxDepth)
+        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && window.dc.treeDepth < g.logAutoExpandMaxDepth)
             isOpen = true
 
         return isOpen

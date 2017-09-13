@@ -99,6 +99,11 @@ import imgui.Context as g
 import glm_.vec2.operators.div
 import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.newLine
+import imgui.WindowFlags as Wf
+import imgui.InputTextFlags as Itf
+import imgui.TreeNodeFlags as Tnf
+import imgui.SelectableFlags as Sf
+import imgui.ColorEditFlags as Cef
 
 /**
  *  Message to the person tempted to delete this file when integrating ImGui into their code base:
@@ -140,7 +145,7 @@ interface imgui_demoDebugInfo {
             window("Style Editor", pOpen = showApp.styleEditor) { showStyleEditor() }
 
         if (showApp.about[0])
-            withWindow("About ImGui", showApp.about, WindowFlags.AlwaysAutoResize.i) {
+            withWindow("About ImGui", showApp.about, Wf.AlwaysAutoResize.i) {
                 text("JVM ImGui, $version")
                 separator()
                 text("Original by Omar Cornut, ported by Giuseppe Barbieri and all github contributors.")
@@ -149,13 +154,13 @@ interface imgui_demoDebugInfo {
 
         // Demonstrate the various window flags. Typically you would just use the default.
         var windowFlags = 0
-        if (noTitlebar[0]) windowFlags = windowFlags or WindowFlags.NoTitleBar
-        if (!noBorder[0]) windowFlags = windowFlags or WindowFlags.ShowBorders
-        if (noResize[0]) windowFlags = windowFlags or WindowFlags.NoResize
-        if (noMove[0]) windowFlags = windowFlags or WindowFlags.NoMove
-        if (noScrollbar[0]) windowFlags = windowFlags or WindowFlags.NoScrollbar
-        if (noCollapse[0]) windowFlags = windowFlags or WindowFlags.NoCollapse
-        if (!noMenu[0]) windowFlags = windowFlags or WindowFlags.MenuBar
+        if (noTitlebar[0]) windowFlags = windowFlags or Wf.NoTitleBar
+        if (!noBorder[0]) windowFlags = windowFlags or Wf.ShowBorders
+        if (noResize[0]) windowFlags = windowFlags or Wf.NoResize
+        if (noMove[0]) windowFlags = windowFlags or Wf.NoMove
+        if (noScrollbar[0]) windowFlags = windowFlags or Wf.NoScrollbar
+        if (noCollapse[0]) windowFlags = windowFlags or Wf.NoCollapse
+        if (!noMenu[0]) windowFlags = windowFlags or Wf.MenuBar
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
         if (!begin("ImGui Demo", pOpen, windowFlags)) {
             end()   // Early out if the window is collapsed, as an optimization.
@@ -376,8 +381,8 @@ interface imgui_demoDebugInfo {
                         for (i in 0..5) {
                             /*  Disable the default open on single-click behavior and pass in Selected flag according
                                 to our selection state.                             */
-                            val nodeFlags = TreeNodeFlags.OpenOnArrow or TreeNodeFlags.OpenOnDoubleClick or
-                                    if (selectionMask has (1 shl i)) TreeNodeFlags.Selected else TreeNodeFlags.Null
+                            val nodeFlags = Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick or
+                                    if (selectionMask has (1 shl i)) Tnf.Selected else Tnf.Null
                             if (i < 3) {    // Node
                                 val nodeOpen = treeNodeExV(i, nodeFlags, "Selectable Node $i")
                                 if (isItemClicked()) nodeClicked = i
@@ -388,7 +393,7 @@ interface imgui_demoDebugInfo {
                             } else {
                                 /*  Leaf: The only reason we have a TreeNode at all is to allow selection of the leaf.
                                     Otherwise we can use BulletText() or TreeAdvanceToLabelPos()+Text().                                 */
-                                treeNodeExV(i, nodeFlags or TreeNodeFlags.Leaf or TreeNodeFlags.NoTreePushOnOpen, "Selectable Leaf $i")
+                                treeNodeExV(i, nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen, "Selectable Leaf $i")
                                 if (isItemClicked()) nodeClicked = i
                             }
                         }
@@ -515,7 +520,7 @@ interface imgui_demoDebugInfo {
                     selectable("2. I am selectable", selected, 1)
                     text("3. I am not selectable")
                     selectable("4. I am selectable", selected, 2)
-                    if (selectable("5. I am double clickable", selected[3], SelectableFlags.AllowDoubleClick.i))
+                    if (selectable("5. I am double clickable", selected[3], Sf.AllowDoubleClick.i))
                         if (isMouseDoubleClicked(0))
                             selected[3] = !selected[3]
                 }
@@ -573,7 +578,7 @@ interface imgui_demoDebugInfo {
                 withStyleVar(StyleVar.FramePadding, Vec2()) {
                     checkbox("Read-only", readOnly)
                 }
-                val flags = InputTextFlags.AllowTabInput or if (readOnly[0]) InputTextFlags.ReadOnly else InputTextFlags.Null
+                val flags = Itf.AllowTabInput or if (readOnly[0]) Itf.ReadOnly else Itf.Null
 //                inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
             }
 //
@@ -1336,7 +1341,7 @@ interface imgui_demoDebugInfo {
                 if (button("Delete..")) {
                     openPopup("Delete?")
                 }
-                popupModal("Delete?", null, WindowFlags.AlwaysAutoResize.i) {
+                popupModal("Delete?", null, Wf.AlwaysAutoResize.i) {
 
                     text("All those beautiful files will be deleted.\nThis operation cannot be undone!\n\n")
                     separator()
@@ -1694,8 +1699,8 @@ interface imgui_demoDebugInfo {
             if (treeNode("Popups", "Open Popups Stack (${g.openPopupStack.size})")) {
                 for (popup in g.openPopupStack) {
                     val window = popup.window
-                    val childWindow = if (window != null && window.flags has WindowFlags.ChildWindow) " ChildWindow" else ""
-                    val childMenu = if (window != null && window.flags has WindowFlags.ChildMenu) " ChildMenu" else ""
+                    val childWindow = if (window != null && window.flags has Wf.ChildWindow) " ChildWindow" else ""
+                    val childMenu = if (window != null && window.flags has Wf.ChildMenu) " ChildMenu" else ""
                     bulletText("PopupID: %08x, Window: '${window?.name}'$childWindow$childMenu", popup.popupId)
                 }
                 treePop()
@@ -1944,14 +1949,14 @@ interface imgui_demoDebugInfo {
 //
 //            radioButton("Both", alphaFlags, ColorEditFlags.AlphaPreviewHalf)
 
-            beginChild("#colors", Vec2(0, 300), true, WindowFlags.AlwaysVerticalScrollbar.i)
+            beginChild("#colors", Vec2(0, 300), true, Wf.AlwaysVerticalScrollbar.i)
             pushItemWidth(-160f)
             for (i in 0 until Col.COUNT.i) {
                 val name = Col.values()[i].name
                 if (!filter.passFilter(name)) // TODO fix bug
                     continue
                 withId(i) {
-                    colorEditVec4(name, style.colors[i], ColorEditFlags.AlphaBar.i) // | alpha_flags); TODO
+                    colorEditVec4(name, style.colors[i], Cef.AlphaBar.i) // | alpha_flags); TODO
                     if (style.colors[i] != (ref?.colors?.get(i) ?: defaultStyle.colors[i])) {
                         sameLine()
                         button("Revert") { style.colors[i] put (ref?.colors?.get(i) ?: defaultStyle.colors[i]) }
@@ -2189,7 +2194,7 @@ interface imgui_demoDebugInfo {
         /** Demonstrate creating a window which gets auto-resized according to its content. */
         fun showExampleAppAutoResize(pOpen: BooleanArray) {
 
-            if (!begin("Example: Auto-resizing window", pOpen, WindowFlags.AlwaysAutoResize.i)) {
+            if (!begin("Example: Auto-resizing window", pOpen, Wf.AlwaysAutoResize.i)) {
                 end()
                 return
             }
@@ -2246,7 +2251,7 @@ interface imgui_demoDebugInfo {
         fun showExampleAppFixedOverlay(pOpen: BooleanArray) {
 
             setNextWindowPos(Vec2(10))
-            val flags = WindowFlags.NoTitleBar or WindowFlags.NoResize or WindowFlags.NoMove or WindowFlags.NoSavedSettings
+            val flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoSavedSettings
             if (!begin("Example: Fixed Overlay", pOpen, Vec2(), 0.3f, flags)) {
                 end()
                 return
@@ -2415,7 +2420,7 @@ interface imgui_demoDebugInfo {
         fun showExampleAppLayout(pOpen: BooleanArray) = with(ImGui) {
 
             setNextWindowSize(Vec2(500, 440), Cond.FirstUseEver)
-            if (begin("Example: Layout", pOpen, WindowFlags.MenuBar.i)) {
+            if (begin("Example: Layout", pOpen, Wf.MenuBar.i)) {
                 if (beginMenuBar()) {
                     if (beginMenu("File")) {
                         if (menuItem("Close")) pOpen[0] = false
@@ -2572,7 +2577,7 @@ interface imgui_demoDebugInfo {
         val outputDest = intArrayOf(0)
         val outputOnlyModified = booleanArrayOf(false)
 
-        var colorFlags = intArrayOf(ColorEditFlags.RGB.i)
+        var colorFlags = intArrayOf(Cef.RGB.i)
 
         val filter = TextFilter()
 
@@ -2925,7 +2930,7 @@ interface imgui_demoDebugInfo {
             sameLine()
             filter.draw("Filter", -100f)
             separator()
-            beginChild("scrolling", Vec2(0, 0), false, WindowFlags.HorizontalScrollbar.i)
+            beginChild("scrolling", Vec2(0, 0), false, Wf.HorizontalScrollbar.i)
             if (copy) logToClipboard()
 
 //      TODO      if (Filter.IsActive())

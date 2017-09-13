@@ -70,7 +70,6 @@ infix fun Int.wo(b: WindowFlags) = this and b.i.inv()
 /** Flags for ImGui::InputText()    */
 enum class InputTextFlags(val i: Int) {
 
-    // Default: 0
     Null(0),
     /** Allow 0123456789 . + - * /      */
     CharsDecimal(1 shl 0),
@@ -159,7 +158,7 @@ infix fun Int.hasnt(b: TreeNodeFlags) = (this and b.i) == 0
 /** Flags for ImGui::Selectable()   */
 enum class SelectableFlags(val i: Int) {
 
-    Default(0),
+    Null(0),
     /** Clicking this don't close parent popup window   */
     DontClosePopups(1 shl 0),
     /** Selectable frame can span all columns (text will still fit in current column)   */

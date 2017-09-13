@@ -14,6 +14,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.internal.Window
 import imgui.internal.lengthSqr
 import imgui.Context as g
+import imgui.WindowFlags as Wf
 
 interface imgui_main {
 
@@ -123,7 +124,7 @@ interface imgui_main {
             assert(g.movedWindow != null)
             assert(g.movedWindow!!.rootWindow.moveId == g.movedWindowMoveId)
             if (IO.mouseDown[0]) {
-                if (g.movedWindow!!.flags hasnt WindowFlags.NoMove) {
+                if (g.movedWindow!!.flags hasnt Wf.NoMove) {
                     g.movedWindow!!.posF plus_ IO.mouseDelta
                     if (IO.mouseDelta notEqual 0f)
                         markIniSettingsDirty(g.movedWindow!!)
@@ -148,7 +149,7 @@ interface imgui_main {
 
         // Find the window we are hovering. Child windows can extend beyond the limit of their parent so we need to derive HoveredRootWindow from HoveredWindow
         g.hoveredWindow = g.movedWindow ?: findHoveredWindow(IO.mousePos, false)
-        if (g.hoveredWindow != null && g.hoveredWindow!!.flags has WindowFlags.ChildWindow)
+        if (g.hoveredWindow != null && g.hoveredWindow!!.flags has Wf.ChildWindow)
             g.hoveredRootWindow = g.hoveredWindow!!.rootWindow
         else
             g.hoveredRootWindow = g.movedWindow?.rootWindow ?: findHoveredWindow(IO.mousePos, true)
@@ -213,9 +214,9 @@ interface imgui_main {
                 window.posF plus_ offset
                 window.size times_ scale
                 window.sizeFull times_ scale
-            } else if (!IO.keyCtrl && window.flags hasnt WindowFlags.NoScrollWithMouse) {
+            } else if (!IO.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse) {
                 // Scroll
-                val scrollLines = if (window.flags has WindowFlags.ComboBox) 3 else 5
+                val scrollLines = if (window.flags has Wf.ComboBox) 3 else 5
                 window.setScrollY(window.scroll.y - IO.mouseWheel * window.calcFontSize() * scrollLines)
             }
         }
@@ -239,7 +240,7 @@ interface imgui_main {
         // Closing the focused window restore focus to the first active root window in descending z-order
         if (g.navWindow != null && !g.navWindow!!.wasActive)
             for (i in g.windows.size - 1 downTo 0)
-                if (g.windows[i].wasActive && g.windows[i].flags hasnt WindowFlags.ChildWindow) {
+                if (g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
                     focusWindow(g.windows[i])
                     break
                 }
@@ -275,7 +276,7 @@ interface imgui_main {
             IO.metricsRenderIndices = 0
             IO.metricsRenderVertices = 0
             g.renderDrawLists.forEach { it.clear() }
-            g.windows.filter { it.active && it.hiddenFrames <= 0 && it.flags hasnt WindowFlags.ChildWindow }
+            g.windows.filter { it.active && it.hiddenFrames <= 0 && it.flags hasnt Wf.ChildWindow }
                     .map(Window::addToRenderListSelectLayer)
 
             // Flatten layers

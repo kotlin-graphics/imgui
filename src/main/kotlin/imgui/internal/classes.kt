@@ -14,6 +14,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import imgui.Context as g
 import imgui.Context.style
+import imgui.WindowFlags as Wf
 
 
 /** 2D axis aligned bounding-box
@@ -507,9 +508,9 @@ class Window(
 
     fun rect() = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
     fun calcFontSize() = g.fontBaseSize * fontWindowScale
-    fun titleBarHeight() = if (flags has WindowFlags.NoTitleBar) 0f else calcFontSize() + style.framePadding.y * 2f
+    fun titleBarHeight() = if (flags has Wf.NoTitleBar) 0f else calcFontSize() + style.framePadding.y * 2f
     fun titleBarRect() = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight()))
-    fun menuBarHeight() = if (flags has WindowFlags.MenuBar) calcFontSize() + style.framePadding.y * 2f else 0f
+    fun menuBarHeight() = if (flags has Wf.MenuBar) calcFontSize() + style.framePadding.y * 2f else 0f
     fun menuBarRect(): Rect {
         val y1 = pos.y + titleBarHeight()
         return Rect(pos.x.f, y1, pos.x + sizeFull.x, y1 + menuBarHeight())
@@ -589,7 +590,7 @@ class Window(
         /*  An active popup disable hovering on other windows (apart from its own children)
             FIXME-OPT: This could be cached/stored within the window.         */
         val focusedRootWindow = g.navWindow?.rootWindow ?: return true
-        return !(focusedRootWindow.flags has WindowFlags.Popup && focusedRootWindow.wasActive && focusedRootWindow != rootWindow)
+        return !(focusedRootWindow.flags has Wf.Popup && focusedRootWindow.wasActive && focusedRootWindow != rootWindow)
     }
 
     fun applySizeFullWithConstraint(newSize: Vec2) {
@@ -603,7 +604,7 @@ class Window(
                 it(g.setNextWindowSizeConstraintCallbackUserData, pos, sizeFull, newSize)
             }
         }
-        if (flags hasnt (WindowFlags.ChildWindow or WindowFlags.AlwaysAutoResize))
+        if (flags hasnt (Wf.ChildWindow or Wf.AlwaysAutoResize))
             newSize max_ style.windowMinSize
         sizeFull put newSize
     }
@@ -612,7 +613,7 @@ class Window(
     infix fun addTo(renderList: ArrayList<DrawList>) {
         drawList addTo renderList
         dc.childWindows.filter { it.active }  // clipped children may have been marked not active
-                .filter { it.flags hasnt WindowFlags.Popup || it.hiddenFrames <= 0 }
+                .filter { it.flags hasnt Wf.Popup || it.hiddenFrames <= 0 }
                 .forEach { it addTo renderList }
     }
 
@@ -630,13 +631,13 @@ class Window(
         // FIXME: Generalize this with a proper layering system so e.g. user can draw in specific layers, below text, ..
         IO.metricsActiveWindows++
         this addTo when {
-            flags has WindowFlags.Popup -> g.renderDrawLists[1]
-            flags has WindowFlags.Tooltip -> g.renderDrawLists[2]
+            flags has Wf.Popup -> g.renderDrawLists[1]
+            flags has Wf.Tooltip -> g.renderDrawLists[2]
             else -> g.renderDrawLists[0]
         }
     }
 
     // FIXME: Add a more explicit sort order in the window structure.
-    private val childWindowComparer = compareBy<Window>({ it.flags has WindowFlags.Popup }, { it.flags has WindowFlags.Tooltip },
-            { it.flags has WindowFlags.ComboBox }, { it.orderWithinParent })
+    private val childWindowComparer = compareBy<Window>({ it.flags has Wf.Popup }, { it.flags has Wf.Tooltip },
+            { it.flags has Wf.ComboBox }, { it.orderWithinParent })
 }

@@ -8,6 +8,7 @@ import imgui.ImGui.isPopupOpen
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popStyleVar
 import imgui.Context as g
+import imgui.WindowFlags as Wf
 
 /** Popups  */
 interface imgui_popups {
@@ -26,7 +27,7 @@ interface imgui_popups {
             clearSetNextWindowData()    // We behave like Begin() and need to consume those values
             return false
         }
-        return beginPopupEx(g.currentWindow!!.getId(strId), WindowFlags.ShowBorders.i)
+        return beginPopupEx(g.currentWindow!!.getId(strId), Wf.ShowBorders.i)
     }
 
     /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside) */
@@ -39,7 +40,7 @@ interface imgui_popups {
             return false
         }
 
-        val flags = extraFlags or WindowFlags.Popup or WindowFlags.Modal or WindowFlags.NoCollapse or WindowFlags.NoSavedSettings
+        val flags = extraFlags or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings
         val isOpen = begin(name, pOpen, flags)
         // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
         if (!isOpen || (pOpen != null && !pOpen.get(0))) {
@@ -56,10 +57,10 @@ interface imgui_popups {
     fun endPopup() {
 
         val window = currentWindow
-        assert(window.flags has WindowFlags.Popup)  // Mismatched BeginPopup()/EndPopup() calls
+        assert(window.flags has Wf.Popup)  // Mismatched BeginPopup()/EndPopup() calls
         assert(g.currentPopupStack.isNotEmpty())
         end()
-        if (window.flags hasnt WindowFlags.Modal)
+        if (window.flags hasnt Wf.Modal)
             popStyleVar()
     }
 
@@ -73,7 +74,7 @@ interface imgui_popups {
         var popupIdx = g.currentPopupStack.lastIndex
         if (popupIdx < 0 || popupIdx >= g.openPopupStack.size || g.currentPopupStack[popupIdx].popupId != g.openPopupStack[popupIdx].popupId)
             return
-        while (popupIdx > 0 && g.openPopupStack[popupIdx].window != null && (g.openPopupStack[popupIdx].window!!.flags has WindowFlags.ChildMenu))
+        while (popupIdx > 0 && g.openPopupStack[popupIdx].window != null && (g.openPopupStack[popupIdx].window!!.flags has Wf.ChildMenu))
             popupIdx--
         closePopupToLevel(popupIdx)
     }

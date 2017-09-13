@@ -3,6 +3,10 @@ import org.gradle.internal.os.OperatingSystem
 apply plugin: 'java'
 apply plugin: 'kotlin'
 
+//apply plugin: 'application'
+//mainClassName = "imgui.ImguiKt"
+apply plugin: 'com.github.johnrengelman.shadow'
+
 // jitpack
 apply plugin: 'maven'
 group = 'com.github.kotlin-graphics'
@@ -24,13 +28,11 @@ buildscript {
     }
 }
 
-apply plugin: 'com.github.johnrengelman.shadow'
-
 dependencies {
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-    compile 'com.github.kotlin-graphics:uno-sdk:aa720d7f8ae7d65b790faed25968700e5804e3c0'
+    compile 'com.github.kotlin-graphics:uno-sdk:119fcddca6a96ad34b94a6dd97c01b03d3c4adc9'
 
     testCompile 'com.github.elect86:kotlintest:43281b7e1b'
 

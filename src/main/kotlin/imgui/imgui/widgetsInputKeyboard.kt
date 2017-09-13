@@ -4,11 +4,11 @@ import glm_.glm
 import glm_.vec2.Vec2
 import imgui.ImGui.inputScalarEx
 import imgui.ImGui.inputTextEx
-import imgui.InputTextFlags
 import imgui.hasnt
 import imgui.internal.DataType
 import imgui.or
 import imgui.Context as g
+import imgui.InputTextFlags as Itf
 
 /** Widgets: Input with Keyboard    */
 interface imgui_widgetsInputKeyboard {
@@ -17,13 +17,13 @@ interface imgui_widgetsInputKeyboard {
     fun inputText(label: String, buf: CharArray, flags: Int = 0
             /*, callback: TextEditCallback  = NULL, void* user_data = NULL*/): Boolean {
 
-        assert(flags hasnt InputTextFlags.Multiline)    // call InputTextMultiline()
+        assert(flags hasnt Itf.Multiline)    // call InputTextMultiline()
         return inputTextEx(label, buf, Vec2(), flags/*, callback, user_data*/)
     }
 
     fun inputTextMultiline(label: String, buf: CharArray, size: Vec2 = Vec2(), flags: Int = 0
             /*,ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/) =
-            inputTextEx(label, buf, size, flags or InputTextFlags.Multiline/*, callback, user_data*/)
+            inputTextEx(label, buf, size, flags or Itf.Multiline/*, callback, user_data*/)
 
     fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1, extraFlags: Int = 0) =
             inputFloat(label, v, 0, step, stepFast, decimalPrecision, extraFlags)

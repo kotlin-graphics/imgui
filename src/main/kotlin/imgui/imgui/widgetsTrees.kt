@@ -14,6 +14,7 @@ import imgui.Cond
 import imgui.TreeNodeFlags
 import imgui.or
 import imgui.Context as g
+import imgui.TreeNodeFlags as Tnf
 
 /** Widgets: Trees  */
 interface imgui_widgetsTrees {
@@ -102,7 +103,7 @@ interface imgui_widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        return treeNodeBehavior(window.getId(label), flags or TreeNodeFlags.CollapsingHeader or TreeNodeFlags.NoTreePushOnOpen, label)
+        return treeNodeBehavior(window.getId(label), flags or Tnf.CollapsingHeader or Tnf.NoTreePushOnOpen, label)
     }
 
     /** when 'pOpen' isn't NULL, display an additional small close button on upper right of the header */
@@ -114,8 +115,8 @@ interface imgui_widgetsTrees {
         if(pOpen!= null && !pOpen[0]) return false
 
         val id = window.getId(label)
-        val isOpen = treeNodeBehavior(id, flags or TreeNodeFlags.CollapsingHeader or TreeNodeFlags.NoTreePushOnOpen or
-                if (pOpen != null) TreeNodeFlags.AllowOverlapMode else TreeNodeFlags.Null, label)
+        val isOpen = treeNodeBehavior(id, flags or Tnf.CollapsingHeader or Tnf.NoTreePushOnOpen or
+                if (pOpen != null) Tnf.AllowOverlapMode else Tnf.Null, label)
         if (pOpen != null) {
             // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
             val buttonSz = g.fontSize * 0.5f

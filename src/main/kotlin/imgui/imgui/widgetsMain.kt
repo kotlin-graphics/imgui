@@ -38,9 +38,10 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHere
 import imgui.ImGui.spacing
-import imgui.internal.ButtonFlags
 import imgui.internal.Rect
 import imgui.Context as g
+import imgui.WindowFlags as Wf
+import imgui.internal.ButtonFlags as Bf
 
 
 /** Widgets: Main   */
@@ -54,7 +55,7 @@ interface imgui_widgetsMain {
     fun smallButton(label: String): Boolean {
         val backupPaddingY = style.framePadding.y
         style.framePadding.y = 0f
-        val pressed = buttonEx(label, Vec2(), ButtonFlags.AlignTextBaseLine.i)
+        val pressed = buttonEx(label, Vec2(), Bf.AlignTextBaseLine.i)
         style.framePadding.y = backupPaddingY
         return pressed
     }
@@ -224,7 +225,7 @@ interface imgui_widgetsMain {
             window.drawList.addCircleFilled(center, radius - pad, Col.CheckMark.u32, 16)
         }
 
-        if (window.flags has WindowFlags.ShowBorders) {
+        if (window.flags has Wf.ShowBorders) {
             window.drawList.addCircle(center + Vec2(1), radius, Col.BorderShadow.u32, 16)
             window.drawList.addCircle(center, radius, Col.Border.u32, 16)
         }
@@ -312,7 +313,7 @@ interface imgui_widgetsMain {
         setNextWindowSize(popupRect.size)
         pushStyleVar(StyleVar.WindowPadding, style.framePadding)
 
-        val flags = WindowFlags.ComboBox or if (window.flags has WindowFlags.ShowBorders) WindowFlags.ShowBorders else WindowFlags.Null
+        val flags = Wf.ComboBox or if (window.flags has Wf.ShowBorders) Wf.ShowBorders else Wf.Null
         if (!beginPopupEx(id, flags)) {
             assert(false)   // This should never happen as we tested for IsPopupOpen() above
             return false

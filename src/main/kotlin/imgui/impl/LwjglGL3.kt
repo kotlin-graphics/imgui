@@ -1,5 +1,6 @@
 package imgui.impl
 
+import gli.wasInit
 import glm_.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
@@ -347,7 +348,7 @@ object LwjglGL3 {
     }
 
     private val mouseButtonCallback = { button: Int, action: Int, _: Int ->
-        if (action == GLFW_PRESS && button in 0 .. 2)
+        if (action == GLFW_PRESS && button in 0..2)
             mousePressed[button] = true
     }
 
@@ -383,7 +384,8 @@ object LwjglGL3 {
         glDeleteVertexArrays(vaoName)
         glDeleteBuffers(bufferName)
 
-        glDeleteProgram(program)
+        if (wasInit { JoglGL3.program })
+            glDeleteProgram(program)
 
         if (fontTexture[0] >= 0) {
             glDeleteTextures(fontTexture)

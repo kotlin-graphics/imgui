@@ -21,6 +21,8 @@ import uno.kotlin.isPrintable
 import java.io.File
 import java.nio.file.Paths
 import imgui.Context as g
+import imgui.WindowFlags as Wf
+import imgui.InputTextFlags as Itf
 
 
 fun logRenderedText(refPos: Vec2, text: String, textEnd: Int = 0): Nothing = TODO()
@@ -71,9 +73,9 @@ fun findHoveredWindow(pos: Vec2, excludingChilds: Boolean): Window? {
         val window = g.windows[i]
         if (!window.active)
             continue
-        if (window.flags has WindowFlags.NoInputs)
+        if (window.flags has Wf.NoInputs)
             continue
-        if (excludingChilds && window.flags has WindowFlags.ChildWindow)
+        if (excludingChilds && window.flags has Wf.ChildWindow)
             continue
 
         // Using the clipped AABB so a child window will typically be clipped by its parent.
@@ -89,7 +91,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
 
     this.flags = flags
 
-    if (flags has WindowFlags.NoSavedSettings) {
+    if (flags has Wf.NoSavedSettings) {
         // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
         sizeFull put size
         this.size put size
@@ -115,13 +117,13 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
             collapsed = settings.collapsed
         }
 
-        if (settings.size.lengthSqr > 0.00001f && flags hasnt WindowFlags.NoResize)
+        if (settings.size.lengthSqr > 0.00001f && flags hasnt Wf.NoResize)
             size put settings.size
         sizeFull put size
         this.size put size
     }
 
-    if (flags has WindowFlags.AlwaysAutoResize) {
+    if (flags has Wf.AlwaysAutoResize) {
         autoFitFrames put 2
         autoFitOnlyGrows = false
     } else {
@@ -132,7 +134,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
         autoFitOnlyGrows = autoFitFrames.x > 0 || autoFitFrames.y > 0
     }
 
-    if (flags has WindowFlags.NoBringToFrontOnFocus)
+    if (flags has Wf.NoBringToFrontOnFocus)
         g.windows.add(0, this) // Quite slow but rare and only once
     else
         g.windows.add(this)
@@ -225,16 +227,16 @@ fun scrollbar(window: Window, horizontal: Boolean) {
                 Rect(windowRect.max.x - style.scrollbarSize, window.pos.y + borderSize,
                         windowRect.max.x - borderSize, windowRect.max.y - otherScrollbarSizeW - borderSize)
     if (!horizontal)
-        bb.min.y += window.titleBarHeight() + if (window.flags has WindowFlags.MenuBar) window.menuBarHeight() else 0f
+        bb.min.y += window.titleBarHeight() + if (window.flags has Wf.MenuBar) window.menuBarHeight() else 0f
     if (bb.width <= 0f || bb.height <= 0f) return
 
-    val windowRounding = if (window.flags has WindowFlags.ChildWindow) style.childWindowRounding else style.windowRounding
+    val windowRounding = if (window.flags has Wf.ChildWindow) style.childWindowRounding else style.windowRounding
     val windowRoundingCorners =
             if (horizontal)
                 Corner.BotLeft or if (otherScrollbar) Corner.All else Corner.BotRight
             else
                 (
-                        if (window.flags has WindowFlags.NoTitleBar && window.flags hasnt WindowFlags.MenuBar)
+                        if (window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar)
                             Corner.TopRight
                         else Corner.All) or if (otherScrollbar) Corner.All else Corner.BotRight
     window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, windowRounding, windowRoundingCorners)
@@ -332,9 +334,9 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window): Vec2 {
     scroll max_ 0f
     if (!window.collapsed && !window.skipItems) {
         // == GetScrollMaxX for that window
-        scroll.x = glm.min(scroll.x, glm.max(0f, window.sizeContents.x-(window.sizeFull.x-window.scrollbarSizes.x)))
+        scroll.x = glm.min(scroll.x, glm.max(0f, window.sizeContents.x - (window.sizeFull.x - window.scrollbarSizes.x)))
         // == GetScrollMaxY for that window
-        scroll.y = glm.min(scroll.y, glm.max(0f, window.sizeContents.y-(window.sizeFull.y-window.scrollbarSizes.y)))
+        scroll.y = glm.min(scroll.y, glm.max(0f, window.sizeContents.y - (window.sizeFull.y - window.scrollbarSizes.y)))
     }
     return scroll
 }
@@ -382,7 +384,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
     // Gather data from windows that were active during this session
     for (window in g.windows) {
 
-        if (window.flags has WindowFlags.NoSavedSettings) continue
+        if (window.flags has Wf.NoSavedSettings) continue
         /** This will only return NULL in the rare instance where the window was first created with
          *  WindowFlags.NoSavedSettings then had the flag disabled later on.
          *  We don't bind settings in this case (bug #1000).    */
@@ -409,7 +411,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
 }
 
 fun markIniSettingsDirty(window: Window) {
-    if (window.flags hasnt WindowFlags.NoSavedSettings)
+    if (window.flags hasnt Wf.NoSavedSettings)
         if (g.settingsDirtyTimer <= 0f)
             g.settingsDirtyTimer = IO.iniSavingRate
 }
@@ -429,18 +431,17 @@ fun beginPopupEx(id: Int, extraFlags: Int): Boolean {
     }
 
     pushStyleVar(StyleVar.WindowRounding, 0f)
-    val flags = extraFlags or WindowFlags.Popup or WindowFlags.NoTitleBar or WindowFlags.NoResize or
-            WindowFlags.NoSavedSettings or WindowFlags.AlwaysAutoResize
+    val flags = extraFlags or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
 
     val name =
-            if (flags has WindowFlags.ChildMenu)
+            if (flags has Wf.ChildMenu)
                 "##menu_%d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
             else
                 "##popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
 
     val isOpen = begin(name, null, flags)
-    if (window.flags hasnt WindowFlags.ShowBorders)
-        g.currentWindow!!.flags = g.currentWindow!!.flags and WindowFlags.ShowBorders.i.inv()
+    if (window.flags hasnt Wf.ShowBorders)
+        g.currentWindow!!.flags = g.currentWindow!!.flags and Wf.ShowBorders.i.inv()
     if (!isOpen) // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
         endPopup()
 
@@ -462,8 +463,8 @@ fun closeInactivePopups() {
                 n++
                 continue
             }
-            assert(popup.window!!.flags has WindowFlags.Popup)
-            if (popup.window!!.flags has WindowFlags.ChildWindow) {
+            assert(popup.window!!.flags has Wf.Popup)
+            if (popup.window!!.flags has Wf.ChildWindow) {
                 n++
                 continue
             }
@@ -499,7 +500,7 @@ fun closePopup(id: Int) {
 fun getFrontMostModalRootWindow(): Window? {
     for (n in g.openPopupStack.size - 1 downTo 0) {
         val frontMostPopup = g.openPopupStack[n].window
-        if (frontMostPopup != null && frontMostPopup.flags has WindowFlags.Modal)
+        if (frontMostPopup != null && frontMostPopup.flags has Wf.Modal)
             return frontMostPopup
     }
     return null
@@ -546,8 +547,8 @@ fun inputTextFilterCharacter(pChar: IntArray, flags: Int/*, ImGuiTextEditCallbac
 
     if (c < 128 && c != ' ' && !c.isPrintable) {
         var pass = false
-        pass = pass or (c == '\n' && flags has InputTextFlags.Multiline)
-        pass = pass or (c == '\t' && flags has InputTextFlags.AllowTabInput)
+        pass = pass or (c == '\n' && flags has Itf.Multiline)
+        pass = pass or (c == '\t' && flags has Itf.AllowTabInput)
         if (!pass) return false
     }
 
@@ -555,25 +556,24 @@ fun inputTextFilterCharacter(pChar: IntArray, flags: Int/*, ImGuiTextEditCallbac
         private characters for special keys like arrow keys.     */
     if (c >= 0xE000 && c <= 0xF8FF) return false
 
-    if (flags has (InputTextFlags.CharsDecimal or InputTextFlags.CharsHexadecimal or InputTextFlags.CharsUppercase or
-            InputTextFlags.CharsNoBlank)) {
+    if (flags has (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsUppercase or Itf.CharsNoBlank)) {
 
-        if (flags has InputTextFlags.CharsDecimal)
+        if (flags has Itf.CharsDecimal)
             if (!(c in '0'..'9') && (c != '.') && (c != '-') && (c != '+') && (c != '*') && (c != '/')) return false
 
-        if (flags has InputTextFlags.CharsHexadecimal)
+        if (flags has Itf.CharsHexadecimal)
             if (!(c in '0'..'9') && !(c in 'a'..'f') && !(c in 'A'..'F'))
                 return false
 
-        if (flags has InputTextFlags.CharsUppercase && c in 'a'..'z') {
+        if (flags has Itf.CharsUppercase && c in 'a'..'z') {
             c += 'A' - 'a'
             pChar[0] = c.i
         }
 
-        if (flags has InputTextFlags.CharsNoBlank && c.isSpace) return false
+        if (flags has Itf.CharsNoBlank && c.isSpace) return false
     }
 
-    if (flags has InputTextFlags.CallbackCharFilter) {
+    if (flags has Itf.CallbackCharFilter) {
         TODO()
 //        ImGuiTextEditCallbackData callback_data
 //                memset(& callback_data, 0, sizeof(ImGuiTextEditCallbackData))

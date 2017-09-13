@@ -917,10 +917,12 @@ class Font {
             // Decode and advance source
             val prevS = s
             val c = text[s]
-            if (c < 0x80)
+            /*  JVM imgui specific, not 0x80 because on jvm we have Unicode with surrogates characters (instead of utf8)
+                    https://www.ibm.com/developerworks/library/j-unicode/index.html             */
+            if (c < Char.MIN_SURROGATE)
                 s += 1
             else {
-                TODO()
+                TODO("Probabily surrogate character")
 //                s += ImTextCharFromUtf8(& c, s, text_end)
 //                if (c.i == 0x0) break   // Malformed UTF-8?
             }
