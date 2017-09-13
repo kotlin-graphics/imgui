@@ -7,15 +7,16 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.u32
+import imgui.Context.style
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
+import imgui.ImGui.u32
+import imgui.ImGui.vec4
 import imgui.internal.ColMod
 import imgui.internal.StyleMod
 import imgui.Context as g
-import imgui.Context.style
-import imgui.ImGui.vec4
+import imgui.ItemFlags as If
 
 
 interface imgui_parametersStacks {
@@ -211,27 +212,29 @@ interface imgui_parametersStacks {
         textWrapPos = textWrapPosStack.lastOrNull() ?: -1f
     }
 
-    /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets   */
-    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = with(currentWindow) {
-        dc.allowKeyboardFocus = allowKeyboardFocus
-        dc.allowKeyboardFocusStack.push(allowKeyboardFocus)
+    /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets
+     *  @param option = ItemFlags   */
+    fun pushItemFlag(option: Int, enabled: Boolean) = with(currentWindow.dc) {
+        if (enabled)
+            itemFlags = itemFlags or option
+        else
+            itemFlags = itemFlags wo option
+        itemFlagsStack.add(itemFlags)
     }
 
-    fun popAllowKeyboardFocus() = with(currentWindow.dc) {
-        allowKeyboardFocusStack.pop()
-        allowKeyboardFocus = allowKeyboardFocusStack.lastOrNull() != false
+    fun popItemFlag() = with(currentWindow.dc) {
+        itemFlagsStack.pop()
+        itemFlags = itemFlagsStack.lastOrNull() ?: If.Default_.i
     }
+
+    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.AllowKeyboardFocus.i, allowKeyboardFocus)
+
+    fun popAllowKeyboardFocus() = popItemFlag()
 
     /** in 'repeat' mode, Button*() functions return repeated true in a typematic manner
-     *  (uses io.KeyRepeatDelay/io.KeyRepeatRate for now). Note that you can call IsItemActive() after any Button() to
+     *  (using io.KeyRepeatDelay/io.KeyRepeatRate setting). Note that you can call IsItemActive() after any Button() to
      *  tell if the button is held in the current frame.    */
-    fun pushButtonRepeat(repeat: Boolean) = with(currentWindow.dc) {
-        buttonRepeat = repeat
-        buttonRepeatStack.push(repeat)
-    }
+    fun pushButtonRepeat(repeat: Boolean) = pushItemFlag(If.ButtonRepeat.i, repeat)
 
-    fun popButtonRepeat() = with(currentWindow.dc) {
-        buttonRepeatStack.pop()
-        buttonRepeat = buttonRepeatStack.lastOrNull() == true
-    }
+    fun popButtonRepeat() = popItemFlag()
 }

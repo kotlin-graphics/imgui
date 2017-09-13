@@ -67,7 +67,6 @@ interface imgui_widgetsSliders {
         if (tabFocusRequested || (hovered && IO.mouseClicked[0])) {
             setActiveId(id, window)
             focusWindow(window)
-
             if (tabFocusRequested || IO.keyCtrl) {
                 startTextInput = true
                 g.scalarAsInputTextId = 0

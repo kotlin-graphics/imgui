@@ -298,18 +298,17 @@ class DrawContext {
     var layoutType = LayoutType.Vertical
 
 
-    // We store the current settings outside of the vectors to increase memory locality (reduce cache misses).
-    // The vectors are rarely modified. Also it allows us to not heap allocate for short-lived windows which are not
-    // using those settings.
-
+    /*  We store the current settings outside of the vectors to increase memory locality (reduce cache misses).
+        The vectors are rarely modified. Also it allows us to not heap allocate for short-lived windows which are not
+        using those settings.   */
+    /** == itemFlagsStack.last() [empty == ItemFlags.Default]   */
+    var itemFlags = 0
     /** == ItemWidthStack.back(). 0.0: default, >0.0: width in pixels, <0.0: align xx pixels to the right of window */
     var itemWidth = 0f
     /** == TextWrapPosStack.back() [empty == -1.0f] */
     var textWrapPos = -1f
-    /** == AllowKeyboardFocusStack.back() [empty == true]   */
-    var allowKeyboardFocus = true
-    /** == ButtonRepeatStack.back() [empty == false]    */
-    var buttonRepeat = false
+
+    val itemFlagsStack = Stack<Int>()
 
     val itemWidthStack = Stack<Float>()
 

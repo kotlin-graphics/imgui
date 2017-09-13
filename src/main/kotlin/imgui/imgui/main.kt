@@ -180,18 +180,16 @@ interface imgui_main {
                     mouseEarliestButtonDown = i
         }
         val mouseAvailToImgui = mouseEarliestButtonDown == -1 || IO.mouseDownOwned[mouseEarliestButtonDown]
-        if (g.captureMouseNextFrame != -1)
-            IO.wantCaptureMouse = g.captureMouseNextFrame != 0
+        if (g.wantCaptureMouseNextFrame != -1)
+            IO.wantCaptureMouse = g.wantCaptureMouseNextFrame != 0
         else
             IO.wantCaptureMouse = (mouseAvailToImgui && (g.hoveredWindow != null || mouseAnyDown)) || g.activeId != 0 ||
                     g.openPopupStack.isNotEmpty()
-        IO.wantCaptureKeyboard =
-                if (g.captureKeyboardNextFrame != -1) g.captureKeyboardNextFrame != 0
-                else g.activeId != 0
-        IO.wantTextInput = g.activeId != 0 //&& g.inputTextState.id == g.activeId TODO
+        IO.wantCaptureKeyboard = if (g.wantCaptureKeyboardNextFrame != -1) g.wantCaptureKeyboardNextFrame != 0 else g.activeId != 0
+        IO.wantTextInput = g.wantTextInputNextFrame != -1 && g.wantTextInputNextFrame != 0
         g.mouseCursor = MouseCursor.Arrow
-        g.captureKeyboardNextFrame = -1
-        g.captureMouseNextFrame = -1
+        g.wantCaptureKeyboardNextFrame = -1
+        g.wantCaptureMouseNextFrame = -1
         g.osImePosRequest put 1f // OS Input Method Editor showing on top-left of our window by default
 
         // If mouse was first clicked outside of ImGui bounds we also cancel out hovering.

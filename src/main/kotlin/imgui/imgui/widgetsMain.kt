@@ -22,7 +22,7 @@ import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowAppearing
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.openPopup
+import imgui.ImGui.openPopupEx
 import imgui.ImGui.popId
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushId
@@ -285,20 +285,24 @@ interface imgui_widgetsMain {
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
+        var popupToggled = false
         if (hovered) {
             setHoveredId(id)
             if (IO.mouseClicked[0]) {
                 clearActiveId()
-                if (isPopupOpen(id))
-                    closePopup(id)
-                else {
-                    focusWindow(window)
-                    openPopup(label)
-                }
+                popupToggled = true
             }
         }
+        if (popupToggled) {
+            if (popupOpen) closePopup(id)
+            else {
+                focusWindow(window)
+                openPopupEx(id, false)
+            }
+            popupOpen = !popupOpen
+        }
 
-        if (!isPopupOpen(id)) return false
+        if (!popupOpen) return false
 
         var popupY1 = frameBb.max.y
         var popupY2 = glm.clamp(popupY1 + popupOpenedHeight, popupY1, IO.displaySize.y - style.displaySafeAreaPadding.y)

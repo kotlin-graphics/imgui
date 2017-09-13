@@ -73,7 +73,6 @@ interface imgui_widgetsDrag {
         if (tabFocusRequested || (hovered && (IO.mouseClicked[0] || IO.mouseDoubleClicked[0]))) {
             setActiveId(id, window)
             focusWindow(window)
-
             if (tabFocusRequested || IO.keyCtrl || IO.mouseDoubleClicked[0]) {
                 startTextInput = true
                 g.scalarAsInputTextId = 0

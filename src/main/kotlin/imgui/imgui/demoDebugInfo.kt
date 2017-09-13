@@ -99,6 +99,8 @@ import imgui.Context as g
 import glm_.vec2.operators.div
 import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.newLine
+import imgui.ImGui.popStyleColor
+import imgui.ImGui.pushStyleColor
 import imgui.WindowFlags as Wf
 import imgui.InputTextFlags as Itf
 import imgui.TreeNodeFlags as Tnf
@@ -2251,8 +2253,8 @@ interface imgui_demoDebugInfo {
         fun showExampleAppFixedOverlay(pOpen: BooleanArray) {
 
             setNextWindowPos(Vec2(10))
-            val flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoSavedSettings
-            if (!begin("Example: Fixed Overlay", pOpen, Vec2(), 0.3f, flags)) {
+            pushStyleColor(Col.WindowBg, Vec4(0f, 0f, 0f, 0.3f))
+            if (!begin("Example: Fixed Overlay", pOpen, Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoSavedSettings)) {
                 end()
                 return
             }
@@ -2260,6 +2262,7 @@ interface imgui_demoDebugInfo {
             separator()
             text("Mouse Position: (%.1f,%.1f)", IO.mousePos.x, IO.mousePos.y)
             end()
+            popStyleColor()
         }
 
         /** Demonstrate using "##" and "###" in identifiers to manipulate ID generation.

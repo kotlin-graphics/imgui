@@ -441,3 +441,23 @@ infix fun Int.or(other: Cond) = this or other.i
 infix fun Int.has(b: Cond) = (this and b.i) != 0
 infix fun Int.hasnt(b: Cond) = (this and b.i) == 0
 infix fun Int.wo(b: Cond) = this and b.i.inv()
+
+
+/** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent
+ *  on first Begin().   */
+enum class ItemFlags(val i: Int) {
+    /** true    */
+    AllowKeyboardFocus(1 shl 0),
+    /** false
+     *  Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.  */
+    ButtonRepeat(1 shl 1),
+    //ImGuiItemFlags_Disabled                   = 1 << 2,  // false    // All widgets appears are disabled
+    //ImGuiItemFlags_AllowNavDefaultFocus       = 1 << 3,  // true
+    //ImGuiItemFlags_SelectableDontClosePopup   = 1 << 4,  // false    // MenuItem/Selectable() automatically closes current Popup window
+    Default_(AllowKeyboardFocus.i)
+}
+
+infix fun Int.or(other: ItemFlags) = this or other.i
+infix fun Int.has(b: ItemFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: ItemFlags) = (this and b.i) == 0
+infix fun Int.wo(b: ItemFlags) = this and b.i.inv()

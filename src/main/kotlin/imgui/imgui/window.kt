@@ -16,9 +16,9 @@ import imgui.ImGui.closeButton
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
+import imgui.ImGui.endColumns
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
-import imgui.ImGui.frameCount
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.isMouseHoveringRect
@@ -29,12 +29,12 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.renderCollapseTriangle
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
-import imgui.ImGui.endColumns
 import imgui.ImGui.u32
 import imgui.internal.*
-import imgui.internal.ButtonFlags as Bf
 import imgui.Context as g
+import imgui.ItemFlags as If
 import imgui.WindowFlags as Wf
+import imgui.internal.ButtonFlags as Bf
 
 
 interface imgui_window {
@@ -516,13 +516,11 @@ interface imgui_window {
                 dc.logLinePosY = dc.cursorPos.y - 9999f
                 dc.childWindows.clear()
                 dc.layoutType = LayoutType.Vertical
+                dc.itemFlags = If.Default_.i
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled
-                dc.allowKeyboardFocus = true
-                dc.buttonRepeat = false
+                dc.itemFlagsStack.clear()
                 dc.itemWidthStack.clear()
-                dc.allowKeyboardFocusStack.clear()
-                dc.buttonRepeatStack.clear()
                 dc.textWrapPosStack.clear()
                 dc.columnsCurrent = 0
                 dc.columnsCount = 1
@@ -534,6 +532,11 @@ interface imgui_window {
                 dc.stateStorage = stateStorage
                 dc.groupStack.clear()
                 menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
+
+                if (flags has Wf.ChildWindow && dc.itemFlags != parentWindow!!.dc.itemFlags) {
+                    dc.itemFlags = parentWindow.dc.itemFlags
+                    dc.itemFlagsStack.add(dc.itemFlags)
+                }
 
                 if (autoFitFrames.x > 0)
                     autoFitFrames.x--

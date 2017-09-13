@@ -57,6 +57,7 @@ import imgui.InputTextFlags as Itf
 import imgui.TreeNodeFlags as Tnf
 import imgui.ColorEditFlags as Cef
 import imgui.internal.ButtonFlags as Bf
+import imgui.ItemFlags as If
 
 fun main(args: Array<String>) {
 
@@ -290,7 +291,7 @@ interface imgui_internal {
     /** Return true if focus is requested   */
     fun focusableItemRegister(window: Window, id: Int, tabStop: Boolean = true): Boolean {
 
-        val allowKeyboardFocus = window.dc.allowKeyboardFocus
+        val allowKeyboardFocus = window.dc.itemFlags has If.AllowKeyboardFocus
         window.focusIdxAllCounter++
         if (allowKeyboardFocus)
             window.focusIdxTabCounter++
@@ -838,7 +839,7 @@ interface imgui_internal {
         if (!itemAdd(bb, id)) return false
 
         var flags = flags
-        if (window.dc.buttonRepeat) flags = flags or Bf.Repeat
+        if (window.dc.itemFlags has If.ButtonRepeat) flags = flags or Bf.Repeat
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 
         // Render
@@ -1246,6 +1247,7 @@ interface imgui_internal {
                 right now with the widget.
                 Down the line we should have a cleaner library-wide concept of Selected vs Active.  */
             g.activeIdAllowOverlap = !IO.mouseDown[0]
+            g.wantTextInputNextFrame = 1
 
             // Edit in progress
             val mouseX = IO.mousePos.x - frameBb.min.x - style.framePadding.x + editState.scrollX
@@ -1782,7 +1784,8 @@ interface imgui_internal {
 
         val window = currentWindow
 
-        // Our replacement widget will override the focus ID (registered previously to allow for a TAB focus to happen)
+        /*  Our replacement widget will override the focus ID (registered previously to allow for a TAB focus to happen)
+            On the first frame, g.ScalarAsInputTextId == 0, then on subsequent frames it becomes == id  */
         setActiveId(g.scalarAsInputTextId, window)
         setHoveredId(0)
         focusableItemUnregister(window)

@@ -198,9 +198,11 @@ object Context {
 
     var framerateSecPerFrameAccum = 0f
     /** explicit capture via CaptureInputs() sets those flags   */
-    var captureMouseNextFrame = -1
+    var wantCaptureMouseNextFrame = -1
 
-    var captureKeyboardNextFrame = -1
+    var wantCaptureKeyboardNextFrame = -1
+
+    var wantTextInputNextFrame = -1
 
 //    char                    TempBuffer[1024*3+1];               // temporary text buffer
 }
