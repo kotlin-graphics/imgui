@@ -205,6 +205,10 @@ object Context {
     var wantTextInputNextFrame = -1
 
 //    char                    TempBuffer[1024*3+1];               // temporary text buffer
+
+    init{
+        ImGui.styleColorsClassic()
+    }
 }
 
 /** This is where your app communicate with ImGui. Access via ImGui::GetIO().
@@ -277,9 +281,9 @@ object IO {
 
     // Optional: access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
-//    const char* (*GetClipboardTextFn)(void* user_data);
-//    void        (*SetClipboardTextFn)(void* user_data, const char* text);
-//    void*       ClipboardUserData;
+    var getClipboardTextFn: ((userData: Any) -> Unit)? = null
+    var setClipboardTextFn: ((userData: Any, text: String) -> Unit)? = null
+    lateinit var clipboardUserData: Any
 //
 //    // Optional: override memory allocations. MemFreeFn() may be called with a NULL pointer.
 //    // (default to posix malloc/free)
@@ -346,6 +350,9 @@ object IO {
     /** Some text input widget is active, which will read input characters from the InputCharacters array. Use to
     activate on screen keyboard if your system needs one    */
     var wantTextInput = false
+    /** [BETA-NAV] MousePos has been altered. back-end should reposition mouse on next frame.
+     *  Used only if 'NavMovesMouse=true'.    */
+    var wantMoveMouse = false
     /** Application framerate estimation, in frame per second. Solely for convenience. Rolling average estimation based
     on IO.DeltaTime over 120 frames */
     var framerate = 0f
@@ -452,50 +459,7 @@ class Style {
      *  reduce quality. */
     var curveTessellationTol = 1.25f
 
-    val colors = arrayOf(
-            Vec4(0.90f, 0.90f, 0.90f, 1.00f), // Text
-            Vec4(0.60f, 0.60f, 0.60f, 1.00f), // TextDisabled
-            Vec4(0.00f, 0.00f, 0.00f, 0.70f), // WindowBg
-            Vec4(0.00f, 0.00f, 0.00f, 0.00f), // ChildWindowBg
-            Vec4(0.05f, 0.05f, 0.10f, 0.90f), // PopupBg
-            Vec4(0.70f, 0.70f, 0.70f, 0.40f), // Border
-            Vec4(0.00f, 0.00f, 0.00f, 0.00f), // BorderShadow
-            Vec4(0.80f, 0.80f, 0.80f, 0.30f), // FrameBg: background of checkbox, radio button, plot, slider, text input
-            Vec4(0.90f, 0.80f, 0.80f, 0.40f), // FrameBgHovered
-            Vec4(0.90f, 0.65f, 0.65f, 0.45f), // FrameBgActive
-            Vec4(0.27f, 0.27f, 0.54f, 0.83f), // TitleBg
-            Vec4(0.40f, 0.40f, 0.80f, 0.20f), // TitleBgCollapsed
-            Vec4(0.32f, 0.32f, 0.63f, 0.87f), // TitleBgActive
-            Vec4(0.40f, 0.40f, 0.55f, 0.80f), // MenuBarBg
-            Vec4(0.20f, 0.25f, 0.30f, 0.60f), // ScrollbarBg
-            Vec4(0.40f, 0.40f, 0.80f, 0.30f), // ScrollbarGrab
-            Vec4(0.40f, 0.40f, 0.80f, 0.40f), // ScrollbarGrabHovered
-            Vec4(0.80f, 0.50f, 0.50f, 0.40f), // ScrollbarGrabActive
-            Vec4(0.20f, 0.20f, 0.20f, 0.99f), // ComboBg
-            Vec4(0.90f, 0.90f, 0.90f, 0.50f), // CheckMark
-            Vec4(1.00f, 1.00f, 1.00f, 0.30f), // SliderGrab
-            Vec4(0.80f, 0.50f, 0.50f, 1.00f), // SliderGrabActive
-            Vec4(0.67f, 0.40f, 0.40f, 0.60f), // Button
-            Vec4(0.67f, 0.40f, 0.40f, 1.00f), // ButtonHovered
-            Vec4(0.80f, 0.50f, 0.50f, 1.00f), // ButtonActive
-            Vec4(0.40f, 0.40f, 0.90f, 0.45f), // Header
-            Vec4(0.45f, 0.45f, 0.90f, 0.80f), // HeaderHovered
-            Vec4(0.53f, 0.53f, 0.87f, 0.80f), // HeaderActive
-            Vec4(0.50f, 0.50f, 0.50f, 1.00f), // Separator
-            Vec4(0.60f, 0.60f, 0.70f, 1.00f), // SeparatorHovered
-            Vec4(0.70f, 0.70f, 0.90f, 1.00f), // SeparatorActive
-            Vec4(1.00f, 1.00f, 1.00f, 0.30f), // ResizeGrip
-            Vec4(1.00f, 1.00f, 1.00f, 0.60f), // ResizeGripHovered
-            Vec4(1.00f, 1.00f, 1.00f, 0.90f), // ResizeGripActive
-            Vec4(0.50f, 0.50f, 0.90f, 0.50f), // CloseButton
-            Vec4(0.70f, 0.70f, 0.90f, 0.60f), // CloseButtonHovered
-            Vec4(0.70f, 0.70f, 0.70f, 1.00f), // CloseButtonActive
-            Vec4(1.00f, 1.00f, 1.00f, 1.00f), // PlotLines
-            Vec4(0.90f, 0.70f, 0.00f, 1.00f), // PlotLinesHovered
-            Vec4(0.90f, 0.70f, 0.00f, 1.00f), // PlotHistogram
-            Vec4(1.00f, 0.60f, 0.00f, 1.00f), // PlotHistogramHovered
-            Vec4(0.00f, 0.00f, 1.00f, 0.35f), // TextSelectedBg
-            Vec4(0.20f, 0.20f, 0.20f, 0.35f))   // ModalWindowDarkening
+    val colors = ArrayList<Vec4>()
 
     /** JVM IMGUI   */
     val locale = Locale.US
@@ -549,11 +513,9 @@ object Debug {
 }
 
 /** for style.colors    */
-operator fun Array<Vec4>.get(idx: Col) = this[idx.i]
+operator fun ArrayList<Vec4>.get(idx: Col) = this[idx.i]
 
-operator fun Array<Vec4>.set(idx: Col, vec: Vec4) {
-    this[idx.i] put vec
-}
+operator fun ArrayList<Vec4>.set(idx: Col, vec: Vec4) = this[idx.i] put vec
 
 operator fun MutableMap<Int, Float>.set(key: Int, value: Int) = set(key, glm.intBitsToFloat(value))
 operator fun MutableMap<Int, Float>.set(key: Int, value: ColorEditFlags) = set(key, glm.intBitsToFloat(value.i))

@@ -109,7 +109,7 @@ interface imgui_parametersStacks {
                     style.buttonTextAlign to it.floats
                     style.buttonTextAlign put (value as Vec2)
                 }
-                else -> Unit
+                else -> throw Error()
             }
         })
     }
@@ -129,7 +129,7 @@ interface imgui_parametersStacks {
             StyleVar.IndentSpacing -> style.indentSpacing = backup.floats[0]
             StyleVar.GrabMinSize -> style.grabMinSize = backup.floats[0]
             StyleVar.ButtonTextAlign -> style.buttonTextAlign put backup.floats
-            else -> Unit
+            else -> throw Error()
         }
     }
 

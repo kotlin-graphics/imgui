@@ -38,6 +38,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHere
 import imgui.ImGui.spacing
+import imgui.imgui.imgui_internal.Companion.smallSquareSize
 import imgui.internal.Rect
 import imgui.Context as g
 import imgui.WindowFlags as Wf
@@ -269,7 +270,7 @@ interface imgui_widgetsMain {
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id)) return false
 
-        val arrowSize = g.fontSize + style.framePadding.x * 2f
+        val arrowSize = smallSquareSize
         val hovered = isHovered(frameBb, id)
         var popupOpen = isPopupOpen(id)
 
@@ -277,7 +278,7 @@ interface imgui_widgetsMain {
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
         val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
         renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, true, style.frameRounding) // FIXME-ROUNDING
-        renderCollapseTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y) + style.framePadding, true)
+        renderCollapseTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y) plus_ style.framePadding.y, true)
 
         if (previewValue != null)
             renderTextClipped(frameBb.min + style.framePadding, valueBb.max, previewValue)

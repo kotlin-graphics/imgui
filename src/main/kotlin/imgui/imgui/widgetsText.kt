@@ -6,7 +6,9 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
+import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.beginPopup
+import imgui.ImGui.button
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcWrapWidthForPos
 import imgui.ImGui.checkboxFlags
@@ -17,6 +19,7 @@ import imgui.ImGui.endPopup
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.openPopup
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleColor
@@ -32,11 +35,12 @@ import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setClipboardText
 import imgui.ImGui.textLineHeight
-import imgui.imgui.imgui_internal.Companion.colorSquareSize
+import imgui.imgui.imgui_internal.Companion.smallSquareSize
 import imgui.internal.*
-import imgui.Context as g
 import imgui.ColorEditFlags as Cef
+import imgui.Context as g
 
 interface imgui_widgetsText {
 
@@ -134,10 +138,10 @@ interface imgui_widgetsText {
 
         val fmt =
 //                try{
-                    if (args.isEmpty())
-                        fmt
-                    else
-                        fmt.format(style.locale, *args)
+                if (args.isEmpty())
+                    fmt
+                else
+                    fmt.format(style.locale, *args)
 //                }catch (err: Exception) {
 //                    println("fmt $fmt, args: ${args}")
 //                    TODO()
@@ -262,7 +266,8 @@ interface imgui_widgetsText {
             }
         }
 
-        fun colorEditOptionsPopup(flags: Int) {
+        /** @param flags ColorEditFlags */
+        fun colorEditOptionsPopup(flags: Int, col: FloatArray) {
             val allowOptInputs = flags hasnt Cef._InputsMask
             val allowOptDatatype = flags hasnt Cef._DataTypeMask
             if ((!allowOptInputs && !allowOptDatatype) || !beginPopup("context")) return
@@ -282,6 +287,30 @@ interface imgui_widgetsText {
                 if (radioButton("0.00..1.00", opts has Cef.Float))
                     opts = (opts wo Cef._DataTypeMask) or Cef.Float
             }
+
+            if (allowOptInputs || allowOptDatatype) separator()
+            if (button("Copy as..", Vec2(-1, 0)))
+                openPopup("Copy")
+            if (beginPopup("Copy")) {
+                val cr = F32_TO_INT8_SAT(col[0])
+                val cg = F32_TO_INT8_SAT(col[1])
+                val cb = F32_TO_INT8_SAT(col[2])
+                val ca = if (flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
+                var buf = "(%.3ff, %.3ff, %.3ff, %.3ff)".format(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
+                if (selectable(buf))
+                    setClipboardText(buf)
+                buf = "(%d,%d,%d,%d)".format(cr, cg, cb, ca)
+                if (selectable(buf))
+                    setClipboardText(buf)
+                buf = when {
+                    flags has Cef.NoAlpha -> "0x%02X%02X%02X".format(cr, cg, cb)
+                    else -> "0x%02X%02X%02X%02X".format(cr, cg, cb, ca)
+                }
+                if (selectable(buf))
+                    setClipboardText(buf)
+                endPopup()
+            }
+
             g.colorEditOptions = opts
             endPopup()
         }
@@ -292,7 +321,7 @@ interface imgui_widgetsText {
             if ((!allowOptPicker && !allowOptAlphaBar) || !beginPopup("context")) return
             if (allowOptPicker) {
                 // FIXME: Picker size copied from main picker function
-                val pickerSize = Vec2(g.fontSize * 8, glm.max(g.fontSize * 8 - (colorSquareSize + style.itemInnerSpacing.x), 1f))
+                val pickerSize = Vec2(g.fontSize * 8, glm.max(g.fontSize * 8 - (smallSquareSize + style.itemInnerSpacing.x), 1f))
                 pushItemWidth(pickerSize.x)
                 for (pickerType in 0..1) {
                     // Draw small/thumbnail version of each picker type (over an invisible button for selection)

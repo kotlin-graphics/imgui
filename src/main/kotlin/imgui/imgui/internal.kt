@@ -51,13 +51,13 @@ import imgui.imgui.imgui_tooltips.Companion.beginTooltipEx
 import imgui.internal.*
 import java.util.*
 import kotlin.apply
-import imgui.Context as g
-import imgui.WindowFlags as Wf
-import imgui.InputTextFlags as Itf
-import imgui.TreeNodeFlags as Tnf
 import imgui.ColorEditFlags as Cef
-import imgui.internal.ButtonFlags as Bf
+import imgui.Context as g
+import imgui.InputTextFlags as Itf
 import imgui.ItemFlags as If
+import imgui.TreeNodeFlags as Tnf
+import imgui.WindowFlags as Wf
+import imgui.internal.ButtonFlags as Bf
 
 fun main(args: Array<String>) {
 
@@ -1738,7 +1738,7 @@ interface imgui_internal {
 
         beginGroup()
         pushId(label)
-        val buttonSz = Vec2(g.fontSize) + style.framePadding * 2f
+        val buttonSz = Vec2(smallSquareSize)
         step?.let { pushItemWidth(glm.max(1f, calcItemWidth() - (buttonSz.x + style.itemInnerSpacing.x) * 2)) }
 
         val buf = data.format(dataType, scalarFormat, CharArray(64))
@@ -1811,7 +1811,7 @@ interface imgui_internal {
         val cg = F32_TO_INT8_SAT(col[1])
         val cb = F32_TO_INT8_SAT(col[2])
         val ca = if (flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
-        beginTooltipEx(true)
+        beginTooltipEx(0, true)
 
         val textEnd = if (text.isEmpty()) findRenderedTextEnd(text) else 0
         if (textEnd > 0) {
@@ -2007,8 +2007,6 @@ interface imgui_internal {
 
     companion object {
 
-        val colorSquareSize get() = g.fontSize + style.framePadding.y * 2f
-
         fun alphaBlendColor(colA: Int, colB: Int): Int {
             val t = ((colB ushr COL32_A_SHIFT) and 0xFF) / 255f
             val r = lerp((colA ushr COL32_R_SHIFT) and 0xFF, (colB ushr COL32_R_SHIFT) and 0xFF, t)
@@ -2028,5 +2026,7 @@ interface imgui_internal {
             else -> glm.acos(x)
         //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
+
+        val smallSquareSize get() = g.fontSize + style.framePadding.y * 2f
     }
 }

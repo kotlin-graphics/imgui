@@ -228,7 +228,6 @@ interface imgui_demoDebugInfo {
         }
 
         collapsingHeader("Widgets") {
-
             //            if (ImGui::TreeNode("Basic"))
 //                {
 //                        static int clicked = 0;
@@ -1573,6 +1572,7 @@ interface imgui_demoDebugInfo {
 //            +        ImGui::Text("WantCaptureMouse: %d", io.WantCaptureMouse);
 //            +        ImGui::Text("WantCaptureKeyboard: %d", io.WantCaptureKeyboard);
 //            +        ImGui::Text("WantTextInput: %d", io.WantTextInput);
+//                    ImGui::Text("WantMoveMouse: %d", io.WantMoveMouse);
 //            +
 //            +        if (ImGui::TreeNode("Keyboard & Mouse State"))
 //                +        {
@@ -1929,12 +1929,12 @@ interface imgui_demoDebugInfo {
                     logToClipboard()
                 else
                     TODO() //logToTTY()
-                //logText("ImGuiStyle& style = ImGui::GetStyle();" IM_NEWLINE); TODO
+                //ImGui::LogText("ImVec4* colors = ImGui::GetStyle().Colors;" IM_NEWLINE); TODO
                 for (i in Col.values()) {
                     val col = style.colors[i]
                     val name = i.name
                     if (!outputOnlyModified[0] || col != (ref?.colors?.get(i) ?: defaultStyle.colors[i]))
-                        TODO()//logText("style.Colors[ImGuiCol_%s]%*s= ImVec4(%.2ff, %.2ff, %.2ff, %.2ff);" IM_NEWLINE, name, 22 - (int)strlen(name), "", col.x, col.y, col.z, col.w);
+                        TODO()//logText("colors[ImGuiCol_%s]%*s= ImVec4(%.2ff, %.2ff, %.2ff, %.2ff);" IM_NEWLINE, name, 23 - (int)strlen(name), "", col.x, col.y, col.z, col.w);
                 }
                 logFinish()
             }

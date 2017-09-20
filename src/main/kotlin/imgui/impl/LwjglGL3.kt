@@ -4,6 +4,7 @@ import gli.wasInit
 import glm_.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2d
 import imgui.*
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.GL11.*
@@ -109,7 +110,13 @@ object LwjglGL3 {
             (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
             Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)   */
         if (window.focused)
-            IO.mousePos put window.cursorPos
+            if (IO.wantMoveMouse)
+            /*  Set mouse position if requested by io.WantMoveMouse flag (used when io.NavMovesTrue is enabled by user
+                and using directional navigation)   */
+                window.cursorPos = Vec2d(IO.mousePos)
+            else
+            // Get mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)
+                IO.mousePos put window.cursorPos
         else
             IO.mousePos put -Float.MAX_VALUE
 

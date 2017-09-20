@@ -49,7 +49,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.u32
-import imgui.imgui.imgui_internal.Companion.colorSquareSize
+import imgui.imgui.imgui_internal.Companion.smallSquareSize
 import imgui.imgui.imgui_widgetsText.Companion.colorEditOptionsPopup
 import imgui.imgui.imgui_widgetsText.Companion.colorPickerOptionsPopup
 import imgui.imgui.imgui_widgetsText.Companion.paintVertsLinearGradientKeepAlpha
@@ -81,8 +81,8 @@ interface imgui_widgetsColorEditorPicker {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val storageId = window.id   // Store options on a per window basis
-        val wExtra = if (flags has Cef.NoSmallPreview) 0f else colorSquareSize + style.itemInnerSpacing.x
+        val squareSz = smallSquareSize
+        val wExtra = if (flags has Cef.NoSmallPreview) 0f else squareSz + style.itemInnerSpacing.x
         val wItemsAll = calcItemWidth() - wExtra
         val labelDisplayEnd = findRenderedTextEnd(label)
 
@@ -102,7 +102,7 @@ interface imgui_widgetsColorEditorPicker {
 
         // Context menu: display and modify options (before defaults are applied)
         if (flags hasnt Cef.NoOptions)
-            colorEditOptionsPopup(flags)
+            colorEditOptionsPopup(flags, col)
 
         // Read stored options
         if (flags hasnt Cef._InputsMask)
@@ -198,7 +198,6 @@ interface imgui_widgetsColorEditorPicker {
                     textUnformatted(label, labelDisplayEnd)
                     separator()
                 }
-                val squareSz = colorSquareSize
                 val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
                 val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._InputsMask or Cef.NoLabel or Cef.AlphaPreviewHalf
                 pushItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
@@ -284,7 +283,8 @@ interface imgui_widgetsColorEditorPicker {
         // Setup
         val alphaBar = flags has Cef.AlphaBar && flags hasnt Cef.NoAlpha
         val pickerPos = window.dc.cursorPos // consume only, safe passing reference
-        val barsWidth = colorSquareSize     // Arbitrary smallish width of Hue/Alpha picking bars TODO check
+        val squareSz = smallSquareSize
+        val barsWidth = squareSz     // Arbitrary smallish width of Hue/Alpha picking bars
         // Saturation/Value picking box
         val svPickerSize = glm.max(barsWidth * 1, calcItemWidth() - (if (alphaBar) 2 else 1) * (barsWidth + style.itemInnerSpacing.x))
         val bar0PosX = pickerPos.x + svPickerSize + style.itemInnerSpacing.x
@@ -386,7 +386,6 @@ interface imgui_widgetsColorEditorPicker {
         }
         if (flags hasnt Cef.NoSidePreview) {
             val colV4 = Vec4(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
-            val squareSz = colorSquareSize
             if (flags has Cef.NoLabel)
                 text("Current")
             val f = flags and (Cef.HDR or Cef.AlphaPreview or Cef.AlphaPreviewHalf or Cef.NoTooltip)
@@ -537,7 +536,7 @@ interface imgui_widgetsColorEditorPicker {
         if (window.skipItems) return false
 
         val id = window.getId(descId)
-        val defaultSize = colorSquareSize
+        val defaultSize = smallSquareSize
         if (size.x == 0f)
             size.x = defaultSize
         if (size.y == 0f)

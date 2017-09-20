@@ -119,7 +119,7 @@ class FontAtlas {
 
     //    IMGUI_API ImFont*           AddFontFromFileTTF(const char* filename, float size_pixels, const ImFontConfig* font_cfg = NULL, const ImWchar* glyph_ranges = NULL);
 
-    /** NBM Transfer ownership of 'ttf_data' to ImFontAtlas, unless font_cfg_template->FontDataOwnedByAtlas == false.
+    /** NB: Transfer ownership of 'ttf_data' to ImFontAtlas, unless font_cfg_template->FontDataOwnedByAtlas == false.
      *  Owned TTF buffer will be deleted after Build(). */
     fun addFontFromMemoryTTF(fontData: CharArray, sizePixels: Float, fontCfgTemplate: FontConfig? = null,
                              glyphRanges: IntArray = intArrayOf()): Font {
@@ -1246,11 +1246,10 @@ class Font {
     // Private
     private fun growIndex(newSize: Int) {
         assert(indexXAdvance.size == indexLookup.size)
-        val oldSize = indexLookup.size
-        if (newSize <= oldSize)
+        if (newSize <= indexLookup.size)
             return
-        for (i in oldSize until newSize) {
-            indexXAdvance.add(-1.0f)
+        for (i in indexLookup.size until newSize) {
+            indexXAdvance.add(-1f)
             indexLookup.add(-1)
         }
     }
@@ -1258,7 +1257,7 @@ class Font {
 
     fun setCurrent() {
         assert(isLoaded)    // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
-        assert(scale > 0.0f)
+        assert(scale > 0f)
         g.font = this
         g.fontBaseSize = IO.fontGlobalScale * g.font.fontSize * g.font.scale
         g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
