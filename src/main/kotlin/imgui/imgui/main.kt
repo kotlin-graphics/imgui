@@ -251,8 +251,8 @@ interface imgui_main {
         closeInactivePopups()
 
         // Create implicit window - we will only render it if the user has added something to it.
-        setNextWindowSize(Vec2(400, 400), Cond.FirstUseEver)
-        begin("Debug")
+        setNextWindowSize(Vec2(400), Cond.FirstUseEver)
+        begin("Debug##Default")
     }
 
 
