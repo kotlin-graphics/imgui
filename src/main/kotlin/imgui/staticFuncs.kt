@@ -422,32 +422,6 @@ fun getVisibleRect(): Rect {
     return Rect(0f, 0f, IO.displaySize.x.f, IO.displaySize.y.f)
 }
 
-fun beginPopupEx(id: Int, extraFlags: Int): Boolean {
-
-    val window = g.currentWindow!!
-    if (!isPopupOpen(id)) {
-        clearSetNextWindowData() // We behave like Begin() and need to consume those values
-        return false
-    }
-
-    pushStyleVar(StyleVar.WindowRounding, 0f)
-    val flags = extraFlags or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
-
-    val name =
-            if (flags has Wf.ChildMenu)
-                "##menu_%d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
-            else
-                "##popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
-
-    val isOpen = begin(name, null, flags)
-    if (window.flags hasnt Wf.ShowBorders)
-        g.currentWindow!!.flags = g.currentWindow!!.flags and Wf.ShowBorders.i.inv()
-    if (!isOpen) // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
-        endPopup()
-
-    return isOpen
-}
-
 fun closeInactivePopups() {
 
     if (g.openPopupStack.empty())
@@ -490,11 +464,6 @@ fun closePopupToLevel(remaining: Int) {
     else
         focusWindow(g.openPopupStack[0].parentWindow)
     for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
-}
-
-fun closePopup(id: Int) {
-    if (!isPopupOpen(id)) return
-    closePopupToLevel(g.openPopupStack.lastIndex)
 }
 
 fun getFrontMostModalRootWindow(): Window? {

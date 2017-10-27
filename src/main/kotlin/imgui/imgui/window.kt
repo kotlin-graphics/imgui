@@ -262,10 +262,10 @@ interface imgui_window {
                     window.sizeFull.x = if (window.autoFitOnlyGrows) glm.max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
                 if (window.autoFitFrames.y > 0)
                     window.sizeFull.y = if (window.autoFitOnlyGrows) glm.max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
-            } else {
-                if (flags has Wf.AlwaysAutoResize && !windowSizeSetByApi)
+            } else if(!windowSizeSetByApi) {
+                if (flags has Wf.AlwaysAutoResize)
                     window.sizeFull put sizeAutoFit
-                else if ((window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0) && !windowSizeSetByApi) {
+                else if (window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0) {
                     // Auto-fit only grows during the first few frames
                     if (window.autoFitFrames.x > 0)
                         window.sizeFull.x = if (window.autoFitOnlyGrows) glm.max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
@@ -276,7 +276,7 @@ interface imgui_window {
             }
 
             // Apply minimum/maximum window size constraints and final size
-            window.applySizeFullWithConstraint(window.sizeFull)
+            window.sizeFull put window.calcSizeFullWithConstraint(window.sizeFull)
             window.size put if (window.collapsed) window.titleBarRect().size else window.sizeFull
 
             // POSITION
@@ -405,7 +405,7 @@ interface imgui_window {
                         sizeTarget put ((IO.mousePos - g.activeIdClickOffset + resizeRect.size) - window.pos)
 
                     if (sizeTarget notEqual Float.MAX_VALUE) {
-                        window.applySizeFullWithConstraint(sizeTarget)
+                        window.sizeFull put window.calcSizeFullWithConstraint(sizeTarget)
                         markIniSettingsDirty(window)
                     }
 

@@ -592,7 +592,7 @@ class Window(
         return !(focusedRootWindow.flags has Wf.Popup && focusedRootWindow.wasActive && focusedRootWindow != rootWindow)
     }
 
-    fun applySizeFullWithConstraint(newSize: Vec2) {
+    fun calcSizeFullWithConstraint(newSize: Vec2): Vec2 {
 
         if (g.setNextWindowSizeConstraint) {
             // Using -1,-1 on either X/Y axis to preserve the current size.
@@ -605,7 +605,7 @@ class Window(
         }
         if (flags hasnt (Wf.ChildWindow or Wf.AlwaysAutoResize))
             newSize max_ style.windowMinSize
-        sizeFull put newSize
+        return newSize
     }
 
 

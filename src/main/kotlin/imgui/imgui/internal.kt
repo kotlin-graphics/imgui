@@ -10,6 +10,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
 import imgui.ImGui.F32_TO_INT8_SAT
+import imgui.ImGui.begin
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemWidth
@@ -19,6 +20,7 @@ import imgui.ImGui.contentRegionMax
 import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
+import imgui.ImGui.endPopup
 import imgui.ImGui.endTooltip
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
@@ -36,6 +38,7 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
+import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.separator
@@ -358,9 +361,40 @@ interface imgui_internal {
             g.openPopupStack[currentStackSize] = popupRef
     }
 
+    fun closePopup(id: Int) {
+        if (!isPopupOpen(id)) return
+        closePopupToLevel(g.openPopupStack.lastIndex)
+    }
+
     // FIXME
     /** return true if the popup is open    */
     fun isPopupOpen(id: Int) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
+
+    fun beginPopupEx(id: Int, extraFlags: Int): Boolean {
+
+        val window = g.currentWindow!!
+        if (!isPopupOpen(id)) {
+            clearSetNextWindowData() // We behave like Begin() and need to consume those values
+            return false
+        }
+
+        pushStyleVar(StyleVar.WindowRounding, 0f)
+        val flags = extraFlags or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
+
+        val name =
+                if (flags has Wf.ChildMenu)
+                    "##menu_%d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
+                else
+                    "##popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
+
+        val isOpen = begin(name, null, flags)
+        if (window.flags hasnt Wf.ShowBorders)
+            g.currentWindow!!.flags = g.currentWindow!!.flags and Wf.ShowBorders.i.inv()
+        if (!isOpen) // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
+            endPopup()
+
+        return isOpen
+    }
 
     fun calcTypematicPressedRepeatAmount(t: Float, tPrev: Float, repeatDelay: Float, repeatRate: Float) = when {
         t == 0f -> 1
