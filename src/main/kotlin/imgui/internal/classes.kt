@@ -9,11 +9,11 @@ import glm_.vec2.Vec2bool
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.Context.style
 import imgui.ImGui.keepAliveId
 import java.util.*
 import kotlin.collections.ArrayList
 import imgui.Context as g
-import imgui.Context.style
 import imgui.WindowFlags as Wf
 
 
@@ -429,8 +429,11 @@ class Window(
     var setWindowSizeAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
     /** store condition flags for next SetWindowCollapsed() call.   */
     var setWindowCollapsedAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
-
-    var setWindowPosCenterWanted = false
+    /** store window position when using a non-zero Pivot (position set needs to be processed when we know the window size) */
+    var setWindowPosVal = Vec2()
+    /** store window pivot for positioning. Vec2(0) when positioning from top-left corner; Vec2(0.5f) for centering;
+     *  Vec2(1) for bottom right.   */
+    var setWindowPosPivot = Vec2()
 
 
     /** Temporary per-window data, reset at the beginning of the frame  */
@@ -541,7 +544,8 @@ class Window(
         if (cond != Cond.Null && setWindowPosAllowFlags hasnt cond)
             return
         setWindowPosAllowFlags = setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
-        setWindowPosCenterWanted = false
+        setWindowPosVal put Float.MAX_VALUE
+        setWindowPosPivot put Float.MAX_VALUE
 
         // Set
         val oldPos = Vec2(pos)
@@ -585,12 +589,13 @@ class Window(
         this.collapsed = collapsed
     }
 
-    val isContentHoverable: Boolean get() {
-        /*  An active popup disable hovering on other windows (apart from its own children)
-            FIXME-OPT: This could be cached/stored within the window.         */
-        val focusedRootWindow = g.navWindow?.rootWindow ?: return true
-        return !(focusedRootWindow.flags has Wf.Popup && focusedRootWindow.wasActive && focusedRootWindow != rootWindow)
-    }
+    val isContentHoverable: Boolean
+        get() {
+            /*  An active popup disable hovering on other windows (apart from its own children)
+                FIXME-OPT: This could be cached/stored within the window.         */
+            val focusedRootWindow = g.navWindow?.rootWindow ?: return true
+            return !(focusedRootWindow.flags has Wf.Popup && focusedRootWindow.wasActive && focusedRootWindow != rootWindow)
+        }
 
     fun calcSizeFullWithConstraint(newSize: Vec2): Vec2 {
 
@@ -607,6 +612,22 @@ class Window(
             newSize max_ style.windowMinSize
         return newSize
     }
+
+    fun calcSizeAutoFit() = if (flags has Wf.Tooltip)
+        // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
+            sizeContents + windowPadding - Vec2(0f, style.itemSpacing.y)
+        else {
+            // Handling case of auto fit window not fitting on the screen (on either axis): we are growing the size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
+            val sizeAutoFit = glm.clamp(sizeContents + windowPadding, Vec2(style.windowMinSize),
+                    Vec2(glm.max(style.windowMinSize, IO.displaySize - style.displaySafeAreaPadding)))
+            val sizeAutoFitAfterConstraint = calcSizeFullWithConstraint(sizeAutoFit)
+            if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+                sizeAutoFit.y += style.scrollbarSize
+            if (sizeAutoFitAfterConstraint.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
+                sizeAutoFit.x += style.scrollbarSize * 2f
+            sizeAutoFit.y = glm.max(sizeAutoFit.y - style.itemSpacing.y, 0f)
+            sizeAutoFit
+        }
 
 
     infix fun addTo(renderList: ArrayList<DrawList>) {

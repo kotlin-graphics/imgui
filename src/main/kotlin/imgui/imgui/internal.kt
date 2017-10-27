@@ -342,6 +342,33 @@ interface imgui_internal {
         return glm.max(wrapPosX - pos.x, 1f)
     }
 
+    fun pushMultiItemsWidths(components: Int, wFull: Float = 0f) {
+
+        val window = ImGui.currentWindow
+        val wFull = if (wFull <= 0f) calcItemWidth() else wFull
+        val wItemOne = glm.max(1f, ((wFull - (style.itemInnerSpacing.x) * (components - 1)) / components.f).i.f)
+        val wItemLast = glm.max(1f, (wFull - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
+        window.dc.itemWidthStack.push(wItemLast)
+        for (i in 0 until components - 1)
+            window.dc.itemWidthStack.push(wItemOne)
+        window.dc.itemWidth = window.dc.itemWidthStack.last()
+    }
+
+    /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets
+     *  @param option = ItemFlags   */
+    fun pushItemFlag(option: Int, enabled: Boolean) = with(ImGui.currentWindow.dc) {
+        if (enabled)
+            itemFlags = itemFlags or option
+        else
+            itemFlags = itemFlags wo option
+        itemFlagsStack.add(itemFlags)
+    }
+
+    fun popItemFlag() = with(ImGui.currentWindow.dc) {
+        itemFlagsStack.pop()
+        itemFlags = itemFlagsStack.lastOrNull() ?: If.Default_.i
+    }
+
     /** Mark popup as open (toggle toward open state).
      *  Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within
      *  a BeginPopup()/EndPopup() block.
@@ -379,7 +406,7 @@ interface imgui_internal {
         }
 
         pushStyleVar(StyleVar.WindowRounding, 0f)
-        val flags = extraFlags or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
+        val flags = extraFlags or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings
 
         val name =
                 if (flags has Wf.ChildMenu)

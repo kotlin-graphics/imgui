@@ -11,6 +11,8 @@ import imgui.Context.style
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
+import imgui.ImGui.popItemFlag
+import imgui.ImGui.pushItemFlag
 import imgui.ImGui.u32
 import imgui.ImGui.vec4
 import imgui.internal.ColMod
@@ -210,21 +212,6 @@ interface imgui_parametersStacks {
     fun popTextWrapPos() = with(currentWindow.dc) {
         textWrapPosStack.pop()
         textWrapPos = textWrapPosStack.lastOrNull() ?: -1f
-    }
-
-    /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets
-     *  @param option = ItemFlags   */
-    fun pushItemFlag(option: Int, enabled: Boolean) = with(currentWindow.dc) {
-        if (enabled)
-            itemFlags = itemFlags or option
-        else
-            itemFlags = itemFlags wo option
-        itemFlagsStack.add(itemFlags)
-    }
-
-    fun popItemFlag() = with(currentWindow.dc) {
-        itemFlagsStack.pop()
-        itemFlags = itemFlagsStack.lastOrNull() ?: If.Default_.i
     }
 
     fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.AllowKeyboardFocus.i, allowKeyboardFocus)

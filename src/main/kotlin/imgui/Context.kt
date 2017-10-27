@@ -90,6 +90,8 @@ object Context {
     // Storage for SetNexWindow** and SetNextTreeNode*** functions
     var setNextWindowPosVal = Vec2()
 
+    var setNextWindowPosPivot = Vec2()
+
     var setNextWindowSizeVal = Vec2()
 
     var setNextWindowContentSizeVal = Vec2()

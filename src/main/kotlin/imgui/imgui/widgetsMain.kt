@@ -7,12 +7,14 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
+import imgui.ImGui.beginPopupEx
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.closePopup
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endPopup
 import imgui.ImGui.focusWindow
@@ -256,7 +258,7 @@ interface imgui_widgetsMain {
     }
 
     /** FIXME-WIP: New Combo API    */
-    fun beginCombo(label: String, previewValue: String?, popupOpenedHeight: Float): Boolean {
+    fun beginCombo(label: String, previewValue: String?, popupSize: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -306,16 +308,16 @@ interface imgui_widgetsMain {
         if (!popupOpen) return false
 
         var popupY1 = frameBb.max.y
-        var popupY2 = glm.clamp(popupY1 + popupOpenedHeight, popupY1, IO.displaySize.y - style.displaySafeAreaPadding.y)
-        if ((popupY2 - popupY1) < glm.min(popupOpenedHeight, frameBb.min.y - style.displaySafeAreaPadding.y)) {
+        var popupY2 = glm.clamp(popupY1 + popupSize.y, popupY1, IO.displaySize.y - style.displaySafeAreaPadding.y)
+        if ((popupY2 - popupY1) < glm.min(popupSize.y, frameBb.min.y - style.displaySafeAreaPadding.y)) {
             /*  Position our combo ABOVE because there's more space to fit! (FIXME: Handle in Begin() or use a shared helper.
             We have similar code in Begin() for popup placement)         */
-            popupY1 = glm.clamp(frameBb.min.y - popupOpenedHeight, style.displaySafeAreaPadding.y, frameBb.min.y)
+            popupY1 = glm.clamp(frameBb.min.y - popupSize.y, style.displaySafeAreaPadding.y, frameBb.min.y)
             popupY2 = frameBb.min.y
-        }
-        val popupRect = Rect(Vec2(frameBb.min.x, popupY1), Vec2(frameBb.max.x, popupY2))
-        setNextWindowPos(popupRect.min)
-        setNextWindowSize(popupRect.size)
+            setNextWindowPos(frameBb.min, Cond.Always, Vec2(0f, 1f))
+        } else   // Position our combo below
+            setNextWindowPos(Vec2(frameBb.min.x, frameBb.max.y), Cond.Always, Vec2())
+        setNextWindowSize(Vec2(popupSize.x, popupY2 - popupY1), Cond.Appearing)
         pushStyleVar(StyleVar.WindowPadding, style.framePadding)
 
         val flags = Wf.ComboBox or if (window.flags has Wf.ShowBorders) Wf.ShowBorders else Wf.Null
@@ -336,13 +338,13 @@ interface imgui_widgetsMain {
     /** Combo box function. */
     fun combo(label: String, currentItem: IntArray, items: List<String>, heightInItems: Int = -1): Boolean {
 
-        var previewText = items.getOrElse(currentItem[0], { "" })
+        val previewText = items.getOrElse(currentItem[0], { "" })
 
         // Size default to hold ~7 items
         val heightInItems = if (heightInItems < 0) 7 else heightInItems
-        val popupOpenedHeight = (g.fontSize + style.itemSpacing.y) * glm.min(items.size, heightInItems) + style.framePadding.y * 3
+        val popupHeight = (g.fontSize + style.itemSpacing.y) * glm.min(items.size, heightInItems) + style.framePadding.y * 3
 
-        if (!beginCombo(label, previewText, popupOpenedHeight)) return false
+        if (!beginCombo(label, previewText, Vec2(0f, popupHeight))) return false
 
         // Display items, FIXME-OPT: Use clipper
         var valueChanged = false

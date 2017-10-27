@@ -110,10 +110,12 @@ interface imgui_window {
             if (window.appearing)
                 window.setWindowPosAllowFlags = window.setWindowPosAllowFlags or Cond.Appearing
             windowPosSetByApi = window.setWindowPosAllowFlags has g.setNextWindowPosCond
-            if (windowPosSetByApi && (g.setNextWindowPosVal - Vec2(-Float.MAX_VALUE)).lengthSqr < 0.001f) {
-                window.setWindowPosCenterWanted = true                            // May be processed on the next frame if this is our first frame and we are measuring size
-                window.setWindowPosAllowFlags =
-                        window.setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
+            if (windowPosSetByApi && g.setNextWindowPosPivot.lengthSqr < 0.00001f) {
+                /*  May be processed on the next frame if this is our first frame and we are measuring size
+                    FIXME: Look into removing the branch so everything can go through this same code path for consistency.  */
+                window.setWindowPosVal put g.setNextWindowPosVal
+                window.setWindowPosPivot put g.setNextWindowPosPivot
+                window.setWindowPosAllowFlags = window.setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
             } else
                 window.setPos(g.setNextWindowPosVal, g.setNextWindowPosCond)
 
@@ -234,27 +236,8 @@ interface imgui_window {
             else
                 window.windowPadding put style.windowPadding
 
-            // Calculate auto-fit size
-            val sizeAutoFit: Vec2
-            if (flags has Wf.Tooltip)
-            // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
-                sizeAutoFit = window.sizeContents + window.windowPadding - Vec2(0f, style.itemSpacing.y)
-            else {
-                sizeAutoFit = window.sizeContents + window.windowPadding
-                sizeAutoFit.x = glm.clamp(sizeAutoFit.x, style.windowMinSize.x.f,
-                        glm.max(style.windowMinSize.x.f, IO.displaySize.x - style.displaySafeAreaPadding.x))
-                sizeAutoFit.y = glm.clamp(sizeAutoFit.y, style.windowMinSize.y.f,
-                        glm.max(style.windowMinSize.y.f, IO.displaySize.y - style.displaySafeAreaPadding.y))
-
-                // Handling case of auto fit window not fitting in screen on one axis, we are growing auto fit size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
-                if (sizeAutoFit.x < window.sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
-                    sizeAutoFit.y += style.scrollbarSize
-                if (sizeAutoFit.y < window.sizeContents.y && flags hasnt Wf.NoScrollbar)
-                    sizeAutoFit.x += style.scrollbarSize
-                sizeAutoFit.y = glm.max(sizeAutoFit.y - style.itemSpacing.y, 0f)
-            }
-
-            // Handle automatic resize
+            // Calculate auto-fit size, handle automatic resize
+            val sizeAutoFit = window.calcSizeAutoFit()
             if (window.collapsed) {
                 /*  We still process initial auto-fit on collapsed windows to get a window width, but otherwise we don't
                 honor ImGuiWindowFlags_AlwaysAutoResize when collapsed. */
@@ -262,7 +245,7 @@ interface imgui_window {
                     window.sizeFull.x = if (window.autoFitOnlyGrows) glm.max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
                 if (window.autoFitFrames.y > 0)
                     window.sizeFull.y = if (window.autoFitOnlyGrows) glm.max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
-            } else if(!windowSizeSetByApi) {
+            } else if (!windowSizeSetByApi) {
                 if (flags has Wf.AlwaysAutoResize)
                     window.sizeFull put sizeAutoFit
                 else if (window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0) {
@@ -295,12 +278,10 @@ interface imgui_window {
                 window.size put window.sizeFull
             }
 
-            var windowPosCenter = false
-            windowPosCenter = windowPosCenter || (window.setWindowPosCenterWanted && window.hiddenFrames == 0)
-            windowPosCenter = windowPosCenter || (flags has Wf.Modal && !windowPosSetByApi && windowJustAppearingAfterBeingHidden)
-            if (windowPosCenter)
-            // Center (any sort of window)
-                window.setPos(glm.max(style.displaySafeAreaPadding, fullscreenRect.center - window.sizeFull * 0.5f), Cond.Null)
+            val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFrames == 0
+            if (windowPosWithPivot)
+            // Position given a pivot (e.g. for centering)
+                window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.Null)
             else if (flags has Wf.ChildMenu) {
                 /*  Child menus typically request _any_ position within the parent menu item, and then our
                 FindBestPopupWindowPos() function will move the new menu outside the parent bounds.
@@ -745,18 +726,19 @@ interface imgui_window {
     }
 
     /** set next window position. call before Begin()   */
-    fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always) {
+    fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Null, pivot: Vec2 = Vec2()) {
         g.setNextWindowPosVal put pos
+        g.setNextWindowPosPivot = pivot
         g.setNextWindowPosCond = cond
     }
 
-    fun setNextWindowPosCenter(cond: Cond = Cond.Always) {                      // set next window position to be centered on screen. call before Begin()
-        g.setNextWindowPosVal put -Float.MAX_VALUE
-        g.setNextWindowPosCond = cond
-    }
+    @Deprecated("")
+    /** set next window position to be centered on screen. call before Begin()  */
+    fun setNextWindowPosCenter(cond: Cond = Cond.Null) =
+            setNextWindowPos(Vec2(IO.displaySize.x * 0.5f, IO.displaySize.y * 0.5f), cond, Vec2(0.5f))
 
     /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
-    fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Always) {
+    fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Null) {
         g.setNextWindowSizeVal put size
         g.setNextWindowSizeCond = cond
     }
@@ -788,7 +770,7 @@ interface imgui_window {
     }
 
     /** set next window collapsed state. call before Begin()    */
-    fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Always) {
+    fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Null) {
         g.setNextWindowCollapsedVal = collapsed
         g.setNextWindowCollapsedCond = cond
     }

@@ -4,9 +4,9 @@ import gli.has
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
+import glm_.vec2.operators.div
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.or
 import imgui.Context.style
 import imgui.ImGui.alignFirstTextHeightToWidgets
 import imgui.ImGui.begin
@@ -35,21 +35,25 @@ import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemClicked
 import imgui.ImGui.isItemRectHovered
+import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
 import imgui.ImGui.mousePos
+import imgui.ImGui.newLine
 import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
+import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
+import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
@@ -94,18 +98,14 @@ import imgui.functionalProgramming.withStyleVar
 import imgui.functionalProgramming.withWindow
 import imgui.internal.Rect
 import imgui.internal.Window
+import imgui.or
 import java.util.*
-import imgui.Context as g
-import glm_.vec2.operators.div
-import imgui.ImGui.isMouseDoubleClicked
-import imgui.ImGui.newLine
-import imgui.ImGui.popStyleColor
-import imgui.ImGui.pushStyleColor
-import imgui.WindowFlags as Wf
-import imgui.InputTextFlags as Itf
-import imgui.TreeNodeFlags as Tnf
-import imgui.SelectableFlags as Sf
 import imgui.ColorEditFlags as Cef
+import imgui.Context as g
+import imgui.InputTextFlags as Itf
+import imgui.SelectableFlags as Sf
+import imgui.TreeNodeFlags as Tnf
+import imgui.WindowFlags as Wf
 
 /**
  *  Message to the person tempted to delete this file when integrating ImGui into their code base:
@@ -2249,21 +2249,33 @@ interface imgui_demoDebugInfo {
 
         var type = intArrayOf(0)
 
-        /** Demonstrate creating a simple static window with no decoration. */
+        /** Demonstrate creating a simple static window with no decoration + a context-menu to choose which corner
+         *  of the screen to use */
         fun showExampleAppFixedOverlay(pOpen: BooleanArray) {
 
-            setNextWindowPos(Vec2(10))
+            val DISTANCE = 10f
+            val windowPos = Vec2(if (corner has 1) IO.displaySize.x - DISTANCE else DISTANCE,
+                    if (corner has 2) IO.displaySize.y - DISTANCE else DISTANCE)
+            val windowPosPivot = Vec2(if (corner has 1) 1f else 0f, if (corner has 2) 1f else 0f)
+            setNextWindowPos(windowPos, Cond.Always, windowPosPivot)
             pushStyleColor(Col.WindowBg, Vec4(0f, 0f, 0f, 0.3f))
-            if (!begin("Example: Fixed Overlay", pOpen, Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoSavedSettings)) {
+            if (begin("Example: Fixed Overlay", pOpen, Wf.NoTitleBar or Wf.NoResize or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoSavedSettings)) {
+                text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
+                separator()
+                text("Mouse Position: (%.1f,%.1f)".format(IO.mousePos.x, IO.mousePos.y))
+//                if(beginPopupContextWindow()) { TODO
+//                    if (ImGui::MenuItem("Top-left", NULL, corner == 0)) corner = 0
+//                    if (ImGui::MenuItem("Top-right", NULL, corner == 1)) corner = 1
+//                    if (ImGui::MenuItem("Bottom-left", NULL, corner == 2)) corner = 2
+//                    if (ImGui::MenuItem("Bottom-right", NULL, corner == 3)) corner = 3
+//                    ImGui::EndPopup()
+//                }
                 end()
-                return
             }
-            text("Simple overlay\non the top-left side of the screen.")
-            separator()
-            text("Mouse Position: (%.1f,%.1f)", IO.mousePos.x, IO.mousePos.y)
-            end()
             popStyleColor()
         }
+
+        var corner = 0
 
         /** Demonstrate using "##" and "###" in identifiers to manipulate ID generation.
          *  Read section "How can I have multiple widgets with the same label? Can I have widget without a label? (Yes).

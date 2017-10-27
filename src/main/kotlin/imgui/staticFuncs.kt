@@ -27,18 +27,6 @@ import imgui.InputTextFlags as Itf
 
 fun logRenderedText(refPos: Vec2, text: String, textEnd: Int = 0): Nothing = TODO()
 
-fun pushMultiItemsWidths(components: Int, wFull: Float = 0f) {
-
-    val window = currentWindow
-    val wFull = if (wFull <= 0f) calcItemWidth() else wFull
-    val wItemOne = glm.max(1f, ((wFull - (style.itemInnerSpacing.x) * (components - 1)) / components.f).i.f)
-    val wItemLast = glm.max(1f, (wFull - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
-    window.dc.itemWidthStack.push(wItemLast)
-    for (i in 0 until components - 1)
-        window.dc.itemWidthStack.push(wItemOne)
-    window.dc.itemWidth = window.dc.itemWidthStack.last()
-}
-
 fun getDraggedColumnOffset(columnIndex: Int): Float {
     /*  Active (dragged) column always follow mouse. The reason we need this is that dragging a column to the right edge
         of an auto-resizing window creates a feedback loop because we store normalized positions. So while dragging we
@@ -322,7 +310,7 @@ fun scrollbar(window: Window, horizontal: Boolean) {
                 grabCol, style.scrollbarRounding)
 }
 
-fun calcNextScrollFromScrollTargetAndClamp(window: Window): Vec2 {
+fun calcNextScrollFromScrollTargetAndClamp(window: Window): Vec2 {  // TODO -> window class?
     val scroll = Vec2(window.scroll)
     val crX = window.scrollTargetCenterRatio.x
     val crY = window.scrollTargetCenterRatio.y
