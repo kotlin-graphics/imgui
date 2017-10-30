@@ -32,6 +32,7 @@ import imgui.ImGui.indent
 import imgui.ImGui.inputText
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.logText
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
@@ -254,11 +255,19 @@ interface imgui_internal {
      *  drawing/interaction, which is passed to ItemAdd().  */
     fun itemAdd(bb: Rect, id: Int = 0): Boolean {
 
-        with(g.currentWindow!!.dc) {
+        val isClipped = isClippedEx(bb, id, false)
+        val dc = g.currentWindow!!.dc.apply {
             lastItemId = id
-            lastItemRect put bb
+            lastItemRect = bb
+            lastItemRectHoveredRect = false
         }
-        return !isClippedEx(bb, id, false)
+        if (isClipped) return false
+        //if (g.IO.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
+
+        /*  We need to calculate this now to take account of the current clipping rectangle (as items like Selectable
+            may change them)         */
+        dc.lastItemRectHoveredRect = isMouseHoveringRect(bb)
+        return true
     }
 
     fun isClippedEx(bb: Rect, id: Int?, clipEvenWhenLogged: Boolean): Boolean {
@@ -271,12 +280,17 @@ interface imgui_internal {
         return false
     }
 
-    /** Internal facing IsHovered() differs slightly from IsItemHovered().  */
-    fun isHovered(bb: Rect, id: Int) = when {
+    /** Internal facing ItemHoverable() used when submitting widgets. Differs slightly from IsItemHovered().    */
+    fun itemHoverable(bb: Rect, id: Int) = when {
         g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> false
         g.hoveredWindow !== g.currentWindow -> false
-        else -> (g.activeId == 0 || g.activeId == id || g.activeIdAllowOverlap) &&
-                    isMouseHoveringRect(bb.min, bb.max) && g.hoveredRootWindow!!.isContentHoverable
+        g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
+        !isMouseHoveringRect(bb) -> false
+        !g.currentWindow!!.isContentHoverable -> false
+        else -> {
+            setHoveredId(id)
+            true
+        }
     }
 
     /** Return true if focus is requested   */
@@ -420,7 +434,23 @@ interface imgui_internal {
         }
     }
 
-    // New Columns API
+    /** Vertical separator, for menu bars (use current line height). not exposed because it is misleading
+     *  what it doesn't have an effect on regular layout.   */
+    fun verticalSeparator() {
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val y1 = window.dc.cursorPos.y
+        val y2 = window.dc.cursorPos.y + window.dc.currentLineHeight
+        val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
+        itemSize(Vec2(bb.width, 0f))
+        if (!itemAdd(bb)) return
+
+        window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
+        if (g.logEnabled) logText(" |")
+    }
+
+    // FIXME-WIP: New Columns API
 
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
     fun beginColumns(id: String?, columnsCount: Int, flags: Int) {
@@ -814,11 +844,10 @@ interface imgui_internal {
             g.hoveredWindow = window
 
         var pressed = false
-        var hovered = isHovered(bb, id)
+        var hovered = itemHoverable(bb, id)
         if (flags has Bf.FlattenChilds && g.hoveredRootWindow === window)
             g.hoveredWindow = backupHoveredWindow
         if (hovered) {
-            setHoveredId(id)
             if (flags hasnt Bf.NoKeyModifiers || (!IO.keyCtrl && !IO.keyShift && !IO.keyAlt)) {
 
                 /*                         | CLICKING        | HOLDING with ImGuiButtonFlags_Repeat
@@ -1197,6 +1226,8 @@ interface imgui_internal {
             itemSize(totalBb, style.framePadding.y)
             if (!itemAdd(totalBb, id)) return false
         }
+        val hovered = itemHoverable(frameBb, id)
+        if (hovered) g.mouseCursor = MouseCursor.TextInput
 
         // Password pushes a temporary font with only a fallback glyph
         if (isPassword) with(g.inputTextPasswordFont) {
@@ -1222,11 +1253,6 @@ interface imgui_internal {
         val focusRequestedByCode = focusRequested && window.focusIdxAllCounter == window.focusIdxAllRequestCurrent
         val focusRequestedByTab = focusRequested && !focusRequestedByCode
 
-        val hovered = isHovered(frameBb, id)
-        if (hovered) {
-            setHoveredId(id)
-            g.mouseCursor = MouseCursor.TextInput
-        }
         val userClicked = hovered && IO.mouseClicked[0]
         val userScrolled = isMultiline && g.activeId == 0 && editState.id == id &&
                 g.activeIdPreviousFrame == drawWindow.getIdNoKeepAlive("#SCROLLY")

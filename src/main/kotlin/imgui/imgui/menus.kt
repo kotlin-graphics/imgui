@@ -18,8 +18,8 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
-import imgui.ImGui.isHovered
 import imgui.ImGui.isPopupOpen
+import imgui.ImGui.itemHoverable
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popId
@@ -32,7 +32,6 @@ import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderCollapseTriangle
 import imgui.ImGui.renderText
-import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
@@ -40,8 +39,9 @@ import imgui.internal.LayoutType
 import imgui.internal.Rect
 import imgui.internal.triangleContainsPoint
 import imgui.Context as g
-import imgui.WindowFlags as Wf
 import imgui.SelectableFlags as Sf
+import imgui.WindowFlags as Wf
+import imgui.internal.LayoutType as Lt
 
 /** Menu    */
 interface imgui_menus {
@@ -155,14 +155,14 @@ interface imgui_menus {
             if (!enabled) popStyleColor()
         }
 
-        val hovered = enabled && isHovered(window.dc.lastItemRect, id)
+        val hovered = enabled && itemHoverable(window.dc.lastItemRect, id)
 
         if (menusetIsOpen)
             g.navWindow = backedNavWindow
 
         var wantOpen = false
         var wantClose = false
-        if (window.flags has (Wf.Popup or Wf.ChildMenu)) {
+        if (window.dc.layoutType != Lt.Horizontal) {    // (window->Flags & (ImGuiWindowFlags_Popup|ImGuiWindowFlags_ChildMenu))
             /*  Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers,
                 so menus feels more reactive.             */
             var movingWithinOpenedTriangle = false
@@ -187,12 +187,15 @@ interface imgui_menus {
             wantClose = (menuIsOpen && !hovered && g.hoveredWindow === window && g.hoveredIdPreviousFrame != 0 &&
                     g.hoveredIdPreviousFrame != id && !movingWithinOpenedTriangle)
             wantOpen = (!menuIsOpen && hovered && !movingWithinOpenedTriangle) || (!menuIsOpen && hovered && pressed)
-        } else if (menuIsOpen && pressed && menusetIsOpen) {    // Menu bar: click an open menu again to close it
-            wantClose = true
-            wantOpen = false
-            menuIsOpen = false
-        } else if (pressed || (hovered && menusetIsOpen && !menuIsOpen)) // menu-bar: first click to open, then hover to open others
-            wantOpen = true
+        } else {
+            // Menu bar
+            if (menuIsOpen && pressed && menusetIsOpen) { // Click an open menu again to close it
+                wantClose = true
+                wantOpen = false
+                menuIsOpen = false
+            } else if (pressed || (hovered && menusetIsOpen && !menuIsOpen)) // First click to open, then hover to open others
+                wantOpen = true
+        }
         /*  explicitly close if an open menu becomes disabled, facilitate users code a lot in pattern such as
             'if (BeginMenu("options", has_object)) { ..use object.. }'         */
         if (!enabled)
@@ -252,7 +255,7 @@ interface imgui_menus {
 
     /** return true when activated + toggle (*p_selected) if p_selected != NULL */
     fun menuItem(label: String, shortcut: String = "", pSelected: BooleanArray?, enabled: Boolean = true) =
-            if (menuItem(label, shortcut, pSelected?.get(0) ?: false, enabled)) {
+            if (menuItem(label, shortcut, pSelected?.get(0) == true, enabled)) {
                 pSelected?.let { it[0] = !it[0] }
                 true
             } else false

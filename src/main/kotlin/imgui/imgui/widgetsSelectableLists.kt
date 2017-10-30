@@ -38,6 +38,7 @@ import imgui.internal.Rect
 import imgui.internal.or
 import imgui.WindowFlags as Wf
 import imgui.SelectableFlags as Sf
+import imgui.ItemFlags as If
 
 /** Widgets: Selectable / Lists */
 interface imgui_widgetsSelectableLists {
@@ -115,7 +116,7 @@ interface imgui_widgetsSelectableLists {
         if (flags has Sf.Disabled) popStyleColor()
 
         // Automatically close popups
-        if (pressed && flags hasnt Sf.DontClosePopups && window.flags has Wf.Popup)
+        if (pressed && window.flags has Wf.Popup && flags hasnt Sf.DontClosePopups && window.dc.itemFlags hasnt If.SelectableDontClosePopup)
             closeCurrentPopup()
         return pressed
     }

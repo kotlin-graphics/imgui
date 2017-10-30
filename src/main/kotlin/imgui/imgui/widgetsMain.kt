@@ -13,13 +13,9 @@ import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
-import imgui.ImGui.clearActiveId
-import imgui.ImGui.closePopup
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endPopup
-import imgui.ImGui.focusWindow
 import imgui.ImGui.getColorU32
-import imgui.ImGui.isHovered
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowAppearing
 import imgui.ImGui.itemAdd
@@ -35,7 +31,6 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
-import imgui.ImGui.setHoveredId
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHere
@@ -172,8 +167,8 @@ interface imgui_widgetsMain {
             window.drawList.addRectFilled(checkBb.min + Vec2(pad), checkBb.max - Vec2(pad), Col.CheckMark.u32, style.frameRounding)
         }
 
-        if (g.logEnabled) logRenderedText(textBb.tl, if (v[0]) "[x]" else "[ ]")
-        if (labelSize.x > 0f) renderText(textBb.tl, label)
+        if (g.logEnabled) logRenderedText(textBb.min, if (v[0]) "[x]" else "[ ]")
+        if (labelSize.x > 0f) renderText(textBb.min, label)
 
         return pressed
     }
@@ -234,9 +229,9 @@ interface imgui_widgetsMain {
         }
 
         if (g.logEnabled)
-            logRenderedText(textBb.tl, if (active) "(x)" else "( )")
+            logRenderedText(textBb.min, if (active) "(x)" else "( )")
         if (labelSize.x > 0.0f)
-            renderText(textBb.tl, label)
+            renderText(textBb.min, label)
 
         return pressed
     }

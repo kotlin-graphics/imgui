@@ -19,7 +19,7 @@ import imgui.WindowFlags as Wf
 import imgui.InputTextFlags as Itf
 
 
-fun logRenderedText(refPos: Vec2, text: String, textEnd: Int = 0): Nothing = TODO()
+fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = 0): Nothing = TODO()
 
 fun getDraggedColumnOffset(columnIndex: Int): Float {
     /*  Active (dragged) column always follow mouse. The reason we need this is that dragging a column to the right edge

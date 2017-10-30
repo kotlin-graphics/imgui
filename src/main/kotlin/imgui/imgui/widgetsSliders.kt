@@ -10,14 +10,13 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.focusWindow
 import imgui.ImGui.focusableItemRegister
-import imgui.ImGui.isHovered
 import imgui.ImGui.itemAdd
+import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
 import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setActiveId
-import imgui.ImGui.setHoveredId
 import imgui.ImGui.sliderBehavior
 import imgui.ImGui.sliderFloatN
 import imgui.internal.Rect
@@ -53,9 +52,7 @@ interface imgui_widgetsSliders {
             return false
         }
 
-        val hovered = isHovered(frameBb, id)
-        if (hovered)
-            setHoveredId(id)
+        val hovered = itemHoverable(frameBb, id)
 
         val displayFormat = if (displayFormat.isEmpty()) "%.3f" else displayFormat
 

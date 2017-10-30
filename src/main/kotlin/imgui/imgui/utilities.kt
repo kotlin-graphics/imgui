@@ -25,22 +25,22 @@ import imgui.WindowFlags as Wf
 
 interface imgui_utilities {
 
-    /** This is roughly matching the behavior of internal-facing IsHovered()
+    /** This is roughly matching the behavior of internal-facing ItemHoverable() which is
      *  - we allow hovering to be true when activeId==window.moveID, so that clicking on non-interactive items
      *  such as a text() item still returns true with isItemHovered()   */
     val isItemHovered: Boolean
         get() {
-
             val window = g.currentWindow!!
-            if (g.hoveredWindow !== window) return false
-            if (g.activeId == 0 || g.activeId == window.dc.lastItemId || g.activeIdAllowOverlap || g.activeId == window.moveId)
-                if (isMouseHoveringRect(window.dc.lastItemRect.min, window.dc.lastItemRect.max))
-                    if (window.isContentHoverable)
-                        return true
-            return false
+            return when {
+                !window.dc.lastItemRectHoveredRect -> false
+                g.hoveredWindow !== window -> false
+                g.activeId != 0 && g.activeId != window.dc.lastItemId && !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
+                !window.isContentHoverable -> false
+                else -> true
+            }
         }
 
-    val isItemRectHovered get() = with(currentWindowRead!!) { isMouseHoveringRect(dc.lastItemRect.min, dc.lastItemRect.max) }
+    val isItemRectHovered get() = currentWindowRead!!.dc.lastItemRectHoveredRect
 
     /** Is the last item active? (e.g. button being held, text field being edited- items that don't interact will always
      *  return false)   */

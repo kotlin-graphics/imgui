@@ -279,7 +279,9 @@ class DrawContext {
 
     var lastItemId = 0
 
-    var lastItemRect = Rect(0f, 0f, 0f, 0f)
+    var lastItemRect = Rect()
+
+    var lastItemRectHoveredRect = false
 
     var menuBarAppending = false
 

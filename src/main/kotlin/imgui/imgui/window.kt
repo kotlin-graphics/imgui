@@ -362,7 +362,7 @@ interface imgui_window {
             val windowRounding = if (flags has Wf.ChildWindow) style.childWindowRounding else style.windowRounding
             if (window.collapsed)
             // Title bar only
-                renderFrame(titleBarRect.tl, titleBarRect.br, Col.TitleBgCollapsed.u32, true, windowRounding)
+                renderFrame(titleBarRect.min, titleBarRect.max, Col.TitleBgCollapsed.u32, true, windowRounding)
             else {
                 var resizeCol = Col.Text
                 val resizeCornerSize = glm.max(g.fontSize * 1.35f, windowRounding + 1f + g.fontSize * 0.2f)
@@ -533,6 +533,9 @@ interface imgui_window {
 
             // Title bar
             if (flags hasnt Wf.NoTitleBar) {
+                // Collapse button
+                if (flags hasnt Wf.NoCollapse)
+                    renderCollapseTriangle(Vec2(window.pos + style.framePadding), !window.collapsed, 1f)
                 // Close button
                 if (pOpen != null) {
                     val pad = 2f
@@ -540,10 +543,8 @@ interface imgui_window {
                     if (closeButton(window.getId("#CLOSE"), window.rect().tr + Vec2(-pad - rad, pad + rad), rad))
                         pOpen[0] = false
                 }
-
+                // Title text (FIXME: refactor text alignment facilities along with RenderText helpers)
                 val textSize = calcTextSize(name, hideTextAfterDoubleHash = true)
-                if (flags hasnt Wf.NoCollapse)
-                    renderCollapseTriangle(style.framePadding + window.pos, !window.collapsed, 1f)
 
                 val textMin = Vec2(window.pos)
                 val textMax = Vec2(window.size.x, style.framePadding.y * 2 + textSize.y) + window.pos
@@ -734,7 +735,7 @@ interface imgui_window {
     }
 
     @Deprecated("")
-    /** set next window position to be centered on screen. call before Begin()  */
+            /** set next window position to be centered on screen. call before Begin()  */
     fun setNextWindowPosCenter(cond: Cond = Cond.Null) =
             setNextWindowPos(Vec2(IO.displaySize.x * 0.5f, IO.displaySize.y * 0.5f), cond, Vec2(0.5f))
 
@@ -880,9 +881,9 @@ interface imgui_window {
 
             val title =
                     if (name.isNotEmpty())
-                        "%s.%s.%08X".format(style.locale, parentWindow.name, name, id)
+                        "%s/%s_%08X".format(style.locale, parentWindow.name, name, id)
                     else
-                        "%s.%08X".format(style.locale, parentWindow.name, id)
+                        "%s/%08X".format(style.locale, parentWindow.name, id)
 
             val ret = ImGui.begin(title, null, size, -1f, flags)
 

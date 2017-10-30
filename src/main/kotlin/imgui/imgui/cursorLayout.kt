@@ -1,8 +1,8 @@
 package imgui.imgui
 
 import gli.hasnt
-import glm_.f
 import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
 import imgui.Col
 import imgui.Context.style
@@ -10,21 +10,22 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.logText
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushColumnClipRect
+import imgui.ImGui.verticalSeparator
 import imgui.internal.GroupData
 import imgui.internal.Rect
 import imgui.internal.has
 import imgui.internal.isPowerOfTwo
 import imgui.internal.or
+import imgui.logRenderedText
 import imgui.Context as g
 import imgui.internal.LayoutType as Lt
 import imgui.internal.SeparatorFlags as Sf
 
 interface imgui_cursorLayout {
 
-    /** Horizontal separating line. */
+    /** Separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a vertical separator. */
     fun separator() {
 
         val window = currentWindow
@@ -36,39 +37,36 @@ interface imgui_cursorLayout {
         // Check that only 1 option is selected
         assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo)
 
-        if (flags has Sf.Horizontal) {
-            if (window.dc.columnsCount > 1) popClipRect()
+        if (flags has Sf.Vertical) {
+            verticalSeparator()
+            return
+        }
+        // Horizontal Separator
+        if (window.dc.columnsCount > 1)
+            popClipRect()
 
-            var x1 = window.pos.x.f
-            val x2 = window.pos.x + window.size.x
-            if (window.dc.groupStack.isNotEmpty())
-                x1 += window.dc.indentX
+        var x1 = window.pos.x
+        val x2 = window.pos.x + window.size.x
+        if (window.dc.groupStack.isNotEmpty())
+            x1 += window.dc.indentX.i
 
-            val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
-            /*  NB: we don't provide our width so that it doesn't get feed back into AutoFit,
-                we don't provide height to not alter layout.    */
-            itemSize(Vec2())
-            if (!itemAdd(bb)) {
-                if (window.dc.columnsCount > 1) pushColumnClipRect()
-                return
-            }
-
-            window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
-
-            if (g.logEnabled) logText("\n--------------------------------")
-
-            if (window.dc.columnsCount > 1) {
+        val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
+        // NB: we don't provide our width so that it doesn't get feed back into AutoFit, we don't provide height to not alter layout.
+        itemSize(Vec2())
+        if (!itemAdd(bb)) {
+            if (window.dc.columnsCount > 1)
                 pushColumnClipRect()
-                window.dc.columnsCellMinY = window.dc.cursorPos.y
-            }
-        } else if (flags has Sf.Vertical) {
-            val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(1f, window.dc.currentLineHeight))
-            itemSize(Vec2(bb.width, 0f))
-            if (!itemAdd(bb)) return
+            return
+        }
 
-            window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
+        window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
 
-            if (g.logEnabled) logText("|")
+        if (g.logEnabled)
+            logRenderedText(null, "\n--------------------------------")
+
+        if (window.dc.columnsCount > 1)        {
+            pushColumnClipRect()
+            window.dc.columnsCellMinY = window.dc.cursorPos.y
         }
     }
 

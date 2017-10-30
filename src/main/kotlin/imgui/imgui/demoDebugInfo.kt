@@ -7,6 +7,7 @@ import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.Context.overlayDrawList
 import imgui.Context.style
 import imgui.ImGui.alignFirstTextHeightToWidgets
 import imgui.ImGui.begin
@@ -34,6 +35,7 @@ import imgui.ImGui.imageButton
 import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemClicked
+import imgui.ImGui.isItemHovered
 import imgui.ImGui.isItemRectHovered
 import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isMouseHoveringRect
@@ -719,7 +721,7 @@ interface imgui_demoDebugInfo {
 //                        }
 //
 //                        ImGui::Text("Color button only:");
-//                        ImGui::ColorButton("MyColor##3b", *(ImVec4*)&color, misc_flags, ImVec2(80,80));
+//                        ImGui::ColorButton("MyColor##3c", *(ImVec4*)&color, misc_flags, ImVec2(80,80));
 //                        +
 //                        ImGui::Text("Color picker:");
 //                        static bool alpha = true;
@@ -1096,7 +1098,8 @@ interface imgui_demoDebugInfo {
 //                ImGui::Text("Text aligned to Widget"); ImGui::SameLine();
 //                ImGui::Button("Widget##1"); ImGui::SameLine();
 //                ImGui::Text("Widget"); ImGui::SameLine();
-//                ImGui::SmallButton("Widget##2");
+//                ImGui::SmallButton("Widget##2"); ImGui::SameLine();
+//                ImGui::Button("Widget##3");
 //
 //                // Tree
 //                const float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
@@ -1402,7 +1405,7 @@ interface imgui_demoDebugInfo {
 //                ImGui::Text("ID"); ImGui::NextColumn();
 //                ImGui::Text("Name"); ImGui::NextColumn();
 //                ImGui::Text("Path"); ImGui::NextColumn();
-//                ImGui::Text("Flags"); ImGui::NextColumn();
+//                ImGui::Text("Hovered"); ImGui::NextColumn();
 //                ImGui::Separator();
 //                const char* names[3] = { "One", "Two", "Three" };
 //                const char* paths[3] = { "/path/one", "/path/two", "/path/three" };
@@ -1413,10 +1416,11 @@ interface imgui_demoDebugInfo {
 //                    sprintf(label, "%04d", i);
 //                    if (ImGui::Selectable(label, selected == i, ImGuiSelectableFlags_SpanAllColumns))
 //                        selected = i;
+//                    bool hovered = ImGui::IsItemHovered();
 //                    ImGui::NextColumn();
 //                    ImGui::Text(names[i]); ImGui::NextColumn();
 //                    ImGui::Text(paths[i]); ImGui::NextColumn();
-//                    ImGui::Text("...."); ImGui::NextColumn();
+//                    ImGui::Text("%d", hovered); ImGui::NextColumn();
 //                }
 //                ImGui::Columns(1);
 //                ImGui::Separator();
@@ -1694,6 +1698,7 @@ interface imgui_demoDebugInfo {
 
             Funcs.nodeWindows(g.windows, "Windows")
             if (treeNode("DrawList", "Active DrawLists (${g.renderDrawLists[0].size})")) {
+                g.renderDrawLists.forEach { layer -> layer.forEach { Funcs.nodeDrawList(it, "DrawList") } }
                 for (i in g.renderDrawLists[0])
                     Funcs.nodeDrawList(i, "DrawList")
                 treePop()
@@ -1743,6 +1748,7 @@ interface imgui_demoDebugInfo {
             var elemOffset = 0
             for (i in drawList.cmdBuffer.indices) {
                 val cmd = drawList.cmdBuffer[i]
+                if (cmd.userCallback == null && cmd.elemCount == 0) continue
                 if (cmd.userCallback != null) {
                     TODO()
 //                        ImGui::BulletText("Callback %p, user_data %p", pcmd->UserCallback, pcmd->UserCallbackData)
@@ -1793,8 +1799,7 @@ interface imgui_demoDebugInfo {
         }
 
         fun nodeWindows(windows: ArrayList<Window>, label: String) {
-            if (!treeNode(label, "$label (${windows.size})"))
-                return
+            if (!treeNode(label, "$label (${windows.size})")) return
             for (i in 0 until windows.size)
                 nodeWindow(windows[i], "Window")
             treePop()
@@ -1805,8 +1810,10 @@ interface imgui_demoDebugInfo {
             if (!treeNode(window, "$label '${window.name}', $active @ 0x%X", System.identityHashCode(window)))
                 return
             nodeDrawList(window.drawList, "DrawList")
-            bulletText("Pos: (%.1f,%.1f)", window.pos.x.f, window.pos.y.f)
-            bulletText("Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.size.x, window.size.y, window.sizeContents.x, window.sizeContents.y)
+            bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x, window.pos.y, window.size.x,
+                    window.size.y, window.sizeContents.x, window.sizeContents.y)
+            if (isItemHovered)
+                overlayDrawList.addRect(Vec2(window.pos), Vec2(window.pos + window.size), COL32(255, 255, 0, 255))
             bulletText("Scroll: (%.2f,%.2f)", window.scroll.x, window.scroll.y)
             bulletText("Active: ${window.active}, Accessed: ${window.accessed}")
             if (window.rootWindow !== window) nodeWindow(window.rootWindow, "RootWindow")

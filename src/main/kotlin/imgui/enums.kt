@@ -453,7 +453,8 @@ enum class ItemFlags(val i: Int) {
     ButtonRepeat(1 shl 1),
     //ImGuiItemFlags_Disabled                   = 1 << 2,  // false    // All widgets appears are disabled
     //ImGuiItemFlags_AllowNavDefaultFocus       = 1 << 3,  // true
-    //ImGuiItemFlags_SelectableDontClosePopup   = 1 << 4,  // false    // MenuItem/Selectable() automatically closes current Popup window
+    /** false, MenuItem/Selectable() automatically closes current Popup window  */
+    SelectableDontClosePopup(1 shl 4),
     Default_(AllowKeyboardFocus.i)
 }
 

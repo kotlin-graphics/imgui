@@ -9,19 +9,19 @@ enum class ButtonFlags {
     Null,
     /** hold to repeat  */
     Repeat,
-    /** (default) return pressed on click+release on same item (default if no PressedOn** flag is set)  */
+    /** return true on click + release on same item [DEFAULT if no PressedOn* flag is set]  */
     PressedOnClickRelease,
-    /** return pressed on click (default requires click+release)    */
+    /** return true on click (default requires click+release)    */
     PressedOnClick,
-    /** return pressed on release (default requires click+release)  */
+    /** return true on release (default requires click+release)  */
     PressedOnRelease,
-    /** return pressed on double-click (default requires click+release) */
+    /** return true on double-click (default requires click+release) */
     PressedOnDoubleClick,
-    /** allow interaction even if a child window is overlapping */
+    /** allow interactions even if a child window is overlapping */
     FlattenChilds,
-    /** disable automatically closing parent popup on press */
+    /** disable automatically closing parent popup on press [UNUSED] */
     DontClosePopups,
-    /** disable interaction */
+    /** disable interactions */
     Disabled,
     /** vertically align button to match text baseline - ButtonEx() only    */
     AlignTextBaseLine,

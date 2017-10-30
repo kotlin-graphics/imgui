@@ -13,8 +13,8 @@ import imgui.ImGui.dragBehavior
 import imgui.ImGui.focusWindow
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.inputScalarAsWidgetReplacement
-import imgui.ImGui.isHovered
 import imgui.ImGui.itemAdd
+import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
 import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.renderText
@@ -60,9 +60,7 @@ interface imgui_widgetsDrag {
             return false
         }
 
-        val hovered = isHovered(frameBb, id)
-        if (hovered)
-            setHoveredId(id)
+        val hovered = itemHoverable(frameBb, id)
 
         val displayFormat = if (displayFormat.isEmpty()) "%.3f" else displayFormat
         val decimalPrecision = parseFormatPrecision(displayFormat, 3)
