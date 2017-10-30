@@ -206,6 +206,7 @@ class FontAtlas {
         }
         configData.clear()
         customRects.clear()
+        customRectIds.fill(-1)
     }
 
     /** Clear the ImGui-side font data (glyphs storage, UV coordinates) */
@@ -479,7 +480,6 @@ class FontAtlas {
         customRects.add(r)
         return customRects.lastIndex // Return index
     }
-//    IMGUI_API void      ClearCustomRects()
 
     fun calcCustomRectUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
         assert(texSize greaterThan 0)   // Font atlas needs to be built before we can calculate UV coordinates
@@ -743,6 +743,8 @@ class FontAtlas {
     fun buildPackCustomRects(packContext: STBRPContext) {
 
         val userRects = customRects
+        // We expect at least the default custom rects to be registered, else something went wrong.
+        assert(userRects.isNotEmpty())
         val packRects = STBRPRect.calloc(userRects.size)    // calloc -> all 0
         for (i in userRects.indices) {
             packRects[i].w = userRects[i].width

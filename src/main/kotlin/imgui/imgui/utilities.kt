@@ -12,6 +12,7 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endChild
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleColor
@@ -24,12 +25,22 @@ import imgui.WindowFlags as Wf
 
 interface imgui_utilities {
 
-    /** Is the last item hovered by mouse (and usable)? */
-    val isItemHovered get() = currentWindowRead!!.dc.lastItemHoveredAndUsable
+    /** This is roughly matching the behavior of internal-facing IsHovered()
+     *  - we allow hovering to be true when activeId==window.moveID, so that clicking on non-interactive items
+     *  such as a text() item still returns true with isItemHovered()   */
+    val isItemHovered: Boolean
+        get() {
 
-    /** Is the last item hovered by mouse? even if another item is active or window is blocked by popup while we are
-     *  hovering this */
-    val isItemRectHovered get() = currentWindowRead!!.dc.lastItemHoveredRect
+            val window = g.currentWindow!!
+            if (g.hoveredWindow !== window) return false
+            if (g.activeId == 0 || g.activeId == window.dc.lastItemId || g.activeIdAllowOverlap || g.activeId == window.moveId)
+                if (isMouseHoveringRect(window.dc.lastItemRect.min, window.dc.lastItemRect.max))
+                    if (window.isContentHoverable)
+                        return true
+            return false
+        }
+
+    val isItemRectHovered get() = with(currentWindowRead!!) { isMouseHoveringRect(dc.lastItemRect.min, dc.lastItemRect.max) }
 
     /** Is the last item active? (e.g. button being held, text field being edited- items that don't interact will always
      *  return false)   */

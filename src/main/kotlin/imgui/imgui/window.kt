@@ -369,6 +369,7 @@ interface imgui_window {
                 if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 &&
                         flags hasnt Wf.NoResize) {
                     // Manual resize
+                    // Using the FlattenChilds button flag, we make the resize button accessible even if we are hovering over a child window
                     val br = window.rect().br
                     val resizeRect = Rect(br - resizeCornerSize * 0.75f, br)
                     val resizeId = window.getId("#RESIZE")

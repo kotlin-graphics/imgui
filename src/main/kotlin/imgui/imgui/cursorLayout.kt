@@ -192,18 +192,14 @@ interface imgui_cursorLayout {
         }
 
         /*  If the current ActiveId was declared within the boundary of our group, we copy it to LastItemId so
-            IsItemActive() will function on the entire group.
+            IsItemActive() will be functional on the entire group.
             It would be be neater if we replaced window.DC.LastItemId by e.g. 'bool LastItemIsActive', but if you
             search for LastItemId you'll notice it is only used in that context.    */
         val activeIdWithinGroup = !groupData.backupActiveIdIsAlive && g.activeIdIsAlive && g.activeId != 0 &&
                 g.activeIdWindow!!.rootWindow === window.rootWindow
         if (activeIdWithinGroup)
             window.dc.lastItemId = g.activeId
-        if (activeIdWithinGroup && g.hoveredId == g.activeId) {
-            window.dc.lastItemHoveredRect = true
-            window.dc.lastItemHoveredAndUsable = true
-        }
-
+        window.dc.lastItemRect put groupBb
         window.dc.groupStack.pop() // TODO last() on top -> pop?
 
         //window->DrawList->AddRect(groupBb.Min, groupBb.Max, IM_COL32(255,0,255,255));   // [Debug]

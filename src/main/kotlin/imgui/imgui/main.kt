@@ -122,13 +122,11 @@ interface imgui_main {
         if (g.movedWindowMoveId != 0 && g.movedWindowMoveId == g.activeId) {
             keepAliveId(g.movedWindowMoveId)
             assert(g.movedWindow != null)
-            assert(g.movedWindow!!.rootWindow.moveId == g.movedWindowMoveId)
+            assert(g.movedWindow!!.moveId == g.movedWindowMoveId)
             if (IO.mouseDown[0]) {
-                if (g.movedWindow!!.flags hasnt Wf.NoMove) {
-                    g.movedWindow!!.posF plus_ IO.mouseDelta
-                    if (IO.mouseDelta notEqual 0f)
-                        markIniSettingsDirty(g.movedWindow!!)
-                }
+                g.movedWindow!!.rootWindow.posF plus_ IO.mouseDelta
+                if (IO.mouseDelta notEqual 0f)
+                    markIniSettingsDirty(g.movedWindow!!.rootWindow)
                 focusWindow(g.movedWindow)
             } else {
                 clearActiveId()

@@ -13,6 +13,8 @@ import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.begin
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
+import imgui.ImGui.beginPopup
+import imgui.ImGui.button
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.colorButton
@@ -30,6 +32,7 @@ import imgui.ImGui.indent
 import imgui.ImGui.inputText
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
@@ -39,9 +42,12 @@ import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleVar
+import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
+import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setClipboardText
 import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.sliderFloat
@@ -167,7 +173,7 @@ interface imgui_internal {
                     focusWindow(g.hoveredWindow)
                     if (g.hoveredWindow!!.flags hasnt Wf.NoMove) {
                         g.movedWindow = g.hoveredWindow
-                        g.movedWindowMoveId = g.hoveredRootWindow!!.moveId
+                        g.movedWindowMoveId = g.hoveredWindow!!.moveId
                         setActiveId(g.movedWindowMoveId, g.hoveredRootWindow)
                     }
                 } else if (g.navWindow != null && getFrontMostModalRootWindow() == null)
@@ -248,28 +254,11 @@ interface imgui_internal {
      *  drawing/interaction, which is passed to ItemAdd().  */
     fun itemAdd(bb: Rect, id: Int = 0): Boolean {
 
-        val window = g.currentWindow!!
-        with(window.dc) {
+        with(g.currentWindow!!.dc) {
             lastItemId = id
-            lastItemRect = Rect(bb)
-            lastItemHoveredRect = false
-            lastItemHoveredAndUsable = false
+            lastItemRect put bb
         }
-        if (isClippedEx(bb, id, false)) return false
-
-        // Setting LastItemHoveredAndUsable for IsItemHovered(). This is a sensible default, but widgets are free to override it.
-        if (isMouseHoveringRect(bb)) {
-            /*  Matching the behavior of IsHovered() but allow if ActiveId==window->MoveID (we clicked on the window
-                background)
-                So that clicking on items with no active id such as Text() still returns true with IsItemHovered()  */
-            window.dc.lastItemHoveredRect = true
-            if (g.hoveredRootWindow === window.rootWindow)
-                if (g.activeId == 0 || (id != 0 && g.activeId == id) || g.activeIdAllowOverlap || (g.activeId == window.moveId))
-                    if (window.isContentHoverable)
-                        window.dc.lastItemHoveredAndUsable = true
-        }
-
-        return true
+        return !isClippedEx(bb, id, false)
     }
 
     fun isClippedEx(bb: Rect, id: Int?, clipEvenWhenLogged: Boolean): Boolean {
@@ -282,18 +271,12 @@ interface imgui_internal {
         return false
     }
 
-    /** NB: This is an internal helper. The user-facing IsItemHovered() is using data emitted from ItemAdd(), with a
-     *  slightly different logic.   */
-    fun isHovered(bb: Rect, id: Int, flattenChilds: Boolean = false): Boolean {
-
-        if (g.hoveredId == 0 || g.hoveredId == id || g.hoveredIdAllowOverlap) {
-            val window = currentWindowRead!!
-            if (g.hoveredWindow === window || (flattenChilds && g.hoveredRootWindow === window.rootWindow))
-                if ((g.activeId == 0 || g.activeId == id || g.activeIdAllowOverlap) && isMouseHoveringRect(bb))
-                    if (g.hoveredRootWindow!!.isContentHoverable)
-                        return true
-        }
-        return false
+    /** Internal facing IsHovered() differs slightly from IsItemHovered().  */
+    fun isHovered(bb: Rect, id: Int) = when {
+        g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> false
+        g.hoveredWindow !== g.currentWindow -> false
+        else -> (g.activeId == 0 || g.activeId == id || g.activeIdAllowOverlap) &&
+                    isMouseHoveringRect(bb.min, bb.max) && g.hoveredRootWindow!!.isContentHoverable
     }
 
     /** Return true if focus is requested   */
@@ -826,8 +809,14 @@ interface imgui_internal {
         if (flags hasnt (Bf.PressedOnClickRelease or Bf.PressedOnClick or Bf.PressedOnRelease or Bf.PressedOnDoubleClick))
             flags = flags or Bf.PressedOnClickRelease
 
+        val backupHoveredWindow = g.hoveredWindow
+        if (flags has Bf.FlattenChilds && g.hoveredRootWindow === window)
+            g.hoveredWindow = window
+
         var pressed = false
-        var hovered = isHovered(bb, id, flags has Bf.FlattenChilds)
+        var hovered = isHovered(bb, id)
+        if (flags has Bf.FlattenChilds && g.hoveredRootWindow === window)
+            g.hoveredWindow = backupHoveredWindow
         if (hovered) {
             setHoveredId(id)
             if (flags hasnt Bf.NoKeyModifiers || (!IO.keyCtrl && !IO.keyShift && !IO.keyAlt)) {
@@ -1892,6 +1881,55 @@ interface imgui_internal {
         else
             text("#%02X%02X%02X%02X\nR:$cr, G:$cg, B:$cb, A:$ca\n(%.3f, %.3f, %.3f, %.3f)", cr, cg, cb, ca, col[0], col[1], col[2], col[3])
         endTooltip()
+    }
+
+    /** @param flags ColorEditFlags */
+    fun colorEditOptionsPopup(col: FloatArray, flags: Int) {
+        val allowOptInputs = flags hasnt Cef._InputsMask
+        val allowOptDatatype = flags hasnt Cef._DataTypeMask
+        if ((!allowOptInputs && !allowOptDatatype) || !beginPopup("context")) return
+        var opts = g.colorEditOptions
+        if (allowOptInputs) {
+            if (radioButton("RGB", opts has Cef.RGB))
+                opts = (opts wo Cef._InputsMask) or Cef.RGB
+            if (radioButton("HSV", opts has Cef.HSV))
+                opts = (opts wo Cef._InputsMask) or Cef.HSV
+            if (radioButton("HEX", opts has Cef.HEX))
+                opts = (opts wo Cef._InputsMask) or Cef.HEX
+        }
+        if (allowOptDatatype) {
+            if (allowOptInputs) separator()
+            if (radioButton("0..255", opts has Cef.Uint8))
+                opts = (opts wo Cef._DataTypeMask) or Cef.Uint8
+            if (radioButton("0.00..1.00", opts has Cef.Float))
+                opts = (opts wo Cef._DataTypeMask) or Cef.Float
+        }
+
+        if (allowOptInputs || allowOptDatatype) separator()
+        if (button("Copy as..", Vec2(-1, 0)))
+            openPopup("Copy")
+        if (beginPopup("Copy")) {
+            val cr = F32_TO_INT8_SAT(col[0])
+            val cg = F32_TO_INT8_SAT(col[1])
+            val cb = F32_TO_INT8_SAT(col[2])
+            val ca = if (flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
+            var buf = "(%.3ff, %.3ff, %.3ff, %.3ff)".format(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
+            if (selectable(buf))
+                setClipboardText(buf)
+            buf = "(%d,%d,%d,%d)".format(cr, cg, cb, ca)
+            if (selectable(buf))
+                setClipboardText(buf)
+            buf = when {
+                flags has Cef.NoAlpha -> "0x%02X%02X%02X".format(cr, cg, cb)
+                else -> "0x%02X%02X%02X%02X".format(cr, cg, cb, ca)
+            }
+            if (selectable(buf))
+                setClipboardText(buf)
+            endPopup()
+        }
+
+        g.colorEditOptions = opts
+        endPopup()
     }
 
     fun treeNodeBehavior(id: Int, flags: Int, label: String): Boolean {

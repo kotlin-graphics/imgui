@@ -266,55 +266,6 @@ interface imgui_widgetsText {
             }
         }
 
-        /** @param flags ColorEditFlags */
-        fun colorEditOptionsPopup(flags: Int, col: FloatArray) {
-            val allowOptInputs = flags hasnt Cef._InputsMask
-            val allowOptDatatype = flags hasnt Cef._DataTypeMask
-            if ((!allowOptInputs && !allowOptDatatype) || !beginPopup("context")) return
-            var opts = g.colorEditOptions
-            if (allowOptInputs) {
-                if (radioButton("RGB", opts has Cef.RGB))
-                    opts = (opts wo Cef._InputsMask) or Cef.RGB
-                if (radioButton("HSV", opts has Cef.HSV))
-                    opts = (opts wo Cef._InputsMask) or Cef.HSV
-                if (radioButton("HEX", opts has Cef.HEX))
-                    opts = (opts wo Cef._InputsMask) or Cef.HEX
-            }
-            if (allowOptDatatype) {
-                if (allowOptInputs) separator()
-                if (radioButton("0..255", opts has Cef.Uint8))
-                    opts = (opts wo Cef._DataTypeMask) or Cef.Uint8
-                if (radioButton("0.00..1.00", opts has Cef.Float))
-                    opts = (opts wo Cef._DataTypeMask) or Cef.Float
-            }
-
-            if (allowOptInputs || allowOptDatatype) separator()
-            if (button("Copy as..", Vec2(-1, 0)))
-                openPopup("Copy")
-            if (beginPopup("Copy")) {
-                val cr = F32_TO_INT8_SAT(col[0])
-                val cg = F32_TO_INT8_SAT(col[1])
-                val cb = F32_TO_INT8_SAT(col[2])
-                val ca = if (flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
-                var buf = "(%.3ff, %.3ff, %.3ff, %.3ff)".format(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
-                if (selectable(buf))
-                    setClipboardText(buf)
-                buf = "(%d,%d,%d,%d)".format(cr, cg, cb, ca)
-                if (selectable(buf))
-                    setClipboardText(buf)
-                buf = when {
-                    flags has Cef.NoAlpha -> "0x%02X%02X%02X".format(cr, cg, cb)
-                    else -> "0x%02X%02X%02X%02X".format(cr, cg, cb, ca)
-                }
-                if (selectable(buf))
-                    setClipboardText(buf)
-                endPopup()
-            }
-
-            g.colorEditOptions = opts
-            endPopup()
-        }
-
         fun colorPickerOptionsPopup(flags: Int, refCol: FloatArray) {
             val allowOptPicker = flags hasnt Cef._PickerMask
             val allowOptAlphaBar = flags hasnt Cef.NoAlpha && flags hasnt Cef.AlphaBar

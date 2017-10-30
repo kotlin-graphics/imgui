@@ -280,12 +280,6 @@ class DrawContext {
     var lastItemId = 0
 
     var lastItemRect = Rect(0f, 0f, 0f, 0f)
-    /** Item rectangle is hovered, and its window is currently interactable with (not blocked by a popup preventing
-    access to the window)   */
-    var lastItemHoveredAndUsable = false
-    /** Item rectangle is hovered, but its window may or not be currently interactable with (might be blocked by a popup
-    preventing access to the window)    */
-    var lastItemHoveredRect = false
 
     var menuBarAppending = false
 
@@ -591,10 +585,10 @@ class Window(
 
     val isContentHoverable: Boolean
         get() {
-            /*  An active popup disable hovering on other windows (apart from its own children)
-                FIXME-OPT: This could be cached/stored within the window.         */
+            // An active popup disable hovering on other windows (apart from its own children)
+            // FIXME-OPT: This could be cached/stored within the window.
             val focusedRootWindow = g.navWindow?.rootWindow ?: return true
-            return !(focusedRootWindow.flags has Wf.Popup && focusedRootWindow.wasActive && focusedRootWindow != rootWindow)
+            return !(focusedRootWindow.flags has Wf.Popup && focusedRootWindow.wasActive && focusedRootWindow !== rootWindow)
         }
 
     fun calcSizeFullWithConstraint(newSize: Vec2): Vec2 {
@@ -614,20 +608,20 @@ class Window(
     }
 
     fun calcSizeAutoFit() = if (flags has Wf.Tooltip)
-        // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
-            sizeContents + windowPadding - Vec2(0f, style.itemSpacing.y)
-        else {
-            // Handling case of auto fit window not fitting on the screen (on either axis): we are growing the size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
-            val sizeAutoFit = glm.clamp(sizeContents + windowPadding, Vec2(style.windowMinSize),
-                    Vec2(glm.max(style.windowMinSize, IO.displaySize - style.displaySafeAreaPadding)))
-            val sizeAutoFitAfterConstraint = calcSizeFullWithConstraint(sizeAutoFit)
-            if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
-                sizeAutoFit.y += style.scrollbarSize
-            if (sizeAutoFitAfterConstraint.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
-                sizeAutoFit.x += style.scrollbarSize * 2f
-            sizeAutoFit.y = glm.max(sizeAutoFit.y - style.itemSpacing.y, 0f)
-            sizeAutoFit
-        }
+    // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
+        sizeContents + windowPadding - Vec2(0f, style.itemSpacing.y)
+    else {
+        // Handling case of auto fit window not fitting on the screen (on either axis): we are growing the size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
+        val sizeAutoFit = glm.clamp(sizeContents + windowPadding, Vec2(style.windowMinSize),
+                Vec2(glm.max(style.windowMinSize, IO.displaySize - style.displaySafeAreaPadding)))
+        val sizeAutoFitAfterConstraint = calcSizeFullWithConstraint(sizeAutoFit)
+        if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+            sizeAutoFit.y += style.scrollbarSize
+        if (sizeAutoFitAfterConstraint.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
+            sizeAutoFit.x += style.scrollbarSize * 2f
+        sizeAutoFit.y = glm.max(sizeAutoFit.y - style.itemSpacing.y, 0f)
+        sizeAutoFit
+    }
 
 
     infix fun addTo(renderList: ArrayList<DrawList>) {

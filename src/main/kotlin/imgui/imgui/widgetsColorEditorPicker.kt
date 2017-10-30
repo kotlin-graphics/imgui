@@ -18,6 +18,7 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorConvertRGBtoHSV
+import imgui.ImGui.colorEditOptionsPopup
 import imgui.ImGui.colorTooltip
 import imgui.ImGui.currentWindow
 import imgui.ImGui.cursorScreenPos
@@ -50,7 +51,6 @@ import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.u32
 import imgui.imgui.imgui_internal.Companion.smallSquareSize
-import imgui.imgui.imgui_widgetsText.Companion.colorEditOptionsPopup
 import imgui.imgui.imgui_widgetsText.Companion.colorPickerOptionsPopup
 import imgui.imgui.imgui_widgetsText.Companion.paintVertsLinearGradientKeepAlpha
 import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
@@ -102,7 +102,7 @@ interface imgui_widgetsColorEditorPicker {
 
         // Context menu: display and modify options (before defaults are applied)
         if (flags hasnt Cef.NoOptions)
-            colorEditOptionsPopup(flags, col)
+            colorEditOptionsPopup(col, flags)
 
         // Read stored options
         if (flags hasnt Cef._InputsMask)

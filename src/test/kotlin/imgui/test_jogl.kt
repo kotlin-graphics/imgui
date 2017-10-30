@@ -68,7 +68,7 @@ class HelloWorld_jogl : GLEventListener {
         //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     }
 
-    val clearColor = floatArrayOf(114 / 255f, 144 / 255f, 154 / 255f)
+    val clearColor = floatArrayOf(0.45f, 0.55f, 0.6f, 1f)
     var showAnotherWindow = booleanArrayOf(false)
     var showTestWindow = booleanArrayOf(false)
 
@@ -116,7 +116,7 @@ class HelloWorld_jogl : GLEventListener {
 
         // Rendering
         glViewport(window.x, window.y)
-        glClearColor(clearColor[0], clearColor[1], clearColor[2], 1f)  // TODO gln
+        glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3])  // TODO gln
         glClear(GL_COLOR_BUFFER_BIT)
         ImGui.render()
     }

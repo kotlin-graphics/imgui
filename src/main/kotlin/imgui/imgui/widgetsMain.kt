@@ -273,7 +273,7 @@ interface imgui_widgetsMain {
         if (!itemAdd(totalBb, id)) return false
 
         val arrowSize = smallSquareSize
-        val hovered = isHovered(frameBb, id)
+        val (pressed, hovered, held) = buttonBehavior(frameBb, id)
         var popupOpen = isPopupOpen(id)
 
         val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
@@ -288,21 +288,9 @@ interface imgui_widgetsMain {
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
-        var popupToggled = false
-        if (hovered) {
-            setHoveredId(id)
-            if (IO.mouseClicked[0]) {
-                clearActiveId()
-                popupToggled = true
-            }
-        }
-        if (popupToggled) {
-            if (popupOpen) closePopup(id)
-            else {
-                focusWindow(window)
-                openPopupEx(id, false)
-            }
-            popupOpen = !popupOpen
+        if (pressed && !popupOpen){
+            openPopupEx(id, false)
+            popupOpen = true
         }
 
         if (!popupOpen) return false
