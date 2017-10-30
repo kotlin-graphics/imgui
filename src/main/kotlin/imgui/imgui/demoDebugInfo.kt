@@ -9,7 +9,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.overlayDrawList
 import imgui.Context.style
-import imgui.ImGui.alignFirstTextHeightToWidgets
+import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
@@ -384,7 +384,7 @@ interface imgui_demoDebugInfo {
                         for (i in 0..5) {
                             /*  Disable the default open on single-click behavior and pass in Selected flag according
                                 to our selection state.                             */
-                            val nodeFlags = Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick or
+                            var nodeFlags = Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick or
                                     if (selectionMask has (1 shl i)) Tnf.Selected else Tnf.Null
                             if (i < 3) {    // Node
                                 val nodeOpen = treeNodeExV(i, nodeFlags, "Selectable Node $i")
@@ -396,7 +396,8 @@ interface imgui_demoDebugInfo {
                             } else {
                                 /*  Leaf: The only reason we have a TreeNode at all is to allow selection of the leaf.
                                     Otherwise we can use BulletText() or TreeAdvanceToLabelPos()+Text().                                 */
-                                treeNodeExV(i, nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen, "Selectable Leaf $i")
+                                nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // ImGuiTreeNodeFlags_Bullet
+                                treeNodeExV(i, nodeFlags, "Selectable Leaf $i")
                                 if (isItemClicked()) nodeClicked = i
                             }
                         }
@@ -1828,10 +1829,10 @@ interface imgui_demoDebugInfo {
             pushId(uid)
             /*  Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree
                 lines equal high.             */
-            alignFirstTextHeightToWidgets()
+            alignTextToFramePadding()
             val nodeOpen = treeNode("Object", "${prefix}_$uid")
             nextColumn()
-            alignFirstTextHeightToWidgets()
+            alignTextToFramePadding()
             text("my sailor is rich")
             nextColumn()
             if (nodeOpen) {
@@ -1840,7 +1841,7 @@ interface imgui_demoDebugInfo {
                     if (i < 2)
                         showDummyObject("Child", 424242)
                     else {
-                        alignFirstTextHeightToWidgets()
+                        alignTextToFramePadding()
                         // Here we use a Selectable (instead of Text) to highlight on hover
                         //Text("Field_%d", i);
                         bullet()

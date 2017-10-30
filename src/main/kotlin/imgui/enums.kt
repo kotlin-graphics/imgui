@@ -144,8 +144,11 @@ enum class TreeNodeFlags(val i: Int) {
     Leaf(1 shl 8),
     /** Display a bullet instead of arrow   */
     Bullet(1 shl 9),
-    //SpanAllAvailWidth  ( 1 shl 10),  // FIXME: TODO: Extend hit box horizontally even if not framed
-    //NoScrollOnOpen     ( 1 shl 11),  // FIXME: TODO: Disable automatic scroll on TreePop() if node got just open and contents is not visible
+    /** Use FramePadding (even for an unframed text node) to vertically align text baseline to regular widget height.
+     *  Equivalent to calling alignTextToFramePadding().    */
+    FramePadding(1 shl 10),
+    //ImGuITreeNodeFlags_SpanAllAvailWidth  = 1 << 11,  // FIXME: TODO: Extend hit box horizontally even if not framed
+    //ImGuiTreeNodeFlags_NoScrollOnOpen     = 1 << 12,  // FIXME: TODO: Disable automatic scroll on TreePop() if node got just open and contents is not visible
     CollapsingHeader(Framed or NoAutoOpenOnLog);
 
     infix fun or(treeNodeFlag: TreeNodeFlags) = i or treeNodeFlag.i
@@ -420,8 +423,9 @@ enum class MouseCursor(val i: Int) {
     }
 }
 
-/** Condition flags for ImGui::SetWindow***(), SetNextWindow***(), SetNextTreeNode***() functions
- *  All those functions treat 0 as a shortcut to Always    */
+/** Condition for setWindow***(), setNextWindow***(), setNextTreeNode***() functions
+ *  All those functions treat 0 as a shortcut to Always.
+ *  From the point of view of the user use this as an enum (don't combine multiple values into flags).    */
 enum class Cond(val i: Int) {
 
     Null(0),

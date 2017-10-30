@@ -12,7 +12,6 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endChild
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.isMouseClicked
-import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleColor
@@ -44,7 +43,7 @@ interface imgui_utilities {
 
     /** Is the last item active? (e.g. button being held, text field being edited- items that don't interact will always
      *  return false)   */
-    val isItemActive get() = if (g.activeId != 0) g.activeId == currentWindowRead!!.dc.lastItemId else false
+    val isItemActive get() = if (g.activeId != 0) g.activeId == g.currentWindow!!.dc.lastItemId else false
 
     /** Is the last item clicked? (e.g. button/node just clicked on)   */
     fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemRectHovered
@@ -142,7 +141,7 @@ interface imgui_utilities {
      *  how those use this sort of pattern.
      *  NB: 'items_count' is only used to clamp the result, if you don't know your count you can use INT_MAX    */
     fun calcListClipping(itemsCount: Int, itemsHeight: Float): IntRange {
-        val window = currentWindowRead!!
+        val window = g.currentWindow!!
         return when {
             g.logEnabled -> 0..itemsCount // If logging is active, do not perform any clipping
             window.skipItems -> 0..0

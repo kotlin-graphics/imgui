@@ -15,7 +15,7 @@ interface imgui_logging {
 
         if (g.logEnabled) return
 
-        val window = currentWindowRead!!
+        val window = g.currentWindow!!
 
         g.logEnabled = true
         g.logFile = null

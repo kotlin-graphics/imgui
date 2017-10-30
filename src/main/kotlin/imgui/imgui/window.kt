@@ -29,12 +29,14 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.renderCollapseTriangle
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.scrollbar
 import imgui.ImGui.u32
 import imgui.internal.*
 import imgui.Context as g
 import imgui.ItemFlags as If
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
+import imgui.internal.LayoutType as Lt
 
 
 interface imgui_window {
@@ -444,9 +446,9 @@ interface imgui_window {
 
                 // Scrollbars
                 if (window.scrollbar.x)
-                    scrollbar(window, true)
+                    scrollbar(Lt.Horizontal)
                 if (window.scrollbar.y)
-                    scrollbar(window, false)
+                    scrollbar(Lt.Vertical)
 
                 /*  Render resize grip
                 (after the input handling so we don't have a frame of latency)  */
@@ -497,7 +499,7 @@ interface imgui_window {
                 dc.menuBarOffsetX = glm.max(windowPadding.x, style.itemSpacing.x)
                 dc.logLinePosY = dc.cursorPos.y - 9999f
                 dc.childWindows.clear()
-                dc.layoutType = LayoutType.Vertical
+                dc.layoutType = Lt.Vertical
                 dc.itemFlags = If.Default_.i
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled

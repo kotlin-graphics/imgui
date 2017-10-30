@@ -26,7 +26,7 @@ fun getDraggedColumnOffset(columnIndex: Int): Float {
         of an auto-resizing window creates a feedback loop because we store normalized positions. So while dragging we
         enforce absolute positioning.   */
 
-    val window = currentWindowRead!!
+    val window = g.currentWindow!!
     /*  We cannot drag column 0. If you get this assert you may have a conflict between the ID of your columns and
         another widgets.    */
     assert(columnIndex > 0)
@@ -183,125 +183,6 @@ fun checkStacksSize(window: Window, write: Boolean) {
         ptr++
     }
     assert(ptr == window.dc.stackSizesBackup.size)
-}
-
-/** Vertical scrollbar
- *  The entire piece of code below is rather confusing because:
- *  - We handle absolute seeking (when first clicking outside the grab) and relative manipulation (afterward or when
- *          clicking inside the grab)
- *  - We store values as normalized ratio and in a form that allows the window content to change while we are holding on
- *          a scrollbar
- *  - We handle both horizontal and vertical scrollbars, which makes the terminology not ideal. */
-fun scrollbar(window: Window, horizontal: Boolean) {
-
-    val id = window.getId(if (horizontal) "#SCROLLX" else "#SCROLLY")
-
-    // Render background
-    val otherScrollbar = if (horizontal) window.scrollbar.y else window.scrollbar.x
-    val otherScrollbarSizeW = if (otherScrollbar) style.scrollbarSize else 0f
-    val windowRect = window.rect()
-    val borderSize = window.borderSize
-    val bb =
-            if (horizontal)
-                Rect(window.pos.x + borderSize, windowRect.max.y - style.scrollbarSize,
-                        windowRect.max.x - otherScrollbarSizeW - borderSize, windowRect.max.y - borderSize)
-            else
-                Rect(windowRect.max.x - style.scrollbarSize, window.pos.y + borderSize,
-                        windowRect.max.x - borderSize, windowRect.max.y - otherScrollbarSizeW - borderSize)
-    if (!horizontal)
-        bb.min.y += window.titleBarHeight() + if (window.flags has Wf.MenuBar) window.menuBarHeight() else 0f
-    if (bb.width <= 0f || bb.height <= 0f) return
-
-    val windowRounding = if (window.flags has Wf.ChildWindow) style.childWindowRounding else style.windowRounding
-    val windowRoundingCorners =
-            if (horizontal)
-                Corner.BotLeft or if (otherScrollbar) Corner.All else Corner.BotRight
-            else
-                (
-                        if (window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar)
-                            Corner.TopRight
-                        else Corner.All) or if (otherScrollbar) Corner.All else Corner.BotRight
-    window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, windowRounding, windowRoundingCorners)
-    bb.expand(Vec2(
-            -glm.clamp(((bb.max.x - bb.min.x - 2.0f) * 0.5f).i.f, 0.0f, 3.0f),
-            -glm.clamp(((bb.max.y - bb.min.y - 2.0f) * 0.5f).i.f, 0.0f, 3.0f)))
-
-    // V denote the main, longer axis of the scrollbar (= height for a vertical scrollbar)
-    val scrollbarSizeV = if (horizontal) bb.width else bb.height
-    var scrollV = if (horizontal) window.scroll.x else window.scroll.y
-    val winSizeAvailV = (if (horizontal) window.sizeFull.x else window.sizeFull.y) - otherScrollbarSizeW
-    val winSizeContentsV = if (horizontal) window.sizeContents.x else window.sizeContents.y
-
-    /*  Calculate the height of our grabbable box. It generally represent the amount visible (vs the total scrollable amount)
-        But we maintain a minimum size in pixel to allow for the user to still aim inside.  */
-    // Adding this assert to check if the ImMax(XXX,1.0f) is still needed. PLEASE CONTACT ME if this triggers.
-    assert(glm.max(winSizeContentsV, winSizeAvailV) > 0f)
-    val winSizeV = glm.max(glm.max(winSizeContentsV, winSizeAvailV), 1f)
-    val grabHPixels = glm.clamp(scrollbarSizeV * (winSizeAvailV / winSizeV), style.grabMinSize, scrollbarSizeV)
-    val grabHNorm = grabHPixels / scrollbarSizeV
-
-    // Handle input right away. None of the code of Begin() is relying on scrolling position before calling Scrollbar().
-    val previouslyHeld = g.activeId == id
-    val (_, hovered, held) = buttonBehavior(bb, id)
-
-    val scrollMax = glm.max(1f, winSizeContentsV - winSizeAvailV)
-    var scrollRatio = saturate(scrollV / scrollMax)
-    var grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV
-    if (held && grabHNorm < 1f) {
-        val scrollbarPosV = if (horizontal) bb.min.x else bb.min.y
-        val mousePosV = if (horizontal) IO.mousePos.x else IO.mousePos.y
-        var clickDeltaToGrabCenterV = if (horizontal) g.scrollbarClickDeltaToGrabCenter.x else g.scrollbarClickDeltaToGrabCenter.y
-
-        // Click position in scrollbar normalized space (0.0f->1.0f)
-        val clickedVNorm = saturate((mousePosV - scrollbarPosV) / scrollbarSizeV)
-        setHoveredId(id)
-
-        var seekAbsolute = false
-        if (!previouslyHeld)
-        // On initial click calculate the distance between mouse and the center of the grab
-            if (clickedVNorm >= grabVNorm && clickedVNorm <= grabVNorm + grabHNorm)
-                clickDeltaToGrabCenterV = clickedVNorm - grabVNorm - grabHNorm * 0.5f
-            else {
-                seekAbsolute = true
-                clickDeltaToGrabCenterV = 0f
-            }
-
-        /*  Apply scroll
-            It is ok to modify Scroll here because we are being called in Begin() after the calculation of SizeContents
-            and before setting up our starting position */
-        val scrollVNorm = saturate((clickedVNorm - clickDeltaToGrabCenterV - grabHNorm * 0.5f) / (1f - grabHNorm))
-        scrollV = (0.5f + scrollVNorm * scrollMax).i.f  //(winSizeContentsV - winSizeV));
-        if (horizontal)
-            window.scroll.x = scrollV
-        else
-            window.scroll.y = scrollV
-
-        // Update values for rendering
-        scrollRatio = saturate(scrollV / scrollMax)
-        grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV
-
-        // Update distance to grab now that we have seeked and saturated
-        if (seekAbsolute)
-            clickDeltaToGrabCenterV = clickedVNorm - grabVNorm - grabHNorm * 0.5f
-
-        if (horizontal)
-            g.scrollbarClickDeltaToGrabCenter.x = clickDeltaToGrabCenterV
-        else
-            g.scrollbarClickDeltaToGrabCenter.y = clickDeltaToGrabCenterV
-    }
-
-    // Render
-    val grabCol = (if (held) Col.ScrollbarGrabActive else if (hovered) Col.ScrollbarGrabHovered else Col.ScrollbarGrab).u32
-    if (horizontal)
-        window.drawList.addRectFilled(
-                Vec2(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y),
-                Vec2(lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, bb.max.y),
-                grabCol, style.scrollbarRounding)
-    else
-        window.drawList.addRectFilled(
-                Vec2(bb.min.x, lerp(bb.min.y, bb.max.y, grabVNorm)),
-                Vec2(bb.max.x, lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels),
-                grabCol, style.scrollbarRounding)
 }
 
 fun calcNextScrollFromScrollTargetAndClamp(window: Window): Vec2 {  // TODO -> window class?

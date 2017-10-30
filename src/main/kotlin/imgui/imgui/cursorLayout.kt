@@ -238,9 +238,9 @@ interface imgui_cursorLayout {
             cursorPos max_ cursorMaxPos
         }
 
-    /** call once if the first item on the line is a Text() item and you want to vertically lower it to match
-     *  subsequent (bigger) widgets */
-    fun alignFirstTextHeightToWidgets() {
+    /** Vertically align/lower upcoming text to framePadding.y so that it will aligns to upcoming widgets
+     *  (call if you have text on a line before regular widgets)    */
+    fun alignTextToFramePadding() {
         val window = currentWindow
         if (window.skipItems) return
         window.dc.currentLineHeight = glm.max(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2)

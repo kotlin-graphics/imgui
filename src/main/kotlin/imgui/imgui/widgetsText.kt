@@ -88,7 +88,7 @@ interface imgui_widgetsText {
                     val lineRect = Rect(pos, pos + Vec2(Float.MAX_VALUE, lineHeight))
                     while (line < textEnd) {
                         var lineEnd = text.strchr(line, '\n') ?: 0
-                        if (isClippedEx(lineRect, null, false)) break
+                        if (isClippedEx(lineRect, 0, false)) break
 
                         val pLine = text.substring(line)
                         val lineSize = calcTextSize(pLine, lineEnd - line, false)

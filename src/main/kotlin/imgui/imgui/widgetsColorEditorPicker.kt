@@ -55,10 +55,10 @@ import imgui.imgui.imgui_widgetsText.Companion.colorPickerOptionsPopup
 import imgui.imgui.imgui_widgetsText.Companion.paintVertsLinearGradientKeepAlpha
 import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
-import imgui.Context as g
-import imgui.WindowFlags as Wf
-import imgui.InputTextFlags as Itf
 import imgui.ColorEditFlags as Cef
+import imgui.Context as g
+import imgui.InputTextFlags as Itf
+import imgui.WindowFlags as Wf
 
 /** Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little colored preview square that can be
  *  left-clicked to open a picker, and right-clicked to open an option menu.)
@@ -554,15 +554,20 @@ interface imgui_widgetsColorEditorPicker {
         val colWithoutAlpha = Vec4(col.x, col.y, col.z, 1f)
         val gridStep = glm.min(size.x, size.y) / 2.99f
         val rounding = glm.min(style.frameRounding, gridStep * 0.5f)
+        val bbInner = Rect(bb)
+        /*  The border (using Col.FrameBg) tends to look off when color is near-opaque and rounding is enabled.
+            This offset seemed like a good middleground to reduce those artefacts.  */
+        val off = -0.75f
+        bbInner expand off
         if (flags has Cef.AlphaPreviewHalf && col.w < 1f) {
-            val midX = ((bb.min.x + bb.max.x) * 0.5f + 0.5f).i.f
-            renderColorRectWithAlphaCheckerboard(Vec2(bb.min.x + gridStep, bb.min.y), bb.max, getColorU32(col), gridStep,
-                    Vec2(-gridStep, 0f), rounding, Corner.TopRight or Corner.BotRight)
-            window.drawList.addRectFilled(bb.min, Vec2(midX, bb.max.y), getColorU32(colWithoutAlpha), rounding,
+            val midX = ((bbInner.min.x + bbInner.max.x) * 0.5f + 0.5f).i.f
+            renderColorRectWithAlphaCheckerboard(Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max, getColorU32(col),
+                    gridStep, Vec2(-gridStep + off, off), rounding, Corner.TopRight or Corner.BotRight)
+            window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colWithoutAlpha), rounding,
                     Corner.TopLeft or Corner.BotLeft)
         } else {
             val c = getColorU32(if (flags has Cef.AlphaPreview) col else colWithoutAlpha)
-            renderColorRectWithAlphaCheckerboard(bb.min, bb.max, c, gridStep, Vec2(), rounding)
+            renderColorRectWithAlphaCheckerboard(bbInner.min, bbInner.max, c, gridStep, Vec2(off), rounding)
         }
         if (window.flags has Wf.ShowBorders)
             renderFrameBorder(bb.min, bb.max, rounding)

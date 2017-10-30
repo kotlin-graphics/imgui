@@ -78,7 +78,7 @@ interface imgui_inputs {
 
     fun isMouseHoveringRect(rMin: Vec2, rMax: Vec2, clip: Boolean = true): Boolean {
 
-        val window = currentWindowRead!!
+        val window = g.currentWindow!!
 
         // Clip
         val rectClipped = Rect(rMin, rMax)

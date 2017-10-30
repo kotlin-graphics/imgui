@@ -8,7 +8,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
 import imgui.Context.style
-import imgui.ImGui.alignFirstTextHeightToWidgets
+import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginPopupEx
@@ -87,7 +87,7 @@ interface imgui_menus {
         window.dc.cursorPos = Vec2(rect.min.x + window.dc.menuBarOffsetX, rect.min.y)// + g.style.FramePadding.y);
         window.dc.layoutType = LayoutType.Horizontal
         window.dc.menuBarAppending = true
-        alignFirstTextHeightToWidgets()
+        alignTextToFramePadding()
         return true
     }
 
