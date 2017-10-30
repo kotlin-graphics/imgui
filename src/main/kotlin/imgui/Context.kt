@@ -208,7 +208,7 @@ object Context {
 
 //    char                    TempBuffer[1024*3+1];               // temporary text buffer
 
-    init{
+    init {
         ImGui.styleColorsClassic()
     }
 }
@@ -465,6 +465,30 @@ class Style {
 
     /** JVM IMGUI   */
     val locale = Locale.US
+
+    /** To scale your entire UI (e.g. if you want your app to use High DPI or generally be DPI aware) you may use this
+     *  helper function. Scaling the fonts is done separately and is up to you.
+     *  Tips: if you need to change your scale multiple times, prefer calling this on a freshly initialized Style
+     *  structure rather than scaling multiple times (because floating point multiplications are lossy).    */
+    fun scaleAllSizes(scaleFactor: Float) {
+        windowPadding *= scaleFactor
+        windowMinSize *= scaleFactor
+        windowRounding *= scaleFactor
+        childWindowRounding *= scaleFactor
+        framePadding *= scaleFactor
+        frameRounding *= scaleFactor
+        itemSpacing *= scaleFactor
+        itemInnerSpacing *= scaleFactor
+        touchExtraPadding *= scaleFactor
+        indentSpacing *= scaleFactor
+        columnsMinSpacing *= scaleFactor
+        scrollbarSize *= scaleFactor
+        scrollbarRounding *= scaleFactor
+        grabMinSize *= scaleFactor
+        grabRounding *= scaleFactor
+        displayWindowPadding *= scaleFactor
+        displaySafeAreaPadding *= scaleFactor
+    }
 }
 
 object Debug {

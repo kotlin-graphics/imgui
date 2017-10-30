@@ -852,8 +852,9 @@ interface imgui_window {
     }
 
     /** focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget.
-     *  Use negative 'offset' to access previous widgets.   */
+     *  Use -1 to access previous widget.   */
     fun setKeyboardFocusHere(offset: Int = 0) = with(currentWindow) {
+        assert(offset >= -1)    // -1 is allowed but not below
         focusIdxAllRequestNext = focusIdxAllCounter + 1 + offset
         focusIdxTabRequestNext = Int.MAX_VALUE
     }

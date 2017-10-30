@@ -51,6 +51,7 @@ interface imgui_widgetsText {
         val window = currentWindow
         if (window.skipItems) return
 
+        val textPos = Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + window.dc.currentLineTextBaseOffset)
         val wrapPosX = window.dc.textWrapPos
         val wrapEnabled = wrapPosX >= 0f
         if (textEnd > 2000 && !wrapEnabled) {
@@ -63,7 +64,6 @@ interface imgui_widgetsText {
 
             var line = 0
             val lineHeight = textLineHeight
-            val textPos = window.dc.cursorPos + Vec2(0f, window.dc.currentLineTextBaseOffset)
             val clipRect = Rect(window.clipRect)
             val textSize = Vec2()
 
@@ -119,7 +119,6 @@ interface imgui_widgetsText {
             val textSize = calcTextSize(text, textEnd, false, wrapWidth)
 
             // Account of baseline offset
-            val textPos = Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + window.dc.currentLineTextBaseOffset)
             val bb = Rect(textPos, textPos + textSize)
             itemSize(textSize)
             if (!itemAdd(bb)) return

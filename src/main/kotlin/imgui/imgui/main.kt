@@ -216,9 +216,7 @@ interface imgui_main {
             }
         }
 
-        /*  Pressing TAB activate widget focus
-            NB: Don't discard FocusedWindow if it isn't active, so that a window that go on/off programatically won't lose
-            its keyboard focus.     */
+        // Pressing TAB activate widget focus
         if (g.activeId == 0 && g.navWindow != null && g.navWindow!!.active && Key.Tab.isPressed(false))
             g.navWindow!!.focusIdxTabRequestNext = 0
 

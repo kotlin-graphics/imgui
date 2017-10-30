@@ -243,10 +243,8 @@ interface imgui_cursorLayout {
     fun alignFirstTextHeightToWidgets() {
         val window = currentWindow
         if (window.skipItems) return
-        /*  Declare a dummy item size to that upcoming items that are smaller will center-align on the newly expanded
-            line height.         */
-        itemSize(Vec2(0f, g.fontSize + style.framePadding.y * 2), style.framePadding.y)
-        sameLine(0f, 0f)
+        window.dc.currentLineHeight = glm.max(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2)
+        window.dc.currentLineTextBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, style.framePadding.y)
     }
 
     /** height of font == GetWindowFontSize()   */
