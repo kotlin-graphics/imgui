@@ -61,6 +61,7 @@ import imgui.ItemFlags as If
 import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
+import imgui.internal.LayoutType as Lt
 
 fun main(args: Array<String>) {
 
@@ -220,6 +221,7 @@ interface imgui_internal {
         // Always align ourselves on pixel boundaries
         val lineHeight = glm.max(window.dc.currentLineHeight, size.y)
         val textBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, textOffsetY)
+        //if (g.IO.KeyAlt) window->DrawList->AddRect(window->DC.CursorPos, window->DC.CursorPos + ImVec2(size.x, line_height), IM_COL32(255,0,0,200)); // [DEBUG]
         window.dc.cursorPosPrevLine.x = window.dc.cursorPos.x + size.x
         window.dc.cursorPosPrevLine.y = window.dc.cursorPos.y
         window.dc.cursorPos.x = (window.pos.x + window.dc.indentX + window.dc.columnsOffsetX).i.f
@@ -227,12 +229,15 @@ interface imgui_internal {
         window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
         window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y)
 
-        //window->DrawList->AddCircle(window->DC.CursorMaxPos, 3.0f, IM_COL32(255,0,0,255), 4); // Debug
+        //if (g.IO.KeyAlt) window->DrawList->AddCircle(window->DC.CursorMaxPos, 3.0f, IM_COL32(255,0,0,255), 4); // [DEBUG]
 
         window.dc.prevLineHeight = lineHeight
         window.dc.prevLineTextBaseOffset = textBaseOffset
         window.dc.currentLineTextBaseOffset = 0f
         window.dc.currentLineHeight = 0f
+
+        // Horizontal layout mode
+        if (window.dc.layoutType == Lt.Horizontal) sameLine()
     }
 
     fun itemSize(bb: Rect, textOffsetY: Float = 0f) = itemSize(bb.size, textOffsetY)
@@ -1205,20 +1210,19 @@ interface imgui_internal {
         }
 
         // Password pushes a temporary font with only a fallback glyph
-        if (isPassword)
-            with(g.inputTextPasswordFont) {
-                val glyph = g.font.findGlyph('*')!!
-                fontSize = g.font.fontSize
-                scale = g.font.scale
-                displayOffset = g.font.displayOffset
-                ascent = g.font.ascent
-                descent = g.font.descent
-                containerAtlas = g.font.containerAtlas
-                fallbackGlyph = glyph
-                fallbackXAdvance = glyph.xAdvance
-                assert(glyphs.isEmpty() && indexXAdvance.isEmpty() && indexLookup.isEmpty())
-                pushFont(this)
-            }
+        if (isPassword) with(g.inputTextPasswordFont) {
+            val glyph = g.font.findGlyph('*')!!
+            fontSize = g.font.fontSize
+            scale = g.font.scale
+            displayOffset = g.font.displayOffset
+            ascent = g.font.ascent
+            descent = g.font.descent
+            containerAtlas = g.font.containerAtlas
+            fallbackGlyph = glyph
+            fallbackAdvanceX = glyph.advanceX
+            assert(glyphs.isEmpty() && indexAdvanceX.isEmpty() && indexLookup.isEmpty())
+            pushFont(this)
+        }
 
         // NB: we are only allowed to access 'editState' if we are the active widget.
         val editState = g.inputTextState
@@ -1729,7 +1733,7 @@ interface imgui_internal {
                         val end = text.size - start
                         val rectSize = inputTextCalcTextSizeW(String(text, start, end), textSelectedEnd, stopOnNewLine = true)
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_A(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)

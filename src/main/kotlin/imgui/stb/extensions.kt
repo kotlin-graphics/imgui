@@ -92,7 +92,7 @@ val STBTTPackedchar.x0 get() = x0().i
 val STBTTPackedchar.x1 get() = x1().i
 val STBTTPackedchar.y0 get() = y0().i
 val STBTTPackedchar.y1 get() = y1().i
-val STBTTPackedchar.xAdvance get() = xadvance()
+val STBTTPackedchar.advanceX get() = xadvance()
 
 var STBTTPackContext.packInfo: STBRPContext
     get() {

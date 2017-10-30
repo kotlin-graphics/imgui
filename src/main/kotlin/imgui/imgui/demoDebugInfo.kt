@@ -2037,7 +2037,7 @@ interface imgui_demoDebugInfo {
                                         tooltip {
                                             text("Codepoint: U+%04X", base + n)
                                             separator()
-                                            text("XAdvance+1: %.1f", glyph.xAdvance)
+                                            text("AdvanceX+1: %.1f", glyph.advanceX)
                                             text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph.x0, glyph.y0, glyph.x1, glyph.y1)
                                             text("UV: (%.3f,%.3f)->(%.3f,%.3f)", glyph.u0, glyph.v0, glyph.u1, glyph.v1)
                                         }

@@ -70,8 +70,8 @@ interface imgui_menus {
         popStyleVar(2)
     }
 
-    /** append to menu-bar of current window (requires ImGuiWindowFlags_MenuBar flag set). only call EndMenuBar() if
-     *  this returns true!  */
+    /** append to menu-bar of current window (requires WindowFlags.MenuBar flag set on parent window).
+     *  Only call endMenuBar() if this returns true!    */
     fun beginMenuBar(): Boolean {
 
         val window = currentWindow
@@ -131,6 +131,8 @@ interface imgui_menus {
         val popupPos = Vec2()
         val pos = Vec2(window.dc.cursorPos)
         if (window.dc.layoutType == LayoutType.Horizontal) {
+            // Menu inside an horizontal menu bar
+            // Selectable extend their highlight by half ItemSpacing in each direction.
             popupPos.put(pos.x - window.windowPadding.x, pos.y - style.framePadding.y + window.menuBarHeight())
             window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
             pushStyleVar(StyleVar.ItemSpacing, style.itemSpacing * 2f)
@@ -138,9 +140,11 @@ interface imgui_menus {
             val flags = Sf.Menu or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
             pressed = selectable(label, menuIsOpen, flags, Vec2(w, 0f))
             popStyleVar()
-            sameLine()
-            window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
+            /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
+                to call sameLine() ourselves after the popStyleVar().   */
+            window.dc.cursorPos.x += (style.itemSpacing.x * (-1f + 0.5f)).i.f
         } else {
+            // Menu inside a menu
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
             val w = window.menuColumns.declColumns(labelSize.x, 0f, (g.fontSize * 1.2f).i.f) // Feedback to next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)

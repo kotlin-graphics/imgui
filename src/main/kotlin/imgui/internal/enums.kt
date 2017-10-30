@@ -58,15 +58,16 @@ enum class ColumnsFlags(val i: Int) {
 infix fun Int.has(b: ColumnsFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: ColumnsFlags) = (this and b.i) == 0
 
-
-/** NB: need to be in sync with last value of SelectableFlags  */
-@Deprecated("us")
-enum class SelectableFlagsPrivate_(val i: Int) {
-    Menu(1 shl 3),
-    MenuItem(1 shl 4),
-    Disabled(1 shl 5),
-    DrawFillAvailWidth(1 shl 6)
+enum class SeparatorFlags {
+    /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
+    Horizontal,
+    Vertical;
+    val i = 1 shl ordinal
 }
+infix fun SeparatorFlags.or(b: SeparatorFlags) = i or b.i
+infix fun Int.or(b: SeparatorFlags) = this or b.i
+infix fun Int.has(b: SeparatorFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: SeparatorFlags) = (this and b.i) == 0
 
 /** FIXME: this is in development, not exposed/functional as a generic feature yet. */
 enum class LayoutType {

@@ -5,16 +5,10 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.Context.style
-import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
-import imgui.ImGui.calcItemWidth
-import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
-import imgui.ImGui.endPopup
 import imgui.ImGui.focusWindow
 import imgui.ImGui.getColumnOffset
-import imgui.ImGui.isPopupOpen
-import imgui.ImGui.pushStyleVar
 import imgui.ImGui.setHoveredId
 import imgui.internal.*
 import uno.kotlin.isPrintable
@@ -584,7 +578,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance_A(c) * scale  //TODO rename back
+        val charWidth: Float = font.getCharAdvance(c) * scale  //TODO rename back
         lineWidth += charWidth
     }
 

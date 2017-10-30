@@ -183,8 +183,7 @@ interface imgui_main {
         if (g.wantCaptureMouseNextFrame != -1)
             IO.wantCaptureMouse = g.wantCaptureMouseNextFrame != 0
         else
-            IO.wantCaptureMouse = (mouseAvailToImgui && (g.hoveredWindow != null || mouseAnyDown)) || g.activeId != 0 ||
-                    g.openPopupStack.isNotEmpty()
+            IO.wantCaptureMouse = (mouseAvailToImgui && (g.hoveredWindow != null || mouseAnyDown)) || g.openPopupStack.isNotEmpty()
         IO.wantCaptureKeyboard = if (g.wantCaptureKeyboardNextFrame != -1) g.wantCaptureKeyboardNextFrame != 0 else g.activeId != 0
         IO.wantTextInput = g.wantTextInputNextFrame != -1 && g.wantTextInputNextFrame != 0
         g.mouseCursor = MouseCursor.Arrow

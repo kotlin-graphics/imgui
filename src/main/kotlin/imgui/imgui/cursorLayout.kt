@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import gli.hasnt
 import glm_.f
 import glm_.glm
 import glm_.vec2.Vec2
@@ -14,7 +15,12 @@ import imgui.ImGui.popClipRect
 import imgui.ImGui.pushColumnClipRect
 import imgui.internal.GroupData
 import imgui.internal.Rect
+import imgui.internal.has
+import imgui.internal.isPowerOfTwo
+import imgui.internal.or
 import imgui.Context as g
+import imgui.internal.LayoutType as Lt
+import imgui.internal.SeparatorFlags as Sf
 
 interface imgui_cursorLayout {
 
@@ -24,31 +30,45 @@ interface imgui_cursorLayout {
         val window = currentWindow
         if (window.skipItems) return
 
-        if (window.dc.columnsCount > 1) popClipRect()
+        var flags = 0
+        if (flags hasnt (Sf.Horizontal or Sf.Vertical))
+            flags = flags or if (window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
+        // Check that only 1 option is selected
+        assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo)
 
-        var x1 = window.pos.x.f
-        val x2 = window.pos.x + window.size.x
-        if (window.dc.groupStack.isNotEmpty())
-            x1 += window.dc.indentX
+        if (flags has Sf.Horizontal) {
+            if (window.dc.columnsCount > 1) popClipRect()
 
-        val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
-        /*  NB: we don't provide our width so that it doesn't get feed back into AutoFit, we don't provide height
-            to not alter layout.         */
-        itemSize(Vec2())
-        if (!itemAdd(bb)) {
-            if (window.dc.columnsCount > 1)
+            var x1 = window.pos.x.f
+            val x2 = window.pos.x + window.size.x
+            if (window.dc.groupStack.isNotEmpty())
+                x1 += window.dc.indentX
+
+            val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
+            /*  NB: we don't provide our width so that it doesn't get feed back into AutoFit,
+                we don't provide height to not alter layout.    */
+            itemSize(Vec2())
+            if (!itemAdd(bb)) {
+                if (window.dc.columnsCount > 1) pushColumnClipRect()
+                return
+            }
+
+            window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
+
+            if (g.logEnabled) logText("\n--------------------------------")
+
+            if (window.dc.columnsCount > 1) {
                 pushColumnClipRect()
-            return
-        }
+                window.dc.columnsCellMinY = window.dc.cursorPos.y
+            }
+        } else if (flags has Sf.Vertical) {
+            val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(1f, window.dc.currentLineHeight))
+            itemSize(Vec2(bb.width, 0f))
+            if (!itemAdd(bb)) return
 
-        window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Border.u32)
+            window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
 
-        if (g.logEnabled)
-            logText("\n--------------------------------")
-
-        if (window.dc.columnsCount > 1) {
-            pushColumnClipRect()
-            window.dc.columnsCellMinY = window.dc.cursorPos.y
+            if (g.logEnabled) logText("|")
         }
     }
 
@@ -79,11 +99,12 @@ interface imgui_cursorLayout {
     fun newLine() {
         val window = currentWindow
         if (window.skipItems) return
+
+        val backupLayoutType = window.dc.layoutType
+        window.dc.layoutType = Lt.Vertical
         // In the event that we are on a line with items that is smaller that FontSize high, we will preserve its height.
-        itemSize(when {
-            window.dc.currentLineHeight > 0f -> Vec2()
-            else -> Vec2(0f, g.fontSize)
-        })
+        itemSize(Vec2(0f, if (window.dc.currentLineHeight > 0f) 0f else g.fontSize))
+        window.dc.layoutType = backupLayoutType
     }
 
     /** add vertical spacing    */

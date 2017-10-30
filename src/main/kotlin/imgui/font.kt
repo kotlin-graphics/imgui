@@ -42,7 +42,7 @@ class FontConfig {
      *  font. If enabled, you can set OversampleH/V to 1.   */
     var pixelSnapH = false
     /** Extra spacing (in pixels) between glyphs. Only X axis is supported for now.    */
-    var glyphExtraSpacing = Vec2()
+    var glyphExtraSpacing = Vec2(1f, 0f)
     /** Offset all glyphs from this font input. */
     var glyphOffset = Vec2()
     /** Pointer to a user-provided list of Unicode range (2 value per range, values are inclusive, zero-terminated
@@ -62,6 +62,36 @@ class FontConfig {
     var name = ""
 
     var dstFont: Font? = null
+}
+
+class FontGlyph {
+    /** 0x0000..0xFFFF  */
+    var codepoint = '\u0000'
+    /** Distance to next character (= data from font + FontConfig.glyphExtraSpacing.x baked in)  */
+    var advanceX = 0f
+    // Glyph corners
+    var x0 = 0f
+    var y0 = 0f
+    var x1 = 0f
+    var y1 = 0f
+    // Texture coordinates
+    var u0 = 0f
+    var v0 = 0f
+    var u1 = 0f
+    var v1 = 0f
+
+    infix fun put(other: FontGlyph) {
+        codepoint = other.codepoint
+        advanceX = other.advanceX
+        x0 = other.x0
+        y0 = other.y0
+        x1 = other.x1
+        y1 = other.y1
+        u0 = other.u0
+        v0 = other.v0
+        u1 = other.u1
+        v1 = other.v1
+    }
 }
 
 /** Load and rasterize multiple TTF/OTF fonts into a same texture.
@@ -119,7 +149,7 @@ class FontAtlas {
 
     //    IMGUI_API ImFont*           AddFontFromFileTTF(const char* filename, float size_pixels, const ImFontConfig* font_cfg = NULL, const ImWchar* glyph_ranges = NULL);
 
-    /** NB: Transfer ownership of 'ttf_data' to ImFontAtlas, unless font_cfg_template->FontDataOwnedByAtlas == false.
+    /** NB: Transfer ownership of 'ttf_data' to FontAtlas, unless fontCfgTemplate.fontDataOwnedByAtlas == false.
      *  Owned TTF buffer will be deleted after Build(). */
     fun addFontFromMemoryTTF(fontData: CharArray, sizePixels: Float, fontCfgTemplate: FontConfig? = null,
                              glyphRanges: IntArray = intArrayOf()): Font {
@@ -165,17 +195,17 @@ class FontAtlas {
 
     /** Clear the input TTF data (inc sizes, glyph ranges)  */
     fun clearInputData() {
-        for (cfg in configData)
-            if (cfg.fontData.isNotEmpty() && cfg.fontDataOwnedByAtlas)
-                cfg.fontData = charArrayOf()
+        configData.filter { it.fontData.isNotEmpty() && it.fontDataOwnedByAtlas }.forEach {
+            it.fontData = charArrayOf()
+        }
 
-        // When clearing this we lose access to the font name and other information used to build the font.
-        for (font in fonts)
-            if (font.configData.isNotEmpty()) {
-                font.configData.clear()
-                font.configDataCount = 0
-            }
+        // When clearing this we lose access to  the font name and other information used to build the font.
+        fonts.filter { configData.contains(it.configData[0]) }.forEach {
+            it.configData.clear()
+            it.configDataCount = 0
+        }
         configData.clear()
+        customRects.clear()
     }
 
     /** Clear the ImGui-side font data (glyphs storage, UV coordinates) */
@@ -191,14 +221,17 @@ class FontAtlas {
         clearFonts()
         stbClear()
     }
-//
-    /* Retrieve texture data
-     * User is in charge of copying the pixels into graphics memory, then call SetTextureUserID()
-     * After loading the texture into your graphic system, store your texture handle in 'TexID' (ignore if you aren't
-     * using multiple fonts nor images)
-     * RGBA32 format is provided for convenience and high compatibility, but note that all RGB pixels are white, so 75%
-     * of the memory is wasted.
-     * Pitch = Width * BytesPerPixels  */
+
+    /*  Build atlas, retrieve pixel data.
+        User is in charge of copying the pixels into graphics memory (e.g. create a texture with your engine).
+        Then store your texture handle with setTexID().
+        RGBA32 format is provided for convenience and compatibility, but note that unless you use CustomRect to draw
+        color data, the RGB pixels emitted from Fonts will all be white (~75% of waste).
+        Pitch = Width * BytesPerPixels  */
+
+    /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
+    private fun build() = buildWithStbTrueType()
+
     /** 1 byte per-pixel    */
     fun getTexDataAsAlpha8(): Triple<ByteBuffer, Vec2i, Int> {
 
@@ -231,66 +264,117 @@ class FontAtlas {
         return Triple(texPixelsRGBA32!!, texSize, 4)
     }
 
+    //-------------------------------------------
+    // Glyph Ranges
+    //-------------------------------------------
+
     /* Helpers to retrieve list of common Unicode ranges (2 value per range, values are inclusive)
      * NB: Make sure that your string are UTF-8 and NOT in your local code page. In C++11, you can create a UTF-8 string
      * literally using the u8"Hello world" syntax. See FAQ for details. */
     /** Retrieve list of range (2 int per range, values are inclusive), Basic Latin, Extended Latin  */
-    val glyphRangesDefault get() = intArrayOf(0x0020, 0x00FF) // Basic Latin + Latin Supplement
-//    IMGUI_API const ImWchar*    GetGlyphRangesKorean();     // Default + Korean characters
-//    IMGUI_API const ImWchar*    GetGlyphRangesJapanese();   // Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs
-//    IMGUI_API const ImWchar*    GetGlyphRangesChinese();    // Japanese + full set of about 21000 CJK Unified Ideographs
-//    IMGUI_API const ImWchar*    GetGlyphRangesCyrillic();   // Default + about 400 Cyrillic characters
-//    IMGUI_API const ImWchar*    GetGlyphRangesThai();       // Default + Thai characters
-//
-    // Members
-    // (Access texture data via GetTexData*() calls which will setup a default font for you.)
-    /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
-    during rendering via the ImDrawCmd structure.   */
-    var texId = -1
-    /** 1 component per pixel, each component is unsigned 8-bit. Total size = TexWidth * TexHeight  */
-    var texPixelsAlpha8: ByteBuffer? = null
-    /** 4 component per pixel, each component is unsigned 8-bit. Total size = TexWidth * TexHeight * 4  */
-    var texPixelsRGBA32: ByteBuffer? = null
-    /** Texture size calculated during Build(). */
-    var texSize = Vec2i()
-    /** Texture width desired by user before Build(). Must be a power-of-two. If have many glyphs your graphics API have
-     *  texture size restrictions you may want to increase texture width to decrease height.    */
-    var texDesiredWidth = 0
-    /** Padding between glyphs within texture in pixels. Defaults to 1. */
-    var texGlyphPadding = 1
-    /** Texture coordinates to a white pixel    */
-    var texUvWhitePixel = Vec2()
-    /** Hold all the fonts returned by AddFont*. Fonts[0] is the default font upon calling ImGui::NewFrame(), use
-     *  ImGui::PushFont()/PopFont() to change the current font. */
-    val fonts = ArrayList<Font>()
 
+    /** Basic Latin + Latin Supplement  */
+    val glyphRangesDefault get() = intArrayOf(0x0020, 0x00FF)
+    /** Default + Korean characters */
+    val glyphRangesKorean
+        get() = intArrayOf(
+                0x0020, 0x00FF, // Basic Latin + Latin Supplement
+                0x3131, 0x3163, // Korean alphabets
+                0xAC00, 0xD79D) // Korean characters
+    /** Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs  */
+    val glyphRangesJapanese: IntArray
+        get() = with(jap) {
+            if (!jap.fullRangesUnpacked) {
+                // Unpack
+                var codepoint = 0x4e00
+                System.arraycopy(baseRanges, 0, fullRanges, 0, baseRanges.size)
+                var dst = baseRanges.size
+                var n = 0
+                while (n < offsetsFrom0x4E00.size) {
+                    codepoint += offsetsFrom0x4E00[n] + 1
+                    fullRanges[dst] = codepoint
+                    fullRanges[dst + 1] = codepoint
+                    n++
+                    dst += 2
+                }
+                fullRanges[dst] = 0
+                fullRangesUnpacked = true
+            }
+            return fullRanges
+        }
 
-    // [Private] Members -----------------------------------------------------------------------------------------------
-
-    /** Rectangles for packing custom texture data into the atlas.  */
-    private val customRects = ArrayList<CustomRect>()
-    /** Internal data   */
-    private val configData = ArrayList<FontConfig>()
-
-    /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
-    private fun build() = buildWithStbTrueType()
-
-    private fun customRectRegister(id: Int, width: Int, height: Int): Int {
-        assert(width in 1..0xFFFF)
-        assert(height in 1..0xFFFF)
-        val r = CustomRect(id, width, height)
-        customRects.add(r)
-        return customRects.lastIndex    // Return index
+    private object jap {
+        /** Store the 1946 ideograms code points as successive offsets from the initial unicode codepoint 0x4E00.
+         *  Each offset has an implicit +1.
+         *  This encoding is designed to helps us reduce the source code size.
+         *  FIXME: Source a list of the revised 2136 joyo kanji list from 2010 and rebuild this.
+         *  The current list was sourced from http://theinstructionlimit.com/author/renaudbedardrenaudbedard/page/3
+         *  Note that you may use FontAtlas.glyphRangesBuilder to create your own ranges, by merging existing ranges
+         *  or adding new characters.   */
+        val offsetsFrom0x4E00 = intArrayOf(
+                -1, 0, 1, 3, 0, 0, 0, 0, 1, 0, 5, 1, 1, 0, 7, 4, 6, 10, 0, 1, 9, 9, 7, 1, 3, 19, 1, 10, 7, 1, 0, 1, 0, 5, 1, 0, 6, 4, 2, 6, 0, 0, 12, 6, 8, 0, 3, 5, 0, 1, 0, 9, 0, 0, 8, 1, 1, 3, 4, 5, 13, 0, 0, 8, 2, 17,
+                4, 3, 1, 1, 9, 6, 0, 0, 0, 2, 1, 3, 2, 22, 1, 9, 11, 1, 13, 1, 3, 12, 0, 5, 9, 2, 0, 6, 12, 5, 3, 12, 4, 1, 2, 16, 1, 1, 4, 6, 5, 3, 0, 6, 13, 15, 5, 12, 8, 14, 0, 0, 6, 15, 3, 6, 0, 18, 8, 1, 6, 14, 1,
+                5, 4, 12, 24, 3, 13, 12, 10, 24, 0, 0, 0, 1, 0, 1, 1, 2, 9, 10, 2, 2, 0, 0, 3, 3, 1, 0, 3, 8, 0, 3, 2, 4, 4, 1, 6, 11, 10, 14, 6, 15, 3, 4, 15, 1, 0, 0, 5, 2, 2, 0, 0, 1, 6, 5, 5, 6, 0, 3, 6, 5, 0, 0, 1, 0,
+                11, 2, 2, 8, 4, 7, 0, 10, 0, 1, 2, 17, 19, 3, 0, 2, 5, 0, 6, 2, 4, 4, 6, 1, 1, 11, 2, 0, 3, 1, 2, 1, 2, 10, 7, 6, 3, 16, 0, 8, 24, 0, 0, 3, 1, 1, 3, 0, 1, 6, 0, 0, 0, 2, 0, 1, 5, 15, 0, 1, 0, 0, 2, 11, 19,
+                1, 4, 19, 7, 6, 5, 1, 0, 0, 0, 0, 5, 1, 0, 1, 9, 0, 0, 5, 0, 2, 0, 1, 0, 3, 0, 11, 3, 0, 2, 0, 0, 0, 0, 0, 9, 3, 6, 4, 12, 0, 14, 0, 0, 29, 10, 8, 0, 14, 37, 13, 0, 31, 16, 19, 0, 8, 30, 1, 20, 8, 3, 48,
+                21, 1, 0, 12, 0, 10, 44, 34, 42, 54, 11, 18, 82, 0, 2, 1, 2, 12, 1, 0, 6, 2, 17, 2, 12, 7, 0, 7, 17, 4, 2, 6, 24, 23, 8, 23, 39, 2, 16, 23, 1, 0, 5, 1, 2, 15, 14, 5, 6, 2, 11, 0, 8, 6, 2, 2, 2, 14,
+                20, 4, 15, 3, 4, 11, 10, 10, 2, 5, 2, 1, 30, 2, 1, 0, 0, 22, 5, 5, 0, 3, 1, 5, 4, 1, 0, 0, 2, 2, 21, 1, 5, 1, 2, 16, 2, 1, 3, 4, 0, 8, 4, 0, 0, 5, 14, 11, 2, 16, 1, 13, 1, 7, 0, 22, 15, 3, 1, 22, 7, 14,
+                22, 19, 11, 24, 18, 46, 10, 20, 64, 45, 3, 2, 0, 4, 5, 0, 1, 4, 25, 1, 0, 0, 2, 10, 0, 0, 0, 1, 0, 1, 2, 0, 0, 9, 1, 2, 0, 0, 0, 2, 5, 2, 1, 1, 5, 5, 8, 1, 1, 1, 5, 1, 4, 9, 1, 3, 0, 1, 0, 1, 1, 2, 0, 0,
+                2, 0, 1, 8, 22, 8, 1, 0, 0, 0, 0, 4, 2, 1, 0, 9, 8, 5, 0, 9, 1, 30, 24, 2, 6, 4, 39, 0, 14, 5, 16, 6, 26, 179, 0, 2, 1, 1, 0, 0, 0, 5, 2, 9, 6, 0, 2, 5, 16, 7, 5, 1, 1, 0, 2, 4, 4, 7, 15, 13, 14, 0, 0,
+                3, 0, 1, 0, 0, 0, 2, 1, 6, 4, 5, 1, 4, 9, 0, 3, 1, 8, 0, 0, 10, 5, 0, 43, 0, 2, 6, 8, 4, 0, 2, 0, 0, 9, 6, 0, 9, 3, 1, 6, 20, 14, 6, 1, 4, 0, 7, 2, 3, 0, 2, 0, 5, 0, 3, 1, 0, 3, 9, 7, 0, 3, 4, 0, 4, 9, 1, 6, 0,
+                9, 0, 0, 2, 3, 10, 9, 28, 3, 6, 2, 4, 1, 2, 32, 4, 1, 18, 2, 0, 3, 1, 5, 30, 10, 0, 2, 2, 2, 0, 7, 9, 8, 11, 10, 11, 7, 2, 13, 7, 5, 10, 0, 3, 40, 2, 0, 1, 6, 12, 0, 4, 5, 1, 5, 11, 11, 21, 4, 8, 3, 7,
+                8, 8, 33, 5, 23, 0, 0, 19, 8, 8, 2, 3, 0, 6, 1, 1, 1, 5, 1, 27, 4, 2, 5, 0, 3, 5, 6, 3, 1, 0, 3, 1, 12, 5, 3, 3, 2, 0, 7, 7, 2, 1, 0, 4, 0, 1, 1, 2, 0, 10, 10, 6, 2, 5, 9, 7, 5, 15, 15, 21, 6, 11, 5, 20,
+                4, 3, 5, 5, 2, 5, 0, 2, 1, 0, 1, 7, 28, 0, 9, 0, 5, 12, 5, 5, 18, 30, 0, 12, 3, 3, 21, 16, 25, 32, 9, 3, 14, 11, 24, 5, 66, 9, 1, 2, 0, 5, 9, 1, 5, 1, 8, 0, 8, 3, 3, 0, 1, 15, 1, 4, 8, 1, 2, 7, 0, 7, 2,
+                8, 3, 7, 5, 3, 7, 10, 2, 1, 0, 0, 2, 25, 0, 6, 4, 0, 10, 0, 4, 2, 4, 1, 12, 5, 38, 4, 0, 4, 1, 10, 5, 9, 4, 0, 14, 4, 2, 5, 18, 20, 21, 1, 3, 0, 5, 0, 7, 0, 3, 7, 1, 3, 1, 1, 8, 1, 0, 0, 0, 3, 2, 5, 2, 11,
+                6, 0, 13, 1, 3, 9, 1, 12, 0, 16, 6, 2, 1, 0, 2, 1, 12, 6, 13, 11, 2, 0, 28, 1, 7, 8, 14, 13, 8, 13, 0, 2, 0, 5, 4, 8, 10, 2, 37, 42, 19, 6, 6, 7, 4, 14, 11, 18, 14, 80, 7, 6, 0, 4, 72, 12, 36, 27,
+                7, 7, 0, 14, 17, 19, 164, 27, 0, 5, 10, 7, 3, 13, 6, 14, 0, 2, 2, 5, 3, 0, 6, 13, 0, 0, 10, 29, 0, 4, 0, 3, 13, 0, 3, 1, 6, 51, 1, 5, 28, 2, 0, 8, 0, 20, 2, 4, 0, 25, 2, 10, 13, 10, 0, 16, 4, 0, 1, 0,
+                2, 1, 7, 0, 1, 8, 11, 0, 0, 1, 2, 7, 2, 23, 11, 6, 6, 4, 16, 2, 2, 2, 0, 22, 9, 3, 3, 5, 2, 0, 15, 16, 21, 2, 9, 20, 15, 15, 5, 3, 9, 1, 0, 0, 1, 7, 7, 5, 4, 2, 2, 2, 38, 24, 14, 0, 0, 15, 5, 6, 24, 14,
+                5, 5, 11, 0, 21, 12, 0, 3, 8, 4, 11, 1, 8, 0, 11, 27, 7, 2, 4, 9, 21, 59, 0, 1, 39, 3, 60, 62, 3, 0, 12, 11, 0, 3, 30, 11, 0, 13, 88, 4, 15, 5, 28, 13, 1, 4, 48, 17, 17, 4, 28, 32, 46, 0, 16, 0,
+                18, 11, 1, 8, 6, 38, 11, 2, 6, 11, 38, 2, 0, 45, 3, 11, 2, 7, 8, 4, 30, 14, 17, 2, 1, 1, 65, 18, 12, 16, 4, 2, 45, 123, 12, 56, 33, 1, 4, 3, 4, 7, 0, 0, 0, 3, 2, 0, 16, 4, 2, 4, 2, 0, 7, 4, 5, 2, 26,
+                2, 25, 6, 11, 6, 1, 16, 2, 6, 17, 77, 15, 3, 35, 0, 1, 0, 5, 1, 0, 38, 16, 6, 3, 12, 3, 3, 3, 0, 9, 3, 1, 3, 5, 2, 9, 0, 18, 0, 25, 1, 3, 32, 1, 72, 46, 6, 2, 7, 1, 3, 14, 17, 0, 28, 1, 40, 13, 0, 20,
+                15, 40, 6, 38, 24, 12, 43, 1, 1, 9, 0, 12, 6, 0, 6, 2, 4, 19, 3, 7, 1, 48, 0, 9, 5, 0, 5, 6, 9, 6, 10, 15, 2, 11, 19, 3, 9, 2, 0, 1, 10, 1, 27, 8, 1, 3, 6, 1, 14, 0, 26, 0, 27, 16, 3, 4, 9, 6, 2, 23,
+                9, 10, 5, 25, 2, 1, 6, 1, 1, 48, 15, 9, 15, 14, 3, 4, 26, 60, 29, 13, 37, 21, 1, 6, 4, 0, 2, 11, 22, 23, 16, 16, 2, 2, 1, 3, 0, 5, 1, 6, 4, 0, 0, 4, 0, 0, 8, 3, 0, 2, 5, 0, 7, 1, 7, 3, 13, 2, 4, 10,
+                3, 0, 2, 31, 0, 18, 3, 0, 12, 10, 4, 1, 0, 7, 5, 7, 0, 5, 4, 12, 2, 22, 10, 4, 2, 15, 2, 8, 9, 0, 23, 2, 197, 51, 3, 1, 1, 4, 13, 4, 3, 21, 4, 19, 3, 10, 5, 40, 0, 4, 1, 1, 10, 4, 1, 27, 34, 7, 21,
+                2, 17, 2, 9, 6, 4, 2, 3, 0, 4, 2, 7, 8, 2, 5, 1, 15, 21, 3, 4, 4, 2, 2, 17, 22, 1, 5, 22, 4, 26, 7, 0, 32, 1, 11, 42, 15, 4, 1, 2, 5, 0, 19, 3, 1, 8, 6, 0, 10, 1, 9, 2, 13, 30, 8, 2, 24, 17, 19, 1, 4,
+                4, 25, 13, 0, 10, 16, 11, 39, 18, 8, 5, 30, 82, 1, 6, 8, 18, 77, 11, 13, 20, 75, 11, 112, 78, 33, 3, 0, 0, 60, 17, 84, 9, 1, 1, 12, 30, 10, 49, 5, 32, 158, 178, 5, 5, 6, 3, 3, 1, 3, 1, 4, 7, 6,
+                19, 31, 21, 0, 2, 9, 5, 6, 27, 4, 9, 8, 1, 76, 18, 12, 1, 4, 0, 3, 3, 6, 3, 12, 2, 8, 30, 16, 2, 25, 1, 5, 5, 4, 3, 0, 6, 10, 2, 3, 1, 0, 5, 1, 19, 3, 0, 8, 1, 5, 2, 6, 0, 0, 0, 19, 1, 2, 0, 5, 1, 2, 5,
+                1, 3, 7, 0, 4, 12, 7, 3, 10, 22, 0, 9, 5, 1, 0, 2, 20, 1, 1, 3, 23, 30, 3, 9, 9, 1, 4, 191, 14, 3, 15, 6, 8, 50, 0, 1, 0, 0, 4, 0, 0, 1, 0, 2, 4, 2, 0, 2, 3, 0, 2, 0, 2, 2, 8, 7, 0, 1, 1, 1, 3, 3, 17, 11,
+                91, 1, 9, 3, 2, 13, 4, 24, 15, 41, 3, 13, 3, 1, 20, 4, 125, 29, 30, 1, 0, 4, 12, 2, 21, 4, 5, 5, 19, 11, 0, 13, 11, 86, 2, 18, 0, 7, 1, 8, 8, 2, 2, 22, 1, 2, 6, 5, 2, 0, 1, 2, 8, 0, 2, 0, 5, 2, 1, 0,
+                2, 10, 2, 0, 5, 9, 2, 1, 2, 0, 1, 0, 4, 0, 0, 10, 2, 5, 3, 0, 6, 1, 0, 1, 4, 4, 33, 3, 13, 17, 3, 18, 6, 4, 7, 1, 5, 78, 0, 4, 1, 13, 7, 1, 8, 1, 0, 35, 27, 15, 3, 0, 0, 0, 1, 11, 5, 41, 38, 15, 22, 6,
+                14, 14, 2, 1, 11, 6, 20, 63, 5, 8, 27, 7, 11, 2, 2, 40, 58, 23, 50, 54, 56, 293, 8, 8, 1, 5, 1, 14, 0, 1, 12, 37, 89, 8, 8, 8, 2, 10, 6, 0, 0, 0, 4, 5, 2, 1, 0, 1, 1, 2, 7, 0, 3, 3, 0, 4, 6, 0, 3, 2,
+                19, 3, 8, 0, 0, 0, 4, 4, 16, 0, 4, 1, 5, 1, 3, 0, 3, 4, 6, 2, 17, 10, 10, 31, 6, 4, 3, 6, 10, 126, 7, 3, 2, 2, 0, 9, 0, 0, 5, 20, 13, 0, 15, 0, 6, 0, 2, 5, 8, 64, 50, 3, 2, 12, 2, 9, 0, 0, 11, 8, 20,
+                109, 2, 18, 23, 0, 0, 9, 61, 3, 0, 28, 41, 77, 27, 19, 17, 81, 5, 2, 14, 5, 83, 57, 252, 14, 154, 263, 14, 20, 8, 13, 6, 57, 39, 38)
+        val baseRanges = intArrayOf(
+                0x0020, 0x00FF, // Basic Latin + Latin Supplement
+                0x3000, 0x30FF, // Punctuations, Hiragana, Katakana
+                0x31F0, 0x31FF, // Katakana Phonetic Extensions
+                0xFF00, 0xFFEF) // Half-width characters
+        var fullRangesUnpacked = false
+        val fullRanges = IntArray(baseRanges.size + offsetsFrom0x4E00.size * 2 + 1)
     }
 
-    private fun customRectCalcUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
-        assert(texSize.x > 0 && texSize.y > 0)   // Font atlas needs to be built before we can calculate UV coordinates
-        assert(rect.isPacked)                // Make sure the rectangle has been packed
-        outUvMin.put(rect.x / texSize.x, rect.y / texSize.y)
-        outUvMax.put((rect.x + rect.width) / texSize.x, (rect.y + rect.height) / texSize.y)
-    }
+    /** Default + Japanese + full set of about 21000 CJK Unified Ideographs */
+    val glyphRangesChinese
+        get() = intArrayOf(
+                0x0020, 0x00FF, // Basic Latin + Latin Supplement
+                0x3000, 0x30FF, // Punctuations, Hiragana, Katakana
+                0x31F0, 0x31FF, // Katakana Phonetic Extensions
+                0xFF00, 0xFFEF, // Half-width characters
+                0x4e00, 0x9FAF) // CJK Ideograms
+    /** Default + about 400 Cyrillic characters */
+    val glyphRangesCyrillic
+        get() = intArrayOf(
+                0x0020, 0x00FF, // Basic Latin + Latin Supplement
+                0x0400, 0x052F, // Cyrillic + Cyrillic Supplement
+                0x2DE0, 0x2DFF, // Cyrillic Extended-A
+                0xA640, 0xA69F) // Cyrillic Extended-B
+    /** Default + Thai characters   */
+    val GetGlyphRangesThai
+        get() = intArrayOf(
+                0x0020, 0x00FF, // Basic Latin
+                0x0E00, 0x0E7F) // Thai
 
-//    // Helpers to build glyph ranges from text data. Feed all your application strings/characters to it then call BuildRanges().
+    // Helpers to build glyph ranges from text data. Feed your application strings/characters to it then call BuildRanges().
 //    +    struct GlyphRangesBuilder
 //    +    {
 //        +        ImVector<unsigned char> UsedChars;  // Store 1-bit per Unicode code point (0=unused, 1=used)
@@ -339,34 +423,112 @@ class FontAtlas {
 //                +        }
 //        +    out_ranges->push_back(0);
 //        +}
-    /** [Private] User rectangle for packing custom texture data into the atlas.   */
-    private class CustomRect {
 
-        // Input
 
-        /** User ID. <0x10000 for font mapped data (WIP/UNSUPPORTED), >=0x10000 for other texture data */
+    //-------------------------------------------
+    // Custom Rectangles/Glyphs API
+    //-------------------------------------------
+
+    /** You can request arbitrary rectangles to be packed into the atlas, for your own purposes. After calling build(),
+     *  you can query the rectangle position and render your pixels.
+     *  You can also request your rectangles to be mapped as font glyph (given a font + Unicode point),
+     *  so you can render e.g. custom colorful icons and use them as regular glyphs.    */
+    class CustomRect {
+
+        /** Input, User ID. Use <0x10000 to map into a font glyph, >=0x10000 for other/internal/custom texture data.   */
         var id = 0xFFFFFFFF.i
-        /** Desired rectangle width */
+        /** Input, Desired rectangle width */
         var width = 0
-        /** Desired rectangle height */
+        /** Input, Desired rectangle height */
         var height = 0
-
-        // Output
-
-        /** Packed width position in Atlas  */
+        /** Output, Packed width position in Atlas  */
         var x = 0xFFFF
-        /** Packed height position in Atlas  */
+        /** Output, Packed height position in Atlas  */
         var y = 0xFFFF
-
-        constructor()
-        constructor(id: Int, width: Int, height: Int) {
-            this.id = id
-            this.width = width
-            this.height = height
-        }
+        /** Input, For custom font glyphs only (ID<0x10000): glyph xadvance */
+        var glyphAdvanceX = 0f
+        /** Input, For custom font glyphs only (ID<0x10000): glyph display offset   */
+        var glyphOffset = Vec2()
+        /** Input, For custom font glyphs only (ID<0x10000): target font    */
+        var font: Font? = null
 
         val isPacked get() = x != 0xFFFF
     }
+
+    /** Id needs to be >= 0x10000. Id >= 0x80000000 are reserved for ImGui and DrawList   */
+    fun addCustomRectRegular(id: Int, width: Int, height: Int): Int {
+        assert(id >= 0x10000 && width in 0..0xFFFF && height in 0..0xFFFF)
+        val r = CustomRect()
+        r.id = id
+        r.width = width
+        r.height = height
+        customRects.add(r)
+        return customRects.lastIndex
+    }
+
+    /** Id needs to be < 0x10000 to register a rectangle to map into a specific font.   */
+    fun addCustomRectFontGlyph(font: Font, id: Int, width: Int, height: Int, advanceX: Float, offset: Vec2 = Vec2()): Int {
+        assert(width in 1..0xFFFF && height in 1..0xFFFF)
+        val r = CustomRect()
+        r.id = id
+        r.width = width
+        r.height = height
+        r.glyphAdvanceX = advanceX
+        r.glyphOffset = offset
+        r.font = font
+        customRects.add(r)
+        return customRects.lastIndex // Return index
+    }
+//    IMGUI_API void      ClearCustomRects()
+
+    fun calcCustomRectUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
+        assert(texSize greaterThan 0)   // Font atlas needs to be built before we can calculate UV coordinates
+        assert(rect.isPacked)                // Make sure the rectangle has been packed
+        outUvMin.put(rect.x.f / texSize.x, rect.y.f / texSize.y)
+        outUvMax.put((rect.x + rect.width).f / texSize.x, (rect.y + rect.height).f / texSize.y)
+    }
+
+    fun getCustomRectByIndex(index: Int) = customRects.getOrNull(index)
+
+    //-------------------------------------------
+    // Members
+    //-------------------------------------------
+
+    /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
+    during rendering via the DrawCmd structure.   */
+    var texId = -1
+    /** 1 component per pixel, each component is unsigned 8-bit. Total size = texSize.x * texSize.y  */
+    var texPixelsAlpha8: ByteBuffer? = null
+    /** 4 component per pixel, each component is unsigned 8-bit. Total size = texSize.x * texSize.y * 4  */
+    var texPixelsRGBA32: ByteBuffer? = null
+    /** Texture size calculated during Build(). */
+    var texSize = Vec2i()
+    /** Texture width desired by user before Build(). Must be a power-of-two. If have many glyphs your graphics API have
+     *  texture size restrictions you may want to increase texture width to decrease height.    */
+    var texDesiredWidth = 0
+    /** Padding between glyphs within texture in pixels. Defaults to 1. */
+    var texGlyphPadding = 1
+    /** Texture coordinates to a white pixel    */
+    var texUvWhitePixel = Vec2()
+    /** Hold all the fonts returned by AddFont*. Fonts[0] is the default font upon calling ImGui::NewFrame(), use
+     *  ImGui::PushFont()/PopFont() to change the current font. */
+    val fonts = ArrayList<Font>()
+
+    /** Rectangles for packing custom texture data into the atlas.  */
+    private val customRects = ArrayList<CustomRect>()
+    /** Internal data   */
+    private val configData = ArrayList<FontConfig>()
+    /** Identifiers of custom texture rectangle used by FontAtlas/DrawList  */
+    private val customRectIds = IntArray(1, { -1 })
+
+    private fun customRectCalcUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
+        assert(texSize.x > 0 && texSize.y > 0)   // Font atlas needs to be built before we can calculate UV coordinates
+        assert(rect.isPacked)                // Make sure the rectangle has been packed
+        outUvMin.put(rect.x / texSize.x, rect.y / texSize.y)
+        outUvMax.put((rect.x + rect.width) / texSize.x, (rect.y + rect.height) / texSize.y)
+    }
+
+    // ImFontAtlas internals
 
     fun buildWithStbTrueType(): Boolean {
 
@@ -384,7 +546,7 @@ class FontAtlas {
         var totalRangesCount = 0
         for (cfg in configData) {
             if (cfg.glyphRanges.isEmpty())
-                cfg.glyphRanges = glyphRangesDefault.clone()
+                cfg.glyphRanges = glyphRangesDefault
             for (i in cfg.glyphRanges.indices step 2) {
                 totalGlyphsCount += (cfg.glyphRanges[i + 1] - cfg.glyphRanges[i]) + 1
                 totalRangesCount++
@@ -481,7 +643,7 @@ class FontAtlas {
             // Extend texture height
             for (r in tmp.rects)
                 if (r.wasPacked)
-                texSize.y = glm.max(texSize.y, r.y + r.h)
+                    texSize.y = glm.max(texSize.y, r.y + r.h)
         }
         assert(bufRectsN == totalGlyphsCount)
         assert(bufPackedcharsN == totalGlyphsCount)
@@ -503,7 +665,7 @@ class FontAtlas {
                 val multiplyTable = buildMultiplyCalcLookupTable(cfg.rasterizerMultiply)
                 for (r in tmp.rects)
                     if (r.wasPacked)
-                    buildMultiplyRectAlpha8(multiplyTable, spc.pixels, r, spc.strideInBytes)
+                        buildMultiplyRectAlpha8(multiplyTable, spc.pixels, r, spc.strideInBytes)
             }
             tmp.rects.free()
         }
@@ -544,50 +706,30 @@ class FontAtlas {
                     val q = STBTTAlignedQuad.create()
                     stbtt_GetPackedQuad(range.chardataForRange, texSize, charIdx, Vec2(), q, false)
 
-                    val glyph = Font.Glyph()
-                    dstFont.glyphs.add(glyph)
-                    glyph.codepoint = codepoint.uc
-                    glyph.x0 = q.x0 + off.x
-                    glyph.y0 = q.y0 + off.y
-                    glyph.x1 = q.x1 + off.x
-                    glyph.y1 = q.y1 + off.y
-                    glyph.u0 = q.s0
-                    glyph.v0 = q.t0
-                    glyph.u1 = q.s1
-                    glyph.v1 = q.t1
-                    glyph.xAdvance = pc.xAdvance + cfg.glyphExtraSpacing.x  // Bake spacing into XAdvance
-
-                    if (cfg.pixelSnapH)
-                        glyph.xAdvance = (glyph.xAdvance + 0.5f).i.f
-                    // +1 to account for average padding, +0.99 to round
-                    dstFont.metricsTotalSurface +=
-                            ((glyph.u1 - glyph.u0) * texSize.x + 1.99f).i * ((glyph.v1 - glyph.v0) * texSize.y + 1.99f).i
+                    dstFont.addGlyph(codepoint, q.x0 + off.x, q.y0 + off.y,
+                            q.x1 + off.x, q.y1 + off.y, q.s0, q.t0, q.s1, q.t1, pc.advanceX)
                 }
             }
-            cfg.dstFont!!.buildLookupTable()
         }
 
         // Cleanup temporaries
         bufPackedchars.free()
         bufRanges.free()
 
-        // Render into our custom data block
-        buildRenderDefaultTexData()
+        buildFinish()
 
         return true
     }
 
     fun buildRegisterDefaultCustomRects() {
-        /*  FIXME-WIP: We should register in the constructor (but cannot because our static instances may not have
-            allocator ready by the time they initialize). This needs to be fixed because we can expose CustomRects.         */
-        if (customRects.isEmpty())
-            customRectRegister(DefaultTexData.id, DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
+        if (customRectIds[0] < 0)
+            customRectIds[0] = addCustomRectRegular(DefaultTexData.id, DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
     }
 
     fun buildSetupFont(font: Font, fontConfig: FontConfig, ascent: Float, descent: Float) {
         if (!fontConfig.mergeMode) with(font) {
             containerAtlas = this@FontAtlas
-            configData.add(fontConfig)
+            configData.add(fontConfig) // TODO replace [0] if not empty?
             configDataCount = 0
             fontSize = fontConfig.sizePixels
             this.ascent = ascent
@@ -616,14 +758,31 @@ class FontAtlas {
             }
     }
 
+    fun buildFinish() {
+        // Render into our custom data block
+        buildRenderDefaultTexData()
+
+        // Register custom rectangle glyphs
+        for (r in customRects) {
+            val font = r.font
+            if (font == null || r.id > 0x10000) continue
+
+            assert(font.containerAtlas === this)
+            val uv0 = Vec2()
+            val uv1 = Vec2()
+            calcCustomRectUV(r, uv0, uv1)
+            font.addGlyph(r.id, r.glyphOffset.x, r.glyphOffset.y, r.glyphOffset.x + r.width, r.glyphOffset.y + r.height,
+                    uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
+        }
+        // Build all fonts lookup tables
+        fonts.forEach { it.buildLookupTable() }
+    }
+
     fun buildRenderDefaultTexData() {
 
-        val r = customRects[0]
-        assert(r.id == DefaultTexData.id)
-        assert(r.width == DefaultTexData.wHalf * 2 + 1)
-        assert(r.height == DefaultTexData.h)
-        assert(r.isPacked)
-        assert(texPixelsAlpha8 != null)
+        val r = customRects[customRectIds[0]]
+        assert(r.width == DefaultTexData.wHalf * 2 + 1 && r.height == DefaultTexData.h)
+        assert(r.isPacked && texPixelsAlpha8 != null)
 
         // Render/copy pixels
         var n = 0
@@ -680,12 +839,13 @@ class FontAtlas {
         }
     }
 
+
     /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
         The white texels on the top left are the ones we'll use everywhere in ImGui to render filled shapes.     */
     object DefaultTexData {
         val wHalf = 90
         val h = 27
-        val id = 0xF0000
+        val id = 0x80000000.i
         val pixels = (
                 "..-         -XXXXXXX-    X    -           X           -XXXXXXX          -          XXXXXXX" +
                         "..-         -X.....X-   X.X   -          X.X          -X.....X          -          X.....X" +
@@ -722,33 +882,6 @@ class FontAtlas {
  *  GetTexDataAsRGBA32().   */
 class Font {
 
-    class Glyph {
-        var codepoint = ' '
-        var xAdvance = 0f
-        var x0 = 0f
-        var y0 = 0f
-        var x1 = 0f
-        var y1 = 0f
-        // Texture coordinates
-        var u0 = 0f
-        var v0 = 0f
-        var u1 = 0f
-        var v1 = 0f
-
-        infix fun put(other: Glyph) {
-            codepoint = other.codepoint
-            xAdvance = other.xAdvance
-            x0 = other.x0
-            y0 = other.y0
-            x1 = other.x1
-            y1 = other.y1
-            u0 = other.u0
-            v0 = other.v0
-            u1 = other.u1
-            v1 = other.v1
-        }
-    }
-
     // Members: Hot ~62/78 bytes
     /** <user set>, Height of characters, set during loading (don't change after loading)   */
     var fontSize = 0f
@@ -757,16 +890,16 @@ class Font {
     /** Offset font rendering by xx pixels  */
     var displayOffset = Vec2(0f, 1f)
     /** All glyphs. */
-    val glyphs = ArrayList<Glyph>()
-    /** Sparse. Glyphs->XAdvance in a directly indexable way (more cache-friendly, for CalcTextSize functions which are
+    val glyphs = ArrayList<FontGlyph>()
+    /** Sparse. Glyphs.advanceX in a directly indexable way (more cache-friendly, for CalcTextSize functions which are
     often bottleneck in large UI).  */
-    val indexXAdvance = ArrayList<Float>()
+    val indexAdvanceX = ArrayList<Float>()
     /** Sparse. Index glyphs by Unicode code-point. */
     val indexLookup = ArrayList<Int>()
     /** == FindGlyph(FontFallbackChar)  */
-    var fallbackGlyph: Glyph? = null
-    /** == FallbackGlyph->XAdvance  */
-    var fallbackXAdvance = 0f
+    var fallbackGlyph: FontGlyph? = null
+    /** == FallbackGlyph.advanceX  */
+    var fallbackAdvanceX = 0f
     /** Replacement glyph if one isn't found. Only set via SetFallbackChar()    */
     var fallbackChar = '?'
 //
@@ -775,7 +908,7 @@ class Font {
     var configDataCount = 0
 
     /** Pointer within ContainerAtlas->ConfigData   */
-    val configData = ArrayList<FontConfig>()
+    var configData = ArrayList<FontConfig>()
 
     var configDataIdx = 0
     /** What we has been loaded into    */
@@ -797,10 +930,10 @@ class Font {
         fontSize = 0f
         displayOffset = Vec2(0.0f, 1.0f)
         glyphs.clear()
-        indexXAdvance.clear()
+        indexAdvanceX.clear()
         indexLookup.clear()
         fallbackGlyph = null
-        fallbackXAdvance = 0f
+        fallbackAdvanceX = 0f
         configDataCount = 0
         configData.clear()
 //        containerAtlas = NULL TODO check
@@ -814,11 +947,11 @@ class Font {
         val maxCodepoint = glyphs.map { it.codepoint.i }.max()!!
 
         assert(glyphs.size < 0xFFFF) // -1 is reserved
-        indexXAdvance.clear()
+        indexAdvanceX.clear()
         indexLookup.clear()
         growIndex(maxCodepoint + 1)
         glyphs.forEachIndexed { i, g ->
-            indexXAdvance[g.codepoint.i] = g.xAdvance
+            indexAdvanceX[g.codepoint.i] = g.advanceX
             indexLookup[g.codepoint.i] = i
         }
 
@@ -826,25 +959,25 @@ class Font {
         // FIXME: Needs proper TAB handling but it needs to be contextualized (or we could arbitrary say that each string starts at "column 0" ?)
         if (findGlyph(' ') != null) {
             if (glyphs.last().codepoint != '\t')   // So we can call this function multiple times
-                glyphs.add(Glyph())
+                glyphs.add(FontGlyph())
             val tabGlyph = glyphs.last()
             tabGlyph put findGlyph(' ')!!
             tabGlyph.codepoint = '\t'
-            tabGlyph.xAdvance *= 4
-            indexXAdvance[tabGlyph.codepoint.i] = tabGlyph.xAdvance
+            tabGlyph.advanceX *= 4
+            indexAdvanceX[tabGlyph.codepoint.i] = tabGlyph.advanceX
             indexLookup[tabGlyph.codepoint.i] = glyphs.size - 1
         }
 
         fallbackGlyph = null
         fallbackGlyph = findGlyph(fallbackChar)
-        fallbackXAdvance = fallbackGlyph?.xAdvance ?: 0f
+        fallbackAdvanceX = fallbackGlyph?.advanceX ?: 0f
         for (i in 0 until maxCodepoint + 1)
-            if (indexXAdvance[i] < 0f)
-                indexXAdvance[i] = fallbackXAdvance
+            if (indexAdvanceX[i] < 0f)
+                indexAdvanceX[i] = fallbackAdvanceX
     }
 
     fun findGlyph(c: Char) = findGlyph(c.i)
-    fun findGlyph(c: Int): Glyph? {
+    fun findGlyph(c: Int): FontGlyph? {
         if (c < indexLookup.size) {
             val i = indexLookup[c]
             if (i != -1) return glyphs[i]
@@ -854,11 +987,7 @@ class Font {
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
 
-    fun getCharAdvance_A(c: Char) =
-            if (c < indexXAdvance.size)
-                indexXAdvance[c.i]
-            else
-                fallbackXAdvance
+    fun getCharAdvance(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
 
     val isLoaded get() = wasInit { containerAtlas }
 
@@ -937,7 +1066,7 @@ class Font {
                 if (c == '\r') continue
             }
 
-            val charWidth = (if (c < indexXAdvance.size) indexXAdvance[c.i] else fallbackXAdvance) * scale
+            val charWidth = (if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX) * scale
             if (lineWidth + charWidth >= maxWidth) {
                 s = prevS
                 break
@@ -1007,7 +1136,7 @@ class Font {
                     continue
                 }
             }
-            val charWidth = indexXAdvance.getOrElse(c.i, { fallbackXAdvance })
+            val charWidth = indexAdvanceX.getOrElse(c.i, { fallbackAdvanceX })
             if (c.isSpace) {
                 if (insideWord) {
                     lineWidth += blankWidth
@@ -1151,7 +1280,7 @@ class Font {
             val glyph = findGlyph(c)
 
             if (glyph != null) {
-                charWidth = glyph.xAdvance * scale
+                charWidth = glyph.advanceX * scale
 
                 // Arbitrarily assume that both space and tabs are empty glyphs as an optimization
                 if (c != ' ' && c != '\t') {
@@ -1243,17 +1372,54 @@ class Font {
         drawList._vtxCurrentIdx = drawList.vtxBuffer.size
     }
 
-    // Private
+    // [Internal]
+
     private fun growIndex(newSize: Int) {
-        assert(indexXAdvance.size == indexLookup.size)
+        assert(indexAdvanceX.size == indexLookup.size)
         if (newSize <= indexLookup.size)
             return
         for (i in indexLookup.size until newSize) {
-            indexXAdvance.add(-1f)
+            indexAdvanceX.add(-1f)
             indexLookup.add(-1)
         }
     }
-//    IMGUI_API void              AddRemapChar(ImWchar dst, ImWchar src, bool overwrite_dst = true); // Makes 'dst' character/glyph points to 'src' character/glyph. Currently needs to be called AFTER fonts have been built.
+
+    fun addGlyph(codepoint: Int, x0: Float, y0: Float, x1: Float, y1: Float, u0: Float, v0: Float, u1: Float, v1: Float, advanceX: Float) {
+        val glyph = FontGlyph()
+        glyphs.add(glyph)
+        glyph.codepoint = codepoint.uc
+        glyph.x0 = x0
+        glyph.y0 = y0
+        glyph.x1 = x1
+        glyph.y1 = y1
+        glyph.u0 = u0
+        glyph.v0 = v0
+        glyph.u1 = u1
+        glyph.v1 = v1
+        glyph.advanceX = advanceX + configData[0].glyphExtraSpacing.x  // Bake spacing into advanceX
+
+        if (configData[0].pixelSnapH)
+            glyph.advanceX = (glyph.advanceX + 0.5f).i.f
+        // Compute rough surface usage metrics (+1 to account for average padding, +0.99 to round)
+        metricsTotalSurface += ((glyph.u1 - glyph.u0) * containerAtlas.texSize.x + 1.99f).i *
+                ((glyph.v1 - glyph.v0) * containerAtlas.texSize.y + 1.99f).i
+    }
+
+    /** Makes 'dst' character/glyph points to 'src' character/glyph. Currently needs to be called AFTER fonts have been built.  */
+    fun addRemapChar(dst: Int, src: Int, overwriteDst: Boolean = true) {
+        // Currently this can only be called AFTER the font has been built, aka after calling ImFontAtlas::GetTexDataAs*() function.
+        assert(indexLookup.isNotEmpty())
+        val indexSize = indexLookup.size
+
+        if (dst < indexSize && indexLookup[dst] == -1 && !overwriteDst) // 'dst' already exists
+            return
+        if (src >= indexSize && dst >= indexSize) // both 'dst' and 'src' don't exist -> no-op
+            return
+
+        growIndex(dst + 1)
+        indexLookup[dst] = indexLookup.getOrElse(src, { -1 })
+        indexAdvanceX[dst] = indexAdvanceX.getOrElse(src, { 1f })
+    }
 
     fun setCurrent() {
         assert(isLoaded)    // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?

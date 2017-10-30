@@ -114,7 +114,7 @@ interface imgui_utilities {
             return Vec2(0f, fontSize)
         val textSize = font.calcTextSizeA(fontSize, Float.MAX_VALUE, wrapWidth, text, textDisplayEnd)
 
-        // Cancel out character spacing for the last character of a line (it is baked into glyph->XAdvance field)
+        // Cancel out character spacing for the last character of a line (it is baked into glyph->AdvanceX field)
         val fontScale = fontSize / font.fontSize
         val characterSpacingX = 1f * fontScale
         if (textSize.x > 0f)
