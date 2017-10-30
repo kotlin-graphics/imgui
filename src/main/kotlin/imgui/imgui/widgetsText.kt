@@ -251,20 +251,6 @@ interface imgui_widgetsText {
             renderArrow(drawList, Vec2(pos.x + barW - halfSz.x, pos.y), halfSz, Dir.Left, COL32_WHITE)
         }
 
-        fun paintVertsLinearGradientKeepAlpha(drawList: DrawList, vertStart: Int, vertEnd: Int, gradientP0: Vec2, gradientP1: Vec2, col0: Int, col1: Int) {
-            val gradientExtent = gradientP1 - gradientP0
-            val gradientInvLength2 = 1f / gradientExtent.lengthSqr
-            for (v in vertStart until vertEnd) {
-                val vert = drawList.vtxBuffer[v]
-                val d = (vert.pos - gradientP0) dot gradientExtent
-                val t = glm.clamp(d * gradientInvLength2, 0f, 1f)
-                val r = lerp((col0 ushr COL32_R_SHIFT) and 0xFF, (col1 ushr COL32_R_SHIFT) and 0xFF, t)
-                val g = lerp((col0 ushr COL32_G_SHIFT) and 0xFF, (col1 ushr COL32_G_SHIFT) and 0xFF, t)
-                val b = lerp((col0 ushr COL32_B_SHIFT) and 0xFF, (col1 ushr COL32_B_SHIFT) and 0xFF, t)
-                vert.col = (r shl COL32_R_SHIFT) or (g shl COL32_G_SHIFT) or (b shl COL32_B_SHIFT) or (vert.col and COL32_A_MASK)
-            }
-        }
-
         fun colorPickerOptionsPopup(flags: Int, refCol: FloatArray) {
             val allowOptPicker = flags hasnt Cef._PickerMask
             val allowOptAlphaBar = flags hasnt Cef.NoAlpha && flags hasnt Cef.AlphaBar

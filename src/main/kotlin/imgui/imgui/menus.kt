@@ -30,11 +30,12 @@ import imgui.ImGui.pushId
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderCheckMark
-import imgui.ImGui.renderCollapseTriangle
 import imgui.ImGui.renderText
+import imgui.ImGui.renderTriangle
 import imgui.ImGui.selectable
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
+import imgui.internal.Dir
 import imgui.internal.LayoutType
 import imgui.internal.Rect
 import imgui.internal.triangleContainsPoint
@@ -151,7 +152,7 @@ interface imgui_menus {
             val flags = Sf.Menu or Sf.DontClosePopups or Sf.DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.Null else Sf.Disabled, Vec2(w, 0f))
             if (!enabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-            renderCollapseTriangle(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.2f, 0f), false)
+            renderTriangle(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.2f, 0f), Dir.Right)
             if (!enabled) popStyleColor()
         }
 
@@ -248,7 +249,8 @@ interface imgui_menus {
         }
 
         if (selected)
-            renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.2f, 0f), (if (enabled) Col.Text else Col.TextDisabled).u32)
+            renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * (0.2f + 0.200f),
+                    g.fontSize * 0.134f * 0.5f), (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize  * 0.866f)
 
         return pressed
     }

@@ -23,12 +23,14 @@ enum class ButtonFlags {
     DontClosePopups,
     /** disable interactions */
     Disabled,
-    /** vertically align button to match text baseline - ButtonEx() only    */
+    /** vertically align button to match text baseline (buttonEx() only)    */
     AlignTextBaseLine,
     /** disable interaction if a key modifier is held   */
     NoKeyModifiers,
     /** require previous frame HoveredId to either match id or be null before being usable  */
-    AllowOverlapMode;
+    AllowOverlapMode,
+    /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only)   */
+    NoHoldingActiveID;
 
     val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
@@ -62,8 +64,10 @@ enum class SeparatorFlags {
     /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
     Horizontal,
     Vertical;
+
     val i = 1 shl ordinal
 }
+
 infix fun SeparatorFlags.or(b: SeparatorFlags) = i or b.i
 infix fun Int.or(b: SeparatorFlags) = this or b.i
 infix fun Int.has(b: SeparatorFlags) = (this and b.i) != 0
@@ -92,6 +96,11 @@ enum class DataType {
     val i = ordinal
 }
 
+enum class Dir { None, Left, Right, Up, Down;
+
+    val i = ordinal - 1
+}
+
 enum class Corner(val i: Int) {
     Null(0),
     TopLeft(1 shl 0), // 1
@@ -106,11 +115,3 @@ enum class Corner(val i: Int) {
 
 infix fun Int.or(b: Corner) = this or b.i
 infix fun Int.has(b: Corner) = (this and b.i) != 0
-
-enum class Dir(val i: Int) {
-    None(-1),
-    Left(0),
-    Right(1),
-    Up(2),
-    Down(3)
-}

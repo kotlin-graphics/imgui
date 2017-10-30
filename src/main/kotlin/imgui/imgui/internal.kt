@@ -461,7 +461,7 @@ interface imgui_internal {
                     Rect(windowRect.max.x - style.scrollbarSize, window.pos.y + borderSize,
                             windowRect.max.x - borderSize, windowRect.max.y - otherScrollbarSizeW - borderSize)
         if (!horizontal)
-            bb.min.y += window.titleBarHeight() + if (window.flags has Wf.MenuBar) window.menuBarHeight() else 0f
+            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight() else 0f
         if (bb.width <= 0f || bb.height <= 0f) return
 
         val windowRounding = if (window.flags has Wf.ChildWindow) style.childWindowRounding else style.windowRounding
@@ -844,46 +844,55 @@ interface imgui_internal {
     }
 
     /** Render a triangle to denote expanded/collapsed state    */
-    fun renderCollapseTriangle(pMin: Vec2, isOpen: Boolean, scale: Float = 1.0f) {
+    fun renderTriangle(pMin: Vec2, dir: Dir, scale: Float = 1.0f) {
 
         val window = g.currentWindow!!
 
         val h = g.fontSize * 1f
-        val r = h * 0.4f * scale
+        var r = h * 0.4f * scale
         val center = pMin + Vec2(h * 0.5f, h * 0.5f * scale)
 
         val a: Vec2
         val b: Vec2
         val c: Vec2
-        if (isOpen) {
-            center.y -= r * 0.25f
-            a = center + Vec2(0, 1) * r
-            b = center + Vec2(-0.866f, -0.5f) * r
-            c = center + Vec2(+0.866f, -0.5f) * r
-        } else {
-            a = center + Vec2(1, 0) * r
-            b = center + Vec2(-0.500f, +0.866f) * r
-            c = center + Vec2(-0.500f, -0.866f) * r
+        when (dir) {
+            Dir.Up, Dir.Down -> {
+                if (dir == Dir.Up) r = -r
+                center.y -= r * 0.25f
+                a = Vec2(0, 1) * r
+                b = Vec2(-0.866f, -0.5f) * r
+                c = Vec2(+0.866f, -0.5f) * r
+            }
+            Dir.Left, Dir.Right -> {
+                if (dir == Dir.Left) r = -r
+                a = Vec2(1, 0) * r
+                b = Vec2(-0.500f, +0.866f) * r
+                c = Vec2(-0.500f, -0.866f) * r
+            }
+            else -> throw Error()
         }
 
-        window.drawList.addTriangleFilled(a, b, c, Col.Text.u32)
+        window.drawList.addTriangleFilled(center + a, center + b, center + c, Col.Text.u32)
     }
 
     fun renderBullet(pos: Vec2) = currentWindow.drawList.addCircleFilled(pos, g.fontSize * 0.2f, Col.Text.u32, 8)
 
-    fun renderCheckMark(pos: Vec2, col: Int) {
+    fun renderCheckMark(pos: Vec2, col: Int, sz: Float) {
 
         val window = g.currentWindow!!
 
-        val startX = (g.fontSize * 0.307f + 0.5f).i.f
-        val remThird = ((g.fontSize - startX) / 3f).i.f
-        val b = Vec2(
-                pos.x + 0.5f + startX + remThird,
-                pos.y - 1f + (g.font.ascent * (g.fontSize / g.font.fontSize) + 0.5f).i.f + g.font.displayOffset.y.i.f)
-        window.drawList.pathLineTo(b - remThird)
-        window.drawList.pathLineTo(b)
-        window.drawList.pathLineTo(Vec2(b.x + remThird * 2, b.y - remThird * 2))
-        window.drawList.pathStroke(col, false)
+        val thickness = glm.max(sz / 5f, 1f)
+        val sz = sz - thickness * 0.5f
+        pos plus_ Vec2(thickness * 0.25f, thickness * 0.25f)
+
+        val third = sz / 3f
+        val bx = pos.x + third
+        val by = pos.y + sz - third * 0.5f
+        window.drawList.pathLineTo(Vec2(bx - third, by - third))
+        window.drawList.pathLineTo(Vec2(bx, by))
+
+        window.drawList.pathLineTo(Vec2(bx + third * 2, by - third * 2))
+        window.drawList.pathStroke(col, false, thickness)
     }
 
     /** FIXME: Cleanup and move code to ImDrawList. */
@@ -983,11 +992,12 @@ interface imgui_internal {
                     focusWindow(window)
                     g.activeIdClickOffset = IO.mousePos - bb.min
                 }
-                if ((flags has Bf.PressedOnClick && IO.mouseClicked[0]) ||
-                        (flags has Bf.PressedOnDoubleClick && IO.mouseDoubleClicked[0])) {
+                if ((flags has Bf.PressedOnClick && IO.mouseClicked[0]) || (flags has Bf.PressedOnDoubleClick && IO.mouseDoubleClicked[0])) {
                     pressed = true
-                    clearActiveId()
+                    if (flags has Bf.NoHoldingActiveID) clearActiveId()
+                    else setActiveId(id, window) // Hold on ID
                     focusWindow(window)
+                    g.activeIdClickOffset = IO.mousePos - bb.min
                 }
                 if (flags has Bf.PressedOnRelease && IO.mouseReleased[0]) {
                     // Repeat mode trumps <on release>
@@ -2147,7 +2157,7 @@ interface imgui_internal {
         if (displayFrame) {
             // Framed type
             renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
-            renderCollapseTriangle(bb.min + Vec2(padding.x, textBaseOffsetY), isOpen, 1f)
+            renderTriangle(bb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
                     range to make sure the ## aren't stripped out here.                 */
@@ -2164,7 +2174,8 @@ interface imgui_internal {
             if (flags has Tnf.Bullet)
                 TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
             else if (flags hasnt Tnf.Leaf)
-                renderCollapseTriangle(bb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY), isOpen, 0.7f)
+                renderTriangle(bb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
+                        if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
             renderText(textPos, label, label.length, false)
@@ -2254,6 +2265,44 @@ interface imgui_internal {
         else
             value += minStep - remainder
         return if (negative) -value else value
+    }
+
+    //-----------------------------------------------------------------------------
+    // Shade functions
+    //-----------------------------------------------------------------------------
+
+    /** Generic linear color gradient, write to RGB fields, leave A untouched.  */
+    fun shadeVertsLinearColorGradientKeepAlpha(drawList: DrawList, vertStart: Int, vertEnd: Int, gradientP0: Vec2, gradientP1: Vec2,
+                                               col0: Int, col1: Int) {
+        val gradientExtent = gradientP1 - gradientP0
+        val gradientInvLength2 = 1f / gradientExtent.lengthSqr
+        for (i in vertStart until vertEnd) {
+            val vert = drawList.vtxBuffer[i]
+            val d = vert.pos - gradientP0 dot gradientExtent
+            val t = glm.clamp(d * gradientInvLength2, 0f, 1f)
+            val r = lerp((col0 ushr COL32_R_SHIFT) and 0xFF, (col1 ushr COL32_R_SHIFT) and 0xFF, t)
+            val g = lerp((col0 ushr COL32_G_SHIFT) and 0xFF, (col1 ushr COL32_G_SHIFT) and 0xFF, t)
+            val b = lerp((col0 ushr COL32_B_SHIFT) and 0xFF, (col1 ushr COL32_B_SHIFT) and 0xFF, t)
+            vert.col = (r shl COL32_R_SHIFT) or (g shl COL32_G_SHIFT) or (b shl COL32_B_SHIFT) or (vert.col and COL32_A_MASK)
+        }
+    }
+
+    /** Scan and shade backward from the end of given vertices. Assume vertices are text only (= vert_start..vert_end
+     *  going left to right) so we can break as soon as we are out the gradient bounds. */
+    fun shadeVertsLinearAlphaGradientForLeftToRightText(drawList: DrawList, vertStart: Int, vertEnd: Int,
+                                                        gradientP0x: Float, gradientP1x: Float) {
+        val gradientExtentX = gradientP1x - gradientP0x
+        val gradientInvLength2 = 1f / (gradientExtentX * gradientExtentX)
+        var fullAlphaCount = 0
+        for (i in vertEnd - 1 downTo vertStart) {
+            val vert = drawList.vtxBuffer[i]
+            val d = (vert.pos.x - gradientP0x) * gradientExtentX
+            val alphaMul = 1f - glm.clamp(d * gradientInvLength2, 0f, 1f)
+            ++fullAlphaCount
+            if (alphaMul >= 1f && fullAlphaCount > 2) return // Early out
+            val a =(((vert.col ushr COL32_A_SHIFT) and 0xFF) * alphaMul).i
+            vert.col = (vert.col wo COL32_A_MASK) or (a shl COL32_A_SHIFT)
+        }
     }
 
     companion object {

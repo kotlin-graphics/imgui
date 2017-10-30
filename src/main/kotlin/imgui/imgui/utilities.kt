@@ -24,15 +24,21 @@ import imgui.WindowFlags as Wf
 
 interface imgui_utilities {
 
-    /** This is roughly matching the behavior of internal-facing ItemHoverable() which is
-     *  - we allow hovering to be true when activeId==window.moveID, so that clicking on non-interactive items
-     *  such as a text() item still returns true with isItemHovered()   */
+    /** This is roughly matching the behavior of internal-facing ItemHoverable()
+     *      - we allow hovering to be true when activeId==window.moveID, so that clicking on non-interactive items
+     *          such as a text() item still returns true with isItemHovered()
+     *      - this should work even for non-interactive items that have no ID, so we cannot use LastItemId  */
     val isItemHovered: Boolean
         get() {
             val window = g.currentWindow!!
             return when {
                 !window.dc.lastItemRectHoveredRect -> false
-                g.hoveredWindow !== window -> false
+            /*  [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to NOT
+                test for rootWindow but this leaves us unable to use isItemHovered after endChild() itself.
+                Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was the test
+                that has been running for a long while. */
+                // g.hoveredWindow !== window -> false
+                g.hoveredRootWindow !== window.rootWindow -> false
                 g.activeId != 0 && g.activeId != window.dc.lastItemId && !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
                 !window.isContentHoverable -> false
                 else -> true

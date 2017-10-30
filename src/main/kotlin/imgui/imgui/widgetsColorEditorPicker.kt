@@ -47,12 +47,12 @@ import imgui.ImGui.rgbToHSV
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowPos
+import imgui.ImGui.shadeVertsLinearColorGradientKeepAlpha
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.u32
 import imgui.imgui.imgui_internal.Companion.smallSquareSize
 import imgui.imgui.imgui_widgetsText.Companion.colorPickerOptionsPopup
-import imgui.imgui.imgui_widgetsText.Companion.paintVertsLinearGradientKeepAlpha
 import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
 import imgui.ColorEditFlags as Cef
@@ -455,7 +455,7 @@ interface imgui_widgetsColorEditorPicker {
                 // Paint colors over existing vertices
                 val gradientP0 = Vec2(wheelCenter.x + a0.cos * wheelRInner, wheelCenter.y + a0.sin * wheelRInner)
                 val gradientP1 = Vec2(wheelCenter.x + a1.cos * wheelRInner, wheelCenter.y + a1.sin * wheelRInner)
-                paintVertsLinearGradientKeepAlpha(drawList, drawList._vtxWritePtr - (drawList._vtxCurrentIdx - vertStartIdx),
+                shadeVertsLinearColorGradientKeepAlpha(drawList, drawList._vtxWritePtr - (drawList._vtxCurrentIdx - vertStartIdx),
                         drawList._vtxWritePtr, gradientP0, gradientP1, hueColors[n], hueColors[n + 1])
             }
 

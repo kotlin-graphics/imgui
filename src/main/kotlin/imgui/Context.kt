@@ -377,12 +377,12 @@ object IO {
 
     /** Previous mouse position temporary storage (nb: not for public use, set to MousePos in NewFrame())   */
     var mousePosPrev = Vec2(-Float.MAX_VALUE)
-    /** Mouse button went from !Down to Down    */
-    val mouseClicked = BooleanArray(5)
     /** Position at time of clicking    */
     val mouseClickedPos = Array(5, { Vec2() })
     /** Time of last click (used to figure out double-click)    */
     val mouseClickedTime = FloatArray(5)
+    /** Mouse button went from !Down to Down    */
+    val mouseClicked = BooleanArray(5)
     /** Has mouse button been double-clicked?    */
     val mouseDoubleClicked = BooleanArray(5)
     /** Mouse button went from Down to !Down    */

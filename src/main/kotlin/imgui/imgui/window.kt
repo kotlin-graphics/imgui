@@ -6,7 +6,6 @@ import glm_.f
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
 import imgui.ImGui.buttonBehavior
@@ -26,11 +25,10 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
-import imgui.ImGui.renderCollapseTriangle
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.renderTriangle
 import imgui.ImGui.scrollbar
-import imgui.ImGui.u32
 import imgui.internal.*
 import imgui.Context as g
 import imgui.ItemFlags as If
@@ -45,8 +43,6 @@ interface imgui_window {
         - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use
             widgets without explicitly calling a Begin/End pair.
         - Begin/End can be called multiple times during the frame with the same window name to append content.
-        - 'size_on_first_use' for a regular window denote the initial size for first-time creation (no saved data) and
-            isn't that useful. Use SetNextWindowSize() prior to calling Begin() for more flexible window manipulation.
         - The window name is used as a unique identifier to preserve window information across frames (and save
             rudimentary information to the .ini file).
             You can use the "##" or "###" markers to use the same label with different id, or same id with different
@@ -54,15 +50,8 @@ interface imgui_window {
         - Return false when window is collapsed, so you can early out in your code. You always need to call ImGui::End()
             even if false is returned.
         - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
-            be set to false when the button is pressed.
-        - Passing non-zero 'size' is roughly equivalent to calling SetNextWindowSize(size, Cond.FirstUseEver)
-            prior to calling Begin().   */
-    fun begin(name: String, pOpen: BooleanArray? = null, flags: Int = 0) = begin(name, pOpen, Vec2(), -1.0f, flags)
-
-    /** OBSOLETE. this is the older/longer API. the extra parameters aren't very relevant. call SetNextWindowSize() instead
-    if you want to set a window size. For regular windows, 'size_on_first_use' only applies to the first time EVER the
-    window is created and probably not what you want! might obsolete this API eventually.   */
-    fun begin(name: String, pOpen: BooleanArray?, sizeOnFirstUse: Vec2, bgAlpha: Float = -1.0f, flags: Int = 0): Boolean {
+            be set to false when the button is pressed. */
+    fun begin(name: String, pOpen: BooleanArray? = null, flags: Int = 0): Boolean {
 
         assert(name.isNotEmpty())   // Window name required
         assert(g.initialized)       // Forgot to call ImGui::NewFrame()
@@ -75,7 +64,12 @@ interface imgui_window {
 
         // Find or create
         var windowIsNew = false
-        val window = findWindowByName(name) ?: createNewWindow(name, sizeOnFirstUse, flags).also { windowIsNew = true }
+        val window = findWindowByName(name) ?: run {
+            // Any condition flag will do since we are creating a new window here.
+            val sizeOnFirstUse = if (g.setNextWindowSizeCond != Cond.Null) g.setNextWindowSizeVal else Vec2()
+            windowIsNew = true
+            createNewWindow(name, sizeOnFirstUse, flags)
+        }
 
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
@@ -272,11 +266,9 @@ interface imgui_window {
                 parentWindow.dc.childWindows.add(window)
             }
             if (flags has Wf.ChildWindow && flags hasnt Wf.Popup) {
+                assert(windowSizeSetByApi) // Submitted by beginChild()
                 window.posF put parentWindow!!.dc.cursorPos
                 window.pos put window.posF
-                /*  NB: argument name 'size_on_first_use' misleading here, it's really just 'size' as provided by user
-                passed via BeginChild()->Begin().   */
-                window.sizeFull put sizeOnFirstUse
                 window.size put window.sizeFull
             }
 
@@ -294,8 +286,8 @@ interface imgui_window {
                 val horizontalOverlap = style.itemSpacing.x
                 val rectToAvoid =
                         if (parentWindow!!.dc.menuBarAppending)
-                            Rect(-Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight(),
-                                    Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight() + parentWindow.menuBarHeight())
+                            Rect(-Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight,
+                                    Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight + parentWindow.menuBarHeight())
                         else
                             Rect(parentWindow.pos.x + horizontalOverlap, -Float.MAX_VALUE,
                                     parentWindow.pos.x + parentWindow.size.x - horizontalOverlap - parentWindow.scrollbarSizes.x, Float.MAX_VALUE)
@@ -412,21 +404,9 @@ interface imgui_window {
                 window.borderSize = if (flags has Wf.ShowBorders) 1f else 0f
 
                 // Window background, Default Alpha
-                val bgColorIdx = when {
-                    flags has Wf.ComboBox -> Col.ComboBg
-                    flags has Wf.Tooltip || flags has Wf.Popup -> Col.PopupBg
-                    flags has Wf.ChildWindow -> Col.ChildWindowBg
-                    else -> Col.WindowBg
-                }
-                // We don't use GetColorU32() because bg_alpha is assigned (not multiplied) below
-                val bgColor = Vec4(style.colors[bgColorIdx])
-                if (bgAlpha >= 0f)
-                    bgColor.w = bgAlpha
-                bgColor.w *= style.alpha
-                if (bgColor.w > 0f)
-                    window.drawList.addRectFilled(Vec2(0, window.titleBarHeight()) + window.pos, window.size + window.pos,
-                            bgColor.u32, windowRounding,
-                            if (flags has Wf.NoTitleBar) Corner.All.i else Corner.BotLeft or Corner.BotRight)
+                window.drawList.addRectFilled(Vec2(window.pos.x, window.pos.y + window.titleBarHeight),
+                        Vec2(window.pos + window.size), getWindowBgColorIdxFromFlags(flags).u32, windowRounding,
+                        if (flags has Wf.NoTitleBar) Corner.All.i else Corner.BotLeft or Corner.BotRight)
 
                 // Title bar
                 val isFocused = g.navWindow?.rootNonPopupWindow == window.rootNonPopupWindow ?: false
@@ -476,7 +456,7 @@ interface imgui_window {
 
                 // Update ContentsRegionMax. All the variable it depends on are set above in this function.
                 contentsRegionRect.min.x = -scroll.x + windowPadding.x
-                contentsRegionRect.min.y = -scroll.y + windowPadding.y + titleBarHeight() + menuBarHeight()
+                contentsRegionRect.min.y = -scroll.y + windowPadding.y + titleBarHeight + menuBarHeight()
                 contentsRegionRect.max.x = -scroll.x - windowPadding.x + (
                         if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else (size.x - scrollbarSizes.x))
                 contentsRegionRect.max.y = -scroll.y - windowPadding.y + (
@@ -487,7 +467,7 @@ interface imgui_window {
                 dc.groupOffsetX = 0f
                 dc.columnsOffsetX = 0.0f
                 dc.cursorStartPos.put(pos.x + dc.indentX + dc.columnsOffsetX,
-                        pos.y + titleBarHeight() + menuBarHeight() + windowPadding.y - scroll.y)
+                        pos.y + titleBarHeight + menuBarHeight() + windowPadding.y - scroll.y)
                 dc.cursorPos put dc.cursorStartPos
                 dc.cursorPosPrevLine put dc.cursorPos
                 dc.cursorMaxPos put dc.cursorStartPos
@@ -537,11 +517,11 @@ interface imgui_window {
             if (flags hasnt Wf.NoTitleBar) {
                 // Collapse button
                 if (flags hasnt Wf.NoCollapse)
-                    renderCollapseTriangle(Vec2(window.pos + style.framePadding), !window.collapsed, 1f)
+                    renderTriangle(Vec2(window.pos + style.framePadding), if(window.collapsed) Dir.Right else Dir.Down, 1f)
                 // Close button
                 if (pOpen != null) {
                     val pad = 2f
-                    val rad = (window.titleBarHeight() - pad * 2f) * 0.5f
+                    val rad = (window.titleBarHeight - pad * 2f) * 0.5f
                     if (closeButton(window.getId("#CLOSE"), window.rect().tr + Vec2(-pad - rad, pad + rad), rad))
                         pOpen[0] = false
                 }
@@ -586,7 +566,7 @@ interface imgui_window {
 
         /*  Inner clipping rectangle
         We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
-        Note that if our window is collapsed we will end up with a null clipping rectangle which is the correct 
+        Note that if our window is collapsed we will end up with a null clipping rectangle which is the correct
         behavior.   */
         val titleBarRect = window.titleBarRect()
         val borderSize = window.borderSize
@@ -820,7 +800,7 @@ interface imgui_window {
         get() = g.currentWindow!!.scroll.y
         set(value) = with(currentWindow) {
             // title bar height canceled out when using ScrollTargetRelY
-            scrollTarget.y = value + titleBarHeight() + menuBarHeight()
+            scrollTarget.y = value + titleBarHeight + menuBarHeight()
             scrollTargetCenterRatio.y = 0f
         }
 
@@ -887,8 +867,8 @@ interface imgui_window {
                         "%s/%s_%08X".format(style.locale, parentWindow.name, name, id)
                     else
                         "%s/%08X".format(style.locale, parentWindow.name, id)
-
-            val ret = ImGui.begin(title, null, size, -1f, flags)
+            ImGui.setNextWindowSize(size)
+            val ret = ImGui.begin(title, null, flags)
 
             val childWindow = currentWindow
             childWindow.autoFitChildAxes = autoFitAxes
@@ -896,6 +876,13 @@ interface imgui_window {
                 childWindow.flags = childWindow.flags wo Wf.ShowBorders
 
             return ret
+        }
+
+        fun getWindowBgColorIdxFromFlags(flags: Int) = when {
+            flags has Wf.ComboBox -> Col.ComboBg
+            flags has (Wf.Tooltip or Wf.Popup) -> Col.PopupBg
+            flags has Wf.ChildWindow -> Col.ChildWindowBg
+            else -> Col.WindowBg
         }
     }
 }

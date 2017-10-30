@@ -35,23 +35,13 @@ object functionalProgramming {
             block()
     }
 
-    inline fun withWindow(name: String, pOpen: BooleanArray? = null, flags: Int = 0, block: (Boolean) -> Unit) =
-            withWindow(name, pOpen, Vec2(), -1.0f, flags, block)
-
-
-    inline fun withWindow(name: String, pOpen: BooleanArray?, sizeOnFirstUse: Vec2, bgAlpha: Float = -1.0f, flags: Int = 0,
-                   block: (Boolean) -> Unit) {
-
-        block(begin(name, pOpen, sizeOnFirstUse, bgAlpha, flags))
+    inline fun withWindow(name: String, pOpen: BooleanArray?, flags: Int = 0, block: (Boolean) -> Unit) {
+        block(begin(name, pOpen, flags))
         end()
     }
 
-    inline fun window(name: String, pOpen: BooleanArray? = null, flags: Int = 0, block: () -> Unit) =
-            window(name, pOpen, Vec2(), -1.0f, flags, block)
-
-
-    inline fun window(name: String, pOpen: BooleanArray?, sizeOnFirstUse: Vec2, bgAlpha: Float = -1.0f, flags: Int = 0, block: () -> Unit) {
-        if (begin(name, pOpen, sizeOnFirstUse, bgAlpha, flags)) {
+    inline fun window(name: String, pOpen: BooleanArray?, flags: Int = 0, block: () -> Unit) {
+        if (begin(name, pOpen, flags)) {
             block()
             end()
         }
@@ -89,21 +79,21 @@ object functionalProgramming {
     }
 
     inline fun treeNode(strId: String, fmt: String, block: () -> Unit) {
-        if(treeNode(strId, fmt)) {
+        if (treeNode(strId, fmt)) {
             block()
             treePop()
         }
     }
 
     inline fun treeNode(ptrId: Any, fmt: String, block: () -> Unit) {
-        if(treeNode(ptrId, fmt)) {
+        if (treeNode(ptrId, fmt)) {
             block()
             treePop()
         }
     }
 
     inline fun popupModal(name: String, pOpen: BooleanArray? = null, extraFlags: Int = 0, block: () -> Unit) {
-        if(beginPopupModal(name, pOpen, extraFlags)) {
+        if (beginPopupModal(name, pOpen, extraFlags)) {
             block()
             endPopup()
         }

@@ -91,7 +91,7 @@ interface imgui_widgetsSelectableLists {
         }
 
         var buttonFlags = 0
-        if (flags has Sf.Menu) buttonFlags = buttonFlags or Bf.PressedOnClick
+        if (flags has Sf.Menu) buttonFlags = buttonFlags or Bf.PressedOnClick or Bf.NoHoldingActiveID
         if (flags has Sf.MenuItem) buttonFlags = buttonFlags or Bf.PressedOnRelease
         if (flags has Sf.Disabled) buttonFlags = buttonFlags or Bf.Disabled
         if (flags has Sf.AllowDoubleClick) buttonFlags = buttonFlags or Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick

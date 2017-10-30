@@ -25,10 +25,11 @@ import imgui.ImGui.popId
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushId
 import imgui.ImGui.pushStyleVar
-import imgui.ImGui.renderCollapseTriangle
+import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.renderTriangle
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setNextWindowPos
@@ -36,6 +37,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHere
 import imgui.ImGui.spacing
 import imgui.imgui.imgui_internal.Companion.smallSquareSize
+import imgui.internal.Dir
 import imgui.internal.Rect
 import imgui.Context as g
 import imgui.WindowFlags as Wf
@@ -164,7 +166,7 @@ interface imgui_widgetsMain {
         if (v[0]) {
             val checkSz = glm.min(checkBb.width, checkBb.height)
             val pad = glm.max(1f, (checkSz / 6f).i.f)
-            window.drawList.addRectFilled(checkBb.min + Vec2(pad), checkBb.max - Vec2(pad), Col.CheckMark.u32, style.frameRounding)
+            renderCheckMark(checkBb.min + Vec2(pad), Col.CheckMark.u32, checkBb.width - pad * 2f)
         }
 
         if (g.logEnabled) logRenderedText(textBb.min, if (v[0]) "[x]" else "[ ]")
@@ -275,7 +277,7 @@ interface imgui_widgetsMain {
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
         val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
         renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, true, style.frameRounding) // FIXME-ROUNDING
-        renderCollapseTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y) plus_ style.framePadding.y, true)
+        renderTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y) plus_ style.framePadding.y, Dir.Down)
 
         if (previewValue != null)
             renderTextClipped(frameBb.min + style.framePadding, valueBb.max, previewValue)
@@ -283,7 +285,7 @@ interface imgui_widgetsMain {
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
-        if (pressed && !popupOpen){
+        if (pressed && !popupOpen) {
             openPopupEx(id, false)
             popupOpen = true
         }

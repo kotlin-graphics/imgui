@@ -417,11 +417,13 @@ interface imgui_demoDebugInfo {
             }
 
             treeNode("Collapsing Headers") {
+                checkbox("Enable extra group", closableGroup)
                 collapsingHeader("Header") {
-                    checkbox("Enable extra group", closableGroup)
+                    text("IsItemHovered: $isItemHovered")
                     for (i in 0..4) text("Some content $i")
                 }
                 collapsingHeader("Header with a close button", closableGroup) {
+                    text("IsItemHovered: $isItemHovered")
                     for (i in 0..4) text("More content $i")
                 }
             }
@@ -1315,6 +1317,11 @@ interface imgui_demoDebugInfo {
 
             treeNode("Context menus") {
 
+                // BeginPopupContextItem() is a helper to provide common/simple popup behavior of essentially doing:
+                //    if (IsItemHovered() && IsMouseClicked(0))
+                //       OpenPopup(id);
+                //    return BeginPopup(id);
+                // For more advanced uses you may want to replicate and cuztomize this code. This the comments inside BeginPopupContextItem() implementation.
                 //                static float value = 0.5f;
 //                ImGui::Text("Value = %.3f (<-- right-click here)", value);
 //                if (ImGui::BeginPopupContextItem("item context menu"))
@@ -1326,9 +1333,9 @@ interface imgui_demoDebugInfo {
 //                }
 //
 //                static char name[32] = "Label1";
-//                char buf[64]; sprintf(buf, "Button: %s###Button", name); // ### operator override ID ignoring the preceeding label
+//                char buf[64]; sprintf(buf, "Button: %s###Button", name); // ### operator override ID ignoring the preceding label
 //                ImGui::Button(buf);
-//                if (ImGui::BeginPopupContextItem("rename context menu"))
+//                if (ImGui::BeginPopupContextItem()) // When used after an item that has an ID (here the Button), we can skip providing an ID to BeginPopupContextItem().
 //                {
 //                    ImGui::Text("Edit name");
 //                    ImGui::InputText("##edit", name, IM_ARRAYSIZE(name));
@@ -2266,7 +2273,7 @@ interface imgui_demoDebugInfo {
                     if (corner has 2) IO.displaySize.y - DISTANCE else DISTANCE)
             val windowPosPivot = Vec2(if (corner has 1) 1f else 0f, if (corner has 2) 1f else 0f)
             setNextWindowPos(windowPos, Cond.Always, windowPosPivot)
-            pushStyleColor(Col.WindowBg, Vec4(0f, 0f, 0f, 0.3f))
+            pushStyleColor(Col.WindowBg, Vec4(0f, 0f, 0f, 0.3f))  // Transparent background
             if (begin("Example: Fixed Overlay", pOpen, Wf.NoTitleBar or Wf.NoResize or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoSavedSettings)) {
                 text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
                 separator()
@@ -2293,22 +2300,22 @@ interface imgui_demoDebugInfo {
             /*  By default, Windows are uniquely identified by their title.
                 You can use the "##" and "###" markers to manipulate the display/ID.
              */
-
+//TODO
             // Using "##" to display same title but have unique identifier.
-            setNextWindowPos(Vec2(100), Cond.FirstUseEver)
-            window("Same title as another window##1") {
-                text("This is window 1.\nMy title is the same as window 2, but my identifier is unique.")
-            }
-
-            setNextWindowPos(Vec2(100, 200), Cond.FirstUseEver)
-            window("Same title as another window##2") {
-                text("This is window 2.\nMy title is the same as window 1, but my identifier is unique.")
-            }
-
-            // Using "###" to display a changing title but keep a static identifier "AnimatedTitle"
-            val title = "Animated title ${"|/-\\"[(time / 0.25f).i and 3]} ${glm_.detail.Random.int}###AnimatedTitle"
-            setNextWindowPos(Vec2(100, 300), Cond.FirstUseEver)
-            window(title) { text("This window has a changing title.") }
+//            setNextWindowPos(Vec2(100), Cond.FirstUseEver)
+//            window("Same title as another window##1") {
+//                text("This is window 1.\nMy title is the same as window 2, but my identifier is unique.")
+//            }
+//
+//            setNextWindowPos(Vec2(100, 200), Cond.FirstUseEver)
+//            window("Same title as another window##2") {
+//                text("This is window 2.\nMy title is the same as window 1, but my identifier is unique.")
+//            }
+//
+//            // Using "###" to display a changing title but keep a static identifier "AnimatedTitle"
+//            val title = "Animated title ${"|/-\\"[(time / 0.25f).i and 3]} ${glm_.detail.Random.int}###AnimatedTitle"
+//            setNextWindowPos(Vec2(100, 300), Cond.FirstUseEver)
+//            window(title) { text("This window has a changing title.") }
         }
 
         /** Demonstrate using the low-level ImDrawList to draw custom shapes.   */

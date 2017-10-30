@@ -827,16 +827,16 @@ class DrawList {
 
         for (i in 1 until _channelsCount) {
             val ch = _channels[i]
-            for (i in ch.cmdBuffer.indices) {
-                cmdBuffer[cmdWrite] = DrawCmd(ch.cmdBuffer[i])
+            for (j in ch.cmdBuffer.indices) {
+                cmdBuffer[cmdWrite] = DrawCmd(ch.cmdBuffer[j])
                 cmdWrite++
             }
-            for (i in ch.idxBuffer.indices) {
-                idxBuffer[_idxWritePtr] = ch.idxBuffer[i]
+            for (j in ch.idxBuffer.indices) {
+                idxBuffer[_idxWritePtr] = ch.idxBuffer[j]
                 _idxWritePtr++
             }
         }
-        addDrawCmd()
+        updateClipRect() // We call this instead of addDrawCmd(), so that empty channels won't produce an extra draw call.
         _channelsCount = 1
     }
 
@@ -1015,7 +1015,7 @@ class DrawList {
 
         // Try to merge with previous command if it matches, else use current command
         val prevCmd = if (cmdBuffer.size > 1) cmdBuffer[cmdBuffer.lastIndex - 1] else null
-        if (prevCmd != null && prevCmd.textureId == currentTextureId!! && prevCmd.clipRect == currentClipRect &&
+        if (currCmd.elemCount == 0 && prevCmd != null && prevCmd.textureId == currentTextureId!! && prevCmd.clipRect == currentClipRect &&
                 prevCmd.userCallback == null)
             cmdBuffer.pop()
         else

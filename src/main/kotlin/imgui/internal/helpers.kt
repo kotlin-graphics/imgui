@@ -239,6 +239,11 @@ fun Vec2.invLength(failValue: Float): Float {
 
 fun Vec2.rotate_(cosA: Float, sinA: Float) = put(x * cosA - y * sinA, x * sinA + y * cosA)
 fun Vec2.rotate(cosA: Float, sinA: Float) = Vec2(x * cosA - y * sinA, x * sinA + y * cosA)
+fun linearSweep(current: Float, target: Float, speed: Float) = when {
+    current < target -> glm.min(current + speed, target)
+    current > target -> glm.max(current - speed, target)
+    else -> current
+}
 
 
 // JVM IMGUI

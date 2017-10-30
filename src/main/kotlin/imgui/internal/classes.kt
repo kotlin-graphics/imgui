@@ -10,6 +10,7 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
+import imgui.ImGui.currentWindow
 import imgui.ImGui.keepAliveId
 import java.util.*
 import kotlin.collections.ArrayList
@@ -506,11 +507,11 @@ class Window(
 
     fun rect() = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
     fun calcFontSize() = g.fontBaseSize * fontWindowScale
-    fun titleBarHeight() = if (flags has Wf.NoTitleBar) 0f else calcFontSize() + style.framePadding.y * 2f
-    fun titleBarRect() = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight()))
+    val titleBarHeight get() = if (flags has Wf.NoTitleBar) 0f else calcFontSize() + style.framePadding.y * 2f
+    fun titleBarRect() = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight))
     fun menuBarHeight() = if (flags has Wf.MenuBar) calcFontSize() + style.framePadding.y * 2f else 0f
     fun menuBarRect(): Rect {
-        val y1 = pos.y + titleBarHeight()
+        val y1 = pos.y + titleBarHeight
         return Rect(pos.x.f, y1, pos.x + sizeFull.x, y1 + menuBarHeight())
     }
 
@@ -656,4 +657,22 @@ class Window(
     // FIXME: Add a more explicit sort order in the window structure.
     private val childWindowComparer = compareBy<Window>({ it.flags has Wf.Popup }, { it.flags has Wf.Tooltip },
             { it.flags has Wf.ComboBox }, { it.orderWithinParent })
+}
+
+/** Backup and restore just enough data to be able to use isItemHovered() on item A after another B in the same window
+ *  has overwritten the data.   */
+fun itemHoveredDataBackup(block: () -> Unit) {
+    // backup
+    var window = g.currentWindow!!
+    val lastItemId = window.dc.lastItemId
+    val lastItemRect = Rect(window.dc.lastItemRect)
+    val lastItemRectHoveredRect = window.dc.lastItemRectHoveredRect
+
+    block()
+
+    // restore
+    window = g.currentWindow!!
+    window.dc.lastItemId = lastItemId
+    window.dc.lastItemRect put lastItemRect
+    window.dc.lastItemRectHoveredRect = lastItemRectHoveredRect
 }

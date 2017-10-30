@@ -2,16 +2,17 @@ package imgui.imgui
 
 import glm_.glm
 import glm_.vec2.Vec2
-import imgui.ImGui.currentWindow
-import imgui.ImGui.popId
-import imgui.ImGui.treeNodeBehavior
-import imgui.ImGui.unindent
+import imgui.Cond
 import imgui.Context.style
 import imgui.ImGui.closeButton
+import imgui.ImGui.currentWindow
 import imgui.ImGui.indent
+import imgui.ImGui.popId
 import imgui.ImGui.pushId
-import imgui.Cond
+import imgui.ImGui.treeNodeBehavior
+import imgui.ImGui.unindent
 import imgui.TreeNodeFlags
+import imgui.internal.itemHoveredDataBackup
 import imgui.or
 import imgui.Context as g
 import imgui.TreeNodeFlags as Tnf
@@ -112,7 +113,7 @@ interface imgui_widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        if(pOpen!= null && !pOpen[0]) return false
+        if (pOpen != null && !pOpen[0]) return false
 
         val id = window.getId(label)
         val isOpen = treeNodeBehavior(id, flags or Tnf.CollapsingHeader or Tnf.NoTreePushOnOpen or
@@ -120,9 +121,11 @@ interface imgui_widgetsTrees {
         if (pOpen != null) {
             // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
             val buttonSz = g.fontSize * 0.5f
-            if (closeButton(window.getId(id + 1), Vec2(glm.min(window.dc.lastItemRect.max.x, window.clipRect.max.x) -
-                    style.framePadding.x - buttonSz, window.dc.lastItemRect.min.y + style.framePadding.y + buttonSz), buttonSz))
-            pOpen[0] = false
+            itemHoveredDataBackup {
+                if (closeButton(window.getId(id + 1), Vec2(glm.min(window.dc.lastItemRect.max.x, window.clipRect.max.x) -
+                        style.framePadding.x - buttonSz, window.dc.lastItemRect.min.y + style.framePadding.y + buttonSz), buttonSz))
+                    pOpen[0] = false
+            }
         }
         return isOpen
     }
