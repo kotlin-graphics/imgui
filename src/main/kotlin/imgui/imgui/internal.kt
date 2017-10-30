@@ -69,6 +69,7 @@ import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
 import imgui.internal.LayoutType as Lt
+import imgui.HoveredFlags as Hf
 
 fun main(args: Array<String>) {
 
@@ -107,31 +108,6 @@ interface imgui_internal {
         return g.windows.firstOrNull { it.id == id }
     }
 
-    /** Moving window to front of display (which happens to be back of our sorted list) */
-    fun focusWindow(window: Window?) {
-
-        // Always mark the window we passed as focused. This is used for keyboard interactions such as tabbing.
-        g.navWindow = window
-
-        // Passing NULL allow to disable keyboard focus
-        if (window == null) return
-
-        // And move its root window to the top of the pile
-//    if (window.rootWindow) TODO check
-        val window = window.rootWindow
-
-        // Steal focus on active widgets
-        if (window.flags has Wf.Popup) // FIXME: This statement should be unnecessary. Need further testing before removing it..
-            if (g.activeId != 0 && g.activeIdWindow != null && g.activeIdWindow!!.rootWindow != window)
-                clearActiveId()
-
-        // Bring to front
-        if ((window.flags has Wf.NoBringToFrontOnFocus) || g.windows.last() === window)
-            return
-        g.windows.remove(window)
-        g.windows.add(window)
-    }
-
     fun initialize() {
 
         g.logClipboard = StringBuilder()
@@ -166,21 +142,39 @@ interface imgui_internal {
 
         end()
 
-        // Click to focus window and start moving (after we're done with all our widgets)
-        if (g.activeId == 0 && g.hoveredId == 0 && IO.mouseClicked[0]) {
-            // Unless we just made a popup appear
-            if (!(g.navWindow != null && !g.navWindow!!.wasActive && g.navWindow!!.active)) {
-                if (g.hoveredRootWindow != null) {
-                    focusWindow(g.hoveredWindow)
-                    if (g.hoveredWindow!!.flags hasnt Wf.NoMove) {
-                        g.movedWindow = g.hoveredWindow
-                        g.movedWindowMoveId = g.hoveredWindow!!.moveId
-                        setActiveId(g.movedWindowMoveId, g.hoveredRootWindow)
+        if (g.activeId == 0 && g.hoveredId == 0)
+            if (g.navWindow == null || !g.navWindow!!.appearing) { // Unless we just made a window/popup appear
+                // Click to focus window and start moving (after we're done with all our widgets)
+                if (IO.mouseClicked[0])
+                    if (g.hoveredRootWindow != null) {
+                        g.hoveredWindow.focus()
+                        if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove) {
+                            g.movedWindow = g.hoveredWindow
+                            g.movedWindowMoveId = g.hoveredWindow!!.moveId
+                            setActiveId(g.movedWindowMoveId, g.hoveredRootWindow)
+                        }
+                    } else if (g.navWindow != null && frontMostModalRootWindow == null)
+                        null.focus()   // Clicking on void disable focus
+
+                /*  With right mouse button we close popups without changing focus
+                (The left mouse button path calls FocusWindow which will lead NewFrame->CloseInactivePopups to trigger) */
+                if (IO.mouseClicked[1]) {
+                    /*  Find the top-most window between HoveredWindow and the front most Modal Window.
+                        This is where we can trim the popup stack.  */
+                    val modal = frontMostModalRootWindow
+                    var hoveredWindowAboveModal = false
+                    if (modal == null)
+                        hoveredWindowAboveModal = true
+                    var i = g.windows.lastIndex
+                    while (i >= 0 && !hoveredWindowAboveModal) {
+                        val window = g.windows[i]
+                        if (window === modal) break
+                        if (window === g.hoveredWindow) hoveredWindowAboveModal = true
+                        i--
                     }
-                } else if (g.navWindow != null && getFrontMostModalRootWindow() == null)
-                    focusWindow(null)   // Clicking on void disable focus
+                    closeInactivePopups(if (hoveredWindowAboveModal) g.hoveredWindow!! else modal!!)
+                }
             }
-        }
 
         /*  Sort the window list so that all child windows are after their parent
             We cannot do that on FocusWindow() because childs may not exist yet         */
@@ -276,7 +270,7 @@ interface imgui_internal {
         g.hoveredWindow !== g.currentWindow -> false
         g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
         !isMouseHoveringRect(bb) -> false
-        !g.currentWindow!!.isContentHoverable -> false
+        !g.currentWindow!!.isContentHoverable(Hf.Default.i) -> false
         else -> {
             setHoveredId(id)
             true
@@ -386,8 +380,12 @@ interface imgui_internal {
         val popupRef = PopupRef(id, window, window.getId("##menus"), IO.mousePos)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack.push(popupRef)
-        else if (reopenExisting || g.openPopupStack[currentStackSize].popupId != id)
+        else if (reopenExisting || g.openPopupStack[currentStackSize].popupId != id) {
             g.openPopupStack[currentStackSize] = popupRef
+            /*  When reopening a popup we first refocus its parent, otherwise if its parent is itself a popup
+                it would get closed by CloseInactivePopups().  This is equivalent to what ClosePopupToLevel() does. */
+            if (g.openPopupStack[currentStackSize].popupId == id) window.focus()
+        }
     }
 
     fun closePopup(id: Int) {
@@ -989,14 +987,14 @@ interface imgui_internal {
                 PressedOnDoubleClick   |  <on dclick>    |  <on dclick> <on repeat> <on repeat> ..   */
                 if (flags has Bf.PressedOnClickRelease && IO.mouseClicked[0]) {
                     setActiveId(id, window) // Hold on ID
-                    focusWindow(window)
+                    window.focus()
                     g.activeIdClickOffset = IO.mousePos - bb.min
                 }
                 if ((flags has Bf.PressedOnClick && IO.mouseClicked[0]) || (flags has Bf.PressedOnDoubleClick && IO.mouseDoubleClicked[0])) {
                     pressed = true
                     if (flags has Bf.NoHoldingActiveID) clearActiveId()
                     else setActiveId(id, window) // Hold on ID
-                    focusWindow(window)
+                    window.focus()
                     g.activeIdClickOffset = IO.mousePos - bb.min
                 }
                 if (flags has Bf.PressedOnRelease && IO.mouseReleased[0]) {
@@ -1432,7 +1430,7 @@ interface imgui_internal {
                     selectAll = true
             }
             setActiveId(id, window)
-            focusWindow(window)
+            window.focus()
         } else if (IO.mouseClicked[0])
         // Release focus when we click outside
             clearActiveId = true
@@ -2300,7 +2298,7 @@ interface imgui_internal {
             val alphaMul = 1f - glm.clamp(d * gradientInvLength2, 0f, 1f)
             ++fullAlphaCount
             if (alphaMul >= 1f && fullAlphaCount > 2) return // Early out
-            val a =(((vert.col ushr COL32_A_SHIFT) and 0xFF) * alphaMul).i
+            val a = (((vert.col ushr COL32_A_SHIFT) and 0xFF) * alphaMul).i
             vert.col = (vert.col wo COL32_A_MASK) or (a shl COL32_A_SHIFT)
         }
     }

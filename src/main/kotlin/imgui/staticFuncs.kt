@@ -5,18 +5,14 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.Context.style
-import imgui.ImGui.buttonBehavior
-import imgui.ImGui.currentWindowRead
-import imgui.ImGui.focusWindow
 import imgui.ImGui.getColumnOffset
-import imgui.ImGui.setHoveredId
 import imgui.internal.*
 import uno.kotlin.isPrintable
 import java.io.File
 import java.nio.file.Paths
 import imgui.Context as g
-import imgui.WindowFlags as Wf
 import imgui.InputTextFlags as Itf
+import imgui.WindowFlags as Wf
 
 
 fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = 0): Nothing = TODO()
@@ -285,7 +281,7 @@ fun getVisibleRect(): Rect {
     return Rect(0f, 0f, IO.displaySize.x.f, IO.displaySize.y.f)
 }
 
-fun closeInactivePopups() {
+fun closeInactivePopups(refWindow: Window?) {
 
     if (g.openPopupStack.empty())
         return
@@ -293,7 +289,7 @@ fun closeInactivePopups() {
     /*  When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it.
         Don't close our own child popup windows */
     var n = 0
-    if (g.navWindow != null)
+    if (refWindow != null)
         while (n < g.openPopupStack.size) {
             val popup = g.openPopupStack[n]
             if (popup.window == null) {
@@ -305,38 +301,35 @@ fun closeInactivePopups() {
                 n++
                 continue
             }
-
+            // Trim the stack if popups are not direct descendant of the reference window (which is often the NavWindow)
             var hasFocus = false
             var m = n
             while (m < g.openPopupStack.size && !hasFocus) {
-                hasFocus = g.openPopupStack[m].window != null && g.openPopupStack[m].window!!.rootWindow === g.navWindow!!.rootWindow
+                hasFocus = g.openPopupStack[m].window != null && g.openPopupStack[m].window!!.rootWindow === refWindow.rootWindow
                 m++
             }
-            if (!hasFocus)
-                break
+            if (!hasFocus) break
             n++
         }
 
-    if (n < g.openPopupStack.size)   // This test is not required but it allows to set a useful breakpoint on the line below
-        for (i in n until g.openPopupStack.size) g.openPopupStack.pop()  // resize(n)
+    if (n < g.openPopupStack.size)   // This test is not required but it allows to set a convenient breakpoint on the block below
+        closePopupToLevel(n)
 }
 
 fun closePopupToLevel(remaining: Int) {
     if (remaining > 0)
-        focusWindow(g.openPopupStack[remaining - 1].window)
+        g.openPopupStack[remaining - 1].window.focus()
     else
-        focusWindow(g.openPopupStack[0].parentWindow)
+        g.openPopupStack[0].parentWindow.focus()
     for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
 }
 
-fun getFrontMostModalRootWindow(): Window? {
-    for (n in g.openPopupStack.size - 1 downTo 0) {
-        val frontMostPopup = g.openPopupStack[n].window
-        if (frontMostPopup != null && frontMostPopup.flags has Wf.Modal)
-            return frontMostPopup
+val frontMostModalRootWindow: Window?
+    get() {
+        for (n in g.openPopupStack.size - 1 downTo 0)
+            g.openPopupStack[n].window?.let { if (it.flags has Wf.Modal) return it }
+        return null
     }
-    return null
-}
 
 fun findBestPopupWindowPos(basePos: Vec2, window: Window, rInner: Rect): Vec2 {
 

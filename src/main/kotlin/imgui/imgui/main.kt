@@ -6,12 +6,12 @@ import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.endFrame
-import imgui.ImGui.focusWindow
 import imgui.ImGui.initialize
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
 import imgui.ImGui.setNextWindowSize
 import imgui.internal.Window
+import imgui.internal.focus
 import imgui.internal.lengthSqr
 import imgui.Context as g
 import imgui.WindowFlags as Wf
@@ -127,7 +127,7 @@ interface imgui_main {
                 g.movedWindow!!.rootWindow.posF plus_ IO.mouseDelta
                 if (IO.mouseDelta notEqual 0f)
                     markIniSettingsDirty(g.movedWindow!!.rootWindow)
-                focusWindow(g.movedWindow)
+                g.movedWindow.focus()
             } else {
                 clearActiveId()
                 g.movedWindow = null
@@ -152,7 +152,7 @@ interface imgui_main {
         else
             g.hoveredRootWindow = g.movedWindow?.rootWindow ?: findHoveredWindow(IO.mousePos, true)
 
-        val modalWindow = getFrontMostModalRootWindow()
+        val modalWindow = frontMostModalRootWindow
         if (modalWindow != null) {
             g.modalWindowDarkeningRatio = glm.min(g.modalWindowDarkeningRatio + IO.deltaTime * 6f, 1f)
             var window = g.hoveredRootWindow
@@ -234,7 +234,7 @@ interface imgui_main {
         if (g.navWindow != null && !g.navWindow!!.wasActive)
             for (i in g.windows.size - 1 downTo 0)
                 if (g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
-                    focusWindow(g.windows[i])
+                    g.windows[i].focus()
                     break
                 }
 
@@ -243,7 +243,7 @@ interface imgui_main {
             explicit clear. */
         g.currentWindowStack.clear()
         g.currentPopupStack.clear()
-        closeInactivePopups()
+        closeInactivePopups(g.navWindow)
 
         // Create implicit window - we will only render it if the user has added something to it.
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)

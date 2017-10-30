@@ -28,7 +28,7 @@ object LwjglGL3 {
 
     lateinit var window: GlfwWindow
     var time = 0.0
-    val mousePressed = Array(3, { false })
+    val mouseJustPressed = Array(3, { false })
     var mouseWheel = 0f
 
     object Buffer {
@@ -123,8 +123,8 @@ object LwjglGL3 {
         repeat(3) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
-            IO.mouseDown[it] = mousePressed[it] || window.mouseButton(it) != 0
-            mousePressed[it] = false
+            IO.mouseDown[it] = mouseJustPressed[it] || window.mouseButton(it) != 0
+            mouseJustPressed[it] = false
         }
 
         IO.mouseWheel = mouseWheel
@@ -356,7 +356,7 @@ object LwjglGL3 {
 
     private val mouseButtonCallback = { button: Int, action: Int, _: Int ->
         if (action == GLFW_PRESS && button in 0..2)
-            mousePressed[button] = true
+            mouseJustPressed[button] = true
     }
 
     private val scrollCallback = { _: Double, yOffset: Double ->

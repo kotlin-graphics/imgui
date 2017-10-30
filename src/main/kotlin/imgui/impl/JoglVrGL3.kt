@@ -27,7 +27,7 @@ object JoglVrGL3 {
     lateinit var window: GLWindow
     val texSize = Vec2i()
     var time = 0.0
-    val mousePressed = BooleanArray(3)
+    val mouseJustPressed = BooleanArray(3)
     @JvmField
     var mouseWheel = 0f
 
@@ -120,7 +120,7 @@ object JoglVrGL3 {
         repeat(3) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
-            IO.mouseDown[it] = mousePressed[it]
+            IO.mouseDown[it] = mouseJustPressed[it]
         }
 
         IO.mouseWheel = mouseWheel
@@ -358,7 +358,7 @@ object JoglVrGL3 {
 
         override fun mouseReleased(e: MouseEvent) {
             if (e.button in MouseEvent.BUTTON1..MouseEvent.BUTTON3)
-                mousePressed[e.button.i - 1] = false
+                mouseJustPressed[e.button.i - 1] = false
         }
 
         override fun mouseMoved(e: MouseEvent) {
@@ -377,7 +377,7 @@ object JoglVrGL3 {
 
         override fun mousePressed(e: MouseEvent) {
             if (e.button in MouseEvent.BUTTON1..MouseEvent.BUTTON3)
-                mousePressed[e.button.i - 1] = true
+                mouseJustPressed[e.button.i - 1] = true
         }
 
         override fun mouseWheelMoved(e: MouseEvent) {

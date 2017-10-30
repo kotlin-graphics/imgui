@@ -36,7 +36,6 @@ import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemClicked
 import imgui.ImGui.isItemHovered
-import imgui.ImGui.isItemRectHovered
 import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
@@ -419,11 +418,11 @@ interface imgui_demoDebugInfo {
             treeNode("Collapsing Headers") {
                 checkbox("Enable extra group", closableGroup)
                 collapsingHeader("Header") {
-                    text("IsItemHovered: $isItemHovered")
+                    text("IsItemHovered: ${isItemHovered()}")
                     for (i in 0..4) text("Some content $i")
                 }
                 collapsingHeader("Header with a close button", closableGroup) {
-                    text("IsItemHovered: $isItemHovered")
+                    text("IsItemHovered: ${isItemHovered()}")
                     for (i in 0..4) text("More content $i")
                 }
             }
@@ -497,7 +496,7 @@ interface imgui_demoDebugInfo {
                 val texId = IO.fonts.texId
                 text("%.0fx%.0f", texSize.x, texSize.y)
                 image(texId, texSize, Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
-                if (isItemRectHovered)
+                if (isItemHovered())
                     tooltip {
                         val focusSz = 32f
                         val focus = glm.clamp(mousePos - texScreenPos - focusSz * 0.5f, Vec2(), texSize - focusSz)
@@ -1297,22 +1296,6 @@ interface imgui_demoDebugInfo {
 //                    ShowExampleMenuFile();
 //                    ImGui::EndPopup();
 //                }
-//
-//                ImGui::Spacing();
-//                ImGui::TextWrapped("Below we are testing adding menu items to a regular window. It's rather unusual but should work!");
-//                ImGui::Separator();
-//                // NB: As a quirk in this very specific example, we want to differentiate the parent of this menu from the parent of the various popup menus above.
-//                // To do so we are encloding the items in a PushID()/PopID() block to make them two different menusets. If we don't, opening any popup above and hovering our menu here
-//                // would open it. This is because once a menu is active, we allow to switch to a sibling menu by just hovering on it, which is the desired behavior for regular menus.
-//                ImGui::PushID("foo");
-//                ImGui::MenuItem("Menu item", "CTRL+M");
-//                if (ImGui::BeginMenu("Menu inside a regular window"))
-//                {
-//                    ShowExampleMenuFile();
-//                    ImGui::EndMenu();
-//                }
-//                ImGui::PopID();
-//                ImGui::Separator();
             }
 
             treeNode("Context menus") {
@@ -1328,7 +1311,9 @@ interface imgui_demoDebugInfo {
 //                {
 //                    if (ImGui::Selectable("Set to zero")) value = 0.0f;
 //                    if (ImGui::Selectable("Set to PI")) value = 3.1415f;
-//                    ImGui::DragFloat("Value", &value, 0.1f, 0.0f, 0.0f);
+//                    ImGui::PushItemWidth(-1);
+//                    ImGui::DragFloat("##Value", &value, 0.1f, 0.0f, 0.0f);
+//                    ImGui::PopItemWidth();
 //                    ImGui::EndPopup();
 //                }
 //
@@ -1374,16 +1359,35 @@ interface imgui_demoDebugInfo {
                     text("Hello from Stacked The First\nUsing style.Colors[ImGuiCol_ModalWindowDarkening] for darkening.")
 //                    static int item = 1; TODO
 //                    ImGui::Combo("Combo", &item, "aaaa\0bbbb\0cccc\0dddd\0eeee\0\0");
+//                    static float color[4] = { 0.4f,0.7f,0.0f,0.5f };
+//                    ImGui::ColorEdit4("color", color);  // This is to test behavior of stacked regular popups over a modal
 
                     button("Add another modal..") { openPopup("Stacked 2") }
                     popupModal("Stacked 2") {
                         text("Hello from Stacked The Second")
                         button("Close") { closeCurrentPopup() }
                     }
-
                     button("Close") { closeCurrentPopup() }
                 }
             }
+//            if (ImGui::TreeNode("Menus inside a regular window"))
+//                +        {
+//                    +            ImGui::TextWrapped("Below we are testing adding menu items to a regular window. It's rather unusual but should work!");
+//                    +            ImGui::Separator();
+//                    +            // NB: As a quirk in this very specific example, we want to differentiate the parent of this menu from the parent of the various popup menus above.
+//                    +            // To do so we are encloding the items in a PushID()/PopID() block to make them two different menusets. If we don't, opening any popup above and hovering our menu here
+//                    +            // would open it. This is because once a menu is active, we allow to switch to a sibling menu by just hovering on it, which is the desired behavior for regular menus.
+//                    +            ImGui::PushID("foo");
+//                    +            ImGui::MenuItem("Menu item", "CTRL+M");
+//                    +            if (ImGui::BeginMenu("Menu inside a regular window"))
+//                        +            {
+//                            +                ShowExampleMenuFile();
+//                            +                ImGui::EndMenu();
+//                            +            }
+//                    +            ImGui::PopID();
+//                    +            ImGui::Separator();
+//                    +            ImGui::TreePop();
+//                    +        }
         }
 
 //        if (ImGui::CollapsingHeader("Columns"))
@@ -1656,6 +1660,34 @@ interface imgui_demoDebugInfo {
 //                ImGui::TreePop();
 //            }
 //
+//        if (ImGui::TreeNode("Hovering"))
+//            +        {
+//                +            // Testing IsWindowHovered() function
+//                +            ImGui::BulletText(
+//                        +                "IsWindowHovered() = %d\n"
+//                                +                "IsWindowHovered(_AllowWhenBlockedByPopup) = %d\n"
+//                                +                "IsWindowHovered(_AllowWhenBlockedByActiveItem) = %d\n",
+//                        +                ImGui::IsWindowHovered(),
+//                        +                ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup),
+//                        +                ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem));
+//                +
+//                +            // Testing IsItemHovered() function (because BulletText is an item itself and that would affect the output of IsItemHovered, we pass all lines in a single items to shorten the code)
+//                +            ImGui::Button("ITEM");
+//                +            ImGui::BulletText(
+//                        +                "IsItemHovered() = %d\n"
+//                                +                "IsItemHovered(_AllowWhenBlockedByPopup) = %d\n"
+//                                +                "IsItemHovered(_AllowWhenBlockedByActiveItem) = %d\n"
+//                                +                "IsItemHovered(_AllowWhenOverlapped) = %d\n"
+//                                +                "IsItemhovered(_RectOnly) = %d\n",
+//                        +                ImGui::IsItemHovered(),
+//                        +                ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup),
+//                        +                ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem),
+//                        +                ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped),
+//                        +                ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly));
+//                +
+//                +            ImGui::TreePop();
+//                +        }
+//
 //            if (ImGui::TreeNode("Dragging"))
 //            {
 //                ImGui::TextWrapped("You can use ImGui::GetMouseDragDelta(0) to query for the dragged amount on any widget.");
@@ -1766,7 +1798,7 @@ interface imgui_demoDebugInfo {
                 val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
                 val cmdNodeOpen = treeNode(i, "Draw %-4d $mode vtx, tex = ${cmd.textureId}, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)",
                         cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
-                if (showClipRects[0] && isItemRectHovered) {
+                if (showClipRects[0] && isItemHovered()) {
                     val clipRect = Rect(cmd.clipRect)
                     val vtxsRect = Rect()
                     for (e in elemOffset until elemOffset + cmd.elemCount)
@@ -1794,7 +1826,7 @@ interface imgui_demoDebugInfo {
                             vtxI++
                         }
                         selectable(buf.joinToString("", limit = bufP, truncated = ""), false)
-                        if (isItemRectHovered)
+                        if (isItemHovered())
                         // Add triangle without AA, more readable for large-thin triangle
                             overlayDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f, false)
                     }
@@ -1820,7 +1852,7 @@ interface imgui_demoDebugInfo {
             nodeDrawList(window.drawList, "DrawList")
             bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x, window.pos.y, window.size.x,
                     window.size.y, window.sizeContents.x, window.sizeContents.y)
-            if (isItemHovered)
+            if (isItemHovered())
                 overlayDrawList.addRect(Vec2(window.pos), Vec2(window.pos + window.size), COL32(255, 255, 0, 255))
             bulletText("Scroll: (%.2f,%.2f)", window.scroll.x, window.scroll.y)
             bulletText("Active: ${window.active}, Accessed: ${window.accessed}")
@@ -2102,7 +2134,7 @@ interface imgui_demoDebugInfo {
 
         fun showHelpMarker(desc: String) {
             textDisabled("(?)")
-            if (isItemRectHovered) {
+            if (isItemHovered()) {
                 beginTooltip()
                 pushTextWrapPos(450f)
                 textUnformatted(desc)

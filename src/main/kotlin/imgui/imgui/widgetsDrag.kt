@@ -10,7 +10,6 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dragBehavior
-import imgui.ImGui.focusWindow
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.inputScalarAsWidgetReplacement
 import imgui.ImGui.itemAdd
@@ -20,9 +19,9 @@ import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setActiveId
-import imgui.ImGui.setHoveredId
 import imgui.internal.DataType
 import imgui.internal.Rect
+import imgui.internal.focus
 import imgui.Context as g
 
 /** Widgets: Drags (tip: ctrl+click on a drag box to input with keyboard. manually input values aren't clamped, can go
@@ -70,7 +69,7 @@ interface imgui_widgetsDrag {
         val tabFocusRequested = focusableItemRegister(window, id)
         if (tabFocusRequested || (hovered && (IO.mouseClicked[0] || IO.mouseDoubleClicked[0]))) {
             setActiveId(id, window)
-            focusWindow(window)
+            window.focus()
             if (tabFocusRequested || IO.keyCtrl || IO.mouseDoubleClicked[0]) {
                 startTextInput = true
                 g.scalarAsInputTextId = 0

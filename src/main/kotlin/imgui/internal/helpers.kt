@@ -273,17 +273,12 @@ val CharArray.strlen: Int
         return i
     }
 
+// TODO precision? i.e: 02X
 fun String.scanHex(ints: IntArray, count: Int = ints.size, precision: Int) {
     var c = 0
     for (i in 0 until count) {
         val end = glm.min((i + 1) * precision, length)
-        ints[i] =
-                if (c > end) 0
-                else {
-                    val s = substring(c, end)
-                    if (s.isEmpty()) 0
-                    else s.toInt(16)
-                }
+        ints[i] = if (c > end) 0 else with(substring(c, end)) { if (isEmpty()) 0 else toInt(16) }
         c += precision
     }
 }

@@ -7,12 +7,15 @@ import imgui.ImGui.beginPopupEx
 import imgui.ImGui.closePopup
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
+import imgui.ImGui.isItemHovered
+import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.setNextWindowPos
 import imgui.Context as g
 import imgui.WindowFlags as Wf
+import imgui.HoveredFlags as Hf
 
 /** Popups  */
 interface imgui_popups {
@@ -23,6 +26,17 @@ interface imgui_popups {
      *  calling CloseCurrentPopup(). Popup identifiers are relative to the current ID-stack (so OpenPopup and BeginPopup
      *  needs to be at the same level).   */
     fun openPopup(strId: String) = openPopupEx(g.currentWindow!!.getId(strId), false)
+
+    /** Helper to open popup when clicked on last item. return true when just opened.   */
+    fun openPopupOnItemClick(strId: String = "", mouseButton: Int = 1) = with(g.currentWindow!!) {
+        if (isMouseClicked(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup.i)) {
+            // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
+            val id = if (strId.isNotEmpty()) getId(strId) else dc.lastItemId
+            assert(id != 0) // However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)
+            openPopupEx(id, true)
+            true
+        } else false
+    }
 
     /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup()
      *  returned true!   */
@@ -57,9 +71,13 @@ interface imgui_popups {
         }
         return isOpen
     }
+
+    /** This is a helper to handle the simplest case of associating one named popup to one given widget.
+     *  You may want to handle this on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
+     *  You can pass a NULL str_id to use the identifier of the last item.  */
 //    IMGUI_API bool          BeginPopupContextItem(const char* str_id = NULL, int mouse_button = 1); // helper to open and begin popup when clicked on last item. if you can pass a NULL str_id only if the previous item had an id. If you want to use that on a non-interactive item such as Text() you need to pass in an explicit ID here. read comments in .cpp!
 //    fun beginPopupContextWindow(strId = NULL, int mouse_button = 1, bool also_over_items = true);  // helper to open and begin popup when clicked on current window.
-//    IMGUI_API bool          BeginPopupContextVoid(const char* str_id = NULL, int mouse_button = 1);                                 // helper to open and begin popup when clicked in void (no window).
+//    IMGUI_API bool          BeginPopupContextVoid(const char* str_id = NULL, int mouse_button = 1); // helper to open and begin popup when clicked in void (where there are no imgui windows).
 
     fun endPopup() {
 

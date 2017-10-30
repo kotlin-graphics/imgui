@@ -10,13 +10,13 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
-import imgui.ImGui.currentWindow
+import imgui.ImGui.clearActiveId
 import imgui.ImGui.keepAliveId
 import java.util.*
 import kotlin.collections.ArrayList
 import imgui.Context as g
 import imgui.WindowFlags as Wf
-
+import imgui.HoveredFlags as Hf
 
 /** 2D axis aligned bounding-box
 NB: we can't rely on ImVec2 math operators being available here */
@@ -586,13 +586,18 @@ class Window(
         this.collapsed = collapsed
     }
 
-    val isContentHoverable: Boolean
-        get() {
-            // An active popup disable hovering on other windows (apart from its own children)
-            // FIXME-OPT: This could be cached/stored within the window.
-            val focusedRootWindow = g.navWindow?.rootWindow ?: return true
-            return !(focusedRootWindow.flags has Wf.Popup && focusedRootWindow.wasActive && focusedRootWindow !== rootWindow)
+    fun isContentHoverable(flags: Int): Boolean {
+        // An active popup disable hovering on other windows (apart from its own children)
+        // FIXME-OPT: This could be cached/stored within the window.
+        val focusedRootWindow = g.navWindow?.rootWindow ?: return true
+        if (focusedRootWindow.wasActive && focusedRootWindow !== rootWindow) {
+            /*  For the purpose of those flags we differentiate "standard popup" from "modal popup"
+                NB: The order of those two tests is important because Modal windows are also Popups.             */
+            if (focusedRootWindow.flags has Wf.Modal) return false
+            if (focusedRootWindow.flags has Wf.Popup && flags hasnt Hf.AllowWhenBlockedByPopup) return false
         }
+        return true
+    }
 
     fun calcSizeFullWithConstraint(newSize: Vec2): Vec2 {
 
@@ -657,6 +662,31 @@ class Window(
     // FIXME: Add a more explicit sort order in the window structure.
     private val childWindowComparer = compareBy<Window>({ it.flags has Wf.Popup }, { it.flags has Wf.Tooltip },
             { it.flags has Wf.ComboBox }, { it.orderWithinParent })
+}
+
+/** Moving window to front of display (which happens to be back of our sorted list) */
+fun Window?.focus() {
+
+    // Always mark the window we passed as focused. This is used for keyboard interactions such as tabbing.
+    g.navWindow = this
+
+    // Passing NULL allow to disable keyboard focus
+    if (this == null) return
+
+    // And move its root window to the top of the pile
+//    if (window.rootWindow) TODO check
+    val window = rootWindow
+
+    // Steal focus on active widgets
+    if (window.flags has Wf.Popup) // FIXME: This statement should be unnecessary. Need further testing before removing it..
+        if (g.activeId != 0 && g.activeIdWindow != null && g.activeIdWindow!!.rootWindow != window)
+            clearActiveId()
+
+    // Bring to front
+    if ((window.flags has Wf.NoBringToFrontOnFocus) || g.windows.last() === window)
+        return
+    g.windows.remove(window)
+    g.windows.add(window)
 }
 
 /** Backup and restore just enough data to be able to use isItemHovered() on item A after another B in the same window

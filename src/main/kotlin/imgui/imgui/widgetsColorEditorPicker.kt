@@ -32,11 +32,11 @@ import imgui.ImGui.hsvToRGB
 import imgui.ImGui.inputText
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.isItemActive
-import imgui.ImGui.isItemRectHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.openPopup
+import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
@@ -97,26 +97,20 @@ interface imgui_widgetsColorEditorPicker {
         var flags = flags
 
         // If we're not showing any slider there's no point in doing any HSV conversions
-        if (flags has Cef.NoInputs)
-            flags = (flags wo Cef._InputsMask) or Cef.RGB or Cef.NoOptions
+        if (flags has Cef.NoInputs) flags = (flags wo Cef._InputsMask) or Cef.RGB or Cef.NoOptions
 
         // Context menu: display and modify options (before defaults are applied)
-        if (flags hasnt Cef.NoOptions)
-            colorEditOptionsPopup(col, flags)
+        if (flags hasnt Cef.NoOptions) colorEditOptionsPopup(col, flags)
 
         // Read stored options
-        if (flags hasnt Cef._InputsMask)
-            flags = flags or (g.colorEditOptions and Cef._InputsMask)
-        if (flags hasnt Cef._DataTypeMask)
-            flags = flags or (g.colorEditOptions and Cef._DataTypeMask)
-        if (flags hasnt Cef._PickerMask)
-            flags = flags or (g.colorEditOptions and Cef._PickerMask)
+        if (flags hasnt Cef._InputsMask) flags = flags or (g.colorEditOptions and Cef._InputsMask)
+        if (flags hasnt Cef._DataTypeMask) flags = flags or (g.colorEditOptions and Cef._DataTypeMask)
+        if (flags hasnt Cef._PickerMask) flags = flags or (g.colorEditOptions and Cef._PickerMask)
         flags = flags or (g.colorEditOptions wo (Cef._InputsMask or Cef._DataTypeMask or Cef._PickerMask))
 
         // Convert to the formats we need
         val f = floatArrayOf(col[0], col[1], col[2], if (alpha) col[3] else 1f)
-        if (flags has Cef.HSV)
-            f.rgbToHSV()
+        if (flags has Cef.HSV) f.rgbToHSV()
 
         val i = IntArray(4, { F32_TO_INT8_UNBOUND(f[it]) })
 
@@ -129,68 +123,60 @@ interface imgui_widgetsColorEditorPicker {
             val wItemOne = glm.max(1f, ((wItemsAll - style.itemInnerSpacing.x * (components - 1)) / components).i.f)
             val wItemLast = glm.max(1f, (wItemsAll - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
 
-            val hidePrefix = wItemOne <= calcTextSize("M:999").x
+            val hidePrefix = wItemOne <= calcTextSize(if (flags has Cef.Float) "M:0.000" else "M:000").x
             val ids = arrayOf("##X", "##Y", "##Z", "##W")
             val fmtTableInt = arrayOf(
                     arrayOf("%3.0f", "%3.0f", "%3.0f", "%3.0f"),             // Short display
                     arrayOf("R:%3.0f", "G:%3.0f", "B:%3.0f", "A:%3.0f"),     // Long display for RGBA
                     arrayOf("H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f"))     // Long display for HSVA
             val fmtTableFloat = arrayOf(
-                    arrayOf("%0.3f", "%0.3f", "%0.3f", "%0.3f"), // Short display
-                    arrayOf("R:%0.3f", "G:%0.3f", "B:%0.3f", "A:%0.3f"), // Long display for RGBA
-                    arrayOf("H:%0.3f", "S:%0.3f", "V:%0.3f", "A:%0.3f"))  // Long display for HSVA
+                    arrayOf("%0.3f", "%0.3f", "%0.3f", "%0.3f"),            // Short display
+                    arrayOf("R:%0.3f", "G:%0.3f", "B:%0.3f", "A:%0.3f"),    // Long display for RGBA
+                    arrayOf("H:%0.3f", "S:%0.3f", "V:%0.3f", "A:%0.3f"))    // Long display for HSVA
             val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.HSV) 2 else 1
 
             pushItemWidth(wItemOne)
             for (n in 0 until components) {
-                if (n > 0)
-                    sameLine(0f, style.itemInnerSpacing.x)
-                if (n + 1 == components)
-                    pushItemWidth(wItemLast)
-                val int = intArrayOf(i[n])
+                if (n > 0) sameLine(0f, style.itemInnerSpacing.x)
+                if (n + 1 == components) pushItemWidth(wItemLast)
                 if (flags has Cef.Float) {
                     valueChangedAsFloat = valueChangedAsFloat or dragFloat(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n])
                     valueChanged = valueChanged or valueChangedAsFloat
                 } else
                     valueChanged = valueChanged or dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n])
+                if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
             }
             popItemWidth()
             popItemWidth()
 
         } else if (flags has Cef.HEX && flags hasnt Cef.NoInputs) {
             // RGB Hexadecimal Input
-            val buf = CharArray(64)
-            (if (alpha)
-                "#%02X%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255), glm.clamp(i[3], 0, 255))
-            else
-                "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))).toCharArray(buf)
+            val text = if (alpha) "#%02X%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255), glm.clamp(i[3], 0, 255))
+            else "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))
+            val buf = text.toCharArray(CharArray(64))
             pushItemWidth(wItemsAll)
             if (inputText("##Text", buf, Itf.CharsHexadecimal or Itf.CharsUppercase)) {
                 valueChanged = valueChanged || true
                 var p = 0
-                while (buf[p] == '#' || buf[p].isSpace)
-                    p++
+                while (buf[p] == '#' || buf[p].isSpace) p++
                 i.fill(0)
                 String(buf, p, buf.strlen - p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
             }
+            if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
             popItemWidth()
         }
 
         var pickerActive = false
         if (flags hasnt Cef.NoSmallPreview) {
-            if (flags hasnt Cef.NoInputs)
-                sameLine(0f, style.itemInnerSpacing.x)
-
-            val colVec4 = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f) // 1.0f
+            if (flags hasnt Cef.NoInputs) sameLine(0f, style.itemInnerSpacing.x)
+            val colVec4 = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f)
             if (colorButton("##ColorButton", colVec4, flags)) {
-                if (flags hasnt Cef.NoPicker) {
-                    // Store current color and open a picker
+                if (flags hasnt Cef.NoPicker) { // Store current color and open a picker
                     g.colorPickerRef put colVec4
                     openPopup("picker")
                     setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
                 }
-            } else if (flags hasnt Cef.NoOptions && isItemRectHovered && isMouseClicked(1))
-                openPopup("context")
+            } else if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
 
             if (beginPopup("picker")) {
                 pickerActive = true
@@ -209,30 +195,24 @@ interface imgui_widgetsColorEditorPicker {
             }
         }
 
-        if (0 != labelDisplayEnd && flags hasnt Cef.NoLabel) {
+        if (label.length != labelDisplayEnd && flags hasnt Cef.NoLabel) { // TODO check first comparison
             sameLine(0f, style.itemInnerSpacing.x)
             textUnformatted(label, labelDisplayEnd)
         }
 
         // Convert back
         if (!pickerActive) {
-            if (!valueChangedAsFloat)
-                for (n in 0..3)
-                    f[n] = i[n] / 255f
-            if (flags has Cef.HSV)
-                f.hsvToRGB()
+            if (!valueChangedAsFloat) for (n in 0..3) f[n] = i[n] / 255f
+            if (flags has Cef.HSV) f.hsvToRGB()
             if (valueChanged) {
                 col[0] = f[0]
                 col[1] = f[1]
                 col[2] = f[2]
-                if (alpha)
-                    col[3] = f[3]
+                if (alpha) col[3] = f[3]
             }
         }
-
         popId()
         endGroup()
-
         return valueChanged
     }
 
@@ -337,8 +317,7 @@ interface imgui_widgetsColorEditorPicker {
                     valueChanged = true
                 }
             }
-            if (flags hasnt Cef.NoOptions && isItemRectHovered && isMouseClicked(1))
-                openPopup("context")
+            if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
 
         } else if (flags has Cef.PickerHueBar) {
             // SV rectangle logic
@@ -349,8 +328,7 @@ interface imgui_widgetsColorEditorPicker {
                 valueChangedSv = true
                 valueChanged = true
             }
-            if (flags hasnt Cef.NoOptions && isItemRectHovered && isMouseClicked(1))
-                openPopup("context")
+            if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
             // Hue bar logic
             cursorScreenPos.put(bar0PosX, pickerPos.y)
             invisibleButton("hue", Vec2(barsWidth, svPickerSize))

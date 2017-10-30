@@ -8,7 +8,6 @@ import imgui.IO
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
-import imgui.ImGui.focusWindow
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
@@ -20,6 +19,7 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.sliderBehavior
 import imgui.ImGui.sliderFloatN
 import imgui.internal.Rect
+import imgui.internal.focus
 import imgui.Context as g
 
 /** Widgets: Sliders (tip: ctrl+click on a slider to input with keyboard. manually input values aren't clamped, can go
@@ -63,7 +63,7 @@ interface imgui_widgetsSliders {
         val tabFocusRequested = focusableItemRegister(window, id)
         if (tabFocusRequested || (hovered && IO.mouseClicked[0])) {
             setActiveId(id, window)
-            focusWindow(window)
+            window.focus()
             if (tabFocusRequested || IO.keyCtrl) {
                 startTextInput = true
                 g.scalarAsInputTextId = 0

@@ -184,6 +184,24 @@ infix fun Int.or(other: SelectableFlags) = this or other.i
 infix fun Int.has(b: SelectableFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: SelectableFlags) = (this and b.i) == 0
 
+enum class HoveredFlags(val i: Int) {
+    /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active
+     *  popup or modal blocking inputs under them.  */
+    Default(0),
+    /** Return true even if a popup window is normally blocking access to this item/window  */
+    AllowWhenBlockedByPopup(1 shl 0),
+    //ImGuiHoveredFlags_AllowWhenBlockedByModal     = 1 << 1,   // Return true even if a modal popup window is normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
+    /** Return true even if an active item is blocking access to this item/window   */
+    AllowWhenBlockedByActiveItem(1 shl 2),
+    /** Return true even if the position is overlapped by another window    */
+    AllowWhenOverlapped(1 shl 3),
+    RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i)
+}
+
+infix fun Int.or(other: HoveredFlags) = this or other.i
+infix fun Int.has(b: HoveredFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: HoveredFlags) = (this and b.i) == 0
+
 /** User fill ImGuiIO.KeyMap[] array with indices into the ImGuiIO.KeysDown[512] array  */
 enum class Key {
 

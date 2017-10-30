@@ -20,6 +20,7 @@ import imgui.internal.Rect
 import imgui.internal.saturate
 import imgui.Context as g
 import imgui.WindowFlags as Wf
+import imgui.HoveredFlags as Hf
 
 
 interface imgui_utilities {
@@ -28,31 +29,29 @@ interface imgui_utilities {
      *      - we allow hovering to be true when activeId==window.moveID, so that clicking on non-interactive items
      *          such as a text() item still returns true with isItemHovered()
      *      - this should work even for non-interactive items that have no ID, so we cannot use LastItemId  */
-    val isItemHovered: Boolean
-        get() {
-            val window = g.currentWindow!!
-            return when {
-                !window.dc.lastItemRectHoveredRect -> false
-            /*  [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to NOT
-                test for rootWindow but this leaves us unable to use isItemHovered after endChild() itself.
-                Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was the test
-                that has been running for a long while. */
-                // g.hoveredWindow !== window -> false
-                g.hoveredRootWindow !== window.rootWindow -> false
-                g.activeId != 0 && g.activeId != window.dc.lastItemId && !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
-                !window.isContentHoverable -> false
-                else -> true
-            }
+    fun isItemHovered(flags: Int = Hf.Default.i): Boolean {
+        val window = g.currentWindow!!
+        return when {
+            !window.dc.lastItemRectHoveredRect -> false
+        /*  [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to NOT
+            test for rootWindow but this leaves us unable to use isItemHovered after endChild() itself.
+            Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was the test
+            that has been running for a long while. */
+        // g.hoveredWindow !== window -> false
+            g.hoveredRootWindow !== window.rootWindow && flags hasnt Hf.AllowWhenOverlapped -> false
+            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeId != window.dc.lastItemId &&
+                    !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
+            !window.isContentHoverable(flags) -> false
+            else -> true
         }
-
-    val isItemRectHovered get() = currentWindowRead!!.dc.lastItemRectHoveredRect
+    }
 
     /** Is the last item active? (e.g. button being held, text field being edited- items that don't interact will always
      *  return false)   */
     val isItemActive get() = if (g.activeId != 0) g.activeId == g.currentWindow!!.dc.lastItemId else false
 
     /** Is the last item clicked? (e.g. button/node just clicked on)   */
-    fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemRectHovered
+    fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemHovered(Hf.Default.i)
 
     /** Is the last item visible? (aka not out of sight due to clipping/scrolling.)    */
     val isItemVisible get() = with(currentWindowRead!!) { clipRect overlaps dc.lastItemRect }
@@ -83,11 +82,15 @@ interface imgui_utilities {
     val isWindowFocused get() = g.navWindow === g.currentWindow
 
     /** is current window hovered and hoverable (not blocked by a popup) (differentiate child windows from each others) */
-    val isWindowHovered get() = g.hoveredWindow === g.currentWindow && g.hoveredRootWindow!!.isContentHoverable
-
-    /** is current window rectangle hovered, disregarding of any consideration of being blocked by a popup.
-     *  (unlike IsWindowHovered() this will return true even if the window is blocked because of a popup)   */
-    val isWindowRectHovered get() = g.hoveredWindow === g.currentWindow
+    fun isWindowHovered(flags: Int = Hf.Default.i): Boolean {
+        assert(flags hasnt Hf.AllowWhenOverlapped)  // Flags not supported by this function
+        return when {
+            g.hoveredWindow !== g.currentWindow -> false
+            !g.hoveredRootWindow!!.isContentHoverable(flags) -> false
+            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeIdWindow !== g.currentWindow -> false
+            else -> true
+        }
+    }
 
     /** is current root window focused (root = top-most parent of a child, otherwise self)  */
     val isRootWindowFocused get() = g.navWindow === g.currentWindow!!.rootWindow
@@ -96,8 +99,15 @@ interface imgui_utilities {
     val isRootWindowOrAnyChildFocused get() = g.navWindow != null && g.navWindow!!.rootWindow === g.currentWindow!!.rootWindow
 
     /** is current root window or any of its child (including current window) hovered and hoverable (not blocked by a popup)    */
-    val isRootWindowOrAnyChildHovered
-        get() = g.hoveredRootWindow != null && (g.hoveredRootWindow === g.currentWindow!!.rootWindow) && g.hoveredRootWindow!!.isContentHoverable
+    fun isRootWindowOrAnyChildHovered(flags: Int = Hf.Default.i): Boolean {
+        assert(flags hasnt Hf.AllowWhenOverlapped)  // Flags not supported by this function
+        return when {
+            g.hoveredRootWindow != null || g.hoveredRootWindow != g.currentWindow!!.rootWindow -> false
+            !g.hoveredRootWindow!!.isContentHoverable(flags) -> false
+            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeIdWindow != g.currentWindow -> false
+            else -> true
+        }
+    }
 
     /** test if rectangle (of given size, starting from cursor position) is visible / not clipped.  */
     fun isRectVisible(size: Vec2) = with(currentWindowRead!!) { clipRect overlaps Rect(dc.cursorPos, dc.cursorPos + size) }

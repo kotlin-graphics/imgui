@@ -17,7 +17,6 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endColumns
 import imgui.ImGui.findWindowByName
-import imgui.ImGui.focusWindow
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.isMouseHoveringRect
@@ -193,7 +192,7 @@ interface imgui_window {
                 if (g.hoveredWindow === window && isMouseHoveringRect(titleBarRect) && IO.mouseDoubleClicked[0]) {
                     window.collapsed = !window.collapsed
                     markIniSettingsDirty(window)
-                    focusWindow(window)
+                    window.focus()
                 }
             } else window.collapsed = false
 
@@ -347,7 +346,7 @@ interface imgui_window {
             window.scrollTarget put Float.MAX_VALUE
 
             // Modal window darkens what is behind them
-            if (flags has Wf.Modal && window === getFrontMostModalRootWindow())
+            if (flags has Wf.Modal && window === frontMostModalRootWindow)
                 window.drawList.addRectFilled(fullscreenRect.min, fullscreenRect.max,
                         getColorU32(Col.ModalWindowDarkening, g.modalWindowDarkeningRatio))
 
@@ -511,7 +510,7 @@ interface imgui_window {
             // New windows appears in front (we need to do that AFTER setting DC.CursorStartPos so our initial navigation reference rectangle can start around there)
             if (windowJustActivatedByUser && flags hasnt Wf.NoFocusOnAppearing)
                 if (flags hasnt (Wf.ChildWindow or Wf.Tooltip) || flags has Wf.Popup)
-                    focusWindow(window)
+                    window.focus()
 
             // Title bar
             if (flags hasnt Wf.NoTitleBar) {
@@ -716,11 +715,6 @@ interface imgui_window {
         g.setNextWindowPosCond = cond
     }
 
-    @Deprecated("")
-            /** set next window position to be centered on screen. call before Begin()  */
-    fun setNextWindowPosCenter(cond: Cond = Cond.Null) =
-            setNextWindowPos(Vec2(IO.displaySize.x * 0.5f, IO.displaySize.y * 0.5f), cond, Vec2(0.5f))
-
     /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
     fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Null) {
         g.setNextWindowSizeVal put size
@@ -776,7 +770,7 @@ interface imgui_window {
     fun setWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Null) = g.currentWindow!!.setCollapsed(collapsed, cond)
 
     /** (not recommended) set current window to be focused / front-most. prefer using SetNextWindowFocus(). */
-    fun setWindowFocus() = focusWindow(g.currentWindow)
+    fun setWindowFocus() = g.currentWindow.focus()
 
     /** set named window position.  */
     fun setWindowPos(name: String, pos: Vec2, cond: Cond = Cond.Null) = findWindowByName(name)?.setPos(pos, cond)
@@ -788,7 +782,7 @@ interface imgui_window {
     fun setWindowCollapsed(name: String, collapsed: Boolean, cond: Cond = Cond.Null) = findWindowByName(name)?.setCollapsed(collapsed, cond)
 
     /** set named window to be focused / front-most. use NULL to remove focus.  */
-    fun setWindowFocus(name: String) = focusWindow(findWindowByName(name))
+    fun setWindowFocus(name: String) = findWindowByName(name).focus()
 
     /** scrolling amount [0..GetScrollMaxX()]   */
     var scrollX
