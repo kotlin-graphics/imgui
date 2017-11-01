@@ -473,14 +473,17 @@ enum class ItemFlags(val i: Int) {
     /** false
      *  Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.  */
     ButtonRepeat(1 shl 1),
-    //ImGuiItemFlags_Disabled                   = 1 << 2,  // false    // All widgets appears are disabled
-    //ImGuiItemFlags_AllowNavDefaultFocus       = 1 << 3,  // true
+    /** false    // All widgets appears are disabled    */
+    Disabled(1 shl 2),
+    //ImGuiItemFlags_NoNav                      = 1 << 3,  // false
+    //ImGuiItemFlags_AllowNavDefaultFocus       = 1 << 4,  // true
     /** false, MenuItem/Selectable() automatically closes current Popup window  */
-    SelectableDontClosePopup(1 shl 4),
+    SelectableDontClosePopup(1 shl 5),
     Default_(AllowKeyboardFocus.i)
 }
 
-infix fun Int.or(other: ItemFlags) = this or other.i
+infix fun ItemFlags.or(other: ItemFlags) = i or other.i
+infix fun Int.or(other: ItemFlags) = or(other.i)
 infix fun Int.has(b: ItemFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: ItemFlags) = (this and b.i) == 0
-infix fun Int.wo(b: ItemFlags) = this and b.i.inv()
+infix fun Int.wo(b: ItemFlags) = and(b.i.inv())

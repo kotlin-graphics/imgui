@@ -164,9 +164,10 @@ interface imgui_main {
             }
         } else g.modalWindowDarkeningRatio = 0f
 
-        /** Are we using inputs? Tell user so they can capture/discard the inputs away from the rest of their application.
-        When clicking outside of a window we assume the click is owned by the application and won't request capture.
-        We need to track click ownership.   */
+        /*  Update the WantCaptureMouse/WantCAptureKeyboard flags, so user can capture/discard the inputs away from
+            the rest of their application.
+            When clicking outside of a window we assume the click is owned by the application and won't request capture.
+            We need to track click ownership.   */
         var mouseEarliestButtonDown = -1
         var mouseAnyDown = false
         for (i in IO.mouseDown.indices) {
@@ -174,7 +175,7 @@ interface imgui_main {
                 IO.mouseDownOwned[i] = g.hoveredWindow != null || g.openPopupStack.isNotEmpty()
             mouseAnyDown = mouseAnyDown || IO.mouseDown[i]
             if (IO.mouseDown[i])
-                if (mouseEarliestButtonDown == -1 || IO.mouseClickedTime[mouseEarliestButtonDown] > IO.mouseClickedTime[i])
+                if (mouseEarliestButtonDown == -1 || IO.mouseClickedTime[i] < IO.mouseClickedTime[mouseEarliestButtonDown])
                     mouseEarliestButtonDown = i
         }
         val mouseAvailToImgui = mouseEarliestButtonDown == -1 || IO.mouseDownOwned[mouseEarliestButtonDown]
@@ -190,6 +191,7 @@ interface imgui_main {
         g.osImePosRequest put 1f // OS Input Method Editor showing on top-left of our window by default
 
         // If mouse was first clicked outside of ImGui bounds we also cancel out hovering.
+        // FIXME: For patterns of drag and drop between "application" and "imgui" we may need to rework/remove this test (first committed 311c0ca9 on 2015/02)
         if (!mouseAvailToImgui) {
             g.hoveredRootWindow = null
             g.hoveredWindow = null

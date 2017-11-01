@@ -265,15 +265,19 @@ interface imgui_internal {
     }
 
     /** Internal facing ItemHoverable() used when submitting widgets. Differs slightly from IsItemHovered().    */
-    fun itemHoverable(bb: Rect, id: Int) = when {
-        g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> false
-        g.hoveredWindow !== g.currentWindow -> false
-        g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
-        !isMouseHoveringRect(bb) -> false
-        !g.currentWindow!!.isContentHoverable(Hf.Default.i) -> false
-        else -> {
-            setHoveredId(id)
-            true
+    fun itemHoverable(bb: Rect, id: Int): Boolean {
+        val window = g.currentWindow!!
+        return when {
+            g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> false
+            g.hoveredWindow !== g.currentWindow -> false
+            g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
+            !isMouseHoveringRect(bb) -> false
+            !window.isContentHoverable(Hf.Default.i) -> false
+            window.dc.itemFlags has If.Disabled -> false
+            else -> {
+                setHoveredId(id)
+                true
+            }
         }
     }
 
@@ -290,7 +294,7 @@ interface imgui_internal {
     /** Return true if focus is requested   */
     fun focusableItemRegister(window: Window, id: Int, tabStop: Boolean = true): Boolean {
 
-        val allowKeyboardFocus = window.dc.itemFlags has If.AllowKeyboardFocus
+        val allowKeyboardFocus = (window.dc.itemFlags and (If.AllowKeyboardFocus or If.Disabled)) == If.AllowKeyboardFocus.i
         window.focusIdxAllCounter++
         if (allowKeyboardFocus)
             window.focusIdxTabCounter++

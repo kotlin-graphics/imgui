@@ -42,6 +42,7 @@ interface imgui_utilities {
             flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeId != window.dc.lastItemId &&
                     !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
             !window.isContentHoverable(flags) -> false
+            window.dc.itemFlags has ItemFlags.Disabled -> false
             else -> true
         }
     }
