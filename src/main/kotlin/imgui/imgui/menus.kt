@@ -236,22 +236,34 @@ interface imgui_menus {
 
         val pos = Vec2(window.dc.cursorPos)
         val labelSize = calcTextSize(label, true)
-        val shortcutSize = if (shortcut.isNotEmpty()) calcTextSize(shortcut, 0) else Vec2()
-        val w = window.menuColumns.declColumns(labelSize.x, shortcutSize.x, (g.fontSize * 1.2f).i.f) // Feedback for next frame
-        val extraW = glm.max(0f, contentRegionAvail.x - w)
-
-        val flags = Sf.MenuItem or Sf.DrawFillAvailWidth or if (enabled) Sf.Null else Sf.Disabled
-        val pressed = selectable(label, false, flags, Vec2(w, 0f))
-        if (shortcutSize.x > 0f) {
-            pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-            renderText(pos + Vec2(window.menuColumns.pos[1] + extraW, 0f), shortcut, 0, false)
-            popStyleColor()
+        val flags = Sf.MenuItem or if (enabled) Sf.Null else Sf.Disabled
+        val pressed: Boolean
+        if (window.dc.layoutType == Lt.Horizontal) {
+            /*  Mimic the exact layout spacing of beginMenu() to allow menuItem() inside a menu bar, which is a little 
+                misleading but may be useful 
+                Note that in this situation we render neither the shortcut neither the selected tick mark   */
+            val w = labelSize.x
+            window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
+            pushStyleVar(StyleVar.ItemSpacing, style.itemSpacing * 2f)
+            pressed = selectable(label, false, flags, Vec2(w, 0f))
+            popStyleVar()
+            /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
+                to call sameLine() ourselves after the popStyleVar().             */
+            window.dc.cursorPos.x += (style.itemSpacing.x * (-1f + 0.5f)).i.f
+        } else {
+            val shortcutSize = if (shortcut.isNotEmpty()) calcTextSize(shortcut) else Vec2()
+            val w = window.menuColumns.declColumns(labelSize.x, shortcutSize.x, (g.fontSize * 1.2f)).i.f // Feedback for next frame
+            val extraW = glm.max(0f, contentRegionAvail.x - w)
+            pressed = selectable(label, false, flags or Sf.DrawFillAvailWidth, Vec2(w, 0f))
+            if (shortcutSize.x > 0f) {
+                pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
+                renderText(pos + Vec2(window.menuColumns.pos[1] + extraW, 0f), shortcut, 0, false)
+                popStyleColor()
+            }
+            if (selected)
+                renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * (0.2f + 0.2f),
+                        g.fontSize * 0.134f * 0.5f), (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
         }
-
-        if (selected)
-            renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * (0.2f + 0.200f),
-                    g.fontSize * 0.134f * 0.5f), (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize  * 0.866f)
-
         return pressed
     }
 

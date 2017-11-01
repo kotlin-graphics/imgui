@@ -232,11 +232,7 @@ interface imgui_main {
 
         // Closing the focused window restore focus to the first active root window in descending z-order
         if (g.navWindow != null && !g.navWindow!!.wasActive)
-            for (i in g.windows.size - 1 downTo 0)
-                if (g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
-                    g.windows[i].focus()
-                    break
-                }
+            focusPreviousWindow()
 
         /*  No window should be open at the beginning of the frame.
             But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an
@@ -358,7 +354,17 @@ interface imgui_main {
     }
 
 //    IMGUI_API void          ShowUserGuide();                            // help block
-//    IMGUI_API void          ShowStyleEditor(ImGuiStyle* ref = NULL);    // style editor block. you can pass in a reference ImGuiStyle structure to compare to, revert to and save to (else it uses the default style)
+//    IMGUI_API void          ShowStyleEditor(ImGuiStyle* ref = NULL);    // style editor block. you can pass in a reference ImGuiStyle structure to compa to, revert to and save to (else it uses the default style)
 //    IMGUI_API void          ShowTestWindow(bool* p_open = NULL);        // test window demonstrating ImGui features
 //    IMGUI_API void          ShowMetricsWindow(bool* p_open = NULL);     // metrics window for debugging ImGui (browse draw commands, individual vertices, window list, etc.)
+
+    companion object {
+        fun focusPreviousWindow() {
+            for (i in g.windows.lastIndex downTo 0)
+                if (g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
+                    g.windows[i].focus()
+                    return
+                }
+        }
+    }
 }

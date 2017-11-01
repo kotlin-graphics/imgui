@@ -89,6 +89,7 @@ interface imgui_widgetsTrees {
 
     /** set next TreeNode/CollapsingHeader open state.  */
     fun setNextTreeNodeOpen(isOpen: Boolean, cond: Cond = Cond.Always) {
+        if (g.currentWindow!!.skipItems) return
         g.setNextTreeNodeOpenVal = isOpen
         g.setNextTreeNodeOpenCond = cond.i
     }

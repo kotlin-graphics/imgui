@@ -211,7 +211,7 @@ class FontAtlas {
 
     /** Clear the ImGui-side font data (glyphs storage, UV coordinates) */
     fun clearFonts() {
-        for (font in fonts) font.clear()
+        for (font in fonts) font.clearOutputData()
         fonts.clear()
     }
 
@@ -928,7 +928,7 @@ class Font {
 //    IMGUI_API ImFont();
 //    IMGUI_API ~ImFont();
 
-    fun clear() {
+    fun clearOutputData() {
         fontSize = 0f
         displayOffset = Vec2(0.0f, 1.0f)
         glyphs.clear()
