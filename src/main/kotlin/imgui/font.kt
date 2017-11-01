@@ -593,8 +593,7 @@ class FontAtlas {
 
             val fontOffset = stbtt_GetFontOffsetForIndex(cfg.fontDataBuffer, cfg.fontNo)
             assert(fontOffset >= 0)
-            if (!stbtt_InitFont(tmp.fontInfo, cfg.fontDataBuffer, fontOffset))
-                return false
+            if (!stbtt_InitFont(tmp.fontInfo, cfg.fontDataBuffer, fontOffset)) return false
         }
 
         // Allocate packing character data and flag packed characters buffer as non-packed (x0=y0=x1=y1=0)

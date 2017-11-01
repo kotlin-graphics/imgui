@@ -520,7 +520,7 @@ interface imgui_widgetsColorEditorPicker {
         if (size.y == 0f)
             size.y = defaultSize
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        itemSize(bb)
+        itemSize(bb, if(size.y >= defaultSize) style.framePadding.y else 0f)
         if (!itemAdd(bb, id)) return false
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
@@ -534,7 +534,7 @@ interface imgui_widgetsColorEditorPicker {
         val rounding = glm.min(style.frameRounding, gridStep * 0.5f)
         val bbInner = Rect(bb)
         /*  The border (using Col.FrameBg) tends to look off when color is near-opaque and rounding is enabled.
-            This offset seemed like a good middleground to reduce those artefacts.  */
+            This offset seemed like a good middle ground to reduce those artifacts.  */
         val off = -0.75f
         bbInner expand off
         if (flags has Cef.AlphaPreviewHalf && col.w < 1f) {
@@ -544,8 +544,13 @@ interface imgui_widgetsColorEditorPicker {
             window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colWithoutAlpha), rounding,
                     Corner.TopLeft or Corner.BotLeft)
         } else {
-            val c = getColorU32(if (flags has Cef.AlphaPreview) col else colWithoutAlpha)
-            renderColorRectWithAlphaCheckerboard(bbInner.min, bbInner.max, c, gridStep, Vec2(off), rounding)
+            /*  Because getColorU32() multiplies by the global style alpha and we don't want to display a checkerboard 
+                if the source code had no alpha */
+            val colSource = if(flags has Cef.AlphaPreview) col else colWithoutAlpha
+            if (colSource.w < 1f)
+                    renderColorRectWithAlphaCheckerboard(bbInner.min, bbInner.max, colSource.u32, gridStep, Vec2(off), rounding)
+            else
+                window.drawList.addRectFilled(bbInner.min, bbInner.max, getColorU32(colSource), rounding, 0.inv())
         }
         if (window.flags has Wf.ShowBorders)
             renderFrameBorder(bb.min, bb.max, rounding)
