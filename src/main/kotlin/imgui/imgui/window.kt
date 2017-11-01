@@ -70,6 +70,9 @@ interface imgui_window {
             createNewWindow(name, sizeOnFirstUse, flags)
         }
 
+        if(name.startsWith("##m"))
+            println()
+
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
         if (firstBeginOfTheFrame)
@@ -105,7 +108,7 @@ interface imgui_window {
             if (window.appearing)
                 window.setWindowPosAllowFlags = window.setWindowPosAllowFlags or Cond.Appearing
             windowPosSetByApi = window.setWindowPosAllowFlags has g.setNextWindowPosCond
-            if (windowPosSetByApi && g.setNextWindowPosPivot.lengthSqr < 0.00001f) {
+            if (windowPosSetByApi && g.setNextWindowPosPivot.lengthSqr > 0.00001f) {
                 /*  May be processed on the next frame if this is our first frame and we are measuring size
                     FIXME: Look into removing the branch so everything can go through this same code path for consistency.  */
                 window.setWindowPosVal put g.setNextWindowPosVal
@@ -200,14 +203,14 @@ interface imgui_window {
 
             // Save contents size from last frame for auto-fitting (unless explicitly specified)
             window.sizeContents.x = (
-                    if (window.sizeContentsExplicit.x != 0.0f) window.sizeContentsExplicit.x
+                    if (window.sizeContentsExplicit.x != 0f) window.sizeContentsExplicit.x
                     else (
-                            if (windowIsNew) 0.0f
+                            if (windowIsNew) 0f
                             else window.dc.cursorMaxPos.x - window.pos.x) + window.scroll.x).i.f
             window.sizeContents.y = (
-                    if (window.sizeContentsExplicit.y != 0.0f) window.sizeContentsExplicit.y
+                    if (window.sizeContentsExplicit.y != 0f) window.sizeContentsExplicit.y
                     else (
-                            if (windowIsNew) 0.0f
+                            if (windowIsNew) 0f
                             else window.dc.cursorMaxPos.y - window.pos.y) + window.scroll.y).i.f
 
             // Hide popup/tooltip window when first appearing while we measure size (because we recycle them)

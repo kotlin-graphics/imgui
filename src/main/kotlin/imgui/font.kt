@@ -42,7 +42,7 @@ class FontConfig {
      *  font. If enabled, you can set OversampleH/V to 1.   */
     var pixelSnapH = false
     /** Extra spacing (in pixels) between glyphs. Only X axis is supported for now.    */
-    var glyphExtraSpacing = Vec2(1f, 0f)
+    var glyphExtraSpacing = Vec2()
     /** Offset all glyphs from this font input. */
     var glyphOffset = Vec2()
     /** Pointer to a user-provided list of Unicode range (2 value per range, values are inclusive, zero-terminated

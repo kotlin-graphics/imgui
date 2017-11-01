@@ -120,6 +120,8 @@ interface imgui_menus {
 
         val pressed: Boolean
         var menuIsOpen = isPopupOpen(id)
+        if(menuIsOpen && label[0] == 'O')
+            println()
         val menusetIsOpen = window.flags hasnt Wf.Popup && g.openPopupStack.size > g.currentPopupStack.size &&
                 g.openPopupStack[g.currentPopupStack.size].parentMenuSet == window.getId("##menus")
         val backedNavWindow = g.navWindow
