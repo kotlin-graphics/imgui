@@ -190,7 +190,7 @@ class DrawList {
 
     fun addRectFilled(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCornersFlags: Int = 0xffffffff.i) {
         if (col hasnt COL32_A_MASK) return
-        if (rounding > 0.0f) {
+        if (rounding > 0f) {
             pathRect(a, b, rounding, roundingCornersFlags)
             pathFillConvex(col)
         } else {

@@ -21,9 +21,9 @@ interface imgui_styles {
                 Vec4(0.80f, 0.80f, 0.80f, 0.30f),   // Background of checkbox, radio button, plot, slider, text input
                 Vec4(0.90f, 0.80f, 0.80f, 0.40f),
                 Vec4(0.90f, 0.65f, 0.65f, 0.45f),
-                Vec4(0.27f, 0.27f, 0.54f, 0.83f),
-                Vec4(0.40f, 0.40f, 0.80f, 0.20f),
-                Vec4(0.32f, 0.32f, 0.63f, 0.87f),
+                Vec4(0.27f, 0.27f, 0.54f, 0.83f),   // TitleBg
+                Vec4(0.32f, 0.32f, 0.63f, 0.87f),   // TitleBgActive
+                Vec4(0.40f, 0.40f, 0.80f, 0.20f),   // TitleBgCollapsed
                 Vec4(0.40f, 0.40f, 0.55f, 0.80f),
                 Vec4(0.20f, 0.25f, 0.30f, 0.60f),
                 Vec4(0.40f, 0.40f, 0.80f, 0.30f),
