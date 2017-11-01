@@ -57,19 +57,18 @@ import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.TextEditState.K
 import imgui.imgui.imgui_colums.Companion.pixelsToOffsetNorm
-import imgui.imgui.imgui_tooltips.Companion.beginTooltipEx
 import imgui.internal.*
 import java.util.*
 import kotlin.apply
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
+import imgui.HoveredFlags as Hf
 import imgui.InputTextFlags as Itf
 import imgui.ItemFlags as If
 import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
 import imgui.internal.LayoutType as Lt
-import imgui.HoveredFlags as Hf
 
 fun main(args: Array<String>) {
 
@@ -149,9 +148,9 @@ interface imgui_internal {
                     if (g.hoveredRootWindow != null) {
                         g.hoveredWindow.focus()
                         if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove) {
-                            g.movedWindow = g.hoveredWindow
-                            g.movedWindowMoveId = g.hoveredWindow!!.moveId
-                            setActiveId(g.movedWindowMoveId, g.hoveredRootWindow)
+                            g.movingWindow = g.hoveredWindow
+                            g.movingdWindowMoveId = g.hoveredWindow!!.moveId
+                            setActiveId(g.movingdWindowMoveId, g.hoveredRootWindow)
                         }
                     } else if (g.navWindow != null && frontMostModalRootWindow == null)
                         null.focus()   // Clicking on void disable focus
@@ -425,6 +424,23 @@ interface imgui_internal {
             endPopup()
 
         return isOpen
+    }
+
+    /** Not exposed publicly as BeginTooltip() because bool parameters are evil. Let's see if other needs arise first.
+     *  @param extraFlags WindowFlags   */
+    fun beginTooltipEx(extraFlags: Int, overridePreviousTooltip: Boolean = true) {
+
+        var windowName = "##Tooltip%02d".format(style.locale, g.tooltipOverrideCount)
+        if (overridePreviousTooltip)
+            findWindowByName(windowName)?.let {
+                if (it.active) {
+                    // Hide previous tooltips. We can't easily "reset" the content of a window so we create a new one.
+                    it.hiddenFrames = 1
+                    windowName = "##Tooltip%02d".format(++g.tooltipOverrideCount)
+                }
+            }
+        val flags = Wf.Tooltip or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
+        begin(windowName, null, flags or extraFlags)
     }
 
     fun calcTypematicPressedRepeatAmount(t: Float, tPrev: Float, repeatDelay: Float, repeatRate: Float) = when {

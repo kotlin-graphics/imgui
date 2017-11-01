@@ -46,17 +46,15 @@ val defaultFont get() = IO.fontDefault ?: IO.fonts.fonts[0]
 FIXME: Note that we have a lag here because WindowRectClipped is updated in Begin() so windows moved by user via
 SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time
 FindHoveredWindow() is called, aka before the next Begin(). Moving window thankfully isn't affected.    */
-fun findHoveredWindow(pos: Vec2, excludingChilds: Boolean): Window? {
+fun findHoveredWindow(pos: Vec2): Window? {
     for (i in g.windows.size - 1 downTo 0) {
         val window = g.windows[i]
         if (!window.active)
             continue
         if (window.flags has Wf.NoInputs)
             continue
-        if (excludingChilds && window.flags has Wf.ChildWindow)
-            continue
 
-        // Using the clipped AABB so a child window will typically be clipped by its parent.
+        // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
         val bb = Rect(window.windowRectClipped.min - style.touchExtraPadding, window.windowRectClipped.max + style.touchExtraPadding)
         if (bb contains pos)
             return window
@@ -200,39 +198,33 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window): Vec2 {  // TODO -> w
     return scroll
 }
 
-fun findWindowSettings(name: String): IniData? {
-    val id = hash(name, 0)
-    return g.settings.firstOrNull { it.id == id }
-}
+fun findWindowSettings(name: String) = hash(name, 0).let { id -> g.settings.firstOrNull { it.id == id } }
 
-fun addWindowSettings(name: String): IniData {
-    val ini = IniData()
-    g.settings.add(ini)
-    ini.name = name
-    ini.id = hash(name, 0)
-    ini.collapsed = false
-    ini.pos = Vec2i(Int.MAX_VALUE)
-    ini.size = Vec2()
-    return ini
+fun addWindowSettings(name: String) = IniData().apply {
+    g.settings.add(this)
+    this.name = name
+    id = hash(name, 0)
+    collapsed = false
+    pos put Int.MAX_VALUE
+    size put 0
 }
 
 fun loadIniSettingsFromDisk(iniFilename: String?) {
-
     if (iniFilename == null) return
-
     var settings: IniData? = null
     val file = Paths.get(iniFilename).toFile()
-    if (file.exists())
-        file.readLines().filter { it.isNotEmpty() }.forEach {
-            if (it[0] == '[' && it.last() == ']') {
-                val name = it.substring(1, it.lastIndex)
-                settings = findWindowSettings(name) ?: addWindowSettings(name)
-            } else if (settings != null) when {
-                it.startsWith("Pos") -> settings!!.pos.put(it.substring(4).split(","))
-                it.startsWith("Size") -> settings!!.size put glm.max(Vec2i(it.substring(5).split(",")), style.windowMinSize)
-                it.startsWith("Collapsed") -> settings!!.collapsed = it.substring(10).toBoolean()
+    if (file.exists()) file.readLines().filter { it.isNotEmpty() }.forEach { s ->
+        if (s[0] == '[' && s.last() == ']') {
+            val name = s.substring(1, s.lastIndex)
+            settings = findWindowSettings(name) ?: addWindowSettings(name)
+        } else settings?.apply {
+            when {
+                s.startsWith("Pos") -> pos.put(s.substring(4).split(","))
+                s.startsWith("Size") -> size put glm.max(Vec2i(s.substring(5).split(",")), style.windowMinSize)
+                s.startsWith("Collapsed") -> collapsed = s.substring(10).toBoolean()
             }
         }
+    }
 }
 
 fun saveIniSettingsToDisk(iniFilename: String?) {

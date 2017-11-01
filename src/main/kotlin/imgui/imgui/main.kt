@@ -119,23 +119,23 @@ interface imgui_main {
 
         /*  Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering).
             Only valid for root windows.         */
-        if (g.movedWindowMoveId != 0 && g.movedWindowMoveId == g.activeId) {
-            keepAliveId(g.movedWindowMoveId)
-            assert(g.movedWindow != null)
-            assert(g.movedWindow!!.moveId == g.movedWindowMoveId)
+        if (g.movingdWindowMoveId != 0 && g.movingdWindowMoveId == g.activeId) {
+            keepAliveId(g.movingdWindowMoveId)
+            assert(g.movingWindow != null)
+            assert(g.movingWindow!!.moveId == g.movingdWindowMoveId)
             if (IO.mouseDown[0]) {
-                g.movedWindow!!.rootWindow.posF plus_ IO.mouseDelta
+                g.movingWindow!!.rootWindow.posF plus_ IO.mouseDelta
                 if (IO.mouseDelta notEqual 0f)
-                    markIniSettingsDirty(g.movedWindow!!.rootWindow)
-                g.movedWindow.focus()
+                    markIniSettingsDirty(g.movingWindow!!.rootWindow)
+                g.movingWindow.focus()
             } else {
                 clearActiveId()
-                g.movedWindow = null
-                g.movedWindowMoveId = 0
+                g.movingWindow = null
+                g.movingdWindowMoveId = 0
             }
         } else {
-            g.movedWindow = null
-            g.movedWindowMoveId = 0
+            g.movingWindow = null
+            g.movingdWindowMoveId = 0
         }
 
         // Delay saving settings so we don't spam disk too much
@@ -145,12 +145,14 @@ interface imgui_main {
                 saveIniSettingsToDisk(IO.iniFilename)
         }
 
-        // Find the window we are hovering. Child windows can extend beyond the limit of their parent so we need to derive HoveredRootWindow from HoveredWindow
-        g.hoveredWindow = g.movedWindow ?: findHoveredWindow(IO.mousePos, false)
-        if (g.hoveredWindow != null && g.hoveredWindow!!.flags has Wf.ChildWindow)
-            g.hoveredRootWindow = g.hoveredWindow!!.rootWindow
-        else
-            g.hoveredRootWindow = g.movedWindow?.rootWindow ?: findHoveredWindow(IO.mousePos, true)
+        /*  Find the window we are hovering
+            - Child windows can extend beyond the limit of their parent so we need to derive HoveredRootWindow from HoveredWindow.
+            - When moving a window we can skip the search, which also conveniently bypasses the fact that window.windowRectClipped
+                is lagging as this point.
+            - We also support the moved window toggling the NoInputs flag after moving has started in order to be able to detect
+                windows below it, which is useful for e.g. docking mechanisms.  */
+        g.hoveredWindow = if (g.movingWindow?.flags?.hasnt(Wf.NoInputs) == true) g.movingWindow else findHoveredWindow(IO.mousePos)
+        g.hoveredRootWindow = g.hoveredWindow?.rootWindow
 
         val modalWindow = frontMostModalRootWindow
         if (modalWindow != null) {
@@ -233,8 +235,7 @@ interface imgui_main {
         }
 
         // Closing the focused window restore focus to the first active root window in descending z-order
-        if (g.navWindow != null && !g.navWindow!!.wasActive)
-            focusPreviousWindow()
+        if (g.navWindow != null && !g.navWindow!!.wasActive) focusPreviousWindow()
 
         /*  No window should be open at the beginning of the frame.
             But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an
@@ -330,7 +331,7 @@ interface imgui_main {
         g.hoveredWindow = null
         g.hoveredRootWindow = null
         g.activeIdWindow = null
-        g.movedWindow = null
+        g.movingWindow = null
         g.settings.clear()
         g.colorModifiers.clear()
         g.styleModifiers.clear()

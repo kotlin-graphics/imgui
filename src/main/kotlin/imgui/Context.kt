@@ -69,9 +69,9 @@ object Context {
 
     var activeIdWindow: Window? = null
     /** Track the child window we clicked on to move a window.  */
-    var movedWindow: Window? = null
+    var movingWindow: Window? = null
     /** == MovedWindow->RootWindow->MoveId  */
-    var movedWindowMoveId = 0
+    var movingdWindowMoveId = 0
     /** .ini Settings   */
     val settings = ArrayList<IniData>()
     /** Save .ini Settings on disk when time reaches zero   */

@@ -427,10 +427,10 @@ class Window(
     /** store condition flags for next SetWindowCollapsed() call.   */
     var setWindowCollapsedAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
     /** store window position when using a non-zero Pivot (position set needs to be processed when we know the window size) */
-    var setWindowPosVal = Vec2()
+    var setWindowPosVal = Vec2(Float.MAX_VALUE)
     /** store window pivot for positioning. Vec2(0) when positioning from top-left corner; Vec2(0.5f) for centering;
      *  Vec2(1) for bottom right.   */
-    var setWindowPosPivot = Vec2()
+    var setWindowPosPivot = Vec2(Float.MAX_VALUE)
 
 
     /** Temporary per-window data, reset at the beginning of the frame  */
