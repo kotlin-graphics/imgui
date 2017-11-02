@@ -70,9 +70,6 @@ interface imgui_window {
             createNewWindow(name, sizeOnFirstUse, flags)
         }
 
-        if(name.startsWith("##m"))
-            println()
-
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
         if (firstBeginOfTheFrame)
