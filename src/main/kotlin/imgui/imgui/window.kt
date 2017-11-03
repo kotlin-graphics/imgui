@@ -199,16 +199,20 @@ interface imgui_window {
             // SIZE
 
             // Save contents size from last frame for auto-fitting (unless explicitly specified)
-            window.sizeContents.x = (
-                    if (window.sizeContentsExplicit.x != 0f) window.sizeContentsExplicit.x
-                    else (
-                            if (windowIsNew) 0f
-                            else window.dc.cursorMaxPos.x - window.pos.x) + window.scroll.x).i.f
-            window.sizeContents.y = (
-                    if (window.sizeContentsExplicit.y != 0f) window.sizeContentsExplicit.y
-                    else (
-                            if (windowIsNew) 0f
-                            else window.dc.cursorMaxPos.y - window.pos.y) + window.scroll.y).i.f
+            window.sizeContents.x = when {
+                window.sizeContentsExplicit.x != 0f -> window.sizeContentsExplicit.x
+                else -> when {
+                    windowIsNew -> 0f
+                    else -> window.dc.cursorMaxPos.x - window.pos.x
+                } + window.scroll.x
+            }.i.f
+            window.sizeContents.y = when {
+                window.sizeContentsExplicit.y != 0f -> window.sizeContentsExplicit.y
+                else -> when {
+                    windowIsNew -> 0f
+                    else -> window.dc.cursorMaxPos.y - window.pos.y
+                } + window.scroll.y
+            }.i.f
 
             // Hide popup/tooltip window when first appearing while we measure size (because we recycle them)
             if (window.hiddenFrames > 0)
@@ -286,7 +290,7 @@ interface imgui_window {
                 val rectToAvoid =
                         if (parentWindow!!.dc.menuBarAppending)
                             Rect(-Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight,
-                                    Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight + parentWindow.menuBarHeight())
+                                    Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight + parentWindow.menuBarHeight)
                         else
                             Rect(parentWindow.pos.x + horizontalOverlap, -Float.MAX_VALUE,
                                     parentWindow.pos.x + parentWindow.size.x - horizontalOverlap - parentWindow.scrollbarSizes.x, Float.MAX_VALUE)
@@ -455,7 +459,7 @@ interface imgui_window {
 
                 // Update ContentsRegionMax. All the variable it depends on are set above in this function.
                 contentsRegionRect.min.x = -scroll.x + windowPadding.x
-                contentsRegionRect.min.y = -scroll.y + windowPadding.y + titleBarHeight + menuBarHeight()
+                contentsRegionRect.min.y = -scroll.y + windowPadding.y + titleBarHeight + menuBarHeight
                 contentsRegionRect.max.x = -scroll.x - windowPadding.x + (
                         if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else (size.x - scrollbarSizes.x))
                 contentsRegionRect.max.y = -scroll.y - windowPadding.y + (
@@ -466,7 +470,7 @@ interface imgui_window {
                 dc.groupOffsetX = 0f
                 dc.columnsOffsetX = 0.0f
                 dc.cursorStartPos.put(pos.x + dc.indentX + dc.columnsOffsetX,
-                        pos.y + titleBarHeight + menuBarHeight() + windowPadding.y - scroll.y)
+                        pos.y + titleBarHeight + menuBarHeight + windowPadding.y - scroll.y)
                 dc.cursorPos put dc.cursorStartPos
                 dc.cursorPosPrevLine put dc.cursorPos
                 dc.cursorMaxPos put dc.cursorStartPos
@@ -501,10 +505,8 @@ interface imgui_window {
                     dc.itemFlagsStack.add(dc.itemFlags)
                 }
 
-                if (autoFitFrames.x > 0)
-                    autoFitFrames.x--
-                if (autoFitFrames.y > 0)
-                    autoFitFrames.y--
+                if (autoFitFrames.x > 0) autoFitFrames.x--
+                if (autoFitFrames.y > 0) autoFitFrames.y--
             }
 
             // New windows appears in front (we need to do that AFTER setting DC.CursorStartPos so our initial navigation reference rectangle can start around there)
@@ -516,7 +518,7 @@ interface imgui_window {
             if (flags hasnt Wf.NoTitleBar) {
                 // Collapse button
                 if (flags hasnt Wf.NoCollapse)
-                    renderTriangle(Vec2(window.pos + style.framePadding), if(window.collapsed) Dir.Right else Dir.Down, 1f)
+                    renderTriangle(Vec2(window.pos + style.framePadding), if (window.collapsed) Dir.Right else Dir.Down, 1f)
                 // Close button
                 if (pOpen != null) {
                     val pad = 2f
@@ -571,7 +573,7 @@ interface imgui_window {
         val borderSize = window.borderSize
         val clipRect = Rect()   // Force round to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
         clipRect.min.x = glm.floor(0.5f + titleBarRect.min.x + glm.max(borderSize, glm.floor(window.windowPadding.x * 0.5f)))
-        clipRect.min.y = glm.floor(0.5f + titleBarRect.max.y + window.menuBarHeight() + borderSize)
+        clipRect.min.y = glm.floor(0.5f + titleBarRect.max.y + window.menuBarHeight + borderSize)
         clipRect.max.x = glm.floor(0.5f + window.pos.x + window.size.x - window.scrollbarSizes.x -
                 glm.max(borderSize, glm.floor(window.windowPadding.x * 0.5f)))
         clipRect.max.y = glm.floor(0.5f + window.pos.y + window.size.y - window.scrollbarSizes.y - borderSize)
@@ -635,8 +637,10 @@ interface imgui_window {
     fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, extraFlags: Int = 0) =
             beginChildEx(strId, currentWindow.getId(strId), size, border, extraFlags)
 
-    /** begin a scrolling region. size==0.0f: use remaining window size, size<0.0f: use remaining window size minus
-     *  abs(size). size>0.0f: fixed size. each axis can use a different mode, e.g. ImVec2(0,400).   */
+    /** begin a scrolling region.
+     *  size == 0f: use remaining window size
+     *  size < 0f: use remaining window size minus abs(size)
+     *  size > 0f: fixed size. each axis can use a different mode, e.g. Vec2(0, 400).   */
     fun beginChild(id: Int, sizeArg: Vec2 = Vec2(), border: Boolean = false, extraFlags: Int = 0) =
             beginChildEx("", id, sizeArg, border, extraFlags)
 
@@ -794,7 +798,7 @@ interface imgui_window {
         get() = g.currentWindow!!.scroll.y
         set(value) = with(currentWindow) {
             // title bar height canceled out when using ScrollTargetRelY
-            scrollTarget.y = value + titleBarHeight + menuBarHeight()
+            scrollTarget.y = value + titleBarHeight + menuBarHeight
             scrollTargetCenterRatio.y = 0f
         }
 
@@ -844,6 +848,7 @@ interface imgui_window {
 
             val parentWindow = currentWindow
             var flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf.ChildWindow
+            flags = flags or (parentWindow.flags and Wf.NoMove.i)  // Inherit the NoMove flag
 
             val contentAvail = contentRegionAvail
             val size = glm.floor(sizeArg)
@@ -852,18 +857,14 @@ interface imgui_window {
                 size.x = glm.max(contentAvail.x, 4f) - glm.abs(size.x)
             if (size.y <= 0f)
                 size.y = glm.max(contentAvail.y, 4f) - glm.abs(size.y)
-            if (border)
-                flags = flags or Wf.ShowBorders
+            if (border) flags = flags or Wf.ShowBorders
             flags = flags or extraFlags
 
             val title =
-                    if (name.isNotEmpty())
-                        "%s/%s_%08X".format(style.locale, parentWindow.name, name, id)
-                    else
-                        "%s/%08X".format(style.locale, parentWindow.name, id)
+                    if (name.isNotEmpty()) "%s/%s_%08X".format(style.locale, parentWindow.name, name, id)
+                    else "%s/%08X".format(style.locale, parentWindow.name, id)
             ImGui.setNextWindowSize(size)
             val ret = ImGui.begin(title, null, flags)
-
             val childWindow = currentWindow
             childWindow.autoFitChildAxes = autoFitAxes
             if (parentWindow.flags hasnt Wf.ShowBorders)

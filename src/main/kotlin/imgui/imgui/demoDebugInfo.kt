@@ -171,9 +171,9 @@ interface imgui_demoDebugInfo {
         }
 
         //pushItemWidth(getWindowWidth() * 0.65f);    // 2/3 of the space for widget and 1/3 for labels
-        pushItemWidth(-140f)                                 // Right align, keep 140 pixels for labels
+        pushItemWidth(-140f) // Right align, keep 140 pixels for labels
 
-        text("JVM ImGui says hello. ($version)")
+        text("dear imgui says hello. ($version)")
 
         // Menu
         menuBar {
@@ -2206,7 +2206,7 @@ interface imgui_demoDebugInfo {
                 sliderFloat("Value", pF, 0f, 1f)
                 inputFloat("Input", pF, 0.1f, 0f, 2)
                 combo("Combo", n, "Yes\u0000No\u0000Maybe\u0000\u0000")
-//                ImGui::Checkbox("Check", &b); TODO
+                checkbox("Check", checkbox)
                 endMenu()
             }
             if (beginMenu("Colors")) {
@@ -2676,6 +2676,8 @@ interface imgui_demoDebugInfo {
                     label""".trimMargin() +
                     "\tlock cmpxchg8b eax\n").toCharArray(it)
         }
+
+        val checkbox = booleanArrayOf(true)
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.

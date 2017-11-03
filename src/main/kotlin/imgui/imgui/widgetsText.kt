@@ -6,9 +6,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
-import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.beginPopup
-import imgui.ImGui.button
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcWrapWidthForPos
 import imgui.ImGui.checkboxFlags
@@ -19,7 +17,6 @@ import imgui.ImGui.endPopup
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.openPopup
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleColor
@@ -28,17 +25,17 @@ import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushTextWrapPos
-import imgui.ImGui.radioButton
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
-import imgui.ImGui.setClipboardText
 import imgui.ImGui.textLineHeight
 import imgui.imgui.imgui_internal.Companion.smallSquareSize
-import imgui.internal.*
+import imgui.internal.Dir
+import imgui.internal.Rect
+import imgui.internal.strchr
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
 
@@ -135,16 +132,7 @@ interface imgui_widgetsText {
         val window = currentWindow
         if (window.skipItems) return
 
-        val fmt =
-//                try{
-                if (args.isEmpty())
-                    fmt
-                else
-                    fmt.format(style.locale, *args)
-//                }catch (err: Exception) {
-//                    println("fmt $fmt, args: ${args}")
-//                    TODO()
-//                }
+        val fmt = if (args.isEmpty()) fmt else fmt.format(style.locale, *args)
 
         val textEnd = fmt.length
         textUnformatted(fmt, textEnd)

@@ -176,7 +176,8 @@ interface imgui_widgetsColorEditorPicker {
                     openPopup("picker")
                     setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
                 }
-            } else if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
+            }
+            if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
 
             if (beginPopup("picker")) {
                 pickerActive = true
@@ -195,7 +196,7 @@ interface imgui_widgetsColorEditorPicker {
             }
         }
 
-        if (label.length != labelDisplayEnd && flags hasnt Cef.NoLabel) { // TODO check first comparison
+        if (0 != labelDisplayEnd && flags hasnt Cef.NoLabel) { // TODO check first comparison
             sameLine(0f, style.itemInnerSpacing.x)
             textUnformatted(label, labelDisplayEnd)
         }

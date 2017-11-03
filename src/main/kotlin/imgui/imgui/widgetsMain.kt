@@ -1,6 +1,7 @@
 package imgui.imgui
 
 import glm_.f
+import glm_.func.common.min
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -327,7 +328,7 @@ interface imgui_widgetsMain {
 
         // Size default to hold ~7 items
         val heightInItems = if (heightInItems < 0) 7 else heightInItems
-        val popupHeight = (g.fontSize + style.itemSpacing.y) * glm.min(items.size, heightInItems) + style.framePadding.y * 3
+        val popupHeight = (g.fontSize + style.itemSpacing.y) * items.size.min(heightInItems) + style.framePadding.y * 3
 
         if (!beginCombo(label, previewText, Vec2(0f, popupHeight))) return false
 

@@ -509,10 +509,10 @@ class Window(
     fun calcFontSize() = g.fontBaseSize * fontWindowScale
     val titleBarHeight get() = if (flags has Wf.NoTitleBar) 0f else calcFontSize() + style.framePadding.y * 2f
     fun titleBarRect() = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight))
-    fun menuBarHeight() = if (flags has Wf.MenuBar) calcFontSize() + style.framePadding.y * 2f else 0f
+    val menuBarHeight get() = if (flags has Wf.MenuBar) calcFontSize() + style.framePadding.y * 2f else 0f
     fun menuBarRect(): Rect {
         val y1 = pos.y + titleBarHeight
-        return Rect(pos.x.f, y1, pos.x + sizeFull.x, y1 + menuBarHeight())
+        return Rect(pos.x.f, y1, pos.x + sizeFull.x, y1 + menuBarHeight)
     }
 
     // _______________________________________ JVM _______________________________________

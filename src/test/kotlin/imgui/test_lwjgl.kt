@@ -88,9 +88,8 @@ class HelloWorld_lwjgl {
                 sliderFloat("float", f, 0f, 1f)
                 colorEdit3("clear color", clearColor)
                 //  You can write functions in the classical way, with if(cond) { code }
-                if (button("Test Window")) {
+                if (button("Test Window"))
                     showTestWindow[0] = !showTestWindow[0]
-                }
                 // or you can take advantage of functional programming and pass directly a lambda as last parameter
                 button("Another Window") {
                     showAnotherWindow[0] = !showAnotherWindow[0]

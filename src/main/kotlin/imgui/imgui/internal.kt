@@ -479,7 +479,7 @@ interface imgui_internal {
                     Rect(windowRect.max.x - style.scrollbarSize, window.pos.y + borderSize,
                             windowRect.max.x - borderSize, windowRect.max.y - otherScrollbarSizeW - borderSize)
         if (!horizontal)
-            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight() else 0f
+            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f
         if (bb.width <= 0f || bb.height <= 0f) return
 
         val windowRounding = if (window.flags has Wf.ChildWindow) style.childWindowRounding else style.windowRounding
