@@ -1,8 +1,9 @@
 package imgui
 
-import gli.hasnt
+import gli_.hasnt
 import glm_.BYTES
 import glm_.f
+import glm_.func.common.max
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -148,8 +149,8 @@ class DrawList {
             if (cr.z > current.z) cr.z = current.z
             if (cr.w > current.w) cr.w = current.w
         }
-        cr.z = glm.max(cr.x, cr.z)
-        cr.w = glm.max(cr.y, cr.w)
+        cr.z = cr.x max cr.z
+        cr.w = cr.y max cr.w
 
         _clipRectStack.push(cr)
         updateClipRect()
@@ -351,7 +352,7 @@ class DrawList {
 
             for (i1 in 0 until count) {
                 val i2 = if ((i1 + 1) == points.size) 0 else i1 + 1
-                var diff = points[i2] - points[i1]
+                val diff = points[i2] - points[i1]
                 diff *= diff.invLength(1f)
                 tempNormals[i1].x = diff.y
                 tempNormals[i1].y = -diff.x
@@ -373,7 +374,7 @@ class DrawList {
                     val idx2 = if ((i1 + 1) == points.size) _vtxCurrentIdx else idx1 + 3
 
                     // Average normals
-                    var dm = (tempNormals[i1] + tempNormals[i2]) * 0.5f
+                    val dm = (tempNormals[i1] + tempNormals[i2]) * 0.5f
                     val dmr2 = dm.x * dm.x + dm.y * dm.y
                     if (dmr2 > 0.000001f) {
                         var scale = 1f / dmr2
@@ -435,7 +436,7 @@ class DrawList {
                     val idx2 = if ((i1 + 1) == points.size) _vtxCurrentIdx else idx1 + 4
 
                     // Average normals
-                    var dm = (tempNormals[i1] + tempNormals[i2]) * 0.5f
+                    val dm = (tempNormals[i1] + tempNormals[i2]) * 0.5f
                     val dmr2 = dm.x * dm.x + dm.y * dm.y
                     if (dmr2 > 0.000001f) {
                         var scale = 1f / dmr2
@@ -501,7 +502,7 @@ class DrawList {
                 val i2 = if ((i1 + 1) == points.size) 0 else i1 + 1
                 val p1 = points[i1]
                 val p2 = points[i2]
-                var diff = p2 - p1
+                val diff = p2 - p1
                 diff *= diff.invLength(1f)
 
                 val d = diff * (thickness * 0.5f)
@@ -566,7 +567,7 @@ class DrawList {
             while (i1 < points.size) {
                 val p0 = points[i0]
                 val p1 = points[i1]
-                var diff = p1 - p0
+                val diff = p1 - p0
                 diff *= diff.invLength(1f)
                 tempNormals[i0].x = diff.y
                 tempNormals[i0].y = -diff.x
@@ -579,7 +580,7 @@ class DrawList {
                 // Average normals
                 val n0 = tempNormals[i0]
                 val n1 = tempNormals[i1]
-                var dm = (n0 + n1) * 0.5f
+                val dm = (n0 + n1) * 0.5f
                 val dmr2 = dm.x * dm.x + dm.y * dm.y
                 if (dmr2 > 0.000001f) {
                     var scale = 1f / dmr2

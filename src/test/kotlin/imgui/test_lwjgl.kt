@@ -2,6 +2,8 @@ package imgui
 
 
 import glm_.vec2.Vec2
+import gln.checkError
+import gln.glViewport
 import imgui.functionalProgramming.button
 import imgui.impl.LwjglGL3
 import org.lwjgl.glfw.GLFW.glfwPollEvents
@@ -9,8 +11,6 @@ import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
-import uno.gln.checkError
-import uno.gln.glViewport
 
 fun main(args: Array<String>) {
     HelloWorld_lwjgl().run()
@@ -67,7 +67,7 @@ class HelloWorld_lwjgl {
 
     val clearColor = floatArrayOf(0.45f, 0.55f, 0.6f, 1f)
     var showAnotherWindow = booleanArrayOf(false)
-    var showTestWindow = booleanArrayOf(false)
+    var showTestWindow = booleanArrayOf(true)
 
     fun loop() {
 

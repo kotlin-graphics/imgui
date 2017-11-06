@@ -100,8 +100,8 @@ interface imgui_widgetsText {
                     // Count remaining lines
                     var linesSkipped = 0
                     while (line < textEnd) {
-                        val line_end = text.strchr(line, '\n') ?: textEnd
-                        line = line_end + 1
+                        val lineEnd = text.strchr(line, '\n') ?: textEnd
+                        line = lineEnd + 1
                         linesSkipped++
                     }
                     pos.y += linesSkipped * lineHeight

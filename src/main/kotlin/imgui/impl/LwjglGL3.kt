@@ -1,10 +1,24 @@
 package imgui.impl
 
-import gli.wasInit
 import glm_.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
+import gln.buffer.glBufferData
+import gln.checkError
+import gln.glGetVec4i
+import gln.glScissor
+import gln.glViewport
+import gln.glf.semantic
+import gln.program.Program
+import gln.program.glDeleteProgram
+import gln.program.glUseProgram
+import gln.program.usingProgram
+import gln.texture.initTexture2d
+import gln.uniform.glUniform
+import gln.vertexArray.glBindVertexArray
+import gln.vertexArray.glVertexAttribPointer
+import gln.vertexArray.withVertexArray
 import imgui.*
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.GL11.*
@@ -17,11 +31,8 @@ import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
 import uno.buffer.intBufferOf
-import uno.glf.semantic
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
-import uno.gln.*
-import uno.glsl.Program
 
 
 object LwjglGL3 {
@@ -391,8 +402,7 @@ object LwjglGL3 {
         glDeleteVertexArrays(vaoName)
         glDeleteBuffers(bufferName)
 
-        if (wasInit { JoglGL3.program })
-            glDeleteProgram(program)
+        if (::program.isInitialized) glDeleteProgram(program)
 
         if (fontTexture[0] >= 0) {
             glDeleteTextures(fontTexture)

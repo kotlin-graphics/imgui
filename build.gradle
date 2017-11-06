@@ -13,7 +13,7 @@ group = 'com.github.kotlin-graphics'
 
 buildscript {
 
-    ext.kotlinVersion = '1.2.0-beta-88'
+    ext.kotlinVersion = '1.2.0-rc-39'
 
     repositories {
         jcenter()   // shadow
@@ -32,9 +32,9 @@ dependencies {
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-    compile 'com.github.kotlin-graphics:uno-sdk:119fcddca6a96ad34b94a6dd97c01b03d3c4adc9'
+    compile 'com.github.kotlin-graphics:uno-sdk:54552477eee8c63156043e833389e13c65005c77'
 
-    testCompile 'com.github.elect86:kotlintest:43281b7e1b'
+    testCompile 'io.kotlintest:kotlintest:2.0.7'
 
     def joglVersion = '2.3.2'
     compile "org.jogamp.gluegen:gluegen-rt-main:$joglVersion"

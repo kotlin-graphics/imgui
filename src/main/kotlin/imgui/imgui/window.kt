@@ -1,8 +1,9 @@
 package imgui.imgui
 
-import gli.has
-import gli.hasnt
+import gli_.has
+import gli_.hasnt
 import glm_.f
+import glm_.func.common.max
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -69,6 +70,9 @@ interface imgui_window {
             windowIsNew = true
             createNewWindow(name, sizeOnFirstUse, flags)
         }
+
+        if (name.length >= 8 && name[7] == '1')
+            println()
 
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
@@ -196,7 +200,7 @@ interface imgui_window {
                 }
             } else window.collapsed = false
 
-            // SIZE
+            /* ---------- SIZE ---------- */
 
             // Save contents size from last frame for auto-fitting (unless explicitly specified)
             window.sizeContents.x = when {
@@ -261,7 +265,7 @@ interface imgui_window {
             window.sizeFull put window.calcSizeFullWithConstraint(window.sizeFull)
             window.size put if (window.collapsed) window.titleBarRect().size else window.sizeFull
 
-            // POSITION
+            /* ---------- POSITION ---------- */
 
             // Position child window
             if (flags has Wf.ChildWindow) {
@@ -446,10 +450,10 @@ interface imgui_window {
 
                 // Borders
                 if (flags has Wf.ShowBorders) {
-                    window.drawList.addRect(Vec2(1) plus_ window.pos, (window.size + window.pos) plus_ 1, Col.BorderShadow.u32,
-                            windowRounding)
-                    // TODO check if window.posF is fine instead window.pos
-                    window.drawList.addRect(window.posF, window.posF + window.size, Col.Border.u32, windowRounding)
+                    val a = Vec2(window.pos.x + 1, window.pos.y + 1)
+                    val b = window.size + window.pos + 1
+                    window.drawList.addRect(a, b, Col.BorderShadow.u32, windowRounding)
+                    window.drawList.addRect(Vec2(window.pos), window.size + window.pos, Col.Border.u32, windowRounding)
                     if (flags hasnt Wf.NoTitleBar)
                         window.drawList.addLine(titleBarRect.bl + Vec2(1, 0), titleBarRect.br - Vec2(1, 0), Col.Border.u32)
                 }
@@ -552,7 +556,7 @@ interface imgui_window {
 
             // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
             window.windowRectClipped put window.rect()
-            window.windowRectClipped.clipWith(window.clipRect)
+            window.windowRectClipped clipWith window.clipRect
 
             // Pressing CTRL+C while holding on a window copy its content to the clipboard
             // This works but 1. doesn't handle multiple Begin/End pairs, 2. recursing into another Begin/End pair - so we need to work that out and add better logging scope.
@@ -565,18 +569,23 @@ interface imgui_window {
             // TODO return pOpen?
         }
 
-        /*  Inner clipping rectangle
-        We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
-        Note that if our window is collapsed we will end up with a null clipping rectangle which is the correct
-        behavior.   */
+        /*  Inner rectangle and inner clipping rectangle
+            We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
+            Note that if our window is collapsed we will end up with a null clipping rectangle which is the correct behavior.   */
         val titleBarRect = window.titleBarRect()
         val borderSize = window.borderSize
-        val clipRect = Rect()   // Force round to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
-        clipRect.min.x = glm.floor(0.5f + titleBarRect.min.x + glm.max(borderSize, glm.floor(window.windowPadding.x * 0.5f)))
-        clipRect.min.y = glm.floor(0.5f + titleBarRect.max.y + window.menuBarHeight + borderSize)
-        clipRect.max.x = glm.floor(0.5f + window.pos.x + window.size.x - window.scrollbarSizes.x -
-                glm.max(borderSize, glm.floor(window.windowPadding.x * 0.5f)))
-        clipRect.max.y = glm.floor(0.5f + window.pos.y + window.size.y - window.scrollbarSizes.y - borderSize)
+        window.innerRect.min.x = titleBarRect.min.x
+        window.innerRect.min.y = titleBarRect.max.y + window.menuBarHeight
+        window.innerRect.max.x = window.pos.x + window.size.x - window.scrollbarSizes.x
+        window.innerRect.max.y = window.pos.y + window.size.y - window.scrollbarSizes.y
+        //window->DrawList->AddRect(window->InnerRect.Min, window->InnerRect.Max, IM_COL32_WHITE);
+
+        // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
+        val clipRect = Rect()
+        clipRect.min.x = glm.floor(0.5f + window.innerRect.min.x + borderSize max glm.floor(window.windowPadding.x * 0.5f))
+        clipRect.min.y = glm.floor(0.5f + window.innerRect.min.y + borderSize)
+        clipRect.max.x = glm.floor(0.5f + window.innerRect.max.x - glm.max(borderSize, glm.floor(window.windowPadding.x * 0.5f)))
+        clipRect.max.y = glm.floor(0.5f + window.innerRect.max.y - borderSize)
         pushClipRect(clipRect.min, clipRect.max, true)
 
         // Clear 'accessed' flag last thing

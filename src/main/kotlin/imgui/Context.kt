@@ -471,23 +471,23 @@ class Style {
      *  Tips: if you need to change your scale multiple times, prefer calling this on a freshly initialized Style
      *  structure rather than scaling multiple times (because floating point multiplications are lossy).    */
     fun scaleAllSizes(scaleFactor: Float) {
-        windowPadding *= scaleFactor
-        windowMinSize *= scaleFactor
+        windowPadding timesAssign  scaleFactor
+        windowMinSize timesAssign scaleFactor
         windowRounding *= scaleFactor
         childWindowRounding *= scaleFactor
-        framePadding *= scaleFactor
+        framePadding timesAssign scaleFactor
         frameRounding *= scaleFactor
-        itemSpacing *= scaleFactor
-        itemInnerSpacing *= scaleFactor
-        touchExtraPadding *= scaleFactor
+        itemSpacing timesAssign scaleFactor
+        itemInnerSpacing timesAssign scaleFactor
+        touchExtraPadding timesAssign scaleFactor
         indentSpacing *= scaleFactor
         columnsMinSpacing *= scaleFactor
         scrollbarSize *= scaleFactor
         scrollbarRounding *= scaleFactor
         grabMinSize *= scaleFactor
         grabRounding *= scaleFactor
-        displayWindowPadding *= scaleFactor
-        displaySafeAreaPadding *= scaleFactor
+        displayWindowPadding timesAssign scaleFactor
+        displaySafeAreaPadding timesAssign scaleFactor
     }
 }
 

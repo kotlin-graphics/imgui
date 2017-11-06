@@ -1,6 +1,6 @@
 package imgui
 
-import gli.has
+import gli_.has
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
@@ -254,7 +254,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
             val name = setting.name.substringBefore("###")
             it.println("[$name]")
             it.println("Pos=${setting.pos.x},${setting.pos.y}")
-            it.println("Size=${setting.size.x},${setting.size.y}")
+            it.println("Size=${setting.size.x.i},${setting.size.y.i}")
             it.println("Collapsed=${setting.collapsed.i}")
             it.println()
         }

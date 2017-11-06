@@ -1,6 +1,6 @@
 package imgui.internal
 
-import gli.hasnt
+import gli_.hasnt
 import glm_.f
 import glm_.glm
 import glm_.i
@@ -448,6 +448,8 @@ class Window(
     /** = WindowRect just after setup in Begin(). == window->Rect() for root window.    */
     var windowRectClipped = Rect()
 
+    var innerRect = Rect()
+
     var lastFrameActive = -1
 
     var itemWidthDefault = 0f
@@ -550,7 +552,7 @@ class Window(
         pos put pos
         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least
         // offset the cursor
-        dc.cursorPos plus_ (pos - oldPos)
+        dc.cursorPos plusAssign pos - oldPos
         dc.cursorMaxPos plus (pos - oldPos) // And more importantly we need to adjust this so size calculation doesn't get affected.
     }
 

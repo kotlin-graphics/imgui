@@ -1,6 +1,6 @@
 package imgui
 
-import gli.has
+import gli_.has
 import glm_.c
 import glm_.glm
 import imgui.internal.isSpace

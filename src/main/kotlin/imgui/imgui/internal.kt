@@ -1,7 +1,7 @@
 package imgui.imgui
 
-import gli.has
-import gli.hasnt
+import gli_.has
+import gli_.hasnt
 import glm_.f
 import glm_.glm
 import glm_.i
@@ -901,7 +901,7 @@ interface imgui_internal {
 
         val thickness = glm.max(sz / 5f, 1f)
         val sz = sz - thickness * 0.5f
-        pos plus_ Vec2(thickness * 0.25f, thickness * 0.25f)
+        pos += thickness * 0.25f
 
         val third = sz / 3f
         val bx = pos.x + third

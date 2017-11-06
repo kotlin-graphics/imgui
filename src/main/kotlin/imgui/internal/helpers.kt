@@ -138,7 +138,7 @@ fun lineClosestPoint(a: Vec2, b: Vec2, p: Vec2): Vec2 {
     val ap = p - a
     var abDir = b - a
     val abLen = glm.sqrt(abDir.x * abDir.x + abDir.y * abDir.y)
-    abDir *= 1f / abLen
+    abDir timesAssign 1f / abLen
     val dot = ap.x * abDir.x + ap.y * abDir.y
     return when {
         dot < 0f -> a

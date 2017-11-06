@@ -124,7 +124,7 @@ interface imgui_main {
             assert(g.movingWindow != null)
             assert(g.movingWindow!!.moveId == g.movingdWindowMoveId)
             if (IO.mouseDown[0]) {
-                g.movingWindow!!.rootWindow.posF plus_ IO.mouseDelta
+                g.movingWindow!!.rootWindow.posF plusAssign IO.mouseDelta
                 if (IO.mouseDelta notEqual 0f)
                     markIniSettingsDirty(g.movingWindow!!.rootWindow)
                 g.movingWindow.focus()
@@ -209,8 +209,8 @@ interface imgui_main {
                 window.fontWindowScale = newFontScale
 
                 val offset = window.size * (1.0f - scale) * (IO.mousePos - window.pos) / window.size
-                window.pos plus_ offset
-                window.posF plus_ offset
+                window.pos plusAssign offset
+                window.posF plusAssign offset
                 window.size times_ scale
                 window.sizeFull times_ scale
             } else if (!IO.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse) {

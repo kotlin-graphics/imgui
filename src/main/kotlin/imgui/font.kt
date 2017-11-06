@@ -3,7 +3,6 @@ package imgui
 //import imgui.TrueType.packFontRangesGatherRects
 //import imgui.TrueType.packFontRangesRenderIntoRects
 //import imgui.TrueType.packSetOversampling
-import gli.wasInit
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
@@ -825,7 +824,7 @@ class FontAtlas {
     }
 
     fun buildMultiplyCalcLookupTable(inBrightenFactor: Float) = CharArray(256, {
-        val value = (i * inBrightenFactor).i
+        val value = (it * inBrightenFactor).i
         (if (value > 255) 255 else (value and 0xFF)).c
     })
 
@@ -990,7 +989,7 @@ class Font {
 
     fun getCharAdvance(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
 
-    val isLoaded get() = wasInit { containerAtlas }
+    val isLoaded get() = ::containerAtlas.isInitialized
 
 
     /*  'maxWidth' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.

@@ -87,8 +87,7 @@ interface imgui_widgetsMain {
         if (window.skipItems) return
 
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        if (borderCol.w > 0f)
-            bb.max plus_ 2
+        if (borderCol.w > 0f) bb.max plusAssign 2
         itemSize(bb)
         if (!itemAdd(bb)) return
 
@@ -278,7 +277,7 @@ interface imgui_widgetsMain {
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
         val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
         renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, true, style.frameRounding) // FIXME-ROUNDING
-        renderTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y) plus_ style.framePadding.y, Dir.Down)
+        renderTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y).apply { plusAssign(style.framePadding.y) }, Dir.Down)
 
         if (previewValue != null)
             renderTextClipped(frameBb.min + style.framePadding, valueBb.max, previewValue)
