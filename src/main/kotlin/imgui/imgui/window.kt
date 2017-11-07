@@ -120,7 +120,7 @@ interface imgui_window {
 
             g.setNextWindowPosCond = Cond.Null
         }
-        if (g.setNextWindowSizeCond.i != 0) {
+        if (g.setNextWindowSizeCond != Cond.Null) {
             if (window.appearing)
                 window.setWindowSizeAllowFlags = window.setWindowSizeAllowFlags or Cond.Appearing
             windowSizeSetByApi = window.setWindowSizeAllowFlags has g.setNextWindowSizeCond
@@ -566,21 +566,19 @@ interface imgui_window {
             if (g.IO.KeyCtrl && IsKeyPressedMap(ImGuiKey_C))
                 ImGui::LogToClipboard();
         */
-            // TODO return pOpen?
-        }
-
-        /*  Inner rectangle and inner clipping rectangle
+            /*  Inner rectangle
             We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
             Note that if our window is collapsed we will end up with a null clipping rectangle which is the correct behavior.   */
-        val titleBarRect = window.titleBarRect()
-        val borderSize = window.borderSize
-        window.innerRect.min.x = titleBarRect.min.x
-        window.innerRect.min.y = titleBarRect.max.y + window.menuBarHeight
-        window.innerRect.max.x = window.pos.x + window.size.x - window.scrollbarSizes.x
-        window.innerRect.max.y = window.pos.y + window.size.y - window.scrollbarSizes.y
-        //window->DrawList->AddRect(window->InnerRect.Min, window->InnerRect.Max, IM_COL32_WHITE);
+            window.innerRect.min.x = titleBarRect.min.x
+            window.innerRect.min.y = titleBarRect.max.y + window.menuBarHeight
+            window.innerRect.max.x = window.pos.x + window.size.x - window.scrollbarSizes.x
+            window.innerRect.max.y = window.pos.y + window.size.y - window.scrollbarSizes.y
+            //window->DrawList->AddRect(window->InnerRect.Min, window->InnerRect.Max, IM_COL32_WHITE);
+        }
 
-        // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
+        /*  Inner clipping rectangle
+            Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.         */
+        val borderSize = window.borderSize
         val clipRect = Rect()
         clipRect.min.x = glm.floor(0.5f + window.innerRect.min.x + (borderSize max glm.floor(window.windowPadding.x * 0.5f)))
         clipRect.min.y = glm.floor(0.5f + window.innerRect.min.y + borderSize)
@@ -589,8 +587,7 @@ interface imgui_window {
         pushClipRect(clipRect.min, clipRect.max, true)
 
         // Clear 'accessed' flag last thing
-        if (firstBeginOfTheFrame)
-            window.accessed = false
+        if (firstBeginOfTheFrame) window.accessed = false
         window.beginCount++
         g.setNextWindowSizeConstraint = false
 
@@ -683,13 +680,16 @@ interface imgui_window {
      *  In window space (not screen space!) */
     val contentRegionMax: Vec2
         get() = with(currentWindowRead!!) {
-            val mx = Vec2(contentsRegionRect.max)
-            if (dc.columnsCount != 1) mx.x = getColumnOffset(dc.columnsCurrent + 1) - windowPadding.x
-            return mx
+            Vec2(contentsRegionRect.max).apply {
+                if (dc.columnsCount != 1) x = getColumnOffset(dc.columnsCurrent + 1) - windowPadding.x
+            }
         }
 
     /** == GetContentRegionMax() - GetCursorPos()   */
-    val contentRegionAvail get() = with(currentWindowRead!!) { contentRegionMax - (dc.cursorPos - pos) }
+    val contentRegionAvail
+        get() = with(currentWindowRead!!) {
+            contentRegionMax - (dc.cursorPos - pos)
+        }
 
     val contentRegionAvailWidth get() = contentRegionAvail.x
     /** content boundaries min (roughly (0,0)-Scroll), in window coordinates    */
@@ -729,7 +729,7 @@ interface imgui_window {
     }
 
     /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
-    fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Null) {
+    fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Always) {
         g.setNextWindowSizeVal put size
         g.setNextWindowSizeCond = cond
     }
@@ -761,7 +761,7 @@ interface imgui_window {
     }
 
     /** set next window collapsed state. call before Begin()    */
-    fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Null) {
+    fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Always) {
         g.setNextWindowCollapsedVal = collapsed
         g.setNextWindowCollapsedCond = cond
     }
