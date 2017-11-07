@@ -292,6 +292,8 @@ interface imgui_widgetsMain {
 
         if (!popupOpen) return false
 
+        if (popupSize.x == 0f) popupSize.x = w
+
         var popupY1 = frameBb.max.y
         var popupY2 = glm.clamp(popupY1 + popupSize.y, popupY1, IO.displaySize.y - style.displaySafeAreaPadding.y)
         if ((popupY2 - popupY1) < glm.min(popupSize.y, frameBb.min.y - style.displaySafeAreaPadding.y)) {
@@ -341,8 +343,7 @@ interface imgui_widgetsMain {
                 valueChanged = true
                 currentItem[0] = i
             }
-            if (itemSelected && isWindowAppearing)
-                setScrollHere()
+            if (itemSelected && isWindowAppearing) setScrollHere()
             popId()
         }
         endCombo()

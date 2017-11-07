@@ -107,8 +107,7 @@ interface imgui_cursorLayout {
 
     /** add vertical spacing    */
     fun spacing() {
-        val window = currentWindow
-        if (window.skipItems) return
+        if (currentWindow.skipItems) return
         itemSize(Vec2())
     }
 
