@@ -582,9 +582,9 @@ interface imgui_window {
 
         // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
         val clipRect = Rect()
-        clipRect.min.x = glm.floor(0.5f + window.innerRect.min.x + borderSize max glm.floor(window.windowPadding.x * 0.5f))
+        clipRect.min.x = glm.floor(0.5f + window.innerRect.min.x + (borderSize max glm.floor(window.windowPadding.x * 0.5f)))
         clipRect.min.y = glm.floor(0.5f + window.innerRect.min.y + borderSize)
-        clipRect.max.x = glm.floor(0.5f + window.innerRect.max.x - glm.max(borderSize, glm.floor(window.windowPadding.x * 0.5f)))
+        clipRect.max.x = glm.floor(0.5f + window.innerRect.max.x - (borderSize max glm.floor(window.windowPadding.x * 0.5f)))
         clipRect.max.y = glm.floor(0.5f + window.innerRect.max.y - borderSize)
         pushClipRect(clipRect.min, clipRect.max, true)
 
