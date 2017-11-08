@@ -4,6 +4,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.imgui.*
+import kotlin.reflect.KMutableProperty0
 
 // Helpers macros to generate 32-bits encoded colors
 var USE_BGRA_PACKED_COLOR = false
@@ -66,3 +67,5 @@ typealias SizeConstraintCallback = (userData: Any?, pos: Vec2i, currenSize: Vec2
 fun main(args: Array<String>) {
 
 }
+
+operator fun KMutableProperty0<Boolean>.invoke() = 3

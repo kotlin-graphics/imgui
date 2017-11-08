@@ -409,6 +409,7 @@ enum class ColorEditFlags(val i: Int) {
 
 infix fun ColorEditFlags.and(other: ColorEditFlags) = i and other.i
 infix fun ColorEditFlags.or(other: ColorEditFlags) = i or other.i
+infix fun ColorEditFlags.or(other: Int) = i or other
 infix fun Int.and(other: ColorEditFlags) = this and other.i
 infix fun Int.or(other: ColorEditFlags) = this or other.i
 infix fun Int.has(b: ColorEditFlags) = (this and b.i) != 0

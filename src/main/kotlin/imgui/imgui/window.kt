@@ -54,7 +54,7 @@ interface imgui_window {
             be set to false when the button is pressed. */
     fun _begin(name: String, pOpen: KMutableProperty0<Boolean>?, flags: Int = 0) =
             if (pOpen != null) {
-                val bool = booleanArrayOf(pOpen.get())
+                val bool = booleanArrayOf(pOpen())
                 val res = begin(name, bool, flags)
                 pOpen.set(bool[0])
                 res

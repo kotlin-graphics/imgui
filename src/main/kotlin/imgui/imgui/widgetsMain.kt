@@ -40,6 +40,7 @@ import imgui.ImGui.spacing
 import imgui.imgui.imgui_internal.Companion.smallSquareSize
 import imgui.internal.Dir
 import imgui.internal.Rect
+import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
@@ -133,7 +134,15 @@ interface imgui_widgetsMain {
         return pressed
     }
 
+
     fun checkbox(label: String, v: BooleanArray): Boolean {
+        b = v[0]
+        val res = checkbox(label, ::b)
+        v[0] = b
+        return res
+    }
+
+    fun checkbox(label: String, v: KMutableProperty0<Boolean>): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -159,17 +168,17 @@ interface imgui_widgetsMain {
         if (!itemAdd(totalBb, id)) return false
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
-        if (pressed) v[0] = !v[0]
+        if (pressed) v.set(!v())
 
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         renderFrame(checkBb.min, checkBb.max, col.u32, true, style.frameRounding)
-        if (v[0]) {
+        if (v()) {
             val checkSz = glm.min(checkBb.width, checkBb.height)
             val pad = glm.max(1f, (checkSz / 6f).i.f)
             renderCheckMark(checkBb.min + Vec2(pad), Col.CheckMark.u32, checkBb.width - pad * 2f)
         }
 
-        if (g.logEnabled) logRenderedText(textBb.min, if (v[0]) "[x]" else "[ ]")
+        if (g.logEnabled) logRenderedText(textBb.min, if (v()) "[x]" else "[ ]")
         if (labelSize.x > 0f) renderText(textBb.min, label)
 
         return pressed
@@ -238,11 +247,8 @@ interface imgui_widgetsMain {
         return pressed
     }
 
-    fun radioButton(label: String, v: IntArray, vButton: Int): Boolean {
-        val pressed = radioButton(label, v[0] == vButton)
-        if (pressed) v[0] = vButton
-        return pressed
-    }
+    fun radioButton(label: String, v: IntArray, vButton: Int) = radioButton(label, v[0] == vButton).also { if(it) v[0] = vButton }
+    fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int) = radioButton(label, v() == vButton).also { if(it) v.set(vButton) }
 //    IMGUI_API bool          Combo(const char* label, int* current_item, const char* const* items, int items_count, int height_in_items = -1);
 
     /** Combo box helper allowing to pass all items in a single string.
@@ -355,4 +361,8 @@ interface imgui_widgetsMain {
 //    IMGUI_API void          PlotHistogram(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));
 //    IMGUI_API void          PlotHistogram(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
 //    IMGUI_API void          ProgressBar(float fraction, const ImVec2& size_arg = ImVec2(-1,0), const char* overlay = NULL);
+
+    companion object {
+        private var b = false
+    }
 }

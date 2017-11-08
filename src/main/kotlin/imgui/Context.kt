@@ -207,10 +207,6 @@ object Context {
     var wantTextInputNextFrame = -1
 
 //    char                    TempBuffer[1024*3+1];               // temporary text buffer
-
-    init {
-        ImGui.styleColorsClassic()
-    }
 }
 
 /** This is where your app communicate with ImGui. Access via ImGui::GetIO().
@@ -410,21 +406,21 @@ operator fun IntArray.set(index: Key, value: Int) {
 class Style {
 
     /**  Global alpha applies to everything in ImGui    */
-    var alpha = 1.0f
+    var alpha = 1f
     /** Padding within a window */
     var windowPadding = Vec2(8)
     /** Minimum window size */
     var windowMinSize = Vec2i(32)
     /** Radius of window corners rounding. Set to 0.0f to have rectangular windows  */
-    var windowRounding = 9.0f
+    var windowRounding = 9f
     /** Alignment for title bar text    */
-    var windowTitleAlign = Vec2(0.0f, 0.5f)
+    var windowTitleAlign = Vec2(0f, 0.5f)
     /** Radius of child window corners rounding. Set to 0.0f to have rectangular child windows  */
-    var childWindowRounding = 0.0f
+    var childWindowRounding = 0f
     /** Padding within a framed rectangle (used by most widgets)    */
     var framePadding = Vec2(4, 3)
     /** Radius of frame corners rounding. Set to 0.0f to have rectangular frames (used by most widgets).    */
-    var frameRounding = 0.0f
+    var frameRounding = 0f
     /** Horizontal and vertical spacing between widgets/lines   */
     var itemSpacing = Vec2(8, 4)
     /** Horizontal and vertical spacing between within elements of a composed widget (e.g. a slider and its label)  */
@@ -434,17 +430,17 @@ class Style {
      *  much!   */
     var touchExtraPadding = Vec2()
     /** Horizontal spacing when e.g. entering a tree node. Generally == (FontSize + FramePadding.x*2).  */
-    var indentSpacing = 21.0f
+    var indentSpacing = 21f
     /** Minimum horizontal spacing between two columns  */
-    var columnsMinSpacing = 6.0f
+    var columnsMinSpacing = 6f
     /** Width of the vertical scrollbar, Height of the horizontal scrollbar */
-    var scrollbarSize = 16.0f
+    var scrollbarSize = 16f
     /** Radius of grab corners rounding for scrollbar   */
-    var scrollbarRounding = 9.0f
+    var scrollbarRounding = 9f
     /** Minimum width/height of a grab box for slider/scrollbar */
-    var grabMinSize = 10.0f
+    var grabMinSize = 10f
     /** Radius of grabs corners rounding. Set to 0.0f to have rectangular slider grabs. */
-    var grabRounding = 0.0f
+    var grabRounding = 0f
     /** Alignment of button text when button is larger than text.   */
     var buttonTextAlign = Vec2(0.5f)
     /** Window positions are clamped to be visible within the display area by at least this amount. Only covers regular
@@ -465,6 +461,10 @@ class Style {
 
     /** JVM IMGUI   */
     val locale = Locale.US
+
+    init {
+        ImGui.styleColorsClassic(this)
+    }
 
     /** To scale your entire UI (e.g. if you want your app to use High DPI or generally be DPI aware) you may use this
      *  helper function. Scaling the fonts is done separately and is up to you.
