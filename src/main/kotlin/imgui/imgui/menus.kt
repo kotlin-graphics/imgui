@@ -39,6 +39,7 @@ import imgui.internal.Dir
 import imgui.internal.LayoutType
 import imgui.internal.Rect
 import imgui.internal.triangleContainsPoint
+import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.SelectableFlags as Sf
 import imgui.WindowFlags as Wf
@@ -273,4 +274,9 @@ interface imgui_menus {
                 pSelected?.let { it[0] = !it[0] }
                 true
             } else false
+
+    fun menuItem(label: String, shortcut: String = "", selected: KMutableProperty0<Boolean>?, enabled: Boolean = true) =
+            menuItem(label, shortcut, selected?.get() == true, enabled).also {
+                if (it) selected?.apply { set(!get()) }
+            }
 }

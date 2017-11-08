@@ -69,7 +69,7 @@
 //
 //    val clearColor = floatArrayOf(0.45f, 0.55f, 0.6f, 1f)
 //    var showAnotherWindow = booleanArrayOf(false)
-//    var showTestWindow = booleanArrayOf(false)
+//    var showDemoWindow = booleanArrayOf(false)
 //
 //    override fun display(drawable: GLAutoDrawable) = with(drawable.gl.gL3) {
 //
@@ -86,7 +86,7 @@
 //                colorEdit3("clear color", clearColor)
 //                //  You can write functions in the classical way, with if(cond) { code }
 //                if (button("Test Window")) {
-//                    showTestWindow[0] = !showTestWindow[0]
+//                    showDemoWindow[0] = !showDemoWindow[0]
 //                }
 //                // or you can take advantage of functional programming and pass directly a lambda as last parameter
 //                button("Another Window") {
@@ -104,11 +104,11 @@
 //                }
 //            }
 //
-//            /* 3. Show the ImGui test window. Most of the sample code is in ImGui.showTestWindow() */
+//            /* 3. Show the ImGui test window. Most of the sample code is in ImGui.showDemoWindow() */
 //            run {
-//                if (showTestWindow[0]) {
+//                if (showDemoWindow[0]) {
 //                    setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
-//                    showTestWindow(showTestWindow)
+//                    showDemoWindow(showDemoWindow)
 //                }
 //            }
 //        }

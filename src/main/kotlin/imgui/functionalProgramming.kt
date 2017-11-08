@@ -1,6 +1,7 @@
 package imgui
 
 import glm_.vec2.Vec2
+import imgui.ImGui._begin
 import imgui.ImGui.begin
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
@@ -22,6 +23,7 @@ import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
+import kotlin.reflect.KMutableProperty0
 
 object functionalProgramming {
 
@@ -40,8 +42,8 @@ object functionalProgramming {
         end()
     }
 
-    inline fun window(name: String, pOpen: BooleanArray?, flags: Int = 0, block: () -> Unit) {
-        if (begin(name, pOpen, flags)) {
+    inline fun window(name: String, open: KMutableProperty0<Boolean>?, flags: Int = 0, block: () -> Unit) {
+        if (_begin(name, open, flags)) {
             block()
             end()
         }

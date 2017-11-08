@@ -56,8 +56,7 @@ class HelloWorld_lwjgl {
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
         //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 
-        while (window.open)
-            loop()
+        while (window.open) loop()
 
         LwjglGL3.shutdown()
 
@@ -65,53 +64,44 @@ class HelloWorld_lwjgl {
         glfw.terminate()
     }
 
+    val f = FloatArray(1)
     val clearColor = floatArrayOf(0.45f, 0.55f, 0.6f, 1f)
-    var showAnotherWindow = booleanArrayOf(false)
-    var showTestWindow = booleanArrayOf(true)
+    var showAnotherWindow = false
+    var showDemoWindow = true
 
     fun loop() {
 
-        checkError("a")
-
         glfwPollEvents()
         LwjglGL3.newFrame()
-
-        checkError("b")
 
         with(ImGui) {
 
             /*  1. Show a simple window
                 Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically
                 called "Debug"             */
-            run {
-                text("Hello, world!")
-                sliderFloat("float", f, 0f, 1f)
-                colorEdit3("clear color", clearColor)
-                //  You can write functions in the classical way, with if(cond) { code }
-                if (button("Test Window"))
-                    showTestWindow[0] = !showTestWindow[0]
-                // or you can take advantage of functional programming and pass directly a lambda as last parameter
-                button("Another Window") {
-                    showAnotherWindow[0] = !showAnotherWindow[0]
-                }
-                text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / IO.framerate, IO.framerate)
+            text("Hello, world!")
+            sliderFloat("float", f, 0f, 1f)
+            colorEdit3("clear color", clearColor)
+            //  You can write functions in the classical way, with if(cond) { code }
+            if (button("Test Window"))
+                showDemoWindow = !showDemoWindow
+            // or you can take advantage of functional programming and pass directly a lambda as last parameter
+            button("Another Window") {
+                showAnotherWindow = !showAnotherWindow
             }
+            text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / IO.framerate, IO.framerate)
 
             /*  2. Show another simple window, this time using an explicit Begin/End pair   */
-            run {
-                if (showAnotherWindow[0]) {
-                    begin("Another Window", showAnotherWindow)
-                    text("Hello from anoter window!")
-                    end()
-                }
+            if (showAnotherWindow) {
+                _begin("Another Window", ::showAnotherWindow)
+                text("Hello from anoter window!")
+                end()
             }
 
             /* 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow() */
-            run {
-                if (showTestWindow[0]) {
-                    setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
-                    showTestWindow(showTestWindow)
-                }
+            if (showDemoWindow) {
+                setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
+                showTestWindow(::showDemoWindow)
             }
 
             /*val buf = CharArray(256)
@@ -123,7 +113,7 @@ class HelloWorld_lwjgl {
             inputText("string", buf)
             sliderFloat("float", f, 0f, 1f)*/
         }
-        checkError("c")
+
         // Rendering
         glViewport(window.framebufferSize)
         glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3])  // TODO gln
@@ -131,9 +121,7 @@ class HelloWorld_lwjgl {
 
         ImGui.render()
         window.swapBuffers()
-    }
 
-    companion object {
-        val f = FloatArray(1)
+        checkError("loop") // TODO remove
     }
 }

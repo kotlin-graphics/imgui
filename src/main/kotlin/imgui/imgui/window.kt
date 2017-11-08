@@ -30,6 +30,7 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTriangle
 import imgui.ImGui.scrollbar
 import imgui.internal.*
+import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.ItemFlags as If
 import imgui.WindowFlags as Wf
@@ -51,6 +52,14 @@ interface imgui_window {
             even if false is returned.
         - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
             be set to false when the button is pressed. */
+    fun _begin(name: String, pOpen: KMutableProperty0<Boolean>?, flags: Int = 0) =
+            if (pOpen != null) {
+                val bool = booleanArrayOf(pOpen.get())
+                val res = begin(name, bool, flags)
+                pOpen.set(bool[0])
+                res
+            } else begin(name, null, flags)
+
     fun begin(name: String, pOpen: BooleanArray? = null, flags: Int = 0): Boolean {
 
         assert(name.isNotEmpty())   // Window name required
