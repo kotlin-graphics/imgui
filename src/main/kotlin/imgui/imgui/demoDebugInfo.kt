@@ -11,7 +11,6 @@ import imgui.Context.overlayDrawList
 import imgui.Context.style
 import imgui.ImGui._begin
 import imgui.ImGui.alignTextToFramePadding
-import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginMainMenuBar
@@ -117,8 +116,6 @@ import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf
 
-private var b = false
-
 /**
  *  Message to the person tempted to delete this file when integrating ImGui into their code base:
  *  Do NOT remove this file from your project! It is useful reference code that you and other users will want to refer to.
@@ -141,8 +138,6 @@ interface imgui_demoDebugInfo {
      *  Demonstrate most ImGui features (big function!)
      *  Call this to learn about the library! try to make it always available in your application!   */
     fun showTestWindow(open: BooleanArray) {
-        //val b = open[0]
-        b = open[0]
         showTestWindow(::b)
         open[0] = b
     }
@@ -159,13 +154,13 @@ interface imgui_demoDebugInfo {
         if (showApp.constrainedResize) showExampleAppConstrainedResize(showApp::constrainedResize)
         if (showApp.fixedOverlay) showExampleAppFixedOverlay(showApp::fixedOverlay)
         if (showApp.manipulatingWindowTitle) showExampleAppManipulatingWindowTitle(showApp::manipulatingWindowTitle)
-        if (showApp.customRendering[0]) showExampleAppCustomRendering(showApp.customRendering)
-        if (showApp.metrics[0]) ImGui.showMetricsWindow(showApp.metrics)
+        if (showApp.customRendering) showExampleAppCustomRendering(showApp::customRendering)
+        if (showApp.metrics) ImGui.showMetricsWindow(showApp::metrics)
         if (showApp.styleEditor)
             window("Style Editor", showApp::styleEditor) { showStyleEditor() }
 
-        if (showApp.about[0])
-            withWindow("About ImGui", showApp.about, Wf.AlwaysAutoResize.i) {
+        if (showApp.about)
+            withWindow("About ImGui", showApp::about, Wf.AlwaysAutoResize.i) {
                 text("JVM ImGui, $version")
                 separator()
                 text("Original by Omar Cornut, ported by Giuseppe Barbieri and all github contributors.")
@@ -208,13 +203,13 @@ interface imgui_demoDebugInfo {
                 menuItem("Auto-resizing window", "", showApp::autoResize)
                 menuItem("Constrained-resizing window", "", showApp::constrainedResize)
                 menuItem("Simple overlay", "", showApp::fixedOverlay)
-                menuItem("Manipulating window title", "", showApp.manipulatingWindowTitle)
-                menuItem("Custom rendering", "", showApp.customRendering)
+                menuItem("Manipulating window title", "", showApp::manipulatingWindowTitle)
+                menuItem("Custom rendering", "", showApp::customRendering)
             }
             menu("Help") {
-                menuItem("Metrics", "", showApp.metrics)
+                menuItem("Metrics", "", showApp::metrics)
                 menuItem("Style Editor", "", showApp::styleEditor)
-                menuItem("About ImGui", "", showApp.about)
+                menuItem("About ImGui", "", showApp::about)
             }
         }
 
@@ -1743,9 +1738,9 @@ interface imgui_demoDebugInfo {
 
     /** create metrics window. display ImGui internals: browse window list, draw commands, individual vertices, basic
      *  internal state, etc.    */
-    fun showMetricsWindow(pOpen: BooleanArray) {
+    fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
-        if (begin("ImGui Metrics", pOpen)) {
+        if (_begin("ImGui Metrics", open)) {
             text("ImGui $version")
             text("Application average %.3f ms/frame (%.1f FPS)", 1000f / IO.framerate, IO.framerate)
             text("%d vertices, %d indices (%d triangles)", IO.metricsRenderVertices, IO.metricsRenderIndices, IO.metricsRenderIndices / 3)
@@ -1867,8 +1862,8 @@ interface imgui_demoDebugInfo {
             if (!treeNode(window, "$label '${window.name}', $active @ 0x%X", System.identityHashCode(window)))
                 return
             nodeDrawList(window.drawList, "DrawList")
-            bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x, window.pos.y, window.size.x,
-                    window.size.y, window.sizeContents.x, window.sizeContents.y)
+            bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
+                    window.size.x, window.size.y, window.sizeContents.x, window.sizeContents.y)
             if (isItemHovered())
                 overlayDrawList.addRect(Vec2(window.pos), Vec2(window.pos + window.size), COL32(255, 255, 0, 255))
             bulletText("Scroll: (%.2f,%.2f)", window.scroll.x, window.scroll.y)
@@ -2148,6 +2143,8 @@ interface imgui_demoDebugInfo {
 
     companion object {
 
+        var b = false
+
         fun showHelpMarker(desc: String) {
             textDisabled("(?)")
             if (isItemHovered()) {
@@ -2367,10 +2364,10 @@ interface imgui_demoDebugInfo {
         }
 
         /** Demonstrate using the low-level ImDrawList to draw custom shapes.   */
-        fun showExampleAppCustomRendering(pOpen: BooleanArray) {
+        fun showExampleAppCustomRendering(open: KMutableProperty0<Boolean>) {
 
             setNextWindowSize(Vec2(350, 560), Cond.FirstUseEver)
-            if (!begin("Example: Custom rendering", pOpen)) {
+            if (!_begin("Example: Custom rendering", open)) {
                 end()
                 return
             }
@@ -2630,11 +2627,11 @@ interface imgui_demoDebugInfo {
             var constrainedResize = false
             var fixedOverlay = false
             var manipulatingWindowTitle = false
-            var customRendering = booleanArrayOf(false)
+            var customRendering = false
             var styleEditor = false
 
-            var metrics = booleanArrayOf(false)
-            var about = booleanArrayOf(false)
+            var metrics = false
+            var about = false
         }
 
         var noTitlebar = booleanArrayOf(false)

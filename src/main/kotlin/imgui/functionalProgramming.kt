@@ -37,8 +37,8 @@ object functionalProgramming {
             block()
     }
 
-    inline fun withWindow(name: String, pOpen: BooleanArray?, flags: Int = 0, block: (Boolean) -> Unit) {
-        block(begin(name, pOpen, flags))
+    inline fun withWindow(name: String, open: KMutableProperty0<Boolean>?, flags: Int = 0, block: (Boolean) -> Unit) {
+        block(_begin(name, open, flags))
         end()
     }
 
