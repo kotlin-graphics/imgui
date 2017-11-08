@@ -2,6 +2,7 @@ package imgui;
 
 import glm_.vec2.Vec2;
 import imgui.impl.LwjglGL3;
+import kotlin.reflect.KMutableProperty0;
 import org.lwjgl.opengl.GL;
 import uno.glfw.GlfwWindow;
 
@@ -69,6 +70,7 @@ public class Test_lwjgl {
     private float[] clearColor = {0.45f, 0.55f, 0.6f, 1f};
     private boolean[] showAnotherWindow = {false};
     private boolean[] showTestWindow = {true};
+//    private KMutableProperty0 prop = new JavaProp<>(() -> showTestWindow, res -> showTestWindow = res);
 
     private void loop() {
 
