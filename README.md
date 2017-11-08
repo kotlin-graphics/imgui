@@ -22,19 +22,21 @@ Your code passes mouse/keyboard inputs and settings to Dear ImGui (see example a
 
 ### Kotlin
 ```kotlin
+var f = 0f
 with(ImGui) {
     text("Hello, world %d", 123)
     button("OK"){
         // react
     }
     inputText("string", buf)
-    sliderFloat("float", f, 0f, 1f)
+    sliderFloat("float", ::f, 0f, 1f)
 }
 ```
 
 ### Java
 ```java
 ImGui imgui = ImGui.INSTANCE;
+float[] f = {0f};
 imgui.text("Hello, world %d", 123);
 if(imgui.button("OK")) {
     // react
