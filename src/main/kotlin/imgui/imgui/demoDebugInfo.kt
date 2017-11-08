@@ -64,6 +64,7 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
+import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
@@ -138,8 +139,8 @@ interface imgui_demoDebugInfo {
      *  Demonstrate most ImGui features (big function!)
      *  Call this to learn about the library! try to make it always available in your application!   */
     fun showTestWindow(open: BooleanArray) {
-        showTestWindow(::b)
-        open[0] = b
+        showTestWindow(::showWindow)
+        open[0] = showWindow
     }
 
     fun showTestWindow(open: KMutableProperty0<Boolean>) {
@@ -169,13 +170,13 @@ interface imgui_demoDebugInfo {
 
         // Demonstrate the various window flags. Typically you would just use the default.
         var windowFlags = 0
-        if (noTitlebar[0]) windowFlags = windowFlags or Wf.NoTitleBar
-        if (!noBorder[0]) windowFlags = windowFlags or Wf.ShowBorders
-        if (noResize[0]) windowFlags = windowFlags or Wf.NoResize
-        if (noMove[0]) windowFlags = windowFlags or Wf.NoMove
-        if (noScrollbar[0]) windowFlags = windowFlags or Wf.NoScrollbar
-        if (noCollapse[0]) windowFlags = windowFlags or Wf.NoCollapse
-        if (!noMenu[0]) windowFlags = windowFlags or Wf.MenuBar
+        if (noTitlebar) windowFlags = windowFlags or Wf.NoTitleBar
+        if (!noBorder) windowFlags = windowFlags or Wf.ShowBorders
+        if (noResize) windowFlags = windowFlags or Wf.NoResize
+        if (noMove) windowFlags = windowFlags or Wf.NoMove
+        if (noScrollbar) windowFlags = windowFlags or Wf.NoScrollbar
+        if (noCollapse) windowFlags = windowFlags or Wf.NoCollapse
+        if (!noMenu) windowFlags = windowFlags or Wf.MenuBar
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
         if (!_begin("ImGui Demo", open, windowFlags)) {
             end()   // Early out if the window is collapsed, as an optimization.
@@ -222,13 +223,13 @@ interface imgui_demoDebugInfo {
 
         collapsingHeader("Window options") {
 
-            checkbox("No titlebar", noTitlebar); sameLine(150f)
-            checkbox("No border", noBorder); sameLine(300f)
-            checkbox("No resize", noResize)
-            checkbox("No move", noMove); sameLine(150f)
-            checkbox("No scrollbar", noScrollbar); sameLine(300f)
-            checkbox("No collapse", noCollapse)
-            checkbox("No menu", noMenu)
+            checkbox("No titlebar", ::noTitlebar); sameLine(150f)
+            checkbox("No border", ::noBorder); sameLine(300f)
+            checkbox("No resize", ::noResize)
+            checkbox("No move", ::noMove); sameLine(150f)
+            checkbox("No scrollbar", ::noScrollbar); sameLine(300f)
+            checkbox("No collapse", ::noCollapse)
+            checkbox("No menu", ::noMenu)
 
             treeNode("Style") { showStyleEditor() }
 
@@ -1358,7 +1359,7 @@ interface imgui_demoDebugInfo {
                     //static int dummy_i = 0;
                     //ImGui::Combo("Combo", &dummy_i, "Delete\0Delete harder\0");
 
-                    withStyleVar(StyleVar.FramePadding, Vec2()) { checkbox("Don't ask me next time", dontAskMeNextTime) }
+                    withStyleVar(StyleVar.FramePadding, Vec2()) { checkbox("Don't ask me next time", ::dontAskMeNextTime) }
 
                     button("OK", Vec2(120, 0)) { closeCurrentPopup() }
                     sameLine()
@@ -1745,7 +1746,7 @@ interface imgui_demoDebugInfo {
             text("Application average %.3f ms/frame (%.1f FPS)", 1000f / IO.framerate, IO.framerate)
             text("%d vertices, %d indices (%d triangles)", IO.metricsRenderVertices, IO.metricsRenderIndices, IO.metricsRenderIndices / 3)
             text("%d allocations", IO.metricsAllocs)
-            checkbox("Show clipping rectangles when hovering an ImDrawCmd", showClipRects)
+            checkbox("Show clipping rectangles when hovering an ImDrawCmd", ::showClipRects)
             separator()
 
             Funcs.nodeWindows(g.windows, "Windows")
@@ -1810,7 +1811,7 @@ interface imgui_demoDebugInfo {
                 val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
                 val cmdNodeOpen = treeNode(i, "Draw %-4d $mode vtx, tex = ${cmd.textureId}, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)",
                         cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
-                if (showClipRects[0] && isItemHovered()) {
+                if (showClipRects && isItemHovered()) {
                     val clipRect = Rect(cmd.clipRect)
                     val vtxsRect = Rect()
                     for (e in elemOffset until elemOffset + cmd.elemCount)
@@ -2003,11 +2004,9 @@ interface imgui_demoDebugInfo {
 
             text("Tip: Left-click on colored square to open color picker,\nRight-click to open edit options menu.")
 
-//            static ImGuiColorEditFlags alpha_flags = 0; TODO (also 10 loc below)
-//            ImGui::RadioButton("Opaque", &alpha_flags, 0); ImGui::SameLine();
-//            ImGui::RadioButton("Alpha", &alpha_flags, ImGuiColorEditFlags_AlphaPreview); ImGui::SameLine();
-//
-//            radioButton("Both", alphaFlags, ColorEditFlags.AlphaPreviewHalf)
+            radioButton("Opaque", ::alphaFlags, 0); sameLine()
+            radioButton("Alpha", ::alphaFlags, Cef.AlphaPreview.i); sameLine()
+            radioButton("Both", ::alphaFlags, Cef.AlphaPreviewHalf.i)
 
             beginChild("#colors", Vec2(0, 300), true, Wf.AlwaysVerticalScrollbar.i)
             pushItemWidth(-160f)
@@ -2016,7 +2015,7 @@ interface imgui_demoDebugInfo {
                 if (!filter.passFilter(name)) // TODO fix bug
                     continue
                 withId(i) {
-                    colorEditVec4(name, style.colors[i], Cef.AlphaBar.i) // | alpha_flags); TODO
+                    colorEditVec4(name, style.colors[i], Cef.AlphaBar or alphaFlags)
                     if (style.colors[i] != (ref?.colors?.get(i) ?: defaultStyle.colors[i])) {
                         sameLine()
                         button("Revert") { style.colors[i] put (ref?.colors?.get(i) ?: defaultStyle.colors[i]) }
@@ -2143,7 +2142,8 @@ interface imgui_demoDebugInfo {
 
     companion object {
 
-        var b = false
+        var showWindow = false
+        var alphaFlags = 0
 
         fun showHelpMarker(desc: String) {
             textDisabled("(?)")
@@ -2634,20 +2634,20 @@ interface imgui_demoDebugInfo {
             var about = false
         }
 
-        var noTitlebar = booleanArrayOf(false)
-        var noBorder = booleanArrayOf(true)
-        var noResize = booleanArrayOf(false)
-        var noMove = booleanArrayOf(false)
-        var noScrollbar = booleanArrayOf(false)
-        var noCollapse = booleanArrayOf(false)
-        var noMenu = booleanArrayOf(false)
+        var noTitlebar = false
+        var noBorder = true
+        var noResize = false
+        var noMove = false
+        var noScrollbar = false
+        var noCollapse = false
+        var noMenu = false
 
 
-        val showClipRects = booleanArrayOf(true)
+        var showClipRects = true
 
         val listboxItemCurrent = intArrayOf(1)
 
-        val dontAskMeNextTime = booleanArrayOf(false)
+        var dontAskMeNextTime = false
 
         val outputDest = intArrayOf(0)
         val outputOnlyModified = booleanArrayOf(false)
