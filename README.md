@@ -92,7 +92,14 @@ The Immediate Mode GUI paradigm may at first appear unusual to some users. This 
 
 ### Status:
 
-To check what has been already ported and working, simply run one of the tests: [lwjgl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test_lwjgl.kt) or [jogl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test_jogl.kt).
+To check what has been already ported and working, simply run one of the tests in Kotlin:
+
+- [lwjgl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test_lwjgl.kt) 
+- [jogl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test_jogl.kt)
+
+or in Java:
+
+- [lwjgl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/java/imgui/Test_lwjgl.java) 
 
 ![Imgur](http://i.imgur.com/0tsoWEP.png)
 
