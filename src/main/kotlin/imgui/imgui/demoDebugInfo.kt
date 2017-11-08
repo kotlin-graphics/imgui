@@ -384,9 +384,9 @@ interface imgui_demoDebugInfo {
 
                     showHelpMarker("""|This is a more standard looking tree with selectable nodes.
                         |Click to select, CTRL+Click to toggle, click on arrows or double-click to open.""".trimMargin())
-                    checkbox("Align label with current X position)", alignLabelWithCurrentXposition)
+                    checkbox("Align label with current X position)", ::alignLabelWithCurrentXposition)
                     text("Hello!")
-                    if (alignLabelWithCurrentXposition[0]) unindent(treeNodeToLabelSpacing)
+                    if (alignLabelWithCurrentXposition) unindent(treeNodeToLabelSpacing)
 
                     /*  Temporary storage of what node we have clicked to process selection at the end of the loop.
                         May be a pointer to your own node type, etc.                     */
@@ -424,17 +424,17 @@ interface imgui_demoDebugInfo {
                                 selectionMask = (1 shl nodeClicked) // Click to single-select
                         }
                     }
-                    if (alignLabelWithCurrentXposition[0]) indent(treeNodeToLabelSpacing)
+                    if (alignLabelWithCurrentXposition) indent(treeNodeToLabelSpacing)
                 }
             }
 
             treeNode("Collapsing Headers") {
-                checkbox("Enable extra group", closableGroup)
+                checkbox("Enable extra group", ::closableGroup)
                 collapsingHeader("Header") {
                     text("IsItemHovered: ${isItemHovered()}")
                     for (i in 0..4) text("Some content $i")
                 }
-                collapsingHeader("Header with a close button", closableGroup) {
+                collapsingHeader("Header with a close button", ::closableGroup) {
                     text("IsItemHovered: ${isItemHovered()}")
                     for (i in 0..4) text("More content $i")
                 }
@@ -594,9 +594,9 @@ interface imgui_demoDebugInfo {
 
             treeNode("Multi-line Text Input TODO") {
                 withStyleVar(StyleVar.FramePadding, Vec2()) {
-                    checkbox("Read-only", readOnly)
+                    checkbox("Read-only", ::readOnly)
                 }
-                val flags = Itf.AllowTabInput or if (readOnly[0]) Itf.ReadOnly else Itf.Null
+                val flags = Itf.AllowTabInput or if (readOnly) Itf.ReadOnly else Itf.Null
 //                inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
             }
 //
@@ -1936,44 +1936,31 @@ interface imgui_demoDebugInfo {
         pushItemWidth(windowWidth * 0.55f)
 
         treeNode("Rendering") {
-            checkbox("Anti-aliased lines", bool.apply { set(0, style.antiAliasedLines) })
-            style.antiAliasedLines = bool[0]
-            checkbox("Anti-aliased shapes", bool.apply { this[0] = style.antiAliasedShapes })
-            style.antiAliasedShapes = bool[0]
+            checkbox("Anti-aliased lines", style::antiAliasedLines)
+            checkbox("Anti-aliased shapes", style::antiAliasedShapes)
             pushItemWidth(100f)
-            dragFloat("Curve Tessellation Tolerance", pF.apply { this[1] = style.curveTessellationTol }, 1,
-                    0.02f, 0.1f, Float.MAX_VALUE, "", 2f)
-            style.curveTessellationTol = pF[1]
+            dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, Float.MAX_VALUE, "", 2f)
             if (style.curveTessellationTol < 0f) style.curveTessellationTol = 0.1f
             /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
                 But application code could have a toggle to switch between zero and non-zero.             */
-            dragFloat("Global Alpha", pF.apply { this[2] = style.alpha }, 2, 0.005f, 0.2f, 1f, "%.2f")
-            style.alpha = pF[2]
+            dragFloat("Global Alpha", style::alpha, 0.005f, 0.2f, 1f, "%.2f")
             popItemWidth()
         }
 
         treeNode("Settings") {
             sliderFloatVec2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
-            sliderFloat("WindowRounding", pF.apply { this[3] = style.windowRounding }, 3, 0f, 16f, "%.0f")
-            style.windowRounding = pF[3]
-            sliderFloat("ChildWindowRounding", pF.apply { this[4] = style.childWindowRounding }, 4, 0f, 16f, "%.0f")
-            style.childWindowRounding = pF[4]
+            sliderFloat("WindowRounding", style::windowRounding, 0f, 16f, "%.0f")
+            sliderFloat("ChildWindowRounding", style::childWindowRounding, 0f, 16f, "%.0f")
             sliderFloatVec2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
-            sliderFloat("FrameRounding", pF.apply { this[5] = style.frameRounding }, 5, 0f, 16f, "%.0f")
-            style.frameRounding = pF[5]
+            sliderFloat("FrameRounding", style::frameRounding, 0f, 16f, "%.0f")
             sliderFloatVec2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
             sliderFloatVec2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
             sliderFloatVec2("TouchExtraPadding", style.touchExtraPadding, 0f, 10f, "%.0f")
-            sliderFloat("IndentSpacing", pF.apply { this[6] = style.indentSpacing }, 6, 0f, 30f, "%.0f")
-            style.indentSpacing = pF[6]
-            sliderFloat("ScrollbarSize", pF.apply { this[7] = style.scrollbarSize }, 7, 1f, 20f, "%.0f")
-            style.scrollbarSize = pF[7]
-            sliderFloat("ScrollbarRounding", pF.apply { this[8] = style.scrollbarRounding }, 8, 0.0f, 16.0f, "%.0f")
-            style.scrollbarRounding = pF[8]
-            sliderFloat("GrabMinSize", pF.apply { this[9] = style.grabMinSize }, 9, 1f, 20f, "%.0f")
-            style.grabMinSize = pF[9]
-            sliderFloat("GrabRounding", pF.apply { this[10] = style.grabRounding }, 10, 0f, 16f, "%.0f")
-            style.grabRounding = pF[10]
+            sliderFloat("IndentSpacing", style::indentSpacing, 0f, 30f, "%.0f")
+            sliderFloat("ScrollbarSize", style::scrollbarSize, 1f, 20f, "%.0f")
+            sliderFloat("ScrollbarRounding", style::scrollbarRounding, 0.0f, 16.0f, "%.0f")
+            sliderFloat("GrabMinSize", style::grabMinSize, 1f, 20f, "%.0f")
+            sliderFloat("GrabRounding", style::grabRounding, 0f, 16f, "%.0f")
             text("Alignment")
             sliderFloatVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
             sliderFloatVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f")
@@ -1984,7 +1971,7 @@ interface imgui_demoDebugInfo {
         treeNode("Colors") {
 
             button("Copy Colors") {
-                if (outputDest[0] == 0)
+                if (outputDest == 0)
                     logToClipboard()
                 else
                     TODO() //logToTTY()
@@ -1992,15 +1979,15 @@ interface imgui_demoDebugInfo {
                 for (i in Col.values()) {
                     val col = style.colors[i]
                     val name = i.name
-                    if (!outputOnlyModified[0] || col != (ref?.colors?.get(i) ?: defaultStyle.colors[i]))
+                    if (!outputOnlyModified || col != (ref?.colors?.get(i) ?: defaultStyle.colors[i]))
                         TODO()//logText("colors[ImGuiCol_%s]%*s= ImVec4(%.2ff, %.2ff, %.2ff, %.2ff);" IM_NEWLINE, name, 23 - (int)strlen(name), "", col.x, col.y, col.z, col.w);
                 }
                 logFinish()
             }
             sameLine()
-            withItemWidth(120f) { combo("##output_type", outputDest, "To Clipboard\u0000To TTY\u0000") }
+            withItemWidth(120f) { combo("##output_type", ::outputDest, "To Clipboard\u0000To TTY\u0000") }
             sameLine()
-            checkbox("Only Modified Fields", outputOnlyModified)
+            checkbox("Only Modified Fields", ::outputOnlyModified)
 
             text("Tip: Left-click on colored square to open color picker,\nRight-click to open edit options menu.")
 
@@ -2211,15 +2198,15 @@ interface imgui_demoDebugInfo {
             }
             separator()
             if (beginMenu("Options")) {
-                menuItem("Enabled", "", enabled)
+                menuItem("Enabled", "", option::enabled)
                 beginChild("child", Vec2(0, 60), true)
                 for (i in 0 until 10)
                     text("Scrolling Text %d", i)
                 endChild()
-                sliderFloat("Value", pF, 0f, 1f)
-                inputFloat("Input", pF, 0.1f, 0f, 2)
-                combo("Combo", n, "Yes\u0000No\u0000Maybe\u0000\u0000")
-                checkbox("Check", checkbox)
+                sliderFloat("Value", option::float, 0f, 1f)
+                inputFloat("Input", option::float, 0.1f, 0f, 2)
+                combo("Combo", option::combo, "Yes\u0000No\u0000Maybe\u0000\u0000")
+                checkbox("Check", option::check)
                 endMenu()
             }
             if (beginMenu("Colors")) {
@@ -2235,23 +2222,12 @@ interface imgui_demoDebugInfo {
             }
         }
 
-        var enabled = booleanArrayOf(true)
-        /**
-         * [0] = sliderFloat for showExampleMenuFile()
-         * [1] = "Curve Tessellation Tolerance" for showStyleEditor()
-         * [2] = "Global Alpha" for showStyleEditor()
-         * [3] = "style.windowRounding" for showStyleEditor()
-         * [4] = "style.childWindowRounding" for showStyleEditor()
-         * [5] = "style.frameRounding" for showStyleEditor()
-         * [6] = "style.indentSpacing" for showStyleEditor()
-         * [7] = "style.scrollbarSize" for showStyleEditor()
-         * [8] = "style.scrollbarRounding" for showStyleEditor()
-         * [9] = "style.grabMinSize" for showStyleEditor()
-         * [10] = "style.grabRounding" for showStyleEditor()
-         */
-        val pF = FloatArray(11, { if (it == 0) 0.5f else 0f })
-        val n = intArrayOf(0)
-        val bool = BooleanArray(1)
+        object option {
+            var enabled = true
+            var float = 0.5f
+            var combo = 0
+            var check = true
+        }
 
         /** Demonstrate creating a window which gets auto-resized according to its content. */
         fun showExampleAppAutoResize(open: KMutableProperty0<Boolean>) {
@@ -2273,8 +2249,7 @@ interface imgui_demoDebugInfo {
 
         /** Demonstrate creating a window with custom resize constraints.   */
         fun showExampleAppConstrainedResize(open: KMutableProperty0<Boolean>) {
-
-            when (type[0]) {
+            when (type) {
                 0 -> setNextWindowSizeConstraints(Vec2(-1, 0), Vec2(-1, Float.MAX_VALUE))      // Vertical only
                 1 -> setNextWindowSizeConstraints(Vec2(0, -1), Vec2(Float.MAX_VALUE, -1))      // Horizontal only
                 2 -> setNextWindowSizeConstraints(Vec2(100), Vec2(Float.MAX_VALUE)) // Width > 100, Height > 100
@@ -2282,11 +2257,10 @@ interface imgui_demoDebugInfo {
                 4 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.square)          // Always Square
                 5 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.step, 100)// Fixed Step
             }
-
             window("Example: Constrained Resize", open) {
                 val desc = listOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
                         "Width 300-400", "Custom: Always Square", "Custom: Fixed Steps (100)")
-                combo("Constraint", type, desc)
+                combo("Constraint", ::type, desc)
                 button("200x200") { setWindowSize(Vec2(200)) }; sameLine()
                 button("500x500") { setWindowSize(Vec2(500)) }; sameLine()
                 button("800x200") { setWindowSize(Vec2(800, 200)) }
@@ -2307,7 +2281,7 @@ interface imgui_demoDebugInfo {
             }
         }
 
-        var type = intArrayOf(0)
+        var type = 0
 
         /** Demonstrate creating a simple static window with no decoration + a context-menu to choose which corner
          *  of the screen to use */
@@ -2645,28 +2619,22 @@ interface imgui_demoDebugInfo {
 
         var showClipRects = true
 
-        val listboxItemCurrent = intArrayOf(1)
-
         var dontAskMeNextTime = false
 
-        val outputDest = intArrayOf(0)
-        val outputOnlyModified = booleanArrayOf(false)
-
-        var colorFlags = intArrayOf(Cef.RGB.i)
+        var outputDest = 0
+        var outputOnlyModified = false
 
         val filter = TextFilter()
 
         var windowScale = 1f
 
-        val alignLabelWithCurrentXposition = booleanArrayOf(false)
+        var alignLabelWithCurrentXposition = false
 
         /** Dumb representation of what may be user-side selection state. You may carry selection state inside or
          *  outside your objects in whatever format you see fit.    */
         var selectionMask = 1 shl 2
 
-        val closableGroup = booleanArrayOf(true)
-
-        val wrapWidth = floatArrayOf(200f)
+        var closableGroup = true
 
         val buf = CharArray(32).apply { "\u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e".toCharArray(this) }
 
@@ -2674,7 +2642,7 @@ interface imgui_demoDebugInfo {
 
         val selected = BooleanArray(4 + 3 + 16 + 16, { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 })
 
-        val readOnly = booleanArrayOf(false)
+        var readOnly = false
 
         val textMultiline = CharArray(1024 * 16).also {
             ("""/*
@@ -2689,8 +2657,6 @@ interface imgui_demoDebugInfo {
                     label""".trimMargin() +
                     "\tlock cmpxchg8b eax\n").toCharArray(it)
         }
-
-        val checkbox = booleanArrayOf(true)
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.

@@ -22,6 +22,7 @@ import imgui.ImGui.setActiveId
 import imgui.internal.DataType
 import imgui.internal.Rect
 import imgui.internal.focus
+import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 
 /** Widgets: Drags (tip: ctrl+click on a drag box to input with keyboard. manually input values aren't clamped, can go
@@ -40,6 +41,15 @@ interface imgui_widgetsDrag {
 
     /** If vMin >= vMax we have no bound  */
     fun dragFloat(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
+                  displayFormat: String = "%.3f", power: Float = 1f): Boolean {
+
+        f = v[ptr]
+        val res = dragFloat(label, ::f, vSpeed, vMin, vMax, displayFormat, power)
+        v[ptr] = f
+        return res
+    }
+
+    fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                   displayFormat: String = "%.3f", power: Float = 1f): Boolean {
 
         val window = currentWindow
@@ -76,18 +86,18 @@ interface imgui_widgetsDrag {
             }
         }
         if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) {
-            val data = intArrayOf(glm.floatBitsToInt(v[ptr]))
+            val data = intArrayOf(glm.floatBitsToInt(v()))
             val res = inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, data, id, decimalPrecision)
-            v[ptr] = glm.intBitsToFloat(data[0])
+            v.set(glm.intBitsToFloat(data[0]))
             return res
         }
 
         // Actual drag behavior
         itemSize(totalBb, style.framePadding.y)
-        val valueChanged = dragBehavior(frameBb, id, v, ptr, vSpeed, vMin, vMax, decimalPrecision, power)
+        val valueChanged = dragBehavior(frameBb, id, v, vSpeed, vMin, vMax, decimalPrecision, power)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = displayFormat.format(style.locale, v[ptr])
+        val value = displayFormat.format(style.locale, v())
         renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
@@ -114,4 +124,7 @@ interface imgui_widgetsDrag {
 //    IMGUI_API bool          DragInt4(const char* label, int v[4], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* display_format = "%.0f");
 //    IMGUI_API bool          DragIntRange2(const char* label, int* v_current_min, int* v_current_max, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* display_format = "%.0f", const char* display_format_max = NULL);
 
+    companion object {
+        private var f = 0f
+    }
 }

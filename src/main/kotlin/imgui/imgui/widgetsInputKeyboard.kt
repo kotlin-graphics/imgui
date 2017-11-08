@@ -7,6 +7,7 @@ import imgui.ImGui.inputTextEx
 import imgui.hasnt
 import imgui.internal.DataType
 import imgui.or
+import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.InputTextFlags as Itf
 
@@ -25,16 +26,24 @@ interface imgui_widgetsInputKeyboard {
             /*,ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/) =
             inputTextEx(label, buf, size, flags or Itf.Multiline/*, callback, user_data*/)
 
-    fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1, extraFlags: Int = 0) =
-            inputFloat(label, v, 0, step, stepFast, decimalPrecision, extraFlags)
+    fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1, extraFlags: Int = 0)
+            = inputFloat(label, v, 0, step, stepFast, decimalPrecision, extraFlags)
 
     fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1,
                    extraFlags: Int = 0): Boolean {
+        f = v[ptr]
+        val res = inputFloat(label, ::f, step, stepFast, decimalPrecision, extraFlags)
+        v[ptr] = f
+        return res
+    }
 
-        val pInt = intArrayOf(glm.floatBitsToInt(v[ptr]))
+    fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1,
+                   extraFlags: Int = 0): Boolean {
+
+        val pInt = intArrayOf(glm.floatBitsToInt(v()))
         val fmt = "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f"
         val res = inputScalarEx(label, DataType.Float, pInt, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, fmt, extraFlags)
-        v[ptr] = glm.intBitsToFloat(pInt[0])
+        v.set(glm.intBitsToFloat(pInt[0]))
         return res
     }
 //    IMGUI_API bool          InputFloat2(const char* label, float v[2], int decimal_precision = -1, ImGuiInputTextFlags extra_flags = 0);
@@ -44,4 +53,8 @@ interface imgui_widgetsInputKeyboard {
 //    IMGUI_API bool          InputInt2(const char* label, int v[2], ImGuiInputTextFlags extra_flags = 0);
 //    IMGUI_API bool          InputInt3(const char* label, int v[3], ImGuiInputTextFlags extra_flags = 0);
 //    IMGUI_API bool          InputInt4(const char* label, int v[4], ImGuiInputTextFlags extra_flags = 0);
+
+    companion object {
+        private var f = 0f
+    }
 }
