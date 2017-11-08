@@ -2,7 +2,6 @@ package imgui
 
 import glm_.vec2.Vec2
 import imgui.ImGui._begin
-import imgui.ImGui.begin
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
 import imgui.ImGui.beginPopupModal
@@ -68,8 +67,8 @@ object functionalProgramming {
             block()
     }
 
-    inline fun collapsingHeader(label: String, pOpen: BooleanArray?, flags: Int = 0, block: () -> Unit) {
-        if (collapsingHeader(label, pOpen, flags))
+    inline fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>, flags: Int = 0, block: () -> Unit) {
+        if (collapsingHeader(label, open, flags))
             block()
     }
 

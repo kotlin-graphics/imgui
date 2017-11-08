@@ -20,6 +20,7 @@ import imgui.ImGui.sliderBehavior
 import imgui.ImGui.sliderFloatN
 import imgui.internal.Rect
 import imgui.internal.focus
+import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 
 /** Widgets: Sliders (tip: ctrl+click on a slider to input with keyboard. manually input values aren't clamped, can go
@@ -32,8 +33,17 @@ interface imgui_widgetsSliders {
     fun sliderFloat(label: String, v: FloatArray, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f) =
             sliderFloat(label, v, 0, vMin, vMax, displayFormat, power)
 
-    fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f)
-            : Boolean {
+    fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, displayFormat: String = "%.3f",
+                    power: Float = 1f): Boolean {
+
+        f = v[ptr]
+        val res = sliderFloat(label, ::f, vMin, vMax, displayFormat, power)
+        v[ptr] = f
+        return res
+    }
+
+    fun sliderFloat(label: String, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, displayFormat: String = "%.3f",
+                    power: Float = 1f): Boolean {
 
 //        println("sliderFloat $ptr") TODO clean
         val window = currentWindow
@@ -75,10 +85,10 @@ interface imgui_widgetsSliders {
 
         // Actual slider behavior + render grab
         itemSize(totalBb, style.framePadding.y)
-        val valueChanged = sliderBehavior(frameBb, id, v, ptr, vMin, vMax, power, decimalPrecision)
+        val valueChanged = sliderBehavior(frameBb, id, v, vMin, vMax, power, decimalPrecision)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = displayFormat.format(style.locale, v[ptr])
+        val value = displayFormat.format(style.locale, v())
         renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f, 0.5f))
 
         if (labelSize.x > 0f)
@@ -87,7 +97,7 @@ interface imgui_widgetsSliders {
         return valueChanged
     }
 
-    fun sliderFloatVec2(label: String, v: Vec2, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f):Boolean{
+    fun sliderFloatVec2(label: String, v: Vec2, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f): Boolean {
         v2[0] = v.x
         v2[1] = v.y
         val res = sliderFloatN(label, v2, vMin, vMax, displayFormat, power)
@@ -115,5 +125,6 @@ interface imgui_widgetsSliders {
 
     companion object {
         val v2 = FloatArray(2)
+        private var f = 0f
     }
 }

@@ -11,9 +11,9 @@ import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
-import imgui.TreeNodeFlags
 import imgui.internal.itemHoveredDataBackup
 import imgui.or
+import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.TreeNodeFlags as Tnf
 
@@ -108,24 +108,24 @@ interface imgui_widgetsTrees {
         return treeNodeBehavior(window.getId(label), flags or Tnf.CollapsingHeader or Tnf.NoTreePushOnOpen, label)
     }
 
-    /** when 'pOpen' isn't NULL, display an additional small close button on upper right of the header */
-    fun collapsingHeader(label: String, pOpen: BooleanArray?, flags: Int = 0): Boolean {
+    /** when 'open' isn't NULL, display an additional small close button on upper right of the header */
+    fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>?, flags: Int = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
-        if (pOpen != null && !pOpen[0]) return false
+        if (open != null && !open()) return false
 
         val id = window.getId(label)
         val isOpen = treeNodeBehavior(id, flags or Tnf.CollapsingHeader or Tnf.NoTreePushOnOpen or
-                if (pOpen != null) Tnf.AllowOverlapMode else Tnf.Null, label)
-        if (pOpen != null) {
+                if (open != null) Tnf.AllowOverlapMode else Tnf.Null, label)
+        if (open != null) {
             // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
             val buttonSz = g.fontSize * 0.5f
             itemHoveredDataBackup {
                 if (closeButton(window.getId(id + 1), Vec2(glm.min(window.dc.lastItemRect.max.x, window.clipRect.max.x) -
                         style.framePadding.x - buttonSz, window.dc.lastItemRect.min.y + style.framePadding.y + buttonSz), buttonSz))
-                    pOpen[0] = false
+                    open.set(false)
             }
         }
         return isOpen

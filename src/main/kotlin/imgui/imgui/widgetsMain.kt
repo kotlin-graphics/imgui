@@ -247,14 +247,22 @@ interface imgui_widgetsMain {
         return pressed
     }
 
-    fun radioButton(label: String, v: IntArray, vButton: Int) = radioButton(label, v[0] == vButton).also { if(it) v[0] = vButton }
-    fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int) = radioButton(label, v() == vButton).also { if(it) v.set(vButton) }
+    fun radioButton(label: String, v: IntArray, vButton: Int) = radioButton(label, v[0] == vButton).also { if (it) v[0] = vButton }
+    fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int) = radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
 //    IMGUI_API bool          Combo(const char* label, int* current_item, const char* const* items, int items_count, int height_in_items = -1);
 
     /** Combo box helper allowing to pass all items in a single string.
      *  separate items with \0, end item-list with \0\0     */
     fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
+        i = currentItem[0]
+        val items = itemsSeparatedByZeros.split('\u0000').filter { it.isNotEmpty() }
+        // FIXME-OPT: Avoid computing this, or at least only when combo is open
+        val res = combo(label, ::i, items, heightInItems)
+        currentItem[0] = i
+        return res
+    }
 
+    fun combo(label: String, currentItem: KMutableProperty0<Int>, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
         val items = itemsSeparatedByZeros.split('\u0000').filter { it.isNotEmpty() }
         // FIXME-OPT: Avoid computing this, or at least only when combo is open
         return combo(label, currentItem, items, heightInItems)
@@ -330,8 +338,15 @@ interface imgui_widgetsMain {
 
     /** Combo box function. */
     fun combo(label: String, currentItem: IntArray, items: List<String>, heightInItems: Int = -1): Boolean {
+        i = currentItem[0]
+        val res = combo(label, ::i, items, heightInItems)
+        currentItem[0] = i
+        return res
+    }
 
-        val previewText = items.getOrElse(currentItem[0], { "" })
+    fun combo(label: String, currentItem: KMutableProperty0<Int>, items: List<String>, heightInItems: Int = -1): Boolean {
+
+        val previewText = items.getOrElse(currentItem(), { "" })
 
         // Size default to hold ~7 items
         val heightInItems = if (heightInItems < 0) 7 else heightInItems
@@ -343,11 +358,11 @@ interface imgui_widgetsMain {
         var valueChanged = false
         for (i in 0 until items.size) {
             pushId(i)
-            val itemSelected = i == currentItem[0]
+            val itemSelected = i == currentItem()
             val itemText = items.getOrElse(i, { "*Unknown item*" })
             if (selectable(itemText, itemSelected)) {
                 valueChanged = true
-                currentItem[0] = i
+                currentItem.set(i)
             }
             if (itemSelected && isWindowAppearing) setScrollHere()
             popId()
@@ -364,5 +379,6 @@ interface imgui_widgetsMain {
 
     companion object {
         private var b = false
+        private var i = 0
     }
 }

@@ -60,6 +60,7 @@ import imgui.imgui.imgui_colums.Companion.pixelsToOffsetNorm
 import imgui.internal.*
 import java.util.*
 import kotlin.apply
+import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
 import imgui.HoveredFlags as Hf
@@ -1120,6 +1121,15 @@ interface imgui_internal {
     fun sliderBehavior(frameBb: Rect, id: Int, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
                        flags: Int = 0): Boolean {
 
+        f = v[ptr]
+        val res = sliderBehavior(frameBb, id, ::f, vMin, vMax, power, decimalPrecision, flags)
+        v[ptr] = f
+        return res
+    }
+
+    fun sliderBehavior(frameBb: Rect, id: Int, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, power: Float,
+                       decimalPrecision: Int, flags: Int = 0): Boolean {
+
         val window = currentWindow
 
 //        println("Draw frame, ${v[ptr]}")
@@ -1194,15 +1204,15 @@ interface imgui_internal {
                         } else lerp(vMin, vMax, clickedT) // Linear slider
                 // Round past decimal precision
                 newValue = roundScalar(newValue, decimalPrecision)
-                if (v[ptr] != newValue) {
-                    v[ptr] = newValue
+                if (v() != newValue) {
+                    v.set(newValue)
                     valueChanged = true
                 }
             }
         }
 
         // Draw
-        var grabT = sliderBehaviorCalcRatioFromValue(v[ptr], vMin, vMax, power, linearZeroPos)
+        var grabT = sliderBehaviorCalcRatioFromValue(v(), vMin, vMax, power, linearZeroPos)
         if (!isHorizontal)
             grabT = 1f - grabT
         val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1267,6 +1277,15 @@ interface imgui_internal {
     fun dragBehavior(frameBb: Rect, id: Int, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
                      power: Float): Boolean {
 
+        f = v[ptr]
+        val res = dragBehavior(frameBb, id, ::f, vSpeed, vMin, vMax, decimalPrecision, power)
+        v[ptr] = f
+        return res
+    }
+
+    fun dragBehavior(frameBb: Rect, id: Int, v: KMutableProperty0<Float>, vSpeed: Float, vMin: Float, vMax: Float,
+                     decimalPrecision: Int, power: Float): Boolean {
+
         // Draw frame
         val frameCol = when (id) {
             g.activeId -> Col.FrameBgActive
@@ -1284,7 +1303,7 @@ interface imgui_internal {
 
                 if (g.activeIdIsJustActivated) {
                     // Lock current value on click
-                    g.dragCurrentValue = v[ptr]
+                    g.dragCurrentValue = v()
                     g.dragLastMouseDelta put 0f
                 }
 
@@ -1325,8 +1344,8 @@ interface imgui_internal {
 
                 // Round to user desired precision, then apply
                 vCur = roundScalar(vCur, decimalPrecision)
-                if (v[ptr] != vCur) {
-                    v[ptr] = vCur
+                if (v() != vCur) {
+                    v.set(vCur)
                     valueChanged = true
                 }
             } else
@@ -2346,5 +2365,7 @@ interface imgui_internal {
         }
 
         val smallSquareSize get() = g.fontSize + style.framePadding.y * 2f
+
+        private var f = 0f
     }
 }
