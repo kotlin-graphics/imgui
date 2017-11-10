@@ -8,7 +8,6 @@
 //import com.jogamp.opengl.GL2ES3
 //import com.jogamp.opengl.GL2ES3.*
 //import com.jogamp.opengl.GL3
-//import gli.wasInit
 //import glm_.*
 //import glm_.mat4x4.Mat4
 //import glm_.vec2.Vec2
@@ -18,8 +17,6 @@
 //import uno.buffer.destroy
 //import uno.buffer.intBufferBig
 //import uno.buffer.intBufferOf
-//import uno.glf.semantic
-//import uno.gln.jogl.*
 //import uno.glsl.Program
 //
 //object JoglVrGL3 {
@@ -143,7 +140,7 @@
 //
 //        program = ProgramA(gl, "shader")
 //
-//        glGenBuffers(bufferName)
+//        glGenBuffers(Buffer.MAX, bufferName)
 //
 //        glGenVertexArrays(vaoName)
 //        withVertexArray(vaoName) {

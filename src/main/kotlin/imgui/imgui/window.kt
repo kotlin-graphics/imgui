@@ -333,7 +333,7 @@ interface imgui_window {
                     window.posF.y = glm.min(window.posF.y, (IO.displaySize.y - padding.y).f)
                 }
             }
-            window.pos put window.posF
+            window.pos.put(window.posF.x.i.f, window.posF.y.i.f)
 
             // Default item width. Make it proportional to window size if window manually resizes
             window.itemWidthDefault =
@@ -728,7 +728,7 @@ interface imgui_window {
     }
 
     /** set next window position. call before Begin()   */
-    fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Null, pivot: Vec2 = Vec2()) {
+    fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always, pivot: Vec2 = Vec2()) {
         g.setNextWindowPosVal put pos
         g.setNextWindowPosPivot = pivot
         g.setNextWindowPosCond = cond

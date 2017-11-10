@@ -1,9 +1,9 @@
-package imgui;
-
-@FunctionalInterface
-public interface Getter<T> {
-
-    T get();
-}
-
-
+//package imgui;
+//
+//@FunctionalInterface
+//public interface Getter<T> {
+//
+//    T get();
+//}
+//
+//
