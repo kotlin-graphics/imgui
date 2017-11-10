@@ -64,7 +64,7 @@ class HelloWorld_lwjgl {
         glfw.terminate()
     }
 
-    val f = FloatArray(1)
+    var f = 0f
     val clearColor = floatArrayOf(0.45f, 0.55f, 0.6f, 1f)
     var showAnotherWindow = false
     var showDemoWindow = true
@@ -80,7 +80,7 @@ class HelloWorld_lwjgl {
                 Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically
                 called "Debug"             */
             text("Hello, world!")
-            sliderFloat("float", f, 0f, 1f)
+            sliderFloat("float", ::f, 0f, 1f)
             colorEdit3("clear color", clearColor)
             //  You can write functions in the classical way, with if(cond) { code }
             if (button("Test Window"))

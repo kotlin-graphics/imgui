@@ -101,6 +101,7 @@ public class Test_lwjgl {
         if (showTestWindow[0]) {
             imgui.setNextWindowPos(new Vec2(650, 20), Cond.FirstUseEver, new Vec2());
             imgui.showTestWindow(showTestWindow);
+//            imgui.showTestWindow(prop);
         }
 
             /*val buf = CharArray(256)

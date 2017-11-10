@@ -13,7 +13,6 @@ import imgui.ImGui._begin
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
-import imgui.ImGui.beginMainMenuBar
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
 import imgui.ImGui.beginTooltip
@@ -31,7 +30,6 @@ import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
-import imgui.ImGui.endMainMenuBar
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endTooltip
@@ -94,6 +92,7 @@ import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
 import imgui.functionalProgramming.button
 import imgui.functionalProgramming.collapsingHeader
+import imgui.functionalProgramming.mainMenuBar
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.menuBar
 import imgui.functionalProgramming.popupModal
@@ -101,6 +100,7 @@ import imgui.functionalProgramming.smallButton
 import imgui.functionalProgramming.tooltip
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.window
+import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
@@ -158,7 +158,7 @@ interface imgui_demoDebugInfo {
         if (showApp.customRendering) showExampleAppCustomRendering(showApp::customRendering)
         if (showApp.metrics) ImGui.showMetricsWindow(showApp::metrics)
         if (showApp.styleEditor)
-            window("Style Editor", showApp::styleEditor) { showStyleEditor() }
+            withWindow("Style Editor", showApp::styleEditor) { showStyleEditor() }
 
         if (showApp.about)
             withWindow("About ImGui", showApp::about, Wf.AlwaysAutoResize.i) {
@@ -190,12 +190,9 @@ interface imgui_demoDebugInfo {
 
         // Menu
         menuBar {
-            if (beginMenu("Menu")) {
-                showExampleMenuFile()
-                endMenu()
-            }
+            menu("Menu") { showExampleMenuFile() }
             menu("Examples") {
-                menuItem("Main menu bar", "", showApp.mainMenuBar)
+                menuItem("Main menu bar", "", showApp::mainMenuBar)
                 menuItem("Console", "", showApp::console)
                 menuItem("Log", "", showApp::log)
                 menuItem("Simple layout", "", showApp::layout)
@@ -2144,70 +2141,44 @@ interface imgui_demoDebugInfo {
         }
 
         /** Demonstrate creating a fullscreen menu bar and populating it.   */
-        fun showExampleAppMainMenuBar() {
-
-            if (beginMainMenuBar()) {
-                if (beginMenu("File")) {
-                    showExampleMenuFile()
-                    endMenu()
-                }
-                if (beginMenu("Edit")) {
-                    if (menuItem("Undo", "CTRL+Z")) {
-                    }
-                    if (menuItem("Redo", "CTRL+Y", false, false)) { // Disabled item
-                    }
-                    separator()
-                    if (menuItem("Cut", "CTRL+X")) {
-                    }
-                    if (menuItem("Copy", "CTRL+C")) {
-                    }
-                    if (menuItem("Paste", "CTRL+V")) {
-                    }
-                    endMenu()
-                }
-                endMainMenuBar()
+        fun showExampleAppMainMenuBar() = mainMenuBar {
+            menu("File") { showExampleMenuFile() }
+            menu("Edit") {
+                menuItem("Undo", "CTRL+Z")
+                menuItem("Redo", "CTRL+Y", false, false) // Disabled item
+                separator()
+                menuItem("Cut", "CTRL+X")
+                menuItem("Copy", "CTRL+C")
+                menuItem("Paste", "CTRL+V")
             }
         }
 
         fun showExampleMenuFile() {
-
             menuItem("(dummy menu)", "", false, false)
-            if (menuItem("New")) Unit
-            if (menuItem("Open", "Ctrl+O")) Unit
-            if (beginMenu("Open Recent")) {
-
+            menuItem("New")
+            menuItem("Open", "Ctrl+O")
+            menu("Open Recent") {
                 menuItem("fish_hat.c")
                 menuItem("fish_hat.inl")
                 menuItem("fish_hat.h")
-                if (beginMenu("More..")) {
-
+                menu("More..") {
                     menuItem("Hello")
                     menuItem("Sailor")
-                    if (beginMenu("Recurse..")) {
-
-                        showExampleMenuFile()
-                        endMenu()
-                    }
-                    endMenu()
+                    menu("Recurse..") { showExampleMenuFile() }
                 }
-                endMenu()
             }
-            if (menuItem("Save", "Ctrl+S")) {
-            }
-            if (menuItem("Save As..")) {
-            }
+            menuItem("Save", "Ctrl+S")
+            menuItem("Save As..")
             separator()
-            if (beginMenu("Options")) {
+            menu("Options") {
                 menuItem("Enabled", "", option::enabled)
-                beginChild("child", Vec2(0, 60), true)
-                for (i in 0 until 10)
-                    text("Scrolling Text %d", i)
-                endChild()
+                withChild("child", Vec2(0, 60), true) {
+                    for (i in 0 until 10) text("Scrolling Text %d", i)
+                }
                 sliderFloat("Value", option::float, 0f, 1f)
                 inputFloat("Input", option::float, 0.1f, 0f, 2)
                 combo("Combo", option::combo, "Yes\u0000No\u0000Maybe\u0000\u0000")
                 checkbox("Check", option::check)
-                endMenu()
             }
             if (beginMenu("Colors")) {
                 for (col in Col.values())

@@ -57,13 +57,14 @@ interface imgui_menus {
         pushStyleVar(StyleVar.WindowRounding, 0f)
         pushStyleVar(StyleVar.WindowMinSize, Vec2i())
         val flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
-        if (!begin("##MainMenuBar", null, flags) || !beginMenuBar()) {
+        return if (!begin("##MainMenuBar", null, flags) || !beginMenuBar()) {
             end()
             popStyleVar(2)
-            return false
+            false
+        }else {
+            g.currentWindow!!.dc.menuBarOffsetX += style.displaySafeAreaPadding.x
+            true
         }
-        g.currentWindow!!.dc.menuBarOffsetX += style.displaySafeAreaPadding.x
-        return true
     }
 
     fun endMainMenuBar() {

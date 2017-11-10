@@ -27,6 +27,7 @@ import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
+import org.lwjgl.opengl.GL33.glBindSampler
 import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
@@ -286,6 +287,7 @@ object LwjglGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastElementArrayBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
+        val lastPolygonMode = glGetInteger(GL_POLYGON_MODE)
         val lastViewport = glGetVec4i(GL_VIEWPORT)
         val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
         val lastBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
@@ -306,6 +308,7 @@ object LwjglGL3 {
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
         glEnable(GL_SCISSOR_TEST)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
         // Setup viewport, orthographic projection matrix
         glViewport(fbSize)
@@ -316,6 +319,7 @@ object LwjglGL3 {
         checkSize(drawData.cmdLists)
 
         glBindVertexArray(vaoName)
+        glBindSampler(semantic.sampler.DIFFUSE, 0) // Rely on combined texture/sampler state.
 
         for (cmdList in drawData.cmdLists) {
 
@@ -361,6 +365,7 @@ object LwjglGL3 {
         if (lastEnableCullFace) glEnable(GL_CULL_FACE) else glDisable(GL_CULL_FACE)
         if (lastEnableDepthTest) glEnable(GL_DEPTH_TEST) else glDisable(GL_DEPTH_TEST)
         if (lastEnableScissorTest) glEnable(GL_SCISSOR_TEST) else glDisable(GL_SCISSOR_TEST)
+        glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode)
         glViewport(lastViewport)
         glScissor(lastScissorBox)
     }

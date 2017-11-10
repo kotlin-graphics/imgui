@@ -1709,7 +1709,7 @@ interface imgui_internal {
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
                 if (isEditable) {
                     TODO()
-//                    edit_state.TempTextBuffer.resize(edit_state.Text.Size * 4);
+//                    editState.empTextBuffer.resize(edit_state.Text.Size * 4);
 //                    ImTextStrToUtf8(edit_state.TempTextBuffer.Data, edit_state.TempTextBuffer.Size, edit_state.Text.Data, NULL);
                 }
 
