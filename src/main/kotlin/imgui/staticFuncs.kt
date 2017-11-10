@@ -103,17 +103,13 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
         autoFitFrames put 2
         autoFitOnlyGrows = false
     } else {
-        if (size.x <= 0.0f)
-            autoFitFrames.x = 2
-        if (size.y <= 0.0f)
-            autoFitFrames.y = 2
+        if (size.x <= 0f) autoFitFrames.x = 2
+        if (size.y <= 0f) autoFitFrames.y = 2
         autoFitOnlyGrows = autoFitFrames.x > 0 || autoFitFrames.y > 0
     }
 
-    if (flags has Wf.NoBringToFrontOnFocus)
-        g.windows.add(0, this) // Quite slow but rare and only once
-    else
-        g.windows.add(this)
+    if (flags has Wf.NoBringToFrontOnFocus) g.windows.add(0, this) // Quite slow but rare and only once
+    else g.windows.add(this)
 }
 
 
