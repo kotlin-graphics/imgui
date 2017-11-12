@@ -102,8 +102,8 @@ object JoglGL3 {
         // Setup display size (every frame to accommodate for window resizing)
         IO.displaySize.x = window.width
         IO.displaySize.y = window.height
-        IO.displayFramebufferScale.x = 1f //if (window.width > 0) window.framebufferSize.x / window.size.x.f else 0f
-        IO.displayFramebufferScale.y = 1f //if (window.height > 0) window.framebufferSize.y / window.size.y.f else 0f
+//        IO.displayFramebufferScale.x = if (window.width > 0) window.framebufferSize.x / window.size.x.f else 0f
+//        IO.displayFramebufferScale.y = if (window.height > 0) window.framebufferSize.y / window.size.y.f else 0f
 
         // Setup time step
         val currentTime = System.nanoTime() / 1e9
