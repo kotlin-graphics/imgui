@@ -230,6 +230,7 @@ fun saturate(f: Float) = if (f < 0f) 0f else if (f > 1f) 1f else f
 fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float) = (a + (b - a) * t).i
 fun Vec2.lerp(b: Vec2, t: Float) = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
+fun Vec2.lerp(b: Vec2, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
 fun Vec4.lerp(b: Vec4, t: Float) = Vec4(x + (b.x - x) * t, y + (b.y - y) * t, z + (b.z - z) * t, w + (b.w - w) * t)
 
 fun Vec2.invLength(failValue: Float): Float {

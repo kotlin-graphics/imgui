@@ -4,11 +4,12 @@ import glm_.bool
 import glm_.glm
 import glm_.i
 import glm_.vec4.Vec4
+import imgui.Context.style
 import imgui.ImGui.calcListClipping
+import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.cursorPosY
-import imgui.Context.style
 import imgui.ImGui.inputText
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
@@ -160,6 +161,13 @@ class Color {
 
     constructor(col: Vec4) {
         value put col
+    }
+
+    companion object {
+        fun hsv(h: Float, s: Float, v: Float, a: Float = 1f): Vec4 {
+            val (r, g, b) = colorConvertHSVtoRGB(h, s, v)
+            return Color(r, g, b, a).value
+        }
     }
 }
 
