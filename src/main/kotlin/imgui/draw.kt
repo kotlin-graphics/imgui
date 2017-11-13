@@ -990,19 +990,19 @@ class DrawList {
     functions only. */
     fun updateClipRect() {
         // If current command is used with different settings we need to add a new command
+        val currClipRect = currentClipRect
         val currCmd = if (cmdBuffer.isNotEmpty()) cmdBuffer.last() else null
-        if (currCmd == null || (currCmd.elemCount != 0 && currCmd.clipRect != currentClipRect) || currCmd.userCallback != null) {
+        if (currCmd == null || (currCmd.elemCount != 0 && currCmd.clipRect != currClipRect) || currCmd.userCallback != null) {
             addDrawCmd()
             return
         }
-
         // Try to merge with previous command if it matches, else use current command
         val prevCmd = if (cmdBuffer.size > 1) cmdBuffer[cmdBuffer.lastIndex - 1] else null
-        if (currCmd.elemCount == 0 && prevCmd != null && prevCmd.clipRect == currentClipRect && prevCmd.textureId == currentTextureId!!
-                && prevCmd.userCallback == null)
+        if (currCmd.elemCount == 0 && prevCmd != null && prevCmd.clipRect == currClipRect &&
+                prevCmd.textureId == currentTextureId!! && prevCmd.userCallback == null)
             cmdBuffer.pop()
         else
-            currCmd.clipRect = currentClipRect
+            currCmd.clipRect put currClipRect
     }
 
     fun updateTextureID() {
