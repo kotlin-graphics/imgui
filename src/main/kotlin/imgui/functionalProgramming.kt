@@ -40,7 +40,7 @@ object functionalProgramming {
         if (ImGui.smallButton(label)) block()
     }
 
-    inline fun withWindow(name: String, open: KMutableProperty0<Boolean>?, flags: Int = 0, block: () -> Unit) {
+    inline fun withWindow(name: String, open: KMutableProperty0<Boolean>? = null, flags: Int = 0, block: () -> Unit) {
         _begin(name, open, flags)
         block()
         end()
