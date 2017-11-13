@@ -109,12 +109,14 @@ interface imgui_widgetsSliders {
 //    IMGUI_API bool          SliderFloat4(const char* label, float v[4], float v_min, float v_max, const char* display_format = "%.3f", float power = 1.0f);
 //    IMGUI_API bool          SliderAngle(const char* label, float* v_rad, float v_degrees_min = -360.0f, float v_degrees_max = +360.0f);
 
-    fun sliderInt(label: String, v: IntArray, vMin: Int, vMax: Int, displayFormat: String = "%.0f"): Boolean {
+    fun sliderInt(label: String, v: IntArray, vMin: Int, vMax: Int, displayFormat: String = "%.0f") =
+            sliderInt(label, ::i.apply { set(v[0]) }, vMin, vMax, displayFormat).also { v[0] = i }
 
-        var displayFormat = if (displayFormat.isEmpty()) "%.0f" else displayFormat
-        val vF = floatArrayOf(v[0].f)
-        val valueChanged = sliderFloat(label, vF, vMin.f, vMax.f, displayFormat, 1f)
-        v[0] = vF[0].i
+    fun sliderInt(label: String, v: KMutableProperty0<Int>, vMin: Int, vMax: Int, displayFormat: String = "%.0f"): Boolean {
+        val displayFormat = if (displayFormat.isEmpty()) "%.0f" else displayFormat
+        f = v().f
+        val valueChanged = sliderFloat(label, ::f, vMin.f, vMax.f, displayFormat, 1f)
+        v.set(f.i)
         return valueChanged
     }
 //    IMGUI_API bool          SliderInt2(const char* label, int v[2], int v_min, int v_max, const char* display_format = "%.0f");
@@ -126,5 +128,6 @@ interface imgui_widgetsSliders {
     companion object {
         val v2 = FloatArray(2)
         private var f = 0f
+        private var i = 0
     }
 }

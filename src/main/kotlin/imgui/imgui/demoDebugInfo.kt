@@ -43,6 +43,7 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemsLineHeightWithSpacing
+import imgui.ImGui.logButtons
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
@@ -237,7 +238,7 @@ interface imgui_demoDebugInfo {
                 textWrapped("The logging API redirects all text output so you can easily capture the content of a " +
                         "window or a block. Tree nodes can be automatically expanded. You can also call LogText() to " +
                         "output directly to the log without a visual output.")
-//                logButtons() TODO
+                logButtons()
             }
         }
 

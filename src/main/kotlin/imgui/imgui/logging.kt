@@ -1,7 +1,16 @@
 package imgui.imgui
 
+import imgui.ImGui.button
 import imgui.Context as g
 import imgui.ImGui.currentWindowRead
+import imgui.ImGui.popAllowKeyboardFocus
+import imgui.ImGui.popId
+import imgui.ImGui.popItemWidth
+import imgui.ImGui.pushAllowKeyboardFocus
+import imgui.ImGui.pushId
+import imgui.ImGui.pushItemWidth
+import imgui.ImGui.sameLine
+import imgui.ImGui.sliderInt
 
 /** Logging: all text output from interface is redirected to tty/file/clipboard. By default, tree nodes are
  *  automatically opened during logging.    */
@@ -47,7 +56,25 @@ interface imgui_logging {
 //            g.LogClipboard->clear();
 //        }
     }
-//    IMGUI_API void          LogButtons();                                                       // helper to display buttons for logging to tty/file/clipboard
+
+    /** Helper to display buttons for logging to tty/file/clipboard */
+    fun logButtons() {
+        pushId("LogButtons")
+        val logToTty = button("Log To TTY"); sameLine()
+        val logToFile = button("Log To File"); sameLine()
+        val logToClipboard = button("Log To Clipboard"); sameLine()
+        pushItemWidth(80f)
+        pushAllowKeyboardFocus(false)
+        sliderInt("Depth", g::logAutoExpandMaxDepth, 0, 9)
+        popAllowKeyboardFocus()
+        popItemWidth()
+        popId()
+
+        // Start logging at the end of the function so that the buttons don't appear in the log
+        if (logToTty) TODO()//LogToTTY(g.LogAutoExpandMaxDepth)
+        if (logToFile) TODO()//LogToFile(g.LogAutoExpandMaxDepth, g.IO.LogFilename)
+        if (logToClipboard) TODO()//LogToClipboard(g.LogAutoExpandMaxDepth)
+    }
 
     /** pass text data straight to log (without being displayed)    */
     fun logText(fmt: String, vararg args: Any) {
