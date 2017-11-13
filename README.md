@@ -60,6 +60,8 @@ Dear ImGui allows you create elaborate tools as well as very short-lived ones. O
 
 See the [Screenshots Thread](https://github.com/ocornut/imgui/issues/123) for some user creations.
 
+![Sample](https://cloud.githubusercontent.com/assets/8225057/20628927/33e14cac-b329-11e6-80f6-9524e93b048a.png)
+
 ### References
 ----------
 
