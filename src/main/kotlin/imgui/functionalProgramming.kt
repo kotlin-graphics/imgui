@@ -140,7 +140,7 @@ object functionalProgramming {
         popId()
     }
 
-    inline fun tooltip(block: () -> Unit) {
+    inline fun withTooltip(block: () -> Unit) {
         beginTooltip()
         block()
         endTooltip()

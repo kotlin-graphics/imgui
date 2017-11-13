@@ -51,6 +51,7 @@ import imgui.ImGui.mousePos
 import imgui.ImGui.newLine
 import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
+import imgui.ImGui.plotLines
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
@@ -71,6 +72,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.setScrollHere
+import imgui.ImGui.setTooltip
 import imgui.ImGui.setWindowFontScale
 import imgui.ImGui.setWindowSize
 import imgui.ImGui.sliderFloat
@@ -101,13 +103,13 @@ import imgui.functionalProgramming.menuItem
 import imgui.functionalProgramming.popupContextWindow
 import imgui.functionalProgramming.popupModal
 import imgui.functionalProgramming.smallButton
-import imgui.functionalProgramming.tooltip
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.window
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
+import imgui.functionalProgramming.withTooltip
 import imgui.functionalProgramming.withWindow
 import imgui.internal.Rect
 import imgui.internal.Window
@@ -243,52 +245,38 @@ interface imgui_demoDebugInfo {
         }
 
         collapsingHeader("Widgets") {
-            //            if (ImGui::TreeNode("Basic"))
-//                {
-//                        static int clicked = 0;
-//                        if (ImGui::Button("Button"))
-//                                clicked++;
-//                        if (clicked & 1)
-//                        {
-//                                ImGui::SameLine();
-//                                ImGui::Text("Thanks for clicking me!");
-//                            }
-//                    +
-//                        static bool check = true;
-//                        ImGui::Checkbox("checkbox", &check);
-//                    +
-//                        static int e = 0;
-//                        ImGui::RadioButton("radio a", &e, 0); ImGui::SameLine();
-//                        ImGui::RadioButton("radio b", &e, 1); ImGui::SameLine();
-//                        ImGui::RadioButton("radio c", &e, 2);
-//                    +
-//                        // Color buttons, demonstrate using PushID() to add unique identifier in the ID stack, and changing style.
-//                        for (int i = 0; i < 7; i++)
-//                        {
-//                                if (i > 0) ImGui::SameLine();
-//                                ImGui::PushID(i);
-//                                ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(i/7.0f, 0.6f, 0.6f));
-//                                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(i/7.0f, 0.7f, 0.7f));
-//                                ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(i/7.0f, 0.8f, 0.8f));
-//                                ImGui::Button("Click");
-//                                ImGui::PopStyleColor(3);
-//                                ImGui::PopID();
-//                            }
-//                    +
-//                        ImGui::Text("Hover over me");
-//                        if (ImGui::IsItemHovered())
-//                                ImGui::SetTooltip("I am a tooltip");
-//                    +
-//                        ImGui::SameLine();
-//                        ImGui::Text("- or me");
-//                        if (ImGui::IsItemHovered())
-//                            {
-//                                    ImGui::BeginTooltip();
-//                                    ImGui::Text("I am a fancy tooltip");
-//                                    static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f };
-//                                    ImGui::PlotLines("Curve", arr, IM_ARRAYSIZE(arr));
-//                                    ImGui::EndTooltip();
-//                                }
+            treeNode("Basic") {
+                if (button("Button")) clicked++
+                if (clicked has 1) {
+                    sameLine()
+                    text("Thanks for clicking me!")
+                }
+                checkbox("checkbox", ::check)
+
+                radioButton("radio a", ::e, 0); sameLine()
+                radioButton("radio b", ::e, 1); sameLine()
+                radioButton("radio c", ::e, 2)
+                // Color buttons, demonstrate using PushID() to add unique identifier in the ID stack, and changing style.
+                for (i in 0..6) {
+                    if (i > 0) sameLine()
+                    pushId(i)
+                    pushStyleColor(Col.Button, Color.hsv(i / 7f, 0.6f, 0.6f))
+                    pushStyleColor(Col.ButtonHovered, Color.hsv(i / 7f, 0.7f, 0.7f))
+                    pushStyleColor(Col.ButtonActive, Color.hsv(i / 7f, 0.8f, 0.8f))
+                    button("Click")
+                    popStyleColor(3)
+                    popId()
+                }
+
+                text("Hover over me")
+                if (isItemHovered()) setTooltip("I am a tooltip")
+                sameLine()
+                text("- or me")
+                if (isItemHovered())
+                    withTooltip {
+                        text("I am a fancy tooltip")
+                        plotLines("Curve", arr)
+                    }
 //                    +
 //                        // Testing IMGUI_ONCE_UPON_A_FRAME macro
 //                        //for (int i = 0; i < 5; i++)
@@ -365,9 +353,7 @@ interface imgui_demoDebugInfo {
 //                        //ImGui::PushItemWidth(-1);
 //                        //ImGui::ListBox("##listbox2", &listbox_item_current2, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
 //                        //ImGui::PopItemWidth();
-//                    +
-//                        ImGui::TreePop();
-//                    }
+            }
 
             treeNode("Trees") {
 
@@ -511,7 +497,7 @@ interface imgui_demoDebugInfo {
                 text("%.0fx%.0f", texSize.x, texSize.y)
                 image(texId, texSize, Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
                 if (isItemHovered())
-                    tooltip {
+                    withTooltip {
                         val focusSz = 32f
                         val focus = glm.clamp(mousePos - texScreenPos - focusSz * 0.5f, Vec2(), texSize - focusSz)
                         text("Min: (%.2f, %.2f)", focus.x, focus.y)
@@ -2079,7 +2065,7 @@ interface imgui_demoDebugInfo {
                                         functions available to generate a string.                                     */
                                     font.renderChar(drawList, cellSize.x, cellP1, Col.Text.u32, (base + n).c)
                                     if (glyph != null && isMouseHoveringRect(cellP1, cellP2))
-                                        tooltip {
+                                        withTooltip {
                                             text("Codepoint: U+%04X", base + n)
                                             separator()
                                             text("AdvanceX+1: %.1f", glyph.advanceX)
@@ -2626,6 +2612,12 @@ interface imgui_demoDebugInfo {
                     label""".trimMargin() +
                     "\tlock cmpxchg8b eax\n").toCharArray(it)
         }
+
+        var clicked = 0
+        var check = true
+        var e = 0
+
+        val arr = floatArrayOf( 0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f )
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
