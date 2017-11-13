@@ -76,7 +76,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
             Use SetWindowPos() or SetNextWindowPos() with the appropriate condition flag to change the initial position
             of a window.    */
         posF put 60
-        pos put posF
+        pos.put(posF.x.i.f, posF.y.i.f)
 
         var settings = findWindowSettings(name)
         if (settings == null)
@@ -93,7 +93,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
             collapsed = settings.collapsed
         }
 
-        if (settings.size.lengthSqr > 0.00001f && flags hasnt Wf.NoResize)
+        if (settings.size.lengthSqr > 0.00001f)
             size put settings.size
         sizeFull put size
         this.size put size
