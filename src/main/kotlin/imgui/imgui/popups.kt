@@ -7,15 +7,17 @@ import imgui.ImGui.beginPopupEx
 import imgui.ImGui.closePopup
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
+import imgui.ImGui.isAnyItemHovered
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isPopupOpen
+import imgui.ImGui.isWindowHovered
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.setNextWindowPos
 import imgui.Context as g
-import imgui.WindowFlags as Wf
 import imgui.HoveredFlags as Hf
+import imgui.WindowFlags as Wf
 
 /** Popups  */
 interface imgui_popups {
@@ -76,17 +78,26 @@ interface imgui_popups {
      *  You may want to handle this on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
      *  You can pass a NULL str_id to use the identifier of the last item.  */
 //    IMGUI_API bool          BeginPopupContextItem(const char* str_id = NULL, int mouse_button = 1); // helper to open and begin popup when clicked on last item. if you can pass a NULL str_id only if the previous item had an id. If you want to use that on a non-interactive item such as Text() you need to pass in an explicit ID here. read comments in .cpp!
-//    fun beginPopupContextWindow(strId = NULL, int mouse_button = 1, bool also_over_items = true);  // helper to open and begin popup when clicked on current window.
+
+    /** Helper to open and begin popup when clicked on current window.  */
+    fun beginPopupContextWindow(strId: String = "", mouseButton: Int = 1, alsoOverItems: Boolean = true): Boolean {
+        val strId = if (strId.isEmpty()) "window_context" else strId
+        val id = currentWindow.getId(strId)
+        if (isMouseClicked(mouseButton))
+            if (isWindowHovered(Hf.AllowWhenBlockedByPopup.i))
+                if (alsoOverItems || !isAnyItemHovered)
+                    openPopupEx(id, true)
+        return beginPopupEx(id, Wf.ShowBorders or Wf.AlwaysAutoResize)
+    }
+
 //    IMGUI_API bool          BeginPopupContextVoid(const char* str_id = NULL, int mouse_button = 1); // helper to open and begin popup when clicked in void (where there are no imgui windows).
 
     fun endPopup() {
-
         val window = currentWindow
         assert(window.flags has Wf.Popup)  // Mismatched BeginPopup()/EndPopup() calls
         assert(g.currentPopupStack.isNotEmpty())
         end()
-        if (window.flags hasnt Wf.Modal)
-            popStyleVar()
+        if (window.flags hasnt Wf.Modal) popStyleVar()
     }
 
     fun isPopupOpen(strId: String) = g.openPopupStack.size > g.currentPopupStack.size &&

@@ -95,10 +95,13 @@ import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.mainMenuBar
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.menuBar
+import imgui.functionalProgramming.menuItem
+import imgui.functionalProgramming.popupContextWindow
 import imgui.functionalProgramming.popupModal
 import imgui.functionalProgramming.smallButton
 import imgui.functionalProgramming.tooltip
 import imgui.functionalProgramming.treeNode
+import imgui.functionalProgramming.window
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
@@ -2262,18 +2265,16 @@ interface imgui_demoDebugInfo {
             val windowPosPivot = Vec2(if (corner has 1) 1f else 0f, if (corner has 2) 1f else 0f)
             setNextWindowPos(windowPos, Cond.Always, windowPosPivot)
             pushStyleColor(Col.WindowBg, Vec4(0f, 0f, 0f, 0.3f))  // Transparent background
-            if (_begin("Example: Fixed Overlay", open, Wf.NoTitleBar or Wf.NoResize or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoSavedSettings)) {
+            window("Example: Fixed Overlay", open, Wf.NoTitleBar or Wf.NoResize or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoSavedSettings) {
                 text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
                 separator()
                 text("Mouse Position: (%.1f,%.1f)".format(IO.mousePos.x, IO.mousePos.y))
-//                if(beginPopupContextWindow()) { TODO
-//                    if (ImGui::MenuItem("Top-left", NULL, corner == 0)) corner = 0
-//                    if (ImGui::MenuItem("Top-right", NULL, corner == 1)) corner = 1
-//                    if (ImGui::MenuItem("Bottom-left", NULL, corner == 2)) corner = 2
-//                    if (ImGui::MenuItem("Bottom-right", NULL, corner == 3)) corner = 3
-//                    ImGui::EndPopup()
-//                }
-                end()
+                popupContextWindow {
+                    menuItem("Top-left", "", corner == 0) { corner = 0 }
+                    menuItem("Top-right", "", corner == 1) { corner = 1 }
+                    menuItem("Bottom-left", "", corner == 2) { corner = 2 }
+                    menuItem("Bottom-right", "", corner == 3) { corner = 3 }
+                }
             }
             popStyleColor()
         }
