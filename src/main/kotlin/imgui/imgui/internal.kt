@@ -172,7 +172,7 @@ interface imgui_internal {
                         if (window === g.hoveredWindow) hoveredWindowAboveModal = true
                         i--
                     }
-                    closeInactivePopups(if (hoveredWindowAboveModal) g.hoveredWindow!! else modal!!)
+                    closeInactivePopups(if (hoveredWindowAboveModal) g.hoveredWindow else modal)
                 }
             }
 
