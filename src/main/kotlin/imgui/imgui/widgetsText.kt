@@ -7,6 +7,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
 import imgui.ImGui.beginPopup
+import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcWrapWidthForPos
 import imgui.ImGui.checkboxFlags
@@ -27,6 +28,7 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderText
+import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -168,8 +170,27 @@ interface imgui_widgetsText {
         if (needWrap) popTextWrapPos()
     }
 
-//    IMGUI_API void          LabelText(const char* label, const char* fmt, ...) IM_PRINTFARGS(2);    // display text+label aligned the same way as value+label widgets
-//    IMGUI_API void          LabelTextV(const char* label, const char* fmt, va_list args);
+    /** Display text+label aligned the same way as value+label widgets  */
+    fun labelText(label: String, fmt: String, vararg args: Any) = labelTextV(label, fmt, args)
+
+    /** Add a label+text combo aligned to other label+value widgets */
+    fun labelTextV(label: String, fmt: String,  args: Array<out Any>) {
+
+        val window = currentWindow
+        if (window.skipItems) return
+        val w = calcItemWidth()
+
+        val labelSize = calcTextSize(label, 0, true)
+        val valueBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2))
+        val totalBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w + if (labelSize.x > 0f) style.itemInnerSpacing.x else 0f, style.framePadding.y * 2) + labelSize)
+        itemSize(totalBb, style.framePadding.y)
+        if (!itemAdd(totalBb, 0)) return
+        // Render
+        val text = fmt.format(style.locale, *args)
+        renderTextClipped(valueBb.min, valueBb.max, text, text.length, null, Vec2(0f, 0.5f))
+        if (labelSize.x > 0f)
+            renderText(Vec2(valueBb.max.x + style.itemInnerSpacing.x, valueBb.min.y + style.framePadding.y), label)
+    }
 
     /** shortcut for Bullet()+Text()    */
     fun bulletText(fmt: String, vararg args: Any) = bulletTextV(fmt, args)

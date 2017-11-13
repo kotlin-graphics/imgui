@@ -43,6 +43,7 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemsLineHeightWithSpacing
+import imgui.ImGui.labelText
 import imgui.ImGui.logButtons
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
@@ -277,20 +278,17 @@ interface imgui_demoDebugInfo {
                         text("I am a fancy tooltip")
                         plotLines("Curve", arr)
                     }
-//                    +
-//                        // Testing IMGUI_ONCE_UPON_A_FRAME macro
-//                        //for (int i = 0; i < 5; i++)
-//                        //{
-//                        //  IMGUI_ONCE_UPON_A_FRAME
-//                        //  {
-//                        //      ImGui::Text("This will be displayed only once.");
-//                        //  }
-//                        //}
-//                    +
-//                        ImGui::Separator();
-//                    +
-//                        ImGui::LabelText("label", "Value");
-//                    +
+                // Testing IMGUI_ONCE_UPON_A_FRAME macro
+                //for (int i = 0; i < 5; i++)
+                //{
+                //  IMGUI_ONCE_UPON_A_FRAME
+                //  {
+                //      ImGui::Text("This will be displayed only once.");
+                //  }
+                //}
+
+                separator()
+                labelText("label", "Value")
 //                        static int item = 1;
 //                        ImGui::Combo("combo", &item, "aaaa\0bbbb\0cccc\0dddd\0eeee\0\0");   // Combo using values packed in a single constant string (for really quick combo)
 //                    +
@@ -2617,7 +2615,7 @@ interface imgui_demoDebugInfo {
         var check = true
         var e = 0
 
-        val arr = floatArrayOf( 0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f )
+        val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
