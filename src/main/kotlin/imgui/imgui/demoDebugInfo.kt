@@ -82,6 +82,7 @@ import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
+import imgui.ImGui.time
 import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeExV
 import imgui.ImGui.treeNodeToLabelSpacing
@@ -2285,26 +2286,23 @@ interface imgui_demoDebugInfo {
          *  Read section "How can I have multiple widgets with the same label? Can I have widget without a label? (Yes).
          *  A primer on the purpose of labels/IDs." about ID.   */
         fun showExampleAppManipulatingWindowTitle(open: KMutableProperty0<Boolean>) {
-
             /*  By default, Windows are uniquely identified by their title.
                 You can use the "##" and "###" markers to manipulate the display/ID.
-             */
-//TODO
-            // Using "##" to display same title but have unique identifier.
-//            setNextWindowPos(Vec2(100), Cond.FirstUseEver)
-//            window("Same title as another window##1") {
-//                text("This is window 1.\nMy title is the same as window 2, but my identifier is unique.")
-//            }
-//
-//            setNextWindowPos(Vec2(100, 200), Cond.FirstUseEver)
-//            window("Same title as another window##2") {
-//                text("This is window 2.\nMy title is the same as window 1, but my identifier is unique.")
-//            }
-//
-//            // Using "###" to display a changing title but keep a static identifier "AnimatedTitle"
-//            val title = "Animated title ${"|/-\\"[(time / 0.25f).i and 3]} ${glm_.detail.Random.int}###AnimatedTitle"
-//            setNextWindowPos(Vec2(100, 300), Cond.FirstUseEver)
-//            window(title) { text("This window has a changing title.") }
+                Using "##" to display same title but have unique identifier.    */
+            setNextWindowPos(Vec2(100), Cond.FirstUseEver)
+            withWindow("Same title as another window##1") {
+                text("This is window 1.\nMy title is the same as window 2, but my identifier is unique.")
+            }
+
+            setNextWindowPos(Vec2(100, 200), Cond.FirstUseEver)
+            withWindow("Same title as another window##2") {
+                text("This is window 2.\nMy title is the same as window 1, but my identifier is unique.")
+            }
+
+            // Using "###" to display a changing title but keep a static identifier "AnimatedTitle"
+            val title = "Animated title ${"|/-\\"[(time / 0.25f).i and 3]} ${glm_.detail.Random.int}###AnimatedTitle"
+            setNextWindowPos(Vec2(100, 300), Cond.FirstUseEver)
+            withWindow(title) { text("This window has a changing title.") }
         }
 
         /** Demonstrate using the low-level ImDrawList to draw custom shapes.   */
