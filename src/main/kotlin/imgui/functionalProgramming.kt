@@ -6,6 +6,7 @@ import imgui.ImGui.beginChild
 import imgui.ImGui.beginMainMenuBar
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
+import imgui.ImGui.beginPopupContextWindow
 import imgui.ImGui.beginPopupModal
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.collapsingHeader
@@ -149,5 +150,12 @@ object functionalProgramming {
         pushTextWrapPos(wrapPosX)
         block()
         popTextWrapPos()
+    }
+
+    inline fun popupContextWindow(block: () -> Unit) {
+        if (beginPopupContextWindow()) {
+            block()
+            endPopup()
+        }
     }
 }

@@ -47,7 +47,6 @@ interface imgui_parametersStacks {
     }
 
     fun pushStyleColor(idx: Col, col: Vec4) {
-
         val backup = ColMod(idx, style.colors[idx])
         g.colorModifiers.push(backup)
         style.colors[idx] = col
