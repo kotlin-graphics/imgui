@@ -99,7 +99,6 @@ import imgui.functionalProgramming.popupModal
 import imgui.functionalProgramming.smallButton
 import imgui.functionalProgramming.tooltip
 import imgui.functionalProgramming.treeNode
-import imgui.functionalProgramming.window
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
@@ -2228,15 +2227,14 @@ interface imgui_demoDebugInfo {
                 4 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.square)          // Always Square
                 5 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.step, 100)// Fixed Step
             }
-            window("Example: Constrained Resize", open) {
+            withWindow("Example: Constrained Resize", open) {
                 val desc = listOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
                         "Width 300-400", "Custom: Always Square", "Custom: Fixed Steps (100)")
                 combo("Constraint", ::type, desc)
                 button("200x200") { setWindowSize(Vec2(200)) }; sameLine()
                 button("500x500") { setWindowSize(Vec2(500)) }; sameLine()
                 button("800x200") { setWindowSize(Vec2(800, 200)) }
-                for (i in 0 until 10)
-                    text("Hello, sailor! Making this line long enough for the example.")
+                for (i in 0 until 10) text("Hello, sailor! Making this line long enough for the example.")
             }
         }
 
