@@ -33,12 +33,13 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.windowContentRegionMax
-import imgui.internal.ButtonFlags as Bf
 import imgui.internal.Rect
 import imgui.internal.or
-import imgui.WindowFlags as Wf
-import imgui.SelectableFlags as Sf
+import kotlin.reflect.KMutableProperty0
 import imgui.ItemFlags as If
+import imgui.SelectableFlags as Sf
+import imgui.WindowFlags as Wf
+import imgui.internal.ButtonFlags as Bf
 
 /** Widgets: Selectable / Lists */
 interface imgui_widgetsSelectableLists {
@@ -121,19 +122,33 @@ interface imgui_widgetsSelectableLists {
         return pressed
     }
 
-    fun selectable(label: String, pSelected: BooleanArray, ptr: Int, flags: Int = 0, size: Vec2 = Vec2()): Boolean {
-        if (selectable(label, pSelected[ptr], flags, size)) {
-            pSelected[ptr] = !pSelected[ptr]
+    fun selectable(label: String, selected: BooleanArray, ptr: Int, flags: Int = 0, size: Vec2 = Vec2()): Boolean {
+        b0 = selected[ptr]
+        val res = selectable(label, ::b0, flags, size)
+        selected[ptr] = b0
+        return res
+    }
+
+    fun selectable(label: String, selected: KMutableProperty0<Boolean>, flags: Int = 0, size: Vec2 = Vec2()): Boolean {
+        if (selectable(label, selected(), flags, size)) {
+            selected.set(!selected())
             return true
         }
         return false
     }
 
-    fun listBox(label: String, currentItem: IntArray, items: Array<String>, heightInItems: Int = -1) =
+    fun listBox(label: String, currentItem: KMutableProperty0<Int>, items: Array<String>, heightInItems: Int = -1) =
             listBox(label, currentItem, imgui_widgetsText.Items.arrayGetter, items, heightInItems)
 
-    fun listBox(label: String, currentItem: IntArray, itemsGetter: (Array<String>, Int, Array<String>) -> Boolean, data: Array<String>,
-                heightInItems: Int = -1): Boolean {
+    fun listBox(label: String, currentItem: IntArray, items: Array<String>, heightInItems: Int = -1): Boolean {
+        i0 = currentItem[0]
+        val res = listBox(label, ::i0, imgui_widgetsText.Items.arrayGetter, items, heightInItems)
+        currentItem[0] = i0
+        return res
+    }
+
+    fun listBox(label: String, currentItem: KMutableProperty0<Int>, itemsGetter: (Array<String>, Int, Array<String>) -> Boolean,
+                data: Array<String>, heightInItems: Int = -1): Boolean {
 
         val itemsCount = data.size
         if (!listBoxHeader(label, itemsCount, heightInItems)) return false
@@ -144,14 +159,14 @@ interface imgui_widgetsSelectableLists {
         val clipper = ListClipper(itemsCount, textLineHeightWithSpacing)
         while (clipper.step())
             for (i in clipper.display.start until clipper.display.last) {
-                val itemSelected = booleanArrayOf(i == currentItem[0])
+                b0 = i == currentItem()
                 val itemText = arrayOf("")
                 if (!itemsGetter(data, i, itemText))
                     itemText[0] = "*Unknown item*"
 
                 pushId(i)
-                if (selectable(itemText[0], itemSelected[0])) {
-                    currentItem[0] = i
+                if (selectable(itemText[0], ::b0)) {
+                    currentItem.set(i)
                     valueChanged = true
                 }
                 popId()
@@ -222,5 +237,10 @@ interface imgui_widgetsSelectableLists {
         parentWindow.dc.cursorPos put bb.min
         itemSize(bb, style.framePadding.y)
         endGroup()
+    }
+
+    companion object {
+        var i0 = 0
+        var b0 = false
     }
 }

@@ -974,10 +974,7 @@ class DrawList {
         _vtxCurrentIdx++
     }
 
-    fun primWriteIdx(idx: DrawIdx) {
-        _idxWritePtr = idx
-        _idxWritePtr++
-    }
+    fun primWriteIdx(idx: DrawIdx) = idxBuffer.set(_idxWritePtr++, idx)
 
     fun primVtx(pos: Vec2, uv: Vec2, col: Int) {
         primWriteIdx(_vtxCurrentIdx)

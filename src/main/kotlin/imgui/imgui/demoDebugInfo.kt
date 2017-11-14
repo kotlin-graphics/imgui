@@ -21,6 +21,8 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
+import imgui.ImGui.colorEdit3
+import imgui.ImGui.colorEdit4
 import imgui.ImGui.colorEditVec4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
@@ -48,6 +50,7 @@ import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemsLineHeightWithSpacing
 import imgui.ImGui.labelText
+import imgui.ImGui.listBox
 import imgui.ImGui.logButtons
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
@@ -330,21 +333,18 @@ interface imgui_demoDebugInfo {
                     sliderAngle("slider angle", ::angle)
                 }
 
-//                        static float col1[3] = { 1.0f,0.0f,0.2f };
-//                        static float col2[4] = { 0.4f,0.7f,0.0f,0.5f };
-//                        ImGui::ColorEdit3("color 1", col1);
-//                        ImGui::SameLine(); ShowHelpMarker("Click on the colored square to open a color picker.\nRight-click on the colored square to show options.\nCTRL+click on individual component to input value.\n");
-//                    +
-//                        ImGui::ColorEdit4("color 2", col2);
-//                    +
-//                        const char* listbox_items[] = { "Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon" };
-//                        static int listbox_item_current = 1;
-//                        ImGui::ListBox("listbox\n(single select)", &listbox_item_current, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
-//                    +
-//                        //static int listbox_item_current2 = 2;
-//                        //ImGui::PushItemWidth(-1);
-//                        //ImGui::ListBox("##listbox2", &listbox_item_current2, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
-//                        //ImGui::PopItemWidth();
+                colorEdit3("color 1", col1)
+                sameLine(); showHelpMarker("Click on the colored square to open a color picker.\nRight-click on the colored square to show options.\nCTRL+click on individual component to input value.\n")
+
+                colorEdit4("color 2", col2)
+
+                val listboxItems = arrayOf( "Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon" )
+//                listBox("listbox\n(single select)", ::listboxItemCurrent, listboxItems, 4)
+
+                //static int listbox_item_current2 = 2;
+                //ImGui::PushItemWidth(-1);
+                //ImGui::ListBox("##listbox2", &listbox_item_current2, listboxItems, IM_ARRAYSIZE(listboxItems), 4);
+                //ImGui::PopItemWidth();
             }
 
             treeNode("Trees") {
@@ -2623,6 +2623,9 @@ interface imgui_demoDebugInfo {
         var f3 = 0.123f
         var f4 = 0f
         var angle = 0f
+        val col1 = floatArrayOf(1f, 0f, 0.2f)
+        val col2 = floatArrayOf(0.4f, 0.7f, 0f, 0.5f)
+        var listboxItemCurrent = 1
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
