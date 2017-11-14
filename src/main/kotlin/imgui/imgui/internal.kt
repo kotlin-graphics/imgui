@@ -324,7 +324,7 @@ interface imgui_internal {
     fun calcItemSize(size: Vec2, defaultX: Float, defaultY: Float): Vec2 {
 
         val contentMax = Vec2()
-        if (size lessThan 0f)
+        if (size.x < 0f || size.y < 0f)
             contentMax put g.currentWindow!!.pos + contentRegionMax
         if (size.x <= 0f)
             size.x = if (size.x == 0f) defaultX else glm.max(contentMax.x - g.currentWindow!!.dc.cursorPos.x, 4f) + size.x
@@ -1061,8 +1061,6 @@ interface imgui_internal {
 
     fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags: Int = 0): Boolean {
 
-//        if(label == "Copy as..")
-//            println()
         val window = currentWindow
         if (window.skipItems) return false
 
