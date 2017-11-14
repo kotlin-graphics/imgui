@@ -2,6 +2,7 @@ package imgui.imgui
 
 import glm_.glm
 import glm_.vec2.Vec2
+import imgui.ImGui.inputFloatN
 import imgui.ImGui.inputScalarEx
 import imgui.ImGui.inputTextEx
 import imgui.has
@@ -48,7 +49,9 @@ interface imgui_widgetsInputKeyboard {
         return res
     }
 //    IMGUI_API bool          InputFloat2(const char* label, float v[2], int decimal_precision = -1, ImGuiInputTextFlags extra_flags = 0);
-//    IMGUI_API bool          InputFloat3(const char* label, float v[3], int decimal_precision = -1, ImGuiInputTextFlags extra_flags = 0);
+
+    fun inputFloat3(label: String, v:FloatArray, decimalPrecision: Int = -1, extraFlags: Int = 0) =
+            inputFloatN(label, v, 3, decimalPrecision, extraFlags)
 //    IMGUI_API bool          InputFloat4(const char* label, float v[4], int decimal_precision = -1, ImGuiInputTextFlags extra_flags = 0);
 
     fun inputInt(label: String, v: KMutableProperty0<Int>, step: Int = 1, stepFast: Int = 100, extraFlags: Int = 0): Boolean {

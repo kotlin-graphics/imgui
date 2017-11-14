@@ -43,9 +43,9 @@ interface imgui_widgetsDrag {
     fun dragFloat(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                   displayFormat: String = "%.3f", power: Float = 1f): Boolean {
 
-        f = v[ptr]
-        val res = dragFloat(label, ::f, vSpeed, vMin, vMax, displayFormat, power)
-        v[ptr] = f
+        f0 = v[ptr]
+        val res = dragFloat(label, ::f0, vSpeed, vMin, vMax, displayFormat, power)
+        v[ptr] = f0
         return res
     }
 
@@ -71,7 +71,6 @@ interface imgui_widgetsDrag {
 
         val hovered = itemHoverable(frameBb, id)
 
-        val displayFormat = if (displayFormat.isEmpty()) "%.3f" else displayFormat
         val decimalPrecision = parseFormatPrecision(displayFormat, 3)
 
         // Tabbing or CTRL-clicking on Drag turns it into an input box
@@ -112,11 +111,20 @@ interface imgui_widgetsDrag {
 
     /** If v_min >= v_max we have no bound
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
-    fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f"): Boolean {
+    fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f")
+            : Boolean {
+        i0 = v[ptr]
+        val res = dragInt(label, ::i0, vSpeed, vMin, vMax, displayFormat)
+        v[ptr] = i0
+        return res
+    }
 
-        val vF = floatArrayOf(v[ptr].f)
-        val valueChanged = dragFloat(label, vF, vSpeed, vMin.f, vMax.f, displayFormat)
-        v[ptr] = vF[0].i
+    fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
+                displayFormat: String = "%.0f"): Boolean {
+
+        f0 = v().f
+        val valueChanged = dragFloat(label, ::f0, vSpeed, vMin.f, vMax.f, displayFormat)
+        v.set(f0.i)
         return valueChanged
     }
 //    IMGUI_API bool          DragInt2(const char* label, int v[2], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* display_format = "%.0f");
@@ -125,6 +133,7 @@ interface imgui_widgetsDrag {
 //    IMGUI_API bool          DragIntRange2(const char* label, int* v_current_min, int* v_current_max, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* display_format = "%.0f", const char* display_format_max = NULL);
 
     companion object {
-        private var f = 0f
+        private var f0 = 0f
+        private var i0 = 0
     }
 }
