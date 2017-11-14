@@ -1125,9 +1125,9 @@ interface imgui_internal {
     fun sliderBehavior(frameBb: Rect, id: Int, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
                        flags: Int = 0): Boolean {
 
-        f = v[ptr]
-        val res = sliderBehavior(frameBb, id, ::f, vMin, vMax, power, decimalPrecision, flags)
-        v[ptr] = f
+        f0 = v[ptr]
+        val res = sliderBehavior(frameBb, id, ::f0, vMin, vMax, power, decimalPrecision, flags)
+        v[ptr] = f0
         return res
     }
 
@@ -1281,9 +1281,9 @@ interface imgui_internal {
     fun dragBehavior(frameBb: Rect, id: Int, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
                      power: Float): Boolean {
 
-        f = v[ptr]
-        val res = dragBehavior(frameBb, id, ::f, vSpeed, vMin, vMax, decimalPrecision, power)
-        v[ptr] = f
+        f0 = v[ptr]
+        val res = dragBehavior(frameBb, id, ::f0, vSpeed, vMin, vMax, decimalPrecision, power)
+        v[ptr] = f0
         return res
     }
 
@@ -1983,6 +1983,14 @@ interface imgui_internal {
      *  functions "display_format" argument)    */
     fun inputScalarEx(label: String, dataType: DataType, data: IntArray, step: Number?, stepFast: Number?, scalarFormat: String,
                       extraFlags: Int): Boolean {
+        i0 = data[0]
+        val res = inputScalarEx(label, dataType, ::i0, step, stepFast, scalarFormat, extraFlags)
+        data[0] = i0
+        return res
+    }
+
+    fun inputScalarEx(label: String, dataType: DataType, data: KMutableProperty0<Int>, step: Number?, stepFast: Number?,
+                      scalarFormat: String, extraFlags: Int): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -2465,6 +2473,7 @@ interface imgui_internal {
 
         val smallSquareSize get() = g.fontSize + style.framePadding.y * 2f
 
-        private var f = 0f
+        private var f0 = 0f
+        private var i0 = 0
     }
 }

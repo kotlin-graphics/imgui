@@ -4,6 +4,7 @@ import glm_.glm
 import glm_.vec2.Vec2
 import imgui.ImGui.inputScalarEx
 import imgui.ImGui.inputTextEx
+import imgui.has
 import imgui.hasnt
 import imgui.internal.DataType
 import imgui.or
@@ -31,9 +32,9 @@ interface imgui_widgetsInputKeyboard {
 
     fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1,
                    extraFlags: Int = 0): Boolean {
-        f = v[ptr]
-        val res = inputFloat(label, ::f, step, stepFast, decimalPrecision, extraFlags)
-        v[ptr] = f
+        f0 = v[ptr]
+        val res = inputFloat(label, ::f0, step, stepFast, decimalPrecision, extraFlags)
+        v[ptr] = f0
         return res
     }
 
@@ -49,12 +50,19 @@ interface imgui_widgetsInputKeyboard {
 //    IMGUI_API bool          InputFloat2(const char* label, float v[2], int decimal_precision = -1, ImGuiInputTextFlags extra_flags = 0);
 //    IMGUI_API bool          InputFloat3(const char* label, float v[3], int decimal_precision = -1, ImGuiInputTextFlags extra_flags = 0);
 //    IMGUI_API bool          InputFloat4(const char* label, float v[4], int decimal_precision = -1, ImGuiInputTextFlags extra_flags = 0);
-//    IMGUI_API bool          InputInt(const char* label, int* v, int step = 1, int step_fast = 100, ImGuiInputTextFlags extra_flags = 0);
+
+    fun inputInt(label: String, v: KMutableProperty0<Int>, step: Int = 1, stepFast: Int = 100, extraFlags: Int = 0): Boolean {
+        /*  Hexadecimal input provided as a convenience but the flag name is awkward. Typically you'd use inputText()
+            to parse your own data, if you want to handle prefixes.             */
+        val scalarFormat = if (extraFlags has Itf.CharsHexadecimal) "%08X" else "%d"
+        return inputScalarEx(label, DataType.Int, v, if (step > 0f) step else null, if (stepFast > 0f) stepFast else null,
+            scalarFormat, extraFlags)
+    }
 //    IMGUI_API bool          InputInt2(const char* label, int v[2], ImGuiInputTextFlags extra_flags = 0);
 //    IMGUI_API bool          InputInt3(const char* label, int v[3], ImGuiInputTextFlags extra_flags = 0);
 //    IMGUI_API bool          InputInt4(const char* label, int v[4], ImGuiInputTextFlags extra_flags = 0);
 
     companion object {
-        private var f = 0f
+        private var f0 = 0f
     }
 }

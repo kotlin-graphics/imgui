@@ -10,6 +10,7 @@ import imgui.internal.*
 import uno.kotlin.isPrintable
 import java.io.File
 import java.nio.file.Paths
+import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.InputTextFlags as Itf
 import imgui.WindowFlags as Wf
@@ -470,6 +471,15 @@ fun IntArray.format(dataType: DataType, displayFormat: String, buf: CharArray): 
     return displayFormat.format(style.locale, value).toCharArray(buf)
 }
 
+fun KMutableProperty0<Int>.format(dataType: DataType, displayFormat: String, buf: CharArray): CharArray {
+    val value: Number = when (dataType) {
+        DataType.Int -> this()
+        DataType.Float -> glm.intBitsToFloat(this())
+        else -> throw Error()
+    }
+    return displayFormat.format(style.locale, value).toCharArray(buf)
+}
+
 /** JVM Imgui, dataTypeFormatString replacement */
 fun IntArray.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) = when (dataType) {
 
@@ -480,23 +490,40 @@ fun IntArray.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) =
     else -> throw Error("unsupported format data type")
 }.toCharArray(buf)
 
-fun dataTypeApplyOp(dataType: DataType, op: Char, pA: IntArray, B: Number) = when (dataType) {
-    DataType.Int -> pA[0] = when (op) {
-        '+' -> pA[0] + B as Int
-        '-' -> pA[0] - B as Int
+fun dataTypeApplyOp(dataType: DataType, op: Char, value1: IntArray, value2: Number) {
+    i0 = value1[0]
+    dataTypeApplyOp(dataType, op, ::i0, value2)
+    value1[0] = i0
+}
+
+fun dataTypeApplyOp(dataType: DataType, op: Char, value1: KMutableProperty0<Int>, value2: Number) {
+    when (dataType) {
+        DataType.Int -> value1.set(when (op) {
+            '+' -> value1() + (value2 as Int)
+            '-' -> value1() - (value2 as Int)
+            else -> throw Error()
+        })
+        DataType.Float -> value1.set(glm.floatBitsToInt(when (op) {
+            '+' -> glm.intBitsToFloat(value1()) + (value2 as Float)
+            '-' -> glm.intBitsToFloat(value1()) - (value2 as Float)
+            else -> throw Error()
+        }))
         else -> throw Error()
     }
-    DataType.Float -> pA[0] = glm.floatBitsToInt(when (op) {
-        '+' -> glm.intBitsToFloat(pA[0]) + B as Float
-        '-' -> glm.intBitsToFloat(pA[0]) - B as Float
-        else -> throw Error()
-    })
-    else -> throw Error()
 }
 
 /** User can input math operators (e.g. +100) to edit a numerical values.   */
 fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: IntArray, scalarFormat: String? = null)
         : Boolean {
+
+    i0 = data[0]
+    val res = dataTypeApplyOpFromText(buf, initialValueBuf, dataType, ::i0, scalarFormat)
+    data[0] = i0
+    return res
+}
+
+fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: KMutableProperty0<Int>,
+                            scalarFormat: String? = null): Boolean {
 
 //    var s = 0
 //    while (buf[s].isSpace) s++
@@ -517,7 +544,7 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 
         DataType.Int -> {
             val scalarFormat = scalarFormat ?: "%d"
-            var v = data[0]
+            var v = data()
             val oldV = v
             val a = seq[0].i
 
@@ -536,13 +563,13 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
             } else
                 v = a   // Assign constant
 
-            data[0] = v
+            data.set(v)
             oldV != v
         }
         DataType.Float -> {
             // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
             val scalarFormat = scalarFormat ?: "%f"
-            var v = glm.intBitsToFloat(data[0])
+            var v = glm.intBitsToFloat(data())
             val oldV = v
             val a = seq[0].f
 
@@ -559,7 +586,7 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
             } else
                 v = a   // Assign constant
 
-            data[0] = glm.floatBitsToInt(v)
+            data.set(glm.floatBitsToInt(v))
             oldV != v
         }
         else -> false
@@ -573,3 +600,5 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 //static const char*      GetClipboardTextFn_DefaultImpl(void* user_data);
 //static void             SetClipboardTextFn_DefaultImpl(void* user_data, const char* text);
 //static void             ImeSetInputScreenPosFn_DefaultImpl(int x, int y);
+
+private var i0 = 0

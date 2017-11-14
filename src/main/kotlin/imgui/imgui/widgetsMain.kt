@@ -251,7 +251,10 @@ interface imgui_widgetsMain {
 
     fun radioButton(label: String, v: IntArray, vButton: Int) = radioButton(label, v[0] == vButton).also { if (it) v[0] = vButton }
     fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int) = radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
-//    IMGUI_API bool          Combo(const char* label, int* current_item, const char* const* items, int items_count, int height_in_items = -1);
+
+    /** Combo box helper allowing to pass an array of strings.  */
+    fun combo(label: String, currentItem: KMutableProperty0<Int>, items: Array<String>, itemsCount: Int = items.size,
+              heightInItems: Int = -1) = combo(label, currentItem, items.toList(), heightInItems)
 
     /** Combo box helper allowing to pass all items in a single string.
      *  separate items with \0, end item-list with \0\0     */

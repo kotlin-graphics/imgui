@@ -38,6 +38,8 @@ import imgui.ImGui.image
 import imgui.ImGui.imageButton
 import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
+import imgui.ImGui.inputInt
+import imgui.ImGui.inputText
 import imgui.ImGui.isItemClicked
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseDoubleClicked
@@ -289,28 +291,25 @@ interface imgui_demoDebugInfo {
 
                 separator()
                 labelText("label", "Value")
-//                        static int item = 1;
-//                        ImGui::Combo("combo", &item, "aaaa\0bbbb\0cccc\0dddd\0eeee\0\0");   // Combo using values packed in a single constant string (for really quick combo)
+                // Combo using values packed in a single constant string (for really quick combo)
+                combo("combo", ::item, "aaaa\u0000bbbb\u0000cccc\u0000dddd\u0000eeee\u0000\u0000")
+                val items = arrayOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK")
+                // Combo using proper array. You can also pass a callback to retrieve array value, no need to create/copy an array just for that.
+                combo("combo scroll", ::item2, items)
+
+                run {
+                    inputText("input text", str0, str0.size)
+                    sameLine(); showHelpMarker("Hold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\n" +
+                        "CTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\n" +
+                        "ESCAPE to revert.\n")
+                    inputInt("input int", ::i0)
+//                    ImGui::SameLine(); ShowHelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n");
 //                    +
-//                        const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK" };
-//                        static int item2 = -1;
-//                        ImGui::Combo("combo scroll", &item2, items, IM_ARRAYSIZE(items));   // Combo using proper array. You can also pass a callback to retrieve array value, no need to create/copy an array just for that.
+//                    ImGui::InputFloat("input float", & f0, 0.01f, 1.0f);
 //                    +
-//                        {
-//                                static char str0[128] = "Hello, world!";
-//                                static int i0=123;
-//                                static float f0=0.001f;
-//                                ImGui::InputText("input text", str0, IM_ARRAYSIZE(str0));
-//                                ImGui::SameLine(); ShowHelpMarker("Hold SHIFT or use mouse to select text.\n" "CTRL+Left/Right to word jump.\n" "CTRL+A or double-click to select all.\n" "CTRL+X,CTRL+C,CTRL+V clipboard.\n" "CTRL+Z,CTRL+Y undo/redo.\n" "ESCAPE to revert.\n");
-//                        +
-//                                ImGui::InputInt("input int", &i0);
-//                                ImGui::SameLine(); ShowHelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n");
-//                        +
-//                                ImGui::InputFloat("input float", &f0, 0.01f, 1.0f);
-//                        +
-//                                static float vec4a[4] = { 0.10f, 0.20f, 0.30f, 0.44f };
-//                                ImGui::InputFloat3("input float3", vec4a);
-//                            }
+//                    static float vec4a[4] = { 0.10f, 0.20f, 0.30f, 0.44f };
+//                    ImGui::InputFloat3("input float3", vec4a);
+                }
 //                    +
 //                        {
 //                                static int i1=50, i2=42;
@@ -2614,8 +2613,12 @@ interface imgui_demoDebugInfo {
         var clicked = 0
         var check = true
         var e = 0
-
         val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
+        var item = 1
+        var item2 = -1
+        var str0 = "Hello, world!".toCharArray()
+        var i0 = 123
+        var f0 = 0.001f
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
