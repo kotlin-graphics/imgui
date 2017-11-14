@@ -31,6 +31,7 @@ import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.indent
+import imgui.ImGui.inputFloat
 import imgui.ImGui.inputText
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
@@ -1302,15 +1303,12 @@ interface imgui_internal {
 
         // Process clicking on the drag
         if (g.activeId == id)
-
             if (IO.mouseDown[0]) {
-
                 if (g.activeIdIsJustActivated) {
                     // Lock current value on click
                     g.dragCurrentValue = v()
                     g.dragLastMouseDelta put 0f
                 }
-
                 var vSpeed = vSpeed
                 if (vSpeed == 0f && (vMax - vMin) != 0f && (vMax - vMin) < Float.MAX_VALUE)
                     vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
@@ -1345,7 +1343,6 @@ interface imgui_internal {
                         vCur = glm.clamp(vCur, vMin, vMax)
                     g.dragCurrentValue = vCur
                 }
-
                 // Round to user desired precision, then apply
                 vCur = roundScalar(vCur, decimalPrecision)
                 if (v() != vCur) {
@@ -1354,7 +1351,6 @@ interface imgui_internal {
                 }
             } else
                 clearActiveId()
-
         return valueChanged
     }
 //IMGUI_API bool          DragFloatN(const char* label, float* v, int components, float v_speed, float v_min, float v_max, const char* display_format, float power);
@@ -1976,7 +1972,28 @@ interface imgui_internal {
 
         return if (flags has Itf.EnterReturnsTrue) enterPressed else valueChanged
     }
-//IMGUI_API bool          InputFloatN(const char* label, float* v, int components, int decimal_precision, ImGuiInputTextFlags extra_flags);
+
+    fun inputFloatN(label: String, v: FloatArray, components: Int, decimalPrecision: Int, extraFlags: Int): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(components)
+        for (i in 0 until components) {
+            pushId(i)
+            f0 = v[i]
+            valueChanged = valueChanged or inputFloat("##v", ::f0, 0f, 0f, decimalPrecision, extraFlags)
+            v[i] = f0
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+        return valueChanged
+    }
 //IMGUI_API bool          InputIntN(const char* label, int* v, int components, ImGuiInputTextFlags extra_flags);
 
     /** NB: scalar_format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
@@ -2379,12 +2396,11 @@ interface imgui_internal {
 
     /** Parse display precision back from the display format string */
     fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
-
         var precision = defaultPrecision
         if (fmt.contains('.')) {
-            val s = fmt.substringAfter('.')
+            val s = fmt.substringAfter('.').filter { it.isDigit() }
             if (s.isNotEmpty()) {
-                precision = Character.getNumericValue(s[0])
+                precision = java.lang.Integer.parseInt(s)   // TODo glm
                 if (precision < 0 || precision > 10)
                     precision = defaultPrecision
             }

@@ -26,6 +26,7 @@ import imgui.ImGui.columns
 import imgui.ImGui.combo
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
+import imgui.ImGui.dragInt
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
@@ -38,6 +39,7 @@ import imgui.ImGui.image
 import imgui.ImGui.imageButton
 import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
+import imgui.ImGui.inputFloat3
 import imgui.ImGui.inputInt
 import imgui.ImGui.inputText
 import imgui.ImGui.isItemClicked
@@ -78,6 +80,7 @@ import imgui.ImGui.setScrollHere
 import imgui.ImGui.setTooltip
 import imgui.ImGui.setWindowFontScale
 import imgui.ImGui.setWindowSize
+import imgui.ImGui.sliderAngle
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderFloatVec2
 import imgui.ImGui.sliderInt
@@ -299,42 +302,34 @@ interface imgui_demoDebugInfo {
 
                 run {
                     inputText("input text", str0, str0.size)
-                    sameLine(); showHelpMarker("Hold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\n" +
-                        "CTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\n" +
-                        "ESCAPE to revert.\n")
+                    sameLine(); showHelpMarker("Hold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\nCTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\nESCAPE to revert.\n")
+
                     inputInt("input int", ::i0)
-//                    ImGui::SameLine(); ShowHelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n");
-//                    +
-//                    ImGui::InputFloat("input float", & f0, 0.01f, 1.0f);
-//                    +
-//                    static float vec4a[4] = { 0.10f, 0.20f, 0.30f, 0.44f };
-//                    ImGui::InputFloat3("input float3", vec4a);
+                    sameLine(); showHelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n")
+
+                    inputFloat("input float", ::f0, 0.01f, 1f)
+
+                    inputFloat3("input float3", vec4a)
                 }
-//                    +
-//                        {
-//                                static int i1=50, i2=42;
-//                                ImGui::DragInt("drag int", &i1, 1);
-//                                ImGui::SameLine(); ShowHelpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.\nDouble-click or CTRL+click to input value.");
-//                        +
-//                                ImGui::DragInt("drag int 0..100", &i2, 1, 0, 100, "%.0f%%");
-//                        +
-//                                static float f1=1.00f, f2=0.0067f;
-//                                ImGui::DragFloat("drag float", &f1, 0.005f);
-//                                ImGui::DragFloat("drag small float", &f2, 0.0001f, 0.0f, 0.0f, "%.06f ns");
-//                            }
-//                    +
-//                        {
-//                                static int i1=0;
-//                                ImGui::SliderInt("slider int", &i1, -1, 3);
-//                                ImGui::SameLine(); ShowHelpMarker("CTRL+click to input value.");
-//                        +
-//                                static float f1=0.123f, f2=0.0f;
-//                                ImGui::SliderFloat("slider float", &f1, 0.0f, 1.0f, "ratio = %.3f");
-//                                ImGui::SliderFloat("slider log float", &f2, -10.0f, 10.0f, "%.4f", 3.0f);
-//                                static float angle = 0.0f;
-//                                ImGui::SliderAngle("slider angle", &angle);
-//                            }
-//                    +
+                run {
+                    dragInt("drag int", ::i1, 1f)
+                    sameLine(); showHelpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.\nDouble-click or CTRL+click to input value.")
+
+                    dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%.0f%%")
+
+                    dragFloat("drag float", ::f1, 0.005f)
+                    dragFloat("drag small float", ::f2, 0.0001f, 0f, 0f, "%.06f ns")
+                }
+                run {
+                    sliderInt("slider int", ::i3, -1, 3)
+                    sameLine(); showHelpMarker("CTRL+click to input value.")
+
+                    sliderFloat("slider float", ::f3, 0f, 1f, "ratio = %.3f")
+                    sliderFloat("slider log float", ::f4, -10f, 10f, "%.4f", 3f)
+
+                    sliderAngle("slider angle", ::angle)
+                }
+
 //                        static float col1[3] = { 1.0f,0.0f,0.2f };
 //                        static float col2[4] = { 0.4f,0.7f,0.0f,0.5f };
 //                        ImGui::ColorEdit3("color 1", col1);
@@ -2619,6 +2614,15 @@ interface imgui_demoDebugInfo {
         var str0 = "Hello, world!".toCharArray()
         var i0 = 123
         var f0 = 0.001f
+        val vec4a = floatArrayOf(0.1f, 0.2f, 0.3f, 0.44f)
+        var i1 = 50
+        var i2 = 42
+        var f1 = 1f
+        var f2 = 0.0067f
+        var i3 = 0
+        var f3 = 0.123f
+        var f4 = 0f
+        var angle = 0f
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
