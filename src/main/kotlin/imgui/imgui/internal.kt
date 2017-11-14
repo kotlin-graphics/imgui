@@ -1061,6 +1061,8 @@ interface imgui_internal {
 
     fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags: Int = 0): Boolean {
 
+//        if(label == "Copy as..")
+//            println()
         val window = currentWindow
         if (window.skipItems) return false
 

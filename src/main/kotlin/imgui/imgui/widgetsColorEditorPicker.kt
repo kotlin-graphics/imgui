@@ -188,9 +188,9 @@ interface imgui_widgetsColorEditorPicker {
                 val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
                 val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._InputsMask or Cef.NoLabel or Cef.AlphaPreviewHalf
                 pushItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
-                val pF = floatArrayOf(g.colorPickerRef.x)
-                valueChanged = valueChanged or colorPicker4("##picker", col, pickerFlags, pF)
-                g.colorPickerRef.x = pF[0]
+                val p = g.colorPickerRef to FloatArray(4)
+                valueChanged = valueChanged or colorPicker4("##picker", col, pickerFlags, p)
+                g.colorPickerRef put p
                 popItemWidth()
                 endPopup()
             }
@@ -256,14 +256,14 @@ interface imgui_widgetsColorEditorPicker {
 
         // Read stored options
         if (flags hasnt Cef._PickerMask)
-            flags = flags or (if (g.colorEditOptions has Cef._PickerMask) g.colorEditOptions else Cef._OptionsDefault.i) and Cef._PickerMask
+            flags = flags or ((if (g.colorEditOptions has Cef._PickerMask) g.colorEditOptions else Cef._OptionsDefault.i) and Cef._PickerMask)
         assert((flags and Cef._PickerMask).isPowerOfTwo) // Check that only 1 is selected
         if (flags hasnt Cef.NoOptions)
             flags = flags or (g.colorEditOptions and Cef.AlphaBar)
 
         // Setup
         val alphaBar = flags has Cef.AlphaBar && flags hasnt Cef.NoAlpha
-        val pickerPos = window.dc.cursorPos // consume only, safe passing reference
+        val pickerPos = Vec2(window.dc.cursorPos)
         val squareSz = smallSquareSize
         val barsWidth = squareSz     // Arbitrary smallish width of Hue/Alpha picking bars
         // Saturation/Value picking box
@@ -412,7 +412,7 @@ interface imgui_widgetsColorEditorPicker {
         }
 
         val hueColorF = Vec4(1)
-        colorConvertHSVtoRGB(h, 1f, 1f).apply { hueColorF.x = this[0]; hueColorF.y = this[1]; hueColorF.z = this[0] }
+        colorConvertHSVtoRGB(h, 1f, 1f).apply { hueColorF.x = this[0]; hueColorF.y = this[1]; hueColorF.z = this[2] }
         val hueColor32 = hueColorF.u32
         val col32NoAlpha = Vec4(col[0], col[1], col[2], 1f).u32
 
