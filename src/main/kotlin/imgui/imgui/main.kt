@@ -255,8 +255,7 @@ interface imgui_main {
 
         assert(g.initialized)   // Forgot to call ImGui::NewFrame()
 
-        if (g.frameCountEnded != g.frameCount)
-            endFrame()
+        if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount
 
         /*  Skip render altogether if alpha is 0.0

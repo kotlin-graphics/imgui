@@ -654,11 +654,11 @@ class Window(
     fun addToRenderListSelectLayer() {
         // FIXME: Generalize this with a proper layering system so e.g. user can draw in specific layers, below text, ..
         IO.metricsActiveWindows++
-        this addTo when {
+        addTo(when {
             flags has Wf.Popup -> g.renderDrawLists[1]
             flags has Wf.Tooltip -> g.renderDrawLists[2]
             else -> g.renderDrawLists[0]
-        }
+        })
     }
 
     // FIXME: Add a more explicit sort order in the window structure.

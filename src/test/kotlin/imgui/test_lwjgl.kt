@@ -68,6 +68,7 @@ class HelloWorld_lwjgl {
     val clearColor = floatArrayOf(0.45f, 0.55f, 0.6f, 1f)
     var showAnotherWindow = false
     var showDemoWindow = true
+    var listboxItemCurrent = 1
 
     fun loop() {
 

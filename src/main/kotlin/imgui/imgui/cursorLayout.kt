@@ -202,7 +202,11 @@ interface imgui_cursorLayout {
         //window->DrawList->AddRect(groupBb.Min, groupBb.Max, IM_COL32(255,0,255,255));   // [Debug]
     }
 
-    /** cursor position is relative to window position  */
+    /** Cursor position is relative to window position
+     *  User generally sees positions in window coordinates. Internally we store CursorPos in absolute screen coordinates
+     *  because it is more convenient.
+     *  Conversion happens as we pass the value to user, but it makes our naming convention confusing because
+     *  cursorPos == dc.cursorPos - window.pos. May want to rename 'dc.cursorPos'.  */
     var cursorPos
         get() = with(currentWindowRead!!) { dc.cursorPos - pos + scroll }
         set(value) = with(currentWindowRead!!) {

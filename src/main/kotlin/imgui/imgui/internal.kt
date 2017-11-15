@@ -322,7 +322,6 @@ interface imgui_internal {
     }
 
     fun calcItemSize(size: Vec2, defaultX: Float, defaultY: Float): Vec2 {
-
         val contentMax = Vec2()
         if (size.x < 0f || size.y < 0f)
             contentMax put g.currentWindow!!.pos + contentRegionMax
@@ -759,8 +758,7 @@ interface imgui_internal {
 
         if (textEnd > 0) {
             window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textEnd, wrapWidth)
-            if (g.logEnabled)
-                logRenderedText(pos, text, textEnd)
+            if (g.logEnabled) logRenderedText(pos, text, textEnd)
         }
     }
 
