@@ -238,7 +238,7 @@ interface imgui_utilities {
 
     fun colorConvertHSVtoRGB(h: Float, s: Float, v: Float, rgb: FloatArray = FloatArray(3)): FloatArray {
         colorConvertHSVtoRGB(h, s, v, ::f0, ::f1, ::f2)
-        return floatArrayOf(f0, f1, f2)
+        return rgb.apply { set(0, f0); set(1, f1); set(2, f2) }
     }
 
     fun colorConvertHSVtoRGB(h: Float, s: Float, v: Float, r: KMutableProperty0<Float>, g: KMutableProperty0<Float>,
