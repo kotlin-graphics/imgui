@@ -18,9 +18,10 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.internal.Rect
 import imgui.internal.saturate
+import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
-import imgui.WindowFlags as Wf
 import imgui.HoveredFlags as Hf
+import imgui.WindowFlags as Wf
 
 
 interface imgui_utilities {
@@ -236,13 +237,18 @@ interface imgui_utilities {
     fun colorConvertHSVtoRGB(hsv: FloatArray, rgb: FloatArray = FloatArray(3)) = colorConvertHSVtoRGB(hsv[0], hsv[1], hsv[2], rgb)
 
     fun colorConvertHSVtoRGB(h: Float, s: Float, v: Float, rgb: FloatArray = FloatArray(3)): FloatArray {
+        colorConvertHSVtoRGB(h, s, v, ::f0, ::f1, ::f2)
+        return floatArrayOf(f0, f1, f2)
+    }
+
+    fun colorConvertHSVtoRGB(h: Float, s: Float, v: Float, r: KMutableProperty0<Float>, g: KMutableProperty0<Float>,
+                             b: KMutableProperty0<Float>) {
 
         if (s == 0f) {
             // gray
-            rgb[0] = v
-            rgb[1] = v
-            rgb[2] = v
-            return rgb
+            r.set(v)
+            g.set(v)
+            b.set(v)
         }
 
         val h = glm.mod(h, 1f) / (60f / 360f)
@@ -254,19 +260,18 @@ interface imgui_utilities {
 
         when (i) {
             0 -> {
-                rgb[0] = v; rgb[1] = t; rgb[2] = p; }
+                r.set(v); g.set(t); b.set(p); }
             1 -> {
-                rgb[0] = q; rgb[1] = v; rgb[2] = p; }
+                r.set(q); g.set(v); b.set(p); }
             2 -> {
-                rgb[0] = p; rgb[1] = v; rgb[2] = t; }
+                r.set(p); g.set(v); b.set(t); }
             3 -> {
-                rgb[0] = p; rgb[1] = q; rgb[2] = v; }
+                r.set(p); g.set(q); b.set(v); }
             4 -> {
-                rgb[0] = t; rgb[1] = p; rgb[2] = v; }
+                r.set(t); g.set(p); b.set(v); }
             else -> {
-                rgb[0] = v; rgb[1] = p; rgb[2] = q; }
+                r.set(v); g.set(p); b.set(q); }
         }
-        return rgb
     }
 
     fun FloatArray.hsvToRGB() = colorConvertHSVtoRGB(this, this)
@@ -277,4 +282,9 @@ interface imgui_utilities {
     /** Saturated, always output 0..255 */
     fun F32_TO_INT8_SAT(_val: Float) = (saturate(_val) * 255f + 0.5f).i
 
+    companion object {
+        var f0 = 0f
+        var f1 = 0f
+        var f2 = 0f
+    }
 }

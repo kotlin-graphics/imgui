@@ -137,3 +137,7 @@ interface imgui_widgetsDrag {
         private var i0 = 0
     }
 }
+
+fun main(args: Array<String>) {
+    println("%0.3f".format(0.0123456f))
+}

@@ -184,7 +184,7 @@ interface imgui_widgetsText {
         val valueBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2))
         val totalBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w + if (labelSize.x > 0f) style.itemInnerSpacing.x else 0f, style.framePadding.y * 2) + labelSize)
         itemSize(totalBb, style.framePadding.y)
-        if (!itemAdd(totalBb, 0)) return
+        if (!itemAdd(totalBb)) return
         // Render
         val text = fmt.format(style.locale, *args)
         renderTextClipped(valueBb.min, valueBb.max, text, text.length, null, Vec2(0f, 0.5f))

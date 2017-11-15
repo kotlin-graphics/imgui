@@ -234,11 +234,11 @@ interface imgui_cursorLayout {
     val cursorStartPos get() = with(currentWindowRead!!) { dc.cursorStartPos - pos }
 
     /** cursor position in absolute screen coordinates [0..io.DisplaySize] (useful to work with ImDrawList API) */
-    var cursorScreenPos
+    var cursorScreenPos // TODO check no put(), otherwise it doesnt trigger the setter
         get() = currentWindowRead!!.dc.cursorPos
-        set(value) = with(currentWindowRead!!.dc) {
+        set(value) = with(currentWindow.dc) {
             cursorPos put value
-            cursorPos max_ cursorMaxPos
+            cursorMaxPos max_ cursorPos
         }
 
     /** Vertically align/lower upcoming text to framePadding.y so that it will aligns to upcoming widgets

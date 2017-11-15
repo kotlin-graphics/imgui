@@ -2,7 +2,9 @@ package imgui
 
 
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import gln.checkError
+import gln.glClearColor
 import gln.glViewport
 import imgui.functionalProgramming.button
 import imgui.impl.LwjglGL3
@@ -65,7 +67,7 @@ class HelloWorld_lwjgl {
     }
 
     var f = 0f
-    val clearColor = floatArrayOf(0.45f, 0.55f, 0.6f, 1f)
+    val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
     var showAnotherWindow = false
     var showDemoWindow = true
     var listboxItemCurrent = 1
@@ -117,7 +119,7 @@ class HelloWorld_lwjgl {
 
         // Rendering
         glViewport(window.framebufferSize)
-        glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3])  // TODO gln
+        glClearColor(clearColor)
         glClear(GL_COLOR_BUFFER_BIT)
 
         ImGui.render()
