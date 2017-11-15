@@ -1,6 +1,7 @@
 package imgui;
 
 import glm_.vec2.Vec2;
+import glm_.vec4.Vec4;
 import imgui.impl.LwjglGL3;
 import kotlin.reflect.KMutableProperty0;
 import org.lwjgl.opengl.GL;
@@ -67,7 +68,7 @@ public class Test_lwjgl {
     }
 
     private float[] f = {0f};
-    private float[] clearColor = {0.45f, 0.55f, 0.6f, 1f};
+    private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
     private boolean[] showAnotherWindow = {false};
     private boolean[] showTestWindow = {true};
 //    private KMutableProperty0 prop = new JavaProp<>(() -> showTestWindow, res -> showTestWindow = res);
@@ -115,7 +116,7 @@ public class Test_lwjgl {
 
         // Rendering
         gln.GlnKt.glViewport(window.getFramebufferSize());
-        glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);  // TODO gln
+        gln.GlnKt.glClearColor(clearColor);
         glClear(GL_COLOR_BUFFER_BIT);
 
         imgui.render();

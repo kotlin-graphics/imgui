@@ -2303,7 +2303,7 @@ interface imgui_internal {
 
         var scaleMin = scaleMin
         var scaleMax = scaleMax
-        val valuesCount = data.values.size
+        val valuesCount = data.count()
 
         val labelSize = calcTextSize(label, 0, true)
         if (graphSize.x == 0f) graphSize.x = calcItemWidth()
@@ -2313,7 +2313,7 @@ interface imgui_internal {
         val innerBb = Rect(frameBb.min + style.framePadding, frameBb.max - style.framePadding)
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0))
         itemSize(totalBb, style.framePadding.y)
-        if (!itemAdd(totalBb, 0)) return
+        if (!itemAdd(totalBb)) return
         val hovered = itemHoverable(innerBb, 0)
 
         // Determine scale from values if not specified

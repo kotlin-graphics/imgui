@@ -32,7 +32,6 @@ import imgui.ImGui.hsvToRGB
 import imgui.ImGui.inputText
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.isItemActive
-import imgui.ImGui.isMouseClicked
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.openPopup
@@ -70,12 +69,26 @@ interface imgui_widgetsColorEditorPicker {
     /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
      *  Hint: 'float col[3]' function argument is same as 'float* col'.
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
+    fun colorEdit3(label: String, col: Vec4, flags: Int = 0): Boolean {
+        val floats = col to FloatArray(4)
+        val res = colorEdit4(label, floats, flags or Cef.NoAlpha)
+        col put floats
+        return res
+    }
+
     fun colorEdit3(label: String, col: FloatArray, flags: Int = 0) = colorEdit4(label, col, flags or Cef.NoAlpha)
 
     /** Edit colors components (each component in 0.0f..1.0f range).
      *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ColorEditFlags.NoAlpha flag is set.
      *  With typical options: Left-click on colored square to open color picker. Right-click to open option menu.
      *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
+    fun colorEdit4(label: String, col: Vec4, flags: Int = 0): Boolean {
+        val floats = col to FloatArray(4)
+        val res = colorEdit4(label, floats, flags)
+        col put floats
+        return res
+    }
+
     fun colorEdit4(label: String, col: FloatArray, flags: Int = 0): Boolean {
 
         val window = currentWindow
@@ -130,9 +143,9 @@ interface imgui_widgetsColorEditorPicker {
                     arrayOf("R:%3.0f", "G:%3.0f", "B:%3.0f", "A:%3.0f"),     // Long display for RGBA
                     arrayOf("H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f"))     // Long display for HSVA
             val fmtTableFloat = arrayOf(
-                    arrayOf("%0.3f", "%0.3f", "%0.3f", "%0.3f"),            // Short display
-                    arrayOf("R:%0.3f", "G:%0.3f", "B:%0.3f", "A:%0.3f"),    // Long display for RGBA
-                    arrayOf("H:%0.3f", "S:%0.3f", "V:%0.3f", "A:%0.3f"))    // Long display for HSVA
+                    arrayOf("%.3f", "%.3f", "%.3f", "%.3f"),            // Short display
+                    arrayOf("R:%.3f", "G:%.3f", "B:%.3f", "A:%.3f"),    // Long display for RGBA
+                    arrayOf("H:%.3f", "S:%.3f", "V:%.3f", "A:%.3f"))    // Long display for HSVA
             val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.HSV) 2 else 1
 
             pushItemWidth(wItemOne)
@@ -238,6 +251,19 @@ interface imgui_widgetsColorEditorPicker {
      *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
      *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)   */
+    fun colorPicker4(label: String, col: Vec4, flags: Int = 0, refCol: Vec4? = null): Boolean {
+        val floats = col to FloatArray(4)
+        val res = if (refCol == null) colorPicker4(label, floats, flags, refCol)
+        else {
+            val floats2 = refCol to FloatArray(4)
+            val res = colorPicker4(label, floats, flags, floats2)
+            refCol put floats2
+            res
+        }
+        col put floats
+        return res
+    }
+
     fun colorPicker4(label: String, col: FloatArray, flags: Int = 0, refCol: FloatArray? = null): Boolean {
 
         val window = currentWindow
@@ -331,7 +357,7 @@ interface imgui_widgetsColorEditorPicker {
             }
             if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
             // Hue bar logic
-            cursorScreenPos.put(bar0PosX, pickerPos.y)
+            cursorScreenPos = Vec2(bar0PosX, pickerPos.y)
             invisibleButton("hue", Vec2(barsWidth, svPickerSize))
             if (isItemActive) {
                 h = saturate((IO.mousePos.y - pickerPos.y) / (svPickerSize - 1))
@@ -521,7 +547,7 @@ interface imgui_widgetsColorEditorPicker {
         if (size.y == 0f)
             size.y = defaultSize
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        itemSize(bb, if(size.y >= defaultSize) style.framePadding.y else 0f)
+        itemSize(bb, if (size.y >= defaultSize) style.framePadding.y else 0f)
         if (!itemAdd(bb, id)) return false
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
@@ -547,9 +573,9 @@ interface imgui_widgetsColorEditorPicker {
         } else {
             /*  Because getColorU32() multiplies by the global style alpha and we don't want to display a checkerboard 
                 if the source code had no alpha */
-            val colSource = if(flags has Cef.AlphaPreview) col else colWithoutAlpha
+            val colSource = if (flags has Cef.AlphaPreview) col else colWithoutAlpha
             if (colSource.w < 1f)
-                    renderColorRectWithAlphaCheckerboard(bbInner.min, bbInner.max, colSource.u32, gridStep, Vec2(off), rounding)
+                renderColorRectWithAlphaCheckerboard(bbInner.min, bbInner.max, colSource.u32, gridStep, Vec2(off), rounding)
             else
                 window.drawList.addRectFilled(bbInner.min, bbInner.max, getColorU32(colSource), rounding, 0.inv())
         }

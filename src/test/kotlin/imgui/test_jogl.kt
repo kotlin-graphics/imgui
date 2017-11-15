@@ -11,6 +11,7 @@ import com.jogamp.opengl.GLEventListener
 import com.jogamp.opengl.GLProfile
 import com.jogamp.opengl.util.Animator
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.functionalProgramming.button
 import imgui.impl.JoglGL3
 
@@ -69,7 +70,7 @@ class HelloWorld_jogl : GLEventListener {
     }
 
     var f = 0f
-    val clearColor = floatArrayOf(0.45f, 0.55f, 0.6f, 1f)
+    val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
     var showAnotherWindow = false
     var showDemoWindow = true
 

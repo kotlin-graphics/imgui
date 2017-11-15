@@ -29,6 +29,7 @@ import imgui.ImGui.pushId
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
+import imgui.ImGui.renderRectFilledRangeH
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTriangle
@@ -39,9 +40,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHere
 import imgui.ImGui.spacing
 import imgui.imgui.imgui_internal.Companion.smallSquareSize
-import imgui.internal.Dir
-import imgui.internal.PlotType
-import imgui.internal.Rect
+import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.WindowFlags as Wf
@@ -376,20 +375,74 @@ interface imgui_widgetsMain {
         return valueChanged
     }
 
-    class PlotArray(val values: FloatArray, val stride: Int) {
-        operator fun get(idx: Int) = values[idx * stride]
+    interface PlotArray {
+        operator fun get(idx: Int): Float
+        fun count(): Int
+    }
+
+    class PlotArrayData(val values: FloatArray, val stride: Int) : PlotArray {
+        override operator fun get(idx: Int) = values[idx * stride]
+        override fun count() = values.size
+    }
+
+    class PlotArrayFunc(val func: (Int) -> Float, val count: Int) : PlotArray {
+        override operator fun get(idx: Int) = func(idx)
+        override fun count() = count
     }
 
     fun plotLines(label: String, values: FloatArray, valuesOffset: Int = 0, overlayText: String = "", scaleMin: Float = Float.MAX_VALUE,
                   scaleMax: Float = Float.MAX_VALUE, graphSize: Vec2 = Vec2(), stride: Int = 1) {
 
-        val data = PlotArray(values, stride)
+        val data = PlotArrayData(values, stride)
         plotEx(PlotType.Lines, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
     }
-//    IMGUI_API void          PlotLines(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
-//    IMGUI_API void          PlotHistogram(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));
-//    IMGUI_API void          PlotHistogram(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
-//    IMGUI_API void          ProgressBar(float fraction, const ImVec2& size_arg = ImVec2(-1,0), const char* overlay = NULL);
+
+    fun plotLines(label: String, valuesGetter: (idx: Int) -> Float, valuesCount: Int, valuesOffset: Int = 0,
+                  overlayText: String = "", scaleMin: Float = Float.MAX_VALUE, scaleMax: Float = Float.MAX_VALUE,
+                  graphSize: Vec2 = Vec2()) {
+
+        val data = PlotArrayFunc(valuesGetter, valuesCount)
+        plotEx(PlotType.Lines, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
+    }
+
+    fun plotHistogram(label: String, values: FloatArray, valuesOffset: Int = 0, overlayText: String = "",
+                      scaleMin: Float = Float.MAX_VALUE, scaleMax: Float = Float.MAX_VALUE, graphSize: Vec2 = Vec2(), stride: Int = 1) {
+
+        val data = PlotArrayData(values, stride)
+        plotEx(PlotType.Histogram, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
+    }
+
+    fun plotHistogram(label: String, valuesGetter: (idx: Int) -> Float, valuesCount: Int, valuesOffset: Int = 0,
+                      overlayText: String = "", scaleMin: Float = Float.MAX_VALUE, scaleMax: Float = Float.MAX_VALUE,
+                      graphSize: Vec2 = Vec2()) {
+
+        val data = PlotArrayFunc(valuesGetter, valuesCount)
+        plotEx(PlotType.Histogram, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
+    }
+
+    fun progressBar(fraction: Float, sizeArg: Vec2 = Vec2(-1f, 0f), overlay: String = "") {
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val pos = Vec2(window.dc.cursorPos)
+        val bb = Rect(pos, pos + calcItemSize(sizeArg, calcItemWidth(), g.fontSize + style.framePadding.y * 2f))
+        itemSize(bb, style.framePadding.y)
+        if (!itemAdd(bb)) return
+        // Render
+        val fraction = saturate(fraction)
+        renderFrame(bb.min, bb.max, Col.FrameBg.u32, true, style.frameRounding)
+        bb expand Vec2(-window.borderSize)
+        val fillBr = Vec2(lerp(bb.min.x, bb.max.x, fraction), bb.max.y)
+        renderRectFilledRangeH(window.drawList, bb, Col.PlotHistogram.u32, 0f, fraction, style.frameRounding)
+        // Default displaying the fraction as percentage string, but user can override it
+        val overlay = if (overlay.isEmpty()) "%.0f%%".format(style.locale, fraction * 100 + 0.01f) else overlay
+
+        val overlaySize = calcTextSize (overlay, 0)
+        if (overlaySize.x > 0f) {
+            val x = glm.clamp(fillBr.x + style.itemSpacing.x, bb.min.x, bb.max.x - overlaySize.x - style.itemInnerSpacing.x)
+            renderTextClipped(Vec2(x, bb.min.y), bb.max, overlay, 0, overlaySize, Vec2(0f, 0.5f), bb)
+        }
+    }
 
     companion object {
         private var b = false

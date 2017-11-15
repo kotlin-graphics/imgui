@@ -21,9 +21,12 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
+import imgui.ImGui.colorButton
+import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorEdit3
 import imgui.ImGui.colorEdit4
 import imgui.ImGui.colorEditVec4
+import imgui.ImGui.colorPicker4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
 import imgui.ImGui.cursorPos
@@ -62,6 +65,7 @@ import imgui.ImGui.mousePos
 import imgui.ImGui.newLine
 import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
+import imgui.ImGui.plotHistogram
 import imgui.ImGui.plotLines
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
@@ -69,6 +73,7 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.popTextWrapPos
+import imgui.ImGui.progressBar
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
@@ -79,6 +84,7 @@ import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setColorEditOptions
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
@@ -113,12 +119,14 @@ import imgui.functionalProgramming.mainMenuBar
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.menuBar
 import imgui.functionalProgramming.menuItem
+import imgui.functionalProgramming.popup
 import imgui.functionalProgramming.popupContextWindow
 import imgui.functionalProgramming.popupModal
 import imgui.functionalProgramming.smallButton
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.window
 import imgui.functionalProgramming.withChild
+import imgui.functionalProgramming.withGroup
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
@@ -128,6 +136,7 @@ import imgui.internal.Rect
 import imgui.internal.Window
 import imgui.or
 import java.util.*
+import kotlin.math.cos
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
@@ -258,6 +267,7 @@ interface imgui_demoDebugInfo {
         }
 
         collapsingHeader("Widgets") {
+
             treeNode("Basic") {
                 if (button("Button")) clicked++
                 if (clicked has 1) {
@@ -495,8 +505,8 @@ interface imgui_demoDebugInfo {
                 text("Pressed $pressedCount times.")
             }
 
-            var offset = 0
             treeNode("Selectables") {
+                var offset = 0
                 treeNode("Basic") {
                     selectable("1. I am selectable", selected, 0)
                     selectable("2. I am selectable", selected, 1)
@@ -540,10 +550,10 @@ interface imgui_demoDebugInfo {
                 }
             }
 
-            treeNode("Filtered Text Input") {
-//                                static char buf1[64] = ""; ImGui::InputText("default", buf1, 64);
-//                static char buf2[64] = ""; ImGui::InputText("decimal", buf2, 64, ImGuiInputTextFlags_CharsDecimal);
-//                static char buf3[64] = ""; ImGui::InputText("hexadecimal", buf3, 64, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+            treeNode("Filtered Text Input TODO") {
+                //                inputText("default", buf1)
+//                inputText("decimal", buf2, Itf.CharsDecimal.i)
+//                inputText("hexadecimal", buf3, Itf.CharsHexadecimal or Itf.CharsUppercase)
 //                static char buf4[64] = ""; ImGui::InputText("uppercase", buf4, 64, ImGuiInputTextFlags_CharsUppercase);
 //                static char buf5[64] = ""; ImGui::InputText("no blank", buf5, 64, ImGuiInputTextFlags_CharsNoBlank);
 //                struct TextFilters { static int FilterImGuiLetters(ImGuiTextEditCallbackData* data) { if (data->EventChar < 256 && strchr("imgui", (char)data->EventChar)) return 0; return 1; } };
@@ -563,191 +573,162 @@ interface imgui_demoDebugInfo {
                 val flags = Itf.AllowTabInput or if (readOnly) Itf.ReadOnly else Itf.Null
 //                inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
             }
-//
-//            if (ImGui::TreeNode("Plots widgets"))
-//            {
-//                static bool animate = true;
-//                ImGui::Checkbox("Animate", &animate);
-//
-//                static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f };
-//                ImGui::PlotLines("Frame Times", arr, IM_ARRAYSIZE(arr));
-//
-//                // Create a dummy array of contiguous float values to plot
-//                // Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float and the sizeof() of your structure in the Stride parameter.
-//                static float values[90] = { 0 };
-//                static int values_offset = 0;
-//                static float refresh_time = 0.0f;
-//                if (!animate || refresh_time == 0.0f)
-//                        refresh_time = ImGui::GetTime();
-//                while (refresh_time < ImGui::GetTime()) // Create dummy data at fixed 60 hz rate for the demo
-//                    {
-//                            static float phase = 0.0f;
-//                            values[values_offset] = cosf(phase);
-//                            values_offset = (values_offset+1) % IM_ARRAYSIZE(values);
-//                            phase += 0.10f*values_offset;
-//                            refresh_time += 1.0f/60.0f;
-//                        }
-//                ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
-//                ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0,80));
-//
-//                // Use functions to generate output
-//                // FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
-//                struct Funcs
-//                        {
-//                                static float Sin(void*, int i) { return sinf(i * 0.1f); }
-//                                static float Saw(void*, int i) { return (i & 1) ? 1.0f : -1.0f; }
-//                            };
-//                static int func_type = 0, display_count = 70;
-//                ImGui::Separator();
-//                ImGui::PushItemWidth(100); ImGui::Combo("func", &func_type, "Sin\0Saw\0"); ImGui::PopItemWidth();
-//                ImGui::SameLine();
-//                ImGui::SliderInt("Sample count", &display_count, 1, 400);
-//                float (*func)(void*, int) = (func_type == 0) ? Funcs::Sin : Funcs::Saw;
-//                ImGui::PlotLines("Lines", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
-//                ImGui::PlotHistogram("Histogram", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
-//                ImGui::Separator();
-//
-//                // Animate a simple progress bar
-//                static float progress = 0.0f, progress_dir = 1.0f;
-//                if (animate)
-//                    {
-//                            progress += progress_dir * 0.4f * ImGui::GetIO().DeltaTime;
-//                            if (progress >= +1.1f) { progress = +1.1f; progress_dir *= -1.0f; }
-//                            if (progress <= -0.1f) { progress = -0.1f; progress_dir *= -1.0f; }
-//                        }
-//
-//                // Typically we would use ImVec2(-1.0f,0.0f) to use all available width, or ImVec2(width,0.0f) for a specified width. ImVec2(0.0f,0.0f) uses ItemWidth.
-//                ImGui::ProgressBar(progress, ImVec2(0.0f,0.0f));
-//                ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-//                ImGui::Text("Progress Bar");
-//
-//                float progress_saturated = (progress < 0.0f) ? 0.0f : (progress > 1.0f) ? 1.0f : progress;
-//                char buf[32];
-//                sprintf(buf, "%d/%d", (int)(progress_saturated*1753), 1753);
-//                ImGui::ProgressBar(progress, ImVec2(0.f,0.f), buf);
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Color/Picker Widgets"))
-//            {
-//                static ImVec4 color = ImColor(114, 144, 154, 200);
-//
-//                static bool hdr = false;
-//                static bool alpha_preview = true;
-//                static bool alpha_half_preview = false;
-//                static bool options_menu = true;
-//                ImGui::Checkbox("With HDR", &hdr); ImGui::SameLine(); ShowHelpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.");
-//                ImGui::Checkbox("With Alpha Preview", &alpha_preview);
-//                ImGui::Checkbox("With Half Alpha Preview", &alpha_half_preview);
-//                ImGui::Checkbox("With Options Menu", &options_menu); ImGui::SameLine(); ShowHelpMarker("Right-click on the individual color widget to show options.");
-//                int misc_flags = (hdr ? ImGuiColorEditFlags_HDR : 0) | (alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0)) | (options_menu ? 0 : ImGuiColorEditFlags_NoOptions);
-//
-//                ImGui::Text("Color widget:");
-//                ImGui::SameLine(); ShowHelpMarker("Click on the colored square to open a color picker.\nCTRL+click on individual component to input value.\n");
-//                ImGui::ColorEdit3("MyColor##1", (float*)&color, misc_flags);
-//
-//                ImGui::Text("Color widget HSV with Alpha:");
-//                ImGui::ColorEdit4("MyColor##2", (float*)&color, ImGuiColorEditFlags_HSV | misc_flags);
-//
-//                ImGui::Text("Color widget with Float Display:");
-//                ImGui::ColorEdit4("MyColor##2f", (float*)&color, ImGuiColorEditFlags_Float | misc_flags);
-//
-//                ImGui::Text("Color button with Picker:");
-//                ImGui::SameLine(); ShowHelpMarker("With the ImGuiColorEditFlags_NoInputs flag you can hide all the slider/text inputs.\nWith the ImGuiColorEditFlags_NoLabel flag you can pass a non-empty label which will only be used for the tooltip and picker popup.");
-//                ImGui::ColorEdit4("MyColor##3", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | misc_flags);
-//
-//                ImGui::Text("Color button with Custom Picker Popup:");
-//                static bool saved_palette_inited = false;
-//                static ImVec4 saved_palette[32];
-//                static ImVec4 backup_color;
-//                if (!saved_palette_inited)
-//                        for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
-//                        ImGui::ColorConvertHSVtoRGB(n / 31.0f, 0.8f, 0.8f, saved_palette[n].x, saved_palette[n].y, saved_palette[n].z);
-//                bool open_popup = ImGui::ColorButton("MyColor##3b", color, misc_flags);
-//                ImGui::SameLine();
-//                open_popup |= ImGui::Button("Palette");
-//                if (open_popup)
-//                    {
-//                            ImGui::OpenPopup("mypicker");
-//                            backup_color = color;
-//                        }
-//                if (ImGui::BeginPopup("mypicker"))
-//                    {
-//                            // FIXME: Adding a drag and drop example here would be perfect!
-//                            ImGui::Text("MY CUSTOM COLOR PICKER WITH AN AMAZING PALETTE!");
-//                            ImGui::Separator();
-//                            ImGui::ColorPicker4("##picker", (float*)&color, misc_flags | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
-//                            ImGui::SameLine();
-//                            ImGui::BeginGroup();
-//                            ImGui::Text("Current");
-//                            ImGui::ColorButton("##current", color, ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(60,40));
-//                            ImGui::Text("Previous");
-//                            if (ImGui::ColorButton("##previous", backup_color, ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(60,40)))
-//                                color = backup_color;
-//                            ImGui::Separator();
-//                            ImGui::Text("Palette");
-//                            for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
-//                            {
-//                                    ImGui::PushID(n);
-//                                    if ((n % 8) != 0)
-//                                            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
-//                                    if (ImGui::ColorButton("##palette", saved_palette[n], ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip, ImVec2(20,20)))
-//                                        color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, color.w); // Preserve alpha!
-//                                    ImGui::PopID();
-//                                }
-//                            ImGui::EndGroup();
-//                            ImGui::EndPopup();
-//                        }
-//
-//                        ImGui::Text("Color button only:");
-//                        ImGui::ColorButton("MyColor##3c", *(ImVec4*)&color, misc_flags, ImVec2(80,80));
-//                        +
-//                        ImGui::Text("Color picker:");
-//                        static bool alpha = true;
-//                        static bool alpha_bar = true;
-//                        static bool side_preview = true;
-//                        static bool ref_color = false;
-//                        static ImVec4 ref_color_v(1.0f,0.0f,1.0f,0.5f);
-//                        static int inputs_mode = 2;
-//                        static int picker_mode = 0;
-//                        ImGui::Checkbox("With Alpha", &alpha);
-//                        ImGui::Checkbox("With Alpha Bar", &alpha_bar);
-//                        ImGui::Checkbox("With Side Preview", &side_preview);
-//                        if (side_preview)
-//                            {
-//                                    ImGui::SameLine();
-//                                    ImGui::Checkbox("With Ref Color", &ref_color);
-//                                    if (ref_color)
-//                                        {
-//                                                ImGui::SameLine();
-//                                                ImGui::ColorEdit4("##RefColor", &ref_color_v.x, ImGuiColorEditFlags_NoInputs | misc_flags);
-//                                            }
-//                                }
-//                        ImGui::Combo("Inputs Mode", &inputs_mode, "All Inputs\0No Inputs\0RGB Input\0HSV Input\0HEX Input\0");
-//                        ImGui::Combo("Picker Mode", &picker_mode, "Auto/Current\0Hue bar + SV rect\0Hue wheel + SV triangle\0");
-//                        ImGui::SameLine(); ShowHelpMarker("User can right-click the picker to change mode.");
-//                        ImGuiColorEditFlags flags = misc_flags;
-//                        if (!alpha) flags |= ImGuiColorEditFlags_NoAlpha; // This is by default if you call ColorPicker3() instead of ColorPicker4()
-//                        if (alpha_bar) flags |= ImGuiColorEditFlags_AlphaBar;
-//                        if (!side_preview) flags |= ImGuiColorEditFlags_NoSidePreview;
-//                        if (picker_mode == 1) flags |= ImGuiColorEditFlags_PickerHueBar;
-//                        if (picker_mode == 2) flags |= ImGuiColorEditFlags_PickerHueWheel;
-//                        if (inputs_mode == 1) flags |= ImGuiColorEditFlags_NoInputs;
-//                        if (inputs_mode == 2) flags |= ImGuiColorEditFlags_RGB;
-//                        if (inputs_mode == 3) flags |= ImGuiColorEditFlags_HSV;
-//                        if (inputs_mode == 4) flags |= ImGuiColorEditFlags_HEX;
-//                        ImGui::ColorPicker4("MyColor##4", (float*)&color, flags, ref_color ? &ref_color_v.x : NULL);
-//                        +
-//                        ImGui::Text("Programmatically set defaults/options:");
-//                        ImGui::SameLine(); ShowHelpMarker("SetColorEditOptions() is designed to allow you to set boot-time default.\nWe don't have Push/Pop functions because you can force options on a per-widget basis if needed, and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid encouraging you to persistently save values that aren't forward-compatible.");
-//                        if (ImGui::Button("Uint8 + HSV"))
-//                                ImGui::SetColorEditOptions(ImGuiColorEditFlags_Uint8 | ImGuiColorEditFlags_HSV);
-//                        ImGui::SameLine();
-//                        if (ImGui::Button("Float + HDR"))
-//                                ImGui::SetColorEditOptions(ImGuiColorEditFlags_Float | ImGuiColorEditFlags_RGB);
-//
-//                        ImGui::TreePop();
-//                    }
+
+            treeNode("Plots widgets") {
+
+                checkbox("Animate", ::animate)
+
+                val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
+                plotLines("Frame Times", arr)
+
+                /*  Create a dummy array of contiguous float values to plot
+                    Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float
+                    and the sizeof() of your structure in the Stride parameter.
+                 */
+                if (!animate || refreshTime == 0f) refreshTime = time
+                while (refreshTime < time) { // Create dummy data at fixed 60 hz rate for the demo
+                    values[valuesOffset] = cos(phase)
+                    valuesOffset = (valuesOffset + 1) % values.size
+                    phase += 0.1f * valuesOffset
+                    refreshTime += 1f / 60f
+                }
+                plotLines("Lines", values, valuesOffset, "avg 0.0", -1f, 1f, Vec2(0, 80))
+                plotHistogram("Histogram", arr, 0, "", 0f, 1f, Vec2(0, 80))
+
+                // Use functions to generate output
+                // FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
+                separator()
+                pushItemWidth(100f); combo("func", ::funcType, "Sin\u0000Saw\u0000"); popItemWidth()
+                sameLine()
+                sliderInt("Sample count", ::displayCount, 1, 400)
+                val func = if (funcType == 0) Companion.Funcs1::sin else Companion.Funcs1::saw
+                plotLines("Lines", func, displayCount, 0, "", -1f, 1f, Vec2(0, 80))
+                plotHistogram("Histogram", func, displayCount, 0, "", -1f, 1f, Vec2(0, 80))
+                separator()
+
+                // Animate a simple progress bar
+                if (animate) {
+                    progress += progressDir * 0.4f * IO.deltaTime
+                    if (progress >= 1.1f) {
+                        progress = +1.1f
+                        progressDir *= -1f
+                    }
+                    if (progress <= -0.1f) {
+                        progress = -0.1f
+                        progressDir *= -1f
+                    }
+                }
+                /*  Typically we would use Vec2(-1f , 0f) to use all available width, or Vec2(width, 0f) for a specified width.
+                    Vec2() uses itemWidth.  */
+                progressBar(progress, Vec2())
+                sameLine(0f, style.itemInnerSpacing.x)
+                text("Progress Bar")
+
+                val progressSaturated = glm.clamp(progress, 0f, 1f)
+                progressBar(progress, Vec2(), "${(progressSaturated * 1753).i}/1753")
+            }
+
+            treeNode("Color/Picker Widgets") {
+
+                checkbox("With HDR", ::hdr); sameLine(); showHelpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.")
+                checkbox("With Alpha Preview", ::alphaPreview)
+                checkbox("With Half Alpha Preview", ::alphaHalfPreview)
+                checkbox("With Options Menu", ::optionsMenu); sameLine(); showHelpMarker("Right-click on the individual color widget to show options.")
+                var miscFlags = if (hdr) Cef.HDR.i else 0
+                if (alphaHalfPreview) miscFlags = miscFlags or Cef.AlphaPreviewHalf
+                if (alphaPreview) miscFlags = miscFlags or Cef.AlphaPreview
+                if (!optionsMenu) miscFlags = miscFlags or Cef.NoOptions
+
+                text("Color widget:")
+                sameLine(); showHelpMarker("Click on the colored square to open a color picker.\nCTRL+click on individual component to input value.\n")
+                colorEdit3("MyColor##1", color, miscFlags)
+
+                text("Color widget HSV with Alpha:")
+                colorEdit4("MyColor##2", color, Cef.HSV or miscFlags)
+
+                text("Color widget with Float Display:")
+                colorEdit4("MyColor##2f", color, Cef.Float or miscFlags)
+
+                text("Color button with Picker:")
+                sameLine(); showHelpMarker("With the ImGuiColorEditFlags_NoInputs flag you can hide all the slider/text inputs.\nWith the ImGuiColorEditFlags_NoLabel flag you can pass a non-empty label which will only be used for the tooltip and picker popup.")
+                colorEdit4("MyColor##3", color, Cef.NoInputs or Cef.NoLabel or miscFlags)
+
+                text("Color button with Custom Picker Popup:")
+                if (!savedPaletteInited)
+                    savedPalette.forEachIndexed { n, c -> colorConvertHSVtoRGB(n / 31f, 0.8f, 0.8f, c::x, c::y, c::z) }
+                var openPopup = colorButton("MyColor##3b", color, miscFlags)
+                sameLine()
+                openPopup = openPopup or button("Palette")
+                if (openPopup) {
+                    openPopup("mypicker")
+                    backupColor put color
+                }
+                popup("mypicker") {
+                    // FIXME: Adding a drag and drop example here would be perfect!
+                    text("MY CUSTOM COLOR PICKER WITH AN AMAZING PALETTE!")
+                    separator()
+                    colorPicker4("##picker", color, miscFlags or Cef.NoSidePreview or Cef.NoSmallPreview)
+                    sameLine()
+                    withGroup {
+                        text("Current")
+                        colorButton("##current", color, Cef.NoPicker or Cef.AlphaPreviewHalf, Vec2(60, 40))
+                        text("Previous")
+                        if (colorButton("##previous", backupColor, Cef.NoPicker or Cef.AlphaPreviewHalf, Vec2(60, 40)))
+                            color put backupColor
+                        separator()
+                        text("Palette")
+                        savedPalette.forEachIndexed { n, c ->
+                            pushId(n)
+                            if ((n % 8) != 0)
+                                sameLine(0f, style.itemSpacing.y)
+                            if (colorButton("##palette", c, Cef.NoPicker or Cef.NoTooltip, Vec2(20, 20)))
+                                color.put(c.x, c.y, c.z, color.w) // Preserve alpha!
+                            popId()
+                        }
+                    }
+                }
+                text("Color button only:")
+                colorButton("MyColor##3c", color, miscFlags, Vec2(80, 80))
+
+                text("Color picker:")
+                checkbox("With Alpha", ::alpha)
+                checkbox("With Alpha Bar", ::alphaBar)
+                checkbox("With Side Preview", ::sidePreview)
+                if (sidePreview) {
+                    sameLine()
+                    checkbox("With Ref Color", ::refColor)
+                    if (refColor) {
+                        sameLine()
+                        colorEdit4("##RefColor", refColorV, Cef.NoInputs or miscFlags)
+                    }
+                }
+                combo("Inputs Mode", ::inputsMode, "All Inputs\u0000No Inputs\u0000RGB Input\u0000HSV Input\u0000HEX Input\u0000")
+                combo("Picker Mode", ::pickerMode, "Auto/Current\u0000Hue bar + SV rect\u0000Hue wheel + SV triangle\u0000")
+                sameLine(); showHelpMarker("User can right-click the picker to change mode.")
+                var flags = miscFlags
+                if (!alpha) flags = flags or Cef.NoAlpha // This is by default if you call ColorPicker3() instead of ColorPicker4()
+                if (alphaBar) flags = flags or Cef.AlphaBar
+                if (!sidePreview) flags = flags or Cef.NoSidePreview
+                flags = flags or when(pickerMode) {
+                    1 -> Cef.PickerHueBar
+                    2 -> Cef.PickerHueWheel
+                    else -> Cef.Null
+                }
+                flags = flags or when(inputsMode) {
+                    1 -> Cef.NoInputs
+                    2->Cef.RGB
+                    3-> Cef.HSV
+                    4->Cef.HEX
+                    else -> Cef.Null
+                }
+                colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
+
+                text("Programmatically set defaults/options:")
+                sameLine(); showHelpMarker("SetColorEditOptions() is designed to allow you to set boot-time default.\nWe don't have Push/Pop functions because you can force options on a per-widget basis if needed, and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid encouraging you to persistently save values that aren't forward-compatible.")
+                button("Uint8 + HSV") { setColorEditOptions(Cef.Uint8 or Cef.HSV) }
+                sameLine()
+                button("Float + HDR") { setColorEditOptions(Cef.Float or Cef.RGB) }
+            }
 //
 //            if (ImGui::TreeNode("Range Widgets"))
 //            {
@@ -1713,11 +1694,11 @@ interface imgui_demoDebugInfo {
             checkbox("Show clipping rectangles when hovering an ImDrawCmd", ::showClipRects)
             separator()
 
-            Funcs.nodeWindows(g.windows, "Windows")
+            Funcs0.nodeWindows(g.windows, "Windows")
             if (treeNode("DrawList", "Active DrawLists (${g.renderDrawLists[0].size})")) {
-                g.renderDrawLists.forEach { layer -> layer.forEach { Funcs.nodeDrawList(it, "DrawList") } }
+                g.renderDrawLists.forEach { layer -> layer.forEach { Funcs0.nodeDrawList(it, "DrawList") } }
                 for (i in g.renderDrawLists[0])
-                    Funcs.nodeDrawList(i, "DrawList")
+                    Funcs0.nodeDrawList(i, "DrawList")
                 treePop()
             }
             if (treeNode("Popups", "Open Popups Stack (${g.openPopupStack.size})")) {
@@ -1742,143 +1723,6 @@ interface imgui_demoDebugInfo {
             }
         }
         end()
-    }
-
-    object Funcs {
-
-        fun nodeDrawList(drawList: DrawList, label: String) {
-
-            val nodeOpen = treeNode(drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.size} vtx, " +
-                    "${drawList.idxBuffer.size} indices, ${drawList.cmdBuffer.size} cmds")
-            if (drawList === windowDrawList) {
-                sameLine()
-                // Can't display stats for active draw list! (we don't have the data double-buffered)
-                textColored(Vec4.fromColor(255, 100, 100), "CURRENTLY APPENDING")
-                if (nodeOpen) treePop()
-                return
-            }
-            if (!nodeOpen)
-                return
-
-            val overlayDrawList = g.overlayDrawList   // Render additional visuals into the top-most draw list
-            overlayDrawList.pushClipRectFullScreen()
-            var elemOffset = 0
-            for (i in drawList.cmdBuffer.indices) {
-                val cmd = drawList.cmdBuffer[i]
-                if (cmd.userCallback == null && cmd.elemCount == 0) continue
-                if (cmd.userCallback != null) {
-                    TODO()
-//                        ImGui::BulletText("Callback %p, user_data %p", pcmd->UserCallback, pcmd->UserCallbackData)
-//                        continue
-                }
-                val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
-                val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
-                val cmdNodeOpen = treeNode(i, "Draw %-4d $mode vtx, tex = ${cmd.textureId}, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)",
-                        cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
-                if (showClipRects && isItemHovered()) {
-                    val clipRect = Rect(cmd.clipRect)
-                    val vtxsRect = Rect()
-                    for (e in elemOffset until elemOffset + cmd.elemCount)
-                        vtxsRect.add(drawList.vtxBuffer[idxBuffer?.get(e) ?: e].pos)
-                    clipRect.floor(); overlayDrawList.addRect(clipRect.min, clipRect.max, COL32(255, 255, 0, 255))
-                    vtxsRect.floor(); overlayDrawList.addRect(vtxsRect.min, vtxsRect.max, COL32(255, 0, 255, 255))
-                }
-                if (!cmdNodeOpen) continue
-                // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
-                val clipper = ListClipper(cmd.elemCount / 3)
-                while (clipper.step()) {
-                    var vtxI = elemOffset + clipper.display.start * 3
-                    for (prim in clipper.display.start until clipper.display.last) {
-                        val buf = CharArray(300)
-                        var bufP = 0
-                        val trianglesPos = arrayListOf(Vec2(), Vec2(), Vec2())
-                        for (n in 0 until 3) {
-                            val v = drawList.vtxBuffer[idxBuffer?.get(vtxI) ?: vtxI]
-                            trianglesPos[n] = v.pos
-                            val name = if (n == 0) "vtx" else "   "
-                            val string = "$name %04d { pos = (%8.2f,%8.2f), uv = (%.6f,%.6f), col = %08X }\n".format(style.locale,
-                                    vtxI, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
-                            string.toCharArray(buf, bufP)
-                            bufP += string.length
-                            vtxI++
-                        }
-                        selectable(buf.joinToString("", limit = bufP, truncated = ""), false)
-                        if (isItemHovered())
-                        // Add triangle without AA, more readable for large-thin triangle
-                            overlayDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f, false)
-                    }
-                }
-                treePop()
-                elemOffset += cmd.elemCount
-            }
-            overlayDrawList.popClipRect()
-            treePop()
-        }
-
-        fun nodeWindows(windows: ArrayList<Window>, label: String) {
-            if (!treeNode(label, "$label (${windows.size})")) return
-            for (i in 0 until windows.size)
-                nodeWindow(windows[i], "Window")
-            treePop()
-        }
-
-        fun nodeWindow(window: Window, label: String) {
-            val active = if (window.active or window.wasActive) "active" else "inactive"
-            if (!treeNode(window, "$label '${window.name}', $active @ 0x%X", System.identityHashCode(window)))
-                return
-            nodeDrawList(window.drawList, "DrawList")
-            bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
-                    window.size.x, window.size.y, window.sizeContents.x, window.sizeContents.y)
-            if (isItemHovered())
-                overlayDrawList.addRect(Vec2(window.pos), Vec2(window.pos + window.size), COL32(255, 255, 0, 255))
-            bulletText("Scroll: (%.2f,%.2f)", window.scroll.x, window.scroll.y)
-            bulletText("Active: ${window.active}, Accessed: ${window.accessed}")
-            if (window.rootWindow !== window) nodeWindow(window.rootWindow, "RootWindow")
-            if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
-            bulletText("Storage: %d bytes", window.stateStorage.data.size * Int.BYTES * 2)
-            treePop()
-        }
-
-        fun showDummyObject(prefix: String, uid: Int) {
-//            println("showDummyObject $prefix _$uid")
-            //  Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
-            pushId(uid)
-            /*  Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree
-                lines equal high.             */
-            alignTextToFramePadding()
-            val nodeOpen = treeNode("Object", "${prefix}_$uid")
-            nextColumn()
-            alignTextToFramePadding()
-            text("my sailor is rich")
-            nextColumn()
-            if (nodeOpen) {
-                for (i in 0..7) {
-                    pushId(i) // Use field index as identifier.
-                    if (i < 2)
-                        showDummyObject("Child", 424242)
-                    else {
-                        alignTextToFramePadding()
-                        // Here we use a Selectable (instead of Text) to highlight on hover
-                        //Text("Field_%d", i);
-                        bullet()
-                        selectable("Field_$i")
-                        nextColumn()
-                        pushItemWidth(-1f)
-                        if (i >= 5)
-                            inputFloat("##value", dummyMembers, i, 1f)
-                        else
-                            dragFloat("##value", dummyMembers, i, 0.01f)
-                        popItemWidth()
-                        nextColumn()
-                    }
-                    popId()
-                }
-                treePop()
-            }
-            popId()
-        }
-
-        val dummyMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f, 0f, 0f, 0f)
     }
 
     fun showStyleEditor(ref: Style? = null) {
@@ -2460,7 +2304,7 @@ interface imgui_demoDebugInfo {
 
             // Iterate dummy objects with dummy members (all the same data)
             for (objI in 0..2)
-                Funcs.showDummyObject("Object", objI)
+                Funcs0.showDummyObject("Object", objI)
 
             columns(1)
             separator()
@@ -2540,6 +2384,143 @@ interface imgui_demoDebugInfo {
             var about = false
         }
 
+        object Funcs0 {
+
+            fun nodeDrawList(drawList: DrawList, label: String) {
+
+                val nodeOpen = treeNode(drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.size} vtx, " +
+                        "${drawList.idxBuffer.size} indices, ${drawList.cmdBuffer.size} cmds")
+                if (drawList === windowDrawList) {
+                    sameLine()
+                    // Can't display stats for active draw list! (we don't have the data double-buffered)
+                    textColored(Vec4.fromColor(255, 100, 100), "CURRENTLY APPENDING")
+                    if (nodeOpen) treePop()
+                    return
+                }
+                if (!nodeOpen)
+                    return
+
+                val overlayDrawList = g.overlayDrawList   // Render additional visuals into the top-most draw list
+                overlayDrawList.pushClipRectFullScreen()
+                var elemOffset = 0
+                for (i in drawList.cmdBuffer.indices) {
+                    val cmd = drawList.cmdBuffer[i]
+                    if (cmd.userCallback == null && cmd.elemCount == 0) continue
+                    if (cmd.userCallback != null) {
+                        TODO()
+//                        ImGui::BulletText("Callback %p, user_data %p", pcmd->UserCallback, pcmd->UserCallbackData)
+//                        continue
+                    }
+                    val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
+                    val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
+                    val cmdNodeOpen = treeNode(i, "Draw %-4d $mode vtx, tex = ${cmd.textureId}, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)",
+                            cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                    if (showClipRects && isItemHovered()) {
+                        val clipRect = Rect(cmd.clipRect)
+                        val vtxsRect = Rect()
+                        for (e in elemOffset until elemOffset + cmd.elemCount)
+                            vtxsRect.add(drawList.vtxBuffer[idxBuffer?.get(e) ?: e].pos)
+                        clipRect.floor(); overlayDrawList.addRect(clipRect.min, clipRect.max, COL32(255, 255, 0, 255))
+                        vtxsRect.floor(); overlayDrawList.addRect(vtxsRect.min, vtxsRect.max, COL32(255, 0, 255, 255))
+                    }
+                    if (!cmdNodeOpen) continue
+                    // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
+                    val clipper = ListClipper(cmd.elemCount / 3)
+                    while (clipper.step()) {
+                        var vtxI = elemOffset + clipper.display.start * 3
+                        for (prim in clipper.display.start until clipper.display.last) {
+                            val buf = CharArray(300)
+                            var bufP = 0
+                            val trianglesPos = arrayListOf(Vec2(), Vec2(), Vec2())
+                            for (n in 0 until 3) {
+                                val v = drawList.vtxBuffer[idxBuffer?.get(vtxI) ?: vtxI]
+                                trianglesPos[n] = v.pos
+                                val name = if (n == 0) "vtx" else "   "
+                                val string = "$name %04d { pos = (%8.2f,%8.2f), uv = (%.6f,%.6f), col = %08X }\n".format(style.locale,
+                                        vtxI, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
+                                string.toCharArray(buf, bufP)
+                                bufP += string.length
+                                vtxI++
+                            }
+                            selectable(buf.joinToString("", limit = bufP, truncated = ""), false)
+                            if (isItemHovered())
+                            // Add triangle without AA, more readable for large-thin triangle
+                                overlayDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f, false)
+                        }
+                    }
+                    treePop()
+                    elemOffset += cmd.elemCount
+                }
+                overlayDrawList.popClipRect()
+                treePop()
+            }
+
+            fun nodeWindows(windows: ArrayList<Window>, label: String) {
+                if (!treeNode(label, "$label (${windows.size})")) return
+                for (i in 0 until windows.size)
+                    nodeWindow(windows[i], "Window")
+                treePop()
+            }
+
+            fun nodeWindow(window: Window, label: String) {
+                val active = if (window.active or window.wasActive) "active" else "inactive"
+                if (!treeNode(window, "$label '${window.name}', $active @ 0x%X", System.identityHashCode(window)))
+                    return
+                nodeDrawList(window.drawList, "DrawList")
+                bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
+                        window.size.x, window.size.y, window.sizeContents.x, window.sizeContents.y)
+                if (isItemHovered())
+                    overlayDrawList.addRect(Vec2(window.pos), Vec2(window.pos + window.size), COL32(255, 255, 0, 255))
+                bulletText("Scroll: (%.2f,%.2f)", window.scroll.x, window.scroll.y)
+                bulletText("Active: ${window.active}, Accessed: ${window.accessed}")
+                if (window.rootWindow !== window) nodeWindow(window.rootWindow, "RootWindow")
+                if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
+                bulletText("Storage: %d bytes", window.stateStorage.data.size * Int.BYTES * 2)
+                treePop()
+            }
+
+            fun showDummyObject(prefix: String, uid: Int) {
+//            println("showDummyObject $prefix _$uid")
+                //  Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
+                pushId(uid)
+                /*  Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree
+                    lines equal high.             */
+                alignTextToFramePadding()
+                val nodeOpen = treeNode("Object", "${prefix}_$uid")
+                nextColumn()
+                alignTextToFramePadding()
+                text("my sailor is rich")
+                nextColumn()
+                if (nodeOpen) {
+                    for (i in 0..7) {
+                        pushId(i) // Use field index as identifier.
+                        if (i < 2)
+                            showDummyObject("Child", 424242)
+                        else {
+                            alignTextToFramePadding()
+                            // Here we use a Selectable (instead of Text) to highlight on hover
+                            //Text("Field_%d", i);
+                            bullet()
+                            selectable("Field_$i")
+                            nextColumn()
+                            pushItemWidth(-1f)
+                            if (i >= 5)
+                                inputFloat("##value", dummyMembers, i, 1f)
+                            else
+                                dragFloat("##value", dummyMembers, i, 0.01f)
+                            popItemWidth()
+                            nextColumn()
+                        }
+                        popId()
+                    }
+                    treePop()
+                }
+                popId()
+            }
+
+            val dummyMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f, 0f, 0f, 0f)
+        }
+
         var noTitlebar = false
         var noBorder = true
         var noResize = false
@@ -2614,6 +2595,48 @@ interface imgui_demoDebugInfo {
         var wrapWidth = 200f
         // "nihongo"
         val buf = CharArray(32).apply { "\u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e".toCharArray(this) }
+        val buf1 = CharArray(64)
+        val buf2 = CharArray(64)
+        val buf3 = CharArray(64)
+        val buf4 = CharArray(64)
+        val buf5 = CharArray(64)
+        val buf6 = CharArray(64)
+
+        /* Plots Widgets */
+        var animate = true
+        var refreshTime = 0f
+        val values = FloatArray(90)
+        var valuesOffset = 0
+        var phase = 0f
+
+        var funcType = 0
+        var displayCount = 70
+
+        object Funcs1 {
+            fun sin(i: Int) = kotlin.math.sin(i * 0.1f)
+            fun saw(i: Int) = if (i has 1) 1f else -1f
+        }
+
+        var progress = 0f
+        var progressDir = 1f
+
+        /* Color/Picker Widgets */
+        val color = Vec4.fromColor(114, 144, 154, 200)
+        var hdr = false
+        var alphaPreview = true
+        var alphaHalfPreview = false
+        var optionsMenu = true
+        var savedPaletteInited = false
+        var savedPalette = Array(32, { Vec4() })
+        var backupColor = Vec4()
+        var alpha = true
+        var alphaBar = true
+        var sidePreview = true
+        var refColor = false
+        var refColorV = Vec4(1f, 0f, 1f, 0.5f)
+        var inputsMode = 2
+        var pickerMode = 0
+
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.

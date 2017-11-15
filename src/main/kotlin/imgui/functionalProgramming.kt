@@ -3,15 +3,18 @@ package imgui
 import glm_.vec2.Vec2
 import imgui.ImGui._begin
 import imgui.ImGui.beginChild
+import imgui.ImGui.beginGroup
 import imgui.ImGui.beginMainMenuBar
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
+import imgui.ImGui.beginPopup
 import imgui.ImGui.beginPopupContextWindow
 import imgui.ImGui.beginPopupModal
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.end
 import imgui.ImGui.endChild
+import imgui.ImGui.endGroup
 import imgui.ImGui.endMainMenuBar
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
@@ -154,6 +157,19 @@ object functionalProgramming {
 
     inline fun popupContextWindow(block: () -> Unit) {
         if (beginPopupContextWindow()) {
+            block()
+            endPopup()
+        }
+    }
+
+    inline fun withGroup(block: () -> Unit) {
+        beginGroup()
+        block()
+        endGroup()
+    }
+
+    inline fun popup(strId: String, block: () -> Unit) {
+        if (beginPopup(strId)) {
             block()
             endPopup()
         }
