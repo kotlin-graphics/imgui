@@ -9,10 +9,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.Context.style
-import imgui.internal.Corner
-import imgui.internal.has
-import imgui.internal.invLength
-import imgui.internal.strlen
+import imgui.internal.*
 import java.util.*
 import kotlin.collections.ArrayList
 import imgui.Context as g
@@ -71,6 +68,8 @@ class DrawVert {
     companion object {
         val size = 2 * Vec2.size + Int.BYTES
     }
+
+    override fun toString() = "pos: $pos, uv: $uv, col: $col"
 }
 
 /** Draw channels are used by the Columns API to "split" the render list into different channels while building, so
@@ -665,7 +664,7 @@ class DrawList {
         private var circleVtxBuilds = false
         private val circleVtx = Array(12, { Vec2() })
         /** Large values that are easy to encode in a few bits+shift    */
-        private val nullClipRect = Vec4(-8192.0f, -8192.0f, +8192.0f, +8192.0f)
+        private val nullClipRect = Vec4(-8192.0f, -8192.0f, 8192.0f, 8192.0f)
     }
 
     /** Use precomputed angles for a 12 steps circle    */
@@ -864,7 +863,7 @@ class DrawList {
     Otherwise primitives are merged into the same draw-call as much as possible */
     fun addDrawCmd() {
         val drawCmd = DrawCmd()
-        drawCmd.clipRect = currentClipRect
+        drawCmd.clipRect put currentClipRect
         drawCmd.textureId = currentTextureId
 
         assert(drawCmd.clipRect.x <= drawCmd.clipRect.z && drawCmd.clipRect.y <= drawCmd.clipRect.w)
@@ -987,8 +986,8 @@ class DrawList {
     functions only. */
     fun updateClipRect() {
         // If current command is used with different settings we need to add a new command
-        val currClipRect = currentClipRect
-        val currCmd = if (cmdBuffer.isNotEmpty()) cmdBuffer.last() else null
+        val currClipRect = Vec4(currentClipRect)
+        val currCmd = cmdBuffer.lastOrNull()
         if (currCmd == null || (currCmd.elemCount != 0 && currCmd.clipRect != currClipRect) || currCmd.userCallback != null) {
             addDrawCmd()
             return

@@ -26,6 +26,7 @@ import imgui.ImGui.colorEdit4
 import imgui.ImGui.colorEditVec4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
+import imgui.ImGui.cursorPos
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
@@ -48,6 +49,8 @@ import imgui.ImGui.isItemClicked
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.itemRectMax
+import imgui.ImGui.itemRectMin
 import imgui.ImGui.itemsLineHeightWithSpacing
 import imgui.ImGui.labelText
 import imgui.ImGui.listBox
@@ -92,6 +95,7 @@ import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
+import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
@@ -286,15 +290,6 @@ interface imgui_demoDebugInfo {
                         text("I am a fancy tooltip")
                         plotLines("Curve", arr)
                     }
-                // Testing IMGUI_ONCE_UPON_A_FRAME macro
-                //for (int i = 0; i < 5; i++)
-                //{
-                //  IMGUI_ONCE_UPON_A_FRAME
-                //  {
-                //      ImGui::Text("This will be displayed only once.");
-                //  }
-                //}
-
                 separator()
                 labelText("label", "Value")
                 // Combo using values packed in a single constant string (for really quick combo)
@@ -338,31 +333,22 @@ interface imgui_demoDebugInfo {
 
                 colorEdit4("color 2", col2)
 
-                val listboxItems = arrayOf( "Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon" )
-//                listBox("listbox\n(single select)", ::listboxItemCurrent, listboxItems, 4)
-
-                //static int listbox_item_current2 = 2;
-                //ImGui::PushItemWidth(-1);
-                //ImGui::ListBox("##listbox2", &listbox_item_current2, listboxItems, IM_ARRAYSIZE(listboxItems), 4);
-                //ImGui::PopItemWidth();
+                val listboxItems = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
+                listBox("listbox\n(single select)", ::listboxItemCurrent, listboxItems, 4)
             }
 
             treeNode("Trees") {
-
                 treeNode("Basic trees") {
-
-                    for (i in 0..4)
-                        treeNode(i, "Child $i") {
-                            text("blah blah")
-                            sameLine()
-                            smallButton("print") { println("Child $i pressed") }
-                        }
+                    for (i in 0..4) treeNode(i, "Child $i") {
+                        text("blah blah")
+                        sameLine()
+                        smallButton("print") { println("Child $i pressed") }
+                    }
                 }
 
                 treeNode("Advanced, with Selectable nodes") {
 
-                    showHelpMarker("""|This is a more standard looking tree with selectable nodes.
-                        |Click to select, CTRL+Click to toggle, click on arrows or double-click to open.""".trimMargin())
+                    showHelpMarker("This is a more standard looking tree with selectable nodes.\nClick to select, CTRL+Click to toggle, click on arrows or double-click to open.")
                     checkbox("Align label with current X position)", ::alignLabelWithCurrentXposition)
                     text("Hello!")
                     if (alignLabelWithCurrentXposition) unindent(treeNodeToLabelSpacing)
@@ -440,49 +426,48 @@ interface imgui_demoDebugInfo {
                             "for text wrapping follows simple rules suitable for English and possibly other languages.")
                     spacing()
 
-//                    static float wrap_width = 200.0f
-//                    ImGui::SliderFloat("Wrap width", & wrap_width, -20, 600, "%.0f")
-//                    +
-//                    ImGui::Text("Test paragraph 1:")
-//                    ImVec2 pos = ImGui ::GetCursorScreenPos()
-//                    ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(pos.x+wrap_width, pos.y), ImVec2(pos.x+wrap_width+10, pos.y+ImGui::GetTextLineHeight()), IM_COL32(255, 0, 255, 255))
-//                    ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + wrap_width)
-//                    ImGui::Text("The lazy dog is a good dog. This paragraph is made to fit within %.0f pixels. Testing a 1 character word. The quick brown fox jumps over the lazy dog.", wrap_width)
-//                    ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(255, 255, 0, 255))
-//                    ImGui::PopTextWrapPos()
-//                    +
-//                    ImGui::Text("Test paragraph 2:")
-//                    pos = ImGui::GetCursorScreenPos()
-//                    ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(pos.x+wrap_width, pos.y), ImVec2(pos.x+wrap_width+10, pos.y+ImGui::GetTextLineHeight()), IM_COL32(255, 0, 255, 255))
-//                    ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + wrap_width)
-//                    ImGui::Text("aaaaaaaa bbbbbbbb, c cccccccc,dddddddd. d eeeeeeee   ffffffff. gggggggg!hhhhhhhh")
-//                    ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(255, 255, 0, 255))
-//                    ImGui::PopTextWrapPos()
+                    sliderFloat("Wrap width", ::wrapWidth, -20f, 600f, "%.0f")
+
+                    text("Test paragraph 1:")
+                    val pos = cursorScreenPos
+                    val a = Vec2(pos.x + wrapWidth, pos.y)
+                    val b = Vec2(pos.x + wrapWidth + 10, pos.y + textLineHeight)
+                    windowDrawList.addRectFilled(a, b, COL32(255, 0, 255, 255))
+                    pushTextWrapPos(cursorPos.x + wrapWidth)
+                    text("The lazy dog is a good dog. This paragraph is made to fit within %.0f pixels. Testing a 1 character word. The quick brown fox jumps over the lazy dog.", wrapWidth)
+                    windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
+                    popTextWrapPos()
+
+                    text("Test paragraph 2:")
+                    pos put cursorScreenPos
+                    a.put(pos.x + wrapWidth, pos.y)
+                    b.put(pos.x + wrapWidth + 10, pos.y + textLineHeight)
+                    windowDrawList.addRectFilled(a, b, COL32(255, 0, 255, 255))
+                    pushTextWrapPos(cursorPos.x + wrapWidth)
+                    text("aaaaaaaa bbbbbbbb, c cccccccc,dddddddd. d eeeeeeee   ffffffff. gggggggg!hhhhhhhh")
+                    windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
+                    popTextWrapPos()
+                }
+                treeNode("UTF-8 Text (jvm Unicode with surrogate characters") {
+                    /*  UTF-8 test with Japanese characters
+                        (needs a suitable font, try Arial Unicode or M+ fonts http://mplus-fonts.sourceforge.jp/mplus-outline-fonts/index-en.html)
+                        - From C++11 you can use the u8"my text" syntax to encode literal strings as UTF-8
+                        - For earlier compiler, you may be able to encode your sources as UTF-8 (e.g. Visual Studio save your file
+                            as 'UTF-8 without signature')
+                        - HOWEVER, FOR THIS DEMO FILE, BECAUSE WE WANT TO SUPPORT COMPILER, WE ARE *NOT* INCLUDING RAW UTF-8 CHARACTERS
+                            IN THIS SOURCE FILE.
+                        Instead we are encoding a few string with hexadecimal constants. Don't do this in your application!
+                        Note that characters values are preserved even by inputText() if the font cannot be displayed,
+                        so you can safely copy & paste garbled characters into another application. */
+                    textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.Font->LoadFromFileTTF() manually to load extra character ranges.")
+                    text("Hiragana: \u00e3\u0081\u008b\u00e3\u0081\u008d\u00e3\u0081\u008f\u00e3\u0081\u0091\u00e3\u0081\u0093 (kakikukeko)")
+                    text("Kanjis: \u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e (nihongo)")
+                    inputText("UTF-8 input", buf, buf.size)
                 }
             }
 
-            treeNode("UTF-8 Text TODO") {
-                /*  UTF-8 test with Japanese characters
-                    (needs a suitable font, try Arial Unicode or M+ fonts
-                    http://mplus-fonts.sourceforge.jp/mplus-outline-fonts/index-en.html)
-                    Most compiler appears to support UTF-8 in source code (with Visual Studio you need to save your file as
-                    'UTF-8 without signature')
-                    However for the sake for maximum portability here we are *not* including raw UTF-8 character in this source file,
-                    instead we encode the string with hexadecimal constants.
-                    In your own application be reasonable and use UTF-8 in source or retrieve the data from file system!
-                    Note that characters values are preserved even if the font cannot be displayed, so you can safely copy & paste
-                    garbled characters into another application.    */
-                textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. " +
-                        "Call io.Font->LoadFromFileTTF() manually to load extra character ranges.")
-//    TODO            text("Hiragana: \u00e3\u0081\u008b\u00e3\u0081\u008d\u00e3\u0081\u008f\u00e3\u0081\u0091\u00e3\u0081\u0093 (kakikukeko)")
-//                text("Kanjis: \u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e (nihongo)")
-//                inputText("UTF-8 input", buf, buf.size)
-            }
-
             treeNode("Images") {
-                textWrapped("Below we are displaying the font texture (which is the only texture we have access to in this " +
-                        "demo). Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. Hover " +
-                        "the texture for a zoomed view!")
+                textWrapped("Below we are displaying the font texture (which is the only texture we have access to in this demo). Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. Hover the texture for a zoomed view!")
                 val texScreenPos = Vec2(cursorScreenPos)
                 val texSize = Vec2(IO.fonts.texSize)
                 val texId = IO.fonts.texId
@@ -555,8 +540,8 @@ interface imgui_demoDebugInfo {
                 }
             }
 
-            treeNode("Filtered Text Input TODO") {
-                //                static char buf1[64] = ""; ImGui::InputText("default", buf1, 64);
+            treeNode("Filtered Text Input") {
+//                                static char buf1[64] = ""; ImGui::InputText("default", buf1, 64);
 //                static char buf2[64] = ""; ImGui::InputText("decimal", buf2, 64, ImGuiInputTextFlags_CharsDecimal);
 //                static char buf3[64] = ""; ImGui::InputText("hexadecimal", buf3, 64, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
 //                static char buf4[64] = ""; ImGui::InputText("uppercase", buf4, 64, ImGuiInputTextFlags_CharsUppercase);
@@ -2583,8 +2568,6 @@ interface imgui_demoDebugInfo {
 
         var closableGroup = true
 
-        val buf = CharArray(32).apply { "\u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e".toCharArray(this) }
-
         var pressedCount = 0
 
         val selected = BooleanArray(4 + 3 + 16 + 16, { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 })
@@ -2606,6 +2589,7 @@ interface imgui_demoDebugInfo {
         }
 
         var clicked = 0
+
         var check = true
         var e = 0
         val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
@@ -2626,6 +2610,10 @@ interface imgui_demoDebugInfo {
         val col1 = floatArrayOf(1f, 0f, 0.2f)
         val col2 = floatArrayOf(0.4f, 0.7f, 0f, 0.5f)
         var listboxItemCurrent = 1
+
+        var wrapWidth = 200f
+        // "nihongo"
+        val buf = CharArray(32).apply { "\u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e".toCharArray(this) }
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.

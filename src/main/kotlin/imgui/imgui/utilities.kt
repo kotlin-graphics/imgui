@@ -176,12 +176,11 @@ interface imgui_utilities {
 
     /** helper to create a child window / scrolling region that looks like a normal widget frame    */
     fun beginChildFrame(id: Int, size: Vec2, extraFlags: Int = 0): Boolean {
-
         pushStyleColor(Col.ChildWindowBg, style.colors[Col.FrameBg])
         pushStyleVar(StyleVar.ChildWindowRounding, style.frameRounding)
         pushStyleVar(StyleVar.WindowPadding, style.framePadding)
-        return beginChild(id, size, g.currentWindow!!.flags has Wf.ShowBorders, Wf.NoMove or Wf.AlwaysUseWindowPadding
-                or extraFlags)
+        val flags = Wf.NoMove or Wf.AlwaysUseWindowPadding or extraFlags
+        return beginChild(id, size, g.currentWindow!!.flags has Wf.ShowBorders, flags)
     }
 
     fun endChildFrame() {

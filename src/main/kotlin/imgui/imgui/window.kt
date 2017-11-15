@@ -104,8 +104,8 @@ interface imgui_window {
             window.popupId = popupRef.popupId
         }
 
-        val windowJustAppearingAfterBeingHidden = window.hiddenFrames == 1
-        window.appearing = windowJustActivatedByUser || windowJustAppearingAfterBeingHidden
+        val windowJustAppearingAfterBeingHiddenForResize = window.hiddenFrames == 1
+        window.appearing = windowJustActivatedByUser || windowJustAppearingAfterBeingHiddenForResize
 
         // Process SetNextWindow***() calls
         var windowPosSetByApi = false
@@ -304,7 +304,7 @@ interface imgui_window {
                             Rect(parentWindow.pos.x + horizontalOverlap, -Float.MAX_VALUE,
                                     parentWindow.pos.x + parentWindow.size.x - horizontalOverlap - parentWindow.scrollbarSizes.x, Float.MAX_VALUE)
                 window.posF put findBestPopupWindowPos(window.posF, window, rectToAvoid)
-            } else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterBeingHidden) {
+            } else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterBeingHiddenForResize) {
                 val rectToAvoid = Rect(window.posF.x - 1, window.posF.y - 1, window.posF.x + 1, window.posF.y + 1)
                 window.posF put findBestPopupWindowPos(window.posF, window, rectToAvoid)
             }
@@ -499,7 +499,7 @@ interface imgui_window {
                 dc.columnsCurrent = 0
                 dc.columnsCount = 1
                 dc.columnsStartPosY = dc.cursorPos.y
-                dc.columnsStartMaxPosX = dc.cursorMaxPos.y
+                dc.columnsStartMaxPosX = dc.cursorMaxPos.x
                 dc.columnsCellMaxY = dc.columnsStartPosY
                 dc.columnsCellMinY = dc.columnsStartPosY
                 dc.treeDepth = 0
@@ -535,12 +535,10 @@ interface imgui_window {
                 }
                 // Title text (FIXME: refactor text alignment facilities along with RenderText helpers)
                 val textSize = calcTextSize(name, hideTextAfterDoubleHash = true)
-
                 val textMin = Vec2(window.pos)
                 val textMax = Vec2(window.size.x, style.framePadding.y * 2 + textSize.y) + window.pos
-                val clipRect = Rect()
                 // Match the size of CloseWindowButton()
-                clipRect.max = Vec2(
+                val clipRect = Rect(0f, 0f,
                         window.pos.x + window.size.x - (if (pOpen != null) titleBarRect.height - 3 else style.framePadding.x),
                         textMax.y)
                 val padLeft =

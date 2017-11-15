@@ -67,5 +67,3 @@ typealias SizeConstraintCallback = (userData: Any?, pos: Vec2i, currenSize: Vec2
 fun main(args: Array<String>) {
 
 }
-
-operator fun KMutableProperty0<Boolean>.invoke() = 3
