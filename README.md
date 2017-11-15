@@ -92,7 +92,11 @@ The Immediate Mode GUI paradigm may at first appear unusual to some users. This 
 	        compile 'com.github.kotlin-graphics:imgui:-SNAPSHOT' // or commit or release (v1.51.b0)
 	    }
 
+### LibGdx
 
+On the initiative to Catvert, ImGui plays now nice also with LibGdx.
+
+Simply follow this [short wiki](https://github.com/kotlin-graphics/imgui/wiki/Using-libGDX) on how to set it up.
 
 ### Status:
 
