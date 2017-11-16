@@ -2268,7 +2268,7 @@ interface imgui_internal {
         val displayFrame = flags has Tnf.Framed
         val padding = if (displayFrame || flags has Tnf.FramePadding) Vec2(style.framePadding) else Vec2(style.framePadding.x, 0f)
 
-        val labelEnd = if(labelEnd == 0) findRenderedTextEnd(label) else labelEnd
+        val labelEnd = if (labelEnd == 0) findRenderedTextEnd(label) else labelEnd
         val labelSize = calcTextSize(label, labelEnd, false)
 
         // We vertically grow up to current line height up the typical widget height.
@@ -2289,8 +2289,7 @@ interface imgui_internal {
             (Ideally we'd want to add a flag for the user to specify if we want the hit test to be done up to the
             right side of the content or not)         */
         val interactBb = if (displayFrame) Rect(bb) else Rect(bb.min.x, bb.min.y, bb.min.x + textWidth + style.itemSpacing.x * 2, bb.max.y)
-//        if(label == "Node##1")
-//            println()
+
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
         if (!itemAdd(interactBb, id)) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
@@ -2342,7 +2341,6 @@ interface imgui_internal {
             // Unframed typed for tree nodes
             if (hovered || flags has Tnf.Selected)
                 renderFrame(bb.min, bb.max, col.u32, false)
-
             if (flags has Tnf.Bullet)
                 TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
             else if (flags hasnt Tnf.Leaf)
@@ -2367,7 +2365,7 @@ interface imgui_internal {
         val window = g.currentWindow!!
         val storage = window.dc.stateStorage
 
-        var isOpen = false
+        var isOpen: Boolean
         if (g.setNextTreeNodeOpenCond != 0) {
             if (g.setNextTreeNodeOpenCond has Cond.Always) {
                 isOpen = g.setNextTreeNodeOpenVal
