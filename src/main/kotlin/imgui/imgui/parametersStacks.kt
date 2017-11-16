@@ -176,6 +176,7 @@ interface imgui_parametersStacks {
 
     /** width of items for the common item+label case, pixels. 0.0f = default to ~2/3 of windows width, >0.0f: width in
      *  pixels, <0.0f align xx pixels to the right of window (so -1.0f always align width to the right side)    */
+    fun pushItemWidth(itemWidth: Int) = pushItemWidth(itemWidth.f)
     fun pushItemWidth(itemWidth: Float) = with(currentWindow) {
         dc.itemWidth = if (itemWidth == 0f) itemWidthDefault else itemWidth
         dc.itemWidthStack.push(dc.itemWidth)

@@ -32,6 +32,7 @@ import imgui.ImGui.combo
 import imgui.ImGui.contentRegionAvailWidth
 import imgui.ImGui.cursorPos
 import imgui.ImGui.cursorScreenPos
+import imgui.ImGui.cursorStartPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dragFloat2
 import imgui.ImGui.dragFloat3
@@ -50,6 +51,7 @@ import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endTooltip
 import imgui.ImGui.fontSize
+import imgui.ImGui.getId
 import imgui.ImGui.image
 import imgui.ImGui.imageButton
 import imgui.ImGui.indent
@@ -100,12 +102,17 @@ import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
+import imgui.ImGui.scrollMaxX
+import imgui.ImGui.scrollMaxY
+import imgui.ImGui.scrollX
+import imgui.ImGui.scrollY
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setColorEditOptions
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
+import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollHere
 import imgui.ImGui.setTooltip
 import imgui.ImGui.setWindowFontScale
@@ -164,6 +171,7 @@ import imgui.internal.Window
 import imgui.or
 import java.util.*
 import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
@@ -239,7 +247,7 @@ interface imgui_demoDebugInfo {
         }
 
         //pushItemWidth(getWindowWidth() * 0.65f);    // 2/3 of the space for widget and 1/3 for labels
-        pushItemWidth(-140f) // Right align, keep 140 pixels for labels
+        pushItemWidth(-140) // Right align, keep 140 pixels for labels
 
         text("dear imgui says hello. ($version)")
 
@@ -625,7 +633,7 @@ interface imgui_demoDebugInfo {
                 // Use functions to generate output
                 // FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
                 separator()
-                pushItemWidth(100f); combo("func", ::funcType, "Sin\u0000Saw\u0000"); popItemWidth()
+                pushItemWidth(100); combo("func", ::funcType, "Sin\u0000Saw\u0000"); popItemWidth()
                 sameLine()
                 sliderInt("Sample count", ::displayCount, 1, 400)
                 val func = if (funcType == 0) Companion.Funcs1::sin else Companion.Funcs1::saw
@@ -858,7 +866,7 @@ interface imgui_demoDebugInfo {
                 var gotoLine = button("Goto")
                 text("Without border")
                 sameLine()
-                pushItemWidth(100f)
+                pushItemWidth(100)
                 gotoLine = gotoLine or inputInt("##Line", L::line, 0, 0, Itf.EnterReturnsTrue.i)
                 popItemWidth()
                 withChild("Sub1", Vec2(windowContentRegionWidth * 0.5f, 300), false, Wf.HorizontalScrollbar.i) {
@@ -888,7 +896,7 @@ interface imgui_demoDebugInfo {
 
                 text("PushItemWidth(100)")
                 sameLine(); showHelpMarker("Fixed width.")
-                pushItemWidth(100f)
+                pushItemWidth(100)
                 dragFloat("float##1", L::f)
                 popItemWidth()
 
@@ -906,13 +914,13 @@ interface imgui_demoDebugInfo {
 
                 text("PushItemWidth(-100)")
                 sameLine(); showHelpMarker("Align to right edge minus 100")
-                pushItemWidth(-100f)
+                pushItemWidth(-100)
                 dragFloat("float##4", L::f)
                 popItemWidth()
 
                 text("PushItemWidth(-1)")
                 sameLine(); showHelpMarker("Align to right edge")
-                pushItemWidth(-1f)
+                pushItemWidth(-1)
                 dragFloat("float##5", L::f)
                 popItemWidth()
             }
@@ -1078,93 +1086,81 @@ interface imgui_demoDebugInfo {
                 bulletText("Node")
                 sameLine(0f, spacing); button("Button##4")
             }
-//
-//            if (ImGui::TreeNode("Scrolling"))
-//            {
-//                ImGui::TextWrapped("(Use SetScrollHere() or SetScrollFromPosY() to scroll to a given position.)");
-//                static bool track = true;
-//                static int track_line = 50, scroll_to_px = 200;
-//                ImGui::Checkbox("Track", &track);
-//                ImGui::PushItemWidth(100);
-//                ImGui::SameLine(130); track |= ImGui::DragInt("##line", &track_line, 0.25f, 0, 99, "Line = %.0f");
-//                bool scroll_to = ImGui::Button("Scroll To Pos");
-//                ImGui::SameLine(130); scroll_to |= ImGui::DragInt("##pos_y", &scroll_to_px, 1.00f, 0, 9999, "Y = %.0f px");
-//                ImGui::PopItemWidth();
-//                if (scroll_to) track = false;
-//
-//                for (int i = 0; i < 5; i++)
-//                {
-//                    if (i > 0) ImGui::SameLine();
-//                    ImGui::BeginGroup();
-//                    ImGui::Text("%s", i == 0 ? "Top" : i == 1 ? "25%" : i == 2 ? "Center" : i == 3 ? "75%" : "Bottom");
-//                    ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)i), ImVec2(ImGui::GetWindowWidth() * 0.17f, 200.0f), true);
-//                    if (scroll_to)
-//                        ImGui::SetScrollFromPosY(ImGui::GetCursorStartPos().y + scroll_to_px, i * 0.25f);
-//                    for (int line = 0; line < 100; line++)
-//                    {
-//                        if (track && line == track_line)
-//                        {
-//                            ImGui::TextColored(ImColor(255,255,0), "Line %d", line);
-//                            ImGui::SetScrollHere(i * 0.25f); // 0.0f:top, 0.5f:center, 1.0f:bottom
-//                        }
-//                        else
-//                        {
-//                            ImGui::Text("Line %d", line);
-//                        }
-//                    }
-//                    float scroll_y = ImGui::GetScrollY(), scroll_max_y = ImGui::GetScrollMaxY();
-//                    ImGui::EndChild();
-//                    ImGui::Text("%.0f/%0.f", scroll_y, scroll_max_y);
-//                    ImGui::EndGroup();
+
+            treeNode("Scrolling") {
+
+                textWrapped("(Use SetScrollHere() or SetScrollFromPosY() to scroll to a given position.)")
+                checkbox("Track", S::track)
+                pushItemWidth(100)
+                sameLine(130); S.track = S.track or dragInt("##line", S::trackLine, 0.25f, 0, 99, "Line = %.0f")
+                var scrollTo = button("Scroll To Pos")
+                sameLine(130); scrollTo = scrollTo or dragInt("##pos_y", S::scrollToPx, 1f, 0, 9999, "Y = %.0f px")
+                popItemWidth()
+                if (scrollTo) S.track = false
+
+                for (i in 0..4) {
+                    if (i > 0) sameLine()
+                    withGroup {
+                        text("%s", if (i == 0) "Top" else if (i == 1) "25%" else if (i == 2) "Center" else if (i == 3) "75%" else "Bottom")
+                        beginChild(getId(i), Vec2(windowWidth * 0.17f, 200f), true)
+                        if (scrollTo)
+                            setScrollFromPosY(cursorStartPos.y + S.scrollToPx, i * 0.25f)
+                        for (line in 0..99)
+                            if (S.track && line == S.trackLine) {
+                                textColored(Vec4.fromColor(255, 255, 0), "Line %d", line)
+                                setScrollHere(i * 0.25f) // 0.0f:top, 0.5f:center, 1.0f:bottom
+                            } else
+                                text("Line $line")
+                        val scrollY = scrollY
+                        val scrollMaxY = scrollMaxY
+                        endChild()
+                        text("%.0f/%.0f", scrollY, scrollMaxY)
+                    }
+                }
+            }
+
+            if(treeNode("Horizontal Scrolling")) {
+                
+                bullet(); textWrapped("Horizontal scrolling for a window has to be enabled explicitly via the ImGuiWindowFlags_HorizontalScrollbar flag.")
+                bullet(); textWrapped("You may want to explicitly specify content width by calling SetNextWindowContentWidth() before Begin().")
+                sliderInt("Lines", Hs::lines, 1, 15)
+                pushStyleVar(StyleVar.FrameRounding, 3f)
+                pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
+                beginChild("scrolling", Vec2(0, itemsLineHeightWithSpacing*7 + 30), true, Wf.HorizontalScrollbar.i)
+                for (line in 0 until Hs.lines)                {
+                    /*  Display random stuff (for the sake of this trivial demo we are using basic button+sameLine.
+                        If you want to create your own time line for a real application you may be better off
+                        manipulating the cursor position yourself, aka using SetCursorPos/SetCursorScreenPos to position
+                        the widgets yourself. You may also want to use the lower-level ImDrawList API)  */
+                    val numButtons = 10 + (line * if(line has 1) 9 else 3)
+                    for (n in 0 until numButtons)                    {
+                        if (n > 0) sameLine()
+                        pushId(n + line * 1000)
+                        val label = if(n%15 == 0) "FizzBuzz" else if(n%3==0) "Fizz" else if (n%5==0) "Buzz" else "$n"
+                        val hue = n*0.05f
+                        pushStyleColor(Col.Button, Color.hsv(hue, 0.6f, 0.6f))
+                        pushStyleColor(Col.ButtonHovered, Color.hsv(hue, 0.7f, 0.7f))
+                        pushStyleColor(Col.ButtonActive, Color.hsv(hue, 0.8f, 0.8f))
+                        button(label, Vec2(40f + sin((line + n).f) * 20f, 0f))
+                        popStyleColor(3)
+                        popId()
+                    }
+                }
+//                val _scrollX = scrollX
+//                val scrollMaxX = scrollMaxX
+//                endChild()
+//                popStyleVar(2)
+//                var scrollXDelta = 0f
+//                smallButton("<<"); if (isItemActive) scrollXDelta = -IO.deltaTime * 1000f; sameLine()
+//                text("Scroll from code"); sameLine()
+//                smallButton(">>"); if (isItemActive) scrollXDelta = IO.deltaTime * 1000f; sameLine()
+//                text("%.0f/%.0f", _scrollX, scrollMaxX)
+//                if (scrollXDelta != 0f)                {
+//                    beginChild("scrolling") // Demonstrate a trick: you can use Begin to set yourself in the context of another window (here we are already out of your child window)
+//                    scrollX += scrollXDelta
+//                    end()
 //                }
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Horizontal Scrolling"))
-//            {
-//                ImGui::Bullet(); ImGui::TextWrapped("Horizontal scrolling for a window has to be enabled explicitly via the ImGuiWindowFlags_HorizontalScrollbar flag.");
-//                ImGui::Bullet(); ImGui::TextWrapped("You may want to explicitly specify content width by calling SetNextWindowContentWidth() before Begin().");
-//                static int lines = 7;
-//                ImGui::SliderInt("Lines", &lines, 1, 15);
-//                ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
-//                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 1.0f));
-//                ImGui::BeginChild("scrolling", ImVec2(0, ImGui::GetItemsLineHeightWithSpacing()*7 + 30), true, ImGuiWindowFlags_HorizontalScrollbar);
-//                for (int line = 0; line < lines; line++)
-//                {
-//                    // Display random stuff (for the sake of this trivial demo we are using basic Button+SameLine. If you want to create your own time line for a real application you may be better off
-//                    // manipulating the cursor position yourself, aka using SetCursorPos/SetCursorScreenPos to position the widgets yourself. You may also want to use the lower-level ImDrawList API)
-//                    int num_buttons = 10 + ((line & 1) ? line * 9 : line * 3);
-//                    for (int n = 0; n < num_buttons; n++)
-//                    {
-//                        if (n > 0) ImGui::SameLine();
-//                        ImGui::PushID(n + line * 1000);
-//                        char num_buf[16];
-//                        const char* label = (!(n%15)) ? "FizzBuzz" : (!(n%3)) ? "Fizz" : (!(n%5)) ? "Buzz" : (sprintf(num_buf, "%d", n), num_buf);
-//                        float hue = n*0.05f;
-//                        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(hue, 0.6f, 0.6f));
-//                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(hue, 0.7f, 0.7f));
-//                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(hue, 0.8f, 0.8f));
-//                        ImGui::Button(label, ImVec2(40.0f + sinf((float)(line + n)) * 20.0f, 0.0f));
-//                        ImGui::PopStyleColor(3);
-//                        ImGui::PopID();
-//                    }
-//                }
-//                float scroll_x = ImGui::GetScrollX(), scroll_max_x = ImGui::GetScrollMaxX();
-//                ImGui::EndChild();
-//                ImGui::PopStyleVar(2);
-//                float scroll_x_delta = 0.0f;
-//                ImGui::SmallButton("<<"); if (ImGui::IsItemActive()) scroll_x_delta = -ImGui::GetIO().DeltaTime * 1000.0f; ImGui::SameLine();
-//                ImGui::Text("Scroll from code"); ImGui::SameLine();
-//                ImGui::SmallButton(">>"); if (ImGui::IsItemActive()) scroll_x_delta = +ImGui::GetIO().DeltaTime * 1000.0f; ImGui::SameLine();
-//                ImGui::Text("%.0f/%.0f", scroll_x, scroll_max_x);
-//                if (scroll_x_delta != 0.0f)
-//                {
-//                    ImGui::BeginChild("scrolling"); // Demonstrate a trick: you can use Begin to set yourself in the context of another window (here we are already out of your child window)
-//                    ImGui::SetScrollX(ImGui::GetScrollX() + scroll_x_delta);
-//                    ImGui::End();
-//                }
-//                ImGui::TreePop();
-//            }
+            }
 //
 //            if (ImGui::TreeNode("Clipping"))
 //            {
@@ -1739,7 +1735,7 @@ interface imgui_demoDebugInfo {
         treeNode("Rendering") {
             checkbox("Anti-aliased lines", style::antiAliasedLines)
             checkbox("Anti-aliased shapes", style::antiAliasedShapes)
-            pushItemWidth(100f)
+            pushItemWidth(100)
             dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, Float.MAX_VALUE, "", 2f)
             if (style.curveTessellationTol < 0f) style.curveTessellationTol = 0.1f
             /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
@@ -1797,7 +1793,7 @@ interface imgui_demoDebugInfo {
             radioButton("Both", ::alphaFlags, Cef.AlphaPreviewHalf.i)
 
             beginChild("#colors", Vec2(0, 300), true, Wf.AlwaysVerticalScrollbar.i)
-            pushItemWidth(-160f)
+            pushItemWidth(-160)
             for (i in 0 until Col.COUNT.i) {
                 val name = Col.values()[i].name
                 if (!filter.passFilter(name)) // TODO fix bug
@@ -1826,7 +1822,7 @@ interface imgui_demoDebugInfo {
                 image(atlas.texId, Vec2(atlas.texSize), Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255),
                         Vec4.fromColor(255, 255, 255, 128))
             }
-            pushItemWidth(100f)
+            pushItemWidth(100)
             for (i in 0 until atlas.fonts.size) {
 
                 val font = atlas.fonts[i]
@@ -2496,7 +2492,7 @@ interface imgui_demoDebugInfo {
                             bullet()
                             selectable("Field_$i")
                             nextColumn()
-                            pushItemWidth(-1f)
+                            pushItemWidth(-1)
                             if (i >= 5)
                                 inputFloat("##value", dummyMembers, i, 1f)
                             else
@@ -2662,6 +2658,18 @@ interface imgui_demoDebugInfo {
         var f2 = 3f
         var item = -1
         val selection = intArrayOf(0, 1, 2, 3)
+    }
+
+    /* Scrolling */
+    object S {
+        var track = true
+        var trackLine = 50
+        var scrollToPx = 200
+    }
+
+    /* Horizontal Scrolling */
+    object Hs {
+        var lines = 7
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
