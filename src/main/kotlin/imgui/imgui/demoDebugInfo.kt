@@ -29,6 +29,7 @@ import imgui.ImGui.colorEditVec4
 import imgui.ImGui.colorPicker4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
+import imgui.ImGui.contentRegionAvailWidth
 import imgui.ImGui.cursorPos
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
@@ -68,9 +69,12 @@ import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectMin
+import imgui.ImGui.itemRectSize
 import imgui.ImGui.itemsLineHeightWithSpacing
 import imgui.ImGui.labelText
 import imgui.ImGui.listBox
+import imgui.ImGui.listBoxFooter
+import imgui.ImGui.listBoxHeader
 import imgui.ImGui.logButtons
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
@@ -133,6 +137,7 @@ import imgui.ImGui.unindent
 import imgui.ImGui.vSliderFloat
 import imgui.ImGui.vSliderInt
 import imgui.ImGui.version
+import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
 import imgui.functionalProgramming.button
@@ -270,11 +275,11 @@ interface imgui_demoDebugInfo {
 
         collapsingHeader("Window options") {
 
-            checkbox("No titlebar", ::noTitlebar); sameLine(150f)
-            checkbox("No border", ::noBorder); sameLine(300f)
+            checkbox("No titlebar", ::noTitlebar); sameLine(150)
+            checkbox("No border", ::noBorder); sameLine(300)
             checkbox("No resize", ::noResize)
-            checkbox("No move", ::noMove); sameLine(150f)
-            checkbox("No scrollbar", ::noScrollbar); sameLine(300f)
+            checkbox("No move", ::noMove); sameLine(150)
+            checkbox("No scrollbar", ::noScrollbar); sameLine(300)
             checkbox("No collapse", ::noCollapse)
             checkbox("No menu", ::noMenu)
 
@@ -540,9 +545,9 @@ interface imgui_demoDebugInfo {
                 }
                 offset += 4
                 treeNode("Rendering more text into the same block") {
-                    selectable("main.c", selected, offset + 0); sameLine(300f); text(" 2,345 bytes")
-                    selectable("Hello.cpp", selected, offset + 1); sameLine(300f); text("12,345 bytes")
-                    selectable("Hello.h", selected, offset + 2); sameLine(300f); text(" 2,345 bytes")
+                    selectable("main.c", selected, offset + 0); sameLine(300); text(" 2,345 bytes")
+                    selectable("Hello.cpp", selected, offset + 1); sameLine(300); text("12,345 bytes")
+                    selectable("Hello.h", selected, offset + 2); sameLine(300); text(" 2,345 bytes")
                 }
                 offset += 3
                 treeNode("In columns") {
@@ -848,250 +853,231 @@ interface imgui_demoDebugInfo {
 
         collapsingHeader("Layout") {
 
-            //            if (ImGui::TreeNode("Child regions"))
-//            {
-//                ImGui::Text("Without border");
-//                static int line = 50;
-//                bool goto_line = ImGui::Button("Goto");
-//                ImGui::SameLine();
-//                ImGui::PushItemWidth(100);
-//                goto_line |= ImGui::InputInt("##Line", &line, 0, 0, ImGuiInputTextFlags_EnterReturnsTrue);
-//                ImGui::PopItemWidth();
-//                ImGui::BeginChild("Sub1", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f,300), false, ImGuiWindowFlags_HorizontalScrollbar);
-//                for (int i = 0; i < 100; i++)
-//                {
-//                    ImGui::Text("%04d: scrollable region", i);
-//                    if (goto_line && line == i)
-//                        ImGui::SetScrollHere();
-//                }
-//                if (goto_line && line >= 100)
-//                    ImGui::SetScrollHere();
-//                ImGui::EndChild();
-//
-//                ImGui::SameLine();
-//
-//                ImGui::PushStyleVar(ImGuiStyleVar_ChildWindowRounding, 5.0f);
-//                ImGui::BeginChild("Sub2", ImVec2(0,300), true);
-//                ImGui::Text("With border");
-//                ImGui::Columns(2);
-//                for (int i = 0; i < 100; i++)
-//                {
-//                    if (i == 50)
-//                        ImGui::NextColumn();
-//                    char buf[32];
-//                    sprintf(buf, "%08x", i*5731);
-//                    ImGui::Button(buf, ImVec2(-1.0f, 0.0f));
-//                }
-//                ImGui::EndChild();
-//                ImGui::PopStyleVar();
-//
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Widgets Width"))
-//            {
-//                static float f = 0.0f;
-//                ImGui::Text("PushItemWidth(100)");
-//                ImGui::SameLine(); ShowHelpMarker("Fixed width.");
-//                ImGui::PushItemWidth(100);
-//                ImGui::DragFloat("float##1", &f);
-//                ImGui::PopItemWidth();
-//
-//                ImGui::Text("PushItemWidth(GetWindowWidth() * 0.5f)");
-//                ImGui::SameLine(); ShowHelpMarker("Half of window width.");
-//                ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
-//                ImGui::DragFloat("float##2", &f);
-//                ImGui::PopItemWidth();
-//
-//                ImGui::Text("PushItemWidth(GetContentRegionAvailWidth() * 0.5f)");
-//                ImGui::SameLine(); ShowHelpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)");
-//                ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() * 0.5f);
-//                ImGui::DragFloat("float##3", &f);
-//                ImGui::PopItemWidth();
-//
-//                ImGui::Text("PushItemWidth(-100)");
-//                ImGui::SameLine(); ShowHelpMarker("Align to right edge minus 100");
-//                ImGui::PushItemWidth(-100);
-//                ImGui::DragFloat("float##4", &f);
-//                ImGui::PopItemWidth();
-//
-//                ImGui::Text("PushItemWidth(-1)");
-//                ImGui::SameLine(); ShowHelpMarker("Align to right edge");
-//                ImGui::PushItemWidth(-1);
-//                ImGui::DragFloat("float##5", &f);
-//                ImGui::PopItemWidth();
-//
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Basic Horizontal Layout"))
-//            {
-//                ImGui::TextWrapped("(Use ImGui::SameLine() to keep adding items to the right of the preceding item)");
-//
-//                // Text
-//                ImGui::Text("Two items: Hello"); ImGui::SameLine();
-//                ImGui::TextColored(ImVec4(1,1,0,1), "Sailor");
-//
-//                // Adjust spacing
-//                ImGui::Text("More spacing: Hello"); ImGui::SameLine(0, 20);
-//                ImGui::TextColored(ImVec4(1,1,0,1), "Sailor");
-//
-//                // Button
-//                ImGui::AlignFirstTextHeightToWidgets();
-//                ImGui::Text("Normal buttons"); ImGui::SameLine();
-//                ImGui::Button("Banana"); ImGui::SameLine();
-//                ImGui::Button("Apple"); ImGui::SameLine();
-//                ImGui::Button("Corniflower");
-//
-//                // Button
-//                ImGui::Text("Small buttons"); ImGui::SameLine();
-//                ImGui::SmallButton("Like this one"); ImGui::SameLine();
-//                ImGui::Text("can fit within a text block.");
-//
-//                // Aligned to arbitrary position. Easy/cheap column.
-//                ImGui::Text("Aligned");
-//                ImGui::SameLine(150); ImGui::Text("x=150");
-//                ImGui::SameLine(300); ImGui::Text("x=300");
-//                ImGui::Text("Aligned");
-//                ImGui::SameLine(150); ImGui::SmallButton("x=150");
-//                ImGui::SameLine(300); ImGui::SmallButton("x=300");
-//
-//                // Checkbox
-//                static bool c1=false,c2=false,c3=false,c4=false;
-//                ImGui::Checkbox("My", &c1); ImGui::SameLine();
-//                ImGui::Checkbox("Tailor", &c2); ImGui::SameLine();
-//                ImGui::Checkbox("Is", &c3); ImGui::SameLine();
-//                ImGui::Checkbox("Rich", &c4);
-//
-//                // Various
-//                static float f0=1.0f, f1=2.0f, f2=3.0f;
-//                ImGui::PushItemWidth(80);
-//                const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD" };
-//                static int item = -1;
-//                ImGui::Combo("Combo", &item, items, IM_ARRAYSIZE(items)); ImGui::SameLine();
-//                ImGui::SliderFloat("X", &f0, 0.0f,5.0f); ImGui::SameLine();
-//                ImGui::SliderFloat("Y", &f1, 0.0f,5.0f); ImGui::SameLine();
-//                ImGui::SliderFloat("Z", &f2, 0.0f,5.0f);
-//                ImGui::PopItemWidth();
-//
-//                ImGui::PushItemWidth(80);
-//                ImGui::Text("Lists:");
-//                static int selection[4] = { 0, 1, 2, 3 };
-//                for (int i = 0; i < 4; i++)
-//                {
-//                    if (i > 0) ImGui::SameLine();
-//                    ImGui::PushID(i);
-//                    ImGui::ListBox("", &selection[i], items, IM_ARRAYSIZE(items));
-//                    ImGui::PopID();
-//                    //if (ImGui::IsItemHovered()) ImGui::SetTooltip("ListBox %d hovered", i);
-//                }
-//                ImGui::PopItemWidth();
-//
-//                // Dummy
-//                ImVec2 sz(30,30);
-//                ImGui::Button("A", sz); ImGui::SameLine();
-//                ImGui::Dummy(sz); ImGui::SameLine();
-//                ImGui::Button("B", sz);
-//
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Groups"))
-//            {
-//                ImGui::TextWrapped("(Using ImGui::BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundles the whole group so that you can use functions such as IsItemHovered() on it.)");
-//                ImGui::BeginGroup();
-//                {
-//                    ImGui::BeginGroup();
-//                    ImGui::Button("AAA");
-//                    ImGui::SameLine();
-//                    ImGui::Button("BBB");
-//                    ImGui::SameLine();
-//                    ImGui::BeginGroup();
-//                    ImGui::Button("CCC");
-//                    ImGui::Button("DDD");
-//                    ImGui::EndGroup();
-//                    ImGui::SameLine();
-//                    ImGui::Button("EEE");
-//                    ImGui::EndGroup();
-//                    if (ImGui::IsItemHovered())
-//                        ImGui::SetTooltip("First group hovered");
-//                }
-//                // Capture the group size and create widgets using the same size
-//                ImVec2 size = ImGui::GetItemRectSize();
-//                const float values[5] = { 0.5f, 0.20f, 0.80f, 0.60f, 0.25f };
-//                ImGui::PlotHistogram("##values", values, IM_ARRAYSIZE(values), 0, NULL, 0.0f, 1.0f, size);
-//
-//                ImGui::Button("ACTION", ImVec2((size.x - ImGui::GetStyle().ItemSpacing.x)*0.5f,size.y));
-//                ImGui::SameLine();
-//                ImGui::Button("REACTION", ImVec2((size.x - ImGui::GetStyle().ItemSpacing.x)*0.5f,size.y));
-//                ImGui::EndGroup();
-//                ImGui::SameLine();
-//
-//                ImGui::Button("LEVERAGE\nBUZZWORD", size);
-//                ImGui::SameLine();
-//
-//                ImGui::ListBoxHeader("List", size);
-//                ImGui::Selectable("Selected", true);
-//                ImGui::Selectable("Not Selected", false);
-//                ImGui::ListBoxFooter();
-//
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Text Baseline Alignment"))
-//            {
-//                ImGui::TextWrapped("(This is testing the vertical alignment that occurs on text to keep it at the same baseline as widgets. Lines only composed of text or \"small\" widgets fit in less vertical spaces than lines with normal widgets)");
-//
-//                ImGui::Text("One\nTwo\nThree"); ImGui::SameLine();
-//                ImGui::Text("Hello\nWorld"); ImGui::SameLine();
-//                ImGui::Text("Banana");
-//
-//                ImGui::Text("Banana"); ImGui::SameLine();
-//                ImGui::Text("Hello\nWorld"); ImGui::SameLine();
-//                ImGui::Text("One\nTwo\nThree");
-//
-//                ImGui::Button("HOP##1"); ImGui::SameLine();
-//                ImGui::Text("Banana"); ImGui::SameLine();
-//                ImGui::Text("Hello\nWorld"); ImGui::SameLine();
-//                ImGui::Text("Banana");
-//
-//                ImGui::Button("HOP##2"); ImGui::SameLine();
-//                ImGui::Text("Hello\nWorld"); ImGui::SameLine();
-//                ImGui::Text("Banana");
-//
-//                ImGui::Button("TEST##1"); ImGui::SameLine();
-//                ImGui::Text("TEST"); ImGui::SameLine();
-//                ImGui::SmallButton("TEST##2");
-//
-//                ImGui::AlignFirstTextHeightToWidgets(); // If your line starts with text, call this to align it to upcoming widgets.
-//                ImGui::Text("Text aligned to Widget"); ImGui::SameLine();
-//                ImGui::Button("Widget##1"); ImGui::SameLine();
-//                ImGui::Text("Widget"); ImGui::SameLine();
-//                ImGui::SmallButton("Widget##2"); ImGui::SameLine();
-//                ImGui::Button("Widget##3");
-//
-//                // Tree
-//                const float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
-//                ImGui::Button("Button##1");
-//                ImGui::SameLine(0.0f, spacing);
-//                if (ImGui::TreeNode("Node##1")) { for (int i = 0; i < 6; i++) ImGui::BulletText("Item %d..", i); ImGui::TreePop(); }    // Dummy tree data
-//
-//                ImGui::AlignFirstTextHeightToWidgets();         // Vertically align text node a bit lower so it'll be vertically centered with upcoming widget. Otherwise you can use SmallButton (smaller fit).
-//                bool node_open = ImGui::TreeNode("Node##2");  // Common mistake to avoid: if we want to SameLine after TreeNode we need to do it before we add child content.
-//                ImGui::SameLine(0.0f, spacing); ImGui::Button("Button##2");
-//                if (node_open) { for (int i = 0; i < 6; i++) ImGui::BulletText("Item %d..", i); ImGui::TreePop(); }   // Dummy tree data
-//
-//                // Bullet
-//                ImGui::Button("Button##3");
-//                ImGui::SameLine(0.0f, spacing);
-//                ImGui::BulletText("Bullet text");
-//
-//                ImGui::AlignFirstTextHeightToWidgets();
-//                ImGui::BulletText("Node");
-//                ImGui::SameLine(0.0f, spacing); ImGui::Button("Button##4");
-//
-//                ImGui::TreePop();
-//            }
+            treeNode("Child regions") {
+
+                var gotoLine = button("Goto")
+                text("Without border")
+                sameLine()
+                pushItemWidth(100f)
+                gotoLine = gotoLine or inputInt("##Line", L::line, 0, 0, Itf.EnterReturnsTrue.i)
+                popItemWidth()
+                withChild("Sub1", Vec2(windowContentRegionWidth * 0.5f, 300), false, Wf.HorizontalScrollbar.i) {
+                    for (i in 0 until 100) {
+                        text("%04d: scrollable region", i)
+                        if (gotoLine && L.line == i) setScrollHere()
+                    }
+                    if (gotoLine && L.line >= 100) setScrollHere()
+                }
+
+                sameLine()
+
+                withStyleVar(StyleVar.ChildWindowRounding, 5f) {
+                    withChild("Sub2", Vec2(0, 300), true) {
+                        text("With border")
+                        columns(2)
+                        for (i in 0..99) {
+                            if (i == 50) nextColumn()
+                            val text = "%08x".format(style.locale, i * 5731)
+                            button(text, Vec2(-1f, 0f))
+                        }
+                    }
+                }
+            }
+
+            treeNode("Widgets Width") {
+
+                text("PushItemWidth(100)")
+                sameLine(); showHelpMarker("Fixed width.")
+                pushItemWidth(100f)
+                dragFloat("float##1", L::f)
+                popItemWidth()
+
+                text("PushItemWidth(GetWindowWidth() * 0.5f)")
+                sameLine(); showHelpMarker("Half of window width.")
+                pushItemWidth(windowWidth * 0.5f)
+                dragFloat("float##2", L::f)
+                popItemWidth()
+
+                text("PushItemWidth(GetContentRegionAvailWidth() * 0.5f)")
+                sameLine(); showHelpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
+                pushItemWidth(contentRegionAvailWidth * 0.5f)
+                dragFloat("float##3", L::f)
+                popItemWidth()
+
+                text("PushItemWidth(-100)")
+                sameLine(); showHelpMarker("Align to right edge minus 100")
+                pushItemWidth(-100f)
+                dragFloat("float##4", L::f)
+                popItemWidth()
+
+                text("PushItemWidth(-1)")
+                sameLine(); showHelpMarker("Align to right edge")
+                pushItemWidth(-1f)
+                dragFloat("float##5", L::f)
+                popItemWidth()
+            }
+
+            treeNode("Basic Horizontal Layout") {
+
+                textWrapped("(Use SameLine() to keep adding items to the right of the preceding item)")
+
+                // Text
+                text("Two items: Hello"); sameLine()
+                textColored(Vec4(1, 1, 0, 1), "Sailor")
+
+                // Adjust spacing
+                text("More spacing: Hello"); sameLine(0, 20)
+                textColored(Vec4(1, 1, 0, 1), "Sailor")
+
+                // Button
+                alignTextToFramePadding()
+                text("Normal buttons"); sameLine()
+                button("Banana"); sameLine()
+                button("Apple"); sameLine()
+                button("Corniflower")
+
+                // Button
+                text("Small buttons"); sameLine()
+                smallButton("Like this one"); sameLine()
+                text("can fit within a text block.")
+
+                // Aligned to arbitrary position. Easy/cheap column.
+                text("Aligned")
+                sameLine(150); text("x=150")
+                sameLine(300); text("x=300")
+                text("Aligned")
+                sameLine(150); smallButton("x=150")
+                sameLine(300); smallButton("x=300")
+
+                // Checkbox
+                checkbox("My", L::c1); sameLine()
+                checkbox("Tailor", L::c2); sameLine()
+                checkbox("Is", L::c3); sameLine()
+                checkbox("Rich", L::c4)
+
+                // Various
+                val items = arrayOf("AAAA", "BBBB", "CCCC", "DDDD")
+                withItemWidth(80f) {
+                    combo("Combo", L::item, items); sameLine()
+                    sliderFloat("X", L::f0, 0f, 5f); sameLine()
+                    sliderFloat("Y", L::f1, 0f, 5f); sameLine()
+                    sliderFloat("Z", L::f2, 0f, 5f)
+                }
+
+                withItemWidth(80f) {
+                    text("Lists:")
+                    for (i in 0..3) {
+                        if (i > 0) sameLine()
+                        withId(i) {
+                            withInt(L.selection, i) {
+                                listBox("", it, items)
+                            }
+                        }
+                        //if (IsItemHovered()) SetTooltip("ListBox %d hovered", i);
+                    }
+                }
+
+                // Dummy
+                val sz = Vec2(30)
+                button("A", sz); sameLine()
+                dummy(sz); sameLine()
+                button("B", sz)
+            }
+
+            treeNode("Groups") {
+
+                textWrapped("(Using BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundles the whole group so that you can use functions such as IsItemHovered() on it.)")
+                beginGroup()
+                withGroup {
+                    button("AAA")
+                    sameLine()
+                    button("BBB")
+                    sameLine()
+                    withGroup {
+                        button("CCC")
+                        button("DDD")
+                    }
+                    sameLine()
+                    button("EEE")
+                }
+                if (isItemHovered()) setTooltip("First group hovered")
+
+                // Capture the group size and create widgets using the same size
+                val size = Vec2(itemRectSize)
+                val values = floatArrayOf(0.5f, 0.2f, 0.8f, 0.6f, 0.25f)
+                plotHistogram("##values", values, 0, "", 0f, 1f, size)
+
+                button("ACTION", Vec2((size.x - style.itemSpacing.x) * 0.5f, size.y))
+                sameLine()
+                button("REACTION", Vec2((size.x - style.itemSpacing.x) * 0.5f, size.y))
+                endGroup()
+                sameLine()
+
+                button("LEVERAGE\nBUZZWORD", size)
+                sameLine()
+
+                listBoxHeader("List", size)
+                selectable("Selected", true)
+                selectable("Not Selected", false)
+                listBoxFooter()
+            }
+
+            treeNode("Text Baseline Alignment") {
+
+                textWrapped("(This is testing the vertical alignment that occurs on text to keep it at the same baseline as widgets. Lines only composed of text or \"small\" widgets fit in less vertical spaces than lines with normal widgets)")
+
+                text("One\nTwo\nThree"); sameLine()
+                text("Hello\nWorld"); sameLine()
+                text("Banana")
+
+                text("Banana"); sameLine()
+                text("Hello\nWorld"); sameLine()
+                text("One\nTwo\nThree")
+
+                button("HOP##1"); sameLine()
+                text("Banana"); sameLine()
+                text("Hello\nWorld"); sameLine()
+                text("Banana")
+
+                button("HOP##2"); sameLine()
+                text("Hello\nWorld"); sameLine()
+                text("Banana")
+
+                button("TEST##1"); sameLine()
+                text("TEST"); sameLine()
+                smallButton("TEST##2")
+
+                alignTextToFramePadding() // If your line starts with text, call this to align it to upcoming widgets.
+                text("Text aligned to Widget"); sameLine()
+                button("Widget##1"); sameLine()
+                text("Widget"); sameLine()
+                smallButton("Widget##2"); sameLine()
+                button("Widget##3")
+
+                // Tree
+                val spacing = style.itemInnerSpacing.x
+                button("Button##1")
+                sameLine(0f, spacing)
+                treeNode("Node##1") { for (i in 0..5) bulletText("Item $i..") } // Dummy tree data
+                /*  Vertically align text node a bit lower so it'll be vertically centered with upcoming widget.
+                    Otherwise you can use SmallButton (smaller fit).                 */
+                alignTextToFramePadding()
+                // Common mistake to avoid: if we want to SameLine after TreeNode we need to do it before we add child content.
+                val nodeOpen = treeNode("Node##2")
+                sameLine(0f, spacing); button("Button##2")
+                if (nodeOpen) { // Dummy tree data
+                    for (i in 0..5) bulletText("Item $i..")
+                    treePop()
+                }
+                // Bullet
+                button("Button##3")
+                sameLine(0f, spacing)
+                bulletText("Bullet text")
+
+                alignTextToFramePadding()
+                bulletText("Node")
+                sameLine(0f, spacing); button("Button##4")
+            }
 //
 //            if (ImGui::TreeNode("Scrolling"))
 //            {
@@ -1357,9 +1343,8 @@ interface imgui_demoDebugInfo {
 //                    +        }
         }
 
-//        if (ImGui::CollapsingHeader("Columns"))
-//        {
-//            ImGui::PushID("Columns");
+        collapsingHeader("Columns") {
+            //            ImGui::PushID("Columns");
 //
 //            // Basic columns
 //            if (ImGui::TreeNode("Basic"))
@@ -1471,8 +1456,7 @@ interface imgui_demoDebugInfo {
 //                }
 //                ImGui::Columns(1);
 //                if (h_borders) ImGui::Separator();
-//        ImGui::TreePop();
-//        +        }
+        }
 //    +
 //    +        // Scrolling columns
 //    +        /*
@@ -2663,6 +2647,21 @@ interface imgui_demoDebugInfo {
         var intValue = 0
         val values = floatArrayOf(0f, 0.6f, 0.35f, 0.9f, 0.7f, 0.2f, 0f)
         val values2 = floatArrayOf(0.2f, 0.8f, 0.4f, 0.25f)
+    }
+
+    /* Layout */
+    object L {
+        var line = 50
+        var f = 0f
+        var c1 = false
+        var c2 = false
+        var c3 = false
+        var c4 = false
+        var f0 = 1f
+        var f1 = 2f
+        var f2 = 3f
+        var item = -1
+        val selection = intArrayOf(0, 1, 2, 3)
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.

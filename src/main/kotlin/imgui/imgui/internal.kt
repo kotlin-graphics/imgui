@@ -2260,7 +2260,7 @@ interface imgui_internal {
         endPopup()
     }
 
-    fun treeNodeBehavior(id: Int, flags: Int, label: String): Boolean {
+    fun treeNodeBehavior(id: Int, flags: Int, label: String, labelEnd: Int = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -2268,7 +2268,8 @@ interface imgui_internal {
         val displayFrame = flags has Tnf.Framed
         val padding = if (displayFrame || flags has Tnf.FramePadding) Vec2(style.framePadding) else Vec2(style.framePadding.x, 0f)
 
-        val labelSize = calcTextSize(label, false)
+        val labelEnd = if(labelEnd == 0) findRenderedTextEnd(label) else labelEnd
+        val labelSize = calcTextSize(label, labelEnd, false)
 
         // We vertically grow up to current line height up the typical widget height.
         val textBaseOffsetY = glm.max(padding.y, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
@@ -2288,8 +2289,9 @@ interface imgui_internal {
             (Ideally we'd want to add a flag for the user to specify if we want the hit test to be done up to the
             right side of the content or not)         */
         val interactBb = if (displayFrame) Rect(bb) else Rect(bb.min.x, bb.min.y, bb.min.x + textWidth + style.itemSpacing.x * 2, bb.max.y)
+//        if(label == "Node##1")
+//            println()
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
-
         if (!itemAdd(interactBb, id)) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushRawId(id)
@@ -2332,10 +2334,10 @@ interface imgui_internal {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
                     range to make sure the ## aren't stripped out here.                 */
                 logRenderedText(textPos, "\n##", 3)
-                renderTextClipped(textPos, bb.max, label, label.length, labelSize)
+                renderTextClipped(textPos, bb.max, label, labelEnd, labelSize)
                 logRenderedText(textPos, "#", 3)
             } else
-                renderTextClipped(textPos, bb.max, label, label.length, labelSize)
+                renderTextClipped(textPos, bb.max, label, labelEnd, labelSize)
         } else {
             // Unframed typed for tree nodes
             if (hovered || flags has Tnf.Selected)
@@ -2348,7 +2350,7 @@ interface imgui_internal {
                         if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
-            renderText(textPos, label, label.length, false)
+            renderText(textPos, label, labelEnd, false)
         }
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
