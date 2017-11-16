@@ -99,7 +99,7 @@ class HelloWorld_jogl : GLEventListener {
             /*  2. Show another simple window, this time using an explicit begin/end pair   */
             if (showAnotherWindow) {
                 _begin("Another Window", ::showAnotherWindow)
-                text("Hello from anoter window!")
+                text("Hello from another window!")
                 end()
             }
 

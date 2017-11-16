@@ -32,7 +32,15 @@ import imgui.ImGui.combo
 import imgui.ImGui.cursorPos
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
+import imgui.ImGui.dragFloat2
+import imgui.ImGui.dragFloat3
+import imgui.ImGui.dragFloat4
+import imgui.ImGui.dragFloatRange2
 import imgui.ImGui.dragInt
+import imgui.ImGui.dragInt2
+import imgui.ImGui.dragInt3
+import imgui.ImGui.dragInt4
+import imgui.ImGui.dragIntRange2
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
@@ -45,9 +53,15 @@ import imgui.ImGui.image
 import imgui.ImGui.imageButton
 import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
+import imgui.ImGui.inputFloat2
 import imgui.ImGui.inputFloat3
+import imgui.ImGui.inputFloat4
 import imgui.ImGui.inputInt
+import imgui.ImGui.inputInt2
+import imgui.ImGui.inputInt3
+import imgui.ImGui.inputInt4
 import imgui.ImGui.inputText
+import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemClicked
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseDoubleClicked
@@ -94,8 +108,14 @@ import imgui.ImGui.setWindowFontScale
 import imgui.ImGui.setWindowSize
 import imgui.ImGui.sliderAngle
 import imgui.ImGui.sliderFloat
-import imgui.ImGui.sliderFloatVec2
+import imgui.ImGui.sliderFloat2
+import imgui.ImGui.sliderFloat3
+import imgui.ImGui.sliderFloat4
 import imgui.ImGui.sliderInt
+import imgui.ImGui.sliderInt2
+import imgui.ImGui.sliderInt3
+import imgui.ImGui.sliderInt4
+import imgui.ImGui.sliderVec2
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.text
@@ -110,6 +130,8 @@ import imgui.ImGui.treeNodeExV
 import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
+import imgui.ImGui.vSliderFloat
+import imgui.ImGui.vSliderInt
 import imgui.ImGui.version
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
@@ -709,16 +731,16 @@ interface imgui_demoDebugInfo {
                 if (!alpha) flags = flags or Cef.NoAlpha // This is by default if you call ColorPicker3() instead of ColorPicker4()
                 if (alphaBar) flags = flags or Cef.AlphaBar
                 if (!sidePreview) flags = flags or Cef.NoSidePreview
-                flags = flags or when(pickerMode) {
+                flags = flags or when (pickerMode) {
                     1 -> Cef.PickerHueBar
                     2 -> Cef.PickerHueWheel
                     else -> Cef.Null
                 }
-                flags = flags or when(inputsMode) {
+                flags = flags or when (inputsMode) {
                     1 -> Cef.NoInputs
-                    2->Cef.RGB
-                    3-> Cef.HSV
-                    4->Cef.HEX
+                    2 -> Cef.RGB
+                    3 -> Cef.HSV
+                    4 -> Cef.HEX
                     else -> Cef.Null
                 }
                 colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
@@ -729,112 +751,99 @@ interface imgui_demoDebugInfo {
                 sameLine()
                 button("Float + HDR") { setColorEditOptions(Cef.Float or Cef.RGB) }
             }
-//
-//            if (ImGui::TreeNode("Range Widgets"))
-//            {
-//                static float begin = 10, end = 90;
-//                static int begin_i = 100, end_i = 1000;
-//                ImGui::DragFloatRange2("range", &begin, &end, 0.25f, 0.0f, 100.0f, "Min: %.1f %%", "Max: %.1f %%");
-//                ImGui::DragIntRange2("range int (no bounds)", &begin_i, &end_i, 5, 0, 0, "Min: %.0f units", "Max: %.0f units");
-//
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Multi-component Widgets"))
-//            {
-//                static float vec4f[4] = { 0.10f, 0.20f, 0.30f, 0.44f };
-//                static int vec4i[4] = { 1, 5, 100, 255 };
-//
-//                ImGui::InputFloat2("input float2", vec4f);
-//                ImGui::DragFloat2("drag float2", vec4f, 0.01f, 0.0f, 1.0f);
-//                ImGui::SliderFloat2("slider float2", vec4f, 0.0f, 1.0f);
-//                ImGui::DragInt2("drag int2", vec4i, 1, 0, 255);
-//                ImGui::InputInt2("input int2", vec4i);
-//                ImGui::SliderInt2("slider int2", vec4i, 0, 255);
-//                ImGui::Spacing();
-//
-//                ImGui::InputFloat3("input float3", vec4f);
-//                ImGui::DragFloat3("drag float3", vec4f, 0.01f, 0.0f, 1.0f);
-//                ImGui::SliderFloat3("slider float3", vec4f, 0.0f, 1.0f);
-//                ImGui::DragInt3("drag int3", vec4i, 1, 0, 255);
-//                ImGui::InputInt3("input int3", vec4i);
-//                ImGui::SliderInt3("slider int3", vec4i, 0, 255);
-//                ImGui::Spacing();
-//
-//                ImGui::InputFloat4("input float4", vec4f);
-//                ImGui::DragFloat4("drag float4", vec4f, 0.01f, 0.0f, 1.0f);
-//                ImGui::SliderFloat4("slider float4", vec4f, 0.0f, 1.0f);
-//                ImGui::InputInt4("input int4", vec4i);
-//                ImGui::DragInt4("drag int4", vec4i, 1, 0, 255);
-//                ImGui::SliderInt4("slider int4", vec4i, 0, 255);
-//
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Vertical Sliders"))
-//            {
-//                const float spacing = 4;
-//                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(spacing, spacing));
-//
-//                static int int_value = 0;
-//                ImGui::VSliderInt("##int", ImVec2(18,160), &int_value, 0, 5);
-//                ImGui::SameLine();
-//
-//                static float values[7] = { 0.0f, 0.60f, 0.35f, 0.9f, 0.70f, 0.20f, 0.0f };
-//                ImGui::PushID("set1");
-//                for (int i = 0; i < 7; i++)
-//                {
-//                    if (i > 0) ImGui::SameLine();
-//                    ImGui::PushID(i);
-//                    ImGui::PushStyleColor(ImGuiCol_FrameBg, (ImVec4)ImColor::HSV(i/7.0f, 0.5f, 0.5f));
-//                    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, (ImVec4)ImColor::HSV(i/7.0f, 0.6f, 0.5f));
-//                    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, (ImVec4)ImColor::HSV(i/7.0f, 0.7f, 0.5f));
-//                    ImGui::PushStyleColor(ImGuiCol_SliderGrab, (ImVec4)ImColor::HSV(i/7.0f, 0.9f, 0.9f));
-//                    ImGui::VSliderFloat("##v", ImVec2(18,160), &values[i], 0.0f, 1.0f, "");
-//                    if (ImGui::IsItemActive() || ImGui::IsItemHovered())
-//                        ImGui::SetTooltip("%.3f", values[i]);
-//                    ImGui::PopStyleColor(4);
-//                    ImGui::PopID();
-//                }
-//                ImGui::PopID();
-//
-//                ImGui::SameLine();
-//                ImGui::PushID("set2");
-//                static float values2[4] = { 0.20f, 0.80f, 0.40f, 0.25f };
-//                const int rows = 3;
-//                const ImVec2 small_slider_size(18, (160.0f-(rows-1)*spacing)/rows);
-//                for (int nx = 0; nx < 4; nx++)
-//                {
-//                    if (nx > 0) ImGui::SameLine();
-//                    ImGui::BeginGroup();
-//                    for (int ny = 0; ny < rows; ny++)
-//                    {
-//                        ImGui::PushID(nx*rows+ny);
-//                        ImGui::VSliderFloat("##v", small_slider_size, &values2[nx], 0.0f, 1.0f, "");
-//                        if (ImGui::IsItemActive() || ImGui::IsItemHovered())
-//                            ImGui::SetTooltip("%.3f", values2[nx]);
-//                        ImGui::PopID();
-//                    }
-//                    ImGui::EndGroup();
-//                }
-//                ImGui::PopID();
-//
-//                ImGui::SameLine();
-//                ImGui::PushID("set3");
-//                for (int i = 0; i < 4; i++)
-//                {
-//                    if (i > 0) ImGui::SameLine();
-//                    ImGui::PushID(i);
-//                    ImGui::PushStyleVar(ImGuiStyleVar_GrabMinSize, 40);
-//                    ImGui::VSliderFloat("##v", ImVec2(40,160), &values[i], 0.0f, 1.0f, "%.2f\nsec");
-//                    ImGui::PopStyleVar();
-//                    ImGui::PopID();
-//                }
-//                ImGui::PopID();
-//                ImGui::PopStyleVar();
-//
-//                ImGui::TreePop();
-//            }
+
+            treeNode("Range Widgets") {
+                dragFloatRange2("range", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%")
+                dragIntRange2("range int (no bounds)", ::beginI, ::endI, 5f, 0, 0, "Min: %.0f units", "Max: %.0f units")
+            }
+
+            treeNode("Multi-component Widgets") {
+
+                inputFloat2("input float2", vec4f)
+                dragFloat2("drag float2", vec4f, 0.01f, 0f, 1f)
+                sliderFloat2("slider float2", vec4f, 0f, 1f)
+                dragInt2("drag int2", vec4i, 1f, 0, 255)
+                inputInt2("input int2", vec4i)
+                sliderInt2("slider int2", vec4i, 0, 255)
+                spacing()
+
+                inputFloat3("input float3", vec4f)
+                dragFloat3("drag float3", vec4f, 0.01f, 0.0f, 1.0f)
+                sliderFloat3("slider float3", vec4f, 0.0f, 1.0f)
+                dragInt3("drag int3", vec4i, 1f, 0, 255)
+                inputInt3("input int3", vec4i)
+                sliderInt3("slider int3", vec4i, 0, 255)
+                spacing()
+
+                inputFloat4("input float4", vec4f)
+                dragFloat4("drag float4", vec4f, 0.01f, 0.0f, 1.0f)
+                sliderFloat4("slider float4", vec4f, 0.0f, 1.0f)
+                inputInt4("input int4", vec4i)
+                dragInt4("drag int4", vec4i, 1f, 0, 255)
+                sliderInt4("slider int4", vec4i, 0, 255)
+            }
+
+            treeNode("Vertical Sliders") {
+
+                pushStyleVar(StyleVar.ItemSpacing, Vec2(Vs.spacing))
+
+                vSliderInt("##int", Vec2(18, 160), Vs::intValue, 0, 5)
+                sameLine()
+
+                withId("set1") {
+                    for (i in 0..6) {
+                        if (i > 0) sameLine()
+                        withId(i) {
+                            pushStyleColor(Col.FrameBg, Color.hsv(i / 7f, 0.5f, 0.5f))
+                            pushStyleColor(Col.FrameBgHovered, Color.hsv(i / 7f, 0.6f, 0.5f))
+                            pushStyleColor(Col.FrameBgActive, Color.hsv(i / 7f, 0.7f, 0.5f))
+                            pushStyleColor(Col.SliderGrab, Color.hsv(i / 7f, 0.9f, 0.9f))
+                            withFloat { f ->
+                                f.set(Vs.values[i])
+                                vSliderFloat("##v", Vec2(18, 160), f, 0f, 1f, "")
+                                Vs.values[i] = f()
+                            }
+                            if (isItemActive || isItemHovered()) setTooltip("%.3f", Vs.values[i])
+                            popStyleColor(4)
+                        }
+                    }
+                }
+
+                sameLine()
+                withId("set2") {
+                    val rows = 3
+                    val smallSliderSize = Vec2(18, (160f - (rows - 1) * Vs.spacing) / rows)
+                    for (nx in 0..3) {
+                        if (nx > 0) sameLine()
+                        withGroup {
+                            for (ny in 0 until rows) {
+                                withId(nx * rows + ny) {
+                                    withFloat(Vs.values2, nx) { f ->
+                                        vSliderFloat("##v", smallSliderSize, f, 0f, 1f, "")
+                                    }
+                                    if (isItemActive || isItemHovered())
+                                        setTooltip("%.3f", Vs.values2[nx])
+                                }
+                            }
+                        }
+                    }
+                }
+
+                sameLine()
+                withId("set3") {
+                    for (i in 0..3) {
+                        if (i > 0) sameLine()
+                        withId(i) {
+                            withStyleVar(StyleVar.GrabMinSize, 40f) {
+                                withFloat(Vs.values, i) {
+                                    vSliderFloat("##v", Vec2(40, 160), it, 0f, 1f, "%.2f\nsec")
+                                }
+                            }
+                        }
+                    }
+                }
+                popStyleVar()
+            }
         }
 
         collapsingHeader("Layout") {
@@ -1756,22 +1765,22 @@ interface imgui_demoDebugInfo {
         }
 
         treeNode("Settings") {
-            sliderFloatVec2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
+            sliderVec2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
             sliderFloat("WindowRounding", style::windowRounding, 0f, 16f, "%.0f")
             sliderFloat("ChildWindowRounding", style::childWindowRounding, 0f, 16f, "%.0f")
-            sliderFloatVec2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
+            sliderVec2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
             sliderFloat("FrameRounding", style::frameRounding, 0f, 16f, "%.0f")
-            sliderFloatVec2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
-            sliderFloatVec2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
-            sliderFloatVec2("TouchExtraPadding", style.touchExtraPadding, 0f, 10f, "%.0f")
+            sliderVec2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
+            sliderVec2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
+            sliderVec2("TouchExtraPadding", style.touchExtraPadding, 0f, 10f, "%.0f")
             sliderFloat("IndentSpacing", style::indentSpacing, 0f, 30f, "%.0f")
             sliderFloat("ScrollbarSize", style::scrollbarSize, 1f, 20f, "%.0f")
             sliderFloat("ScrollbarRounding", style::scrollbarRounding, 0.0f, 16.0f, "%.0f")
             sliderFloat("GrabMinSize", style::grabMinSize, 1f, 20f, "%.0f")
             sliderFloat("GrabRounding", style::grabRounding, 0f, 16f, "%.0f")
             text("Alignment")
-            sliderFloatVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
-            sliderFloatVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f")
+            sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
+            sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f")
             sameLine()
             showHelpMarker("Alignment applies when a button is larger than its text content.")
         }
@@ -2637,6 +2646,23 @@ interface imgui_demoDebugInfo {
         var inputsMode = 2
         var pickerMode = 0
 
+        /* Range Widgets */
+        var begin = 10f
+        var end = 90f
+        var beginI = 100
+        var endI = 1000
+
+        /* Multi-component Widgets */
+        var vec4f = floatArrayOf(0.1f, 0.2f, 0.3f, 0.44f)
+        val vec4i = intArrayOf(1, 5, 100, 255)
+    }
+
+    /* Vertical Sliders */
+    object Vs {
+        var spacing = 4f
+        var intValue = 0
+        val values = floatArrayOf(0f, 0.6f, 0.35f, 0.9f, 0.7f, 0.2f, 0f)
+        val values2 = floatArrayOf(0.2f, 0.8f, 0.4f, 0.25f)
     }
 
     /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
