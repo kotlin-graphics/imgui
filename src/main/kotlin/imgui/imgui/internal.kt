@@ -21,6 +21,8 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.colorButton
 import imgui.ImGui.contentRegionMax
+import imgui.ImGui.dragFloat
+import imgui.ImGui.dragInt
 import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
@@ -32,6 +34,7 @@ import imgui.ImGui.getColumnWidth
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
+import imgui.ImGui.inputInt
 import imgui.ImGui.inputText
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
@@ -56,6 +59,7 @@ import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderFloat
+import imgui.ImGui.sliderInt
 import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
@@ -228,8 +232,7 @@ interface imgui_internal {
         val lineHeight = glm.max(window.dc.currentLineHeight, size.y)
         val textBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, textOffsetY)
         //if (g.IO.KeyAlt) window->DrawList->AddRect(window->DC.CursorPos, window->DC.CursorPos + ImVec2(size.x, line_height), IM_COL32(255,0,0,200)); // [DEBUG]
-        window.dc.cursorPosPrevLine.x = window.dc.cursorPos.x + size.x
-        window.dc.cursorPosPrevLine.y = window.dc.cursorPos.y
+        window.dc.cursorPosPrevLine.put(window.dc.cursorPos.x + size.x, window.dc.cursorPos.y)
         window.dc.cursorPos.x = (window.pos.x + window.dc.indentX + window.dc.columnsOffsetX).i.f
         window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + style.itemSpacing.y).i.f
         window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
@@ -1135,7 +1138,6 @@ interface imgui_internal {
 
         val window = currentWindow
 
-//        println("Draw frame, ${v[ptr]}")
         // Draw frame
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
 
@@ -1250,20 +1252,22 @@ interface imgui_internal {
         return (vClamped - vMin) / (vMax - vMin)
     }
 
-    fun sliderFloatN(label: String, v: FloatArray, vMin: Float, vMax: Float, displayFormat: String, power: Float): Boolean {
-
+    /** Add multiple sliders on 1 line for compact edition of multiple components   */
+    fun sliderFloatN(label: String, v: FloatArray, component: Int, vMin: Float, vMax: Float, displayFormat: String, power: Float)
+            : Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
         var valueChanged = false
         beginGroup()
         pushId(label)
-        pushMultiItemsWidths(v.size)
-        for (i in v.indices) {
+        pushMultiItemsWidths(component)
+        for (i in 0 until component) {
             pushId(i)
-//            println(i) TODO clean
-            valueChanged = valueChanged || sliderFloat("##v", v, i, vMin, vMax, displayFormat, power)
-//            println("wtf")
+            withFloat(v, i) { f ->
+                val res = sliderFloat("##v", f, vMin, vMax, displayFormat, power)
+                valueChanged = valueChanged || res
+            }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -1275,7 +1279,33 @@ interface imgui_internal {
         return valueChanged
     }
 
-//IMGUI_API bool          SliderIntN(const char* label, int* v, int components, int v_min, int v_max, const char* display_format);
+    fun sliderIntN(label: String, v: IntArray, components: Int, vMin: Int, vMax: Int, displayFormat: String): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(components)
+        for (i in 0 until components) {
+            pushId(i)
+            withInt { int ->
+                int.set(v[i])
+                val res = sliderInt("##v", int, vMin, vMax, displayFormat)
+                valueChanged = valueChanged || res
+                v[i] = int()
+            }
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+
+        return valueChanged
+    }
 
     fun dragBehavior(frameBb: Rect, id: Int, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
                      power: Float): Boolean {
@@ -1351,9 +1381,59 @@ interface imgui_internal {
                 clearActiveId()
         return valueChanged
     }
-//IMGUI_API bool          DragFloatN(const char* label, float* v, int components, float v_speed, float v_min, float v_max, const char* display_format, float power);
-//IMGUI_API bool          DragIntN(const char* label, int* v, int components, float v_speed, int v_min, int v_max, const char* display_format);
 
+    fun dragFloatN(label: String, v: FloatArray, components: Int, vSpeed: Float, vMin: Float, vMax: Float, displayFormat: String,
+                   power: Float): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(components)
+        for (i in 0 until components) {
+            pushId(i)
+            withFloat(v, i) { f ->
+                valueChanged = valueChanged or dragFloat("##v", f, vSpeed, vMin, vMax, displayFormat, power)
+            }
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+
+        return valueChanged
+    }
+
+    fun dragIntN(label: String, v: IntArray, components: Int, vSpeed: Float, vMin: Int, vMax: Int, displayFormat: String): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(components)
+        for (i in 0 until components) {
+            pushId(i)
+            withInt { int ->
+                int.set(v[i])
+                valueChanged = valueChanged or dragInt("##v", int, vSpeed, vMin, vMax, displayFormat)
+                v[i] = int()
+            }
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+
+        return valueChanged
+    }
 
     fun inputTextEx(label: String, buf: CharArray, sizeArg: Vec2, flags: Int
             /*, ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean {
@@ -1980,9 +2060,9 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            f0 = v[i]
-            valueChanged = valueChanged or inputFloat("##v", ::f0, 0f, 0f, decimalPrecision, extraFlags)
-            v[i] = f0
+            withFloat(v, i) { f ->
+                valueChanged = valueChanged or inputFloat("##v", f, 0f, 0f, decimalPrecision, extraFlags)
+            }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -1992,7 +2072,33 @@ interface imgui_internal {
         endGroup()
         return valueChanged
     }
-//IMGUI_API bool          InputIntN(const char* label, int* v, int components, ImGuiInputTextFlags extra_flags);
+
+    fun inputIntN(label: String, v: IntArray, components: Int, extraFlags: Int): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(components)
+        for (i in 0 until components) {
+            pushId(i)
+            withInt { int ->
+                int.set(v[i])
+                valueChanged = valueChanged or inputInt("##v", int, 0, 0, extraFlags)
+                v[i] = int()
+            }
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+
+        return valueChanged
+    }
 
     /** NB: scalar_format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
      *  functions "display_format" argument)    */
@@ -2490,4 +2596,29 @@ interface imgui_internal {
         private var f0 = 0f
         private var i0 = 0
     }
+}
+
+inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
+    Ref.fPtr++
+    val f = Ref::float
+    f.set(floats[ptr])
+    val res = block(f)
+    floats[ptr] = f()
+    Ref.fPtr--
+    return res
+}
+
+inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
+    Ref.iPtr++
+    val i = Ref::int
+    i.set(ints[ptr])
+    val res = block(i)
+    ints[ptr] = i()
+    Ref.iPtr--
+    return res
+}
+
+inline fun <R> withInt(block: (KMutableProperty0<Int>) -> R): R {
+    Ref.iPtr++
+    return block(Ref::int).also { Ref.iPtr-- }
 }

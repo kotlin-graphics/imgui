@@ -143,6 +143,12 @@ object functionalProgramming {
         popId()
     }
 
+    inline fun withId(id: String, block: () -> Unit) {
+        pushId(id)
+        block()
+        popId()
+    }
+
     inline fun withTooltip(block: () -> Unit) {
         beginTooltip()
         block()

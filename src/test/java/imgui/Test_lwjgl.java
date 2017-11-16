@@ -94,7 +94,7 @@ public class Test_lwjgl {
         /*  2. Show another simple window, this time using an explicit Begin/End pair   */
         if (showAnotherWindow[0]) {
             imgui.begin("Another Window", showAnotherWindow, 0);
-            imgui.text("Hello from anoter window!");
+            imgui.text("Hello from another window!");
             imgui.end();
         }
 

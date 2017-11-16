@@ -1,24 +1,40 @@
 package imgui.imgui
 
 import glm_.f
+import glm_.func.common.max
+import glm_.func.common.min
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
+import glm_.vec3.Vec3i
+import glm_.vec4.Vec4i
 import imgui.Context.style
 import imgui.IO
+import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dragBehavior
+import imgui.ImGui.dragFloatN
+import imgui.ImGui.dragIntN
+import imgui.ImGui.endGroup
+import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.inputScalarAsWidgetReplacement
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
 import imgui.ImGui.parseFormatPrecision
+import imgui.ImGui.popId
+import imgui.ImGui.popItemWidth
+import imgui.ImGui.pushId
+import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.sameLine
 import imgui.ImGui.setActiveId
+import imgui.ImGui.textUnformatted
 import imgui.internal.DataType
 import imgui.internal.Rect
 import imgui.internal.focus
@@ -104,10 +120,67 @@ interface imgui_widgetsDrag {
 
         return valueChanged
     }
-//    IMGUI_API bool          DragFloat2(const char* label, float v[2], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* display_format = "%.3f", float power = 1.0f);
-//    IMGUI_API bool          DragFloat3(const char* label, float v[3], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* display_format = "%.3f", float power = 1.0f);
-//    IMGUI_API bool          DragFloat4(const char* label, float v[4], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* display_format = "%.3f", float power = 1.0f);
-//    IMGUI_API bool          DragFloatRange2(const char* label, float* v_current_min, float* v_current_max, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* display_format = "%.3f", const char* display_format_max = NULL, float power = 1.0f);
+
+    fun dragFloat2(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
+                   power: Float = 1f) = dragFloatN(label, v, 2, vSpeed, vMin, vMax, displayFormat, power)
+
+    fun dragVec2(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
+                 power: Float = 1f): Boolean {
+        val floats = v to FloatArray(2)
+        val res = dragFloatN(label, floats, 2, vSpeed, vMin, vMax, displayFormat, power)
+        v put floats
+        return res
+    }
+
+    fun dragFloat3(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
+                   power: Float = 1f) = dragFloatN(label, v, 3, vSpeed, vMin, vMax, displayFormat, power)
+
+    fun dragVec3(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
+                 power: Float = 1f): Boolean {
+        val floats = v to FloatArray(3)
+        val res = dragFloatN(label, floats, 3, vSpeed, vMin, vMax, displayFormat, power)
+        v put floats
+        return res
+    }
+
+    fun dragFloat4(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
+                   power: Float = 1f) = dragFloatN(label, v, 4, vSpeed, vMin, vMax, displayFormat, power)
+
+    fun dragVec4(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
+                 power: Float = 1f): Boolean {
+        val floats = v to FloatArray(4)
+        val res = dragFloatN(label, floats, 4, vSpeed, vMin, vMax, displayFormat, power)
+        v put floats
+        return res
+    }
+
+    fun dragFloatRange2(label: String, vCurrentMin: KMutableProperty0<Float>, vCurrentMax: KMutableProperty0<Float>, vSpeed: Float = 1f,
+                        vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f", displayFormatMax: String = displayFormat,
+                        power: Float = 1f): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        pushId(label)
+        beginGroup()
+        pushMultiItemsWidths(2)
+
+        var min = if (vMin >= vMax) -Float.MAX_VALUE else vMin
+        var max = if (vMin >= vMax) vCurrentMax() else vMax min vCurrentMax()
+        var valueChanged = dragFloat("##min", vCurrentMin, vSpeed, min, max, displayFormat, power)
+        popItemWidth()
+        sameLine(0f, style.itemInnerSpacing.x)
+        min = if (vMin >= vMax) vCurrentMin() else vMin max vCurrentMin()
+        max = if (vMin >= vMax) Float.MAX_VALUE else vMax
+        valueChanged = valueChanged or dragFloat("##max", vCurrentMax, vSpeed, min, max, displayFormatMax, power)
+        popItemWidth()
+        sameLine(0f, style.itemInnerSpacing.x)
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+        popId()
+
+        return valueChanged
+    }
 
     /** If v_min >= v_max we have no bound
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
@@ -127,10 +200,63 @@ interface imgui_widgetsDrag {
         v.set(f0.i)
         return valueChanged
     }
-//    IMGUI_API bool          DragInt2(const char* label, int v[2], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* display_format = "%.0f");
-//    IMGUI_API bool          DragInt3(const char* label, int v[3], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* display_format = "%.0f");
-//    IMGUI_API bool          DragInt4(const char* label, int v[4], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* display_format = "%.0f");
-//    IMGUI_API bool          DragIntRange2(const char* label, int* v_current_min, int* v_current_max, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* display_format = "%.0f", const char* display_format_max = NULL);
+
+    fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f") =
+            dragIntN(label, v, 2, vSpeed, vMin, vMax, displayFormat)
+
+    fun dragVec2i(label: String, v: Vec2i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f"): Boolean {
+        val ints = v to IntArray(2)
+        val res = dragIntN(label, ints, 2, vSpeed, vMin, vMax, displayFormat)
+        v put ints
+        return res
+    }
+
+    fun dragInt3(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f") =
+            dragIntN(label, v, 3, vSpeed, vMin, vMax, displayFormat)
+
+    fun dragVec3i(label: String, v: Vec3i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f"): Boolean {
+        val ints = v to IntArray(3)
+        val res = dragIntN(label, ints, 3, vSpeed, vMin, vMax, displayFormat)
+        v put ints
+        return res
+    }
+
+    fun dragInt4(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f") =
+            dragIntN(label, v, 4, vSpeed, vMin, vMax, displayFormat)
+
+    fun dragVec4i(label: String, v: Vec4i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f"): Boolean {
+        val ints = v to IntArray(4)
+        val res = dragIntN(label, ints, 4, vSpeed, vMin, vMax, displayFormat)
+        v put ints
+        return res
+    }
+
+    fun dragIntRange2(label: String, vCurrentMin: KMutableProperty0<Int>, vCurrentMax: KMutableProperty0<Int>, vSpeed: Float = 1f,
+                      vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f", displayFormatMax: String = displayFormat): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        pushId(label)
+        beginGroup()
+        pushMultiItemsWidths(2)
+
+        var min = if (vMin >= vMax) Int.MIN_VALUE else vMin
+        var max = if (vMin >= vMax) vCurrentMax() else vMax min vCurrentMax()
+        var valueChanged = dragInt("##min", vCurrentMin, vSpeed, min, max, displayFormat)
+        popItemWidth()
+        sameLine(0f, style.itemInnerSpacing.x)
+        min = if (vMin >= vMax) vCurrentMin() else vMin max vCurrentMin()
+        max = if (vMin >= vMax) Int.MAX_VALUE else vMax
+        valueChanged = valueChanged or dragInt("##max", vCurrentMax, vSpeed, min, max, displayFormatMax)
+        popItemWidth()
+        sameLine(0f, style.itemInnerSpacing.x)
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+        popId()
+
+        return valueChanged
+    }
 
     companion object {
         private var f0 = 0f

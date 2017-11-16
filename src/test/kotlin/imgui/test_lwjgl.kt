@@ -97,7 +97,7 @@ class HelloWorld_lwjgl {
             /*  2. Show another simple window, this time using an explicit Begin/End pair   */
             if (showAnotherWindow) {
                 _begin("Another Window", ::showAnotherWindow)
-                text("Hello from anoter window!")
+                text("Hello from another window!")
                 end()
             }
 
