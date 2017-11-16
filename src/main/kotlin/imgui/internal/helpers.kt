@@ -94,12 +94,11 @@ fun hash(data: String, dataSize: Int, seed: Int = 0): Int {
     if (dataSize > 0)
     // Known size
         while (dataSize-- != 0)
-            crc = (crc ushr 8) xor crc32_lut[(crc and 0xFF) xor data[current++].i]
+            crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor data[current++].i]
     else
     // Zero-terminated string
         while (current < data.length) {
-
-            val c = data[current]
+            val c = data[current++]
             /*  We support a syntax of "label###id" where only "###id" is included in the hash, and only "label" gets
                 displayed.
                 Because this syntax is rarely used we are optimizing for the common case.
@@ -107,26 +106,18 @@ fun hash(data: String, dataSize: Int, seed: Int = 0): Int {
                     - We don't do 'current += 2; continue;' after handling ### to keep the code smaller.    */
             if (c == '#' && data[current] == '#' && data[current + 1] == '#')
                 crc = seed
-            crc = (crc ushr 8) xor crc32_lut[(crc and 0xFF) xor c]
-
-            current++
+            crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c]
         }
     return crc.inv()
 }
 
-val crc32_lut by lazy {
-    val res = IntArray(256)
-    if (res[1] == 0) {
-        val polynomial = 0xEDB88320.i
-        repeat(256) {
-            var crc = it
-            for (i in 0 until 8)
-                crc = (crc ushr 1) xor (-(crc and 1) and polynomial)
-            res[it] = crc
-        }
-    }
-    res
-}
+val crc32Lut = IntArray(256, {
+    val polynomial = 0xEDB88320.i
+    var crc = it
+    for (i in 0..7)
+        crc = (crc ushr 1) xor ((-(crc and 1)) and polynomial)
+    crc
+})
 
 //IMGUI_API void*         ImFileLoadToMemory(const char* filename, const char* file_open_mode, int* out_file_size = NULL, int padding_bytes = 0);
 //IMGUI_API FILE*         ImFileOpen(const char* filename, const char* file_open_mode);
