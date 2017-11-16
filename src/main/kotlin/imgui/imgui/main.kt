@@ -92,11 +92,10 @@ interface imgui_main {
             IO.mouseClicked[i] = IO.mouseDown[i] && IO.mouseDownDuration[i] < 0f
             IO.mouseReleased[i] = !IO.mouseDown[i] && IO.mouseDownDuration[i] >= 0f
             IO.mouseDownDurationPrev[i] = IO.mouseDownDuration[i]
-            IO.mouseDownDuration[i] =
-                    if (IO.mouseDown[i]) {
-                        if (IO.mouseDownDuration[i] < 0f) 0f
-                        else IO.mouseDownDuration[i] + IO.deltaTime
-                    } else -1.0f
+            IO.mouseDownDuration[i] = when (IO.mouseDown[i]) {
+                true -> if (IO.mouseDownDuration[i] < 0f) 0f else IO.mouseDownDuration[i] + IO.deltaTime
+                else -> -1f
+            }
             IO.mouseDoubleClicked[i] = false
             if (IO.mouseClicked[i]) {
                 if (g.time - IO.mouseClickedTime[i] < IO.mouseDoubleClickTime) {

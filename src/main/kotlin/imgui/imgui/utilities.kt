@@ -145,8 +145,7 @@ interface imgui_utilities {
         // Cancel out character spacing for the last character of a line (it is baked into glyph->AdvanceX field)
         val fontScale = fontSize / font.fontSize
         val characterSpacingX = 1f * fontScale
-        if (textSize.x > 0f)
-            textSize.x -= characterSpacingX
+        if (textSize.x > 0f) textSize.x -= characterSpacingX
         textSize.x = (textSize.x + 0.95f).i.f
 
         return textSize

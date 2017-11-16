@@ -1,6 +1,7 @@
 package imgui.imgui
 
 import gli_.hasnt
+import glm_.f
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -76,6 +77,8 @@ interface imgui_cursorLayout {
      *      posX != 0      : align to specified x position (relative to window/group left)
      *      spacingW < 0   : use default spacing if posX == 0, no spacing if posX != 0
      *      spacingW >= 0  : enforce spacing amount    */
+    fun sameLine(posX: Int) = sameLine(posX.f)
+    fun sameLine(posX: Int, spacingW: Int) = sameLine(posX.f, spacingW.f)
     fun sameLine(posX: Float = 0f, spacingW: Float = -1f) {
 
         val window = currentWindow
