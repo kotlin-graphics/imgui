@@ -13,7 +13,6 @@ import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
-import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columns
 import imgui.ImGui.combo
 import imgui.ImGui.contentRegionAvailWidth
@@ -23,6 +22,7 @@ import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
 import imgui.ImGui.dragVec2
 import imgui.ImGui.dummy
+import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
 import imgui.ImGui.font
@@ -68,6 +68,7 @@ import imgui.ImGui.treePop
 import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
+import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withGroup
@@ -83,7 +84,7 @@ import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf
 
-object layout {
+object layout_ {
 
     /* Child regions */
     var line = 50
@@ -121,7 +122,7 @@ object layout {
 
     operator fun invoke() {
 
-        if (collapsingHeader("Layout")) {
+        collapsingHeader("Layout") {
 
             treeNode("Child regions") {
 
@@ -417,11 +418,13 @@ object layout {
                 text("Scroll from code"); sameLine()
                 smallButton(">>"); if (isItemActive) scrollXDelta = IO.deltaTime * 1000f; sameLine()
                 text("%.0f/%.0f", _scrollX, scrollMaxX)
-//                if (scrollXDelta != 0f)                {
-//                    beginChild("scrolling") // Demonstrate a trick: you can use Begin to set yourself in the context of another window (here we are already out of your child window)
-//                    scrollX += scrollXDelta
-//                    end()
-//                }
+                if (scrollXDelta != 0f) {
+                    /*  Demonstrate a trick: you can use begin() to set yourself in the context of another window (here
+                        we are already out of your child window) */
+                    beginChild("scrolling")
+                    scrollX = scrollX + scrollXDelta    // TODO bug
+                    end()
+                }
             }
 
             treeNode("Clipping") {

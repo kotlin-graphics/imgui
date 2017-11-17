@@ -16,7 +16,6 @@ import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
-import imgui.ImGui.collapsingHeader
 import imgui.ImGui.colorEditVec4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
@@ -225,7 +224,7 @@ object ExampleApp {
 
         widgets()
 
-        layout()
+        layout_()
     }
 }
 

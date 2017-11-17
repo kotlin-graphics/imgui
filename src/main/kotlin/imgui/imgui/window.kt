@@ -801,7 +801,7 @@ interface imgui_window {
     /** scrolling amount [0..GetScrollMaxX()]   */
     var scrollX
         get() = g.currentWindow!!.scroll.x
-        set(value) = with(currentWindow) { scrollTarget.x = scrollX; scrollTargetCenterRatio.x = 0f }
+        set(value) = with(currentWindow) { scrollTarget.x = value; scrollTargetCenterRatio.x = 0f }
 
     /** scrolling amount [0..GetScrollMaxY()]   */
     var scrollY
