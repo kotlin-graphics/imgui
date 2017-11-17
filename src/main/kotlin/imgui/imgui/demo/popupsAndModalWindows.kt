@@ -5,18 +5,24 @@ import imgui.*
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
+import imgui.ImGui.isItemHovered
+import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setTooltip
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.functionalProgramming.button
 import imgui.functionalProgramming.collapsingHeader
+import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.popup
 import imgui.functionalProgramming.popupModal
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withStyleVar
+import imgui.imgui.demo.imgui_demoDebugInfo.Companion.showExampleMenuFile
+import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
 import imgui.InputTextFlags as Itf
@@ -55,47 +61,26 @@ object popupsAndModalWindows {
                     names.forEachIndexed { i, n -> if (selectable(n)) selectedFish = i }
                 }
 
-//                // Showing a menu with toggles
-//                if (ImGui::Button("Toggle.."))
-//                    ImGui::OpenPopup("toggle");
-//                if (ImGui::BeginPopup("toggle"))
-//                {
-//                    for (int i = 0; i < IM_ARRAYSIZE(names); i++)
-//                    ImGui::MenuItem(names[i], "", &toggles[i]);
-//                    if (ImGui::BeginMenu("Sub-menu"))
-//                    {
-//                        ImGui::MenuItem("Click me");
-//                        ImGui::EndMenu();
-//                    }
-//
-//                    ImGui::Separator();
-//                    ImGui::Text("Tooltip here");
-//                    if (ImGui::IsItemHovered())
-//                        ImGui::SetTooltip("I am a tooltip over a popup");
-//
-//                    if (ImGui::Button("Stacked Popup"))
-//                        ImGui::OpenPopup("another popup");
-//                    if (ImGui::BeginPopup("another popup"))
-//                    {
-//                        for (int i = 0; i < IM_ARRAYSIZE(names); i++)
-//                        ImGui::MenuItem(names[i], "", &toggles[i]);
-//                        if (ImGui::BeginMenu("Sub-menu"))
-//                        {
-//                            ImGui::MenuItem("Click me");
-//                            ImGui::EndMenu();
-//                        }
-//                        ImGui::EndPopup();
-//                    }
-//                    ImGui::EndPopup();
-//                }
-//
-//                if (ImGui::Button("Popup Menu.."))
-//                    ImGui::OpenPopup("FilePopup");
-//                if (ImGui::BeginPopup("FilePopup"))
-//                {
-//                    ShowExampleMenuFile();
-//                    ImGui::EndPopup();
-//                }
+                // Showing a menu with toggles
+                if (button("Toggle..")) openPopup("toggle")
+                popup("toggle") {
+                    names.forEachIndexed { i, n -> withBool(toggles, i) { b -> menuItem(n, "", b) } }
+
+                    menu("Sub-menu") { menuItem("Click me") }
+
+                    separator()
+                    text("Tooltip here")
+                    if (isItemHovered()) setTooltip("I am a tooltip over a popup")
+
+                    if (button("Stacked Popup")) openPopup("another popup")
+                    popup("another popup") {
+                        names.forEachIndexed { i, n -> withBool(toggles, i) { b -> menuItem(n, "", b) } }
+                        menu("Sub-menu") { menuItem("Click me") }
+                    }
+                }
+
+                if (button("Popup Menu..")) openPopup("FilePopup")
+                popup("FilePopup") { showExampleMenuFile() }
             }
 
             treeNode("Context menus") {
@@ -181,7 +166,7 @@ object popupsAndModalWindows {
 //                    +            ImGui::MenuItem("Menu item", "CTRL+M");
 //                    +            if (ImGui::BeginMenu("Menu inside a regular window"))
 //                        +            {
-//                            +                ShowExampleMenuFile();
+//                            +                showExampleMenuFile();
 //                            +                ImGui::EndMenu();
 //                            +            }
 //                    +            ImGui::PopID();
@@ -190,4 +175,15 @@ object popupsAndModalWindows {
 //                    +        }
         }
     }
+}
+
+
+inline fun <R>withBool(bools: BooleanArray, index: Int, block: (KMutableProperty0<Boolean>) -> R): R {
+    Ref.bPtr++
+    val b = Ref::bool
+    b.set(bools[index])
+    val res = block(b)
+    bools[index] = b()
+    Ref.bPtr--
+    return res
 }

@@ -1,6 +1,5 @@
 package imgui.imgui.demo
 
-import gli_.has
 import glm_.BYTES
 import glm_.f
 import glm_.vec2.Vec2
@@ -9,84 +8,35 @@ import imgui.*
 import imgui.Context.overlayDrawList
 import imgui.Context.style
 import imgui.ImGui._begin
-import imgui.ImGui.alignTextToFramePadding
-import imgui.ImGui.beginChild
-import imgui.ImGui.beginGroup
 import imgui.ImGui.beginTooltip
-import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
-import imgui.ImGui.button
 import imgui.ImGui.checkbox
-import imgui.ImGui.closeCurrentPopup
-import imgui.ImGui.columns
 import imgui.ImGui.combo
-import imgui.ImGui.contentRegionAvailWidth
-import imgui.ImGui.cursorStartPos
-import imgui.ImGui.dragFloat
-import imgui.ImGui.dragInt
-import imgui.ImGui.dummy
 import imgui.ImGui.end
-import imgui.ImGui.endChild
-import imgui.ImGui.endGroup
 import imgui.ImGui.endTooltip
-import imgui.ImGui.getId
 import imgui.ImGui.inputFloat
-import imgui.ImGui.inputInt
 import imgui.ImGui.isItemHovered
-import imgui.ImGui.itemRectSize
-import imgui.ImGui.itemsLineHeightWithSpacing
-import imgui.ImGui.listBox
-import imgui.ImGui.listBoxFooter
-import imgui.ImGui.listBoxHeader
 import imgui.ImGui.menuItem
-import imgui.ImGui.nextColumn
-import imgui.ImGui.openPopup
-import imgui.ImGui.plotHistogram
-import imgui.ImGui.popId
-import imgui.ImGui.popItemWidth
-import imgui.ImGui.popStyleColor
 import imgui.ImGui.popTextWrapPos
-import imgui.ImGui.pushId
-import imgui.ImGui.pushItemWidth
-import imgui.ImGui.pushStyleColor
-import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
-import imgui.ImGui.scrollMaxY
-import imgui.ImGui.scrollY
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
-import imgui.ImGui.setScrollFromPosY
-import imgui.ImGui.setScrollHere
-import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderFloat
-import imgui.ImGui.sliderInt
-import imgui.ImGui.smallButton
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textUnformatted
-import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.version
-import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
-import imgui.ImGui.windowWidth
-import imgui.functionalProgramming.button
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.menu
-import imgui.functionalProgramming.popupModal
-import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withChild
-import imgui.functionalProgramming.withGroup
-import imgui.functionalProgramming.withId
-import imgui.functionalProgramming.withItemWidth
-import imgui.functionalProgramming.withStyleVar
 import imgui.internal.Rect
 import imgui.internal.Window
 import java.util.*
-import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
@@ -546,7 +496,7 @@ interface imgui_demoDebugInfo {
         var combo = 0
         var check = true
 
-        fun showMenu() {
+        fun showExampleMenuFile() {
             menuItem("(dummy menu)", "", false, false)
             menuItem("New")
             menuItem("Open", "Ctrl+O")
@@ -557,7 +507,7 @@ interface imgui_demoDebugInfo {
                 menu("More..") {
                     menuItem("Hello")
                     menuItem("Sailor")
-                    menu("Recurse..") { showMenu() }
+                    menu("Recurse..") { showExampleMenuFile() }
                 }
             }
             menuItem("Save", "Ctrl+S")
