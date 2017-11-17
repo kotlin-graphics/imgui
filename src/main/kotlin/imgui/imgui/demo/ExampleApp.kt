@@ -84,7 +84,7 @@ import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withTooltip
 import imgui.functionalProgramming.withWindow
 import imgui.imgui.demo.imgui_demoDebugInfo.Companion.showHelpMarker
-import imgui.imgui.demo.imgui_demoDebugInfo.Companion.showMenu
+import imgui.imgui.demo.imgui_demoDebugInfo.Companion.showExampleMenuFile
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
@@ -174,7 +174,7 @@ object ExampleApp {
 
         // Menu
         menuBar {
-            menu("Menu") { showMenu() }
+            menu("Menu") { showExampleMenuFile() }
             menu("Examples") {
                 menuItem("Main menu bar", "", ExampleApp.show::mainMenuBar)
                 menuItem("Console", "", ExampleApp.show::console)
@@ -231,7 +231,7 @@ object ExampleApp {
 /** Demonstrate creating a fullscreen menu bar and populating it.   */
 object MainMenuBar {
     operator fun invoke() = mainMenuBar {
-        menu("File") { showMenu() }
+        menu("File") { showExampleMenuFile() }
         menu("Edit") {
             menuItem("Undo", "CTRL+Z")
             menuItem("Redo", "CTRL+Y", false, false) // Disabled item
