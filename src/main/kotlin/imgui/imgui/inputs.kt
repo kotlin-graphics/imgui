@@ -66,8 +66,15 @@ interface imgui_inputs {
     /** did mouse button double-clicked. a double-click returns false in IsMouseClicked(). uses io.MouseDoubleClickTime.    */
     fun isMouseDoubleClicked(button: Int) = IO.mouseDoubleClicked[button]
 
-//IMGUI_API bool          IsMouseReleased(int button);                                        // did mouse button released (went from Down to !Down)
-//IMGUI_API bool          IsMouseDragging(int button = 0, float lock_threshold = -1.0f);      // is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold
+    /** did mouse button released (went from Down to !Down) */
+    fun isMouseReleased(button: Int) = IO.mouseReleased[button]
+
+    /** is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold */
+    fun isMouseDragging(button: Int = 0, lockThreshold: Float = -1f): Boolean {
+        if (!IO.mouseDown[button])            return false
+        val lockThreshold = if (lockThreshold < 0f) IO.mouseDragThreshold else lockThreshold
+        return IO.mouseDragMaxDistanceSqr[button] >= lockThreshold  * lockThreshold
+    }
 
     /** Test if mouse cursor is hovering given rectangle
      *  NB- Rectangle is clipped by our current clip setting
