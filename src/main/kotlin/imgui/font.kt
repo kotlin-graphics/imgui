@@ -148,8 +148,8 @@ class FontAtlas {
 
     //    IMGUI_API ImFont*           AddFontFromFileTTF(const char* filename, float size_pixels, const ImFontConfig* font_cfg = NULL, const ImWchar* glyph_ranges = NULL);
 
-    /** NB: Transfer ownership of 'ttf_data' to FontAtlas, unless fontCfgTemplate.fontDataOwnedByAtlas == false.
-     *  Owned TTF buffer will be deleted after Build(). */
+    /** Note: Transfer ownership of 'ttfData' to FontAtlas! Will be deleted after build(). Set fontCfg.fontDataOwnedByAtlas
+     *  to false to keep ownership. */
     fun addFontFromMemoryTTF(fontData: CharArray, sizePixels: Float, fontCfgTemplate: FontConfig? = null,
                              glyphRanges: IntArray = intArrayOf()): Font {
 
@@ -163,7 +163,7 @@ class FontAtlas {
         return addFont(fontCfg)
     }
 
-    /** @param compressedFontData still owned by caller. Compress with binary_to_compressed_c.cpp   */
+    /** @param compressedFontData still owned by caller. Compress with binary_to_compressed_c.cpp.   */
     fun addFontFromMemoryCompressedTTF(compressedFontData: CharArray, sizePixels: Float, fontCfgTemplate: FontConfig? = null,
                                        glyphRanges: IntArray): Font {
 
@@ -372,6 +372,7 @@ class FontAtlas {
     val GetGlyphRangesThai
         get() = intArrayOf(
                 0x0020, 0x00FF, // Basic Latin
+                0x2010, 0x205E, // Punctuations
                 0x0E00, 0x0E7F) // Thai
 
     // Helpers to build glyph ranges from text data. Feed your application strings/characters to it then call BuildRanges().

@@ -9,7 +9,6 @@ import imgui.*
 import imgui.Context.style
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.beginChild
-import imgui.ImGui.beginGroup
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -25,7 +24,6 @@ import imgui.ImGui.dragVec2
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
-import imgui.ImGui.endGroup
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.getId
@@ -76,7 +74,7 @@ import imgui.functionalProgramming.withGroup
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
-import imgui.imgui.demo.imgui_demoDebugInfo.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInfo.Companion.showHelpMarker
 import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef

@@ -54,10 +54,14 @@ object Context {
     var hoveredIdAllowOverlap = false
 
     var hoveredIdPreviousFrame = 0
+
+    var hoveredIdTimer = 0f
     /** Active widget   */
     var activeId = 0
 
     var activeIdPreviousFrame = 0
+
+    var activeIdTimer = 0f
     /** Active widget has been seen this frame   */
     var activeIdIsAlive = false
     /** Set at the time of activation for one frame */

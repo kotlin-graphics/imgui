@@ -80,10 +80,10 @@ interface imgui_utilities {
             g.activeIdAllowOverlap = true
     }
 
-    /** is current window focused   */
-    val isWindowFocused get() = g.navWindow === g.currentWindow
+    /** is current Begin()-ed window focused?   */
+    val isWindowFocused get() = g.navWindow === g.currentWindow!! // Not inside a Begin()/End()
 
-    /** is current window hovered and hoverable (not blocked by a popup) (differentiate child windows from each others) */
+    /** is current Begin()-ed window hovered (and typically: not blocked by a popup/modal)? */
     fun isWindowHovered(flags: Int = Hf.Default.i): Boolean {
         assert(flags hasnt Hf.AllowWhenOverlapped)  // Flags not supported by this function
         return when {
@@ -94,17 +94,17 @@ interface imgui_utilities {
         }
     }
 
-    /** is current root window focused (root = top-most parent of a child, otherwise self)  */
-    val isRootWindowFocused get() = g.navWindow === g.currentWindow!!.rootWindow
+    /** is current Begin()-ed root window focused (root = top-most parent of a child, otherwise self)?  */
+    val isRootWindowFocused get() = g.navWindow === g.currentWindow!!.rootWindow // Not inside a Begin()/End()
 
-    /** is current root window or any of its child (including current window) focused   */
-    val isRootWindowOrAnyChildFocused get() = g.navWindow != null && g.navWindow!!.rootWindow === g.currentWindow!!.rootWindow
+    /** is current Begin()-ed root window or any of its child (including current window) focused?   */
+    val isRootWindowOrAnyChildFocused get() = g.navWindow != null && g.navWindow!!.rootWindow === g.currentWindow!!.rootWindow // Not inside a Begin()/End()
 
-    /** is current root window or any of its child (including current window) hovered and hoverable (not blocked by a popup)    */
+    /** is current Begin()-ed root window or any of its child (including current window) hovered and hoverable (not blocked by a popup)? */
     fun isRootWindowOrAnyChildHovered(flags: Int = Hf.Default.i): Boolean {
         assert(flags hasnt Hf.AllowWhenOverlapped)  // Flags not supported by this function
         return when {
-            g.hoveredRootWindow != null || g.hoveredRootWindow != g.currentWindow!!.rootWindow -> false
+            g.hoveredRootWindow != null || g.hoveredRootWindow != g.currentWindow!!.rootWindow -> false // Not inside a Begin()/End()
             !g.hoveredRootWindow!!.isContentHoverable(flags) -> false
             flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeIdWindow != g.currentWindow -> false
             else -> true

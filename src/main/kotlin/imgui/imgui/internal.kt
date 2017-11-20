@@ -204,7 +204,8 @@ interface imgui_internal {
     }
 
     fun setActiveId(id: Int, window: Window?) {
-        g.activeIdIsJustActivated = (g.activeId != id)
+        g.activeIdIsJustActivated = g.activeId != id
+        if (g.activeIdIsJustActivated) g.activeIdTimer = 0f
         g.activeId = id
         g.activeIdAllowOverlap = false
         g.activeIdIsAlive = g.activeIdIsAlive || id != 0
@@ -216,6 +217,7 @@ interface imgui_internal {
     fun setHoveredId(id: Int) {
         g.hoveredId = id
         g.hoveredIdAllowOverlap = false
+        g.hoveredIdTimer = if(id != 0 && g.hoveredIdPreviousFrame == id) g.hoveredIdTimer + IO.deltaTime else 0f
     }
 
     fun keepAliveId(id: Int) {

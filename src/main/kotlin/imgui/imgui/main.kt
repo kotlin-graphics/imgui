@@ -60,11 +60,13 @@ interface imgui_main {
         g.renderDrawData.cmdListsCount = 0
 
         // Clear reference to active widget if the widget isn't alive anymore
+        if (g.hoveredIdPreviousFrame == 0) g.hoveredIdTimer = 0f
         g.hoveredIdPreviousFrame = g.hoveredId
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
         if (!g.activeIdIsAlive && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
             clearActiveId()
+        if (g.activeId != 0) g.activeIdTimer += IO.deltaTime
         g.activeIdPreviousFrame = g.activeId
         g.activeIdIsAlive = false
         g.activeIdIsJustActivated = false
@@ -358,11 +360,6 @@ interface imgui_main {
 
         g.initialized = false
     }
-
-//    IMGUI_API void          ShowUserGuide();                            // help block
-//    IMGUI_API void          ShowStyleEditor(ImGuiStyle* ref = NULL);    // style editor block. you can pass in a reference ImGuiStyle structure to compa to, revert to and save to (else it uses the default style)
-//    IMGUI_API void          ShowTestWindow(bool* p_open = NULL);        // test window demonstrating ImGui features
-//    IMGUI_API void          ShowMetricsWindow(bool* p_open = NULL);     // metrics window for debugging ImGui (browse draw commands, individual vertices, window list, etc.)
 
     companion object {
         fun focusPreviousWindow() {

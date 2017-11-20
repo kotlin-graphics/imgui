@@ -4,7 +4,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.imgui.*
-import imgui.imgui.demo.imgui_demoDebugInfo
+import imgui.imgui.imgui_demoDebugInfo
 
 // Helpers macros to generate 32-bits encoded colors
 var USE_BGRA_PACKED_COLOR = false

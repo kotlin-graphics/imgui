@@ -1,4 +1,4 @@
-package imgui.imgui.demo
+package imgui.imgui
 
 import glm_.BYTES
 import glm_.f
@@ -31,9 +31,9 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.version
 import imgui.ImGui.windowDrawList
-import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.withChild
+import imgui.imgui.demo.ExampleApp
 import imgui.internal.Rect
 import imgui.internal.Window
 import java.util.*
@@ -68,7 +68,7 @@ interface imgui_demoDebugInfo {
      *  Call this to learn about the library! try to make it always available in your application!   */
     fun showTestWindow(open: BooleanArray) {
         showWindow = open[0]
-        showTestWindow(::showWindow)
+        showTestWindow(Companion::showWindow)
         open[0] = showWindow
     }
 
@@ -269,8 +269,8 @@ interface imgui_demoDebugInfo {
                 text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
                 /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
                     information or not                 */
-                text("HoveredId: 0x%08X/0x%08X", g.hoveredId, g.hoveredIdPreviousFrame)
-                text("ActiveId: 0x%08X/0x%08X", g.activeId, g.activeIdPreviousFrame)
+                text("HoveredId: 0x%08X/0x%08X (%.2f sec)", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)
+                text("ActiveId: 0x%08X/0x%08X (%.2f sec)", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
                 text("NavWindow: '${g.navWindow?.name}'")
                 treePop()
@@ -339,14 +339,14 @@ interface imgui_demoDebugInfo {
             menuItem("Save As..")
             separator()
             menu("Options") {
-                menuItem("Enabled", "", ::enabled)
+                menuItem("Enabled", "", Companion::enabled)
                 withChild("child", Vec2(0, 60), true) {
                     for (i in 0 until 10) text("Scrolling Text %d", i)
                 }
-                sliderFloat("Value", ::float, 0f, 1f)
-                inputFloat("Input", ::float, 0.1f, 0f, 2)
-                combo("Combo", ::combo, "Yes\u0000No\u0000Maybe\u0000\u0000")
-                checkbox("Check", ::check)
+                sliderFloat("Value", Companion::float, 0f, 1f)
+                inputFloat("Input", Companion::float, 0.1f, 0f, 2)
+                combo("Combo", Companion::combo, "Yes\u0000No\u0000Maybe\u0000\u0000")
+                checkbox("Check", Companion::check)
             }
             menu("Colors") { for (col in Col.values()) menuItem(col.toString()) }
             menu("Disabled", false) { assert(false) } // Disabled
