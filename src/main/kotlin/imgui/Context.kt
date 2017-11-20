@@ -482,23 +482,23 @@ class Style {
      *  Tips: if you need to change your scale multiple times, prefer calling this on a freshly initialized Style
      *  structure rather than scaling multiple times (because floating point multiplications are lossy).    */
     fun scaleAllSizes(scaleFactor: Float) {
-        windowPadding timesAssign scaleFactor
-        windowMinSize timesAssign scaleFactor
-        windowRounding *= scaleFactor
-        childWindowRounding *= scaleFactor
-        framePadding timesAssign scaleFactor
-        frameRounding *= scaleFactor
-        itemSpacing timesAssign scaleFactor
-        itemInnerSpacing timesAssign scaleFactor
-        touchExtraPadding timesAssign scaleFactor
-        indentSpacing *= scaleFactor
-        columnsMinSpacing *= scaleFactor
-        scrollbarSize *= scaleFactor
-        scrollbarRounding *= scaleFactor
-        grabMinSize *= scaleFactor
-        grabRounding *= scaleFactor
-        displayWindowPadding timesAssign scaleFactor
-        displaySafeAreaPadding timesAssign scaleFactor
+        windowPadding = glm.floor(windowPadding * scaleFactor)
+        windowMinSize.put(glm.floor(windowMinSize.x * scaleFactor), glm.floor(windowMinSize.y * scaleFactor))
+        windowRounding = glm.floor(windowRounding * scaleFactor)
+        childWindowRounding = glm.floor(childWindowRounding * scaleFactor)
+        framePadding = glm.floor(framePadding * scaleFactor)
+        frameRounding = glm.floor(frameRounding * scaleFactor)
+        itemSpacing = glm.floor(itemSpacing * scaleFactor)
+        itemInnerSpacing = glm.floor(itemInnerSpacing * scaleFactor)
+        touchExtraPadding = glm.floor(touchExtraPadding * scaleFactor)
+        indentSpacing = glm.floor(indentSpacing * scaleFactor)
+        columnsMinSpacing = glm.floor(columnsMinSpacing * scaleFactor)
+        scrollbarSize = glm.floor(scrollbarSize * scaleFactor)
+        scrollbarRounding = glm.floor(scrollbarRounding * scaleFactor)
+        grabMinSize = glm.floor(grabMinSize * scaleFactor)
+        grabRounding = glm.floor(grabRounding * scaleFactor)
+        displayWindowPadding = glm.floor(displayWindowPadding * scaleFactor)
+        displaySafeAreaPadding = glm.floor(displaySafeAreaPadding * scaleFactor)
     }
 }
 
