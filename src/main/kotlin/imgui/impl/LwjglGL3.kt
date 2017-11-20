@@ -145,7 +145,8 @@ object LwjglGL3 {
         // Hide OS mouse cursor if ImGui is drawing it
         window.cursor = if (IO.mouseDrawCursor) GlfwWindow.Cursor.Hidden else GlfwWindow.Cursor.Normal
 
-        // Start the frame
+        /*  Start the frame. This call will update the IO.wantCaptureMouse, IO.wantCaptureKeyboard flag that you can use
+            to dispatch inputs (or not) to your application.         */
         ImGui.newFrame()
     }
 
@@ -376,7 +377,7 @@ object LwjglGL3 {
     }
 
     private val scrollCallback = { _: Double, yOffset: Double ->
-        mouseWheel += yOffset.f // Use fractional mouse wheel, 1.0 unit 5 lines.
+        mouseWheel += yOffset.f // Use fractional mouse wheel.
     }
 
     private val keyCallback = { key: Int, _: Int, action: Int, _: Int ->

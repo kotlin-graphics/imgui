@@ -891,6 +891,7 @@ interface imgui_internal {
                 c = Vec2(+0.866f, -0.5f) * r
             }
             Dir.Left, Dir.Right -> {
+                center.x -= r * 0.25f
                 if (dir == Dir.Left) r = -r
                 a = Vec2(1, 0) * r
                 b = Vec2(-0.500f, +0.866f) * r

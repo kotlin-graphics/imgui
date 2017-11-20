@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import com.sun.org.apache.xml.internal.serialize.OutputFormat.Defaults.Indent
 import glm_.BYTES
 import glm_.f
 import glm_.vec2.Vec2
@@ -33,6 +34,7 @@ import imgui.ImGui.version
 import imgui.ImGui.windowDrawList
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.withChild
+import imgui.functionalProgramming.withIndent
 import imgui.imgui.demo.ExampleApp
 import imgui.internal.Rect
 import imgui.internal.Window
@@ -72,172 +74,10 @@ interface imgui_demoDebugInfo {
         open[0] = showWindow
     }
 
-    fun showTestWindow(open: KMutableProperty0<Boolean>) {
+    fun showTestWindow(open: KMutableProperty0<Boolean>)  = ExampleApp(open)
 
-        ExampleApp(open)
-
-//
-//    if (ImGui::CollapsingHeader("Filtering"))
-//    {
-//        static ImGuiTextFilter filter;
-//        ImGui::Text("Filter usage:\n"
-//                "  \"\"         display all lines\n"
-//        "  \"xxx\"      display lines containing \"xxx\"\n"
-//        "  \"xxx,yyy\"  display lines containing \"xxx\" or \"yyy\"\n"
-//        "  \"-xxx\"     hide lines containing \"xxx\"");
-//        filter.Draw();
-//        const char* lines[] = { "aaa1.c", "bbb1.c", "ccc1.c", "aaa2.cpp", "bbb2.cpp", "ccc2.cpp", "abc.h", "hello, world" };
-//        for (int i = 0; i < IM_ARRAYSIZE(lines); i++)
-//        if (filter.PassFilter(lines[i]))
-//            ImGui::BulletText("%s", lines[i]);
-//    }
-//        if (ImGui::CollapsingHeader("Inputs & Focus"))
-//        {
-//            +        ImGuiIO& io = ImGui::GetIO();
-//            +        ImGui::Checkbox("io.MouseDrawCursor", &io.MouseDrawCursor);
-//            +        ImGui::SameLine(); ShowHelpMarker("Request ImGui to render a mouse cursor for you in software. Note that a mouse cursor rendered via regular GPU rendering will feel more laggy than hardware cursor, but will be more in sync with your other visuals.");
-//            +
-//            +        ImGui::Text("WantCaptureMouse: %d", io.WantCaptureMouse);
-//            +        ImGui::Text("WantCaptureKeyboard: %d", io.WantCaptureKeyboard);
-//            +        ImGui::Text("WantTextInput: %d", io.WantTextInput);
-//                    ImGui::Text("WantMoveMouse: %d", io.WantMoveMouse);
-//            +
-//            +        if (ImGui::TreeNode("Keyboard & Mouse State"))
-//                +        {
-//                    +            ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y);
-//                    +            ImGui::Text("Mouse down:");     for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (io.MouseDownDuration[i] >= 0.0f)   { ImGui::SameLine(); ImGui::Text("b%d (%.02f secs)", i, io.MouseDownDuration[i]); }
-//                    +            ImGui::Text("Mouse clicked:");  for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseClicked(i))          { ImGui::SameLine(); ImGui::Text("b%d", i); }
-//                    +            ImGui::Text("Mouse dbl-clicked:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDoubleClicked(i)) { ImGui::SameLine(); ImGui::Text("b%d", i); }
-//                    +            ImGui::Text("Mouse released:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseReleased(i))         { ImGui::SameLine(); ImGui::Text("b%d", i); }
-//                    +            ImGui::Text("Mouse wheel: %.1f", io.MouseWheel);
-//                    +
-//                    +            ImGui::Text("Keys down:");      for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (io.KeysDownDuration[i] >= 0.0f)     { ImGui::SameLine(); ImGui::Text("%d (%.02f secs)", i, io.KeysDownDuration[i]); }
-//                    +            ImGui::Text("Keys pressed:");   for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyPressed(i))             { ImGui::SameLine(); ImGui::Text("%d", i); }
-//                    +            ImGui::Text("Keys release:");   for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyReleased(i))            { ImGui::SameLine(); ImGui::Text("%d", i); }
-//                    +            ImGui::Text("Keys mods: %s%s%s%s", io.KeyCtrl ? "CTRL " : "", io.KeyShift ? "SHIFT " : "", io.KeyAlt ? "ALT " : "", io.KeySuper ? "SUPER " : "");
-//                    +
-//                    +
-//                    +            ImGui::Button("Hovering me sets the\nkeyboard capture flag");
-//                    +            if (ImGui::IsItemHovered())
-//                        +                ImGui::CaptureKeyboardFromApp(true);
-//                    +            ImGui::SameLine();
-//                    +            ImGui::Button("Holding me clears the\nthe keyboard capture flag");
-//                    +            if (ImGui::IsItemActive())
-//                        +                ImGui::CaptureKeyboardFromApp(false);
-//                    +
-//                    +            ImGui::TreePop();
-//                    +        }
-//            +
-//            if (ImGui::TreeNode("Tabbing"))
-//            {
-//                ImGui::Text("Use TAB/SHIFT+TAB to cycle through keyboard editable fields.");
-//                static char buf[32] = "dummy";
-//                ImGui::InputText("1", buf, IM_ARRAYSIZE(buf));
-//                ImGui::InputText("2", buf, IM_ARRAYSIZE(buf));
-//                ImGui::InputText("3", buf, IM_ARRAYSIZE(buf));
-//                ImGui::PushAllowKeyboardFocus(false);
-//                ImGui::InputText("4 (tab skip)", buf, IM_ARRAYSIZE(buf));
-//                //ImGui::SameLine(); ShowHelperMarker("Use ImGui::PushAllowKeyboardFocus(bool)\nto disable tabbing through certain widgets.");
-//                ImGui::PopAllowKeyboardFocus();
-//                ImGui::InputText("5", buf, IM_ARRAYSIZE(buf));
-//                ImGui::TreePop();
-//            }
-//
-//            if (ImGui::TreeNode("Focus from code"))
-//            {
-//                bool focus_1 = ImGui::Button("Focus on 1"); ImGui::SameLine();
-//                bool focus_2 = ImGui::Button("Focus on 2"); ImGui::SameLine();
-//                bool focus_3 = ImGui::Button("Focus on 3");
-//                int has_focus = 0;
-//                static char buf[128] = "click on a button to set focus";
-//
-//                if (focus_1) ImGui::SetKeyboardFocusHere();
-//                ImGui::InputText("1", buf, IM_ARRAYSIZE(buf));
-//                if (ImGui::IsItemActive()) has_focus = 1;
-//
-//                if (focus_2) ImGui::SetKeyboardFocusHere();
-//                ImGui::InputText("2", buf, IM_ARRAYSIZE(buf));
-//                if (ImGui::IsItemActive()) has_focus = 2;
-//
-//                ImGui::PushAllowKeyboardFocus(false);
-//                if (focus_3) ImGui::SetKeyboardFocusHere();
-//                ImGui::InputText("3 (tab skip)", buf, IM_ARRAYSIZE(buf));
-//                if (ImGui::IsItemActive()) has_focus = 3;
-//                ImGui::PopAllowKeyboardFocus();
-//                if (has_focus)
-//                    ImGui::Text("Item with focus: %d", has_focus);
-//                else
-//                    ImGui::Text("Item with focus: <none>");
-//                ImGui::TextWrapped("Cursor & selection are preserved when refocusing last used item in code.");
-//                ImGui::TreePop();
-//            }
-//
-//        if (ImGui::TreeNode("Hovering"))
-//            +        {
-//                +            // Testing IsWindowHovered() function
-//                +            ImGui::BulletText(
-//                        +                "IsWindowHovered() = %d\n"
-//                                +                "IsWindowHovered(_AllowWhenBlockedByPopup) = %d\n"
-//                                +                "IsWindowHovered(_AllowWhenBlockedByActiveItem) = %d\n",
-//                        +                ImGui::IsWindowHovered(),
-//                        +                ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup),
-//                        +                ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem));
-//                +
-//                +            // Testing IsItemHovered() function (because BulletText is an item itself and that would affect the output of IsItemHovered, we pass all lines in a single items to shorten the code)
-//                +            ImGui::Button("ITEM");
-//                +            ImGui::BulletText(
-//                        +                "IsItemHovered() = %d\n"
-//                                +                "IsItemHovered(_AllowWhenBlockedByPopup) = %d\n"
-//                                +                "IsItemHovered(_AllowWhenBlockedByActiveItem) = %d\n"
-//                                +                "IsItemHovered(_AllowWhenOverlapped) = %d\n"
-//                                +                "IsItemhovered(_RectOnly) = %d\n",
-//                        +                ImGui::IsItemHovered(),
-//                        +                ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup),
-//                        +                ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem),
-//                        +                ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped),
-//                        +                ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly));
-//                +
-//                +            ImGui::TreePop();
-//                +        }
-//
-//            if (ImGui::TreeNode("Dragging"))
-//            {
-//                ImGui::TextWrapped("You can use ImGui::GetMouseDragDelta(0) to query for the dragged amount on any widget.");
-//                ImGui::Button("Drag Me");
-//                if (ImGui::IsItemActive())
-//                {
-//                    // Draw a line between the button and the mouse cursor
-//                    ImDrawList* draw_list = ImGui::GetWindowDrawList();
-//                    draw_list->PushClipRectFullScreen();
-//        draw_list->AddLine(ImGui::CalcItemRectClosestPoint(io.MousePos, true, -2.0f), io.MousePos, ImColor(ImGui::GetStyle().Colors[ImGuiCol_Button]), 4.0f);
-//        draw_list->PopClipRect();
-//        ImVec2 value_raw = ImGui::GetMouseDragDelta(0, 0.0f);
-//        ImVec2 value_with_lock_threshold = ImGui::GetMouseDragDelta(0);
-//        ImVec2 mouse_delta = io.MouseDelta;
-//        ImGui::SameLine(); ImGui::Text("Raw (%.1f, %.1f), WithLockThresold (%.1f, %.1f), MouseDelta (%.1f, %.1f)", value_raw.x, value_raw.y, value_with_lock_threshold.x, value_with_lock_threshold.y, mouse_delta.x, mouse_delta.y);
-//    }
-//    ImGui::TreePop();
-//}
-//        if (ImGui::TreeNode("Mouse cursors"))
-//        {
-//        ImGui::Text("Hover to see mouse cursors:");
-//        +            ImGui::SameLine(); ShowHelpMarker("Your application can render a different mouse cursor based on what ImGui::GetMouseCursor() returns. If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, otherwise your backend needs to handle it.");
-//                     for (int i = 0; i < ImGuiMouseCursor_Count_; i++)
-//        {
-//            char label[32];
-//            sprintf(label, "Mouse cursor %d", i);
-//            ImGui::Bullet(); ImGui::Selectable(label, false);
-//            if (ImGui::IsItemHovered())
-//                ImGui::SetMouseCursor(i);
-//        }
-//        ImGui::TreePop();
-//    }
-//}
-        end()
-    }
-
-    /** create metrics window. display ImGui internals: browse window list, draw commands, individual vertices, basic
-     *  internal state, etc.    */
+    /** Create metrics window. display ImGui internals: draw commands (with individual draw calls and vertices), window list,
+     *  basic internal state, etc.    */
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
         if (_begin("ImGui Metrics", open)) {
@@ -282,23 +122,23 @@ interface imgui_demoDebugInfo {
 
     fun showUserGuide() {
         bulletText("Double-click on title bar to collapse window.")
-        bulletText("Click and drag on lower right corner to resize window.")
+        bulletText("Click and drag on lower right corner to resize window\n(double-click to auto fit window to its contents).")
         bulletText("Click and drag on any empty space to move window.")
-        bulletText("Mouse Wheel to scroll.")
+        bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
+        bulletText("CTRL+Click on a slider or drag box to input value as text.")
         if (IO.fontAllowUserScaling)
             bulletText("CTRL+Mouse Wheel to zoom window contents.")
-        bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
-        bulletText("CTRL+Click on a slider or drag box to input text.")
-        bulletText(
-                "While editing text:\n" +
-                        "- Hold SHIFT or use mouse to select text\n" +
-                        "- CTRL+Left/Right to word jump\n" +
-                        "- CTRL+A or double-click to select all\n" +
-                        "- CTRL+X,CTRL+C,CTRL+V clipboard\n" +
-                        "- CTRL+Z,CTRL+Y undo/redo\n" +
-                        "- ESCAPE to revert\n" +
-                        "- You can apply arithmetic operators +,*,/ on numerical values.\n" +
-                        "  Use +- to subtract.\n")
+        bulletText("Mouse Wheel to scroll.")
+        bulletText("While editing text:\n")
+        withIndent {
+            bulletText("Hold SHIFT or use mouse to select text.")
+            bulletText("CTRL+Left/Right to word jump.")
+            bulletText("CTRL+A or double-click to select all.")
+            bulletText("CTRL+X,CTRL+C,CTRL+V to use clipboard.")
+            bulletText("CTRL+Z,CTRL+Y to undo/redo.")
+            bulletText("ESCAPE to revert.")
+            bulletText("You can apply arithmetic operators +,*,/ on numerical values.\nUse +- to subtract.")
+        }
     }
 
     companion object {

@@ -154,7 +154,7 @@ interface imgui_menus {
             val flags = Sf.Menu or Sf.DontClosePopups or Sf.DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.Null else Sf.Disabled, Vec2(w, 0f))
             if (!enabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-            renderTriangle(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.2f, 0f), Dir.Right)
+            renderTriangle(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), Dir.Right)
             if (!enabled) popStyleColor()
         }
 
@@ -263,8 +263,8 @@ interface imgui_menus {
                 popStyleColor()
             }
             if (selected)
-                renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * (0.2f + 0.2f),
-                        g.fontSize * 0.134f * 0.5f), (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
+                renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
+                        (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
         }
         return pressed
     }

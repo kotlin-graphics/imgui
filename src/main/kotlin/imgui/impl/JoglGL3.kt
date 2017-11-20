@@ -136,7 +136,8 @@ object JoglGL3 {
         // Hide OS mouse cursor if ImGui is drawing it
         window.isPointerVisible = !IO.mouseDrawCursor
 
-        // Start the frame
+        /*  Start the frame. This call will update the IO.wantCaptureMouse, IO.wantCaptureKeyboard flag that you can use
+            to dispatch inputs (or not) to your application.         */
         ImGui.newFrame()
     }
 
@@ -403,7 +404,7 @@ object JoglGL3 {
         }
 
         override fun mouseWheelMoved(e: MouseEvent) {
-            mouseWheel += e.rotation[1] // Use fractional mouse wheel, 1.0 unit 5 lines.
+            mouseWheel += e.rotation[1] // Use fractional mouse wheel.
         }
     }
 

@@ -8,6 +8,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
 import imgui.ImGui.beginChild
+import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endChild
 import imgui.ImGui.findRenderedTextEnd
@@ -30,6 +31,7 @@ interface imgui_utilities {
      *      - we allow hovering to be true when activeId==window.moveID, so that clicking on non-interactive items
      *          such as a text() item still returns true with isItemHovered()
      *      - this should work even for non-interactive items that have no ID, so we cannot use LastItemId  */
+    fun isItemHovered(flags: Hf) = isItemHovered(flags.i)
     fun isItemHovered(flags: Int = Hf.Default.i): Boolean {
         val window = g.currentWindow!!
         return when {
@@ -39,12 +41,17 @@ interface imgui_utilities {
             Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was the test
             that has been running for a long while. */
         // g.hoveredWindow !== window -> false
-            g.hoveredRootWindow !== window.rootWindow && flags hasnt Hf.AllowWhenOverlapped -> false
-            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeId != window.dc.lastItemId &&
-                    !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
-            !window.isContentHoverable(flags) -> false
-            window.dc.itemFlags has ItemFlags.Disabled -> false
-            else -> true
+            else -> {
+                assert(flags hasnt Hf.FlattenChilds) // Flags not supported by this function
+                when {
+                    g.hoveredRootWindow !== window.rootWindow && flags hasnt Hf.AllowWhenOverlapped -> false
+                    flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeId != window.dc.lastItemId &&
+                            !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
+                    !window.isContentHoverable(flags) -> false
+                    window.dc.itemFlags has ItemFlags.Disabled -> false
+                    else -> true
+                }
+            }
         }
     }
 
@@ -53,7 +60,7 @@ interface imgui_utilities {
     val isItemActive get() = if (g.activeId != 0) g.activeId == g.currentWindow!!.dc.lastItemId else false
 
     /** Is the last item clicked? (e.g. button/node just clicked on)   */
-    fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemHovered(Hf.Default.i)
+    fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemHovered(Hf.Default)
 
     /** Is the last item visible? (aka not out of sight due to clipping/scrolling.)    */
     val isItemVisible get() = with(currentWindowRead!!) { clipRect overlaps dc.lastItemRect }
@@ -84,12 +91,14 @@ interface imgui_utilities {
     val isWindowFocused get() = g.navWindow === g.currentWindow!! // Not inside a Begin()/End()
 
     /** is current Begin()-ed window hovered (and typically: not blocked by a popup/modal)? */
+    fun isWindowHovered(flags: Hf) = isWindowHovered(flags.i)
     fun isWindowHovered(flags: Int = Hf.Default.i): Boolean {
         assert(flags hasnt Hf.AllowWhenOverlapped)  // Flags not supported by this function
         return when {
+            flags has Hf.FlattenChilds && g.hoveredRootWindow !== g.currentWindow!!.rootWindow -> false
             g.hoveredWindow !== g.currentWindow -> false
             !g.hoveredRootWindow!!.isContentHoverable(flags) -> false
-            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeIdWindow !== g.currentWindow -> false
+            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != g.hoveredWindow!!.moveId -> false
             else -> true
         }
     }
@@ -99,17 +108,6 @@ interface imgui_utilities {
 
     /** is current Begin()-ed root window or any of its child (including current window) focused?   */
     val isRootWindowOrAnyChildFocused get() = g.navWindow != null && g.navWindow!!.rootWindow === g.currentWindow!!.rootWindow // Not inside a Begin()/End()
-
-    /** is current Begin()-ed root window or any of its child (including current window) hovered and hoverable (not blocked by a popup)? */
-    fun isRootWindowOrAnyChildHovered(flags: Int = Hf.Default.i): Boolean {
-        assert(flags hasnt Hf.AllowWhenOverlapped)  // Flags not supported by this function
-        return when {
-            g.hoveredRootWindow != null || g.hoveredRootWindow != g.currentWindow!!.rootWindow -> false // Not inside a Begin()/End()
-            !g.hoveredRootWindow!!.isContentHoverable(flags) -> false
-            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeIdWindow != g.currentWindow -> false
-            else -> true
-        }
-    }
 
     /** test if rectangle (of given size, starting from cursor position) is visible / not clipped.  */
     fun isRectVisible(size: Vec2) = with(currentWindowRead!!) { clipRect overlaps Rect(dc.cursorPos, dc.cursorPos + size) }

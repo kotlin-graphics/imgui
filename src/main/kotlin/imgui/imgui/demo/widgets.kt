@@ -449,9 +449,21 @@ object widgets {
 
             treeNode("Images") {
                 textWrapped("Below we are displaying the font texture (which is the only texture we have access to in this demo). Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. Hover the texture for a zoomed view!")
+                /*  Here we are grabbing the font texture because that's the only one we have access to inside the demo
+                    code.
+                    Remember that textureId is just storage for whatever you want it to be, it is essentially a value
+                    that will be passed to the render function inside the ImDrawCmd structure.
+                    If you use one of the default imgui_impl_XXXX.cpp renderer, they all have comments at the top of
+                    their file to specify what they expect to be stored in textureID.
+                    (for example, the imgui_impl_glfw_gl3.cpp renderer expect a GLuint OpenGL texture identifier etc.)
+                    If you decided that textureID = MyEngineTexture*, then you can pass your MyEngineTexture* pointers
+                    to imgui.image(), and gather width/height through your own functions, etc.
+                    Using showMetricsWindow() as a "debugger" to inspect the draw data that are being passed to your
+                    render will help you debug issues if you are confused about this.
+                    Consider using the lower-level drawList.addImage() API, via imgui.windowDrawList.addImage().    */
+                val texId = IO.fonts.texId
                 val texScreenPos = Vec2(cursorScreenPos)
                 val texSize = Vec2(IO.fonts.texSize)
-                val texId = IO.fonts.texId
                 text("%.0fx%.0f", texSize.x, texSize.y)
                 image(texId, texSize, Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
                 if (isItemHovered())
