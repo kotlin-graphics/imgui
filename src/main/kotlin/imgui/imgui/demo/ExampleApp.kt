@@ -83,8 +83,8 @@ import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withTooltip
 import imgui.functionalProgramming.withWindow
-import imgui.imgui.demo.imgui_demoDebugInfo.Companion.showHelpMarker
-import imgui.imgui.demo.imgui_demoDebugInfo.Companion.showExampleMenuFile
+import imgui.imgui.imgui_demoDebugInfo.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInfo.Companion.showExampleMenuFile
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.max

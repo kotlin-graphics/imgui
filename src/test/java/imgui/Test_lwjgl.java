@@ -3,11 +3,11 @@ package imgui;
 import glm_.vec2.Vec2;
 import glm_.vec4.Vec4;
 import imgui.impl.LwjglGL3;
-import kotlin.reflect.KMutableProperty0;
 import org.lwjgl.opengl.GL;
 import uno.glfw.GlfwWindow;
 
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.glClear;
 
 public class Test_lwjgl {
 
@@ -31,14 +31,24 @@ public class Test_lwjgl {
         lwjglGL3.init(window, true);
 
         // Load Fonts
-        // (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)
+        /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use
+                pushFont()/popFont() to select them.
+            - addFontFromFileTTF() will return the Font so you can store it if you need to select the font among multiple.
+            - If the file cannot be loaded, the function will return null. Please handle those errors in your application
+                (e.g. use an assertion, or display an error and quit).
+            - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling
+                FontAtlas.build()/getTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
+            - Read 'extra_fonts/README.txt' for more instructions and details.
+            - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write
+                a double backslash \\ ! */
         //ImGuiIO& io = ImGui::GetIO();
         //io.Fonts->AddFontDefault();
+        //io.Fonts->AddFontFromFileTTF("../../extra_fonts/Roboto-Medium.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/Cousine-Regular.ttf", 15.0f);
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/DroidSans.ttf", 16.0f);
-        //io.Fonts->AddFontFromFileTTF("../../extra_fonts/Roboto-Medium.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
-        //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+        //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+        //IM_ASSERT(font != NULL);
 
         while (window.getOpen()) loop();
 
