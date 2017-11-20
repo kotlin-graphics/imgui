@@ -665,7 +665,8 @@ interface imgui_internal {
 
         dc.columnsCellMaxY = glm.max(dc.columnsCellMaxY, dc.cursorPos.y)
         dc.cursorPos.y = dc.columnsCellMaxY
-        dc.cursorMaxPos.x = glm.max(dc.columnsStartMaxPosX, dc.columnsMaxX)  // Columns don't grow parent
+        if (dc.columnsFlags hasnt ColumnsFlags.GrowParentContentsSize)
+            dc.cursorMaxPos.x = max(dc.columnsStartMaxPosX, dc.columnsMaxX) // Restore cursor max pos, as columns don't grow parent
 
         // Draw columns borders and handle resize
         if (dc.columnsFlags hasnt ColumnsFlags.NoBorder && !skipItems) {
@@ -2612,7 +2613,7 @@ interface imgui_internal {
 
         val smallSquareSize get() = g.fontSize + style.framePadding.y * 2f
 
-        private var f0 = 0f
+        private var f0 = 0f // TODO remove
         private var i0 = 0
     }
 }

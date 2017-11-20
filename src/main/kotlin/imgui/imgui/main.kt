@@ -130,9 +130,9 @@ interface imgui_main {
             assert(g.movingWindow != null)
             assert(g.movingWindow!!.moveId == g.movingdWindowMoveId)
             if (IO.mouseDown[0]) {
-                g.movingWindow!!.rootWindow.posF plusAssign IO.mouseDelta
+                g.movingWindow!!.rootWindow!!.posF plusAssign IO.mouseDelta
                 if (IO.mouseDelta notEqual 0f)
-                    markIniSettingsDirty(g.movingWindow!!.rootWindow)
+                    markIniSettingsDirty(g.movingWindow!!.rootWindow!!)
                 g.movingWindow.focus()
             } else {
                 clearActiveId()
