@@ -191,15 +191,16 @@ class Color {
  *      Step(). Does nothing and switch to Step 3.)
  *  - Step 3: the clipper validate that we have reached the expected Y position (corresponding to element DisplayEnd),
  *      advance the cursor to the end of the list and then returns 'false' to end the loop. */
-class ListClipper {
+class ListClipper
+/** @param[itemsCount]:  Use -1 to ignore (you can call Begin later). Use INT_MAX if you don't know how many items
+ *  you have (in which case the cursor won't be advanced in the final step).
+ *  @param[itemsHeight]: Use -1.0f to be calculated automatically on first step. Otherwise pass in the distance
+ *  between your items, typically GetTextLineHeightWithSpacing() or GetItemsLineHeightWithSpacing().
+ *  If you don't specify an items_height, you NEED to call Step(). If you specify items_height you may call the old
+ *  Begin()/End() api directly, but prefer calling Step().   */
+constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
 
-    /** @param[itemsCount]:  Use -1 to ignore (you can call Begin later). Use INT_MAX if you don't know how many items
-     *  you have (in which case the cursor won't be advanced in the final step).
-     *  @param[itemsHeight]: Use -1.0f to be calculated automatically on first step. Otherwise pass in the distance
-     *  between your items, typically GetTextLineHeightWithSpacing() or GetItemsLineHeightWithSpacing().
-     *  If you don't specify an items_height, you NEED to call Step(). If you specify items_height you may call the old
-     *  Begin()/End() api directly, but prefer calling Step().   */
-    constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
+    init {
         /* NB: Begin() initialize every fields (as we allow user to call Begin/End multiple times on a same instance if
             they want).         */
         begin(itemsCount, itemsHeight)
