@@ -232,9 +232,14 @@ interface imgui_widgetsSelectableLists {
     companion object {
         //        var i0 = 0
 //        var b0 = false
-        inline fun <R> withBool(block: (KMutableProperty0<Boolean>) -> R): R {
+        private inline fun <R> withBool(block: (KMutableProperty0<Boolean>) -> R): R {
             Ref.bPtr++
             return block(Ref::bool).also { Ref.bPtr-- }
+        }
+
+        private inline fun <R> withInt(block: (KMutableProperty0<Int>) -> R): R {
+            Ref.iPtr++
+            return block(Ref::int).also { Ref.iPtr-- }
         }
     }
 }

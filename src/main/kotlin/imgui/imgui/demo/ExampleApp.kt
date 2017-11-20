@@ -125,6 +125,8 @@ object ExampleApp {
     var noCollapse = false
     var noMenu = false
 
+    var filter = TextFilter()
+
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         if (show.mainMenuBar) MainMenuBar()
@@ -225,6 +227,25 @@ object ExampleApp {
         widgets()
 
         layout_()
+
+        popupsAndModalWindows()
+
+        columns_()
+
+        collapsingHeader("Filtering TODO") {
+//            ImGui::Text("Filter usage:\n"
+//                    "  \"\"         display all lines\n"
+//            "  \"xxx\"      display lines containing \"xxx\"\n"
+//            "  \"xxx,yyy\"  display lines containing \"xxx\" or \"yyy\"\n"
+//            "  \"-xxx\"     hide lines containing \"xxx\"");
+//            filter.Draw();
+//            const char* lines[] = { "aaa1.c", "bbb1.c", "ccc1.c", "aaa2.cpp", "bbb2.cpp", "ccc2.cpp", "abc.h", "hello, world" };
+//            for (int i = 0; i < IM_ARRAYSIZE(lines); i++)
+//            if (filter.PassFilter(lines[i]))
+//                ImGui::BulletText("%s", lines[i]);
+        }
+
+        inputAndFocus()
     }
 }
 

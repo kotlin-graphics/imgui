@@ -15,7 +15,6 @@ import imgui.has
 import imgui.hasnt
 import imgui.internal.DataType
 import imgui.or
-import imgui.withFloat
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.InputTextFlags as Itf
