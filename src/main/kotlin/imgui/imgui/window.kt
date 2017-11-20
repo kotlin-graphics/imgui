@@ -261,8 +261,10 @@ interface imgui_window {
             // Apply minimum/maximum window size constraints and final size
             window.sizeFull put window.calcSizeFullWithConstraint(window.sizeFull)
             window.size put if (window.collapsed) window.titleBarRect().size else window.sizeFull
-
-            if (flags has Wf.ChildWindow && flags hasnt Wf.Popup) window.size put window.sizeFull
+            if (flags has Wf.ChildWindow && flags hasnt Wf.Popup) {
+                assert(windowSizeSetByApi)  // Submitted by beginChild()
+                window.size put window.sizeFull
+            }
 
             /* ---------- SCROLLBAR STATUS ---------- */
 
@@ -274,8 +276,8 @@ interface imgui_window {
 
                 if (window.scrollbar.x && !window.scrollbar.y)
                     window.scrollbar.y = window.sizeContents.y > window.sizeFull.y + style.itemSpacing.y - style.scrollbarSize && flags hasnt Wf.NoScrollbar
-                window.scrollbarSizes.put(if(window.scrollbar.y) style.scrollbarSize else 0f, if(window.scrollbar.x) style.scrollbarSize else 0f)
-                window.borderSize = if(flags has Wf.ShowBorders) 1f else 0f
+                window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f, if (window.scrollbar.x) style.scrollbarSize else 0f)
+                window.borderSize = if (flags has Wf.ShowBorders) 1f else 0f
             }
 
             /* ---------- POSITION ---------- */
@@ -285,8 +287,7 @@ interface imgui_window {
                 window.orderWithinParent = parentWindow!!.dc.childWindows.size
                 parentWindow.dc.childWindows.add(window)
             }
-            if (flags has Wf.ChildWindow && flags hasnt Wf.Popup) {
-                assert(windowSizeSetByApi) // Submitted by beginChild()
+            if (flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowPosSetByApi) {
                 window.posF put parentWindow!!.dc.cursorPos
                 window.pos put window.posF
             }
@@ -571,6 +572,12 @@ interface imgui_window {
             window.innerRect.max.x = window.pos.x + window.size.x - window.scrollbarSizes.x
             window.innerRect.max.y = window.pos.y + window.size.y - window.scrollbarSizes.y
             //window->DrawList->AddRect(window->InnerRect.Min, window->InnerRect.Max, IM_COL32_WHITE);
+
+            /* After begin() we fill the last item / hovered data using the title bar data. Make that a standard behavior
+                (to allow usage of context menus on title bar only, etc.).             */
+            window.dc.lastItemId = window.moveId
+            window.dc.lastItemRect = titleBarRect
+            window.dc.lastItemRectHoveredRect = isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false)
         }
 
         /*  Inner clipping rectangle

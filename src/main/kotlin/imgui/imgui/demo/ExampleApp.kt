@@ -76,6 +76,7 @@ import imgui.functionalProgramming.mainMenuBar
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.menuBar
 import imgui.functionalProgramming.menuItem
+import imgui.functionalProgramming.popupContextItem
 import imgui.functionalProgramming.popupContextWindow
 import imgui.functionalProgramming.smallButton
 import imgui.functionalProgramming.treeNode
@@ -332,6 +333,11 @@ object Console {
                 end()
                 return
             }
+
+            /*  As a specific feature guaranteed by the library, after calling begin() the last Item represent the title bar.
+                So e.g. isItemHovered() will return true when hovering the title bar. */
+            // Here we create a context menu only available from the title bar.
+            popupContextItem() { if(menuItem("Close")) open.set(false) }
 
             textWrapped("This example is not yet implemented, you are welcome to contribute")
 //            textWrapped("This example implements a console with basic coloring, completion and history. A more elaborate implementation may want to store entries along with extra data such as timestamp, emitter, etc.");
@@ -764,7 +770,7 @@ object LongText {
 //            static ImGuiTextBuffer log;
 //            static int lines = 0;
 //            ImGui::Text("Printing unusually long amount of text.");
-//            ImGui::Combo("Test type", &test_type, "Single call to TextUnformatted()\0Multiple calls to Text(), clipped manually\0Multiple calls to Text(), not clipped\0");
+//            ImGui::Combo("Test type", &test_type, "Single call to TextUnformatted()\0Multiple calls to Text(), clipped manually\0Multiple calls to Text(), not clipped (slow)\0");
 //            ImGui::Text("Buffer contents: %d lines, %d bytes", lines, log.size());
 //            if (ImGui::Button("Clear")) { log.clear(); lines = 0; }
 //            ImGui::SameLine();

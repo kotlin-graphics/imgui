@@ -14,6 +14,7 @@ import imgui.ImGui.clearActiveId
 import imgui.ImGui.keepAliveId
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.max
 import imgui.Context as g
 import imgui.WindowFlags as Wf
 import imgui.HoveredFlags as Hf
@@ -612,8 +613,11 @@ class Window(
                 it(g.setNextWindowSizeConstraintCallbackUserData, pos, sizeFull, newSize)
             }
         }
-        if (flags hasnt (Wf.ChildWindow or Wf.AlwaysAutoResize))
+        if (flags hasnt (Wf.ChildWindow or Wf.AlwaysAutoResize)) {
             newSize max_ style.windowMinSize
+            // Reduce artifacts with very small windows
+            newSize.y = max(newSize.y, titleBarHeight + menuBarHeight + max(0f, style.windowRounding - 1f))
+        }
         return newSize
     }
 

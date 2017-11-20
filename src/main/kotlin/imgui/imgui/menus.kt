@@ -39,6 +39,7 @@ import imgui.internal.Dir
 import imgui.internal.LayoutType
 import imgui.internal.Rect
 import imgui.internal.triangleContainsPoint
+import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.SelectableFlags as Sf
@@ -84,7 +85,7 @@ interface imgui_menus {
         assert(!window.dc.menuBarAppending)
         beginGroup() // Save position
         pushId("##menubar")
-        val rect = Rect(window.menuBarRect())
+        val rect = Rect(window.menuBarRect()).apply { max.x = max(min.x, max.x - style.windowRounding) }
         pushClipRect(Vec2(glm.floor(rect.min.x + 0.5f), glm.floor(rect.min.y + window.borderSize + 0.5f)),
                 Vec2(glm.floor(rect.max.x + 0.5f), glm.floor(rect.max.y + 0.5f)), false)
         window.dc.cursorPos = Vec2(rect.min.x + window.dc.menuBarOffsetX, rect.min.y)// + g.style.FramePadding.y);
@@ -136,6 +137,7 @@ interface imgui_menus {
         if (window.dc.layoutType == LayoutType.Horizontal) {
             // Menu inside an horizontal menu bar
             // Selectable extend their highlight by half ItemSpacing in each direction.
+            // For ChildMenu, the popup position will be overwritten by the call to findBestPopupWindowPos() in begin()
             popupPos.put(pos.x - window.windowPadding.x, pos.y - style.framePadding.y + window.menuBarHeight)
             window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
             pushStyleVar(StyleVar.ItemSpacing, style.itemSpacing * 2f)
