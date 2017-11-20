@@ -2200,7 +2200,7 @@ interface imgui_internal {
             textUnformatted(text, textEnd)
             separator()
         }
-        val sz = Vec2(g.fontSize * 3)
+        val sz = Vec2(g.fontSize * 3 + style.framePadding.y * 2)
         val f = (flags and (Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf)) or Cef.NoTooltip
         colorButton("##preview", Vec4(col), f, sz)
         sameLine()

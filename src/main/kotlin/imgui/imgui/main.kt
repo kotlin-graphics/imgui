@@ -13,6 +13,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.internal.Window
 import imgui.internal.focus
 import imgui.internal.lengthSqr
+import kotlin.math.max
 import imgui.Context as g
 import imgui.WindowFlags as Wf
 
@@ -106,8 +107,12 @@ interface imgui_main {
                     IO.mouseClickedTime[i] = g.time
                 IO.mouseClickedPos[i] put IO.mousePos
                 IO.mouseDragMaxDistanceSqr[i] = 0f
-            } else if (IO.mouseDown[i])
-                IO.mouseDragMaxDistanceSqr[i] = glm.max(IO.mouseDragMaxDistanceSqr[i], (IO.mousePos - IO.mouseClickedPos[i]).lengthSqr)
+            } else if (IO.mouseDown[i]) {
+                val mouseDelta = IO.mousePos - IO.mouseClickedPos[i]
+                IO.mouseDragMaxDistanceAbs[i].x = max(IO.mouseDragMaxDistanceAbs[i].x, if(mouseDelta.x < 0f) -mouseDelta.x else mouseDelta.x)
+                IO.mouseDragMaxDistanceAbs[i].y = max(IO.mouseDragMaxDistanceAbs[i].y, if(mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y)
+                IO.mouseDragMaxDistanceSqr[i] = max(IO.mouseDragMaxDistanceSqr[i], mouseDelta.lengthSqr)
+            }
         }
 
         // Calculate frame-rate for the user, as a purely luxurious feature

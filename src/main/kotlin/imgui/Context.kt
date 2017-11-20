@@ -390,7 +390,9 @@ object IO {
     val mouseDownDuration = FloatArray(5, { -1f })
     /** Previous time the mouse button has been down    */
     val mouseDownDurationPrev = FloatArray(5, { -1f })
-    /** Squared maximum distance of how much mouse has traveled from the click point    */
+    /** Maximum distance, absolute, on each axis, of how much mouse has traveled from the clicking point    */
+    val mouseDragMaxDistanceAbs = Array(5, { Vec2() })
+    /** Squared maximum distance of how much mouse has traveled from the clicking point */
     val mouseDragMaxDistanceSqr = FloatArray(5)
     /** Duration the keyboard key has been down (0.0f == just pressed)  */
     val keysDownDuration = FloatArray(512, { -1f })
@@ -471,7 +473,7 @@ class Style {
      *  Tips: if you need to change your scale multiple times, prefer calling this on a freshly initialized Style
      *  structure rather than scaling multiple times (because floating point multiplications are lossy).    */
     fun scaleAllSizes(scaleFactor: Float) {
-        windowPadding timesAssign  scaleFactor
+        windowPadding timesAssign scaleFactor
         windowMinSize timesAssign scaleFactor
         windowRounding *= scaleFactor
         childWindowRounding *= scaleFactor
