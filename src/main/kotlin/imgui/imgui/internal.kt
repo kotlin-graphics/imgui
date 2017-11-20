@@ -68,6 +68,7 @@ import imgui.imgui.imgui_colums.Companion.pixelsToOffsetNorm
 import imgui.internal.*
 import java.util.*
 import kotlin.apply
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
@@ -213,7 +214,7 @@ interface imgui_internal {
     fun setHoveredId(id: Int) {
         g.hoveredId = id
         g.hoveredIdAllowOverlap = false
-        g.hoveredIdTimer = if(id != 0 && g.hoveredIdPreviousFrame == id) g.hoveredIdTimer + IO.deltaTime else 0f
+        g.hoveredIdTimer = if (id != 0 && g.hoveredIdPreviousFrame == id) g.hoveredIdTimer + IO.deltaTime else 0f
     }
 
     fun keepAliveId(id: Int) {
@@ -611,7 +612,7 @@ interface imgui_internal {
                 In addition, when an identifier isn't explicitly provided we include the number of columns in the hash
                 to make it uniquer. */
             pushId(0x11223347 + if (id.isNotEmpty()) 0 else columnsCount)
-            dc.columnsSetId = getId(if(id.isEmpty()) "columns" else id)
+            dc.columnsSetId = getId(if (id.isEmpty()) "columns" else id)
             popId()
 
             // Set state for first column
@@ -678,8 +679,8 @@ interface imgui_internal {
 
                 val x = pos.x + getColumnOffset(i)
                 val columnId = dc.columnsSetId + i
-                val columnW = 4f // Width for interaction
-                val columnRect = Rect(x - columnW, y1, x + columnW, y2)
+                val columnHw = 4f // Half-width for interaction
+                val columnRect = Rect(x - columnHw, y1, x + columnHw, y2)
                 if (isClippedEx(columnRect, columnId, false)) continue
 
                 var hovered = false
@@ -694,7 +695,7 @@ interface imgui_internal {
                     if (held && g.activeIdIsJustActivated)
                     /*  Store from center of column line (we used a 8 wide rect for columns clicking). This is used by
                         GetDraggedColumnOffset().                     */
-                        g.activeIdClickOffset.x -= columnW
+                        g.activeIdClickOffset.x -= columnHw
                     if (held)
                         draggingColumn = i
                 }
@@ -702,7 +703,7 @@ interface imgui_internal {
                 // Draw column
                 val col = getColorU32(if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator)
                 val xi = x.i.f
-                drawList.addLine(Vec2(xi, y1 + 1f), Vec2(xi, y2), col)
+                drawList.addLine(Vec2(xi, max(y1 + 1f, clipRect.min.y)), Vec2(xi, min(y2, clipRect.max.y)), col)
             }
 
             // Apply dragging after drawing the column lines, so our rendered lines are in sync with how items were displayed during the frame.
@@ -1002,6 +1003,12 @@ interface imgui_internal {
         var hovered = itemHoverable(bb, id)
         if (flags has Bf.FlattenChilds && g.hoveredRootWindow === window)
             g.hoveredWindow = backupHoveredWindow
+
+        /*  AllowOverlap mode (rarely used) requires previous frame hoveredId to be null or to match. This allows using
+            patterns where a later submitted widget overlaps a previous one.         */
+        if (hovered && flags has Bf.AllowOverlapMode && g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)
+            hovered = false
+
         if (hovered) {
             if (flags hasnt Bf.NoKeyModifiers || (!IO.keyCtrl && !IO.keyShift && !IO.keyAlt)) {
 
@@ -1051,13 +1058,6 @@ interface imgui_internal {
                         pressed = true
                 clearActiveId()
             }
-        /*  AllowOverlap mode (rarely used) requires previous frame HoveredId to be null or to match. This allows using
-        patterns where a later submitted widget overlaps a previous one.    */
-        if (hovered && flags has Bf.AllowOverlapMode && (g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)) {
-            held = false
-            pressed = false
-            hovered = false
-        }
         return booleanArrayOf(pressed, hovered, held)
     }
 
@@ -1119,6 +1119,25 @@ interface imgui_internal {
             window.drawList.addLine(center + Vec2(crossExtent, -crossExtent), center + Vec2(-crossExtent, crossExtent), Col.Text.u32)
         }
 
+        return pressed
+    }
+
+    /** [Internal]
+     *  @param flags: ButtonFlags */
+    fun arrowButton(id: Int, dir: Dir, padding: Vec2, flags: Int = 0): Boolean {
+        val window = g.currentWindow!!
+        if (window.skipItems) return false
+
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + g.fontSize + padding * 2f)
+        itemSize(bb, style.framePadding.y)
+        if (!itemAdd(bb, id)) return false
+
+        val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
+
+        val col = (if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button).u32
+        if (IMGUI_HAS_NAV) TODO() //renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, col, true, style.frameRounding)
+        renderTriangle(bb.min + padding, dir, 1f)
         return pressed
     }
 
@@ -1586,7 +1605,7 @@ interface imgui_internal {
                     else g.fontSize * 0.5f
 
             // OS X style: Double click selects by word instead of selecting whole text
-            val osxDoubleClickSelectsWords = IO.osxBehaviors
+            val osxDoubleClickSelectsWords = IO.optMacOSXBehaviors
             if (selectAll || (hovered && !osxDoubleClickSelectsWords && IO.mouseDoubleClicked[0])) {
                 editState.selectAll()
                 editState.selectedAllMouseLock = true
@@ -1632,12 +1651,12 @@ interface imgui_internal {
             // Handle key-presses
             val kMask = if (IO.keyShift) K.SHIFT else 0
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
-            val superCtrl = if (IO.osxBehaviors) IO.keySuper && !IO.keyCtrl else IO.keyCtrl && !IO.keySuper
+            val superCtrl = if (IO.optMacOSXBehaviors) IO.keySuper && !IO.keyCtrl else IO.keyCtrl && !IO.keySuper
             val isShortcutKeyOnly = superCtrl && !IO.keyAlt && !IO.keyShift
             // OS X style: Text editing cursor movement using Alt instead of Ctrl
-            val isWordmoveKeyDown = if (IO.osxBehaviors) IO.keyAlt else IO.keyCtrl
+            val isWordmoveKeyDown = if (IO.optMacOSXBehaviors) IO.keyAlt else IO.keyCtrl
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
-            val isStartendKeyDown = IO.osxBehaviors && IO.keySuper && !IO.keyCtrl && !IO.keyAlt
+            val isStartendKeyDown = IO.optMacOSXBehaviors && IO.keySuper && !IO.keyCtrl && !IO.keyAlt
 
             when {
                 Key.LeftArrow.isPressed -> editState.onKeyPressed(
@@ -1669,7 +1688,7 @@ interface imgui_internal {
                     if (!editState.hasSelection) {
                         if (isWordmoveKeyDown)
                             editState.onKeyPressed(K.WORDLEFT or K.SHIFT)
-                        else if (IO.osxBehaviors && IO.keySuper && !IO.keyAlt && !IO.keyCtrl)
+                        else if (IO.optMacOSXBehaviors && IO.keySuper && !IO.keyAlt && !IO.keyCtrl)
                             editState.onKeyPressed(K.LINESTART or K.SHIFT)
                     }
                     editState.onKeyPressed(K.BACKSPACE or kMask)
@@ -2013,7 +2032,7 @@ interface imgui_internal {
                     editState.curLenA, 0f, if (isMultiline) null else clipRect)
 
             // Draw blinking cursor
-            val cursorIsVisible = g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
+            val cursorIsVisible = !IO.optCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
             val cursorScreenPos = renderPos + cursorOffset - renderScroll
             val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
             if (cursorIsVisible && cursorScreenRect overlaps Rect(clipRect))

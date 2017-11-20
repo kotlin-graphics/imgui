@@ -6,6 +6,7 @@ import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.columnIndex
 import imgui.ImGui.columns
+import imgui.ImGui.fontSize
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
 import imgui.ImGui.inputFloat
@@ -20,6 +21,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
+import imgui.ListClipper
 import imgui.SelectableFlags
 import imgui.WindowFlags
 import imgui.functionalProgramming.collapsingHeader
@@ -145,13 +147,18 @@ object columns_ {
 
                 treeNode("Horizontal Scrolling") {
                     setNextWindowContentWidth(1500f)
-                    withChild("##scrollingregion", Vec2(0, 120), false, WindowFlags.HorizontalScrollbar.i) {
+                    withChild("##Scrollingregion", Vec2(0, fontSize * 20), false, WindowFlags.HorizontalScrollbar.i) {
                         columns(10)
-                        for (i in 0..19)
-                            for (j in 0..9) {
-                                text("Line $i Column $j...")
-                                nextColumn()
-                            }
+                        val ITEMS_COUNT = 2000
+                        val clipper = ListClipper(ITEMS_COUNT)  // Also demonstrate using the clipper for large list
+                        while (clipper.step()) {
+                            val i = clipper.display.start
+                            while (i < clipper.display.endInclusive)
+                                for (j in 0..9) {
+                                    text("Line $i Column $j...")
+                                    nextColumn()
+                                }
+                        }
                         columns(1)
                     }
                 }

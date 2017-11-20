@@ -24,6 +24,8 @@ var _DEBUG = true
 
 val MOUSE_INVALID = -256000f
 
+var IMGUI_HAS_NAV = false
+
 object ImGui :
 
         imgui_main,

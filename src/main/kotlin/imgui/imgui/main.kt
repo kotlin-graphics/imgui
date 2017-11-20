@@ -332,6 +332,7 @@ interface imgui_main {
         g.windowsSortBuffer.clear()
         g.currentWindow = null
         g.currentWindowStack.clear()
+        g.windowsById.clear()
         g.navWindow = null
         g.hoveredWindow = null
         g.hoveredRootWindow = null

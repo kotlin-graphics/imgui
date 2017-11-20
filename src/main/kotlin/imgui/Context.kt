@@ -269,10 +269,12 @@ object IO {
     // Advanced/subtle behaviors
     //------------------------------------------------------------------
 
-    /** OS X style: Text editing cursor movement using Alt instead of Ctrl, Shortcuts using Cmd/Super instead of Ctrl,
-     *  Line/Text Start and End using Cmd+Arrows instead of Home/End, Double click selects by word instead of selecting
-     *  whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl */
-    var osxBehaviors = false
+    /** = defined(__APPLE__), OS X style: Text editing cursor movement using Alt instead of Ctrl, Shortcuts using
+     *  Cmd/Super instead of Ctrl, Line/Text Start and End using Cmd + Arrows instead of Home/End, Double click selects
+     *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl */
+    var optMacOSXBehaviors = false  // JVM TODO
+    /** Enable blinking cursor, for users who consider it annoying. */
+    var optCursorBlink = true
 
     //------------------------------------------------------------------
     // User Functions
