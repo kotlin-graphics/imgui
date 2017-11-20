@@ -56,17 +56,17 @@ object Ref {
         set(value) { bools[bPtr] = value }
 }
 
-inline fun <R>withInt(block: (KMutableProperty0<Int>) -> R): R {
-    Ref.iPtr++
-    return block(Ref::int).also { Ref.iPtr-- }
-}
-
-inline fun <R>withFloat(block: (KMutableProperty0<Float>) -> R): R {
-    Ref.fPtr++
-    return block(Ref::float).also { Ref.fPtr-- }
-}
-
-inline fun <R>withBool(block: (KMutableProperty0<Boolean>) -> R): R {
-    Ref.bPtr++
-    return block(Ref::bool).also { Ref.bPtr-- }
-}
+//inline fun <R>withInt(block: (KMutableProperty0<Int>) -> R): R {
+//    Ref.iPtr++
+//    return block(Ref::int).also { Ref.iPtr-- }
+//}
+//
+//inline fun <R>withFloat(block: (KMutableProperty0<Float>) -> R): R {
+//    Ref.fPtr++
+//    return block(Ref::float).also { Ref.fPtr-- }
+//}
+//
+//inline fun <R>withBool(block: (KMutableProperty0<Boolean>) -> R): R {
+//    Ref.bPtr++
+//    return block(Ref::bool).also { Ref.bPtr-- }
+//}

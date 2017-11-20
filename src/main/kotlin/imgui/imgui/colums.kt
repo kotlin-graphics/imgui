@@ -20,7 +20,7 @@ import imgui.Context as g
 interface imgui_colums {
 
     /** [2017/08: This is currently the only public API, while we are working on making BeginColumns/EndColumns user-facing]    */
-    fun columns(columnsCount: Int = 1, id: String? = null, border: Boolean = true) {
+    fun columns(columnsCount: Int = 1, id: String = "", border: Boolean = true) {
 
         val window = currentWindow
         assert(columnsCount >= 1)

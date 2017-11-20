@@ -601,7 +601,7 @@ interface imgui_internal {
     // FIXME-WIP: New Columns API
 
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
-    fun beginColumns(id: String?, columnsCount: Int, flags: Int) {
+    fun beginColumns(id: String = "", columnsCount: Int, flags: Int) {
 
         with(currentWindow) {
 
@@ -612,8 +612,8 @@ interface imgui_internal {
                 as another widget.
                 In addition, when an identifier isn't explicitly provided we include the number of columns in the hash
                 to make it uniquer. */
-            pushId(0x11223347 + if (id != null) 0 else columnsCount)
-            dc.columnsSetId = getId(id ?: "columns")
+            pushId(0x11223347 + if (id.isNotEmpty()) 0 else columnsCount)
+            dc.columnsSetId = getId(if(id.isEmpty()) "columns" else id)
             popId()
 
             // Set state for first column
@@ -2598,7 +2598,7 @@ interface imgui_internal {
     }
 }
 
-inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
+private inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
     Ref.fPtr++
     val f = Ref::float
     f.set(floats[ptr])
@@ -2608,7 +2608,7 @@ inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0
     return res
 }
 
-inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
+private inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
     Ref.iPtr++
     val i = Ref::int
     i.set(ints[ptr])
@@ -2618,7 +2618,7 @@ inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>)
     return res
 }
 
-inline fun <R> withInt(block: (KMutableProperty0<Int>) -> R): R {
+private inline fun <R> withInt(block: (KMutableProperty0<Int>) -> R): R {
     Ref.iPtr++
     return block(Ref::int).also { Ref.iPtr-- }
 }

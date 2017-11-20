@@ -58,17 +58,7 @@ import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.plotLines
-import imgui.ImGui.popId
-import imgui.ImGui.popItemWidth
-import imgui.ImGui.popStyleColor
-import imgui.ImGui.popStyleVar
-import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.progressBar
-import imgui.ImGui.pushId
-import imgui.ImGui.pushItemWidth
-import imgui.ImGui.pushStyleColor
-import imgui.ImGui.pushStyleVar
-import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -106,11 +96,15 @@ import imgui.functionalProgramming.smallButton
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withGroup
 import imgui.functionalProgramming.withId
+import imgui.functionalProgramming.withItemWidth
+import imgui.functionalProgramming.withStyleColor
 import imgui.functionalProgramming.withStyleVar
+import imgui.functionalProgramming.withTextWrapPos
 import imgui.functionalProgramming.withTooltip
 import imgui.imgui.demo.imgui_demoDebugInfo.Companion.showHelpMarker
 import imgui.or
 import kotlin.math.cos
+import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
 import imgui.InputTextFlags as Itf
@@ -223,10 +217,12 @@ object widgets {
     var phase = 0f
     var funcType = 0
     var displayCount = 70
+
     object Funcs1 {
         fun sin(i: Int) = kotlin.math.sin(i * 0.1f)
         fun saw(i: Int) = if (i has 1) 1f else -1f
     }
+
     var progress = 0f
     var progressDir = 1f
 
@@ -256,13 +252,14 @@ object widgets {
                 // Color buttons, demonstrate using PushID() to add unique identifier in the ID stack, and changing style.
                 for (i in 0..6) {
                     if (i > 0) sameLine()
-                    pushId(i)
-                    pushStyleColor(Col.Button, Color.hsv(i / 7f, 0.6f, 0.6f))
-                    pushStyleColor(Col.ButtonHovered, Color.hsv(i / 7f, 0.7f, 0.7f))
-                    pushStyleColor(Col.ButtonActive, Color.hsv(i / 7f, 0.8f, 0.8f))
-                    button("Click")
-                    popStyleColor(3)
-                    popId()
+                    withId(i) {
+                        withStyleColor(
+                                Col.Button, Color.hsv(i / 7f, 0.6f, 0.6f),
+                                Col.ButtonHovered, Color.hsv(i / 7f, 0.7f, 0.7f),
+                                Col.ButtonActive, Color.hsv(i / 7f, 0.8f, 0.8f)) {
+                            button("Click")
+                        }
+                    }
                 }
 
                 text("Hover over me")
@@ -417,20 +414,20 @@ object widgets {
                     val a = Vec2(pos.x + wrapWidth, pos.y)
                     val b = Vec2(pos.x + wrapWidth + 10, pos.y + textLineHeight)
                     windowDrawList.addRectFilled(a, b, COL32(255, 0, 255, 255))
-                    pushTextWrapPos(cursorPos.x + wrapWidth)
-                    text("The lazy dog is a good dog. This paragraph is made to fit within %.0f pixels. Testing a 1 character word. The quick brown fox jumps over the lazy dog.", wrapWidth)
-                    windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
-                    popTextWrapPos()
+                    withTextWrapPos(cursorPos.x + wrapWidth) {
+                        text("The lazy dog is a good dog. This paragraph is made to fit within %.0f pixels. Testing a 1 character word. The quick brown fox jumps over the lazy dog.", wrapWidth)
+                        windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
+                    }
 
                     text("Test paragraph 2:")
                     pos put cursorScreenPos
                     a.put(pos.x + wrapWidth, pos.y)
                     b.put(pos.x + wrapWidth + 10, pos.y + textLineHeight)
                     windowDrawList.addRectFilled(a, b, COL32(255, 0, 255, 255))
-                    pushTextWrapPos(cursorPos.x + wrapWidth)
-                    text("aaaaaaaa bbbbbbbb, c cccccccc,dddddddd. d eeeeeeee   ffffffff. gggggggg!hhhhhhhh")
-                    windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
-                    popTextWrapPos()
+                    withTextWrapPos(cursorPos.x + wrapWidth) {
+                        text("aaaaaaaa bbbbbbbb, c cccccccc,dddddddd. d eeeeeeee   ffffffff. gggggggg!hhhhhhhh")
+                        windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
+                    }
                 }
                 treeNode("UTF-8 Text (jvm Unicode with surrogate characters") {
                     /*  UTF-8 test with Japanese characters
@@ -476,7 +473,7 @@ object widgets {
                         sameLine()
                     }
                 newLine()
-                text("Pressed ${pressedCount} times.")
+                text("Pressed $pressedCount times.")
             }
 
             treeNode("Selectables") {
@@ -498,7 +495,7 @@ object widgets {
                 }
                 offset += 3
                 treeNode("In columns") {
-                    columns(3, null, false)
+                    columns(3, "", false)
                     for (i in 0..15) {
                         if (selectable("Item $i", selected, offset + i)) Unit
                         nextColumn()
@@ -572,7 +569,7 @@ object widgets {
                 // Use functions to generate output
                 // FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
                 separator()
-                pushItemWidth(100); combo("func", ::funcType, "Sin\u0000Saw\u0000"); popItemWidth()
+                withItemWidth(100) { combo("func", ::funcType, "Sin\u0000Saw\u0000") }
                 sameLine()
                 sliderInt("Sample count", ::displayCount, 1, 400)
                 val func = if (funcType == 0) Funcs1::sin else Funcs1::saw
@@ -652,12 +649,12 @@ object widgets {
                         separator()
                         text("Palette")
                         savedPalette.forEachIndexed { n, c ->
-                            pushId(n)
-                            if ((n % 8) != 0)
-                                sameLine(0f, style.itemSpacing.y)
-                            if (colorButton("##palette", c, Cef.NoPicker or Cef.NoTooltip, Vec2(20, 20)))
-                                color.put(c.x, c.y, c.z, color.w) // Preserve alpha!
-                            popId()
+                            withId(n) {
+                                if ((n % 8) != 0)
+                                    sameLine(0f, style.itemSpacing.y)
+                                if (colorButton("##palette", c, Cef.NoPicker or Cef.NoTooltip, Vec2(20, 20)))
+                                    color.put(c.x, c.y, c.z, color.w) // Preserve alpha!
+                            }
                         }
                     }
                 }
@@ -737,65 +734,82 @@ object widgets {
 
             treeNode("Vertical Sliders") {
 
-                pushStyleVar(StyleVar.ItemSpacing, Vec2(spacing))
+                withStyleVar(StyleVar.ItemSpacing, Vec2(spacing)) {
 
-                vSliderInt("##int", Vec2(18, 160), ::intValue, 0, 5)
-                sameLine()
+                    vSliderInt("##int", Vec2(18, 160), ::intValue, 0, 5)
+                    sameLine()
 
-                withId("set1") {
-                    for (i in 0..6) {
-                        if (i > 0) sameLine()
-                        withId(i) {
-                            pushStyleColor(Col.FrameBg, Color.hsv(i / 7f, 0.5f, 0.5f))
-                            pushStyleColor(Col.FrameBgHovered, Color.hsv(i / 7f, 0.6f, 0.5f))
-                            pushStyleColor(Col.FrameBgActive, Color.hsv(i / 7f, 0.7f, 0.5f))
-                            pushStyleColor(Col.SliderGrab, Color.hsv(i / 7f, 0.9f, 0.9f))
-                            imgui.imgui.withFloat { f ->
-                                f.set(values1[i])
-                                vSliderFloat("##v", Vec2(18, 160), f, 0f, 1f, "")
-                                values1[i] = f()
-                            }
-                            if (isItemActive || isItemHovered()) setTooltip("%.3f", values1[i])
-                            popStyleColor(4)
-                        }
-                    }
-                }
+                    withId("set1") {
+                        for (i in 0..6) {
+                            if (i > 0) sameLine()
+                            withId(i) {
+                                withStyleColor(
+                                        Col.FrameBg, Color.hsv(i / 7f, 0.5f, 0.5f),
+                                        Col.FrameBgHovered, Color.hsv(i / 7f, 0.6f, 0.5f),
+                                        Col.FrameBgActive, Color.hsv(i / 7f, 0.7f, 0.5f),
+                                        Col.SliderGrab, Color.hsv(i / 7f, 0.9f, 0.9f)) {
 
-                sameLine()
-                withId("set2") {
-                    val rows = 3
-                    val smallSliderSize = Vec2(18, (160f - (rows - 1) * spacing) / rows)
-                    for (nx in 0..3) {
-                        if (nx > 0) sameLine()
-                        withGroup {
-                            for (ny in 0 until rows) {
-                                withId(nx * rows + ny) {
-                                    imgui.imgui.withFloat(values2, nx) { f ->
-                                        vSliderFloat("##v", smallSliderSize, f, 0f, 1f, "")
+                                    withFloat { f ->
+                                        f.set(values1[i])
+                                        vSliderFloat("##v", Vec2(18, 160), f, 0f, 1f, "")
+                                        values1[i] = f()
                                     }
-                                    if (isItemActive || isItemHovered())
-                                        setTooltip("%.3f", values2[nx])
+                                    if (isItemActive || isItemHovered()) setTooltip("%.3f", values1[i])
                                 }
                             }
                         }
                     }
-                }
 
-                sameLine()
-                withId("set3") {
-                    for (i in 0..3) {
-                        if (i > 0) sameLine()
-                        withId(i) {
-                            withStyleVar(StyleVar.GrabMinSize, 40f) {
-                                imgui.imgui.withFloat(values1, i) {
-                                    vSliderFloat("##v", Vec2(40, 160), it, 0f, 1f, "%.2f\nsec")
+                    sameLine()
+                    withId("set2") {
+                        val rows = 3
+                        val smallSliderSize = Vec2(18, (160f - (rows - 1) * spacing) / rows)
+                        for (nx in 0..3) {
+                            if (nx > 0) sameLine()
+                            withGroup {
+                                for (ny in 0 until rows) {
+                                    withId(nx * rows + ny) {
+                                        withFloat(values2, nx) { f ->
+                                            vSliderFloat("##v", smallSliderSize, f, 0f, 1f, "")
+                                        }
+                                        if (isItemActive || isItemHovered())
+                                            setTooltip("%.3f", values2[nx])
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    sameLine()
+                    withId("set3") {
+                        for (i in 0..3) {
+                            if (i > 0) sameLine()
+                            withId(i) {
+                                withStyleVar(StyleVar.GrabMinSize, 40f) {
+                                    withFloat(values1, i) {
+                                        vSliderFloat("##v", Vec2(40, 160), it, 0f, 1f, "%.2f\nsec")
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                popStyleVar()
             }
         }
     }
+}
+
+inline fun <R>withFloat(block: (KMutableProperty0<Float>) -> R): R {
+    Ref.fPtr++
+    return block(Ref::float).also { Ref.fPtr-- }
+}
+
+inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
+    Ref.fPtr++
+    val f = Ref::float
+    f.set(floats[ptr])
+    val res = block(f)
+    floats[ptr] = f()
+    Ref.fPtr--
+    return res
 }

@@ -1,10 +1,10 @@
 package imgui.imgui
 
 import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
-import imgui.IO
-import imgui.ImGui.currentWindowRead
 import imgui.Context.style
+import imgui.IO
 import imgui.ImGui.calcTypematicPressedRepeatAmount
 import imgui.MOUSE_INVALID
 import imgui.internal.Rect
@@ -21,7 +21,7 @@ interface imgui_inputs {
 
     /** uses user's key indices as stored in the keys_down[] array. if repeat=true.
      *  uses io.KeyRepeatDelay / KeyRepeatRate  */
-    fun isKeyPressed(userKeyIndex: Int, repeat: Boolean): Boolean {
+    fun isKeyPressed(userKeyIndex: Int, repeat: Boolean = true): Boolean {
 
         if (userKeyIndex < 0) return false
         val t = IO.keysDownDuration[userKeyIndex]
@@ -71,9 +71,9 @@ interface imgui_inputs {
 
     /** is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold */
     fun isMouseDragging(button: Int = 0, lockThreshold: Float = -1f): Boolean {
-        if (!IO.mouseDown[button])            return false
+        if (!IO.mouseDown[button]) return false
         val lockThreshold = if (lockThreshold < 0f) IO.mouseDragThreshold else lockThreshold
-        return IO.mouseDragMaxDistanceSqr[button] >= lockThreshold  * lockThreshold
+        return IO.mouseDragMaxDistanceSqr[button] >= lockThreshold * lockThreshold
     }
 
     /** Test if mouse cursor is hovering given rectangle
@@ -116,10 +116,26 @@ interface imgui_inputs {
                 return IO.mousePos - IO.mouseClickedPos[button] // Assume we can only get active with left-mouse button (at the moment).
         return Vec2()
     }
-//IMGUI_API void          ResetMouseDragDelta(int button = 0);                                //
-//IMGUI_API ImGuiMouseCursor GetMouseCursor();                                                // get desired cursor type, reset in ImGui::NewFrame(), this is updated during the frame. valid before Render(). If you use software rendering by setting io.MouseDrawCursor ImGui will render those for you
-//IMGUI_API void          SetMouseCursor(ImGuiMouseCursor type);                              // set desired cursor type
-//IMGUI_API void          CaptureKeyboardFromApp(bool capture = true);                        // manually override io.WantCaptureKeyboard flag next frame (said flag is entirely left for your application handle). e.g. force capture keyboard when your widget is being hovered.
-//IMGUI_API void          CaptureMouseFromApp(bool capture = true);                           // manually override io.WantCaptureMouse flag next frame (said flag is entirely left for your application handle).
 
+    fun resetMouseDragDelta(button: Int = 0) = IO.mouseClickedPos.get(button).put(IO.mousePos) // NB: We don't need to reset g.IO.MouseDragMaxDistanceSqr
+
+    var mouseCursor
+        /** Get desired cursor type, reset in newFrame(), this is updated during the frame. valid before render().
+         *  If you use software rendering by setting IO.mouseDrawCursor ImGui will render those for you */
+        get() = g.mouseCursor
+        /** set desired cursor type */
+        set(value) {
+            g.mouseCursor = value
+        }
+
+    /** Manually override IO.wantCaptureKeyboard flag next frame (said flag is entirely left for your application handle).
+     *  e.g. force capture keyboard when your widget is being hovered.  */
+    fun captureKeyboardFromApp(capture: Boolean = true) {
+        g.wantCaptureKeyboardNextFrame = capture.i
+    }
+
+    /** Manually override io.WantCaptureMouse flag next frame (said flag is entirely left for your application handle). */
+    fun captureMouseFromApp(capture: Boolean = true) {
+        g.wantCaptureMouseNextFrame = capture.i
+    }
 }

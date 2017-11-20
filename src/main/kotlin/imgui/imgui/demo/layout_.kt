@@ -1,6 +1,7 @@
 package imgui.imgui.demo
 
 import gli_.has
+import imgui.ImGui.u32
 import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -77,6 +78,7 @@ import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
 import imgui.imgui.demo.imgui_demoDebugInfo.Companion.showHelpMarker
 import kotlin.math.sin
+import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
 import imgui.InputTextFlags as Itf
@@ -129,9 +131,9 @@ object layout_ {
                 var gotoLine = button("Goto")
                 text("Without border")
                 sameLine()
-                pushItemWidth(100)
-                gotoLine = gotoLine or inputInt("##Line", ::line, 0, 0, Itf.EnterReturnsTrue.i)
-                popItemWidth()
+                withItemWidth(100) {
+                    gotoLine = gotoLine or inputInt("##Line", ::line, 0, 0, Itf.EnterReturnsTrue.i)
+                }
                 withChild("Sub1", Vec2(windowContentRegionWidth * 0.5f, 300), false, Wf.HorizontalScrollbar.i) {
                     for (i in 0 until 100) {
                         text("%04d: scrollable region", i)
@@ -159,33 +161,23 @@ object layout_ {
 
                 text("PushItemWidth(100)")
                 sameLine(); showHelpMarker("Fixed width.")
-                pushItemWidth(100)
-                dragFloat("float##1", ::f)
-                popItemWidth()
+                withItemWidth(100) { dragFloat("float##1", ::f) }
 
                 text("PushItemWidth(GetWindowWidth() * 0.5f)")
                 sameLine(); showHelpMarker("Half of window width.")
-                pushItemWidth(windowWidth * 0.5f)
-                dragFloat("float##2", ::f)
-                popItemWidth()
+                withItemWidth(windowWidth * 0.5f) { dragFloat("float##2", ::f) }
 
                 text("PushItemWidth(GetContentRegionAvailWidth() * 0.5f)")
                 sameLine(); showHelpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
-                pushItemWidth(contentRegionAvailWidth * 0.5f)
-                dragFloat("float##3", ::f)
-                popItemWidth()
+                withItemWidth(contentRegionAvailWidth * 0.5f) { dragFloat("float##3", ::f) }
 
                 text("PushItemWidth(-100)")
                 sameLine(); showHelpMarker("Align to right edge minus 100")
-                pushItemWidth(-100)
-                dragFloat("float##4", ::f)
-                popItemWidth()
+                withItemWidth(-100) { dragFloat("float##4", ::f) }
 
                 text("PushItemWidth(-1)")
                 sameLine(); showHelpMarker("Align to right edge")
-                pushItemWidth(-1)
-                dragFloat("float##5", ::f)
-                popItemWidth()
+                withItemWidth(-1) { dragFloat("float##5", ::f) }
             }
 
             treeNode("Basic Horizontal Layout") {
@@ -240,7 +232,7 @@ object layout_ {
                     for (i in 0..3) {
                         if (i > 0) sameLine()
                         withId(i) {
-                            imgui.imgui.withInt(selection, i) {
+                            withInt(selection, i) {
                                 listBox("", it, items)
                             }
                         }
@@ -258,30 +250,30 @@ object layout_ {
             treeNode("Groups") {
 
                 textWrapped("(Using BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundles the whole group so that you can use functions such as IsItemHovered() on it.)")
-                beginGroup()
                 withGroup {
-                    button("AAA")
-                    sameLine()
-                    button("BBB")
-                    sameLine()
                     withGroup {
-                        button("CCC")
-                        button("DDD")
+                        button("AAA")
+                        sameLine()
+                        button("BBB")
+                        sameLine()
+                        withGroup {
+                            button("CCC")
+                            button("DDD")
+                        }
+                        sameLine()
+                        button("EEE")
                     }
+                    if (isItemHovered()) setTooltip("First group hovered")
+
+                    // Capture the group size and create widgets using the same size
+                    val size = Vec2(itemRectSize)
+                    val values = floatArrayOf(0.5f, 0.2f, 0.8f, 0.6f, 0.25f)
+                    plotHistogram("##values", values, 0, "", 0f, 1f, size)
+
+                    button("ACTION", Vec2((size.x - style.itemSpacing.x) * 0.5f, size.y))
                     sameLine()
-                    button("EEE")
+                    button("REACTION", Vec2((size.x - style.itemSpacing.x) * 0.5f, size.y))
                 }
-                if (isItemHovered()) setTooltip("First group hovered")
-
-                // Capture the group size and create widgets using the same size
-                val size = Vec2(itemRectSize)
-                val values = floatArrayOf(0.5f, 0.2f, 0.8f, 0.6f, 0.25f)
-                plotHistogram("##values", values, 0, "", 0f, 1f, size)
-
-                button("ACTION", Vec2((size.x - style.itemSpacing.x) * 0.5f, size.y))
-                sameLine()
-                button("REACTION", Vec2((size.x - style.itemSpacing.x) * 0.5f, size.y))
-                endGroup()
                 sameLine()
 
                 button("LEVERAGE\nBUZZWORD", size)
@@ -435,10 +427,20 @@ object layout_ {
                 val clipRect = Vec4(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
                 invisibleButton("##dummy", size)
                 if (isItemActive && isMouseDragging()) offset += IO.mouseDelta
-                windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), COL32(90, 90, 120, 255));
+                windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), Vec4.fromColor(90, 90, 120, 255).u32)
                 windowDrawList.addText(font, fontSize * 2f, Vec2(pos.x + offset.x, pos.y + offset.y),
-                        COL32(255, 255, 255, 255), "Line 1 hello\nLine 2 clip me!".toCharArray(), 0, 0f, clipRect)
+                        Vec4.fromColor(255, 255, 255, 255).u32, "Line 1 hello\nLine 2 clip me!".toCharArray(), 0, 0f, clipRect)
             }
         }
     }
+}
+
+private inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
+    Ref.iPtr++
+    val i = Ref::int
+    i.set(ints[ptr])
+    val res = block(i)
+    ints[ptr] = i()
+    Ref.iPtr--
+    return res
 }

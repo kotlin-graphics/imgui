@@ -1,10 +1,13 @@
 package imgui.imgui.demo
 
+import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
+import imgui.ImGui.dragFloat
+import imgui.ImGui.inputText
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
@@ -18,8 +21,11 @@ import imgui.functionalProgramming.button
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.popup
+import imgui.functionalProgramming.popupContextItem
 import imgui.functionalProgramming.popupModal
 import imgui.functionalProgramming.treeNode
+import imgui.functionalProgramming.withId
+import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
 import imgui.imgui.demo.imgui_demoDebugInfo.Companion.showExampleMenuFile
 import kotlin.reflect.KMutableProperty0
@@ -36,6 +42,9 @@ object popupsAndModalWindows {
     var selectedFish = -1
     val toggles = booleanArrayOf(true, false, false, false, false)
 
+    /* Context Menu */
+    var value = 0.5f
+    var name = "Label1"
 
     var dontAskMeNextTime = false
 
@@ -90,30 +99,24 @@ object popupsAndModalWindows {
                 //       OpenPopup(id);
                 //    return BeginPopup(id);
                 // For more advanced uses you may want to replicate and cuztomize this code. This the comments inside BeginPopupContextItem() implementation.
-                //                static float value = 0.5f;
-//                ImGui::Text("Value = %.3f (<-- right-click here)", value);
-//                if (ImGui::BeginPopupContextItem("item context menu"))
-//                {
-//                    if (ImGui::Selectable("Set to zero")) value = 0.0f;
-//                    if (ImGui::Selectable("Set to PI")) value = 3.1415f;
-//                    ImGui::PushItemWidth(-1);
-//                    ImGui::DragFloat("##Value", &value, 0.1f, 0.0f, 0.0f);
-//                    ImGui::PopItemWidth();
-//                    ImGui::EndPopup();
-//                }
-//
-//                static char name[32] = "Label1";
-//                char buf[64]; sprintf(buf, "Button: %s###Button", name); // ### operator override ID ignoring the preceding label
-//                ImGui::Button(buf);
-//                if (ImGui::BeginPopupContextItem()) // When used after an item that has an ID (here the Button), we can skip providing an ID to BeginPopupContextItem().
-//                {
-//                    ImGui::Text("Edit name");
-//                    ImGui::InputText("##edit", name, IM_ARRAYSIZE(name));
-//                    if (ImGui::Button("Close"))
-//                        ImGui::CloseCurrentPopup();
-//                    ImGui::EndPopup();
-//                }
-//                ImGui::SameLine(); ImGui::Text("(<-- right-click here)");
+                text("Value = %.3f (<-- right-click here)", value)
+                popupContextItem("item context menu") {
+                    if (selectable("Set to zero")) value = 0f
+                    if (selectable("Set to PI")) value = glm.PIf
+                    withItemWidth(-1) {
+                        dragFloat("##Value", ::value, 0.1f, 0f, 0f)
+                    }
+                }
+
+                val text = "Button: $name###Button" // ### operator override id ignoring the preceding label
+                button(text)
+                // When used after an item that has an ID (here the Button), we can skip providing an ID to BeginPopupContextItem().
+                popupContextItem {
+                    text("Edit name")
+                    inputText("##edit", name.toCharArray())
+                    if (button("Close")) closeCurrentPopup()
+                }
+                sameLine(); text("(<-- right-click here)")
             }
 
             treeNode("Modals") {
@@ -155,30 +158,28 @@ object popupsAndModalWindows {
                     button("Close") { closeCurrentPopup() }
                 }
             }
-//            if (ImGui::TreeNode("Menus inside a regular window"))
-//                +        {
-//                    +            ImGui::TextWrapped("Below we are testing adding menu items to a regular window. It's rather unusual but should work!");
-//                    +            ImGui::Separator();
-//                    +            // NB: As a quirk in this very specific example, we want to differentiate the parent of this menu from the parent of the various popup menus above.
-//                    +            // To do so we are encloding the items in a PushID()/PopID() block to make them two different menusets. If we don't, opening any popup above and hovering our menu here
-//                    +            // would open it. This is because once a menu is active, we allow to switch to a sibling menu by just hovering on it, which is the desired behavior for regular menus.
-//                    +            ImGui::PushID("foo");
-//                    +            ImGui::MenuItem("Menu item", "CTRL+M");
-//                    +            if (ImGui::BeginMenu("Menu inside a regular window"))
-//                        +            {
-//                            +                showExampleMenuFile();
-//                            +                ImGui::EndMenu();
-//                            +            }
-//                    +            ImGui::PopID();
-//                    +            ImGui::Separator();
-//                    +            ImGui::TreePop();
-//                    +        }
+
+            treeNode("Menus inside a regular window") {
+                textWrapped("Below we are testing adding menu items to a regular window. It's rather unusual but should work!")
+                separator()
+                /*  NB: As a quirk in this very specific example, we want to differentiate the parent of this menu from
+                    the parent of the various popup menus above.
+                    To do so we are encloding the items in a pushID()/popID() block to make them two different menusets.
+                    If we don't, opening any popup above and hovering our menu here would open it. This is because once
+                    a menu is active, we allow to switch to a sibling menu by just hovering on it, which is the desired
+                    behavior for regular menus. */
+                withId("foo") {
+                    menuItem("Menu item", "CTRL+M")
+                    menu("Menu inside a regular window") { showExampleMenuFile() }
+                }
+                separator()
+            }
         }
     }
 }
 
 
-inline fun <R>withBool(bools: BooleanArray, index: Int, block: (KMutableProperty0<Boolean>) -> R): R {
+private inline fun <R> withBool(bools: BooleanArray, index: Int, block: (KMutableProperty0<Boolean>) -> R): R {
     Ref.bPtr++
     val b = Ref::bool
     b.set(bools[index])

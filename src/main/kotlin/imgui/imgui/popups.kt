@@ -76,8 +76,19 @@ interface imgui_popups {
 
     /** This is a helper to handle the simplest case of associating one named popup to one given widget.
      *  You may want to handle this on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
-     *  You can pass a NULL str_id to use the identifier of the last item.  */
-//    IMGUI_API bool          BeginPopupContextItem(const char* str_id = NULL, int mouse_button = 1); // helper to open and begin popup when clicked on last item. if you can pass a NULL str_id only if the previous item had an id. If you want to use that on a non-interactive item such as Text() you need to pass in an explicit ID here. read comments in .cpp!
+     *  You can pass a NULL str_id to use the identifier of the last item.
+     *  helper to open and begin popup when clicked on last item. if you can pass an empty strId only if the previous
+     *  item had an id. If you want to use that on a non-interactive item such as text() you need to pass in an explicit
+     *  id here. read comments in .cpp! */
+    fun beginPopupContextItem(strId: String = "", mouseButton: Int = 1): Boolean {
+        val window = currentWindow
+        // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!
+        val id = if(strId.isNotEmpty()) window.getId(strId) else window.dc.lastItemId
+        assert(id != 0) // However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)
+        if (isMouseClicked(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup.i))
+            openPopupEx(id, true)
+        return beginPopupEx(id, Wf.ShowBorders or Wf.AlwaysAutoResize)
+    }
 
     /** Helper to open and begin popup when clicked on current window.  */
     fun beginPopupContextWindow(strId: String = "", mouseButton: Int = 1, alsoOverItems: Boolean = true): Boolean {
