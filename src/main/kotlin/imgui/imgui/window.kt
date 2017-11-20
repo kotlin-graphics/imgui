@@ -153,10 +153,10 @@ interface imgui_window {
 
             // Initialize
             window.parentWindow = parentWindow
-            window.rootWindow = if(flags hasnt Wf.ChildWindow) window else parentWindow!!.rootWindow
+            window.rootWindow = if (flags hasnt Wf.ChildWindow) window else parentWindow!!.rootWindow
             val cond = flags hasnt (Wf.ChildWindow or Wf.Popup) || flags has Wf.Modal
             // Used to display TitleBgActive color and for selecting which window to use for NavWindowing
-            window.rootNonPopupWindow = if(cond) window else parentWindow!!.rootNonPopupWindow
+            window.rootNonPopupWindow = if (cond) window else parentWindow!!.rootNonPopupWindow
             //window->RootNavWindow = window;
             //while (window->RootNavWindow->Flags & ImGuiWindowFlags_NavFlattened)
             //    window->RootNavWindow = window->RootNavWindow->ParentWindow;
@@ -229,11 +229,9 @@ interface imgui_window {
             }
 
             // Lock window padding so that altering the ShowBorders flag for children doesn't have side-effects.
-            if (flags has Wf.ChildWindow &&
-                    flags hasnt (Wf.AlwaysUseWindowPadding or Wf.ShowBorders or Wf.ComboBox or Wf.Popup))
-                window.windowPadding put 0f
-            else
-                window.windowPadding put style.windowPadding
+            window.windowPadding put style.windowPadding
+            if (flags has Wf.ChildWindow && flags hasnt (Wf.AlwaysUseWindowPadding or Wf.ShowBorders or Wf.ComboBox or Wf.Popup))
+                window.windowPadding.y = if(flags has Wf.MenuBar) style.windowPadding.y else 0f
 
             // Calculate auto-fit size, handle automatic resize
             val sizeAutoFit = window.calcSizeAutoFit()

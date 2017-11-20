@@ -111,11 +111,7 @@ interface imgui_internal {
             return g.currentWindowStack[g.currentWindowStack.size - 2]
         }
 
-    fun findWindowByName(name: String): Window? {
-        // FIXME-OPT: Store sorted hashes -> pointers so we can do a bissection in a contiguous block
-        val id = hash(name, 0)
-        return g.windows.firstOrNull { it.id == id }
-    }
+    fun findWindowByName(name: String) = g.windowsById[hash(name, 0)]
 
     fun initialize() {
 
@@ -1022,10 +1018,13 @@ interface imgui_internal {
                 }
                 if ((flags has Bf.PressedOnClick && IO.mouseClicked[0]) || (flags has Bf.PressedOnDoubleClick && IO.mouseDoubleClicked[0])) {
                     pressed = true
-                    if (flags has Bf.NoHoldingActiveID) clearActiveId()
-                    else setActiveId(id, window) // Hold on ID
+                    if (flags has Bf.NoHoldingActiveID)
+                        clearActiveId()
+                    else {
+                        setActiveId(id, window) // Hold on ID
+                        g.activeIdClickOffset = IO.mousePos - bb.min
+                    }
                     window.focus()
-                    g.activeIdClickOffset = IO.mousePos - bb.min
                 }
                 if (flags has Bf.PressedOnRelease && IO.mouseReleased[0]) {
                     // Repeat mode trumps <on release>

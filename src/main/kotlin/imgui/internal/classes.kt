@@ -628,7 +628,7 @@ class Window(
         if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
             sizeAutoFit.y += style.scrollbarSize
         if (sizeAutoFitAfterConstraint.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
-            sizeAutoFit.x += style.scrollbarSize * 2f
+            sizeAutoFit.x += style.scrollbarSize
         sizeAutoFit.y = glm.max(sizeAutoFit.y - style.itemSpacing.y, 0f)
         sizeAutoFit
     }
