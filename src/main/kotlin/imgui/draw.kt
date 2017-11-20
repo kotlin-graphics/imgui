@@ -782,7 +782,7 @@ class DrawList {
             for (i in oldChannelsCount until channelsCount) _channels.add(DrawChannel())   // resize(channelsCount)
         _channelsCount = channelsCount
 
-        /*  _Channels[] (24 bytes each) hold storage that we'll swap with this->_CmdBuffer/_IdxBuffer
+        /*  _Channels[] (24/32 bytes each) hold storage that we'll swap with this->_CmdBuffer/_IdxBuffer
             The content of _Channels[0] at this point doesn't matter. We clear it to make state tidy in a debugger but
             we don't strictly need to.
             When we switch to the next channel, we'll copy _CmdBuffer/_IdxBuffer into _Channels[0] and then _Channels[1]

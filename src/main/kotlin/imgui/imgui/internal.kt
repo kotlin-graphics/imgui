@@ -569,16 +569,14 @@ interface imgui_internal {
 
         // Render
         val grabCol = (if (held) Col.ScrollbarGrabActive else if (hovered) Col.ScrollbarGrabHovered else Col.ScrollbarGrab).u32
-        if (horizontal)
-            window.drawList.addRectFilled(
-                    Vec2(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y),
-                    Vec2(lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, bb.max.y),
-                    grabCol, style.scrollbarRounding)
-        else
-            window.drawList.addRectFilled(
-                    Vec2(bb.min.x, lerp(bb.min.y, bb.max.y, grabVNorm)),
-                    Vec2(bb.max.x, lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels),
-                    grabCol, style.scrollbarRounding)
+        val grabRect =
+                if (horizontal)
+                    Rect(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y,
+                            min(lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, windowRect.max.x), bb.max.y)
+                else
+                    Rect(bb.min.x, lerp(bb.min.y, bb.max.y, grabVNorm),
+                            bb.max.x, min(lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels, windowRect.max.y))
+        window.drawList.addRectFilled(grabRect.min, grabRect.max, grabCol, style.scrollbarRounding)
     }
 
     /** Vertical separator, for menu bars (use current line height). not exposed because it is misleading

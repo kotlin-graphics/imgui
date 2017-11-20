@@ -799,23 +799,15 @@ class FontAtlas {
         texUvWhitePixel = Vec2((r.x + 0.5f) * texUvScale.x, (r.y + 0.5f) * texUvScale.y)
 
         // Setup mouse cursors
-        val cursorDatas = arrayOf(
-                // Pos ........ Size ......... Offset ......
-                arrayOf(Vec2(0, 3), Vec2(12, 19), Vec2(0)),         // MouseCursor.Arrow
-                arrayOf(Vec2(13, 0), Vec2(7, 16), Vec2(4, 8)),   // MouseCursor.TextInput
-                arrayOf(Vec2(31, 0), Vec2(23), Vec2(11)),              // MouseCursor.Move
-                arrayOf(Vec2(21, 0), Vec2(9, 23), Vec2(5, 11)),  // MouseCursor.ResizeNS
-                arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 5)), // MouseCursor.ResizeEW
-                arrayOf(Vec2(73, 0), Vec2(17), Vec2(9)),               // MouseCursor.ResizeNESW
-                arrayOf(Vec2(55, 0), Vec2(17), Vec2(9)))               // MouseCursor.ResizeNWSE
+
 
         for (type in 0 until MouseCursor.Count.i) {
             val cursorData = g.mouseCursorData[type]
-            val pos = cursorDatas[type][0] + Vec2(r.x, r.y)
-            val size = cursorDatas[type][1]
+            val pos = DefaultTexData.cursorDatas[type][0] + Vec2(r.x, r.y)
+            val size = DefaultTexData.cursorDatas[type][1]
             cursorData.type = MouseCursor.of(type)
             cursorData.size = size
-            cursorData.hotOffset = cursorDatas[type][2]
+            cursorData.hotOffset = DefaultTexData.cursorDatas[type][2]
             cursorData.texUvMin[0] = pos * texUvScale
             cursorData.texUvMax[0] = (pos + size) * texUvScale
             pos.x += DefaultTexData.wHalf + 1
@@ -875,6 +867,16 @@ class FontAtlas {
                         "                                                      -  X..X           X..X  -           " +
                         "                                                      -   X.X           X.X   -           " +
                         "                                                      -    XX           XX    -           ").toCharArray()
+
+        val cursorDatas = arrayOf(
+                // Pos ........ Size ......... Offset ......
+                arrayOf(Vec2(0, 3), Vec2(12, 19), Vec2(0)),         // MouseCursor.Arrow
+                arrayOf(Vec2(13, 0), Vec2(7, 16), Vec2(4, 8)),   // MouseCursor.TextInput
+                arrayOf(Vec2(31, 0), Vec2(23), Vec2(11)),              // MouseCursor.Move
+                arrayOf(Vec2(21, 0), Vec2(9, 23), Vec2(5, 11)),  // MouseCursor.ResizeNS
+                arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 5)), // MouseCursor.ResizeEW
+                arrayOf(Vec2(73, 0), Vec2(17), Vec2(9)),               // MouseCursor.ResizeNESW
+                arrayOf(Vec2(55, 0), Vec2(17), Vec2(9)))               // MouseCursor.ResizeNWSE
     }
 }
 
