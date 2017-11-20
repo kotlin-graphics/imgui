@@ -67,6 +67,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
     // Create window the first time
 
     this.flags = flags
+    g.windowsById[id] = this
 
     if (flags has Wf.NoSavedSettings) {
         // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.

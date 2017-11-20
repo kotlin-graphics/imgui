@@ -21,6 +21,7 @@ import imgui.ImGui.columns
 import imgui.ImGui.combo
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
+import imgui.ImGui.dragInt
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
@@ -83,8 +84,8 @@ import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withTooltip
 import imgui.functionalProgramming.withWindow
-import imgui.imgui.imgui_demoDebugInfo.Companion.showHelpMarker
 import imgui.imgui.imgui_demoDebugInfo.Companion.showExampleMenuFile
+import imgui.imgui.imgui_demoDebugInfo.Companion.showHelpMarker
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
@@ -233,7 +234,7 @@ object ExampleApp {
         columns_()
 
         collapsingHeader("Filtering TODO") {
-//            ImGui::Text("Filter usage:\n"
+            //            ImGui::Text("Filter usage:\n"
 //                    "  \"\"         display all lines\n"
 //            "  \"xxx\"      display lines containing \"xxx\"\n"
 //            "  \"xxx,yyy\"  display lines containing \"xxx\" or \"yyy\"\n"
@@ -827,26 +828,35 @@ object AutoResize {
 
 object ConstrainedResize {
 
+    var autoResize = false
     var type = 0
+    var displayLines = 10
 
     /** Demonstrate creating a window with custom resize constraints.   */
     operator fun invoke(open: KMutableProperty0<Boolean>) {
         when (type) {
-            0 -> setNextWindowSizeConstraints(Vec2(-1, 0), Vec2(-1, Float.MAX_VALUE))      // Vertical only
-            1 -> setNextWindowSizeConstraints(Vec2(0, -1), Vec2(Float.MAX_VALUE, -1))      // Horizontal only
-            2 -> setNextWindowSizeConstraints(Vec2(100), Vec2(Float.MAX_VALUE)) // Width > 100, Height > 100
-            3 -> setNextWindowSizeConstraints(Vec2(300, 0), Vec2(400, Float.MAX_VALUE))     // Width 300-400
-            4 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.square)          // Always Square
-            5 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.step, 100)// Fixed Step
+            0 -> setNextWindowSizeConstraints(Vec2(-1, 0), Vec2(-1, Float.MAX_VALUE))     // Vertical only
+            1 -> setNextWindowSizeConstraints(Vec2(0, -1), Vec2(Float.MAX_VALUE, -1))     // Horizontal only
+            2 -> setNextWindowSizeConstraints(Vec2(100), Vec2(Float.MAX_VALUE))                 // Width > 100, Height > 100
+            3 -> setNextWindowSizeConstraints(Vec2(400, -1), Vec2(500, -1))           // Width 400-500
+            4 -> setNextWindowSizeConstraints(Vec2(-1, 400), Vec2(-1, 500))           // Height 400-500
+            5 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.square)          // Always Square
+            6 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.step, 100)// Fixed Step
         }
+        val flags = if (autoResize) Wf.AlwaysAutoResize.i else 0
         withWindow("Example: Constrained Resize", open) {
             val desc = listOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
-                    "Width 300-400", "Custom: Always Square", "Custom: Fixed Steps (100)")
-            combo("Constraint", ::type, desc)
+                    "Width 400-500", "Height 400-500", "Custom: Always Square", "Custom: Fixed Steps (100)")
             button("200x200") { setWindowSize(Vec2(200)) }; sameLine()
             button("500x500") { setWindowSize(Vec2(500)) }; sameLine()
             button("800x200") { setWindowSize(Vec2(800, 200)) }
-            for (i in 0 until 10) text("Hello, sailor! Making this line long enough for the example.")
+            withItemWidth(200) {
+                combo("Constraint", ::type, desc)
+                dragInt("Lines", ::displayLines, 0.2f, 1, 100)
+            }
+            checkbox("Auto-resize", ::autoResize)
+            for (i in 0 until displayLines)
+                text(" ".repeat(i * 4) + "Hello, sailor! Making this line long enough for the example.")
         }
     }
 

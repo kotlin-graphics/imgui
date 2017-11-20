@@ -40,6 +40,8 @@ object Context {
     val windowsSortBuffer = ArrayList<Window>()
 
     val currentWindowStack = Stack<Window>()
+
+    val windowsById = mutableMapOf<Int, Window>()
     /** Being drawn into    */
     var currentWindow: Window? = null
     /** Will catch keyboard inputs  */
