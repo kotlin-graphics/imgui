@@ -107,15 +107,15 @@ interface imgui_window {
             window.popupId = popupRef.popupId
         }
 
-        val windowJustAppearingAfterBeingHiddenForResize = window.hiddenFrames == 1
-        window.appearing = windowJustActivatedByUser || windowJustAppearingAfterBeingHiddenForResize
+        val windowJustAppearingAfterHiddenForResize = window.hiddenFrames == 1
+        window.appearing = windowJustActivatedByUser || windowJustAppearingAfterHiddenForResize
+        window.closeButton = pOpen != null
 
         // Process SetNextWindow***() calls
+        if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, true)
         var windowPosSetByApi = false
         var windowSizeSetByApi = false
         if (g.setNextWindowPosCond != Cond.Null) {
-            if (window.appearing)
-                window.setWindowPosAllowFlags = window.setWindowPosAllowFlags or Cond.Appearing
             windowPosSetByApi = window.setWindowPosAllowFlags has g.setNextWindowPosCond
             if (windowPosSetByApi && g.setNextWindowPosPivot.lengthSqr > 0.00001f) {
                 /*  May be processed on the next frame if this is our first frame and we are measuring size
@@ -125,12 +125,9 @@ interface imgui_window {
                 window.setWindowPosAllowFlags = window.setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
             } else
                 window.setPos(g.setNextWindowPosVal, g.setNextWindowPosCond)
-
             g.setNextWindowPosCond = Cond.Null
         }
         if (g.setNextWindowSizeCond != Cond.Null) {
-            if (window.appearing)
-                window.setWindowSizeAllowFlags = window.setWindowSizeAllowFlags or Cond.Appearing
             windowSizeSetByApi = window.setWindowSizeAllowFlags has g.setNextWindowSizeCond
             window.setSize(g.setNextWindowSizeVal, g.setNextWindowSizeCond)
             g.setNextWindowSizeCond = Cond.Null
@@ -141,8 +138,6 @@ interface imgui_window {
         } else if (firstBeginOfTheFrame)
             window.sizeContentsExplicit put 0f
         if (g.setNextWindowCollapsedCond != Cond.Null) {
-            if (window.appearing)
-                window.setWindowCollapsedAllowFlags = window.setWindowCollapsedAllowFlags or Cond.Appearing
             window.setCollapsed(g.setNextWindowCollapsedVal, g.setNextWindowCollapsedCond)
             g.setNextWindowCollapsedCond = Cond.Null
         }
@@ -150,6 +145,7 @@ interface imgui_window {
             setWindowFocus()
             g.setNextWindowFocus = false
         }
+        if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, false)
 
         // When reusing window again multiple times a frame, just append content (don't need to setup again)
         if (firstBeginOfTheFrame) {
@@ -312,7 +308,7 @@ interface imgui_window {
                             Rect(parentWindow.pos.x + horizontalOverlap, -Float.MAX_VALUE,
                                     parentWindow.pos.x + parentWindow.size.x - horizontalOverlap - parentWindow.scrollbarSizes.x, Float.MAX_VALUE)
                 window.posF put findBestPopupWindowPos(window.posF, window, rectToAvoid)
-            } else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterBeingHiddenForResize) {
+            } else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize) {
                 val rectToAvoid = Rect(window.posF.x - 1, window.posF.y - 1, window.posF.x + 1, window.posF.y + 1)
                 window.posF put findBestPopupWindowPos(window.posF, window, rectToAvoid)
             }

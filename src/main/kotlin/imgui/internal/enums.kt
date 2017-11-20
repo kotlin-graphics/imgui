@@ -54,7 +54,10 @@ enum class ColumnsFlags(val i: Int) {
     /** Disable column width preservation when adjusting columns    */
     NoPreserveWidths(1 shl 2),
     /** Disable forcing columns to fit within window    */
-    NoForceWithinWindow(1 shl 3)
+    NoForceWithinWindow(1 shl 3),
+    /** (WIP) Restore pre-1.51 behavior of extending the parent window contents size but _without affecting the columns
+     *  width at all_. Will eventually remove.  */
+    GrowParentContentsSize(1 shl 4)
 }
 
 infix fun Int.has(b: ColumnsFlags) = (this and b.i) != 0
