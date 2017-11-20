@@ -150,17 +150,18 @@ object inputAndFocus {
             }
 
             treeNode("Hovering") {
-                // Testing IsWindowHovered() function
+                // Testing IsWindowHovered() function with its various flags (note that the flags can be combined)
                 bulletText("IsWindowHovered() = ${isWindowHovered()}\n" +
-                        "IsWindowHovered(_AllowWhenBlockedByPopup) = ${isWindowHovered(Hf.AllowWhenBlockedByPopup.i)}\n" +
-                        "IsWindowHovered(_AllowWhenBlockedByActiveItem) = ${isWindowHovered(Hf.AllowWhenBlockedByActiveItem.i)}\n")
+                        "IsWindowHovered(_AllowWhenBlockedByPopup) = ${isWindowHovered(Hf.AllowWhenBlockedByPopup)}\n" +
+                        "IsWindowHovered(_AllowWhenBlockedByActiveItem) = ${isWindowHovered(Hf.AllowWhenBlockedByActiveItem)}\n" +
+                        "IsWindowHovered(_FlattenChilds) = ${isWindowHovered(Hf.FlattenChilds)}\n")
                 // Testing IsItemHovered() function (because BulletText is an item itself and that would affect the output of IsItemHovered, we pass all lines in a single items to shorten the code)
                 button("ITEM")
                 bulletText("IsItemHovered() = ${isItemHovered()}\n" +
-                        "IsItemHovered(_AllowWhenBlockedByPopup) = ${isItemHovered(Hf.AllowWhenBlockedByPopup.i)}\n" +
-                        "IsItemHovered(_AllowWhenBlockedByActiveItem) = ${isItemHovered(Hf.AllowWhenBlockedByActiveItem.i)}\n" +
-                        "IsItemHovered(_AllowWhenOverlapped) = ${isItemHovered(Hf.AllowWhenOverlapped.i)}\n" +
-                        "IsItemhovered(_RectOnly) = ${isItemHovered(Hf.RectOnly.i)}\n")
+                        "IsItemHovered(_AllowWhenBlockedByPopup) = ${isItemHovered(Hf.AllowWhenBlockedByPopup)}\n" +
+                        "IsItemHovered(_AllowWhenBlockedByActiveItem) = ${isItemHovered(Hf.AllowWhenBlockedByActiveItem)}\n" +
+                        "IsItemHovered(_AllowWhenOverlapped) = ${isItemHovered(Hf.AllowWhenOverlapped)}\n" +
+                        "IsItemhovered(_RectOnly) = ${isItemHovered(Hf.RectOnly)}\n")
             }
 
             treeNode("Dragging") {

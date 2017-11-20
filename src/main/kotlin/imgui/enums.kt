@@ -195,6 +195,8 @@ enum class HoveredFlags(val i: Int) {
     AllowWhenBlockedByActiveItem(1 shl 2),
     /** Return true even if the position is overlapped by another window    */
     AllowWhenOverlapped(1 shl 3),
+    /** Treat all child windows as the same window (for isWindowHovered())  */
+    FlattenChilds (1 shl 4),
     RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i)
 }
 

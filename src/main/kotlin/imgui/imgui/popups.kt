@@ -31,7 +31,7 @@ interface imgui_popups {
 
     /** Helper to open popup when clicked on last item. return true when just opened.   */
     fun openPopupOnItemClick(strId: String = "", mouseButton: Int = 1) = with(g.currentWindow!!) {
-        if (isMouseClicked(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup.i)) {
+        if (isMouseClicked(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
             // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
             val id = if (strId.isNotEmpty()) getId(strId) else dc.lastItemId
             assert(id != 0) // However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)
@@ -85,7 +85,7 @@ interface imgui_popups {
         // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!
         val id = if(strId.isNotEmpty()) window.getId(strId) else window.dc.lastItemId
         assert(id != 0) // However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)
-        if (isMouseClicked(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup.i))
+        if (isMouseClicked(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup))
             openPopupEx(id, true)
         return beginPopupEx(id, Wf.ShowBorders or Wf.AlwaysAutoResize)
     }
@@ -95,7 +95,7 @@ interface imgui_popups {
         val strId = if (strId.isEmpty()) "window_context" else strId
         val id = currentWindow.getId(strId)
         if (isMouseClicked(mouseButton))
-            if (isWindowHovered(Hf.AllowWhenBlockedByPopup.i))
+            if (isWindowHovered(Hf.AllowWhenBlockedByPopup))
                 if (alsoOverItems || !isAnyItemHovered)
                     openPopupEx(id, true)
         return beginPopupEx(id, Wf.ShowBorders or Wf.AlwaysAutoResize)

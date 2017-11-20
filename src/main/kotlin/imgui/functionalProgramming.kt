@@ -23,6 +23,7 @@ import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTooltip
+import imgui.ImGui.indent
 import imgui.ImGui.menuItem
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
@@ -37,6 +38,7 @@ import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.selectable
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
+import imgui.ImGui.unindent
 import kotlin.reflect.KMutableProperty0
 
 object functionalProgramming {
@@ -238,5 +240,11 @@ object functionalProgramming {
 
     inline fun selectable(label: String, selected: Boolean = false, flags: Int = 0, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
         if(selectable(label, selected, flags, sizeArg)) block()
+    }
+
+    inline fun withIndent(indentW: Float = 0f, block: () -> Unit) {
+        indent(indentW)
+        block()
+        unindent(indentW)
     }
 }

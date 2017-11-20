@@ -148,27 +148,18 @@ interface imgui_window {
             g.setNextWindowFocus = false
         }
 
-        // Update known root window (if we are a child window, otherwise window == window->RootWindow)
-        var rootIdx = g.currentWindowStack.lastIndex
-        while (rootIdx > 0) {
-            if (g.currentWindowStack[rootIdx].flags hasnt Wf.ChildWindow)
-                break
-            rootIdx--
-        }
-        var rootNonPopupIdx = rootIdx
-        while (rootNonPopupIdx > 0) {
-            if (g.currentWindowStack[rootNonPopupIdx].flags hasnt (Wf.ChildWindow or Wf.Popup)
-                    || g.currentWindowStack[rootNonPopupIdx].flags has Wf.Modal)
-                break
-            rootNonPopupIdx--
-        }
-        window.parentWindow = parentWindow
-        window.rootWindow = g.currentWindowStack[rootIdx]
-        // Used to display TitleBgActive color and for selecting which window to use for NavWindowing
-        window.rootNonPopupWindow = g.currentWindowStack[rootNonPopupIdx]
-
         // When reusing window again multiple times a frame, just append content (don't need to setup again)
         if (firstBeginOfTheFrame) {
+
+            // Initialize
+            window.parentWindow = parentWindow
+            window.rootWindow = if(flags hasnt Wf.ChildWindow) window else parentWindow!!.rootWindow
+            val cond = flags hasnt (Wf.ChildWindow or Wf.Popup) || flags has Wf.Modal
+            // Used to display TitleBgActive color and for selecting which window to use for NavWindowing
+            window.rootNonPopupWindow = if(cond) window else parentWindow!!.rootNonPopupWindow
+            //window->RootNavWindow = window;
+            //while (window->RootNavWindow->Flags & ImGuiWindowFlags_NavFlattened)
+            //    window->RootNavWindow = window->RootNavWindow->ParentWindow;
 
             window.active = true
             window.orderWithinParent = 0
