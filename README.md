@@ -78,7 +78,7 @@ The Immediate Mode GUI paradigm may at first appear unusual to some users. This 
 
 [Gradle, Maven, Sbt, Leiningen](https://jitpack.io/#kotlin-graphics/imgui)
 
-- Add it in your root build.gradle at the end of repositories:
+- Add it in your root `build.gradle` at the end of repositories:
 
 	    allprojects {
 		    repositories {
