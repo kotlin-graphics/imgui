@@ -431,7 +431,7 @@ interface imgui_widgetsMain {
         // Render
         val fraction = saturate(fraction)
         renderFrame(bb.min, bb.max, Col.FrameBg.u32, true, style.frameRounding)
-        bb expand Vec2(-window.borderSize)
+        bb expand Vec2(-window.windowBorderSize)
         val fillBr = Vec2(lerp(bb.min.x, bb.max.x, fraction), bb.max.y)
         renderRectFilledRangeH(window.drawList, bb, Col.PlotHistogram.u32, 0f, fraction, style.frameRounding)
         // Default displaying the fraction as percentage string, but user can override it

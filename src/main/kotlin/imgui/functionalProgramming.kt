@@ -15,6 +15,7 @@ import imgui.ImGui.beginPopupContextWindow
 import imgui.ImGui.beginPopupModal
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.collapsingHeader
+import imgui.ImGui.combo
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
@@ -239,12 +240,18 @@ object functionalProgramming {
     }
 
     inline fun selectable(label: String, selected: Boolean = false, flags: Int = 0, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
-        if(selectable(label, selected, flags, sizeArg)) block()
+        if (selectable(label, selected, flags, sizeArg)) block()
     }
 
     inline fun withIndent(indentW: Float = 0f, block: () -> Unit) {
         indent(indentW)
         block()
         unindent(indentW)
+    }
+
+    inline fun combo(label: String, currentItem: KMutableProperty0<Int>, itemsSeparatedByZeros: String, heightInItems: Int = -1,
+                     block: () -> Unit) {
+        if (combo(label, currentItem, itemsSeparatedByZeros, heightInItems))
+            block()
     }
 }

@@ -86,7 +86,7 @@ interface imgui_menus {
         beginGroup() // Save position
         pushId("##menubar")
         val rect = Rect(window.menuBarRect()).apply { max.x = max(min.x, max.x - style.windowRounding) }
-        pushClipRect(Vec2(glm.floor(rect.min.x + 0.5f), glm.floor(rect.min.y + window.borderSize + 0.5f)),
+        pushClipRect(Vec2(glm.floor(rect.min.x + 0.5f), glm.floor(rect.min.y + window.windowBorderSize + 0.5f)),
                 Vec2(glm.floor(rect.max.x + 0.5f), glm.floor(rect.max.y + 0.5f)), false)
         window.dc.cursorPos = Vec2(rect.min.x + window.dc.menuBarOffsetX, rect.min.y)// + g.style.FramePadding.y);
         window.dc.layoutType = LayoutType.Horizontal

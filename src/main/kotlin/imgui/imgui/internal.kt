@@ -477,7 +477,7 @@ interface imgui_internal {
         val otherScrollbar = if (horizontal) window.scrollbar.y else window.scrollbar.x
         val otherScrollbarSizeW = if (otherScrollbar) style.scrollbarSize else 0f
         val windowRect = window.rect()
-        val borderSize = window.borderSize
+        val borderSize = window.windowBorderSize
         val bb =
                 if (horizontal)
                     Rect(window.pos.x + borderSize, windowRect.max.y - style.scrollbarSize,
@@ -489,7 +489,6 @@ interface imgui_internal {
             bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f
         if (bb.width <= 0f || bb.height <= 0f) return
 
-        val windowRounding = if (window.flags has Wf.ChildWindow) style.childWindowRounding else style.windowRounding
         val windowRoundingCorners =
                 if (horizontal)
                     Corner.BotLeft or if (otherScrollbar) Corner.All else Corner.BotRight
@@ -498,10 +497,10 @@ interface imgui_internal {
                             if (window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar)
                                 Corner.TopRight
                             else Corner.All) or if (otherScrollbar) Corner.All else Corner.BotRight
-        window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, windowRounding, windowRoundingCorners)
+        window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, window.windowRounding, windowRoundingCorners)
         bb.expand(Vec2(
-                -glm.clamp(((bb.max.x - bb.min.x - 2.0f) * 0.5f).i.f, 0.0f, 3.0f),
-                -glm.clamp(((bb.max.y - bb.min.y - 2.0f) * 0.5f).i.f, 0.0f, 3.0f)))
+                -glm.clamp(((bb.max.x - bb.min.x - 2f) * 0.5f).i.f, 0f, 3f),
+                -glm.clamp(((bb.max.y - bb.min.y - 2f) * 0.5f).i.f, 0f, 3f)))
 
         // V denote the main, longer axis of the scrollbar (= height for a vertical scrollbar)
         val scrollbarSizeV = if (horizontal) bb.width else bb.height

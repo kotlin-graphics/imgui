@@ -231,6 +231,9 @@ interface imgui_window {
             window.windowPadding put style.windowPadding
             if (flags has Wf.ChildWindow && flags hasnt (Wf.AlwaysUseWindowPadding or Wf.ShowBorders or Wf.ComboBox or Wf.Popup))
                 window.windowPadding.y = if (flags has Wf.MenuBar) style.windowPadding.y else 0f
+            window.windowRounding = if(flags has Wf.ChildWindow) style.childRounding else style.windowRounding
+            window.windowBorderSize = if(flags has Wf.ShowBorders) 1f else 0f
+            val windowRounding = window.windowRounding
 
             // Calculate auto-fit size, handle automatic resize
             val sizeAutoFit = window.calcSizeAutoFit()
@@ -273,7 +276,6 @@ interface imgui_window {
                 if (window.scrollbar.x && !window.scrollbar.y)
                     window.scrollbar.y = window.sizeContents.y > window.sizeFull.y + style.itemSpacing.y - style.scrollbarSize && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f, if (window.scrollbar.x) style.scrollbarSize else 0f)
-                window.borderSize = if (flags has Wf.ShowBorders) 1f else 0f
             }
 
             /* ---------- POSITION ---------- */
@@ -368,7 +370,6 @@ interface imgui_window {
 
             // Draw window + handle manual resize
             val titleBarRect = window.titleBarRect()
-            val windowRounding = if (flags has Wf.ChildWindow) style.childWindowRounding else style.windowRounding
             if (window.collapsed)
             // Title bar only
                 renderFrame(titleBarRect.min, titleBarRect.max, Col.TitleBgCollapsed.u32, true, windowRounding)
@@ -434,10 +435,10 @@ interface imgui_window {
                 (after the input handling so we don't have a frame of latency)  */
                 if (flags hasnt Wf.NoResize) {
                     val br = window.rect().br
-                    window.drawList.pathLineTo(br + Vec2(-resizeCornerSize, -window.borderSize))
-                    window.drawList.pathLineTo(br + Vec2(-window.borderSize, -resizeCornerSize))
-                    window.drawList.pathArcToFast(Vec2(br.x - windowRounding - window.borderSize, br.y - windowRounding - window.borderSize),
-                            windowRounding, 0, 3)
+                    window.drawList.pathLineTo(br + Vec2(-resizeCornerSize, -window.windowBorderSize))
+                    window.drawList.pathLineTo(br + Vec2(-window.windowBorderSize, -resizeCornerSize))
+                    val centre = Vec2(br.x - windowRounding - window.windowBorderSize, br.y - windowRounding - window.windowBorderSize)
+                    window.drawList.pathArcToFast(centre, windowRounding, 0, 3)
                     window.drawList.pathFillConvex(resizeCol.u32)
                 }
 
@@ -578,7 +579,7 @@ interface imgui_window {
 
         /*  Inner clipping rectangle
             Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.         */
-        val borderSize = window.borderSize
+        val borderSize = window.windowBorderSize
         val clipRect = Rect()
         clipRect.min.x = glm.floor(0.5f + window.innerRect.min.x + (borderSize max glm.floor(window.windowPadding.x * 0.5f)))
         clipRect.min.y = glm.floor(0.5f + window.innerRect.min.y + borderSize)
@@ -883,7 +884,6 @@ interface imgui_window {
         }
 
         fun getWindowBgColorIdxFromFlags(flags: Int) = when {
-            flags has Wf.ComboBox -> Col.ComboBg
             flags has (Wf.Tooltip or Wf.Popup) -> Col.PopupBg
             flags has Wf.ChildWindow -> Col.ChildWindowBg
             else -> Col.WindowBg
