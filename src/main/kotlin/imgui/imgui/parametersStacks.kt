@@ -78,9 +78,9 @@ interface imgui_parametersStacks {
                     style.windowMinSize to it.ints
                     style.windowMinSize put (value as Vec2i)
                 }
-                StyleVar.ChildWindowRounding -> {
-                    it.floats[0] = style.childWindowRounding
-                    style.childWindowRounding = value as Float
+                StyleVar.ChildRounding -> {
+                    it.floats[0] = style.childRounding
+                    style.childRounding = value as Float
                 }
                 StyleVar.FramePadding -> {
                     style.framePadding to it.floats
@@ -122,7 +122,7 @@ interface imgui_parametersStacks {
             StyleVar.WindowPadding -> style.windowPadding put backup.floats
             StyleVar.WindowRounding -> style.windowRounding = backup.floats[0]
             StyleVar.WindowMinSize -> style.windowMinSize put backup.ints
-            StyleVar.ChildWindowRounding -> style.childWindowRounding = backup.floats[0]
+            StyleVar.ChildRounding -> style.childRounding = backup.floats[0]
             StyleVar.FramePadding -> style.framePadding put backup.floats
             StyleVar.FrameRounding -> style.frameRounding = backup.floats[0]
             StyleVar.ItemSpacing -> style.itemSpacing put backup.floats

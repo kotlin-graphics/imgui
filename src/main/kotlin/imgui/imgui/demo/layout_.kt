@@ -142,7 +142,7 @@ object layout_ {
 
                 sameLine()
 
-                withStyleVar(StyleVar.ChildWindowRounding, 5f) {
+                withStyleVar(StyleVar.ChildRounding, 5f) {
                     withChild("Sub2", Vec2(0, 300), true) {
                         text("With border")
                         columns(2)

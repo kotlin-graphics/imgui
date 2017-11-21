@@ -1,6 +1,5 @@
 package imgui.imgui
 
-import com.sun.org.apache.xml.internal.serialize.OutputFormat.Defaults.Indent
 import glm_.BYTES
 import glm_.f
 import glm_.vec2.Vec2
@@ -12,9 +11,11 @@ import imgui.ImGui._begin
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.checkbox
+import imgui.ImGui.colorButton
 import imgui.ImGui.combo
 import imgui.ImGui.end
 import imgui.ImGui.endTooltip
+import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
@@ -35,6 +36,7 @@ import imgui.ImGui.windowDrawList
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withIndent
+import imgui.functionalProgramming.withStyleVar
 import imgui.imgui.demo.ExampleApp
 import imgui.internal.Rect
 import imgui.internal.Window
@@ -74,7 +76,7 @@ interface imgui_demoDebugInfo {
         open[0] = showWindow
     }
 
-    fun showTestWindow(open: KMutableProperty0<Boolean>)  = ExampleApp(open)
+    fun showTestWindow(open: KMutableProperty0<Boolean>) = ExampleApp(open)
 
     /** Create metrics window. display ImGui internals: draw commands (with individual draw calls and vertices), window list,
      *  basic internal state, etc.    */
@@ -188,7 +190,16 @@ interface imgui_demoDebugInfo {
                 combo("Combo", Companion::combo, "Yes\u0000No\u0000Maybe\u0000\u0000")
                 checkbox("Check", Companion::check)
             }
-            menu("Colors") { for (col in Col.values()) menuItem(col.toString()) }
+            menu("Colors") {
+                withStyleVar(StyleVar.FramePadding, Vec2()) {
+                    for (col in Col.values()) {
+                        val name = col.name
+                        colorButton(name, getStyleColorVec4(col))
+                        sameLine()
+                        menuItem(name)
+                    }
+                }
+            }
             menu("Disabled", false) { assert(false) } // Disabled
             menuItem("Checked", selected = true)
             menuItem("Quit", "Alt+F4")
@@ -295,8 +306,6 @@ interface imgui_demoDebugInfo {
         var showClipRects = true
 
 
-
-
         val selected = BooleanArray(4 + 3 + 16 + 16, { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 })
 
 
@@ -309,9 +318,6 @@ interface imgui_demoDebugInfo {
 
 
     }
-
-
-
 
 
 }

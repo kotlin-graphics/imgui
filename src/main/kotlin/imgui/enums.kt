@@ -283,7 +283,6 @@ enum class Col {
     ScrollbarGrab,
     ScrollbarGrabHovered,
     ScrollbarGrabActive,
-    ComboBg,
     CheckMark,
     SliderGrab,
     SliderGrabActive,
@@ -308,12 +307,15 @@ enum class Col {
     PlotHistogramHovered,
     TextSelectedBg,
     /** darken entire screen when a modal window is active   */
-    ModalWindowDarkening,
-    COUNT;
+    ModalWindowDarkening;
 
     val i = ordinal
 
     val u32 get() = ImGui.getColorU32(i, alphaMul = 1f)
+
+    companion object {
+        val COUNT = values().size
+    }
 }
 
 /** Enumeration for PushStyleVar() / PopStyleVar() to temporarily modify the ImGuiStyle structure.
@@ -332,7 +334,7 @@ enum class StyleVar {
     /** vec2    */
     WindowMinSize,
     /** float   */
-    ChildWindowRounding,
+    ChildRounding,
     /** vec2    */
     FramePadding,
     /** float   */

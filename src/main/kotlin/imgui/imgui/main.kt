@@ -19,7 +19,11 @@ import imgui.WindowFlags as Wf
 
 interface imgui_main {
 
-    val style get() = g.style
+    var style
+        get() = g.style
+        set(value) {
+            g.style = value
+        }
 
     /** Same value as passed to your RenderDrawListsFn() function. valid after Render() and
      *  until the next call to NewFrame()   */
@@ -111,8 +115,8 @@ interface imgui_main {
                 IO.mouseDragMaxDistanceSqr[i] = 0f
             } else if (IO.mouseDown[i]) {
                 val mouseDelta = IO.mousePos - IO.mouseClickedPos[i]
-                IO.mouseDragMaxDistanceAbs[i].x = max(IO.mouseDragMaxDistanceAbs[i].x, if(mouseDelta.x < 0f) -mouseDelta.x else mouseDelta.x)
-                IO.mouseDragMaxDistanceAbs[i].y = max(IO.mouseDragMaxDistanceAbs[i].y, if(mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y)
+                IO.mouseDragMaxDistanceAbs[i].x = max(IO.mouseDragMaxDistanceAbs[i].x, if (mouseDelta.x < 0f) -mouseDelta.x else mouseDelta.x)
+                IO.mouseDragMaxDistanceAbs[i].y = max(IO.mouseDragMaxDistanceAbs[i].y, if (mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y)
                 IO.mouseDragMaxDistanceSqr[i] = max(IO.mouseDragMaxDistanceSqr[i], mouseDelta.lengthSqr)
             }
         }

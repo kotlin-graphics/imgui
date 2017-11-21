@@ -61,6 +61,8 @@ import imgui.ImGui.sliderInt
 import imgui.ImGui.sliderVec2
 import imgui.ImGui.spacing
 import imgui.ImGui.style
+import imgui.ImGui.styleColorsClassic
+import imgui.ImGui.styleColorsDark
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
@@ -72,6 +74,7 @@ import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
 import imgui.functionalProgramming.button
 import imgui.functionalProgramming.collapsingHeader
+import imgui.functionalProgramming.combo
 import imgui.functionalProgramming.mainMenuBar
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.menuBar
@@ -81,6 +84,7 @@ import imgui.functionalProgramming.popupContextWindow
 import imgui.functionalProgramming.smallButton
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.window
+import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withTooltip
@@ -337,7 +341,7 @@ object Console {
             /*  As a specific feature guaranteed by the library, after calling begin() the last Item represent the title bar.
                 So e.g. isItemHovered() will return true when hovering the title bar. */
             // Here we create a context menu only available from the title bar.
-            popupContextItem() { if(menuItem("Close")) open.set(false) }
+            popupContextItem() { if (menuItem("Close")) open.set(false) }
 
             textWrapped("This example is not yet implemented, you are welcome to contribute")
 //            textWrapped("This example implements a console with basic coloring, completion and history. A more elaborate implementation may want to store entries along with extra data such as timestamp, emitter, etc.");
@@ -1044,8 +1048,13 @@ object CustomRendering {
 
 object StyleEditor {
 
+    var init = true
+    var refSavedStyle: Style? = null
+    // Default Styles Selector
+    var styleIdx = 0
+
     var outputDest = 0
-    var outputOnlyModified = false
+    var outputOnlyModified = true
     var alphaFlags = 0
     val filter = TextFilter()
     var windowScale = 1f
@@ -1054,19 +1063,30 @@ object StyleEditor {
 
         /*  You can pass in a reference ImGuiStyle structure to compare to, revert to and save to
             (else it compares to the default style)         */
-        val defaultStyle = Style()  // Default style
-        button("Revert Style") {
-            g.style = ref ?: defaultStyle
-        }
 
-        ref?.let {
-            sameLine()
-            button("Save Style") {
-                TODO()//*ref = style
-            }
-        }
+        // Default to using internal storage as reference
+        if (init && ref == null) refSavedStyle = Style(style)
+        init = false
+        var ref = if (ref == null) refSavedStyle else ref
 
         pushItemWidth(windowWidth * 0.55f)
+        combo("Colors##Selector", ::styleIdx, "Classic\u0000Dark\u0000") {
+            when (styleIdx) {
+                0 -> styleColorsClassic()
+                1 -> styleColorsDark()
+            }
+            refSavedStyle = Style(style)
+        }
+
+        // Save/Revert button
+        button("Save Ref") {
+            refSavedStyle = Style(style)
+            ref = style
+        }
+        sameLine()
+        if (button("Revert Ref")) style = ref!!
+        sameLine()
+        showHelpMarker("Save/Revert in local non-persistent storage. Default Colors definition are not affected. Use \"Export Colors\" below to save them somewhere.")
 
         treeNode("Rendering") {
             checkbox("Anti-aliased lines", style::antiAliasedLines)
@@ -1083,7 +1103,7 @@ object StyleEditor {
         treeNode("Settings") {
             sliderVec2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
             sliderFloat("WindowRounding", style::windowRounding, 0f, 16f, "%.0f")
-            sliderFloat("ChildWindowRounding", style::childWindowRounding, 0f, 16f, "%.0f")
+            sliderFloat("ChildRounding", style::childRounding, 0f, 16f, "%.0f")
             sliderVec2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
             sliderFloat("FrameRounding", style::frameRounding, 0f, 16f, "%.0f")
             sliderVec2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
@@ -1103,7 +1123,7 @@ object StyleEditor {
 
         treeNode("Colors") {
 
-            button("Copy Colors") {
+            button("Export Unsaved") {
                 if (outputDest == 0)
                     logToClipboard()
                 else
@@ -1112,7 +1132,7 @@ object StyleEditor {
                 for (i in Col.values()) {
                     val col = style.colors[i]
                     val name = i.name
-                    if (!outputOnlyModified || col != (ref?.colors?.get(i) ?: defaultStyle.colors[i]))
+                    if (!outputOnlyModified || col != ref!!.colors[i])
                         TODO()//logText("colors[ImGuiCol_%s]%*s= ImVec4(%.2ff, %.2ff, %.2ff, %.2ff);" IM_NEWLINE, name, 23 - (int)strlen(name), "", col.x, col.y, col.z, col.w);
                 }
                 logFinish()
@@ -1120,7 +1140,7 @@ object StyleEditor {
             sameLine()
             withItemWidth(120f) { combo("##output_type", ::outputDest, "To Clipboard\u0000To TTY\u0000") }
             sameLine()
-            checkbox("Only Modified Fields", ::outputOnlyModified)
+            checkbox("Only Modified Colors", ::outputOnlyModified)
 
             text("Tip: Left-click on colored square to open color picker,\nRight-click to open edit options menu.")
 
@@ -1128,26 +1148,30 @@ object StyleEditor {
             radioButton("Alpha", ::alphaFlags, Cef.AlphaPreview.i); sameLine()
             radioButton("Both", ::alphaFlags, Cef.AlphaPreviewHalf.i)
 
-            beginChild("#colors", Vec2(0, 300), true, Wf.AlwaysVerticalScrollbar.i)
-            pushItemWidth(-160)
-            for (i in 0 until Col.COUNT.i) {
-                val name = Col.values()[i].name
-                if (!filter.passFilter(name)) // TODO fix bug
-                    continue
-                withId(i) {
-                    colorEditVec4(name, style.colors[i], Cef.AlphaBar or alphaFlags)
-                    if (style.colors[i] != (ref?.colors?.get(i) ?: defaultStyle.colors[i])) {
-                        sameLine()
-                        button("Revert") { style.colors[i] put (ref?.colors?.get(i) ?: defaultStyle.colors[i]) }
-                        ref?.let {
-                            sameLine()
-                            button("Save") { it.colors[i] = style.colors[i] }
+            withChild("#colors", Vec2(0, 300), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar) {
+                withItemWidth(-160) {
+                    for (i in 0 until Col.COUNT) {
+                        val name = Col.values()[i].name
+                        if (!filter.passFilter(name)) // TODO fix bug
+                            continue
+                        withId(i) {
+                            colorEditVec4("##color", style.colors[i], Cef.AlphaBar or alphaFlags)
+                            if (style.colors[i] != ref!!.colors[i]) {
+                                /*  Tips: in a real user application, you may want to merge and use an icon font into
+                                    the main font, so instead of "Save"/"Revert" you'd use icons.
+                                    Read the FAQ and extra_fonts/README.txt about using icon fonts. It's really easy
+                                    and super convenient!  */
+                                sameLine(0f, style.itemInnerSpacing.x)
+                                if (button("Save")) ref!!.colors[i] = Vec4(style.colors[i])
+                                sameLine(0f, style.itemInnerSpacing.x)
+                                if (button("Revert")) style.colors[i] = Vec4(ref!!.colors[i])
+                            }
+                            sameLine(0f, style.itemInnerSpacing.x)
+                            textUnformatted(name)
                         }
                     }
                 }
             }
-            popItemWidth()
-            endChild()
         }
 
         val fontsOpened = treeNode("Fonts", "Fonts (${IO.fonts.fonts.size})")

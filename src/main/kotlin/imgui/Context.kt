@@ -426,8 +426,8 @@ class Style {
     var windowRounding = 9f
     /** Alignment for title bar text    */
     var windowTitleAlign = Vec2(0f, 0.5f)
-    /** Radius of child window corners rounding. Set to 0.0f to have rectangular child windows  */
-    var childWindowRounding = 0f
+    /** Radius of child window corners rounding. Set to 0.0f to have rectangular child windows.  */
+    var childRounding = 0f
     /** Padding within a framed rectangle (used by most widgets)    */
     var framePadding = Vec2(4, 3)
     /** Radius of frame corners rounding. Set to 0.0f to have rectangular frames (used by most widgets).    */
@@ -477,6 +477,36 @@ class Style {
         ImGui.styleColorsClassic(this)
     }
 
+    constructor()
+
+    constructor(style: Style) {
+        alpha = style.alpha
+        windowPadding put style.windowPadding
+        windowMinSize put style.windowMinSize
+        windowRounding = style.windowRounding
+        windowTitleAlign put style.windowTitleAlign
+        childRounding = style.childRounding
+        framePadding put style.framePadding
+        frameRounding = style.frameRounding
+        itemSpacing put style.itemSpacing
+        itemInnerSpacing put style.itemInnerSpacing
+        touchExtraPadding put style.touchExtraPadding
+        indentSpacing = style.indentSpacing
+        columnsMinSpacing = style.columnsMinSpacing
+        scrollbarSize = style.scrollbarSize
+        scrollbarRounding = style.scrollbarRounding
+        grabMinSize = style.grabMinSize
+        grabRounding = style.grabRounding
+        buttonTextAlign put style.buttonTextAlign
+        displayWindowPadding put style.displayWindowPadding
+        displaySafeAreaPadding put style.displaySafeAreaPadding
+        antiAliasedLines = style.antiAliasedLines
+        antiAliasedShapes = style.antiAliasedShapes
+        curveTessellationTol = style.curveTessellationTol
+        style.colors.forEach { colors.add(Vec4(it)) }
+//        locale = style.locale
+    }
+
     /** To scale your entire UI (e.g. if you want your app to use High DPI or generally be DPI aware) you may use this
      *  helper function. Scaling the fonts is done separately and is up to you.
      *  Tips: if you need to change your scale multiple times, prefer calling this on a freshly initialized Style
@@ -485,7 +515,7 @@ class Style {
         windowPadding = glm.floor(windowPadding * scaleFactor)
         windowMinSize.put(glm.floor(windowMinSize.x * scaleFactor), glm.floor(windowMinSize.y * scaleFactor))
         windowRounding = glm.floor(windowRounding * scaleFactor)
-        childWindowRounding = glm.floor(childWindowRounding * scaleFactor)
+        childRounding = glm.floor(childRounding * scaleFactor)
         framePadding = glm.floor(framePadding * scaleFactor)
         frameRounding = glm.floor(frameRounding * scaleFactor)
         itemSpacing = glm.floor(itemSpacing * scaleFactor)

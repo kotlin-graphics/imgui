@@ -377,9 +377,12 @@ class Window(
     /** Maximum visible content position in window coordinates.
     ~~ (SizeContentsExplicit ? SizeContentsExplicit : Size - ScrollbarSizes) - CursorStartPos, per axis */
     var contentsRegionRect = Rect()
-    /** Window padding at the time of begin. We need to lock it, in particular manipulation of the ShowBorder would have
-    effect  */
+    /** Window padding at the time of begin. */
     var windowPadding = Vec2()
+    /** Window rounding at the time of begin.   */
+    var windowRounding = 0f
+    /** Window border size at the time of begin.    */
+    var windowBorderSize = 0f
     /** == window->GetID("#MOVE")   */
     var moveId: Int
 
