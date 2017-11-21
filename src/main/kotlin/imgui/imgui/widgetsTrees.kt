@@ -64,7 +64,7 @@ interface imgui_widgetsTrees {
 
     /** ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for
      *  layout purpose  */
-    fun treePush(ptrId: Any? = null) {
+    fun treePush(ptrId: Any?) {
         val window = currentWindow
         indent()
         window.dc.treeDepth++

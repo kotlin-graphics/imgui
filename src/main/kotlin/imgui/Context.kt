@@ -420,18 +420,28 @@ class Style {
     var alpha = 1f
     /** Padding within a window */
     var windowPadding = Vec2(8)
-    /** Minimum window size */
-    var windowMinSize = Vec2i(32)
     /** Radius of window corners rounding. Set to 0.0f to have rectangular windows  */
     var windowRounding = 9f
+    /** Thickness of border around windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly)   */
+    var windowBorderSize = 0f
+    /** Minimum window size */
+    var windowMinSize = Vec2i(32)
     /** Alignment for title bar text    */
     var windowTitleAlign = Vec2(0f, 0.5f)
     /** Radius of child window corners rounding. Set to 0.0f to have rectangular child windows.  */
     var childRounding = 0f
+    /** Thickness of border around child windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly) */
+    var childBorderSize = 1f
+    /** Radius of popup window corners rounding.    */
+    var popupRounding = 0f
+    /** Thickness of border around popup windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly) */
+    var popupBorderSize = 1f
     /** Padding within a framed rectangle (used by most widgets)    */
     var framePadding = Vec2(4, 3)
     /** Radius of frame corners rounding. Set to 0.0f to have rectangular frames (used by most widgets).    */
     var frameRounding = 0f
+    /** Thickness of border around frames. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly)    */
+    var frameBorderSize = 0f
     /** Horizontal and vertical spacing between widgets/lines   */
     var itemSpacing = Vec2(8, 4)
     /** Horizontal and vertical spacing between within elements of a composed widget (e.g. a slider and its label)  */
@@ -482,12 +492,17 @@ class Style {
     constructor(style: Style) {
         alpha = style.alpha
         windowPadding put style.windowPadding
-        windowMinSize put style.windowMinSize
         windowRounding = style.windowRounding
+        windowBorderSize = style.windowBorderSize
+        windowMinSize put style.windowMinSize
         windowTitleAlign put style.windowTitleAlign
         childRounding = style.childRounding
+        childBorderSize = style.childBorderSize
+        popupRounding = style.popupRounding
+        popupBorderSize = style.popupBorderSize
         framePadding put style.framePadding
         frameRounding = style.frameRounding
+        frameBorderSize = style.frameBorderSize
         itemSpacing put style.itemSpacing
         itemInnerSpacing put style.itemInnerSpacing
         touchExtraPadding put style.touchExtraPadding
@@ -513,9 +528,10 @@ class Style {
      *  structure rather than scaling multiple times (because floating point multiplications are lossy).    */
     fun scaleAllSizes(scaleFactor: Float) {
         windowPadding = glm.floor(windowPadding * scaleFactor)
-        windowMinSize.put(glm.floor(windowMinSize.x * scaleFactor), glm.floor(windowMinSize.y * scaleFactor))
         windowRounding = glm.floor(windowRounding * scaleFactor)
+        windowMinSize.put(glm.floor(windowMinSize.x * scaleFactor), glm.floor(windowMinSize.y * scaleFactor))
         childRounding = glm.floor(childRounding * scaleFactor)
+        popupRounding = glm.floor(popupRounding * scaleFactor)
         framePadding = glm.floor(framePadding * scaleFactor)
         frameRounding = glm.floor(frameRounding * scaleFactor)
         itemSpacing = glm.floor(itemSpacing * scaleFactor)

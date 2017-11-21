@@ -16,6 +16,7 @@ import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setTooltip
 import imgui.ImGui.text
+import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.functionalProgramming.button
 import imgui.functionalProgramming.collapsingHeader
@@ -63,7 +64,7 @@ object popupsAndModalWindows {
                     using the "###" operator to preserve a constant ID with a variable label)                 */
                 if (button("Select..")) openPopup("select")
                 sameLine()
-                text(names.getOrElse(selectedFish, { "<None>" }))
+                textUnformatted(names.getOrElse(selectedFish, { "<None>" }))
                 popup("select") {
                     text("Aquarium")
                     separator()

@@ -579,7 +579,7 @@ interface imgui_widgetsColorEditorPicker {
             else
                 window.drawList.addRectFilled(bbInner.min, bbInner.max, getColorU32(colSource), rounding, 0.inv())
         }
-        if (window.flags has Wf.ShowBorders)
+        if (style.frameBorderSize > 0f)
             renderFrameBorder(bb.min, bb.max, rounding)
         else
             window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border

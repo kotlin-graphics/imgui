@@ -43,8 +43,9 @@ import imgui.Context as g
 
 interface imgui_widgetsText {
 
-    /** doesn't require null terminated string if 'text_end' is specified. no copy done to any bounded stack buffer,
-     *  recommended for long chunks of text */
+    /** Raw text without formatting. Roughly equivalent to text("%s", text) but:
+     *  A) doesn't require null terminated string if 'textEnd' is specified
+     *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
     fun textUnformatted(text: String, textEnd: Int = text.length) {
 
         val window = currentWindow

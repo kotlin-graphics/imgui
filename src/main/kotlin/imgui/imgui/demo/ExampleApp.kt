@@ -63,6 +63,7 @@ import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.styleColorsClassic
 import imgui.ImGui.styleColorsDark
+import imgui.ImGui.styleColorsLight
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
@@ -124,12 +125,11 @@ object ExampleApp {
     }
 
     var noTitlebar = false
-    var noBorder = true
-    var noResize = false
-    var noMove = false
     var noScrollbar = false
-    var noCollapse = false
     var noMenu = false
+    var noMove = false
+    var noResize = false
+    var noCollapse = false
 
     var filter = TextFilter()
 
@@ -163,12 +163,11 @@ object ExampleApp {
         // Demonstrate the various window flags. Typically you would just use the default.
         var windowFlags = 0
         if (noTitlebar) windowFlags = windowFlags or Wf.NoTitleBar
-        if (!noBorder) windowFlags = windowFlags or Wf.ShowBorders
-        if (noResize) windowFlags = windowFlags or Wf.NoResize
-        if (noMove) windowFlags = windowFlags or Wf.NoMove
         if (noScrollbar) windowFlags = windowFlags or Wf.NoScrollbar
-        if (noCollapse) windowFlags = windowFlags or Wf.NoCollapse
         if (!noMenu) windowFlags = windowFlags or Wf.MenuBar
+        if (noMove) windowFlags = windowFlags or Wf.NoMove
+        if (noResize) windowFlags = windowFlags or Wf.NoResize
+        if (noCollapse) windowFlags = windowFlags or Wf.NoCollapse
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
         if (!_begin("ImGui Demo", open, windowFlags)) {
             end()   // Early out if the window is collapsed, as an optimization.
@@ -213,12 +212,11 @@ object ExampleApp {
         collapsingHeader("Window options") {
 
             checkbox("No titlebar", ::noTitlebar); sameLine(150)
-            checkbox("No border", ::noBorder); sameLine(300)
-            checkbox("No resize", ::noResize)
-            checkbox("No move", ::noMove); sameLine(150)
             checkbox("No scrollbar", ::noScrollbar); sameLine(300)
-            checkbox("No collapse", ::noCollapse)
             checkbox("No menu", ::noMenu)
+            checkbox("No move", ::noMove); sameLine(150)
+            checkbox("No resize", ::noResize)
+            checkbox("No collapse", ::noCollapse)
 
             treeNode("Style") { StyleEditor() }
 
@@ -341,7 +339,7 @@ object Console {
             /*  As a specific feature guaranteed by the library, after calling begin() the last Item represent the title bar.
                 So e.g. isItemHovered() will return true when hovering the title bar. */
             // Here we create a context menu only available from the title bar.
-            popupContextItem() { if (menuItem("Close")) open.set(false) }
+            popupContextItem { if (menuItem("Close")) open.set(false) }
 
             textWrapped("This example is not yet implemented, you are welcome to contribute")
 //            textWrapped("This example implements a console with basic coloring, completion and history. A more elaborate implementation may want to store entries along with extra data such as timestamp, emitter, etc.");
@@ -606,8 +604,6 @@ object Log {
             scrollToBottom = true
         }
 
-        fun clear() = buf.setLength(0)
-
         fun draw(title: String, open: KMutableProperty0<Boolean>? = null) {
 
             setNextWindowSize(Vec2(500, 400), Cond.FirstUseEver)
@@ -641,6 +637,8 @@ object Log {
             endChild()
             end()
         }
+
+        fun clear() = buf.setLength(0)
     }
 }
 
@@ -1053,6 +1051,10 @@ object StyleEditor {
     // Default Styles Selector
     var styleIdx = 0
 
+    var windowBorder = false
+    var frameBorder = false
+    var popupBorder = false
+
     var outputDest = 0
     var outputOnlyModified = true
     var alphaFlags = 0
@@ -1070,12 +1072,34 @@ object StyleEditor {
         var ref = if (ref == null) refSavedStyle else ref
 
         pushItemWidth(windowWidth * 0.55f)
-        combo("Colors##Selector", ::styleIdx, "Classic\u0000Dark\u0000") {
+        combo("Colors##Selector", ::styleIdx, "Classic\u0000Dark\u0000Light\u0000") {
             when (styleIdx) {
                 0 -> styleColorsClassic()
                 1 -> styleColorsDark()
+                2 -> styleColorsLight()
             }
             refSavedStyle = Style(style)
+        }
+
+        // Simplified Settings
+        if (sliderFloat("FrameRounding", style::frameRounding, 0f, 12f, "%.0f"))
+            style.grabRounding = style.frameRounding    // Make GrabRounding always the same value as FrameRounding
+        run {
+            windowBorder = style.windowBorderSize > 0f
+            if (checkbox("WindowBorder", ::windowBorder))
+                style.windowBorderSize = if (windowBorder) 1f else 0f
+        }
+        sameLine()
+        run {
+            frameBorder = style.frameBorderSize > 0f
+            if (checkbox("FrameBorder", ::frameBorder))
+                style.frameBorderSize = if (frameBorder) 1f else 0f
+        }
+        sameLine()
+        run {
+            popupBorder = style.popupBorderSize > 0f
+            if (checkbox("PopupBorder", ::popupBorder))
+                style.popupBorderSize = if (popupBorder) 1f else 0f
         }
 
         // Save/Revert button
@@ -1102,17 +1126,24 @@ object StyleEditor {
 
         treeNode("Settings") {
             sliderVec2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
-            sliderFloat("WindowRounding", style::windowRounding, 0f, 16f, "%.0f")
-            sliderFloat("ChildRounding", style::childRounding, 0f, 16f, "%.0f")
+            sliderFloat("PopupRounding", style::popupRounding, 0f, 16f, "%.0f")
             sliderVec2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
-            sliderFloat("FrameRounding", style::frameRounding, 0f, 16f, "%.0f")
             sliderVec2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
             sliderVec2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
             sliderVec2("TouchExtraPadding", style.touchExtraPadding, 0f, 10f, "%.0f")
             sliderFloat("IndentSpacing", style::indentSpacing, 0f, 30f, "%.0f")
             sliderFloat("ScrollbarSize", style::scrollbarSize, 1f, 20f, "%.0f")
-            sliderFloat("ScrollbarRounding", style::scrollbarRounding, 0.0f, 16.0f, "%.0f")
             sliderFloat("GrabMinSize", style::grabMinSize, 1f, 20f, "%.0f")
+            text("BorderSize")
+            sliderFloat("WindowBorderSize", style::windowBorderSize, 0f, 1f, "%.0f")
+            sliderFloat("ChildBorderSize", style::childBorderSize, 0f, 1f, "%.0f")
+            sliderFloat("PopupBorderSize", style::popupBorderSize, 0f, 1f, "%.0f")
+            sliderFloat("FrameBorderSize", style::frameBorderSize, 0f, 1f, "%.0f")
+            text("Rounding")
+            sliderFloat("WindowRounding", style::windowRounding, 0f, 16f, "%.0f")
+            sliderFloat("ChildRounding", style::childRounding, 0f, 16f, "%.0f")
+            sliderFloat("FrameRounding", style::frameRounding, 0f, 16f, "%.0f")
+            sliderFloat("ScrollbarRounding", style::scrollbarRounding, 0.0f, 16.0f, "%.0f")
             sliderFloat("GrabRounding", style::grabRounding, 0f, 16f, "%.0f")
             text("Alignment")
             sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")

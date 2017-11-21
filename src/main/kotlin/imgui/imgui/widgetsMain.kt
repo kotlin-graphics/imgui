@@ -235,9 +235,9 @@ interface imgui_widgetsMain {
             window.drawList.addCircleFilled(center, radius - pad, Col.CheckMark.u32, 16)
         }
 
-        if (window.flags has Wf.ShowBorders) {
-            window.drawList.addCircle(center + Vec2(1), radius, Col.BorderShadow.u32, 16)
-            window.drawList.addCircle(center, radius, Col.Border.u32, 16)
+        if (style.frameBorderSize > 0f) {
+            window.drawList.addCircle(center + Vec2(1), radius, Col.BorderShadow.u32, 16, style.frameBorderSize)
+            window.drawList.addCircle(center, radius, Col.Border.u32, 16, style.frameBorderSize)
         }
 
         if (g.logEnabled)
@@ -319,14 +319,13 @@ interface imgui_widgetsMain {
             We have similar code in Begin() for popup placement)         */
             popupY1 = glm.clamp(frameBb.min.y - popupSize.y, style.displaySafeAreaPadding.y, frameBb.min.y)
             popupY2 = frameBb.min.y
-            setNextWindowPos(frameBb.min, Cond.Always, Vec2(0f, 1f))
+            setNextWindowPos(Vec2(frameBb.min.x, frameBb.min.y + style.frameBorderSize), Cond.Always, Vec2(0f, 1f))
         } else   // Position our combo below
-            setNextWindowPos(Vec2(frameBb.min.x, frameBb.max.y), Cond.Always, Vec2())
+            setNextWindowPos(Vec2(frameBb.min.x, frameBb.max.y - style.frameBorderSize), Cond.Always, Vec2())
         setNextWindowSize(Vec2(popupSize.x, popupY2 - popupY1), Cond.Appearing)
         pushStyleVar(StyleVar.WindowPadding, style.framePadding)
 
-        val flags = Wf.ComboBox or if (window.flags has Wf.ShowBorders) Wf.ShowBorders else Wf.Null
-        if (!beginPopupEx(id, flags)) {
+        if (!beginPopupEx(id, Wf.ComboBox.i)) {
             assert(false)   // This should never happen as we tested for IsPopupOpen() above
             return false
         }
@@ -431,7 +430,7 @@ interface imgui_widgetsMain {
         // Render
         val fraction = saturate(fraction)
         renderFrame(bb.min, bb.max, Col.FrameBg.u32, true, style.frameRounding)
-        bb expand Vec2(-window.windowBorderSize)
+        bb expand Vec2(-style.frameBorderSize)
         val fillBr = Vec2(lerp(bb.min.x, bb.max.x, fraction), bb.max.y)
         renderRectFilledRangeH(window.drawList, bb, Col.PlotHistogram.u32, 0f, fraction, style.frameRounding)
         // Default displaying the fraction as percentage string, but user can override it

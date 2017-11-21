@@ -31,6 +31,7 @@ interface imgui_utilities {
      *          such as a text() item still returns true with isItemHovered()
      *      - this should work even for non-interactive items that have no ID, so we cannot use LastItemId  */
     fun isItemHovered(flags: Hf) = isItemHovered(flags.i)
+
     fun isItemHovered(flags: Int = Hf.Default.i): Boolean {
         val window = g.currentWindow!!
         return when {
@@ -48,6 +49,9 @@ interface imgui_utilities {
                             !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
                     !window.isContentHoverable(flags) -> false
                     window.dc.itemFlags has ItemFlags.Disabled -> false
+                /*  Special handling for the 1st item after begin() which represent the title bar. When the window is
+                    collapsed (skipItems == true) that last item will never be overwritten.                 */
+                    window.dc.lastItemId == window.moveId && window.writeAccessed -> false
                     else -> true
                 }
             }
@@ -91,6 +95,7 @@ interface imgui_utilities {
 
     /** is current Begin()-ed window hovered (and typically: not blocked by a popup/modal)? */
     fun isWindowHovered(flags: Hf) = isWindowHovered(flags.i)
+
     fun isWindowHovered(flags: Int = Hf.Default.i): Boolean {
         assert(flags hasnt Hf.AllowWhenOverlapped)  // Flags not supported by this function
         return when {
@@ -179,16 +184,17 @@ interface imgui_utilities {
 
     /** helper to create a child window / scrolling region that looks like a normal widget frame    */
     fun beginChildFrame(id: Int, size: Vec2, extraFlags: Int = 0): Boolean {
-        pushStyleColor(Col.ChildWindowBg, style.colors[Col.FrameBg])
+        pushStyleColor(Col.ChildBg, style.colors[Col.FrameBg])
         pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
+        pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)
         pushStyleVar(StyleVar.WindowPadding, style.framePadding)
         val flags = Wf.NoMove or Wf.AlwaysUseWindowPadding or extraFlags
-        return beginChild(id, size, g.currentWindow!!.flags has Wf.ShowBorders, flags)
+        return beginChild(id, size, true, Wf.NoMove or Wf.AlwaysUseWindowPadding or extraFlags)
     }
 
     fun endChildFrame() {
         endChild()
-        popStyleVar(2)
+        popStyleVar(3)
         popStyleColor()
     }
 

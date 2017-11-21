@@ -104,7 +104,7 @@ interface imgui_internal {
 
     val currentWindowRead get() = g.currentWindow
 
-    val currentWindow get() = g.currentWindow!!.apply { accessed = true }
+    val currentWindow get() = g.currentWindow!!.apply { writeAccessed = true }
 
     val parentWindow: Window
         get() {
@@ -121,83 +121,6 @@ interface imgui_internal {
         assert(g.settings.isEmpty())
         loadIniSettingsFromDisk(IO.iniFilename)
         g.initialized = true
-    }
-
-    /** Ends the ImGui frame. Automatically called by Render()! you most likely don't need to ever call that yourself
-     *  directly. If you don't need to render you can call EndFrame() but you'll have wasted CPU already. If you don't
-     *  need to render, don't create any windows instead!
-     *
-     *  This is normally called by Render(). You may want to call it directly if you want to avoid calling Render() but
-     *  the gain will be very minimal.  */
-    fun endFrame() {
-
-        assert(g.initialized)                       // Forgot to call ImGui::NewFrame()
-        assert(g.frameCountEnded != g.frameCount)   // ImGui::EndFrame() called multiple times, or forgot to call ImGui::NewFrame() again
-
-        // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
-//        if (IO.imeSetInputScreenPosFn && ImLengthSqr(g.OsImePosRequest - g.OsImePosSet) > 0.0001f) { TODO
-//            g.IO.ImeSetInputScreenPosFn((int) g . OsImePosRequest . x, (int) g . OsImePosRequest . y)
-//            g.OsImePosSet = g.OsImePosRequest
-//        }
-
-        // Hide implicit "Debug" window if it hasn't been used
-        assert(g.currentWindowStack.size == 1)    // Mismatched Begin()/End() calls
-        g.currentWindow?.let {
-            if (!it.accessed) it.active = false
-        }
-
-        end()
-
-        if (g.activeId == 0 && g.hoveredId == 0)
-            if (g.navWindow == null || !g.navWindow!!.appearing) { // Unless we just made a window/popup appear
-                // Click to focus window and start moving (after we're done with all our widgets)
-                if (IO.mouseClicked[0])
-                    if (g.hoveredRootWindow != null) {
-                        g.hoveredWindow.focus()
-                        if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove) {
-                            g.movingWindow = g.hoveredWindow
-                            g.movingdWindowMoveId = g.hoveredWindow!!.moveId
-                            setActiveId(g.movingdWindowMoveId, g.hoveredRootWindow)
-                        }
-                    } else if (g.navWindow != null && frontMostModalRootWindow == null)
-                        null.focus()   // Clicking on void disable focus
-
-                /*  With right mouse button we close popups without changing focus
-                (The left mouse button path calls FocusWindow which will lead NewFrame->CloseInactivePopups to trigger) */
-                if (IO.mouseClicked[1]) {
-                    /*  Find the top-most window between HoveredWindow and the front most Modal Window.
-                        This is where we can trim the popup stack.  */
-                    val modal = frontMostModalRootWindow
-                    var hoveredWindowAboveModal = false
-                    if (modal == null)
-                        hoveredWindowAboveModal = true
-                    var i = g.windows.lastIndex
-                    while (i >= 0 && !hoveredWindowAboveModal) {
-                        val window = g.windows[i]
-                        if (window === modal) break
-                        if (window === g.hoveredWindow) hoveredWindowAboveModal = true
-                        i--
-                    }
-                    closeInactivePopups(if (hoveredWindowAboveModal) g.hoveredWindow else modal)
-                }
-            }
-
-        /*  Sort the window list so that all child windows are after their parent
-            We cannot do that on FocusWindow() because childs may not exist yet         */
-        g.windowsSortBuffer.clear()
-        g.windows.forEach {
-            if (!it.active || it.flags hasnt Wf.ChildWindow)  // if a child is active its parent will add it
-                it.addToSortedBuffer()
-        }
-        assert(g.windows.size == g.windowsSortBuffer.size)  // we done something wrong
-        g.windows.clear()
-        g.windows.addAll(g.windowsSortBuffer)
-
-        // Clear Input data for next frame
-        IO.mouseWheel = 0f
-        IO.inputCharacters.fill('\u0000')
-
-        g.frameCountEnded = g.frameCount
     }
 
     fun setActiveId(id: Int, window: Window?) {
@@ -409,13 +332,11 @@ interface imgui_internal {
 
     fun beginPopupEx(id: Int, extraFlags: Int): Boolean {
 
-        val window = g.currentWindow!!
         if (!isPopupOpen(id)) {
             clearSetNextWindowData() // We behave like Begin() and need to consume those values
             return false
         }
 
-        pushStyleVar(StyleVar.WindowRounding, 0f)
         val flags = extraFlags or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings
 
         val name =
@@ -425,9 +346,7 @@ interface imgui_internal {
                     "##popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
 
         val isOpen = begin(name, null, flags)
-        if (window.flags hasnt Wf.ShowBorders)
-            g.currentWindow!!.flags = g.currentWindow!!.flags and Wf.ShowBorders.i.inv()
-        if (!isOpen) // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
+        if (!isOpen) // NB: Begin can return false when the popup is completely clipped (e.g. zero size display)
             endPopup()
 
         return isOpen
@@ -806,16 +725,18 @@ interface imgui_internal {
         val window = g.currentWindow!!
 
         window.drawList.addRectFilled(pMin, pMax, fillCol, rounding)
-        if (border && window.flags has Wf.ShowBorders) {
-            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding)
-            window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding)
+        val borderSize = style.frameBorderSize
+        if (border && borderSize > 0f) {
+            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, 0.inv(), borderSize)
+            window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0.inv(), borderSize)
         }
     }
 
     fun renderFrameBorder(pMin: Vec2, pMax: Vec2, rounding: Float = 0f) = with(g.currentWindow!!) {
-        if (flags has Wf.ShowBorders) {
-            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding)
-            drawList.addRect(pMin, pMax, Col.Border.u32, rounding)
+        val borderSize = style.frameBorderSize
+        if (borderSize > 0f) {
+            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, 0.inv(), borderSize)
+            drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0.inv(), borderSize)
         }
     }
 
