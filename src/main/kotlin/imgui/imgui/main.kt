@@ -5,10 +5,12 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.end
 import imgui.ImGui.endFrame
 import imgui.ImGui.initialize
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
+import imgui.ImGui.setActiveId
 import imgui.ImGui.setNextWindowSize
 import imgui.internal.Window
 import imgui.internal.focus
@@ -34,14 +36,15 @@ interface imgui_main {
 
         ptrIndices = 0
 
-        // Check user data
-        assert(IO.deltaTime >= 0f)  // Need a positive DeltaTime (zero is tolerated but will cause some timing issues)
-        assert(IO.displaySize greaterThanEqual 0)
-        assert(IO.fonts.fonts.size > 0) // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
-        assert(IO.fonts.fonts[0].isLoaded)  // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
-        assert(style.curveTessellationTol > 0f)  // Invalid style setting
-        // Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)
-        assert(style.alpha in 0f..1f)
+        /* (We pass an error message in the assert expression as a trick to get it visible to programmers who are not 
+            using a debugger, as most assert handlers display their argument)         */
+        assert(IO.deltaTime >= 0f, { "Need a positive deltaTime (zero is tolerated but will cause some timing issues)" })
+        assert(IO.displaySize greaterThanEqual 0, { "Invalid displaySize value" })
+        assert(IO.fonts.fonts.size > 0, { "Font Atlas not created. Did you call IO.fonts.getTexDataAsRGBA32 / getTexDataAsAlpha8 ?" })
+        assert(IO.fonts.fonts[0].isLoaded, { "Font Atlas not created. Did you call IO.fonts.getTexDataAsRGBA32 / getTexDataAsAlpha8 ?" })
+        assert(style.curveTessellationTol > 0f, { "Invalid style setting" })
+        assert(style.alpha in 0f..1f, { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)" })
+        assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount, { "Forgot to call render() or endFrame() at the end of the previous frame?" })
 
         // Initialize on first frame
         if (!g.initialized) initialize()
@@ -240,7 +243,7 @@ interface imgui_main {
             val window = g.windows[i]
             window.wasActive = window.active
             window.active = false
-            window.accessed = false
+            window.writeAccessed = false
             i++
         }
 
@@ -316,6 +319,83 @@ interface imgui_main {
             if (g.renderDrawData.cmdListsCount > 0 && IO.renderDrawListsFn != null)
                 IO.renderDrawListsFn!!(g.renderDrawData)
         }
+    }
+
+    /** Ends the ImGui frame. Automatically called by Render()! you most likely don't need to ever call that yourself
+     *  directly. If you don't need to render you can call EndFrame() but you'll have wasted CPU already. If you don't
+     *  need to render, don't create any windows instead!
+     *
+     *  This is normally called by Render(). You may want to call it directly if you want to avoid calling Render() but
+     *  the gain will be very minimal.  */
+    fun endFrame() {
+
+        assert(g.initialized)                       // Forgot to call newFrame()
+        if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
+
+        // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
+//        if (IO.imeSetInputScreenPosFn && ImLengthSqr(g.OsImePosRequest - g.OsImePosSet) > 0.0001f) { TODO
+//            g.IO.ImeSetInputScreenPosFn((int) g . OsImePosRequest . x, (int) g . OsImePosRequest . y)
+//            g.OsImePosSet = g.OsImePosRequest
+//        }
+
+        // Hide implicit "Debug" window if it hasn't been used
+        assert(g.currentWindowStack.size == 1)    // Mismatched Begin()/End() calls
+        g.currentWindow?.let {
+            if (!it.writeAccessed) it.active = false
+        }
+
+        end()
+
+        if (g.activeId == 0 && g.hoveredId == 0)
+            if (g.navWindow == null || !g.navWindow!!.appearing) { // Unless we just made a window/popup appear
+                // Click to focus window and start moving (after we're done with all our widgets)
+                if (IO.mouseClicked[0])
+                    if (g.hoveredRootWindow != null) {
+                        g.hoveredWindow.focus()
+                        if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove) {
+                            g.movingWindow = g.hoveredWindow
+                            g.movingdWindowMoveId = g.hoveredWindow!!.moveId
+                            setActiveId(g.movingdWindowMoveId, g.hoveredRootWindow)
+                        }
+                    } else if (g.navWindow != null && frontMostModalRootWindow == null)
+                        null.focus()   // Clicking on void disable focus
+
+                /*  With right mouse button we close popups without changing focus
+                (The left mouse button path calls FocusWindow which will lead NewFrame->CloseInactivePopups to trigger) */
+                if (IO.mouseClicked[1]) {
+                    /*  Find the top-most window between HoveredWindow and the front most Modal Window.
+                        This is where we can trim the popup stack.  */
+                    val modal = frontMostModalRootWindow
+                    var hoveredWindowAboveModal = false
+                    if (modal == null)
+                        hoveredWindowAboveModal = true
+                    var i = g.windows.lastIndex
+                    while (i >= 0 && !hoveredWindowAboveModal) {
+                        val window = g.windows[i]
+                        if (window === modal) break
+                        if (window === g.hoveredWindow) hoveredWindowAboveModal = true
+                        i--
+                    }
+                    closeInactivePopups(if (hoveredWindowAboveModal) g.hoveredWindow else modal)
+                }
+            }
+
+        /*  Sort the window list so that all child windows are after their parent
+            We cannot do that on FocusWindow() because childs may not exist yet         */
+        g.windowsSortBuffer.clear()
+        g.windows.forEach {
+            if (!it.active || it.flags hasnt Wf.ChildWindow)  // if a child is active its parent will add it
+                it.addToSortedBuffer()
+        }
+        assert(g.windows.size == g.windowsSortBuffer.size)  // we done something wrong
+        g.windows.clear()
+        g.windows.addAll(g.windowsSortBuffer)
+
+        // Clear Input data for next frame
+        IO.mouseWheel = 0f
+        IO.inputCharacters.fill('\u0000')
+
+        g.frameCountEnded = g.frameCount
     }
 
     /** This function is merely here to free heap allocations.     */

@@ -220,7 +220,7 @@ interface imgui_menus {
 
         if (menuIsOpen) {
             setNextWindowPos(popupPos, Cond.Always)
-            val flags = Wf.ShowBorders or Wf.AlwaysAutoResize or (
+            val flags = Wf.AlwaysAutoResize or (
                     if (window.flags has (Wf.Popup or Wf.ChildMenu)) Wf.ChildMenu or Wf.ChildWindow
                     else Wf.ChildMenu.i)
             // menuIsOpen can be 'false' when the popup is completely clipped (e.g. zero size display)

@@ -403,7 +403,7 @@ class Window(
 
     var wasActive = false
     /** Set to true when any widget access the current window   */
-    var accessed = false
+    var writeAccessed = false
     /** Set when collapsing window to become only title-bar */
     var collapsed = false
     /** Set when items can safely be all clipped (e.g. window not visible or collapsed) */

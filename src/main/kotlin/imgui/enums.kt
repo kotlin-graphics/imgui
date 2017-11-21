@@ -20,6 +20,7 @@ enum class WindowFlags(val i: Int) {
     NoCollapse(1 shl 5),
     /** Resize every window to its content every frame  */
     AlwaysAutoResize(1 shl 6),
+    @Deprecated("OBSOLETE! Use e.g. style.FrameBorderSize=1.0f to enable borders")
     /** Show borders around windows and items   */
     ShowBorders(1 shl 7),
     /** Never load/save settings in .ini file   */
@@ -266,7 +267,7 @@ enum class Col {
     /** Background of normal windows    */
     WindowBg,
     /** Background of child windows */
-    ChildWindowBg,
+    ChildBg,
     /*-* Background of popups, menus, tooltips windows  */
     PopupBg,
     Border,
@@ -324,21 +325,30 @@ enum class Col {
  *  NB: if changing this enum, you need to update the associated internal table GStyleVarInfo[] accordingly. This is
  *  where we link enum values to members offset/type.   */
 enum class StyleVar {
-
     /** float   */
     Alpha,
     /** vec2    */
     WindowPadding,
     /** float   */
     WindowRounding,
+    /** float */
+    WindowBorderSize,
     /** vec2    */
     WindowMinSize,
     /** float   */
     ChildRounding,
+    /** float */
+    ChildBorderSize,
+    /** float */
+    PopupRounding,
+    /** float */
+    PopupBorderSize,
     /** vec2    */
     FramePadding,
     /** float   */
     FrameRounding,
+    /** float   */
+    FrameBorderSize,
     /** vec2    */
     ItemSpacing,
     /** vec2    */

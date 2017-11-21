@@ -294,7 +294,7 @@ interface imgui_demoDebugInfo {
                 if (isItemHovered())
                     overlayDrawList.addRect(Vec2(window.pos), Vec2(window.pos + window.size), COL32(255, 255, 0, 255))
                 bulletText("Scroll: (%.2f,%.2f)", window.scroll.x, window.scroll.y)
-                bulletText("Active: ${window.active}, Accessed: ${window.accessed}")
+                bulletText("Active: ${window.active}, WriteAccessed: ${window.writeAccessed}")
                 if (window.rootWindow !== window) nodeWindow(window.rootWindow!!, "RootWindow")
                 if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
                 bulletText("Storage: %d bytes", window.stateStorage.data.size * Int.BYTES * 2)

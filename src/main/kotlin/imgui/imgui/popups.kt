@@ -47,7 +47,7 @@ interface imgui_popups {
             clearSetNextWindowData()    // We behave like Begin() and need to consume those values
             return false
         }
-        return beginPopupEx(g.currentWindow!!.getId(strId), Wf.ShowBorders or Wf.AlwaysAutoResize)
+        return beginPopupEx(g.currentWindow!!.getId(strId), Wf.AlwaysAutoResize.i)
     }
 
     /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside) */
@@ -87,7 +87,7 @@ interface imgui_popups {
         assert(id != 0) // However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)
         if (isMouseClicked(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup))
             openPopupEx(id, true)
-        return beginPopupEx(id, Wf.ShowBorders or Wf.AlwaysAutoResize)
+        return beginPopupEx(id, Wf.AlwaysAutoResize.i)
     }
 
     /** Helper to open and begin popup when clicked on current window.  */
@@ -98,7 +98,7 @@ interface imgui_popups {
             if (isWindowHovered(Hf.AllowWhenBlockedByPopup))
                 if (alsoOverItems || !isAnyItemHovered)
                     openPopupEx(id, true)
-        return beginPopupEx(id, Wf.ShowBorders or Wf.AlwaysAutoResize)
+        return beginPopupEx(id, Wf.AlwaysAutoResize.i)
     }
 
 //    IMGUI_API bool          BeginPopupContextVoid(const char* str_id = NULL, int mouse_button = 1); // helper to open and begin popup when clicked in void (where there are no imgui windows).
@@ -108,7 +108,6 @@ interface imgui_popups {
         assert(window.flags has Wf.Popup)  // Mismatched BeginPopup()/EndPopup() calls
         assert(g.currentPopupStack.isNotEmpty())
         end()
-        if (window.flags hasnt Wf.Modal) popStyleVar()
     }
 
     fun isPopupOpen(strId: String) = g.openPopupStack.size > g.currentPopupStack.size &&
