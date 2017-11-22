@@ -159,7 +159,10 @@ object widgets {
 
 
     /* Selectables */
-    val selected = booleanArrayOf(false, true, false, false)
+    val selected0 = booleanArrayOf(false, true, false, false)
+    val selected1 = BooleanArray(3)
+    val selected2 = BooleanArray(16)
+    val selected3 = booleanArrayOf(true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true)
 
 
     /* Multi-line Text Input */
@@ -489,44 +492,37 @@ object widgets {
             }
 
             treeNode("Selectables") {
-                var offset = 0
                 treeNode("Basic") {
-                    selectable("1. I am selectable", selected, 0)
-                    selectable("2. I am selectable", selected, 1)
+                    selectable("1. I am selectable", selected0, 0)
+                    selectable("2. I am selectable", selected0, 1)
                     text("3. I am not selectable")
-                    selectable("4. I am selectable", selected, 2)
-                    if (selectable("5. I am double clickable", selected[3], Sf.AllowDoubleClick.i))
-                        if (isMouseDoubleClicked(0))
-                            selected[3] = !selected[3]
+                    selectable("4. I am selectable", selected0, 2)
+                    if (selectable("5. I am double clickable", selected0[3], Sf.AllowDoubleClick.i))
+                        if (isMouseDoubleClicked(0)) selected0[3] = !selected0[3]
                 }
-                offset += 4
                 treeNode("Rendering more text into the same block") {
-                    selectable("main.c", selected, offset + 0); sameLine(300); text(" 2,345 bytes")
-                    selectable("Hello.cpp", selected, offset + 1); sameLine(300); text("12,345 bytes")
-                    selectable("Hello.h", selected, offset + 2); sameLine(300); text(" 2,345 bytes")
+                    selectable("main.c", selected1, 0); sameLine(300); text(" 2,345 bytes")
+                    selectable("Hello.cpp", selected1, 1); sameLine(300); text("12,345 bytes")
+                    selectable("Hello.h", selected1, 2); sameLine(300); text(" 2,345 bytes")
                 }
-                offset += 3
                 treeNode("In columns") {
                     columns(3, "", false)
                     for (i in 0..15) {
-                        if (selectable("Item $i", selected, offset + i)) Unit
+                        if (selectable("Item $i", selected2, i)) Unit
                         nextColumn()
                     }
                     columns(1)
                 }
-                offset += 16
                 treeNode("Grid") {
                     for (i in 0..15)
-                        withId(offset + i) {
-                            if (selectable("Sailor", selected, offset + i, 0, Vec2(50))) {
+                        withId(i) {
+                            if (selectable("Sailor", selected3, i, 0, Vec2(50))) {
                                 val x = i % 4
                                 val y = i / 4
-                                when {
-                                    x > 0 -> selected[offset + i - 1] = selected[offset + i - 1] xor true
-                                    x < 3 -> selected[offset + i + 1] = selected[offset + i + 1] xor true
-                                    y > 0 -> selected[offset + i - 4] = selected[offset + i + 1] xor true
-                                    y < 3 -> selected[offset + i + 4] = selected[offset + i + 1] xor true
-                                }
+                                if (x > 0) selected3[i - 1] = selected3[i - 1] xor true
+                                if (x < 3) selected3[i + 1] = selected3[i + 1] xor true
+                                if (y > 0) selected3[i - 4] = selected3[i + 1] xor true
+                                if (y < 3) selected3[i + 4] = selected3[i + 1] xor true
                             }
                             if ((i % 4) < 3) sameLine()
                         }
@@ -811,7 +807,7 @@ object widgets {
     }
 }
 
-inline fun <R>withFloat(block: (KMutableProperty0<Float>) -> R): R {
+inline fun <R> withFloat(block: (KMutableProperty0<Float>) -> R): R {
     Ref.fPtr++
     return block(Ref::float).also { Ref.fPtr-- }
 }
