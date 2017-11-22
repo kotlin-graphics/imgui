@@ -59,7 +59,6 @@ interface imgui_parametersStacks {
 
     /** It'll throw error if wrong correspondence between idx and value type    */
     fun pushStyleVar(idx: StyleVar, value: Any) {
-
         g.styleModifiers.push(StyleMod(idx).also {
             when (idx) {
                 StyleVar.Alpha -> {
@@ -74,6 +73,10 @@ interface imgui_parametersStacks {
                     it.floats[0] = style.windowRounding
                     style.windowRounding = value as Float
                 }
+                StyleVar.WindowBorderSize -> {
+                    it.floats[0] = style.windowBorderSize
+                    style.windowBorderSize = value as Float
+                }
                 StyleVar.WindowMinSize -> {
                     style.windowMinSize to it.ints
                     style.windowMinSize put (value as Vec2i)
@@ -82,6 +85,18 @@ interface imgui_parametersStacks {
                     it.floats[0] = style.childRounding
                     style.childRounding = value as Float
                 }
+                StyleVar.ChildBorderSize -> {
+                    it.floats[0] = style.childBorderSize
+                    style.childBorderSize = value as Float
+                }
+                StyleVar.PopupRounding -> {
+                    it.floats[0] = style.popupRounding
+                    style.popupRounding = value as Float
+                }
+                StyleVar.PopupBorderSize -> {
+                    it.floats[0] = style.popupBorderSize
+                    style.popupBorderSize = value as Float
+                }
                 StyleVar.FramePadding -> {
                     style.framePadding to it.floats
                     style.framePadding put (value as Vec2)
@@ -89,6 +104,10 @@ interface imgui_parametersStacks {
                 StyleVar.FrameRounding -> {
                     it.floats[0] = style.frameRounding
                     style.frameRounding = value as Float
+                }
+                StyleVar.FrameBorderSize -> {
+                    it.floats[0] = style.frameBorderSize
+                    style.frameBorderSize= value as Float
                 }
                 StyleVar.ItemSpacing -> {
                     style.itemSpacing to it.floats
@@ -121,8 +140,12 @@ interface imgui_parametersStacks {
             StyleVar.Alpha -> style.alpha = backup.floats[0]
             StyleVar.WindowPadding -> style.windowPadding put backup.floats
             StyleVar.WindowRounding -> style.windowRounding = backup.floats[0]
+            StyleVar.WindowBorderSize -> style.windowBorderSize = backup.floats[0]
             StyleVar.WindowMinSize -> style.windowMinSize put backup.ints
             StyleVar.ChildRounding -> style.childRounding = backup.floats[0]
+            StyleVar.ChildBorderSize -> style.childBorderSize = backup.floats[0]
+            StyleVar.PopupRounding -> style.popupRounding = backup.floats[0]
+            StyleVar.PopupBorderSize -> style.popupBorderSize = backup.floats[0]
             StyleVar.FramePadding -> style.framePadding put backup.floats
             StyleVar.FrameRounding -> style.frameRounding = backup.floats[0]
             StyleVar.ItemSpacing -> style.itemSpacing put backup.floats
