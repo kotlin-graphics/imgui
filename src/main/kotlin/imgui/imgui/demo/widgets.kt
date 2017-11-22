@@ -521,8 +521,8 @@ object widgets {
                                 val y = i / 4
                                 if (x > 0) selected3[i - 1] = selected3[i - 1] xor true
                                 if (x < 3) selected3[i + 1] = selected3[i + 1] xor true
-                                if (y > 0) selected3[i - 4] = selected3[i + 1] xor true
-                                if (y < 3) selected3[i + 4] = selected3[i + 1] xor true
+                                if (y > 0) selected3[i - 4] = selected3[i - 4] xor true
+                                if (y < 3) selected3[i + 4] = selected3[i + 4] xor true
                             }
                             if ((i % 4) < 3) sameLine()
                         }
