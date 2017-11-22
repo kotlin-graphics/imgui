@@ -35,6 +35,7 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.setActiveId
 import imgui.ImGui.textUnformatted
+import imgui.Ref
 import imgui.internal.DataType
 import imgui.internal.Rect
 import imgui.internal.focus
@@ -57,13 +58,8 @@ interface imgui_widgetsDrag {
 
     /** If vMin >= vMax we have no bound  */
     fun dragFloat(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                  displayFormat: String = "%.3f", power: Float = 1f): Boolean {
-
-        f0 = v[ptr]
-        val res = dragFloat(label, ::f0, vSpeed, vMin, vMax, displayFormat, power)
-        v[ptr] = f0
-        return res
-    }
+                  displayFormat: String = "%.3f", power: Float = 1f) =
+            withFloat(v, ptr) { dragFloat(label, it, vSpeed, vMin, vMax, displayFormat, power) }
 
     fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                   displayFormat: String = "%.3f", power: Float = 1f): Boolean {
@@ -100,12 +96,8 @@ interface imgui_widgetsDrag {
                 g.scalarAsInputTextId = 0
             }
         }
-        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) {
-            val data = intArrayOf(glm.floatBitsToInt(v()))
-            val res = inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, data, id, decimalPrecision)
-            v.set(glm.intBitsToFloat(data[0]))
-            return res
-        }
+        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
+            return withFloatAsInt(v) { inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, it, id, decimalPrecision) }
 
         // Actual drag behavior
         itemSize(totalBb, style.framePadding.y)
@@ -171,7 +163,7 @@ interface imgui_widgetsDrag {
         sameLine(0f, style.itemInnerSpacing.x)
         min = if (vMin >= vMax) vCurrentMin() else vMin max vCurrentMin()
         max = if (vMin >= vMax) Float.MAX_VALUE else vMax
-        valueChanged = valueChanged or dragFloat("##max", vCurrentMax, vSpeed, min, max, displayFormatMax, power)
+        valueChanged = dragFloat("##max", vCurrentMax, vSpeed, min, max, displayFormatMax, power) || valueChanged
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
@@ -184,22 +176,11 @@ interface imgui_widgetsDrag {
 
     /** If v_min >= v_max we have no bound
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
-    fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f")
-            : Boolean {
-        i0 = v[ptr]
-        val res = dragInt(label, ::i0, vSpeed, vMin, vMax, displayFormat)
-        v[ptr] = i0
-        return res
-    }
+    fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f") =
+            withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, displayFormat) }
 
     fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                displayFormat: String = "%.0f"): Boolean {
-
-        f0 = v().f
-        val valueChanged = dragFloat(label, ::f0, vSpeed, vMin.f, vMax.f, displayFormat)
-        v.set(f0.i)
-        return valueChanged
-    }
+                displayFormat: String = "%.0f") = withFloat(v) { dragFloat(label, it, vSpeed, vMin.f, vMax.f, displayFormat) }
 
     fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f") =
             dragIntN(label, v, 2, vSpeed, vMin, vMax, displayFormat)
@@ -247,7 +228,7 @@ interface imgui_widgetsDrag {
         sameLine(0f, style.itemInnerSpacing.x)
         min = if (vMin >= vMax) vCurrentMin() else vMin max vCurrentMin()
         max = if (vMin >= vMax) Int.MAX_VALUE else vMax
-        valueChanged = valueChanged or dragInt("##max", vCurrentMax, vSpeed, min, max, displayFormatMax)
+        valueChanged = dragInt("##max", vCurrentMax, vSpeed, min, max, displayFormatMax) || valueChanged
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
@@ -259,8 +240,56 @@ interface imgui_widgetsDrag {
     }
 
     companion object {
-        private var f0 = 0f
-        private var i0 = 0
+
+        private inline fun <R> withFloat(block: (KMutableProperty0<Float>) -> R): R {
+            Ref.fPtr++
+            return block(Ref::float).also { Ref.fPtr-- }
+        }
+
+        private inline fun <R> withInt(block: (KMutableProperty0<Int>) -> R): R {
+            Ref.iPtr++
+            return block(Ref::int).also { Ref.iPtr-- }
+        }
+
+        private inline fun <R> withFloatAsInt(value: KMutableProperty0<Float>, block: (KMutableProperty0<Int>) -> R): R {
+            Ref.iPtr++
+            val i = Ref::int
+            i.set(glm.floatBitsToInt(value()))
+            val res = block(i)
+            value.set(glm.intBitsToFloat(i()))
+            Ref.iPtr--
+            return res
+        }
+
+        private inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
+            Ref.iPtr++
+            val i = Ref::int
+            i.set(ints[ptr])
+            val res = block(i)
+            ints[ptr] = i()
+            Ref.iPtr--
+            return res
+        }
+
+        private inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
+            Ref.fPtr++
+            val f = Ref::float
+            f.set(floats[ptr])
+            val res = block(f)
+            floats[ptr] = f()
+            Ref.fPtr--
+            return res
+        }
+
+        private inline fun <R> withFloat(value: KMutableProperty0<Int>, block: (KMutableProperty0<Float>) -> R): R {
+            Ref.fPtr++
+            val f = Ref::float
+            f.set(value().f)
+            val res = block(f)
+            value.set(f().i)
+            Ref.fPtr--
+            return res
+        }
     }
 }
 

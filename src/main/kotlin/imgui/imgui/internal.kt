@@ -23,7 +23,6 @@ import imgui.ImGui.colorButton
 import imgui.ImGui.contentRegionMax
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
-import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
@@ -48,7 +47,6 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
-import imgui.ImGui.pushStyleVar
 import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
@@ -1204,10 +1202,7 @@ interface imgui_internal {
         pushMultiItemsWidths(component)
         for (i in 0 until component) {
             pushId(i)
-            withFloat(v, i) { f ->
-                val res = sliderFloat("##v", f, vMin, vMax, displayFormat, power)
-                valueChanged = valueChanged || res
-            }
+            withFloat(v, i) { valueChanged = sliderFloat("##v", it, vMin, vMax, displayFormat, power) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -1229,12 +1224,7 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withInt { int ->
-                int.set(v[i])
-                val res = sliderInt("##v", int, vMin, vMax, displayFormat)
-                valueChanged = valueChanged || res
-                v[i] = int()
-            }
+            withInt(v, i) { valueChanged = sliderInt("##v", it, vMin, vMax, displayFormat) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -1333,9 +1323,7 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withFloat(v, i) { f ->
-                valueChanged = valueChanged or dragFloat("##v", f, vSpeed, vMin, vMax, displayFormat, power)
-            }
+            withFloat(v, i) { valueChanged = dragFloat("##v", it, vSpeed, vMin, vMax, displayFormat, power) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -1358,11 +1346,7 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withInt { int ->
-                int.set(v[i])
-                valueChanged = valueChanged or dragInt("##v", int, vSpeed, vMin, vMax, displayFormat)
-                v[i] = int()
-            }
+            withInt(v, i) { valueChanged = dragInt("##v", it, vSpeed, vMin, vMax, displayFormat) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -1604,12 +1588,11 @@ interface imgui_internal {
                 Key.End.isPressed -> editState.onKeyPressed((if (IO.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
                 Key.Delete.isPressed && isEditable -> editState.onKeyPressed(K.DELETE or kMask)
                 Key.Backspace.isPressed && isEditable -> {
-                    if (!editState.hasSelection) {
+                    if (!editState.hasSelection)
                         if (isWordmoveKeyDown)
                             editState.onKeyPressed(K.WORDLEFT or K.SHIFT)
                         else if (IO.optMacOSXBehaviors && IO.keySuper && !IO.keyAlt && !IO.keyCtrl)
                             editState.onKeyPressed(K.LINESTART or K.SHIFT)
-                    }
                     editState.onKeyPressed(K.BACKSPACE or kMask)
                 }
                 Key.Enter.isPressed -> {
@@ -1706,13 +1689,10 @@ interface imgui_internal {
         }
         if (g.activeId == id) {
 
-            if (cancelEdit)
-            // Restore initial value
-                if (isEditable) {
-                    TODO()
-//                        ImStrncpy(buf, editState.InitialText.Data, buf_size)
-//                        valueChanged = true
-                }
+            if (cancelEdit && isEditable) { // Restore initial value
+                for (c in 0 until buf.size) buf[c] = editState.initialText[c]
+                valueChanged = true
+            }
 
             /*  When using `InputTextFlags.EnterReturnsTrue` as a special case we reapply the live buffer back to the
                 input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
@@ -1725,11 +1705,8 @@ interface imgui_internal {
                 // Note that as soon as the input box is active, the in-widget value gets priority over any underlying modification of the input buffer
                 // FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above incorrect.
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
-                if (isEditable) {
-                    TODO()
-//                    editState.empTextBuffer.resize(edit_state.Text.Size * 4);
-//                    ImTextStrToUtf8(edit_state.TempTextBuffer.Data, edit_state.TempTextBuffer.Size, edit_state.Text.Data, NULL);
-                }
+                if (isEditable)
+                    editState.tempTextBuffer = CharArray(editState.text.size * 4, { editState.text.getOrElse(it, { '\u0000' }) })
 
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
@@ -1935,7 +1912,7 @@ interface imgui_internal {
                         val end = text.size - start
                         val rectSize = inputTextCalcTextSizeW(String(text, start, end), textSelectedEnd, stopOnNewLine = true)
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_aa(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)
@@ -2000,9 +1977,7 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withFloat(v, i) { f ->
-                valueChanged = valueChanged or inputFloat("##v", f, 0f, 0f, decimalPrecision, extraFlags)
-            }
+            withFloat(v, i) { valueChanged = inputFloat("##v", it, 0f, 0f, decimalPrecision, extraFlags) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -2023,11 +1998,7 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withInt { int ->
-                int.set(v[i])
-                valueChanged = valueChanged or inputInt("##v", int, 0, 0, extraFlags)
-                v[i] = int()
-            }
+            withInt(v, i) { valueChanged = inputInt("##v", it, 0, 0, extraFlags) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -2101,8 +2072,8 @@ interface imgui_internal {
 
     /** Create text input in place of a slider (when CTRL+Clicking on slider)
      *  FIXME: Logic is messy and confusing. */
-    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: IntArray, id: Int, decimalPrecision: Int)
-            : Boolean {
+    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: KMutableProperty0<Int>, id: Int,
+                                       decimalPrecision: Int): Boolean {
 
         val window = currentWindow
 
@@ -2121,9 +2092,9 @@ interface imgui_internal {
             g.scalarAsInputTextId = g.activeId
             setHoveredId(id)
         }
-        if (textValueChanged)
-            return dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data)
-        return false
+        return if (textValueChanged)
+            dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data)
+        else false
     }
 
     /** Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.   */

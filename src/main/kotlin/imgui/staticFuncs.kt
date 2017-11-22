@@ -439,7 +439,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance(c) * scale  //TODO rename back
+        val charWidth: Float = font.getCharAdvance_aa(c) * scale  //TODO rename back
         lineWidth += charWidth
     }
 
@@ -485,6 +485,15 @@ fun IntArray.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) =
 /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
     non-significant digits?         */
     DataType.Float -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f".format(style.locale, glm.intBitsToFloat(this[0]))
+    else -> throw Error("unsupported format data type")
+}.toCharArray(buf)
+
+fun KMutableProperty0<Int>.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) = when (dataType) {
+
+    DataType.Int -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}d".format(style.locale, this())
+/*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
+    non-significant digits?         */
+    DataType.Float -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f".format(style.locale, glm.intBitsToFloat(this()))
     else -> throw Error("unsupported format data type")
 }.toCharArray(buf)
 

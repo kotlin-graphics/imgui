@@ -153,10 +153,10 @@ interface imgui_widgetsColorEditorPicker {
                 if (n > 0) sameLine(0f, style.itemInnerSpacing.x)
                 if (n + 1 == components) pushItemWidth(wItemLast)
                 if (flags has Cef.Float) {
-                    valueChangedAsFloat = valueChangedAsFloat or dragFloat(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n])
-                    valueChanged = valueChanged or valueChangedAsFloat
+                    valueChangedAsFloat = dragFloat(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n]) || valueChangedAsFloat
+                    valueChanged = valueChanged || valueChangedAsFloat
                 } else
-                    valueChanged = valueChanged or dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n])
+                    valueChanged = dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n]) || valueChanged
                 if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
             }
             popItemWidth()
@@ -169,7 +169,7 @@ interface imgui_widgetsColorEditorPicker {
             val buf = text.toCharArray(CharArray(64))
             pushItemWidth(wItemsAll)
             if (inputText("##Text", buf, Itf.CharsHexadecimal or Itf.CharsUppercase)) {
-                valueChanged = valueChanged || true
+                valueChanged = true
                 var p = 0
                 while (buf[p] == '#' || buf[p].isSpace) p++
                 i.fill(0)
@@ -183,13 +183,12 @@ interface imgui_widgetsColorEditorPicker {
         if (flags hasnt Cef.NoSmallPreview) {
             if (flags hasnt Cef.NoInputs) sameLine(0f, style.itemInnerSpacing.x)
             val colVec4 = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f)
-            if (colorButton("##ColorButton", colVec4, flags)) {
+            if (colorButton("##ColorButton", colVec4, flags))
                 if (flags hasnt Cef.NoPicker) { // Store current color and open a picker
                     g.colorPickerRef put colVec4
                     openPopup("picker")
                     setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
                 }
-            }
             if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
 
             if (beginPopup("picker")) {
@@ -202,7 +201,7 @@ interface imgui_widgetsColorEditorPicker {
                 val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._InputsMask or Cef.NoLabel or Cef.AlphaPreviewHalf
                 pushItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
                 val p = g.colorPickerRef to FloatArray(4)
-                valueChanged = valueChanged or colorPicker4("##picker", col, pickerFlags, p)
+                valueChanged = colorPicker4("##picker", col, pickerFlags, p) or valueChanged
                 g.colorPickerRef put p
                 popItemWidth()
                 endPopup()
@@ -417,12 +416,12 @@ interface imgui_widgetsColorEditorPicker {
             val subFlagsToForward = Cef._DataTypeMask or Cef.HDR or Cef.NoAlpha or Cef.NoOptions or Cef.NoSmallPreview or
                     Cef.AlphaPreview or Cef.AlphaPreviewHalf
             val subFlags = (flags and subFlagsToForward) or Cef.NoPicker
-            if (flags has Cef.RGB || flags hasnt Cef._InputsMask)
-                valueChanged = valueChanged or colorEdit4("##rgb", col, subFlags or Cef.RGB)
-            if (flags has Cef.HSV || flags hasnt Cef._InputsMask)
-                valueChanged = valueChanged or colorEdit4("##hsv", col, subFlags or Cef.HSV)
-            if (flags has Cef.HEX || flags hasnt Cef._InputsMask)
-                valueChanged = valueChanged or colorEdit4("##hex", col, subFlags or Cef.HEX)
+            valueChanged = when {
+                flags has Cef.RGB || flags hasnt Cef._InputsMask -> colorEdit4("##rgb", col, subFlags or Cef.RGB)
+                flags has Cef.HSV || flags hasnt Cef._InputsMask -> colorEdit4("##hsv", col, subFlags or Cef.HSV)
+                flags has Cef.HEX || flags hasnt Cef._InputsMask -> colorEdit4("##hex", col, subFlags or Cef.HEX)
+                else -> false
+            } or valueChanged
             popItemWidth()
         }
 
