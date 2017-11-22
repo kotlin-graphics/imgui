@@ -416,8 +416,8 @@ fun inputTextCalcTextLenAndLineCount(text: String, outTextEnd: IntArray): Int {
     return lineCount
 }
 
-fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = null, outOffset: Vec2? = null,
-                           stopOnNewLine: Boolean = false): Vec2 {
+fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remaining: KMutableProperty0<Int>? = null,
+                           outOffset: Vec2? = null, stopOnNewLine: Boolean = false): Vec2 {
 
     val font = g.font
     val lineHeight = g.fontSize
@@ -426,7 +426,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
     val textSize = Vec2()
     var lineWidth = 0f
 
-    var s = 0
+    var s = textBegin
     while (s < textEnd) {
         val c = text[s++]
         if (c == '\n') {
@@ -439,7 +439,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance_aaaa(c) * scale  //TODO rename back
+        val charWidth: Float = font.getCharAdvance_aaaaa(c) * scale  //TODO rename back
         lineWidth += charWidth
     }
 
@@ -455,7 +455,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
     if (lineWidth > 0 || textSize.y == 0f)  // whereas size.y will ignore the trailing \n
         textSize.y += lineHeight
 
-    remaining?.set(0, s)
+    remaining?.set(s)
 
     return textSize
 }

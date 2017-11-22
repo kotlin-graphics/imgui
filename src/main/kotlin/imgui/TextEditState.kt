@@ -76,7 +76,7 @@ class TextEditState {
     fun getChar(idx: Int) = text[idx]
     fun getWidth(lineStartIdx: Int, charIdx: Int): Float {
         val c = text[lineStartIdx + charIdx]
-        return if (c == '\n') -1f else Context.font.getCharAdvance_aaaa(c) * (Context.fontSize / Context.font.fontSize)
+        return if (c == '\n') -1f else Context.font.getCharAdvance_aaaaa(c) * (Context.fontSize / Context.font.fontSize)
     }
 
     fun keyToText(key: Int) = if (key >= 0x10000) 0 else key
@@ -84,15 +84,16 @@ class TextEditState {
 
     fun layout(r: Row, lineStartIdx: Int) {
         val textRemaining = IntArray(1)
-        val size = inputTextCalcTextSizeW(String(text, lineStartIdx, text.size - lineStartIdx), curLenW, textRemaining, null, true)
-        with(r) {
-            r.x0 = 0f
-            r.x1 = size.x
-            r.baselineYDelta = size.y
-            r.yMin = 0f
-            r.yMax = size.y
-            r.numChars = textRemaining[0] - lineStartIdx
-        }
+        TODO()
+//        val size = inputTextCalcTextSizeW(String(text, lineStartIdx, text.size - lineStartIdx), curLenW, textRemaining, null, true)
+//        with(r) {
+//            r.x0 = 0f
+//            r.x1 = size.x
+//            r.baselineYDelta = size.y
+//            r.yMin = 0f
+//            r.yMax = size.y
+//            r.numChars = textRemaining[0] - lineStartIdx
+//        }
     }
 
     val Char.isSeparator get() = this.isSpace || this == ',' || this == ';' || this == '(' || this == ')' ||

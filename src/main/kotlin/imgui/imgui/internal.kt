@@ -1562,18 +1562,16 @@ interface imgui_internal {
             val isStartendKeyDown = IO.optMacOSXBehaviors && IO.keySuper && !IO.keyCtrl && !IO.keyAlt
 
             when {
-                Key.LeftArrow.isPressed -> editState.onKeyPressed(
-                        when {
-                            isStartendKeyDown -> K.LINESTART
-                            isWordmoveKeyDown -> K.WORDLEFT
-                            else -> K.LEFT
-                        } or kMask)
-                Key.RightArrow.isPressed -> editState.onKeyPressed(
-                        when {
-                            isStartendKeyDown -> K.LINEEND
-                            isWordmoveKeyDown -> K.WORDRIGHT
-                            else -> K.RIGHT
-                        } or kMask)
+                Key.LeftArrow.isPressed -> editState.onKeyPressed(when {
+                    isStartendKeyDown -> K.LINESTART
+                    isWordmoveKeyDown -> K.WORDLEFT
+                    else -> K.LEFT
+                } or kMask)
+                Key.RightArrow.isPressed -> editState.onKeyPressed(when {
+                    isStartendKeyDown -> K.LINEEND
+                    isWordmoveKeyDown -> K.WORDRIGHT
+                    else -> K.RIGHT
+                } or kMask)
                 Key.UpArrow.isPressed && isMultiline ->
                     if (IO.keyCtrl)
                         drawWindow.setScrollY(glm.max(drawWindow.scroll.y - g.fontSize, 0f))
@@ -1829,8 +1827,9 @@ interface imgui_internal {
                 // In multi-line mode, we never exit the loop until all lines are counted, so add one extra to the searchesRemaining counter.
                 if (isMultiline) searchesRemaining++
                 var lineCount = 0
-                for (s in text.indices)
-                    if (text[s] == '\n') {
+                var s = 0
+                while(s < text.size && text[s] != '\u0000')
+                    if (text[s++] == '\n') {
                         lineCount++
                         if (searchesResultLineNumber[0] == -1 && s >= searchesInputPtr[0]) {
                             searchesResultLineNumber[0] = lineCount
@@ -1847,13 +1846,11 @@ interface imgui_internal {
 
                 // Calculate 2d position by finding the beginning of the line and measuring distance
                 var start = text.beginOfLine(searchesInputPtr[0])
-                var length = text.size - start
-                cursorOffset.x = inputTextCalcTextSizeW(String(text, start, length), searchesInputPtr[0]).x
+                cursorOffset.x = inputTextCalcTextSizeW(text, start, searchesInputPtr[0]).x
                 cursorOffset.y = searchesResultLineNumber[0] * g.fontSize
                 if (searchesResultLineNumber[1] >= 0) {
                     start = text.beginOfLine(searchesInputPtr[1])
-                    length = text.size - start
-                    selectStartOffset.x = inputTextCalcTextSizeW(String(text, start, length), searchesInputPtr[1]).x
+                    selectStartOffset.x = inputTextCalcTextSizeW(text, start, searchesInputPtr[1]).x
                     selectStartOffset.y = searchesResultLineNumber[1] * g.fontSize
                 }
 
@@ -1908,11 +1905,11 @@ interface imgui_internal {
                             if (text[p++] == '\n')
                                 break
                     } else {
-                        val start = text.beginOfLine(p)
-                        val end = text.size - start
-                        val rectSize = inputTextCalcTextSizeW(String(text, start, end), textSelectedEnd, stopOnNewLine = true)
+                        val rectSize = withInt {
+                            inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
+                        }
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_aaaa(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_aaaaa(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)
