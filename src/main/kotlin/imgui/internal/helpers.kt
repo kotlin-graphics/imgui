@@ -203,9 +203,9 @@ val CharArray.strlenW: Int
 
 /** Find beginning-of-line  */
 fun CharArray.beginOfLine(midLine: Int): Int {
-    var midLine = midLine
-    while (midLine > 0 && this[midLine - 1] != '\n') midLine--
-    return midLine
+    var res = midLine
+    while (res > 0 && this[res - 1] != '\n') res--
+    return res
 }
 //IMGUI_API const char*   ImStristr(const char* haystack, const char* haystack_end, const char* needle, const char* needle_end);
 //IMGUI_API int           ImFormatString(char* buf, int buf_size, const char* fmt, ...) IM_PRINTFARGS(3);
