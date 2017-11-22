@@ -358,9 +358,7 @@ enum class StyleVar {
     /** float   */
     GrabMinSize,
     /** vec2  */
-    ButtonTextAlign,
-
-    COUNT;
+    ButtonTextAlign;
 
     val i = ordinal
 }
