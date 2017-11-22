@@ -101,7 +101,11 @@ Simply follow this [short wiki](https://github.com/kotlin-graphics/imgui/wiki/Us
 
 ### Status:
 
-90% ported, text inputs handling and few other small things
+90% ported
+
+Weak/bugged: text inputs handling and few other small things
+Not yet implemented, foreign languages
+Not yet tested, other fonts
 
 To check what has been already ported and working, simply run one of the tests in Kotlin:
 
