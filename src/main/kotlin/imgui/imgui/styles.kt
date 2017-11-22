@@ -108,8 +108,6 @@ interface imgui_styles {
         colors.addAll(arrayOf(
                 Vec4(0.00f, 0.00f, 0.00f, 1.00f),
                 Vec4(0.60f, 0.60f, 0.60f, 1.00f),
-                Vec4(),//colors[ImGuiCol_TextHovered]          = ImVec4(1.00f, 1.00f, 1.00f, 1.00f),
-                Vec4(),//colors[ImGuiCol_TextActive]           = ImVec4(1.00f, 1.00f, 0.00f, 1.00f),
                 Vec4(0.94f, 0.94f, 0.94f, 1.00f),
                 Vec4(0.00f, 0.00f, 0.00f, 0.00f),
                 Vec4(1.00f, 1.00f, 1.00f, 0.94f),
@@ -119,8 +117,8 @@ interface imgui_styles {
                 Vec4(0.26f, 0.59f, 0.98f, 0.40f),
                 Vec4(0.26f, 0.59f, 0.98f, 0.67f),
                 Vec4(0.96f, 0.96f, 0.96f, 1.00f),
-                Vec4(1.00f, 1.00f, 1.00f, 0.51f),
                 Vec4(0.82f, 0.82f, 0.82f, 1.00f),
+                Vec4(1.00f, 1.00f, 1.00f, 0.51f),
                 Vec4(0.86f, 0.86f, 0.86f, 1.00f),
                 Vec4(0.98f, 0.98f, 0.98f, 0.53f),
                 Vec4(0.69f, 0.69f, 0.69f, 0.80f),
