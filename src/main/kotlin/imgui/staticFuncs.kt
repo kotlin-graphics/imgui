@@ -439,7 +439,7 @@ fun inputTextCalcTextSizeW(text: String, textEnd: Int, remaining: IntArray? = nu
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance_aa(c) * scale  //TODO rename back
+        val charWidth: Float = font.getCharAdvance_aaaa(c) * scale  //TODO rename back
         lineWidth += charWidth
     }
 
@@ -547,7 +547,8 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 //    if (buf[s] == 0.c) return false
 
     val seq = String(buf).replace("\\s+", "").split(Regex("-+\\*/"))
-    return when (dataType) {
+    return if (buf[0] == '\u0000') false
+    else when (dataType) {
 
         DataType.Int -> {
             val scalarFormat = scalarFormat ?: "%d"
