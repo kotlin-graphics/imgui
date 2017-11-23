@@ -443,7 +443,7 @@ object widgets {
                         Instead we are encoding a few string with hexadecimal constants. Don't do this in your application!
                         Note that characters values are preserved even by inputText() if the font cannot be displayed,
                         so you can safely copy & paste garbled characters into another application. */
-                    textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.Font->LoadFromFileTTF() manually to load extra character ranges.")
+                    textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call IO.font.loadFromFileTTF() manually to load extra character ranges.")
                     text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)")
                     text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
                     inputText("UTF-16 input", buf)
