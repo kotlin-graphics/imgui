@@ -1,7 +1,10 @@
 package imgui
 
 import gli_.has
-import glm_.*
+import glm_.compareTo
+import glm_.f
+import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.Context.style
@@ -10,6 +13,10 @@ import imgui.internal.*
 import uno.kotlin.isPrintable
 import java.io.File
 import java.nio.file.Paths
+import kotlin.collections.filter
+import kotlin.collections.firstOrNull
+import kotlin.collections.forEach
+import kotlin.collections.set
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.InputTextFlags as Itf
@@ -207,8 +214,7 @@ fun addWindowSettings(name: String) = IniData().apply {
 fun loadIniSettingsFromDisk(iniFilename: String?) {
     if (iniFilename == null) return
     var settings: IniData? = null
-    val file = Paths.get(iniFilename).toFile()
-    if (file.exists()) file.readLines().filter { it.isNotEmpty() }.forEach { s ->
+    fileLoadToLines(iniFilename)?.filter { it.isNotEmpty() }?.forEach { s ->
         if (s[0] == '[' && s.last() == ']') {
             val name = s.substring(1, s.lastIndex)
             settings = findWindowSettings(name) ?: addWindowSettings(name)

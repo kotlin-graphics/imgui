@@ -59,14 +59,12 @@ class HelloWorld_lwjgl {
             - Read 'extra_fonts/README.txt' for more instructions and details.
             - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write
                 a double backslash \\ ! */
-        //ImGuiIO& io = ImGui::GetIO();
         //io.Fonts->AddFontDefault();
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/Roboto-Medium.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/Cousine-Regular.ttf", 15.0f);
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/DroidSans.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
-        //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-        //IM_ASSERT(font != NULL);
+        //IO.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, glyphRanges = IO.fonts.glyphRangesJapanese)!!
 
         while (window.open) loop()
 

@@ -119,7 +119,14 @@ val crc32Lut = IntArray(256, {
     crc
 })
 
-//IMGUI_API void*         ImFileLoadToMemory(const char* filename, const char* file_open_mode, int* out_file_size = NULL, int padding_bytes = 0);
+fun fileLoadToCharArray(filename: String, paddingBytes: Int = 0) = ClassLoader.getSystemResourceAsStream(filename)?.use {
+    val bytes = it.readBytes()
+    CharArray(bytes.size, { bytes[it].c })
+}
+
+fun fileLoadToLines(filename: String) = ClassLoader.getSystemResourceAsStream(filename)?.use { it.bufferedReader().readLines() }
+
+
 //IMGUI_API FILE*         ImFileOpen(const char* filename, const char* file_open_mode);
 
 
