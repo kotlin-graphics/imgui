@@ -325,7 +325,7 @@ object IO {
     var keySuper = false
     /** Keyboard keys that are pressed (in whatever storage order you naturally have access to keyboard data)   */
     val keysDown = BooleanArray(512)
-    /** List of characters input (translated by user from keypress+keyboard state). Fill using AddInputCharacter()
+    /** List of characters input (translated by user from keypress + keyboard state). Fill using addInputCharacter()
      *  helper. */
     val inputCharacters = CharArray(16)
 

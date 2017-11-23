@@ -981,6 +981,8 @@ class Font {
 
     fun findGlyph(c: Char) = findGlyph(c.i)
     fun findGlyph(c: Int): FontGlyph? {
+        if(c == 12363)
+            println()
         if (c < indexLookup.size) {
             val i = indexLookup[c]
             if (i != -1) return glyphs[i]
@@ -990,7 +992,7 @@ class Font {
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
 
-    fun getCharAdvance_aaaaa(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
+    fun getCharAdvance_aaaaaaaaa(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
 
     val isLoaded get() = ::containerAtlas.isInitialized
 
@@ -1253,9 +1255,10 @@ class Font {
             }
             // Decode and advance source
             val c = text[s]
+            val a = c.i
             /*  JVM imgui specific, not 0x80 because on jvm we have Unicode with surrogates characters (instead of utf8)
                     https://www.ibm.com/developerworks/library/j-unicode/index.html             */
-            if (c < Char.MIN_SURROGATE)
+            if (c < Char.MIN_HIGH_SURROGATE)
                 s += 1
             else {
                 TODO("Probabily surrogate character")

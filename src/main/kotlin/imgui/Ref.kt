@@ -40,10 +40,14 @@ object Ref {
     var iPtr = 0
     var fPtr = 0
     var bPtr = 0
+    var cPtr = 0
 
-    val ints = IntArray(100)
-    val floats = FloatArray(100)
-    val bools = BooleanArray(100)
+    val size = 100
+
+    val ints = IntArray(size)
+    val floats = FloatArray(size)
+    val bools = BooleanArray(size)
+    val chars = CharArray(size)
 
     var int
         get() = ints[iPtr]
@@ -54,6 +58,9 @@ object Ref {
     var bool
         get() = bools[bPtr]
         set(value) { bools[bPtr] = value }
+    var char
+        get() = chars[cPtr]
+        set(value) { chars[cPtr] = value }
 }
 
 //inline fun <R>withInt(block: (KMutableProperty0<Int>) -> R): R {

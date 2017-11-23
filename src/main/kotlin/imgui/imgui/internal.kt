@@ -1425,8 +1425,7 @@ interface imgui_internal {
         val focusRequestedByTab = focusRequested && !focusRequestedByCode
 
         val userClicked = hovered && IO.mouseClicked[0]
-        val userScrolled = isMultiline && g.activeId == 0 && editState.id == id &&
-                g.activeIdPreviousFrame == drawWindow.getIdNoKeepAlive("#SCROLLY")
+        val userScrolled = isMultiline && g.activeId == 0 && editState.id == id && g.activeIdPreviousFrame == drawWindow.getIdNoKeepAlive("#SCROLLY")
 
         var clearActiveId = false
 
@@ -1443,7 +1442,6 @@ interface imgui_internal {
                 // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
 //                editState.initialText.add('\u0000')
                 editState.initialText strncpy buf
-                var bufEnd = 0
                 editState.curLenW = editState.text.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
                 /*  We can't get the result from ImFormatString() above because it is not UTF-8 aware.
                     Here we'll cut off malformed UTF-8.                 */
@@ -1462,8 +1460,7 @@ interface imgui_internal {
                     editState.id = id
                     editState.scrollX = 0f
                     editState.state.clear(!isMultiline)
-                    if (!isMultiline && focusRequestedByCode)
-                        selectAll = true
+                    if (!isMultiline && focusRequestedByCode) selectAll = true
                 }
                 if (flags has Itf.AlwaysInsertMode)
                     editState.state.insertMode = true
@@ -1482,7 +1479,6 @@ interface imgui_internal {
         if (g.activeId == id) {
 
             if (!isEditable && !g.activeIdIsJustActivated) {
-
                 TODO()
                 // When read-only we always use the live data passed to the function
 //                editState.text.add('\u0000')
@@ -1529,20 +1525,17 @@ interface imgui_internal {
                 editState.selectedAllMouseLock = false
 
             if (IO.inputCharacters[0].i != 0) {
+                println(IO.inputCharacters)
                 /*  Process text input (before we check for Return because using some IME will effectively send a
                     Return?)
                     We ignore CTRL inputs, but need to allow CTRL+ALT as some keyboards (e.g. German) use AltGR - which
                     is Alt+Ctrl - to input certain characters.  */
                 if (!(IO.keyCtrl && !IO.keyAlt) && isEditable)
-                    for (n in IO.inputCharacters.indices) {
-                        var c = IO.inputCharacters[n].i
-                        if (c == 0) continue
-                        // Insert character if they pass filtering
-                        val pChar = intArrayOf(c)
-                        if (!inputTextFilterCharacter(pChar, flags/*, callback, user_data*/))
-                            continue
-                        c = pChar[0]
-                        editState.onKeyPressed(c)
+                    IO.inputCharacters.filter { it != '\u0000' }.map {
+                        withChar { c -> // Insert character if they pass filtering
+                            if (inputTextFilterCharacter(c.apply { set(it) }, flags/*, callback, user_data*/))
+                                editState.onKeyPressed(c().i)
+                        }
                     }
                 // Consume characters
                 IO.inputCharacters.fill('\u0000')
@@ -1828,7 +1821,7 @@ interface imgui_internal {
                 if (isMultiline) searchesRemaining++
                 var lineCount = 0
                 var s = 0
-                while(s < text.size && text[s] != '\u0000')
+                while (s < text.size && text[s] != '\u0000')
                     if (text[s++] == '\n') {
                         lineCount++
                         if (searchesResultLineNumber[0] == -1 && s >= searchesInputPtr[0]) {
@@ -1909,7 +1902,7 @@ interface imgui_internal {
                             inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
                         }
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_aaaaa(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_aaaaaaaaa(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)
@@ -2529,4 +2522,9 @@ private inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutablePropert
 private inline fun <R> withInt(block: (KMutableProperty0<Int>) -> R): R {
     Ref.iPtr++
     return block(Ref::int).also { Ref.iPtr-- }
+}
+
+private inline fun <R> withChar(block: (KMutableProperty0<Char>) -> R): R {
+    Ref.cPtr++
+    return block(Ref::char).also { Ref.cPtr-- }
 }
