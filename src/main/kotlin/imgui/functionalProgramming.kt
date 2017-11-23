@@ -59,7 +59,7 @@ object functionalProgramming {
     }
 
     inline fun window(name: String, open: KMutableProperty0<Boolean>?, flags: Int = 0, block: () -> Unit) {
-        if (_begin(name, open, flags)) {
+        if (!_begin(name, open, flags)) {
             block()
             end()
         }
