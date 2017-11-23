@@ -63,6 +63,11 @@ Also see the [Mega screenshots](https://github.com/ocornut/imgui/issues/1273) fo
 
 ![Sample](https://cloud.githubusercontent.com/assets/8225057/20628927/33e14cac-b329-11e6-80f6-9524e93b048a.png)
 
+ImGui supports also other languages, such as japanese:
+
+![Imgur](https://i.imgur.com/ASwYzBo.png?1)
+
+
 ### References
 ----------
 
