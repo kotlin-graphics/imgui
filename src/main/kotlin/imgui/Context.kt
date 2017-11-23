@@ -290,16 +290,17 @@ object IO {
     var getClipboardTextFn: ((userData: Any) -> Unit)? = null
     var setClipboardTextFn: ((userData: Any, text: String) -> Unit)? = null
     lateinit var clipboardUserData: Any
-//
+    //
 //    // Optional: override memory allocations. MemFreeFn() may be called with a NULL pointer.
 //    // (default to posix malloc/free)
 //    void*       (*MemAllocFn)(size_t sz);
 //    void        (*MemFreeFn)(void* ptr);
 //
-//    // Optional: notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
-//    // (default to use native imm32 api on Windows)
-//    void        (*ImeSetInputScreenPosFn)(int x, int y);
-//    void*       ImeWindowHandle;            // (Windows) Set this to your HWND to get automatic IME cursor positioning.
+    // Optional: notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
+    // (default to use native imm32 api on Windows)
+//    var imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = null
+    /** (Windows) Set this to your HWND to get automatic IME cursor positioning.    */
+    var imeWindowHandle = 0L
 //
 //    //------------------------------------------------------------------
 //    // Input - Fill before calling NewFrame()
@@ -407,6 +408,20 @@ object IO {
     val keysDownDuration = FloatArray(512, { -1f })
     /** Previous duration the key has been down */
     val keysDownDurationPrev = FloatArray(512, { -1f })
+
+//    var imeSetInputScreenPosFn_DefaultImpl = { x: Int, y: Int -> TODO
+//        // Notify OS Input Method Editor of text input position
+//        val hwnd = imeWindowHandle
+//        val a = WindowProc
+//        if (hwnd != 0L)
+//            if (HIMC himc = ImmGetContext (hwnd)) {
+//                COMPOSITIONFORM cf;
+//                cf.ptCurrentPos.x = x;
+//                cf.ptCurrentPos.y = y;
+//                cf.dwStyle = CFS_FORCE_POSITION;
+//                ImmSetCompositionWindow(himc, & cf);
+//            }
+//    }
 }
 
 operator fun IntArray.set(index: Key, value: Int) {
