@@ -1525,7 +1525,6 @@ interface imgui_internal {
                 editState.selectedAllMouseLock = false
 
             if (IO.inputCharacters[0].i != 0) {
-                println(IO.inputCharacters)
                 /*  Process text input (before we check for Return because using some IME will effectively send a
                     Return?)
                     We ignore CTRL inputs, but need to allow CTRL+ALT as some keyboards (e.g. German) use AltGR - which
