@@ -21,6 +21,7 @@ import gln.vertexArray.glVertexAttribPointer
 import gln.vertexArray.withVertexArray
 import imgui.*
 import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL14.*
@@ -28,6 +29,12 @@ import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.glBindSampler
+import org.lwjgl.system.Callback
+import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.Platform
+import org.lwjgl.system.windows.RECT
+import org.lwjgl.system.windows.User32.*
+import org.lwjgl.system.windows.WindowProc
 import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
@@ -92,10 +99,27 @@ object LwjglGL3 {
             window.scrollCallback = scrollCallback
             window.keyCallback = keyCallback
             window.charCallback = charCallback // TODO check if used (jogl doesnt have)
+            if (Platform.get() == Platform.WINDOWS) {
+                val hwnd = glfwGetWin32Window(window.handle)
+                val glfwProc = GetWindowLongPtr(hwnd, GWL_WNDPROC)
+                windowProc = object : WindowProc() {
+                    override fun invoke(hwnd: Long, msg: Int, w: Long, l: Long) = when (msg) {
+                        0x02E0 -> { // WM_DPICHANGED
+                            with(RECT.create(l)) {
+                                SetWindowPos(hwnd, NULL, left(), top(), right() - left(), bottom() - top(), SWP_NOZORDER or SWP_NOACTIVATE)
+                            }
+                            NULL
+                        }
+                        else -> nCallWindowProc(glfwProc, hwnd, msg, w, l)
+                    }
+                }
+                SetWindowLongPtr(hwnd, GWL_WNDPROC, windowProc!!.address())
+            }
         }
-
         return true
     }
+
+    var windowProc: Callback? = null
 
     var vtxSize = 1 shl 5 // 32768
     var idxSize = 1 shl 6 // 65536
