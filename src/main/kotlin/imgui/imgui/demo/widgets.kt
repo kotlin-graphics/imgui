@@ -432,7 +432,7 @@ object widgets {
                         windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
                     }
                 }
-                treeNode("UTF-8 Text (jvm Unicode with surrogate characters") {
+                treeNode("JVM UTF-16 Unicode with surrogate characters") {
                     /*  UTF-8 test with Japanese characters
                         (needs a suitable font, try Arial Unicode or M+ fonts http://mplus-fonts.sourceforge.jp/mplus-outline-fonts/index-en.html)
                         - From C++11 you can use the u8"my text" syntax to encode literal strings as UTF-8
@@ -446,7 +446,7 @@ object widgets {
                     textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.Font->LoadFromFileTTF() manually to load extra character ranges.")
                     text("Hiragana: \u00e3\u0081\u008b\u00e3\u0081\u008d\u00e3\u0081\u008f\u00e3\u0081\u0091\u00e3\u0081\u0093 (kakikukeko)")
                     text("Kanjis: \u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e (nihongo)")
-                    inputText("UTF-8 input", buf, buf.size)
+                    inputText("UTF-16 input", buf)
                 }
             }
 

@@ -21,11 +21,10 @@ interface imgui_inputs {
 
     /** uses user's key indices as stored in the keys_down[] array. if repeat=true.
      *  uses io.KeyRepeatDelay / KeyRepeatRate  */
-    fun isKeyPressed(userKeyIndex: Int, repeat: Boolean = true): Boolean {
-
-        if (userKeyIndex < 0) return false
+    fun isKeyPressed(userKeyIndex: Int, repeat: Boolean = true) = if (userKeyIndex < 0) false
+    else {
         val t = IO.keysDownDuration[userKeyIndex]
-        return when {
+        when {
             t == 0f -> true
             repeat && t > IO.keyRepeatDelay -> getKeyPressedAmount(userKeyIndex, IO.keyRepeatDelay, IO.keyRepeatRate) > 0
             else -> false

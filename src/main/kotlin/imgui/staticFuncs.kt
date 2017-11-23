@@ -353,9 +353,9 @@ fun findBestPopupWindowPos(basePos: Vec2, window: Window, rInner: Rect): Vec2 {
 }
 
 /** Return false to discard a character.    */
-fun inputTextFilterCharacter(pChar: IntArray, flags: Int/*, ImGuiTextEditCallback callback, void* user_data*/): Boolean {
+fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: Int/*, ImGuiTextEditCallback callback, void* user_data*/): Boolean {
 
-    var c = pChar[0].c
+    var c = char()
 
     if (c < 128 && c != ' ' && !c.isPrintable) {
         var pass = false
@@ -379,7 +379,7 @@ fun inputTextFilterCharacter(pChar: IntArray, flags: Int/*, ImGuiTextEditCallbac
 
         if (flags has Itf.CharsUppercase && c in 'a'..'z') {
             c += 'A' - 'a'
-            pChar[0] = c.i
+            char.set(c)
         }
 
         if (flags has Itf.CharsNoBlank && c.isSpace) return false
@@ -439,7 +439,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance_aaaaa(c) * scale  //TODO rename back
+        val charWidth: Float = font.getCharAdvance_aaaaaaaaa(c) * scale  //TODO rename back
         lineWidth += charWidth
     }
 
