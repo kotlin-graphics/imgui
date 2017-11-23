@@ -444,8 +444,8 @@ object widgets {
                         Note that characters values are preserved even by inputText() if the font cannot be displayed,
                         so you can safely copy & paste garbled characters into another application. */
                     textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.Font->LoadFromFileTTF() manually to load extra character ranges.")
-                    text("Hiragana: \u00e3\u0081\u008b\u00e3\u0081\u008d\u00e3\u0081\u008f\u00e3\u0081\u0091\u00e3\u0081\u0093 (kakikukeko)")
-                    text("Kanjis: \u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e (nihongo)")
+                    text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)")
+                    text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
                     inputText("UTF-16 input", buf)
                 }
             }
