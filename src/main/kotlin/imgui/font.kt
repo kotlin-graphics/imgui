@@ -625,7 +625,7 @@ class FontAtlas {
             var i = 0
             inRange[0] = cfg.glyphRanges[i++]
             inRange[1] = cfg.glyphRanges[i++]
-            while(inRange[0] != 0 && inRange[1] != 0) {
+            while (inRange[0] != 0 && inRange[1] != 0) {
                 fontGlyphsCount += (inRange[1] - inRange[0]) + 1
                 inRange[0] = cfg.glyphRanges.getOrElse(i++, { 0 })
                 inRange[1] = cfg.glyphRanges.getOrElse(i++, { 0 })
@@ -635,7 +635,7 @@ class FontAtlas {
             tmp.rangesCount = fontRangesCount
             bufRangesN += fontRangesCount
             i = 0
-            while(i < fontRangesCount) {
+            while (i < fontRangesCount) {
                 inRange[0] = cfg.glyphRanges[i * 2]
                 inRange[1] = cfg.glyphRanges[i * 2 + 1]
                 val range = tmp.ranges[i++]
@@ -1233,7 +1233,7 @@ class Font {
         var idxWrite = drawList._idxWritePtr
         var vtxCurrentIdx = drawList._vtxCurrentIdx
 
-        while (s < textEnd) {
+        while (s < textEnd && !g.imeInProgress) {
 
             if (wordWrapEnabled) {
 
@@ -1266,7 +1266,8 @@ class Font {
                 }
             }
             // Decode and advance source
-            val c = text[s]
+            val ime = g.imeLastKey
+            val c = if (ime == 0) text[s] else ime.c.also { g.imeLastKey = 0 }
             /*  JVM imgui specific, not 0x80 because on jvm we have Unicode with surrogates characters (instead of utf8)
                     https://www.ibm.com/developerworks/library/j-unicode/index.html             */
             if (c < Char.MIN_HIGH_SURROGATE)

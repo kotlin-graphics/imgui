@@ -1914,7 +1914,7 @@ interface imgui_internal {
             }
 
             drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, Col.Text.u32, bufDisplay,
-                    editState.curLenA, 0f, if (isMultiline) null else clipRect)
+                    editState.curLenA, 0f, clipRect.takeIf { isMultiline })
 
             // Draw blinking cursor
             val cursorIsVisible = !IO.optCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
