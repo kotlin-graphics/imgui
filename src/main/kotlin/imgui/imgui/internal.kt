@@ -2,6 +2,7 @@ package imgui.imgui
 
 import gli_.has
 import gli_.hasnt
+import glm_.c
 import glm_.f
 import glm_.func.common.max
 import glm_.func.common.min
@@ -1441,6 +1442,11 @@ interface imgui_internal {
                 editState.initialText = CharArray(buf.size)
                 // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
 //                editState.initialText.add(NUL)
+                val ime = g.imeLastKey
+                if (ime != 0) {
+                    buf[0] = ime.c
+                    g.imeLastKey = 0
+                }
                 editState.initialText strncpy buf
                 editState.curLenW = editState.text.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
                 /*  We can't get the result from ImFormatString() above because it is not UTF-8 aware.
@@ -1531,7 +1537,8 @@ interface imgui_internal {
                     is Alt+Ctrl - to input certain characters.  */
                 if (!(IO.keyCtrl && !IO.keyAlt) && isEditable)
                     IO.inputCharacters.filter { it != NUL }.map {
-                        withChar { c -> // Insert character if they pass filtering
+                        withChar { c ->
+                            // Insert character if they pass filtering
                             if (inputTextFilterCharacter(c.apply { set(it) }, flags/*, callback, user_data*/))
                                 editState.onKeyPressed(c().i)
                         }
@@ -1766,7 +1773,7 @@ interface imgui_internal {
                 }
                 // Copy back to user buffer
                 if (isEditable && !Arrays.equals(editState.tempTextBuffer, buf)) {
-                    repeat(buf.size) { buf[it] = editState.tempTextBuffer[it] }
+                    for (i in 0 until buf.size) buf[i] = editState.tempTextBuffer[i]
                     valueChanged = true
                 }
             }

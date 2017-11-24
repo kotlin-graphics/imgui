@@ -121,7 +121,11 @@ object LwjglGL3 {
                             g.imeInProgress = false
                             0L
                         }
-                        WM_IME_COMPOSITION /*,WM_IME_KEYLAST*/ -> println("Ime composition/keyLast w: $w l: $l").let { 0L }
+                        WM_IME_COMPOSITION /*,WM_IME_KEYLAST*/ -> {
+                            println("Ime composition/keyLast w: $w l: $l")
+                            g.imeLastKey = if (g.imeInProgress) w.i else 0
+                            0L
+                        }
                         WM_IME_SETCONTEXT -> println("Ime setContex w: $w l: $l").let { 0L }
                         WM_IME_NOTIFY -> println("Ime notify w: $w l: $l").let { 0L }
                         WM_IME_CONTROL -> println("Ime control w: $w l: $l").let { 0L }

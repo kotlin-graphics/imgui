@@ -1233,7 +1233,7 @@ class Font {
         var idxWrite = drawList._idxWritePtr
         var vtxCurrentIdx = drawList._vtxCurrentIdx
 
-        while (s < textEnd && !g.imeInProgress) {
+        while (s < textEnd) {
 
             if (wordWrapEnabled) {
 
@@ -1266,8 +1266,7 @@ class Font {
                 }
             }
             // Decode and advance source
-            val ime = g.imeLastKey
-            val c = if (ime == 0) text[s] else ime.c.also { g.imeLastKey = 0 }
+            val c = text[s]
             /*  JVM imgui specific, not 0x80 because on jvm we have Unicode with surrogates characters (instead of utf8)
                     https://www.ibm.com/developerworks/library/j-unicode/index.html             */
             if (c < Char.MIN_HIGH_SURROGATE)
