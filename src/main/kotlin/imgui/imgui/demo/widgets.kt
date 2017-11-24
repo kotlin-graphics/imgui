@@ -151,7 +151,7 @@ object widgets {
 
     /* Text */
     var wrapWidth = 200f
-    val buf = "\u00e6\u0097\u00a5\u00e6\u009c\u00ac\u00e8\u00aa\u009e".toCharArray() // "nihongo"
+    val buf = "日本語".toCharArray(CharArray(32)) // "nihongo"
 
 
     /* Images */
