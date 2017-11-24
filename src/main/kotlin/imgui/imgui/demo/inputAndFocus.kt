@@ -114,7 +114,7 @@ object inputAndFocus {
                 if (isItemActive) captureKeyboardFromApp(false)
             }
 
-            treeNode("Tabbing TODO") {
+            treeNode("Tabbing") {
                 text("Use TAB/SHIFT+TAB to cycle through keyboard editable fields.")
                 inputText("1", buf0)
                 inputText("2", buf0)
