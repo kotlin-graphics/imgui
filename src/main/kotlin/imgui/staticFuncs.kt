@@ -446,7 +446,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance_bca(c) * scale  //TODO rename back
+        val charWidth: Float = font.getCharAdvance_aaaa(c) * scale  //TODO rename back
         lineWidth += charWidth
     }
 
@@ -552,10 +552,9 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 //        op = 0.c
 //
 //    if (buf[s] == 0.c) return false
-    val seq = String(buf).replace(Regex("\\s+"), "").replace("\\s+", "").split(Regex("-+\\*/"))
+    val seq = String(buf).replace(Regex("\\s+"), "").replace("$NUL", "").split(Regex("-+\\*/"))
     return if (buf[0] == NUL) false
     else when (dataType) {
-
         DataType.Int -> {
             val scalarFormat = scalarFormat ?: "%d"
             var v = data()
@@ -568,15 +567,13 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                 /*  Store operand b in a float so we can use fractional value for multipliers (*1.1), but constant
                     always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision  */
                 val b = seq[2].f
-                when (op) {
-                    '+' -> v = (a + b).i    // Add (use "+-" to subtract)
-                    '*' -> v = (a * b).i    // Multiply
-                    '/' -> v = (a / b).i    // Divide   TODO / 0 will throw
+                v = when (op) {
+                    '+' -> (a + b).i    // Add (use "+-" to subtract)
+                    '*' -> (a * b).i    // Multiply
+                    '/' -> (a / b).i    // Divide   TODO / 0 will throw
                     else -> throw Error()
                 }
-            } else
-                v = a   // Assign constant
-
+            } else v = a   // Assign constant
             data.set(v)
             oldV != v
         }
@@ -591,15 +588,13 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 
                 val op = seq[1][0]
                 val b = seq[2].f
-                when (op) {
-                    '+' -> v = a + b    // Add (use "+-" to subtract)
-                    '*' -> v = a * b    // Multiply
-                    '/' -> v = a / b    // Divide   TODO / 0 will throw
+                v = when (op) {
+                    '+' -> a + b    // Add (use "+-" to subtract)
+                    '*' -> a * b    // Multiply
+                    '/' -> a / b    // Divide   TODO / 0 will throw
                     else -> throw Error()
                 }
-            } else
-                v = a   // Assign constant
-
+            } else v = a   // Assign constant
             data.set(glm.floatBitsToInt(v))
             oldV != v
         }
