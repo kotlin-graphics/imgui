@@ -20,6 +20,7 @@ import gln.vertexArray.glBindVertexArray
 import gln.vertexArray.glVertexAttribPointer
 import gln.vertexArray.withVertexArray
 import imgui.*
+import imgui.Context as g
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.opengl.GL11.*
@@ -110,8 +111,16 @@ object LwjglGL3 {
                             }
                             NULL
                         }
-                        WM_IME_STARTCOMPOSITION -> println("Ime startComposition w: $w l: $l").let { 0L }
-                        WM_IME_ENDCOMPOSITION -> println("Ime endComposition w: $w l: $l").let { 0L }
+                        WM_IME_STARTCOMPOSITION -> {
+                            println("Ime startComposition w: $w l: $l")
+                            g.imeInProgress = true
+                            0L
+                        }
+                        WM_IME_ENDCOMPOSITION -> {
+                            println("Ime endComposition w: $w l: $l")
+                            g.imeInProgress = false
+                            0L
+                        }
                         WM_IME_COMPOSITION /*,WM_IME_KEYLAST*/ -> println("Ime composition/keyLast w: $w l: $l").let { 0L }
                         WM_IME_SETCONTEXT -> println("Ime setContex w: $w l: $l").let { 0L }
                         WM_IME_NOTIFY -> println("Ime notify w: $w l: $l").let { 0L }
