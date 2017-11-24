@@ -12,9 +12,11 @@ import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setNextWindowSize
+import imgui.impl.LwjglGL3
 import imgui.internal.Window
 import imgui.internal.focus
 import imgui.internal.lengthSqr
+import org.lwjgl.system.windows.WindowProc
 import kotlin.math.max
 import imgui.Context as g
 import imgui.WindowFlags as Wf
@@ -333,10 +335,11 @@ interface imgui_main {
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
-//        if (IO.imeSetInputScreenPosFn && ImLengthSqr(g.OsImePosRequest - g.OsImePosSet) > 0.0001f) { TODO
+        if (/*IO.imeSetInputScreenPosFn &&*/ (g.osImePosRequest - g.osImePosSet).lengthSqr > 0.0001f) {
+//            (LwjglGL3.windowProc!! as WindowProc).in
 //            g.IO.ImeSetInputScreenPosFn((int) g . OsImePosRequest . x, (int) g . OsImePosRequest . y)
-//            g.OsImePosSet = g.OsImePosRequest
-//        }
+            g.osImePosSet put g.osImePosRequest
+        }
 
         // Hide implicit "Debug" window if it hasn't been used
         assert(g.currentWindowStack.size == 1)    // Mismatched Begin()/End() calls
