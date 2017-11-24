@@ -67,7 +67,7 @@ class FontConfig {
 
 class FontGlyph {
     /** 0x0000..0xFFFF  */
-    var codepoint = '\u0000'
+    var codepoint = NUL
     /** Distance to next character (= data from font + FontConfig.glyphExtraSpacing.x baked in)  */
     var advanceX = 0f
     // Glyph corners
@@ -1004,7 +1004,7 @@ class Font {
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
 
-    fun getCharAdvance_aaaaaaaaaa(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
+    fun getCharAdvance_bca(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
 
     val isLoaded get() = ::containerAtlas.isInitialized
 
@@ -1137,7 +1137,7 @@ class Font {
                         s + 1
                     else
                         TODO() // (s + ImTextCharFromUtf8(&c, s, text_end)).c
-            if (c == '\u0000') break
+            if (c == NUL) break
 
             if (c < 32) {
                 if (c == '\n') {

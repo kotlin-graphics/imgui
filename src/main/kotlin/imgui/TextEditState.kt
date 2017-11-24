@@ -76,7 +76,7 @@ class TextEditState {
     fun getChar(idx: Int) = text[idx]
     fun getWidth(lineStartIdx: Int, charIdx: Int): Float {
         val c = text[lineStartIdx + charIdx]
-        return if (c == '\n') -1f else Context.font.getCharAdvance_aaaaaaaaaa(c) * (Context.fontSize / Context.font.fontSize)
+        return if (c == '\n') -1f else Context.font.getCharAdvance_bca(c) * (Context.fontSize / Context.font.fontSize)
     }
 
     fun keyToText(key: Int) = if (key >= 0x10000) 0 else key
@@ -127,7 +127,7 @@ class TextEditState {
         // Offset remaining text
         for (c in pos + n until text.size)
             text[dst++] = text[c]
-        text[dst] = '\u0000'
+        text[dst] = NUL
     }
 
     fun insertChars(pos: Int, newText: CharArray, ptr: Int, newTextLen: Int): Boolean {
@@ -145,7 +145,7 @@ class TextEditState {
 
         curLenW += newTextLen
         curLenA += newTextLenUtf8
-        text[curLenW] = '\u0000'
+        text[curLenW] = NUL
 
         return true
     }
@@ -366,9 +366,9 @@ class TextEditState {
         var initialized = false
         var hasPreferredX = false
         var singleLine = false
-        var padding1 = '\u0000'
-        var padding2 = '\u0000'
-        var padding3 = '\u0000'
+        var padding1 = NUL
+        var padding2 = NUL
+        var padding3 = NUL
         /** this determines where the cursor up/down tries to seek to along x   */
         var preferredX = 0f
         val undostate = UndoState()

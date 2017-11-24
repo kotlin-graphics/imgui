@@ -6,6 +6,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import glm_.xor
+import imgui.NUL
 import imgui.Context as g
 
 // -----------------------------------------------------------------------------------------------------------------
@@ -253,7 +254,7 @@ infix fun CharArray.strncpy(src: CharArray) = strncpy(src, size)
 fun CharArray.strncpy(src: CharArray, count: Int) {
     if (count < 1) return
     for (i in 0 until count) {
-        if (src[i] == '\u0000') break
+        if (src[i] == NUL) break
         this[i] = src[i]
     }
 }
@@ -261,7 +262,7 @@ fun CharArray.strncpy(src: CharArray, count: Int) {
 fun CharArray.textStr(src: CharArray): Int {
     var i = 0
     while (i < size) {
-        if (src[i] == '\u0000') break
+        if (src[i] == NUL) break
         this[i] = src[i++]
     }
     return i
@@ -270,7 +271,7 @@ fun CharArray.textStr(src: CharArray): Int {
 val CharArray.strlen: Int
     get() {
         var i = 0
-        while (i < size && this[i] != '\u0000') i++
+        while (i < size && this[i] != NUL) i++
         return i
     }
 

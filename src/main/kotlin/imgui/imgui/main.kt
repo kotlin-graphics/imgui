@@ -396,7 +396,7 @@ interface imgui_main {
 
         // Clear Input data for next frame
         IO.mouseWheel = 0f
-        IO.inputCharacters.fill('\u0000')
+        IO.inputCharacters.fill(NUL)
 
         g.frameCountEnded = g.frameCount
     }

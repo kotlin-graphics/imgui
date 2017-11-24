@@ -259,7 +259,7 @@ interface imgui_widgetsMain {
      *  separate items with \0, end item-list with \0\0     */
     fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
         i = currentItem[0]
-        val items = itemsSeparatedByZeros.split('\u0000').filter { it.isNotEmpty() }
+        val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
         // FIXME-OPT: Avoid computing this, or at least only when combo is open
         val res = combo(label, ::i, items, heightInItems)
         currentItem[0] = i
@@ -267,7 +267,7 @@ interface imgui_widgetsMain {
     }
 
     fun combo(label: String, currentItem: KMutableProperty0<Int>, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
-        val items = itemsSeparatedByZeros.split('\u0000').filter { it.isNotEmpty() }
+        val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
         // FIXME-OPT: Avoid computing this, or at least only when combo is open
         return combo(label, currentItem, items, heightInItems)
     }

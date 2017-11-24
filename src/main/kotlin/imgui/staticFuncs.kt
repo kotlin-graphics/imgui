@@ -13,6 +13,7 @@ import imgui.internal.*
 import uno.kotlin.isPrintable
 import java.io.File
 import java.nio.file.Paths
+import java.util.*
 import kotlin.collections.filter
 import kotlin.collections.firstOrNull
 import kotlin.collections.forEach
@@ -445,7 +446,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance_aaaaaaaaaa(c) * scale  //TODO rename back
+        val charWidth: Float = font.getCharAdvance_bca(c) * scale  //TODO rename back
         lineWidth += charWidth
     }
 
@@ -551,16 +552,15 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 //        op = 0.c
 //
 //    if (buf[s] == 0.c) return false
-
-    val seq = String(buf).replace("\\s+", "").split(Regex("-+\\*/"))
-    return if (buf[0] == '\u0000') false
+    val seq = String(buf).replace(Regex("\\s+"), "").replace("\\s+", "").split(Regex("-+\\*/"))
+    return if (buf[0] == NUL) false
     else when (dataType) {
 
         DataType.Int -> {
             val scalarFormat = scalarFormat ?: "%d"
             var v = data()
             val oldV = v
-            val a = seq[0].i
+            val a = Scanner(seq[0]).nextInt()
 
             if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
 
@@ -585,7 +585,7 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
             val scalarFormat = scalarFormat ?: "%f"
             var v = glm.intBitsToFloat(data())
             val oldV = v
-            val a = seq[0].f
+            val a = Scanner(seq[0]).nextFloat()
 
             if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
 
