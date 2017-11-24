@@ -126,8 +126,8 @@ object layout_ {
 
             treeNode("Child regions") {
 
-                var gotoLine = button("Goto")
                 text("Without border")
+                var gotoLine = button("Goto")
                 sameLine()
                 withItemWidth(100) {
                     gotoLine = gotoLine or inputInt("##Line", ::line, 0, 0, Itf.EnterReturnsTrue.i)

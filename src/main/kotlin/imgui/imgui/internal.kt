@@ -1440,7 +1440,7 @@ interface imgui_internal {
                 editState.text = CharArray(buf.size)
                 editState.initialText = CharArray(buf.size)
                 // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
-//                editState.initialText.add('\u0000')
+//                editState.initialText.add(NUL)
                 editState.initialText strncpy buf
                 editState.curLenW = editState.text.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
                 /*  We can't get the result from ImFormatString() above because it is not UTF-8 aware.
@@ -1481,7 +1481,7 @@ interface imgui_internal {
             if (!isEditable && !g.activeIdIsJustActivated) {
                 TODO()
                 // When read-only we always use the live data passed to the function
-//                editState.text.add('\u0000')
+//                editState.text.add(NUL)
 //                const char* buf_end = NULL
 //                        editState.CurLenW = ImTextStrFromUtf8(editState.Text.Data, editState.Text.Size, buf, NULL, &buf_end)
 //                editState.CurLenA = (int)(buf_end - buf)
@@ -1530,14 +1530,14 @@ interface imgui_internal {
                     We ignore CTRL inputs, but need to allow CTRL+ALT as some keyboards (e.g. German) use AltGR - which
                     is Alt+Ctrl - to input certain characters.  */
                 if (!(IO.keyCtrl && !IO.keyAlt) && isEditable)
-                    IO.inputCharacters.filter { it != '\u0000' }.map {
+                    IO.inputCharacters.filter { it != NUL }.map {
                         withChar { c -> // Insert character if they pass filtering
                             if (inputTextFilterCharacter(c.apply { set(it) }, flags/*, callback, user_data*/))
                                 editState.onKeyPressed(c().i)
                         }
                     }
                 // Consume characters
-                IO.inputCharacters.fill('\u0000')
+                IO.inputCharacters.fill(NUL)
             }
         }
 
@@ -1696,7 +1696,7 @@ interface imgui_internal {
                 // FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above incorrect.
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
                 if (isEditable)
-                    editState.tempTextBuffer = CharArray(editState.text.size * 4, { editState.text.getOrElse(it, { '\u0000' }) })
+                    editState.tempTextBuffer = CharArray(editState.text.size * 4, { editState.text.getOrElse(it, { NUL }) })
 
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
@@ -1820,7 +1820,7 @@ interface imgui_internal {
                 if (isMultiline) searchesRemaining++
                 var lineCount = 0
                 var s = 0
-                while (s < text.size && text[s] != '\u0000')
+                while (s < text.size && text[s] != NUL)
                     if (text[s++] == '\n') {
                         lineCount++
                         if (searchesResultLineNumber[0] == -1 && s >= searchesInputPtr[0]) {
@@ -1901,7 +1901,7 @@ interface imgui_internal {
                             inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
                         }
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_aaaaaaaaaa(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_bca(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)

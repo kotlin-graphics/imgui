@@ -240,7 +240,7 @@ interface imgui_widgetsText {
     // TODO, lambdas are so short, consider removing it
     object Items {
         // FIXME-OPT: we could pre-compute the indices to fasten this. But only 1 active combo means the waste is limited.
-        val singleStringGetter = { data: String, idx: Int -> data.split('\u0000')[idx] }
+        val singleStringGetter = { data: String, idx: Int -> data.split(NUL)[idx] }
         val arrayGetter = { data: Array<String>, idx: Int, outText: Array<String> -> outText[0] = data[idx]; true }
     }
 

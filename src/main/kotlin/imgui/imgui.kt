@@ -70,3 +70,5 @@ typealias SizeConstraintCallback = (userData: Any?, pos: Vec2i, currenSize: Vec2
 fun main(args: Array<String>) {
 
 }
+
+val NUL = '\u0000'
