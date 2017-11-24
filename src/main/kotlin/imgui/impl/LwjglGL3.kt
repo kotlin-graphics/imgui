@@ -110,6 +110,18 @@ object LwjglGL3 {
                             }
                             NULL
                         }
+                        WM_IME_STARTCOMPOSITION -> println("Ime startComposition w: $w l: $l").let { 0L }
+                        WM_IME_ENDCOMPOSITION -> println("Ime endComposition w: $w l: $l").let { 0L }
+                        WM_IME_COMPOSITION /*,WM_IME_KEYLAST*/ -> println("Ime composition/keyLast w: $w l: $l").let { 0L }
+                        WM_IME_SETCONTEXT -> println("Ime setContex w: $w l: $l").let { 0L }
+                        WM_IME_NOTIFY -> println("Ime notify w: $w l: $l").let { 0L }
+                        WM_IME_CONTROL -> println("Ime control w: $w l: $l").let { 0L }
+                        WM_IME_COMPOSITIONFULL -> println("Ime compositionFull w: $w l: $l").let { 0L }
+                        WM_IME_SELECT -> println("Ime select w: $w l: $l").let { 0L }
+                        WM_IME_CHAR -> println("Ime char w: $w l: $l").let { 0L }
+                        WM_IME_REQUEST -> println("Ime request w: $w l: $l").let { 0L }
+                        WM_IME_KEYDOWN -> println("Ime keyDown w: $w l: $l").let { 0L }
+                        WM_IME_KEYUP -> println("Ime keyUp w: $w l: $l").let { 0L }
                         else -> nCallWindowProc(glfwProc, hwnd, msg, w, l)
                     }
                 }
