@@ -76,7 +76,7 @@ class TextEditState {
     fun getChar(idx: Int) = text[idx]
     fun getWidth(lineStartIdx: Int, charIdx: Int): Float {
         val c = text[lineStartIdx + charIdx]
-        return if (c == '\n') -1f else Context.font.getCharAdvance_aaaaaaaaa(c) * (Context.fontSize / Context.font.fontSize)
+        return if (c == '\n') -1f else Context.font.getCharAdvance_aaaaaaaaaa(c) * (Context.fontSize / Context.font.fontSize)
     }
 
     fun keyToText(key: Int) = if (key >= 0x10000) 0 else key
@@ -97,8 +97,9 @@ class TextEditState {
         }
     }
 
-    val Char.isSeparator get() = this.isSpace || this == ',' || this == ';' || this == '(' || this == ')' ||
-            this == '{' || this == '}' || this == '[' || this == ']' || this == '|'
+    val Char.isSeparator
+        get() = this.isSpace || this == ',' || this == ';' || this == '(' || this == ')' ||
+                this == '{' || this == '}' || this == '[' || this == ']' || this == '|'
 
     fun isWordBoundaryFromRight(idx: Int) = if (idx > 0) text[idx - 1].isSeparator && !text[idx].isSeparator else true
 
@@ -794,7 +795,6 @@ class TextEditState {
     /** API key: process a keyboard input   */
     fun key(key: Int): Unit = with(state) {
         when (key) {
-//            K.INSERT:            state->insert_mode = !state->insert_mode
             K.UNDO -> {
                 undo()
                 hasPreferredX = false
@@ -925,8 +925,8 @@ class TextEditState {
                     cursor = find.prevFirst
                     layout(row, cursor)
                     x = row.x0
-                    for (i in 0 until row.numChars) {
-                        val dx = getWidth(find.prevFirst, i)
+                    while (i < row.numChars) {
+                        val dx = getWidth(find.prevFirst, i++)
                         if (dx == GETWIDTH_NEWLINE)
                             break
                         x += dx

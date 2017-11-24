@@ -1004,7 +1004,7 @@ class Font {
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
 
-    fun getCharAdvance_aaaaaaaaa(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
+    fun getCharAdvance_aaaaaaaaaa(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
 
     val isLoaded get() = ::containerAtlas.isInitialized
 
