@@ -100,7 +100,7 @@ object LwjglGL3 {
             window.scrollCallback = scrollCallback
             window.keyCallback = keyCallback
             window.charCallback = charCallback // TODO check if used (jogl doesnt have)
-//            imeListner.install(window.handle)
+            imeListner.install(window.handle)
         }
         return true
     }
