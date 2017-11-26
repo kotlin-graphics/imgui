@@ -1431,8 +1431,19 @@ interface imgui_internal {
         var clearActiveId = false
 
         var selectAll = g.activeId != id && flags has Itf.AutoSelectAll
-        if (focusRequested || userClicked || userScrolled) {
-            if (g.activeId != id) {
+//        println(g.imeLastKey)
+        if (focusRequested || userClicked || userScrolled || g.imeLastKey != 0) {
+            if (g.activeId != id || g.imeLastKey != 0) {
+                // JVM, put char if no more in ime mode and last key is valid
+//                println("${g.imeInProgress}, ${g.imeLastKey}")
+                if(!g.imeInProgress && g.imeLastKey != 0) {
+                    for(i in 0 until buf.size)
+                        if(buf[i] == NUL) {
+                            buf[i] = g.imeLastKey.c
+                            break
+                        }
+                    g.imeLastKey = 0
+                }
                 /*  Start edition
                     Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
@@ -1442,11 +1453,6 @@ interface imgui_internal {
                 editState.initialText = CharArray(buf.size)
                 // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
 //                editState.initialText.add(NUL)
-                val ime = g.imeLastKey
-                if (ime != 0) {
-                    buf[0] = ime.c
-                    g.imeLastKey = 0
-                }
                 editState.initialText strncpy buf
                 editState.curLenW = editState.text.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
                 /*  We can't get the result from ImFormatString() above because it is not UTF-8 aware.
@@ -1773,7 +1779,7 @@ interface imgui_internal {
                 }
                 // Copy back to user buffer
                 if (isEditable && !Arrays.equals(editState.tempTextBuffer, buf)) {
-                    for (i in 0 until buf.size) buf[i] = editState.tempTextBuffer[i]
+                    for(i in 0 until buf.size) buf[i] = editState.tempTextBuffer[i]
                     valueChanged = true
                 }
             }
