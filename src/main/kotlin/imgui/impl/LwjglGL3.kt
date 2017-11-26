@@ -100,51 +100,10 @@ object LwjglGL3 {
             window.scrollCallback = scrollCallback
             window.keyCallback = keyCallback
             window.charCallback = charCallback // TODO check if used (jogl doesnt have)
-            if (Platform.get() == Platform.WINDOWS) {
-                val hwnd = glfwGetWin32Window(window.handle)
-                val glfwProc = GetWindowLongPtr(hwnd, GWL_WNDPROC)
-                windowProc = object : WindowProc() {
-                    override fun invoke(hwnd: Long, msg: Int, w: Long, l: Long) = when (msg) {
-                        0x02E0 -> { // WM_DPICHANGED
-                            with(RECT.create(l)) {
-                                SetWindowPos(hwnd, NULL, left(), top(), right() - left(), bottom() - top(), SWP_NOZORDER or SWP_NOACTIVATE)
-                            }
-                            NULL
-                        }
-                        WM_IME_STARTCOMPOSITION -> {
-                            println("Ime startComposition w: $w l: $l")
-                            g.imeInProgress = true
-                            0L
-                        }
-                        WM_IME_ENDCOMPOSITION -> {
-                            println("Ime endComposition w: $w l: $l")
-                            g.imeInProgress = false
-                            0L
-                        }
-                        WM_IME_COMPOSITION /*,WM_IME_KEYLAST*/ -> {
-                            println("Ime composition/keyLast w: $w l: $l")
-                            g.imeLastKey = if (g.imeInProgress) w.i else 0
-                            0L
-                        }
-                        WM_IME_SETCONTEXT -> println("Ime setContex w: $w l: $l").let { 0L }
-                        WM_IME_NOTIFY -> println("Ime notify w: $w l: $l").let { 0L }
-                        WM_IME_CONTROL -> println("Ime control w: $w l: $l").let { 0L }
-                        WM_IME_COMPOSITIONFULL -> println("Ime compositionFull w: $w l: $l").let { 0L }
-                        WM_IME_SELECT -> println("Ime select w: $w l: $l").let { 0L }
-                        WM_IME_CHAR -> println("Ime char w: $w l: $l").let { 0L }
-                        WM_IME_REQUEST -> println("Ime request w: $w l: $l").let { 0L }
-                        WM_IME_KEYDOWN -> println("Ime keyDown w: $w l: $l").let { 0L }
-                        WM_IME_KEYUP -> println("Ime keyUp w: $w l: $l").let { 0L }
-                        else -> nCallWindowProc(glfwProc, hwnd, msg, w, l)
-                    }
-                }
-                SetWindowLongPtr(hwnd, GWL_WNDPROC, windowProc!!.address())
-            }
+            imeListner.install(window.handle)
         }
         return true
     }
-
-    var windowProc: Callback? = null
 
     var vtxSize = 1 shl 5 // 32768
     var idxSize = 1 shl 6 // 65536
