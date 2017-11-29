@@ -412,7 +412,7 @@ object layout_ {
                     /*  Demonstrate a trick: you can use begin() to set yourself in the context of another window (here
                         we are already out of your child window) */
                     beginChild("scrolling")
-                    scrollX = scrollX + scrollXDelta    // TODO bug https://youtrack.jetbrains.com/issue/KT-21343
+                    scrollX = scrollX + scrollXDelta    // TODO bug https://youtrack.jetbrains.com/issue/KT-21343 wait for 1.2.20 EAP
                     end()
                 }
             }
