@@ -179,6 +179,9 @@ object Context {
     /** Last cursor position passed to the OS Input Method Editor   */
     var osImePosSet = Vec2(-1f)
 
+    var imeInProgress = false
+    var imeLastKey = 0
+
 
     //------------------------------------------------------------------
     // Logging

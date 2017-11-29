@@ -68,8 +68,13 @@ ImGui supports also other languages, such as japanese, initiliazed [here](https:
 ```kotlin
 IO.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, glyphRanges = IO.fonts.glyphRangesJapanese)!!
 ```
+or [here](https://github.com/kotlin-graphics/imgui/blob/master/src/test/java/imgui/Test_lwjgl.java#L50-L51)
+```java
+Font font = io.getFonts().addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, new FontConfig(), io.getFonts().getGlyphRangesJapanese());
+assert (font != null);
+```
 
-![Imgur](https://i.imgur.com/ASwYzBo.png?1)
+![Imgur](https://i.imgur.com/vul0VbT.png?1)
 
 
 ### References

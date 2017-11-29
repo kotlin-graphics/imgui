@@ -625,7 +625,7 @@ class FontAtlas {
             var i = 0
             inRange[0] = cfg.glyphRanges[i++]
             inRange[1] = cfg.glyphRanges[i++]
-            while(inRange[0] != 0 && inRange[1] != 0) {
+            while (inRange[0] != 0 && inRange[1] != 0) {
                 fontGlyphsCount += (inRange[1] - inRange[0]) + 1
                 inRange[0] = cfg.glyphRanges.getOrElse(i++, { 0 })
                 inRange[1] = cfg.glyphRanges.getOrElse(i++, { 0 })
@@ -635,7 +635,7 @@ class FontAtlas {
             tmp.rangesCount = fontRangesCount
             bufRangesN += fontRangesCount
             i = 0
-            while(i < fontRangesCount) {
+            while (i < fontRangesCount) {
                 inRange[0] = cfg.glyphRanges[i * 2]
                 inRange[1] = cfg.glyphRanges[i * 2 + 1]
                 val range = tmp.ranges[i++]
