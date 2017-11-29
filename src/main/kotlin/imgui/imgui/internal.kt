@@ -2,6 +2,7 @@ package imgui.imgui
 
 import gli_.has
 import gli_.hasnt
+import glm_.c
 import glm_.f
 import glm_.func.common.max
 import glm_.func.common.min
@@ -1430,8 +1431,19 @@ interface imgui_internal {
         var clearActiveId = false
 
         var selectAll = g.activeId != id && flags has Itf.AutoSelectAll
-        if (focusRequested || userClicked || userScrolled) {
-            if (g.activeId != id) {
+//        println(g.imeLastKey)
+        if (focusRequested || userClicked || userScrolled || g.imeLastKey != 0) {
+            if (g.activeId != id || g.imeLastKey != 0) {
+                // JVM, put char if no more in ime mode and last key is valid
+//                println("${g.imeInProgress}, ${g.imeLastKey}")
+                if(!g.imeInProgress && g.imeLastKey != 0) {
+                    for(i in 0 until buf.size)
+                        if(buf[i] == NUL) {
+                            buf[i] = g.imeLastKey.c
+                            break
+                        }
+                    g.imeLastKey = 0
+                }
                 /*  Start edition
                     Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
@@ -1531,7 +1543,8 @@ interface imgui_internal {
                     is Alt+Ctrl - to input certain characters.  */
                 if (!(IO.keyCtrl && !IO.keyAlt) && isEditable)
                     IO.inputCharacters.filter { it != NUL }.map {
-                        withChar { c -> // Insert character if they pass filtering
+                        withChar { c ->
+                            // Insert character if they pass filtering
                             if (inputTextFilterCharacter(c.apply { set(it) }, flags/*, callback, user_data*/))
                                 editState.onKeyPressed(c().i)
                         }
@@ -1766,7 +1779,7 @@ interface imgui_internal {
                 }
                 // Copy back to user buffer
                 if (isEditable && !Arrays.equals(editState.tempTextBuffer, buf)) {
-                    repeat(buf.size) { buf[it] = editState.tempTextBuffer[it] }
+                    for(i in 0 until buf.size) buf[i] = editState.tempTextBuffer[i]
                     valueChanged = true
                 }
             }
@@ -1914,7 +1927,7 @@ interface imgui_internal {
             }
 
             drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, Col.Text.u32, bufDisplay,
-                    editState.curLenA, 0f, if (isMultiline) null else clipRect)
+                    editState.curLenA, 0f, clipRect.takeIf { isMultiline })
 
             // Draw blinking cursor
             val cursorIsVisible = !IO.optCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
