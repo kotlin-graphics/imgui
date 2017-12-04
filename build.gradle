@@ -37,8 +37,8 @@ dependencies {
     testCompile 'io.kotlintest:kotlintest:2.0.7'
 
     def joglVersion = '2.3.2'
-    compile "org.jogamp.gluegen:gluegen-rt-main:$joglVersion"
-    compile "org.jogamp.jogl:jogl-all-main:$joglVersion"
+    testCompile "org.jogamp.gluegen:gluegen-rt-main:$joglVersion"
+    testCompile "org.jogamp.jogl:jogl-all-main:$joglVersion"
 
     switch ( OperatingSystem.current() ) {
         case OperatingSystem.WINDOWS:
@@ -51,19 +51,19 @@ dependencies {
             ext.lwjglNatives = "natives-macos"
             break
     }
-    ext.lwjglVersion = "3.1.5-SNAPSHOT"
+    ext.lwjglVersion = "3.1.5"
     compile "org.lwjgl:lwjgl:${lwjglVersion}"
     compile "org.lwjgl:lwjgl-glfw:${lwjglVersion}"
     compile "org.lwjgl:lwjgl-jemalloc:${lwjglVersion}"
     compile "org.lwjgl:lwjgl-openal:${lwjglVersion}"
     compile "org.lwjgl:lwjgl-opengl:${lwjglVersion}"
     compile "org.lwjgl:lwjgl-stb:${lwjglVersion}"
-    runtime "org.lwjgl:lwjgl:${lwjglVersion}:${lwjglNatives}"
-    runtime "org.lwjgl:lwjgl-glfw:${lwjglVersion}:${lwjglNatives}"
-    runtime "org.lwjgl:lwjgl-jemalloc:${lwjglVersion}:${lwjglNatives}"
-    runtime "org.lwjgl:lwjgl-openal:${lwjglVersion}:${lwjglNatives}"
-    runtime "org.lwjgl:lwjgl-opengl:${lwjglVersion}:${lwjglNatives}"
-    runtime "org.lwjgl:lwjgl-stb:${lwjglVersion}:${lwjglNatives}"
+    testRuntime "org.lwjgl:lwjgl:${lwjglVersion}:${lwjglNatives}"
+    testRuntime "org.lwjgl:lwjgl-glfw:${lwjglVersion}:${lwjglNatives}"
+    testRuntime "org.lwjgl:lwjgl-jemalloc:${lwjglVersion}:${lwjglNatives}"
+    testRuntime "org.lwjgl:lwjgl-openal:${lwjglVersion}:${lwjglNatives}"
+    testRuntime "org.lwjgl:lwjgl-opengl:${lwjglVersion}:${lwjglNatives}"
+    testRuntime "org.lwjgl:lwjgl-stb:${lwjglVersion}:${lwjglNatives}"
 
     compile files("${System.properties['java.home']}/../lib/tools.jar")
 }
