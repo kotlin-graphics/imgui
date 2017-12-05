@@ -90,22 +90,45 @@ The Immediate Mode GUI paradigm may at first appear unusual to some users. This 
 
 ### How to get it
 
-[Gradle, Maven, Sbt, Leiningen](https://jitpack.io/#kotlin-graphics/imgui)
+ImGui does not impose any platform specific dependency. Therefor users must specify runtime dependencies themselves. This should
+be done with great care to ensure that the dependencies versions do not conflict.
 
-- Add it in your root `build.gradle` at the end of repositories:
+Using Gradle with the following workaround is recommended to keep the manual maintenance cost low.
 
-	    allprojects {
-		    repositories {
-			        ...
-			        maven { url 'https://jitpack.io' }
-		    }
-	    }
-    
-- Add the dependency
+```groovy
+import org.gradle.internal.os.OperatingSystem
 
-	    dependencies {
-	        compile 'com.github.kotlin-graphics:imgui:-SNAPSHOT' // or commit or release (v1.51.b0)
-	    }
+repositories {
+    ...
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    compile 'com.github.kotlin-graphics:imgui:-SNAPSHOT'
+	
+    switch ( OperatingSystem.current() ) {
+        case OperatingSystem.WINDOWS:
+            ext.lwjglNatives = "natives-windows"
+            break
+        case OperatingSystem.LINUX:
+            ext.lwjglNatives = "natives-linux"
+            break
+        case OperatingSystem.MAC_OS:
+            ext.lwjglNatives = "natives-macos"
+            break
+    }
+
+    // Look up which modules and versions of LWJGL are required and add setup the approriate natives.
+    configurations.compile.resolvedConfiguration.getResolvedArtifacts().forEach {
+        if (it.moduleVersion.id.group == "org.lwjgl") {
+            runtime "org.lwjgl:${it.moduleVersion.id.name}:${it.moduleVersion.id.version}:${lwjglNatives}"
+        }
+    }
+}
+```
+
+Please refer to the [wiki](https://github.com/kotlin-graphics/imgui/wiki/Install) for a more detailed guide and for other
+systems (such as Maven, Sbt or Leiningen).
 
 ### LibGdx
 
