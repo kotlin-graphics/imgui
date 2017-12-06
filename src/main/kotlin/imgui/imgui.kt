@@ -1,5 +1,6 @@
 package imgui
 
+import glm_.b
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
@@ -60,7 +61,7 @@ object ImGui :
 
 var debug = 0
 
-var ptrIndices = 0 // TODO move
+var ptrIndices = 0.b // TODO move
 
 // TODO get rid of local top value KMutableProperty in favor of the better with*{} solution
 
