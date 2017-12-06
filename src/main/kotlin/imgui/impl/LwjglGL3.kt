@@ -237,7 +237,7 @@ object LwjglGL3 {
 
             checkError("checkSize")
 
-            println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
+            if(DEBUG) println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
         }
     }
 

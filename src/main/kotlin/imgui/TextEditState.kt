@@ -76,7 +76,7 @@ class TextEditState {
     fun getChar(idx: Int) = text[idx]
     fun getWidth(lineStartIdx: Int, charIdx: Int): Float {
         val c = text[lineStartIdx + charIdx]
-        return if (c == '\n') -1f else Context.font.getCharAdvance_aaaaa(c) * (Context.fontSize / Context.font.fontSize)
+        return if (c == '\n') -1f else Context.font.getCharAdvance_aaaaaaaaaaa(c) * (Context.fontSize / Context.font.fontSize)
     }
 
     fun keyToText(key: Int) = if (key >= 0x10000) 0 else key
@@ -139,13 +139,9 @@ class TextEditState {
         val newTextLenUtf8 = newTextLen //TODO check textCountUtf8BytesFromStr(new_text, new_text + newTextLen)
         if (newTextLenUtf8 + curLenA > bufSizeA) return false
 
-        if (pos != textLen){
-            var eBuffer= charArrayOf()
-            for (i in pos until text.size+newTextLen) eBuffer[i - pos] = text[i]
-            for (i in 0 until newTextLen) text[pos + i] = newText[i]
-            for (i in 0 until eBuffer.size) text [pos + newTextLen + i] = eBuffer[i]
-        }else
-            for (i in 0 until newTextLen) text[pos + i] = newText[i]
+        if (pos != textLen)
+            for (i in 0 until textLen - pos) text[textLen - 1 + newTextLen - i] = text[textLen - 1 - i]
+        for (i in 0 until newTextLen) text[pos + i] = newText[ptr + i]
 
         curLenW += newTextLen
         curLenA += newTextLenUtf8

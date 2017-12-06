@@ -5,6 +5,7 @@ import glm_.bool
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
+import imgui.DEBUG
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.system.*
@@ -41,12 +42,12 @@ object imeListner : WindowProc() {
             NULL
         }
         WM_IME_STARTCOMPOSITION -> {
-            println("Ime startComposition")
+            if(DEBUG) println("Ime startComposition")
             g.imeInProgress = true
             NULL
         }
         WM_IME_ENDCOMPOSITION -> {
-            println("Ime endComposition")
+            if(DEBUG) println("Ime endComposition")
             g.imeInProgress = false
             g.imeLastKey = latestChange
             NULL
@@ -67,7 +68,7 @@ object imeListner : WindowProc() {
                 GCS_RESULTSTR -> "the string of the composition result."
                 else -> "new character> ${w.i}".also { latestChange = w.i }
             }
-            println("Ime composition/keyLast = latestChange: $w, how: $how")
+            if(DEBUG) println("Ime composition/keyLast = latestChange: $w, how: $how")
             NULL
         }
         WM_IME_SETCONTEXT -> {
@@ -80,11 +81,11 @@ object imeListner : WindowProc() {
                 ISC_SHOWUICANDIDATEWINDOW_l3 -> "Show the candidate window of index 3 by user interface window."
                 else -> throw Error("${w.i}")
             }
-            println("Ime setContex: active: ${w.bool}, option: $option")
+            if(DEBUG) println("Ime setContex: active: ${w.bool}, option: $option")
             NULL
         }
         WM_IME_NOTIFY -> {
-            println("Ime notify: " +
+            if(DEBUG) println("Ime notify: " +
                     when (w.i) {
                         WM_IME_STARTCOMPOSITION -> "IME startComposition"
                         WM_IME_ENDCOMPOSITION -> "IME endComposition"
@@ -108,7 +109,7 @@ object imeListner : WindowProc() {
             NULL
         }
         WM_IME_CONTROL -> {
-            println("Ime control: Instructs the IME window to " +
+            if(DEBUG) println("Ime control: Instructs the IME window to " +
                     when (w.i) {
                         IMC_CLOSESTATUSWINDOW -> "hide the status window."
                         IMC_GETCANDIDATEPOS -> "Instructs an IME window to get the position of the candidate window."
@@ -124,12 +125,21 @@ object imeListner : WindowProc() {
                     })
             0L
         }
-        WM_IME_COMPOSITIONFULL -> println("Ime compositionFull w: $w l: $l").let { 0L }
-        WM_IME_SELECT -> println("Ime select w: $w l: $l").let { 0L }
-        WM_IME_CHAR -> println("Ime char w: $w l: $l").let { 0L }
+        WM_IME_COMPOSITIONFULL -> {
+            if(DEBUG) println("Ime compositionFull w: $w l: $l")
+            NULL
+        }
+        WM_IME_SELECT -> {
+            if(DEBUG) println("Ime select w: $w l: $l")
+            NULL
+        }
+        WM_IME_CHAR -> {
+            if(DEBUG) println("Ime char w: $w l: $l")
+            NULL
+        }
         WM_IME_REQUEST -> {
             var res = NULL
-            println("Ime request " +
+            if(DEBUG) println("Ime request " +
                     when (w.i) {
                         IMR_COMPOSITIONWINDOW -> "IME needs information about the composition window."
                         IMR_CANDIDATEWINDOW -> {
@@ -148,8 +158,14 @@ object imeListner : WindowProc() {
                     })
             res
         }
-        WM_IME_KEYDOWN -> println("Ime keyDown w: $w l: $l").let { 0L }
-        WM_IME_KEYUP -> println("Ime keyUp w: $w l: $l").let { 0L }
+        WM_IME_KEYDOWN -> {
+            if(DEBUG) println("Ime keyDown w: $w l: $l")
+            NULL
+        }
+        WM_IME_KEYUP -> {
+            if(DEBUG) println("Ime keyUp w: $w l: $l")
+            NULL
+        }
         else -> nCallWindowProc(glfwProc, hwnd, msg, w, l)
     }
 
