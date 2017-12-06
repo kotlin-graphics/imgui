@@ -139,9 +139,13 @@ class TextEditState {
         val newTextLenUtf8 = newTextLen //TODO check textCountUtf8BytesFromStr(new_text, new_text + newTextLen)
         if (newTextLenUtf8 + curLenA > bufSizeA) return false
 
-        if (pos != textLen)
-            TODO()  //memmove(text + pos + new_text_len, text + pos, (size_t)(text_len - pos) * sizeof(ImWchar));
-        for (i in 0 until newTextLen) text[pos + i] = newText[i]
+        if (pos != textLen){
+            var eBuffer= charArrayOf()
+            for (i in pos until text.size+newTextLen) eBuffer[i - pos] = text[i]
+            for (i in 0 until newTextLen) text[pos + i] = newText[i]
+            for (i in 0 until eBuffer.size) text [pos + newTextLen + i] = eBuffer[i]
+        }else
+            for (i in 0 until newTextLen) text[pos + i] = newText[i]
 
         curLenW += newTextLen
         curLenA += newTextLenUtf8
