@@ -502,8 +502,7 @@ class Window(
     }
 
     fun getId(ptr: Any): Int {
-        val seed = idStack.last()
-        val id = System.identityHashCode(++ptrIndices)
+        val id = System.identityHashCode(ptrId[++ptrIndices])
         keepAliveId(id)
         return id
     }
