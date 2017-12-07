@@ -241,7 +241,7 @@ interface imgui_cursorLayout {
         get() = currentWindowRead!!.dc.cursorPos
         set(value) = with(currentWindow.dc) {
             cursorPos put value
-            cursorMaxPos max_ cursorPos
+            cursorMaxPos maxAssign cursorPos
         }
 
     /** Vertically align/lower upcoming text to framePadding.y so that it will aligns to upcoming widgets

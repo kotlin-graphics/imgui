@@ -226,8 +226,8 @@ interface imgui_main {
                 val offset = window.size * (1.0f - scale) * (IO.mousePos - window.pos) / window.size
                 window.pos plusAssign offset
                 window.posF plusAssign offset
-                window.size times_ scale
-                window.sizeFull times_ scale
+                window.size timesAssign scale
+                window.sizeFull timesAssign scale
             } else if (!IO.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse) {
                 // Scroll
                 val scrollLines = if (window.flags has Wf.ComboBox) 3 else 5

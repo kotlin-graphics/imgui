@@ -1100,7 +1100,7 @@ class DrawData {
     fun scaleClipRects(scale: Vec2) {
         cmdLists.forEach {
             it.cmdBuffer.forEach { cmd ->
-                cmd.clipRect.times_(scale.x, scale.y, scale.x, scale.y)
+                cmd.clipRect.timesAssign(scale.x, scale.y, scale.x, scale.y)
             }
         }
     }
