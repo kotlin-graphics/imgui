@@ -191,7 +191,7 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window): Vec2 {  // TODO -> w
     if (window.scrollTarget.y < Float.MAX_VALUE)
         scroll.y = window.scrollTarget.y - (1f - crY) * (window.titleBarHeight + window.menuBarHeight) -
                 crY * (window.sizeFull.y - window.scrollbarSizes.y)
-    scroll max_ 0f
+    scroll maxAssign 0f
     if (!window.collapsed && !window.skipItems) {
         // == GetScrollMaxX for that window
         scroll.x = glm.min(scroll.x, glm.max(0f, window.sizeContents.x - (window.sizeFull.x - window.scrollbarSizes.x)))
