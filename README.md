@@ -144,9 +144,9 @@ Things to notice:
 
 - text inputs handling, weak/bugged
 
-- foreign languages support: at the moment tested shortly only japanese with IME support on Windows, not yet fully robust and tested, looking for feedbacks
+- foreign languages support: at the moment tested shortly only japanese with IME support on Windows, not yet fully robust and tested
 
-- other fonts Shortly tested, looking for feedbacks
+- other fonts Shortly tested
 
 - and few other small things which escaped the demo checking
 
