@@ -140,11 +140,17 @@ Simply follow this [short wiki](https://github.com/kotlin-graphics/imgui/wiki/Us
 
 90% ported
 
-Weak/bugged: text inputs handling and few other small things
+Things to notice:
 
-Not yet implemented, foreign languages
+- text inputs handling, weak/bugged
 
-Not yet tested, other fonts
+- foreign languages support: at the moment tested shortly only japanese with IME support on Windows, not yet fully robust and tested, looking for feedbacks
+
+- other fonts Shortly tested, looking for feedbacks
+
+- and few other small things which escaped the demo checking
+
+I'm looking for feedbacks to report and get fixed as much bugs as possible, don't hesitate to contribute (wiki, code, screenshots, suggestions, whatever)
 
 To check what has been already ported and working, simply run one of the tests in Kotlin:
 
@@ -161,7 +167,6 @@ You should refer to those also to learn how to use the imgui library.
 ### Bugs:
 
 - copy/cut/undo/redo text
-- ~window resize constrains~
 - text filters
 
 ### Credits
