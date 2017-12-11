@@ -149,6 +149,7 @@ object JoglVrGL3 {
 
         glGenBuffers(Buffer.MAX, bufferName)
 
+        glGenVertexArrays(1, vaoName)
         glBindVertexArray(vaoName[0])
 
         glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
@@ -329,10 +330,10 @@ object JoglVrGL3 {
                 vtxBuffer.putInt(offset + Vec2.size * 2, v.col)
             }
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-            glBufferSubData(GL_ARRAY_BUFFER, 0, vtxBuffer.capacity().L, vtxBuffer)
+            glBufferSubData(GL_ARRAY_BUFFER, 0, cmdList._vtxWritePtr * DrawVert.size.L, vtxBuffer)
             cmdList.idxBuffer.forEachIndexed { i, idx -> idxBuffer[i] = idx }
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBuffer.capacity().L, idxBuffer)
+            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, cmdList._idxWritePtr * Int.BYTES.L, idxBuffer)
 
             var idxBufferOffset = 0L
             for (cmd in cmdList.cmdBuffer) {
