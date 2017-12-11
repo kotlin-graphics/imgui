@@ -96,8 +96,7 @@ object JoglGL3 {
 
         this.gl = gl
 
-        if (fontTexture[0] < 0)
-            createDeviceObjects(gl)
+        if (fontTexture[0] < 0) gl.createDeviceObjects()
 
         // Setup display size (every frame to accommodate for window resizing)
         IO.displaySize.x = window.width
@@ -141,7 +140,7 @@ object JoglGL3 {
         ImGui.newFrame()
     }
 
-    private fun createDeviceObjects(gl: GL3): Boolean = with(gl) {
+    private fun GL3.createDeviceObjects(): Boolean {
 
         // Backup GL state
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
@@ -149,7 +148,7 @@ object JoglGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
 
-        program = ProgramA(gl, "shader")
+        program = ProgramA(this, "shader")
 
         glGenBuffers(Buffer.MAX, bufferName)
 
@@ -171,7 +170,7 @@ object JoglGL3 {
 
         glBindVertexArray(0)
 
-        createFontsTexture(gl)
+        createFontsTexture()
 
         // Restore modified GL state
         glUseProgram(lastProgram)
@@ -184,7 +183,7 @@ object JoglGL3 {
         return true
     }
 
-    private fun checkSize(gl: GL3, draws: ArrayList<DrawList>) = with(gl) {
+    private fun GL3.checkSize(draws: ArrayList<DrawList>){
 
         val minVtxSize = draws.map { it.vtxBuffer.size }.sum() * DrawVert.size
         val minIdxSize = draws.map { it.idxBuffer.size }.sum() * Int.BYTES
@@ -225,7 +224,7 @@ object JoglGL3 {
 
             if (glGetError() != GL.GL_NO_ERROR) throw Error("render")
 
-            println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
+            if(DEBUG) println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
         }
     }
 
@@ -242,7 +241,7 @@ object JoglGL3 {
     }
 
     /** Build texture atlas */
-    private fun createFontsTexture(gl: GL3): Boolean = with(gl) {
+    private fun GL3.createFontsTexture(): Boolean {
 
         /*  Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely
             to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than
@@ -292,10 +291,8 @@ object JoglGL3 {
         val lastElementArrayBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
         val lastPolygonMode = glGetInteger(GL_POLYGON_MODE)
-        glGetIntegerv(GL_VIEWPORT, buf.asIntBuffer())
-        val lastViewport = Vec4i(buf)
-        glGetIntegerv(GL_SCISSOR_BOX, buf.asIntBuffer())
-        val lastScissorBox = Vec4i(buf)
+        val lastViewport = Vec4i(buf.apply { glGetIntegerv(GL_VIEWPORT, asIntBuffer()) })
+        val lastScissorBox = Vec4i(buf.apply { glGetIntegerv(GL_SCISSOR_BOX, asIntBuffer()) })
         val lastBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
         val lastBlendDstRgb = glGetInteger(GL_BLEND_DST_RGB)
         val lastBlendSrcAlpha = glGetInteger(GL_BLEND_SRC_ALPHA)
@@ -314,7 +311,7 @@ object JoglGL3 {
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
         glEnable(GL_SCISSOR_TEST)
-        glPolygonMode(GL.GL_FRONT_AND_BACK, GL_FILL)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
         // Setup viewport, orthographic projection matrix
         glViewport(0, 0, fbSize.x, fbSize.y)
@@ -322,7 +319,7 @@ object JoglGL3 {
         glUseProgram(program.name)
         glUniformMatrix4fv(program.mat, 1, false, (ortho to buf).asFloatBuffer())
 
-        checkSize(this, drawData.cmdLists)
+        checkSize(drawData.cmdLists)
 
         glBindVertexArray(vaoName[0])
         glBindSampler(semantic.sampler.DIFFUSE, 0) // Rely on combined texture/sampler state.
@@ -336,10 +333,10 @@ object JoglGL3 {
                 vtxBuffer.putInt(offset + Vec2.size * 2, v.col)
             }
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-            glBufferSubData(GL_ARRAY_BUFFER, 0, vtxBuffer.capacity().L, vtxBuffer)
+            glBufferSubData(GL_ARRAY_BUFFER, 0, cmdList._vtxWritePtr * DrawVert.size.L, vtxBuffer)
             cmdList.idxBuffer.forEachIndexed { i, idx -> idxBuffer[i] = idx }
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBuffer.capacity().L, idxBuffer)
+            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, cmdList._idxWritePtr * Int.BYTES.L, idxBuffer)
 
             var idxBufferOffset = 0L
             for (cmd in cmdList.cmdBuffer) {
