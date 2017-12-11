@@ -301,23 +301,9 @@ interface imgui_demoDebugInfo {
                 treePop()
             }
         }
-
-
+        
         var showClipRects = true
 
-
         val selected = BooleanArray(4 + 3 + 16 + 16, { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 })
-
-
-        val buf1 = CharArray(64)
-        val buf2 = CharArray(64)
-        val buf3 = CharArray(64)
-        val buf4 = CharArray(64)
-        val buf5 = CharArray(64)
-        val buf6 = CharArray(64)
-
-
     }
-
-
 }

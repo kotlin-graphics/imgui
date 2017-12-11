@@ -8,8 +8,10 @@ import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL2ES3
 import com.jogamp.opengl.GL2ES3.*
+import com.jogamp.opengl.GL2GL3.GL_FILL
 import com.jogamp.opengl.GL2GL3.GL_POLYGON_MODE
 import com.jogamp.opengl.GL3
+import com.jogamp.opengl.GL3ES3.GL_SAMPLER_BINDING
 import glm_.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
@@ -98,8 +100,7 @@ object JoglVrGL3 {
 
         this.gl = gl
 
-        if (fontTexture[0] < 0)
-            createDeviceObjects(gl)
+        if (fontTexture[0] < 0) gl.createDeviceObjects()
 
         // Setup display size (every frame to accommodate for window resizing)
         IO.displaySize put texSize
@@ -136,7 +137,7 @@ object JoglVrGL3 {
         ImGui.newFrame()
     }
 
-    private fun createDeviceObjects(gl: GL3): Boolean = with(gl) {
+    private fun GL3.createDeviceObjects(): Boolean {
 
         // Backup GL state
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
@@ -144,7 +145,7 @@ object JoglVrGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL2ES3.GL_VERTEX_ARRAY_BINDING)
 
-        program = ProgramA(gl, "shader")
+        program = ProgramA(this, "shader")
 
         glGenBuffers(Buffer.MAX, bufferName)
 
@@ -167,7 +168,7 @@ object JoglVrGL3 {
 
         if (glGetError() != GL.GL_NO_ERROR) throw Error("render")
 
-        createFontsTexture(gl)
+        createFontsTexture()
 
         // Restore modified GL state
         glUseProgram(lastProgram)
@@ -178,7 +179,7 @@ object JoglVrGL3 {
         return true
     }
 
-    private fun checkSize(gl: GL3, draws: ArrayList<DrawList>) = with(gl) {
+    private fun GL3.checkSize(draws: ArrayList<DrawList>) {
 
         val minVtxSize = draws.map { it.vtxBuffer.size }.sum() * DrawVert.size
         val minIdxSize = draws.map { it.idxBuffer.size }.sum() * Int.BYTES
@@ -219,7 +220,7 @@ object JoglVrGL3 {
 
             if (glGetError() != GL.GL_NO_ERROR) throw Error("render")
 
-            println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
+            if(DEBUG) println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
         }
     }
 
@@ -236,7 +237,7 @@ object JoglVrGL3 {
     }
 
     /** Build texture atlas */
-    private fun createFontsTexture(gl: GL3): Boolean = with(gl) {
+    private fun GL3.createFontsTexture(): Boolean {
 
         /*  Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely
             to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than
@@ -244,7 +245,7 @@ object JoglVrGL3 {
         val (pixels, size) = IO.fonts.getTexDataAsRGBA32()
 
         // Upload texture to graphics system
-        val lastTexture = gl.glGetInteger(GL_TEXTURE_BINDING_2D)
+        val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
 
         glGenTextures(1, fontTexture)
         glBindTexture(GL_TEXTURE_2D, fontTexture[0])
@@ -281,14 +282,13 @@ object JoglVrGL3 {
         val lastActiveTexture = glGetInteger(GL_ACTIVE_TEXTURE)
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
+        val lastSampler = glGetInteger(GL_SAMPLER_BINDING)
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastElementArrayBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL2ES3.GL_VERTEX_ARRAY_BINDING)
         val lastPolygonMode = glGetInteger(GL_POLYGON_MODE)
-        glGetIntegerv(GL_VIEWPORT, buf.asIntBuffer())
-        val lastViewport = Vec4i(buf)
-        glGetIntegerv(GL_SCISSOR_BOX, buf.asIntBuffer())
-        val lastScissorBox = Vec4i(buf)
+        val lastViewport = Vec4i(buf.apply { glGetIntegerv(GL_VIEWPORT, asIntBuffer()) })
+        val lastScissorBox = Vec4i(buf.apply { glGetIntegerv(GL_SCISSOR_BOX, asIntBuffer()) })
         val lastBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
         val lastBlendDstRgb = glGetInteger(GL_BLEND_DST_RGB)
         val lastBlendSrcAlpha = glGetInteger(GL_BLEND_SRC_ALPHA)
@@ -307,6 +307,7 @@ object JoglVrGL3 {
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
         glEnable(GL_SCISSOR_TEST)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
         // Setup viewport, orthographic projection matrix
         glViewport(0, 0, fbSize.x, fbSize.y)
@@ -314,7 +315,7 @@ object JoglVrGL3 {
         glUseProgram(program.name)
         glUniformMatrix4fv(program.mat, 1, false, (ortho to buf).asFloatBuffer())
 
-        checkSize(this, drawData.cmdLists)
+        checkSize(drawData.cmdLists)
 
         glBindVertexArray(vaoName[0])
         glBindSampler(semantic.sampler.DIFFUSE, 0) // Rely on combined texture/sampler state.
@@ -353,6 +354,7 @@ object JoglVrGL3 {
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
+        glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)

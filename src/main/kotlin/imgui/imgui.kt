@@ -20,8 +20,6 @@ val COL32_WHITE = COL32(255, 255, 255, 255) // Opaque white = 0xFFFFFFFF
 val COL32_BLACK = COL32(0, 0, 0, 255)       // Opaque black
 val COL32_BLACK_TRANS = COL32(0, 0, 0, 0)   // Transparent black = 0x00000000
 
-var _DEBUG = true
-
 val MOUSE_INVALID = -256000f
 
 var IMGUI_HAS_NAV = false
@@ -57,8 +55,6 @@ object ImGui :
 
     val version = "1.53 WIP"
 }
-
-var debug = 0
 
 var ptrIndices = 0
 val ptrId = Array(512, { java.lang.Byte(it.b) })

@@ -5,6 +5,7 @@ import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import gln.buffer.glBufferData
+import gln.buffer.glBufferSubData
 import gln.checkError
 import gln.glGetVec4i
 import gln.glScissor
@@ -29,9 +30,11 @@ import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
+import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
 import org.lwjgl.system.Callback
 import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.MemoryUtil.memAddress
 import org.lwjgl.system.Platform
 import org.lwjgl.system.windows.RECT
 import org.lwjgl.system.windows.User32.*
@@ -48,7 +51,7 @@ object LwjglGL3 {
 
     lateinit var window: GlfwWindow
     var time = 0.0
-    val mouseJustPressed = Array(3, { false })
+    val mouseJustPressed = BooleanArray(3)
     var mouseWheel = 0f
 
     object Buffer {
@@ -113,8 +116,7 @@ object LwjglGL3 {
 
     fun newFrame() {
 
-        if (fontTexture[0] < 0)
-            createDeviceObjects()
+        if (fontTexture[0] < 0) createDeviceObjects()
 
         // Setup display size (every frame to accommodate for window resizing)
         IO.displaySize put window.size
@@ -293,6 +295,7 @@ object LwjglGL3 {
         val lastActiveTexture = glGetInteger(GL_ACTIVE_TEXTURE)
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
+        val lastSampler = glGetInteger(GL_SAMPLER_BINDING)
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastElementArrayBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
@@ -339,10 +342,10 @@ object LwjglGL3 {
                 vtxBuffer.putInt(offset + Vec2.size * 2, v.col)
             }
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-            glBufferSubData(GL_ARRAY_BUFFER, 0, vtxBuffer)
+            glBufferSubData(GL_ARRAY_BUFFER, 0, cmdList._vtxWritePtr * DrawVert.size, vtxBuffer)
             cmdList.idxBuffer.forEachIndexed { i, idx -> idxBuffer[i] = idx }
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBuffer)
+            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, cmdList._idxWritePtr * Int.BYTES, idxBuffer)
 
             var idxBufferOffset = 0L
             for (cmd in cmdList.cmdBuffer) {
@@ -364,6 +367,7 @@ object LwjglGL3 {
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
+        glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
