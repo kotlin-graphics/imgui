@@ -4,6 +4,7 @@
 [![license](https://img.shields.io/badge/License-MIT-orange.svg)](https://github.com/kotlin-graphics/imgui/blob/master/LICENSE) 
 ![](https://reposs.herokuapp.com/?path=kotlin-graphics/imgui&color=yellow) 
 [![Release](https://jitpack.io/v/kotlin-graphics/imgui.svg)](https://jitpack.io/#kotlin-graphics/imgui) 
+[![Github All Releases](https://img.shields.io/github/downloads/kotlin-graphics/imgui/total.svg)]()
 [![Slack Status](http://slack.kotlinlang.org/badge.svg)](http://slack.kotlinlang.org/)
 
 This porting is free but needs your support to sustain its development. There are lots of desirable new features and maintenance to do. If you are an individual using dear imgui, please consider donating via Patreon or PayPal. If your company is using dear imgui, please consider financial support (e.g. sponsoring a few weeks/months of development)
