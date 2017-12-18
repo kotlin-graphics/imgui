@@ -1145,11 +1145,11 @@ class Font {
                     wordWidth = 0f
                     blankWidth = 0f
                     insideWord = true
-                    s = nextS.i
+                    s = nextS
                     continue
                 }
                 if (c == '\r') {
-                    s = nextS.i
+                    s = nextS
                     continue
                 }
             }
@@ -1165,7 +1165,7 @@ class Font {
             } else {
                 wordWidth += charWidth
                 if (insideWord)
-                    wordEnd = nextS.i
+                    wordEnd = nextS
                 else {
                     prevWordEnd = wordEnd
                     lineWidth += wordWidth + blankWidth
@@ -1183,7 +1183,7 @@ class Font {
                     s = if (prevWordEnd != -1) prevWordEnd else wordEnd
                 break
             }
-            s = nextS.i
+            s = nextS
         }
         return s
     }
