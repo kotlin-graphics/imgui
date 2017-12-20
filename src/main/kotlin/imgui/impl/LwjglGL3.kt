@@ -50,7 +50,7 @@ import uno.glfw.glfw
 object LwjglGL3 {
 
     lateinit var window: GlfwWindow
-    var time = 0.0
+    var time = 0f
     val mouseJustPressed = BooleanArray(3)
     var mouseWheel = 0f
 
@@ -388,9 +388,7 @@ object LwjglGL3 {
             mouseJustPressed[button] = true
     }
 
-    private val scrollCallback = { _: Double, yOffset: Double ->
-        mouseWheel += yOffset.f // Use fractional mouse wheel.
-    }
+    private val scrollCallback = { offset: Vec2d -> mouseWheel += offset.y.f } // Use fractional mouse wheel.
 
     private val keyCallback = { key: Int, _: Int, action: Int, _: Int ->
         with(IO) {
