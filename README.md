@@ -170,6 +170,8 @@ or in Java:
 
 You should refer to those also to learn how to use the imgui library.
 
+Ps: `DEBUG = false` to turn off debugs `println()`
+
 
 ### Bugs:
 
