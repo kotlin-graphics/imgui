@@ -77,24 +77,22 @@ infix fun Int.has(b: SeparatorFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: SeparatorFlags) = (this and b.i) == 0
 
 /** FIXME: this is in development, not exposed/functional as a generic feature yet. */
-enum class LayoutType {
-    Vertical,
-    Horizontal;
+enum class LayoutType { Vertical, Horizontal;
 
     val i = ordinal
 }
 
-enum class PlotType {
-    Lines,
-    Histogram;
+enum class Axis { None, X, Y;
+
+    val i = ordinal - 1
+}
+
+enum class PlotType { Lines, Histogram;
 
     val i = ordinal
 }
 
-enum class DataType {
-    Int,
-    Float,
-    Vec2;
+enum class DataType { Int, Float, Vec2;
 
     val i = ordinal
 }
@@ -104,17 +102,22 @@ enum class Dir { None, Left, Right, Up, Down;
     val i = ordinal - 1
 }
 
-enum class Corner(val i: Int) {
-    Null(0),
-    TopLeft(1 shl 0), // 1
-    TopRight(1 shl 1), // 2
-    BotRight(1 shl 2), // 4
-    BotLeft(1 shl 3), // 8
-    All(0x0F);
-
-    infix fun or(b: Corner) = i or b.i
-    infix fun or(b: Int) = i or b
+// TODO check enum declarance position
+enum class DrawCornerFlags(val i: Int) {
+    TopLeft(1 shl 0), // 0x1
+    TopRight(1 shl 1), // 0x2
+    BotLeft(1 shl 2), // 0x4
+    BotRight(1 shl 3), // 0x8
+    Top(TopLeft or TopRight),   // 0x3
+    Bot(BotLeft or BotRight),   // 0xC
+    Left(TopLeft or BotLeft),    // 0x5
+    Right(TopRight or BotRight),  // 0xA
+    /** In your function calls you may use ~0 (= all bits sets) instead of ImDrawCornerFlags_All, as a convenience  */
+    All(0xF)
 }
 
-infix fun Int.or(b: Corner) = this or b.i
-infix fun Int.has(b: Corner) = (this and b.i) != 0
+infix fun DrawCornerFlags.or(b: DrawCornerFlags) = i or b.i
+infix fun Int.or(b: DrawCornerFlags) = or(b.i)
+infix fun Int.and(b: DrawCornerFlags) = and(b.i)
+infix fun Int.has(b: DrawCornerFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: DrawCornerFlags) = (this and b.i) == 0

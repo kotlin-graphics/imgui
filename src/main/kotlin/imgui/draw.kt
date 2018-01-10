@@ -9,14 +9,12 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.Context.style
-import imgui.internal.Corner
-import imgui.internal.has
-import imgui.internal.invLength
-import imgui.internal.strlen
 import imgui.ImGui.shadeVertsLinearUV
+import imgui.internal.*
 import java.util.*
 import kotlin.collections.ArrayList
 import imgui.Context as g
+import imgui.internal.DrawCornerFlags as Dcf
 
         /** Draw callbacks for advanced uses.
         NB- You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering
@@ -90,6 +88,7 @@ class DrawChannel {
         idxBuffer.clear()
     }
 }
+
 
 /** Draw command list
  *  This is the low-level list of polygons that ImGui functions are filling. At the end of the frame, all command lists
@@ -186,13 +185,13 @@ class DrawList {
     /** we don't render 1 px sized rectangles properly.
      * @param a: upper-left
      * @param b: b: lower-right */
-    fun addRect(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCornersFlags: Int = 0xffffffff.i, thickness: Float = 1f) {
+    fun addRect(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCornersFlags: Int = Dcf.All.i, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
         pathRect(a + Vec2(0.5f), b - Vec2(0.5f), rounding, roundingCornersFlags)
         pathStroke(col, true, thickness)
     }
 
-    fun addRectFilled(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCornersFlags: Int = 0xffffffff.i) {
+    fun addRectFilled(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCornersFlags: Int = Dcf.All.i) {
         if (col hasnt COL32_A_MASK) return
         if (rounding > 0f) {
             pathRect(a, b, rounding, roundingCornersFlags)
@@ -315,7 +314,6 @@ class DrawList {
 
         if (col hasnt COL32_A_MASK) return
 
-        // FIXME-OPT: This is wasting draw calls.
         val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
         if (pushTextureId) pushTextureId(userTextureId)
 
@@ -326,30 +324,22 @@ class DrawList {
     }
 //    IMGUI_API void  AddImageQuad(ImTextureID user_texture_id, const ImVec2& a, const ImVec2& b, const ImVec2& c, const ImVec2& d, const ImVec2& uv_a = ImVec2(0,0), const ImVec2& uv_b = ImVec2(1,0), const ImVec2& uv_c = ImVec2(1,1), const ImVec2& uv_d = ImVec2(0,1), ImU32 col = 0xFFFFFFFF);
 
-    fun addImageRounded(userTextureId: Int, a: Vec2, b: Vec2, rounding: Float, uvA: Vec2 = Vec2(), uvB: Vec2 = Vec2(1),
-                        col: Int = 0.inv(), roundingCorners: Int = 0.inv()) {
+    fun addImageRounded(userTextureId: Int, a: Vec2, b: Vec2, uvA: Vec2, uvB: Vec2, col: Int, rounding: Float, roundingCorners: Int = Dcf.All.i) {
         if (col hasnt COL32_A_MASK) return
 
-        if (rounding <= 0f) {
+        if (rounding <= 0f || roundingCorners hasnt Dcf.All) {
             addImage(userTextureId, a, b, uvA, uvB, col)
             return
         }
 
-        // FIXME-OPT: This is wasting draw calls.
         val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
         if (pushTextureId) pushTextureId(userTextureId)
 
-        if (rounding > 0f && roundingCorners != 0) {
-            val startIndex = vtxBuffer.size
-            pathRect(a, b, rounding, roundingCorners)
-            pathFillConvex(col)
-            val endIndex = vtxBuffer . size
-
-            shadeVertsLinearUV(vtxBuffer, startIndex, endIndex, a, b, uvA, uvB, true)
-        } else {
-            primReserve(6, 4)
-            primRectUV(a, b, uvA, uvB, col)
-        }
+        val vertStartIdx = vtxBuffer.size
+        pathRect(a, b, rounding, roundingCorners)
+        pathFillConvex(col)
+        val vertEndIdx = vtxBuffer.size
+        shadeVertsLinearUV(vtxBuffer, vertStartIdx, vertEndIdx, a, b, uvA, uvB, true)
 
         if (pushTextureId) popTextureId()
     }
@@ -769,17 +759,11 @@ class DrawList {
 //        }
 //    }
 
-    /** rounding_corners_flags: 4-bits corresponding to which corner to round   */
-    fun pathRect(a: Vec2, b: Vec2, rounding: Float = 0f, roundingCorners: Int = 0.inv()) {
+    fun pathRect(a: Vec2, b: Vec2, rounding: Float = 0f, roundingCorners: Int = Dcf.All.i) {
 
-        val cornersTop = Corner.TopLeft or Corner.TopRight
-        val cornersBottom = Corner.BotLeft or Corner.BotRight
-        val cornersLeft = Corner.TopLeft or Corner.BotLeft
-        val cornersRight = Corner.TopRight or Corner.BotRight
-
-        var cond = ((roundingCorners and cornersTop) == cornersTop) || ((roundingCorners and cornersBottom) == cornersBottom)
+        var cond = ((roundingCorners and Dcf.Top) == Dcf.Top.i) || ((roundingCorners and Dcf.Bot) == Dcf.Bot.i) // TODO consider simplyfing
         var rounding = glm.min(rounding, glm.abs(b.x - a.x) * (if (cond) 0.5f else 1f) - 1f)
-        cond = ((roundingCorners and cornersLeft) == cornersLeft) || ((roundingCorners and cornersRight) == cornersRight)
+        cond = ((roundingCorners and Dcf.Left) == Dcf.Left.i) || ((roundingCorners and Dcf.Right) == Dcf.Right.i)
         rounding = glm.min(rounding, glm.abs(b.y - a.y) * (if (cond) 0.5f else 1f) - 1f)
 
         if (rounding <= 0f || roundingCorners == 0) {
@@ -788,10 +772,10 @@ class DrawList {
             pathLineTo(b)
             pathLineTo(Vec2(a.x, b.y))
         } else {
-            val roundingTL = if (roundingCorners has Corner.TopLeft) rounding else 0f
-            val roundingTR = if (roundingCorners has Corner.TopRight) rounding else 0f
-            val roundingBR = if (roundingCorners has Corner.BotRight) rounding else 0f
-            val roundingBL = if (roundingCorners has Corner.BotLeft) rounding else 0f
+            val roundingTL = if (roundingCorners has Dcf.TopLeft) rounding else 0f
+            val roundingTR = if (roundingCorners has Dcf.TopRight) rounding else 0f
+            val roundingBR = if (roundingCorners has Dcf.BotRight) rounding else 0f
+            val roundingBL = if (roundingCorners has Dcf.BotLeft) rounding else 0f
             pathArcToFast(Vec2(a.x + roundingTL, a.y + roundingTL), roundingTL, 6, 9)
             pathArcToFast(Vec2(b.x - roundingTR, a.y + roundingTR), roundingTR, 9, 12)
             pathArcToFast(Vec2(b.x - roundingBR, b.y - roundingBR), roundingBR, 0, 3)
