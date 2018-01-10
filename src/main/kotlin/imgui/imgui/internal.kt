@@ -67,6 +67,7 @@ import imgui.imgui.imgui_colums.Companion.pixelsToOffsetNorm
 import imgui.internal.*
 import java.util.*
 import kotlin.apply
+import kotlin.collections.ArrayList
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
@@ -1436,9 +1437,9 @@ interface imgui_internal {
             if (g.activeId != id || g.imeLastKey != 0) {
                 // JVM, put char if no more in ime mode and last key is valid
 //                println("${g.imeInProgress}, ${g.imeLastKey}")
-                if(!g.imeInProgress && g.imeLastKey != 0) {
-                    for(i in 0 until buf.size)
-                        if(buf[i] == NUL) {
+                if (!g.imeInProgress && g.imeLastKey != 0) {
+                    for (i in 0 until buf.size)
+                        if (buf[i] == NUL) {
                             buf[i] = g.imeLastKey.c
                             break
                         }
@@ -1543,12 +1544,12 @@ interface imgui_internal {
                     is Alt+Ctrl - to input certain characters.  */
                 if (!(IO.keyCtrl && !IO.keyAlt) && isEditable)
                     IO.inputCharacters.filter { it != NUL }.map {
-                        withChar { c ->
-                            // Insert character if they pass filtering
-                            if (inputTextFilterCharacter(c.apply { set(it) }, flags/*, callback, user_data*/))
-                                editState.onKeyPressed(c().i)
-                        }
-                    }
+                                withChar { c ->
+                                    // Insert character if they pass filtering
+                                    if (inputTextFilterCharacter(c.apply { set(it) }, flags/*, callback, user_data*/))
+                                        editState.onKeyPressed(c().i)
+                                }
+                            }
                 // Consume characters
                 IO.inputCharacters.fill(NUL)
             }
@@ -1779,7 +1780,7 @@ interface imgui_internal {
                 }
                 // Copy back to user buffer
                 if (isEditable && !Arrays.equals(editState.tempTextBuffer, buf)) {
-                    for(i in 0 until buf.size) buf[i] = editState.tempTextBuffer[i]
+                    for (i in 0 until buf.size) buf[i] = editState.tempTextBuffer[i]
                     valueChanged = true
                 }
             }
@@ -2479,6 +2480,29 @@ interface imgui_internal {
             if (alphaMul >= 1f && fullAlphaCount > 2) return // Early out
             val a = (((vert.col ushr COL32_A_SHIFT) and 0xFF) * alphaMul).i
             vert.col = (vert.col wo COL32_A_MASK) or (a shl COL32_A_SHIFT)
+        }
+    }
+
+    /** Distribute UV over (a, b) rectangle */
+    fun shadeVertsLinearUV(list: ArrayList<DrawVert>, vertStart: Int, vertEnd: Int, a: Vec2, b: Vec2, uvA: Vec2, uvB: Vec2, clamp: Boolean) {
+        val size = b - a
+        val uvSize = uvB - uvA
+        val scale = Vec2(
+                if (size.x != 0f) uvSize.x / size.x else 0f,
+                if (size.y != 0f) uvSize.y / size.y else 0f)
+        if (clamp) {
+            val min = glm.min(uvA, uvB) // TODO glm min
+            val max = uvA max uvB
+
+            for (i in vertStart until vertEnd) {
+                val vertex = list[i]
+                vertex.uv = glm.clamp(uvA + (vertex.pos - a) * scale, min, max)
+            }
+        } else {
+            for (i in vertStart until vertEnd) {
+                val vertex = list[i]
+                vertex.uv = uvA + (vertex.pos - a) * scale
+            }
         }
     }
 

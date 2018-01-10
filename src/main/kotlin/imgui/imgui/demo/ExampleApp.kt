@@ -84,7 +84,6 @@ import imgui.functionalProgramming.popupContextItem
 import imgui.functionalProgramming.popupContextWindow
 import imgui.functionalProgramming.smallButton
 import imgui.functionalProgramming.treeNode
-import imgui.functionalProgramming.window
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
@@ -1086,20 +1085,17 @@ object StyleEditor {
             style.grabRounding = style.frameRounding    // Make GrabRounding always the same value as FrameRounding
         run {
             windowBorder = style.windowBorderSize > 0f
-            if (checkbox("WindowBorder", ::windowBorder))
-                style.windowBorderSize = if (windowBorder) 1f else 0f
+            if (checkbox("WindowBorder", ::windowBorder)) style.windowBorderSize = if (windowBorder) 1f else 0f
         }
         sameLine()
         run {
             frameBorder = style.frameBorderSize > 0f
-            if (checkbox("FrameBorder", ::frameBorder))
-                style.frameBorderSize = if (frameBorder) 1f else 0f
+            if (checkbox("FrameBorder", ::frameBorder)) style.frameBorderSize = if (frameBorder) 1f else 0f
         }
         sameLine()
         run {
             popupBorder = style.popupBorderSize > 0f
-            if (checkbox("PopupBorder", ::popupBorder))
-                style.popupBorderSize = if (popupBorder) 1f else 0f
+            if (checkbox("PopupBorder", ::popupBorder)) style.popupBorderSize = if (popupBorder) 1f else 0f
         }
 
         // Save/Revert button

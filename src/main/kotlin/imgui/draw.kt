@@ -9,19 +9,23 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.Context.style
-import imgui.internal.*
+import imgui.internal.Corner
+import imgui.internal.has
+import imgui.internal.invLength
+import imgui.internal.strlen
+import imgui.ImGui.shadeVertsLinearUV
 import java.util.*
 import kotlin.collections.ArrayList
 import imgui.Context as g
 
-/** Draw callbacks for advanced uses.
-NB- You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering
-(you can poke into the draw list for that)
-Draw callback may be useful, for example, to:
-- change your GPU render state
-- render a complex 3D scene inside a UI element (without an intermediate texture/render target), etc.
-The expected behavior from your rendering function is
-'if (cmd.UserCallback != NULL) cmd.UserCallback(parent_list, cmd); else RenderTriangles()'  */
+        /** Draw callbacks for advanced uses.
+        NB- You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering
+        (you can poke into the draw list for that)
+        Draw callback may be useful, for example, to:
+        - change your GPU render state
+        - render a complex 3D scene inside a UI element (without an intermediate texture/render target), etc.
+        The expected behavior from your rendering function is
+        'if (cmd.UserCallback != NULL) cmd.UserCallback(parent_list, cmd); else RenderTriangles()'  */
 typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
 /** Typically, 1 command = 1 gpu draw call (unless command is a callback)   */
@@ -321,6 +325,34 @@ class DrawList {
         if (pushTextureId) popTextureId()
     }
 //    IMGUI_API void  AddImageQuad(ImTextureID user_texture_id, const ImVec2& a, const ImVec2& b, const ImVec2& c, const ImVec2& d, const ImVec2& uv_a = ImVec2(0,0), const ImVec2& uv_b = ImVec2(1,0), const ImVec2& uv_c = ImVec2(1,1), const ImVec2& uv_d = ImVec2(0,1), ImU32 col = 0xFFFFFFFF);
+
+    fun addImageRounded(userTextureId: Int, a: Vec2, b: Vec2, rounding: Float, uvA: Vec2 = Vec2(), uvB: Vec2 = Vec2(1),
+                        col: Int = 0.inv(), roundingCorners: Int = 0.inv()) {
+        if (col hasnt COL32_A_MASK) return
+
+        if (rounding <= 0f) {
+            addImage(userTextureId, a, b, uvA, uvB, col)
+            return
+        }
+
+        // FIXME-OPT: This is wasting draw calls.
+        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
+        if (pushTextureId) pushTextureId(userTextureId)
+
+        if (rounding > 0f && roundingCorners != 0) {
+            val startIndex = vtxBuffer.size
+            pathRect(a, b, rounding, roundingCorners)
+            pathFillConvex(col)
+            val endIndex = vtxBuffer . size
+
+            shadeVertsLinearUV(vtxBuffer, startIndex, endIndex, a, b, uvA, uvB, true)
+        } else {
+            primReserve(6, 4)
+            primRectUV(a, b, uvA, uvB, col)
+        }
+
+        if (pushTextureId) popTextureId()
+    }
 
     // TODO: Thickness anti-aliased lines cap are missing their AA fringe.
     fun addPolyline(points: ArrayList<Vec2>, col: Int, closed: Boolean, thickness: Float, antiAliased: Boolean) {
@@ -1086,13 +1118,13 @@ class DrawData {
         totalVtxCount = 0
         totalIdxCount = 0
         cmdLists.filter { it.idxBuffer.isNotEmpty() }.forEach { cmdList ->
-            for (j in cmdList.idxBuffer.indices)
-                newVtxBuffer[j] = cmdList.vtxBuffer[cmdList.idxBuffer[j]]
-            cmdList.vtxBuffer.clear()
-            cmdList.vtxBuffer.addAll(newVtxBuffer)
-            cmdList.idxBuffer.clear()
-            totalVtxCount += cmdList.vtxBuffer.size
-        }
+                    for (j in cmdList.idxBuffer.indices)
+                        newVtxBuffer[j] = cmdList.vtxBuffer[cmdList.idxBuffer[j]]
+                    cmdList.vtxBuffer.clear()
+                    cmdList.vtxBuffer.addAll(newVtxBuffer)
+                    cmdList.idxBuffer.clear()
+                    totalVtxCount += cmdList.vtxBuffer.size
+                }
     }
 
     /** Helper to scale the ClipRect field of each ImDrawCmd. Use if your final output buffer is at a different scale
