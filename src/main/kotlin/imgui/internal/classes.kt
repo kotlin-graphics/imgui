@@ -512,6 +512,7 @@ class Window(
         return hash(str, str.length - strEnd, seed)
     }
 
+    /** We don't use g.FontSize because the window may be != g.CurrentWidow. */
     fun rect() = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
     fun calcFontSize() = g.fontBaseSize * fontWindowScale
     val titleBarHeight get() = if (flags has Wf.NoTitleBar) 0f else calcFontSize() + style.framePadding.y * 2f

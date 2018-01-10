@@ -154,8 +154,9 @@ interface imgui_widgetsColorEditorPicker {
                 if (n > 0) sameLine(0f, style.itemInnerSpacing.x)
                 if (n + 1 == components) pushItemWidth(wItemLast)
                 if (flags has Cef.Float) {
-                    valueChangedAsFloat = dragFloat(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n]) || valueChangedAsFloat
-                    valueChanged = valueChanged || valueChangedAsFloat
+                    // operands inverted to have dragFloat always executed, no matter valueChanged
+                    valueChangedAsFloat = dragFloat(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n]) || valueChanged
+                    valueChanged = valueChangedAsFloat
                 } else
                     valueChanged = dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n]) || valueChanged
                 if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
