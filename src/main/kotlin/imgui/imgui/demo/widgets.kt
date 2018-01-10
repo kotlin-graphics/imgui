@@ -464,26 +464,27 @@ object widgets {
                     Using showMetricsWindow() as a "debugger" to inspect the draw data that are being passed to your
                     render will help you debug issues if you are confused about this.
                     Consider using the lower-level drawList.addImage() API, via imgui.windowDrawList.addImage().    */
-                val texId = IO.fonts.texId
-                val texScreenPos = Vec2(cursorScreenPos)
-                val texSize = Vec2(IO.fonts.texSize)
-                text("%.0fx%.0f", texSize.x, texSize.y)
-                image(texId, texSize, Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
+                val myTexId = IO.fonts.texId
+                val myTexSize = Vec2(IO.fonts.texSize)
+
+                text("%.0fx%.0f", myTexSize.x, myTexSize.y)
+                val pos = Vec2(cursorScreenPos)
+                image(myTexId, myTexSize, Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
                 if (isItemHovered())
                     withTooltip {
                         val focusSz = 32f
-                        val focus = glm.clamp(mousePos - texScreenPos - focusSz * 0.5f, Vec2(), texSize - focusSz)
+                        val focus = glm.clamp(mousePos - pos - focusSz * 0.5f, Vec2(), myTexSize - focusSz)
                         text("Min: (%.2f, %.2f)", focus.x, focus.y)
                         text("Max: (%.2f, %.2f)", focus.x + focusSz, focus.y + focusSz)
-                        val uv0 = focus / texSize
-                        val uv1 = (focus + focusSz) / texSize
-                        image(texId, Vec2(128), uv0, uv1, Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
+                        val uv0 = focus / myTexSize
+                        val uv1 = (focus + focusSz) / myTexSize
+                        image(myTexId, Vec2(128), uv0, uv1, Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
                     }
                 textWrapped("And now some textured buttons..")
                 for (i in 0..7)
                     withId(i) {
                         val framePadding = -1 + i  // -1 = uses default padding
-                        if (imageButton(texId, Vec2(32, 32), Vec2(), 32 / texSize, framePadding, Vec4.fromColor(0, 0, 0, 255)))
+                        if (imageButton(myTexId, Vec2(32, 32), Vec2(), 32 / myTexSize, framePadding, Vec4.fromColor(0, 0, 0, 255)))
                             pressedCount++
                         sameLine()
                     }

@@ -39,6 +39,7 @@ import imgui.ImGui.inputText
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logText
+import imgui.ImGui.mouseCursor
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
@@ -67,12 +68,12 @@ import imgui.imgui.imgui_colums.Companion.pixelsToOffsetNorm
 import imgui.internal.*
 import java.util.*
 import kotlin.apply
-import kotlin.collections.ArrayList
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
+import imgui.internal.DrawCornerFlags as Dcf
 import imgui.HoveredFlags as Hf
 import imgui.InputTextFlags as Itf
 import imgui.ItemFlags as If
@@ -81,19 +82,6 @@ import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
 import imgui.internal.LayoutType as Lt
 
-fun main(args: Array<String>) {
-
-    fun c() = null
-
-    fun b() = Unit
-
-    fun a() {
-        val a = c() ?: b().also { return }
-        println("a")
-    }
-
-    a()
-}
 
 /** We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
  *  If this ever crash because g.CurrentWindow is NULL it means that either
@@ -410,12 +398,10 @@ interface imgui_internal {
 
         val windowRoundingCorners =
                 if (horizontal)
-                    Corner.BotLeft or if (otherScrollbar) Corner.All else Corner.BotRight
+                    Dcf.BotLeft.i or if (otherScrollbar) 0 else Dcf.BotRight.i
                 else
-                    (
-                            if (window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar)
-                                Corner.TopRight
-                            else Corner.All) or if (otherScrollbar) Corner.All else Corner.BotRight
+                    (if (window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar) Dcf.TopRight.i else 0) or
+                            if (otherScrollbar) 0 else Dcf.BotRight.i
         window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, window.windowRounding, windowRoundingCorners)
         bb.expand(Vec2(
                 -glm.clamp(((bb.max.x - bb.min.x - 2f) * 0.5f).i.f, 0f, 3f),
@@ -511,6 +497,50 @@ interface imgui_internal {
 
         window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
         if (g.logEnabled) logText(" |")
+    }
+
+    fun splitterBehavior(id: Int, bb: Rect, axis: Axis, size1: KMutableProperty0<Float>, size2: KMutableProperty0<Float>,
+                         minSize1: Float, minSize2: Float, hoverExtend: Float): Boolean {
+        val window = g.currentWindow!!
+
+        val itemFlagsBackup = window.dc.itemFlags
+
+        // TODO if(IMGUI_HAS_NAV) window->DC.ItemFlags |= ImGuiItemFlags_NoNav | ImGuiItemFlags_NoNavDefaultFocus;
+
+        val add = itemAdd(bb, id)
+        window.dc.itemFlags = itemFlagsBackup
+        if (!add) return false
+
+        val bbInteract = Rect(bb)
+        bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
+        val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChilds or Bf.AllowOverlapMode)
+        if (g.activeId != id) setItemAllowOverlap()
+
+        if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id))
+            mouseCursor = if (axis == Axis.Y) MouseCursor.ResizeNS else MouseCursor.ResizeEW
+
+        val bbRender = Rect(bb)
+        if (held) {
+            val mouseDelta2d = IO.mousePos - g.activeIdClickOffset - bbInteract.min
+            var mouseDelta = if (axis == Axis.Y) mouseDelta2d.y else mouseDelta2d.x
+
+            // Minimum pane size
+            if (mouseDelta < minSize1 - size1())
+                mouseDelta = minSize1 - size1()
+            if (mouseDelta > size2() -minSize2)
+                mouseDelta = size2() -minSize2
+
+            // Apply resize
+            size1.set(size1() + mouseDelta)
+            size2.set(size2() - mouseDelta)
+            bbRender translate if(axis == Axis.X) Vec2 (mouseDelta, 0f) else Vec2(0f, mouseDelta)
+        }
+
+        // Render
+        val col = if(held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator
+        renderFrame(bbRender.min, bbRender.max, col.u32, true, style.frameRounding)
+
+        return held
     }
 
     // FIXME-WIP: New Columns API
@@ -727,7 +757,7 @@ interface imgui_internal {
         window.drawList.addRectFilled(pMin, pMax, fillCol, rounding)
         val borderSize = style.frameBorderSize
         if (border && borderSize > 0f) {
-            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, 0.inv(), borderSize)
+            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, Dcf.All.i, borderSize)
             window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0.inv(), borderSize)
         }
     }
@@ -735,7 +765,7 @@ interface imgui_internal {
     fun renderFrameBorder(pMin: Vec2, pMax: Vec2, rounding: Float = 0f) = with(g.currentWindow!!) {
         val borderSize = style.frameBorderSize
         if (borderSize > 0f) {
-            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, 0.inv(), borderSize)
+            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, Dcf.All.i, borderSize)
             drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0.inv(), borderSize)
         }
     }
@@ -767,12 +797,12 @@ interface imgui_internal {
                         if (x2 <= x1) continue
                         var roundingCornersFlagsCell = 0
                         if (y1 <= pMin.y) {
-                            if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Corner.TopLeft
-                            if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Corner.TopRight
+                            if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.TopLeft
+                            if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.TopRight
                         }
                         if (y2 >= pMax.y) {
-                            if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Corner.BotLeft
-                            if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Corner.BotRight
+                            if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.BotLeft
+                            if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.BotRight
                         }
                         roundingCornersFlagsCell = roundingCornersFlagsCell and roundingCornerFlags
                         val r = if (roundingCornersFlagsCell != 0) rounding else 0f
@@ -2450,12 +2480,12 @@ interface imgui_internal {
     //-----------------------------------------------------------------------------
 
     /** Generic linear color gradient, write to RGB fields, leave A untouched.  */
-    fun shadeVertsLinearColorGradientKeepAlpha(drawList: DrawList, vertStart: Int, vertEnd: Int, gradientP0: Vec2, gradientP1: Vec2,
-                                               col0: Int, col1: Int) {
+    fun shadeVertsLinearColorGradientKeepAlpha(list: ArrayList<DrawVert>, vertStart: Int, vertEnd: Int, gradientP0: Vec2,
+                                               gradientP1: Vec2, col0: Int, col1: Int) {
         val gradientExtent = gradientP1 - gradientP0
         val gradientInvLength2 = 1f / gradientExtent.lengthSqr
         for (i in vertStart until vertEnd) {
-            val vert = drawList.vtxBuffer[i]
+            val vert = list[i]
             val d = vert.pos - gradientP0 dot gradientExtent
             val t = glm.clamp(d * gradientInvLength2, 0f, 1f)
             val r = lerp((col0 ushr COL32_R_SHIFT) and 0xFF, (col1 ushr COL32_R_SHIFT) and 0xFF, t)
