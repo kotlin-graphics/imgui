@@ -13,7 +13,7 @@ group = 'com.github.kotlin-graphics'
 
 buildscript {
 
-    ext.kotlinVersion = '1.2.20-eap-11'
+    ext.kotlinVersion = '1.2.20-eap-33'
 
     repositories {
         jcenter()   // shadow
