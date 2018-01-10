@@ -39,6 +39,7 @@ import imgui.internal.Dir
 import imgui.internal.LayoutType
 import imgui.internal.Rect
 import imgui.internal.triangleContainsPoint
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
@@ -85,10 +86,18 @@ interface imgui_menus {
         assert(!window.dc.menuBarAppending)
         beginGroup() // Save position
         pushId("##menubar")
-        val rect = Rect(window.menuBarRect()).apply { max.x = max(min.x, max.x - style.windowRounding) }
-        pushClipRect(Vec2(glm.floor(rect.min.x + 0.5f), glm.floor(rect.min.y + window.windowBorderSize + 0.5f)),
-                Vec2(glm.floor(rect.max.x + 0.5f), glm.floor(rect.max.y + 0.5f)), false)
-        window.dc.cursorPos = Vec2(rect.min.x + window.dc.menuBarOffsetX, rect.min.y)// + g.style.FramePadding.y);
+
+        /*  We don't clip with regular window clipping rectangle as it is already set to the area below. However we clip
+            with window full rect.
+            We remove 1 worth of rounding to max.x to that text in long menus don't tend to display over the lower-right
+            rounded area, which looks particularly glitchy. */
+        val barRect = window.menuBarRect()
+        val clipRect = Rect(floor(barRect.min.x + 0.5f), floor(barRect.min.y + window.windowBorderSize + 0.5f),
+                floor(max(barRect.min.x, barRect.max.x - window.windowRounding) + 0.5f), floor(barRect.max.y + 0.5f))
+        clipRect clipWith window.rect()
+        pushClipRect(clipRect.min, clipRect.max, false)
+
+        window.dc.cursorPos.put(barRect.min.x + window.dc.menuBarOffsetX, barRect.min.y) // + g.Style.FramePadding.y);
         window.dc.layoutType = LayoutType.Horizontal
         window.dc.menuBarAppending = true
         alignTextToFramePadding()

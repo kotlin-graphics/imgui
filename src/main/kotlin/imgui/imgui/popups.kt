@@ -104,8 +104,7 @@ interface imgui_popups {
 //    IMGUI_API bool          BeginPopupContextVoid(const char* str_id = NULL, int mouse_button = 1); // helper to open and begin popup when clicked in void (where there are no imgui windows).
 
     fun endPopup() {
-        val window = currentWindow
-        assert(window.flags has Wf.Popup)  // Mismatched BeginPopup()/EndPopup() calls
+        assert(currentWindow.flags has Wf.Popup)  // Mismatched BeginPopup()/EndPopup() calls
         assert(g.currentPopupStack.isNotEmpty())
         end()
     }

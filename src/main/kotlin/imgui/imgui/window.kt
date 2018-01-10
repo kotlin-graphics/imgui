@@ -244,7 +244,6 @@ interface imgui_window {
                 window.windowPadding = Vec2(0f, if(flags has Wf.MenuBar) style.windowPadding.y else 0f)
             val windowRounding = window.windowRounding
             val windowBorderSize = window.windowBorderSize
-            val windowPadding = window.windowPadding
 
             // Calculate auto-fit size, handle automatic resize
             val sizeAutoFit = window.calcSizeAutoFit()
@@ -424,18 +423,20 @@ interface imgui_window {
                         if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
 
                 // Title bar
-                val isFocused = g.navWindow?.rootNonPopupWindow == window.rootNonPopupWindow ?: false
+                val windowIsFocused = g.navWindow?.rootNonPopupWindow == window.rootNonPopupWindow ?: false
                 if (flags hasnt Wf.NoTitleBar)
-                    window.drawList.addRectFilled(titleBarRect.tl, titleBarRect.br,
-                            (if (isFocused) Col.TitleBgActive else Col.TitleBg).u32,
+                    window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max,
+                            (if (windowIsFocused) Col.TitleBgActive else Col.TitleBg).u32,
                             windowRounding, Dcf.Top.i)
 
                 // Menu bar
                 if (flags has Wf.MenuBar) {
                     val menuBarRect = window.menuBarRect()
-                    window.drawList.addRectFilled(menuBarRect.tl, menuBarRect.br, Col.MenuBarBg.u32,
-                            if (flags has Wf.NoTitleBar) windowRounding else 0f, Dcf.Top.i)
-                    if (style.frameBorderSize > 0f)
+                    // Soft clipping, in particular child window don't have minimum size covering the menu bar so this is useful for them.
+                    menuBarRect clipWith window.rect()
+                    val rounding = if(flags has Wf.NoTitleBar) windowRounding else 0f
+                    window.drawList.addRectFilled(menuBarRect.min, menuBarRect.max, Col.MenuBarBg.u32, rounding, Dcf.Top.i)
+                    if (style.frameBorderSize > 0f && menuBarRect.max.y < window.pos.y + window.size.y)
                         window.drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32, style.frameBorderSize)
                 }
 
