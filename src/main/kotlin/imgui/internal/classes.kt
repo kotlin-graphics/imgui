@@ -221,9 +221,8 @@ class SimpleColumns {
 }
 
 // Data saved in imgui.ini file
-class IniData {
-    var name = ""
-    var id = 0
+class WindowSettings(val name: String = "") {
+    var id = hash(name, 0)
     var pos = Vec2i()
     var size = Vec2()
     var collapsed = false
