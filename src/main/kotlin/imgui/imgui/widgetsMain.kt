@@ -1,14 +1,13 @@
 package imgui.imgui
 
 import glm_.f
-import glm_.func.common.min
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
-import imgui.ImGui.beginPopupEx
+import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemSize
@@ -16,7 +15,9 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endPopup
+import imgui.ImGui.findWindowByName
 import imgui.ImGui.getColorU32
+import imgui.ImGui.indent
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowAppearing
 import imgui.ImGui.itemAdd
@@ -24,9 +25,7 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.plotEx
 import imgui.ImGui.popId
-import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushId
-import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderRectFilledRangeH
@@ -36,12 +35,14 @@ import imgui.ImGui.renderTriangle
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setNextWindowPos
-import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.setScrollHere
-import imgui.ImGui.spacing
+import imgui.ImGui.unindent
 import imgui.imgui.imgui_internal.Companion.smallSquareSize
 import imgui.internal.*
+import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
+import imgui.ComboFlags as Cf
 import imgui.Context as g
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
@@ -273,7 +274,13 @@ interface imgui_widgetsMain {
     }
 
     /** FIXME-WIP: New Combo API    */
-    fun beginCombo(label: String, previewValue: String?, flags: Int, popupSize: Vec2 = Vec2()): Boolean {
+    fun beginCombo(label: String, previewValue: String?, flags: Int): Boolean {
+
+        var flags = flags
+
+        // Always consume the SetNextWindowSizeConstraint() call in our early return paths
+        val backupHasNextWindowSizeConstraint = g.setNextWindowSizeConstraint
+        g.setNextWindowSizeConstraint = false
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -287,19 +294,17 @@ interface imgui_widgetsMain {
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id)) return false
 
-        val arrowSize = smallSquareSize
         val (pressed, hovered, held) = buttonBehavior(frameBb, id)
         var popupOpen = isPopupOpen(id)
 
+        val arrowSize = smallSquareSize
         val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
         val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
         renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, true, style.frameRounding) // FIXME-ROUNDING
         renderTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y).apply { plusAssign(style.framePadding.y) }, Dir.Down)
-
         if (previewValue != null)
             renderTextClipped(frameBb.min + style.framePadding, valueBb.max, previewValue)
-
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
@@ -310,52 +315,72 @@ interface imgui_widgetsMain {
 
         if (!popupOpen) return false
 
-        if (popupSize.x == 0f) popupSize.x = w
+        if (backupHasNextWindowSizeConstraint) {
+            g.setNextWindowSizeConstraint = true
+            g.setNextWindowSizeConstraintRect.min.x = max(g.setNextWindowSizeConstraintRect.min.x, w)
+        } else {
+            if (flags hasnt Cf.HeightMask_)
+                flags = flags or Cf.HeightRegular
+            assert((flags and Cf.HeightMask_).isPowerOfTwo)    // Only one
+            val popupMaxHeightInItems = when {
+                flags has Cf.HeightRegular -> 8
+                flags has Cf.HeightSmall -> 4
+                flags has Cf.HeightLarge -> 20
+                else -> -1
+            }
+            setNextWindowSizeConstraints(Vec2(w, 0f), Vec2(Float.MAX_VALUE, calcMaxPopupHeightFromItemCount(popupMaxHeightInItems)))
+        }
 
-        var popupY1 = frameBb.max.y
-        var popupY2 = glm.clamp(popupY1 + popupSize.y, popupY1, IO.displaySize.y - style.displaySafeAreaPadding.y)
-        if ((popupY2 - popupY1) < glm.min(popupSize.y, frameBb.min.y - style.displaySafeAreaPadding.y)) {
-            /*  Position our combo ABOVE because there's more space to fit! (FIXME: Handle in Begin() or use a shared helper.
-            We have similar code in Begin() for popup placement)         */
-            popupY1 = glm.clamp(frameBb.min.y - popupSize.y, style.displaySafeAreaPadding.y, frameBb.min.y)
-            popupY2 = frameBb.min.y
-            setNextWindowPos(Vec2(frameBb.min.x, frameBb.min.y + style.frameBorderSize), Cond.Always, Vec2(0f, 1f))
-        } else   // Position our combo below
-            setNextWindowPos(Vec2(frameBb.min.x, frameBb.max.y - style.frameBorderSize), Cond.Always, Vec2())
-        setNextWindowSize(Vec2(popupSize.x, popupY2 - popupY1), Cond.Appearing)
-        pushStyleVar(StyleVar.WindowPadding, style.framePadding)
+        val name = "##Combo_%02d".format(g.currentPopupStack.size) // Recycle windows based on depth
 
-        if (!beginPopupEx(id, Wf.ComboBox.i)) {
+        // Peak into expected window size so we can position it
+        findWindowByName(name)?.let {
+            val sizeContents = it.calcSizeContents()
+            val sizeExpected = it.calcSizeAfterConstraint(it.calcSizeAutoFit(sizeContents))
+            if (flags has Cf.PopupAlignLeft)
+                it.autoPosLastDirection = Dir.Left
+            val pos = findBestWindowPosForPopup(frameBb.bl, sizeExpected, it::autoPosLastDirection, frameBb, PopupPositionPolicy.ComboBox)
+            setNextWindowPos(pos)
+        }
+
+        val windowFlags = Wf.AlwaysAutoResize or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings
+        if (!begin(name, null, windowFlags)) {
+            endPopup()
             assert(false)   // This should never happen as we tested for IsPopupOpen() above
             return false
         }
-        spacing()
+
+        // Horizontally align ourselves with the framed text
+        if (style.framePadding.x != style.windowPadding.x)
+            indent(style.framePadding.x - style.windowPadding.x)
 
         return true
     }
 
     fun endCombo() {
+        if (style.framePadding.x != style.windowPadding.x)
+            unindent(style.framePadding.x - style.windowPadding.x)
         endPopup()
-        popStyleVar()
     }
 
     /** Combo box function. */
-    fun combo(label: String, currentItem: IntArray, items: List<String>, heightInItems: Int = -1): Boolean {
+    fun combo(label: String, currentItem: IntArray, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
         i = currentItem[0]
-        val res = combo(label, ::i, items, heightInItems)
+        val res = combo(label, ::i, items, popupMaxHeightInItem)
         currentItem[0] = i
         return res
     }
 
-    fun combo(label: String, currentItem: KMutableProperty0<Int>, items: List<String>, heightInItems: Int = -1): Boolean {
+    fun combo(label: String, currentItem: KMutableProperty0<Int>, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
 
         val previewText = items.getOrElse(currentItem(), { "" })
 
-        // Size default to hold ~7 items
-        val heightInItems = if (heightInItems < 0) 7 else heightInItems
-        val popupHeight = (g.fontSize + style.itemSpacing.y) * items.size.min(heightInItems) + style.framePadding.y * 3
+        if (popupMaxHeightInItem != -1 && !g.setNextWindowSizeConstraint) {
+            val popupMaxHeight = calcMaxPopupHeightFromItemCount(popupMaxHeightInItem)
+            setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, popupMaxHeight))
+        }
 
-        if (!beginCombo(label, previewText, 0, Vec2(0f, popupHeight))) return false
+        if (!beginCombo(label, previewText, 0)) return false
 
         // Display items, FIXME-OPT: Use clipper
         var valueChanged = false
@@ -436,7 +461,7 @@ interface imgui_widgetsMain {
         // Default displaying the fraction as percentage string, but user can override it
         val overlay = if (overlay.isEmpty()) "%.0f%%".format(style.locale, fraction * 100 + 0.01f) else overlay
 
-        val overlaySize = calcTextSize (overlay, 0)
+        val overlaySize = calcTextSize(overlay, 0)
         if (overlaySize.x > 0f) {
             val x = glm.clamp(fillBr.x + style.itemSpacing.x, bb.min.x, bb.max.x - overlaySize.x - style.itemInnerSpacing.x)
             renderTextClipped(Vec2(x, bb.min.y), bb.max, overlay, 0, overlaySize, Vec2(0f, 0.5f), bb)
@@ -446,5 +471,9 @@ interface imgui_widgetsMain {
     companion object {
         private var b = false
         private var i = 0
+
+        fun calcMaxPopupHeightFromItemCount(itemsCount: Int) =
+                if (itemsCount <= 0) Float.MAX_VALUE
+                else (g.fontSize + style.itemSpacing.y) * itemsCount - style.itemSpacing.y + style.windowPadding.y * 2
     }
 }

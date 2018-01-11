@@ -1,6 +1,8 @@
 package imgui.imgui
 
+import glm_.f
 import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
@@ -18,6 +20,7 @@ import imgui.internal.focus
 import imgui.internal.lengthSqr
 import org.lwjgl.system.windows.WindowProc
 import kotlin.math.max
+import kotlin.math.min
 import imgui.Context as g
 import imgui.WindowFlags as Wf
 
@@ -31,7 +34,7 @@ interface imgui_main {
 
     /** Same value as passed to your RenderDrawListsFn() function. valid after Render() and
      *  until the next call to NewFrame()   */
-    val drawData get() = if (g.renderDrawData.valid) g.renderDrawData else null
+    val drawData get() = g.renderDrawData.takeIf { it.valid }
 
     /** start a new ImGui frame, you can submit any command from this point until NewFrame()/Render().  */
     fun newFrame() {
@@ -229,9 +232,10 @@ interface imgui_main {
                 window.size timesAssign scale
                 window.sizeFull timesAssign scale
             } else if (!IO.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse) {
-                // Scroll
-                val scrollLines = if (window.flags has Wf.ComboBox) 3 else 5
-                window.setScrollY(window.scroll.y - IO.mouseWheel * window.calcFontSize() * scrollLines)
+                // Mouse wheel Scrolling
+                var scrollAmount = 5 * window.calcFontSize()
+                scrollAmount = min(scrollAmount, (window.contentsRegionRect.height + window.windowPadding.y * 2f) * 0.67f).i.f
+                window.setScrollY(window.scroll.y - IO.mouseWheel * scrollAmount)
             }
         }
 

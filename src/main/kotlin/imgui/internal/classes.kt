@@ -624,7 +624,7 @@ class Window(
         return true
     }
 
-    fun calcSizeFullWithConstraint(newSize: Vec2): Vec2 {
+    fun calcSizeAfterConstraint(newSize: Vec2): Vec2 {
 
         if (g.setNextWindowSizeConstraint) {
             // Using -1,-1 on either X/Y axis to preserve the current size.
@@ -635,6 +635,8 @@ class Window(
                 it(g.setNextWindowSizeConstraintCallbackUserData, pos, sizeFull, newSize)
             }
         }
+
+        // Minimum size
         if (flags hasnt (Wf.ChildWindow or Wf.AlwaysAutoResize)) {
             newSize maxAssign style.windowMinSize
             // Reduce artifacts with very small windows
@@ -643,14 +645,16 @@ class Window(
         return newSize
     }
 
-    fun calcSizeAutoFit() =
+    fun calcSizeAutoFit(sizeContents: Vec2) =
             // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
             if (flags has Wf.Tooltip) Vec2(sizeContents)
             else {
-                // Handling case of auto fit window not fitting on the screen (on either axis): we are growing the size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
+                /*  When the window cannot fit all contents (either because of constraints, either because screen is too small):
+                    we are growing the size on the other axis to compensate for expected scrollbar.
+                    FIXME: Might turn bigger than DisplaySize-WindowPadding.                 */
                 val sizeAutoFit = glm.clamp(sizeContents, Vec2(style.windowMinSize),
                         Vec2(glm.max(style.windowMinSize, IO.displaySize - style.displaySafeAreaPadding)))
-                val sizeAutoFitAfterConstraint = calcSizeFullWithConstraint(sizeAutoFit)
+                val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
                 if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
                     sizeAutoFit.y += style.scrollbarSize
                 if (sizeAutoFitAfterConstraint.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
@@ -689,8 +693,7 @@ class Window(
     }
 
     // FIXME: Add a more explicit sort order in the window structure.
-    private val childWindowComparer = compareBy<Window>({ it.flags has Wf.Popup }, { it.flags has Wf.Tooltip },
-            { it.flags has Wf.ComboBox }, { it.orderWithinParent })
+    private val childWindowComparer = compareBy<Window>({ it.flags has Wf.Popup }, { it.flags has Wf.Tooltip }, { it.orderWithinParent })
 
     fun setConditionAllowFlags(flags: Int, enabled: Boolean) = if (enabled) {
         setWindowPosAllowFlags = setWindowPosAllowFlags or flags
@@ -725,7 +728,7 @@ class Window(
         val posMin = cornerTarget.lerp(pos, cornerNorm)             // Expected window upper-left
         val posMax = (size + pos).lerp(cornerTarget, cornerNorm)    // Expected window lower-right
         val sizeExpected = posMax - posMin
-        val sizeConstrained = calcSizeFullWithConstraint(sizeExpected)
+        val sizeConstrained = calcSizeAfterConstraint(sizeExpected)
         outPos put posMin
         if (cornerNorm.x == 0f) outPos.x -= (sizeConstrained.x - sizeExpected.x)
         if (cornerNorm.y == 0f) outPos.y -= (sizeConstrained.y - sizeExpected.y)

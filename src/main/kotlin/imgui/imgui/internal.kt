@@ -302,7 +302,7 @@ interface imgui_internal {
         val window = g.currentWindow!!
         val currentStackSize = g.currentPopupStack.size
         // Tagged as new ref because constructor sets Window to NULL (we are passing the ParentWindow info here)
-        val popupRef = PopupRef(id, window, window.getId("##menus"), IO.mousePos)
+        val popupRef = PopupRef(id, window, window.getId("##Menus"), IO.mousePos)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack.push(popupRef)
         else if (reopenExisting || g.openPopupStack[currentStackSize].popupId != id) {
@@ -333,9 +333,9 @@ interface imgui_internal {
 
         val name =
                 if (flags has Wf.ChildMenu)
-                    "##menu_%d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
+                    "##Menu_%d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
                 else
-                    "##popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
+                    "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
 
         val isOpen = begin(name, null, flags)
         if (!isOpen) // NB: Begin can return false when the popup is completely clipped (e.g. zero size display)
@@ -348,13 +348,13 @@ interface imgui_internal {
      *  @param extraFlags WindowFlags   */
     fun beginTooltipEx(extraFlags: Int, overridePreviousTooltip: Boolean = true) {
 
-        var windowName = "##Tooltip%02d".format(style.locale, g.tooltipOverrideCount)
+        var windowName = "##Tooltip_%02d".format(style.locale, g.tooltipOverrideCount)
         if (overridePreviousTooltip)
             findWindowByName(windowName)?.let {
                 if (it.active) {
                     // Hide previous tooltips. We can't easily "reset" the content of a window so we create a new one.
                     it.hiddenFrames = 1
-                    windowName = "##Tooltip%02d".format(++g.tooltipOverrideCount)
+                    windowName = "##Tooltip_%02d".format(++g.tooltipOverrideCount)
                 }
             }
         val flags = Wf.Tooltip or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize

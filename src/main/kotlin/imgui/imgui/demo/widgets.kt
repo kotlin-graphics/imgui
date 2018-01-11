@@ -278,7 +278,7 @@ object widgets {
                 labelText("label", "Value")
                 // Combo using values packed in a single constant string (for really quick combo)
                 combo("combo", ::item, "aaaa\u0000bbbb\u0000cccc\u0000dddd\u0000eeee\u0000\u0000")
-                val items = arrayOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK")
+                val items = arrayOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO", "PPPP", "QQQQQQQQQQ", "RRR", "SSSS")
                 // Combo using proper array. You can also pass a callback to retrieve array value, no need to create/copy an array just for that.
                 combo("combo scroll", ::item2, items)
 

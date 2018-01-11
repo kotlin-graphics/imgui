@@ -318,7 +318,10 @@ val frontMostModalRootWindow: Window?
         return null
     }
 
-fun findBestPopupWindowPos(basePos: Vec2, size: Vec2, lastDir: KMutableProperty0<Dir>, rAvoid: Rect): Vec2 {
+enum class PopupPositionPolicy { Default, ComboBox }
+
+fun findBestWindowPosForPopup(refPos: Vec2, size: Vec2, lastDir: KMutableProperty0<Dir>, rAvoid: Rect,
+                              policy: PopupPositionPolicy = PopupPositionPolicy.Default): Vec2 {
 
     /*  rAvoid = the rectangle to avoid (e.g. for tooltip it is a rectangle around the mouse cursor which we want to avoid. 
         for popups it's a small point around the cursor.)
@@ -327,26 +330,44 @@ fun findBestPopupWindowPos(basePos: Vec2, size: Vec2, lastDir: KMutableProperty0
     val safePadding = Vec2(style.displaySafeAreaPadding)
     val rOuter = Rect(getVisibleRect())
     rOuter expand Vec2(if (size.x - rOuter.width > safePadding.x * 2) -safePadding.x else 0f, if (size.y - rOuter.height > safePadding.y * 2) -safePadding.y else 0f)
-    val basePosClamped = glm.clamp(basePos, rOuter.min, rOuter.max - size)
+    val basePosClamped = glm.clamp(refPos, rOuter.min, rOuter.max - size)
     //GImGui->OverlayDrawList.AddRect(r_avoid.Min, r_avoid.Max, IM_COL32(255,0,0,255));
     //GImGui->OverlayDrawList.AddRect(rOuter.Min, rOuter.Max, IM_COL32(0,255,0,255));
+
+    // Combo Box policy (we want a connecting edge)
+    if (policy == PopupPositionPolicy.ComboBox) {
+        val dirPreferedOrder = arrayOf(Dir.Down, Dir.Right, Dir.Left, Dir.Up)
+        for (n in (if (lastDir() != Dir.None) -1 else 0) until Dir.Count.i) {
+            val dir = if (n == -1) lastDir() else dirPreferedOrder[n]
+            if (n != -1 && dir == lastDir) continue // Already tried this direction?
+            val pos = Vec2()
+            if (dir == Dir.Down) pos.put(rAvoid.min.x, rAvoid.max.y)          // Below, Toward Right (default)
+            if (dir == Dir.Right) pos.put(rAvoid.min.x, rAvoid.min.y - size.y) // Above, Toward Right
+            if (dir == Dir.Left) pos.put(rAvoid.max.x - size.x, rAvoid.max.y) // Below, Toward Left
+            if (dir == Dir.Up) pos.put(rAvoid.max.x - size.x, rAvoid.min.y - size.y) // Above, Toward Left
+            if (!rOuter.contains(Rect(pos, pos + size))) continue
+            lastDir.set(dir)
+            return pos
+        }
+    }
+
+    // Default popup policy
     val dirPreferedOrder = arrayOf(Dir.Right, Dir.Down, Dir.Up, Dir.Left)
     for (n in (if (lastDir() != Dir.None) -1 else 0) until Dir.values().size) {
         val dir = if (n == -1) lastDir() else dirPreferedOrder[n]
+        if (n != -1 && dir == lastDir()) continue  // Already tried this direction?
         val availW = (if (dir == Dir.Left) rAvoid.min.x else rOuter.max.x) - if (dir == Dir.Right) rAvoid.max.x else rOuter.min.x
-        if (availW < size.x) continue
-        val availH = (if(dir == Dir.Up) rAvoid.min.y else rOuter.max.y)-if(dir == Dir.Down) rAvoid.max.y else rOuter.min.y
-        if (availH < size.y) continue
-
+        val availH = (if (dir == Dir.Up) rAvoid.min.y else rOuter.max.y) - if (dir == Dir.Down) rAvoid.max.y else rOuter.min.y
+        if (availW < size.x || availH < size.y) continue
         val pos = Vec2(
-        if(dir == Dir.Left) rAvoid.min.x-size.x else if(dir == Dir.Right) rAvoid.max.x else basePosClamped.x,
-        if(dir == Dir.Up)   rAvoid.min.y-size.y else if(dir == Dir.Down)  rAvoid.max.y else basePosClamped.y)
+                if (dir == Dir.Left) rAvoid.min.x - size.x else if (dir == Dir.Right) rAvoid.max.x else basePosClamped.x,
+                if (dir == Dir.Up) rAvoid.min.y - size.y else if (dir == Dir.Down) rAvoid.max.y else basePosClamped.y)
         lastDir.set(dir)
         return pos
     }
     // Fallback, try to keep within display
     lastDir.set(Dir.None)
-    return Vec2(basePos).apply {
+    return Vec2(refPos).apply {
         x = max(min(x + size.x, rOuter.max.x) - size.x, rOuter.min.x)
         y = max(min(y + size.y, rOuter.max.y) - size.y, rOuter.min.y)
     }
