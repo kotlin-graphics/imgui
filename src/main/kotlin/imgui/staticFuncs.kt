@@ -75,11 +75,8 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
     this.flags = flags
     g.windowsById[id] = this
 
-    if (flags has Wf.NoSavedSettings) {
-        // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
-        sizeFull put size
-        this.size put size
-    } else {
+    // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
+    if (flags hasnt Wf.NoSavedSettings) {
         /*  Retrieve settings from .ini file
             Use SetWindowPos() or SetNextWindowPos() with the appropriate condition flag to change the initial position
             of a window.    */
@@ -93,10 +90,10 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
             collapsed = s.collapsed
             if (s.size.lengthSqr > 0.00001f) size put s.size
         }
-
-        sizeFull put size
-        this.size put size
     }
+    sizeFullAtLastBegin put size
+    sizeFull put size
+    this.size put size
 
     if (flags has Wf.AlwaysAutoResize) {
         autoFitFrames put 2

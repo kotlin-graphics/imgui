@@ -119,6 +119,19 @@ class Rect {
         max.y = max.y.i.f
     }
 
+    fun fixInverted() {
+        if (min.x > max.x) {
+            val t = min.x
+            min.x = max.x
+            max.x = t
+        }
+        if (min.y > max.y) {
+            val t = min.y
+            min.y = max.y
+            max.y = t
+        }
+    }
+
     val isFinite get() = min.x != Float.MAX_VALUE
 
     fun getClosestPoint(p: Vec2, onEdge: Boolean): Vec2 {
@@ -371,6 +384,8 @@ class Window(
     var size = Vec2()
     /** Size when non collapsed */
     var sizeFull = Vec2()
+    /** Copy of SizeFull at the end of Begin. This is the reference value we'll use on the next frame to decide if we need scrollbars.  */
+    var sizeFullAtLastBegin = Vec2()
     /** Size of contents (== extents reach of the drawing cursor) from previous frame    */
     var sizeContents = Vec2()
     /** Size of contents explicitly set by the user via SetNextWindowContentSize()  */
@@ -704,6 +719,29 @@ class Window(
                 g.windows.removeAt(i)
                 g.windows.add(0, this)
             }
+    }
+
+    fun calcResizePosSizeFromAnyCorner(cornerTarget: Vec2, cornerNorm: Vec2, outPos: Vec2, outSize: Vec2) {
+        val posMin = cornerTarget.lerp(pos, cornerNorm)             // Expected window upper-left
+        val posMax = (size + pos).lerp(cornerTarget, cornerNorm)    // Expected window lower-right
+        val sizeExpected = posMax - posMin
+        val sizeConstrained = calcSizeFullWithConstraint(sizeExpected)
+        outPos put posMin
+        if (cornerNorm.x == 0f) outPos.x -= (sizeConstrained.x - sizeExpected.x)
+        if (cornerNorm.y == 0f) outPos.y -= (sizeConstrained.y - sizeExpected.y)
+        outSize put sizeConstrained
+    }
+
+    fun getBorderRect(borderN: Int, perpPadding: Float, thickness: Float): Rect {
+        val rect = rect()
+        if (thickness == 0f) rect.max minusAssign 1
+        return when (borderN) {
+            0 -> Rect(rect.min.x + perpPadding, rect.min.y, rect.max.x - perpPadding, rect.min.y + thickness)
+            1 -> Rect(rect.max.x - thickness, rect.min.y + perpPadding, rect.max.x, rect.max.y - perpPadding)
+            2 -> Rect(rect.min.x + perpPadding, rect.max.y - thickness, rect.max.x - perpPadding, rect.max.y)
+            3 -> Rect(rect.min.x, rect.min.y + perpPadding, rect.min.x + thickness, rect.max.y - perpPadding)
+            else -> throw Error()
+        }
     }
 }
 

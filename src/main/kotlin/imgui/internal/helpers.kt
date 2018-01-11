@@ -4,6 +4,7 @@ import glm_.c
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import glm_.xor
 import imgui.NUL
@@ -230,6 +231,8 @@ fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float) = (a + (b - a) * t).i
 fun Vec2.lerp(b: Vec2, t: Float) = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
 fun Vec2.lerp(b: Vec2, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
+fun Vec2.lerp(b: Vec2i, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
+fun Vec2i.lerp(b: Vec2i, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
 fun Vec4.lerp(b: Vec4, t: Float) = Vec4(x + (b.x - x) * t, y + (b.y - y) * t, z + (b.z - z) * t, w + (b.w - w) * t)
 
 fun Vec2.invLength(failValue: Float): Float {

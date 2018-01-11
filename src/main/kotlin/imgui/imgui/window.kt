@@ -24,19 +24,22 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.popClipRect
+import imgui.ImGui.popId
 import imgui.ImGui.pushClipRect
+import imgui.ImGui.pushId
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTriangle
 import imgui.ImGui.scrollbar
 import imgui.internal.*
+import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.ItemFlags as If
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
-import imgui.internal.LayoutType as Lt
 import imgui.internal.DrawCornerFlags as Dcf
+import imgui.internal.LayoutType as Lt
 
 
 interface imgui_window {
@@ -87,6 +90,21 @@ interface imgui_window {
         else
             flags = window.flags
 
+        // Update the Appearing flag
+
+        // Not using !WasActive because the implicit "Debug" window would always toggle off->on
+        var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1
+        val windowJustAppearingAfterHiddenForResize = window.hiddenFrames == 1
+        if (flags has Wf.Popup) {
+            val popupRef = g.openPopupStack[g.currentPopupStack.size]
+            // We recycle popups so treat window as activated if popup id changed
+            windowJustActivatedByUser = windowJustActivatedByUser || window.popupId != popupRef.popupId
+            windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
+        }
+        window.appearing = windowJustActivatedByUser || windowJustAppearingAfterHiddenForResize
+        window.closeButton = pOpen != null
+        if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, true)
+
         /*  Parent window is latched only on the first call to begin() of the frame, so further append-calls can be done
             from a different window stack         */
         val parentWindow = if (firstBeginOfTheFrame) g.currentWindowStack.lastOrNull() else window.parentWindow
@@ -96,24 +114,14 @@ interface imgui_window {
         g.currentWindowStack.add(window)
         window.setCurrent()
         checkStacksSize(window, true)
-        // Not using !WasActive because the implicit "Debug" window would always toggle off->on
-        var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1
         if (flags has Wf.Popup) {
             val popupRef = g.openPopupStack[g.currentPopupStack.size]
-            // We recycle popups so treat window as activated if popup id changed
-            windowJustActivatedByUser = windowJustActivatedByUser || window.popupId != popupRef.popupId
-            windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
             popupRef.window = window
             g.currentPopupStack.push(popupRef)
             window.popupId = popupRef.popupId
         }
 
-        val windowJustAppearingAfterHiddenForResize = window.hiddenFrames == 1
-        window.appearing = windowJustActivatedByUser || windowJustAppearingAfterHiddenForResize
-        window.closeButton = pOpen != null
-
         // Process SetNextWindow***() calls
-        if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, true)
         var windowPosSetByApi = false
         var windowSizeSetByApi = false
         if (g.setNextWindowPosCond != Cond.Null) {
@@ -242,7 +250,7 @@ interface imgui_window {
             }
             window.windowPadding put style.windowPadding
             if (flags has Wf.ChildWindow && flags hasnt (Wf.AlwaysUseWindowPadding or Wf.ComboBox or Wf.Popup) && window.windowBorderSize == 0f)
-                window.windowPadding = Vec2(0f, if(flags has Wf.MenuBar) style.windowPadding.y else 0f)
+                window.windowPadding = Vec2(0f, if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
             val windowRounding = window.windowRounding
             val windowBorderSize = window.windowBorderSize
 
@@ -278,14 +286,14 @@ interface imgui_window {
 
             /* ---------- SCROLLBAR STATUS ---------- */
 
-            // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size). We need to do this before manual resize (below) is effective.
+            // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size).
             if (!window.collapsed) {
-                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (window.sizeContents.y > window.sizeFull.y && flags hasnt Wf.NoScrollbar)
-                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || (window.sizeContents.x > window.sizeFull.x - (if (window.scrollbar.y) style.scrollbarSize else 0f) - window.windowPadding.x &&
+                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (window.sizeContents.y > window.sizeFullAtLastBegin.y && flags hasnt Wf.NoScrollbar)
+                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || (window.sizeContents.x > window.sizeFullAtLastBegin.x - (if (window.scrollbar.y) style.scrollbarSize else 0f) - window.windowPadding.x &&
                         flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
 
                 if (window.scrollbar.x && !window.scrollbar.y)
-                    window.scrollbar.y = window.sizeContents.y > window.sizeFull.y + style.scrollbarSize && flags hasnt Wf.NoScrollbar
+                    window.scrollbar.y = window.sizeContents.y > window.sizeFullAtLastBegin.y + style.scrollbarSize && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f, if (window.scrollbar.x) style.scrollbarSize else 0f)
             }
 
@@ -379,6 +387,9 @@ interface imgui_window {
                 window.drawList.addRectFilled(fullscreenRect.min, fullscreenRect.max,
                         getColorU32(Col.ModalWindowDarkening, g.modalWindowDarkeningRatio))
 
+            // Apply focus, new windows appears in front
+            var wantFocus = windowJustActivatedByUser && flags hasnt Wf.NoFocusOnAppearing && (flags hasnt (Wf.ChildWindow or Wf.Tooltip) || flags has Wf.Popup)
+
             // Draw window + handle manual resize
             val titleBarRect = window.titleBarRect()
             if (window.collapsed) {
@@ -388,29 +399,79 @@ interface imgui_window {
                 renderFrame(titleBarRect.min, titleBarRect.max, Col.TitleBgCollapsed.u32, true, windowRounding)
                 style.frameBorderSize = backupBorderSize
             } else {
-                var resizeCol = Col.Text
-                val resizeCornerSize = glm.max(g.fontSize * 1.35f, windowRounding + 1f + g.fontSize * 0.2f)
+                // Handle resize for: Resize Grips, Borders, Gamepad
+                var borderHeld = -1
+                val resizeGripCol = IntArray(4)
+                val resizeGripCount = if (flags has Wf.ResizeFromAnySide) 2 else 1 // 4
+                val resizeBorderCount = if (flags has Wf.ResizeFromAnySide) 4 else 0
+
+                val gripDrawSize = max(g.fontSize * 1.35f, windowRounding + 1f + g.fontSize * 0.2f).i.f
+                val gripHoverSize = (gripDrawSize * 0.75f).i.f
                 if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames lessThanEqual 0 && flags hasnt Wf.NoResize) {
-                    // Manual resize
-                    // Using the FlattenChilds button flag, we make the resize button accessible even if we are hovering over a child window
-                    val br = window.rect().br
-                    val resizeRect = Rect(br - glm.floor(resizeCornerSize * 0.75f), br)
-                    val resizeId = window.getId("#RESIZE")
-                    val (_, hovered, held) = buttonBehavior(resizeRect, resizeId, Bf.FlattenChilds)
-                    resizeCol = if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip
-                    if (hovered || held)
-                        g.mouseCursor = MouseCursor.ResizeNWSE
-
+                    val posTarget = Vec2(Float.MAX_VALUE)
                     val sizeTarget = Vec2(Float.MAX_VALUE)
-                    if (g.hoveredWindow === window && held && IO.mouseDoubleClicked[0]) {
-                        sizeTarget put sizeAutoFit
-                        clearActiveId()
-                    } else if (held)
-                    // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
-                        sizeTarget put (IO.mousePos - g.activeIdClickOffset - window.pos + resizeRect.size)
 
-                    if (sizeTarget notEqual Float.MAX_VALUE) {
-                        window.sizeFull put window.calcSizeFullWithConstraint(sizeTarget)
+                    // Manual resize grips
+                    pushId("#RESIZE")
+                    for (resizeGripN in 0 until resizeGripCount) {
+                        val grip = resizeGripDef[resizeGripN]
+                        val corner = window.pos.lerp(window.pos + window.size, grip.cornerPos)
+
+                        // Using the FlattenChilds button flag we make the resize button accessible even if we are hovering over a child window
+                        val resizeRect = Rect(corner, corner + grip.innerDir * gripHoverSize)
+                        resizeRect.fixInverted()
+                        val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), Bf.FlattenChilds)
+                        if (hovered || held)
+                            g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
+
+                        if (g.hoveredWindow === window && held && IO.mouseDoubleClicked[0] && resizeGripN == 0) {
+                            // Manual auto-fit when double-clicking
+                            sizeTarget put window.calcSizeFullWithConstraint(sizeAutoFit)
+                            clearActiveId()
+                        } else if (held) {
+                            /*  Resize from any of the four corners
+                                We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position                             */
+                            // Corner of the window corresponding to our corner grip
+                            val cornerTarget = IO.mousePos - g.activeIdClickOffset + resizeRect.size * grip.cornerPos
+                            window.calcResizePosSizeFromAnyCorner(cornerTarget, grip.cornerPos, posTarget, sizeTarget)
+                        }
+                        if (resizeGripN == 0 || held || hovered)
+                            resizeGripCol[resizeGripN] = (if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip).u32
+                    }
+                    for (borderN in 0 until resizeBorderCount) {
+                        val BORDER_SIZE = 5f // FIXME: Only works _inside_ window because of HoveredWindow check.
+                        val BORDER_APPEAR_TIMER = 0.05f // Reduce visual noise
+                        val borderRect = window.getBorderRect(borderN, gripHoverSize, BORDER_SIZE)
+                        val (_, hovered, held) = buttonBehavior(borderRect, window.getId(borderN + 4), Bf.FlattenChilds)
+                        if ((hovered && g.hoveredIdTimer > BORDER_APPEAR_TIMER) || held) {
+                            g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
+                            if (held) borderHeld = borderN
+                        }
+                        if (held) {
+                            val borderTarget = Vec2(window.pos)
+                            val borderPosN = Vec2()
+                            if (borderN == 0) {
+                                borderPosN.put(0, 0); borderTarget.y = (IO.mousePos.y - g.activeIdClickOffset.y); }
+                            if (borderN == 1) {
+                                borderPosN.put(1, 0); borderTarget.x = (IO.mousePos.x - g.activeIdClickOffset.x + BORDER_SIZE); }
+                            if (borderN == 2) {
+                                borderPosN.put(0, 1); borderTarget.y = (IO.mousePos.y - g.activeIdClickOffset.y + BORDER_SIZE); }
+                            if (borderN == 3) {
+                                borderPosN.put(0, 0); borderTarget.x = (IO.mousePos.x - g.activeIdClickOffset.x); }
+                            window.calcResizePosSizeFromAnyCorner(borderTarget, borderPosN, posTarget, sizeTarget)
+                        }
+                    }
+                    popId()
+
+
+                    // Apply back modified position/size to window
+                    if (sizeTarget.x != Float.MAX_VALUE) {
+                        window.sizeFull put sizeTarget
+                        markIniSettingsDirty(window)
+                    }
+                    if (posTarget.x != Float.MAX_VALUE) {
+                        window.posF.put(posTarget.x.i.f, posTarget.y.i.f)
+                        window.pos put window.posF
                         markIniSettingsDirty(window)
                     }
 
@@ -424,7 +485,7 @@ interface imgui_window {
                         if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
 
                 // Title bar
-                val windowIsFocused = g.navWindow?.rootNonPopupWindow == window.rootNonPopupWindow ?: false
+                val windowIsFocused = wantFocus || (g.navWindow?.rootNonPopupWindow === window.rootNonPopupWindow ?: false)
                 if (flags hasnt Wf.NoTitleBar)
                     window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max,
                             (if (windowIsFocused) Col.TitleBgActive else Col.TitleBg).u32,
@@ -435,35 +496,42 @@ interface imgui_window {
                     val menuBarRect = window.menuBarRect()
                     // Soft clipping, in particular child window don't have minimum size covering the menu bar so this is useful for them.
                     menuBarRect clipWith window.rect()
-                    val rounding = if(flags has Wf.NoTitleBar) windowRounding else 0f
+                    val rounding = if (flags has Wf.NoTitleBar) windowRounding else 0f
                     window.drawList.addRectFilled(menuBarRect.min, menuBarRect.max, Col.MenuBarBg.u32, rounding, Dcf.Top.i)
                     if (style.frameBorderSize > 0f && menuBarRect.max.y < window.pos.y + window.size.y)
                         window.drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32, style.frameBorderSize)
                 }
 
                 // Scrollbars
-                if (window.scrollbar.x)
-                    scrollbar(Lt.Horizontal)
-                if (window.scrollbar.y)
-                    scrollbar(Lt.Vertical)
+                if (window.scrollbar.x) scrollbar(Lt.Horizontal)
+                if (window.scrollbar.y) scrollbar(Lt.Vertical)
 
-                /*  Render resize grip
-                (after the input handling so we don't have a frame of latency)  */
-                if (flags hasnt Wf.NoResize) {
-                    val br = window.rect().br
-                    window.drawList.pathLineTo(br + Vec2(-resizeCornerSize, -windowBorderSize))
-                    window.drawList.pathLineTo(br + Vec2(-windowBorderSize, -resizeCornerSize))
-                    val centre = Vec2(br.x - windowRounding - windowBorderSize, br.y - windowRounding - windowBorderSize)
-                    window.drawList.pathArcToFast(centre, windowRounding, 0, 3)
-                    window.drawList.pathFillConvex(resizeCol.u32)
-                }
+                // Render resize grips (after their input handling so we don't have a frame of latency)
+                if (flags hasnt Wf.NoResize)
+                    for (resizeGripN in 0 until resizeGripCount) {
+                        val grip = resizeGripDef[resizeGripN]
+                        val corner = window.pos.lerp(window.pos + window.size, grip.cornerPos)
+                        with(window.drawList) {
+                            pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(windowBorderSize, gripDrawSize) else Vec2(gripDrawSize, windowBorderSize)))
+                            pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(gripDrawSize, windowBorderSize) else Vec2(windowBorderSize, gripDrawSize)))
+                            pathArcToFast(Vec2(corner.x + grip.innerDir.x * (windowRounding + windowBorderSize), corner.y + grip.innerDir.y * (windowRounding + windowBorderSize)), windowRounding, grip.angleMin12, grip.angleMax12)
+                            pathFillConvex(resizeGripCol[resizeGripN])
+                        }
+                    }
 
                 // Borders
                 if (windowBorderSize > 0f)
                     window.drawList.addRect(Vec2(window.pos), window.size + window.pos, Col.Border.u32, windowRounding, Dcf.All.i, windowBorderSize)
+                if (borderHeld != -1) {
+                    val border = window.getBorderRect(borderHeld, gripDrawSize, 0f)
+                    window.drawList.addLine(border.min, border.max, Col.SeparatorActive.u32, max(1f, windowBorderSize))
+                }
                 if (style.frameBorderSize > 0 && flags hasnt Wf.NoTitleBar)
                     window.drawList.addLine(titleBarRect.bl + Vec2(1, -1), titleBarRect.br + Vec2(-1), Col.Border.u32, style.frameBorderSize)
             }
+
+            // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars.
+            window.sizeFullAtLastBegin put window.sizeFull
 
             with(window) {
 
@@ -522,10 +590,8 @@ interface imgui_window {
                 if (autoFitFrames.y > 0) autoFitFrames.y--
             }
 
-            // New windows appears in front (we need to do that AFTER setting DC.CursorStartPos so our initial navigation reference rectangle can start around there)
-            if (windowJustActivatedByUser && flags hasnt Wf.NoFocusOnAppearing)
-                if (flags hasnt (Wf.ChildWindow or Wf.Tooltip) || flags has Wf.Popup)
-                    window.focus()
+            // Apply focus (we need to call FocusWindow() AFTER setting DC.CursorStartPos so our initial navigation reference rectangle can start around there)
+            if (wantFocus) window.focus()
 
             // Title bar
             if (flags hasnt Wf.NoTitleBar) {
@@ -903,5 +969,13 @@ interface imgui_window {
             flags has Wf.ChildWindow -> Col.ChildBg
             else -> Col.WindowBg
         }
+
+        class ResizeGripDef(val cornerPos: Vec2, val innerDir: Vec2, val angleMin12: Int, val angleMax12: Int)
+
+        val resizeGripDef = arrayOf(
+                ResizeGripDef(Vec2(1, 1), Vec2(-1, -1), 0, 3),  // Lower right
+                ResizeGripDef(Vec2(0, 1), Vec2(+1, -1), 3, 6),  // Lower left
+                ResizeGripDef(Vec2(0, 0), Vec2(+1, +1), 6, 9),  // Upper left
+                ResizeGripDef(Vec2(1, 0), Vec2(-1, +1), 9, 12)) // Upper right
     }
 }
