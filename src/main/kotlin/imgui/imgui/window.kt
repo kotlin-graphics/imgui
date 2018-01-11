@@ -182,7 +182,7 @@ interface imgui_window {
             window.drawList.clear()
             window.drawList.pushTextureId(g.font.containerAtlas.texId)
             val fullscreenRect = getVisibleRect()
-            if (flags has Wf.ChildWindow && flags hasnt (Wf.ComboBox or Wf.Popup))
+            if (flags has Wf.ChildWindow && flags hasnt Wf.Popup)
                 pushClipRect(parentWindow!!.clipRect.min, parentWindow.clipRect.max, true)
             else
                 pushClipRect(fullscreenRect.min, fullscreenRect.max, true)
@@ -241,41 +241,41 @@ interface imgui_window {
                 else -> style.windowBorderSize
             }
             window.windowPadding put style.windowPadding
-            if (flags has Wf.ChildWindow && flags hasnt (Wf.AlwaysUseWindowPadding or Wf.ComboBox or Wf.Popup) && window.windowBorderSize == 0f)
+            if (flags has Wf.ChildWindow && flags hasnt (Wf.AlwaysUseWindowPadding or Wf.Popup) && window.windowBorderSize == 0f)
                 window.windowPadding = Vec2(0f, if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
             val windowRounding = window.windowRounding
             val windowBorderSize = window.windowBorderSize
 
             // Calculate auto-fit size, handle automatic resize
-            val sizeAutoFit = window.calcSizeAutoFit()
-            val sizeForScrollbarsVisibility = window.sizeFullAtLastBegin
+            val sizeAutoFit = window.calcSizeAutoFit(window.sizeContents)
+            val sizeFullModified = Vec2(Float.MAX_VALUE)
             if (flags has Wf.AlwaysAutoResize && !window.collapsed) {
                 // Using SetNextWindowSize() overrides ImGuiWindowFlags_AlwaysAutoResize, so it can be used on tooltips/popups, etc.
                 if (!windowSizeXsetByApi) {
-                    sizeForScrollbarsVisibility.x = sizeAutoFit.x
+                    sizeFullModified.x = sizeAutoFit.x
                     window.sizeFull.x = sizeAutoFit.x
                 }
                 if (!windowSizeYsetByApi) {
-                    sizeForScrollbarsVisibility.y = sizeAutoFit.y
+                    sizeFullModified.y = sizeAutoFit.y
                     window.sizeFull.y = sizeAutoFit.y
                 }
             } else if (window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0) {
                 /*  Auto-fit only grows during the first few frames
                     We still process initial auto-fit on collapsed windows to get a window width,
-                    but otherwise don't honor WindowFlags.AlwaysAutoResize WindowFlags.AlwaysAutoResize.                 */
+                    but otherwise don't honor WindowFlags.AlwaysAutoResize when collapsed.                 */
                 if (!windowSizeXsetByApi && window.autoFitFrames.x > 0) {
-                    sizeForScrollbarsVisibility.x = if(window.autoFitOnlyGrows) max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
-                    window.sizeFull.x = sizeForScrollbarsVisibility.x
+                    sizeFullModified.x = if (window.autoFitOnlyGrows) max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
+                    window.sizeFull.x = sizeFullModified.x
                 }
                 if (!windowSizeYsetByApi && window.autoFitFrames.y > 0) {
-                    sizeForScrollbarsVisibility.y = if(window.autoFitOnlyGrows) max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
-                    window.sizeFull.y = sizeForScrollbarsVisibility.y
+                    sizeFullModified.y = if (window.autoFitOnlyGrows) max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
+                    window.sizeFull.y = sizeFullModified.y
                 }
                 if (!window.collapsed) markIniSettingsDirty(window)
             }
 
             // Apply minimum/maximum window size constraints and final size
-            window.sizeFull put window.calcSizeFullWithConstraint(window.sizeFull)
+            window.sizeFull put window.calcSizeAfterConstraint(window.sizeFull)
             window.size put if (window.collapsed) window.titleBarRect().size else window.sizeFull
             if (flags has Wf.ChildWindow && flags hasnt Wf.Popup) {
                 assert(windowSizeXsetByApi && windowSizeYsetByApi)  // Submitted by beginChild()
@@ -286,12 +286,14 @@ interface imgui_window {
 
             // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size).
             if (!window.collapsed) {
-                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (window.sizeContents.y > sizeForScrollbarsVisibility.y && flags hasnt Wf.NoScrollbar)
-                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || (window.sizeContents.x > sizeForScrollbarsVisibility.x - (if (window.scrollbar.y) style.scrollbarSize else 0f) - window.windowPadding.x &&
-                        flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+                // When reading the current size we need to read it after size constraints have been applied
+                val sizeXforScrollbars = if(sizeFullModified.x != Float.MAX_VALUE) window.sizeFull.x else window.sizeFullAtLastBegin.x
+                val sizeYforScrollbars = if(sizeFullModified.y != Float.MAX_VALUE) window.sizeFull.y else window.sizeFullAtLastBegin.y
+                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (window.sizeContents.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar)
+                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((window.sizeContents.x > sizeXforScrollbars - (if(window.scrollbar.y) style.scrollbarSize else 0f) - window.windowPadding.x) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
 
                 if (window.scrollbar.x && !window.scrollbar.y)
-                    window.scrollbar.y = window.sizeContents.y > sizeForScrollbarsVisibility.y + style.scrollbarSize && flags hasnt Wf.NoScrollbar
+                    window.scrollbar.y = window.sizeContents.y > sizeYforScrollbars + style.scrollbarSize && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f, if (window.scrollbar.x) style.scrollbarSize else 0f)
             }
 
@@ -326,10 +328,10 @@ interface imgui_window {
                         else
                             Rect(parentWindow.pos.x + horizontalOverlap, -Float.MAX_VALUE,
                                     parentWindow.pos.x + parentWindow.size.x - horizontalOverlap - parentWindow.scrollbarSizes.x, Float.MAX_VALUE)
-                window.posF put findBestPopupWindowPos(window.posF, window.size, window::autoPosLastDirection, rectToAvoid)
+                window.posF put findBestWindowPosForPopup(window.posF, window.size, window::autoPosLastDirection, rectToAvoid)
             } else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize) {
                 val rectToAvoid = Rect(window.posF.x - 1, window.posF.y - 1, window.posF.x + 1, window.posF.y + 1)
-                window.posF put findBestPopupWindowPos(window.posF, window.size, window::autoPosLastDirection, rectToAvoid)
+                window.posF put findBestWindowPosForPopup(window.posF, window.size, window::autoPosLastDirection, rectToAvoid)
             }
 
             // Position tooltip (always follows mouse)
@@ -337,7 +339,7 @@ interface imgui_window {
                 val refPos = IO.mousePos    // safe
                 // FIXME: Completely hard-coded. Perhaps center on cursor hit-point instead?
                 val rectToAvoid = Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24, refPos.y + 24)
-                window.posF put findBestPopupWindowPos(refPos, window.size, window::autoPosLastDirection, rectToAvoid)
+                window.posF put findBestWindowPosForPopup(refPos, window.size, window::autoPosLastDirection, rectToAvoid)
                 if (window.autoPosLastDirection == Dir.None)
                 /*  If there's not enough room, for tooltip we prefer avoiding the cursor at all cost even if it
                 means that part of the tooltip won't be visible.    */
@@ -424,7 +426,7 @@ interface imgui_window {
 
                         if (g.hoveredWindow === window && held && IO.mouseDoubleClicked[0] && resizeGripN == 0) {
                             // Manual auto-fit when double-clicking
-                            sizeTarget put window.calcSizeFullWithConstraint(sizeAutoFit)
+                            sizeTarget put window.calcSizeAfterConstraint(sizeAutoFit)
                             clearActiveId()
                         } else if (held) {
                             /*  Resize from any of the four corners
@@ -732,8 +734,7 @@ interface imgui_window {
         val window = currentWindow
 
         assert(window.flags has Wf.ChildWindow)   // Mismatched BeginChild()/EndChild() callss
-        if (window.flags has Wf.ComboBox || window.beginCount > 1)
-            end()
+        if (window.beginCount > 1) end()
         else {
             /*  When using auto-filling child window, we don't provide full width/height to ItemSize so that it doesn't
                 feed back into automatic size-fitting.             */

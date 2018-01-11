@@ -44,22 +44,20 @@ enum class WindowFlags(val i: Int) {
      *  because more convenient)  */
     AlwaysUseWindowPadding(1 shl 16),
     /** (WIP) Enable resize from any corners and borders. Your back-end needs to honor the different values of IO.mouseCursor set by imgui. */
-    ResizeFromAnySide      (1 shl 17),
+    ResizeFromAnySide(1 shl 17),
 
     // [Internal]
 
     /** Don't use! For internal use by BeginChild() */
-    ChildWindow(1 shl 22),
-    /** Don't use! For internal use by ComboBox()   */
-    ComboBox(1 shl 23),
+    ChildWindow(1 shl 24),
     /** Don't use! For internal use by BeginTooltip()   */
-    Tooltip(1 shl 24),
+    Tooltip(1 shl 25),
     /** Don't use! For internal use by BeginPopup() */
-    Popup(1 shl 25),
+    Popup(1 shl 26),
     /** Don't use! For internal use by BeginPopupModal()    */
-    Modal(1 shl 26),
+    Modal(1 shl 27),
     /** Don't use! For internal use by BeginMenu()  */
-    ChildMenu(1 shl 27);
+    ChildMenu(1 shl 28);
 
     infix fun or(b: WindowFlags) = i or b.i
     infix fun or(b: Int) = i or b
@@ -187,6 +185,28 @@ infix fun Int.or(other: SelectableFlags) = this or other.i
 infix fun Int.has(b: SelectableFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: SelectableFlags) = (this and b.i) == 0
 
+enum class ComboFlags(val i: Int) {
+    /** Align the popup toward the left by default */
+    PopupAlignLeft(1 shl 0),
+
+    // If you want your combo popup to be a specific size you can use SetNextWindowSizeConstraints() prior to calling BeginCombo()
+    /** Max ~4 items visible */
+    HeightSmall(1 shl 1),
+    /** Max ~8 items visible (default) */
+    HeightRegular(1 shl 2),
+    /** Max ~20 items visible */
+    HeightLarge(1 shl 3),
+    /** As many fitting items as possible */
+    HeightLargest(1 shl 4),
+    HeightMask_(HeightSmall or HeightRegular or HeightLarge or HeightLargest)
+}
+
+infix fun ComboFlags.or(other: ComboFlags) = i or other.i
+infix fun Int.and(other: ComboFlags) = and(other.i)
+infix fun Int.or(other: ComboFlags) = or(other.i)
+infix fun Int.has(b: ComboFlags) = and(b.i) != 0
+infix fun Int.hasnt(b: ComboFlags) = and(b.i) == 0
+
 enum class HoveredFlags(val i: Int) {
     /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active
      *  popup or modal blocking inputs under them.  */
@@ -199,7 +219,7 @@ enum class HoveredFlags(val i: Int) {
     /** Return true even if the position is overlapped by another window    */
     AllowWhenOverlapped(1 shl 3),
     /** Treat all child windows as the same window (for isWindowHovered())  */
-    FlattenChilds (1 shl 4),
+    FlattenChilds(1 shl 4),
     RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i)
 }
 

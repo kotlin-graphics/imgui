@@ -35,22 +35,27 @@ interface imgui_utilities {
     fun isItemHovered(flags: Int = Hf.Default.i): Boolean {
         val window = g.currentWindow!!
         return when {
+        // Test for bounding box overlap, as updated as ItemAdd()
             !window.dc.lastItemRectHoveredRect -> false
-        /*  [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to NOT
-            test for rootWindow but this leaves us unable to use isItemHovered after endChild() itself.
-            Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was the test
-            that has been running for a long while. */
-        // g.hoveredWindow !== window -> false
             else -> {
                 assert(flags hasnt Hf.FlattenChilds) // Flags not supported by this function
                 when {
+                /*  Test if we are hovering the right window (our window could be behind another window)
+                    [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to
+                    NOT test for rootWindow but this leaves us unable to use isItemHovered after endChild() itself.
+                    Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was
+                    the test that has been running for a long while. */
+                // g.hoveredWindow !== window -> false
                     g.hoveredRootWindow !== window.rootWindow && flags hasnt Hf.AllowWhenOverlapped -> false
+                // Test if another item is active (e.g. being dragged)
                     flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeId != window.dc.lastItemId &&
                             !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
+                // Test if interactions on this window are blocked by an active popup or modal
                     !window.isContentHoverable(flags) -> false
+                // Test if the item is disabled
                     window.dc.itemFlags has ItemFlags.Disabled -> false
-                /*  Special handling for the 1st item after begin() which represent the title bar. When the window is
-                    collapsed (skipItems == true) that last item will never be overwritten.                 */
+                /*  Special handling for the 1st item after Begin() which represent the title bar. When the window is
+                    collapsed (SkipItems==true) that last item will never be overwritten so we need to detect tht case.                 */
                     window.dc.lastItemId == window.moveId && window.writeAccessed -> false
                     else -> true
                 }
