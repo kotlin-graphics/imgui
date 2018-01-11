@@ -73,13 +73,13 @@ import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
-import imgui.internal.DrawCornerFlags as Dcf
 import imgui.HoveredFlags as Hf
 import imgui.InputTextFlags as Itf
 import imgui.ItemFlags as If
 import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
+import imgui.internal.DrawCornerFlags as Dcf
 import imgui.internal.LayoutType as Lt
 
 
@@ -109,6 +109,10 @@ interface imgui_internal {
         assert(g.settings.isEmpty())
         loadIniSettingsFromDisk(IO.iniFilename)
         g.initialized = true
+    }
+
+    fun markIniSettingsDirty() {
+        if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = IO.iniSavingRate
     }
 
     fun setActiveId(id: Int, window: Window?) {
@@ -527,17 +531,17 @@ interface imgui_internal {
             // Minimum pane size
             if (mouseDelta < minSize1 - size1())
                 mouseDelta = minSize1 - size1()
-            if (mouseDelta > size2() -minSize2)
-                mouseDelta = size2() -minSize2
+            if (mouseDelta > size2() - minSize2)
+                mouseDelta = size2() - minSize2
 
             // Apply resize
             size1.set(size1() + mouseDelta)
             size2.set(size2() - mouseDelta)
-            bbRender translate if(axis == Axis.X) Vec2 (mouseDelta, 0f) else Vec2(0f, mouseDelta)
+            bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
         }
 
         // Render
-        val col = if(held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator
+        val col = if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator
         renderFrame(bbRender.min, bbRender.max, col.u32, true, style.frameRounding)
 
         return held

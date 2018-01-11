@@ -1,9 +1,6 @@
 package imgui
 
-import com.sun.jdi.Bootstrap
 import com.sun.jdi.VirtualMachine
-import com.sun.jdi.connect.AttachingConnector
-import com.sun.jdi.connect.Connector.Argument
 import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
@@ -79,7 +76,7 @@ object Context {
     /** == MovedWindow->RootWindow->MoveId  */
     var movingdWindowMoveId = 0
     /** .ini Settings   */
-    val settings = ArrayList<IniData>()
+    val settings = ArrayList<WindowSettings>()
     /** Save .ini Settings on disk when time reaches zero   */
     var settingsDirtyTimer = 0f
     /** Stack for PushStyleColor()/PopStyleColor()  */

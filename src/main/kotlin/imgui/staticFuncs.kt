@@ -14,9 +14,7 @@ import uno.kotlin.isPrintable
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
-import kotlin.collections.filter
 import kotlin.collections.firstOrNull
-import kotlin.collections.forEach
 import kotlin.collections.set
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
@@ -88,20 +86,14 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
         posF put 60
         pos.put(posF.x.i.f, posF.y.i.f)
 
-        var settings = findWindowSettings(name)
-        if (settings == null)
-            settings = addWindowSettings(name)
-        else
+        findWindowSettings(id)?.let { s ->
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
-
-        if (settings.pos.x != Int.MAX_VALUE) {
-            posF put settings.pos
-            pos put posF
-            collapsed = settings.collapsed
+            posF put s.pos
+            pos.put(posF.x.i.f, posF.y.i.f)
+            collapsed = s.collapsed
+            if (s.size.lengthSqr > 0.00001f) size put s.size
         }
 
-        if (settings.size.lengthSqr > 0.00001f)
-            size put settings.size
         sizeFull put size
         this.size put size
     }
@@ -201,32 +193,38 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window): Vec2 {  // TODO -> w
     return scroll
 }
 
-fun findWindowSettings(name: String) = hash(name, 0).let { id -> g.settings.firstOrNull { it.id == id } }
+fun findWindowSettings(id: Int) = g.settings.firstOrNull { it.id == id }
 
-fun addWindowSettings(name: String) = IniData().apply {
-    g.settings.add(this)
-    this.name = name
-    id = hash(name, 0)
-    collapsed = false
-    pos put Int.MAX_VALUE
-    size put 0
-}
+fun addWindowSettings(name: String) = WindowSettings(name).apply { g.settings.add(this) }
 
 fun loadIniSettingsFromDisk(iniFilename: String?) {
     if (iniFilename == null) return
-    var settings: IniData? = null
+    var settings: WindowSettings? = null
     fileLoadToLines(iniFilename)?.filter { it.isNotEmpty() }?.forEach { s ->
-        if (s[0] == '[' && s.last() == ']') {
-            val name = s.substring(1, s.lastIndex)
-            settings = findWindowSettings(name) ?: addWindowSettings(name)
-        } else settings?.apply {
-            when {
-                s.startsWith("Pos") -> pos.put(s.substring(4).split(","))
-                s.startsWith("Size") -> size put glm.max(Vec2i(s.substring(5).split(",")), style.windowMinSize)
-                s.startsWith("Collapsed") -> collapsed = s.substring(10).toBoolean()
+                if (s[0] == '[' && s.last() == ']') {
+                    /*  Parse "[Type][Name]". Note that 'Name' can itself contains [] characters, which is acceptable with
+                        the current format and parsing code.                 */
+                    val firstCloseBracket = s.indexOf(']')
+                    val name: String
+                    val type: String
+                    if(firstCloseBracket != s.length - 1) { // Import legacy entries that have no type
+                        type = s.substring(1, firstCloseBracket)
+                        name = s.substring(firstCloseBracket + 2, s.length - 1)
+                    }
+                    else {
+                        type = "Window"
+                        name = s.substring(1, firstCloseBracket)
+                    }
+                    val typeHash = hash(type, 0, 0)
+                    settings = findWindowSettings(typeHash) ?: addWindowSettings(name)
+                } else settings?.apply {
+                    when {
+                        s.startsWith("Pos") -> pos.put(s.substring(4).split(","))
+                        s.startsWith("Size") -> size put glm.max(Vec2i(s.substring(5).split(",")), style.windowMinSize)
+                        s.startsWith("Collapsed") -> collapsed = s.substring(10).toBoolean()
+                    }
+                }
             }
-        }
-    }
 }
 
 fun saveIniSettingsToDisk(iniFilename: String?) {
@@ -241,7 +239,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
         /** This will only return NULL in the rare instance where the window was first created with
          *  WindowFlags.NoSavedSettings then had the flag disabled later on.
          *  We don't bind settings in this case (bug #1000).    */
-        val settings = findWindowSettings(window.name) ?: continue
+        val settings = findWindowSettings(window.id) ?: addWindowSettings(window.name)
         settings.pos put window.pos
         settings.size put window.sizeFull
         settings.collapsed = window.collapsed
@@ -250,23 +248,22 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
     /*  Write .ini file
         If a window wasn't opened in this session we preserve its settings     */
     File(Paths.get(iniFilename).toUri()).printWriter().use {
-        for (setting in g.settings) {
-            if (setting.pos.x == Int.MAX_VALUE) continue
-            // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
-            val name = setting.name.substringBefore("###")
-            it.println("[$name]")
-            it.println("Pos=${setting.pos.x},${setting.pos.y}")
-            it.println("Size=${setting.size.x.i},${setting.size.y.i}")
-            it.println("Collapsed=${setting.collapsed.i}")
-            it.println()
-        }
-    }
+                for (setting in g.settings) {
+                    if (setting.pos.x == Int.MAX_VALUE) continue
+                    // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
+                    val name = setting.name.substringBefore("###")
+                    it.println("[Window][$name]")
+                    it.println("Pos=${setting.pos.x},${setting.pos.y}")
+                    it.println("Size=${setting.size.x.i},${setting.size.y.i}")
+                    it.println("Collapsed=${setting.collapsed.i}")
+                    it.println()
+                }
+            }
 }
 
 fun markIniSettingsDirty(window: Window) {
     if (window.flags hasnt Wf.NoSavedSettings)
-        if (g.settingsDirtyTimer <= 0f)
-            g.settingsDirtyTimer = IO.iniSavingRate
+        if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = IO.iniSavingRate
 }
 
 fun getVisibleRect(): Rect {
