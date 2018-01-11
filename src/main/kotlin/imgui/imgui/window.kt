@@ -213,6 +213,7 @@ interface imgui_window {
                     else -> window.dc.cursorMaxPos.y - window.pos.y
                 } + window.scroll.y
             }.i.f
+            window.sizeContents plusAssign window.windowPadding
 
             // Hide popup/tooltip window when first appearing while we measure size (because we recycle them)
             if (window.hiddenFrames > 0)
@@ -279,12 +280,12 @@ interface imgui_window {
 
             // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size). We need to do this before manual resize (below) is effective.
             if (!window.collapsed) {
-                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (window.sizeContents.y > window.sizeFull.y + style.itemSpacing.y && flags hasnt Wf.NoScrollbar)
+                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (window.sizeContents.y > window.sizeFull.y && flags hasnt Wf.NoScrollbar)
                 window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || (window.sizeContents.x > window.sizeFull.x - (if (window.scrollbar.y) style.scrollbarSize else 0f) - window.windowPadding.x &&
                         flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
 
                 if (window.scrollbar.x && !window.scrollbar.y)
-                    window.scrollbar.y = window.sizeContents.y > window.sizeFull.y + style.itemSpacing.y - style.scrollbarSize && flags hasnt Wf.NoScrollbar
+                    window.scrollbar.y = window.sizeContents.y > window.sizeFull.y + style.scrollbarSize && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f, if (window.scrollbar.x) style.scrollbarSize else 0f)
             }
 
@@ -824,10 +825,10 @@ interface imgui_window {
         }
 
     /** get maximum scrolling amount ~~ ContentSize.X - WindowSize.X    */
-    val scrollMaxX get() = with(currentWindowRead!!) { glm.max(0f, sizeContents.x - (sizeFull.x - scrollbarSizes.x)) }
+    val scrollMaxX get() = currentWindowRead!!.scrollMaxX
 
     /** get maximum scrolling amount ~~ ContentSize.Y - WindowSize.Y    */
-    val scrollMaxY get() = with(currentWindowRead!!) { glm.max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y)) }
+    val scrollMaxY get() = currentWindowRead!!.scrollMaxY
 
     /** adjust scrolling amount to make current cursor position visible.
      *  centerYRatio = 0.0: top, 0.5: center, 1.0: bottom.    */
@@ -845,11 +846,13 @@ interface imgui_window {
             window size         */
         assert(centerYRatio in 0f..1f)
         scrollTarget.y = (posY + scroll.y).i.f
-        /*  Minor hack to make "scroll to top" take account of WindowPadding,
-            else it would scroll to (WindowPadding.y - ItemSpacing.y)         */
+        scrollTargetCenterRatio.y = centerYRatio
+        /*  Minor hack to to make scrolling to top/bottom of window take account of WindowPadding,
+            it looks more right to the user this way         */
         if (centerYRatio <= 0f && scrollTarget.y <= windowPadding.y)
             scrollTarget.y = 0f
-        scrollTargetCenterRatio.y = centerYRatio
+        else if (centerYRatio >= 1f && scrollTarget.y >= sizeContents.y - windowPadding.y + style.itemSpacing.y)
+            scrollTarget.y = sizeContents.y
     }
 
     /** focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget.

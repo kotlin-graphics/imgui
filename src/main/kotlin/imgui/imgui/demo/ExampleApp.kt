@@ -361,7 +361,7 @@ object Console {
 //            ImGui::PopStyleVar();
 //            ImGui::Separator();
 //
-//            ImGui::BeginChild("ScrollingRegion", ImVec2(0,-ImGui::GetItemsLineHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);
+//            ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetStyle().ItemSpacing.y - ImGui::GetItemsLineHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
 //            if (ImGui::BeginPopupContextWindow())
 //            {
 //                if (ImGui::Selectable("Clear")) ClearLog();
@@ -673,11 +673,9 @@ object Layout {
             textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +
                     "incididunt ut labore et dolore magna aliqua. ")
             endChild()
-            beginChild("buttons")
-            if (button("Revert")) Unit
+            button("Revert") {}
             sameLine()
-            if (button("Save")) Unit
-            endChild()
+            button("Save") {}
             endGroup()
         }
         end()

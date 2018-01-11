@@ -172,7 +172,6 @@ interface imgui_cursorLayout {
         val groupData = window.dc.groupStack.last()
 
         val groupBb = Rect(groupData.backupCursorPos, window.dc.cursorMaxPos)
-        groupBb.max.y -= style.itemSpacing.y      // Cancel out last vertical spacing because we are adding one ourselves.
         groupBb.max = glm.max(groupBb.min, groupBb.max)
 
         with(window.dc) {
