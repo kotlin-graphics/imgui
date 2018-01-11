@@ -54,6 +54,7 @@ import imgui.imgui.imgui_internal.Companion.smallSquareSize
 import imgui.imgui.imgui_widgetsText.Companion.colorPickerOptionsPopup
 import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
+import java.util.*
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
 import imgui.InputTextFlags as Itf
@@ -181,7 +182,7 @@ interface imgui_widgetsColorEditorPicker {
             popItemWidth()
         }
 
-        var pickerActive = false
+        var pickerActiveWindow: Window? = null
         if (flags hasnt Cef.NoSmallPreview) {
             if (flags hasnt Cef.NoInputs) sameLine(0f, style.itemInnerSpacing.x)
             val colVec4 = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f)
@@ -194,7 +195,7 @@ interface imgui_widgetsColorEditorPicker {
             if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
 
             if (beginPopup("picker")) {
-                pickerActive = true
+                pickerActiveWindow = g.currentWindow
                 if (0 != labelDisplayEnd) {
                     textUnformatted(label, labelDisplayEnd)
                     separator()
@@ -216,7 +217,7 @@ interface imgui_widgetsColorEditorPicker {
         }
 
         // Convert back
-        if (!pickerActive) {
+        if (pickerActiveWindow == null) {
             if (!valueChangedAsFloat) for (n in 0..3) f[n] = i[n] / 255f
             if (flags has Cef.HSV) f.hsvToRGB()
             if (valueChanged) {
@@ -228,6 +229,11 @@ interface imgui_widgetsColorEditorPicker {
         }
         popId()
         endGroup()
+
+        // When picker is being actively used, use its active id so isItemActive() will function on colorEdit4().
+        if (pickerActiveWindow != null && g.activeId != 0 && g.activeIdWindow == pickerActiveWindow)
+            window.dc.lastItemId = g.activeId
+        
         return valueChanged
     }
 
@@ -289,6 +295,7 @@ interface imgui_widgetsColorEditorPicker {
             flags = flags or (g.colorEditOptions and Cef.AlphaBar)
 
         // Setup
+        val components = if(flags has Cef.NoAlpha) 3 else 4
         val alphaBar = flags has Cef.AlphaBar && flags hasnt Cef.NoAlpha
         val pickerPos = Vec2(window.dc.cursorPos)
         val squareSz = smallSquareSize
@@ -298,6 +305,8 @@ interface imgui_widgetsColorEditorPicker {
         val bar0PosX = pickerPos.x + svPickerSize + style.itemInnerSpacing.x
         val bar1PosX = bar0PosX + barsWidth + style.itemInnerSpacing.x
         val barsTrianglesHalfSz = (barsWidth * 0.2f).i.f
+
+        val backupInitialCol = FloatArray(4, {col[it]})
 
         val wheelThickness = svPickerSize * 0.08f
         val wheelROuter = svPickerSize * 0.50f
@@ -400,8 +409,7 @@ interface imgui_widgetsColorEditorPicker {
                 text("Original")
                 val refColV4 = Vec4(it[0], it[1], it[2], if (flags has Cef.NoAlpha) 1f else it[3])
                 if (colorButton("##original", refColV4, f, Vec2(squareSz * 3, squareSz * 2))) {
-                    for (i in 0..2) col[i] = it[i]
-                    if (flags hasnt Cef.NoAlpha) col[3] = it[3]
+                    for (i in 0 until components) col[i] = it[i]
                     valueChanged = true
                 }
             }
@@ -530,7 +538,10 @@ interface imgui_widgetsColorEditorPicker {
         endGroup()
         popId()
 
-        return valueChanged
+        var compare = true
+        repeat(components) { if(backupInitialCol[it] != col[it]) compare = false }
+
+        return valueChanged && !compare
     }
 
     /**  A little colored square. Return true when clicked.
