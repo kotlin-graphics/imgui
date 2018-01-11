@@ -125,15 +125,15 @@ interface imgui_cursorLayout {
         itemAdd(bb)
     }
 
-    /** move content position toward the right, by style.IndentSpacing or indent_w if >0    */
+    /** move content position toward the right, by style.indentSpacing or indentW if != 0    */
     fun indent(indentW: Float = 0f) = with(currentWindow) {
-        dc.indentX += if (indentW > 0f) indentW else style.indentSpacing
+        dc.indentX += if (indentW != 0f) indentW else style.indentSpacing
         dc.cursorPos.x = pos.x + dc.indentX + dc.columnsOffsetX
     }
 
-    /** move content position back to the left, by style.IndentSpacing or indent_w if >0    */
+    /** move content position back to the left, by style.IndentSpacing or indentW if != 0    */
     fun unindent(indentW: Float = 0f) = with(currentWindow) {
-        dc.indentX -= if (indentW > 0f) indentW else style.indentSpacing
+        dc.indentX -= if (indentW != 0f) indentW else style.indentSpacing
         dc.cursorPos.x = pos.x + dc.indentX + dc.columnsOffsetX
     }
 

@@ -439,7 +439,7 @@ class Window(
 
     var autoFitChildAxes = 0x00
 
-    var autoPosLastDirection = -1
+    var autoPosLastDirection = Dir.None
 
     var hiddenFrames = 0
     /** store condition flags for next SetWindowPos() call. */
@@ -743,6 +743,10 @@ class Window(
             else -> throw Error()
         }
     }
+
+    fun calcSizeContents() = Vec2(
+            (if(sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f,
+            (if(sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f) + windowPadding
 }
 
 /** Moving window to front of display (which happens to be back of our sorted list) */

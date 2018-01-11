@@ -87,6 +87,8 @@ enum class Axis { None, X, Y;
     val i = ordinal - 1
 }
 
+infix fun Int.shl(b: Axis) = shl(b.i)
+
 enum class PlotType { Lines, Histogram;
 
     val i = ordinal
@@ -97,7 +99,7 @@ enum class DataType { Int, Float, Vec2;
     val i = ordinal
 }
 
-enum class Dir { None, Left, Right, Up, Down;
+enum class Dir { None, Left, Right, Up, Down, Count;
 
     val i = ordinal - 1
 }

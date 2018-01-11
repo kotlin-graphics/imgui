@@ -123,7 +123,8 @@ interface imgui_window {
 
         // Process SetNextWindow***() calls
         var windowPosSetByApi = false
-        var windowSizeSetByApi = false
+        var windowSizeXsetByApi = false
+        var windowSizeYsetByApi = false
         if (g.setNextWindowPosCond != Cond.Null) {
             windowPosSetByApi = window.setWindowPosAllowFlags has g.setNextWindowPosCond
             if (windowPosSetByApi && g.setNextWindowPosPivot.lengthSqr > 0.00001f) {
@@ -137,7 +138,8 @@ interface imgui_window {
             g.setNextWindowPosCond = Cond.Null
         }
         if (g.setNextWindowSizeCond != Cond.Null) {
-            windowSizeSetByApi = window.setWindowSizeAllowFlags has g.setNextWindowSizeCond
+            windowSizeXsetByApi = window.setWindowSizeAllowFlags has g.setNextWindowSizeCond && g.setNextWindowSizeVal.x > 0f
+            windowSizeYsetByApi = window.setWindowSizeAllowFlags has g.setNextWindowSizeCond && g.setNextWindowSizeVal.y > 0f
             window.setSize(g.setNextWindowSizeVal, g.setNextWindowSizeCond)
             g.setNextWindowSizeCond = Cond.Null
         }
@@ -187,7 +189,7 @@ interface imgui_window {
 
             if (windowJustActivatedByUser) {
                 // Popup first latch mouse position, will position itself when it appears next frame
-                window.autoPosLastDirection = -1
+                window.autoPosLastDirection = Dir.None
                 if (flags has Wf.Popup && !windowPosSetByApi)
                     window.posF put IO.mousePos
             }
@@ -207,31 +209,21 @@ interface imgui_window {
             /* ---------- SIZE ---------- */
 
             // Update contents size from last frame for auto-fitting (unless explicitly specified)
-            window.sizeContents.x = when {
-                window.sizeContentsExplicit.x != 0f -> window.sizeContentsExplicit.x
-                else -> when {
-                    windowIsNew -> 0f
-                    else -> window.dc.cursorMaxPos.x - window.pos.x
-                } + window.scroll.x
-            }.i.f
-            window.sizeContents.y = when {
-                window.sizeContentsExplicit.y != 0f -> window.sizeContentsExplicit.y
-                else -> when {
-                    windowIsNew -> 0f
-                    else -> window.dc.cursorMaxPos.y - window.pos.y
-                } + window.scroll.y
-            }.i.f
-            window.sizeContents plusAssign window.windowPadding
+            window.sizeContents put window.calcSizeContents()
 
-            // Hide popup/tooltip window when first appearing while we measure size (because we recycle them)
+            // Hide popup/tooltip window when re-opening while we measure size (because we recycle the windows)
             if (window.hiddenFrames > 0)
                 window.hiddenFrames--
             if (flags has (Wf.Popup or Wf.Tooltip) && windowJustActivatedByUser) {
                 window.hiddenFrames = 1
                 if (flags has Wf.AlwaysAutoResize) {
-                    if (!windowSizeSetByApi) {
-                        window.sizeFull put 0f
-                        window.size put 0f
+                    if (!windowSizeXsetByApi) {
+                        window.sizeFull.x = 0f
+                        window.size.x = 0f
+                    }
+                    if (!windowSizeYsetByApi) {
+                        window.sizeFull.y = 0f
+                        window.size.y = 0f
                     }
                     window.sizeContents put 0f
                 }
@@ -256,31 +248,37 @@ interface imgui_window {
 
             // Calculate auto-fit size, handle automatic resize
             val sizeAutoFit = window.calcSizeAutoFit()
-            if (window.collapsed) {
-                /*  We still process initial auto-fit on collapsed windows to get a window width, but otherwise we don't
-                honor ImGuiWindowFlags_AlwaysAutoResize when collapsed. */
-                if (window.autoFitFrames.x > 0)
-                    window.sizeFull.x = if (window.autoFitOnlyGrows) glm.max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
-                if (window.autoFitFrames.y > 0)
-                    window.sizeFull.y = if (window.autoFitOnlyGrows) glm.max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
-            } else if (!windowSizeSetByApi) {
-                if (flags has Wf.AlwaysAutoResize)
-                    window.sizeFull put sizeAutoFit
-                else if (window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0) {
-                    // Auto-fit only grows during the first few frames
-                    if (window.autoFitFrames.x > 0)
-                        window.sizeFull.x = if (window.autoFitOnlyGrows) glm.max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
-                    if (window.autoFitFrames.y > 0)
-                        window.sizeFull.y = if (window.autoFitOnlyGrows) glm.max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
-                    markIniSettingsDirty(window)
+            val sizeForScrollbarsVisibility = window.sizeFullAtLastBegin
+            if (flags has Wf.AlwaysAutoResize && !window.collapsed) {
+                // Using SetNextWindowSize() overrides ImGuiWindowFlags_AlwaysAutoResize, so it can be used on tooltips/popups, etc.
+                if (!windowSizeXsetByApi) {
+                    sizeForScrollbarsVisibility.x = sizeAutoFit.x
+                    window.sizeFull.x = sizeAutoFit.x
                 }
+                if (!windowSizeYsetByApi) {
+                    sizeForScrollbarsVisibility.y = sizeAutoFit.y
+                    window.sizeFull.y = sizeAutoFit.y
+                }
+            } else if (window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0) {
+                /*  Auto-fit only grows during the first few frames
+                    We still process initial auto-fit on collapsed windows to get a window width,
+                    but otherwise don't honor WindowFlags.AlwaysAutoResize WindowFlags.AlwaysAutoResize.                 */
+                if (!windowSizeXsetByApi && window.autoFitFrames.x > 0) {
+                    sizeForScrollbarsVisibility.x = if(window.autoFitOnlyGrows) max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
+                    window.sizeFull.x = sizeForScrollbarsVisibility.x
+                }
+                if (!windowSizeYsetByApi && window.autoFitFrames.y > 0) {
+                    sizeForScrollbarsVisibility.y = if(window.autoFitOnlyGrows) max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
+                    window.sizeFull.y = sizeForScrollbarsVisibility.y
+                }
+                if (!window.collapsed) markIniSettingsDirty(window)
             }
 
             // Apply minimum/maximum window size constraints and final size
             window.sizeFull put window.calcSizeFullWithConstraint(window.sizeFull)
             window.size put if (window.collapsed) window.titleBarRect().size else window.sizeFull
             if (flags has Wf.ChildWindow && flags hasnt Wf.Popup) {
-                assert(windowSizeSetByApi)  // Submitted by beginChild()
+                assert(windowSizeXsetByApi && windowSizeYsetByApi)  // Submitted by beginChild()
                 window.size put window.sizeFull
             }
 
@@ -288,12 +286,12 @@ interface imgui_window {
 
             // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size).
             if (!window.collapsed) {
-                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (window.sizeContents.y > window.sizeFullAtLastBegin.y && flags hasnt Wf.NoScrollbar)
-                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || (window.sizeContents.x > window.sizeFullAtLastBegin.x - (if (window.scrollbar.y) style.scrollbarSize else 0f) - window.windowPadding.x &&
+                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (window.sizeContents.y > sizeForScrollbarsVisibility.y && flags hasnt Wf.NoScrollbar)
+                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || (window.sizeContents.x > sizeForScrollbarsVisibility.x - (if (window.scrollbar.y) style.scrollbarSize else 0f) - window.windowPadding.x &&
                         flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
 
                 if (window.scrollbar.x && !window.scrollbar.y)
-                    window.scrollbar.y = window.sizeContents.y > window.sizeFullAtLastBegin.y + style.scrollbarSize && flags hasnt Wf.NoScrollbar
+                    window.scrollbar.y = window.sizeContents.y > sizeForScrollbarsVisibility.y + style.scrollbarSize && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f, if (window.scrollbar.x) style.scrollbarSize else 0f)
             }
 
@@ -328,10 +326,10 @@ interface imgui_window {
                         else
                             Rect(parentWindow.pos.x + horizontalOverlap, -Float.MAX_VALUE,
                                     parentWindow.pos.x + parentWindow.size.x - horizontalOverlap - parentWindow.scrollbarSizes.x, Float.MAX_VALUE)
-                window.posF put findBestPopupWindowPos(window.posF, window, rectToAvoid)
+                window.posF put findBestPopupWindowPos(window.posF, window.size, window::autoPosLastDirection, rectToAvoid)
             } else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize) {
                 val rectToAvoid = Rect(window.posF.x - 1, window.posF.y - 1, window.posF.x + 1, window.posF.y + 1)
-                window.posF put findBestPopupWindowPos(window.posF, window, rectToAvoid)
+                window.posF put findBestPopupWindowPos(window.posF, window.size, window::autoPosLastDirection, rectToAvoid)
             }
 
             // Position tooltip (always follows mouse)
@@ -339,8 +337,8 @@ interface imgui_window {
                 val refPos = IO.mousePos    // safe
                 // FIXME: Completely hard-coded. Perhaps center on cursor hit-point instead?
                 val rectToAvoid = Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24, refPos.y + 24)
-                window.posF put findBestPopupWindowPos(refPos, window, rectToAvoid)
-                if (window.autoPosLastDirection == -1)
+                window.posF put findBestPopupWindowPos(refPos, window.size, window::autoPosLastDirection, rectToAvoid)
+                if (window.autoPosLastDirection == Dir.None)
                 /*  If there's not enough room, for tooltip we prefer avoiding the cursor at all cost even if it
                 means that part of the tooltip won't be visible.    */
                     window.posF = refPos + 2
@@ -741,9 +739,9 @@ interface imgui_window {
                 feed back into automatic size-fitting.             */
             val sz = Vec2(windowSize)
             // Arbitrary minimum zero-ish child size of 4.0f causes less trouble than a 0.0f
-            if (window.autoFitChildAxes has 0x01)
+            if (window.autoFitChildAxes has (1 shl Axis.X))
                 sz.x = glm.max(4f, sz.x)
-            if (window.autoFitChildAxes has 0x02)
+            if (window.autoFitChildAxes has (1 shl Axis.Y))
                 sz.y = glm.max(4f, sz.y)
             end()
 
@@ -942,7 +940,7 @@ interface imgui_window {
 
             val contentAvail = contentRegionAvail
             val size = glm.floor(sizeArg)
-            val autoFitAxes = (if (size.x == 0f) 0x01 else 0x00) or (if (size.y == 0f) 0x02 else 0x00)
+            val autoFitAxes = (if (size.x == 0f) 1 shl Axis.X else 0x00) or (if (size.y == 0f) 1 shl Axis.Y else 0x00)
             if (size.x <= 0f)   // Arbitrary minimum zero-ish child size of 4.0f (0.0f causing too much issues)
                 size.x = glm.max(contentAvail.x, 4f) - glm.abs(size.x)
             if (size.y <= 0f)

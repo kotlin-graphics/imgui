@@ -16,6 +16,8 @@ import java.nio.file.Paths
 import java.util.*
 import kotlin.collections.firstOrNull
 import kotlin.collections.set
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.InputTextFlags as Itf
@@ -202,11 +204,10 @@ fun loadIniSettingsFromDisk(iniFilename: String?) {
                     val firstCloseBracket = s.indexOf(']')
                     val name: String
                     val type: String
-                    if(firstCloseBracket != s.length - 1) { // Import legacy entries that have no type
+                    if (firstCloseBracket != s.length - 1) { // Import legacy entries that have no type
                         type = s.substring(1, firstCloseBracket)
                         name = s.substring(firstCloseBracket + 2, s.length - 1)
-                    }
-                    else {
+                    } else {
                         type = "Window"
                         name = s.substring(1, firstCloseBracket)
                     }
@@ -317,37 +318,37 @@ val frontMostModalRootWindow: Window?
         return null
     }
 
-fun findBestPopupWindowPos(basePos: Vec2, window: Window, rInner: Rect): Vec2 {
+fun findBestPopupWindowPos(basePos: Vec2, size: Vec2, lastDir: KMutableProperty0<Dir>, rAvoid: Rect): Vec2 {
 
-    val size = window.size  // safe
-
-    /*  Clamp into visible area while not overlapping the cursor. Safety padding is optional if our popup size won't fit
-        without it. */
-    val safePadding = style.displaySafeAreaPadding
+    /*  rAvoid = the rectangle to avoid (e.g. for tooltip it is a rectangle around the mouse cursor which we want to avoid. 
+        for popups it's a small point around the cursor.)
+        rOuter = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding 
+        we ignore it.   */
+    val safePadding = Vec2(style.displaySafeAreaPadding)
     val rOuter = Rect(getVisibleRect())
-    rOuter.expand(Vec2(if (size.x - rOuter.width > safePadding.x * 2) -safePadding.x else 0f,
-            if (size.y - rOuter.height > safePadding.y * 2) -safePadding.y else 0f))
+    rOuter expand Vec2(if (size.x - rOuter.width > safePadding.x * 2) -safePadding.x else 0f, if (size.y - rOuter.height > safePadding.y * 2) -safePadding.y else 0f)
     val basePosClamped = glm.clamp(basePos, rOuter.min, rOuter.max - size)
+    //GImGui->OverlayDrawList.AddRect(r_avoid.Min, r_avoid.Max, IM_COL32(255,0,0,255));
+    //GImGui->OverlayDrawList.AddRect(rOuter.Min, rOuter.Max, IM_COL32(0,255,0,255));
+    val dirPreferedOrder = arrayOf(Dir.Right, Dir.Down, Dir.Up, Dir.Left)
+    for (n in (if (lastDir() != Dir.None) -1 else 0) until Dir.values().size) {
+        val dir = if (n == -1) lastDir() else dirPreferedOrder[n]
+        val availW = (if (dir == Dir.Left) rAvoid.min.x else rOuter.max.x) - if (dir == Dir.Right) rAvoid.max.x else rOuter.min.x
+        if (availW < size.x) continue
+        val availH = (if(dir == Dir.Up) rAvoid.min.y else rOuter.max.y)-if(dir == Dir.Down) rAvoid.max.y else rOuter.min.y
+        if (availH < size.y) continue
 
-    var n = if (window.autoPosLastDirection != -1) -1 else 0
-    while (n < 4)   // Last, Right, down, up, left. (Favor last used direction).
-    {
-        val dir = if (n == -1) window.autoPosLastDirection else n
-        n++
-        val rect = Rect(
-                if (dir == 0) rInner.max.x else rOuter.min.x, if (dir == 1) rInner.max.y else rOuter.min.y,
-                if (dir == 3) rInner.min.x else rOuter.max.x, if (dir == 2) rInner.min.y else rOuter.max.y)
-        if (rect.width < size.x || rect.height < size.y) continue
-        window.autoPosLastDirection = dir
-        return Vec2(if (dir == 0) rInner.max.x else if (dir == 3) rInner.min.x - size.x else basePosClamped.x,
-                if (dir == 1) rInner.max.y else if (dir == 2) rInner.min.y - size.y else basePosClamped.y)
+        val pos = Vec2(
+        if(dir == Dir.Left) rAvoid.min.x-size.x else if(dir == Dir.Right) rAvoid.max.x else basePosClamped.x,
+        if(dir == Dir.Up)   rAvoid.min.y-size.y else if(dir == Dir.Down)  rAvoid.max.y else basePosClamped.y)
+        lastDir.set(dir)
+        return pos
     }
-
     // Fallback, try to keep within display
-    window.autoPosLastDirection = -1
-    return Vec2(basePos).also {
-        it.x = glm.max(glm.min(it.x + size.x, rOuter.max.x) - size.x, rOuter.min.x)
-        it.y = glm.max(glm.min(it.y + size.y, rOuter.max.y) - size.y, rOuter.min.y)
+    lastDir.set(Dir.None)
+    return Vec2(basePos).apply {
+        x = max(min(x + size.x, rOuter.max.x) - size.x, rOuter.min.x)
+        y = max(min(y + size.y, rOuter.max.y) - size.y, rOuter.min.y)
     }
 }
 

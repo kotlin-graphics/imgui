@@ -16,6 +16,7 @@ import imgui.ImGui.isKeyPressed
 import imgui.ImGui.isKeyReleased
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDoubleClicked
+import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMouseReleased
 import imgui.ImGui.isWindowHovered
 import imgui.ImGui.mouseCursor
@@ -166,6 +167,7 @@ object inputAndFocus {
 
             treeNode("Dragging") {
                 textWrapped("You can use getMouseDragDelta(0) to query for the dragged amount on any widget.")
+                for (button in 0..2) text("IsMouseDragging($button) = ${isMouseDragging(button)}")
                 button("Drag Me")
                 if (isItemActive) {
                     // Draw a line between the button and the mouse cursor
@@ -184,10 +186,11 @@ object inputAndFocus {
             }
 
             treeNode("Mouse cursors") {
+                text("Current mouse cursor = $mouseCursor")
                 text("Hover to see mouse cursors:")
                 sameLine(); showHelpMarker("Your application can render a different mouse cursor based on what GetMouseCursor() returns. If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, otherwise your backend needs to handle it.")
                 for (i in 0 until MouseCursor.Count.i) {
-                    bullet(); selectable("Mouse cursor $i", false)
+                    bullet(); selectable("Mouse cursor $i: ${MouseCursor.of(i)}", false)
                     if (isItemHovered()) mouseCursor = MouseCursor.of(i)
                 }
             }
