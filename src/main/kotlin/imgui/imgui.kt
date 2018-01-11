@@ -35,6 +35,7 @@ object ImGui :
         imgui_idScopes,
         imgui_widgetsText,
         imgui_widgetsMain,
+        imgui_widgetsComboBox,
         imgui_widgetsDrag,
         imgui_widgetsInputKeyboard,
         imgui_widgetsSliders,

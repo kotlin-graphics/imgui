@@ -277,8 +277,8 @@ class DrawContext {
     var cursorPosPrevLine = Vec2()
 
     var cursorStartPos = Vec2()
-    /** Implicitly calculate the size of our contents, always extending. Saved into window->SizeContents at the end of
-    the frame   */
+    /** Used to implicitly calculate the size of our contents, always growing during the frame.
+     *  Turned into window.sizeContents at the beginning of next frame   */
     var cursorMaxPos = Vec2()
 
     var currentLineHeight = 0f

@@ -144,7 +144,9 @@ interface imgui_window {
             g.setNextWindowSizeCond = Cond.Null
         }
         if (g.setNextWindowContentSizeCond != Cond.Null) {
+            // Adjust passed "client size" to become a "window size"
             window.sizeContentsExplicit put g.setNextWindowContentSizeVal
+            window.sizeContentsExplicit.y += window.titleBarHeight + window.menuBarHeight
             g.setNextWindowContentSizeCond = Cond.Null
         } else if (firstBeginOfTheFrame)
             window.sizeContentsExplicit put 0f
@@ -287,10 +289,10 @@ interface imgui_window {
             // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size).
             if (!window.collapsed) {
                 // When reading the current size we need to read it after size constraints have been applied
-                val sizeXforScrollbars = if(sizeFullModified.x != Float.MAX_VALUE) window.sizeFull.x else window.sizeFullAtLastBegin.x
-                val sizeYforScrollbars = if(sizeFullModified.y != Float.MAX_VALUE) window.sizeFull.y else window.sizeFullAtLastBegin.y
+                val sizeXforScrollbars = if (sizeFullModified.x != Float.MAX_VALUE) window.sizeFull.x else window.sizeFullAtLastBegin.x
+                val sizeYforScrollbars = if (sizeFullModified.y != Float.MAX_VALUE) window.sizeFull.y else window.sizeFullAtLastBegin.y
                 window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (window.sizeContents.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar)
-                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((window.sizeContents.x > sizeXforScrollbars - (if(window.scrollbar.y) style.scrollbarSize else 0f) - window.windowPadding.x) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((window.sizeContents.x > sizeXforScrollbars - (if (window.scrollbar.y) style.scrollbarSize else 0f) - window.windowPadding.x) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
 
                 if (window.scrollbar.x && !window.scrollbar.y)
                     window.scrollbar.y = window.sizeContents.y > sizeYforScrollbars + style.scrollbarSize && flags hasnt Wf.NoScrollbar
@@ -527,7 +529,8 @@ interface imgui_window {
                     window.drawList.addLine(border.min, border.max, Col.SeparatorActive.u32, max(1f, windowBorderSize))
                 }
                 if (style.frameBorderSize > 0 && flags hasnt Wf.NoTitleBar)
-                    window.drawList.addLine(titleBarRect.bl + Vec2(1, -1), titleBarRect.br + Vec2(-1), Col.Border.u32, style.frameBorderSize)
+                    window.drawList.addLine(titleBarRect.bl + Vec2(style.windowBorderSize, -1),
+                            titleBarRect.br + Vec2(style.windowBorderSize, -1), Col.Border.u32, style.frameBorderSize)
             }
 
             // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars.
@@ -642,10 +645,10 @@ interface imgui_window {
             /*  Inner rectangle
             We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
             Note that if our window is collapsed we will end up with a null clipping rectangle which is the correct behavior.   */
-            window.innerRect.min.x = titleBarRect.min.x
-            window.innerRect.min.y = titleBarRect.max.y + window.menuBarHeight
-            window.innerRect.max.x = window.pos.x + window.size.x - window.scrollbarSizes.x
-            window.innerRect.max.y = window.pos.y + window.size.y - window.scrollbarSizes.y
+            window.innerRect.min.x = titleBarRect.min.x + window.windowBorderSize
+            window.innerRect.min.y = titleBarRect.max.y + window.menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else window.windowBorderSize
+            window.innerRect.max.x = window.pos.x + window.size.x - window.scrollbarSizes.x - window.windowBorderSize
+            window.innerRect.max.y = window.pos.y + window.size.y - window.scrollbarSizes.y - window.windowBorderSize
             //window->DrawList->AddRect(window->InnerRect.Min, window->InnerRect.Max, IM_COL32_WHITE);
 
             /* After begin() we fill the last item / hovered data using the title bar data. Make that a standard behavior
@@ -659,10 +662,10 @@ interface imgui_window {
             Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.         */
         val borderSize = window.windowBorderSize
         val clipRect = Rect()
-        clipRect.min.x = glm.floor(0.5f + window.innerRect.min.x + (borderSize max glm.floor(window.windowPadding.x * 0.5f)))
-        clipRect.min.y = glm.floor(0.5f + window.innerRect.min.y + borderSize)
-        clipRect.max.x = glm.floor(0.5f + window.innerRect.max.x - (borderSize max glm.floor(window.windowPadding.x * 0.5f)))
-        clipRect.max.y = glm.floor(0.5f + window.innerRect.max.y - borderSize)
+        clipRect.min.x = glm.floor(0.5f + window.innerRect.min.x + (0f max glm.floor(window.windowPadding.x * 0.5f - borderSize)))
+        clipRect.min.y = glm.floor(0.5f + window.innerRect.min.y)
+        clipRect.max.x = glm.floor(0.5f + window.innerRect.max.x - (0f max glm.floor(window.windowPadding.x * 0.5f - borderSize)))
+        clipRect.max.y = glm.floor(0.5f + window.innerRect.max.y)
         pushClipRect(clipRect.min, clipRect.max, true)
 
         // Clear 'accessed' flag last thing
@@ -824,17 +827,11 @@ interface imgui_window {
         g.setNextWindowSizeConstraintCallbackUserData = customCallbackUserData
     }
 
-    /** set next window content size (enforce the range of scrollbars). set axis to 0.0f to leave it automatic. call
-     *  before Begin() */
+    /** set next window content size (~ enforce the range of scrollbars). not including window decorations (title bar, menu bar, etc.).
+     *  set an axis to 0.0f to leave it automatic. call before Begin() */
     fun setNextWindowContentSize(size: Vec2) {
-        g.setNextWindowContentSizeVal put size
-        g.setNextWindowContentSizeCond = Cond.Always
-    }
-
-    /** set next window content width (enforce the range of horizontal scrollbar). call before Begin()  */
-    fun setNextWindowContentWidth(width: Float) {
-        g.setNextWindowContentSizeVal = Vec2(width,
-                if (g.setNextWindowContentSizeCond != Cond.Null) g.setNextWindowContentSizeVal.y else 0f)
+        // In Begin() we will add the size of window decorations (title bar, menu etc.) to that to form a SizeContents value.
+        g.setNextWindowContentSizeVal = size
         g.setNextWindowContentSizeCond = Cond.Always
     }
 

@@ -64,8 +64,10 @@ interface imgui_widgetsMain {
         return pressed
     }
 
-    /** Tip: use ImGui::PushID()/PopID() to push indices or pointers in the ID stack.
-     *  Then you can keep 'str_id' empty or the same for all your buttons (instead of creating a string based on a
+    /** button behavior without the visuals, useful to build custom behaviors using the public api (along with
+     *  isItemActive, isItemHovered, etc.)
+     *  Tip: use pushId()/popId() to push indices or pointers in the ID stack.
+     *  Then you can keep 'strid' empty or the same for all your buttons (instead of creating a string based on a
      *  non-string id)  */
     fun invisibleButton(strId: String, sizeArg: Vec2): Boolean {
         val window = currentWindow
@@ -252,153 +254,6 @@ interface imgui_widgetsMain {
     fun radioButton(label: String, v: IntArray, vButton: Int) = radioButton(label, v[0] == vButton).also { if (it) v[0] = vButton }
     fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int) = radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
 
-    /** Combo box helper allowing to pass an array of strings.  */
-    fun combo(label: String, currentItem: KMutableProperty0<Int>, items: Array<String>, itemsCount: Int = items.size,
-              heightInItems: Int = -1) = combo(label, currentItem, items.toList(), heightInItems)
-
-    /** Combo box helper allowing to pass all items in a single string.
-     *  separate items with \0, end item-list with \0\0     */
-    fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
-        i = currentItem[0]
-        val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
-        // FIXME-OPT: Avoid computing this, or at least only when combo is open
-        val res = combo(label, ::i, items, heightInItems)
-        currentItem[0] = i
-        return res
-    }
-
-    fun combo(label: String, currentItem: KMutableProperty0<Int>, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
-        val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
-        // FIXME-OPT: Avoid computing this, or at least only when combo is open
-        return combo(label, currentItem, items, heightInItems)
-    }
-
-    /** FIXME-WIP: New Combo API    */
-    fun beginCombo(label: String, previewValue: String?, flags: Int): Boolean {
-
-        var flags = flags
-
-        // Always consume the SetNextWindowSizeConstraint() call in our early return paths
-        val backupHasNextWindowSizeConstraint = g.setNextWindowSizeConstraint
-        g.setNextWindowSizeConstraint = false
-
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        val id = window.getId(label)
-        val w = calcItemWidth()
-
-        val labelSize = calcTextSize(label, true)
-        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
-        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
-        itemSize(totalBb, style.framePadding.y)
-        if (!itemAdd(totalBb, id)) return false
-
-        val (pressed, hovered, held) = buttonBehavior(frameBb, id)
-        var popupOpen = isPopupOpen(id)
-
-        val arrowSize = smallSquareSize
-        val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
-        renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
-        val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
-        renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, true, style.frameRounding) // FIXME-ROUNDING
-        renderTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y).apply { plusAssign(style.framePadding.y) }, Dir.Down)
-        if (previewValue != null)
-            renderTextClipped(frameBb.min + style.framePadding, valueBb.max, previewValue)
-        if (labelSize.x > 0)
-            renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
-
-        if (pressed && !popupOpen) {
-            openPopupEx(id, false)
-            popupOpen = true
-        }
-
-        if (!popupOpen) return false
-
-        if (backupHasNextWindowSizeConstraint) {
-            g.setNextWindowSizeConstraint = true
-            g.setNextWindowSizeConstraintRect.min.x = max(g.setNextWindowSizeConstraintRect.min.x, w)
-        } else {
-            if (flags hasnt Cf.HeightMask_)
-                flags = flags or Cf.HeightRegular
-            assert((flags and Cf.HeightMask_).isPowerOfTwo)    // Only one
-            val popupMaxHeightInItems = when {
-                flags has Cf.HeightRegular -> 8
-                flags has Cf.HeightSmall -> 4
-                flags has Cf.HeightLarge -> 20
-                else -> -1
-            }
-            setNextWindowSizeConstraints(Vec2(w, 0f), Vec2(Float.MAX_VALUE, calcMaxPopupHeightFromItemCount(popupMaxHeightInItems)))
-        }
-
-        val name = "##Combo_%02d".format(g.currentPopupStack.size) // Recycle windows based on depth
-
-        // Peak into expected window size so we can position it
-        findWindowByName(name)?.let {
-            val sizeContents = it.calcSizeContents()
-            val sizeExpected = it.calcSizeAfterConstraint(it.calcSizeAutoFit(sizeContents))
-            if (flags has Cf.PopupAlignLeft)
-                it.autoPosLastDirection = Dir.Left
-            val pos = findBestWindowPosForPopup(frameBb.bl, sizeExpected, it::autoPosLastDirection, frameBb, PopupPositionPolicy.ComboBox)
-            setNextWindowPos(pos)
-        }
-
-        val windowFlags = Wf.AlwaysAutoResize or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings
-        if (!begin(name, null, windowFlags)) {
-            endPopup()
-            assert(false)   // This should never happen as we tested for IsPopupOpen() above
-            return false
-        }
-
-        // Horizontally align ourselves with the framed text
-        if (style.framePadding.x != style.windowPadding.x)
-            indent(style.framePadding.x - style.windowPadding.x)
-
-        return true
-    }
-
-    fun endCombo() {
-        if (style.framePadding.x != style.windowPadding.x)
-            unindent(style.framePadding.x - style.windowPadding.x)
-        endPopup()
-    }
-
-    /** Combo box function. */
-    fun combo(label: String, currentItem: IntArray, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
-        i = currentItem[0]
-        val res = combo(label, ::i, items, popupMaxHeightInItem)
-        currentItem[0] = i
-        return res
-    }
-
-    fun combo(label: String, currentItem: KMutableProperty0<Int>, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
-
-        val previewText = items.getOrElse(currentItem(), { "" })
-
-        if (popupMaxHeightInItem != -1 && !g.setNextWindowSizeConstraint) {
-            val popupMaxHeight = calcMaxPopupHeightFromItemCount(popupMaxHeightInItem)
-            setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, popupMaxHeight))
-        }
-
-        if (!beginCombo(label, previewText, 0)) return false
-
-        // Display items, FIXME-OPT: Use clipper
-        var valueChanged = false
-        for (i in 0 until items.size) {
-            pushId(i)
-            val itemSelected = i == currentItem()
-            val itemText = items.getOrElse(i, { "*Unknown item*" })
-            if (selectable(itemText, itemSelected)) {
-                valueChanged = true
-                currentItem.set(i)
-            }
-            if (itemSelected && isWindowAppearing) setScrollHere()
-            popId()
-        }
-        endCombo()
-        return valueChanged
-    }
-
     interface PlotArray {
         operator fun get(idx: Int): Float
         fun count(): Int
@@ -470,10 +325,5 @@ interface imgui_widgetsMain {
 
     companion object {
         private var b = false
-        private var i = 0
-
-        fun calcMaxPopupHeightFromItemCount(itemsCount: Int) =
-                if (itemsCount <= 0) Float.MAX_VALUE
-                else (g.fontSize + style.itemSpacing.y) * itemsCount - style.itemSpacing.y + style.windowPadding.y * 2
     }
 }

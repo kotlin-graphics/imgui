@@ -1008,6 +1008,7 @@ class Font {
 
     val isLoaded get() = ::containerAtlas.isInitialized
 
+    val debugName get() = configData.getOrNull(0)?.name ?: "<unknown>"
 
     /*  'maxWidth' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.
         'wrapWidth' enable automatic word-wrapping across multiple lines to fit into given width. 0.0f to disable. */
