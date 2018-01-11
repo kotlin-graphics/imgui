@@ -188,8 +188,6 @@ infix fun Int.hasnt(b: SelectableFlags) = (this and b.i) == 0
 enum class ComboFlags(val i: Int) {
     /** Align the popup toward the left by default */
     PopupAlignLeft(1 shl 0),
-
-    // If you want your combo popup to be a specific size you can use SetNextWindowSizeConstraints() prior to calling BeginCombo()
     /** Max ~4 items visible */
     HeightSmall(1 shl 1),
     /** Max ~8 items visible (default) */

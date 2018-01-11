@@ -26,6 +26,7 @@ import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
+import imgui.ImGui.frameCount
 import imgui.ImGui.image
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isMouseHoveringRect
@@ -115,7 +116,7 @@ object ExampleApp {
         var autoResize = false
         var constrainedResize = false
         var fixedOverlay = false
-        var manipulatingWindowTitle = false
+        var windowTitles = false
         var customRendering = false
         var styleEditor = false
 
@@ -129,10 +130,13 @@ object ExampleApp {
     var noMove = false
     var noResize = false
     var noCollapse = false
+    var noClose = false
 
     var filter = TextFilter()
 
-    operator fun invoke(open: KMutableProperty0<Boolean>) {
+    operator fun invoke(open: KMutableProperty0<Boolean>?) {
+
+        var open = open
 
         if (show.mainMenuBar) MainMenuBar()
         if (show.console) Console(show::console)
@@ -143,7 +147,7 @@ object ExampleApp {
         if (show.autoResize) AutoResize(show::autoResize)
         if (show.constrainedResize) ConstrainedResize(show::constrainedResize)
         if (show.fixedOverlay) FixedOverlay(show::fixedOverlay)
-        if (show.manipulatingWindowTitle) ManipulatingWindowTitle(show::manipulatingWindowTitle)
+        if (show.windowTitles) WindowTitles(show::windowTitles)
         if (show.customRendering) CustomRendering(show::customRendering)
         if (show.metrics) ImGui.showMetricsWindow(show::metrics)
         if (show.styleEditor)
@@ -152,11 +156,11 @@ object ExampleApp {
             }
 
         if (show.about)
-            withWindow("About ImGui", show::about, Wf.AlwaysAutoResize.i) {
+            withWindow("About Dear ImGui", show::about, Wf.AlwaysAutoResize.i) {
                 text("JVM ImGui, $version")
                 separator()
-                text("Original by Omar Cornut, ported by Giuseppe Barbieri and all github contributors.")
-                text("ImGui is licensed under the MIT License, see LICENSE for more information.")
+                text("Original by Omar Cornut, ported by Giuseppe Barbieri and all dear imgui contributors.")
+                text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
             }
 
         // Demonstrate the various window flags. Typically you would just use the default.
@@ -167,6 +171,7 @@ object ExampleApp {
         if (noMove) windowFlags = windowFlags or Wf.NoMove
         if (noResize) windowFlags = windowFlags or Wf.NoResize
         if (noCollapse) windowFlags = windowFlags or Wf.NoCollapse
+        if (noClose) open = null // Don't pass our bool* to Begin
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
         if (!_begin("ImGui Demo", open, windowFlags)) {
             end()   // Early out if the window is collapsed, as an optimization.
@@ -191,13 +196,13 @@ object ExampleApp {
                 menuItem("Auto-resizing window", "", ExampleApp.show::autoResize)
                 menuItem("Constrained-resizing window", "", ExampleApp.show::constrainedResize)
                 menuItem("Simple overlay", "", ExampleApp.show::fixedOverlay)
-                menuItem("Manipulating window title", "", ExampleApp.show::manipulatingWindowTitle)
+                menuItem("Manipulating window titles", "", ExampleApp.show::windowTitles)
                 menuItem("Custom rendering", "", ExampleApp.show::customRendering)
             }
             menu("Help") {
                 menuItem("Metrics", "", ExampleApp.show::metrics)
                 menuItem("Style Editor", "", ExampleApp.show::styleEditor)
-                menuItem("About ImGui", "", ExampleApp.show::about)
+                menuItem("About Dear ImGui", "", ExampleApp.show::about)
             }
         }
 
@@ -216,10 +221,11 @@ object ExampleApp {
             checkbox("No move", ::noMove); sameLine(150)
             checkbox("No resize", ::noResize)
             checkbox("No collapse", ::noCollapse)
+            checkbox("No close", ::noClose)
 
             treeNode("Style") { StyleEditor() }
 
-            treeNode("Logging") {
+            treeNode("Capture/Logging") {
                 textWrapped("The logging API redirects all text output so you can easily capture the content of a " +
                         "window or a block. Tree nodes can be automatically expanded. You can also call LogText() to " +
                         "output directly to the log without a visual output.")
@@ -581,7 +587,7 @@ object Log {
         if (time - lastTime >= 0.2f && !IO.keyCtrl) {
             val s = randomWords[rand % randomWords.size]
             val t = "%.1f".format(style.locale, time)
-            log.addLog("[$s] Hello, time is $t, rand() $rand\n")
+            log.addLog("[$s] Hello, time is $t, frame count is $frameCount\n")
             lastTime = time
         }
         log.draw("Example: Log (Filter not yet implemented)", open)
@@ -908,11 +914,11 @@ object FixedOverlay {
     }
 }
 
-object ManipulatingWindowTitle {
+object WindowTitles {
 
     /** Demonstrate using "##" and "###" in identifiers to manipulate ID generation.
-     *  Read section "How can I have multiple widgets with the same label? Can I have widget without a label? (Yes).
-     *  A primer on the purpose of labels/IDs." about ID.   */
+     *  This apply to regular items as well. Read FAQ section "How can I have multiple widgets with the same label?
+     *  Can I have widget without a label? (Yes). A primer on the purpose of labels/IDs." for details.   */
     operator fun invoke(open: KMutableProperty0<Boolean>) {
         /*  By default, Windows are uniquely identified by their title.
             You can use the "##" and "###" markers to manipulate the display/ID.
@@ -928,7 +934,7 @@ object ManipulatingWindowTitle {
         }
 
         // Using "###" to display a changing title but keep a static identifier "AnimatedTitle"
-        val title = "Animated title ${"|/-\\"[(time / 0.25f).i and 3]} ${glm_.detail.Random.int}###AnimatedTitle"
+        val title = "Animated title ${"|/-\\"[(time / 0.25f).i and 3]} $frameCount###AnimatedTitle"
         setNextWindowPos(Vec2(100, 300), Cond.FirstUseEver)
         withWindow(title) { text("This window has a changing title.") }
     }

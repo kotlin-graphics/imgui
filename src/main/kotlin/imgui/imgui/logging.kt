@@ -12,8 +12,8 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.sliderInt
 
-/** Logging: all text output from interface is redirected to tty/file/clipboard. By default, tree nodes are
- *  automatically opened during logging.    */
+/** Logging/Capture: all text output from interface is captured to tty/file/clipboard.
+ *  By default, tree nodes are automatically opened during logging.    */
 interface imgui_logging {
 
 //    IMGUI_API void          LogToTTY(int max_depth = -1);                                       // start logging to tty

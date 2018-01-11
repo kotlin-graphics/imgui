@@ -150,7 +150,7 @@ interface imgui_internal {
         window.dc.cursorPos.x = (window.pos.x + window.dc.indentX + window.dc.columnsOffsetX).i.f
         window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + style.itemSpacing.y).i.f
         window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
-        window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y  - style.itemSpacing.y)
+        window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y - style.itemSpacing.y)
 
         //if (g.IO.KeyAlt) window->DrawList->AddCircle(window->DC.CursorMaxPos, 3.0f, IM_COL32(255,0,0,255), 4); // [DEBUG]
 
@@ -391,13 +391,9 @@ interface imgui_internal {
         val borderSize = window.windowBorderSize
         val bb =
                 if (horizontal)
-                    Rect(window.pos.x + borderSize, windowRect.max.y - style.scrollbarSize,
-                            windowRect.max.x - otherScrollbarSizeW - borderSize, windowRect.max.y - borderSize)
+                    Rect(window.innerRect.min.x, windowRect.max.y - style.scrollbarSize, window.innerRect.max.x, windowRect.max.y - borderSize)
                 else
-                    Rect(windowRect.max.x - style.scrollbarSize, window.pos.y + borderSize,
-                            windowRect.max.x - borderSize, windowRect.max.y - otherScrollbarSizeW - borderSize)
-        if (!horizontal)
-            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f
+                    Rect(windowRect.max.x - style.scrollbarSize, window.innerRect.min.y, windowRect.max.x - borderSize, window.innerRect.max.y)
         if (bb.width <= 0f || bb.height <= 0f) return
 
         val windowRoundingCorners =
