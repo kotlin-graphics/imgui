@@ -444,7 +444,7 @@ enum class MouseCursor(val i: Int) {
     ResizeNS(3),
     /** When hovering over a column */
     ResizeEW(4),
-    /** Unused  */
+    /** When hovering over the bottom-left corner of a window  */
     ResizeNESW(5),
     /** When hovering over the bottom-right corner of a window  */
     ResizeNWSE(6),

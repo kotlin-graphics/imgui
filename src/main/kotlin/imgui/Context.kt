@@ -134,9 +134,7 @@ object Context {
 
     var modalWindowDarkeningRatio = 0f
     /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
-    var overlayDrawList = DrawList().apply {
-        _ownerName = "##Overlay" // Give it a name for debugging
-    }
+    var overlayDrawList = DrawList().apply { _ownerName = "##Overlay" } // Give it a name for debugging
 
     var mouseCursor = MouseCursor.Arrow
 

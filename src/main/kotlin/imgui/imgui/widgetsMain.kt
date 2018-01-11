@@ -273,7 +273,7 @@ interface imgui_widgetsMain {
     }
 
     /** FIXME-WIP: New Combo API    */
-    fun beginCombo(label: String, previewValue: String?, popupSize: Vec2 = Vec2()): Boolean {
+    fun beginCombo(label: String, previewValue: String?, flags: Int, popupSize: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -355,7 +355,7 @@ interface imgui_widgetsMain {
         val heightInItems = if (heightInItems < 0) 7 else heightInItems
         val popupHeight = (g.fontSize + style.itemSpacing.y) * items.size.min(heightInItems) + style.framePadding.y * 3
 
-        if (!beginCombo(label, previewText, Vec2(0f, popupHeight))) return false
+        if (!beginCombo(label, previewText, 0, Vec2(0f, popupHeight))) return false
 
         // Display items, FIXME-OPT: Use clipper
         var valueChanged = false
