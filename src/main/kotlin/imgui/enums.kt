@@ -43,6 +43,8 @@ enum class WindowFlags(val i: Int) {
     /** Ensure child windows without border uses style.WindowPadding (ignored by default for non-bordered child windows),
      *  because more convenient)  */
     AlwaysUseWindowPadding(1 shl 16),
+    /** (WIP) Enable resize from any corners and borders. Your back-end needs to honor the different values of IO.mouseCursor set by imgui. */
+    ResizeFromAnySide      (1 shl 17),
 
     // [Internal]
 
