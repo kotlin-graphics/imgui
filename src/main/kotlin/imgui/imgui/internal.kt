@@ -150,7 +150,7 @@ interface imgui_internal {
         window.dc.cursorPos.x = (window.pos.x + window.dc.indentX + window.dc.columnsOffsetX).i.f
         window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + style.itemSpacing.y).i.f
         window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
-        window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y)
+        window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y  - style.itemSpacing.y)
 
         //if (g.IO.KeyAlt) window->DrawList->AddCircle(window->DC.CursorMaxPos, 3.0f, IM_COL32(255,0,0,255), 4); // [DEBUG]
 
@@ -542,7 +542,7 @@ interface imgui_internal {
 
         // Render
         val col = if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator
-        renderFrame(bbRender.min, bbRender.max, col.u32, true, style.frameRounding)
+        window.drawList.addRectFilled(bbRender.min, bbRender.max, col.u32, style.frameRounding)
 
         return held
     }

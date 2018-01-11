@@ -436,7 +436,7 @@ class Style {
     /** Padding within a window */
     var windowPadding = Vec2(8)
     /** Radius of window corners rounding. Set to 0.0f to have rectangular windows  */
-    var windowRounding = 9f
+    var windowRounding = 7f
     /** Thickness of border around windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly)   */
     var windowBorderSize = 0f
     /** Minimum window size */

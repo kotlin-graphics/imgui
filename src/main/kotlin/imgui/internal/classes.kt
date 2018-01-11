@@ -119,6 +119,8 @@ class Rect {
         max.y = max.y.i.f
     }
 
+    val isFinite get() = min.x != Float.MAX_VALUE
+
     fun getClosestPoint(p: Vec2, onEdge: Boolean): Vec2 {
         if (!onEdge && contains(p))
             return p
@@ -513,6 +515,7 @@ class Window(
 
     /** We don't use g.FontSize because the window may be != g.CurrentWidow. */
     fun rect() = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
+
     fun calcFontSize() = g.fontBaseSize * fontWindowScale
     val titleBarHeight get() = if (flags has Wf.NoTitleBar) 0f else calcFontSize() + style.framePadding.y * 2f
     fun titleBarRect() = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight))
@@ -625,22 +628,23 @@ class Window(
         return newSize
     }
 
-    fun calcSizeAutoFit() = if (flags has Wf.Tooltip)
-    // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
-        sizeContents + windowPadding - Vec2(0f, style.itemSpacing.y)
-    else {
-        // Handling case of auto fit window not fitting on the screen (on either axis): we are growing the size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
-        val sizeAutoFit = glm.clamp(sizeContents + windowPadding, Vec2(style.windowMinSize),
-                Vec2(glm.max(style.windowMinSize, IO.displaySize - style.displaySafeAreaPadding)))
-        val sizeAutoFitAfterConstraint = calcSizeFullWithConstraint(sizeAutoFit)
-        if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
-            sizeAutoFit.y += style.scrollbarSize
-        if (sizeAutoFitAfterConstraint.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
-            sizeAutoFit.x += style.scrollbarSize
-        sizeAutoFit.y = glm.max(sizeAutoFit.y - style.itemSpacing.y, 0f)
-        sizeAutoFit
-    }
+    fun calcSizeAutoFit() =
+            // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
+            if (flags has Wf.Tooltip) Vec2(sizeContents)
+            else {
+                // Handling case of auto fit window not fitting on the screen (on either axis): we are growing the size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
+                val sizeAutoFit = glm.clamp(sizeContents, Vec2(style.windowMinSize),
+                        Vec2(glm.max(style.windowMinSize, IO.displaySize - style.displaySafeAreaPadding)))
+                val sizeAutoFitAfterConstraint = calcSizeFullWithConstraint(sizeAutoFit)
+                if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+                    sizeAutoFit.y += style.scrollbarSize
+                if (sizeAutoFitAfterConstraint.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
+                    sizeAutoFit.x += style.scrollbarSize
+                sizeAutoFit
+            }
 
+    val scrollMaxX get() = max(0f, sizeContents.x - (sizeFull.x - scrollbarSizes.x))
+    val scrollMaxY get() = max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y))
 
     infix fun addTo(renderList: ArrayList<DrawList>) {
         drawList addTo renderList
