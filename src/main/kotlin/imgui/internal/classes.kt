@@ -186,14 +186,6 @@ class GroupData {
     var advanceCursor = false
 }
 
-// Per column data for Columns()
-class ColumnData {
-    /** Column start offset, normalized 0.0 (far left) -> 1.0 (far right)   */
-    var offsetNorm = 0f
-    val clipRect = Rect()
-    //float     IndentX;
-}
-
 // Simple column measurement currently used for MenuItem() only. This is very short-sighted/throw-away code and NOT a generic helper.
 class SimpleColumns {
 
@@ -265,6 +257,46 @@ class PopupRef(
 ) {
     /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
     var window: Window? = null
+}
+
+class ColumnData {
+    /** Column start offset, normalized 0f (far left) -> 1f (far right) */
+    var offsetNorm = 0f
+    var offsetNormBeforeResize = 0f
+    var clipRect = Rect()
+}
+
+class ColumnsSet {
+    var id = 0
+    var flags = 0
+    var isFirstFrame = false
+    var isBeingResized = false
+    var current = 0
+    var count = 1
+    var minX = 0f
+    var maxX = 0f
+    var startPosY = 0f
+    /** Backup of cursorMaxPos */
+    var startMaxPosX = 0f
+    var cellMinY = 0f
+    var cellMaxY = 0f
+    val columns = ArrayList<ColumnData>()
+
+    fun clear() {
+        id = 0
+        flags = 0
+        isFirstFrame = false
+        isBeingResized = false
+        current = 0
+        count = 1
+        maxX = 0f
+        minX = 0f
+        startPosY = 0f
+        startMaxPosX = 0f
+        cellMaxY = 0f
+        cellMinY = 0f
+        columns.clear()
+    }
 }
 
 /** Transient per-window data, reset at the beginning of the frame
@@ -342,28 +374,8 @@ class DrawContext {
     /** Offset to the current column (if ColumnsCurrent > 0). FIXME: This and the above should be a stack to allow use
     cases like Tree->Column->Tree. Need revamp columns API. */
     var columnsOffsetX = 0f
-
-    var columnsCurrent = 0
-
-    var columnsCount = 1
-
-    var columnsMinX = 0f
-
-    var columnsMaxX = 0f
-
-    var columnsStartPosY = 0f
-    /** Backup of CursorMaxPos  */
-    var columnsStartMaxPosX = 0f
-
-    var columnsCellMinY = 0f
-
-    var columnsCellMaxY = 0f
-
-    var columnsFlags = 0
-
-    var columnsSetId = 0
-
-    val columnsData = ArrayList<ColumnData>()
+    /** Current columns set */
+    var columnsSet: ColumnsSet? = null
 }
 
 /** Windows data    */
@@ -482,6 +494,8 @@ class Window(
     val menuColumns = SimpleColumns()
 
     var stateStorage = Storage()
+
+    val columnsStorage = ArrayList<ColumnsSet>()
     /** Scale multiplier per-window */
     var fontWindowScale = 1f
 
@@ -769,6 +783,17 @@ class Window(
     fun calcSizeContents() = Vec2(
             (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f,
             (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f) + windowPadding
+
+    fun findOrAddColumnsSet(id: Int): ColumnsSet {
+        for (c in columnsStorage)
+            if (c.id == id)
+                return c
+
+        return ColumnsSet().also {
+            columnsStorage += it
+            it.id = id
+        }
+    }
 }
 
 /** Moving window to front of display (which happens to be back of our sorted list) */

@@ -56,6 +56,8 @@ import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.setScrollHere
 import imgui.ImGui.setWindowFontScale
 import imgui.ImGui.setWindowSize
+import imgui.ImGui.showFontSelector
+import imgui.ImGui.showStyleSelector
 import imgui.ImGui.showUserGuide
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderInt
@@ -90,8 +92,8 @@ import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withTooltip
 import imgui.functionalProgramming.withWindow
-import imgui.imgui.imgui_demoDebugInfo.Companion.showExampleMenuFile
-import imgui.imgui.imgui_demoDebugInfo.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
+import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
@@ -367,7 +369,8 @@ object Console {
 //            ImGui::PopStyleVar();
 //            ImGui::Separator();
 //
-//            ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetStyle().ItemSpacing.y - ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
+//            const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing(); // 1 separator, 1 input text
+//            ImGui::BeginChild("ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
 //            if (ImGui::BeginPopupContextWindow())
 //            {
 //                if (ImGui::Selectable("Clear")) ClearLog();
@@ -1075,14 +1078,10 @@ object StyleEditor {
         var ref = if (ref == null) refSavedStyle else ref
 
         pushItemWidth(windowWidth * 0.55f)
-        combo("Colors##Selector", ::styleIdx, "Classic\u0000Dark\u0000Light\u0000") {
-            when (styleIdx) {
-                0 -> styleColorsClassic()
-                1 -> styleColorsDark()
-                2 -> styleColorsLight()
-            }
+        if(showStyleSelector("Colors##Selector"))
             refSavedStyle = Style(style)
-        }
+
+        showFontSelector("Fonts##Selector")
 
         // Simplified Settings
         if (sliderFloat("FrameRounding", style::frameRounding, 0f, 12f, "%.0f"))

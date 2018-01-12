@@ -27,7 +27,7 @@ var IMGUI_HAS_NAV = false
 object ImGui :
 
         imgui_main,
-        imgui_demoDebugInfo,
+        imgui_demoDebugInformations,
         imgui_window,
         imgui_parametersStacks,
         imgui_cursorLayout,

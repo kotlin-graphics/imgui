@@ -70,6 +70,7 @@ import imgui.imgui.imgui_colums.Companion.pixelsToOffsetNorm
 import imgui.internal.*
 import java.util.*
 import kotlin.apply
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
@@ -82,6 +83,7 @@ import imgui.ItemFlags as If
 import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
+import imgui.internal.ColumnsFlags as Cf
 import imgui.internal.DrawCornerFlags as Dcf
 import imgui.internal.LayoutType as Lt
 
@@ -386,11 +388,14 @@ interface imgui_internal {
         val otherScrollbarSizeW = if (otherScrollbar) style.scrollbarSize else 0f
         val windowRect = window.rect()
         val borderSize = window.windowBorderSize
-        val bb =
-                if (horizontal)
-                    Rect(window.innerRect.min.x, windowRect.max.y - style.scrollbarSize, window.innerRect.max.x, windowRect.max.y - borderSize)
-                else
-                    Rect(windowRect.max.x - style.scrollbarSize, window.innerRect.min.y, windowRect.max.x - borderSize, window.innerRect.max.y)
+        val bb = when (horizontal) {
+            true -> Rect(window.pos.x + borderSize, windowRect.max.y - style.scrollbarSize,
+                    windowRect.max.x - otherScrollbarSizeW - borderSize, windowRect.max.y - borderSize)
+            else -> Rect(windowRect.max.x - style.scrollbarSize, window.pos.y + borderSize,
+                    windowRect.max.x - borderSize, windowRect.max.y - otherScrollbarSizeW - borderSize)
+        }
+        if (!horizontal)
+            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f
         if (bb.width <= 0f || bb.height <= 0f) return
 
         val windowRoundingCorners =
@@ -570,58 +575,71 @@ interface imgui_internal {
     // FIXME-WIP: New Columns API
 
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
-    fun beginColumns(id: String = "", columnsCount: Int, flags: Int) {
+    fun beginColumns(strId: String = "", columnsCount: Int, flags: Int) {
 
         with(currentWindow) {
 
             assert(columnsCount > 1)
-            assert(dc.columnsCount == 1) // Nested columns are currently not supported
+            assert(dc.columnsSet == null) // Nested columns are currently not supported
 
             /*  Differentiate column ID with an arbitrary prefix for cases where users name their columns set the same
                 as another widget.
                 In addition, when an identifier isn't explicitly provided we include the number of columns in the hash
                 to make it uniquer. */
-            pushId(0x11223347 + if (id.isNotEmpty()) 0 else columnsCount)
-            dc.columnsSetId = getId(if (id.isEmpty()) "columns" else id)
+            pushId(0x11223347 + if (strId.isNotEmpty()) 0 else columnsCount)
+            val id = getId(if (strId.isEmpty()) "columns" else strId)
             popId()
 
-            // Set state for first column
-            dc.columnsCurrent = 0
-            dc.columnsCount = columnsCount
-            dc.columnsFlags = flags
+            // Acquire storage for the columns set
+            val columns = findOrAddColumnsSet(id)
+            assert(columns.id == id)
+            with(columns) {
+                current = 0
+                count = columnsCount
+                this.flags = flags
+            }
+            dc.columnsSet = columns
 
+            // Set state for first column
             val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else size.x - scrollbarSizes.x
-            dc.columnsMinX = dc.indentX - style.itemSpacing.x // Lock our horizontal range
-            //window->DC.ColumnsMaxX = contentRegionWidth - window->Scroll.x -((window->Flags & ImGuiWindowFlags_NoScrollbar) ? 0 : g.Style.ScrollbarSize);// - window->WindowPadding().x;
-            dc.columnsMaxX = contentRegionWidth - scroll.x
-            dc.columnsStartPosY = dc.cursorPos.y
-            dc.columnsStartMaxPosX = dc.cursorMaxPos.x
-            dc.columnsCellMaxY = dc.cursorPos.y
-            dc.columnsCellMinY = dc.cursorPos.y
+            with(columns) {
+                minX = dc.indentX - style.itemSpacing.x // Lock our horizontal range
+                //maxX = contentRegionWidth - window->Scroll.x -((window->Flags & ImGuiWindowFlags_NoScrollbar) ? 0 : g.Style.ScrollbarSize);// - window->WindowPadding().x;
+                maxX = contentRegionWidth - scroll.x
+                startPosY = dc.cursorPos.y
+                startMaxPosX = dc.cursorMaxPos.x
+                cellMaxY = dc.cursorPos.y
+                cellMinY = dc.cursorPos.y
+            }
             dc.columnsOffsetX = 0f
             dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
 
-            // Cache column offsets
-            for (i in 0..columnsCount) dc.columnsData.add(ColumnData())
-            for (columnIndex in 0..columnsCount) {
+            // Initialize defaults
+            columns.isFirstFrame = columns.columns.isEmpty()
+            if (columns.columns.isEmpty())
+                for (n in 0..columnsCount)
+                    columns.columns += ColumnData().apply { offsetNorm = n / columnsCount.f }
 
-                val columnId = dc.columnsSetId + columnIndex
-                keepAliveId(columnId)
-                val defaultT = columnIndex / dc.columnsCount.f
-                var t = dc.stateStorage.float(columnId, defaultT)
-                if (dc.columnsFlags hasnt ColumnsFlags.NoForceWithinWindow)
-                    t = glm.min(t, pixelsToOffsetNorm(this, dc.columnsMaxX - style.columnsMinSpacing * (dc.columnsCount - columnIndex)))
-                dc.columnsData[columnIndex].offsetNorm = t
-            }
+            assert(columns.columns.size == columnsCount + 1)
 
             // Cache clipping rectangles
-            for (columnIndex in 0 until columnsCount) {
-                val clipX1 = glm.floor(0.5f + pos.x + getColumnOffset(columnIndex) - 1f)
-                val clipX2 = glm.floor(0.5f + pos.x + getColumnOffset(columnIndex + 1) - 1f)
-                dc.columnsData[columnIndex].clipRect.put(clipX1, -Float.MAX_VALUE, clipX2, Float.MAX_VALUE)
-                dc.columnsData[columnIndex].clipRect.clipWith(clipRect)
+            for (n in 0..columnsCount) {
+                // Clamp
+                val column = columns.columns[n]
+                var t = column.offsetNorm
+                if (columns.flags hasnt Cf.NoForceWithinWindow)
+                    t = min(t, pixelsToOffsetNorm(columns, columns.maxX - style.columnsMinSpacing * (columns.count - n)))
+                column.offsetNorm = t
+
+                if (n == columnsCount) continue
+
+                // Compute clipping rectangles
+                val clipX1 = floor(0.5f + pos.x + getColumnOffset(n) - 1f)
+                val clipX2 = floor(0.5f + pos.x + getColumnOffset(n + 1) - 1f)
+                column.clipRect = Rect(clipX1, -Float.MAX_VALUE, clipX2, +Float.MAX_VALUE)
+                column.clipRect clipWith clipRect
             }
-            drawList.channelsSplit(dc.columnsCount)
+            drawList.channelsSplit(columns.count)
             pushColumnClipRect()
             pushItemWidth(getColumnWidth() * 0.65f)
         }
@@ -629,34 +647,36 @@ interface imgui_internal {
 
     fun endColumns() = with(currentWindow) {
 
-        assert(dc.columnsCount > 1)
+        val columns = dc.columnsSet!!
 
         popItemWidth()
         popClipRect()
         drawList.channelsMerge()
 
-        dc.columnsCellMaxY = glm.max(dc.columnsCellMaxY, dc.cursorPos.y)
-        dc.cursorPos.y = dc.columnsCellMaxY
-        if (dc.columnsFlags hasnt ColumnsFlags.GrowParentContentsSize)
-            dc.cursorMaxPos.x = max(dc.columnsStartMaxPosX, dc.columnsMaxX) // Restore cursor max pos, as columns don't grow parent
+        columns.cellMaxY = glm.max(columns.cellMaxY, dc.cursorPos.y)
+        dc.cursorPos.y = columns.cellMaxY
+        if (columns.flags hasnt Cf.GrowParentContentsSize)
+            dc.cursorMaxPos.x = max(columns.startMaxPosX, columns.maxX) // Restore cursor max pos, as columns don't grow parent
 
         // Draw columns borders and handle resize
-        if (dc.columnsFlags hasnt ColumnsFlags.NoBorder && !skipItems) {
+        var isBeingResized = false
+        if (columns.flags hasnt Cf.NoBorder && !skipItems) {
 
-            val y1 = dc.columnsStartPosY
+            val y1 = columns.startPosY
             val y2 = dc.cursorPos.y
             var draggingColumn = -1
-            for (i in 1 until dc.columnsCount) {
+            for (n in 1 until columns.count) {
 
-                val x = pos.x + getColumnOffset(i)
-                val columnId = dc.columnsSetId + i
+                val x = pos.x + getColumnOffset(n)
+                val columnId = columns.id + n
                 val columnHw = 4f // Half-width for interaction
                 val columnRect = Rect(x - columnHw, y1, x + columnHw, y2)
+                keepAliveId(columnId)
                 if (isClippedEx(columnRect, columnId, false)) continue
 
                 var hovered = false
                 var held = false
-                if (dc.columnsFlags hasnt ColumnsFlags.NoResize) {
+                if (columns.flags hasnt Cf.NoResize) {
 
                     val (_, b, c) = buttonBehavior(columnRect, columnId)
                     hovered = b
@@ -667,26 +687,29 @@ interface imgui_internal {
                     /*  Store from center of column line (we used a 8 wide rect for columns clicking). This is used by
                         GetDraggedColumnOffset().                     */
                         g.activeIdClickOffset.x -= columnHw
-                    if (held)
-                        draggingColumn = i
+                    if (held) draggingColumn = n
                 }
 
-                // Draw column
+                // Draw column (we clip the Y boundaries CPU side because very long triangles are mishandled by some GPU drivers.)
                 val col = getColorU32(if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator)
                 val xi = x.i.f
                 drawList.addLine(Vec2(xi, max(y1 + 1f, clipRect.min.y)), Vec2(xi, min(y2, clipRect.max.y)), col)
             }
 
             // Apply dragging after drawing the column lines, so our rendered lines are in sync with how items were displayed during the frame.
-            if (draggingColumn != -1)
-                setColumnOffset(draggingColumn, getDraggedColumnOffset(draggingColumn))
+            if (draggingColumn != -1) {
+                if (!columns.isBeingResized)
+                    for (n in 0..columns.count)
+                        columns.columns[n].offsetNormBeforeResize = columns.columns[n].offsetNorm
+                isBeingResized = true
+                columns.isBeingResized = true
+                val x = getDraggedColumnOffset(columns, draggingColumn)
+                setColumnOffset(draggingColumn, getDraggedColumnOffset(columns, draggingColumn))
+            }
         }
+        columns.isBeingResized = isBeingResized
 
-        dc.columnsSetId = 0
-        dc.columnsCurrent = 0
-        dc.columnsCount = 1
-        dc.columnsFlags = 0
-        dc.columnsData.clear()
+        dc.columnsSet = null
         dc.columnsOffsetX = 0f
         dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
     }
@@ -694,9 +717,10 @@ interface imgui_internal {
     fun pushColumnClipRect(columnIndex: Int = -1) {
 
         val window = currentWindowRead!!
-        val columnIndex = if (columnIndex < 0) window.dc.columnsCurrent else columnIndex
+        val columns = window.dc.columnsSet!!
+        val columnIndex = if (columnIndex < 0) columns.current else columnIndex
 
-        pushClipRect(window.dc.columnsData[columnIndex].clipRect.min, window.dc.columnsData[columnIndex].clipRect.max, false)
+        pushClipRect(columns.columns[columnIndex].clipRect.min, columns.columns[columnIndex].clipRect.max, false)
     }
 
 
@@ -1040,7 +1064,7 @@ interface imgui_internal {
             else {
                 if (hovered && flags has Bf.PressedOnClickRelease)
                     if (!(flags has Bf.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay)) // Repeat mode trumps <on release>
-                        if(!g.dragDropActive)
+                        if (!g.dragDropActive)
                             pressed = true
                 clearActiveId()
             }

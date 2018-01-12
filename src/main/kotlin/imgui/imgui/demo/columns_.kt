@@ -29,7 +29,7 @@ import imgui.functionalProgramming.selectable
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withId
-import imgui.imgui.imgui_demoDebugInfo.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 
 object columns_ {
 

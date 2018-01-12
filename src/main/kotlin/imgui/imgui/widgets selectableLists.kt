@@ -53,7 +53,7 @@ interface imgui_widgetsSelectableLists {
         val window = currentWindow
         if (window.skipItems) return false
 
-        if (flags has Sf.SpanAllColumns && window.dc.columnsCount > 1)  // FIXME-OPT: Avoid if vertically clipped.
+        if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null)  // FIXME-OPT: Avoid if vertically clipped.
             popClipRect()
 
         val id = window.getId(label)
@@ -85,7 +85,7 @@ interface imgui_widgetsSelectableLists {
         bbWithSpacing.max.x += spacingR
         bbWithSpacing.max.y += spacingD
         if (!itemAdd(bbWithSpacing, id)) {
-            if (flags has Sf.SpanAllColumns && window.dc.columnsCount > 1)
+            if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null)
                 pushColumnClipRect()
             return false
         }
@@ -106,7 +106,7 @@ interface imgui_widgetsSelectableLists {
             renderFrame(bbWithSpacing.min, bbWithSpacing.max, col.u32, false, 0f)
         }
 
-        if (flags has Sf.SpanAllColumns && window.dc.columnsCount > 1) {
+        if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null) {
             pushColumnClipRect()
             bbWithSpacing.max.x -= contentRegionMax.x - maxX
         }

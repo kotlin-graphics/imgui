@@ -26,7 +26,7 @@ import imgui.WindowFlags as Wf
 
 fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = 0): Nothing = TODO()
 
-fun getDraggedColumnOffset(columnIndex: Int): Float {
+fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
     /*  Active (dragged) column always follow mouse. The reason we need this is that dragging a column to the right edge
         of an auto-resizing window creates a feedback loop because we store normalized positions. So while dragging we
         enforce absolute positioning.   */
@@ -35,11 +35,11 @@ fun getDraggedColumnOffset(columnIndex: Int): Float {
     /*  We cannot drag column 0. If you get this assert you may have a conflict between the ID of your columns and
         another widgets.    */
     assert(columnIndex > 0)
-    assert(g.activeId == window.dc.columnsSetId + columnIndex)
+    assert(g.activeId == columns.id + columnIndex)
 
     var x = IO.mousePos.x - g.activeIdClickOffset.x - window.pos.x
     x = glm.max(x, getColumnOffset(columnIndex - 1) + style.columnsMinSpacing)
-    if (window.dc.columnsFlags has ColumnsFlags.NoPreserveWidths)
+    if (columns.flags has ColumnsFlags.NoPreserveWidths)
         x = glm.min(x, getColumnOffset(columnIndex + 1) - style.columnsMinSpacing)
 
     return x

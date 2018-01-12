@@ -39,7 +39,7 @@ import imgui.internal.ButtonFlags as Bf
 
 interface imgui_widgetsComboBox {
 
-    fun beginCombo(label: String, previewValue: String?, flags: Int): Boolean {
+    fun beginCombo(label: String, previewValue: String?, flags: Int = 0): Boolean {
 
         var flags = flags
 
