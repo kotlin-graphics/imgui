@@ -87,6 +87,7 @@ import imgui.WindowFlags as Wf
 object layout_ {
 
     /* Child regions */
+    var disableMouseWheel = false
     var line = 50
 
 
@@ -126,13 +127,17 @@ object layout_ {
 
             treeNode("Child regions") {
 
+                checkbox("Disable Mouse Wheel", ::disableMouseWheel)
+
                 text("Without border")
                 var gotoLine = button("Goto")
                 sameLine()
                 withItemWidth(100) {
                     gotoLine = gotoLine or inputInt("##Line", ::line, 0, 0, Itf.EnterReturnsTrue.i)
                 }
-                withChild("Sub1", Vec2(windowContentRegionWidth * 0.5f, 300), false, Wf.HorizontalScrollbar.i) {
+
+                val flags = Wf.HorizontalScrollbar or if(disableMouseWheel) Wf.NoScrollWithMouse else Wf.Null
+                withChild("Sub1", Vec2(windowContentRegionWidth * 0.5f, 300), false, flags) {
                     for (i in 0 until 100) {
                         text("%04d: scrollable region", i)
                         if (gotoLine && line == i) setScrollHere()
@@ -143,7 +148,7 @@ object layout_ {
                 sameLine()
 
                 withStyleVar(StyleVar.ChildRounding, 5f) {
-                    withChild("Sub2", Vec2(0, 300), true) {
+                    withChild("Sub2", Vec2(0, 300), true, if(disableMouseWheel) Wf.NoScrollWithMouse.i else 0) {
                         text("With border")
                         columns(2)
                         for (i in 0..99) {

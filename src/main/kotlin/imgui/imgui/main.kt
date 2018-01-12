@@ -240,11 +240,20 @@ interface imgui_main {
                 window.posF plusAssign offset
                 window.size timesAssign scale
                 window.sizeFull timesAssign scale
-            } else if (!IO.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse) {
+            } else if (!IO.keyCtrl) {
                 // Mouse wheel Scrolling
-                var scrollAmount = 5 * window.calcFontSize()
-                scrollAmount = min(scrollAmount, (window.contentsRegionRect.height + window.windowPadding.y * 2f) * 0.67f).i.f
-                window.setScrollY(window.scroll.y - IO.mouseWheel * scrollAmount)
+                // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent (unless either ImGuiWindowFlags_NoInputs or ImGuiWindowFlags_NoScrollbar are also set).
+                var scrollWindow = window
+                while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
+                        scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
+                    scrollWindow = scrollWindow.parentWindow!!
+
+                if (scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags has Wf.NoInputs) {
+                    var scrollAmount = 5 * scrollWindow.calcFontSize()
+                    scrollAmount = min(scrollAmount,
+                            (scrollWindow.contentsRegionRect.height + scrollWindow.windowPadding.y * 2f) * 0.67f).i.f
+                    scrollWindow.setScrollY(scrollWindow.scroll.y - IO.mouseWheel * scrollAmount)
+                }
             }
         }
 

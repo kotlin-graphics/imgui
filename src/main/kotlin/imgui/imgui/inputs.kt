@@ -43,7 +43,11 @@ interface imgui_inputs {
         return calcTypematicPressedRepeatAmount(t, t - IO.deltaTime, repeatDelay, repeatRate)
     }
 
-//IMGUI_API bool          IsMouseDown(int button);                                            // is mouse button held
+    /** is mouse button held */
+    fun isMouseDown(button: Int): Boolean {
+        assert(button in IO.mouseDown.indices)
+        return IO.mouseDown[button]
+    }
 
     /** did mouse button clicked (went from !Down to Down)  */
     fun isMouseClicked(button: Int, repeat: Boolean = false): Boolean {

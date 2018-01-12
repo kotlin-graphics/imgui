@@ -6,6 +6,7 @@ import imgui.ImGui.beginTooltipEx
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.endTooltip
 import imgui.ImGui.getStyleColorVec4
+import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMouseReleased
 import imgui.ImGui.popStyleColor
@@ -15,6 +16,7 @@ import imgui.ImGui.setHoveredId
 import imgui.ImGui.setNextWindowPos
 import imgui.internal.Rect
 import imgui.internal.focus
+import imgui.internal.hash
 import imgui.Context as g
 import imgui.DragDropFlags as Ddf
 
@@ -33,51 +35,64 @@ interface imgui_dragAndDrop {
     fun beginDragDropSource(flags: Int = 0, mouseButton: Int = 0): Boolean {
 
         val window = g.currentWindow!!
-        if (!IO.mouseDown[mouseButton]) return false
 
-        var id = window.dc.lastItemId
-        if (id == 0) {
-            /*  If you want to use beginDragDropSource() on an item with no unique identifier for interaction, such as
-                text() or image(), you need to:
-                A) Read the explanation below
-                B) Use the DragDropFlags.SourceAllowNullID flag
-                C) Swallow your programmer pride.   */
-            if (flags hasnt Ddf.SourceAllowNullID) throw Error()
-
-            /*  Magic fallback (=somehow reprehensible) to handle items with no assigned ID, e.g. text(), image()
-                We build a throwaway ID based on current ID stack + relative AABB of items in window.
-                THE IDENTIFIER WON'T SURVIVE ANY REPOSITIONING OF THE WIDGET, so if your widget moves
-                your dragging operation will be canceled.
-                We don't need to maintain/call clearActiveID() as releasing the button will early out this function and
-                trigger !activeIdIsAlive.   */
-            val isHovered = window.dc.lastItemRectHoveredRect
-            if (!isHovered && (g.activeId == 0 || g.activeIdWindow != window))
+        var sourceDragActive = false
+        var sourceId = 0
+        var sourceParentId = 0
+        if (flags hasnt Ddf.SourceExtern) {
+            sourceId = window.dc.lastItemId
+            if (sourceId != 0 && g.activeId != sourceId) // Early out for most common case
                 return false
-            window.dc.lastItemId = window.getIdFromRectangle(window.dc.lastItemRect)
-            id = window.dc.lastItemId
-            if (isHovered) setHoveredId(id)
-            if (isHovered && IO.mouseClicked[mouseButton]) {
-                setActiveId(id, window)
-                window.focus()
-            }
-            // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.
-            if (g.activeId == id) g.activeIdAllowOverlap = isHovered
-        }
-        if (g.activeId != id) return false
 
-        if (isMouseDragging(mouseButton)) {
+            if (!IO.mouseDown[mouseButton]) return false
+            if (sourceId == 0) {
+                /*  If you want to use beginDragDropSource() on an item with no unique identifier for interaction,
+                    such as text() or image(), you need to:
+                    A) Read the explanation below
+                    B) Use the DragDropFlags.SourceAllowNullID flag
+                     C) Swallow your programmer pride.  */
+                if (flags hasnt Ddf.SourceAllowNullID) throw Error()
+                /*  Magic fallback (=somehow reprehensible) to handle items with no assigned ID, e.g. text(), image()
+                    We build a throwaway ID based on current ID stack + relative AABB of items in window.
+                    THE IDENTIFIER WON'T SURVIVE ANY REPOSITIONING OF THE WIDGET, so if your widget moves
+                    your dragging operation will be canceled.
+                    We don't need to maintain/call clearActiveID() as releasing the button will early out this function
+                    and trigger !activeIdIsAlive. */
+                val isHovered = window.dc.lastItemRectHoveredRect
+                if (!isHovered && (g.activeId == 0 || g.activeIdWindow !== window))
+                    return false
+                window.dc.lastItemId = window.getIdFromRectangle(window.dc.lastItemRect)
+                sourceId = window.dc.lastItemId
+                if (isHovered) setHoveredId(sourceId)
+                if (isHovered && IO.mouseClicked[mouseButton]) {
+                    setActiveId(sourceId, window)
+                    window.focus()
+                }
+                // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.
+                if (g.activeId == sourceId) g.activeIdAllowOverlap = isHovered
+            }
+            if (g.activeId != sourceId) return false
+            sourceParentId = window.idStack.last()
+            sourceDragActive = isMouseDragging(mouseButton)
+        } else {
+//            window = NULL; // TODO check
+            sourceId = hash("#SourceExtern", 0)
+            sourceDragActive = true
+        }
+
+        if (sourceDragActive) {
             if (!g.dragDropActive) {
-                assert(id != 0)
+                assert(sourceId != 0)
                 clearDragDrop()
                 val payload = g.dragDropPayload
-                payload.sourceId = id
-                payload.sourceParentId = window.idStack.last()
+                payload.sourceId = sourceId
+                payload.sourceParentId = sourceParentId
                 g.dragDropActive = true
                 g.dragDropSourceFlags = flags
                 g.dragDropMouseButton = mouseButton
             }
 
-            if (flags hasnt Ddf.SourceNoAutoTooltip) {
+            if (flags hasnt Ddf.SourceNoPreviewTooltip) {
                 // FIXME-DRAG
                 //SetNextWindowPos(g.IO.MousePos - g.ActiveIdClickOffset - g.Style.WindowPadding);
                 //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This is better but e.g ColorButton with checkboard has issue with transparent colors :(
@@ -86,7 +101,8 @@ interface imgui_dragAndDrop {
                 beginTooltipEx(WindowFlags.NoInputs.i)
             }
 
-            if (flags hasnt Ddf.SourceNoDisableHover) window.dc.lastItemRectHoveredRect = false
+            if (flags hasnt Ddf.SourceNoDisableHover && flags hasnt Ddf.SourceExtern)
+                window.dc.lastItemRectHoveredRect = false
 
             return true
         }
@@ -133,7 +149,7 @@ interface imgui_dragAndDrop {
     fun endDragDropSource() {
         assert(g.dragDropActive)
 
-        if (g.dragDropSourceFlags hasnt Ddf.SourceNoAutoTooltip) {
+        if (g.dragDropSourceFlags hasnt Ddf.SourceNoPreviewTooltip) {
             endTooltip()
             popStyleColor()
             //PopStyleVar();
@@ -190,7 +206,7 @@ interface imgui_dragAndDrop {
 
         // Render default drop visuals
         payload.preview = wasAcceptedPreviously
-        if (flags hasnt Ddf.AcceptNoDrawDefaultRect && payload.preview)        {
+        if (flags hasnt Ddf.AcceptNoDrawDefaultRect && payload.preview) {
             // FIXME-DRAG: Settle on a proper default visuals for drop target.
             r expand 3.5f
             val pushClipRect = !window.clipRect.contains(r)
@@ -200,7 +216,8 @@ interface imgui_dragAndDrop {
         }
 
         g.dragDropAcceptFrameCount = g.frameCount
-        payload.delivery = wasAcceptedPreviously && isMouseReleased(g.dragDropMouseButton)
+        // For extern drag sources affecting os window focus, it's easier to just test !isMouseDown() instead of isMouseReleased()
+        payload.delivery = wasAcceptedPreviously && !isMouseDown(g.dragDropMouseButton)
         if (!payload.delivery && flags hasnt Ddf.AcceptBeforeDelivery) return null
 
         return payload
