@@ -8,13 +8,16 @@ import imgui.*
 import imgui.Context.overlayDrawList
 import imgui.Context.style
 import imgui.ImGui._begin
+import imgui.ImGui.beginCombo
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.checkbox
 import imgui.ImGui.colorButton
 import imgui.ImGui.combo
 import imgui.ImGui.end
+import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
+import imgui.ImGui.font
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
@@ -25,6 +28,9 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.sliderFloat
+import imgui.ImGui.styleColorsClassic
+import imgui.ImGui.styleColorsDark
+import imgui.ImGui.styleColorsLight
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
@@ -66,7 +72,7 @@ import imgui.WindowFlags as Wf
  *  Thank you,
  *  -Your beloved friend, imgui_demo.cpp (that you won't delete)
  */
-interface imgui_demoDebugInfo {
+interface imgui_demoDebugInformations {
     /** Create demo/test window.
      *  Demonstrate most ImGui features (big function!)
      *  Call this to learn about the library! try to make it always available in your application!   */
@@ -119,6 +125,32 @@ interface imgui_demoDebugInfo {
             }
         }
         end()
+    }
+
+    fun showStyleSelector(label: String) =
+            if (combo(label, ::styleIdx, "Classic\u0000Dark\u0000Light\u0000")) {
+                when (styleIdx) {
+                    0 -> styleColorsClassic()
+                    1 -> styleColorsDark()
+                    2 -> styleColorsLight()
+                }
+                true
+            } else false
+
+    fun showFontSelector(label: String) {
+        val fontCurrent = font
+        if (beginCombo(label, fontCurrent.debugName))        {
+            for (f in IO.fonts.fonts)
+                if (selectable(f.debugName, f == fontCurrent))
+                    IO.fontDefault = f
+            endCombo()
+        }
+        sameLine()
+        showHelpMarker("""
+            - Load additional fonts with io.Fonts->AddFontFromFileTTF().
+            - The font atlas is built when calling io.Fonts->GetTexDataAsXXXX() or io.Fonts->Build().
+            - Read FAQ and documentation in extra_fonts/ for more details.
+            - If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame().""")
     }
 
 
@@ -301,9 +333,11 @@ interface imgui_demoDebugInfo {
                 treePop()
             }
         }
-        
+
         var showClipRects = true
 
         val selected = BooleanArray(4 + 3 + 16 + 16, { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 })
+
+        var styleIdx = 0
     }
 }

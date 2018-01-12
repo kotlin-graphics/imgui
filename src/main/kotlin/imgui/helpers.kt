@@ -338,14 +338,14 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
                 FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would stumble
                 on the same issue. Consider moving within SetCursorXXX functions?   */
             cursorPosY = posY
-            with(currentWindow.dc) {
+            val window = currentWindow
+            with(window.dc) {
                 // Setting those fields so that SetScrollHere() can properly function after the end of our clipper usage.
                 cursorPosPrevLine.y = cursorPos.y - lineHeight
                 /*  If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a
                     fourth step to let user process and display the last item in their list.             */
                 prevLineHeight = lineHeight - style.itemSpacing.y
-                if (columnsCount > 1)
-                    columnsCellMinY = cursorPos.y   // Setting this so that cell Y position are set properly
+                columnsSet?.cellMinY = window.dc.cursorPos.y // Setting this so that cell Y position are set properly
             }
         }
     }

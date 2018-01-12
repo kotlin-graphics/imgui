@@ -28,7 +28,7 @@ import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
-import imgui.imgui.imgui_demoDebugInfo.Companion.showExampleMenuFile
+import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g

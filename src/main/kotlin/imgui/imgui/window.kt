@@ -108,7 +108,7 @@ interface imgui_window {
         /*  Parent window is latched only on the first call to begin() of the frame, so further append-calls can be done
             from a different window stack         */
         val parentWindowInStack = g.currentWindowStack.lastOrNull()
-        val parentWindow = when(firstBeginOfTheFrame) {
+        val parentWindow = when (firstBeginOfTheFrame) {
             true -> parentWindowInStack.takeIf { flags has (Wf.ChildWindow or Wf.Popup) }
             else -> window.parentWindow
         }
@@ -172,7 +172,7 @@ interface imgui_window {
             window.rootNonPopupWindow = window
             window.rootWindow = window
             parentWindow?.let {
-                if(flags has Wf.ChildWindow)
+                if (flags has Wf.ChildWindow)
                     window.rootWindow = it.rootWindow
                 if (flags hasnt Wf.Modal && flags has (Wf.ChildWindow or Wf.Popup))
                     window.rootNonPopupWindow = it.rootNonPopupWindow
@@ -583,12 +583,7 @@ interface imgui_window {
                 dc.itemFlagsStack.clear()
                 dc.itemWidthStack.clear()
                 dc.textWrapPosStack.clear()
-                dc.columnsCurrent = 0
-                dc.columnsCount = 1
-                dc.columnsStartPosY = dc.cursorPos.y
-                dc.columnsStartMaxPosX = dc.cursorMaxPos.x
-                dc.columnsCellMaxY = dc.columnsStartPosY
-                dc.columnsCellMinY = dc.columnsStartPosY
+                dc.columnsSet = null
                 dc.treeDepth = 0
                 dc.stateStorage = stateStorage
                 dc.groupStack.clear()
@@ -712,7 +707,7 @@ interface imgui_window {
 
         with(g.currentWindow!!) {
 
-            if (dc.columnsCount != 1) // close columns set if any is open
+            if (dc.columnsSet != null) // close columns set if any is open
                 endColumns()
             popClipRect()   // inner window clip rectangle
 
@@ -771,9 +766,9 @@ interface imgui_window {
      *  In window space (not screen space!) */
     val contentRegionMax: Vec2
         get() = with(currentWindowRead!!) {
-            Vec2(contentsRegionRect.max).apply {
-                if (dc.columnsCount != 1) x = getColumnOffset(dc.columnsCurrent + 1) - windowPadding.x
-            }
+            val mx = Vec2(contentsRegionRect.max)
+            dc.columnsSet?.let { mx.x = getColumnOffset(it.current + 1) - windowPadding.x }
+            mx
         }
 
     /** == GetContentRegionMax() - GetCursorPos()   */
@@ -943,10 +938,10 @@ interface imgui_window {
             val contentAvail = contentRegionAvail
             val size = glm.floor(sizeArg)
             val autoFitAxes = (if (size.x == 0f) 1 shl Axis.X else 0x00) or (if (size.y == 0f) 1 shl Axis.Y else 0x00)
-            if (size.x <= 0f)   // Arbitrary minimum zero-ish child size of 4.0f (0.0f causing too much issues)
-                size.x = glm.max(contentAvail.x, 4f) - glm.abs(size.x)
+            if (size.x <= 0f)   // Arbitrary minimum child size (0.0f causing too much issues)
+                size.x = glm.max(contentAvail.x + size.x, 4f)
             if (size.y <= 0f)
-                size.y = glm.max(contentAvail.y, 4f) - glm.abs(size.y)
+                size.y = glm.max(contentAvail.y + size.y, 4f)
 
             val backupBorderSize = style.childBorderSize
             if (!border) style.childBorderSize = 0f

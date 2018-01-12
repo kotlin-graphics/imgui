@@ -104,7 +104,7 @@ import imgui.functionalProgramming.withStyleColor
 import imgui.functionalProgramming.withStyleVar
 import imgui.functionalProgramming.withTextWrapPos
 import imgui.functionalProgramming.withTooltip
-import imgui.imgui.imgui_demoDebugInfo.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 import imgui.or
 import kotlin.math.cos
 import kotlin.reflect.KMutableProperty0

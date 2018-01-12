@@ -37,7 +37,7 @@ import imgui.ImGui.u32
 import imgui.ImGui.windowDrawList
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.treeNode
-import imgui.imgui.imgui_demoDebugInfo.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 import imgui.HoveredFlags as Hf
 
 object inputAndFocus {

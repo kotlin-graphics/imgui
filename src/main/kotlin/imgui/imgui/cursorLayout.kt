@@ -43,8 +43,7 @@ interface imgui_cursorLayout {
             return
         }
         // Horizontal Separator
-        if (window.dc.columnsCount > 1)
-            popClipRect()
+        window.dc.columnsSet?.let { popClipRect() }
 
         var x1 = window.pos.x
         val x2 = window.pos.x + window.size.x
@@ -55,8 +54,7 @@ interface imgui_cursorLayout {
         // NB: we don't provide our width so that it doesn't get feed back into AutoFit, we don't provide height to not alter layout.
         itemSize(Vec2())
         if (!itemAdd(bb)) {
-            if (window.dc.columnsCount > 1)
-                pushColumnClipRect()
+            window.dc.columnsSet?.let { pushColumnClipRect() }
             return
         }
 
@@ -65,9 +63,9 @@ interface imgui_cursorLayout {
         if (g.logEnabled)
             logRenderedText(null, "\n--------------------------------")
 
-        if (window.dc.columnsCount > 1)        {
+        window.dc.columnsSet?.let {
             pushColumnClipRect()
-            window.dc.columnsCellMinY = window.dc.cursorPos.y
+            it.cellMinY = window.dc.cursorPos.y
         }
     }
 

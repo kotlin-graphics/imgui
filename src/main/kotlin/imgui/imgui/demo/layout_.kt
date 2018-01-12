@@ -74,7 +74,7 @@ import imgui.functionalProgramming.withGroup
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
-import imgui.imgui.imgui_demoDebugInfo.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
