@@ -513,7 +513,7 @@ interface imgui_internal {
 
         val bbInteract = Rect(bb)
         bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
-        val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChilds or Bf.AllowOverlapMode)
+        val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
         if (g.activeId != id) setItemAllowOverlap()
 
         if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id))
@@ -945,17 +945,17 @@ interface imgui_internal {
             flags = flags or Bf.PressedOnClickRelease
 
         val backupHoveredWindow = g.hoveredWindow
-        if (flags has Bf.FlattenChilds && g.hoveredRootWindow === window)
+        if (flags has Bf.FlattenChildren && g.hoveredRootWindow === window)
             g.hoveredWindow = window
 
         var pressed = false
         var hovered = itemHoverable(bb, id)
-        if (flags has Bf.FlattenChilds && g.hoveredRootWindow === window)
+        if (flags has Bf.FlattenChildren && g.hoveredRootWindow === window)
             g.hoveredWindow = backupHoveredWindow
 
         /*  AllowOverlap mode (rarely used) requires previous frame hoveredId to be null or to match. This allows using
             patterns where a later submitted widget overlaps a previous one.         */
-        if (hovered && flags has Bf.AllowOverlapMode && g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)
+        if (hovered && flags has Bf.AllowItemOverlap && g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)
             hovered = false
 
         if (hovered) {
@@ -2247,10 +2247,10 @@ interface imgui_internal {
                 - OpenOnArrow .................... single-click on arrow to open
                 - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
         var buttonFlags = Bf.NoKeyModifiers or
-                if (flags has Tnf.AllowOverlapMode) Bf.AllowOverlapMode else Bf.Null
+                if (flags has Tnf.AllowItemOverlap) Bf.AllowItemOverlap else Bf.Repeat // =0
         if (flags has Tnf.OpenOnDoubleClick)
             buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (
-                    if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.Null)
+                    if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.Repeat) // =0
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
         if (pressed && flags hasnt Tnf.Leaf) {
             var toggled = flags hasnt (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick)
@@ -2263,7 +2263,7 @@ interface imgui_internal {
                 window.dc.stateStorage[id] = isOpen
             }
         }
-        if (flags has Tnf.AllowOverlapMode)
+        if (flags has Tnf.AllowItemOverlap)
             setItemAllowOverlap()
 
         // Render

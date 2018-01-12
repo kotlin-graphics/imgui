@@ -34,6 +34,7 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTriangle
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
+import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.setScrollHere
@@ -180,7 +181,7 @@ interface imgui_widgetsComboBox {
         if (!beginCombo(label, previewText, 0)) return false
 
         // Display items
-        // FIXME-OPT: Use clipper (if we can disable it on the appearing frame to make sure our call to SetScrollHere() is processed)
+        // FIXME-OPT: Use clipper (but we need to disable it on the appearing frame to make sure our call to setItemDefaultFocus() is processed)
         var valueChanged = false
         for (i in 0 until items.size) {
             pushId(i)
@@ -190,7 +191,7 @@ interface imgui_widgetsComboBox {
                 valueChanged = true
                 currentItem.set(i)
             }
-            if (itemSelected && isWindowAppearing) setScrollHere()
+            if (itemSelected) setItemDefaultFocus()
             popId()
         }
         endCombo()

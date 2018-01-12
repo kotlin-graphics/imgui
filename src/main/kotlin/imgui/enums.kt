@@ -128,7 +128,7 @@ enum class TreeNodeFlags(val i: Int) {
     /** Full colored frame (e.g. for CollapsingHeader)  */
     Framed(1 shl 1),
     /** Hit testing to allow subsequent widgets to overlap this one */
-    AllowOverlapMode(1 shl 2),
+    AllowItemOverlap(1 shl 2),
     /** Don't do a TreePush() when open (e.g. for CollapsingHeader) ( no extra indent nor pushing on ID stack   */
     NoTreePushOnOpen(1 shl 3),
     /** Don't automatically and temporarily open node when Logging is active (by default logging will automatically open
@@ -458,9 +458,9 @@ enum class MouseCursor(val i: Int) {
     TextInput(1),
     /** Unused  */
     Move(2),
-    /** Unused  */
+    /** When hovering over an horizontal border  */
     ResizeNS(3),
-    /** When hovering over a column */
+    /** When hovering over a vertical border or a column */
     ResizeEW(4),
     /** When hovering over the bottom-left corner of a window  */
     ResizeNESW(5),

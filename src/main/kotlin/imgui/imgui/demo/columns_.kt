@@ -15,7 +15,7 @@ import imgui.ImGui.nextColumn
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
-import imgui.ImGui.setNextWindowContentWidth
+import imgui.ImGui.setNextWindowContentSize
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
@@ -146,7 +146,7 @@ object columns_ {
                 }
 
                 treeNode("Horizontal Scrolling") {
-                    setNextWindowContentWidth(1500f)
+                    setNextWindowContentSize(Vec2(1500f, 0f))
                     withChild("##Scrollingregion", Vec2(0, fontSize * 20), false, WindowFlags.HorizontalScrollbar.i) {
                         columns(10)
                         val ITEMS_COUNT = 2000

@@ -6,7 +6,6 @@ package imgui.internal
 
 enum class ButtonFlags {
 
-    Null,
     /** hold to repeat  */
     Repeat,
     /** return true on click + release on same item [DEFAULT if no PressedOn* flag is set]  */
@@ -18,21 +17,21 @@ enum class ButtonFlags {
     /** return true on double-click (default requires click+release) */
     PressedOnDoubleClick,
     /** allow interactions even if a child window is overlapping */
-    FlattenChilds,
-    /** disable automatically closing parent popup on press [UNUSED] */
+    FlattenChildren,
+    /** require previous frame HoveredId to either match id or be null before being usable, use along with setItemAllowOverlap() */
+    AllowItemOverlap,
+    /** disable automatically closing parent popup on press // [UNUSED] */
     DontClosePopups,
     /** disable interactions */
     Disabled,
-    /** vertically align button to match text baseline (buttonEx() only)    */
+    /** vertically align button to match text baseline (buttonEx() only) */
     AlignTextBaseLine,
-    /** disable interaction if a key modifier is held   */
+    /** disable interaction if a key modifier is held */
     NoKeyModifiers,
-    /** require previous frame HoveredId to either match id or be null before being usable  */
-    AllowOverlapMode,
-    /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only)   */
+    /** don't set ActiveId while holding the mouse (ButtonFlags.PressedOnClick only) */
     NoHoldingActiveID;
 
-    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    val i = 1 shl ordinal
 
     infix fun or(b: ButtonFlags) = i or b.i
 }
