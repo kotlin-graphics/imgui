@@ -4,8 +4,12 @@ package imgui.internal
 // Types
 //-----------------------------------------------------------------------------
 
+// Internal Drag and Drop payload types. String starting with '_' are reserved for Dear ImGui.
+val PAYLOAD_TYPE_DOCKABLE = "_IMDOCK"   // ImGuiWindow* // [Internal] Docking/tabs
+
 enum class ButtonFlags {
 
+    Null,
     /** hold to repeat  */
     Repeat,
     /** return true on click + release on same item [DEFAULT if no PressedOn* flag is set]  */
@@ -24,14 +28,17 @@ enum class ButtonFlags {
     DontClosePopups,
     /** disable interactions */
     Disabled,
-    /** vertically align button to match text baseline (buttonEx() only) */
+    /** vertically align button to match text baseline - ButtonEx() only
+     *  FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
     AlignTextBaseLine,
     /** disable interaction if a key modifier is held */
     NoKeyModifiers,
     /** don't set ActiveId while holding the mouse (ButtonFlags.PressedOnClick only) */
-    NoHoldingActiveID;
+    NoHoldingActiveID,
+    /** press when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
+    PressedOnDragDropHold;
 
-    val i = 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
     infix fun or(b: ButtonFlags) = i or b.i
 }

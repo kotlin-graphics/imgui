@@ -1,13 +1,11 @@
 package imgui.internal
 
-import glm_.c
-import glm_.glm
-import glm_.i
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
-import glm_.xor
 import imgui.NUL
+import java.nio.ByteBuffer
 import imgui.Context as g
 
 // -----------------------------------------------------------------------------------------------------------------
@@ -83,6 +81,13 @@ import imgui.Context as g
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: Misc
 // -----------------------------------------------------------------------------------------------------------------
+
+fun hash(data: IntArray, seed: Int = 0): Int {
+    val buffer = ByteBuffer.allocate(data.size * Int.BYTES)
+    for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])
+    val bytes = ByteArray(buffer.size, { buffer[it] })
+    return hash(String(bytes), bytes.size, seed)
+}
 
 /** Pass data_size==0 for zero-terminated strings
 FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */

@@ -8,6 +8,8 @@ import glm_.vec2.operators.div
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
+import imgui.ImGui.acceptDragDropPayload
+import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -31,6 +33,7 @@ import imgui.ImGui.dragInt2
 import imgui.ImGui.dragInt3
 import imgui.ImGui.dragInt4
 import imgui.ImGui.dragIntRange2
+import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
 import imgui.ImGui.imageButton
@@ -188,6 +191,7 @@ object widgets {
     var alphaPreview = true
     var alphaHalfPreview = false
     var optionsMenu = true
+    // Generate a dummy palette
     var savedPaletteInited = false
     var savedPalette = Array(32, { Vec4() })
     var backupColor = Vec4()
@@ -635,7 +639,11 @@ object widgets {
 
                 text("Color button with Custom Picker Popup:")
                 if (!savedPaletteInited)
-                    savedPalette.forEachIndexed { n, c -> colorConvertHSVtoRGB(n / 31f, 0.8f, 0.8f, c::x, c::y, c::z) }
+                    savedPalette.forEachIndexed { n, c ->
+                        colorConvertHSVtoRGB(n / 31f, 0.8f, 0.8f, c::x, c::y, c::z)
+                        savedPalette[n].w = 1f // Alpha
+                    }
+                savedPaletteInited = true
                 var openPopup = colorButton("MyColor##3b", color, miscFlags)
                 sameLine()
                 openPopup = openPopup or button("Palette")
@@ -661,8 +669,18 @@ object widgets {
                             withId(n) {
                                 if ((n % 8) != 0)
                                     sameLine(0f, style.itemSpacing.y)
-                                if (colorButton("##palette", c, Cef.NoPicker or Cef.NoTooltip, Vec2(20, 20)))
+                                if (colorButton("##palette", c, Cef.NoAlpha or Cef.NoPicker or Cef.NoTooltip, Vec2(20, 20)))
                                     color.put(c.x, c.y, c.z, color.w) // Preserve alpha!
+
+                                if (beginDragDropTarget()) {
+                                    acceptDragDropPayload (PAYLOAD_TYPE_COLOR_3F)?.let {
+                                        for(i in 0..2) savedPalette [n][i] = (it.data as Vec4)[i]
+                                    }
+                                    acceptDragDropPayload (PAYLOAD_TYPE_COLOR_4F)?.let {
+                                        for(i in 0..3) savedPalette [n][i] = (it.data as Vec4)[i]
+                                    }
+                                    endDragDropTarget()
+                                }
                             }
                         }
                     }

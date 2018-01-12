@@ -169,9 +169,9 @@ enum class SelectableFlags(val i: Int) {
     SpanAllColumns(1 shl 1),
     /** Generate press events on double clicks too  */
     AllowDoubleClick(1 shl 2),
-    /* private  */
+    /* -> PressedOnClick  */
     Menu(1 shl 3),
-    /* private  */
+    /* -> PressedOnRelease  */
     MenuItem(1 shl 4),
     /* private  */
     Disabled(1 shl 5),
@@ -205,25 +205,82 @@ infix fun Int.or(other: ComboFlags) = or(other.i)
 infix fun Int.has(b: ComboFlags) = and(b.i) != 0
 infix fun Int.hasnt(b: ComboFlags) = and(b.i) == 0
 
+// Flags for ImGui::IsWindowFocused()
+enum class FocusedFlags(val i: Int) {
+    Null(0),
+    /** isWindowFocused(): Return true if any children of the window is focused */
+    ChildWindows(1 shl 0),
+    /** isWindowFocused(): Test from root window (top most parent of the current hierarchy) */
+    RootWindow(1 shl 1),
+    RootAndChildWindows(RootWindow or ChildWindows)
+}
+
+infix fun FocusedFlags.or(other: FocusedFlags) = i or other.i
+infix fun Int.and(other: FocusedFlags) = and(other.i)
+infix fun Int.or(other: FocusedFlags) = or(other.i)
+infix fun Int.has(b: FocusedFlags) = and(b.i) != 0
+infix fun Int.hasnt(b: FocusedFlags) = and(b.i) == 0
+
 enum class HoveredFlags(val i: Int) {
     /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active
      *  popup or modal blocking inputs under them.  */
     Default(0),
-    /** Return true even if a popup window is normally blocking access to this item/window  */
-    AllowWhenBlockedByPopup(1 shl 0),
-    //ImGuiHoveredFlags_AllowWhenBlockedByModal     = 1 << 1,   // Return true even if a modal popup window is normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
-    /** Return true even if an active item is blocking access to this item/window   */
-    AllowWhenBlockedByActiveItem(1 shl 2),
-    /** Return true even if the position is overlapped by another window    */
-    AllowWhenOverlapped(1 shl 3),
-    /** Treat all child windows as the same window (for isWindowHovered())  */
-    FlattenChilds(1 shl 4),
+    /** isWindowHovered() only: Return true if any children of the window is hovered */
+    ChildWindows(1 shl 0),
+    /** isWindowHovered() only: Test from root window (top most parent of the current hierarchy) */
+    RootWindow(1 shl 1),
+    /** Return true even if a popup window is normally blocking access to this item/window */
+    AllowWhenBlockedByPopup(1 shl 2),
+    // Return true even if a modal popup window is normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
+    //ImGuiHoveredFlags_AllowWhenBlockedByModal     ( 1 shl 3),
+    /** Return true even if an active item is blocking access to this item/window. Useful for Drag and Drop patterns. */
+    AllowWhenBlockedByActiveItem(1 shl 4),
+    /** Return true even if the position is overlapped by another window */
+    AllowWhenOverlapped(1 shl 5),
     RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i)
 }
 
+infix fun HoveredFlags.or(other: HoveredFlags) = i or other.i
 infix fun Int.or(other: HoveredFlags) = this or other.i
 infix fun Int.has(b: HoveredFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: HoveredFlags) = (this and b.i) == 0
+
+/** Flags for beginDragDropSource(), acceptDragDropPayload() */
+enum class DragDropFlags(val i: Int) {
+    // BeginDragDropSource() flags
+    /** By default), a successful call to beginDragDropSource opens a tooltip so you can display a preview or
+     *  description of the dragged contents. This flag disable this behavior. */
+    SourceNoAutoTooltip(1 shl 0),
+    /** By default), when dragging we clear data so that isItemHovered() will return true), to avoid subsequent user code
+     *  submitting tooltips. This flag disable this behavior so you can still call IsItemHovered() on the source item. */
+    SourceNoDisableHover(1 shl 1),
+    /** Disable the behavior that allows to open tree nodes and collapsing header by holding over them while dragging
+     *  a source item. */
+    SourceNoHoldToOpenOthers(1 shl 2),
+    /** Allow items such as text()), Image() that have no unique identifier to be used as drag source),
+     *  by manufacturing a temporary identifier based on their window-relative position.
+     *  This is extremely unusual within the dear imgui ecosystem and so we made it explicit. */
+    SourceAllowNullID(1 shl 3),
+    // AcceptDragDropPayload() flags
+    /** AcceptDragDropPayload() will returns true even before the mouse button is released.
+     *  You can then call isDelivery() to test if the payload needs to be delivered. */
+    AcceptBeforeDelivery(1 shl 10),
+    /** Do not draw the default highlight rectangle when hovering over target. */
+    AcceptNoDrawDefaultRect(1 shl 11),
+    /** For peeking ahead and inspecting the payload before delivery. */
+    AcceptPeekOnly(AcceptBeforeDelivery or AcceptNoDrawDefaultRect)
+}
+
+infix fun DragDropFlags.or(other: DragDropFlags) = i or other.i
+infix fun Int.or(other: DragDropFlags) = this or other.i
+infix fun Int.has(b: DragDropFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: DragDropFlags) = (this and b.i) == 0
+
+// Standard Drag and Drop payload types. Types starting with '_' are defined by Dear ImGui.
+/** float[3], Standard type for colors, without alpha. User code may use this type. */
+val PAYLOAD_TYPE_COLOR_3F  =   "_COL3F"
+/** float[4], Standard type for colors. User code may use this type. */
+val PAYLOAD_TYPE_COLOR_4F  =   "_COL4F"
 
 /** User fill ImGuiIO.KeyMap[] array with indices into the ImGuiIO.KeysDown[512] array  */
 enum class Key {
@@ -328,7 +385,8 @@ enum class Col {
     PlotHistogramHovered,
     TextSelectedBg,
     /** darken entire screen when a modal window is active   */
-    ModalWindowDarkening;
+    ModalWindowDarkening,
+    DragDropTarget;
 
     val i = ordinal
 

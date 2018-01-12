@@ -7,18 +7,16 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearDragDrop
 import imgui.ImGui.end
-import imgui.ImGui.endFrame
 import imgui.ImGui.initialize
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setNextWindowSize
-import imgui.impl.LwjglGL3
 import imgui.internal.Window
 import imgui.internal.focus
 import imgui.internal.lengthSqr
-import org.lwjgl.system.windows.WindowProc
 import kotlin.math.max
 import kotlin.math.min
 import imgui.Context as g
@@ -60,6 +58,7 @@ interface imgui_main {
         g.time += IO.deltaTime
         g.frameCount += 1
         g.tooltipOverrideCount = 0
+        g.windowsActiveCount = 0
         g.overlayDrawList.clear()
         g.overlayDrawList.pushTextureId(IO.fonts.texId)
         g.overlayDrawList.pushClipRectFullScreen()
@@ -93,6 +92,17 @@ interface imgui_main {
                         if (IO.keysDownDuration[i] < 0f) 0f
                         else IO.keysDownDuration[i] + IO.deltaTime
                     else -1f
+
+        // Elapse drag & drop payload
+        if (g.dragDropActive && g.dragDropPayload.dataFrameCount + 1 < g.frameCount) {
+            clearDragDrop()
+            TODO()
+//            g.DragDropPayloadBufHeap.clear()
+//            memset(& g . DragDropPayloadBufLocal, 0, sizeof(g.DragDropPayloadBufLocal))
+        }
+        g.dragDropAcceptIdPrev = g.dragDropAcceptIdCurr
+        g.dragDropAcceptIdCurr = 0
+        g.dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
 
         /*  Update mouse inputs state
             If mouse just appeared or disappeared (usually denoted by -Float.MAX_VALUE component, but in reality we test
@@ -175,12 +185,11 @@ interface imgui_main {
         val modalWindow = frontMostModalRootWindow
         if (modalWindow != null) {
             g.modalWindowDarkeningRatio = glm.min(g.modalWindowDarkeningRatio + IO.deltaTime * 6f, 1f)
-            var window = g.hoveredRootWindow
-            while (window != null && window != modalWindow)
-                window = window.parentWindow
-            if (window == null) {
-                g.hoveredWindow = null
-                g.hoveredRootWindow = null
+            g.hoveredRootWindow?.let {
+                if (!it.isChildOf(modalWindow)) {
+                    g.hoveredWindow = null
+                    g.hoveredRootWindow = null
+                }
             }
         } else g.modalWindowDarkeningRatio = 0f
 

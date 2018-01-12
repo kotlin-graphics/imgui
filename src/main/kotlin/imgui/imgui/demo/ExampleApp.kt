@@ -30,7 +30,7 @@ import imgui.ImGui.frameCount
 import imgui.ImGui.image
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isMouseHoveringRect
-import imgui.ImGui.itemsLineHeightWithSpacing
+import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.logButtons
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
@@ -367,7 +367,7 @@ object Console {
 //            ImGui::PopStyleVar();
 //            ImGui::Separator();
 //
-//            ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetStyle().ItemSpacing.y - ImGui::GetItemsLineHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
+//            ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetStyle().ItemSpacing.y - ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
 //            if (ImGui::BeginPopupContextWindow())
 //            {
 //                if (ImGui::Selectable("Clear")) ClearLog();
@@ -420,7 +420,7 @@ object Console {
 //            }
 //
 //            // Demonstrate keeping auto focus on the input box
-//            if (ImGui::IsItemHovered() || (ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0)))
+//            if (ImGui::IsItemHovered() || (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0)))
 //                ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
 //
 //            ImGui::End();
@@ -673,7 +673,7 @@ object Layout {
 
             // right
             beginGroup()
-            beginChild("item view", Vec2(0, -itemsLineHeightWithSpacing)) // Leave room for 1 line below us
+            beginChild("item view", Vec2(0, -frameHeightWithSpacing)) // Leave room for 1 line below us
             text("MyObject: ${selectedChild}")
             separator()
             textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +

@@ -28,6 +28,7 @@ import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTooltip
+import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
@@ -36,6 +37,7 @@ import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
 import imgui.ImGui.inputInt
 import imgui.ImGui.inputText
+import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logText
@@ -73,6 +75,7 @@ import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
+import imgui.DragDropFlags as Ddf
 import imgui.HoveredFlags as Hf
 import imgui.InputTextFlags as Itf
 import imgui.ItemFlags as If
@@ -93,12 +96,6 @@ interface imgui_internal {
     val currentWindowRead get() = g.currentWindow
 
     val currentWindow get() = g.currentWindow!!.apply { writeAccessed = true }
-
-    val parentWindow: Window
-        get() {
-            assert(g.currentWindowStack.size >= 2)
-            return g.currentWindowStack[g.currentWindowStack.size - 2]
-        }
 
     fun findWindowByName(name: String) = g.windowsById[hash(name, 0)]
 
@@ -299,17 +296,17 @@ interface imgui_internal {
      *  to NULL)    */
     fun openPopupEx(id: Int, reopenExisting: Boolean) {
 
-        val window = g.currentWindow!!
+        val parentWindow = g.currentWindow!!
         val currentStackSize = g.currentPopupStack.size
-        // Tagged as new ref because constructor sets Window to NULL (we are passing the ParentWindow info here)
-        val popupRef = PopupRef(id, window, window.getId("##Menus"), IO.mousePos)
+        // Tagged as new ref because constructor sets Window to NULL.
+        val popupRef = PopupRef(id, parentWindow, parentWindow.getId("##Menus"), IO.mousePos)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack.push(popupRef)
         else if (reopenExisting || g.openPopupStack[currentStackSize].popupId != id) {
             g.openPopupStack[currentStackSize] = popupRef
             /*  When reopening a popup we first refocus its parent, otherwise if its parent is itself a popup
                 it would get closed by CloseInactivePopups().  This is equivalent to what ClosePopupToLevel() does. */
-            if (g.openPopupStack[currentStackSize].popupId == id) window.focus()
+            if (g.openPopupStack[currentStackSize].popupId == id) parentWindow.focus()
         }
     }
 
@@ -542,6 +539,33 @@ interface imgui_internal {
 
         return held
     }
+
+
+    fun beginDragDropTargetCustom(bb: Rect, id: Int): Boolean {
+        if (!g.dragDropActive) return false
+
+        val window = g.currentWindow!!
+        g.hoveredWindow.let { if (it == null || window.rootWindow != it.rootWindow) return false }
+        assert(id != 0)
+        if (!isMouseHoveringRect(bb.min, bb.max) || id == g.dragDropPayload.sourceId)
+            return false
+
+        g.dragDropTargetRect put bb
+        g.dragDropTargetId = id
+        return true
+    }
+
+    fun clearDragDrop() = with(g) {
+        dragDropActive = false
+        dragDropPayload.clear()
+        dragDropAcceptIdPrev = 0
+        dragDropAcceptIdCurr = 0
+        dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
+        dragDropAcceptFrameCount = -1
+    }
+
+    val isDragDropPayloadBeingAccepted get() = g.dragDropActive && g.dragDropAcceptIdPrev != 0
+
 
     // FIXME-WIP: New Columns API
 
@@ -950,6 +974,19 @@ interface imgui_internal {
 
         var pressed = false
         var hovered = itemHoverable(bb, id)
+
+        // Special mode for Drag and Drop where holding button pressed for a long time while dragging another item triggers the button
+        if (flags has Bf.PressedOnDragDropHold && g.dragDropActive && g.dragDropSourceFlags hasnt Ddf.SourceNoHoldToOpenOthers)
+            if (isItemHovered(Hf.AllowWhenBlockedByActiveItem)) {
+                hovered = true
+                setHoveredId(id)
+                if (calcTypematicPressedRepeatAmount(g.hoveredIdTimer + 0.0001f, g.hoveredIdTimer + 0.0001f - IO.deltaTime,
+                                0.01f, 0.7f) != 0) { // FIXME: Our formula for CalcTypematicPressedRepeatAmount() is fishy
+                    pressed = true
+                    window.focus()
+                }
+            }
+
         if (flags has Bf.FlattenChildren && g.hoveredRootWindow === window)
             g.hoveredWindow = backupHoveredWindow
 
@@ -1002,9 +1039,9 @@ interface imgui_internal {
                 held = true
             else {
                 if (hovered && flags has Bf.PressedOnClickRelease)
-                // Repeat mode trumps <on release>
-                    if (!(flags has Bf.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay))
-                        pressed = true
+                    if (!(flags has Bf.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay)) // Repeat mode trumps <on release>
+                        if(!g.dragDropActive)
+                            pressed = true
                 clearActiveId()
             }
         return booleanArrayOf(pressed, hovered, held)
@@ -2064,7 +2101,7 @@ interface imgui_internal {
 
         beginGroup()
         pushId(label)
-        val buttonSz = Vec2(smallSquareSize)
+        val buttonSz = Vec2(frameHeight)
         step?.let { pushItemWidth(glm.max(1f, calcItemWidth() - (buttonSz.x + style.itemInnerSpacing.x) * 2)) }
 
         val buf = data.format(dataType, scalarFormat, CharArray(64))
@@ -2246,11 +2283,11 @@ interface imgui_internal {
                 - OpenOnDoubleClick .............. double-click anywhere to open
                 - OpenOnArrow .................... single-click on arrow to open
                 - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
-        var buttonFlags = Bf.NoKeyModifiers or
-                if (flags has Tnf.AllowItemOverlap) Bf.AllowItemOverlap else Bf.Repeat // =0
+        var buttonFlags = Bf.NoKeyModifiers or if (flags has Tnf.AllowItemOverlap) Bf.AllowItemOverlap else Bf.Null
+        buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
         if (flags has Tnf.OpenOnDoubleClick)
-            buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (
-                    if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.Repeat) // =0
+            buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.Null)
+
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
         if (pressed && flags hasnt Tnf.Leaf) {
             var toggled = flags hasnt (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick)
@@ -2258,6 +2295,8 @@ interface imgui_internal {
                 toggled = toggled or isMouseHoveringRect(interactBb.min, Vec2(interactBb.min.x + textOffsetX, interactBb.max.y))
             if (flags has Tnf.OpenOnDoubleClick)
                 toggled = toggled or IO.mouseDoubleClicked[0]
+            if (g.dragDropActive && isOpen) // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
+                toggled = false
             if (toggled) {
                 isOpen = !isOpen
                 window.dc.stateStorage[id] = isOpen
@@ -2557,8 +2596,6 @@ interface imgui_internal {
             else -> glm.acos(x)
         //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
-
-        val smallSquareSize get() = g.fontSize + style.framePadding.y * 2f
 
         private var f0 = 0f // TODO remove
         private var i0 = 0

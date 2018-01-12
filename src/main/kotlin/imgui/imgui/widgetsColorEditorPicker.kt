@@ -7,10 +7,12 @@ import glm_.func.sin
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
 import imgui.ImGui.F32_TO_INT8_UNBOUND
+import imgui.ImGui.beginDragDropSource
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginPopup
 import imgui.ImGui.buttonBehavior
@@ -24,9 +26,11 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
+import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.hsvToRGB
 import imgui.ImGui.inputText
@@ -45,16 +49,15 @@ import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.rgbToHSV
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
+import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.shadeVertsLinearColorGradientKeepAlpha
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.u32
-import imgui.imgui.imgui_internal.Companion.smallSquareSize
 import imgui.imgui.imgui_widgetsText.Companion.colorPickerOptionsPopup
 import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
-import java.util.*
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
 import imgui.InputTextFlags as Itf
@@ -96,7 +99,7 @@ interface imgui_widgetsColorEditorPicker {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val squareSz = smallSquareSize
+        val squareSz = frameHeight
         val wExtra = if (flags has Cef.NoSmallPreview) 0f else squareSz + style.itemInnerSpacing.x
         val wItemsAll = calcItemWidth() - wExtra
         val labelDisplayEnd = findRenderedTextEnd(label)
@@ -233,7 +236,7 @@ interface imgui_widgetsColorEditorPicker {
         // When picker is being actively used, use its active id so isItemActive() will function on colorEdit4().
         if (pickerActiveWindow != null && g.activeId != 0 && g.activeIdWindow == pickerActiveWindow)
             window.dc.lastItemId = g.activeId
-        
+
         return valueChanged
     }
 
@@ -295,10 +298,10 @@ interface imgui_widgetsColorEditorPicker {
             flags = flags or (g.colorEditOptions and Cef.AlphaBar)
 
         // Setup
-        val components = if(flags has Cef.NoAlpha) 3 else 4
+        val components = if (flags has Cef.NoAlpha) 3 else 4
         val alphaBar = flags has Cef.AlphaBar && flags hasnt Cef.NoAlpha
         val pickerPos = Vec2(window.dc.cursorPos)
-        val squareSz = smallSquareSize
+        val squareSz = frameHeight
         val barsWidth = squareSz     // Arbitrary smallish width of Hue/Alpha picking bars
         // Saturation/Value picking box
         val svPickerSize = glm.max(barsWidth * 1, calcItemWidth() - (if (alphaBar) 2 else 1) * (barsWidth + style.itemInnerSpacing.x))
@@ -306,7 +309,7 @@ interface imgui_widgetsColorEditorPicker {
         val bar1PosX = bar0PosX + barsWidth + style.itemInnerSpacing.x
         val barsTrianglesHalfSz = (barsWidth * 0.2f).i.f
 
-        val backupInitialCol = FloatArray(4, {col[it]})
+        val backupInitialCol = FloatArray(4, { col[it] })
 
         val wheelThickness = svPickerSize * 0.08f
         val wheelROuter = svPickerSize * 0.50f
@@ -539,7 +542,7 @@ interface imgui_widgetsColorEditorPicker {
         popId()
 
         var compare = true
-        repeat(components) { if(backupInitialCol[it] != col[it]) compare = false }
+        repeat(components) { if (backupInitialCol[it] != col[it]) compare = false }
 
         return valueChanged && !compare
     }
@@ -553,7 +556,7 @@ interface imgui_widgetsColorEditorPicker {
         if (window.skipItems) return false
 
         val id = window.getId(descId)
-        val defaultSize = smallSquareSize
+        val defaultSize = frameHeight
         if (size.x == 0f)
             size.x = defaultSize
         if (size.y == 0f)
@@ -562,7 +565,7 @@ interface imgui_widgetsColorEditorPicker {
         itemSize(bb, if (size.y >= defaultSize) style.framePadding.y else 0f)
         if (!itemAdd(bb, id)) return false
 
-        val (pressed, hovered, held) = buttonBehavior(bb, id)
+        var (pressed, hovered, held) = buttonBehavior(bb, id)
 
         var flags = flags
         if (flags has Cef.NoAlpha)
@@ -596,7 +599,21 @@ interface imgui_widgetsColorEditorPicker {
         else
             window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
 
-        if (hovered && flags hasnt Cef.NoTooltip) {
+        // Drag and Drop Source
+        if (g.activeId == id && beginDragDropSource()) { // NB: The ActiveId test is merely an optional micro-optimization
+
+            if (flags has Cef.NoAlpha)
+                setDragDropPayload(PAYLOAD_TYPE_COLOR_3F, col, Vec3.size, Cond.Once)
+            else
+                setDragDropPayload(PAYLOAD_TYPE_COLOR_4F, col, Vec4.size, Cond.Once)
+            colorButton(descId, col, flags)
+            sameLine()
+            textUnformatted("Color")
+            endDragDropSource()
+            hovered = false
+        }
+        // Tooltip
+        if (flags hasnt Cef.NoTooltip && hovered) {
             val pF = floatArrayOf(col.x, col.y, col.z, col.w)
             colorTooltip(descId, pF, flags and (Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf))
             col.put(pF)

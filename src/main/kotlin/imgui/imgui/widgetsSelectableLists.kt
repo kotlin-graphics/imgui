@@ -20,7 +20,6 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.getId
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.parentWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popId
 import imgui.ImGui.popStyleColor
@@ -216,7 +215,7 @@ interface imgui_widgetsSelectableLists {
 
     /** terminate the scrolling region  */
     fun listBoxFooter() {
-        val parentWindow = parentWindow
+        val parentWindow = currentWindow.parentWindow!!
         val bb = parentWindow.dc.lastItemRect // assign is safe, itemSize() won't modify bb
 
         endChildFrame()
