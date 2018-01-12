@@ -374,8 +374,6 @@ class Window(
     val id = hash(name, 0)
     /** See enum ImGuiWindowFlags_  */
     var flags = 0
-    /** Order within immediate parent window, if we are a child window. Otherwise 0.    */
-    var orderWithinParent = 0
 
     var posF = Vec2()
     /** Position rounded-up to nearest pixel    */
@@ -428,6 +426,10 @@ class Window(
     var appearing = false
     /** Set when the window has a close button (p_open != NULL) */
     var closeButton = false
+    /** Order within immediate parent window, if we are a child window. Otherwise 0. */
+    var beginOrderWithinParent = -1
+    /** Order within entire imgui context. This is mostly used for debugging submission order related issues. */
+    var beginOrderWithinContext = -1
     /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
     var beginCount = 0
     /** ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)   */
@@ -484,7 +486,7 @@ class Window(
     var fontWindowScale = 1f
 
     var drawList = DrawList().apply { _ownerName = name }
-    /** Immediate parent in the window stack *regardless* of whether this window is a child window or not)  */
+    /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
     /** Generally point to ourself. If we are a child window, this is pointing to the first non-child parent window.    */
     var rootWindow: Window? = null
@@ -526,6 +528,13 @@ class Window(
     fun getIdNoKeepAlive(str: String, strEnd: Int = str.length): Int {
         val seed = idStack.last()
         return hash(str, str.length - strEnd, seed)
+    }
+
+    /** This is only used in rare/specific situations to manufacture an ID out of nowhere. */
+    fun getIdFromRectangle(rAbs: Rect): Int {
+        val seed = idStack.last()
+        val rRel = intArrayOf((rAbs.min.x - pos.x).i, (rAbs.min.y - pos.y).i, (rAbs.max.x - pos.x).i, (rAbs.max.y - pos.y).i)
+        return hash(rRel, seed).also { keepAliveId(it) } // id
     }
 
     /** We don't use g.FontSize because the window may be != g.CurrentWidow. */
@@ -693,7 +702,7 @@ class Window(
     }
 
     // FIXME: Add a more explicit sort order in the window structure.
-    private val childWindowComparer = compareBy<Window>({ it.flags has Wf.Popup }, { it.flags has Wf.Tooltip }, { it.orderWithinParent })
+    private val childWindowComparer = compareBy<Window>({ it.flags has Wf.Popup }, { it.flags has Wf.Tooltip }, { it.beginOrderWithinParent })
 
     fun setConditionAllowFlags(flags: Int, enabled: Boolean) = if (enabled) {
         setWindowPosAllowFlags = setWindowPosAllowFlags or flags
@@ -724,6 +733,16 @@ class Window(
             }
     }
 
+    infix fun isChildOf(potentialParent: Window?): Boolean {
+        if (rootWindow === potentialParent) return true
+        var window: Window? = this
+        while (window != null) {
+            if (window === potentialParent) return true
+            window = window.parentWindow
+        }
+        return false
+    }
+
     fun calcResizePosSizeFromAnyCorner(cornerTarget: Vec2, cornerNorm: Vec2, outPos: Vec2, outSize: Vec2) {
         val posMin = cornerTarget.lerp(pos, cornerNorm)             // Expected window upper-left
         val posMax = (size + pos).lerp(cornerTarget, cornerNorm)    // Expected window lower-right
@@ -748,8 +767,8 @@ class Window(
     }
 
     fun calcSizeContents() = Vec2(
-            (if(sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f,
-            (if(sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f) + windowPadding
+            (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f,
+            (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f) + windowPadding
 }
 
 /** Moving window to front of display (which happens to be back of our sorted list) */

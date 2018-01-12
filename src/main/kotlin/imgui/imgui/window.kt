@@ -107,7 +107,11 @@ interface imgui_window {
 
         /*  Parent window is latched only on the first call to begin() of the frame, so further append-calls can be done
             from a different window stack         */
-        val parentWindow = if (firstBeginOfTheFrame) g.currentWindowStack.lastOrNull() else window.parentWindow
+        val parentWindowInStack = g.currentWindowStack.lastOrNull()
+        val parentWindow = when(firstBeginOfTheFrame) {
+            true -> parentWindowInStack.takeIf { flags has (Wf.ChildWindow or Wf.Popup) }
+            else -> window.parentWindow
+        }
         assert(parentWindow != null || flags hasnt Wf.ChildWindow)
 
         // Add to stack
@@ -165,16 +169,21 @@ interface imgui_window {
 
             // Initialize
             window.parentWindow = parentWindow
-            window.rootWindow = if (flags hasnt Wf.ChildWindow) window else parentWindow!!.rootWindow
-            val cond = flags hasnt (Wf.ChildWindow or Wf.Popup) || flags has Wf.Modal
-            // Used to display TitleBgActive color and for selecting which window to use for NavWindowing
-            window.rootNonPopupWindow = if (cond) window else parentWindow!!.rootNonPopupWindow
+            window.rootNonPopupWindow = window
+            window.rootWindow = window
+            parentWindow?.let {
+                if(flags has Wf.ChildWindow)
+                    window.rootWindow = it.rootWindow
+                if (flags hasnt Wf.Modal && flags has (Wf.ChildWindow or Wf.Popup))
+                    window.rootNonPopupWindow = it.rootNonPopupWindow
+            }
             //window->RootNavWindow = window;
             //while (window->RootNavWindow->Flags & ImGuiWindowFlags_NavFlattened)
             //    window->RootNavWindow = window->RootNavWindow->ParentWindow;
 
             window.active = true
-            window.orderWithinParent = 0
+            window.beginOrderWithinParent = 0
+            window.beginOrderWithinContext = g.windowsActiveCount++
             window.beginCount = 0
             window.clipRect.put(-Float.MAX_VALUE, -Float.MAX_VALUE, +Float.MAX_VALUE, +Float.MAX_VALUE)
             window.lastFrameActive = currentFrame
@@ -303,7 +312,7 @@ interface imgui_window {
 
             // Position child window
             if (flags has Wf.ChildWindow) {
-                window.orderWithinParent = parentWindow!!.dc.childWindows.size
+                window.beginOrderWithinParent = parentWindow!!.dc.childWindows.size
                 parentWindow.dc.childWindows.add(window)
             }
             if (flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowPosSetByApi) {
@@ -323,13 +332,14 @@ interface imgui_window {
                 /*  We want some overlap to convey the relative depth of each popup (currently the amount of overlap it is
                 hard-coded to style.ItemSpacing.x, may need to introduce another style value).  */
                 val horizontalOverlap = style.itemSpacing.x
+                val parentMenu = parentWindowInStack!!
                 val rectToAvoid =
-                        if (parentWindow!!.dc.menuBarAppending)
-                            Rect(-Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight,
-                                    Float.MAX_VALUE, parentWindow.pos.y + parentWindow.titleBarHeight + parentWindow.menuBarHeight)
+                        if (parentMenu.dc.menuBarAppending)
+                            Rect(-Float.MAX_VALUE, parentMenu.pos.y + parentMenu.titleBarHeight,
+                                    Float.MAX_VALUE, parentMenu.pos.y + parentMenu.titleBarHeight + parentMenu.menuBarHeight)
                         else
-                            Rect(parentWindow.pos.x + horizontalOverlap, -Float.MAX_VALUE,
-                                    parentWindow.pos.x + parentWindow.size.x - horizontalOverlap - parentWindow.scrollbarSizes.x, Float.MAX_VALUE)
+                            Rect(parentMenu.pos.x + horizontalOverlap, -Float.MAX_VALUE,
+                                    parentMenu.pos.x + parentMenu.size.x - horizontalOverlap - parentMenu.scrollbarSizes.x, Float.MAX_VALUE)
                 window.posF put findBestWindowPosForPopup(window.posF, window.size, window::autoPosLastDirection, rectToAvoid)
             } else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize) {
                 val rectToAvoid = Rect(window.posF.x - 1, window.posF.y - 1, window.posF.x + 1, window.posF.y + 1)

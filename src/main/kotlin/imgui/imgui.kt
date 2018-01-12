@@ -46,6 +46,7 @@ object ImGui :
         imgui_menus,
         imgui_popups,
         imgui_logging,
+        imgui_dragAndDrop,
         imgui_clipping,
         imgui_styles,
         imgui_focus,

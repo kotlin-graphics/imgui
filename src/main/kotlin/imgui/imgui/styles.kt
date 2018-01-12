@@ -51,7 +51,8 @@ interface imgui_styles {
                 Vec4(0.90f, 0.70f, 0.00f, 1.00f),
                 Vec4(1.00f, 0.60f, 0.00f, 1.00f),
                 Vec4(0.00f, 0.00f, 1.00f, 0.35f),
-                Vec4(0.20f, 0.20f, 0.20f, 0.35f)))
+                Vec4(0.20f, 0.20f, 0.20f, 0.35f),
+                Vec4(1.00f, 1.00f, 0.00f, 0.90f)))
     }
 
     fun styleColorsDark(dst: Style? = null) = with(dst ?: g.style) {
@@ -99,7 +100,8 @@ interface imgui_styles {
                 Vec4(0.90f, 0.70f, 0.00f, 1.00f),
                 Vec4(1.00f, 0.60f, 0.00f, 1.00f),
                 Vec4(0.26f, 0.59f, 0.98f, 0.35f),
-                Vec4(0.80f, 0.80f, 0.80f, 0.35f)))
+                Vec4(0.80f, 0.80f, 0.80f, 0.35f),
+                Vec4(1.00f, 1.00f, 0.00f, 0.90f)))
     }
 
     fun styleColorsLight(dst: Style? = null) = with(dst ?: g.style) {
@@ -147,6 +149,7 @@ interface imgui_styles {
                 Vec4(0.90f, 0.70f, 0.00f, 1.00f),
                 Vec4(1.00f, 0.45f, 0.00f, 1.00f),
                 Vec4(0.26f, 0.59f, 0.98f, 0.35f),
-                Vec4(0.20f, 0.20f, 0.20f, 0.35f)))
+                Vec4(0.20f, 0.20f, 0.20f, 0.35f),
+                Vec4(0.26f, 0.59f, 0.98f, 0.95f)))
     }
 }

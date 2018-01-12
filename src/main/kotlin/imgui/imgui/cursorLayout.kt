@@ -252,14 +252,17 @@ interface imgui_cursorLayout {
         window.dc.currentLineTextBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, style.framePadding.y)
     }
 
-    /** height of font == GetWindowFontSize()   */
+    /** ~ FontSize   */
     val textLineHeight get() = g.fontSize
 
-    /** distance (in pixels) between 2 consecutive lines of text == GetWindowFontSize() + GetStyle().ItemSpacing.y  */
+    /** ~ FontSize + style.ItemSpacing.y (distance in pixels between 2 consecutive lines of text)  */
     val textLineHeightWithSpacing get() = g.fontSize + style.itemSpacing.y
+
+    /** ~ FontSize + style.FramePadding.y * 2 */
+    val frameHeight get() = g.fontSize + style.framePadding.y * 2f
 
     /** distance (in pixels) between 2 consecutive lines of standard height widgets ==
      *  GetWindowFontSize() + GetStyle().FramePadding.y*2 + GetStyle().ItemSpacing.y    */
-    val itemsLineHeightWithSpacing get() = g.fontSize + style.framePadding.y * 2f + style.itemSpacing.y
+    val frameHeightWithSpacing get() = g.fontSize + style.framePadding.y * 2f + style.itemSpacing.y
 
 }

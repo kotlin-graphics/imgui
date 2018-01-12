@@ -33,7 +33,7 @@ import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemRectSize
-import imgui.ImGui.itemsLineHeightWithSpacing
+import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.listBox
 import imgui.ImGui.listBoxFooter
 import imgui.ImGui.listBoxHeader
@@ -379,7 +379,7 @@ object layout_ {
                 sliderInt("Lines", ::lines, 1, 15)
                 pushStyleVar(StyleVar.FrameRounding, 3f)
                 pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
-                beginChild("scrolling", Vec2(0, itemsLineHeightWithSpacing * 7 + 30), true, Wf.HorizontalScrollbar.i)
+                beginChild("scrolling", Vec2(0, frameHeightWithSpacing * 7 + 30), true, Wf.HorizontalScrollbar.i)
                 for (line in 0 until lines) {
                     /*  Display random stuff (for the sake of this trivial demo we are using basic button+sameLine.
                         If you want to create your own time line for a real application you may be better off

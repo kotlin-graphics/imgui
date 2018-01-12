@@ -1,46 +1,35 @@
 package imgui.imgui
 
-import glm_.f
-import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
 import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
-import imgui.ImGui.buttonEx
-import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endPopup
 import imgui.ImGui.findWindowByName
-import imgui.ImGui.getColorU32
+import imgui.ImGui.frameHeight
 import imgui.ImGui.indent
 import imgui.ImGui.isPopupOpen
-import imgui.ImGui.isWindowAppearing
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.openPopupEx
-import imgui.ImGui.plotEx
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
-import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
-import imgui.ImGui.renderRectFilledRangeH
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTriangle
-import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
-import imgui.ImGui.setScrollHere
 import imgui.ImGui.unindent
-import imgui.imgui.imgui_internal.Companion.smallSquareSize
-import imgui.internal.*
+import imgui.internal.Dir
+import imgui.internal.Rect
+import imgui.internal.isPowerOfTwo
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlags as Cf
@@ -73,7 +62,7 @@ interface imgui_widgetsComboBox {
         val (pressed, hovered, held) = buttonBehavior(frameBb, id)
         var popupOpen = isPopupOpen(id)
 
-        val arrowSize = smallSquareSize
+        val arrowSize = frameHeight
         val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
         val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button

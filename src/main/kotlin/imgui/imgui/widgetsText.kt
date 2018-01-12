@@ -15,6 +15,7 @@ import imgui.ImGui.colorPicker4
 import imgui.ImGui.currentWindow
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.endPopup
+import imgui.ImGui.frameHeight
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
@@ -34,7 +35,6 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.textLineHeight
-import imgui.imgui.imgui_internal.Companion.smallSquareSize
 import imgui.internal.Dir
 import imgui.internal.Rect
 import imgui.internal.strchr
@@ -267,7 +267,7 @@ interface imgui_widgetsText {
             if ((!allowOptPicker && !allowOptAlphaBar) || !beginPopup("context")) return
             if (allowOptPicker) {
                 // FIXME: Picker size copied from main picker function
-                val pickerSize = Vec2(g.fontSize * 8, glm.max(g.fontSize * 8 - (smallSquareSize + style.itemInnerSpacing.x), 1f))
+                val pickerSize = Vec2(g.fontSize * 8, glm.max(g.fontSize * 8 - (frameHeight + style.itemInnerSpacing.x), 1f))
                 pushItemWidth(pickerSize.x)
                 for (pickerType in 0..1) {
                     // Draw small/thumbnail version of each picker type (over an invisible button for selection)

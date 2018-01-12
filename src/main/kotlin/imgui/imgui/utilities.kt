@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import gli_.hasnt
 import glm_.f
 import glm_.glm
 import glm_.i
@@ -20,6 +21,7 @@ import imgui.internal.Rect
 import imgui.internal.saturate
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
+import imgui.FocusedFlags as Ff
 import imgui.HoveredFlags as Hf
 import imgui.WindowFlags as Wf
 
@@ -38,7 +40,7 @@ interface imgui_utilities {
         // Test for bounding box overlap, as updated as ItemAdd()
             !window.dc.lastItemRectHoveredRect -> false
             else -> {
-                assert(flags hasnt Hf.FlattenChilds) // Flags not supported by this function
+                assert(flags hasnt (Hf.RootWindow or Hf.ChildWindows)) // Flags not supported by this function
                 when {
                 /*  Test if we are hovering the right window (our window could be behind another window)
                     [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to
@@ -95,28 +97,56 @@ interface imgui_utilities {
             g.activeIdAllowOverlap = true
     }
 
-    /** is current Begin()-ed window focused?   */
-    val isWindowFocused get() = g.navWindow === g.currentWindow!! // Not inside a Begin()/End()
+    /** is current window focused? or its root/child, depending on flag. see flag for options.
+     *  @param flag FocusedFlags */
+    fun isWindowFocused(flag: Ff) = isWindowFocused(flag.i)
 
-    /** is current Begin()-ed window hovered (and typically: not blocked by a popup/modal)? */
-    fun isWindowHovered(flags: Hf) = isWindowHovered(flags.i)
+    /** is current window focused? or its root/child, depending on flags. see flags for options.
+     *  @param flags FocusedFlags */
+    fun isWindowFocused(flags: Int = Ff.Null.i): Boolean {
+        val curr = g.currentWindow!!     // Not inside a Begin()/End()
+        return when (flags and (Ff.RootWindow or Ff.ChildWindows)) {
+            Ff.RootWindow or Ff.ChildWindows -> g.navWindow?.let { it.rootWindow === curr.rootWindow } ?: false
+            Ff.RootWindow.i -> curr.rootWindow === g.navWindow
+            Ff.ChildWindows.i -> g.navWindow?.isChildOf(curr) ?: false
+            else -> curr === g.navWindow
+        }
+    }
 
+    /** iis current window hovered (and typically: not blocked by a popup/modal)? see flag for options.
+     *  @param flag HoveredFlags */
+    fun isWindowHovered(flag: Hf) = isWindowHovered(flag.i)
+
+    /** is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
+     *  @param flags HoveredFlags */
     fun isWindowHovered(flags: Int = Hf.Default.i): Boolean {
-        assert(flags hasnt Hf.AllowWhenOverlapped)  // Flags not supported by this function
+        assert(flags hasnt Hf.AllowWhenOverlapped)   // Flags not supported by this function
+        when (flags and (Hf.RootWindow or Hf.ChildWindows)) {
+            Hf.RootWindow or Hf.ChildWindows -> {
+                if (g.hoveredRootWindow !== g.currentWindow!!.rootWindow) return false
+            }
+            Hf.RootWindow.i -> {
+                if (g.hoveredWindow !== g.currentWindow!!.rootWindow) return false
+            }
+            Hf.ChildWindows.i -> {
+                g.hoveredWindow.let { if (it == null || !it.isChildOf(g.currentWindow)) return false }
+            }
+            else -> {
+                if (g.hoveredWindow !== g.currentWindow) return false
+            }
+        }
+
         return when {
-            flags has Hf.FlattenChilds && g.hoveredRootWindow !== g.currentWindow!!.rootWindow -> false
-            g.hoveredWindow !== g.currentWindow -> false
             !g.hoveredRootWindow!!.isContentHoverable(flags) -> false
             flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != g.hoveredWindow!!.moveId -> false
             else -> true
         }
     }
 
-    /** is current Begin()-ed root window focused (root = top-most parent of a child, otherwise self)?  */
-    val isRootWindowFocused get() = g.navWindow === g.currentWindow!!.rootWindow // Not inside a Begin()/End()
+    val isAnyWindowFocused get() = g.navWindow != null
 
-    /** is current Begin()-ed root window or any of its child (including current window) focused?   */
-    val isRootWindowOrAnyChildFocused get() = g.navWindow != null && g.navWindow!!.rootWindow === g.currentWindow!!.rootWindow // Not inside a Begin()/End()
+    /** is mouse hovering any visible window */
+    val isAnyWindowHovered get() = g.hoveredWindow != null
 
     /** test if rectangle (of given size, starting from cursor position) is visible / not clipped.  */
     fun isRectVisible(size: Vec2) = with(currentWindowRead!!) { clipRect overlaps Rect(dc.cursorPos, dc.cursorPos + size) }

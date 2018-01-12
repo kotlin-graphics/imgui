@@ -7,6 +7,7 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.internal.*
 import java.io.File
+import java.nio.ByteBuffer
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -39,6 +40,8 @@ object Context {
     val currentWindowStack = Stack<Window>()
 
     val windowsById = mutableMapOf<Int, Window>()
+
+    var windowsActiveCount = 0
     /** Being drawn into    */
     var currentWindow: Window? = null
     /** Will catch keyboard inputs  */
@@ -139,6 +142,34 @@ object Context {
     var mouseCursor = MouseCursor.Arrow
 
     val mouseCursorData = Array(MouseCursor.Count.i, { MouseCursorData() })
+
+
+    //------------------------------------------------------------------
+    // Drag and Drop
+    //------------------------------------------------------------------
+    var dragDropActive = false
+
+    var dragDropSourceFlags = 0
+
+    var dragDropMouseButton = -1
+
+    var dragDropPayload = Payload()
+
+    var dragDropTargetRect = Rect()
+
+    var dragDropTargetId = 0
+
+    var dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE // TODO check
+    /** Target item id (set at the time of accepting the payload) */
+    var dragDropAcceptIdCurr = 0
+    /** Target item id from previous frame (we need to store this to allow for overlapping drag and drop targets) */
+    var dragDropAcceptIdPrev = 0
+    /** Last time a target expressed a desire to accept the source */
+    var dragDropAcceptFrameCount = -1
+    /** We don't expose the ImVector<> directly */
+    lateinit var dragDropPayloadBufHeap: ByteBuffer
+
+    var dragDropPayloadBufLocal = ByteArray(8)
 
     //------------------------------------------------------------------
     // Widget state
