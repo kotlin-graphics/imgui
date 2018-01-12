@@ -14,7 +14,8 @@ enum class WindowFlags(val i: Int) {
     NoMove(1 shl 2),
     /** Disable scrollbars (window can still scroll with mouse or programatically)  */
     NoScrollbar(1 shl 3),
-    /** Disable user vertically scrolling with mouse wheel  */
+    /** Disable user vertically scrolling with mouse wheel. On child window, mouse wheel will be forwarded to the parent
+     *  unless noScrollbar is also set.  */
     NoScrollWithMouse(1 shl 4),
     /** Disable user collapsing window by double-clicking on it */
     NoCollapse(1 shl 5),
@@ -106,6 +107,8 @@ enum class InputTextFlags(val i: Int) {
     ReadOnly(1 shl 14),
     /** Password mode), display all characters as '*'   */
     Password(1 shl 15),
+    /** Disable undo / redo */
+    DisableUndo(1 shl 16),
 
     // [Internal]
 
@@ -249,8 +252,8 @@ infix fun Int.hasnt(b: HoveredFlags) = (this and b.i) == 0
 enum class DragDropFlags(val i: Int) {
     // BeginDragDropSource() flags
     /** By default), a successful call to beginDragDropSource opens a tooltip so you can display a preview or
-     *  description of the dragged contents. This flag disable this behavior. */
-    SourceNoAutoTooltip(1 shl 0),
+     *  description of the source contents. This flag disable this behavior. */
+    SourceNoPreviewTooltip(1 shl 0),
     /** By default), when dragging we clear data so that isItemHovered() will return true), to avoid subsequent user code
      *  submitting tooltips. This flag disable this behavior so you can still call IsItemHovered() on the source item. */
     SourceNoDisableHover(1 shl 1),
@@ -261,6 +264,9 @@ enum class DragDropFlags(val i: Int) {
      *  by manufacturing a temporary identifier based on their window-relative position.
      *  This is extremely unusual within the dear imgui ecosystem and so we made it explicit. */
     SourceAllowNullID(1 shl 3),
+    /** External source (from outside of imgui), won't attempt to read current item/window info. Will always return true.
+     *  Only one Extern source can be active simultaneously.    */
+    SourceExtern(1 shl 4),
     // AcceptDragDropPayload() flags
     /** AcceptDragDropPayload() will returns true even before the mouse button is released.
      *  You can then call isDelivery() to test if the payload needs to be delivered. */
@@ -278,9 +284,9 @@ infix fun Int.hasnt(b: DragDropFlags) = (this and b.i) == 0
 
 // Standard Drag and Drop payload types. Types starting with '_' are defined by Dear ImGui.
 /** float[3], Standard type for colors, without alpha. User code may use this type. */
-val PAYLOAD_TYPE_COLOR_3F  =   "_COL3F"
+val PAYLOAD_TYPE_COLOR_3F = "_COL3F"
 /** float[4], Standard type for colors. User code may use this type. */
-val PAYLOAD_TYPE_COLOR_4F  =   "_COL4F"
+val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 
 /** User fill ImGuiIO.KeyMap[] array with indices into the ImGuiIO.KeysDown[512] array  */
 enum class Key {

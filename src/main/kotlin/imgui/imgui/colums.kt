@@ -54,9 +54,9 @@ interface imgui_colums {
                 drawList.channelsSetCurrent(columns.current)
             } else {
                 dc.columnsOffsetX = 0f
+                drawList.channelsSetCurrent(0)
                 columns.current = 0
                 columns.cellMinY = columns.cellMaxY
-                drawList.channelsSetCurrent(0)
             }
             dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
             dc.cursorPos.y = columns.cellMinY

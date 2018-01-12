@@ -263,6 +263,8 @@ class ColumnData {
     /** Column start offset, normalized 0f (far left) -> 1f (far right) */
     var offsetNorm = 0f
     var offsetNormBeforeResize = 0f
+    /** Not exposed */
+    var flags = 0
     var clipRect = Rect()
 }
 

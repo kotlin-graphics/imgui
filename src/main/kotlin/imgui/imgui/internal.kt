@@ -622,9 +622,8 @@ interface imgui_internal {
 
             assert(columns.columns.size == columnsCount + 1)
 
-            // Cache clipping rectangles
             for (n in 0..columnsCount) {
-                // Clamp
+                // Clamp position
                 val column = columns.columns[n]
                 var t = column.offsetNorm
                 if (columns.flags hasnt Cf.NoForceWithinWindow)
@@ -633,7 +632,7 @@ interface imgui_internal {
 
                 if (n == columnsCount) continue
 
-                // Compute clipping rectangles
+                // Compute clipping rectangle
                 val clipX1 = floor(0.5f + pos.x + getColumnOffset(n) - 1f)
                 val clipX2 = floor(0.5f + pos.x + getColumnOffset(n + 1) - 1f)
                 column.clipRect = Rect(clipX1, -Float.MAX_VALUE, clipX2, +Float.MAX_VALUE)
@@ -687,7 +686,8 @@ interface imgui_internal {
                     /*  Store from center of column line (we used a 8 wide rect for columns clicking). This is used by
                         GetDraggedColumnOffset().                     */
                         g.activeIdClickOffset.x -= columnHw
-                    if (held) draggingColumn = n
+                    if (held && columns.columns[n].flags hasnt Cf.NoResize)
+                        draggingColumn = n
                 }
 
                 // Draw column (we clip the Y boundaries CPU side because very long triangles are mishandled by some GPU drivers.)
@@ -1466,6 +1466,7 @@ interface imgui_internal {
         val isMultiline = flags has Itf.Multiline
         val isEditable = flags hasnt Itf.ReadOnly
         val isPassword = flags has Itf.Password
+        val disableUndo = flags has Itf.DisableUndo
 
         if (isMultiline) // Open group before calling GetID() because groups tracks id created during their spawn
             beginGroup()
@@ -1714,11 +1715,11 @@ interface imgui_internal {
                 }
                 isShortcutKeyOnly -> when {
 
-                    Key.Z.isPressed && isEditable -> {
+                    Key.Z.isPressed && isEditable && !disableUndo -> {
                         editState.onKeyPressed(K.UNDO)
                         editState.clearSelection()
                     }
-                    Key.Y.isPressed && isEditable -> {
+                    Key.Y.isPressed && isEditable && !disableUndo -> {
                         editState.onKeyPressed(K.REDO)
                         editState.clearSelection()
                     }
