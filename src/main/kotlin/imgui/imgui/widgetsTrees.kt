@@ -118,7 +118,7 @@ interface imgui_widgetsTrees {
 
         val id = window.getId(label)
         val isOpen = treeNodeBehavior(id, flags or Tnf.CollapsingHeader or Tnf.NoTreePushOnOpen or
-                if (open != null) Tnf.AllowOverlapMode else Tnf.Null, label)
+                if (open != null) Tnf.AllowItemOverlap else Tnf.Null, label)
         if (open != null) {
             // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
             val buttonSz = g.fontSize * 0.5f

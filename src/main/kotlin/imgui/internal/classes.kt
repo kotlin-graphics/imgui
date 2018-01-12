@@ -571,7 +571,7 @@ class Window(
 
         // Set
         val oldPos = Vec2(pos)
-        posF put pos // TODO glm .f on vec
+        posF put pos
         pos put pos
         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least
         // offset the cursor

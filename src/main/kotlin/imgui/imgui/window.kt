@@ -419,10 +419,10 @@ interface imgui_window {
                         val grip = resizeGripDef[resizeGripN]
                         val corner = window.pos.lerp(window.pos + window.size, grip.cornerPos)
 
-                        // Using the FlattenChilds button flag we make the resize button accessible even if we are hovering over a child window
+                        // Using the FlattenChildren button flag we make the resize button accessible even if we are hovering over a child window
                         val resizeRect = Rect(corner, corner + grip.innerDir * gripHoverSize)
                         resizeRect.fixInverted()
-                        val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), Bf.FlattenChilds)
+                        val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), Bf.FlattenChildren)
                         if (hovered || held)
                             g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
 
@@ -444,7 +444,7 @@ interface imgui_window {
                         val BORDER_SIZE = 5f // FIXME: Only works _inside_ window because of HoveredWindow check.
                         val BORDER_APPEAR_TIMER = 0.05f // Reduce visual noise
                         val borderRect = window.getBorderRect(borderN, gripHoverSize, BORDER_SIZE)
-                        val (_, hovered, held) = buttonBehavior(borderRect, window.getId(borderN + 4), Bf.FlattenChilds)
+                        val (_, hovered, held) = buttonBehavior(borderRect, window.getId(borderN + 4), Bf.FlattenChildren)
                         if ((hovered && g.hoveredIdTimer > BORDER_APPEAR_TIMER) || held) {
                             g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
                             if (held) borderHeld = borderN
@@ -893,7 +893,8 @@ interface imgui_window {
     val scrollMaxY get() = currentWindowRead!!.scrollMaxY
 
     /** adjust scrolling amount to make current cursor position visible.
-     *  centerYRatio = 0.0: top, 0.5: center, 1.0: bottom.    */
+     *  centerYRatio = 0.0: top, 0.5: center, 1.0: bottom.
+     *   When using to make a "default/current item" visible, consider using setItemDefaultFocus() instead.*/
     fun setScrollHere(centerYRatio: Float = 0.5f) = with(currentWindow) {
         var targetY = dc.cursorPosPrevLine.y - pos.y  // Top of last item, in window space
         // Precisely aim above, in the middle or below the last line.
@@ -917,13 +918,6 @@ interface imgui_window {
             scrollTarget.y = sizeContents.y
     }
 
-    /** focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget.
-     *  Use -1 to access previous widget.   */
-    fun setKeyboardFocusHere(offset: Int = 0) = with(currentWindow) {
-        assert(offset >= -1)    // -1 is allowed but not below
-        focusIdxAllRequestNext = focusIdxAllCounter + 1 + offset
-        focusIdxTabRequestNext = Int.MAX_VALUE
-    }
 //IMGUI_API void          SetStateStorage(ImGuiStorage* tree);                                // replace tree state storage with our own (if you want to manipulate it yourself, typically clear subsection of it)
 //IMGUI_API ImGuiStorage* GetStateStorage();
 
