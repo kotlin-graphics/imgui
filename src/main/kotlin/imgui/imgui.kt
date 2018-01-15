@@ -56,7 +56,7 @@ object ImGui :
 
         imgui_internal {
 
-    val version = "1.53 WIP"
+    val version = "1.53"
 }
 
 var ptrIndices = 0

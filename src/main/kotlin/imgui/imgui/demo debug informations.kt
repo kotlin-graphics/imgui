@@ -60,15 +60,15 @@ import imgui.WindowFlags as Wf
  *  Message to the person tempted to delete this file when integrating ImGui into their code base:
  *  Do NOT remove this file from your project! It is useful reference code that you and other users will want to refer to.
  *  Don't do it! Do NOT remove this file from your project! It is useful reference code that you and other users will want to refer to.
- *  Everything in this file will be stripped out by the linker if you don't call ImGui::ShowTestWindow().
- *  During development, you can call ImGui::ShowTestWindow() in your code to learn about various features of ImGui.
+ *  Everything in this file will be stripped out by the linker if you don't call ImGui::ShowDemoWindow().
+ *  During development, you can call ImGui::ShowDemoWindow() in your code to learn about various features of ImGui.
  *  Removing this file from your project is hindering your access to documentation, likely leading you to poorer usage of the library.
- *  During development, you can call ImGui::ShowTestWindow() in your code to learn about various features of ImGui. Have it wired in a debug menu!
+ *  During development, you can call ImGui::ShowDemoWindow() in your code to learn about various features of ImGui. Have it wired in a debug menu!
  *  Removing this file from your project is hindering access to documentation for everyone in your team, likely leading you to poorer usage of the library.
  *
- *  Note that you can #define IMGUI_DISABLE_TEST_WINDOWS in imconfig.h for the same effect.
- *  If you want to link core ImGui in your public builds but not those test windows, #define IMGUI_DISABLE_TEST_WINDOWS in imconfig.h and those functions will be empty.
- *  For any other case, if you have ImGui available you probably want this to be available for reference and execution.
+ *  Note that you can #define IMGUI_DISABLE_DEMO_WINDOWS in imconfig.h for the same effect.
+ *  If you want to link core ImGui in your final builds but not those demo windows, #define IMGUI_DISABLE_DEMO_WINDOWS in imconfig.h and those functions will be empty.
+ *  In other situation, when you have ImGui available you probably want this to be available for reference and execution.
  *
  *  Thank you,
  *  -Your beloved friend, imgui_demo.cpp (that you won't delete)
@@ -77,13 +77,13 @@ interface imgui_demoDebugInformations {
     /** Create demo/test window.
      *  Demonstrate most ImGui features (big function!)
      *  Call this to learn about the library! try to make it always available in your application!   */
-    fun showTestWindow(open: BooleanArray) {
+    fun showDemoWindow(open: BooleanArray) {
         showWindow = open[0]
-        showTestWindow(Companion::showWindow)
+        showDemoWindow(Companion::showWindow)
         open[0] = showWindow
     }
 
-    fun showTestWindow(open: KMutableProperty0<Boolean>) = ExampleApp(open)
+    fun showDemoWindow(open: KMutableProperty0<Boolean>) = ExampleApp(open)
 
     /** Create metrics window. display ImGui internals: draw commands (with individual draw calls and vertices), window list,
      *  basic internal state, etc.    */
@@ -128,6 +128,9 @@ interface imgui_demoDebugInformations {
         end()
     }
 
+    /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
+     *  Here we use the simplified combo() api that packs items into a single literal string. Useful for quick combo
+     *  boxes where the choices are known locally.  */
     fun showStyleSelector(label: String) =
             if (combo(label, ::styleIdx, "Classic\u0000Dark\u0000Light\u0000")) {
                 when (styleIdx) {
@@ -138,6 +141,8 @@ interface imgui_demoDebugInformations {
                 true
             } else false
 
+    /** Demo helper function to select among loaded fonts.
+     *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one. */
     fun showFontSelector(label: String) {
         val fontCurrent = font
         if (beginCombo(label, fontCurrent.debugName))        {

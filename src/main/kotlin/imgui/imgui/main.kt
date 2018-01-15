@@ -156,8 +156,8 @@ interface imgui_main {
             assert(g.movingWindow != null)
             assert(g.movingWindow!!.moveId == g.movingdWindowMoveId)
             if (IO.mouseDown[0]) {
-                g.movingWindow!!.rootWindow!!.posF plusAssign IO.mouseDelta
-                if (IO.mouseDelta notEqual 0f)
+                val pos = IO.mousePos - g.activeIdClickOffset
+                if (g.movingWindow!!.rootWindow!!.posF != pos)
                     markIniSettingsDirty(g.movingWindow!!.rootWindow!!)
                 g.movingWindow.focus()
             } else {
@@ -385,6 +385,7 @@ interface imgui_main {
                             g.movingWindow = g.hoveredWindow
                             g.movingdWindowMoveId = g.hoveredWindow!!.moveId
                             setActiveId(g.movingdWindowMoveId, g.hoveredRootWindow)
+                            g.activeIdClickOffset = IO.mousePos - g.movingWindow!!.rootWindow!!.pos
                         }
                     } else if (g.navWindow != null && frontMostModalRootWindow == null)
                         null.focus()   // Clicking on void disable focus

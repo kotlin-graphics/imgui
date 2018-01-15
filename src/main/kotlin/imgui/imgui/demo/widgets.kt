@@ -9,6 +9,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
 import imgui.ImGui.acceptDragDropPayload
+import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
@@ -33,6 +34,7 @@ import imgui.ImGui.dragInt2
 import imgui.ImGui.dragInt3
 import imgui.ImGui.dragInt4
 import imgui.ImGui.dragIntRange2
+import imgui.ImGui.endCombo
 import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
@@ -67,6 +69,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setColorEditOptions
+import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderAngle
 import imgui.ImGui.sliderFloat
@@ -122,8 +125,8 @@ object widgets {
     var check = true
     var e = 0
     val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
-    var item = 1
-    var item2 = -1
+    var currentItem1 = 1
+    var currentItem2 = ""
     var str0 = "Hello, world!".toCharArray()
     var i0 = 123
     var f0 = 0.001f
@@ -280,11 +283,27 @@ object widgets {
                     }
                 separator()
                 labelText("label", "Value")
-                // Combo using values packed in a single constant string (for really quick combo)
-                combo("combo", ::item, "aaaa\u0000bbbb\u0000cccc\u0000dddd\u0000eeee\u0000\u0000")
-                val items = arrayOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO", "PPPP", "QQQQQQQQQQ", "RRR", "SSSS")
-                // Combo using proper array. You can also pass a callback to retrieve array value, no need to create/copy an array just for that.
-                combo("combo scroll", ::item2, items)
+
+                run {
+                    // Simplified one-liner Combo() API, using values packed in a single constant string
+                    combo("combo", ::currentItem1, "aaaa\u0000bbbb\u0000cccc\u0000dddd\u0000eeee\u0000\u0000")
+                    //ImGui::Combo("combo w/ array of char*", &current_item_2_idx, items, IM_ARRAYSIZE(items));   // Combo using proper array. You can also pass a callback to retrieve array value, no need to create/copy an array just for that.
+
+                    // General BeginCombo() API, you have full control over your selection data and display type
+                    val items = arrayOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO", "PPPP", "QQQQQQQQQQ", "RRR", "SSSS")
+                    // Combo using proper array. You can also pass a callback to retrieve array value, no need to create/copy an array just for that.
+
+//                  jvm TODO  if (beginCombo("combo 2", ::currentItem2)) { // The second parameter is the label previewed before opening the combo.
+//                        for (n in items) {
+//                            val isSelected = currentItem2 == n // You can store your selection however you want, outside or inside your objects
+//                            if (selectable(n, isSelected))
+//                                currentItem2 = n
+//                            if (isSelected)
+//                                setItemDefaultFocus()   // Set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
+//                        }
+//                        endCombo()
+//                    }
+                }
 
                 run {
                     inputText("input text", str0, str0.size)
@@ -673,11 +692,11 @@ object widgets {
                                     color.put(c.x, c.y, c.z, color.w) // Preserve alpha!
 
                                 if (beginDragDropTarget()) {
-                                    acceptDragDropPayload (PAYLOAD_TYPE_COLOR_3F)?.let {
-                                        for(i in 0..2) savedPalette [n][i] = (it.data as Vec4)[i]
+                                    acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
+                                        for (i in 0..2) savedPalette[n][i] = (it.data as Vec4)[i]
                                     }
-                                    acceptDragDropPayload (PAYLOAD_TYPE_COLOR_4F)?.let {
-                                        for(i in 0..3) savedPalette [n][i] = (it.data as Vec4)[i]
+                                    acceptDragDropPayload(PAYLOAD_TYPE_COLOR_4F)?.let {
+                                        for (i in 0..3) savedPalette[n][i] = (it.data as Vec4)[i]
                                     }
                                     endDragDropTarget()
                                 }

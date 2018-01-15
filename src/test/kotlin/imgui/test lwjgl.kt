@@ -48,6 +48,10 @@ class HelloWorld_lwjgl {
         // Setup ImGui binding
         LwjglGL3.init(window, true)
 
+        // Setup style
+        ImGui.styleColorsClassic()
+        //ImGui.styleColorsDark()
+
         // Load Fonts
         /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use
                 pushFont()/popFont() to select them.
@@ -77,7 +81,7 @@ class HelloWorld_lwjgl {
     var f = 0f
     val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
     var showAnotherWindow = false
-    var showDemoWindow = true
+    var showDemo = true
     var listboxItemCurrent = 1
 
     fun loop() {
@@ -96,12 +100,12 @@ class HelloWorld_lwjgl {
             /*  1. Show a simple window.
                 Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically
                 called "Debug"             */
-            text("Hello, world!")
-            sliderFloat("float", ::f, 0f, 1f)
-            colorEdit3("clear color", clearColor)
+            text("Hello, world!")                             // Some text (you can use a format string too)
+            sliderFloat("float", ::f, 0f, 1f)   // Edit 1 float as a slider from 0f to 1f
+            colorEdit3("clear color", clearColor)           // Edit 3 floats as a color
             //  You can write functions in the classical way, with if(cond) { code }
-            if (button("Test Window"))
-                showDemoWindow = !showDemoWindow
+            if (button("Demo Window"))                      // Use buttons to toggle our bools. We could use checkbox() as well.
+                showDemo = !showDemo
             // or you can take advantage of functional programming and pass directly a lambda as last parameter
             button("Another Window") {
                 showAnotherWindow = !showAnotherWindow
@@ -115,10 +119,12 @@ class HelloWorld_lwjgl {
                 end()
             }
 
-            /* 3. Show the ImGui test window. Most of the sample code is in imgui.showTestWindow(). */
-            if (showDemoWindow) {
+            /* 3. Show the ImGui demo window. Most of the sample code is in imgui.showDemoWindow(). */
+            if (showDemo) {
+                /*  Normally user code doesn't need/want to call this because positions are saved in .ini file anyway.
+                    Here we just want to make the demo initial state a bit more friendly!                 */
                 setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
-                showTestWindow(::showDemoWindow)
+                showDemoWindow(::showDemo)
             }
 
             /*val buf = CharArray(256)

@@ -30,6 +30,10 @@ public class Test_lwjgl {
         // Setup ImGui binding
         lwjglGL3.init(window, true);
 
+        // Setup style
+        imgui.styleColorsClassic(null);
+        //imgui.styleColorsDark(null);
+
         // Load Fonts
         /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use
                 pushFont()/popFont() to select them.
@@ -80,8 +84,8 @@ public class Test_lwjgl {
     private float[] f = {0f};
     private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
     private boolean[] showAnotherWindow = {false};
-    private boolean[] showTestWindow = {true};
-//    private KMutableProperty0 prop = new JavaProp<>(() -> showTestWindow, res -> showTestWindow = res);
+    private boolean[] showDemoWindow = {true};
+//    private KMutableProperty0 prop = new JavaProp<>(() -> showDemoWindow, res -> showDemoWindow = res);
 
     private void loop() {
 
@@ -102,7 +106,7 @@ public class Test_lwjgl {
         imgui.colorEdit3("clear color", clearColor, 0);
         //  You can write functions in the classical way, with if(cond) { code }
         if (imgui.button("Test Window", new Vec2()))
-            showTestWindow[0] = !showTestWindow[0];
+            showDemoWindow[0] = !showDemoWindow[0];
         if (imgui.button("Another Window", new Vec2()))
             showAnotherWindow[0] = !showAnotherWindow[0];
         imgui.text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.getFramerate(), io.getFramerate());
@@ -114,11 +118,13 @@ public class Test_lwjgl {
             imgui.end();
         }
 
-        /* 3. Show the ImGui test window. Most of the sample code is in imgui.showTestWindow(). */
-        if (showTestWindow[0]) {
+        /* 3. Show the ImGui demo window. Most of the sample code is in imgui.showDemoWindow(). */
+        if (showDemoWindow[0]) {
+            /*  Normally user code doesn't need/want to call this because positions are saved in .ini file anyway.
+                    Here we just want to make the demo initial state a bit more friendly!                 */
             imgui.setNextWindowPos(new Vec2(650, 20), Cond.FirstUseEver, new Vec2());
-            imgui.showTestWindow(showTestWindow);
-//            imgui.showTestWindow(prop);
+            imgui.showDemoWindow(showDemoWindow);
+//            imgui.showDemoWindow(prop);
         }
 
             /*val buf = CharArray(256)
