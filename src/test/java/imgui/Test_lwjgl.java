@@ -50,7 +50,7 @@ public class Test_lwjgl {
 //        Font font = io.getFonts().addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, new FontConfig(), io.getFonts().getGlyphRangesJapanese());
 //        assert (font != null);
 
-        while (window.getOpen()) loop();
+        while (window.isOpen()) loop();
 
         lwjglGL3.shutdown();
 
