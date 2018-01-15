@@ -206,7 +206,7 @@ object ExampleApp {
 
         spacing()
         collapsingHeader("Help") {
-            textWrapped("This window is being created by the ShowTestWindow() function. Please refer to the code " +
+            textWrapped("This window is being created by the ShowDemoWindow() function. Please refer to the code " +
                     "for programming reference.\n\nUser Guide:")
             showUserGuide()
         }

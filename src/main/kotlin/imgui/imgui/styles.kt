@@ -104,6 +104,7 @@ interface imgui_styles {
                 Vec4(1.00f, 1.00f, 0.00f, 0.90f)))
     }
 
+    /** Those light colors are better suited with a thicker font than the default one + FrameBorder */
     fun styleColorsLight(dst: Style? = null) = with(dst ?: g.style) {
         colors.clear()
         val borderSepator = Vec4(1.00f, 1.00f, 1.00f, 0.19f)
