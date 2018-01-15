@@ -30,6 +30,7 @@ import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.fontTexUvWhitePixel
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.hsvToRGB
@@ -491,7 +492,7 @@ interface imgui_widgetsColorEditorPicker {
             val tra = wheelCenter + trianglePa.rotate(cosHueAngle, sinHueAngle)
             val trb = wheelCenter + trianglePb.rotate(cosHueAngle, sinHueAngle)
             val trc = wheelCenter + trianglePc.rotate(cosHueAngle, sinHueAngle)
-            val uvWhite = g.fontTexUvWhitePixel
+            val uvWhite = fontTexUvWhitePixel
             drawList.primReserve(6, 6)
             drawList.primVtx(tra, uvWhite, hueColor32)
             drawList.primVtx(trb, uvWhite, hueColor32)

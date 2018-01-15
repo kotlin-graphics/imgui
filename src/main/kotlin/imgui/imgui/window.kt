@@ -32,6 +32,7 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTriangle
 import imgui.ImGui.scrollbar
 import imgui.internal.*
+import imgui.internal.DrawListFlags as Dlf
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
@@ -189,8 +190,9 @@ interface imgui_window {
             window.lastFrameActive = currentFrame
             for (i in 1 until window.idStack.size) window.idStack.pop()  // resize 1
 
-            // Clear draw list, setup texture, outer clipping rectangle
+            // Setup draw list and outer clipping rectangle
             window.drawList.clear()
+            window.drawList.flags = (if(style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if(style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
             window.drawList.pushTextureId(g.font.containerAtlas.texId)
             val fullscreenRect = getVisibleRect()
             if (flags has Wf.ChildWindow && flags hasnt Wf.Popup)
@@ -394,13 +396,12 @@ interface imgui_window {
             window.scroll put calcNextScrollFromScrollTargetAndClamp(window)
             window.scrollTarget put Float.MAX_VALUE
 
+            // Apply focus, new windows appears in front
+            val wantFocus = windowJustActivatedByUser && flags hasnt Wf.NoFocusOnAppearing && (flags hasnt (Wf.ChildWindow or Wf.Tooltip) || flags has Wf.Popup)
+
             // Modal window darkens what is behind them
             if (flags has Wf.Modal && window === frontMostModalRootWindow)
-                window.drawList.addRectFilled(fullscreenRect.min, fullscreenRect.max,
-                        getColorU32(Col.ModalWindowDarkening, g.modalWindowDarkeningRatio))
-
-            // Apply focus, new windows appears in front
-            var wantFocus = windowJustActivatedByUser && flags hasnt Wf.NoFocusOnAppearing && (flags hasnt (Wf.ChildWindow or Wf.Tooltip) || flags has Wf.Popup)
+                window.drawList.addRectFilled(fullscreenRect.min, fullscreenRect.max, getColorU32(Col.ModalWindowDarkening, g.modalWindowDarkeningRatio))
 
             // Draw window + handle manual resize
             val titleBarRect = window.titleBarRect()

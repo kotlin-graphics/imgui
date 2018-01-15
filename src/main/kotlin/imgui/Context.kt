@@ -22,10 +22,10 @@ object Context {
     var fontSize = 0f
     /** (Shortcut) == IO.FontGlobalScale * Font->Scale * Font->FontSize. Base text height.    */
     var fontBaseSize = 0f
-    /** (Shortcut) == Font->TexUvWhitePixel */
-    var fontTexUvWhitePixel = Vec2()
 
-    var time = 0.0f
+    lateinit var drawListSharedData: DrawListSharedData
+
+    var time = 0f
 
     var frameCount = 0
 
@@ -137,7 +137,10 @@ object Context {
 
     var modalWindowDarkeningRatio = 0f
     /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
-    var overlayDrawList = DrawList().apply { _ownerName = "##Overlay" } // Give it a name for debugging
+    var overlayDrawList = DrawList(null).apply {
+        _data = drawListSharedData
+        _ownerName = "##Overlay" // Give it a name for debugging
+    }
 
     var mouseCursor = MouseCursor.Arrow
 
@@ -517,9 +520,9 @@ class Style {
     /** Enable anti-aliasing on lines/borders. Disable if you are really short on CPU/GPU.  */
     var antiAliasedLines = true
     /**  Enable anti-aliasing on filled shapes (rounded rectangles, circles, etc.)  */
-    var antiAliasedShapes = true
-    /** Tessellation tolerance. Decrease for highly tessellated curves (higher quality, more polygons), increase to
-     *  reduce quality. */
+    var antiAliasedFill = true
+    /** Tessellation tolerance when using pathBezierCurveTo() without a specific number of segments.
+     *  Decrease for highly tessellated curves (higher quality, more polygons), increase to reduce quality. */
     var curveTessellationTol = 1.25f
 
     val colors = ArrayList<Vec4>()
@@ -560,7 +563,7 @@ class Style {
         displayWindowPadding put style.displayWindowPadding
         displaySafeAreaPadding put style.displaySafeAreaPadding
         antiAliasedLines = style.antiAliasedLines
-        antiAliasedShapes = style.antiAliasedShapes
+        antiAliasedFill = style.antiAliasedFill
         curveTessellationTol = style.curveTessellationTol
         style.colors.forEach { colors.add(Vec4(it)) }
 //        locale = style.locale

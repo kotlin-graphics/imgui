@@ -1445,7 +1445,11 @@ class Font {
         g.font = this
         g.fontBaseSize = IO.fontGlobalScale * g.font.fontSize * g.font.scale
         g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
-        g.fontTexUvWhitePixel = g.font.containerAtlas.texUvWhitePixel
+
+        val atlas = g.font.containerAtlas
+        g.drawListSharedData.texUvWhitePixel put atlas.texUvWhitePixel
+        g.drawListSharedData.font = g.font
+        g.drawListSharedData.fontSize = g.fontSize
     }
 }
 

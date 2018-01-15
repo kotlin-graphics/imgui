@@ -47,7 +47,7 @@ interface imgui_popups {
             clearSetNextWindowData()    // We behave like Begin() and need to consume those values
             return false
         }
-        return beginPopupEx(g.currentWindow!!.getId(strId), Wf.AlwaysAutoResize.i)
+        return beginPopupEx(g.currentWindow!!.getId(strId), Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
     }
 
     /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside) */
@@ -88,7 +88,7 @@ interface imgui_popups {
         if (isMouseClicked(mouseButton))
             if (isItemHovered(Hf.AllowWhenBlockedByPopup))
                 openPopupEx(id, true)
-        return beginPopupEx(id, Wf.AlwaysAutoResize.i)
+        return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
     }
 
     /** Helper to open and begin popup when clicked on current window.  */
@@ -99,7 +99,7 @@ interface imgui_popups {
             if (isWindowHovered(Hf.AllowWhenBlockedByPopup))
                 if (alsoOverItems || !isAnyItemHovered)
                     openPopupEx(id, true)
-        return beginPopupEx(id, Wf.AlwaysAutoResize.i)
+        return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
     }
 
 //    IMGUI_API bool          BeginPopupContextVoid(const char* str_id = NULL, int mouse_button = 1); // helper to open and begin popup when clicked in void (where there are no imgui windows).

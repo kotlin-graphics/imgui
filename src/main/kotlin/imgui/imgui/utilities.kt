@@ -158,6 +158,11 @@ interface imgui_utilities {
 
     val frameCount get() = g.frameCount
 
+    /** this draw list will be the last rendered one, useful to quickly draw overlays shapes/text   */
+    val overlayDrawList get() = g.overlayDrawList
+
+    val drawListSharedData get() = g.drawListSharedData
+
 //IMGUI_API const char*   GetStyleColorName(ImGuiCol idx);
 
     /** Utility to find the closest point the last item bounding rectangle edge. useful to visually link items  */

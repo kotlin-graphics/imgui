@@ -129,3 +129,15 @@ infix fun Int.or(b: DrawCornerFlags) = or(b.i)
 infix fun Int.and(b: DrawCornerFlags) = and(b.i)
 infix fun Int.has(b: DrawCornerFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: DrawCornerFlags) = (this and b.i) == 0
+
+// TODO check enum declarance position
+enum class DrawListFlags { AntiAliasedLines, AntiAliasedFill;
+
+    val i = 1 shl ordinal
+}
+
+infix fun DrawListFlags.or(b: DrawListFlags) = i or b.i
+infix fun Int.or(b: DrawListFlags) = or(b.i)
+infix fun Int.and(b: DrawListFlags) = and(b.i)
+infix fun Int.has(b: DrawListFlags) = (this and b.i) != 0
+infix fun Int.hasnt(b: DrawListFlags) = (this and b.i) == 0

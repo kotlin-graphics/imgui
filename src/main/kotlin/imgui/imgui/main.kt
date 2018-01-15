@@ -21,6 +21,7 @@ import kotlin.math.max
 import kotlin.math.min
 import imgui.Context as g
 import imgui.WindowFlags as Wf
+import imgui.internal.DrawListFlags as Dlf
 
 interface imgui_main {
 
@@ -54,6 +55,8 @@ interface imgui_main {
 
         defaultFont.setCurrent()
         assert(g.font.isLoaded)
+        g.drawListSharedData.clipRectFullscreen.put(0f, 0f, IO.displaySize)
+        g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
 
         g.time += IO.deltaTime
         g.frameCount += 1
@@ -62,6 +65,7 @@ interface imgui_main {
         g.overlayDrawList.clear()
         g.overlayDrawList.pushTextureId(IO.fonts.texId)
         g.overlayDrawList.pushClipRectFullScreen()
+        g.overlayDrawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
 
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it
         g.renderDrawData.valid = false
@@ -208,10 +212,9 @@ interface imgui_main {
                     mouseEarliestButtonDown = i
         }
         val mouseAvailToImgui = mouseEarliestButtonDown == -1 || IO.mouseDownOwned[mouseEarliestButtonDown]
-        if (g.wantCaptureMouseNextFrame != -1)
-            IO.wantCaptureMouse = g.wantCaptureMouseNextFrame != 0
-        else
-            IO.wantCaptureMouse = (mouseAvailToImgui && (g.hoveredWindow != null || mouseAnyDown)) || g.openPopupStack.isNotEmpty()
+        IO.wantCaptureMouse =
+                if (g.wantCaptureMouseNextFrame != -1) g.wantCaptureMouseNextFrame != 0
+                else (mouseAvailToImgui && (g.hoveredWindow != null || mouseAnyDown)) || g.openPopupStack.isNotEmpty()
         IO.wantCaptureKeyboard = if (g.wantCaptureKeyboardNextFrame != -1) g.wantCaptureKeyboardNextFrame != 0 else g.activeId != 0
         IO.wantTextInput = g.wantTextInputNextFrame != -1 && g.wantTextInputNextFrame != 0
         g.mouseCursor = MouseCursor.Arrow

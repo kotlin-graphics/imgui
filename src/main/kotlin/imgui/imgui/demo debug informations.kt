@@ -44,6 +44,7 @@ import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withIndent
 import imgui.functionalProgramming.withStyleVar
 import imgui.imgui.demo.ExampleApp
+import imgui.internal.DrawListFlags
 import imgui.internal.Rect
 import imgui.internal.Window
 import java.util.*
@@ -255,7 +256,6 @@ interface imgui_demoDebugInformations {
                     return
 
                 val overlayDrawList = g.overlayDrawList   // Render additional visuals into the top-most draw list
-                overlayDrawList.pushClipRectFullScreen()
                 var elemOffset = 0
                 for (i in drawList.cmdBuffer.indices) {
                     val cmd = drawList.cmdBuffer[i]
@@ -278,6 +278,7 @@ interface imgui_demoDebugInformations {
                         vtxsRect.floor(); overlayDrawList.addRect(vtxsRect.min, vtxsRect.max, COL32(255, 0, 255, 255))
                     }
                     if (!cmdNodeOpen) continue
+                    // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
                     val clipper = ListClipper(cmd.elemCount / 3)
                     while (clipper.step()) {
@@ -297,15 +298,19 @@ interface imgui_demoDebugInformations {
                                 vtxI++
                             }
                             selectable(buf.joinToString("", limit = bufP, truncated = ""), false)
-                            if (isItemHovered())
-                            // Add triangle without AA, more readable for large-thin triangle
-                                overlayDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f, false)
+                            if (isItemHovered()) {
+                                val backupFlags = overlayDrawList.flags
+                                // Disable AA on triangle outlines at is more readable for very large and thin triangles.
+                                overlayDrawList.flags = overlayDrawList.flags and DrawListFlags.AntiAliasedLines.i.inv()
+                                overlayDrawList.addPolyline(trianglesPos, COL32(255,255,0,255), true, 1f)
+                                overlayDrawList.flags = backupFlags
+                            }
+                                
                         }
                     }
                     treePop()
                     elemOffset += cmd.elemCount
                 }
-                overlayDrawList.popClipRect()
                 treePop()
             }
 
