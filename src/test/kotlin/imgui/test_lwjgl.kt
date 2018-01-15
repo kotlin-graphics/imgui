@@ -66,7 +66,7 @@ class HelloWorld_lwjgl {
         //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
 //        IO.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, glyphRanges = IO.fonts.glyphRangesJapanese)!!
 
-        while (window.open) loop()
+        while (window.isOpen) loop()
 
         LwjglGL3.shutdown()
 
