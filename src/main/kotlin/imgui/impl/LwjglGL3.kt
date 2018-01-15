@@ -383,14 +383,14 @@ object LwjglGL3 {
         glScissor(lastScissorBox)
     }
 
-    private val mouseButtonCallback = { button: Int, action: Int, _: Int ->
+    val mouseButtonCallback = { button: Int, action: Int, _: Int ->
         if (action == GLFW_PRESS && button in 0..2)
             mouseJustPressed[button] = true
     }
 
-    private val scrollCallback = { offset: Vec2d -> mouseWheel += offset.y.f } // Use fractional mouse wheel.
+    val scrollCallback = { offset: Vec2d -> mouseWheel += offset.y.f } // Use fractional mouse wheel.
 
-    private val keyCallback = { key: Int, _: Int, action: Int, _: Int ->
+    val keyCallback = { key: Int, _: Int, action: Int, _: Int ->
         with(IO) {
             if (key in keysDown.indices)
                 if (action == GLFW_PRESS)
@@ -406,7 +406,7 @@ object LwjglGL3 {
         }
     }
 
-    private val charCallback = { c: Int -> if (c in 1..65535) IO.addInputCharacter(c.c) }
+    val charCallback = { c: Int -> if (c in 1..65535) IO.addInputCharacter(c.c) }
 
     fun shutdown() {
         invalidateDeviceObjects()
