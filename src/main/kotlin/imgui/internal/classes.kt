@@ -14,7 +14,9 @@ import imgui.ImGui.clearActiveId
 import imgui.ImGui.keepAliveId
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.cos
 import kotlin.math.max
+import kotlin.math.sin
 import imgui.Context as g
 import imgui.HoveredFlags as Hf
 import imgui.WindowFlags as Wf
@@ -301,6 +303,27 @@ class ColumnsSet {
     }
 }
 
+/** Data shared among multiple draw lists (typically owned by parent ImGui context, but you may create one yourself) */
+class DrawListSharedData {
+    /** UV of white pixel in the atlas  */
+    var texUvWhitePixel = Vec2()
+    /** Current/default font (optional, for simplified AddText overload) */
+    var font: Font? = null
+    /** Current/default font size (optional, for simplified AddText overload) */
+    var fontSize = 0f
+
+    var curveTessellationTol = 0f
+    /** Value for pushClipRectFullscreen() */
+    var clipRectFullscreen = Vec4(-8192f, -8192f, 8192f, 8192f)
+
+    // Const data
+    // FIXME: Bake rounded corners fill/borders in atlas
+    var circleVtx12 = Array(12, {
+        val a = it * 2 * glm.PIf / 12
+        Vec2(cos(a), sin(a))
+    })
+}
+
 /** Transient per-window data, reset at the beginning of the frame
 FIXME: That's theory, in practice the delimitation between ImGuiWindow and ImGuiDrawContext is quite tenuous and
 could be reconsidered.  */
@@ -381,9 +404,7 @@ class DrawContext {
 }
 
 /** Windows data    */
-class Window(
-        var name: String
-) {
+class Window(var context: imgui.Context, var name: String) {
     /** == ImHash(Name) */
     val id = hash(name, 0)
     /** See enum ImGuiWindowFlags_  */
@@ -501,7 +522,7 @@ class Window(
     /** Scale multiplier per-window */
     var fontWindowScale = 1f
 
-    var drawList = DrawList().apply { _ownerName = name }
+    var drawList = DrawList(context.drawListSharedData).apply { _ownerName = name }
     /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
     /** Generally point to ourself. If we are a child window, this is pointing to the first non-child parent window.    */

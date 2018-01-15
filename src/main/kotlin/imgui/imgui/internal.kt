@@ -328,15 +328,13 @@ interface imgui_internal {
             return false
         }
 
-        val flags = extraFlags or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings
-
         val name =
-                if (flags has Wf.ChildMenu)
+                if (extraFlags has Wf.ChildMenu)
                     "##Menu_%d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
                 else
                     "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
 
-        val isOpen = begin(name, null, flags)
+        val isOpen = begin(name, null, extraFlags or Wf.Popup)
         if (!isOpen) // NB: Begin can return false when the popup is completely clipped (e.g. zero size display)
             endPopup()
 
@@ -1466,7 +1464,7 @@ interface imgui_internal {
         val isMultiline = flags has Itf.Multiline
         val isEditable = flags hasnt Itf.ReadOnly
         val isPassword = flags has Itf.Password
-        val disableUndo = flags has Itf.DisableUndo
+        val isUndoable = flags has Itf.NoUndoRedo
 
         if (isMultiline) // Open group before calling GetID() because groups tracks id created during their spawn
             beginGroup()
@@ -1715,11 +1713,11 @@ interface imgui_internal {
                 }
                 isShortcutKeyOnly -> when {
 
-                    Key.Z.isPressed && isEditable && !disableUndo -> {
+                    Key.Z.isPressed && isEditable && !isUndoable -> {
                         editState.onKeyPressed(K.UNDO)
                         editState.clearSelection()
                     }
-                    Key.Y.isPressed && isEditable && !disableUndo -> {
+                    Key.Y.isPressed && isEditable && !isUndoable -> {
                         editState.onKeyPressed(K.REDO)
                         editState.clearSelection()
                     }

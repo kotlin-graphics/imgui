@@ -71,7 +71,7 @@ fun findHoveredWindow(pos: Vec2): Window? {
     return null
 }
 
-fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(name).apply {
+fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).apply {
     // Create window the first time
 
     this.flags = flags

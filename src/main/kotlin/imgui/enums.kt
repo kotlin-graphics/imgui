@@ -107,8 +107,9 @@ enum class InputTextFlags(val i: Int) {
     ReadOnly(1 shl 14),
     /** Password mode), display all characters as '*'   */
     Password(1 shl 15),
-    /** Disable undo / redo */
-    DisableUndo(1 shl 16),
+    /** Disable undo/redo. Note that input text owns the text data while active, if you want to provide your own
+     *  undo/redo stack you need e.g. to call clearActiveID(). */
+    NoUndoRedo(1 shl 16),
 
     // [Internal]
 

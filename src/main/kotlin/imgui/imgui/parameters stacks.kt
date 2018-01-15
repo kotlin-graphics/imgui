@@ -168,7 +168,7 @@ interface imgui_parametersStacks {
     val fontSize get() = g.fontSize
 
     /** get UV coordinate for a while pixel, useful to draw custom shapes via the ImDrawList API    */
-    val fontTexUvWhitePixel get() = g.fontTexUvWhitePixel
+    val fontTexUvWhitePixel get() = g.drawListSharedData.texUvWhitePixel
 
     /** retrieve given style color with style alpha applied and optional extra alpha multiplier */
     fun getColorU32(idx: Col, alphaMul: Float = 1f) = getColorU32(idx.i, alphaMul)

@@ -64,9 +64,6 @@ import imgui.ImGui.sliderInt
 import imgui.ImGui.sliderVec2
 import imgui.ImGui.spacing
 import imgui.ImGui.style
-import imgui.ImGui.styleColorsClassic
-import imgui.ImGui.styleColorsDark
-import imgui.ImGui.styleColorsLight
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
@@ -78,7 +75,6 @@ import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
 import imgui.functionalProgramming.button
 import imgui.functionalProgramming.collapsingHeader
-import imgui.functionalProgramming.combo
 import imgui.functionalProgramming.mainMenuBar
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.menuBar
@@ -1113,7 +1109,7 @@ object StyleEditor {
 
         treeNode("Rendering") {
             checkbox("Anti-aliased lines", style::antiAliasedLines)
-            checkbox("Anti-aliased shapes", style::antiAliasedShapes)
+            checkbox("Anti-aliased fill", style::antiAliasedFill)
             pushItemWidth(100)
             dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, Float.MAX_VALUE, "", 2f)
             if (style.curveTessellationTol < 0f) style.curveTessellationTol = 0.1f

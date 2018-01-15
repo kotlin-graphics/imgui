@@ -42,7 +42,7 @@ class DrawCmd {
      *  vtx_buffer[] array, indices in idx_buffer[].    */
     var elemCount = 0
     /** Clipping rectangle (x1, y1, x2, y2) */
-    var clipRect = Vec4(-8192.0f, -8192.0f, 8192.0f, 8192.0f)
+    var clipRect = Vec4()
     /** User-provided texture ID. Set by user in ImfontAtlas::SetTexID() for fonts or passed to Image*() functions.
     Ignore if never using images or multiple fonts atlas.   */
     var textureId: Int? = null
@@ -92,20 +92,20 @@ class DrawChannel {
 
 /** Draw command list
  *  This is the low-level list of polygons that ImGui functions are filling. At the end of the frame, all command lists
- *  are passed to your ImGuiIO::RenderDrawListFn function for rendering.
- *  At the moment, each ImGui window contains its own ImDrawList but they could potentially be merged in the future.
- *  If you want to add custom rendering within a window, you can use ImGui::GetWindowDrawList() to access the current
- *  draw list and add your own primitives.
+ *  are passed to your IO.renderDrawListFn function for rendering.
+ *  Each ImGui window contains its own DrawList. You can use ImGui::windowDrawList to access the current
+ *  window draw list and draw custom primitives.
  *  You can interleave normal ImGui:: calls and adding primitives to the current draw list.
- *  All positions are in screen coordinates (0,0=top-left, 1 pixel per unit). Primitives are always added to the list
- *  and not culled (culling is done at render time and at a higher-level by ImGui:: functions). */
-class DrawList {
+ *  All positions are in screen coordinates (0,0=top-left, 1 pixel per unit).
+ *  Important: Primitives are always added to the list and not culled (culling is done at render time and
+ *  at a higher-level by ImGui::functions), if you use this API a lot consider coarse culling your drawn objects.   */
+class DrawList(sharedData: DrawListSharedData?) {
 
     // -----------------------------------------------------------------------------------------------------------------
     // This is what you have to render
     // -----------------------------------------------------------------------------------------------------------------
 
-    /** Commands. Typically 1 command = 1 GPU draw call.    */
+    /** Draw commands. Typically 1 command = 1 GPU draw call, unless the command is a callback.    */
     var cmdBuffer = Stack<DrawCmd>()
     /** Index buffer. Each command consume ImDrawCmd::ElemCount of those    */
     var idxBuffer = Stack<DrawIdx>()
@@ -117,6 +117,10 @@ class DrawList {
     // [Internal, used while building lists]
     // -----------------------------------------------------------------------------------------------------------------
 
+    /** Flags, you may poke into these to adjust anti-aliasing settings per-primitive. */
+    var flags = 0
+    /** Pointer to shared draw data (you can use ImGui::drawListSharedData to get the one from current ImGui context) */
+    var _data: DrawListSharedData = sharedData ?: DrawListSharedData()
     /** Pointer to owner window's name for debugging    */
     var _ownerName = ""
     /** Internal == VtxBuffer.Size    */
@@ -158,7 +162,7 @@ class DrawList {
         updateClipRect()
     }
 
-    fun pushClipRectFullScreen() = pushClipRect(Vec2(nullClipRect.x, nullClipRect.y), Vec2(nullClipRect.z, nullClipRect.w))
+    fun pushClipRectFullScreen() = pushClipRect(Vec2(_data.clipRectFullscreen), Vec2(_data.clipRectFullscreen.z, _data.clipRectFullscreen.w))
 
     fun popClipRect() {
         assert(_clipRectStack.isNotEmpty())
@@ -206,7 +210,7 @@ class DrawList {
 
         if ((colUprLeft or colUprRight or colBotRight or colBotLeft) hasnt COL32_A_MASK) return
 
-        val uv = g.fontTexUvWhitePixel
+        val uv = _data.texUvWhitePixel
         primReserve(6, 4)
         primWriteIdx(_vtxCurrentIdx); primWriteIdx(_vtxCurrentIdx + 1); primWriteIdx(_vtxCurrentIdx + 2)
         primWriteIdx(_vtxCurrentIdx); primWriteIdx(_vtxCurrentIdx + 2); primWriteIdx(_vtxCurrentIdx + 3)
@@ -278,7 +282,7 @@ class DrawList {
 
     fun addText(pos: Vec2, col: Int, text: CharArray, textEnd: Int = text.size) = addText(g.font, g.fontSize, pos, col, text, textEnd)
 
-    fun addText(font: Font, fontSize: Float, pos: Vec2, col: Int, text: CharArray, textEnd: Int = text.size, wrapWidth: Float = 0f,
+    fun addText(font: Font?, fontSize: Float, pos: Vec2, col: Int, text: CharArray, textEnd: Int = text.size, wrapWidth: Float = 0f,
                 cpuFineClipRect: Vec4? = null) {
 
         if ((col and COL32_A_MASK) == 0) return
@@ -289,14 +293,9 @@ class DrawList {
         if (textEnd == 0)
             return
 
-        /*  IMPORTANT: This is one of the few instance of breaking the encapsulation of ImDrawList, as we pull this from
-            ImGui state, but it is just SO useful.
-            Might just move Font/FontSize to ImDrawList?    */
-//        if (font == NULL) TODO
-//            font = GImGui->Font
-        var fontSize = fontSize
-        if (fontSize == 0f)
-            fontSize = g.fontSize
+        // Pull default font/size from the shared ImDrawListSharedData instance
+        val font = font ?: _data.font!!
+        val fontSize = if (fontSize == 0f) _data.fontSize else fontSize
 
         assert(font.containerAtlas.texId == _textureIdStack.last())  // Use high-level ImGui::PushFont() or low-level ImDrawList::PushTextureId() to change font.
 
@@ -345,20 +344,18 @@ class DrawList {
     }
 
     // TODO: Thickness anti-aliased lines cap are missing their AA fringe.
-    fun addPolyline(points: ArrayList<Vec2>, col: Int, closed: Boolean, thickness: Float, antiAliased: Boolean) {
+    fun addPolyline(points: ArrayList<Vec2>, col: Int, closed: Boolean, thickness: Float) {
 
         if (points.size < 2) return
 
-        val uv = g.fontTexUvWhitePixel
-        val antiAliased = antiAliased && style.antiAliasedLines
-        //if (ImGui::GetIO().KeyCtrl) antiAliased = false; // Debug
+        val uv = Vec2(_data.texUvWhitePixel)
 
         var count = points.size
         if (!closed)
             count = points.lastIndex
 
         val thickLine = thickness > 1f
-        if (antiAliased) {
+        if (flags has DrawListFlags.AntiAliasedLines) {
             // Anti-aliased stroke
             val AA_SIZE = 1f
             val colTrans = col wo COL32_A_MASK
@@ -557,13 +554,11 @@ class DrawList {
         }
     }
 
-    fun addConvexPolyFilled(points: ArrayList<Vec2>, col: Int, antiAliased: Boolean) {
+    fun addConvexPolyFilled(points: ArrayList<Vec2>, col: Int) {
 
-        val uv = g.fontTexUvWhitePixel
-        val antiAliased = antiAliased && style.antiAliasedShapes
-        //if (ImGui::GetIO().KeyCtrl) antiAliased = false; // Debug
+        val uv = Vec2(_data.texUvWhitePixel)
 
-        if (antiAliased) {
+        if (flags has DrawListFlags.AntiAliasedFill) {
             // Anti-aliased Fill
             val AA_SIZE = 1f
             val colTrans = col wo COL32_A_MASK
@@ -666,10 +661,10 @@ class DrawList {
         if (_path.isEmpty() || _path.last() != pos) _path.add(pos)
     }
 
-    fun pathFillConvex(col: Int) = addConvexPolyFilled(_path, col, true).also { pathClear() }
+    fun pathFillConvex(col: Int) = addConvexPolyFilled(_path, col).also { pathClear() }
 
     /** rounding_corners_flags: 4-bits corresponding to which corner to round   */
-    fun pathStroke(col: Int, closed: Boolean, thickness: Float = 1.0f) = addPolyline(_path, col, closed, thickness, true).also { pathClear() }
+    fun pathStroke(col: Int, closed: Boolean, thickness: Float = 1.0f) = addPolyline(_path, col, closed, thickness).also { pathClear() }
 
     fun pathArcTo(centre: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 10) {
         if (radius == 0f) {
@@ -682,31 +677,15 @@ class DrawList {
         }
     }
 
-    companion object {
-        private var circleVtxBuilds = false
-        private val circleVtx = Array(12, { Vec2() })
-        /** Large values that are easy to encode in a few bits+shift    */
-        private val nullClipRect = Vec4(-8192.0f, -8192.0f, 8192.0f, 8192.0f)
-    }
-
     /** Use precomputed angles for a 12 steps circle    */
     fun pathArcToFast(centre: Vec2, radius: Float, aMinOf12: Int, aMaxOf12: Int) {
-        val circleVtxCount = circleVtx.size
-        if (!circleVtxBuilds) {
-            for (i in 0 until circleVtxCount) {
-                val a = (i.f / circleVtxCount) * 2 * glm.PIf
-                circleVtx[i].x = glm.cos(a)
-                circleVtx[i].y = glm.sin(a)
-            }
-            circleVtxBuilds = true
-        }
 
         if (radius == 0f || aMinOf12 > aMaxOf12) {
             _path.add(centre)
             return
         }
         for (a in aMinOf12..aMaxOf12) {
-            val c = circleVtx[a % circleVtxCount]
+            val c = _data.circleVtx12[a % _data.circleVtx12.size]
             _path.add(Vec2(centre.x + c.x * radius, centre.y + c.y * radius))
         }
     }
@@ -716,7 +695,7 @@ class DrawList {
 //        val p1 = _path.last()
 //        if (numSegments == 0)
 //            // Auto-tessellated
-//            pathBezierToCasteljau(&_Path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, GImGui->style.CurveTessellationTol, 0)
+//            pathBezierToCasteljau(&_Path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, _Data->style.CurveTessellationTol, 0)
 //        else
 //        {
 //            float t_step = 1.0f / (float)num_segments;
@@ -894,6 +873,7 @@ class DrawList {
         cmdBuffer.clear()
         idxBuffer.clear()
         vtxBuffer.clear()
+        flags = DrawListFlags.AntiAliasedLines or DrawListFlags.AntiAliasedFill
         _vtxCurrentIdx = 0
         _vtxWritePtr = -1
         _idxWritePtr = -1
@@ -937,7 +917,7 @@ class DrawList {
     fun primRect(a: Vec2, c: Vec2, col: Int) {
         val b = Vec2(c.x, a.y)
         val d = Vec2(a.x, c.y)
-        val uv = Vec2(g.fontTexUvWhitePixel)
+        val uv = Vec2(_data.texUvWhitePixel)
         val idx = _vtxCurrentIdx
         idxBuffer[_idxWritePtr + 0] = idx; idxBuffer[_idxWritePtr + 1] = idx + 1; idxBuffer[_idxWritePtr + 2] = idx + 2
         idxBuffer[_idxWritePtr + 3] = idx; idxBuffer[_idxWritePtr + 4] = idx + 2; idxBuffer[_idxWritePtr + 5] = idx + 3
@@ -1037,7 +1017,7 @@ class DrawList {
 
 
     // Macros
-    val currentClipRect get() = if (_clipRectStack.isNotEmpty()) _clipRectStack.last()!! else nullClipRect
+    val currentClipRect get() = if (_clipRectStack.isNotEmpty()) _clipRectStack.last()!! else _data.clipRectFullscreen
     val currentTextureId get() = if (_textureIdStack.isNotEmpty()) _textureIdStack.last()!! else null
 
     infix fun addTo(renderList: ArrayList<DrawList>) {
