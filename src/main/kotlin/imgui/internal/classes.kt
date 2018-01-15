@@ -594,11 +594,6 @@ class Window(var context: imgui.Context, var name: String) {
         name = ""
     }
 
-    fun setCurrent() {
-        g.currentWindow = this
-        g.fontSize = calcFontSize()
-    }
-
     fun setScrollY(newScrollY: Float) {
         /*  SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need
             to apply our change to it.         */
@@ -816,6 +811,14 @@ class Window(var context: imgui.Context, var name: String) {
             columnsStorage += it
             it.id = id
         }
+    }
+}
+
+fun Window?.setCurrent() {
+    g.currentWindow = this
+    this?.let {
+        g.drawListSharedData.fontSize = calcFontSize()
+        g.fontSize = g.drawListSharedData.fontSize
     }
 }
 

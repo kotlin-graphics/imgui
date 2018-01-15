@@ -805,7 +805,8 @@ interface imgui_window {
     /** per-window font scale. Adjust IO.FontGlobalScale if you want to scale all windows   */
     fun setWindowFontScale(scale: Float) = with(currentWindow) {
         fontWindowScale = scale
-        g.fontSize = calcFontSize()
+        g.drawListSharedData.fontSize = calcFontSize()
+        g.fontSize = g.drawListSharedData.fontSize
     }
 
     /** set next window position. call before Begin()   */

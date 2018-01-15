@@ -66,6 +66,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.TextEditState.K
+import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.imgui.imgui_colums.Companion.pixelsToOffsetNorm
 import imgui.internal.*
 import java.util.*
@@ -602,7 +603,7 @@ interface imgui_internal {
             val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else size.x - scrollbarSizes.x
             with(columns) {
                 minX = dc.indentX - style.itemSpacing.x // Lock our horizontal range
-                //maxX = contentRegionWidth - window->Scroll.x -((window->Flags & ImGuiWindowFlags_NoScrollbar) ? 0 : g.Style.ScrollbarSize);// - window->WindowPadding().x;
+                //maxX = contentRegionWidth - window->Scroll.x - ((window->Flags & ImGuiWindowFlags_NoScrollbar) ? 0 : g.Style.ScrollbarSize);// - window->WindowPadding().x;
                 maxX = contentRegionWidth - scroll.x
                 startPosY = dc.cursorPos.y
                 startMaxPosX = dc.cursorMaxPos.x
@@ -625,7 +626,7 @@ interface imgui_internal {
                 val column = columns.columns[n]
                 var t = column.offsetNorm
                 if (columns.flags hasnt Cf.NoForceWithinWindow)
-                    t = min(t, pixelsToOffsetNorm(columns, columns.maxX - style.columnsMinSpacing * (columns.count - n)))
+                    t = min(t, pixelsToOffsetNorm(columns, (columns.maxX - columns.minX) - style.columnsMinSpacing * (columns.count - n)))
                 column.offsetNorm = t
 
                 if (n == columnsCount) continue
@@ -666,7 +667,7 @@ interface imgui_internal {
 
                 val x = pos.x + getColumnOffset(n)
                 val columnId = columns.id + n
-                val columnHw = 4f // Half-width for interaction
+                val columnHw = columnsRectHalfWidth // Half-width for interaction
                 val columnRect = Rect(x - columnHw, y1, x + columnHw, y2)
                 keepAliveId(columnId)
                 if (isClippedEx(columnRect, columnId, false)) continue
@@ -680,10 +681,6 @@ interface imgui_internal {
                     held = c
                     if (hovered || held)
                         g.mouseCursor = MouseCursor.ResizeEW
-                    if (held && g.activeIdIsJustActivated)
-                    /*  Store from center of column line (we used a 8 wide rect for columns clicking). This is used by
-                        GetDraggedColumnOffset().                     */
-                        g.activeIdClickOffset.x -= columnHw
                     if (held && columns.columns[n].flags hasnt Cf.NoResize)
                         draggingColumn = n
                 }
@@ -883,8 +880,8 @@ interface imgui_internal {
                 c = Vec2(+0.866f, -0.5f) * r
             }
             Dir.Left, Dir.Right -> {
-                center.x -= r * 0.25f
                 if (dir == Dir.Left) r = -r
+                center.x -= r * 0.25f
                 a = Vec2(1, 0) * r
                 b = Vec2(-0.500f, +0.866f) * r
                 c = Vec2(-0.500f, -0.866f) * r
@@ -2005,7 +2002,7 @@ interface imgui_internal {
                             inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
                         }
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_aaaaaaaaaaa(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)

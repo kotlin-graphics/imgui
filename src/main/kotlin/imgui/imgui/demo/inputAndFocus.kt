@@ -21,6 +21,7 @@ import imgui.ImGui.isKeyReleased
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isMouseDragging
+import imgui.ImGui.isMousePosValid
 import imgui.ImGui.isMouseReleased
 import imgui.ImGui.isWindowFocused
 import imgui.ImGui.isWindowHovered
@@ -66,7 +67,8 @@ object inputAndFocus {
             text("WantMoveMouse: ${IO.wantMoveMouse}")
 
             treeNode("Keyboard & Mouse State") {
-                text("Mouse pos: (%g, %g)", IO.mousePos.x, IO.mousePos.y)
+                if(isMousePosValid()) text("Mouse pos: (%g, %g)", IO.mousePos.x, IO.mousePos.y)
+                else text("Mouse pos: <INVALID>")
                 text("Mouse down:")
                 for (i in 0 until IO.mouseDown.size)
                     if (IO.mouseDownDuration[i] >= 0f) {
