@@ -340,7 +340,7 @@ fun findBestWindowPosForPopup(refPos: Vec2, size: Vec2, lastDir: KMutablePropert
         val dirPreferedOrder = arrayOf(Dir.Down, Dir.Right, Dir.Left, Dir.Up)
         for (n in (if (lastDir() != Dir.None) -1 else 0) until Dir.Count.i) {
             val dir = if (n == -1) lastDir() else dirPreferedOrder[n]
-            if (n != -1 && dir == lastDir) continue // Already tried this direction?
+            if (n != -1 && dir == lastDir.get()) continue // Already tried this direction?
             val pos = Vec2()
             if (dir == Dir.Down) pos.put(rAvoid.min.x, rAvoid.max.y)          // Below, Toward Right (default)
             if (dir == Dir.Right) pos.put(rAvoid.min.x, rAvoid.min.y - size.y) // Above, Toward Right
