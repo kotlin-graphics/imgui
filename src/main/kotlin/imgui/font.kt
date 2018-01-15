@@ -115,10 +115,10 @@ class FontAtlas {
 
         // Create new font
         if (!fontCfg.mergeMode)
-            fonts.add(Font())
+            fonts += Font()
         else
             assert(fonts.isNotEmpty())  /*  When using MergeMode make sure that a font has already been added before.
-                                You can use ImGui::GetIO().Fonts->AddFontDefault() to add the default imgui font.  */
+                                You can use IO.fonts.addFontDefault to add the default imgui font.  */
         configData.add(fontCfg)
         if (fontCfg.dstFont == null)
             fontCfg.dstFont = fonts.last()
@@ -1003,8 +1003,7 @@ class Font {
     }
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
-    // TODO bug, rename back
-    fun getCharAdvance_aaaaaaaaaaa(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
+    fun getCharAdvance(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
 
     val isLoaded get() = ::containerAtlas.isInitialized
 

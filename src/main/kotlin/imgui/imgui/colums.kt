@@ -122,7 +122,7 @@ interface imgui_colums {
 
         val offset = if (columns.flags has Cf.NoForceWithinWindow) offset
             else min(offset, columns.maxX - style.columnsMinSpacing * (columns.count - columnIndex))
-        columns.columns[columnIndex].offsetNorm = pixelsToOffsetNorm(columns, offset)
+        columns.columns[columnIndex].offsetNorm = pixelsToOffsetNorm(columns, offset - columns.minX)
 
         if (preserveWidth)
             setColumnOffset(columnIndex + 1, offset + glm.max(style.columnsMinSpacing, width))
@@ -135,7 +135,9 @@ interface imgui_colums {
 
         fun offsetNormToPixels(columns: ColumnsSet, offsetNorm: Float) = offsetNorm * (columns.maxX - columns.minX)
 
-        fun pixelsToOffsetNorm(columns: ColumnsSet, offset: Float) = (offset - columns.minX) / (columns.maxX - columns.minX)
+        fun pixelsToOffsetNorm(columns: ColumnsSet, offset: Float) = offset / (columns.maxX - columns.minX)
+
+        val columnsRectHalfWidth get() = 4f
 
         fun getColumnWidthEx(columns: ColumnsSet, columnIndex: Int, beforeResize: Boolean = false): Float {
             val columnIndex = if (columnIndex < 0) columns.current else columnIndex

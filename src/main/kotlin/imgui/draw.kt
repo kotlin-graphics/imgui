@@ -1037,23 +1037,24 @@ class DrawList(sharedData: DrawListSharedData?) {
         assert(idxBuffer.isEmpty() || _idxWritePtr == idxBuffer.size)
         assert(_vtxCurrentIdx == vtxBuffer.size)
 
-        /*  Check that draw_list doesn't use more vertices than indexable in a single draw call
-                (default ImDrawIdx = 2 bytes = 64K vertices per windows)
-            If this assert triggers because you are drawing lots of stuff manually, you can:
-                A) Add '#define ImDrawIdx unsigned int' in imconfig.h to set the index size to 4 bytes. You'll need to
-                    handle the 4-bytes indices to your renderer.
-                    For example, the OpenGL example code detect index size at compile-time by doing:
-                        glDrawElements(GL_TRIANGLES,
-                                       cmd.elemCount,
-                                       if(DrawIdx.BYTES == Short.Bytes) GL_UNSIGNED_SHORT else GL_UNSIGNED_INT,
-                                       idx_buffer_offset)
-                   Your own engine or render API may use different parameters or function calls to specify index sizes.
-                   2 and 4 bytes indices are generally supported by most API.
-               B) If for some reason you cannot use 4 bytes indices or don't want to, a workaround is to call
-                    BeginChild()/EndChild() before reaching the 64K limit to split your draw commands in multiple draw lists. */
-        assert(_vtxCurrentIdx <= (1L shl (Int.BYTES * 8))) // Too many vertices in same Im See comment above.
+        // JVM ImGui, this doesnt apply, we use Ints by default, TODO make Int/Short option?
+        /*  Check that drawList doesn't use more vertices than indexable in a single draw call
+            (default DrawIdx = unsigned short = 2 bytes = 64K vertices per DrawList = per window)
+            If this assert triggers because you are drawing lots of stuff manually:
+            A) Make sure you are coarse clipping, because DrawList let all your vertices pass. You can use the Metrics
+                window to inspect draw list contents.
+            B) If you need/want meshes with more than 64K vertices, uncomment the '#define DrawIdx unsigned int' line in
+                imconfig.h to set the index size to 4 bytes.
+                You'll need to handle the 4-bytes indices to your renderer. For example, the OpenGL example code detect
+                index size at compile-time by doing:
+                glDrawElements(GL_TRIANGLES, cmd.elemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idxBufferOffset)
+                Your own engine or render API may use different parameters or function calls to specify index sizes.
+                2 and 4 bytes indices are generally supported by most API.
+            C) If for some reason you cannot use 4 bytes indices or don't want to, a workaround is to call
+                beginChild()/endChild() before reaching the 64K limit to split your draw commands in multiple draw lists.*/
+//        assert(_vtxCurrentIdx <= (1L shl (Int.BYTES * 8))) // Too many vertices in same Im See comment above.
 
-        renderList.add(this)
+        renderList += this
         IO.metricsRenderVertices += vtxBuffer.size
         IO.metricsRenderIndices += idxBuffer.size
     }

@@ -9,6 +9,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.Context.style
 import imgui.ImGui.getColumnOffset
+import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.internal.*
 import uno.kotlin.isPrintable
 import java.io.File
@@ -37,7 +38,7 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
     assert(columnIndex > 0)
     assert(g.activeId == columns.id + columnIndex)
 
-    var x = IO.mousePos.x - g.activeIdClickOffset.x - window.pos.x
+    var x = IO.mousePos.x - g.activeIdClickOffset.x + columnsRectHalfWidth - window.pos.x
     x = glm.max(x, getColumnOffset(columnIndex - 1) + style.columnsMinSpacing)
     if (columns.flags has ColumnsFlags.NoPreserveWidths)
         x = glm.min(x, getColumnOffset(columnIndex + 1) - style.columnsMinSpacing)
@@ -460,7 +461,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance_aaaaaaaaaaa(c) * scale  //TODO rename back
+        val charWidth: Float = font.getCharAdvance(c) * scale  //TODO rename back
         lineWidth += charWidth
     }
 
