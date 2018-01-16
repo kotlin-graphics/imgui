@@ -96,19 +96,19 @@ object inputAndFocus {
                 text("Mouse wheel: %.1f", IO.mouseWheel)
 
                 text("Keys down:")
-                for (i in 0 until IO.keysDown.size)
+                for (i in IO.keysDown.indices)
                     if (IO.keysDownDuration[i] >= 0f) {
                         sameLine()
                         text("$i (%.02f secs)", IO.keysDownDuration[i])
                     }
                 text("Keys pressed:")
-                for (i in 0 until IO.keysDown.size)
+                for (i in IO.keysDown.indices)
                     if (isKeyPressed(i)) {
                         sameLine()
                         text("$i")
                     }
                 text("Keys release:")
-                for (i in 0 until IO.keysDown.size)
+                for (i in IO.keysDown.indices)
                     if (isKeyReleased(i)) {
                         sameLine()
                         text("$i")
