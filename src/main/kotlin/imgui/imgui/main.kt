@@ -252,7 +252,7 @@ interface imgui_main {
                         scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
                     scrollWindow = scrollWindow.parentWindow!!
 
-                if (scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags has Wf.NoInputs) {
+                if (scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs) {
                     var scrollAmount = 5 * scrollWindow.calcFontSize()
                     scrollAmount = min(scrollAmount,
                             (scrollWindow.contentsRegionRect.height + scrollWindow.windowPadding.y * 2f) * 0.67f).i.f
