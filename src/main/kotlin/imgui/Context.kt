@@ -23,7 +23,7 @@ object Context {
     /** (Shortcut) == IO.FontGlobalScale * Font->Scale * Font->FontSize. Base text height.    */
     var fontBaseSize = 0f
 
-    lateinit var drawListSharedData: DrawListSharedData
+    var drawListSharedData = DrawListSharedData()
 
     var time = 0f
 
