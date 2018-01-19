@@ -369,7 +369,6 @@ interface imgui_window {
                     window.posF.x = glm.min(window.posF.x, (IO.displaySize.x - padding.x).f)
                     window.posF.y = glm.min(window.posF.y, (IO.displaySize.y - padding.y).f)
                 }
-            if(name[0] == 'D') println("pos ${window.posF.x}, ${window.posF.y}")
             window.pos.put(window.posF.x.i.f, window.posF.y.i.f)
 
             // Default item width. Make it proportional to window size if window manually resizes
