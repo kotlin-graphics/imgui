@@ -159,6 +159,7 @@ interface imgui_main {
                 val pos = IO.mousePos - g.activeIdClickOffset
                 if (g.movingWindow!!.rootWindow!!.posF != pos)
                     markIniSettingsDirty(g.movingWindow!!.rootWindow!!)
+                g.movingWindow!!.rootWindow!!.posF put pos
                 g.movingWindow.focus()
             } else {
                 clearActiveId()
