@@ -315,7 +315,7 @@ interface imgui_window {
             // Position child window
             if (flags has Wf.ChildWindow) {
                 window.beginOrderWithinParent = parentWindow!!.dc.childWindows.size
-                parentWindow.dc.childWindows.add(window)
+                parentWindow.dc.childWindows += window
             }
             if (flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowPosSetByApi) {
                 window.posF put parentWindow!!.dc.cursorPos
@@ -323,8 +323,7 @@ interface imgui_window {
             }
 
             val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFrames == 0
-            if (windowPosWithPivot)
-            // Position given a pivot (e.g. for centering)
+            if (windowPosWithPivot) // Position given a pivot (e.g. for centering)
                 window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.Null)
             else if (flags has Wf.ChildMenu) {
                 /*  Child menus typically request _any_ position within the parent menu item, and then our
@@ -370,6 +369,7 @@ interface imgui_window {
                     window.posF.x = glm.min(window.posF.x, (IO.displaySize.x - padding.x).f)
                     window.posF.y = glm.min(window.posF.y, (IO.displaySize.y - padding.y).f)
                 }
+            if(name[0] == 'D') println("pos ${window.posF.x}, ${window.posF.y}")
             window.pos.put(window.posF.x.i.f, window.posF.y.i.f)
 
             // Default item width. Make it proportional to window size if window manually resizes
