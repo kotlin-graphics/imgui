@@ -461,7 +461,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance(c) * scale  //TODO rename back
+        val charWidth: Float = font.getCharAdvance_aaaaa(c) * scale  //TODO rename back
         lineWidth += charWidth
     }
 
@@ -574,7 +574,7 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
             val scalarFormat = scalarFormat ?: "%d"
             var v = data()
             val oldV = v
-            val a = Scanner(seq[0]).nextInt()
+            val a = Scanner(seq[0]).useLocale(style.locale).nextInt()
 
             if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
 
@@ -597,7 +597,7 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
             val scalarFormat = scalarFormat ?: "%f"
             var v = glm.intBitsToFloat(data())
             val oldV = v
-            val a = Scanner(seq[0]).nextFloat()
+            val a = Scanner(seq[0]).useLocale(style.locale).nextFloat()
 
             if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
 
