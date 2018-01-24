@@ -529,6 +529,7 @@ class Style {
 
     /** JVM IMGUI   */
     val locale = Locale.US
+//    val locale = Locale.getDefault()
 
     init {
         ImGui.styleColorsClassic(this)
