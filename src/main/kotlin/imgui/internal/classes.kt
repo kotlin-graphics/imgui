@@ -1,6 +1,7 @@
 package imgui.internal
 
 import gli_.hasnt
+import glm_.b
 import glm_.f
 import glm_.glm
 import glm_.i
@@ -20,6 +21,9 @@ import kotlin.math.sin
 import imgui.Context as g
 import imgui.HoveredFlags as Hf
 import imgui.WindowFlags as Wf
+import gln.glf.semantic.buffer
+
+
 
 /** 2D axis aligned bounding-box
 NB: we can't rely on ImVec2 math operators being available here */
@@ -557,6 +561,13 @@ class Window(var context: imgui.Context, var name: String) {
     }
 
     fun getId(ptr: Any): Int {
+        val ptrIndex = ++ptrIndices
+        if(ptrIndex >= ptrId.size){
+            val newBufLength = ptrId.size + 512
+            val newBuf = Array(newBufLength, { java.lang.Byte(it.b) })
+            System.arraycopy(ptrId, 0, newBuf, 0, ptrId.size)
+            ptrId = newBuf
+        }
         val id = System.identityHashCode(ptrId[++ptrIndices])
         keepAliveId(id)
         return id
