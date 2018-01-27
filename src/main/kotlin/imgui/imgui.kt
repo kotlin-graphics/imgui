@@ -60,7 +60,7 @@ object ImGui :
 }
 
 var ptrIndices = 0
-val ptrId = Array(512, { java.lang.Byte(it.b) })
+var ptrId = Array(512, { java.lang.Byte(it.b) })
 
 // TODO get rid of local top value KMutableProperty in favor of the better with*{} solution
 
