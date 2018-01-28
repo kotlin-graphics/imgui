@@ -574,7 +574,10 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
             val scalarFormat = scalarFormat ?: "%d"
             var v = data()
             val oldV = v
-            val a = Scanner(seq[0]).useLocale(style.locale).nextInt()
+            var a = 0
+            try {
+                a = Scanner(seq[0]).useLocale(style.locale).nextInt()
+            }catch(_: Exception){}
 
             if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
 
@@ -597,7 +600,10 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
             val scalarFormat = scalarFormat ?: "%f"
             var v = glm.intBitsToFloat(data())
             val oldV = v
-            val a = Scanner(seq[0]).useLocale(style.locale).nextFloat()
+            var a = 0f
+            try{
+                a= Scanner(seq[0]).useLocale(style.locale).nextFloat()
+            }catch(_: Exception){}
 
             if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
 
