@@ -91,6 +91,9 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.Toolkit.getDefaultToolkit
 import javafx.scene.input.Clipboard.getSystemClipboard
 import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
+
+
 
 
 /** We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
@@ -1732,23 +1735,25 @@ interface imgui_internal {
                         if (cut && !editState.hasSelection)
                             editState.selectAll()
 
-                        TODO()
-//                        if (IO.setClipboardTextFn) {
-//                            val ib =
-//                                    if (editState.hasSelection) glm.min(editState.state.selectStart, editState.state.selectEnd)
-//                                    else 0
-//                            val ie =
-//                                    if(editState.hasSelection) glm.max(editState.state.selectStart, editState.state.selectEnd)
-//                                    else editState.curLenW
-//                            editState.TempTextBuffer.resize((ie - ib) * 4 + 1)
-//                            ImTextStrToUtf8(editState.TempTextBuffer.Data, editState.TempTextBuffer.Size, editState.Text.Data + ib, editState.Text.Data + ie)
-//                            SetClipboardText(editState.TempTextBuffer.Data)
-//                        }
-//
-//                        if (cut) {
-//                            editState.CursorFollow = true
-//                            stb_textedit_cut(& editState, &editState.StbState)
-//                        }
+                        val min = min(editState.state.selectStart, editState.state.selectEnd)
+                        val max = max(editState.state.selectStart, editState.state.selectEnd)
+
+                        val copy = String(editState.text, min, max)
+
+                        if(copy.isNotEmpty()){
+                            val stringSelection = StringSelection(copy)
+                            val clpbrd = Toolkit.getDefaultToolkit().systemClipboard
+                            clpbrd.setContents(stringSelection, null)
+                        }
+
+                        if(cut){
+                            System.arraycopy(editState.text, max, editState.text, min, max - min)
+                            val oldLen = editState.stringLen
+                            for(i in 0 until max - min){
+                                editState.text[oldLen - i] = NUL
+                            }
+                            editState.cursorClamp()
+                        }
                     }
                     Key.V.isPressed && isEditable -> {
                         val data = Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as String
