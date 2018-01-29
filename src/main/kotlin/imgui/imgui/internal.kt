@@ -88,8 +88,6 @@ import imgui.internal.ColumnsFlags as Cf
 import imgui.internal.DrawCornerFlags as Dcf
 import imgui.internal.LayoutType as Lt
 import java.awt.datatransfer.DataFlavor
-import java.awt.Toolkit.getDefaultToolkit
-import javafx.scene.input.Clipboard.getSystemClipboard
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 
@@ -1748,11 +1746,9 @@ interface imgui_internal {
 
                         if(cut){
                             System.arraycopy(editState.text, max, editState.text, min, max - min)
-                            val oldLen = editState.stringLen
-                            for(i in 0 until max - min){
-                                editState.text[oldLen - i] = NUL
-                            }
-                            editState.cursorClamp()
+                            editState.deleteChars(editState.state.cursor, max - min)
+                            editState.state.cursor = min
+                            editState.clearSelection()
                         }
                     }
                     Key.V.isPressed && isEditable -> {
@@ -1989,7 +1985,7 @@ interface imgui_internal {
                             inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
                         }
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_aaaaa(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)
