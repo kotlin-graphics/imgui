@@ -568,7 +568,7 @@ class Window(var context: imgui.Context, var name: String) {
             System.arraycopy(ptrId, 0, newBuf, 0, ptrId.size)
             ptrId = newBuf
         }
-        val id = System.identityHashCode(ptrId[++ptrIndices])
+        val id = System.identityHashCode(ptrId[ptrIndex])
         keepAliveId(id)
         return id
     }
