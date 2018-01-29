@@ -87,6 +87,10 @@ import imgui.internal.ButtonFlags as Bf
 import imgui.internal.ColumnsFlags as Cf
 import imgui.internal.DrawCornerFlags as Dcf
 import imgui.internal.LayoutType as Lt
+import java.awt.datatransfer.DataFlavor
+import java.awt.Toolkit.getDefaultToolkit
+import javafx.scene.input.Clipboard.getSystemClipboard
+import java.awt.Toolkit
 
 
 /** We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
@@ -1747,33 +1751,11 @@ interface imgui_internal {
 //                        }
                     }
                     Key.V.isPressed && isEditable -> {
-                        TODO()
-
-//                        val clipboard = getClipboardText ()
-//                        // Paste
-//                        if (clipboard) {
-//                            // Filter pasted buffer
-//                            const int clipboard_len = (int) strlen (clipboard)
-//                            ImWchar * clipboard_filtered = (ImWchar *) ImGui ::MemAlloc((clipboard_len + 1) * sizeof(ImWchar))
-//                            int clipboard_filtered_len = 0
-//                            for (const char* s = clipboard; *s; )
-//                            {
-//                                unsigned int c
-//                                s += ImTextCharFromUtf8(& c, s, NULL)
-//                                if (c == 0)
-//                                    break
-//                                if (c >= 0x10000 || !InputTextFilterCharacter(& c, flags, callback, user_data))
-//                                continue
-//                                clipboard_filtered[clipboard_filtered_len++] = (ImWchar) c
-//                            }
-//                            clipboard_filtered[clipboard_filtered_len] = 0
-//                            if (clipboard_filtered_len > 0) // If everything was filtered, ignore the pasting operation
-//                            {
-//                                stb_textedit_paste(& editState, &editState.StbState, clipboard_filtered, clipboard_filtered_len)
-//                                editState.CursorFollow = true
-//                            }
-//                            ImGui::MemFree(clipboard_filtered)
-//                        }
+                        val data = Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as String
+                        if(data != null){
+                            editState.insertChars(editState.state.cursor, data.toCharArray(), 0, data.toCharArray().size)
+                            editState.state.cursor += data.length
+                        }
                     }
                 }
             }
