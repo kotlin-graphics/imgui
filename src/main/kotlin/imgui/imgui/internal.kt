@@ -1752,6 +1752,9 @@ interface imgui_internal {
                         }
                     }
                     Key.V.isPressed && isEditable -> {
+                        if(editState.hasSelection){
+                            editState.deleteSelection()
+                        }
                         val data = Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as String
                         if(data != null){
                             editState.insertChars(editState.state.cursor, data.toCharArray(), 0, data.toCharArray().size)
