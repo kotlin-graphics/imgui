@@ -100,9 +100,9 @@ interface imgui_main {
         // Elapse drag & drop payload
         if (g.dragDropActive && g.dragDropPayload.dataFrameCount + 1 < g.frameCount) {
             clearDragDrop()
-            TODO()
-//            g.DragDropPayloadBufHeap.clear()
-//            memset(& g . DragDropPayloadBufLocal, 0, sizeof(g.DragDropPayloadBufLocal))
+            g.dragDropPayloadBufHeap.clear()
+            val size = g.dragDropPayloadBufLocal.size
+            g.dragDropPayloadBufLocal = ByteArray(size)
         }
         g.dragDropAcceptIdPrev = g.dragDropAcceptIdCurr
         g.dragDropAcceptIdCurr = 0
