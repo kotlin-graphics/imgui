@@ -1621,10 +1621,10 @@ interface imgui_internal {
                 editState.click(mouseX, mouseY)
                 editState.cursorAnimReset()
             } else if (IO.mouseDown[0] && !editState.selectedAllMouseLock && IO.mouseDelta notEqual 0f) {
-                TODO()
-//                stb_textedit_drag(& editState, &editState.StbState, mouse_x, mouse_y)
-//                editState.CursorAnimReset()
-//                editState.CursorFollow = true
+                editState.state.selectStart = editState.state.cursor
+                editState.state.selectEnd = editState.locateCoord(mouseX, mouseY)
+                editState.cursorFollow = true
+                editState.cursorAnimReset()
             }
             if (editState.selectedAllMouseLock && !IO.mouseDown[0])
                 editState.selectedAllMouseLock = false
@@ -1697,17 +1697,20 @@ interface imgui_internal {
                         clearActiveId = true
                         enterPressed = true
                     } else if (isEditable) {
-                        val c = '\n' // Insert new line
-                        TODO()
-//                        if (inputTextFilterCharacter(& c, flags, callback, user_data))
-//                        editState.OnKeyPressed((int) c)
+                        if (flags has Itf.EnterReturnsTrue){
+                            enterPressed = true
+                            TODO()
+                        }else {
+                            editState.insertChars(editState.state.cursor, charArrayOf('\n'), 0, 1)
+                            editState.state.cursor += 1
+                        }
                     }
                 }
                 flags has Itf.AllowTabInput && Key.Tab.isPressed && !IO.keyCtrl && !IO.keyShift && !IO.keyAlt && isEditable -> {
-                    val c = '\t' // Insert TAB
-                    TODO()
-//                    if (InputTextFilterCharacter(& c, flags, callback, user_data))
-//                    editState.OnKeyPressed((int) c)
+                    if(flags hasnt Itf.AllowTabInput)
+                        TODO()
+                    editState.insertChars(editState.state.cursor, charArrayOf('\t'), 0, 1)
+                    editState.state.cursor += 1
                 }
                 Key.Escape.isPressed -> {
                     clearActiveId = true
@@ -1736,7 +1739,7 @@ interface imgui_internal {
                         val min = min(editState.state.selectStart, editState.state.selectEnd)
                         val max = max(editState.state.selectStart, editState.state.selectEnd)
 
-                        val copy = String(editState.text, min, max)
+                        val copy = String(editState.text, min, max - editState.state.cursor)//for some reason this is needed.
 
                         if(copy.isNotEmpty()){
                             val stringSelection = StringSelection(copy)
