@@ -11,6 +11,7 @@ import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.sliderInt
+import java.io.FileWriter
 
 /** Logging/Capture: all text output from interface is captured to tty/file/clipboard.
  *  By default, tree nodes are automatically opened during logging.    */
@@ -78,21 +79,14 @@ interface imgui_logging {
 
     /** pass text data straight to log (without being displayed)    */
     fun logText(fmt: String, vararg args: Any) {
-        TODO()
-//        ImGuiContext& g = *GImGui;
-//        if (!g.LogEnabled)
-//            return;
-//
-//        va_list args;
-//        va_start(args, fmt);
-//        if (g.LogFile)
-//        {
-//            vfprintf(g.LogFile, fmt, args);
-//        }
-//        else
-//        {
-//            g.LogClipboard->appendv(fmt, args);
-//        }
-//        va_end(args);
+        if(!g.logEnabled)
+            return
+
+        if(g.logFile != null) {
+            val writer = FileWriter(g.logFile, true)
+            writer.write(String.format(fmt, args))
+        }else{
+            g.logClipboard.append(String.format(fmt, args))
+        }
     }
 }
