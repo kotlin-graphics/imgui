@@ -414,7 +414,7 @@ class TextEditState {
     /////////////////////////////////////////////////////////////////////////////
 
     /** traverse the layout to locate the nearest character to a display position   */
-    private fun locateCoord(x: Float, y: Float): Int {
+    fun locateCoord(x: Float, y: Float): Int {
 
         val r = Row()
         val n = curLenW
