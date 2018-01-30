@@ -10,6 +10,7 @@ import imgui.ImGui.pushAllowKeyboardFocus
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
+import imgui.ImGui.setClipboardText
 import imgui.ImGui.sliderInt
 import java.io.FileWriter
 
@@ -40,22 +41,16 @@ interface imgui_logging {
 
         if (!g.logEnabled) return
 
-        TODO()
-//        LogText(IM_NEWLINE);
-//        g.LogEnabled = false;
-//        if (g.LogFile != NULL)
-//        {
-//            if (g.LogFile == stdout)
-//                fflush(g.LogFile);
-//            else
-//                fclose(g.LogFile);
-//            g.LogFile = NULL;
-//        }
-//        if (g.LogClipboard->size() > 1)
-//        {
-//            SetClipboardText(g.LogClipboard->begin());
-//            g.LogClipboard->clear();
-//        }
+        logText("%s","\n")
+        g.logEnabled = false
+
+        if(g.logFile != null){
+            g.logFile = null
+        }
+        if(g.logClipboard.length > 1){
+            setClipboardText(g.logClipboard.toString())
+            g.logClipboard = StringBuilder()
+        }
     }
 
     /** Helper to display buttons for logging to tty/file/clipboard */
