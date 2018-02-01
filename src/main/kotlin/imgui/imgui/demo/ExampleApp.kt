@@ -908,6 +908,7 @@ object FixedOverlay {
                 menuItem("Top-right", "", corner == 1) { corner = 1 }
                 menuItem("Bottom-left", "", corner == 2) { corner = 2 }
                 menuItem("Bottom-right", "", corner == 3) { corner = 3 }
+                if (open() && menuItem("Close")) open.set(false)
             }
         }
         popStyleColor()
