@@ -7,7 +7,6 @@ import imgui.ImGui.beginChild
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
-import imgui.ImGui.calcItemRectClosestPoint
 import imgui.ImGui.captureKeyboardFromApp
 import imgui.ImGui.checkbox
 import imgui.ImGui.endChild
@@ -31,10 +30,8 @@ import imgui.ImGui.pushAllowKeyboardFocus
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setKeyboardFocusHere
-import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
-import imgui.ImGui.u32
 import imgui.ImGui.windowDrawList
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.treeNode
@@ -206,8 +203,7 @@ object inputAndFocus {
                     // Draw a line between the button and the mouse cursor
                     with(windowDrawList) {
                         pushClipRectFullScreen()
-                        addLine(calcItemRectClosestPoint(IO.mousePos, true, -2f), IO.mousePos,
-                                style.colors[Col.Button].u32, 4f)
+                        addLine(IO.mouseClickedPos[0], IO.mousePos, Col.Button.u32, 4f)
                         popClipRect()
                     }
 

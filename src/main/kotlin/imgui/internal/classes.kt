@@ -21,8 +21,6 @@ import kotlin.math.sin
 import imgui.Context as g
 import imgui.HoveredFlags as Hf
 import imgui.WindowFlags as Wf
-import gln.glf.semantic.buffer
-
 
 
 /** 2D axis aligned bounding-box
@@ -76,18 +74,18 @@ class Rect {
     infix fun contains(p: Vec2) = p.x >= min.x && p.y >= min.y && p.x < max.x && p.y < max.y
     infix fun contains(r: Rect) = r.min.x >= min.x && r.min.y >= min.y && r.max.x < max.x && r.max.y < max.y
     infix fun overlaps(r: Rect) = r.min.y < max.y && r.max.y > min.y && r.min.x < max.x && r.max.x > min.x
-    infix fun add(rhs: Vec2) {
-        if (min.x > rhs.x) min.x = rhs.x
-        if (min.y > rhs.y) min.y = rhs.y
-        if (max.x < rhs.x) max.x = rhs.x
-        if (max.y < rhs.y) max.y = rhs.y
+    infix fun add(p: Vec2) {
+        if (min.x > p.x) min.x = p.x
+        if (min.y > p.y) min.y = p.y
+        if (max.x < p.x) max.x = p.x
+        if (max.y < p.y) max.y = p.y
     }
 
-    infix fun add(rhs: Rect) {
-        if (min.x > rhs.min.x) min.x = rhs.min.x
-        if (min.y > rhs.min.y) min.y = rhs.min.y
-        if (max.x < rhs.max.x) max.x = rhs.max.x
-        if (max.y < rhs.max.y) max.y = rhs.max.y
+    infix fun add(r: Rect) {
+        if (min.x > r.min.x) min.x = r.min.x
+        if (min.y > r.min.y) min.y = r.min.y
+        if (max.x < r.max.x) max.x = r.max.x
+        if (max.y < r.max.y) max.y = r.max.y
     }
 
     infix fun expand(amount: Float) {
@@ -111,11 +109,11 @@ class Rect {
         max.y -= v.y
     }
 
-    infix fun clipWith(clip: Rect) {
-        if (min.x < clip.min.x) min.x = clip.min.x
-        if (min.y < clip.min.y) min.y = clip.min.y
-        if (max.x > clip.max.x) max.x = clip.max.x
-        if (max.y > clip.max.y) max.y = clip.max.y
+    infix fun clipWith(r: Rect) {
+        if (min.x < r.min.x) min.x = r.min.x
+        if (min.y < r.min.y) min.y = r.min.y
+        if (max.x > r.max.x) max.x = r.max.x
+        if (max.y > r.max.y) max.y = r.max.y
     }
 
     fun floor() {
@@ -139,16 +137,6 @@ class Rect {
     }
 
     val isFinite get() = min.x != Float.MAX_VALUE
-
-    fun getClosestPoint(p: Vec2, onEdge: Boolean): Vec2 {
-        if (!onEdge && contains(p))
-            return p
-        if (p.x > max.x) p.x = max.x
-        else if (p.x < min.x) p.x = min.x
-        if (p.y > max.y) p.y = max.y
-        else if (p.y < min.y) p.y = min.y
-        return p
-    }
 
     fun put(x1: Float, y1: Float, x2: Float, y2: Float) {
         min.put(x1, y1)

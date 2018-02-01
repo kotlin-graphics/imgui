@@ -118,7 +118,6 @@ object JoglGL3 {
                 and using directional navigation)   */
                 window.warpPointer(IO.mousePos.x.i, IO.mousePos.y.i)
             else
-            // Get mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)
                 IO.mousePos put cursorPos
         else
             IO.mousePos put -Float.MAX_VALUE
