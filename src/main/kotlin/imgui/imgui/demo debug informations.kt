@@ -122,6 +122,8 @@ interface imgui_demoDebugInformations {
                 text("ActiveId: 0x%08X/0x%08X (%.2f sec)", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
                 text("NavWindow: '${g.navWindow?.name}'")
+                text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" " +
+                        "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
                 treePop()
             }
         }
@@ -145,7 +147,7 @@ interface imgui_demoDebugInformations {
      *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one. */
     fun showFontSelector(label: String) {
         val fontCurrent = font
-        if (beginCombo(label, fontCurrent.debugName))        {
+        if (beginCombo(label, fontCurrent.debugName)) {
             for (f in IO.fonts.fonts)
                 if (selectable(f.debugName, f == fontCurrent))
                     IO.fontDefault = f
@@ -307,10 +309,10 @@ interface imgui_demoDebugInformations {
                                 val backupFlags = overlayDrawList.flags
                                 // Disable AA on triangle outlines at is more readable for very large and thin triangles.
                                 overlayDrawList.flags = overlayDrawList.flags and DrawListFlags.AntiAliasedLines.i.inv()
-                                overlayDrawList.addPolyline(trianglesPos, COL32(255,255,0,255), true, 1f)
+                                overlayDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f)
                                 overlayDrawList.flags = backupFlags
                             }
-                                
+
                         }
                     }
                     treePop()

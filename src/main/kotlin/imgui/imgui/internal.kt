@@ -2293,7 +2293,8 @@ interface imgui_internal {
                 - OpenOnArrow .................... single-click on arrow to open
                 - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
         var buttonFlags = Bf.NoKeyModifiers or if (flags has Tnf.AllowItemOverlap) Bf.AllowItemOverlap else Bf.Null
-        buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
+        if (flags hasnt Tnf.Leaf)
+            buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
         if (flags has Tnf.OpenOnDoubleClick)
             buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.Null)
 

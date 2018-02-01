@@ -225,4 +225,6 @@ interface imgui_dragAndDrop {
 
     /** We don't really use/need this now, but added it for the sake of consistency and because we might need it later. */
     fun endDragDropTarget() = assert(g.dragDropActive)
+
+    val isDragDropActive get() = g.dragDropActive
 }

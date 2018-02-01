@@ -101,12 +101,14 @@ interface imgui_widgetsComboBox {
 
         // Peak into expected window size so we can position it
         findWindowByName(name)?.let {
-            val sizeContents = it.calcSizeContents()
-            val sizeExpected = it.calcSizeAfterConstraint(it.calcSizeAutoFit(sizeContents))
-            if (flags has Cf.PopupAlignLeft)
-                it.autoPosLastDirection = Dir.Left
-            val pos = findBestWindowPosForPopup(frameBb.bl, sizeExpected, it::autoPosLastDirection, frameBb, PopupPositionPolicy.ComboBox)
-            setNextWindowPos(pos)
+            if(it.wasActive) {
+                val sizeContents = it.calcSizeContents()
+                val sizeExpected = it.calcSizeAfterConstraint(it.calcSizeAutoFit(sizeContents))
+                if (flags has Cf.PopupAlignLeft)
+                    it.autoPosLastDirection = Dir.Left
+                val pos = findBestWindowPosForPopup(frameBb.bl, sizeExpected, it::autoPosLastDirection, frameBb, PopupPositionPolicy.ComboBox)
+                setNextWindowPos(pos)
+            }
         }
 
         val windowFlags = Wf.AlwaysAutoResize or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings

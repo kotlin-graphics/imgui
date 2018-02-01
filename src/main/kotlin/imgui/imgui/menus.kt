@@ -94,7 +94,7 @@ interface imgui_menus {
         val barRect = window.menuBarRect()
         val clipRect = Rect(floor(barRect.min.x + 0.5f), floor(barRect.min.y + window.windowBorderSize + 0.5f),
                 floor(max(barRect.min.x, barRect.max.x - window.windowRounding) + 0.5f), floor(barRect.max.y + 0.5f))
-        clipRect clipWith window.rect()
+        clipRect clipWith window.windowRectClipped
         pushClipRect(clipRect.min, clipRect.max, false)
 
         window.dc.cursorPos.put(barRect.min.x + window.dc.menuBarOffsetX, barRect.min.y) // + g.Style.FramePadding.y);

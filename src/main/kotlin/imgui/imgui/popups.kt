@@ -60,7 +60,7 @@ interface imgui_popups {
             return false
         }
         // Center modal windows by default
-        if (window.setWindowPosAllowFlags hasnt g.setNextWindowPosCond)
+        if (g.setNextWindowPosCond == Cond.Null)
             setNextWindowPos(Vec2(IO.displaySize.x * 0.5f, IO.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
 
         val flags = extraFlags or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings
