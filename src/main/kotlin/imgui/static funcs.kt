@@ -199,29 +199,29 @@ fun loadIniSettingsFromDisk(iniFilename: String?) {
     if (iniFilename == null) return
     var settings: WindowSettings? = null
     fileLoadToLines(iniFilename)?.filter { it.isNotEmpty() }?.forEach { s ->
-                if (s[0] == '[' && s.last() == ']') {
-                    /*  Parse "[Type][Name]". Note that 'Name' can itself contains [] characters, which is acceptable with
-                        the current format and parsing code.                 */
-                    val firstCloseBracket = s.indexOf(']')
-                    val name: String
-                    val type: String
-                    if (firstCloseBracket != s.length - 1) { // Import legacy entries that have no type
-                        type = s.substring(1, firstCloseBracket)
-                        name = s.substring(firstCloseBracket + 2, s.length - 1)
-                    } else {
-                        type = "Window"
-                        name = s.substring(1, firstCloseBracket)
-                    }
-                    val typeHash = hash(type, 0, 0)
-                    settings = findWindowSettings(typeHash) ?: addWindowSettings(name)
-                } else settings?.apply {
-                    when {
-                        s.startsWith("Pos") -> pos.put(s.substring(4).split(","))
-                        s.startsWith("Size") -> size put glm.max(Vec2i(s.substring(5).split(",")), style.windowMinSize)
-                        s.startsWith("Collapsed") -> collapsed = s.substring(10).toBoolean()
-                    }
-                }
+        if (s[0] == '[' && s.last() == ']') {
+            /*  Parse "[Type][Name]". Note that 'Name' can itself contains [] characters, which is acceptable with
+                the current format and parsing code.                 */
+            val firstCloseBracket = s.indexOf(']')
+            val name: String
+            val type: String
+            if (firstCloseBracket != s.length - 1) { // Import legacy entries that have no type
+                type = s.substring(1, firstCloseBracket)
+                name = s.substring(firstCloseBracket + 2, s.length - 1)
+            } else {
+                type = "Window"
+                name = s.substring(1, firstCloseBracket)
             }
+            val typeHash = hash(type, 0, 0)
+            settings = findWindowSettings(typeHash) ?: addWindowSettings(name)
+        } else settings?.apply {
+            when {
+                s.startsWith("Pos") -> pos.put(s.substring(4).split(","))
+                s.startsWith("Size") -> size put glm.max(Vec2i(s.substring(5).split(",")), style.windowMinSize)
+                s.startsWith("Collapsed") -> collapsed = s.substring(10).toBoolean()
+            }
+        }
+    }
 }
 
 fun saveIniSettingsToDisk(iniFilename: String?) {
@@ -245,17 +245,17 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
     /*  Write .ini file
         If a window wasn't opened in this session we preserve its settings     */
     File(Paths.get(iniFilename).toUri()).printWriter().use {
-                for (setting in g.settings) {
-                    if (setting.pos.x == Int.MAX_VALUE) continue
-                    // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
-                    val name = setting.name.substringBefore("###")
-                    it.println("[Window][$name]")
-                    it.println("Pos=${setting.pos.x},${setting.pos.y}")
-                    it.println("Size=${setting.size.x.i},${setting.size.y.i}")
-                    it.println("Collapsed=${setting.collapsed.i}")
-                    it.println()
-                }
-            }
+        for (setting in g.settings) {
+            if (setting.pos.x == Int.MAX_VALUE) continue
+            // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
+            val name = setting.name.substringBefore("###")
+            it.println("[Window][$name]")
+            it.println("Pos=${setting.pos.x},${setting.pos.y}")
+            it.println("Size=${setting.size.x.i},${setting.size.y.i}")
+            it.println("Collapsed=${setting.collapsed.i}")
+            it.println()
+        }
+    }
 }
 
 fun markIniSettingsDirty(window: Window) {
@@ -577,7 +577,8 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
             var a = 0
             try {
                 a = Scanner(seq[0]).useLocale(style.locale).nextInt()
-            }catch(_: Exception){}
+            } catch (_: Exception) {
+            }
 
             if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
 
@@ -601,9 +602,10 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
             var v = glm.intBitsToFloat(data())
             val oldV = v
             var a = 0f
-            try{
-                a= Scanner(seq[0]).useLocale(style.locale).nextFloat()
-            }catch(_: Exception){}
+            try {
+                a = Scanner(seq[0]).useLocale(style.locale).nextFloat()
+            } catch (_: Exception) {
+            }
 
             if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
 
