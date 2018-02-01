@@ -53,15 +53,16 @@ interface imgui_main {
         // Initialize on first frame
         if (!g.initialized) initialize()
 
+        g.time += IO.deltaTime
+        g.frameCount += 1
+        g.tooltipOverrideCount = 0
+        g.windowsActiveCount = 0
+
         defaultFont.setCurrent()
         assert(g.font.isLoaded)
         g.drawListSharedData.clipRectFullscreen.put(0f, 0f, IO.displaySize)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
 
-        g.time += IO.deltaTime
-        g.frameCount += 1
-        g.tooltipOverrideCount = 0
-        g.windowsActiveCount = 0
         g.overlayDrawList.clear()
         g.overlayDrawList.pushTextureId(IO.fonts.texId)
         g.overlayDrawList.pushClipRectFullScreen()

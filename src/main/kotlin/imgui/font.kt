@@ -18,6 +18,7 @@ import org.lwjgl.stb.STBTruetype.*
 import org.lwjgl.system.MemoryUtil
 import uno.buffer.bufferBig
 import uno.buffer.destroy
+import uno.buffer.isNotEmpty
 import uno.convert.decode85
 import uno.stb.stb
 import java.nio.ByteBuffer
@@ -258,14 +259,15 @@ class FontAtlas {
             Although it is likely to be the most commonly used format, our font rendering is 1 channel / 8 bpp         */
         if (texPixelsRGBA32 == null) {
             val (pixels, _, _) = getTexDataAsAlpha8()
-            val a = ByteArray(32768, { pixels[it] })
-            texPixelsRGBA32 = bufferBig(texSize.x * texSize.y * 4)
-            val dst = texPixelsRGBA32!!
-            for (n in 0 until pixels.size) {
-                dst[n * 4] = 255.b
-                dst[n * 4 + 1] = 255.b
-                dst[n * 4 + 2] = 255.b
-                dst[n * 4 + 3] = pixels[n]
+            if(pixels.isNotEmpty()) {
+                texPixelsRGBA32 = bufferBig(texSize.x * texSize.y * 4)
+                val dst = texPixelsRGBA32!!
+                for (n in 0 until pixels.size) {
+                    dst[n * 4] = 255.b
+                    dst[n * 4 + 1] = 255.b
+                    dst[n * 4 + 2] = 255.b
+                    dst[n * 4 + 3] = pixels[n]
+                }
             }
         }
 
@@ -604,7 +606,10 @@ class FontAtlas {
 
             val fontOffset = stbtt_GetFontOffsetForIndex(cfg.fontDataBuffer, cfg.fontNo)
             assert(fontOffset >= 0)
-            if (!stbtt_InitFont(tmp.fontInfo, cfg.fontDataBuffer, fontOffset)) return false
+            if (!stbtt_InitFont(tmp.fontInfo, cfg.fontDataBuffer, fontOffset)) {
+                texSize put 0   // Reset output on failure
+                return false
+            }
         }
 
         // Allocate packing character data and flag packed characters buffer as non-packed (x0=y0=x1=y1=0)
