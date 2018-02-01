@@ -112,9 +112,7 @@ object JoglVrGL3 {
         IO.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         time = currentTime
 
-        /*  Setup inputs
-            (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
-            Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)   */
+        //  Setup inputs
 //        if (window.hasFocus())
         IO.mousePos put cursorPos
 //        else

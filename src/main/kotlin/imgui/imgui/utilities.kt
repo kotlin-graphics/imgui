@@ -165,13 +165,6 @@ interface imgui_utilities {
 
 //IMGUI_API const char*   GetStyleColorName(ImGuiCol idx);
 
-    /** Utility to find the closest point the last item bounding rectangle edge. useful to visually link items  */
-    fun calcItemRectClosestPoint(pos: Vec2, onEdge: Boolean = false, outward: Float = 0f): Vec2 {
-        val rect = Rect(currentWindowRead!!.dc.lastItemRect)
-        rect.expand(outward)
-        return rect.getClosestPoint(pos, onEdge)
-    }
-
     /** Calculate text size. Text can be multi-line. Optionally ignore text after a ## marker.
      *  CalcTextSize("") should return ImVec2(0.0f, GImGui->FontSize)   */
     fun calcTextSize(text: String, hideTextAfterDoubleHash: Boolean) = calcTextSize(text, 0, hideTextAfterDoubleHash)

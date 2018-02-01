@@ -137,7 +137,6 @@ object LwjglGL3 {
                 and using directional navigation)   */
                 window.cursorPos = Vec2d(IO.mousePos)
             else
-            // Get mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)
                 IO.mousePos put window.cursorPos
         else
             IO.mousePos put -Float.MAX_VALUE
