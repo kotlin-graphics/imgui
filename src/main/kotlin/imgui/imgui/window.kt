@@ -155,7 +155,8 @@ interface imgui_window {
         if (g.nextWindowData.contentSizeCond != Cond.Null) {
             // Adjust passed "client size" to become a "window size"
             window.sizeContentsExplicit put g.nextWindowData.contentSizeVal
-            window.sizeContentsExplicit.y += window.titleBarHeight + window.menuBarHeight
+            if (window.sizeContentsExplicit.y != 0f)
+                window.sizeContentsExplicit.y += window.titleBarHeight + window.menuBarHeight
             g.nextWindowData.contentSizeCond = Cond.Null
         } else if (firstBeginOfTheFrame)
             window.sizeContentsExplicit put 0f
