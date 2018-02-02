@@ -129,11 +129,14 @@ interface imgui_internal {
 
     fun clearActiveId() = setActiveId(0, null)
 
+    // TODO custom setter/getters?
     fun setHoveredId(id: Int) {
         g.hoveredId = id
         g.hoveredIdAllowOverlap = false
         g.hoveredIdTimer = if (id != 0 && g.hoveredIdPreviousFrame == id) g.hoveredIdTimer + IO.deltaTime else 0f
     }
+
+    fun getHoveredId() = if(g.hoveredId != 0) g.hoveredId else g.hoveredIdPreviousFrame
 
     fun keepAliveId(id: Int) {
         if (g.activeId == id) g.activeIdIsAlive = true

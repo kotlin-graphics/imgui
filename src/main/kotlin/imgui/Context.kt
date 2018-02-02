@@ -74,7 +74,8 @@ object Context {
     var activeIdClickOffset = Vec2(-1)
 
     var activeIdWindow: Window? = null
-    /** Track the child window we clicked on to move a window.  */
+    /** Track the window we clicked on (in order to preserve focus).
+     *  The actually window that is moved is generally MovingWindow.rootWindow.  */
     var movingWindow: Window? = null
     /** == MovedWindow->RootWindow->MoveId  */
     var movingdWindowMoveId = 0
@@ -105,9 +106,9 @@ object Context {
     //------------------------------------------------------------------
 
     /** Main ImDrawData instance to pass render information to the user */
-    var renderDrawData = DrawData()
+    var drawData = DrawData()
 
-    val renderDrawLists = Array(3, { ArrayList<DrawList>() })
+    val drawDataBuilder = DrawDataBuilder()
 
     var modalWindowDarkeningRatio = 0f
     /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
@@ -136,7 +137,7 @@ object Context {
 
     var dragDropTargetId = 0
 
-    var dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE // TODO check
+    var dragDropAcceptIdCurrRectSurface = 0f
     /** Target item id (set at the time of accepting the payload) */
     var dragDropAcceptIdCurr = 0
     /** Target item id from previous frame (we need to store this to allow for overlapping drag and drop targets) */

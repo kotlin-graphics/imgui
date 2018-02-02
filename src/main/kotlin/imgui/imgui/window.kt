@@ -424,6 +424,7 @@ interface imgui_window {
             val windowRounding = window.windowRounding
             val windowBorderSize = window.windowBorderSize
             val titleBarRect = window.titleBarRect()
+            val windowIsFocused = wantFocus || (g.navWindow?.rootNonPopupWindow === window.rootNonPopupWindow ?: false)
             if (window.collapsed) {
                 // Title bar only
                 val backupBorderSize = style.frameBorderSize
@@ -438,7 +439,6 @@ interface imgui_window {
                         if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
 
                 // Title bar
-                val windowIsFocused = wantFocus || (g.navWindow?.rootNonPopupWindow === window.rootNonPopupWindow ?: false)
                 if (flags hasnt Wf.NoTitleBar)
                     window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max,
                             (if (windowIsFocused) Col.TitleBgActive else Col.TitleBg).u32,

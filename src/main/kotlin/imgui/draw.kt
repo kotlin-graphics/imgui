@@ -8,7 +8,6 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import imgui.Context.style
 import imgui.ImGui.shadeVertsLinearUV
 import imgui.internal.*
 import java.util.*
@@ -1038,7 +1037,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         assert(_vtxCurrentIdx == vtxBuffer.size)
 
         // JVM ImGui, this doesnt apply, we use Ints by default, TODO make Int/Short option?
-        /*  Check that drawList doesn't use more vertices than indexable in a single draw call
+        /*  Check that drawList doesn't use more vertices than indexable
             (default DrawIdx = unsigned short = 2 bytes = 64K vertices per DrawList = per window)
             If this assert triggers because you are drawing lots of stuff manually:
             A) Make sure you are coarse clipping, because DrawList let all your vertices pass. You can use the Metrics
@@ -1075,6 +1074,15 @@ class DrawData {
 
     // Functions
 
+    /** Draw lists are owned by the ImGuiContext and only pointed to here. */
+    fun clear() {
+        valid = false
+        cmdLists.clear()
+        totalIdxCount = 0
+        totalVtxCount = 0
+        cmdListsCount = 0
+    }
+
     /** For backward compatibility or convenience: convert all buffers from indexed to de-indexed, in case you cannot
      *  render indexed.
      *  Note: this is slow and most likely a waste of resources. Always prefer indexed rendering!   */
@@ -1083,13 +1091,13 @@ class DrawData {
         totalVtxCount = 0
         totalIdxCount = 0
         cmdLists.filter { it.idxBuffer.isNotEmpty() }.forEach { cmdList ->
-                    for (j in cmdList.idxBuffer.indices)
-                        newVtxBuffer[j] = cmdList.vtxBuffer[cmdList.idxBuffer[j]]
-                    cmdList.vtxBuffer.clear()
-                    cmdList.vtxBuffer.addAll(newVtxBuffer)
-                    cmdList.idxBuffer.clear()
-                    totalVtxCount += cmdList.vtxBuffer.size
-                }
+            for (j in cmdList.idxBuffer.indices)
+                newVtxBuffer[j] = cmdList.vtxBuffer[cmdList.idxBuffer[j]]
+            cmdList.vtxBuffer.clear()
+            cmdList.vtxBuffer.addAll(newVtxBuffer)
+            cmdList.idxBuffer.clear()
+            totalVtxCount += cmdList.vtxBuffer.size
+        }
     }
 
     /** Helper to scale the ClipRect field of each ImDrawCmd. Use if your final output buffer is at a different scale

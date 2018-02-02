@@ -35,7 +35,7 @@ interface imgui_main {
 
     /** Same value as passed to your RenderDrawListsFn() function. valid after Render() and
      *  until the next call to NewFrame()   */
-    val drawData get() = g.renderDrawData.takeIf { it.valid }
+    val drawData get() = g.drawData.takeIf { it.valid }
 
     /** start a new ImGui frame, you can submit any command from this point until NewFrame()/Render().  */
     fun newFrame() {
@@ -71,11 +71,7 @@ interface imgui_main {
         g.overlayDrawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
 
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it
-        g.renderDrawData.valid = false
-        g.renderDrawData.cmdLists.clear()
-        g.renderDrawData.totalIdxCount = 0
-        g.renderDrawData.totalVtxCount = 0
-        g.renderDrawData.cmdListsCount = 0
+        g.drawData.clear()
 
         // Clear reference to active widget if the widget isn't alive anymore
         if (g.hoveredIdPreviousFrame == 0) g.hoveredIdTimer = 0f
@@ -158,10 +154,16 @@ interface imgui_main {
             assert(g.movingWindow != null)
             assert(g.movingWindow!!.moveId == g.movingdWindowMoveId)
             if (IO.mouseDown[0]) {
+                /*  MovingWindow = window we clicked on, could be a child window. We track it to preserve Focus and
+                    so that ActiveIdWindow == MovingWindow and ActiveId == MovingWindow->MoveId for consistency.    */
+                val actuallyMovingWindow = g.movingWindow!!.rootWindow!!
                 val pos = IO.mousePos - g.activeIdClickOffset
-                if (g.movingWindow!!.rootWindow!!.posF != pos)
-                    markIniSettingsDirty(g.movingWindow!!.rootWindow!!)
-                g.movingWindow!!.rootWindow!!.posF put pos
+                if (actuallyMovingWindow !== g.movingWindow)
+                    pos += actuallyMovingWindow.posF - g.movingWindow!!.posF
+                if (actuallyMovingWindow.posF.x != pos.x || actuallyMovingWindow.posF.y != pos.y) {
+                    markIniSettingsDirty(actuallyMovingWindow)
+                    actuallyMovingWindow.posF put pos
+                }
                 g.movingWindow.focus()
             } else {
                 clearActiveId()
@@ -320,13 +322,9 @@ interface imgui_main {
             IO.metricsActiveWindows = 0
             IO.metricsRenderIndices = 0
             IO.metricsRenderVertices = 0
-            g.renderDrawLists.forEach { it.clear() }
-            g.windows.filter { it.active && it.hiddenFrames <= 0 && it.flags hasnt Wf.ChildWindow }
-                    .map(Window::addToRenderListSelectLayer)
-
-            // Flatten layers
-            for (i in 1 until g.renderDrawLists.size)
-                g.renderDrawLists[0].addAll(g.renderDrawLists[i])
+            g.drawDataBuilder.clear()
+            g.windows.filter { it.active && it.hiddenFrames <= 0 && it.flags hasnt Wf.ChildWindow }.map(Window::addToDrawDataSelectLayer)
+            g.drawDataBuilder.flattenIntoSingleLayer()
 
             // Draw software mouse cursor if requested
             if (IO.mouseDrawCursor) {
@@ -346,19 +344,16 @@ interface imgui_main {
                 g.overlayDrawList.popTextureId()
             }
             if (g.overlayDrawList.vtxBuffer.isNotEmpty())
-                g.overlayDrawList addTo g.renderDrawLists[0]
+                g.overlayDrawList addTo g.drawDataBuilder.layers[0]
 
-            // Setup draw data
-            g.renderDrawData.valid = true
-            g.renderDrawData.cmdLists.clear()
-            g.renderDrawData.cmdLists.addAll(g.renderDrawLists[0])
-            g.renderDrawData.cmdListsCount = g.renderDrawLists[0].size
-            g.renderDrawData.totalVtxCount = IO.metricsRenderVertices
-            g.renderDrawData.totalIdxCount = IO.metricsRenderIndices
+            // Setup ImDrawData structure for end-user
+            setupDrawData(g.drawDataBuilder.layers[0], g.drawData)
+            IO.metricsRenderVertices = g.drawData.totalVtxCount
+            IO.metricsRenderIndices = g.drawData.totalIdxCount
 
             // Render. If user hasn't set a callback then they may retrieve the draw data via GetDrawData()
-            if (g.renderDrawData.cmdListsCount > 0 && IO.renderDrawListsFn != null)
-                IO.renderDrawListsFn!!(g.renderDrawData)
+            if (g.drawData.cmdListsCount > 0 && IO.renderDrawListsFn != null)
+                IO.renderDrawListsFn!!(g.drawData)
         }
     }
 
@@ -397,7 +392,7 @@ interface imgui_main {
                             with _NoMove would activate hover on other windows.                         */
                         g.hoveredWindow.focus()
                         setActiveId(g.hoveredWindow!!.moveId, g.hoveredWindow)
-                        g.activeIdClickOffset = IO.mousePos - g.hoveredRootWindow!!.pos
+                        g.activeIdClickOffset = IO.mousePos - g.hoveredWindow!!.pos
                         if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove) {
                             g.movingWindow = g.hoveredWindow
                             g.movingdWindowMoveId = g.hoveredWindow!!.moveId
@@ -473,7 +468,7 @@ interface imgui_main {
         g.fontStack.clear()
         g.openPopupStack.clear()
         g.currentPopupStack.clear()
-        g.renderDrawLists.forEach { it.clear() }
+        g.drawDataBuilder.clear()
         g.overlayDrawList.clearFreeMemory()
         g.privateClipboard = ""
         g.inputTextState.text = charArrayOf()
@@ -600,6 +595,20 @@ interface imgui_main {
                     g.windows[i].focus()
                     return
                 }
+        }
+
+        fun setupDrawData(drawLists: ArrayList<DrawList>, outDrawData: DrawData) = with(outDrawData) {
+            valid = true
+            cmdLists.clear()
+            if (drawLists.isNotEmpty())
+                cmdLists += drawLists
+            cmdListsCount = drawLists.size
+            outDrawData.totalIdxCount = 0
+            totalVtxCount = 0
+            for (n in 0 until drawLists.size) {
+                totalVtxCount += drawLists[n].vtxBuffer.size
+                totalIdxCount += drawLists[n].idxBuffer.size
+            }
         }
     }
 }

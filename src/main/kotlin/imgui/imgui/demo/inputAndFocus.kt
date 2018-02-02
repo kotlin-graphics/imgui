@@ -155,6 +155,7 @@ object inputAndFocus {
                 inputText("3 (tab skip)", buf1)
                 if (isItemActive) hasFocus = 3
                 popAllowKeyboardFocus()
+
                 text("Item with focus: ${if (hasFocus != 0) "$hasFocus" else "<none>"}")
                 textWrapped("Cursor & selection are preserved when refocusing last used item in code.")
             }
