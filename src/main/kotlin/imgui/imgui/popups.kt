@@ -8,9 +8,7 @@ import imgui.ImGui.closePopup
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.isAnyItemHovered
-import imgui.ImGui.isAnyWindowHovered
 import imgui.ImGui.isItemHovered
-import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseReleased
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowHovered
@@ -69,7 +67,7 @@ interface imgui_popups {
     /** helper to open and begin popup when clicked in void (where there are no imgui windows). */
     fun beginPopupContextVoid(strId: String = "", mouseButton: Int = 1): Boolean {
         val id = currentWindow.getId(if (strId.isEmpty()) "window_context" else strId)
-        if (isMouseReleased(mouseButton) && !isAnyWindowHovered)
+        if (isMouseReleased(mouseButton) && !isWindowHovered(Hf.AnyWindow))
             openPopupEx(id)
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
     }

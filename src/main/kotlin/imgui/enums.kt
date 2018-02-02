@@ -216,6 +216,8 @@ enum class FocusedFlags(val i: Int) {
     ChildWindows(1 shl 0),
     /** isWindowFocused(): Test from root window (top most parent of the current hierarchy) */
     RootWindow(1 shl 1),
+    /** IsWindowFocused(): Return true if any window is focused */
+    AnyWindow(1 shl 2),
     RootAndChildWindows(RootWindow or ChildWindows)
 }
 
@@ -233,15 +235,17 @@ enum class HoveredFlags(val i: Int) {
     ChildWindows(1 shl 0),
     /** isWindowHovered() only: Test from root window (top most parent of the current hierarchy) */
     RootWindow(1 shl 1),
-    /** Return true even if a popup window is normally blocking access to this item/window */
-    AllowWhenBlockedByPopup(1 shl 2),
-    // Return true even if a modal popup window is normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
-    //ImGuiHoveredFlags_AllowWhenBlockedByModal     ( 1 shl 3),
-    /** Return true even if an active item is blocking access to this item/window. Useful for Drag and Drop patterns. */
-    AllowWhenBlockedByActiveItem(1 shl 4),
-    /** Return true even if the position is overlapped by another window */
-    AllowWhenOverlapped(1 shl 5),
-    RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i)
+    /** IsWindowHovered() only: Return true if any window is hovered    */
+    AnyWindow(1 shl 2),
+    /** Return true even if a popup window is normally blocking access to this item/window  */
+    AllowWhenBlockedByPopup(1 shl 3),
+    //AllowWhenBlockedByModal     (1 shl 4),   // Return true even if a modal popup window is normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
+    /** Return true even if an active item is blocking access to this item/window. Useful for Drag and Drop patterns.   */
+    AllowWhenBlockedByActiveItem(1 shl 5),
+    /** Return true even if the position is overlapped by another window,   */
+    AllowWhenOverlapped(1 shl 6),
+    RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i),
+    RootAndChildWindows(RootWindow or ChildWindows)
 }
 
 infix fun HoveredFlags.or(other: HoveredFlags) = i or other.i

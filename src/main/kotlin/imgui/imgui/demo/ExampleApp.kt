@@ -989,7 +989,7 @@ object CustomRendering {
 //                draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x+sz, y+sz), col32); x += sz+spacing;
 //                draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x+sz, y+sz), col32, 10.0f); x += sz+spacing;
 //                draw_list->AddTriangleFilled(ImVec2(x+sz*0.5f, y), ImVec2(x+sz,y+sz-0.5f), ImVec2(x,y+sz-0.5f), col32); x += sz+spacing;
-//                draw_list->AddRectFilledMultiColor(ImVec2(x, y), ImVec2(x+sz, y+sz), ImColor(0,0,0), ImColor(255,0,0), ImColor(255,255,0), ImColor(0,255,0));
+//                draw_list->AddRectFilledMultiColor(ImVec2(x, y), ImVec2(x+sz, y+sz), COL32(0,0,0,255), COL32(255,0,0,255), COL32(255,255,0,255), COL32(0,255,0,255));
 //                ImGui::Dummy(ImVec2((sz+spacing)*8, (sz+spacing)*3));
 //            }
 //            ImGui::Separator();
@@ -1008,8 +1008,8 @@ object CustomRendering {
 //                ImVec2 canvas_size = ImGui::GetContentRegionAvail();        // Resize canvas to what's available
 //                if (canvas_size.x < 50.0f) canvas_size.x = 50.0f;
 //                if (canvas_size.y < 50.0f) canvas_size.y = 50.0f;
-//                draw_list->AddRectFilledMultiColor(canvas_pos, ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), ImColor(50,50,50), ImColor(50,50,60), ImColor(60,60,70), ImColor(50,50,60));
-//                draw_list->AddRect(canvas_pos, ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), ImColor(255,255,255));
+//                draw_list->AddRectFilledMultiColor(canvas_pos, ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), IM_COL32(50,50,50,255), IM_COL32(50,50,60,255), IM_COL32(60,60,70,255), IM_COL32(50,50,60,255));
+//                draw_list->AddRect(canvas_pos, ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), IM_COL32(255,255,255,255));
 //
 //                bool adding_preview = false;
 //                ImGui::InvisibleButton("canvas", canvas_size);
@@ -1018,7 +1018,7 @@ object CustomRendering {
 //                {
 //                    adding_preview = true;
 //                    points.push_back(mouse_pos_in_canvas);
-//                    if (!ImGui::GetIO().MouseDown[0])
+//                    if (!ImGui::IsMouseDown[0])
 //                        adding_line = adding_preview = false;
 //                }
 //                if (ImGui::IsItemHovered())
