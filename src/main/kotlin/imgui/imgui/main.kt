@@ -278,7 +278,8 @@ interface imgui_main {
         }
 
         // Closing the focused window restore focus to the first active root window in descending z-order
-        if (g.navWindow != null && !g.navWindow!!.wasActive) focusPreviousWindow()
+        if (g.navWindow != null && !g.navWindow!!.wasActive)
+            focusFrontMostActiveWindow(null)
 
         /*  No window should be open at the beginning of the frame.
             But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an
@@ -477,9 +478,9 @@ interface imgui_main {
     }
 
     companion object {
-        fun focusPreviousWindow() {
+        fun focusFrontMostActiveWindow(ignoreWindow: Window?) {
             for (i in g.windows.lastIndex downTo 0)
-                if (g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
+                if (g.windows[i] !== ignoreWindow && g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
                     g.windows[i].focus()
                     return
                 }

@@ -76,7 +76,7 @@ interface imgui_widgetsComboBox {
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
         if (pressed && !popupOpen) {
-            openPopupEx(id, false)
+            openPopupEx(id)
             popupOpen = true
         }
 

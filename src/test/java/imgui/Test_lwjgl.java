@@ -65,7 +65,7 @@ public class Test_lwjgl {
     private void init() {
 
         glfw.init();
-        windowHint.getContext().setVersion("3.3");
+        windowHint.getContext().setVersion("3.2");
         windowHint.setProfile("core");
 
         window = new GlfwWindow(1280, 720, "ImGui Lwjgl OpenGL3 example");

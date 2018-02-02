@@ -94,7 +94,7 @@ object Context {
     val currentPopupStack = Stack<PopupRef>()
 
     /** Storage for SetNextWindow** functions   */
-    lateinit var nextWindowData: NextWindowData
+    val nextWindowData = NextWindowData()
     /** Storage for SetNextTreeNode** functions */
     var nextTreeNodeOpenVal = false
 

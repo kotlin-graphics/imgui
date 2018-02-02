@@ -209,7 +209,7 @@ interface imgui_window {
                 // Popup first latch mouse position, will position itself when it appears next frame
                 window.autoPosLastDirection = Dir.None
                 if (flags has Wf.Popup && !windowPosSetByApi)
-                    window.posF put IO.mousePos
+                    window.posF put g.currentPopupStack.last().openPopupPos
             }
 
             /* Collapse window by double-clicking on title bar
@@ -633,7 +633,7 @@ interface imgui_window {
                 textR.max.x -= padRight
                 val clipRect = Rect(textR)
                 // Match the size of CloseButton()
-                clipRect.max.x = window.pos.x + window.size.x - (if (pOpen!!.get(0)) titleBarRect.height - 3 else style.framePadding.x)
+                clipRect.max.x = window.pos.x + window.size.x - (if (pOpen?.get(0) == true) titleBarRect.height - 3 else style.framePadding.x)
                 renderTextClipped(textR.min, textR.max, name, 0, textSize, style.windowTitleAlign, clipRect)
             }
 
