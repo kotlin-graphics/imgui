@@ -97,7 +97,10 @@ class DrawChannel {
  *  You can interleave normal ImGui:: calls and adding primitives to the current draw list.
  *  All positions are in screen coordinates (0,0=top-left, 1 pixel per unit).
  *  Important: Primitives are always added to the list and not culled (culling is done at render time and
- *  at a higher-level by ImGui::functions), if you use this API a lot consider coarse culling your drawn objects.   */
+ *  at a higher-level by ImGui::functions), if you use this API a lot consider coarse culling your drawn objects.
+ *
+ *  If you want to create ImDrawList instances, pass them ImGui::GetDrawListSharedData() or create and use your own
+ *  DrawListSharedData (so you can use ImDrawList without ImGui)    */
 class DrawList(sharedData: DrawListSharedData?) {
 
     // -----------------------------------------------------------------------------------------------------------------

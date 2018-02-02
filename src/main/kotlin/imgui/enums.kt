@@ -429,6 +429,8 @@ enum class StyleVar {
     WindowBorderSize,
     /** vec2    */
     WindowMinSize,
+    /** Vec2    */
+    WindowTitleAlign,
     /** float   */
     ChildRounding,
     /** float */
@@ -449,8 +451,14 @@ enum class StyleVar {
     ItemInnerSpacing,
     /** float   */
     IndentSpacing,
+    /** Float   */
+    ScrollbarSize,
+    /** Float   */
+    ScrollbarRounding,
     /** float   */
     GrabMinSize,
+    /** Float   */
+    GrabRounding,
     /** vec2  */
     ButtonTextAlign;
 

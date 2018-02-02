@@ -57,7 +57,8 @@ interface imgui_parametersStacks {
         style.colors[backup.col] put backup.backupValue
     }
 
-    /** It'll throw error if wrong correspondence between idx and value type    */
+    /** It'll throw error if wrong correspondence between idx and value type
+     *  GStyleVarInfo */
     fun pushStyleVar(idx: StyleVar, value: Any) {
         g.styleModifiers.push(StyleMod(idx).also {
             when (idx) {
@@ -80,6 +81,10 @@ interface imgui_parametersStacks {
                 StyleVar.WindowMinSize -> {
                     style.windowMinSize to it.ints
                     style.windowMinSize put (value as Vec2i)
+                }
+                StyleVar.WindowTitleAlign -> {
+                    style.windowTitleAlign to it.floats
+                    style.windowTitleAlign put (value as Vec2)
                 }
                 StyleVar.ChildRounding -> {
                     it.floats[0] = style.childRounding
@@ -121,9 +126,21 @@ interface imgui_parametersStacks {
                     it.floats[0] = style.indentSpacing
                     style.indentSpacing = value as Float
                 }
+                StyleVar.ScrollbarSize -> {
+                    it.floats[0] = style.scrollbarSize
+                    style.scrollbarSize = value as Float
+                }
+                StyleVar.ScrollbarRounding -> {
+                    it.floats[0] = style.scrollbarRounding
+                    style.scrollbarRounding = value as Float
+                }
                 StyleVar.GrabMinSize -> {
                     it.floats[0] = style.grabMinSize
                     style.grabMinSize = value as Float
+                }
+                StyleVar.GrabRounding -> {
+                    it.floats[0] = style.grabRounding
+                    style.grabRounding = value as Float
                 }
                 StyleVar.ButtonTextAlign -> {
                     style.buttonTextAlign to it.floats
@@ -142,6 +159,7 @@ interface imgui_parametersStacks {
             StyleVar.WindowRounding -> style.windowRounding = backup.floats[0]
             StyleVar.WindowBorderSize -> style.windowBorderSize = backup.floats[0]
             StyleVar.WindowMinSize -> style.windowMinSize put backup.ints
+            StyleVar.WindowTitleAlign -> style.windowTitleAlign put backup.floats
             StyleVar.ChildRounding -> style.childRounding = backup.floats[0]
             StyleVar.ChildBorderSize -> style.childBorderSize = backup.floats[0]
             StyleVar.PopupRounding -> style.popupRounding = backup.floats[0]
@@ -151,7 +169,10 @@ interface imgui_parametersStacks {
             StyleVar.ItemSpacing -> style.itemSpacing put backup.floats
             StyleVar.ItemInnerSpacing -> style.itemInnerSpacing put backup.floats
             StyleVar.IndentSpacing -> style.indentSpacing = backup.floats[0]
+            StyleVar.ScrollbarSize -> style.scrollbarSize = backup.floats[0]
+            StyleVar.ScrollbarRounding -> style.scrollbarRounding = backup.floats[0]
             StyleVar.GrabMinSize -> style.grabMinSize = backup.floats[0]
+            StyleVar.GrabRounding -> style.grabRounding = backup.floats[0]
             StyleVar.ButtonTextAlign -> style.buttonTextAlign put backup.floats
             else -> throw Error()
         }

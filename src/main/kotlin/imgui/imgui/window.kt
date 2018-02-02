@@ -9,6 +9,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.Context.style
+import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
 import imgui.ImGui.contentRegionAvail
@@ -274,9 +275,9 @@ interface imgui_window {
 
             // Apply minimum/maximum window size constraints and final size
             window.sizeFull put window.calcSizeAfterConstraint(window.sizeFull)
-            window.size put when(window.collapsed && flags hasnt Wf.ChildWindow) {
-                    true -> window.titleBarRect().size
-                    else -> window.sizeFull
+            window.size put when (window.collapsed && flags hasnt Wf.ChildWindow) {
+                true -> window.titleBarRect().size
+                else -> window.sizeFull
             }
 
             /* ---------- SCROLLBAR STATUS ---------- */
@@ -395,16 +396,16 @@ interface imgui_window {
             // Handle manual resize: Resize Grips, Borders, Gamepad
             val borderHeld = -1
             val resizeGripCol = IntArray(4)
-            val resizeGripCount = if(flags has Wf.ResizeFromAnySide) 2 else 1 // 4
+            val resizeGripCount = if (flags has Wf.ResizeFromAnySide) 2 else 1 // 4
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             if (!window.collapsed)
                 updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
-            
+
             /* ---------- DRAWING ---------- */
 
             // Setup draw list and outer clipping rectangle
             window.drawList.clear()
-            window.drawList.flags = (if(style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if(style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
+            window.drawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
             window.drawList.pushTextureId(g.font.containerAtlas.texId)
             val fullscreenRect = Rect(getVisibleRect())
             if (flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip)
@@ -429,10 +430,12 @@ interface imgui_window {
                 style.frameBorderSize = backupBorderSize
             } else {
 
-                // Window background, Default Alpha
-                window.drawList.addRectFilled(Vec2(window.pos.x, window.pos.y + window.titleBarHeight),
-                        Vec2(window.pos + window.size), getWindowBgColorIdxFromFlags(flags).u32, windowRounding,
-                        if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
+                // Window background
+                var bgCol = getWindowBgColorIdxFromFlags(flags).u32
+                if (g.nextWindowData.bgAlphaCond != Cond.Null)
+                    bgCol = (bgCol wo COL32_A_MASK) or (F32_TO_INT8_SAT(g.nextWindowData.bgAlphaVal) shl COL32_A_SHIFT)
+                window.drawList.addRectFilled(Vec2(window.pos.x, window.pos.y + window.titleBarHeight), Vec2(window.pos + window.size),
+                        bgCol, windowRounding, if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
 
                 // Title bar
                 if (flags hasnt Wf.NoTitleBar)
@@ -774,7 +777,7 @@ interface imgui_window {
         }
     }
 
-    /** set next window content size (~ enforce the range of scrollbars). not including window decorations (title bar, menu bar, etc.).
+    /** Set next window content size (~ enforce the range of scrollbars). not including window decorations (title bar, menu bar, etc.).
      *  set an axis to 0.0f to leave it automatic. call before Begin() */
     fun setNextWindowContentSize(size: Vec2) {
         // In Begin() we will add the size of window decorations (title bar, menu etc.) to that to form a SizeContents value.
@@ -784,7 +787,7 @@ interface imgui_window {
         }
     }
 
-    /** set next window collapsed state. call before Begin()    */
+    /** Set next window collapsed state. call before Begin()    */
     fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Always) {
         with(g.nextWindowData) {
             collapsedVal = collapsed
@@ -792,9 +795,17 @@ interface imgui_window {
         }
     }
 
-    /** set next window to be focused / front-most. call before Begin() */
+    /** Set next window to be focused / front-most. call before Begin() */
     fun setNextWindowFocus() {
+        // Using a Cond member for consistency (may transition all of them to single flag set for fast Clear() op)
         g.nextWindowData.focusCond = Cond.Always
+    }
+
+    /** Set next window background color alpha. helper to easily modify ImGuiCol_WindowBg/ChildBg/PopupBg.  */
+    fun setNextWindowBgAlpha(alpha: Float) {
+        g.nextWindowData.bgAlphaVal = alpha
+        // Using a Cond member for consistency (may transition all of them to single flag set for fast Clear() op)
+        g.nextWindowData.bgAlphaCond = Cond.Always
     }
 
     /** (not recommended) set current window position - call within Begin()/End(). prefer using SetNextWindowPos(),
@@ -811,19 +822,19 @@ interface imgui_window {
     /** (not recommended) set current window to be focused / front-most. prefer using SetNextWindowFocus(). */
     fun setWindowFocus() = g.currentWindow.focus()
 
-    /** set named window position.  */
+    /** Set named window position.  */
     fun setWindowPos(name: String, pos: Vec2, cond: Cond = Cond.Null) = findWindowByName(name)?.setPos(pos, cond)
 
-    /** set named window size. set axis to 0.0f to force an auto-fit on this axis.  */
+    /** Set named window size. set axis to 0.0f to force an auto-fit on this axis.  */
     fun setWindowSize(name: String, size: Vec2, cond: Cond = Cond.Null) = findWindowByName(name)?.setSize(size, cond)
 
-    /** set named window collapsed state    */
+    /** Set named window collapsed state    */
     fun setWindowCollapsed(name: String, collapsed: Boolean, cond: Cond = Cond.Null) = findWindowByName(name)?.setCollapsed(collapsed, cond)
 
-    /** set named window to be focused / front-most. use NULL to remove focus.  */
+    /** Set named window to be focused / front-most. use NULL to remove focus.  */
     fun setWindowFocus(name: String) = findWindowByName(name).focus()
 
-    /** scrolling amount [0..GetScrollMaxX()]   */
+    /** Scrolling amount [0..GetScrollMaxX()]   */
     var scrollX
         get() = g.currentWindow!!.scroll.x
         set(value) = with(currentWindow) { scrollTarget.x = value; scrollTargetCenterRatio.x = 0f }
