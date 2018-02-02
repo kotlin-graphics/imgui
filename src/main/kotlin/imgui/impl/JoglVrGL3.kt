@@ -64,6 +64,7 @@ object JoglVrGL3 {
             keyMap[Key.PageDown] = KeyEvent.VK_PAGE_DOWN.i
             keyMap[Key.Home] = KeyEvent.VK_HOME.i
             keyMap[Key.End] = KeyEvent.VK_END.i
+            keyMap[Key.Insert] = KeyEvent.VK_INSERT.i
             keyMap[Key.Delete] = KeyEvent.VK_DELETE.i
             keyMap[Key.Backspace] = KeyEvent.VK_BACK_SPACE.i
             keyMap[Key.Enter] = KeyEvent.VK_ENTER.i

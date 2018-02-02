@@ -1669,6 +1669,12 @@ interface imgui_internal {
             val isWordmoveKeyDown = if (IO.optMacOSXBehaviors) IO.keyAlt else IO.keyCtrl
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
             val isStartendKeyDown = IO.optMacOSXBehaviors && IO.keySuper && !IO.keyCtrl && !IO.keyAlt
+            val isCtrlKeyOnly = IO.keyCtrl && !IO.keyShift && !IO.keyAlt && !IO.keySuper
+            val isShiftKeyOnly = IO.keyShift && !IO.keyCtrl && !IO.keyAlt && !IO.keySuper
+
+            val isCut = ((isShortcutKeyOnly && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && isEditable && !isPassword && (!isMultiline || editState.hasSelection)
+            val isCopy = ((isShortcutKeyOnly && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || editState.hasSelection)
+            val isPaste = ((isShortcutKeyOnly && Key.V.isPressed) || (isShiftKeyOnly && Key.Insert.isPressed)) && isEditable
 
             when {
                 Key.LeftArrow.isPressed -> editState.onKeyPressed(when {
@@ -1741,12 +1747,8 @@ interface imgui_internal {
                         editState.selectAll()
                         editState.cursorFollow = true
                     }
-                    !isPassword && ((Key.X.isPressed && isEditable) || Key.C.isPressed) && (!isMultiline || editState.hasSelection) -> {
+                    isCut || isCopy -> {
                         // Cut, Copy
-                        val cut = Key.X.isPressed
-                        if (cut && !editState.hasSelection)
-                            editState.selectAll()
-
                         val min = min(editState.state.selectStart, editState.state.selectEnd)
                         val max = max(editState.state.selectStart, editState.state.selectEnd)
 
@@ -1758,18 +1760,21 @@ interface imgui_internal {
                             clpbrd.setContents(stringSelection, null)
                         }
 
-                        if (cut) {
+                        if (isCut) {
+                            if (!editState.hasSelection)
+                                editState.selectAll()
                             System.arraycopy(editState.text, max, editState.text, min, max - min)
                             editState.deleteChars(editState.state.cursor, max - min)
                             editState.state.cursor = min
                             editState.clearSelection()
                         }
                     }
-                    Key.V.isPressed && isEditable -> {
+                    isPaste -> {
+                        // Paste
                         if (editState.hasSelection) {
                             editState.deleteSelection()
                         }
-                        val data = Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as String
+                        val data = Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as? String
                         if (data != null) {
                             editState.insertChars(editState.state.cursor, data.toCharArray(), 0, data.toCharArray().size)
                             editState.state.cursor += data.length

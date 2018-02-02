@@ -311,6 +311,8 @@ enum class Key {
     /** for text edit   */
     End,
     /** for text edit   */
+    Insert,
+    /** for text edit   */
     Delete,
     /** for text edit   */
     Backspace,

@@ -82,6 +82,7 @@ object LwjglGL3 {
             keyMap[Key.PageDown] = GLFW_KEY_PAGE_DOWN
             keyMap[Key.Home] = GLFW_KEY_HOME
             keyMap[Key.End] = GLFW_KEY_END
+            keyMap[Key.Insert] = GLFW_KEY_INSERT
             keyMap[Key.Delete] = GLFW_KEY_DELETE
             keyMap[Key.Backspace] = GLFW_KEY_BACKSPACE
             keyMap[Key.Enter] = GLFW_KEY_ENTER
