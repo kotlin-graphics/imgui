@@ -341,6 +341,7 @@ class NextWindowData {
     var collapsedCond = Cond.Null
     var sizeConstraintCond = Cond.Null
     var focusCond = Cond.Null
+    var bgAlphaCond = Cond.Null
     val posVal = Vec2()
     val posPivotVal = Vec2()
     val sizeVal = Vec2()
@@ -350,6 +351,7 @@ class NextWindowData {
     val sizeConstraintRect = Rect()
     var sizeCallback: SizeCallback? = null
     var sizeCallbackUserData: Any? = null
+    var bgAlphaVal = Float.MAX_VALUE
 
     fun clear() {
         posCond = Cond.Null
@@ -358,6 +360,7 @@ class NextWindowData {
         collapsedCond = Cond.Null
         sizeConstraintCond = Cond.Null
         focusCond = Cond.Null
+        bgAlphaCond = Cond.Null
     }
 }
 

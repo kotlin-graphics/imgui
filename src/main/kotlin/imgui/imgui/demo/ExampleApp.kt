@@ -50,6 +50,7 @@ import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
@@ -896,7 +897,7 @@ object FixedOverlay {
                 if (corner has 2) IO.displaySize.y - DISTANCE else DISTANCE)
         val windowPosPivot = Vec2(if (corner has 1) 1f else 0f, if (corner has 2) 1f else 0f)
         setNextWindowPos(windowPos, Cond.Always, windowPosPivot)
-        pushStyleColor(Col.WindowBg, Vec4(0f, 0f, 0f, 0.3f))  // Transparent background
+        setNextWindowBgAlpha(0.3f)  // Transparent background
         withWindow("Example: Fixed Overlay", open, Wf.NoTitleBar or Wf.NoResize or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoSavedSettings) {
             text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
             separator()
@@ -909,7 +910,6 @@ object FixedOverlay {
                 if (open() && menuItem("Close")) open.set(false)
             }
         }
-        popStyleColor()
     }
 }
 
