@@ -84,12 +84,12 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
             Use SetWindowPos() or SetNextWindowPos() with the appropriate condition flag to change the initial position
             of a window.    */
         posF put 60
-        pos.put(posF.x.i.f, posF.y.i.f)
+        pos put 60
 
         findWindowSettings(id)?.let { s ->
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
             posF put s.pos
-            pos.put(posF.x.i.f, posF.y.i.f)
+            pos put glm.floor(posF)
             collapsed = s.collapsed
             if (s.size.lengthSqr > 0.00001f) size put s.size
         }

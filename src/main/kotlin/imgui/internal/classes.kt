@@ -109,11 +109,16 @@ class Rect {
         max.y -= v.y
     }
 
+    /** Simple version, may lead to an inverted rectangle, which is fine for Contains/Overlaps test but not for display. */
     infix fun clipWith(r: Rect) {
-        if (min.x < r.min.x) min.x = r.min.x
-        if (min.y < r.min.y) min.y = r.min.y
-        if (max.x > r.max.x) max.x = r.max.x
-        if (max.y > r.max.y) max.y = r.max.y
+        min = min max r.min
+        max = max min r.max
+    }
+
+    /** Full version, ensure both points are fully clipped. */
+    infix fun clipWithFull(r: Rect) {
+        min = glm.clamp(min, r.min, r.max)
+        max = glm.clamp(max, r.min, r.max)
     }
 
     fun floor() {
@@ -643,7 +648,7 @@ class Window(var context: imgui.Context, var name: String) {
         // Set
         val oldPos = Vec2(pos)
         posF put pos
-        pos put pos
+        pos put glm.floor(pos)
         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least
         // offset the cursor
         dc.cursorPos plusAssign pos - oldPos
