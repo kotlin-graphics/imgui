@@ -212,15 +212,6 @@ interface imgui_window {
             if (flags has Wf.ChildWindow && !(flags has (Wf.AlwaysUseWindowPadding or Wf.Popup)) && window.windowBorderSize == 0f)
                 window.windowPadding.put(0f, if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
 
-            if (windowJustActivatedByUser) {
-                // Popup first latch mouse position, will position itself when it appears next frame
-                window.autoPosLastDirection = Dir.None
-                if (flags has Wf.Popup && !windowPosSetByApi) {
-                    window.posF put g.currentPopupStack.last().openPopupPos
-                    window.pos put window.posF
-                }
-            }
-
             /* Collapse window by double-clicking on title bar
             At this point we don't have a clipping rectangle setup yet, so we can use the title bar area for hit
             detection and drawing   */
@@ -309,14 +300,24 @@ interface imgui_window {
 
             /* ---------- POSITION ---------- */
 
+            if (windowJustActivatedByUser) {
+                // Popup first latch mouse position, will position itself when it appears next frame
+                window.autoPosLastDirection = Dir.None
+                if (flags has Wf.Popup && !windowPosSetByApi) {
+                    window.posF put g.currentPopupStack.last().openPopupPos
+                    window.pos put window.posF
+                }
+            }
+
             // Position child window
             if (flags has Wf.ChildWindow) {
                 window.beginOrderWithinParent = parentWindow!!.dc.childWindows.size
                 parentWindow.dc.childWindows += window
-            }
-            if (flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowPosSetByApi) {
-                window.posF put parentWindow!!.dc.cursorPos
-                window.pos put window.posF
+
+                if (flags hasnt Wf.Popup && !windowPosSetByApi) {
+                    window.posF put parentWindow.dc.cursorPos
+                    window.pos put window.posF
+                }
             }
 
             val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFrames == 0
@@ -395,6 +396,14 @@ interface imgui_window {
             // Apply focus, new windows appears in front
             val wantFocus = windowJustActivatedByUser && flags hasnt Wf.NoFocusOnAppearing && (flags hasnt (Wf.ChildWindow or Wf.Tooltip) || flags has Wf.Popup)
 
+            // Handle manual resize: Resize Grips, Borders, Gamepad
+            val borderHeld = -1
+            val resizeGripCol = IntArray(4)
+            val resizeGripCount = if(flags has Wf.ResizeFromAnySide) 2 else 1 // 4
+            val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
+            if (!window.collapsed)
+                updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
+            
             /* ---------- DRAWING ---------- */
 
             // Setup draw list and outer clipping rectangle
@@ -422,13 +431,6 @@ interface imgui_window {
                 renderFrame(titleBarRect.min, titleBarRect.max, Col.TitleBgCollapsed.u32, true, windowRounding)
                 style.frameBorderSize = backupBorderSize
             } else {
-                // Handle resize for: Resize Grips, Borders, Gamepad
-                val borderHeld = -1
-                val resizeGripCol = IntArray(4)
-                val resizeGripCount = if (flags has Wf.ResizeFromAnySide) 2 else 1 // 4
-                val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
-                updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCol)
-                titleBarRect put window.titleBarRect()
 
                 // Window background, Default Alpha
                 window.drawList.addRectFilled(Vec2(window.pos.x, window.pos.y + window.titleBarHeight),

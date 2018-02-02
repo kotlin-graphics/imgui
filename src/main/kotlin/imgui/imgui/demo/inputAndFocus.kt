@@ -36,6 +36,7 @@ import imgui.ImGui.windowDrawList
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.treeNode
 import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
+import imgui.FocusedFlags as Ff
 import imgui.HoveredFlags as Hf
 
 object inputAndFocus {
@@ -64,7 +65,7 @@ object inputAndFocus {
             text("WantMoveMouse: ${IO.wantMoveMouse}")
 
             treeNode("Keyboard & Mouse State") {
-                if(isMousePosValid()) text("Mouse pos: (%g, %g)", IO.mousePos.x, IO.mousePos.y)
+                if (isMousePosValid()) text("Mouse pos: (%g, %g)", IO.mousePos.x, IO.mousePos.y)
                 else text("Mouse pos: <INVALID>")
                 text("Mouse down:")
                 for (i in 0 until IO.mouseDown.size)
@@ -158,7 +159,8 @@ object inputAndFocus {
                 textWrapped("Cursor & selection are preserved when refocusing last used item in code.")
             }
 
-            treeNode("Focused & Hovered Test") { // TODO to test
+            treeNode("Focused & Hovered Test") {
+                // TODO to test
 
                 checkbox("Embed everything inside a child window (for additional testing)", ::embedAllInsideAchildWindow)
                 if (embedAllInsideAchildWindow)
@@ -167,9 +169,10 @@ object inputAndFocus {
                 // Testing IsWindowFocused() function with its various flags (note that the flags can be combined)
                 bulletText("""
                     IsWindowFocused() = ${isWindowFocused()}
-                    IsWindowFocused(_ChildWindows) = ${isWindowFocused(Hf.ChildWindows.i)}
-                    IsWindowFocused(_ChildWindows|_RootWindow) = ${isWindowFocused(Hf.ChildWindows or Hf.RootWindow)}
-                    IsWindowFocused(_RootWindow) = ${isWindowFocused(Hf.RootWindow.i)}""")
+                    IsWindowFocused(_ChildWindows) = ${isWindowFocused(Ff.ChildWindows.i)}
+                    IsWindowFocused(_ChildWindows|_RootWindow) = ${isWindowFocused(Ff.ChildWindows or Ff.RootWindow)}
+                    IsWindowFocused(_RootWindow) = ${isWindowFocused(Ff.RootWindow.i)}
+                    IsWindowFocused(_AnyWindow) = ${isWindowFocused(Ff.AnyWindow)}""")
 
                 // Testing IsWindowHovered() function with its various flags (note that the flags can be combined)
                 bulletText("IsWindowHovered() = ${isWindowHovered()}\n" + // TODO triple quote?
@@ -177,7 +180,8 @@ object inputAndFocus {
                         "IsWindowHovered(_AllowWhenBlockedByActiveItem) = ${isWindowHovered(Hf.AllowWhenBlockedByActiveItem)}\n" +
                         "IsWindowHovered(_ChildWindows) = ${isWindowHovered(Hf.ChildWindows)}\n" +
                         "IsWindowHovered(_ChildWindows|_RootWindow) = ${isWindowHovered(Hf.ChildWindows or Hf.RootWindow)}\n" +
-                        "IsWindowHovered(_RootWindow) = ${isWindowHovered(Hf.RootWindow)}\n")
+                        "IsWindowHovered(_RootWindow) = ${isWindowHovered(Hf.RootWindow)}\n" +
+                        "IsWindowHovered(_AnyWindow) = ${isWindowHovered(Hf.AnyWindow)}")
                 // Testing IsItemHovered() function (because BulletText is an item itself and that would affect the output of IsItemHovered, we pass all lines in a single items to shorten the code)
                 button("ITEM")
                 bulletText("IsItemHovered() = ${isItemHovered()}\n" + // TODO triple quote?
@@ -186,7 +190,7 @@ object inputAndFocus {
                         "IsItemHovered(_AllowWhenOverlapped) = ${isItemHovered(Hf.AllowWhenOverlapped)}\n" +
                         "IsItemhovered(_RectOnly) = ${isItemHovered(Hf.RectOnly)}\n")
 
-                beginChild("child", Vec2(0,50), true)
+                beginChild("child", Vec2(0, 50), true)
                 text("This is another child window for testing IsWindowHovered() flags.")
                 endChild()
 

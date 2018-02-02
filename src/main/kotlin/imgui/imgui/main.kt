@@ -152,10 +152,9 @@ interface imgui_main {
         g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
         IO.framerate = 1.0f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
 
-        /*  Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering).
-            Only valid for root windows.         */
+        // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering).
         if (g.movingdWindowMoveId != 0 && g.movingdWindowMoveId == g.activeId) {
-            keepAliveId(g.movingdWindowMoveId)
+            keepAliveId(g.activeId)
             assert(g.movingWindow != null)
             assert(g.movingWindow!!.moveId == g.movingdWindowMoveId)
             if (IO.mouseDown[0]) {
@@ -170,6 +169,15 @@ interface imgui_main {
                 g.movingdWindowMoveId = 0
             }
         } else {
+            /*  When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order
+                to prevent hovering others.             */
+            g.activeIdWindow?.let {
+                if (it.moveId == g.activeId) {
+                    keepAliveId(g.activeId)
+                    if (!IO.mouseDown[0])
+                        clearActiveId()
+                }
+            }
             g.movingWindow = null
             g.movingdWindowMoveId = 0
         }
@@ -385,12 +393,14 @@ interface imgui_main {
                 // Click to focus window and start moving (after we're done with all our widgets)
                 if (IO.mouseClicked[0])
                     if (g.hoveredRootWindow != null) {
+                        /*  Set ActiveId even if the _NoMove flag is set, without it dragging away from a window
+                            with _NoMove would activate hover on other windows.                         */
                         g.hoveredWindow.focus()
+                        setActiveId(g.hoveredWindow!!.moveId, g.hoveredWindow)
+                        g.activeIdClickOffset = IO.mousePos - g.hoveredRootWindow!!.pos
                         if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove) {
                             g.movingWindow = g.hoveredWindow
                             g.movingdWindowMoveId = g.hoveredWindow!!.moveId
-                            setActiveId(g.movingdWindowMoveId, g.hoveredRootWindow)
-                            g.activeIdClickOffset = IO.mousePos - g.movingWindow!!.rootWindow!!.pos
                         }
                     } else if (g.navWindow != null && frontMostModalRootWindow == null)
                         null.focus()   // Clicking on void disable focus
@@ -483,7 +493,7 @@ interface imgui_main {
 
         /** Handle resize for: Resize Grips, Borders, Gamepad
          * @return borderHelf   */
-        fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld: Int, resizeGripCol: IntArray): Int {
+        fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld: Int, resizeGripCount: Int, resizeGripCol: IntArray): Int {
 
             var borderHeld = borderHeld
 
@@ -491,7 +501,6 @@ interface imgui_main {
             if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0)
                 return borderHeld
 
-            val resizeGripCount = if (flags has Wf.ResizeFromAnySide) 2 else 1 // 4
             val resizeBorderCount = if (flags has Wf.ResizeFromAnySide) 4 else 0
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             val gripHoverSize = (gripDrawSize * 0.75f).i.f

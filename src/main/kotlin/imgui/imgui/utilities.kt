@@ -104,12 +104,17 @@ interface imgui_utilities {
     /** is current window focused? or its root/child, depending on flags. see flags for options.
      *  @param flags FocusedFlags */
     fun isWindowFocused(flags: Int = Ff.Null.i): Boolean {
+
         val curr = g.currentWindow!!     // Not inside a Begin()/End()
+
+        if (flags has Ff.AnyWindow)
+            return g.navWindow != null
+
         return when (flags and (Ff.RootWindow or Ff.ChildWindows)) {
             Ff.RootWindow or Ff.ChildWindows -> g.navWindow?.let { it.rootWindow === curr.rootWindow } ?: false
-            Ff.RootWindow.i -> curr.rootWindow === g.navWindow
+            Ff.RootWindow.i -> g.navWindow === curr.rootWindow
             Ff.ChildWindows.i -> g.navWindow?.isChildOf(curr) ?: false
-            else -> curr === g.navWindow
+            else -> g.navWindow === curr
         }
     }
 
@@ -121,19 +126,14 @@ interface imgui_utilities {
      *  @param flags HoveredFlags */
     fun isWindowHovered(flags: Int = Hf.Default.i): Boolean {
         assert(flags hasnt Hf.AllowWhenOverlapped)   // Flags not supported by this function
-        when (flags and (Hf.RootWindow or Hf.ChildWindows)) {
-            Hf.RootWindow or Hf.ChildWindows -> {
-                if (g.hoveredRootWindow !== g.currentWindow!!.rootWindow) return false
-            }
-            Hf.RootWindow.i -> {
-                if (g.hoveredWindow !== g.currentWindow!!.rootWindow) return false
-            }
-            Hf.ChildWindows.i -> {
-                g.hoveredWindow.let { if (it == null || !it.isChildOf(g.currentWindow)) return false }
-            }
-            else -> {
-                if (g.hoveredWindow !== g.currentWindow) return false
-            }
+        if (flags has Hf.AnyWindow) {
+            if (g.hoveredWindow == null)
+                return false
+        } else when (flags and (Hf.RootWindow or Hf.ChildWindows)) {
+            Hf.RootWindow or Hf.ChildWindows -> if (g.hoveredRootWindow !== g.currentWindow!!.rootWindow) return false
+            Hf.RootWindow.i -> if (g.hoveredWindow != g.currentWindow!!.rootWindow) return false
+            Hf.ChildWindows.i -> g.hoveredWindow.let { if (it == null || !it.isChildOf(g.currentWindow)) return false }
+            else -> if (g.hoveredWindow !== g.currentWindow) return false
         }
 
         return when {
@@ -142,11 +142,6 @@ interface imgui_utilities {
             else -> true
         }
     }
-
-    val isAnyWindowFocused get() = g.navWindow != null
-
-    /** is mouse hovering any visible window */
-    val isAnyWindowHovered get() = g.hoveredWindow != null
 
     /** test if rectangle (of given size, starting from cursor position) is visible / not clipped.  */
     fun isRectVisible(size: Vec2) = with(currentWindowRead!!) { clipRect overlaps Rect(dc.cursorPos, dc.cursorPos + size) }

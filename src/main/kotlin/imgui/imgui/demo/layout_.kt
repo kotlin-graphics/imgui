@@ -1,7 +1,6 @@
 package imgui.imgui.demo
 
 import gli_.has
-import imgui.ImGui.u32
 import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -26,6 +25,7 @@ import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
+import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.getId
 import imgui.ImGui.inputInt
 import imgui.ImGui.invisibleButton
@@ -33,7 +33,6 @@ import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemRectSize
-import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.listBox
 import imgui.ImGui.listBoxFooter
 import imgui.ImGui.listBoxHeader
@@ -64,6 +63,7 @@ import imgui.ImGui.textColored
 import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
+import imgui.ImGui.u32
 import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
@@ -136,9 +136,9 @@ object layout_ {
                     gotoLine = gotoLine or inputInt("##Line", ::line, 0, 0, Itf.EnterReturnsTrue.i)
                 }
 
-                val flags = Wf.HorizontalScrollbar or if(disableMouseWheel) Wf.NoScrollWithMouse else Wf.Null
-                withChild("Sub1", Vec2(windowContentRegionWidth * 0.5f, 300), false, flags) {
-                    for (i in 0 until 100) {
+                val flags = if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.Null
+                withChild("Child1", Vec2(windowContentRegionWidth * 0.5f, 300), false, flags or Wf.HorizontalScrollbar) {
+                    for (i in 0..99) {
                         text("%04d: scrollable region", i)
                         if (gotoLine && line == i) setScrollHere()
                     }
@@ -147,8 +147,9 @@ object layout_ {
 
                 sameLine()
 
+                // Child 2: rounded border
                 withStyleVar(StyleVar.ChildRounding, 5f) {
-                    withChild("Sub2", Vec2(0, 300), true, if(disableMouseWheel) Wf.NoScrollWithMouse.i else 0) {
+                    withChild("Child2", Vec2(0, 300), true, flags.i) {
                         text("With border")
                         columns(2)
                         for (i in 0..99) {
@@ -430,9 +431,9 @@ object layout_ {
                 val clipRect = Vec4(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
                 invisibleButton("##dummy", size)
                 if (isItemActive && isMouseDragging()) offset += IO.mouseDelta
-                windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), Vec4.fromColor(90, 90, 120, 255).u32)
+                windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), COL32(90, 90, 120, 255))
                 windowDrawList.addText(font, fontSize * 2f, Vec2(pos.x + offset.x, pos.y + offset.y),
-                        Vec4.fromColor(255, 255, 255, 255).u32, "Line 1 hello\nLine 2 clip me!".toCharArray(), 0, 0f, clipRect)
+                        COL32(255, 255, 255, 255), "Line 1 hello\nLine 2 clip me!".toCharArray(), 0, 0f, clipRect)
             }
         }
     }
