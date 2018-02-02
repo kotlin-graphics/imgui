@@ -69,6 +69,9 @@ import imgui.TextEditState.K
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.imgui.imgui_colums.Companion.pixelsToOffsetNorm
 import imgui.internal.*
+import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.StringSelection
 import java.util.*
 import kotlin.apply
 import kotlin.math.floor
@@ -87,11 +90,6 @@ import imgui.internal.ButtonFlags as Bf
 import imgui.internal.ColumnsFlags as Cf
 import imgui.internal.DrawCornerFlags as Dcf
 import imgui.internal.LayoutType as Lt
-import java.awt.datatransfer.DataFlavor
-import java.awt.Toolkit
-import java.awt.datatransfer.StringSelection
-
-
 
 
 /** We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
@@ -302,16 +300,29 @@ interface imgui_internal {
      *  level).
      *  One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef
      *  to NULL)    */
-    fun openPopupEx(id: Int, reopenExisting: Boolean) {
+    fun openPopupEx(id: Int) {
 
         val parentWindow = g.currentWindow!!
         val currentStackSize = g.currentPopupStack.size
-        // Tagged as new ref because constructor sets Window to NULL.
-        val popupRef = PopupRef(id, parentWindow, parentWindow.getId("##Menus"), IO.mousePos)
+        // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
+        val popupRef = PopupRef(id, null, parentWindow, g.frameCount, parentWindow.idStack.last(), Vec2(IO.mousePos),
+                Vec2(IO.mousePos)) // NB: In the Navigation branch OpenPopupPos doesn't use the mouse position, hence the separation here.
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack.push(popupRef)
-        else if (reopenExisting || g.openPopupStack[currentStackSize].popupId != id) {
-            g.openPopupStack[currentStackSize] = popupRef
+        else {
+            // Close child popups if any
+            //g.OpenPopupStack.resize(current_stack_size + 1);  JVM, useless we add it automatically later at the end TODO check
+
+            /*  Gently handle the user mistakenly calling OpenPopup() every frame. It is a programming mistake!
+                However, if we were to run the regular code path, the ui would become completely unusable because
+                the popup will always be in hidden-while-calculating-size state _while_ claiming focus.
+                Which would be a very confusing situation for the programmer. Instead, we silently allow the popup
+                to proceed, it will keep reappearing and the programming error will be more obvious to understand.  */
+            if (g.openPopupStack[currentStackSize].popupId == id && g.openPopupStack[currentStackSize].openFrameCount == g.frameCount - 1)
+                g.openPopupStack[currentStackSize].openFrameCount = popupRef.openFrameCount
+            else
+                g.openPopupStack[currentStackSize] = popupRef
+
             /*  When reopening a popup we first refocus its parent, otherwise if its parent is itself a popup
                 it would get closed by CloseInactivePopups().  This is equivalent to what ClosePopupToLevel() does. */
             if (g.openPopupStack[currentStackSize].popupId == id) parentWindow.focus()
@@ -1033,16 +1044,11 @@ interface imgui_internal {
                 if (flags has Bf.PressedOnClickRelease && IO.mouseClicked[0]) {
                     setActiveId(id, window) // Hold on ID
                     window.focus()
-                    g.activeIdClickOffset = IO.mousePos - bb.min
                 }
                 if ((flags has Bf.PressedOnClick && IO.mouseClicked[0]) || (flags has Bf.PressedOnDoubleClick && IO.mouseDoubleClicked[0])) {
                     pressed = true
-                    if (flags has Bf.NoHoldingActiveID)
-                        clearActiveId()
-                    else {
-                        setActiveId(id, window) // Hold on ID
-                        g.activeIdClickOffset = IO.mousePos - bb.min
-                    }
+                    if (flags has Bf.NoHoldingActiveID) clearActiveId()
+                    else setActiveId(id, window) // Hold on ID
                     window.focus()
                 }
                 if (flags has Bf.PressedOnRelease && IO.mouseReleased[0]) {
@@ -1060,7 +1066,9 @@ interface imgui_internal {
             }
         }
         var held = false
-        if (g.activeId == id)
+        if (g.activeId == id) {
+            if (g.activeIdIsJustActivated)
+                g.activeIdClickOffset put IO.mousePos - bb.min
             if (IO.mouseDown[0])
                 held = true
             else {
@@ -1070,6 +1078,7 @@ interface imgui_internal {
                             pressed = true
                 clearActiveId()
             }
+        }
         return booleanArrayOf(pressed, hovered, held)
     }
 
@@ -1638,12 +1647,12 @@ interface imgui_internal {
                     is Alt+Ctrl - to input certain characters.  */
                 if (!(IO.keyCtrl && !IO.keyAlt) && isEditable)
                     IO.inputCharacters.filter { it != NUL }.map {
-                                withChar { c ->
-                                    // Insert character if they pass filtering
-                                    if (inputTextFilterCharacter(c.apply { set(it) }, flags/*, callback, user_data*/))
-                                        editState.onKeyPressed(c().i)
-                                }
-                            }
+                        withChar { c ->
+                            // Insert character if they pass filtering
+                            if (inputTextFilterCharacter(c.apply { set(it) }, flags/*, callback, user_data*/))
+                                editState.onKeyPressed(c().i)
+                        }
+                    }
                 // Consume characters
                 IO.inputCharacters.fill(NUL)
             }
@@ -1699,17 +1708,17 @@ interface imgui_internal {
                         clearActiveId = true
                         enterPressed = true
                     } else if (isEditable) {
-                        if (flags has Itf.EnterReturnsTrue){
+                        if (flags has Itf.EnterReturnsTrue) {
                             enterPressed = true
                             TODO()
-                        }else {
+                        } else {
                             editState.insertChars(editState.state.cursor, charArrayOf('\n'), 0, 1)
                             editState.state.cursor += 1
                         }
                     }
                 }
                 flags has Itf.AllowTabInput && Key.Tab.isPressed && !IO.keyCtrl && !IO.keyShift && !IO.keyAlt && isEditable -> {
-                    if(flags hasnt Itf.AllowTabInput)
+                    if (flags hasnt Itf.AllowTabInput)
                         TODO()
                     editState.insertChars(editState.state.cursor, charArrayOf('\t'), 0, 1)
                     editState.state.cursor += 1
@@ -1743,13 +1752,13 @@ interface imgui_internal {
 
                         val copy = String(editState.text, min, max - editState.state.cursor)//for some reason this is needed.
 
-                        if(copy.isNotEmpty()){
+                        if (copy.isNotEmpty()) {
                             val stringSelection = StringSelection(copy)
                             val clpbrd = Toolkit.getDefaultToolkit().systemClipboard
                             clpbrd.setContents(stringSelection, null)
                         }
 
-                        if(cut){
+                        if (cut) {
                             System.arraycopy(editState.text, max, editState.text, min, max - min)
                             editState.deleteChars(editState.state.cursor, max - min)
                             editState.state.cursor = min
@@ -1757,11 +1766,11 @@ interface imgui_internal {
                         }
                     }
                     Key.V.isPressed && isEditable -> {
-                        if(editState.hasSelection){
+                        if (editState.hasSelection) {
                             editState.deleteSelection()
                         }
                         val data = Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as String
-                        if(data != null){
+                        if (data != null) {
                             editState.insertChars(editState.state.cursor, data.toCharArray(), 0, data.toCharArray().size)
                             editState.state.cursor += data.length
                         }

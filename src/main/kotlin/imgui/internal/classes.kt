@@ -242,16 +242,19 @@ class MouseCursorData {
 class PopupRef(
         /** Set on OpenPopup()  */
         var popupId: Int,
+        /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
+        var window: Window?,
         /** Set on OpenPopup()  */
         var parentWindow: Window,
         /** Set on OpenPopup()  */
-        var parentMenuSet: Int,
-        /** Copy of mouse position at the time of opening popup */
-        var mousePosOnOpen: Vec2
-) {
-    /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
-    var window: Window? = null
-}
+        var openFrameCount: Int,
+        /** Set on OpenPopup(), we need this to differenciate multiple menu sets from each others
+         *  (e.g. inside menu bar vs loose menu items)    */
+        var openParentId: Int,
+        /** Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)   */
+        var openPopupPos: Vec2,
+        /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
+        var openMousePos: Vec2)
 
 class ColumnData {
     /** Column start offset, normalized 0f (far left) -> 1f (far right) */
@@ -776,7 +779,7 @@ class Window(var context: imgui.Context, var name: String) {
 
     fun bringToFront() {
         if (g.windows.last() === this) return
-        for (i in 0 until g.windows.size)
+        for (i in g.windows.size - 2 downTo 0)
             if (g.windows[i] === this) {
                 g.windows.removeAt(i)
                 g.windows.add(this)

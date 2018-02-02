@@ -27,7 +27,7 @@ class HelloWorld_lwjgl {
         with(glfw) {
             init()
             windowHint {
-                context.version = "3.3"
+                context.version = "3.2"
                 profile = "core"
             }
         }
