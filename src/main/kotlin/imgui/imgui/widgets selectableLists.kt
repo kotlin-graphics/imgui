@@ -44,10 +44,12 @@ import imgui.internal.ButtonFlags as Bf
 interface imgui_widgetsSelectableLists {
 
 
-    /** size.x==0.0: use remaining width, size.x>0.0: specify width. size.y==0.0: use label height, size.y>0.0:
-     *  specify height
-     *  Tip: pass an empty label (e.g. "##dummy") then you can use the space to draw other text or image.
-     *  But you need to make sure the ID is unique, e.g. enclose calls in PushID/PopID. */
+    /** "bool selected" carry the selection state (read-only). Selectable() is clicked is returns true so you can modify
+     *  your selection state.
+     *  size.x == 0f -> use remaining width
+     *  size.x > 0f -> specify width
+     *  size.y == 0f -> use label height
+     *  size.y > 0f -> specify height   */
     fun selectable(label: String, selected: Boolean = false, flags: Int = 0, sizeArg: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
@@ -121,6 +123,7 @@ interface imgui_widgetsSelectableLists {
         return pressed
     }
 
+    /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
     fun selectable(label: String, selected: BooleanArray, ptr: Int, flags: Int = 0, size: Vec2 = Vec2()) = withBool { b ->
         b.set(selected[ptr])
         val res = selectable(label, b, flags, size)
@@ -128,6 +131,7 @@ interface imgui_widgetsSelectableLists {
         res
     }
 
+    /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
     fun selectable(label: String, selected: KMutableProperty0<Boolean>, flags: Int = 0, size: Vec2 = Vec2()): Boolean {
         if (selectable(label, selected(), flags, size)) {
             selected.set(!selected())

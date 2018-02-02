@@ -557,10 +557,11 @@ enum class Cond(val i: Int) {
     infix fun or(other: Cond) = i or other.i
 }
 
-infix fun Int.or(other: Cond) = this or other.i
-infix fun Int.has(b: Cond) = (this and b.i) != 0
-infix fun Int.hasnt(b: Cond) = (this and b.i) == 0
-infix fun Int.wo(b: Cond) = this and b.i.inv()
+infix fun Int.or(other: Cond) = or(other.i)
+infix fun Int.has(b: Cond) = and(b.i) != 0
+infix fun Cond.has(b: Cond) = i.and(b.i) != 0
+infix fun Int.hasnt(b: Cond) = and(b.i) == 0
+infix fun Int.wo(b: Cond) = and(b.i.inv())
 
 
 /** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent

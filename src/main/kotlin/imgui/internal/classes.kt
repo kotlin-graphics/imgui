@@ -181,14 +181,14 @@ class GroupData {
 }
 
 // Simple column measurement currently used for MenuItem() only. This is very short-sighted/throw-away code and NOT a generic helper.
-class SimpleColumns {
+class MenuColumns {
 
     var count = 0
     var spacing = 0f
     var width = 0f
     var nextWidth = 0f
-    val pos = FloatArray(8)
-    var nextWidths = FloatArray(8)
+    val pos = FloatArray(4)
+    var nextWidths = FloatArray(4)
 
     fun update(count: Int, spacing: Float, clear: Boolean) {
         assert(count <= pos.size)
@@ -316,6 +316,34 @@ class DrawListSharedData {
     })
 }
 
+/** Storage for SetNexWindow** functions    */
+class NextWindowData {
+    var posCond = Cond.Null
+    var sizeCond = Cond.Null
+    var contentSizeCond = Cond.Null
+    var collapsedCond = Cond.Null
+    var sizeConstraintCond = Cond.Null
+    var focusCond = Cond.Null
+    val posVal = Vec2()
+    val posPivotVal = Vec2()
+    val sizeVal = Vec2()
+    val contentSizeVal = Vec2()
+    var collapsedVal = false
+    /** Valid if 'SetNextWindowSizeConstraint' is true  */
+    val sizeConstraintRect = Rect()
+    var sizeCallback: SizeCallback? = null
+    var sizeCallbackUserData: Any? = null
+
+    fun clear() {
+        posCond = Cond.Null
+        sizeCond = Cond.Null
+        contentSizeCond = Cond.Null
+        collapsedCond = Cond.Null
+        sizeConstraintCond = Cond.Null
+        focusCond = Cond.Null
+    }
+}
+
 /** Transient per-window data, reset at the beginning of the frame
 FIXME: That's theory, in practice the delimitation between ImGuiWindow and ImGuiDrawContext is quite tenuous and
 could be reconsidered.  */
@@ -439,7 +467,7 @@ class Window(var context: imgui.Context, var name: String) {
     var scrollbarSizes = Vec2()
 
     var borderSize = 0f
-    /** Set to true on Begin()  */
+    /** Set to true on Begin(), unless Collapsed  */
     var active = false
 
     var wasActive = false
@@ -506,7 +534,7 @@ class Window(var context: imgui.Context, var name: String) {
     var itemWidthDefault = 0f
 
     /** Simplified columns storage for menu items   */
-    val menuColumns = SimpleColumns()
+    val menuColumns = MenuColumns()
 
     var stateStorage = Storage()
 
@@ -550,7 +578,7 @@ class Window(var context: imgui.Context, var name: String) {
 
     fun getId(ptr: Any): Int {
         val ptrIndex = ++ptrIndices
-        if(ptrIndex >= ptrId.size){
+        if (ptrIndex >= ptrId.size) {
             val newBufLength = ptrId.size + 512
             val newBuf = Array(newBufLength, { java.lang.Byte(it.b) })
             System.arraycopy(ptrId, 0, newBuf, 0, ptrId.size)
@@ -666,14 +694,16 @@ class Window(var context: imgui.Context, var name: String) {
 
     fun calcSizeAfterConstraint(newSize: Vec2): Vec2 {
 
-        if (g.setNextWindowSizeConstraint) {
+        if (g.nextWindowData.sizeConstraintCond != Cond.Null) {
             // Using -1,-1 on either X/Y axis to preserve the current size.
-            val cr = g.setNextWindowSizeConstraintRect
+            val cr = g.nextWindowData.sizeConstraintRect
             newSize.x = if (cr.min.x >= 0 && cr.max.x >= 0) glm.clamp(newSize.x, cr.min.x, cr.max.x) else sizeFull.x
             newSize.y = if (cr.min.y >= 0 && cr.max.y >= 0) glm.clamp(newSize.y, cr.min.y, cr.max.y) else sizeFull.y
-            g.setNextWindowSizeConstraintCallback?.let {
-                it(g.setNextWindowSizeConstraintCallbackUserData, pos, sizeFull, newSize)
-            }
+            g.nextWindowData.sizeCallback?.invoke(SizeCallbackData(
+                    userData = g.nextWindowData.sizeCallbackUserData,
+                    pos = Vec2(this@Window.pos),
+                    currentSize = sizeFull,
+                    desiredSize = newSize))
         }
 
         // Minimum size
@@ -708,8 +738,7 @@ class Window(var context: imgui.Context, var name: String) {
     infix fun addTo(renderList: ArrayList<DrawList>) {
         drawList addTo renderList
         dc.childWindows.filter { it.active }  // clipped children may have been marked not active
-                .filter { it.flags hasnt Wf.Popup || it.hiddenFrames <= 0 }
-                .forEach { it addTo renderList }
+                .filter { it.hiddenFrames <= 0 }.forEach { it addTo renderList }
     }
 
     fun addToSortedBuffer() {

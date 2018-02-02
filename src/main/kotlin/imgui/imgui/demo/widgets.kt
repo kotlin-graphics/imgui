@@ -9,7 +9,6 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
 import imgui.ImGui.acceptDragDropPayload
-import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
@@ -34,7 +33,6 @@ import imgui.ImGui.dragInt2
 import imgui.ImGui.dragInt3
 import imgui.ImGui.dragInt4
 import imgui.ImGui.dragIntRange2
-import imgui.ImGui.endCombo
 import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
@@ -69,7 +67,6 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setColorEditOptions
-import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderAngle
 import imgui.ImGui.sliderFloat
@@ -165,7 +162,9 @@ object widgets {
 
 
     /* Selectables */
-    val selected0 = booleanArrayOf(false, true, false, false)
+    val selection0 = booleanArrayOf(false, true, false, false, false)
+    val selection1 = BooleanArray(5)
+    var selected0 = -1
     val selected1 = BooleanArray(3)
     val selected2 = BooleanArray(16)
     val selected3 = booleanArrayOf(true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true)
@@ -190,10 +189,10 @@ object widgets {
 
     /* Color/Picker Widgets */
     val color = Vec4.fromColor(114, 144, 154, 200)
-    var hdr = false
     var alphaPreview = true
     var alphaHalfPreview = false
     var optionsMenu = true
+    var hdr = false
     // Generate a dummy palette
     var savedPaletteInited = false
     var savedPalette = Array(32, { Vec4() })
@@ -516,15 +515,36 @@ object widgets {
             }
 
             treeNode("Selectables") {
+                /*  Selectable() has 2 overloads:
+                    - The one taking "bool selected" as a read-only selection information. When Selectable() has been
+                        clicked is returns true and you can alter selection state accordingly.
+                    - The one taking "bool* p_selected" as a read-write selection information (convenient in some cases)
+                    The earlier is more flexible, as in real application your selection may be stored in
+                    a different manner (in flags within objects, as an external list, etc). */
                 treeNode("Basic") {
-                    selectable("1. I am selectable", selected0, 0)
-                    selectable("2. I am selectable", selected0, 1)
+                    selectable("1. I am selectable", selection0, 0)
+                    selectable("2. I am selectable", selection0, 1)
                     text("3. I am not selectable")
-                    selectable("4. I am selectable", selected0, 2)
-                    if (selectable("5. I am double clickable", selected0[3], Sf.AllowDoubleClick.i))
-                        if (isMouseDoubleClicked(0)) selected0[3] = !selected0[3]
+                    selectable("4. I am selectable", selection0, 2)
+                    if (selectable("5. I am double clickable", selection0[3], Sf.AllowDoubleClick.i))
+                        if (isMouseDoubleClicked(0)) selection0[3] = !selection0[3]
                 }
-                treeNode("Rendering more text into the same block") {
+                treeNode("Selection State: Single Selection") {
+                    for (n in 0..4)
+                        if (selectable("Object $n", selected0 == n))
+                            selected0 = n
+                }
+                treeNode("Selection State: Multiple Selection") {
+                    showHelpMarker("Hold CTRL and click to select multiple items.")
+                    for (n in 0..4)
+                        if (selectable("Object $n", selection1[n])) {
+                            if (!IO.keyCtrl)    // Clear selection when CTRL is not held
+                                selection1.fill(false)
+                            selection0[n] = selection0[n] xor true
+                        }
+                }
+                treeNode("Rendering more text into the same line") {
+                    // Using the Selectable() override that takes "bool* p_selected" parameter and toggle your booleans automatically.
                     selectable("main.c", selected1, 0); sameLine(300); text(" 2,345 bytes")
                     selectable("Hello.cpp", selected1, 1); sameLine(300); text("12,345 bytes")
                     selectable("Hello.h", selected1, 2); sameLine(300); text(" 2,345 bytes")
@@ -633,10 +653,10 @@ object widgets {
 
             treeNode("Color/Picker Widgets") {
 
-                checkbox("With HDR", ::hdr); sameLine(); showHelpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.")
                 checkbox("With Alpha Preview", ::alphaPreview)
                 checkbox("With Half Alpha Preview", ::alphaHalfPreview)
                 checkbox("With Options Menu", ::optionsMenu); sameLine(); showHelpMarker("Right-click on the individual color widget to show options.")
+                checkbox("With HDR", ::hdr); sameLine(); showHelpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.")
                 var miscFlags = if (hdr) Cef.HDR.i else 0
                 if (alphaHalfPreview) miscFlags = miscFlags or Cef.AlphaPreviewHalf
                 if (alphaPreview) miscFlags = miscFlags or Cef.AlphaPreview

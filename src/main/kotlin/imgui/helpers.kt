@@ -3,6 +3,7 @@ package imgui
 import glm_.bool
 import glm_.glm
 import glm_.i
+import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.Context.style
 import imgui.ImGui.calcListClipping
@@ -126,11 +127,15 @@ class TextEditCallbackData {
     }
 }
 
-class SizeConstraintCallbackData {
-    init {
-        TODO()
-    }
-}
+class SizeCallbackData(
+        /** Read-only.   What user passed to SetNextWindowSizeConstraints() */
+        var userData: Any? = null,
+        /** Read-only.   Window position, for reference.    */
+        val pos: Vec2 = Vec2(),
+        /** Read-only.   Current window size.   */
+        val currentSize: Vec2 = Vec2(),
+        /** Read-write.  Desired size, based on user's mouse position. Write to this field to restrain resizing.    */
+        val desiredSize: Vec2 = Vec2())
 
 /** Data payload for Drag and Drop operations */
 class Payload {
@@ -156,7 +161,7 @@ class Payload {
     /** Set when AcceptDragDropPayload() was called and mouse button is released over the target item. */
     var delivery = false
 
-    fun clear()    {
+    fun clear() {
         sourceParentId = 0
         sourceId = 0
         data = null

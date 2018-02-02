@@ -460,8 +460,6 @@ interface imgui_main {
         g.fontStack.clear()
         g.openPopupStack.clear()
         g.currentPopupStack.clear()
-        g.setNextWindowSizeConstraintCallback = null
-        g.setNextWindowSizeConstraintCallbackUserData = null
         g.renderDrawLists.forEach { it.clear() }
         g.overlayDrawList.clearFreeMemory()
         g.privateClipboard = ""

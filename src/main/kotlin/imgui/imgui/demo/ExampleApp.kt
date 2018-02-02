@@ -155,7 +155,7 @@ object ExampleApp {
 
         if (show.about)
             withWindow("About Dear ImGui", show::about, Wf.AlwaysAutoResize.i) {
-                text("JVM ImGui, $version")
+                text("JVM Dear ImGui, $version")
                 separator()
                 text("Original by Omar Cornut, ported by Giuseppe Barbieri and all dear imgui contributors.")
                 text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
@@ -873,13 +873,11 @@ object ConstrainedResize {
 
     /** Helper functions to demonstrate programmatic constraints    */
     object CustomConstraints {
-        val square: SizeConstraintCallback = { _: Any?, _: Vec2i, _: Vec2, desiredSize: Vec2 ->
-            desiredSize put max(desiredSize.x, desiredSize.y)
-        }
-        val step: SizeConstraintCallback = { userData: Any?, _: Vec2i, _: Vec2, desiredSize: Vec2 ->
-            val step = (userData as Int).f
-            desiredSize.x = (desiredSize.x / step + 0.5f).i * step
-            desiredSize.y = (desiredSize.y / step + 0.5f).i * step
+        val square: SizeCallback = { it.desiredSize put max(it.desiredSize.x, it.desiredSize.y) }
+        val step: SizeCallback = {
+            val step = (it.userData as Int).f
+            it.desiredSize.x = (it.desiredSize.x / step + 0.5f).i * step
+            it.desiredSize.y = (it.desiredSize.y / step + 0.5f).i * step
         }
 
     }

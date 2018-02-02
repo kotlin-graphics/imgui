@@ -64,7 +64,7 @@ var ptrId = Array(512, { java.lang.Byte(it.b) })
 
 // TODO get rid of local top value KMutableProperty in favor of the better with*{} solution
 
-typealias SizeConstraintCallback = (userData: Any?, pos: Vec2i, currenSize: Vec2, desiredSize: Vec2) -> Unit
+typealias SizeCallback = (SizeCallbackData) -> Unit
 
 // dummy main
 fun main(args: Array<String>) {
