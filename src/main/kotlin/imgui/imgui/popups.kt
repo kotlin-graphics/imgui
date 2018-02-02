@@ -44,7 +44,7 @@ interface imgui_popups {
      *  returned true!   */
     fun beginPopup(strId: String): Boolean {
         if (g.openPopupStack.size <= g.currentPopupStack.size) {    // Early out for performance
-            clearSetNextWindowData()    // We behave like Begin() and need to consume those values
+            g.nextWindowData.clear()    // We behave like Begin() and need to consume those values
             return false
         }
         return beginPopupEx(g.currentWindow!!.getId(strId), Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
@@ -56,11 +56,11 @@ interface imgui_popups {
         val window = g.currentWindow!!
         val id = window.getId(name)
         if (!isPopupOpen(id)) {
-            clearSetNextWindowData() // We behave like Begin() and need to consume those values
+            g.nextWindowData.clear() // We behave like Begin() and need to consume those values
             return false
         }
         // Center modal windows by default
-        if (g.setNextWindowPosCond == Cond.Null)
+        if (g.nextWindowData.posCond == Cond.Null)
             setNextWindowPos(Vec2(IO.displaySize.x * 0.5f, IO.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
 
         val flags = extraFlags or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings

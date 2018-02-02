@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.Context.style
@@ -45,8 +46,8 @@ interface imgui_widgetsComboBox {
         var flags = flags
 
         // Always consume the SetNextWindowSizeConstraint() call in our early return paths
-        val backupHasNextWindowSizeConstraint = g.setNextWindowSizeConstraint
-        g.setNextWindowSizeConstraint = false
+        val backupNextWindowSizeConstraint = g.nextWindowData.sizeConstraintCond
+        g.nextWindowData.sizeConstraintCond = Cond.Null
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -81,9 +82,9 @@ interface imgui_widgetsComboBox {
 
         if (!popupOpen) return false
 
-        if (backupHasNextWindowSizeConstraint) {
-            g.setNextWindowSizeConstraint = true
-            g.setNextWindowSizeConstraintRect.min.x = max(g.setNextWindowSizeConstraintRect.min.x, w)
+        if (backupNextWindowSizeConstraint != Cond.Null) {
+            g.nextWindowData.sizeConstraintCond = backupNextWindowSizeConstraint
+            g.nextWindowData.sizeConstraintRect.min.x = g.nextWindowData.sizeConstraintRect.min.x max w
         } else {
             if (flags hasnt Cf.HeightMask_)
                 flags = flags or Cf.HeightRegular
@@ -165,7 +166,7 @@ interface imgui_widgetsComboBox {
         val previewText = items.getOrElse(currentItem(), { "" })
 
         // The old Combo() API exposed "popup_max_height_in_items", however the new more general BeginCombo() API doesn't, so we emulate it here.
-        if (popupMaxHeightInItem != -1 && !g.setNextWindowSizeConstraint) {
+        if (popupMaxHeightInItem != -1 && g.nextWindowData.sizeConstraintCond == Cond.Null) {
             val popupMaxHeight = calcMaxPopupHeightFromItemCount(popupMaxHeightInItem)
             setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, popupMaxHeight))
         }

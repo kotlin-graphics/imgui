@@ -111,17 +111,6 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
     else g.windows.add(this)
 }
 
-
-fun clearSetNextWindowData() {
-    // FIXME-OPT
-    g.setNextWindowPosCond = Cond.Null
-    g.setNextWindowSizeCond = Cond.Null
-    g.setNextWindowPosCond = Cond.Null
-    g.setNextWindowPosCond = Cond.Null
-    g.setNextWindowSizeConstraint = false
-    g.setNextWindowFocus = false
-}
-
 /** Save and compare stack sizes on Begin()/End() to detect usage errors    */
 fun checkStacksSize(window: Window, write: Boolean) {
     /*  NOT checking: DC.ItemWidth, DC.AllowKeyboardFocus, DC.ButtonRepeat, DC.TextWrapPos (per window) to allow user to
@@ -249,7 +238,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
             if (setting.pos.x == Int.MAX_VALUE) continue
             // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
             val name = setting.name.substringBefore("###")
-            it.println("[Window][$name]")
+            it.println("[Window][$name]")   // TODO [%s][%s]\n", handler->TypeName, name
             it.println("Pos=${setting.pos.x},${setting.pos.y}")
             it.println("Size=${setting.size.x.i},${setting.size.y.i}")
             it.println("Collapsed=${setting.collapsed.i}")

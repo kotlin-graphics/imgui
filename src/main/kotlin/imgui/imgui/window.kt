@@ -32,7 +32,6 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTriangle
 import imgui.ImGui.scrollbar
 import imgui.internal.*
-import imgui.internal.DrawListFlags as Dlf
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
@@ -40,6 +39,7 @@ import imgui.ItemFlags as If
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
 import imgui.internal.DrawCornerFlags as Dcf
+import imgui.internal.DrawListFlags as Dlf
 import imgui.internal.LayoutType as Lt
 
 
@@ -73,17 +73,22 @@ interface imgui_window {
         assert(g.frameCountEnded != g.frameCount)
 
         var flags = flags
-        if (flags has Wf.NoInputs)
-            flags = flags or Wf.NoMove or Wf.NoResize
 
         // Find or create
         var windowIsNew = false
         val window = findWindowByName(name) ?: run {
             // Any condition flag will do since we are creating a new window here.
-            val sizeOnFirstUse = if (g.setNextWindowSizeCond != Cond.Null) g.setNextWindowSizeVal else Vec2()
+            val sizeOnFirstUse = if (g.nextWindowData.sizeCond != Cond.Null) Vec2(g.nextWindowData.sizeVal) else Vec2()
             windowIsNew = true
             createNewWindow(name, sizeOnFirstUse, flags)
         }
+
+        // Automatically disable manual moving/resizing when NoInputs is set
+        if (flags has Wf.NoInputs)
+            flags = flags or Wf.NoMove or Wf.NoResize
+        //if (flags & ImGuiWindowFlags_NavFlattened)
+        //    IM_ASSERT(flags & ImGuiWindowFlags_ChildWindow);
+
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
         if (firstBeginOfTheFrame)
@@ -130,38 +135,38 @@ interface imgui_window {
         var windowPosSetByApi = false
         var windowSizeXsetByApi = false
         var windowSizeYsetByApi = false
-        if (g.setNextWindowPosCond != Cond.Null) {
-            windowPosSetByApi = window.setWindowPosAllowFlags has g.setNextWindowPosCond
-            if (windowPosSetByApi && g.setNextWindowPosPivot.lengthSqr > 0.00001f) {
+        if (g.nextWindowData.posCond != Cond.Null) {
+            windowPosSetByApi = window.setWindowPosAllowFlags has g.nextWindowData.posCond
+            if (windowPosSetByApi && g.nextWindowData.posPivotVal.lengthSqr > 0.00001f) {
                 /*  May be processed on the next frame if this is our first frame and we are measuring size
                     FIXME: Look into removing the branch so everything can go through this same code path for consistency.  */
-                window.setWindowPosVal put g.setNextWindowPosVal
-                window.setWindowPosPivot put g.setNextWindowPosPivot
+                window.setWindowPosVal put g.nextWindowData.posVal
+                window.setWindowPosPivot put g.nextWindowData.posPivotVal
                 window.setWindowPosAllowFlags = window.setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
             } else
-                window.setPos(g.setNextWindowPosVal, g.setNextWindowPosCond)
-            g.setNextWindowPosCond = Cond.Null
+                window.setPos(g.nextWindowData.posVal, g.nextWindowData.posCond)
+            g.nextWindowData.posCond = Cond.Null
         }
-        if (g.setNextWindowSizeCond != Cond.Null) {
-            windowSizeXsetByApi = window.setWindowSizeAllowFlags has g.setNextWindowSizeCond && g.setNextWindowSizeVal.x > 0f
-            windowSizeYsetByApi = window.setWindowSizeAllowFlags has g.setNextWindowSizeCond && g.setNextWindowSizeVal.y > 0f
-            window.setSize(g.setNextWindowSizeVal, g.setNextWindowSizeCond)
-            g.setNextWindowSizeCond = Cond.Null
+        if (g.nextWindowData.sizeCond != Cond.Null) {
+            windowSizeXsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.x > 0f
+            windowSizeYsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.y > 0f
+            window.setSize(g.nextWindowData.sizeVal, g.nextWindowData.sizeCond)
+            g.nextWindowData.sizeCond = Cond.Null
         }
-        if (g.setNextWindowContentSizeCond != Cond.Null) {
+        if (g.nextWindowData.contentSizeCond != Cond.Null) {
             // Adjust passed "client size" to become a "window size"
-            window.sizeContentsExplicit put g.setNextWindowContentSizeVal
+            window.sizeContentsExplicit put g.nextWindowData.contentSizeVal
             window.sizeContentsExplicit.y += window.titleBarHeight + window.menuBarHeight
-            g.setNextWindowContentSizeCond = Cond.Null
+            g.nextWindowData.contentSizeCond = Cond.Null
         } else if (firstBeginOfTheFrame)
             window.sizeContentsExplicit put 0f
-        if (g.setNextWindowCollapsedCond != Cond.Null) {
-            window.setCollapsed(g.setNextWindowCollapsedVal, g.setNextWindowCollapsedCond)
-            g.setNextWindowCollapsedCond = Cond.Null
+        if (g.nextWindowData.collapsedCond != Cond.Null) {
+            window.setCollapsed(g.nextWindowData.collapsedVal, g.nextWindowData.collapsedCond)
+            g.nextWindowData.collapsedCond = Cond.Null
         }
-        if (g.setNextWindowFocus) {
+        if (g.nextWindowData.focusCond != Cond.Null) {
             setWindowFocus()
-            g.setNextWindowFocus = false
+            g.nextWindowData.focusCond = Cond.Null
         }
         if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, false)
 
@@ -192,7 +197,7 @@ interface imgui_window {
 
             // Setup draw list and outer clipping rectangle
             window.drawList.clear()
-            window.drawList.flags = (if(style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if(style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
+            window.drawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
             window.drawList.pushTextureId(g.font.containerAtlas.texId)
             val fullscreenRect = getVisibleRect()
             if (flags has Wf.ChildWindow && flags hasnt Wf.Popup)
@@ -614,13 +619,8 @@ interface imgui_window {
                         pOpen[0] = false
                 }
                 // Title text (FIXME: refactor text alignment facilities along with RenderText helpers)
-                val textSize = calcTextSize(name, hideTextAfterDoubleHash = true)
-                val textMin = Vec2(window.pos)
-                val textMax = Vec2(window.size.x, style.framePadding.y * 2 + textSize.y) + window.pos
-                // Match the size of CloseWindowButton()
-                val clipRect = Rect(0f, 0f,
-                        window.pos.x + window.size.x - (if (pOpen != null) titleBarRect.height - 3 else style.framePadding.x),
-                        textMax.y)
+                val textSize = calcTextSize(name, 0, true)
+                val textR = Rect(titleBarRect)
                 val padLeft =
                         if (flags hasnt Wf.NoCollapse) style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
                         else style.framePadding.x
@@ -629,10 +629,12 @@ interface imgui_window {
                         else style.framePadding.x
                 if (style.windowTitleAlign.x > 0f)
                     padRight = lerp(padRight, padLeft, style.windowTitleAlign.x)
-                textMin.x += padLeft
-                textMax.x -= padRight
-                clipRect.min = Vec2(textMin.x, window.pos.y)
-                renderTextClipped(textMin, textMax, name, name.length, textSize, style.windowTitleAlign, clipRect)
+                textR.min.x += padLeft
+                textR.max.x -= padRight
+                val clipRect = Rect(textR)
+                // Match the size of CloseButton()
+                clipRect.max.x = window.pos.x + window.size.x - (if (pOpen!!.get(0)) titleBarRect.height - 3 else style.framePadding.x)
+                renderTextClipped(textR.min, textR.max, name, 0, textSize, style.windowTitleAlign, clipRect)
             }
 
             // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
@@ -675,8 +677,9 @@ interface imgui_window {
 
         // Clear 'accessed' flag last thing
         if (firstBeginOfTheFrame) window.writeAccessed = false
+
         window.beginCount++
-        g.setNextWindowSizeConstraint = false
+        g.nextWindowData.sizeConstraintCond = Cond.Null
 
         // Child window can be out of sight and have "negative" clip windows.
         // Mark them as collapsed so commands are skipped earlier (we can't manually collapse because they have no title bar).
@@ -810,46 +813,54 @@ interface imgui_window {
 
     /** set next window position. call before Begin()   */
     fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always, pivot: Vec2 = Vec2()) {
-        g.setNextWindowPosVal put pos
-        g.setNextWindowPosPivot = pivot
-        g.setNextWindowPosCond = cond
+        with(g.nextWindowData) {
+            posVal put pos
+            posPivotVal put pivot
+            posCond = cond
+        }
     }
 
     /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
     fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Always) {
-        g.setNextWindowSizeVal put size
-        g.setNextWindowSizeCond = cond
+        with(g.nextWindowData) {
+            sizeVal put size
+            sizeCond = cond
+        }
     }
 
     /** set next window size limits. use -1,-1 on either X/Y axis to preserve the current size. Use callback to apply
      *  non-trivial programmatic constraints.   */
-    fun setNextWindowSizeConstraints(sizeMin: Vec2, sizeMax: Vec2, customCallback: SizeConstraintCallback? = null,
-                                     customCallbackUserData: Any? = null) {
-
-        g.setNextWindowSizeConstraint = true
-        g.setNextWindowSizeConstraintRect.min put sizeMin
-        g.setNextWindowSizeConstraintRect.max put sizeMax
-        g.setNextWindowSizeConstraintCallback = customCallback
-        g.setNextWindowSizeConstraintCallbackUserData = customCallbackUserData
+    fun setNextWindowSizeConstraints(sizeMin: Vec2, sizeMax: Vec2, customCallback: SizeCallback? = null, customCallbackUserData: Any? = null) {
+        with(g.nextWindowData) {
+            sizeConstraintCond = Cond.Always
+            sizeConstraintRect.min put sizeMin
+            sizeConstraintRect.max put sizeMax
+            sizeCallback = customCallback
+            sizeCallbackUserData = customCallbackUserData
+        }
     }
 
     /** set next window content size (~ enforce the range of scrollbars). not including window decorations (title bar, menu bar, etc.).
      *  set an axis to 0.0f to leave it automatic. call before Begin() */
     fun setNextWindowContentSize(size: Vec2) {
         // In Begin() we will add the size of window decorations (title bar, menu etc.) to that to form a SizeContents value.
-        g.setNextWindowContentSizeVal = size
-        g.setNextWindowContentSizeCond = Cond.Always
+        with(g.nextWindowData) {
+            contentSizeVal put size
+            contentSizeCond = Cond.Always
+        }
     }
 
     /** set next window collapsed state. call before Begin()    */
     fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Always) {
-        g.setNextWindowCollapsedVal = collapsed
-        g.setNextWindowCollapsedCond = cond
+        with(g.nextWindowData) {
+            collapsedVal = collapsed
+            collapsedCond = cond
+        }
     }
 
     /** set next window to be focused / front-most. call before Begin() */
     fun setNextWindowFocus() {
-        g.setNextWindowFocus = true
+        g.nextWindowData.focusCond = Cond.Always
     }
 
     /** (not recommended) set current window position - call within Begin()/End(). prefer using SetNextWindowPos(),

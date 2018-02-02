@@ -93,38 +93,12 @@ object Context {
     /** Which level of BeginPopup() we are in (reset every frame)   */
     val currentPopupStack = Stack<PopupRef>()
 
-    // Storage for SetNexWindow** and SetNextTreeNode*** functions
-    var setNextWindowPosVal = Vec2()
+    /** Storage for SetNextWindow** functions   */
+    lateinit var nextWindowData: NextWindowData
+    /** Storage for SetNextTreeNode** functions */
+    var nextTreeNodeOpenVal = false
 
-    var setNextWindowPosPivot = Vec2()
-
-    var setNextWindowSizeVal = Vec2()
-
-    var setNextWindowContentSizeVal = Vec2()
-
-    var setNextWindowCollapsedVal = false
-
-    var setNextWindowPosCond = Cond.Null
-
-    var setNextWindowSizeCond = Cond.Always
-
-    var setNextWindowContentSizeCond = Cond.Null
-
-    var setNextWindowCollapsedCond = Cond.Null
-    /** Valid if 'SetNextWindowSizeConstraint' is true  */
-    var setNextWindowSizeConstraintRect = Rect()
-
-    var setNextWindowSizeConstraintCallback: SizeConstraintCallback? = null
-
-    var setNextWindowSizeConstraintCallbackUserData: Any? = null
-
-    var setNextWindowSizeConstraint = false
-
-    var setNextWindowFocus = false
-
-    var setNextTreeNodeOpenVal = false
-
-    var setNextTreeNodeOpenCond = 0
+    var nextTreeNodeOpenCond = Cond.Null
 
     //------------------------------------------------------------------
     // Render

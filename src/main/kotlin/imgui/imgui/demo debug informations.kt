@@ -90,7 +90,7 @@ interface imgui_demoDebugInformations {
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
         if (_begin("ImGui Metrics", open)) {
-            text("ImGui $version")
+            text("Dear ImGui $version")
             text("Application average %.3f ms/frame (%.1f FPS)", 1000f / IO.framerate, IO.framerate)
             text("%d vertices, %d indices (%d triangles)", IO.metricsRenderVertices, IO.metricsRenderIndices, IO.metricsRenderIndices / 3)
             text("%d allocations", IO.metricsAllocs)

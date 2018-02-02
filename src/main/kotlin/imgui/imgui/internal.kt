@@ -330,7 +330,7 @@ interface imgui_internal {
     fun beginPopupEx(id: Int, extraFlags: Int): Boolean {
 
         if (!isPopupOpen(id)) {
-            clearSetNextWindowData() // We behave like Begin() and need to consume those values
+            g.nextWindowData.clear() // We behave like Begin() and need to consume those values
             return false
         }
 
@@ -618,13 +618,15 @@ interface imgui_internal {
             dc.columnsOffsetX = 0f
             dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
 
+            // Clear data if columns count changed
+            if (columns.columns.isNotEmpty() && columns.columns.size != columnsCount + 1)
+                columns.columns.clear()
+
             // Initialize defaults
             columns.isFirstFrame = columns.columns.isEmpty()
             if (columns.columns.isEmpty())
                 for (n in 0..columnsCount)
                     columns.columns += ColumnData().apply { offsetNorm = n / columnsCount.f }
-
-            assert(columns.columns.size == columnsCount + 1)
 
             for (n in 0..columnsCount) {
                 // Clamp position
@@ -2359,21 +2361,21 @@ interface imgui_internal {
         val storage = window.dc.stateStorage
 
         var isOpen: Boolean
-        if (g.setNextTreeNodeOpenCond != 0) {
-            if (g.setNextTreeNodeOpenCond has Cond.Always) {
-                isOpen = g.setNextTreeNodeOpenVal
+        if (g.nextTreeNodeOpenCond != Cond.Null) {
+            if (g.nextTreeNodeOpenCond has Cond.Always) {
+                isOpen = g.nextTreeNodeOpenVal
                 storage[id] = isOpen
             } else {
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
                 val storedValue = storage.int(id, -1)
                 if (storedValue == -1) {
-                    isOpen = g.setNextTreeNodeOpenVal
+                    isOpen = g.nextTreeNodeOpenVal
                     storage[id] = isOpen
                 } else
                     isOpen = storedValue != 0
             }
-            g.setNextTreeNodeOpenCond = 0
+            g.nextTreeNodeOpenCond = Cond.Null
         } else
             isOpen = storage.int(id, if (flags has Tnf.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
