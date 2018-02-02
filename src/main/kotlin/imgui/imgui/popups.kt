@@ -81,6 +81,7 @@ interface imgui_popups {
             return false
         }
         // Center modal windows by default
+        // FIXME: Should test for (PosCond & window->SetWindowPosAllowFlags) with the upcoming window.
         if (g.nextWindowData.posCond == Cond.Null)
             setNextWindowPos(Vec2(IO.displaySize.x * 0.5f, IO.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
 
