@@ -32,8 +32,6 @@ object JoglVrGL3 {
     val texSize = Vec2i()
     var time = 0.0
     val mouseJustPressed = BooleanArray(3)
-    @JvmField
-    var mouseWheel = 0f
 
     object Buffer {
         val Vertex = 0
@@ -124,9 +122,6 @@ object JoglVrGL3 {
                 events that are shorter than 1 frame.   */
             IO.mouseDown[it] = mouseJustPressed[it]
         }
-
-        IO.mouseWheel = mouseWheel
-        mouseWheel = 0f
 
         // Hide OS mouse cursor if ImGui is drawing it
 //        window.isPointerVisible = !IO.mouseDrawCursor
@@ -397,7 +392,8 @@ object JoglVrGL3 {
         }
 
         override fun mouseWheelMoved(e: MouseEvent) {
-            mouseWheel += e.rotation[1] // Use fractional mouse wheel.
+            IO.mouseWheel += e.rotation[1]
+            IO.mouseWheelH += e.rotation[0] // unchecked
         }
     }
 

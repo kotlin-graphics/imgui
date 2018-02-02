@@ -5,6 +5,8 @@ package imgui
 //import imgui.TrueType.packSetOversampling
 import glm_.*
 import glm_.vec2.Vec2
+import glm_.vec2.operators.div
+import glm_.vec2.operators.times
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.Context.style
@@ -386,53 +388,53 @@ class FontAtlas {
                 0x0E00, 0x0E7F) // Thai
 
     // Helpers to build glyph ranges from text data. Feed your application strings/characters to it then call BuildRanges().
-//    +    struct GlyphRangesBuilder
-//    +    {
-//        +        ImVector<unsigned char> UsedChars;  // Store 1-bit per Unicode code point (0=unused, 1=used)
-//        +        GlyphRangesBuilder()                { UsedChars.resize(0x10000 / 8); memset(UsedChars.Data, 0, 0x10000 / 8); }
-//        +        bool           GetBit(int n)        { return (UsedChars[n >> 3] & (1 << (n & 7))) != 0; }
-//        +        void           SetBit(int n)        { UsedChars[n >> 3] |= 1 << (n & 7); }  // Set bit 'c' in the array
-//        +        void           AddChar(ImWchar c)   { SetBit(c); }                          // Add character
-//        +        IMGUI_API void AddText(const char* text, const char* text_end = NULL);      // Add string (each character of the UTF-8 string are added)
-//        +        IMGUI_API void AddRanges(const ImWchar* ranges);                            // Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault) to force add all of ASCII/Latin+Ext
-//        +        IMGUI_API void BuildRanges(ImVector<ImWchar>* out_ranges);                  // Output new ranges
-//        +    };
+//    struct GlyphRangesBuilder
+//    {
+//            ImVector<unsigned char> UsedChars;  // Store 1-bit per Unicode code point (0=unused, 1=used)
+//            GlyphRangesBuilder()                { UsedChars.resize(0x10000 / 8); memset(UsedChars.Data, 0, 0x10000 / 8); }
+//            bool           GetBit(int n)        { return (UsedChars[n >> 3] & (1 << (n & 7))) != 0; }
+//            void           SetBit(int n)        { UsedChars[n >> 3] |= 1 << (n & 7); }  // Set bit 'c' in the array
+//            void           AddChar(ImWchar c)   { SetBit(c); }                          // Add character
+//            IMGUI_API void AddText(const char* text, const char* text_end = NULL);      // Add string (each character of the UTF-8 string are added)
+//            IMGUI_API void AddRanges(const ImWchar* ranges);                            // Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault) to force add all of ASCII/Latin+Ext
+//            IMGUI_API void BuildRanges(ImVector<ImWchar>* out_ranges);                  // Output new ranges
+//        };
 //    //-----------------------------------------------------------------------------
 //    +// ImFontAtlas::GlyphRangesBuilder
 //    +//-----------------------------------------------------------------------------
 //    +
 //    +void ImFontAtlas::GlyphRangesBuilder::AddText(const char* text, const char* text_end)
 //    +{
-//        +    while (text_end ? (text < text_end) : *text)
-//        +    {
-//            +        unsigned int c = 0;
-//            +        int c_len = ImTextCharFromUtf8(&c, text, text_end);
-//            +        text += c_len;
-//            +        if (c_len == 0)
-//                +            break;
-//            +        if (c < 0x10000)
-//                +            AddChar((ImWchar)c);
-//            +    }
+//        while (text_end ? (text < text_end) : *text)
+//        {
+//                unsigned int c = 0;
+//                int c_len = ImTextCharFromUtf8(&c, text, text_end);
+//                text += c_len;
+//                if (c_len == 0)
+//                        break;
+//                if (c < 0x10000)
+//                        AddChar((ImWchar)c);
+//            }
 //        +}
 //    +
 //    +void ImFontAtlas::GlyphRangesBuilder::AddRanges(const ImWchar* ranges)
 //    +{
-//        +    for (; ranges[0]; ranges += 2)
-//        +        for (ImWchar c = ranges[0]; c <= ranges[1]; c++)
-//        +            AddChar(c);
+//        for (; ranges[0]; ranges += 2)
+//            for (ImWchar c = ranges[0]; c <= ranges[1]; c++)
+//                AddChar(c);
 //        +}
 //    +
 //    +void ImFontAtlas::GlyphRangesBuilder::BuildRanges(ImVector<ImWchar>* out_ranges)
 //    +{
-//        +    for (int n = 0; n < 0x10000; n++)
-//        +        if (GetBit(n))
-//            +        {
-//                +            out_ranges->push_back((ImWchar)n);
-//                +            while (n < 0x10000 && GetBit(n + 1))
-//                    +                n++;
-//                +            out_ranges->push_back((ImWchar)n);
-//                +        }
-//        +    out_ranges->push_back(0);
+//        for (int n = 0; n < 0x10000; n++)
+//            if (GetBit(n))
+//                {
+//                        out_ranges->push_back((ImWchar)n);
+//                        while (n < 0x10000 && GetBit(n + 1))
+//                                n++;
+//                        out_ranges->push_back((ImWchar)n);
+//                    }
+//        out_ranges->push_back(0);
 //        +}
 
 
@@ -491,14 +493,36 @@ class FontAtlas {
         return customRects.lastIndex // Return index
     }
 
+    fun getCustomRectByIndex(index: Int) = customRects.getOrNull(index)
+
+    // Internals
+
     fun calcCustomRectUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
         assert(texSize greaterThan 0)   // Font atlas needs to be built before we can calculate UV coordinates
         assert(rect.isPacked)                // Make sure the rectangle has been packed
-        outUvMin.put(rect.x.f / texSize.x, rect.y.f / texSize.y)
-        outUvMax.put((rect.x + rect.width).f / texSize.x, (rect.y + rect.height).f / texSize.y)
+        outUvMin.put(rect.x.f * texUvScale.x, rect.y.f * texUvScale.y)
+        outUvMax.put((rect.x + rect.width).f * texUvScale.x, (rect.y + rect.height).f * texUvScale.y)
     }
 
-    fun getCustomRectByIndex(index: Int) = customRects.getOrNull(index)
+    fun getMouseCursorTexData(cursor: MouseCursor, outOffset: Vec2, outSize: Vec2, outUv: Array<Vec2>): Boolean {
+
+        if (cursor <= MouseCursor.None || cursor >= MouseCursor.Count) return false
+
+        val r = customRects[customRectIds[0]]
+        assert(r.id == DefaultTexData.id)
+        val pos = DefaultTexData.cursorDatas[cursor.i][0] + Vec2(r.x, r.y)
+        val size = DefaultTexData.cursorDatas[cursor.i][1]
+        outSize put size
+        outOffset put DefaultTexData.cursorDatas[cursor.i][2]
+        // JVM border
+        outUv[0] = pos * texUvScale
+        outUv[1] = (pos + size) * texUvScale
+        pos.x += DefaultTexData.wHalf + 1
+        // JVM fill
+        outUv[2] = pos * texUvScale
+        outUv[3] = (pos + size) * texUvScale
+        return true
+    }
 
     //-------------------------------------------
     // Members
@@ -518,6 +542,8 @@ class FontAtlas {
     var texDesiredWidth = 0
     /** Padding between glyphs within texture in pixels. Defaults to 1. */
     var texGlyphPadding = 1
+    /** = (1.0f/TexWidth, 1.0f/TexHeight)   */
+    var texUvScale = Vec2()
     /** Texture coordinates to a white pixel    */
     var texUvWhitePixel = Vec2()
     /** Hold all the fonts returned by AddFont*. Fonts[0] is the default font upon calling ImGui::NewFrame(), use
@@ -548,6 +574,7 @@ class FontAtlas {
 
         texId = -1
         texSize put 0
+        texUvScale put 0
         texUvWhitePixel put 0
         clearTexData()
         val inRange = IntArray(2)
@@ -672,6 +699,7 @@ class FontAtlas {
 
         // Create texture
         texSize.y = texSize.y.upperPowerOfTwo
+        texUvScale = 1f / Vec2(texSize)
         texPixelsAlpha8 = bufferBig(texSize.x * texSize.y)
         spc.pixels = texPixelsAlpha8!!
         spc.height = texSize.y
@@ -814,25 +842,7 @@ class FontAtlas {
                 texPixelsAlpha8!![offset1] = if (DefaultTexData.pixels[n] == 'X') 0xFF.b else 0x00.b
                 n++
             }
-        val texUvScale = Vec2(1f / texSize.x, 1f / texSize.y)
-        texUvWhitePixel = Vec2((r.x + 0.5f) * texUvScale.x, (r.y + 0.5f) * texUvScale.y)
-
-        // Setup mouse cursors
-
-
-        for (type in 0 until MouseCursor.Count.i) {
-            val cursorData = g.mouseCursorData[type]
-            val pos = DefaultTexData.cursorDatas[type][0] + Vec2(r.x, r.y)
-            val size = DefaultTexData.cursorDatas[type][1]
-            cursorData.type = MouseCursor.of(type)
-            cursorData.size = size
-            cursorData.hotOffset = DefaultTexData.cursorDatas[type][2]
-            cursorData.texUvMin[0] = pos * texUvScale
-            cursorData.texUvMax[0] = (pos + size) * texUvScale
-            pos.x += DefaultTexData.wHalf + 1
-            cursorData.texUvMin[1] = pos * texUvScale
-            cursorData.texUvMax[1] = (pos + size) * texUvScale
-        }
+        texUvWhitePixel = (r.x + 0.5f) * texUvScale
     }
 
     fun buildMultiplyCalcLookupTable(inBrightenFactor: Float) = CharArray(256, {

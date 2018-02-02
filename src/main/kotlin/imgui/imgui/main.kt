@@ -244,34 +244,43 @@ interface imgui_main {
             g.hoveredWindow = null
         }
 
-        // Scale & Scrolling
-        if (g.hoveredWindow != null && IO.mouseWheel != 0f && !g.hoveredWindow!!.collapsed) {
+        // Mouse wheel scrolling, scale
+        if (g.hoveredWindow != null && !g.hoveredWindow!!.collapsed && (IO.mouseWheel != 0f || IO.mouseWheelH != 0f)) {
+            /*  If a child window has the WindowFlags.NoScrollWithMouse flag, we give a chance to scroll its parent
+                (unless either WindowFlags.NoInputs or WindowFlags.NoScrollbar are also set).             */
             val window = g.hoveredWindow!!
-            if (IO.keyCtrl && IO.fontAllowUserScaling) {
-                // Zoom / Scale window
-                val newFontScale = glm.clamp(window.fontWindowScale + IO.mouseWheel * 0.10f, 0.50f, 2.50f)
-                val scale = newFontScale / window.fontWindowScale
-                window.fontWindowScale = newFontScale
+            var scrollWindow = window
+            while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
+                    scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
+                scrollWindow.parentWindow?.let { scrollWindow = it }
+            val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs
 
-                val offset = window.size * (1.0f - scale) * (IO.mousePos - window.pos) / window.size
-                window.pos plusAssign offset
-                window.posF plusAssign offset
-                window.size timesAssign scale
-                window.sizeFull timesAssign scale
-            } else if (!IO.keyCtrl) {
-                // Mouse wheel Scrolling
-                // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent (unless either ImGuiWindowFlags_NoInputs or ImGuiWindowFlags_NoScrollbar are also set).
-                var scrollWindow = window
-                while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
-                        scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
-                    scrollWindow = scrollWindow.parentWindow!!
+            if (IO.mouseWheel != 0f)
+                if (IO.keyCtrl && IO.fontAllowUserScaling) {
+                    // Zoom / Scale window
+                    val newFontScale = glm.clamp(window.fontWindowScale + IO.mouseWheel * 0.1f, 0.5f, 2.5f)
+                    val scale = newFontScale / window.fontWindowScale
+                    window.fontWindowScale = newFontScale
 
-                if (scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs) {
+                    val offset = window.size * (1f - scale) * (IO.mousePos - window.pos) / window.size
+                    with(window) {
+                        pos plusAssign offset
+                        posF plusAssign offset
+                        size timesAssign scale
+                        sizeFull timesAssign scale
+                    }
+                } else if (!IO.keyCtrl && scrollAllowed) {
+                    // Mouse wheel vertical scrolling
                     var scrollAmount = 5 * scrollWindow.calcFontSize()
                     scrollAmount = min(scrollAmount,
                             (scrollWindow.contentsRegionRect.height + scrollWindow.windowPadding.y * 2f) * 0.67f).i.f
                     scrollWindow.setScrollY(scrollWindow.scroll.y - IO.mouseWheel * scrollAmount)
                 }
+            if (IO.mouseWheelH != 0f && scrollAllowed) {
+                // Mouse wheel horizontal scrolling (for hardware that supports it)
+                val scrollAmount = scrollWindow.calcFontSize()
+                if (!IO.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse)
+                    window.setScrollX(window.scroll.x - IO.mouseWheelH * scrollAmount)
             }
         }
 
@@ -327,20 +336,17 @@ interface imgui_main {
             g.drawDataBuilder.flattenIntoSingleLayer()
 
             // Draw software mouse cursor if requested
-            if (IO.mouseDrawCursor) {
-                val cursorData = g.mouseCursorData[g.mouseCursor.i]
-                val pos = IO.mousePos - cursorData.hotOffset
-                val size = cursorData.size
+            val offset = Vec2()
+            val size = Vec2()
+            val uv = Array(4) { Vec2() }
+            if (IO.mouseDrawCursor && IO.fonts.getMouseCursorTexData(g.mouseCursor, offset, size, uv)) {
+                val pos = IO.mousePos - offset
                 val texId = IO.fonts.texId
                 g.overlayDrawList.pushTextureId(texId)
-                g.overlayDrawList.addImage(texId, pos + Vec2(1, 0), pos + Vec2(1, 0) + size,
-                        cursorData.texUvMin[1], cursorData.texUvMax[1], COL32(0, 0, 0, 48))        // Shadow
-                g.overlayDrawList.addImage(texId, pos + Vec2(2, 0), pos + Vec2(2, 0) + size,
-                        cursorData.texUvMin[1], cursorData.texUvMax[1], COL32(0, 0, 0, 48))        // Shadow
-                g.overlayDrawList.addImage(texId, pos, pos + size, cursorData.texUvMin[1], cursorData.texUvMax[1],
-                        COL32(0, 0, 0, 255))       // Black border
-                g.overlayDrawList.addImage(texId, pos, pos + size, cursorData.texUvMin[0], cursorData.texUvMax[0],
-                        COL32(255, 255, 255, 255)) // White fill
+                g.overlayDrawList.addImage(texId, pos + Vec2(1, 0), pos + Vec2(1, 0) + size, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
+                g.overlayDrawList.addImage(texId, pos + Vec2(2, 0), pos + Vec2(2, 0) + size, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
+                g.overlayDrawList.addImage(texId, pos, pos + size, uv[2], uv[3], COL32(0, 0, 0, 255))       // Black border
+                g.overlayDrawList.addImage(texId, pos, pos + size, uv[0], uv[1], COL32(255, 255, 255, 255)) // White fill
                 g.overlayDrawList.popTextureId()
             }
             if (g.overlayDrawList.vtxBuffer.isNotEmpty())
@@ -433,6 +439,7 @@ interface imgui_main {
 
         // Clear Input data for next frame
         IO.mouseWheel = 0f
+        IO.mouseWheelH = 0f
         IO.inputCharacters.fill(NUL)
 
         g.frameCountEnded = g.frameCount

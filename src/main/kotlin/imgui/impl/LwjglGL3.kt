@@ -21,9 +21,7 @@ import gln.vertexArray.glBindVertexArray
 import gln.vertexArray.glVertexAttribPointer
 import gln.vertexArray.withVertexArray
 import imgui.*
-import imgui.Context as g
 import org.lwjgl.glfw.GLFW.*
-import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL14.*
@@ -32,19 +30,13 @@ import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
-import org.lwjgl.system.Callback
-import org.lwjgl.system.MemoryUtil.NULL
-import org.lwjgl.system.MemoryUtil.memAddress
-import org.lwjgl.system.Platform
-import org.lwjgl.system.windows.RECT
-import org.lwjgl.system.windows.User32.*
-import org.lwjgl.system.windows.WindowProc
 import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
 import uno.buffer.intBufferOf
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
+import imgui.Context as g
 
 
 object LwjglGL3 {
@@ -52,7 +44,6 @@ object LwjglGL3 {
     lateinit var window: GlfwWindow
     var time = 0f
     val mouseJustPressed = BooleanArray(3)
-    var mouseWheel = 0f
 
     object Buffer {
         val Vertex = 0
@@ -149,9 +140,6 @@ object LwjglGL3 {
             mouseJustPressed[it] = false
         }
 
-        IO.mouseWheel = mouseWheel
-        mouseWheel = 0f
-
         // Hide OS mouse cursor if ImGui is drawing it
         window.cursor = if (IO.mouseDrawCursor) GlfwWindow.Cursor.Hidden else GlfwWindow.Cursor.Normal
 
@@ -239,7 +227,7 @@ object LwjglGL3 {
 
             checkError("checkSize")
 
-            if(DEBUG) println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
+            if (DEBUG) println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
         }
     }
 
@@ -388,7 +376,10 @@ object LwjglGL3 {
             mouseJustPressed[button] = true
     }
 
-    val scrollCallback = { offset: Vec2d -> mouseWheel += offset.y.f } // Use fractional mouse wheel.
+    val scrollCallback = { offset: Vec2d ->
+        IO.mouseWheel += offset.x.f
+        IO.mouseWheelH += offset.y.f
+    }
 
     val keyCallback = { key: Int, _: Int, action: Int, _: Int ->
         with(IO) {

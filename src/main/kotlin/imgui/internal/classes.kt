@@ -234,15 +234,6 @@ class WindowSettings(val name: String = "") {
     var collapsed = false
 }
 
-// Mouse cursor data (used when io.MouseDrawCursor is set)
-class MouseCursorData {
-    var type = MouseCursor.None
-    var hotOffset = Vec2()
-    var size = Vec2()
-    val texUvMin = Array(2, { Vec2() })
-    val texUvMax = Array(2, { Vec2() })
-}
-
 /* Storage for current popup stack  */
 class PopupRef(
         /** Set on OpenPopup()  */
@@ -647,6 +638,12 @@ class Window(var context: imgui.Context, var name: String) {
         name = ""
     }
 
+    fun setScrollX(newScrollX: Float) {
+        dc.cursorMaxPos.x += scroll.x // SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need to apply our change to it.
+        scroll.x = newScrollX
+        dc.cursorMaxPos.x -= scroll.x
+    }
+    
     fun setScrollY(newScrollY: Float) {
         /*  SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need
             to apply our change to it.         */
