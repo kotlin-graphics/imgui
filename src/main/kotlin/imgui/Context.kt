@@ -77,8 +77,6 @@ object Context {
     /** Track the window we clicked on (in order to preserve focus).
      *  The actually window that is moved is generally MovingWindow.rootWindow.  */
     var movingWindow: Window? = null
-    /** == MovedWindow->RootWindow->MoveId  */
-    var movingdWindowMoveId = 0
     /** .ini Settings   */
     val settings = ArrayList<WindowSettings>()
     /** Save .ini Settings on disk when time reaches zero   */

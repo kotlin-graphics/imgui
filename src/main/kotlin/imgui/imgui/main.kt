@@ -46,8 +46,8 @@ interface imgui_main {
             using a debugger, as most assert handlers display their argument)         */
         assert(IO.deltaTime >= 0f) { "Need a positive deltaTime (zero is tolerated but will cause some timing issues)" }
         assert(IO.displaySize greaterThanEqual 0) { "Invalid displaySize value" }
-        assert(IO.fonts.fonts.size > 0) { "Font Atlas not created. Did you call IO.fonts.getTexDataAsRGBA32 / getTexDataAsAlpha8 ?" }
-        assert(IO.fonts.fonts[0].isLoaded) { "Font Atlas not created. Did you call IO.fonts.getTexDataAsRGBA32 / getTexDataAsAlpha8 ?" }
+        assert(IO.fonts.fonts.size > 0) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
+        assert(IO.fonts.fonts[0].isLoaded) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
         assert(style.curveTessellationTol > 0f) { "Invalid style setting" }
         assert(style.alpha in 0f..1f) { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)" }
         assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount) { "Forgot to call render() or endFrame() at the end of the previous frame?" }
@@ -151,10 +151,9 @@ interface imgui_main {
         IO.framerate = 1.0f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
 
         // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering).
-        if (g.movingdWindowMoveId != 0 && g.movingdWindowMoveId == g.activeId) {
+        if (g.movingWindow?.moveId == g.activeId) {
             keepAliveId(g.activeId)
             assert(g.movingWindow != null)
-            assert(g.movingWindow!!.moveId == g.movingdWindowMoveId)
             if (IO.mouseDown[0]) {
                 /*  MovingWindow = window we clicked on, could be a child window. We track it to preserve Focus and
                     so that ActiveIdWindow == MovingWindow and ActiveId == MovingWindow->MoveId for consistency.    */
@@ -168,7 +167,6 @@ interface imgui_main {
             } else {
                 clearActiveId()
                 g.movingWindow = null
-                g.movingdWindowMoveId = 0
             }
         } else {
             /*  When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order
@@ -181,7 +179,6 @@ interface imgui_main {
                 }
             }
             g.movingWindow = null
-            g.movingdWindowMoveId = 0
         }
 
         // Delay saving settings so we don't spam disk too much
@@ -399,10 +396,8 @@ interface imgui_main {
                         g.hoveredWindow.focus()
                         setActiveId(g.hoveredWindow!!.moveId, g.hoveredWindow)
                         g.activeIdClickOffset = IO.mousePos - g.hoveredRootWindow!!.pos
-                        if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove) {
+                        if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove)
                             g.movingWindow = g.hoveredWindow
-                            g.movingdWindowMoveId = g.hoveredWindow!!.moveId
-                        }
                     } else if (g.navWindow != null && frontMostModalRootWindow == null)
                         null.focus()   // Clicking on void disable focus
 
