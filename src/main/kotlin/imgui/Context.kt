@@ -119,8 +119,6 @@ object Context {
 
     var mouseCursor = MouseCursor.Arrow
 
-    val mouseCursorData = Array(MouseCursor.Count.i, { MouseCursorData() })
-
 
     //------------------------------------------------------------------
     // Drag and Drop
@@ -321,6 +319,8 @@ object IO {
     val mouseDown = BooleanArray(5)
     /** Mouse wheel: 1 unit scrolls about 5 lines text. */
     var mouseWheel = 0f
+    /** Mouse wheel (Horizontal). Most users don't have a mouse with an horizontal wheel, may not be filled by all back ends.   */
+    var mouseWheelH = 0f
     /** Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor). */
     var mouseDrawCursor = false
     /** Keyboard modifier pressed: Control  */
