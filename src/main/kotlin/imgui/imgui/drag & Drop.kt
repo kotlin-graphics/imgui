@@ -109,14 +109,14 @@ interface imgui_dragAndDrop {
         return false
     }
 
-    /** Type is a user defined string of maximum 8 characters. Strings starting with '_' are reserved for dear imgui internal types.
+    /** Type is a user defined string of maximum 12 characters. Strings starting with '_' are reserved for dear imgui internal types.
      *  Data is copied and held by imgui. */
     fun setDragDropPayload(type: String, data: Vec4, dataSize: Int, cond: Cond = Cond.Null): Boolean {
         val payload = g.dragDropPayload
         val cond = if (cond == Cond.Null) Cond.Always else cond
 
         assert(type.isNotEmpty())
-        assert(type.length < 8)       // Payload type can be at most 8 characters longs
+        assert(type.length < 8) { "Payload type can be at most 12 characters long" }
 //        assert((data != NULL && data_size > 0) || (data == NULL && data_size == 0))
         assert(cond == Cond.Always || cond == Cond.Once)
         assert(payload.sourceId != 0) // Not called between beginDragDropSource() and endDragDropSource()
@@ -146,6 +146,7 @@ interface imgui_dragAndDrop {
         return g.dragDropAcceptFrameCount == g.frameCount || g.dragDropAcceptFrameCount == g.frameCount - 1
     }
 
+    /** Only call EndDragDropSource() if BeginDragDropSource() returns true!    */
     fun endDragDropSource() {
         assert(g.dragDropActive)
 
@@ -223,6 +224,7 @@ interface imgui_dragAndDrop {
         return payload
     }
 
-    /** We don't really use/need this now, but added it for the sake of consistency and because we might need it later. */
+    /** We don't really use/need this now, but added it for the sake of consistency and because we might need it later.
+     *  Only call EndDragDropTarget() if BeginDragDropTarget() returns true!    */
     fun endDragDropTarget() = assert(g.dragDropActive)
 }

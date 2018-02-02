@@ -44,13 +44,15 @@ interface imgui_main {
 
         /* (We pass an error message in the assert expression as a trick to get it visible to programmers who are not 
             using a debugger, as most assert handlers display their argument)         */
-        assert(IO.deltaTime >= 0f, { "Need a positive deltaTime (zero is tolerated but will cause some timing issues)" })
-        assert(IO.displaySize greaterThanEqual 0, { "Invalid displaySize value" })
-        assert(IO.fonts.fonts.size > 0, { "Font Atlas not created. Did you call IO.fonts.getTexDataAsRGBA32 / getTexDataAsAlpha8 ?" })
-        assert(IO.fonts.fonts[0].isLoaded, { "Font Atlas not created. Did you call IO.fonts.getTexDataAsRGBA32 / getTexDataAsAlpha8 ?" })
-        assert(style.curveTessellationTol > 0f, { "Invalid style setting" })
-        assert(style.alpha in 0f..1f, { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)" })
-        assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount, { "Forgot to call render() or endFrame() at the end of the previous frame?" })
+        assert(IO.deltaTime >= 0f) { "Need a positive deltaTime (zero is tolerated but will cause some timing issues)" }
+        assert(IO.displaySize greaterThanEqual 0) { "Invalid displaySize value" }
+        assert(IO.fonts.fonts.size > 0) { "Font Atlas not created. Did you call IO.fonts.getTexDataAsRGBA32 / getTexDataAsAlpha8 ?" }
+        assert(IO.fonts.fonts[0].isLoaded) { "Font Atlas not created. Did you call IO.fonts.getTexDataAsRGBA32 / getTexDataAsAlpha8 ?" }
+        assert(style.curveTessellationTol > 0f) { "Invalid style setting" }
+        assert(style.alpha in 0f..1f) { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)" }
+        assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount) { "Forgot to call render() or endFrame() at the end of the previous frame?" }
+        for (k in Key.values())
+            assert(IO.keyMap[k.i] >= -1 && IO.keyMap[k.i] < IO.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
 
         // Initialize on first frame
         if (!g.initialized) initialize()

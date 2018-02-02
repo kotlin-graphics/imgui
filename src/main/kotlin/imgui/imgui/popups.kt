@@ -28,8 +28,7 @@ interface imgui_popups {
      *  needs to be at the same level).   */
     fun openPopup(strId: String) = openPopupEx(g.currentWindow!!.getId(strId))
 
-    /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup()
-     *  returned true!
+    /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returns true!
      *  @param flags = WindowFlag   */
     fun beginPopup(strId: String, flags: Int = 0): Boolean {
         if (g.openPopupStack.size <= g.currentPopupStack.size) {    // Early out for performance
@@ -95,6 +94,7 @@ interface imgui_popups {
         return isOpen
     }
 
+    /** Only call EndPopup() if BeginPopupXXX() returns true!   */
     fun endPopup() {
         assert(currentWindow.flags has Wf.Popup)  // Mismatched BeginPopup()/EndPopup() calls
         assert(g.currentPopupStack.isNotEmpty())

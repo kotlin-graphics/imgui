@@ -335,8 +335,11 @@ enum class Key {
     /** for text edit CTRL+Y: redo  */
     Y,
     /** for text edit CTRL+Z: undo  */
-    Z,
-    COUNT;
+    Z;
+
+    companion object {
+        val COUNT = values().size
+    }
 
     val i = ordinal
 
