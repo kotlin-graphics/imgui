@@ -1,22 +1,24 @@
 package imgui.imgui
 
+import gli_.has
 import glm_.f
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
+import imgui.ImGui.buttonBehavior
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.end
 import imgui.ImGui.initialize
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
+import imgui.ImGui.popId
+import imgui.ImGui.pushId
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setNextWindowSize
-import imgui.internal.Window
-import imgui.internal.focus
-import imgui.internal.lengthSqr
+import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
 import imgui.Context as g
@@ -478,6 +480,111 @@ interface imgui_main {
     }
 
     companion object {
+
+        /** Handle resize for: Resize Grips, Borders, Gamepad
+         * @return borderHelf   */
+        fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld: Int, resizeGripCol: IntArray): Int {
+
+            var borderHeld = borderHeld
+
+            val flags = window.flags
+            if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0)
+                return borderHeld
+
+            val resizeGripCount = if (flags has Wf.ResizeFromAnySide) 2 else 1 // 4
+            val resizeBorderCount = if (flags has Wf.ResizeFromAnySide) 4 else 0
+            val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
+            val gripHoverSize = (gripDrawSize * 0.75f).i.f
+
+            val posTarget = Vec2(Float.MAX_VALUE)
+            val sizeTarget = Vec2(Float.MAX_VALUE)
+
+            // Manual resize grips
+            pushId("#RESIZE")
+            for (resizeGripN in 0 until resizeGripCount) {
+                val grip = resizeGripDef[resizeGripN]
+                val corner = window.pos.lerp(window.pos + window.size, grip.cornerPos)
+
+                // Using the FlattenChilds button flag we make the resize button accessible even if we are hovering over a child window
+                val resizeRect = Rect(corner, corner + grip.innerDir * gripHoverSize)
+                resizeRect.fixInverted()
+
+                val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), ButtonFlags.FlattenChildren)
+                if (hovered || held)
+                    g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
+
+                if (g.hoveredWindow === window && held && IO.mouseDoubleClicked[0] && resizeGripN == 0) {
+                    // Manual auto-fit when double-clicking
+                    sizeTarget put window.calcSizeAfterConstraint(sizeAutoFit)
+                    clearActiveId()
+                } else if (held) {
+                    // Resize from any of the four corners
+                    // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
+                    val cornerTarget = IO.mousePos - g.activeIdClickOffset + resizeRect.size * grip.cornerPos // Corner of the window corresponding to our corner grip
+                    window.calcResizePosSizeFromAnyCorner(cornerTarget, grip.cornerPos, posTarget, sizeTarget)
+                }
+                if (resizeGripN == 0 || held || hovered)
+                    resizeGripCol[resizeGripN] = (if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip).u32
+            }
+            for (borderN in 0 until resizeBorderCount) {
+                val BORDER_SIZE = 5f          // FIXME: Only works _inside_ window because of HoveredWindow check.
+                val BORDER_APPEAR_TIMER = 0.05f // Reduce visual noise
+                val borderRect = window.getBorderRect(borderN, gripHoverSize, BORDER_SIZE)
+                val (_, hovered, held) = buttonBehavior(borderRect, window.getId((borderN + 4)), ButtonFlags.FlattenChildren)
+                if ((hovered && g.hoveredIdTimer > BORDER_APPEAR_TIMER) || held) {
+                    g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
+                    if (held) borderHeld = borderN
+                }
+                if (held) {
+                    val borderTarget = Vec2(window.pos)
+                    val borderPosN = when (borderN) {
+                        0 -> {
+                            borderTarget.y = IO.mousePos.y - g.activeIdClickOffset.y
+                            Vec2(0, 0)
+                        }
+                        1 -> {
+                            borderTarget.x = IO.mousePos.x - g.activeIdClickOffset.x + BORDER_SIZE
+                            Vec2(1, 0)
+                        }
+                        2 -> {
+                            borderTarget.y = IO.mousePos.y - g.activeIdClickOffset.y + BORDER_SIZE
+                            Vec2(0, 1)
+                        }
+                        3 -> {
+                            borderTarget.x = IO.mousePos.x - g.activeIdClickOffset.x
+                            Vec2(0, 0)
+                        }
+                        else -> Vec2(0, 0)
+                    }
+                    window.calcResizePosSizeFromAnyCorner(borderTarget, borderPosN, posTarget, sizeTarget)
+                }
+            }
+            popId()
+
+            // Apply back modified position/size to window
+            if (sizeTarget.x != Float.MAX_VALUE) {
+                window.sizeFull put sizeTarget
+                markIniSettingsDirty(window)
+            }
+            if (posTarget.x != Float.MAX_VALUE) {
+                window.posF = glm.floor(posTarget)
+                window.pos put window.posF
+                markIniSettingsDirty(window)
+            }
+
+            window.size put window.sizeFull
+
+            return borderHeld
+        }
+
+        class ResizeGripDef(val cornerPos: Vec2, val innerDir: Vec2, val angleMin12: Int, val angleMax12: Int)
+
+        val resizeGripDef = arrayOf(
+                ResizeGripDef(Vec2(1, 1), Vec2(-1, -1), 0, 3),  // Lower right
+                ResizeGripDef(Vec2(0, 1), Vec2(+1, -1), 3, 6),  // Lower left
+                ResizeGripDef(Vec2(0, 0), Vec2(+1, +1), 6, 9),  // Upper left
+                ResizeGripDef(Vec2(1, 0), Vec2(-1, +1), 9, 12)) // Upper right
+
         fun focusFrontMostActiveWindow(ignoreWindow: Window?) {
             for (i in g.windows.lastIndex downTo 0)
                 if (g.windows[i] !== ignoreWindow && g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
