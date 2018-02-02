@@ -40,6 +40,7 @@ import imgui.ImGui.inputText
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.isMousePosValid
 import imgui.ImGui.logText
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.openPopup
@@ -1381,16 +1382,17 @@ interface imgui_internal {
                 var vCur = g.dragCurrentValue
                 val mouseDragDelta = getMouseDragDelta(0, 1f)
                 var adjustDelta = 0f
-                //if (g.ActiveIdSource == ImGuiInputSource_Mouse)
-                run {
-                    adjustDelta = mouseDragDelta.x - g.dragLastMouseDelta.x
-                    if (IO.keyShift && g.dragSpeedScaleFast >= 0f)
-                        adjustDelta *= g.dragSpeedScaleFast
-                    if (IO.keyAlt && g.dragSpeedScaleSlow >= 0f)
-                        adjustDelta *= g.dragSpeedScaleSlow
+                if (isMousePosValid()) {
+                    //if (g.ActiveIdSource == ImGuiInputSource_Mouse)
+                    run {
+                        adjustDelta = mouseDragDelta.x - g.dragLastMouseDelta.x
+                        if (IO.keyShift && g.dragSpeedScaleFast >= 0f) adjustDelta *= g.dragSpeedScaleFast
+                        if (IO.keyAlt && g.dragSpeedScaleSlow >= 0f) adjustDelta *= g.dragSpeedScaleSlow
+                    }
+                    g.dragLastMouseDelta.x = mouseDragDelta.x
                 }
                 adjustDelta *= vSpeed
-                g.dragLastMouseDelta.x = mouseDragDelta.x
+
                 if (glm.abs(adjustDelta) > 0f) {
                     if (glm.abs(power - 1f) > 0.001f) {
                         // Logarithmic curve on both side of 0.0
