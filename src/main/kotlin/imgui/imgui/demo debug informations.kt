@@ -2,6 +2,7 @@ package imgui.imgui
 
 import glm_.BYTES
 import glm_.f
+import glm_.toHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -18,6 +19,7 @@ import imgui.ImGui.end
 import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
 import imgui.ImGui.font
+import imgui.ImGui.fontSize
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
@@ -94,7 +96,7 @@ interface imgui_demoDebugInformations {
             text("Application average %.3f ms/frame (%.1f FPS)", 1000f / IO.framerate, IO.framerate)
             text("%d vertices, %d indices (%d triangles)", IO.metricsRenderVertices, IO.metricsRenderIndices, IO.metricsRenderIndices / 3)
             text("%d allocations", IO.metricsAllocs)
-            checkbox("Show clipping rectangles when hovering an ImDrawCmd", Companion::showClipRects)
+            checkbox("Show clipping rectangles when hovering draw commands", Companion::showClipRects)
             separator()
 
             Funcs0.nodeWindows(g.windows, "Windows")
@@ -111,7 +113,7 @@ interface imgui_demoDebugInformations {
                 }
                 treePop()
             }
-            if (treeNode("Basic state")) {
+            if (treeNode("Internal state")) {
                 text("HoveredWindow: '${g.hoveredWindow?.name}'")
                 text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
                 /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
@@ -189,7 +191,7 @@ interface imgui_demoDebugInformations {
             textDisabled("(?)")
             if (isItemHovered()) {
                 beginTooltip()
-                pushTextWrapPos(450f)
+                pushTextWrapPos(fontSize * 35f)
                 textUnformatted(desc)
                 popTextWrapPos()
                 endTooltip()
@@ -277,8 +279,7 @@ interface imgui_demoDebugInformations {
                     }
                     val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
                     val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
-                    val cmdNodeOpen = treeNode(i, "Draw %-4d $mode vtx, tex = ${cmd.textureId}, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)",
-                            cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                    val cmdNodeOpen = treeNode(i, "Draw %4d $mode vtx, tex = ${cmd.textureId!!.toHexString}, clip_rect = (%4.0f,%4.0f)-(%4.0f,%4.0f)", cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
                     if (showClipRects && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
                         val vtxsRect = Rect()
@@ -301,7 +302,7 @@ interface imgui_demoDebugInformations {
                                 val v = drawList.vtxBuffer[idxBuffer?.get(vtxI) ?: vtxI]
                                 trianglesPos[n] = v.pos
                                 val name = if (n == 0) "vtx" else "   "
-                                val string = "$name %04d { pos = (%8.2f,%8.2f), uv = (%.6f,%.6f), col = %08X }\n".format(style.locale,
+                                val string = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n".format(style.locale,
                                         vtxI, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
                                 string.toCharArray(buf, bufP)
                                 bufP += string.length
