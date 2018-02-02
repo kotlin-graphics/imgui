@@ -98,10 +98,8 @@ interface imgui_demoDebugInformations {
             separator()
 
             Funcs0.nodeWindows(g.windows, "Windows")
-            if (treeNode("DrawList", "Active DrawLists (${g.renderDrawLists[0].size})")) {
-                g.renderDrawLists.forEach { layer -> layer.forEach { Funcs0.nodeDrawList(it, "DrawList") } }
-                for (i in g.renderDrawLists[0])
-                    Funcs0.nodeDrawList(i, "DrawList")
+            if (treeNode("DrawList", "Active DrawLists (${g.drawDataBuilder.layers[0].size})")) {
+                g.drawDataBuilder.layers.forEach { layer -> layer.forEach { Funcs0.nodeDrawList(null, it, "DrawList") } }
                 treePop()
             }
             if (treeNode("Popups", "Open Popups Stack (${g.openPopupStack.size})")) {
@@ -248,7 +246,7 @@ interface imgui_demoDebugInformations {
 
         object Funcs0 {
 
-            fun nodeDrawList(drawList: DrawList, label: String) {
+            fun nodeDrawList(window: Window?, drawList: DrawList, label: String) {
 
                 val nodeOpen = treeNode(drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.size} vtx, " +
                         "${drawList.idxBuffer.size} indices, ${drawList.cmdBuffer.size} cmds")
@@ -263,6 +261,11 @@ interface imgui_demoDebugInformations {
                     return
 
                 val overlayDrawList = g.overlayDrawList   // Render additional visuals into the top-most draw list
+                window?.let {
+                    if (isItemHovered())    // TODO check if .posF is fine instead .pos
+                        overlayDrawList.addRect(window.posF, window.posF + window.size, COL32(255, 255, 0, 255))
+                }
+
                 var elemOffset = 0
                 for (i in drawList.cmdBuffer.indices) {
                     val cmd = drawList.cmdBuffer[i]
@@ -332,11 +335,9 @@ interface imgui_demoDebugInformations {
                 val active = if (window.active or window.wasActive) "active" else "inactive"
                 if (!treeNode(window, "$label '${window.name}', $active @ 0x%X", System.identityHashCode(window)))
                     return
-                nodeDrawList(window.drawList, "DrawList")
+                nodeDrawList(window, window.drawList, "DrawList")
                 bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
                         window.size.x, window.size.y, window.sizeContents.x, window.sizeContents.y)
-                if (isItemHovered())
-                    overlayDrawList.addRect(Vec2(window.pos), Vec2(window.pos + window.size), COL32(255, 255, 0, 255))
                 bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f)", window.scroll.x, window.scrollMaxX, window.scroll.y, window.scrollMaxY)
                 bulletText("Active: ${window.active}, WriteAccessed: ${window.writeAccessed}")
                 if (window.rootWindow !== window) nodeWindow(window.rootWindow!!, "RootWindow")

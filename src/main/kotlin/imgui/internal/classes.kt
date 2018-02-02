@@ -324,6 +324,24 @@ class DrawListSharedData {
     })
 }
 
+class DrawDataBuilder {
+    /** Global layers for: regular, tooltip */
+    val layers = Array(2) { ArrayList<DrawList>() }
+
+    fun clear() = layers.forEach { it.clear() }
+
+    fun flattenIntoSingleLayer() {
+        val size = layers.map { it.size }.count()
+        layers[0].ensureCapacity(size)
+        for (layerN in 1 until layers.size) {
+            val layer = layers[layerN]
+            if (layer.isEmpty()) continue
+            layers[0].addAll(layer)
+            layer.clear()
+        }
+    }
+}
+
 /** Storage for SetNexWindow** functions    */
 class NextWindowData {
     var posCond = Cond.Null
@@ -745,8 +763,8 @@ class Window(var context: imgui.Context, var name: String) {
 
     infix fun addTo(renderList: ArrayList<DrawList>) {
         drawList addTo renderList
-        dc.childWindows.filter { it.active }  // clipped children may have been marked not active
-                .filter { it.hiddenFrames <= 0 }.forEach { it addTo renderList }
+        dc.childWindows.filter { it.active && it.hiddenFrames <= 0 }  // clipped children may have been marked not active
+                .forEach { it addTo renderList }
     }
 
     fun addToSortedBuffer() {
@@ -759,14 +777,9 @@ class Window(var context: imgui.Context, var name: String) {
         }
     }
 
-    fun addToRenderListSelectLayer() {
-        // FIXME: Generalize this with a proper layering system so e.g. user can draw in specific layers, below text, ..
+    fun addToDrawDataSelectLayer() {
         IO.metricsActiveWindows++
-        addTo(when {
-            flags has Wf.Popup -> g.renderDrawLists[1]
-            flags has Wf.Tooltip -> g.renderDrawLists[2]
-            else -> g.renderDrawLists[0]
-        })
+        addTo(if (flags has Wf.Tooltip) g.drawDataBuilder.layers[1] else g.drawDataBuilder.layers[0])
     }
 
     // FIXME: Add a more explicit sort order in the window structure.

@@ -153,7 +153,7 @@ object popupsAndModalWindows {
 
                     button("Add another modal..") { openPopup("Stacked 2") }
                     popupModal("Stacked 2") {
-                        text("Hello from Stacked The Second")
+                        text("Hello from Stacked The Second!")
                         button("Close") { closeCurrentPopup() }
                     }
                     button("Close") { closeCurrentPopup() }
