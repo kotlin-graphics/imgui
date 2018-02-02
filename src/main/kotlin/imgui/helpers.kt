@@ -154,7 +154,7 @@ class Payload {
     var sourceParentId = 0
     /** Data timestamp */
     var dataFrameCount = -1
-    /** Data type tag (short user-supplied string) */
+    /** Data type tag (short user-supplied string, 12 characters max) */
     var dataType = ""
     /** Set when AcceptDragDropPayload() was called and mouse has been hovering the target item (nb: handle overlapping drag targets) */
     var preview = false

@@ -51,7 +51,7 @@ import imgui.internal.LayoutType as Lt
 interface imgui_menus {
 
 
-    /** create and append to a full screen menu-bar. only call EndMainMenuBar() if this returns true!   */
+    /** Create and append to a full screen menu-bar.  */
     fun beginMainMenuBar(): Boolean {
 
         setNextWindowPos(Vec2())
@@ -69,13 +69,14 @@ interface imgui_menus {
         }
     }
 
+    /** Only call EndMainMenuBar() if BeginMainMenuBar() returns true! */
     fun endMainMenuBar() {
         endMenuBar()
         end()
         popStyleVar(2)
     }
 
-    /** append to menu-bar of current window (requires WindowFlags.MenuBar flag set on parent window).
+    /** Append to menu-bar of current window (requires WindowFlags.MenuBar flag set on parent window).
      *  Only call endMenuBar() if this returns true!    */
     fun beginMenuBar(): Boolean {
 
@@ -104,6 +105,7 @@ interface imgui_menus {
         return true
     }
 
+    /** Only call EndMenuBar() if BeginMenuBar() returns true!  */
     fun endMenuBar() {
 
         val window = currentWindow
@@ -238,6 +240,7 @@ interface imgui_menus {
         return menuIsOpen
     }
 
+    /** Only call EndBegin() if BeginMenu() returns true! */
     fun endMenu() = endPopup()
 
     /** return true when activated. shortcuts are displayed for convenience but not processed by ImGui at the moment    */

@@ -244,10 +244,10 @@ object IO {
     var mouseDoubleClickTime = 0.3f
     /** Distance threshold to stay in to validate a double-click, in pixels.    */
     var mouseDoubleClickMaxDist = 6f
-    /** Distance threshold before considering we are dragging   */
+    /** Distance threshold before considering we are dragging.   */
     var mouseDragThreshold = 6f
-    /** Map of indices into the KeysDown[512] entries array */
-    var keyMap = IntArray(Key.COUNT.i, { -1 })
+    /** Map of indices into the KeysDown[512] entries array which represent your "native" keyboard state.   */
+    var keyMap = IntArray(Key.COUNT, { -1 })
     /** When holding a key/button, time before it starts repeating, in seconds (for buttons in Repeat mode, etc.).  */
     var keyRepeatDelay = 0.25f
     /** When holding a key/button, rate at which it repeats, in seconds.    */
@@ -331,7 +331,8 @@ object IO {
     var keyAlt = false
     /** Keyboard modifier pressed: Cmd/Super/Windows    */
     var keySuper = false
-    /** Keyboard keys that are pressed (in whatever storage order you naturally have access to keyboard data)   */
+    /** Keyboard keys that are pressed (ideally left in the "native" order your engine has access to keyboard keys,
+     *  so you can use your own defines/enums for keys).   */
     val keysDown = BooleanArray(512)
     /** List of characters input (translated by user from keypress + keyboard state). Fill using addInputCharacter()
      *  helper. */

@@ -9,9 +9,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.Context.style
-import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
-import imgui.ImGui.clearActiveId
 import imgui.ImGui.closeButton
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
@@ -24,9 +22,7 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.popClipRect
-import imgui.ImGui.popId
 import imgui.ImGui.pushClipRect
-import imgui.ImGui.pushId
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTriangle
@@ -55,8 +51,8 @@ interface imgui_window {
             rudimentary information to the .ini file).
             You can use the "##" or "###" markers to use the same label with different id, or same id with different
             label. See documentation at the top of this file.
-        - Return false when window is collapsed, so you can early out in your code. You always need to call ImGui::End()
-            even if false is returned.
+        - Return false when window is collapsed (so you can early out in your code) but you always need to call End()
+            regardless. You always need to call ImGui::End() even if false is returned.
         - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
             be set to false when the button is pressed. */
     fun _begin(name: String, pOpen: KMutableProperty0<Boolean>?, flags: Int = 0) =
@@ -641,7 +637,8 @@ interface imgui_window {
         return !window.skipItems
     }
 
-    /** finish appending to current window, pop it off the window stack.    */
+    /** Always call even if Begin() return false (which indicates a collapsed window)! finish appending to current window,
+     *  pop it off the window stack.    */
     fun end() {
 
         with(g.currentWindow!!) {
@@ -666,16 +663,17 @@ interface imgui_window {
         }
     }
 
-    fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, extraFlags: Int = 0) =
-            beginChildEx(strId, currentWindow.getId(strId), size, border, extraFlags)
+    fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, flags: Int = 0) =
+            beginChildEx(strId, currentWindow.getId(strId), size, border, flags)
 
     /** begin a scrolling region.
      *  size == 0f: use remaining window size
      *  size < 0f: use remaining window size minus abs(size)
      *  size > 0f: fixed size. each axis can use a different mode, e.g. Vec2(0, 400).   */
-    fun beginChild(id: Int, sizeArg: Vec2 = Vec2(), border: Boolean = false, extraFlags: Int = 0) =
-            beginChildEx("", id, sizeArg, border, extraFlags)
+    fun beginChild(id: Int, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: Int = 0) =
+            beginChildEx("", id, sizeArg, border, flags)
 
+    /** Always call even if BeginChild() return false (which indicates a collapsed or clipping child window)    */
     fun endChild() {
 
         val window = currentWindow

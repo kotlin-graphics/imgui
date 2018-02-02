@@ -126,6 +126,7 @@ interface imgui_widgetsComboBox {
         return true
     }
 
+    /** Only call EndCombo() if BeginCombo() returns true! */
     fun endCombo() {
         if (style.framePadding.x != style.windowPadding.x)
             unindent(style.framePadding.x - style.windowPadding.x)

@@ -53,7 +53,7 @@ class TextEditState {
     fun selectAll() {
         state.selectStart = 0
         state.selectEnd = curLenW
-        state.cursor = state.selectEnd
+        state.cursor = curLenW
         state.hasPreferredX = false
     }
 

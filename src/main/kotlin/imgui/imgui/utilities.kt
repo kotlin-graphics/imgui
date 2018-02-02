@@ -220,6 +220,7 @@ interface imgui_utilities {
         return beginChild(id, size, true, Wf.NoMove or Wf.AlwaysUseWindowPadding or extraFlags)
     }
 
+    /** Always call EndChildFrame() regardless of BeginChildFrame() return values (which indicates a collapsed/clipped window)  */
     fun endChildFrame() {
         endChild()
         popStyleVar(3)

@@ -136,7 +136,7 @@ interface imgui_internal {
         g.hoveredIdTimer = if (id != 0 && g.hoveredIdPreviousFrame == id) g.hoveredIdTimer + IO.deltaTime else 0f
     }
 
-    fun getHoveredId() = if(g.hoveredId != 0) g.hoveredId else g.hoveredIdPreviousFrame
+    fun getHoveredId() = if (g.hoveredId != 0) g.hoveredId else g.hoveredIdPreviousFrame
 
     fun keepAliveId(id: Int) {
         if (g.activeId == id) g.activeIdIsAlive = true
@@ -1632,8 +1632,10 @@ interface imgui_internal {
                 editState.onKeyPressed(K.WORDLEFT)
                 editState.onKeyPressed(K.WORDRIGHT or K.SHIFT)
             } else if (IO.mouseClicked[0] && !editState.selectedAllMouseLock) {
-                editState.click(mouseX, mouseY)
-                editState.cursorAnimReset()
+                if (hovered) {
+                    editState.click(mouseX, mouseY)
+                    editState.cursorAnimReset()
+                }
             } else if (IO.mouseDown[0] && !editState.selectedAllMouseLock && IO.mouseDelta notEqual 0f) {
                 editState.state.selectStart = editState.state.cursor
                 editState.state.selectEnd = editState.locateCoord(mouseX, mouseY)
