@@ -432,8 +432,10 @@ interface imgui_window {
 
                 // Window background
                 var bgCol = getWindowBgColorIdxFromFlags(flags).u32
-                if (g.nextWindowData.bgAlphaCond != Cond.Null)
+                if (g.nextWindowData.bgAlphaCond != Cond.Null) {
                     bgCol = (bgCol wo COL32_A_MASK) or (F32_TO_INT8_SAT(g.nextWindowData.bgAlphaVal) shl COL32_A_SHIFT)
+                    g.nextWindowData.bgAlphaCond = Cond.Null
+                }
                 window.drawList.addRectFilled(Vec2(window.pos.x, window.pos.y + window.titleBarHeight), Vec2(window.pos + window.size),
                         bgCol, windowRounding, if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
 
