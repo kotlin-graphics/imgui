@@ -252,7 +252,7 @@ fun markIniSettingsDirty(window: Window) {
         if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = IO.iniSavingRate
 }
 
-fun getVisibleRect(): Rect {
+fun getViewportRect(): Rect {
     if (IO.displayVisibleMin != IO.displayVisibleMax)
         return Rect(IO.displayVisibleMin, IO.displayVisibleMax)
     return Rect(0f, 0f, IO.displaySize.x.f, IO.displaySize.y.f)
@@ -318,7 +318,7 @@ fun findBestWindowPosForPopup(refPos: Vec2, size: Vec2, lastDir: KMutablePropert
         rOuter = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding 
         we ignore it.   */
     val safePadding = Vec2(style.displaySafeAreaPadding)
-    val rOuter = Rect(getVisibleRect())
+    val rOuter = Rect(getViewportRect())
     rOuter expand Vec2(if (size.x - rOuter.width > safePadding.x * 2) -safePadding.x else 0f, if (size.y - rOuter.height > safePadding.y * 2) -safePadding.y else 0f)
     val basePosClamped = glm.clamp(refPos, rOuter.min, rOuter.max - size)
     //GImGui->OverlayDrawList.AddRect(r_avoid.Min, r_avoid.Max, IM_COL32(255,0,0,255));

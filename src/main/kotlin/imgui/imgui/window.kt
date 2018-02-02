@@ -407,15 +407,15 @@ interface imgui_window {
             window.drawList.clear()
             window.drawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
             window.drawList.pushTextureId(g.font.containerAtlas.texId)
-            val fullscreenRect = Rect(getVisibleRect())
+            val viewportRect = Rect(getViewportRect())
             if (flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip)
                 pushClipRect(parentWindow!!.clipRect.min, parentWindow.clipRect.max, true)
             else
-                pushClipRect(fullscreenRect.min, fullscreenRect.max, true)
+                pushClipRect(viewportRect.min, viewportRect.max, true)
 
             // Draw modal window background (darkens what is behind them)
             if (flags has Wf.Modal && window === frontMostModalRootWindow)
-                window.drawList.addRectFilled(fullscreenRect.min, fullscreenRect.max, getColorU32(Col.ModalWindowDarkening, g.modalWindowDarkeningRatio))
+                window.drawList.addRectFilled(viewportRect.min, viewportRect.max, getColorU32(Col.ModalWindowDarkening, g.modalWindowDarkeningRatio))
 
             // Draw window + handle manual resize
             val windowRounding = window.windowRounding
