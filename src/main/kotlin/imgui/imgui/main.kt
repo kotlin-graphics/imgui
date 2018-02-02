@@ -160,8 +160,6 @@ interface imgui_main {
                     so that ActiveIdWindow == MovingWindow and ActiveId == MovingWindow->MoveId for consistency.    */
                 val actuallyMovingWindow = g.movingWindow!!.rootWindow!!
                 val pos = IO.mousePos - g.activeIdClickOffset
-                if (actuallyMovingWindow !== g.movingWindow)
-                    pos += actuallyMovingWindow.posF - g.movingWindow!!.posF
                 if (actuallyMovingWindow.posF.x != pos.x || actuallyMovingWindow.posF.y != pos.y) {
                     markIniSettingsDirty(actuallyMovingWindow)
                     actuallyMovingWindow.posF put pos
@@ -394,7 +392,7 @@ interface imgui_main {
                             with _NoMove would activate hover on other windows.                         */
                         g.hoveredWindow.focus()
                         setActiveId(g.hoveredWindow!!.moveId, g.hoveredWindow)
-                        g.activeIdClickOffset = IO.mousePos - g.hoveredWindow!!.pos
+                        g.activeIdClickOffset = IO.mousePos - g.hoveredRootWindow!!.pos
                         if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove) {
                             g.movingWindow = g.hoveredWindow
                             g.movingdWindowMoveId = g.hoveredWindow!!.moveId

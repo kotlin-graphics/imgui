@@ -170,13 +170,14 @@ interface imgui_window {
 
         // When reusing window again multiple times a frame, just append content (don't need to setup again)
         if (firstBeginOfTheFrame) {
+            val windowIsChildTooltip = flags has Wf.ChildWindow && flags has Wf.Tooltip // FIXME-WIP: Undocumented behavior of Child+Tooltip for pinned tooltip (#1345)
 
             // Initialize
             window.parentWindow = parentWindow
             window.rootNonPopupWindow = window
             window.rootWindow = window
             parentWindow?.let {
-                if (flags has Wf.ChildWindow)
+                if (flags has Wf.ChildWindow && !windowIsChildTooltip)
                     window.rootWindow = it.rootWindow
                 if (flags hasnt Wf.Modal && flags has (Wf.ChildWindow or Wf.Popup))
                     window.rootNonPopupWindow = it.rootNonPopupWindow
@@ -273,10 +274,9 @@ interface imgui_window {
 
             // Apply minimum/maximum window size constraints and final size
             window.sizeFull put window.calcSizeAfterConstraint(window.sizeFull)
-            window.size put if (window.collapsed) window.titleBarRect().size else window.sizeFull
-            if (flags has Wf.ChildWindow && flags hasnt Wf.Popup) {
-                assert(windowSizeXsetByApi && windowSizeYsetByApi)  // Submitted by beginChild()
-                window.size put window.sizeFull
+            window.size put when(window.collapsed && flags hasnt Wf.ChildWindow) {
+                    true -> window.titleBarRect().size
+                    else -> window.sizeFull
             }
 
             /* ---------- SCROLLBAR STATUS ---------- */
@@ -310,7 +310,7 @@ interface imgui_window {
                 window.beginOrderWithinParent = parentWindow!!.dc.childWindows.size
                 parentWindow.dc.childWindows += window
 
-                if (flags hasnt Wf.Popup && !windowPosSetByApi) {
+                if (flags hasnt Wf.Popup && !windowPosSetByApi && !windowIsChildTooltip) {
                     window.posF put parentWindow.dc.cursorPos
                     window.pos put window.posF
                 }
@@ -342,7 +342,7 @@ interface imgui_window {
             }
 
             // Position tooltip (always follows mouse)
-            if (flags has Wf.Tooltip && !windowPosSetByApi) {
+            if (flags has Wf.Tooltip && !windowPosSetByApi && !windowIsChildTooltip) {
                 val refPos = IO.mousePos    // safe
                 // FIXME: Completely hard-coded. Perhaps center on cursor hit-point instead?
                 val rectToAvoid = Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24, refPos.y + 24)
@@ -407,7 +407,7 @@ interface imgui_window {
             window.drawList.flags = (if(style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if(style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
             window.drawList.pushTextureId(g.font.containerAtlas.texId)
             val fullscreenRect = Rect(getVisibleRect())
-            if (flags has Wf.ChildWindow && flags hasnt Wf.Popup)
+            if (flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip)
                 pushClipRect(parentWindow!!.clipRect.min, parentWindow.clipRect.max, true)
             else
                 pushClipRect(fullscreenRect.min, fullscreenRect.max, true)
