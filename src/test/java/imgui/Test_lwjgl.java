@@ -31,8 +31,8 @@ public class Test_lwjgl {
         lwjglGL3.init(window, true);
 
         // Setup style
-        imgui.styleColorsClassic(null);
-        //imgui.styleColorsDark(null);
+        imgui.styleColorsDark(null);
+//        imgui.styleColorsClassic(null);
 
         // Load Fonts
         /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use
@@ -42,16 +42,16 @@ public class Test_lwjgl {
                 (e.g. use an assertion, or display an error and quit).
             - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling
                 FontAtlas.build()/getTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-            - Read 'extra_fonts/README.txt' for more instructions and details.
+            - Read 'misc/fonts/README.txt' for more instructions and details.
             - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write
                 a double backslash \\ ! */
         //ImGuiIO& io = ImGui::GetIO();
         //io.Fonts->AddFontDefault();
-        //io.Fonts->AddFontFromFileTTF("../../extra_fonts/Roboto-Medium.ttf", 16.0f);
-        //io.Fonts->AddFontFromFileTTF("../../extra_fonts/Cousine-Regular.ttf", 15.0f);
-        //io.Fonts->AddFontFromFileTTF("../../extra_fonts/DroidSans.ttf", 16.0f);
-        //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
-//        Font font = io.getFonts().addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, new FontConfig(), io.getFonts().getGlyphRangesJapanese());
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
+//        Font font = io.getFonts().addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f, new FontConfig(), io.getFonts().getGlyphRangesJapanese());
 //        assert (font != null);
 
         while (window.isOpen()) loop();

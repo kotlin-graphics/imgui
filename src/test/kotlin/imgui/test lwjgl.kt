@@ -49,8 +49,8 @@ class HelloWorld_lwjgl {
         LwjglGL3.init(window, true)
 
         // Setup style
-        ImGui.styleColorsClassic()
-        //ImGui.styleColorsDark()
+        ImGui.styleColorsDark()
+//        ImGui.styleColorsClassic()
 
         // Load Fonts
         /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use
@@ -60,15 +60,15 @@ class HelloWorld_lwjgl {
                 (e.g. use an assertion, or display an error and quit).
             - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling
                 FontAtlas.build()/getTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-            - Read 'extra_fonts/README.txt' for more instructions and details.
+            - Read 'misc/fonts/README.txt' for more instructions and details.
             - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write
                 a double backslash \\ ! */
         //io.Fonts->AddFontDefault();
-        //io.Fonts->AddFontFromFileTTF("../../extra_fonts/Roboto-Medium.ttf", 16.0f);
-        //io.Fonts->AddFontFromFileTTF("../../extra_fonts/Cousine-Regular.ttf", 15.0f);
-        //io.Fonts->AddFontFromFileTTF("../../extra_fonts/DroidSans.ttf", 16.0f);
-        //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
-//        IO.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, glyphRanges = IO.fonts.glyphRangesJapanese)!!
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
+//        IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f, glyphRanges = IO.fonts.glyphRangesJapanese)!!
 
         while (window.isOpen) loop()
 

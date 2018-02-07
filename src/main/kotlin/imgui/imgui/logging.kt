@@ -28,8 +28,9 @@ interface imgui_logging {
 
         val window = g.currentWindow!!
 
-        g.logEnabled = true
+        assert(g.logFile != null)
         g.logFile = null
+        g.logEnabled = true
         g.logStartDepth = window.dc.treeDepth
         if (maxDepth >= 0)
             g.logAutoExpandMaxDepth = maxDepth
@@ -42,7 +43,6 @@ interface imgui_logging {
         if (!g.logEnabled) return
 
         logText("%s","\n")
-        g.logEnabled = false
 
         if(g.logFile != null){
             g.logFile = null
@@ -51,6 +51,7 @@ interface imgui_logging {
             setClipboardText(g.logClipboard.toString())
             g.logClipboard = StringBuilder()
         }
+        g.logEnabled = false
     }
 
     /** Helper to display buttons for logging to tty/file/clipboard */

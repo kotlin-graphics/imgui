@@ -157,7 +157,7 @@ interface imgui_demoDebugInformations {
         showHelpMarker("""
             - Load additional fonts with io.Fonts->AddFontFromFileTTF().
             - The font atlas is built when calling io.Fonts->GetTexDataAsXXXX() or io.Fonts->Build().
-            - Read FAQ and documentation in extra_fonts/ for more details.
+            - Read FAQ and documentation in misc/fonts/ for more details.
             - If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame().""")
     }
 
@@ -352,6 +352,6 @@ interface imgui_demoDebugInformations {
 
         val selected = BooleanArray(4 + 3 + 16 + 16, { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 })
 
-        var styleIdx = 0
+        var styleIdx = -1
     }
 }
