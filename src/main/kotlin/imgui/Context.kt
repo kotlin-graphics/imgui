@@ -434,50 +434,51 @@ operator fun IntArray.set(index: Key, value: Int) {
     this[index.i] = value
 }
 
-
+/** You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
+ *  During the frame, prefer using ImGui::PushStyleVar(ImGuiStyleVar_XXXX)/PopStyleVar() to alter the main style values,
+ *  and ImGui::PushStyleColor(ImGuiCol_XXX)/PopStyleColor() for colors. */
 class Style {
 
-    /**  Global alpha applies to everything in ImGui    */
+    /**  Global alpha applies to everything in ImGui.    */
     var alpha = 1f
-    /** Padding within a window */
+    /** Padding within a window. */
     var windowPadding = Vec2(8)
-    /** Radius of window corners rounding. Set to 0.0f to have rectangular windows  */
+    /** Radius of window corners rounding. Set to 0.0f to have rectangular windows.  */
     var windowRounding = 7f
-    /** Thickness of border around windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly)   */
+    /** Thickness of border around windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly).  */
     var windowBorderSize = 0f
-    /** Minimum window size */
+    /** Minimum window size. This is a global setting. If you want to constraint individual windows, use SetNextWindowSizeConstraints(). */
     var windowMinSize = Vec2i(32)
     /** Alignment for title bar text    */
     var windowTitleAlign = Vec2(0f, 0.5f)
     /** Radius of child window corners rounding. Set to 0.0f to have rectangular child windows.  */
     var childRounding = 0f
-    /** Thickness of border around child windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly) */
+    /** Thickness of border around child windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly). */
     var childBorderSize = 1f
     /** Radius of popup window corners rounding.    */
     var popupRounding = 0f
-    /** Thickness of border around popup windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly) */
+    /** Thickness of border around popup windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly). */
     var popupBorderSize = 1f
-    /** Padding within a framed rectangle (used by most widgets)    */
+    /** Padding within a framed rectangle (used by most widgets).    */
     var framePadding = Vec2(4, 3)
     /** Radius of frame corners rounding. Set to 0.0f to have rectangular frames (used by most widgets).    */
     var frameRounding = 0f
-    /** Thickness of border around frames. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly)    */
+    /** Thickness of border around frames. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly).    */
     var frameBorderSize = 0f
-    /** Horizontal and vertical spacing between widgets/lines   */
+    /** Horizontal and vertical spacing between widgets/lines.   */
     var itemSpacing = Vec2(8, 4)
-    /** Horizontal and vertical spacing between within elements of a composed widget (e.g. a slider and its label)  */
+    /** Horizontal and vertical spacing between within elements of a composed widget (e.g. a slider and its label).  */
     var itemInnerSpacing = Vec2(4)
     /** Expand reactive bounding box for touch-based system where touch position is not accurate enough. Unfortunately
-     *  we don't sort widgets so priority on overlap will always be given to the first widget. So don't grow this too
-     *  much!   */
+     *  we don't sort widgets so priority on overlap will always be given to the first widget. So don't grow this too much!   */
     var touchExtraPadding = Vec2()
     /** Horizontal spacing when e.g. entering a tree node. Generally == (FontSize + FramePadding.x*2).  */
     var indentSpacing = 21f
-    /** Minimum horizontal spacing between two columns  */
+    /** Minimum horizontal spacing between two columns.  */
     var columnsMinSpacing = 6f
-    /** Width of the vertical scrollbar, Height of the horizontal scrollbar */
+    /** Width of the vertical scrollbar, Height of the horizontal scrollbar. */
     var scrollbarSize = 16f
-    /** Radius of grab corners rounding for scrollbar   */
+    /** Radius of grab corners rounding for scrollbar.   */
     var scrollbarRounding = 9f
     /** Minimum width/height of a grab box for slider/scrollbar */
     var grabMinSize = 10f

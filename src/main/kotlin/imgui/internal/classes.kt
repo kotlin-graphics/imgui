@@ -471,7 +471,7 @@ class Window(var context: imgui.Context, var name: String) {
     /** Window rounding at the time of begin.   */
     var windowRounding = 0f
     /** Window border size at the time of begin.    */
-    var windowBorderSize = 0f
+    var windowBorderSize = 1f
     /** == window->GetID("#MOVE")   */
     var moveId: Int
 
