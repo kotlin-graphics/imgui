@@ -141,6 +141,7 @@ class Rect {
         }
     }
 
+    val isInverted get() = min.x > max.x || min.y > max.y
     val isFinite get() = min.x != Float.MAX_VALUE
 
     fun put(x1: Float, y1: Float, x2: Float, y2: Float) {
