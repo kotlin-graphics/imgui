@@ -646,7 +646,7 @@ class Window(var context: imgui.Context, var name: String) {
         scroll.x = newScrollX
         dc.cursorMaxPos.x -= scroll.x
     }
-    
+
     fun setScrollY(newScrollY: Float) {
         /*  SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need
             to apply our change to it.         */
@@ -796,7 +796,9 @@ class Window(var context: imgui.Context, var name: String) {
     }
 
     fun bringToFront() {
-        if (g.windows.last() === this) return
+        val currentFrontWindow = g.windows.last()
+        if (currentFrontWindow === this || currentFrontWindow.rootWindow === this)
+            return
         for (i in g.windows.size - 2 downTo 0)
             if (g.windows[i] === this) {
                 g.windows.removeAt(i)
