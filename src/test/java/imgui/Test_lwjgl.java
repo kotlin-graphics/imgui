@@ -84,8 +84,8 @@ public class Test_lwjgl {
     private float[] f = {0f};
     private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
     private boolean[] showAnotherWindow = {false};
-    private boolean[] showDemoWindow = {true};
-//    private KMutableProperty0 prop = new JavaProp<>(() -> showDemoWindow, res -> showDemoWindow = res);
+    private boolean[] showDemo = {true};
+    private int[] counter = {0};
 
     private void loop() {
 
@@ -98,43 +98,39 @@ public class Test_lwjgl {
         glfw.pollEvents();
         lwjglGL3.newFrame();
 
-            /*  1. Show a simple window.
-                Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically
-                called "Debug"             */
-        imgui.text("Hello, world!");
-        imgui.sliderFloat("float", f, 0f, 1f, "%.3f", 1f);
-        imgui.colorEdit3("clear color", clearColor, 0);
-        //  You can write functions in the classical way, with if(cond) { code }
-        if (imgui.button("Test Window", new Vec2()))
-            showDemoWindow[0] = !showDemoWindow[0];
-        if (imgui.button("Another Window", new Vec2()))
-            showAnotherWindow[0] = !showAnotherWindow[0];
+
+        imgui.text("Hello, world!");                                // Display some text (you can use a format string too)
+        imgui.sliderFloat("float", f, 0f, 1f, "%.3f", 1f);       // Edit 1 float using a slider from 0.0f to 1.0f
+        imgui.colorEdit3("clear color", clearColor, 0);               // Edit 3 floats representing a color
+
+        imgui.checkbox("Demo Window", showDemo);                 // Edit bools storing our windows open/close state
+        imgui.checkbox("Another Window", showAnotherWindow);
+
+        if (imgui.button("Button", new Vec2()))                               // Buttons return true when clicked (NB: most widgets return true when edited/activated)
+            counter[0]++;
+
+        imgui.sameLine(0f, -1f);
+        imgui.text("counter = $counter");
+
         imgui.text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.getFramerate(), io.getFramerate());
 
-        /*  2. Show another simple window. In most cases you will use an explicit begin/end pair to name the window.*/
+        // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name the window.
         if (showAnotherWindow[0]) {
             imgui.begin("Another Window", showAnotherWindow, 0);
             imgui.text("Hello from another window!");
+            if (imgui.button("Close Me", new Vec2()))
+                showAnotherWindow[0] = false;
             imgui.end();
         }
 
-        /* 3. Show the ImGui demo window. Most of the sample code is in imgui.showDemoWindow(). */
-        if (showDemoWindow[0]) {
+        /*  3. Show the ImGui demo window. Most of the sample code is in imgui.showDemoWindow().
+                Read its code to learn more about Dear ImGui!  */
+        if (showDemo[0]) {
             /*  Normally user code doesn't need/want to call this because positions are saved in .ini file anyway.
                     Here we just want to make the demo initial state a bit more friendly!                 */
             imgui.setNextWindowPos(new Vec2(650, 20), Cond.FirstUseEver, new Vec2());
-            imgui.showDemoWindow(showDemoWindow);
-//            imgui.showDemoWindow(prop);
+            imgui.showDemoWindow(showDemo);
         }
-
-            /*val buf = CharArray(256)
-
-            text("Hello, world %d", 123)
-            button("OK"){
-                // react
-            }
-            inputText("string", buf)
-            sliderFloat("float", f, 0f, 1f)*/
 
         // Rendering
         gln.GlnKt.glViewport(window.getFramebufferSize());

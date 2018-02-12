@@ -446,7 +446,7 @@ class Style {
     /** Radius of window corners rounding. Set to 0.0f to have rectangular windows.  */
     var windowRounding = 7f
     /** Thickness of border around windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly).  */
-    var windowBorderSize = 0f
+    var windowBorderSize = 1f
     /** Minimum window size. This is a global setting. If you want to constraint individual windows, use SetNextWindowSizeConstraints(). */
     var windowMinSize = Vec2i(32)
     /** Alignment for title bar text    */
