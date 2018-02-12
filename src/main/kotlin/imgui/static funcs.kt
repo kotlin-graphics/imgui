@@ -259,10 +259,9 @@ fun getViewportRect(): Rect {
 }
 
 fun closePopupToLevel(remaining: Int) {
-    if (remaining > 0)
-        g.openPopupStack[remaining - 1].window.focus()
-    else
-        g.openPopupStack[0].parentWindow.focus()
+    val focusWindow = if(remaining > 0) g.openPopupStack[remaining-1].window
+    else g.openPopupStack[0].parentWindow
+    focusWindow.focus()
     for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
 }
 

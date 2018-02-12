@@ -1159,7 +1159,7 @@ interface imgui_internal {
     }
 
 
-    /* Upper-right button to close a window.    */
+    /* Button to close a window    */
     fun closeButton(id: Int, pos: Vec2, radius: Float): Boolean {
 
         val window = currentWindow
@@ -1419,12 +1419,9 @@ interface imgui_internal {
                 val mouseDragDelta = getMouseDragDelta(0, 1f)
                 var adjustDelta = 0f
                 if (isMousePosValid()) {
-                    //if (g.ActiveIdSource == ImGuiInputSource_Mouse)
-                    run {
-                        adjustDelta = mouseDragDelta.x - g.dragLastMouseDelta.x
-                        if (IO.keyShift && g.dragSpeedScaleFast >= 0f) adjustDelta *= g.dragSpeedScaleFast
-                        if (IO.keyAlt && g.dragSpeedScaleSlow >= 0f) adjustDelta *= g.dragSpeedScaleSlow
-                    }
+                    adjustDelta = mouseDragDelta.x - g.dragLastMouseDelta.x
+                    if (IO.keyShift && g.dragSpeedScaleFast >= 0f) adjustDelta *= g.dragSpeedScaleFast
+                    if (IO.keyAlt && g.dragSpeedScaleSlow >= 0f) adjustDelta *= g.dragSpeedScaleSlow
                     g.dragLastMouseDelta.x = mouseDragDelta.x
                 }
                 adjustDelta *= vSpeed

@@ -336,9 +336,18 @@ interface imgui_demoDebugInformations {
                 val active = if (window.active or window.wasActive) "active" else "inactive"
                 if (!treeNode(window, "$label '${window.name}', $active @ 0x%X", System.identityHashCode(window)))
                     return
+                val flags = window.flags
                 nodeDrawList(window, window.drawList, "DrawList")
                 bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
                         window.size.x, window.size.y, window.sizeContents.x, window.sizeContents.y)
+                val builder = StringBuilder()
+                if (flags has Wf.ChildWindow) builder += "Child "
+                if (flags has Wf.Tooltip) builder += "Tooltip "
+                if (flags has Wf.Popup) builder += "Popup "
+                if (flags has Wf.Modal) builder += "Modal "
+                if(flags has Wf.ChildMenu) builder += "ChildMenu "
+                if(flags has Wf.NoSavedSettings) builder += "NoSavedSettings "
+                bulletText("Flags: 0x%08X ($builder..)", flags)
                 bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f)", window.scroll.x, window.scrollMaxX, window.scroll.y, window.scrollMaxY)
                 bulletText("Active: ${window.active}, WriteAccessed: ${window.writeAccessed}")
                 if (window.rootWindow !== window) nodeWindow(window.rootWindow!!, "RootWindow")

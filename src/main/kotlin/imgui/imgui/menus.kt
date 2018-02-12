@@ -178,7 +178,7 @@ interface imgui_menus {
 
         var wantOpen = false
         var wantClose = false
-        if (window.dc.layoutType != Lt.Horizontal) {    // (window->Flags & (ImGuiWindowFlags_Popup|ImGuiWindowFlags_ChildMenu))
+        if (window.dc.layoutType == Lt.Vertical) {    // (window->Flags & (ImGuiWindowFlags_Popup|ImGuiWindowFlags_ChildMenu))
             /*  Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers,
                 so menus feels more reactive.             */
             var movingWithinOpenedTriangle = false

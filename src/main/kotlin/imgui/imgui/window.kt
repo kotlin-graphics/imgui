@@ -85,6 +85,7 @@ interface imgui_window {
         // Automatically disable manual moving/resizing when NoInputs is set
         if (flags has Wf.NoInputs)
             flags = flags or Wf.NoMove or Wf.NoResize
+
         //if (flags & ImGuiWindowFlags_NavFlattened)
         //    IM_ASSERT(flags & ImGuiWindowFlags_ChildWindow);
 
@@ -184,9 +185,9 @@ interface imgui_window {
                 if (flags hasnt Wf.Modal && flags has (Wf.ChildWindow or Wf.Popup))
                     window.rootNonPopupWindow = it.rootNonPopupWindow
             }
-            //window->RootNavWindow = window;
-            //while (window->RootNavWindow->Flags & ImGuiWindowFlags_NavFlattened)
-            //    window->RootNavWindow = window->RootNavWindow->ParentWindow;
+            //window->NavRootWindow = window;
+            //while (window->NavRootWindow->Flags & ImGuiWindowFlags_NavFlattened)
+            //    window->NavRootWindow = window->NavRootWindow->ParentWindow;
 
             window.active = true
             window.beginOrderWithinParent = 0
@@ -423,11 +424,12 @@ interface imgui_window {
             val windowBorderSize = window.windowBorderSize
             val titleBarRect = window.titleBarRect()
             val windowIsFocused = wantFocus || (g.navWindow?.rootNonPopupWindow === window.rootNonPopupWindow ?: false)
+            val titleBarCol = if(window.collapsed) Col.TitleBgCollapsed else if(windowIsFocused) Col.TitleBgActive else Col.TitleBg
             if (window.collapsed) {
                 // Title bar only
                 val backupBorderSize = style.frameBorderSize
                 style.frameBorderSize = window.windowBorderSize
-                renderFrame(titleBarRect.min, titleBarRect.max, Col.TitleBgCollapsed.u32, true, windowRounding)
+                renderFrame(titleBarRect.min, titleBarRect.max, titleBarCol.u32, true, windowRounding)
                 style.frameBorderSize = backupBorderSize
             } else {
 
@@ -442,9 +444,7 @@ interface imgui_window {
 
                 // Title bar
                 if (flags hasnt Wf.NoTitleBar)
-                    window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max,
-                            (if (windowIsFocused) Col.TitleBgActive else Col.TitleBg).u32,
-                            windowRounding, Dcf.Top.i)
+                    window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, Dcf.Top.i)
 
                 // Menu bar
                 if (flags has Wf.MenuBar) {
@@ -676,8 +676,10 @@ interface imgui_window {
      *  size == 0f: use remaining window size
      *  size < 0f: use remaining window size minus abs(size)
      *  size > 0f: fixed size. each axis can use a different mode, e.g. Vec2(0, 400).   */
-    fun beginChild(id: Int, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: Int = 0) =
-            beginChildEx("", id, sizeArg, border, flags)
+    fun beginChild(id: Int, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: Int = 0): Boolean {
+        assert(id != 0)
+        return beginChildEx("", id, sizeArg, border, flags)
+    }
 
     /** Always call even if BeginChild() return false (which indicates a collapsed or clipping child window)    */
     fun endChild() {
