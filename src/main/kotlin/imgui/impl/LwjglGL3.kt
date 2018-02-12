@@ -377,8 +377,8 @@ object LwjglGL3 {
     }
 
     val scrollCallback = { offset: Vec2d ->
-        IO.mouseWheel += offset.x.f
-        IO.mouseWheelH += offset.y.f
+        IO.mouseWheelH += offset.x.f
+        IO.mouseWheel += offset.y.f
     }
 
     val keyCallback = { key: Int, _: Int, action: Int, _: Int ->
