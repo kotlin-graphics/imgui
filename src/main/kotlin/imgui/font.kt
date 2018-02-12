@@ -1,13 +1,11 @@
 package imgui
 
-//import imgui.TrueType.packFontRangesGatherRects
-//import imgui.TrueType.packFontRangesRenderIntoRects
-//import imgui.TrueType.packSetOversampling
+
 import glm_.*
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
 import glm_.vec2.operators.times
-import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.Context.style
 import imgui.internal.fileLoadToCharArray
@@ -39,7 +37,7 @@ class FontConfig {
     /** Index of font within TTF/OTF file   */
     var fontNo = 0
     /** Size in pixels for rasterizer.  */
-    var sizePixels = 0.0f
+    var sizePixels = 0f
     /** Rasterize at higher quality for sub-pixel positioning. We don't use sub-pixel positions on the Y axis.  */
     var oversample = Vec2i(3, 1)
     /** Align every glyph to pixel boundary. Useful e.g. if you are merging a non-pixel aligned font with the default
@@ -145,7 +143,7 @@ class FontAtlas {
     fun addFontDefault(fontCfg: FontConfig): Font {
 
         if (fontCfg.name.isEmpty()) fontCfg.name = "ProggyClean.ttf, 13px"
-        if (fontCfg.sizePixels <= 0f) fontCfg.sizePixels = 13.0f
+        if (fontCfg.sizePixels <= 0f) fontCfg.sizePixels = 13f
 
         val ttfCompressedBase85 = proggyCleanTtfCompressedDataBase85
         return addFontFromMemoryCompressedBase85TTF(ttfCompressedBase85, fontCfg.sizePixels, fontCfg, glyphRangesDefault)
@@ -261,7 +259,7 @@ class FontAtlas {
             Although it is likely to be the most commonly used format, our font rendering is 1 channel / 8 bpp         */
         if (texPixelsRGBA32 == null) {
             val (pixels, _, _) = getTexDataAsAlpha8()
-            if(pixels.isNotEmpty()) {
+            if (pixels.isNotEmpty()) {
                 texPixelsRGBA32 = bufferBig(texSize.x * texSize.y * 4)
                 val dst = texPixelsRGBA32!!
                 for (n in 0 until pixels.size) {
@@ -574,8 +572,8 @@ class FontAtlas {
 
         texId = -1
         texSize put 0
-        texUvScale put 0
-        texUvWhitePixel put 0
+        texUvScale put 0f
+        texUvWhitePixel put 0f
         clearTexData()
         val inRange = IntArray(2)
 
@@ -684,7 +682,7 @@ class FontAtlas {
             tmp.rects = STBRPRect.create(bufRects.address() + bufRectsN * STBRPRect.SIZEOF, fontGlyphsCount)
             tmp.rectsCount = fontGlyphsCount
             bufRectsN += fontGlyphsCount
-            imgui.stb.stbtt_PackSetOversampling(spc, cfg.oversample)
+            stbtt_PackSetOversampling(spc, cfg.oversample)
             val n = stbtt_PackFontRangesGatherRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
             assert(n == fontGlyphsCount)
             stbrp_pack_rects(spc.packInfo, tmp.rects)
@@ -709,7 +707,7 @@ class FontAtlas {
         for (input in 0 until configData.size) {
             val cfg = configData[input]
             val tmp = tmpArray[input]
-            imgui.stb.stbtt_PackSetOversampling(spc, cfg.oversample)
+            stbtt_PackSetOversampling(spc, cfg.oversample)
             stbtt_PackFontRangesRenderIntoRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
             if (cfg.rasterizerMultiply != 1f) {
                 val multiplyTable = buildMultiplyCalcLookupTable(cfg.rasterizerMultiply)
@@ -733,7 +731,7 @@ class FontAtlas {
             val dstFont = cfg.dstFont!!
 
             val fontScale = stbtt_ScaleForPixelHeight(tmp.fontInfo, cfg.sizePixels)
-            val (unscaledAscent, unscaledDescent, unscaledLineGap) = imgui.stb.stbtt_GetFontVMetrics(tmp.fontInfo)
+            val (unscaledAscent, unscaledDescent, unscaledLineGap) = stbtt_GetFontVMetrics(tmp.fontInfo)
 
             val ascent = unscaledAscent * fontScale
             val descent = unscaledDescent * fontScale
