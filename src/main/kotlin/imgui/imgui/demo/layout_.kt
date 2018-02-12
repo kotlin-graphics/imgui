@@ -8,6 +8,7 @@ import imgui.*
 import imgui.Context.style
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.beginChild
+import imgui.ImGui.beginMenu
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -23,6 +24,7 @@ import imgui.ImGui.dragVec2
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
+import imgui.ImGui.endMenu
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameHeightWithSpacing
@@ -63,17 +65,18 @@ import imgui.ImGui.textColored
 import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
-import imgui.ImGui.u32
 import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
 import imgui.functionalProgramming.collapsingHeader
+import imgui.functionalProgramming.menuBar
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withGroup
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
+import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
 import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
@@ -149,8 +152,13 @@ object layout_ {
 
                 // Child 2: rounded border
                 withStyleVar(StyleVar.ChildRounding, 5f) {
-                    withChild("Child2", Vec2(0, 300), true, flags.i) {
-                        text("With border")
+                    withChild("Child2", Vec2(0, 300), true, flags or Wf.MenuBar) {
+                        menuBar {
+                            if (beginMenu("Menu")) {
+                                showExampleMenuFile()
+                                endMenu()
+                            }
+                        }
                         columns(2)
                         for (i in 0..99) {
                             if (i == 50) nextColumn()
