@@ -294,50 +294,8 @@ val PAYLOAD_TYPE_COLOR_3F = "_COL3F"
 val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 
 /** User fill ImGuiIO.KeyMap[] array with indices into the ImGuiIO.KeysDown[512] array  */
-enum class Key {
-
-    /** for tabbing through fields  */
-    Tab,
-    /** for text edit   */
-    LeftArrow,
-    /** for text edit   */
-    RightArrow,
-    /** for text edit   */
-    UpArrow,
-    /** for text edit   */
-    DownArrow,
-
-    PageUp,
-
-    PageDown,
-    /** for text edit   */
-    Home,
-    /** for text edit   */
-    End,
-    /** for text edit   */
-    Insert,
-    /** for text edit   */
-    Delete,
-    /** for text edit   */
-    Backspace,
-
-    Space,
-    /** for text edit   */
-    Enter,
-    /** for text edit   */
-    Escape,
-    /** for text edit CTRL+A: select all    */
-    A,
-    /** for text edit CTRL+C: copy  */
-    C,
-    /** for text edit CTRL+V: paste */
-    V,
-    /** // for text edit CTRL+X: cut    */
-    X,
-    /** for text edit CTRL+Y: redo  */
-    Y,
-    /** for text edit CTRL+Z: undo  */
-    Z;
+enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
+    Space, Enter, Escape, A, C, V, X,  Z;
 
     companion object {
         val COUNT = values().size
