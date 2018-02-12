@@ -87,6 +87,7 @@ class HelloWorld_jogl : GLEventListener {
     val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
     var showAnotherWindow = false
     var showDemo = true
+    var counter = 0
 
     override fun display(drawable: GLAutoDrawable) = with(drawable.gl.gL3) {
 
@@ -94,30 +95,37 @@ class HelloWorld_jogl : GLEventListener {
 
         with(ImGui) {
 
-            /*  1. Show a simple window
-                Tip: if we don't call ImGui.begin()/ImGui.end() the widgets appears in a window automatically
-                called "Debug"             */
-            text("Hello, world!")                             // Some text (you can use a format string too)
-            sliderFloat("float", ::f, 0f, 1f)   // Edit 1 float as a slider from 0f to 1f
-            colorEdit3("clear color", clearColor)           // Edit 3 floats as a color
-            //  You can write functions in the classical way, with if(cond) { code }
-            if (button("Demo Window"))                      // Use buttons to toggle our bools. We could use checkbox() as well.
-                showDemo = !showDemo
+            text("Hello, world!")                                // Display some text (you can use a format string too)
+            sliderFloat("float", ::f, 0f, 1f)       // Edit 1 float using a slider from 0.0f to 1.0f
+            colorEdit3("clear color", clearColor)               // Edit 3 floats representing a color
 
-            // or you can take advantage of functional programming and pass directly a lambda as last parameter
-            button("Another Window") {
-                showAnotherWindow = !showAnotherWindow
-            }
+            checkbox("Demo Window", ::showDemo)                 // Edit bools storing our windows open/close state
+            checkbox("Another Window", ::showAnotherWindow)
+
+            if (button("Button"))                               // Buttons return true when clicked (NB: most widgets return true when edited/activated)
+                counter++
+
+            /* Or you can take advantage of functional programming and pass directly a lambda as last parameter:
+
+                button("Button") { counter++ }
+            */
+
+            sameLine()
+            text("counter = $counter")
+
             text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / IO.framerate, IO.framerate)
 
-            /*  2. Show another simple window, this time using an explicit begin/end pair   */
+            // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name your windows.
             if (showAnotherWindow) {
                 _begin("Another Window", ::showAnotherWindow)
                 text("Hello from another window!")
+                if (button("Close Me"))
+                    showAnotherWindow = false
                 end()
             }
 
-            /* 3. Show the ImGui demo window. Most of the sample code is in ImGui.showDemoWindow() */
+            /*  3. Show the ImGui demo window. Most of the sample code is in imgui.showDemoWindow().
+                Read its code to learn more about Dear ImGui!  */
             if (showDemo) {
                 /*  Normally user code doesn't need/want to call this because positions are saved in .ini file anyway.
                     Here we just want to make the demo initial state a bit more friendly!                 */
