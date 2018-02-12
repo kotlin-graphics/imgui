@@ -1170,11 +1170,12 @@ interface imgui_internal {
 
         // Render
         val col = if (held && hovered) Col.CloseButtonActive else if (hovered) Col.CloseButtonHovered else Col.CloseButton
-        val center = bb.center
+        val center = Vec2(bb.center)
         window.drawList.addCircleFilled(center, glm.max(2f, radius), col.u32, 12)
 
         val crossExtent = (radius * 0.7071f) - 1f
         if (hovered) {
+            center -= 0.5f
             window.drawList.addLine(center + crossExtent, center - crossExtent, Col.Text.u32)
             window.drawList.addLine(center + Vec2(crossExtent, -crossExtent), center + Vec2(-crossExtent, crossExtent), Col.Text.u32)
         }
