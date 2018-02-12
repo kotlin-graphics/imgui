@@ -10,6 +10,7 @@ import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.clearDragDrop
+import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.end
 import imgui.ImGui.initialize
 import imgui.ImGui.isMousePosValid
@@ -304,7 +305,7 @@ interface imgui_main {
             explicit clear. */
         g.currentWindowStack.clear()
         g.currentPopupStack.clear()
-        closeInactivePopups(g.navWindow)
+        closePopupsOverWindow(g.navWindow)
 
         // Create implicit window - we will only render it if the user has added something to it.
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
@@ -402,7 +403,7 @@ interface imgui_main {
                         null.focus()   // Clicking on void disable focus
 
                 /*  With right mouse button we close popups without changing focus
-                (The left mouse button path calls FocusWindow which will lead NewFrame->CloseInactivePopups to trigger) */
+                (The left mouse button path calls FocusWindow which will lead NewFrame::closePopupsOverWindow to trigger) */
                 if (IO.mouseClicked[1]) {
                     /*  Find the top-most window between HoveredWindow and the front most Modal Window.
                         This is where we can trim the popup stack.  */
@@ -417,7 +418,7 @@ interface imgui_main {
                         if (window === g.hoveredWindow) hoveredWindowAboveModal = true
                         i--
                     }
-                    closeInactivePopups(if (hoveredWindowAboveModal) g.hoveredWindow else modal)
+                    closePopupsOverWindow(if (hoveredWindowAboveModal) g.hoveredWindow else modal)
                 }
             }
 

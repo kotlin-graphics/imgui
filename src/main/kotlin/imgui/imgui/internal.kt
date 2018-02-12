@@ -328,7 +328,7 @@ interface imgui_internal {
                 g.openPopupStack[currentStackSize] = popupRef
 
             /*  When reopening a popup we first refocus its parent, otherwise if its parent is itself a popup
-                it would get closed by CloseInactivePopups().  This is equivalent to what ClosePopupToLevel() does. */
+                it would get closed by closePopupsOverWindow().  This is equivalent to what ClosePopupToLevel() does. */
             if (g.openPopupStack[currentStackSize].popupId == id) parentWindow.focus()
         }
     }
@@ -336,6 +336,41 @@ interface imgui_internal {
     fun closePopup(id: Int) {
         if (!isPopupOpen(id)) return
         closePopupToLevel(g.openPopupStack.lastIndex)
+    }
+
+    fun closePopupsOverWindow(refWindow: Window?) {
+
+        if (g.openPopupStack.empty())
+            return
+
+        /*  When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it.
+            Don't close our own child popup windows */
+        var n = 0
+        if (refWindow != null)
+            while (n < g.openPopupStack.size) {
+                val popup = g.openPopupStack[n]
+                if (popup.window == null) {
+                    n++
+                    continue
+                }
+                assert(popup.window!!.flags has Wf.Popup)
+                if (popup.window!!.flags has Wf.ChildWindow) {
+                    n++
+                    continue
+                }
+                // Trim the stack if popups are not direct descendant of the reference window (which is often the NavWindow)
+                var hasFocus = false
+                var m = n
+                while (m < g.openPopupStack.size && !hasFocus) {
+                    hasFocus = g.openPopupStack[m].window != null && g.openPopupStack[m].window!!.rootWindow === refWindow.rootWindow
+                    m++
+                }
+                if (!hasFocus) break
+                n++
+            }
+
+        if (n < g.openPopupStack.size)   // This test is not required but it allows to set a convenient breakpoint on the block below
+            closePopupToLevel(n)
     }
 
     // FIXME
