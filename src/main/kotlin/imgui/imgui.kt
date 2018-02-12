@@ -2,8 +2,6 @@ package imgui
 
 import glm_.b
 import glm_.i
-import glm_.vec2.Vec2
-import glm_.vec2.Vec2i
 import imgui.imgui.*
 
 // Helpers macros to generate 32-bits encoded colors
@@ -74,3 +72,7 @@ fun main(args: Array<String>) {
 val NUL = '\u0000'
 
 var DEBUG = true
+
+operator fun StringBuilder.plusAssign(string: String) {
+    append(string)
+}
