@@ -15,9 +15,7 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setHoveredId
 import imgui.ImGui.setNextWindowPos
-import imgui.internal.Rect
-import imgui.internal.focus
-import imgui.internal.hash
+import imgui.internal.*
 import imgui.Context as g
 import imgui.DragDropFlags as Ddf
 
@@ -59,7 +57,7 @@ interface imgui_dragAndDrop {
                     your dragging operation will be canceled.
                     We don't need to maintain/call clearActiveID() as releasing the button will early out this function
                     and trigger !activeIdIsAlive. */
-                val isHovered = window.dc.lastItemRectHoveredRect
+                val isHovered = window.dc.lastItemStatusFlags has ItemStatusFlags.HoveredRect
                 if (!isHovered && (g.activeId == 0 || g.activeIdWindow !== window))
                     return false
                 window.dc.lastItemId = window.getIdFromRectangle(window.dc.lastItemRect)
@@ -103,7 +101,7 @@ interface imgui_dragAndDrop {
             }
 
             if (flags hasnt Ddf.SourceNoDisableHover && flags hasnt Ddf.SourceExtern)
-                window.dc.lastItemRectHoveredRect = false
+                window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags wo ItemStatusFlags.HoveredRect
 
             return true
         }
@@ -174,7 +172,7 @@ interface imgui_dragAndDrop {
         if (!g.dragDropActive) return false
 
         val window = g.currentWindow!!
-        if (!window.dc.lastItemRectHoveredRect) return false
+        if (window.dc.lastItemStatusFlags hasnt ItemStatusFlags.HoveredRect) return false
         g.hoveredWindow.let { if (it == null || window.rootWindow !== it.rootWindow) return false }
 
         var id = window.dc.lastItemId

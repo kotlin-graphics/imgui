@@ -82,6 +82,16 @@ infix fun Int.or(b: SeparatorFlags) = this or b.i
 infix fun Int.has(b: SeparatorFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: SeparatorFlags) = (this and b.i) == 0
 
+/** Storage for LastItem data   */
+enum class ItemStatusFlags { HoveredRect;
+    val i = 1 shl ordinal
+}
+
+infix fun Int.wo(b: ItemStatusFlags) = and(b.i.inv())
+infix fun Int.or(b: ItemStatusFlags) = or(b.i)
+infix fun Int.has(b: ItemStatusFlags) = and(b.i) != 0
+infix fun Int.hasnt(b: ItemStatusFlags) = and(b.i) == 0
+
 /** FIXME: this is in development, not exposed/functional as a generic feature yet. */
 enum class LayoutType { Vertical, Horizontal;
 

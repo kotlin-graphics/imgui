@@ -392,10 +392,10 @@ class DrawContext {
     var treeDepth = 0
 
     var lastItemId = 0
-
+    /** ItemStatusFlags */
+    var lastItemStatusFlags = 0
+    /** Interaction rect    */
     var lastItemRect = Rect()
-
-    var lastItemRectHoveredRect = false
 
     var menuBarAppending = false
 
@@ -902,8 +902,8 @@ fun itemHoveredDataBackup(block: () -> Unit) {
     // backup
     var window = g.currentWindow!!
     val lastItemId = window.dc.lastItemId
+    val lastItemFlags = window.dc.lastItemStatusFlags
     val lastItemRect = Rect(window.dc.lastItemRect)
-    val lastItemRectHoveredRect = window.dc.lastItemRectHoveredRect
 
     block()
 
@@ -911,5 +911,5 @@ fun itemHoveredDataBackup(block: () -> Unit) {
     window = g.currentWindow!!
     window.dc.lastItemId = lastItemId
     window.dc.lastItemRect put lastItemRect
-    window.dc.lastItemRectHoveredRect = lastItemRectHoveredRect
+    window.dc.lastItemStatusFlags = lastItemFlags
 }

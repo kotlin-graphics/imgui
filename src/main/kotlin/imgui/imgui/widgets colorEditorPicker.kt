@@ -12,7 +12,9 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.Context.style
 import imgui.ImGui.F32_TO_INT8_UNBOUND
+import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.beginDragDropSource
+import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginPopup
 import imgui.ImGui.buttonBehavior
@@ -27,6 +29,7 @@ import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
 import imgui.ImGui.endDragDropSource
+import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.findRenderedTextEnd
@@ -234,8 +237,23 @@ interface imgui_widgetsColorEditorPicker {
         popId()
         endGroup()
 
-        // When picker is being actively used, use its active id so isItemActive() will function on colorEdit4().
-        if (pickerActiveWindow != null && g.activeId != 0 && g.activeIdWindow == pickerActiveWindow)
+        // Drag and Drop Target
+
+        // NB: The flag test is merely an optional micro-optimization, BeginDragDropTarget() does the same test.
+        if (window.dc.lastItemStatusFlags has ItemStatusFlags.HoveredRect && beginDragDropTarget()) {
+            acceptDragDropPayload (PAYLOAD_TYPE_COLOR_3F)?.let {
+                for (j in 0..2) col[j] = (it.data as Vec4)[j]
+                valueChanged = true
+            }
+            acceptDragDropPayload (PAYLOAD_TYPE_COLOR_4F)?.let {
+                for (j in 0..components) col[j] = (it.data as Vec4)[j]
+                valueChanged = true
+            }
+            endDragDropTarget()
+        }
+
+        // When picker is being actively used, use its active id so IsItemActive() will function on ColorEdit4().
+        if (pickerActiveWindow != null && g.activeId != 0 && g.activeIdWindow === pickerActiveWindow)
             window.dc.lastItemId = g.activeId
 
         return valueChanged

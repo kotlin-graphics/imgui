@@ -599,8 +599,8 @@ interface imgui_window {
             /* After begin() we fill the last item / hovered data using the title bar data. Make that a standard behavior
                 (to allow usage of context menus on title bar only, etc.).             */
             window.dc.lastItemId = window.moveId
+            window.dc.lastItemStatusFlags = if(isMouseHoveringRect(titleBarRect.min, titleBarRect.max)) ItemStatusFlags.HoveredRect.i else 0
             window.dc.lastItemRect = titleBarRect
-            window.dc.lastItemRectHoveredRect = isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false)
         }
 
         /*  Inner clipping rectangle
