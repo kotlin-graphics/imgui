@@ -493,7 +493,7 @@ class Style {
      *  as well regular windows.    */
     var displaySafeAreaPadding = Vec2(4)
     /** Scale software rendered mouse cursor (when io.MouseDrawCursor is enabled). May be removed later.    */
-    var mouseCursorScale = 0f
+    var mouseCursorScale = 1f
     /** Enable anti-aliasing on lines/borders. Disable if you are really short on CPU/GPU.  */
     var antiAliasedLines = true
     /**  Enable anti-aliasing on filled shapes (rounded rectangles, circles, etc.)  */
