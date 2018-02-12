@@ -581,8 +581,8 @@ infix fun Int.hasnt(b: Cond) = and(b.i) == 0
 infix fun Int.wo(b: Cond) = and(b.i.inv())
 
 
-/** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent
- *  on first Begin().   */
+/** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
+ *  This is going to be exposed in imgui.h when stabilized enough.  */
 enum class ItemFlags(val i: Int) {
     /** true    */
     AllowKeyboardFocus(1 shl 0),

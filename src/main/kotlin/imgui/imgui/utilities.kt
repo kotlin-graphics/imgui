@@ -17,7 +17,9 @@ import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
+import imgui.internal.ItemStatusFlags
 import imgui.internal.Rect
+import imgui.internal.hasnt
 import imgui.internal.saturate
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
@@ -38,7 +40,7 @@ interface imgui_utilities {
         val window = g.currentWindow!!
         return when {
         // Test for bounding box overlap, as updated as ItemAdd()
-            !window.dc.lastItemRectHoveredRect -> false
+            window.dc.lastItemStatusFlags hasnt ItemStatusFlags.HoveredRect -> false
             else -> {
                 assert(flags hasnt (Hf.RootWindow or Hf.ChildWindows)) // Flags not supported by this function
                 when {

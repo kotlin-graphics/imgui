@@ -182,14 +182,15 @@ interface imgui_internal {
         val dc = g.currentWindow!!.dc.apply {
             lastItemId = id
             lastItemRect = bb
-            lastItemRectHoveredRect = false
+            lastItemStatusFlags = 0
         }
         if (isClipped) return false
         //if (g.IO.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
 
         /*  We need to calculate this now to take account of the current clipping rectangle (as items like Selectable
             may change them)         */
-        dc.lastItemRectHoveredRect = isMouseHoveringRect(bb)
+        if (isMouseHoveringRect(bb.min, bb.max))
+            dc.lastItemStatusFlags = dc.lastItemStatusFlags or ItemStatusFlags.HoveredRect
         return true
     }
 
