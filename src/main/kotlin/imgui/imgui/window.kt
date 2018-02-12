@@ -344,9 +344,10 @@ interface imgui_window {
 
             // Position tooltip (always follows mouse)
             if (flags has Wf.Tooltip && !windowPosSetByApi && !windowIsChildTooltip) {
+                val sc = style.mouseCursorScale
                 val refPos = IO.mousePos    // safe
-                // FIXME: Completely hard-coded. Perhaps center on cursor hit-point instead?
-                val rectToAvoid = Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24, refPos.y + 24)
+                // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
+                val rectToAvoid = Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc)
                 window.posF put findBestWindowPosForPopup(refPos, window.size, window::autoPosLastDirection, rectToAvoid)
                 if (window.autoPosLastDirection == Dir.None)
                 /*  If there's not enough room, for tooltip we prefer avoiding the cursor at all cost even if it

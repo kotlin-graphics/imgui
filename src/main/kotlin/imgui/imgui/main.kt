@@ -340,11 +340,12 @@ interface imgui_main {
             if (IO.mouseDrawCursor && IO.fonts.getMouseCursorTexData(g.mouseCursor, offset, size, uv)) {
                 val pos = IO.mousePos - offset
                 val texId = IO.fonts.texId
+                val sc = style.mouseCursorScale
                 g.overlayDrawList.pushTextureId(texId)
-                g.overlayDrawList.addImage(texId, pos + Vec2(1, 0), pos + Vec2(1, 0) + size, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
-                g.overlayDrawList.addImage(texId, pos + Vec2(2, 0), pos + Vec2(2, 0) + size, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
-                g.overlayDrawList.addImage(texId, pos, pos + size, uv[2], uv[3], COL32(0, 0, 0, 255))       // Black border
-                g.overlayDrawList.addImage(texId, pos, pos + size, uv[0], uv[1], COL32(255, 255, 255, 255)) // White fill
+                g.overlayDrawList.addImage(texId, pos + Vec2(1, 0) * sc, pos + Vec2(1, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
+                g.overlayDrawList.addImage(texId, pos + Vec2(2, 0) * sc, pos + Vec2(2, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
+                g.overlayDrawList.addImage(texId, pos, pos + size * sc, uv[2], uv[3], COL32(0, 0, 0, 255))       // Black border
+                g.overlayDrawList.addImage(texId, pos, pos + size * sc, uv[0], uv[1], COL32(255, 255, 255, 255)) // White fill
                 g.overlayDrawList.popTextureId()
             }
             if (g.overlayDrawList.vtxBuffer.isNotEmpty())
