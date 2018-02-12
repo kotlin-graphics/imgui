@@ -663,7 +663,8 @@ class FontAtlas {
                 inRange[1] = cfg.glyphRanges.getOrElse(i++, { 0 })
                 fontRangesCount++
             }
-            tmp.ranges = STBTTPackRange.create(bufRanges.address() + bufRectsN * fontRangesCount, fontRangesCount)
+            var address = bufRanges.address() + bufRangesN * STBTTPackRange.SIZEOF
+            tmp.ranges = STBTTPackRange.create(address, fontRangesCount)
             tmp.rangesCount = fontRangesCount
             bufRangesN += fontRangesCount
             i = 0
@@ -674,7 +675,7 @@ class FontAtlas {
                 range.fontSize = cfg.sizePixels
                 range.firstUnicodeCodepointInRange = inRange[0]
                 range.numChars = (inRange[1] - inRange[0]) + 1
-                val address = bufPackedchars.address() + bufPackedcharsN * STBTTPackedchar.SIZEOF
+                address = bufPackedchars.address() + bufPackedcharsN * STBTTPackedchar.SIZEOF
                 range.chardataForRange = STBTTPackedchar.create(address, range.numChars)
                 bufPackedcharsN += range.numChars
             }
@@ -716,7 +717,7 @@ class FontAtlas {
                     if (r.wasPacked)
                         buildMultiplyRectAlpha8(multiplyTable, spc.pixels, r, spc.strideInBytes)
             }
-            tmp.rects.free()
+//            tmp.rects.free()
         }
 
         // End packing
