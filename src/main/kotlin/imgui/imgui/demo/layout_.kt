@@ -9,6 +9,7 @@ import imgui.Context.style
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
+import imgui.ImGui.beginMenuBar
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -25,6 +26,7 @@ import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
+import imgui.ImGui.endMenuBar
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameHeightWithSpacing
@@ -91,6 +93,7 @@ object layout_ {
 
     /* Child regions */
     var disableMouseWheel = false
+    var disableMenu = false
     var line = 50
 
 
@@ -131,8 +134,8 @@ object layout_ {
             treeNode("Child regions") {
 
                 checkbox("Disable Mouse Wheel", ::disableMouseWheel)
+                checkbox("Disable Menu", ::disableMenu)
 
-                text("Without border")
                 var gotoLine = button("Goto")
                 sameLine()
                 withItemWidth(100) {
@@ -152,12 +155,13 @@ object layout_ {
 
                 // Child 2: rounded border
                 withStyleVar(StyleVar.ChildRounding, 5f) {
-                    withChild("Child2", Vec2(0, 300), true, flags or Wf.MenuBar) {
-                        menuBar {
+                    withChild("Child2", Vec2(0, 300), true, flags or if(disableMenu) Wf.Null else Wf.MenuBar) {
+                        if(!disableMenu && beginMenuBar()) {
                             if (beginMenu("Menu")) {
                                 showExampleMenuFile()
                                 endMenu()
                             }
+                            endMenuBar()
                         }
                         columns(2)
                         for (i in 0..99) {
