@@ -83,7 +83,8 @@ infix fun Int.has(b: SeparatorFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: SeparatorFlags) = (this and b.i) == 0
 
 /** Storage for LastItem data   */
-enum class ItemStatusFlags { HoveredRect;
+enum class ItemStatusFlags { HoveredRect, HasDisplayRect;
+
     val i = 1 shl ordinal
 }
 

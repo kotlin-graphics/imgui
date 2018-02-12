@@ -396,6 +396,8 @@ class DrawContext {
     var lastItemStatusFlags = 0
     /** Interaction rect    */
     var lastItemRect = Rect()
+    /** End-user display rect (only valid if LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) */
+    var lastItemDisplayRect = Rect()
 
     var menuBarAppending = false
 
@@ -902,8 +904,9 @@ fun itemHoveredDataBackup(block: () -> Unit) {
     // backup
     var window = g.currentWindow!!
     val lastItemId = window.dc.lastItemId
-    val lastItemFlags = window.dc.lastItemStatusFlags
+    val lastItemStatusFlags = window.dc.lastItemStatusFlags
     val lastItemRect = Rect(window.dc.lastItemRect)
+    val lastItemDisplayRect = Rect(window.dc.lastItemDisplayRect)
 
     block()
 
@@ -911,5 +914,6 @@ fun itemHoveredDataBackup(block: () -> Unit) {
     window = g.currentWindow!!
     window.dc.lastItemId = lastItemId
     window.dc.lastItemRect put lastItemRect
-    window.dc.lastItemStatusFlags = lastItemFlags
+    window.dc.lastItemStatusFlags = lastItemStatusFlags
+    window.dc.lastItemDisplayRect = lastItemDisplayRect
 }
