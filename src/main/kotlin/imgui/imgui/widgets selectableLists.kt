@@ -190,7 +190,7 @@ interface imgui_widgetsSelectableLists {
         val frameSize = Vec2(size.x, glm.max(size.y, labelSize.y))
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
         val bb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
-        window.dc.lastItemRect = bb
+        window.dc.lastItemRect put bb   // Forward storage for ListBoxFooter.. dodgy.
 
         beginGroup()
         if (labelSize.x > 0)

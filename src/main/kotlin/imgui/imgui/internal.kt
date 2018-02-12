@@ -564,9 +564,9 @@ interface imgui_internal {
 
         // TODO if(IMGUI_HAS_NAV) window->DC.ItemFlags |= ImGuiItemFlags_NoNav | ImGuiItemFlags_NoNavDefaultFocus;
 
-        val add = itemAdd(bb, id)
+        val itemAdd = itemAdd(bb, id)
         window.dc.itemFlags = itemFlagsBackup
-        if (!add) return false
+        if (!itemAdd) return false
 
         val bbInteract = Rect(bb)
         bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
@@ -2321,11 +2321,11 @@ interface imgui_internal {
         // We vertically grow up to current line height up the typical widget height.
         val textBaseOffsetY = glm.max(padding.y, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
         val frameHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
-        val frameBB = Rect(window.dc.cursorPos, Vec2(window.pos.x + contentRegionMax.x, window.dc.cursorPos.y + frameHeight))
+        val frameBb = Rect(window.dc.cursorPos, Vec2(window.pos.x + contentRegionMax.x, window.dc.cursorPos.y + frameHeight))
         if (displayFrame) {
             // Framed header expand a little outside the default padding
-            frameBB.min.x -= (window.windowPadding.x * 0.5f).i.f - 1
-            frameBB.max.x += (window.windowPadding.x * 0.5f).i.f - 1
+            frameBb.min.x -= (window.windowPadding.x * 0.5f).i.f - 1
+            frameBb.max.x += (window.windowPadding.x * 0.5f).i.f - 1
         }
 
         val textOffsetX = g.fontSize + padding.x * if (displayFrame) 3 else 2   // Collapser arrow width + Spacing
@@ -2335,10 +2335,14 @@ interface imgui_internal {
         /*  For regular tree nodes, we arbitrary allow to click past 2 worth of ItemSpacing
             (Ideally we'd want to add a flag for the user to specify if we want the hit test to be done up to the
             right side of the content or not)         */
-        val interactBb = if (displayFrame) Rect(frameBB) else Rect(frameBB.min.x, frameBB.min.y, frameBB.min.x + textWidth + style.itemSpacing.x * 2, frameBB.max.y)
-
+        val interactBb = if (displayFrame) Rect(frameBb) else Rect(frameBb.min.x, frameBb.min.y, frameBb.min.x + textWidth + style.itemSpacing.x * 2, frameBb.max.y)
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
-        if (!itemAdd(interactBb, id)) {
+
+        val itemAdd = itemAdd(interactBb, id)
+        window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlags.HasDisplayRect
+        window.dc.lastItemDisplayRect put frameBb
+
+        if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushRawId(id)
             return isOpen
@@ -2374,27 +2378,27 @@ interface imgui_internal {
 
         // Render
         val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
-        val textPos = frameBB.min + Vec2(textOffsetX, textBaseOffsetY)
+        val textPos = frameBb.min + Vec2(textOffsetX, textBaseOffsetY)
         if (displayFrame) {
             // Framed type
-            renderFrame(frameBB.min, frameBB.max, col.u32, true, style.frameRounding)
-            renderTriangle(frameBB.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
+            renderFrame(frameBb.min, frameBb.max, col.u32, true, style.frameRounding)
+            renderTriangle(frameBb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
                     range to make sure the ## aren't stripped out here.                 */
                 logRenderedText(textPos, "\n##", 3)
-                renderTextClipped(textPos, frameBB.max, label, labelEnd, labelSize)
+                renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
                 logRenderedText(textPos, "#", 3)
             } else
-                renderTextClipped(textPos, frameBB.max, label, labelEnd, labelSize)
+                renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
         } else {
             // Unframed typed for tree nodes
             if (hovered || flags has Tnf.Selected)
-                renderFrame(frameBB.min, frameBB.max, col.u32, false)
+                renderFrame(frameBb.min, frameBb.max, col.u32, false)
             if (flags has Tnf.Bullet)
                 TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
             else if (flags hasnt Tnf.Leaf)
-                renderTriangle(frameBB.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
+                renderTriangle(frameBb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
                         if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
