@@ -2321,11 +2321,11 @@ interface imgui_internal {
         // We vertically grow up to current line height up the typical widget height.
         val textBaseOffsetY = glm.max(padding.y, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
         val frameHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
-        val bb = Rect(window.dc.cursorPos, Vec2(window.pos.x + contentRegionMax.x, window.dc.cursorPos.y + frameHeight))
+        val frameBB = Rect(window.dc.cursorPos, Vec2(window.pos.x + contentRegionMax.x, window.dc.cursorPos.y + frameHeight))
         if (displayFrame) {
             // Framed header expand a little outside the default padding
-            bb.min.x -= (window.windowPadding.x * 0.5f).i.f - 1
-            bb.max.x += (window.windowPadding.x * 0.5f).i.f - 1
+            frameBB.min.x -= (window.windowPadding.x * 0.5f).i.f - 1
+            frameBB.max.x += (window.windowPadding.x * 0.5f).i.f - 1
         }
 
         val textOffsetX = g.fontSize + padding.x * if (displayFrame) 3 else 2   // Collapser arrow width + Spacing
@@ -2335,7 +2335,7 @@ interface imgui_internal {
         /*  For regular tree nodes, we arbitrary allow to click past 2 worth of ItemSpacing
             (Ideally we'd want to add a flag for the user to specify if we want the hit test to be done up to the
             right side of the content or not)         */
-        val interactBb = if (displayFrame) Rect(bb) else Rect(bb.min.x, bb.min.y, bb.min.x + textWidth + style.itemSpacing.x * 2, bb.max.y)
+        val interactBb = if (displayFrame) Rect(frameBB) else Rect(frameBB.min.x, frameBB.min.y, frameBB.min.x + textWidth + style.itemSpacing.x * 2, frameBB.max.y)
 
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
         if (!itemAdd(interactBb, id)) {
@@ -2374,27 +2374,27 @@ interface imgui_internal {
 
         // Render
         val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
-        val textPos = bb.min + Vec2(textOffsetX, textBaseOffsetY)
+        val textPos = frameBB.min + Vec2(textOffsetX, textBaseOffsetY)
         if (displayFrame) {
             // Framed type
-            renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
-            renderTriangle(bb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
+            renderFrame(frameBB.min, frameBB.max, col.u32, true, style.frameRounding)
+            renderTriangle(frameBB.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
                     range to make sure the ## aren't stripped out here.                 */
                 logRenderedText(textPos, "\n##", 3)
-                renderTextClipped(textPos, bb.max, label, labelEnd, labelSize)
+                renderTextClipped(textPos, frameBB.max, label, labelEnd, labelSize)
                 logRenderedText(textPos, "#", 3)
             } else
-                renderTextClipped(textPos, bb.max, label, labelEnd, labelSize)
+                renderTextClipped(textPos, frameBB.max, label, labelEnd, labelSize)
         } else {
             // Unframed typed for tree nodes
             if (hovered || flags has Tnf.Selected)
-                renderFrame(bb.min, bb.max, col.u32, false)
+                renderFrame(frameBB.min, frameBB.max, col.u32, false)
             if (flags has Tnf.Bullet)
                 TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
             else if (flags hasnt Tnf.Leaf)
-                renderTriangle(bb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
+                renderTriangle(frameBB.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
                         if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
