@@ -2,6 +2,7 @@ package imgui.imgui
 
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.beginTooltip
 import imgui.ImGui.beginTooltipEx
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.endTooltip
@@ -98,7 +99,7 @@ interface imgui_dragAndDrop {
                 //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This is better but e.g ColorButton with checkboard has issue with transparent colors :(
                 setNextWindowPos(IO.mousePos)
                 pushStyleColor(Col.PopupBg, getStyleColorVec4(Col.PopupBg) * Vec4(1f, 1f, 1f, 0.6f))
-                beginTooltipEx(WindowFlags.NoInputs.i)
+                beginTooltip()
             }
 
             if (flags hasnt Ddf.SourceNoDisableHover && flags hasnt Ddf.SourceExtern)
