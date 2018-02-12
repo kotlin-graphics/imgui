@@ -65,6 +65,7 @@ object JoglVrGL3 {
             keyMap[Key.Insert] = KeyEvent.VK_INSERT.i
             keyMap[Key.Delete] = KeyEvent.VK_DELETE.i
             keyMap[Key.Backspace] = KeyEvent.VK_BACK_SPACE.i
+            keyMap[Key.Space] = KeyEvent.VK_SPACE.i
             keyMap[Key.Enter] = KeyEvent.VK_ENTER.i
             keyMap[Key.Escape] = KeyEvent.VK_ESCAPE.i
             keyMap[Key.A] = KeyEvent.VK_A.i

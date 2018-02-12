@@ -76,6 +76,7 @@ object LwjglGL3 {
             keyMap[Key.Insert] = GLFW_KEY_INSERT
             keyMap[Key.Delete] = GLFW_KEY_DELETE
             keyMap[Key.Backspace] = GLFW_KEY_BACKSPACE
+            keyMap[Key.Space] = GLFW_KEY_SPACE
             keyMap[Key.Enter] = GLFW_KEY_ENTER
             keyMap[Key.Escape] = GLFW_KEY_ESCAPE
             keyMap[Key.A] = GLFW_KEY_A

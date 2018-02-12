@@ -320,6 +320,8 @@ enum class Key {
     Delete,
     /** for text edit   */
     Backspace,
+
+    Space,
     /** for text edit   */
     Enter,
     /** for text edit   */
