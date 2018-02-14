@@ -3,7 +3,7 @@ package imgui.imgui
 import glm_.vec4.Vec4
 import imgui.Col
 import imgui.Style
-import imgui.Context as g
+import imgui.g
 
 /** Styles  */
 interface imgui_styles {
@@ -18,11 +18,12 @@ interface imgui_styles {
      * of I'll kill you slowly
      */
 
-    fun styleColorsClassic(dst: Style? = null) = with(dst ?: g.style) {
-        colors.clear()
-        for(c in Col.values())
-            colors += Vec4()
-        // @formatter:off
+    fun styleColorsClassic(dst: Style? = null) {
+        with(dst ?: g.style) {
+            colors.clear()
+            for(c in Col.values())
+                colors += Vec4()
+            // @formatter:off
         colors[Col.Text]                   .put(0.90f, 0.90f, 0.90f, 1.00f)
         colors[Col.TextDisabled]           .put(0.60f, 0.60f, 0.60f, 1.00f)
         colors[Col.WindowBg]               .put(0.00f, 0.00f, 0.00f, 0.70f)
@@ -69,6 +70,7 @@ interface imgui_styles {
         colors[Col.NavHighlight]            put colors[Col.HeaderHovered]
         colors[Col.NavWindowingHighlight]  .put(1.00f, 1.00f, 1.00f, 0.70f)
         // @formatter:on
+        }
     }
 
     fun styleColorsDark(dst: Style? = null) = with(dst ?: g.style) {

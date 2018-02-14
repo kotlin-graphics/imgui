@@ -10,7 +10,7 @@ import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.ImGui.F32_TO_INT8_UNBOUND
 import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.beginDragDropSource
@@ -39,6 +39,7 @@ import imgui.ImGui.getColorU32
 import imgui.ImGui.hsvToRGB
 import imgui.ImGui.inputText
 import imgui.ImGui.invisibleButton
+import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
@@ -66,7 +67,6 @@ import imgui.imgui.imgui_widgetsText.Companion.colorPickerOptionsPopup
 import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
 import imgui.ColorEditFlags as Cef
-import imgui.Context as g
 import imgui.InputTextFlags as Itf
 import imgui.WindowFlags as Wf
 import imgui.internal.DrawCornerFlags as Dcf
@@ -355,8 +355,8 @@ interface imgui_widgetsColorEditorPicker {
             // Hue wheel + SV triangle logic
             invisibleButton("hsv", Vec2(svPickerSize + style.itemInnerSpacing.x + barsWidth, svPickerSize))
             if (isItemActive) {
-                val initialOff = IO.mouseClickedPos[0] - wheelCenter
-                val currentOff = IO.mousePos - wheelCenter
+                val initialOff = io.mouseClickedPos[0] - wheelCenter
+                val currentOff = io.mousePos - wheelCenter
                 val initialDist2 = initialOff.lengthSqr
                 if (initialDist2 >= (wheelRInner - 1) * (wheelRInner - 1) && initialDist2 <= (wheelROuter + 1) * (wheelROuter + 1)) {
                     // Interactive with Hue wheel
@@ -386,8 +386,8 @@ interface imgui_widgetsColorEditorPicker {
             // SV rectangle logic
             invisibleButton("sv", Vec2(svPickerSize))
             if (isItemActive) {
-                s = saturate((IO.mousePos.x - pickerPos.x) / (svPickerSize - 1))
-                v = 1f - saturate((IO.mousePos.y - pickerPos.y) / (svPickerSize - 1))
+                s = saturate((io.mousePos.x - pickerPos.x) / (svPickerSize - 1))
+                v = 1f - saturate((io.mousePos.y - pickerPos.y) / (svPickerSize - 1))
                 valueChangedSv = true
                 valueChanged = true
             }
@@ -396,7 +396,7 @@ interface imgui_widgetsColorEditorPicker {
             cursorScreenPos = Vec2(bar0PosX, pickerPos.y)
             invisibleButton("hue", Vec2(barsWidth, svPickerSize))
             if (isItemActive) {
-                h = saturate((IO.mousePos.y - pickerPos.y) / (svPickerSize - 1))
+                h = saturate((io.mousePos.y - pickerPos.y) / (svPickerSize - 1))
                 valueChangedH = true
                 valueChanged = true
             }
@@ -407,7 +407,7 @@ interface imgui_widgetsColorEditorPicker {
             cursorScreenPos = Vec2(bar1PosX, pickerPos.y)
             invisibleButton("alpha", Vec2(barsWidth, svPickerSize))
             if (isItemActive) {
-                col[3] = 1f - saturate((IO.mousePos.y - pickerPos.y) / (svPickerSize - 1))
+                col[3] = 1f - saturate((io.mousePos.y - pickerPos.y) / (svPickerSize - 1))
                 valueChanged = true
             }
         }

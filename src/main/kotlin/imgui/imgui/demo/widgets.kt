@@ -7,7 +7,6 @@ import glm_.vec2.Vec2
 import glm_.vec2.operators.div
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.Context.style
 import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.bullet
@@ -47,6 +46,7 @@ import imgui.ImGui.inputInt2
 import imgui.ImGui.inputInt3
 import imgui.ImGui.inputInt4
 import imgui.ImGui.inputText
+import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemClicked
 import imgui.ImGui.isItemHovered
@@ -79,6 +79,7 @@ import imgui.ImGui.sliderInt3
 import imgui.ImGui.sliderInt4
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
+import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
@@ -109,7 +110,6 @@ import imgui.or
 import kotlin.math.cos
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
-import imgui.Context as g
 import imgui.InputTextFlags as Itf
 import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf
@@ -387,7 +387,7 @@ object widgets {
                         if (nodeClicked != -1) {
                             /*  Update selection state. Process outside of tree loop to avoid visual inconsistencies during
                                 the clicking-frame.                         */
-                            if (IO.keyCtrl)
+                            if (io.keyCtrl)
                                 selectionMask = selectionMask xor (1 shl nodeClicked)   // CTRL+click to toggle
                             /*  Depending on selection behavior you want, this commented bit preserve selection when
                                 clicking on item that is part of the selection                         */
@@ -465,7 +465,7 @@ object widgets {
                         Instead we are encoding a few string with hexadecimal constants. Don't do this in your application!
                         Note that characters values are preserved even by inputText() if the font cannot be displayed,
                         so you can safely copy & paste garbled characters into another application. */
-                    textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call IO.font.loadFromFileTTF() manually to load extra character ranges.")
+                    textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.font.loadFromFileTTF() manually to load extra character ranges.")
                     text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)")
                     text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
                     inputText("UTF-16 input", buf)
@@ -486,8 +486,8 @@ object widgets {
                     Using showMetricsWindow() as a "debugger" to inspect the draw data that are being passed to your
                     render will help you debug issues if you are confused about this.
                     Consider using the lower-level drawList.addImage() API, via imgui.windowDrawList.addImage().    */
-                val myTexId = IO.fonts.texId
-                val myTexSize = Vec2(IO.fonts.texSize)
+                val myTexId = io.fonts.texId
+                val myTexSize = Vec2(io.fonts.texSize)
 
                 text("%.0fx%.0f", myTexSize.x, myTexSize.y)
                 val pos = Vec2(cursorScreenPos)
@@ -538,7 +538,7 @@ object widgets {
                     showHelpMarker("Hold CTRL and click to select multiple items.")
                     for (n in 0..4)
                         if (selectable("Object $n", selection1[n])) {
-                            if (!IO.keyCtrl)    // Clear selection when CTRL is not held
+                            if (!io.keyCtrl)    // Clear selection when CTRL is not held
                                 selection1.fill(false)
                             selection0[n] = selection0[n] xor true
                         }
@@ -631,7 +631,7 @@ object widgets {
 
                 // Animate a simple progress bar
                 if (animate) {
-                    progress += progressDir * 0.4f * IO.deltaTime
+                    progress += progressDir * 0.4f * io.deltaTime
                     if (progress >= 1.1f) {
                         progress = +1.1f
                         progressDir *= -1f

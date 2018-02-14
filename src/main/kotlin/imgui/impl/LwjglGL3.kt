@@ -21,6 +21,7 @@ import gln.vertexArray.glBindVertexArray
 import gln.vertexArray.glVertexAttribPointer
 import gln.vertexArray.withVertexArray
 import imgui.*
+import imgui.ImGui.io
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.*
@@ -36,7 +37,6 @@ import uno.buffer.intBufferBig
 import uno.buffer.intBufferOf
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
-import imgui.Context as g
 
 
 object LwjglGL3 {
@@ -62,7 +62,7 @@ object LwjglGL3 {
 
         this.window = window
 
-        with(IO) {
+        with(io) {
             // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
             keyMap[Key.Tab] = GLFW_KEY_TAB
             keyMap[Key.LeftArrow] = GLFW_KEY_LEFT
@@ -112,39 +112,39 @@ object LwjglGL3 {
         if (fontTexture[0] < 0) createDeviceObjects()
 
         // Setup display size (every frame to accommodate for window resizing)
-        IO.displaySize put window.size
-        IO.displayFramebufferScale.x = if (window.size.x > 0) window.framebufferSize.x / window.size.x.f else 0f
-        IO.displayFramebufferScale.y = if (window.size.y > 0) window.framebufferSize.y / window.size.y.f else 0f
+        io.displaySize put window.size
+        io.displayFramebufferScale.x = if (window.size.x > 0) window.framebufferSize.x / window.size.x.f else 0f
+        io.displayFramebufferScale.y = if (window.size.y > 0) window.framebufferSize.y / window.size.y.f else 0f
 
         // Setup time step
         val currentTime = glfw.time
-        IO.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
+        io.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         time = currentTime
 
         /*  Setup inputs
             (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
             Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)   */
         if (window.focused)
-            if (IO.wantMoveMouse)
+            if (io.wantMoveMouse)
             /*  Set mouse position if requested by io.WantMoveMouse flag (used when io.NavMovesTrue is enabled by user
                 and using directional navigation)   */
-                window.cursorPos = Vec2d(IO.mousePos)
+                window.cursorPos = Vec2d(io.mousePos)
             else
-                IO.mousePos put window.cursorPos
+                io.mousePos put window.cursorPos
         else
-            IO.mousePos put -Float.MAX_VALUE
+            io.mousePos put -Float.MAX_VALUE
 
         repeat(3) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
-            IO.mouseDown[it] = mouseJustPressed[it] || window.mouseButton(it) != 0
+            io.mouseDown[it] = mouseJustPressed[it] || window.mouseButton(it) != 0
             mouseJustPressed[it] = false
         }
 
         // Hide OS mouse cursor if ImGui is drawing it
-        window.cursor = if (IO.mouseDrawCursor) GlfwWindow.Cursor.Hidden else GlfwWindow.Cursor.Normal
+        window.cursor = if (io.mouseDrawCursor) GlfwWindow.Cursor.Hidden else GlfwWindow.Cursor.Normal
 
-        /*  Start the frame. This call will update the IO.wantCaptureMouse, IO.wantCaptureKeyboard flag that you can use
+        /*  Start the frame. This call will update the io.wantCaptureMouse, io.wantCaptureKeyboard flag that you can use
             to dispatch inputs (or not) to your application.         */
         ImGui.newFrame()
     }
@@ -246,7 +246,7 @@ object LwjglGL3 {
         /*  Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely
             to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than
             just a GL texture id, consider calling GetTexDataAsAlpha8() instead to save on GPU memory.  */
-        val (pixels, size) = IO.fonts.getTexDataAsRGBA32()
+        val (pixels, size) = io.fonts.getTexDataAsRGBA32()
 
         // Upload texture to graphics system
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
@@ -258,7 +258,7 @@ object LwjglGL3 {
         }
 
         // Store our identifier
-        IO.fonts.texId = fontTexture[0]
+        io.fonts.texId = fontTexture[0]
 
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)
@@ -276,9 +276,9 @@ object LwjglGL3 {
         checkError("init")
         /** Avoid rendering when minimized, scale coordinates for retina displays
          *  (screen coordinates != framebuffer coordinates) */
-        val fbSize = IO.displaySize * IO.displayFramebufferScale
+        val fbSize = io.displaySize * io.displayFramebufferScale
         if (fbSize equal 0) return
-        drawData.scaleClipRects(IO.displayFramebufferScale)
+        drawData.scaleClipRects(io.displayFramebufferScale)
 
         // Backup GL state
         val lastActiveTexture = glGetInteger(GL_ACTIVE_TEXTURE)
@@ -313,7 +313,7 @@ object LwjglGL3 {
 
         // Setup viewport, orthographic projection matrix
         glViewport(fbSize)
-        val ortho = glm.ortho(mat, 0f, IO.displaySize.x.f, IO.displaySize.y.f, 0f)
+        val ortho = glm.ortho(mat, 0f, io.displaySize.x.f, io.displaySize.y.f, 0f)
         glUseProgram(program)
         glUniform(program.mat, ortho)
 
@@ -378,12 +378,12 @@ object LwjglGL3 {
     }
 
     val scrollCallback = { offset: Vec2d ->
-        IO.mouseWheelH += offset.x.f
-        IO.mouseWheel += offset.y.f
+        io.mouseWheelH += offset.x.f
+        io.mouseWheel += offset.y.f
     }
 
     val keyCallback = { key: Int, _: Int, action: Int, _: Int ->
-        with(IO) {
+        with(io) {
             if (key in keysDown.indices)
                 if (action == GLFW_PRESS)
                     keysDown[key] = true
@@ -398,11 +398,10 @@ object LwjglGL3 {
         }
     }
 
-    val charCallback = { c: Int -> if (c in 1..65535) IO.addInputCharacter(c.c) }
+    val charCallback = { c: Int -> if (c in 1..65535) io.addInputCharacter(c.c) }
 
     fun shutdown() {
         invalidateDeviceObjects()
-        ImGui.shutdown()
     }
 
     private fun invalidateDeviceObjects() {
@@ -414,7 +413,7 @@ object LwjglGL3 {
 
         if (fontTexture[0] >= 0) {
             glDeleteTextures(fontTexture)
-            IO.fonts.texId = -1
+            io.fonts.texId = -1
             fontTexture[0] = -1
         }
     }

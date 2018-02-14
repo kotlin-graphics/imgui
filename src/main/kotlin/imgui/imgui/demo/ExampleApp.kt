@@ -29,6 +29,7 @@ import imgui.ImGui.frameCount
 import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.image
 import imgui.ImGui.inputFloat
+import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logButtons
 import imgui.ImGui.logFinish
@@ -94,7 +95,6 @@ import kotlin.math.max
 import kotlin.math.sqrt
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
-import imgui.Context as g
 import imgui.InputTextFlags as Itf
 import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf
@@ -588,7 +588,7 @@ object Log {
 
         // Demo: add random items (unless Ctrl is held)
         val time = g.time
-        if (time - lastTime >= 0.2f && !IO.keyCtrl) {
+        if (time - lastTime >= 0.2f && !io.keyCtrl) {
             val s = randomWords[rand % randomWords.size]
             val t = "%.1f".format(style.locale, time)
             log.addLog("[$s] Hello, time is $t, frame count is $frameCount\n")
@@ -896,8 +896,8 @@ object FixedOverlay {
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         val DISTANCE = 10f
-        val windowPos = Vec2(if (corner has 1) IO.displaySize.x - DISTANCE else DISTANCE,
-                if (corner has 2) IO.displaySize.y - DISTANCE else DISTANCE)
+        val windowPos = Vec2(if (corner has 1) io.displaySize.x - DISTANCE else DISTANCE,
+                if (corner has 2) io.displaySize.y - DISTANCE else DISTANCE)
         val windowPosPivot = Vec2(if (corner has 1) 1f else 0f, if (corner has 2) 1f else 0f)
         setNextWindowPos(windowPos, Cond.Always, windowPosPivot)
         setNextWindowBgAlpha(0.3f)  // Transparent background
@@ -905,7 +905,7 @@ object FixedOverlay {
         withWindow("Example: Fixed Overlay", open, flags) {
             text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
             separator()
-            text("Mouse Position: (%.1f,%.1f)".format(IO.mousePos.x, IO.mousePos.y))
+            text("Mouse Position: (%.1f,%.1f)".format(io.mousePos.x, io.mousePos.y))
             popupContextWindow {
                 menuItem("Top-left", "", corner == 0) { corner = 0 }
                 menuItem("Top-right", "", corner == 1) { corner = 1 }
@@ -1075,7 +1075,7 @@ object StyleEditor {
         // Default to using internal storage as reference
         if (init && ref == null) refSavedStyle = Style(style)
         init = false
-        var ref = if (ref == null) refSavedStyle else ref
+        var ref = ref ?: refSavedStyle
 
         pushItemWidth(windowWidth * 0.55f)
         if (showStyleSelector("Colors##Selector"))
@@ -1107,7 +1107,7 @@ object StyleEditor {
             ref = style
         }
         sameLine()
-        if (button("Revert Ref")) style = ref!!
+        if (button("Revert Ref")) g.style = ref!!
         sameLine()
         showHelpMarker("Save/Revert in local non-persistent storage. Default Colors definition are not affected. Use \"Export Colors\" below to save them somewhere.")
 
@@ -1205,10 +1205,10 @@ object StyleEditor {
             }
         }
 
-        val fontsOpened = treeNode("Fonts", "Fonts (${IO.fonts.fonts.size})")
-        sameLine(); showHelpMarker("Tip: Load fonts with IO.fonts.addFontFromFileTTF()\nbefore calling IO.fonts.getTex* functions.")
+        val fontsOpened = treeNode("Fonts", "Fonts (${io.fonts.fonts.size})")
+        sameLine(); showHelpMarker("Tip: Load fonts with io.fonts.addFontFromFileTTF()\nbefore calling io.fonts.getTex* functions.")
         if (fontsOpened) {
-            val atlas = IO.fonts
+            val atlas = io.fonts
             treeNode("Atlas texture", "Atlas texture (${atlas.texSize.x}x${atlas.texSize.y} pixels)") {
                 image(atlas.texId, Vec2(atlas.texSize), Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255),
                         Vec4.fromColor(255, 255, 255, 128))
@@ -1219,7 +1219,7 @@ object StyleEditor {
                 val font = atlas.fonts[i]
                 val name = font.configData.getOrNull(0)?.name ?: ""
                 val fontDetailsOpened = bulletText("Font $i: '$name', %.2f px, ${font.glyphs.size} glyphs", font.fontSize)
-                sameLine(); smallButton("Set as default") { IO.fontDefault = font }
+                sameLine(); smallButton("Set as default") { io.fontDefault = font }
                 if (fontsOpened) {
                     pushFont(font)
                     text("The quick brown fox jumps over the lazy dog")
@@ -1285,9 +1285,9 @@ object StyleEditor {
             val pF = floatArrayOf(windowScale)
             dragFloat("this window scale", pF, 0.005f, 0.3f, 2f, "%.1f")    // scale only this window
             windowScale = pF[0]
-            pF[0] = IO.fontGlobalScale
+            pF[0] = io.fontGlobalScale
             dragFloat("global scale", pF, 0.005f, 0.3f, 2f, "%.1f") // scale everything
-            IO.fontGlobalScale = pF[0]
+            io.fontGlobalScale = pF[0]
             popItemWidth()
             setWindowFontScale(windowScale)
         }

@@ -3,8 +3,8 @@ package imgui.imgui
 import imgui.ImGui.currentWindow
 import imgui.ImGui.isItemVisible
 import imgui.ImGui.setScrollHere
+import imgui.g
 import imgui.internal.Rect
-import imgui.Context as g
 
 
 /** Focus, Activation

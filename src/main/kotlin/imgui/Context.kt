@@ -11,9 +11,13 @@ import java.nio.ByteBuffer
 import java.util.*
 import kotlin.collections.ArrayList
 
-object Context {
+class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var initialized = false
+    /** Io.Fonts-> is owned by the ImGuiContext and will be destructed along with it.   */
+    var fontAtlasOwnedByContext = sharedFontAtlas != null
+
+    var io = IO(sharedFontAtlas)
 
     var style = Style()
 
@@ -123,7 +127,7 @@ object Context {
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId = 0
     /** Just navigated to this id (result of a successfully MoveRequest)    */
-    var  navJustMovedToId = 0
+    var navJustMovedToId = 0
     /** Rectangle used for scoring, in screen space. Based of window.dc.navRefRectRel[], modified for directional navigation scoring.  */
     var navScoringRectScreen = Rect()
     /** Metrics for debugging   */
@@ -295,11 +299,76 @@ object Context {
     var wantTextInputNextFrame = -1
 
 //    char                    TempBuffer[1024*3+1];               // temporary text buffer
+
+    /*  Context creation and access, if you want to use multiple context, share context between modules (e.g. DLL).
+        All contexts share a same FontAtlas by default. If you want different font atlas, you can new() them and
+        overwrite the ::io. Fonts variable of an ImGui context.
+        All those functions are not reliant on the current context. */
+    init {
+        if (gImGui == null) setCurrent()
+    }
+
+    /** This function is merely here to free heap allocations.     */
+    fun shutdown() {
+
+        /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
+            (which would happen if we never called NewFrame)         */
+//        if (IO.fonts) // Testing for NULL to allow user to NULLify in case of running Shutdown() on multiple contexts. Bit hacky.
+        io.fonts.clear()
+
+        // Cleanup of other data are conditional on actually having initialize ImGui.
+        if (!g.initialized) return
+
+        saveIniSettingsToDisk(io.iniFilename)
+
+        for (window in g.windows) window.clear()
+        g.windows.clear()
+        g.windowsSortBuffer.clear()
+        g.currentWindow = null
+        g.currentWindowStack.clear()
+        g.windowsById.clear()
+        g.navWindow = null
+        g.hoveredWindow = null
+        g.hoveredRootWindow = null
+        g.activeIdWindow = null
+        g.movingWindow = null
+        g.settings.clear()
+        g.colorModifiers.clear()
+        g.styleModifiers.clear()
+        g.fontStack.clear()
+        g.openPopupStack.clear()
+        g.currentPopupStack.clear()
+        g.drawDataBuilder.clear()
+        g.overlayDrawList.clearFreeMemory()
+        g.privateClipboard = ""
+        g.inputTextState.text = charArrayOf()
+        g.inputTextState.initialText = charArrayOf()
+        g.inputTextState.tempTextBuffer = charArrayOf()
+
+//        if (g.logFile != null && g.logFile != stdout) { TODO
+//            fclose(g.LogFile)
+//            g.LogFile = NULL
+//        }
+        g.logClipboard.setLength(0)
+
+        g.initialized = false
+    }
+}
+
+fun Context?.setCurrent() {
+    gImGui = this
+}
+
+fun Context?.destroy() {
+    val c = this ?: g
+    c.shutdown()
+    if (gImGui === c)
+        c.setCurrent()
 }
 
 /** This is where your app communicate with ImGui. Access via ImGui::GetIO().
  *  Read 'Programmer guide' section in .cpp file for general usage. */
-object IO {
+class IO(sharedFontAtlas: FontAtlas?) {
 
     //------------------------------------------------------------------
     // Settings (fill once)
@@ -333,7 +402,7 @@ object IO {
 //    void*         UserData;                 // = NULL               // Store your own data for retrieval by callbacks.
 
     /** Load and assemble one or more fonts into a single tightly packed texture. Output to Fonts array.    */
-    val fonts = FontAtlas()
+    val fonts = sharedFontAtlas ?: FontAtlas()
     /** Global scale all fonts  */
     var fontGlobalScale = 1f
     /** Allow user scaling text of individual window with CTRL+Wheel.   */

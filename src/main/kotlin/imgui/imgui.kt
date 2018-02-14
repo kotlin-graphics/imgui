@@ -4,6 +4,24 @@ import glm_.b
 import glm_.i
 import imgui.imgui.*
 
+/** -----------------------------------------------------------------------------
+ *      Context
+ *  -----------------------------------------------------------------------------
+ *
+ *  Current context pointer. Implicitely used by all ImGui functions. Always assumed to be != null.
+ *  ::createContext() will automatically set this pointer if it is null. Change to a different context by calling
+ *  ::setCurrentContext().
+ *  If you use DLL hotreloading you might need to call ::setCurrentContext() after reloading code from this file.
+ *  ImGui functions are not thread-safe because of this pointer. If you want thread-safety to allow N threads to access
+ *  N different contexts, you can:
+ *      - Change this variable to use thread local storage. You may #define GImGui in imconfig.h for that purpose.
+ *          Future development aim to make this context pointer explicit to all calls.
+ *          Also read https://github.com/ocornut/imgui/issues/586
+ *      - Having multiple instances of the ImGui code compiled inside different namespace (easiest/safest, if you have
+ *          a finite number of contexts)    */
+val g get() = gImGui!!
+var gImGui: Context? = null
+
 // Helpers macros to generate 32-bits encoded colors
 var USE_BGRA_PACKED_COLOR = false
 
@@ -21,8 +39,8 @@ val COL32_BLACK_TRANS = COL32(0, 0, 0, 0)   // Transparent black = 0x00000000
 val MOUSE_INVALID = -256000f
 
 var IMGUI_HAS_NAV = false   // TODO remove
-val IMGUI_DEBUG_NAV_SCORING     = false
-val IMGUI_DEBUG_NAV_RECTS       = false
+val IMGUI_DEBUG_NAV_SCORING = false
+val IMGUI_DEBUG_NAV_RECTS = false
 
 object ImGui :
 

@@ -46,6 +46,7 @@ class HelloWorld_lwjgl {
     fun run() {
 
         // Setup ImGui binding
+        val ctx = Context()
         LwjglGL3.init(window, true)
 
         // Setup style
@@ -75,6 +76,7 @@ class HelloWorld_lwjgl {
         while (window.isOpen) loop()
 
         LwjglGL3.shutdown()
+        ctx.destroy()
 
         window.destroy()
         glfw.terminate()
@@ -117,7 +119,7 @@ class HelloWorld_lwjgl {
             sameLine()
             text("counter = $counter")
 
-            text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / IO.framerate, IO.framerate)
+            text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.framerate, io.framerate)
 
             // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name your windows.
             if (showAnotherWindow) {

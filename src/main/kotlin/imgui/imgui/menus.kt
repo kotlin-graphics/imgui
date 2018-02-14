@@ -7,7 +7,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
 import imgui.ImGui.beginGroup
@@ -18,6 +18,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
+import imgui.ImGui.io
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.openPopup
@@ -41,7 +42,6 @@ import imgui.internal.LayoutType
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
-import imgui.Context as g
 import imgui.SelectableFlags as Sf
 import imgui.WindowFlags as Wf
 import imgui.internal.LayoutType as Lt
@@ -54,7 +54,7 @@ interface imgui_menus {
     fun beginMainMenuBar(): Boolean {
 
         setNextWindowPos(Vec2())
-        setNextWindowSize(Vec2(IO.displaySize.x, g.fontBaseSize + style.framePadding.y * 2f))
+        setNextWindowSize(Vec2(io.displaySize.x, g.fontBaseSize + style.framePadding.y * 2f))
         pushStyleVar(StyleVar.WindowRounding, 0f)
         pushStyleVar(StyleVar.WindowMinSize, Vec2i())
         val flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
@@ -217,7 +217,7 @@ interface imgui_menus {
 
                 g.openPopupStack[g.currentPopupStack.size].window?.let {
                     val nextWindowRect = it.rect()
-                    val ta = IO.mousePos - IO.mouseDelta
+                    val ta = io.mousePos - io.mouseDelta
                     val tb = if (window.pos.x < it.pos.x) nextWindowRect.tl else nextWindowRect.tr
                     val tc = if (window.pos.x < it.pos.x) nextWindowRect.bl else nextWindowRect.br
                     val extra = glm.clamp(glm.abs(ta.x - tb.x) * 0.3f, 5f, 30f) // add a bit of extra slack.
@@ -226,7 +226,7 @@ interface imgui_menus {
                         FIXME: Multiply by fb_scale?                     */
                     tb.y = ta.y + glm.max((tb.y - extra) - ta.y, -100f)
                     tc.y = ta.y + glm.min((tc.y + extra) - ta.y, +100f)
-                    movingWithinOpenedTriangle = triangleContainsPoint(ta, tb, tc, IO.mousePos)
+                    movingWithinOpenedTriangle = triangleContainsPoint(ta, tb, tc, io.mousePos)
                     //window->DrawList->PushClipRectFullScreen(); window->DrawList->AddTriangleFilled(ta, tb, tc, movingWithinOpenedTriangle ? IM_COL32(0,128,0,128) : IM_COL32(128,0,0,128)); window->DrawList->PopClipRect(); // Debug
                 }
 

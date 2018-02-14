@@ -6,14 +6,11 @@ import glm_.toHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.Context.overlayDrawList
-import imgui.Context.style
 import imgui.ImGui._begin
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.checkbox
-import imgui.ImGui.colorButton
 import imgui.ImGui.combo
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dummy
@@ -22,8 +19,8 @@ import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
-import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.inputFloat
+import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
 import imgui.ImGui.popTextWrapPos
@@ -32,6 +29,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.sliderFloat
+import imgui.ImGui.style
 import imgui.ImGui.styleColorsClassic
 import imgui.ImGui.styleColorsDark
 import imgui.ImGui.styleColorsLight
@@ -54,7 +52,6 @@ import imgui.internal.Window
 import java.util.*
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
-import imgui.Context as g
 import imgui.InputTextFlags as Itf
 import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf
@@ -95,9 +92,9 @@ interface imgui_demoDebugInformations {
 
         if (_begin("ImGui Metrics", open)) {
             text("Dear ImGui $version")
-            text("Application average %.3f ms/frame (%.1f FPS)", 1000f / IO.framerate, IO.framerate)
-            text("%d vertices, %d indices (%d triangles)", IO.metricsRenderVertices, IO.metricsRenderIndices, IO.metricsRenderIndices / 3)
-            text("%d allocations", IO.metricsAllocs)
+            text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
+            text("%d vertices, %d indices (%d triangles)", io.metricsRenderVertices, io.metricsRenderIndices, io.metricsRenderIndices / 3)
+            text("%d allocations", io.metricsAllocs)
             checkbox("Show clipping rectangles when hovering draw commands", Companion::showClipRects)
             separator()
 
@@ -125,7 +122,7 @@ interface imgui_demoDebugInformations {
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
                 text("NavWindow: '${g.navWindow?.name}'")
                 text("NavId: 0x%08X, NavLayer: ${g.navLayer}", g.navId)
-                text("NavActive: ${IO.navActive}, NavVisible: ${IO.navVisible}")
+                text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
                 text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
                 text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
                 text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" " +
@@ -154,9 +151,9 @@ interface imgui_demoDebugInformations {
     fun showFontSelector(label: String) {
         val fontCurrent = font
         if (beginCombo(label, fontCurrent.debugName)) {
-            for (f in IO.fonts.fonts)
+            for (f in io.fonts.fonts)
                 if (selectable(f.debugName, f == fontCurrent))
-                    IO.fontDefault = f
+                    io.fontDefault = f
             endCombo()
         }
         sameLine()
@@ -174,7 +171,7 @@ interface imgui_demoDebugInformations {
         bulletText("Click and drag on any empty space to move window.")
         bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
         bulletText("CTRL+Click on a slider or drag box to input value as text.")
-        if (IO.fontAllowUserScaling)
+        if (io.fontAllowUserScaling)
             bulletText("CTRL+Mouse Wheel to zoom window contents.")
         bulletText("Mouse Wheel to scroll.")
         bulletText("While editing text:\n")

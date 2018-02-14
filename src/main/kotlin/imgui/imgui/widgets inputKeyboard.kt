@@ -16,7 +16,6 @@ import imgui.hasnt
 import imgui.internal.DataType
 import imgui.or
 import kotlin.reflect.KMutableProperty0
-import imgui.Context as g
 import imgui.InputTextFlags as Itf
 
 /** Widgets: Input with Keyboard    */

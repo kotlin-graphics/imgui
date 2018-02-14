@@ -7,6 +7,7 @@ import imgui.ImGui.beginTooltipEx
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.endTooltip
 import imgui.ImGui.getStyleColorVec4
+import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMouseReleased
@@ -16,7 +17,6 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.setHoveredId
 import imgui.ImGui.setNextWindowPos
 import imgui.internal.*
-import imgui.Context as g
 import imgui.DragDropFlags as Ddf
 
 /** Drag and Drop
@@ -43,7 +43,7 @@ interface imgui_dragAndDrop {
             if (sourceId != 0 && g.activeId != sourceId) // Early out for most common case
                 return false
 
-            if (!IO.mouseDown[mouseButton]) return false
+            if (!io.mouseDown[mouseButton]) return false
             if (sourceId == 0) {
                 /*  If you want to use beginDragDropSource() on an item with no unique identifier for interaction,
                     such as text() or image(), you need to:
@@ -63,7 +63,7 @@ interface imgui_dragAndDrop {
                 window.dc.lastItemId = window.getIdFromRectangle(window.dc.lastItemRect)
                 sourceId = window.dc.lastItemId
                 if (isHovered) setHoveredId(sourceId)
-                if (isHovered && IO.mouseClicked[mouseButton]) {
+                if (isHovered && io.mouseClicked[mouseButton]) {
                     setActiveId(sourceId, window)
                     window.focus()
                 }
@@ -93,9 +93,9 @@ interface imgui_dragAndDrop {
 
             if (flags hasnt Ddf.SourceNoPreviewTooltip) {
                 // FIXME-DRAG
-                //SetNextWindowPos(g.IO.MousePos - g.ActiveIdClickOffset - g.Style.WindowPadding);
+                //SetNextWindowPos(g.io.MousePos - g.ActiveIdClickOffset - g.Style.WindowPadding);
                 //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This is better but e.g ColorButton with checkboard has issue with transparent colors :(
-                setNextWindowPos(IO.mousePos)
+                setNextWindowPos(io.mousePos)
                 pushStyleColor(Col.PopupBg, getStyleColorVec4(Col.PopupBg) * Vec4(1f, 1f, 1f, 0.6f))
                 beginTooltip()
             }

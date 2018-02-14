@@ -6,7 +6,6 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.NUL
 import java.nio.ByteBuffer
-import imgui.Context as g
 
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: UTF-8 <> wchar

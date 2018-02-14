@@ -8,11 +8,11 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
+import imgui.ImGui.io
 import imgui.ImGui.shadeVertsLinearUV
 import imgui.internal.*
 import java.util.*
 import kotlin.collections.ArrayList
-import imgui.Context as g
 import imgui.internal.DrawCornerFlags as Dcf
 
         /** Draw callbacks for advanced uses.
@@ -1058,8 +1058,8 @@ class DrawList(sharedData: DrawListSharedData?) {
 //        assert(_vtxCurrentIdx <= (1L shl (Int.BYTES * 8))) // Too many vertices in same Im See comment above.
 
         renderList += this
-        IO.metricsRenderVertices += vtxBuffer.size
-        IO.metricsRenderIndices += idxBuffer.size
+        io.metricsRenderVertices += vtxBuffer.size
+        io.metricsRenderIndices += idxBuffer.size
     }
 }
 

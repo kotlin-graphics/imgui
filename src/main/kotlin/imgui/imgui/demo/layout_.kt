@@ -5,7 +5,7 @@ import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
@@ -33,6 +33,7 @@ import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.getId
 import imgui.ImGui.inputInt
 import imgui.ImGui.invisibleButton
+import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseDragging
@@ -83,7 +84,6 @@ import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
-import imgui.Context as g
 import imgui.InputTextFlags as Itf
 import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf
@@ -422,9 +422,9 @@ object layout_ {
                 endChild()
                 popStyleVar(2)
                 var scrollXDelta = 0f
-                smallButton("<<"); if (isItemActive) scrollXDelta = -IO.deltaTime * 1000f; sameLine()
+                smallButton("<<"); if (isItemActive) scrollXDelta = -io.deltaTime * 1000f; sameLine()
                 text("Scroll from code"); sameLine()
-                smallButton(">>"); if (isItemActive) scrollXDelta = IO.deltaTime * 1000f; sameLine()
+                smallButton(">>"); if (isItemActive) scrollXDelta = io.deltaTime * 1000f; sameLine()
                 text("%.0f/%.0f", _scrollX, scrollMaxX)
                 if (scrollXDelta != 0f) {
                     /*  Demonstrate a trick: you can use begin() to set yourself in the context of another window (here
@@ -442,7 +442,7 @@ object layout_ {
                 val pos = Vec2(cursorScreenPos)
                 val clipRect = Vec4(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
                 invisibleButton("##dummy", size)
-                if (isItemActive && isMouseDragging()) offset += IO.mouseDelta
+                if (isItemActive && isMouseDragging()) offset += io.mouseDelta
                 windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), COL32(90, 90, 120, 255))
                 windowDrawList.addText(font, fontSize * 2f, Vec2(pos.x + offset.x, pos.y + offset.y),
                         COL32(255, 255, 255, 255), "Line 1 hello\nLine 2 clip me!".toCharArray(), 0, 0f, clipRect)

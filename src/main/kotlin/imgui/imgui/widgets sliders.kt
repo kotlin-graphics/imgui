@@ -8,12 +8,13 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec3.Vec3i
 import glm_.vec4.Vec4i
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.IO
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.focusableItemRegister
+import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
@@ -26,9 +27,9 @@ import imgui.ImGui.sliderBehavior
 import imgui.ImGui.sliderFloatN
 import imgui.ImGui.sliderIntN
 import imgui.Ref
+import imgui.g
 import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
-import imgui.Context as g
 
 /** Widgets: Sliders (tip: ctrl+click on a slider to input with keyboard. manually input values aren't clamped, can go
  *  off-bounds)  */
@@ -75,12 +76,12 @@ interface imgui_widgetsSliders {
         // Tabbing or CTRL-clicking on Slider turns it into an input box
         var startTextInput = false
         val tabFocusRequested = focusableItemRegister(window, id)
-        if (tabFocusRequested || (hovered && IO.mouseClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id)) {
+        if (tabFocusRequested || (hovered && io.mouseClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id)) {
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()
             g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-            if (tabFocusRequested || IO.keyCtrl || g.navInputId == id) {
+            if (tabFocusRequested || io.keyCtrl || g.navInputId == id) {
                 startTextInput = true
                 g.scalarAsInputTextId = 0
             }
@@ -198,7 +199,7 @@ interface imgui_widgetsSliders {
 
         val decimalPrecision = parseFormatPrecision(displayFormat, 3)
 
-        if ((hovered && IO.mouseClicked[0])  || g.navActivateId == id || g.navInputId == id) {
+        if ((hovered && io.mouseClicked[0])  || g.navActivateId == id || g.navInputId == id) {
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()

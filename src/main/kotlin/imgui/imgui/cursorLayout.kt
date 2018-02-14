@@ -6,21 +6,21 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.Col
-import imgui.Context.style
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushColumnClipRect
+import imgui.ImGui.style
 import imgui.ImGui.verticalSeparator
+import imgui.g
 import imgui.internal.GroupData
 import imgui.internal.Rect
 import imgui.internal.has
 import imgui.internal.isPowerOfTwo
 import imgui.internal.or
 import imgui.logRenderedText
-import imgui.Context as g
 import imgui.internal.LayoutType as Lt
 import imgui.internal.SeparatorFlags as Sf
 
