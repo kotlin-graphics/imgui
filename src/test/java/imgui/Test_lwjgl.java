@@ -21,7 +21,7 @@ public class Test_lwjgl {
     private uno.glfw.windowHint windowHint = uno.glfw.windowHint.INSTANCE;
     private LwjglGL3 lwjglGL3 = LwjglGL3.INSTANCE;
     private ImGui imgui = ImGui.INSTANCE;
-    private IO io = imgui.getIo();
+    private IO io;
 
     public void run() {
 
@@ -30,6 +30,8 @@ public class Test_lwjgl {
         // Setup ImGui binding
         Context ctx = new Context(null);
         lwjglGL3.init(window, true);
+
+        io = imgui.getIo();
 
         // Setup style
         imgui.styleColorsDark(null);
@@ -58,7 +60,7 @@ public class Test_lwjgl {
         while (window.isOpen()) loop();
 
         lwjglGL3.shutdown();
-        ImGui.INSTANCE.dest
+        ContextKt.destroy(ctx);
 
         glfw.terminate();
     }
