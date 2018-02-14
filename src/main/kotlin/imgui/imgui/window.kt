@@ -10,6 +10,7 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.Context.style
 import imgui.ImGui.F32_TO_INT8_SAT
+import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
 import imgui.ImGui.contentRegionAvail
@@ -22,12 +23,16 @@ import imgui.ImGui.getColumnOffset
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.renderFrame
+import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTriangle
 import imgui.ImGui.scrollbar
+import imgui.ImGui.setActiveId
+import imgui.ImGui.setNextWindowSize
 import imgui.imgui.imgui_main.Companion.resizeGripDef
 import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
@@ -86,8 +91,8 @@ interface imgui_window {
         if (flags has Wf.NoInputs)
             flags = flags or Wf.NoMove or Wf.NoResize
 
-        //if (flags & ImGuiWindowFlags_NavFlattened)
-        //    IM_ASSERT(flags & ImGuiWindowFlags_ChildWindow);
+        if (flags has Wf.NavFlattened)
+            assert(flags has Wf.ChildWindow)
 
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
@@ -130,6 +135,9 @@ interface imgui_window {
             g.currentPopupStack.push(popupRef)
             window.popupId = popupRef.popupId
         }
+
+        if (windowJustAppearingAfterHiddenForResize && flags hasnt Wf.ChildWindow)
+            window.navLastIds[0] = 0
 
         // Process SetNextWindow***() calls
         var windowPosSetByApi = false
@@ -185,9 +193,9 @@ interface imgui_window {
                 if (flags hasnt Wf.Modal && flags has (Wf.ChildWindow or Wf.Popup))
                     window.rootNonPopupWindow = it.rootNonPopupWindow
             }
-            //window->NavRootWindow = window;
-            //while (window->NavRootWindow->Flags & ImGuiWindowFlags_NavFlattened)
-            //    window->NavRootWindow = window->NavRootWindow->ParentWindow;
+            window.navRootWindow = window
+            while (window.navRootWindow!!.flags has Wf.NavFlattened)
+                window.navRootWindow = window.navRootWindow!!.parentWindow
 
             window.active = true
             window.beginOrderWithinParent = 0
@@ -217,12 +225,13 @@ interface imgui_window {
             detection and drawing   */
             if (flags hasnt Wf.NoTitleBar && flags hasnt Wf.NoCollapse) {
                 val titleBarRect = window.titleBarRect()
-                if (g.hoveredWindow === window && isMouseHoveringRect(titleBarRect) && IO.mouseDoubleClicked[0]) {
+                if (window.collapseToggleWanted || (g.hoveredWindow === window && isMouseHoveringRect(titleBarRect) && IO.mouseDoubleClicked[0])) {
                     window.collapsed = !window.collapsed
                     markIniSettingsDirty(window)
                     window.focus()
                 }
             } else window.collapsed = false
+            window.collapseToggleWanted = false
 
             /* ---------- SIZE ---------- */
 
@@ -346,9 +355,12 @@ interface imgui_window {
             // Position tooltip (always follows mouse)
             if (flags has Wf.Tooltip && !windowPosSetByApi && !windowIsChildTooltip) {
                 val sc = style.mouseCursorScale
-                val refPos = IO.mousePos    // safe
-                // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
-                val rectToAvoid = Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc)
+                val refPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(IO.mousePos)
+                val rectToAvoid =
+                        if (!g.navDisableHighlight && g.navDisableMouseHover && IO.navFlags hasnt NavFlags.MoveMouse)
+                            Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
+                        else
+                            Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
                 window.posF put findBestWindowPosForPopup(refPos, window.size, window::autoPosLastDirection, rectToAvoid)
                 if (window.autoPosLastDirection == Dir.None)
                 /*  If there's not enough room, for tooltip we prefer avoiding the cursor at all cost even if it
@@ -419,16 +431,24 @@ interface imgui_window {
             if (flags has Wf.Modal && window === frontMostModalRootWindow)
                 window.drawList.addRectFilled(viewportRect.min, viewportRect.max, getColorU32(Col.ModalWindowDarkening, g.modalWindowDarkeningRatio))
 
+            // Draw navigation selection/windowing rectangle background
+            if (g.navWindowingTarget === window) {
+                val bb = window.rect()
+                bb expand g.fontSize
+                if (!bb.contains(viewportRect)) // Avoid drawing if the window covers all the viewport anyway
+                    window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f), g.style.windowRounding)
+            }
+
             // Draw window + handle manual resize
             val windowRounding = window.windowRounding
             val windowBorderSize = window.windowBorderSize
             val titleBarRect = window.titleBarRect()
             val windowIsFocused = wantFocus || (g.navWindow?.rootNonPopupWindow === window.rootNonPopupWindow ?: false)
-            val titleBarCol = if(window.collapsed) Col.TitleBgCollapsed else if(windowIsFocused) Col.TitleBgActive else Col.TitleBg
             if (window.collapsed) {
                 // Title bar only
                 val backupBorderSize = style.frameBorderSize
-                style.frameBorderSize = window.windowBorderSize
+                g.style.frameBorderSize = window.windowBorderSize
+                val titleBarCol = (if (windowIsFocused && !g.navDisableHighlight) Col.TitleBgActive else Col.TitleBgCollapsed)
                 renderFrame(titleBarRect.min, titleBarRect.max, titleBarCol.u32, true, windowRounding)
                 style.frameBorderSize = backupBorderSize
             } else {
@@ -443,6 +463,7 @@ interface imgui_window {
                         bgCol, windowRounding, if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
 
                 // Title bar
+                val titleBarCol = if (window.collapsed) Col.TitleBgCollapsed else if (windowIsFocused) Col.TitleBgActive else Col.TitleBg
                 if (flags hasnt Wf.NoTitleBar)
                     window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, Dcf.Top.i)
 
@@ -486,6 +507,16 @@ interface imgui_window {
                             titleBarRect.br + Vec2(style.windowBorderSize, -1), Col.Border.u32, style.frameBorderSize)
             }
 
+            // Draw navigation selection/windowing rectangle border
+            if (g.navWindowingTarget === window) {
+                val bb = window.rect()
+                bb expand g.fontSize
+                if (bb contains viewportRect)
+                    bb expand (-g.fontSize - 2f)
+                val col = getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha)
+                window.drawList.addRect(bb.min, bb.max, col, g.style.windowRounding, 0.inv(), 3f)
+            }
+
             // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars.
             window.sizeFullAtLastBegin put window.sizeFull
 
@@ -515,11 +546,16 @@ interface imgui_window {
                 dc.currentLineHeight = 0f
                 dc.prevLineTextBaseOffset = 0f
                 dc.currentLineTextBaseOffset = 0f
+                dc.navHideHighlightOneFrame = false
+                dc.navHasScroll = scrollMaxY > 0f
+                dc.navLayerActiveMask = window.dc.navLayerActiveMaskNext
+                dc.navLayerActiveMaskNext = 0
                 dc.menuBarAppending = false
                 dc.menuBarOffsetX = glm.max(windowPadding.x, style.itemSpacing.x)
                 dc.logLinePosY = dc.cursorPos.y - 9999f
                 dc.childWindows.clear()
                 dc.layoutType = Lt.Vertical
+                dc.parentLayoutType = parentWindow?.dc?.layoutType ?: Lt.Vertical
                 dc.itemFlags = If.Default_.i
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled
@@ -528,6 +564,7 @@ interface imgui_window {
                 dc.textWrapPosStack.clear()
                 dc.columnsSet = null
                 dc.treeDepth = 0
+                dc.treeDepthMayCloseOnPop = 0
                 dc.stateStorage = stateStorage
                 dc.groupStack.clear()
                 menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
@@ -542,13 +579,29 @@ interface imgui_window {
             }
 
             // Apply focus (we need to call FocusWindow() AFTER setting DC.CursorStartPos so our initial navigation reference rectangle can start around there)
-            if (wantFocus) window.focus()
+            if (wantFocus) {
+                window.focus()
+                navInitWindow(window, false)
+            }
 
             // Title bar
             if (flags hasnt Wf.NoTitleBar) {
+                // Close & collapse button are on layer 1 (same as menus) and don't default focus
+                val itemFlagsBackup = window.dc.itemFlags
+                window.dc.itemFlags = window.dc.itemFlags or If.NoNavDefaultFocus
+                window.dc.navLayerCurrent++
+                window.dc.navLayerCurrentMask = window.dc.navLayerCurrentMask shl 1
+
                 // Collapse button
-                if (flags hasnt Wf.NoCollapse)
+                if (flags hasnt Wf.NoCollapse) {
+                    val id = window.getId("#COLLAPSE")
+                    val bb = Rect(window.pos + style.framePadding + 1, window.pos + style.framePadding + g.fontSize - 1)
+                    itemAdd(bb, id) // To allow navigation
+                    if (buttonBehavior(bb, id).first())
+                        window.collapseToggleWanted = true // Defer collapsing to next frame as we are too far in the Begin() function
+                    renderNavHighlight(bb, id)
                     renderTriangle(Vec2(window.pos + style.framePadding), if (window.collapsed) Dir.Right else Dir.Down, 1f)
+                }
                 // Close button
                 if (pOpen != null) {
                     val pad = 2f
@@ -556,6 +609,11 @@ interface imgui_window {
                     if (closeButton(window.getId("#CLOSE"), window.rect().tr + Vec2(-pad - rad, pad + rad), rad))
                         pOpen[0] = false
                 }
+
+                window.dc.navLayerCurrent--
+                window.dc.navLayerCurrentMask = window.dc.navLayerCurrentMask ushr 1    // TODO unsigned necessary?
+                window.dc.itemFlags = itemFlagsBackup
+
                 // Title text (FIXME: refactor text alignment facilities along with RenderText helpers)
                 val textSize = calcTextSize(name, 0, true)
                 val textR = Rect(titleBarRect)
@@ -599,7 +657,7 @@ interface imgui_window {
             /* After begin() we fill the last item / hovered data using the title bar data. Make that a standard behavior
                 (to allow usage of context menus on title bar only, etc.).             */
             window.dc.lastItemId = window.moveId
-            window.dc.lastItemStatusFlags = if(isMouseHoveringRect(titleBarRect.min, titleBarRect.max)) ItemStatusFlags.HoveredRect.i else 0
+            window.dc.lastItemStatusFlags = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max)) ItemStatusFlags.HoveredRect.i else 0
             window.dc.lastItemRect = titleBarRect
         }
 
@@ -702,7 +760,15 @@ interface imgui_window {
             val parentWindow = currentWindow
             val bb = Rect(parentWindow.dc.cursorPos, parentWindow.dc.cursorPos + sz)
             itemSize(sz)
-            itemAdd(bb)
+            if ((window.dc.navLayerActiveMask != 0 || window.dc.navHasScroll) && window.flags hasnt Wf.NavFlattened) {
+                itemAdd(bb, window.childId)
+                renderNavHighlight(bb, window.childId)
+
+                // When browsing a window that has no activable items (scroll only) we keep a highlight on the child
+                if (window.dc.navLayerActiveMask == 0 && window === g.navWindow)
+                    renderNavHighlight(Rect(bb.min - 2, bb.max + 2), g.navId, NavHighlightFlags.TypeThin.i)
+            } else // Not navigable into
+                itemAdd(bb, 0)
         }
     }
 
@@ -912,11 +978,20 @@ interface imgui_window {
             val title =
                     if (name.isNotEmpty()) "%s/%s_%08X".format(style.locale, parentWindow.name, name, id)
                     else "%s/%08X".format(style.locale, parentWindow.name, id)
-            ImGui.setNextWindowSize(size)
+            setNextWindowSize(size)
             val ret = ImGui.begin(title, null, flags)
             val childWindow = currentWindow
+            childWindow.childId = id
             childWindow.autoFitChildAxes = autoFitAxes
             style.childBorderSize = backupBorderSize
+
+            // Process navigation-in immediately so NavInit can run on first frame
+            if (flags hasnt Wf.NavFlattened && (childWindow.dc.navLayerActiveMask != 0 || childWindow.dc.navHasScroll) && g.navActivateId == id) {
+                childWindow.focus()
+                navInitWindow(childWindow, false)
+                setActiveId(id + 1, childWindow) // Steal ActiveId with a dummy id so that key-press won't activate child item
+                g.activeIdSource = InputSource.Nav
+            }
 
             return ret
         }

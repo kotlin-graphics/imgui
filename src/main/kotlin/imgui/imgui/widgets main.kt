@@ -21,6 +21,7 @@ import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
+import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderRectFilledRangeH
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
@@ -79,7 +80,7 @@ interface imgui_widgetsMain {
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         if (borderCol.w > 0f) bb.max plusAssign 2
         itemSize(bb)
-        if (!itemAdd(bb)) return
+        if (!itemAdd(bb, 0)) return
 
         if (borderCol.w > 0f) {
             window.drawList.addRect(bb.min, bb.max, getColorU32(borderCol), 0f)
@@ -115,6 +116,7 @@ interface imgui_widgetsMain {
 
         // Render
         val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col.u32, true, glm.clamp(glm.min(padding.x, padding.y), 0f, style.frameRounding))
         if (bgCol.w > 0f)
             window.drawList.addRectFilled(imageBb.min, imageBb.max, getColorU32(bgCol))
@@ -159,6 +161,7 @@ interface imgui_widgetsMain {
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
         if (pressed) v.set(!v())
 
+        renderNavHighlight(totalBb, id)
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         renderFrame(checkBb.min, checkBb.max, col.u32, true, style.frameRounding)
         if (v()) {
@@ -182,7 +185,16 @@ interface imgui_widgetsMain {
             else
                 flags[0] = flags[0] wo flagsValue
         }
+        return pressed
+    }
 
+    fun checkboxFlags(label: String, flags: KMutableProperty0<Int>, flagsValue: Int): Boolean {
+        val v = booleanArrayOf((flags() and flagsValue) == flagsValue)
+        val pressed = checkbox(label, v)
+        if (pressed)
+            flags.set(
+                    if (v[0]) flags() or flagsValue
+                    else flags() wo flagsValue)
         return pressed
     }
 
@@ -215,6 +227,7 @@ interface imgui_widgetsMain {
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
 
+        renderNavHighlight(totalBb, id)
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         window.drawList.addCircleFilled(center, radius, col.u32, 16)
         if (active) {
@@ -291,7 +304,7 @@ interface imgui_widgetsMain {
         val pos = Vec2(window.dc.cursorPos)
         val bb = Rect(pos, pos + calcItemSize(sizeArg, calcItemWidth(), g.fontSize + style.framePadding.y * 2f))
         itemSize(bb, style.framePadding.y)
-        if (!itemAdd(bb)) return
+        if (!itemAdd(bb, 0)) return
         // Render
         val fraction = saturate(fraction)
         renderFrame(bb.min, bb.max, Col.FrameBg.u32, true, style.frameRounding)

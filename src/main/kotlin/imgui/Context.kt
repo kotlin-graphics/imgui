@@ -25,6 +25,7 @@ object Context {
 
     var drawListSharedData = DrawListSharedData()
 
+
     var time = 0f
 
     var frameCount = 0
@@ -44,8 +45,6 @@ object Context {
     var windowsActiveCount = 0
     /** Being drawn into    */
     var currentWindow: Window? = null
-    /** Will catch keyboard inputs  */
-    var navWindow: Window? = null
     /** Will catch mouse inputs */
     var hoveredWindow: Window? = null
     /** Will catch mouse inputs (for focus/move only)   */
@@ -70,10 +69,14 @@ object Context {
     var activeIdIsJustActivated = false
     /** Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)   */
     var activeIdAllowOverlap = false
+    /** Active widget allows using directional navigation (e.g. can activate a button and move away from it)    */
+    var activeIdAllowNavDirFlags = 0
     /** Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior) */
     var activeIdClickOffset = Vec2(-1)
 
     var activeIdWindow: Window? = null
+    /** Activating with mouse or nav (gamepad/keyboard) */
+    var activeIdSource = InputSource.None
     /** Track the window we clicked on (in order to preserve focus).
      *  The actually window that is moved is generally MovingWindow.rootWindow.  */
     var movingWindow: Window? = null
@@ -100,6 +103,82 @@ object Context {
     var nextTreeNodeOpenCond = Cond.Null
 
     //------------------------------------------------------------------
+    // Navigation data (for gamepad/keyboard)
+    //------------------------------------------------------------------
+
+    /** Focused window for navigation. Could be called 'FocusWindow'    */
+    var navWindow: Window? = null
+    /** Focused item for navigation */
+    var navId = 0
+    /** ~~ (g.activeId == 0) && NavInput.Activate.isPressed() ? navId : 0, also set when calling activateItem() */
+    var navActivateId = 0
+    /** ~~ isNavInputDown(NavInput.Activate) ? navId : 0   */
+    var navActivateDownId = 0
+    /** ~~ NavInput.Activate.isPressed() ? navId : 0    */
+    var navActivatePressedId = 0
+    /** ~~ NavInput.Input.isPressed() ? navId : 0   */
+    var navInputId = 0
+    /** Just tabbed to this id. */
+    var navJustTabbedId = 0
+    /** Set by ActivateItem(), queued until next frame  */
+    var navNextActivateId = 0
+    /** Just navigated to this id (result of a successfully MoveRequest)    */
+    var  navJustMovedToId = 0
+    /** Rectangle used for scoring, in screen space. Based of window.dc.navRefRectRel[], modified for directional navigation scoring.  */
+    var navScoringRectScreen = Rect()
+    /** Metrics for debugging   */
+    var navScoringCount = 0
+    /** When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed front-most.   */
+    var navWindowingTarget: Window? = null
+
+    var navWindowingHighlightTimer = 0f
+
+    var navWindowingHighlightAlpha = 0f
+
+    var navWindowingToggleLayer = false
+    /** Gamepad or keyboard mode    */
+    var navWindowingInputSource = InputSource.None
+    /** Layer we are navigating on. For now the system is hard-coded for 0 = main contents and 1 = menu/title bar,
+     *  may expose layers later. */
+    var navLayer = 0
+    /** == NavWindow->DC.FocusIdxTabCounter at time of NavId processing */
+    var navIdTabCounter = Int.MAX_VALUE
+    /** Nav widget has been seen this frame ~~ NavRefRectRel is valid   */
+    var navIdIsAlive = false
+    /** When set we will update mouse position if (NavFlags & ImGuiNavFlags_MoveMouse) if set (NB: this not enabled by default) */
+    var navMousePosDirty = false
+    /** When user starts using mouse, we hide gamepad/keyboard highlight (nb: but they are still available, which is why
+     *  navDisableHighlight isn't always != navDisableMouseHover)  */
+    var navDisableHighlight = true
+    /** When user starts using gamepad/keyboard, we hide mouse hovering highlight until mouse is touched again. */
+    var navDisableMouseHover = false
+    /** ~~ navMoveRequest || navInitRequest */
+    var navAnyRequest = false
+    /** Init request for appearing window to select first item  */
+    var navInitRequest = false
+
+    var navInitRequestFromMove = false
+
+    var navInitResultId = 0
+
+    var navInitResultRectRel = Rect()
+    /** Set by manual scrolling, if we scroll to a point where NavId isn't visible we reset navigation from visible items   */
+    var navMoveFromClampedRefRect = false
+    /** Move request for this frame */
+    var navMoveRequest = false
+    /** None / ForwardQueued / ForwardActive (this is used to navigate sibling parent menus from a child menu)  */
+    var navMoveRequestForward = NavForward.None
+    /** Direction of the move request (left/right/up/down), direction of the previous move request  */
+    var navMoveDir = Dir.None
+    /** Direction of the move request (left/right/up/down), direction of the previous move request  */
+    var navMoveDirLast = Dir.None
+    /** Best move request candidate within NavWindow    */
+    val navMoveResultLocal = NavMoveResult()
+    /** Best move request candidate within NavWindow's flattened hierarchy (when using the NavFlattened flag)   */
+    val navMoveResultOther = NavMoveResult()
+
+
+    // ------------------------------------------------------------------
     // Render
     //------------------------------------------------------------------
 
@@ -236,6 +315,8 @@ object IO {
     var iniFilename: String? = "imgui.ini"
     /** Path to .log file (default parameter to ImGui::LogToFile when no file is specified).    */
     var logFilename = "imgui_log.txt"
+    /** See NavFlags. Gamepad/keyboard navigation options.    */
+    var navFlags = 0
     /** Time for a double-click, in seconds.    */
     var mouseDoubleClickTime = 0.3f
     /** Distance threshold to stay in to validate a double-click, in pixels.    */
@@ -243,7 +324,7 @@ object IO {
     /** Distance threshold before considering we are dragging.   */
     var mouseDragThreshold = 6f
     /** Map of indices into the KeysDown[512] entries array which represent your "native" keyboard state.   */
-    var keyMap = IntArray(Key.COUNT, { -1 })
+    var keyMap = IntArray(Key.COUNT) { -1 }
     /** When holding a key/button, time before it starts repeating, in seconds (for buttons in Repeat mode, etc.).  */
     var keyRepeatDelay = 0.25f
     /** When holding a key/button, rate at which it repeats, in seconds.    */
@@ -257,7 +338,7 @@ object IO {
     var fontGlobalScale = 1f
     /** Allow user scaling text of individual window with CTRL+Wheel.   */
     var fontAllowUserScaling = false
-    /** Font to use on NewFrame(). Use NULL to uses Fonts->Fonts[0].    */
+    /** Font to use on NewFrame(). Use NULL to useMouseDragThreshold s Fonts->Fonts[0].    */
     var fontDefault: Font? = null
     /** For retina display or other situations where window coordinates are different from framebuffer coordinates.
      *  User storage only, presently not used by ImGui. */
@@ -335,6 +416,8 @@ object IO {
     /** List of characters input (translated by user from keypress + keyboard state). Fill using addInputCharacter()
      *  helper. */
     val inputCharacters = CharArray(16)
+    /** Gamepad inputs (keyboard keys will be auto-mapped and be written here by ::newFrame)   */
+    val navInputs = FloatArray(NavInput.COUNT)
 
     // Functions
 
@@ -364,9 +447,14 @@ object IO {
     /** Mobile/console: when IO.wantTextInput is true, you may display an on-screen keyboard. This is set by ImGui when
      *  it wants textual keyboard input to happen (e.g. when a InputText widget is active). */
     var wantTextInput = false
-    /** [BETA-NAV] MousePos has been altered, back-end should reposition mouse on next frame. Set only when
-     * 'navMovesMouse = true'.    */
+    /** MousePos has been altered, back-end should reposition mouse on next frame. Set only when NavFlags.MoveMouse flag
+     * is enabled in IO.navFlags.    */
     var wantMoveMouse = false
+    /** Directional navigation is currently allowed (will handle KeyNavXXX events) = a window is focused and it doesn't
+     *  use the WindowFlags.NoNavInputs flag.   */
+    var navActive = false
+    /** Directional navigation is visible and allowed (will handle KeyNavXXX events). */
+    var navVisible = false
     /** Application framerate estimation, in frame per second. Solely for convenience. Rolling average estimation based
     on IO.DeltaTime over 120 frames */
     var framerate = 0f
@@ -390,7 +478,7 @@ object IO {
     /** Previous mouse position temporary storage (nb: not for public use, set to MousePos in NewFrame())   */
     var mousePosPrev = Vec2(-Float.MAX_VALUE)
     /** Position at time of clicking    */
-    val mouseClickedPos = Array(5, { Vec2() })
+    val mouseClickedPos = Array(5) { Vec2() }
     /** Time of last click (used to figure out double-click)    */
     val mouseClickedTime = FloatArray(5)
     /** Mouse button went from !Down to Down    */
@@ -403,17 +491,21 @@ object IO {
     started outside ImGui bounds.   */
     var mouseDownOwned = BooleanArray(5)
     /** Duration the mouse button has been down (0.0f == just clicked)  */
-    val mouseDownDuration = FloatArray(5, { -1f })
+    val mouseDownDuration = FloatArray(5) { -1f }
     /** Previous time the mouse button has been down    */
-    val mouseDownDurationPrev = FloatArray(5, { -1f })
+    val mouseDownDurationPrev = FloatArray(5) { -1f }
     /** Maximum distance, absolute, on each axis, of how much mouse has traveled from the clicking point    */
-    val mouseDragMaxDistanceAbs = Array(5, { Vec2() })
+    val mouseDragMaxDistanceAbs = Array(5) { Vec2() }
     /** Squared maximum distance of how much mouse has traveled from the clicking point */
     val mouseDragMaxDistanceSqr = FloatArray(5)
     /** Duration the keyboard key has been down (0.0f == just pressed)  */
-    val keysDownDuration = FloatArray(512, { -1f })
+    val keysDownDuration = FloatArray(512) { -1f }
     /** Previous duration the key has been down */
-    val keysDownDurationPrev = FloatArray(512, { -1f })
+    val keysDownDurationPrev = FloatArray(512) { -1f }
+
+    val navInputsDownDuration = FloatArray(NavInput.COUNT) { -1f }
+
+    val navInputsDownDurationPrev = FloatArray(NavInput.COUNT)
 
 //    var imeSetInputScreenPosFn_DefaultImpl = { x: Int, y: Int -> TODO
 //        // Notify OS Input Method Editor of text input position
@@ -430,9 +522,21 @@ object IO {
 //    }
 }
 
+// for IO.keyMap
+
 operator fun IntArray.set(index: Key, value: Int) {
     this[index.i] = value
 }
+
+operator fun IntArray.get(index: Key) = get(index.i)
+
+// for IO.navInputs
+
+operator fun FloatArray.set(index: NavInput, value: Float) {
+    this[index.i] = value
+}
+
+operator fun FloatArray.get(index: NavInput) = get(index.i)
 
 /** You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
  *  During the frame, prefer using ImGui::PushStyleVar(ImGuiStyleVar_XXXX)/PopStyleVar() to alter the main style values,

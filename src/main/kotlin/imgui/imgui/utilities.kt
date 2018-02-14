@@ -17,10 +17,7 @@ import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
-import imgui.internal.ItemStatusFlags
-import imgui.internal.Rect
-import imgui.internal.hasnt
-import imgui.internal.saturate
+import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.FocusedFlags as Ff
@@ -37,6 +34,10 @@ interface imgui_utilities {
     fun isItemHovered(flags: Hf) = isItemHovered(flags.i)
 
     fun isItemHovered(flags: Int = Hf.Default.i): Boolean {
+
+        if (g.navDisableMouseHover && !g.navDisableHighlight)
+            return isItemFocused
+
         val window = g.currentWindow!!
         return when {
         // Test for bounding box overlap, as updated as ItemAdd()
@@ -55,7 +56,7 @@ interface imgui_utilities {
                     flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeId != window.dc.lastItemId &&
                             !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
                 // Test if interactions on this window are blocked by an active popup or modal
-                    !window.isContentHoverable(flags) -> false
+                    g.navDisableMouseHover || !window.isContentHoverable(flags) -> false
                 // Test if the item is disabled
                     window.dc.itemFlags has ItemFlags.Disabled -> false
                 /*  Special handling for the 1st item after Begin() which represent the title bar. When the window is
@@ -71,6 +72,9 @@ interface imgui_utilities {
      *  return false)   */
     val isItemActive get() = if (g.activeId != 0) g.activeId == g.currentWindow!!.dc.lastItemId else false
 
+    /** is the last item focused for keyboard/gamepad navigation?   */
+    val isItemFocused get() = g.navId != 0 && !g.navDisableHighlight && g.navId == g.currentWindow!!.dc.lastItemId
+
     /** Is the last item clicked? (e.g. button/node just clicked on)   */
     fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemHovered(Hf.Default)
 
@@ -80,6 +84,8 @@ interface imgui_utilities {
     val isAnyItemHovered get() = g.hoveredId != 0 || g.hoveredIdPreviousFrame != 0
 
     val isAnyItemActive get() = g.activeId != 0
+
+    val isAnyItemFocused get() = g.navId != 0 && !g.navDisableHighlight
 
     /** get bounding rect of last item in screen space  */
     val itemRectMin get() = currentWindowRead!!.dc.lastItemRect.min
@@ -204,6 +210,11 @@ interface imgui_utilities {
                 val pos = window.dc.cursorPos
                 var start = ((window.clipRect.min.y - pos.y) / itemsHeight).i
                 var end = ((window.clipRect.max.y - pos.y) / itemsHeight).i
+                // When performing a navigation request, ensure we have one item extra in the direction we are moving to
+                if (g.navMoveRequest && g.navMoveDir == Dir.Up)
+                    start--
+                if (g.navMoveRequest && g.navMoveDir == Dir.Down)
+                    end++
                 start = glm.clamp(start, 0, itemsCount)
                 end = glm.clamp(end + 1, start, itemsCount)
                 start..end

@@ -1,6 +1,8 @@
 package imgui
 
+import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.isKeyPressed
+import imgui.internal.InputReadMode
 
 /** Flags for ImGui::Begin()    */
 enum class WindowFlags(val i: Int) {
@@ -46,9 +48,17 @@ enum class WindowFlags(val i: Int) {
     AlwaysUseWindowPadding(1 shl 16),
     /** (WIP) Enable resize from any corners and borders. Your back-end needs to honor the different values of IO.mouseCursor set by imgui. */
     ResizeFromAnySide(1 shl 17),
+    /** No gamepad/keyboard navigation within the window    */
+    NoNavInputs(1 shl 18),
+    /** No focusing toward this window with gamepad/keyboard navigation (e.g. skipped by CTRL+TAB)  */
+    NoNavFocus(1 shl 19),
+
+    NoNav(NoNavInputs or NoNavFocus),
 
     // [Internal]
 
+    /** (WIP) Allow gamepad/keyboard navigation to cross over parent border to this child (only use on child that have no scrolling!)   */
+    NavFlattened(1 shl 23),
     /** Don't use! For internal use by BeginChild() */
     ChildWindow(1 shl 24),
     /** Don't use! For internal use by BeginTooltip()   */
@@ -154,6 +164,8 @@ enum class TreeNodeFlags(val i: Int) {
     FramePadding(1 shl 10),
     //ImGuITreeNodeFlags_SpanAllAvailWidth  = 1 << 11,  // FIXME: TODO: Extend hit box horizontally even if not framed
     //ImGuiTreeNodeFlags_NoScrollOnOpen     = 1 << 12,  // FIXME: TODO: Disable automatic scroll on TreePop() if node got just open and contents is not visible
+    /** (WIP) Nav: left direction may close this TreeNode() when focusing on any child (items submitted between TreeNode and TreePop)   */
+    NavCloseFromChild    (1 shl 13),
     CollapsingHeader(Framed or NoAutoOpenOnLog);
 
     infix fun or(treeNodeFlag: TreeNodeFlags) = i or treeNodeFlag.i
@@ -295,7 +307,7 @@ val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 
 /** User fill ImGuiIO.KeyMap[] array with indices into the ImGuiIO.KeysDown[512] array  */
 enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
-    Space, Enter, Escape, A, C, V, X,  Z;
+    Space, Enter, Escape, A, C, V, X, Y, Z;
 
     companion object {
         val COUNT = values().size
@@ -311,6 +323,98 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
     /** map ImGuiKey_* values into user's key index. == io.KeyMap[key]   */
     val index get() = i
 }
+
+/** [BETA] Gamepad/Keyboard directional navigation
+ *  Keyboard: Set IO.navFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill IO.navInputs[]
+ *  based on your IO.keyDown[] + IO.keyMap[] arrays.
+ *  Gamepad:  Set IO.navFlags |= NavFlags.EnableGamepad to enable. Fill the IO.navInputs[] fields before calling
+ *  ::newFrame(). Note that IO.navInputs[] is cleared by ::endFrame().
+ *  Read instructions in imgui.cpp for more details.    */
+enum class NavInput {
+    // Gamepad Mapping
+    /** activate / open / toggle / tweak value       // e.g. Circle (PS4), A (Xbox), B (Switch), Space (Keyboard)   */
+    Activate,
+    /** cancel / close / exit                        // e.g. Cross  (PS4), B (Xbox), A (Switch), Escape (Keyboard)  */
+    Cancel,
+    /** text input / on-screen keyboard              // e.g. Triang.(PS4), Y (Xbox), X (Switch), Return (Keyboard)  */
+    Input,
+    /** tap: toggle menu / hold: focus, move, resize // e.g. Square (PS4), X (Xbox), Y (Switch), Alt (Keyboard) */
+    Menu,
+    /** move / tweak / resize window (w/ PadMenu)    // e.g. D-pad Left/Right/Up/Down (Gamepads), Arrow keys (Keyboard) */
+    DpadLeft,
+    /** move / tweak / resize window (w/ PadMenu)    // e.g. D-pad Left/Right/Up/Down (Gamepads), Arrow keys (Keyboard) */
+    DpadRight,
+    /** move / tweak / resize window (w/ PadMenu)    // e.g. D-pad Left/Right/Up/Down (Gamepads), Arrow keys (Keyboard) */
+    DpadUp,
+    /** move / tweak / resize window (w/ PadMenu)    // e.g. D-pad Left/Right/Up/Down (Gamepads), Arrow keys (Keyboard) */
+    DpadDown,
+    /** scroll / move window (w/ PadMenu)            // e.g. Left Analog Stick Left/Right/Up/Down   */
+    LStickLeft,
+    /** scroll / move window (w/ PadMenu)            // e.g. Left Analog Stick Left/Right/Up/Down   */
+    LStickRight,
+    /** scroll / move window (w/ PadMenu)            // e.g. Left Analog Stick Left/Right/Up/Down   */
+    LStickUp,
+    /** scroll / move window (w/ PadMenu)            // e.g. Left Analog Stick Left/Right/Up/Down   */
+    LStickDown,
+    /** next window (w/ PadMenu)                     // e.g. L1 or L2 (PS4), LB or LT (Xbox), L or ZL (Switch)  */
+    FocusPrev,
+    /** prev window (w/ PadMenu)                     // e.g. R1 or R2 (PS4), RB or RT (Xbox), R or ZL (Switch)  */
+    FocusNext,
+    /** slower tweaks                                // e.g. L1 or L2 (PS4), LB or LT (Xbox), L or ZL (Switch)  */
+    TweakSlow,
+    /** faster tweaks                                // e.g. R1 or R2 (PS4), RB or RT (Xbox), R or ZL (Switch)  */
+    TweakFast,
+
+    /*  [Internal] Don't use directly! This is used internally to differentiate keyboard from gamepad inputs for
+        behaviors that require to differentiate them.
+        Keyboard behavior that have no corresponding gamepad mapping (e.g. CTRL + TAB) may be directly reading from
+        IO.keyDown[] instead of IO.navInputs[]. */
+
+    /** toggle menu = IO.keyAlt */
+    KeyMenu,
+    /** move left = Arrow keys  */
+    KeyLeft,
+    /** move right = Arrow keys  */
+    KeyRight,
+    /** move up = Arrow keys  */
+    KeyUp,
+    /** move down = Arrow keys  */
+    KeyDown;
+
+    val i = ordinal
+
+    companion object {
+        val COUNT = values().size
+        val InternalStart = KeyMenu.i
+    }
+
+    /** Equivalent of isKeyDown() for NavInputs[]   */ // JVM TODO check for semantic Key.isPressed/Down
+    fun isDown() = IO.navInputs[i] > 0f
+
+    /** Equivalent of isKeyPressed() for NavInputs[]    */
+    fun isPressed(mode: InputReadMode) = getNavInputAmount(this, mode) > 0f
+}
+
+/** [BETA] Gamepad/Keyboard directional navigation options  */
+enum class NavFlags {
+    /** Master keyboard navigation enable flag. ::newFrame() will automatically fill IO.navInputs[] based on IO.keyDown[].    */
+    EnableKeyboard,
+    /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill IO.navInputs[].   */
+    EnableGamepad,
+    /** Request navigation to allow moving the mouse cursor. May be useful on TV/console systems where moving a virtual
+     *  mouse is awkward. Will update IO.mousePos and set IO.WantMoveMouse = true. If enabled you MUST honor IO.wantMoveMouse
+     *  requests in your binding, otherwise ImGui will react as if the mouse is jumping around back and forth.  */
+    MoveMouse,
+    /** Do not set the io.WantCaptureKeyboard flag with io.NavActive is set.    */
+    NoCaptureKeyboard;
+
+    val i = 1 shl ordinal
+}
+
+infix fun Int.has(b: NavFlags) = and(b.i) != 0
+infix fun Int.hasnt(b: NavFlags) = and(b.i) == 0
+infix fun Int.or(b: NavFlags) = or(b.i)
+infix fun NavFlags.or(b: NavFlags) = i or b.i
 
 /** Enumeration for PushStyleColor() / PopStyleColor()  */
 enum class Col {
@@ -362,7 +466,11 @@ enum class Col {
     TextSelectedBg,
     /** darken entire screen when a modal window is active   */
     ModalWindowDarkening,
-    DragDropTarget;
+    DragDropTarget,
+    /** gamepad/keyboard: current highlighted item  */
+    NavHighlight,
+    /** gamepad/keyboard: when holding NavMenu to focus/move/resize windows */
+    NavWindowingHighlight;
 
     val i = ordinal
 
@@ -370,6 +478,7 @@ enum class Col {
 
     companion object {
         val COUNT = values().size
+        fun of(i: Int) = values()[i]
     }
 }
 
@@ -546,15 +655,17 @@ infix fun Int.wo(b: Cond) = and(b.i.inv())
 enum class ItemFlags(val i: Int) {
     /** true    */
     AllowKeyboardFocus(1 shl 0),
-    /** false
-     *  Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.  */
+    /** false. Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.  */
     ButtonRepeat(1 shl 1),
-    /** false    // All widgets appears are disabled    */
+    /** false. FIXME-WIP: Disable interactions but doesn't affect visuals. Should be: grey out and disable interactions with widgets that affect data + view widgets (WIP)     */
     Disabled(1 shl 2),
-    //ImGuiItemFlags_NoNav                      = 1 << 3,  // false
-    //ImGuiItemFlags_AllowNavDefaultFocus       = 1 << 4,  // true
+    /** false   */
+    NoNav(1 shl 3),
+    /** false   */
+    NoNavDefaultFocus(1 shl 4),
     /** false, MenuItem/Selectable() automatically closes current Popup window  */
     SelectableDontClosePopup(1 shl 5),
+
     Default_(AllowKeyboardFocus.i)
 }
 

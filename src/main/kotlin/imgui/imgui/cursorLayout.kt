@@ -53,7 +53,7 @@ interface imgui_cursorLayout {
         val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
         // NB: we don't provide our width so that it doesn't get feed back into AutoFit, we don't provide height to not alter layout.
         itemSize(Vec2())
-        if (!itemAdd(bb)) {
+        if (!itemAdd(bb, 0)) {
             window.dc.columnsSet?.let { pushColumnClipRect() }
             return
         }
@@ -120,7 +120,7 @@ interface imgui_cursorLayout {
 
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         itemSize(bb)
-        itemAdd(bb)
+        itemAdd(bb, 0)
     }
 
     /** move content position toward the right, by style.indentSpacing or indentW if != 0    */
@@ -185,7 +185,7 @@ interface imgui_cursorLayout {
         if (groupData.advanceCursor) {
             window.dc.currentLineTextBaseOffset = glm.max(window.dc.prevLineTextBaseOffset, groupData.backupCurrentLineTextBaseOffset)      // FIXME: Incorrect, we should grab the base offset from the *first line* of the group but it is hard to obtain now.
             itemSize(groupBb.size, groupData.backupCurrentLineTextBaseOffset)
-            itemAdd(groupBb)
+            itemAdd(groupBb, 0)
         }
 
         /*  If the current ActiveId was declared within the boundary of our group, we copy it to LastItemId so

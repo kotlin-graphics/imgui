@@ -35,10 +35,9 @@ import imgui.ImGui.renderTriangle
 import imgui.ImGui.selectable
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
-import imgui.internal.Dir
+import imgui.imgui.imgui_main.Companion.focusFrontMostActiveWindow
+import imgui.internal.*
 import imgui.internal.LayoutType
-import imgui.internal.Rect
-import imgui.internal.triangleContainsPoint
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
@@ -63,7 +62,7 @@ interface imgui_menus {
             end()
             popStyleVar(2)
             false
-        }else {
+        } else {
             g.currentWindow!!.dc.menuBarOffsetX += style.displaySafeAreaPadding.x
             true
         }
@@ -72,6 +71,11 @@ interface imgui_menus {
     /** Only call EndMainMenuBar() if BeginMainMenuBar() returns true! */
     fun endMainMenuBar() {
         endMenuBar()
+
+        // When the user has left the menu layer (typically: closed menus through activation of an item), we restore focus to the previous window
+        if (g.currentWindow == g.navWindow && g.navLayer == 0)
+            focusFrontMostActiveWindow(g.navWindow)
+
         end()
         popStyleVar(2)
     }
@@ -98,9 +102,13 @@ interface imgui_menus {
         clipRect clipWith window.windowRectClipped
         pushClipRect(clipRect.min, clipRect.max, false)
 
-        window.dc.cursorPos.put(barRect.min.x + window.dc.menuBarOffsetX, barRect.min.y) // + g.Style.FramePadding.y);
-        window.dc.layoutType = LayoutType.Horizontal
-        window.dc.menuBarAppending = true
+        with(window.dc) {
+            cursorPos.put(barRect.min.x + menuBarOffsetX, barRect.min.y) // + g.Style.FramePadding.y);
+            layoutType = LayoutType.Horizontal
+            navLayerCurrent++
+            navLayerCurrentMask = navLayerCurrentMask shl 1
+            menuBarAppending = true
+        }
         alignTextToFramePadding()
         return true
     }
@@ -111,15 +119,37 @@ interface imgui_menus {
         val window = currentWindow
         if (window.skipItems) return
 
-        assert(window.flags has Wf.MenuBar)
-        assert(window.dc.menuBarAppending)
+        // Nav: When a move request within one of our child menu failed, capture the request to navigate among our siblings.
+        if (navMoveRequestButNoResultYet() && (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right) && g.navWindow!!.flags has Wf.ChildMenu) {
+            var navEarliestChild = g.navWindow!!
+            while (navEarliestChild.parentWindow != null && navEarliestChild.parentWindow!!.flags has Wf.ChildMenu)
+                navEarliestChild = navEarliestChild.parentWindow!!
+            if (navEarliestChild.parentWindow == window && navEarliestChild.dc.parentLayoutType == Lt.Horizontal && g.navMoveRequestForward == NavForward.None) {
+                /*  To do so we claim focus back, restore NavId and then process the movement request for yet another
+                    frame. This involve a one-frame delay which isn't very problematic in this situation.
+                    We could remove it by scoring in advance for multiple window (probably not worth the hassle/cost)   */
+                assert(window.dc.navLayerActiveMaskNext has 0x02) // Sanity check
+                window.focus()
+                setNavIdAndMoveMouse(window.navLastIds[1], 1, window.navRectRel[1])
+                g.navLayer = 1
+                g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
+                g.navMoveRequestForward = NavForward.ForwardQueued
+                navMoveRequestCancel()
+            }
+        }
+
+        assert(window.flags has Wf.MenuBar && window.dc.menuBarAppending)
         popClipRect()
         popId()
-        window.dc.menuBarOffsetX = window.dc.cursorPos.x - window.menuBarRect().min.x
-        window.dc.groupStack.last().advanceCursor = false
-        endGroup()
-        window.dc.layoutType = LayoutType.Vertical
-        window.dc.menuBarAppending = false
+        with(window.dc) {
+            menuBarOffsetX = cursorPos.x - window.menuBarRect().min.x
+            groupStack.last().advanceCursor = false
+            endGroup()
+            layoutType = LayoutType.Vertical
+            navLayerCurrent--
+            navLayerCurrentMask = navLayerCurrentMask ushr 1    // TODO needs uns?
+            menuBarAppending = false
+        }
     }
 
     /** create a sub-menu entry. only call EndMenu() if this returns true!  */
@@ -183,7 +213,7 @@ interface imgui_menus {
                 so menus feels more reactive.             */
             var movingWithinOpenedTriangle = false
             if (g.hoveredWindow === window && g.openPopupStack.size > g.currentPopupStack.size &&
-                    g.openPopupStack[g.currentPopupStack.size].parentWindow === window)
+                    g.openPopupStack[g.currentPopupStack.size].parentWindow === window && window.flags hasnt Wf.MenuBar)
 
                 g.openPopupStack[g.currentPopupStack.size].window?.let {
                     val nextWindowRect = it.rect()
@@ -203,6 +233,15 @@ interface imgui_menus {
             wantClose = (menuIsOpen && !hovered && g.hoveredWindow === window && g.hoveredIdPreviousFrame != 0 &&
                     g.hoveredIdPreviousFrame != id && !movingWithinOpenedTriangle)
             wantOpen = (!menuIsOpen && hovered && !movingWithinOpenedTriangle) || (!menuIsOpen && hovered && pressed)
+
+            if (g.navActivateId == id) {
+                wantClose = menuIsOpen
+                wantOpen = !menuIsOpen
+            }
+            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Right) { // Nav-Right to open
+                wantOpen = true
+                navMoveRequestCancel()
+            }
         } else {
             // Menu bar
             if (menuIsOpen && pressed && menusetIsOpen) { // Click an open menu again to close it
@@ -211,6 +250,10 @@ interface imgui_menus {
                 menuIsOpen = false
             } else if (pressed || (hovered && menusetIsOpen && !menuIsOpen)) // First click to open, then hover to open others
                 wantOpen = true
+            else if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Down) { // Nav-Down to open
+                wantOpen = true
+                navMoveRequestCancel()
+            }
         }
         /*  explicitly close if an open menu becomes disabled, facilitate users code a lot in pattern such as
             'if (BeginMenu("options", has_object)) { ..use object.. }'         */
@@ -241,7 +284,20 @@ interface imgui_menus {
     }
 
     /** Only call EndBegin() if BeginMenu() returns true! */
-    fun endMenu() = endPopup()
+    fun endMenu() {
+        /*  Nav: When a left move request _within our child menu_ failed, close the menu.
+            A menu doesn't close itself because EndMenuBar() wants the catch the last Left<>Right inputs.
+            However it means that with the current code, a beginMenu() from outside another menu or a menu-bar won't be
+            closable with the Left direction.   */
+        val window = g.currentWindow!!
+        g.navWindow?.let {
+            if (it.parentWindow === window && g.navMoveDir == Dir.Left && navMoveRequestButNoResultYet() && window.dc.layoutType == Lt.Vertical) {
+                closePopupToLevel(g.openPopupStack.lastIndex)
+                navMoveRequestCancel()
+            }
+        }
+        endPopup()
+    }
 
     /** return true when activated. shortcuts are displayed for convenience but not processed by ImGui at the moment    */
     fun menuItem(label: String, shortcut: String = "", selected: Boolean = false, enabled: Boolean = true): Boolean {

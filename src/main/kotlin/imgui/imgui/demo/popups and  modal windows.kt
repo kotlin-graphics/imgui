@@ -14,6 +14,7 @@ import imgui.ImGui.openPopup
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setTooltip
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
@@ -138,6 +139,7 @@ object popupsAndModalWindows {
                     withStyleVar(StyleVar.FramePadding, Vec2()) { checkbox("Don't ask me next time", ::dontAskMeNextTime) }
 
                     button("OK", Vec2(120, 0)) { closeCurrentPopup() }
+                    setItemDefaultFocus()
                     sameLine()
                     button("Cancel", Vec2(120, 0)) { closeCurrentPopup() }
                 }

@@ -147,6 +147,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** Render-level scissoring. This is passed down to your render function but not used for CPU-side coarse clipping.
      *  Prefer using higher-level ImGui::PushClipRect() to affect logic (hit-testing and widget culling)    */
+    fun pushClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false) = pushClipRect(rect.min, rect.max, intersectWithCurrentClipRect)
     fun pushClipRect(crMin: Vec2, crMax: Vec2, intersectWithCurrentClipRect: Boolean = false) {
 
         val cr = Vec4(crMin, crMax)

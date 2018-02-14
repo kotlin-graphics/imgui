@@ -1,18 +1,30 @@
 package imgui.imgui
 
-import imgui.ImGui.isWindowAppearing
 import imgui.ImGui.currentWindow
+import imgui.ImGui.isItemVisible
 import imgui.ImGui.setScrollHere
+import imgui.internal.Rect
+import imgui.Context as g
 
 
-interface imgui_focus {
+/** Focus, Activation
+ *  (Prefer using "setItemDefaultFocus()" over "if (isWindowAppearing()) setScrollHere()" when applicable,
+ *  to make your code more forward compatible when navigation branch is merged) */
+interface imgui_focusActivation {
 
-    /** make last item the default focused item of a window (WIP navigation branch only). Please use instead of setScrollHere().
-     *  FIXME-NAV: This function is a placeholder for the upcoming Navigation branch + Focusing features.
-     *  In the current branch this function will only set the scrolling, in the navigation branch it will also set your navigation cursor.
-     *  Prefer using "setItemDefaultFocus()" over "if (isWindowAppearing()) setScrollHere()" when applicable.*/
+    /** Make last item the default focused item of a window.
+     *  Please use instead of "if (isWindowAppearing()) setScrollHere()" to signify "default item". */
     fun setItemDefaultFocus() {
-        if (isWindowAppearing) setScrollHere()
+        val window = g.currentWindow!!
+        if (!window.appearing) return
+        val nav = g.navWindow!!
+        if (nav === window.navRootWindow && (g.navInitRequest || g.navInitResultId != 0) && g.navLayer == nav.dc.navLayerCurrent) {
+            g.navInitRequest = false
+            g.navInitResultId = nav.dc.lastItemId
+            g.navInitResultRectRel = Rect(nav.dc.lastItemRect.min - nav.pos, nav.dc.lastItemRect.max - nav.pos)
+            navUpdateAnyRequestFlag()
+            if (!isItemVisible) setScrollHere()
+        }
     }
 
     /** focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget.

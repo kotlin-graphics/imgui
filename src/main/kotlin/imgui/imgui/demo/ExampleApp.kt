@@ -5,7 +5,6 @@ import glm_.c
 import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
-import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui._begin
@@ -27,10 +26,10 @@ import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
 import imgui.ImGui.frameCount
+import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.image
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isMouseHoveringRect
-import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.logButtons
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
@@ -39,12 +38,10 @@ import imgui.ImGui.nextColumn
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
-import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
@@ -130,6 +127,7 @@ object ExampleApp {
     var noResize = false
     var noCollapse = false
     var noClose = false
+    var noNav = false
 
     var filter = TextFilter()
 
@@ -171,6 +169,7 @@ object ExampleApp {
         if (noResize) windowFlags = windowFlags or Wf.NoResize
         if (noCollapse) windowFlags = windowFlags or Wf.NoCollapse
         if (noClose) open = null // Don't pass our bool* to Begin
+        if (noNav) windowFlags = windowFlags or Wf.NoNav
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
         if (!_begin("ImGui Demo", open, windowFlags)) {
             end()   // Early out if the window is collapsed, as an optimization.
@@ -220,7 +219,8 @@ object ExampleApp {
             checkbox("No move", ::noMove); sameLine(150)
             checkbox("No resize", ::noResize)
             checkbox("No collapse", ::noCollapse)
-            checkbox("No close", ::noClose)
+            checkbox("No close", ::noClose); sameLine(150)
+            checkbox("No nav", ::noNav)
 
             treeNode("Style") { StyleEditor() }
 
@@ -253,7 +253,7 @@ object ExampleApp {
 //                ImGui::BulletText("%s", lines[i]);
         }
 
-        inputAndFocus()
+        inputNavigationAndFocus()
     }
 }
 
@@ -411,6 +411,7 @@ object Console {
 //            ImGui::Separator();
 //
 //            // Command-line
+//            bool reclaim_focus = false;
 //            if (ImGui::InputText("Input", InputBuf, IM_ARRAYSIZE(InputBuf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCompletion|ImGuiInputTextFlags_CallbackHistory, &TextEditCallbackStub, (void*)this))
 //            {
 //                char* input_end = InputBuf+strlen(InputBuf);
@@ -418,10 +419,12 @@ object Console {
 //                if (InputBuf[0])
 //                    ExecCommand(InputBuf);
 //                strcpy(InputBuf, "");
+//                reclaim_focus = true;
 //            }
 //
-//            // Demonstrate keeping auto focus on the input box
-//            if (ImGui::IsItemHovered() || (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0)))
+//            // Demonstrate keeping focus on the input box
+//            ImGui::SetItemDefaultFocus();
+//            if (reclaim_focus)
 //                ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
 //
 //            ImGui::End();
@@ -898,7 +901,8 @@ object FixedOverlay {
         val windowPosPivot = Vec2(if (corner has 1) 1f else 0f, if (corner has 2) 1f else 0f)
         setNextWindowPos(windowPos, Cond.Always, windowPosPivot)
         setNextWindowBgAlpha(0.3f)  // Transparent background
-        withWindow("Example: Fixed Overlay", open, Wf.NoTitleBar or Wf.NoResize or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoSavedSettings) {
+        val flags = Wf.NoTitleBar or Wf.NoResize or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoSavedSettings or Wf.NoFocusOnAppearing or Wf.NoNav
+        withWindow("Example: Fixed Overlay", open, flags) {
             text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
             separator()
             text("Mouse Position: (%.1f,%.1f)".format(IO.mousePos.x, IO.mousePos.y))
@@ -1074,7 +1078,7 @@ object StyleEditor {
         var ref = if (ref == null) refSavedStyle else ref
 
         pushItemWidth(windowWidth * 0.55f)
-        if(showStyleSelector("Colors##Selector"))
+        if (showStyleSelector("Colors##Selector"))
             refSavedStyle = Style(style)
 
         showFontSelector("Fonts##Selector")
@@ -1174,7 +1178,8 @@ object StyleEditor {
             radioButton("Alpha", ::alphaFlags, Cef.AlphaPreview.i); sameLine()
             radioButton("Both", ::alphaFlags, Cef.AlphaPreviewHalf.i)
 
-            withChild("#colors", Vec2(0, 300), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar) {
+            val flags = Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf.NavFlattened
+            withChild("#colors", Vec2(0, 300), true, flags) {
                 withItemWidth(-160) {
                     for (i in 0 until Col.COUNT) {
                         val name = Col.values()[i].name

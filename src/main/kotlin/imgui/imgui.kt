@@ -20,7 +20,9 @@ val COL32_BLACK_TRANS = COL32(0, 0, 0, 0)   // Transparent black = 0x00000000
 
 val MOUSE_INVALID = -256000f
 
-var IMGUI_HAS_NAV = false
+var IMGUI_HAS_NAV = false   // TODO remove
+val IMGUI_DEBUG_NAV_SCORING     = false
+val IMGUI_DEBUG_NAV_RECTS       = false
 
 object ImGui :
 
@@ -47,7 +49,7 @@ object ImGui :
         imgui_dragAndDrop,
         imgui_clipping,
         imgui_styles,
-        imgui_focus,
+        imgui_focusActivation,
         imgui_utilities,
         imgui_inputs,
         imgui_helpers,
