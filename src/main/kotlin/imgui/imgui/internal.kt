@@ -11,7 +11,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.begin
 import imgui.ImGui.beginChildFrame
@@ -37,6 +37,7 @@ import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
 import imgui.ImGui.inputInt
 import imgui.ImGui.inputText
+import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
@@ -78,7 +79,6 @@ import kotlin.apply
 import kotlin.math.*
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
-import imgui.Context as g
 import imgui.DragDropFlags as Ddf
 import imgui.HoveredFlags as Hf
 import imgui.InputTextFlags as Itf
@@ -109,12 +109,12 @@ interface imgui_internal {
         g.logClipboard = StringBuilder()
 
         assert(g.settings.isEmpty())
-        loadIniSettingsFromDisk(IO.iniFilename)
+        loadIniSettingsFromDisk(io.iniFilename)
         g.initialized = true
     }
 
     fun markIniSettingsDirty() {
-        if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = IO.iniSavingRate
+        if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = io.iniSavingRate
     }
 
     fun setActiveId(id: Int, window: Window?) {
@@ -163,7 +163,7 @@ interface imgui_internal {
     fun setHoveredId(id: Int) {
         g.hoveredId = id
         g.hoveredIdAllowOverlap = false
-        g.hoveredIdTimer = if (id != 0 && g.hoveredIdPreviousFrame == id) g.hoveredIdTimer + IO.deltaTime else 0f
+        g.hoveredIdTimer = if (id != 0 && g.hoveredIdPreviousFrame == id) g.hoveredIdTimer + io.deltaTime else 0f
     }
 
     fun getHoveredId() = if (g.hoveredId != 0) g.hoveredId else g.hoveredIdPreviousFrame
@@ -181,14 +181,14 @@ interface imgui_internal {
         // Always align ourselves on pixel boundaries
         val lineHeight = glm.max(window.dc.currentLineHeight, size.y)
         val textBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, textOffsetY)
-        //if (g.IO.KeyAlt) window->DrawList->AddRect(window->DC.CursorPos, window->DC.CursorPos + ImVec2(size.x, line_height), IM_COL32(255,0,0,200)); // [DEBUG]
+        //if (g.io.KeyAlt) window->DrawList->AddRect(window->DC.CursorPos, window->DC.CursorPos + ImVec2(size.x, line_height), IM_COL32(255,0,0,200)); // [DEBUG]
         window.dc.cursorPosPrevLine.put(window.dc.cursorPos.x + size.x, window.dc.cursorPos.y)
         window.dc.cursorPos.x = (window.pos.x + window.dc.indentX + window.dc.columnsOffsetX).i.f
         window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + style.itemSpacing.y).i.f
         window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
         window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y - style.itemSpacing.y)
 
-        //if (g.IO.KeyAlt) window->DrawList->AddCircle(window->DC.CursorMaxPos, 3.0f, IM_COL32(255,0,0,255), 4); // [DEBUG]
+        //if (g.io.KeyAlt) window->DrawList->AddCircle(window->DC.CursorMaxPos, 3.0f, IM_COL32(255,0,0,255), 4); // [DEBUG]
 
         window.dc.prevLineHeight = lineHeight
         window.dc.prevLineTextBaseOffset = textBaseOffset
@@ -231,7 +231,7 @@ interface imgui_internal {
 
         // Clipping test
         if (isClippedEx(bb, id, false)) return false
-        //if (g.IO.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
+        //if (g.io.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
 
         /*  We need to calculate this now to take account of the current clipping rectangle (as items like Selectable
             may change them)         */
@@ -278,9 +278,9 @@ interface imgui_internal {
         /*  Process keyboard input at this point: TAB/Shift-TAB to tab out of the currently focused item.
             Note that we can always TAB out of a widget that doesn't allow tabbing in.         */
         if (tabStop && g.activeId == id && window.focusIdxAllRequestNext == Int.MAX_VALUE &&
-                window.focusIdxTabRequestNext == Int.MAX_VALUE && !IO.keyCtrl && Key.Tab.isPressed)
+                window.focusIdxTabRequestNext == Int.MAX_VALUE && !io.keyCtrl && Key.Tab.isPressed)
         // Modulo on index will be applied at the end of frame once we've got the total counter of items.
-            window.focusIdxTabRequestNext = window.focusIdxTabCounter + if (IO.keyShift) if (allowKeyboardFocus) -1 else 0 else 1
+            window.focusIdxTabRequestNext = window.focusIdxTabCounter + if (io.keyShift) if (allowKeyboardFocus) -1 else 0 else 1
 
         if (window.focusIdxAllCounter == window.focusIdxAllRequestCurrent) return true
 
@@ -361,8 +361,8 @@ interface imgui_internal {
         val currentStackSize = g.currentPopupStack.size
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
         val popupRef = PopupRef(popupId = id, window = null, parentWindow = parentWindow, openFrameCount = g.frameCount,
-                openParentId = parentWindow.idStack.last(), openMousePos = Vec2(IO.mousePos),
-                openPopupPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(IO.mousePos))
+                openParentId = parentWindow.idStack.last(), openMousePos = Vec2(io.mousePos),
+                openPopupPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(io.mousePos))
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack.push(popupRef)
         else {
@@ -495,20 +495,20 @@ interface imgui_internal {
     fun getNavInputAmount(n: NavInput, mode: InputReadMode): Float {    // TODO -> NavInput?
 
         val i = n.i
-        if (mode == InputReadMode.Down) return IO.navInputs[i] // Instant, read analog input (0.0f..1.0f, as provided by user)
+        if (mode == InputReadMode.Down) return io.navInputs[i] // Instant, read analog input (0.0f..1.0f, as provided by user)
 
-        val t = IO.navInputsDownDuration[i]
+        val t = io.navInputsDownDuration[i]
         return when {
         // Return 1.0f when just released, no repeat, ignore analog input.
-            t < 0f && mode == InputReadMode.Released -> if (IO.navInputsDownDurationPrev[i] >= 0f) 1f else 0f
+            t < 0f && mode == InputReadMode.Released -> if (io.navInputsDownDurationPrev[i] >= 0f) 1f else 0f
             t < 0f -> 0f
             else -> when (mode) {
             // Return 1.0f when just pressed, no repeat, ignore analog input.
                 InputReadMode.Pressed -> if (t == 0f) 1 else 0
-                InputReadMode.Repeat -> calcTypematicPressedRepeatAmount(t, t - IO.deltaTime, IO.keyRepeatDelay * 0.8f,
-                        IO.keyRepeatRate * 0.8f)
-                InputReadMode.RepeatSlow -> calcTypematicPressedRepeatAmount(t, t - IO.deltaTime, IO.keyRepeatDelay * 1f, IO.keyRepeatRate * 2f)
-                InputReadMode.RepeatFast -> calcTypematicPressedRepeatAmount(t, t - IO.deltaTime, IO.keyRepeatDelay * 0.8f, IO.keyRepeatRate * 0.3f)
+                InputReadMode.Repeat -> calcTypematicPressedRepeatAmount(t, t - io.deltaTime, io.keyRepeatDelay * 0.8f,
+                        io.keyRepeatRate * 0.8f)
+                InputReadMode.RepeatSlow -> calcTypematicPressedRepeatAmount(t, t - io.deltaTime, io.keyRepeatDelay * 1f, io.keyRepeatRate * 2f)
+                InputReadMode.RepeatFast -> calcTypematicPressedRepeatAmount(t, t - io.deltaTime, io.keyRepeatDelay * 0.8f, io.keyRepeatRate * 0.3f)
                 else -> 0
             }.f
         }
@@ -606,7 +606,7 @@ interface imgui_internal {
         var grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV
         if (held && grabHNorm < 1f) {
             val scrollbarPosV = if (horizontal) bb.min.x else bb.min.y
-            val mousePosV = if (horizontal) IO.mousePos.x else IO.mousePos.y
+            val mousePosV = if (horizontal) io.mousePos.x else io.mousePos.y
             var clickDeltaToGrabCenterV = if (horizontal) g.scrollbarClickDeltaToGrabCenter.x else g.scrollbarClickDeltaToGrabCenter.y
 
             // Click position in scrollbar normalized space (0.0f->1.0f)
@@ -697,7 +697,7 @@ interface imgui_internal {
 
         val bbRender = Rect(bb)
         if (held) {
-            val mouseDelta2d = IO.mousePos - g.activeIdClickOffset - bbInteract.min
+            val mouseDelta2d = io.mousePos - g.activeIdClickOffset - bbInteract.min
             var mouseDelta = if (axis == Axis.Y) mouseDelta2d.y else mouseDelta2d.x
 
             // Minimum pane size
@@ -1204,7 +1204,7 @@ interface imgui_internal {
             if (isItemHovered(Hf.AllowWhenBlockedByActiveItem)) {
                 hovered = true
                 setHoveredId(id)
-                if (calcTypematicPressedRepeatAmount(g.hoveredIdTimer + 0.0001f, g.hoveredIdTimer + 0.0001f - IO.deltaTime,
+                if (calcTypematicPressedRepeatAmount(g.hoveredIdTimer + 0.0001f, g.hoveredIdTimer + 0.0001f - io.deltaTime,
                                 0.01f, 0.7f) != 0) { // FIXME: Our formula for CalcTypematicPressedRepeatAmount() is fishy
                     pressed = true
                     window.focus()
@@ -1221,7 +1221,7 @@ interface imgui_internal {
 
         // Mouse
         if (hovered) {
-            if (flags hasnt Bf.NoKeyModifiers || (!IO.keyCtrl && !IO.keyShift && !IO.keyAlt)) {
+            if (flags hasnt Bf.NoKeyModifiers || (!io.keyCtrl && !io.keyShift && !io.keyAlt)) {
 
                 /*                         | CLICKING        | HOLDING with ImGuiButtonFlags_Repeat
                 PressedOnClickRelease  |  <on release>*  |  <on repeat> <on repeat> .. (NOT on release)  <-- MOST COMMON!
@@ -1230,21 +1230,21 @@ interface imgui_internal {
                 PressedOnRelease       |  <on release>   |  <on repeat> <on repeat> .. (NOT on release)
                 PressedOnDoubleClick   |  <on dclick>    |  <on dclick> <on repeat> <on repeat> ..   */
                 // FIXME-NAV: We don't honor those different behaviors.
-                if (flags has Bf.PressedOnClickRelease && IO.mouseClicked[0]) {
+                if (flags has Bf.PressedOnClickRelease && io.mouseClicked[0]) {
                     setActiveId(id, window)
                     if (flags hasnt Bf.NoNavFocus)
                         setFocusId(id, window)
                     window.focus()
                 }
-                if ((flags has Bf.PressedOnClick && IO.mouseClicked[0]) || (flags has Bf.PressedOnDoubleClick && IO.mouseDoubleClicked[0])) {
+                if ((flags has Bf.PressedOnClick && io.mouseClicked[0]) || (flags has Bf.PressedOnDoubleClick && io.mouseDoubleClicked[0])) {
                     pressed = true
                     if (flags has Bf.NoHoldingActiveID) clearActiveId()
                     else setActiveId(id, window) // Hold on ID
                     window.focus()
                 }
-                if (flags has Bf.PressedOnRelease && IO.mouseReleased[0]) {
+                if (flags has Bf.PressedOnRelease && io.mouseReleased[0]) {
                     // Repeat mode trumps <on release>
-                    if (!(flags has Bf.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay))
+                    if (!(flags has Bf.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay))
                         pressed = true
                     clearActiveId()
                 }
@@ -1252,7 +1252,7 @@ interface imgui_internal {
                 /*  'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
                 Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing
                 finer RepeatDelay/RepeatRate settings.  */
-                if (flags has Bf.Repeat && g.activeId == id && IO.mouseDownDuration[0] > 0f && isMouseClicked(0, true))
+                if (flags has Bf.Repeat && g.activeId == id && io.mouseDownDuration[0] > 0f && isMouseClicked(0, true))
                     pressed = true
             }
 
@@ -1283,13 +1283,13 @@ interface imgui_internal {
         if (g.activeId == id) {
             if (g.activeIdSource == InputSource.Mouse) {
                 if (g.activeIdIsJustActivated)
-                    g.activeIdClickOffset = IO.mousePos - bb.min
-                if (IO.mouseDown[0]) {
+                    g.activeIdClickOffset = io.mousePos - bb.min
+                if (io.mouseDown[0]) {
                     held = true
                 } else {
                     if (hovered && flags has Bf.PressedOnClickRelease)
                     // Repeat mode trumps <on release>
-                        if (!(flags has Bf.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay))
+                        if (!(flags has Bf.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay))
                             if (!g.dragDropActive)
                                 pressed = true
                     clearActiveId()
@@ -1447,9 +1447,9 @@ interface imgui_internal {
             var clickedT = 0f
 
             if (g.activeIdSource == InputSource.Mouse) {
-                if (!IO.mouseDown[0]) clearActiveId()
+                if (!io.mouseDown[0]) clearActiveId()
                 else {
-                    val mouseAbsPos = if (isHorizontal) IO.mousePos.x else IO.mousePos.y
+                    val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
                     clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
                     if (!isHorizontal)
                         clickedT = 1f - clickedT
@@ -1619,7 +1619,7 @@ interface imgui_internal {
 
         // Process interacting with the drag
         if (g.activeId == id) {
-            if (g.activeIdSource == InputSource.Mouse && !IO.mouseDown[0])
+            if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
                 clearActiveId()
             else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                 clearActiveId()
@@ -1641,9 +1641,9 @@ interface imgui_internal {
             var adjustDelta = 0f
             if (g.activeIdSource == InputSource.Mouse && isMousePosValid()) {
                 adjustDelta = mouseDragDelta.x - g.dragLastMouseDelta.x
-                if (IO.keyShift && g.dragSpeedScaleFast >= 0f)
+                if (io.keyShift && g.dragSpeedScaleFast >= 0f)
                     adjustDelta *= g.dragSpeedScaleFast
-                if (IO.keyAlt && g.dragSpeedScaleSlow >= 0f)
+                if (io.keyAlt && g.dragSpeedScaleSlow >= 0f)
                     adjustDelta *= g.dragSpeedScaleSlow
                 g.dragLastMouseDelta.x = mouseDragDelta.x
             }
@@ -1798,7 +1798,7 @@ interface imgui_internal {
         val focusRequestedByCode = focusRequested && window.focusIdxAllCounter == window.focusIdxAllRequestCurrent
         val focusRequestedByTab = focusRequested && !focusRequestedByCode
 
-        val userClicked = hovered && IO.mouseClicked[0]
+        val userClicked = hovered && io.mouseClicked[0]
         val userScrolled = isMultiline && g.activeId == 0 && editState.id == id && g.activeIdPreviousFrame == drawWindow.getIdNoKeepAlive("#SCROLLY")
 
         var clearActiveId = false
@@ -1849,7 +1849,7 @@ interface imgui_internal {
                 }
                 if (flags has Itf.AlwaysInsertMode)
                     editState.state.insertMode = true
-                if (!isMultiline && (focusRequestedByTab || (userClicked && IO.keyCtrl)))
+                if (!isMultiline && (focusRequestedByTab || (userClicked && io.keyCtrl)))
                     selectAll = true
             }
             setActiveId(id, window)
@@ -1857,7 +1857,7 @@ interface imgui_internal {
             window.focus()
             if (!isMultiline && flags hasnt Itf.CallbackHistory)
                 g.activeIdAllowNavDirFlags = g.activeIdAllowNavDirFlags or ((1 shl Dir.Up) or (1 shl Dir.Down))
-        } else if (IO.mouseClicked[0])
+        } else if (io.mouseClicked[0])
         // Release focus when we click outside
             clearActiveId = true
 
@@ -1881,46 +1881,46 @@ interface imgui_internal {
             /*  Although we are active we don't prevent mouse from hovering other elements unless we are interacting
                 right now with the widget.
                 Down the line we should have a cleaner library-wide concept of Selected vs Active.  */
-            g.activeIdAllowOverlap = !IO.mouseDown[0]
+            g.activeIdAllowOverlap = !io.mouseDown[0]
             g.wantTextInputNextFrame = 1
 
             // Edit in progress
-            val mouseX = IO.mousePos.x - frameBb.min.x - style.framePadding.x + editState.scrollX
+            val mouseX = io.mousePos.x - frameBb.min.x - style.framePadding.x + editState.scrollX
             val mouseY =
                     if (isMultiline)
-                        IO.mousePos.y - drawWindow.dc.cursorPos.y - style.framePadding.y
+                        io.mousePos.y - drawWindow.dc.cursorPos.y - style.framePadding.y
                     else g.fontSize * 0.5f
 
             // OS X style: Double click selects by word instead of selecting whole text
-            val osxDoubleClickSelectsWords = IO.optMacOSXBehaviors
-            if (selectAll || (hovered && !osxDoubleClickSelectsWords && IO.mouseDoubleClicked[0])) {
+            val osxDoubleClickSelectsWords = io.optMacOSXBehaviors
+            if (selectAll || (hovered && !osxDoubleClickSelectsWords && io.mouseDoubleClicked[0])) {
                 editState.selectAll()
                 editState.selectedAllMouseLock = true
-            } else if (hovered && osxDoubleClickSelectsWords && IO.mouseDoubleClicked[0]) {
+            } else if (hovered && osxDoubleClickSelectsWords && io.mouseDoubleClicked[0]) {
                 // Select a word only, OS X style (by simulating keystrokes)
                 editState.onKeyPressed(K.WORDLEFT)
                 editState.onKeyPressed(K.WORDRIGHT or K.SHIFT)
-            } else if (IO.mouseClicked[0] && !editState.selectedAllMouseLock) {
+            } else if (io.mouseClicked[0] && !editState.selectedAllMouseLock) {
                 if (hovered) {
                     editState.click(mouseX, mouseY)
                     editState.cursorAnimReset()
                 }
-            } else if (IO.mouseDown[0] && !editState.selectedAllMouseLock && IO.mouseDelta notEqual 0f) {
+            } else if (io.mouseDown[0] && !editState.selectedAllMouseLock && io.mouseDelta notEqual 0f) {
                 editState.state.selectStart = editState.state.cursor
                 editState.state.selectEnd = editState.locateCoord(mouseX, mouseY)
                 editState.cursorFollow = true
                 editState.cursorAnimReset()
             }
-            if (editState.selectedAllMouseLock && !IO.mouseDown[0])
+            if (editState.selectedAllMouseLock && !io.mouseDown[0])
                 editState.selectedAllMouseLock = false
 
-            if (IO.inputCharacters[0].i != 0) {
+            if (io.inputCharacters[0].i != 0) {
                 /*  Process text input (before we check for Return because using some IME will effectively send a
                     Return?)
                     We ignore CTRL inputs, but need to allow CTRL+ALT as some keyboards (e.g. German) use AltGR - which
                     is Alt+Ctrl - to input certain characters.  */
-                if (!(IO.keyCtrl && !IO.keyAlt) && isEditable)
-                    IO.inputCharacters.filter { it != NUL }.map {
+                if (!(io.keyCtrl && !io.keyAlt) && isEditable)
+                    io.inputCharacters.filter { it != NUL }.map {
                         withChar { c ->
                             // Insert character if they pass filtering
                             if (inputTextFilterCharacter(c.apply { set(it) }, flags/*, callback, user_data*/))
@@ -1928,23 +1928,23 @@ interface imgui_internal {
                         }
                     }
                 // Consume characters
-                IO.inputCharacters.fill(NUL)
+                io.inputCharacters.fill(NUL)
             }
         }
 
         var cancelEdit = false
         if (g.activeId == id && !g.activeIdIsJustActivated && !clearActiveId) {
             // Handle key-presses
-            val kMask = if (IO.keyShift) K.SHIFT else 0
+            val kMask = if (io.keyShift) K.SHIFT else 0
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
-            val superCtrl = if (IO.optMacOSXBehaviors) IO.keySuper && !IO.keyCtrl else IO.keyCtrl && !IO.keySuper
-            val isShortcutKeyOnly = superCtrl && !IO.keyAlt && !IO.keyShift
+            val superCtrl = if (io.optMacOSXBehaviors) io.keySuper && !io.keyCtrl else io.keyCtrl && !io.keySuper
+            val isShortcutKeyOnly = superCtrl && !io.keyAlt && !io.keyShift
             // OS X style: Text editing cursor movement using Alt instead of Ctrl
-            val isWordmoveKeyDown = if (IO.optMacOSXBehaviors) IO.keyAlt else IO.keyCtrl
+            val isWordmoveKeyDown = if (io.optMacOSXBehaviors) io.keyAlt else io.keyCtrl
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
-            val isStartendKeyDown = IO.optMacOSXBehaviors && IO.keySuper && !IO.keyCtrl && !IO.keyAlt
-            val isCtrlKeyOnly = IO.keyCtrl && !IO.keyShift && !IO.keyAlt && !IO.keySuper
-            val isShiftKeyOnly = IO.keyShift && !IO.keyCtrl && !IO.keyAlt && !IO.keySuper
+            val isStartendKeyDown = io.optMacOSXBehaviors && io.keySuper && !io.keyCtrl && !io.keyAlt
+            val isCtrlKeyOnly = io.keyCtrl && !io.keyShift && !io.keyAlt && !io.keySuper
+            val isShiftKeyOnly = io.keyShift && !io.keyCtrl && !io.keyAlt && !io.keySuper
 
             val isCut = ((isShortcutKeyOnly && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && isEditable && !isPassword && (!isMultiline || editState.hasSelection)
             val isCopy = ((isShortcutKeyOnly && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || editState.hasSelection)
@@ -1962,29 +1962,29 @@ interface imgui_internal {
                     else -> K.RIGHT
                 } or kMask)
                 Key.UpArrow.isPressed && isMultiline ->
-                    if (IO.keyCtrl)
+                    if (io.keyCtrl)
                         drawWindow.setScrollY(glm.max(drawWindow.scroll.y - g.fontSize, 0f))
                     else
                         editState.onKeyPressed((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
                 Key.DownArrow.isPressed && isMultiline ->
-                    if (IO.keyCtrl)
+                    if (io.keyCtrl)
                         drawWindow.setScrollY(glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY))
                     else
                         editState.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
-                Key.Home.isPressed -> editState.onKeyPressed((if (IO.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
-                Key.End.isPressed -> editState.onKeyPressed((if (IO.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
+                Key.Home.isPressed -> editState.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
+                Key.End.isPressed -> editState.onKeyPressed((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
                 Key.Delete.isPressed && isEditable -> editState.onKeyPressed(K.DELETE or kMask)
                 Key.Backspace.isPressed && isEditable -> {
                     if (!editState.hasSelection)
                         if (isWordmoveKeyDown)
                             editState.onKeyPressed(K.WORDLEFT or K.SHIFT)
-                        else if (IO.optMacOSXBehaviors && IO.keySuper && !IO.keyAlt && !IO.keyCtrl)
+                        else if (io.optMacOSXBehaviors && io.keySuper && !io.keyAlt && !io.keyCtrl)
                             editState.onKeyPressed(K.LINESTART or K.SHIFT)
                     editState.onKeyPressed(K.BACKSPACE or kMask)
                 }
                 Key.Enter.isPressed -> {
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
-                    if (!isMultiline || (ctrlEnterForNewLine && !IO.keyCtrl) || (!ctrlEnterForNewLine && IO.keyCtrl)) {
+                    if (!isMultiline || (ctrlEnterForNewLine && !io.keyCtrl) || (!ctrlEnterForNewLine && io.keyCtrl)) {
                         clearActiveId = true
                         enterPressed = true
                     } else if (isEditable) {
@@ -1997,7 +1997,7 @@ interface imgui_internal {
                         }
                     }
                 }
-                flags has Itf.AllowTabInput && Key.Tab.isPressed && !IO.keyCtrl && !IO.keyShift && !IO.keyAlt && isEditable -> {
+                flags has Itf.AllowTabInput && Key.Tab.isPressed && !io.keyCtrl && !io.keyShift && !io.keyAlt && isEditable -> {
                     if (flags hasnt Itf.AllowTabInput)
                         TODO()
                     editState.insertChars(editState.state.cursor, charArrayOf('\t'), 0, 1)
@@ -2170,7 +2170,7 @@ interface imgui_internal {
         val isCurrentlyScrolling = editState.id == id && isMultiline && g.activeId == drawWindow.getIdNoKeepAlive("#SCROLLY")
         if (g.activeId == id || isCurrentlyScrolling) {
 
-            editState.cursorAnim += IO.deltaTime
+            editState.cursorAnim += io.deltaTime
 
             /*  This is going to be messy. We need to:
                     - Display the text (this alone can be more easily clipped)
@@ -2298,7 +2298,7 @@ interface imgui_internal {
                     editState.curLenA, 0f, clipRect.takeIf { isMultiline })
 
             // Draw blinking cursor
-            val cursorIsVisible = !IO.optCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
+            val cursorIsVisible = !io.optCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
             val cursorScreenPos = renderPos + cursorOffset - renderScroll
             val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
             if (cursorIsVisible && cursorScreenRect overlaps Rect(clipRect))
@@ -2419,12 +2419,12 @@ interface imgui_internal {
             popItemWidth()
             sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("-", buttonSz, Bf.Repeat or Bf.DontClosePopups)) {
-                dataTypeApplyOp(dataType, '-', data, if (IO.keyCtrl && stepFast != null) stepFast else step)
+                dataTypeApplyOp(dataType, '-', data, if (io.keyCtrl && stepFast != null) stepFast else step)
                 valueChanged = true
             }
             sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("+", buttonSz, Bf.Repeat or Bf.DontClosePopups)) {
-                dataTypeApplyOp(dataType, '+', data, if (IO.keyCtrl && stepFast != null) stepFast else step)
+                dataTypeApplyOp(dataType, '+', data, if (io.keyCtrl && stepFast != null) stepFast else step)
                 valueChanged = true
             }
         }
@@ -2610,7 +2610,7 @@ interface imgui_internal {
                     toggled = isMouseHoveringRect(interactBb.min, max) && !g.navDisableMouseHover || toggled
                 }
                 if (flags has Tnf.OpenOnDoubleClick)
-                    toggled = IO.mouseDoubleClicked[0] || toggled
+                    toggled = io.mouseDoubleClicked[0] || toggled
                 // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
                 if (g.dragDropActive && isOpen)
                     toggled = false
@@ -2758,7 +2758,7 @@ interface imgui_internal {
             // Tooltip on hover
             var vHovered = -1
             if (hovered) {
-                val t = glm.clamp((IO.mousePos.x - innerBb.min.x) / (innerBb.max.x - innerBb.min.x), 0f, 0.9999f)
+                val t = glm.clamp((io.mousePos.x - innerBb.min.x) / (innerBb.max.x - innerBb.min.x), 0f, 0.9999f)
                 val vIdx = (t * itemCount).i
                 assert(vIdx in 0 until valuesCount)
 

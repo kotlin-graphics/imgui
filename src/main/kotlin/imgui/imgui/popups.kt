@@ -7,6 +7,7 @@ import imgui.ImGui.beginPopupEx
 import imgui.ImGui.closePopup
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
+import imgui.ImGui.io
 import imgui.ImGui.isAnyItemHovered
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseReleased
@@ -18,7 +19,6 @@ import imgui.internal.Dir
 import imgui.internal.NavForward
 import imgui.internal.Window
 import kotlin.math.max
-import imgui.Context as g
 import imgui.HoveredFlags as Hf
 import imgui.WindowFlags as Wf
 
@@ -87,7 +87,7 @@ interface imgui_popups {
         // Center modal windows by default
         // FIXME: Should test for (PosCond & window->SetWindowPosAllowFlags) with the upcoming window.
         if (g.nextWindowData.posCond == Cond.Null)
-            setNextWindowPos(Vec2(IO.displaySize.x * 0.5f, IO.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
+            setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
 
         val isOpen = begin(name, pOpen, flags or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings)
         // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)

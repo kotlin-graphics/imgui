@@ -2,7 +2,7 @@ package imgui.imgui
 
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
-import imgui.Context as g
+import imgui.g
 
 /** ID scopes
  *  If you are creating widgets in a loop you most likely want to push a unique identifier so ImGui can differentiate

@@ -5,12 +5,12 @@ import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.style
 import imgui.internal.*
 import kotlin.math.abs
-import imgui.Context as g
 import imgui.WindowFlags as Wf
 
 fun navScoreItemGetQuadrant(dx: Float, dy: Float) = when {
@@ -95,17 +95,17 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
                 addRect(curr.min, curr.max, COL32(255, 200, 0, 100))
                 addRect(cand.min, cand.max, COL32(255, 255, 0, 200))
                 addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf) + Vec2(4), COL32(40, 0, 0, 150))
-                addText(IO.fontDefault, 13f, cand.max, 0.inv(), buf.toCharArray())
+                addText(io.fontDefault, 13f, cand.max, 0.inv(), buf.toCharArray())
             }
-        } else if (IO.keyCtrl) { // Hold to preview score in matching quadrant. Press C to rotate.
+        } else if (io.keyCtrl) { // Hold to preview score in matching quadrant. Press C to rotate.
             if (Key.C.isPressed) {
                 g.navMoveDirLast = Dir.of((g.navMoveDirLast.i + 1) and 3)
-                IO.keysDownDuration[IO.keyMap[Key.C]] = 0.01f
+                io.keysDownDuration[io.keyMap[Key.C]] = 0.01f
             }
             if (quadrant == g.navMoveDir) {
                 val buf = "%.0f/%.0f".format(style.locale, distBox, distCenter).toCharArray()
                 g.overlayDrawList.addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 200))
-                g.overlayDrawList.addText(IO.fontDefault, 13f, cand.min, COL32(255, 255, 255, 255), buf)
+                g.overlayDrawList.addText(io.fontDefault, 13f, cand.min, COL32(255, 255, 255, 255), buf)
             }
         }
 

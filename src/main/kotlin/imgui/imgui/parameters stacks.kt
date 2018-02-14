@@ -7,7 +7,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
@@ -17,7 +17,6 @@ import imgui.ImGui.u32
 import imgui.ImGui.vec4
 import imgui.internal.ColMod
 import imgui.internal.StyleMod
-import imgui.Context as g
 import imgui.ItemFlags as If
 
 

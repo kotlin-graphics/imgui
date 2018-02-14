@@ -10,15 +10,15 @@ import glm_.vec2.Vec2bool
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.io
 import imgui.ImGui.keepAliveId
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sin
-import imgui.Context as g
 import imgui.HoveredFlags as Hf
 import imgui.WindowFlags as Wf
 
@@ -821,7 +821,7 @@ class Window(var context: imgui.Context, var name: String) {
                     we are growing the size on the other axis to compensate for expected scrollbar.
                     FIXME: Might turn bigger than DisplaySize-WindowPadding.                 */
                 val sizeAutoFit = glm.clamp(sizeContents, Vec2(style.windowMinSize),
-                        Vec2(glm.max(style.windowMinSize, IO.displaySize - style.displaySafeAreaPadding)))
+                        Vec2(glm.max(style.windowMinSize, io.displaySize - style.displaySafeAreaPadding)))
                 val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
                 if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
                     sizeAutoFit.y += style.scrollbarSize
@@ -850,7 +850,7 @@ class Window(var context: imgui.Context, var name: String) {
     }
 
     fun addToDrawDataSelectLayer() {
-        IO.metricsActiveWindows++
+        io.metricsActiveWindows++
         addTo(if (flags has Wf.Tooltip) g.drawDataBuilder.layers[1] else g.drawDataBuilder.layers[0])
     }
 

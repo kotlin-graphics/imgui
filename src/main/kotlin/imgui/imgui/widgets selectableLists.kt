@@ -5,7 +5,7 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
 import imgui.ImGui.buttonBehavior
@@ -38,7 +38,6 @@ import imgui.internal.NavHighlightFlags
 import imgui.internal.Rect
 import imgui.internal.or
 import kotlin.reflect.KMutableProperty0
-import imgui.Context as g
 import imgui.ItemFlags as If
 import imgui.SelectableFlags as Sf
 import imgui.WindowFlags as Wf

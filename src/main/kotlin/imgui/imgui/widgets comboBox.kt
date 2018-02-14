@@ -3,7 +3,7 @@ package imgui.imgui
 import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcItemWidth
@@ -36,7 +36,6 @@ import java.util.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlags as Cf
-import imgui.Context as g
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
 

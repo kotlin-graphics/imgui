@@ -8,7 +8,7 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
@@ -20,6 +20,7 @@ import imgui.ImGui.endColumns
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
+import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
@@ -38,7 +39,6 @@ import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
-import imgui.Context as g
 import imgui.ItemFlags as If
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
@@ -225,7 +225,7 @@ interface imgui_window {
             detection and drawing   */
             if (flags hasnt Wf.NoTitleBar && flags hasnt Wf.NoCollapse) {
                 val titleBarRect = window.titleBarRect()
-                if (window.collapseToggleWanted || (g.hoveredWindow === window && isMouseHoveringRect(titleBarRect) && IO.mouseDoubleClicked[0])) {
+                if (window.collapseToggleWanted || (g.hoveredWindow === window && isMouseHoveringRect(titleBarRect) && io.mouseDoubleClicked[0])) {
                     window.collapsed = !window.collapsed
                     markIniSettingsDirty(window)
                     window.focus()
@@ -355,9 +355,9 @@ interface imgui_window {
             // Position tooltip (always follows mouse)
             if (flags has Wf.Tooltip && !windowPosSetByApi && !windowIsChildTooltip) {
                 val sc = style.mouseCursorScale
-                val refPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(IO.mousePos)
+                val refPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(io.mousePos)
                 val rectToAvoid =
-                        if (!g.navDisableHighlight && g.navDisableMouseHover && IO.navFlags hasnt NavFlags.MoveMouse)
+                        if (!g.navDisableHighlight && g.navDisableMouseHover && io.navFlags hasnt NavFlags.MoveMouse)
                             Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
                         else
                             Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
@@ -372,11 +372,11 @@ interface imgui_window {
             if (flags hasnt Wf.ChildWindow && flags hasnt Wf.Tooltip)
             /*  Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized
             window when initializing or minimizing. */
-                if (!windowPosSetByApi && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 && IO.displaySize greaterThan 0) {
+                if (!windowPosSetByApi && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 && io.displaySize greaterThan 0) {
                     val padding = glm.max(style.displayWindowPadding, style.displaySafeAreaPadding)
                     window.posF put (glm.max(window.posF + window.size, padding) - window.size)
-                    window.posF.x = glm.min(window.posF.x, (IO.displaySize.x - padding.x).f)
-                    window.posF.y = glm.min(window.posF.y, (IO.displaySize.y - padding.y).f)
+                    window.posF.x = glm.min(window.posF.x, (io.displaySize.x - padding.x).f)
+                    window.posF.y = glm.min(window.posF.y, (io.displaySize.y - padding.y).f)
                 }
             window.pos put glm.floor(window.posF)
 
@@ -642,7 +642,7 @@ interface imgui_window {
             // Maybe we can support CTRL+C on every element?
             /*
         if (g.ActiveId == move_id)
-            if (g.IO.KeyCtrl && IsKeyPressedMap(ImGuiKey_C))
+            if (g.io.KeyCtrl && IsKeyPressedMap(ImGuiKey_C))
                 ImGui::LogToClipboard();
         */
             /*  Inner rectangle
@@ -812,7 +812,7 @@ interface imgui_window {
 
     val isWindowAppearing get() = currentWindowRead!!.appearing
 
-    /** per-window font scale. Adjust IO.FontGlobalScale if you want to scale all windows   */
+    /** per-window font scale. Adjust io.FontGlobalScale if you want to scale all windows   */
     fun setWindowFontScale(scale: Float) = with(currentWindow) {
         fontWindowScale = scale
         g.drawListSharedData.fontSize = calcFontSize()

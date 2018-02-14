@@ -7,7 +7,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.ImGui.beginChild
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endChild
@@ -19,7 +19,6 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
-import imgui.Context as g
 import imgui.FocusedFlags as Ff
 import imgui.HoveredFlags as Hf
 import imgui.WindowFlags as Wf

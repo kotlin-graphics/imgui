@@ -1,8 +1,6 @@
 package imgui.imgui
 
 import imgui.ImGui.button
-import imgui.Context as g
-import imgui.ImGui.currentWindowRead
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
@@ -12,6 +10,7 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.setClipboardText
 import imgui.ImGui.sliderInt
+import imgui.g
 import java.io.FileWriter
 
 /** Logging/Capture: all text output from interface is captured to tty/file/clipboard.

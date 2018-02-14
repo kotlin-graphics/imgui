@@ -50,10 +50,12 @@ class HelloWorld_jogl : GLEventListener {
         })
     }
 
+    lateinit var ctx: Context
 
     override fun init(drawable: GLAutoDrawable) {
 
         // Setup ImGui binding
+        ctx = Context()
         JoglGL3.init(window, true)
 
         // Setup style
@@ -113,7 +115,7 @@ class HelloWorld_jogl : GLEventListener {
             sameLine()
             text("counter = $counter")
 
-            text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / IO.framerate, IO.framerate)
+            text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.framerate, io.framerate)
 
             // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name your windows.
             if (showAnotherWindow) {
@@ -147,5 +149,6 @@ class HelloWorld_jogl : GLEventListener {
 
     override fun dispose(drawable: GLAutoDrawable) {
         JoglGL3.shutdown(drawable.gl.gL3)
+        ctx.destroy()
     }
 }

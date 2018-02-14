@@ -8,12 +8,13 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.getNavInputAmount2d
+import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
@@ -29,7 +30,6 @@ import kotlin.collections.set
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
-import imgui.Context as g
 import imgui.InputTextFlags as Itf
 import imgui.NavFlags as Nf
 import imgui.WindowFlags as Wf
@@ -48,7 +48,7 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
     assert(columnIndex > 0)
     assert(g.activeId == columns.id + columnIndex)
 
-    var x = IO.mousePos.x - g.activeIdClickOffset.x + columnsRectHalfWidth - window.pos.x
+    var x = io.mousePos.x - g.activeIdClickOffset.x + columnsRectHalfWidth - window.pos.x
     x = glm.max(x, getColumnOffset(columnIndex - 1) + style.columnsMinSpacing)
     if (columns.flags has ColumnsFlags.NoPreserveWidths)
         x = glm.min(x, getColumnOffset(columnIndex + 1) - style.columnsMinSpacing)
@@ -56,7 +56,7 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
     return x
 }
 
-val defaultFont get() = IO.fontDefault ?: IO.fonts.fonts[0]
+val defaultFont get() = io.fontDefault ?: io.fonts.fonts[0]
 
 //-----------------------------------------------------------------------------
 // Internal API exposed in imgui_internal.h
@@ -259,13 +259,13 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
 
 fun markIniSettingsDirty(window: Window) {
     if (window.flags hasnt Wf.NoSavedSettings)
-        if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = IO.iniSavingRate
+        if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = io.iniSavingRate
 }
 
 fun getViewportRect(): Rect {
-    if (IO.displayVisibleMin != IO.displayVisibleMax)
-        return Rect(IO.displayVisibleMin, IO.displayVisibleMax)
-    return Rect(0f, 0f, IO.displaySize.x.f, IO.displaySize.y.f)
+    if (io.displayVisibleMin != io.displayVisibleMax)
+        return Rect(io.displayVisibleMin, io.displayVisibleMax)
+    return Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
 }
 
 fun closePopupToLevel(remaining: Int) {
@@ -622,17 +622,17 @@ fun navScrollToBringItemIntoView(window: Window, itemRectRel: Rect) {
 
 fun navUpdate() {
 
-    IO.wantMoveMouse = false
+    io.wantMoveMouse = false
 
 //    if (g.NavScoringCount > 0) printf("[%05d] NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.FrameCount, g.NavScoringCount, g.NavWindow ? g . NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest)
 
     // Update Keyboard->Nav inputs mapping
     for (i in NavInput.InternalStart until NavInput.COUNT)
-        IO.navInputs[i] = 0f
-    if (IO.navFlags has Nf.EnableKeyboard) {
+        io.navInputs[i] = 0f
+    if (io.navFlags has Nf.EnableKeyboard) {
         fun navMapKey(key: Key, navInput: NavInput) {
-            if (IO.keyMap[key] != -1 && isKeyDown(IO.keyMap[key]))
-                IO.navInputs[navInput] = 1f
+            if (io.keyMap[key] != -1 && isKeyDown(io.keyMap[key]))
+                io.navInputs[navInput] = 1f
         }
         navMapKey(Key.Space, NavInput.Activate)
         navMapKey(Key.Enter, NavInput.Input)
@@ -641,16 +641,16 @@ fun navUpdate() {
         navMapKey(Key.RightArrow, NavInput.KeyRight)
         navMapKey(Key.UpArrow, NavInput.KeyUp)
         navMapKey(Key.DownArrow, NavInput.KeyDown)
-        if (IO.keyCtrl) IO.navInputs[NavInput.TweakSlow] = 1f
-        if (IO.keyShift) IO.navInputs[NavInput.TweakFast] = 1f
-        if (IO.keyAlt) IO.navInputs[NavInput.KeyMenu] = 1f
+        if (io.keyCtrl) io.navInputs[NavInput.TweakSlow] = 1f
+        if (io.keyShift) io.navInputs[NavInput.TweakFast] = 1f
+        if (io.keyAlt) io.navInputs[NavInput.KeyMenu] = 1f
     }
 
-    for (i in IO.navInputsDownDuration.indices)
-        IO.navInputsDownDurationPrev[i] = IO.navInputsDownDuration[i]
-    for (i in IO.navInputs.indices)
-        IO.navInputsDownDuration[i] = when (IO.navInputs[i] > 0f) {
-            true -> if (IO.navInputsDownDuration[i] < 0f) 0f else IO.navInputsDownDuration[i] + IO.deltaTime
+    for (i in io.navInputsDownDuration.indices)
+        io.navInputsDownDurationPrev[i] = io.navInputsDownDuration[i]
+    for (i in io.navInputs.indices)
+        io.navInputsDownDuration[i] = when (io.navInputs[i] > 0f) {
+            true -> if (io.navInputsDownDuration[i] < 0f) 0f else io.navInputsDownDuration[i] + io.deltaTime
             else -> -1f
         }
 
@@ -704,10 +704,10 @@ fun navUpdate() {
     // Apply application mouse position movement, after we had a chance to process move request result.
     if (g.navMousePosDirty && g.navIdIsAlive) {
         // Set mouse position given our knowledge of the nav widget position from last frame
-        if (IO.navFlags has Nf.MoveMouse) {
-            IO.mousePosPrev = navCalcPreferredMousePos()
-            IO.mousePos = IO.mousePosPrev
-            IO.wantMoveMouse = true
+        if (io.navFlags has Nf.MoveMouse) {
+            io.mousePosPrev = navCalcPreferredMousePos()
+            io.mousePos = io.mousePosPrev
+            io.wantMoveMouse = true
         }
         g.navMousePosDirty = false
     }
@@ -725,8 +725,8 @@ fun navUpdate() {
     navUpdateWindowing()
 
     // Set output flags for user application
-    IO.navActive = IO.navFlags has (Nf.EnableGamepad or Nf.EnableKeyboard) && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs
-    IO.navVisible = (IO.navActive && g.navId != 0 && !g.navDisableHighlight) || g.navWindowingTarget != null || g.navInitRequest
+    io.navActive = io.navFlags has (Nf.EnableGamepad or Nf.EnableKeyboard) && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs
+    io.navVisible = (io.navActive && g.navId != 0 && !g.navDisableHighlight) || g.navWindowingTarget != null || g.navInitRequest
 
     // Process NavCancel input (to close a popup, get back to parent, clear focus)
     if (NavInput.Cancel.isPressed(InputReadMode.Pressed)) {
@@ -832,7 +832,7 @@ fun navUpdate() {
 
         if (it.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null) {
             // *Fallback* manual-scroll with NavUp/NavDown when window has no navigable item
-            val scrollSpeed = glm.floor(it.calcFontSize() * 100 * IO.deltaTime + 0.5f) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
+            val scrollSpeed = glm.floor(it.calcFontSize() * 100 * io.deltaTime + 0.5f) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
             if (it.dc.navLayerActiveMask == 0 && it.dc.navHasScroll && g.navMoveRequest) {
                 if (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right)
                     it.setScrollX(glm.floor(it.scroll.x + (if (g.navMoveDir == Dir.Left) -1f else 1f) * scrollSpeed))
@@ -902,7 +902,7 @@ fun navUpdateWindowing() {
     var applyToggleLayer = false
 
     val startWindowingWithGamepad = g.navWindowingTarget == null && NavInput.Menu.isPressed(InputReadMode.Pressed)
-    val startWindowingWithKeyboard = g.navWindowingTarget == null && IO.keyCtrl && Key.Tab.isPressed && IO.navFlags has Nf.EnableKeyboard
+    val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.navFlags has Nf.EnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavigable(g.windows.lastIndex, -Int.MAX_VALUE, -1))?.let {
             g.navWindowingTarget = it.rootNonPopupWindow
@@ -913,7 +913,7 @@ fun navUpdateWindowing() {
         }
 
     // Gamepad update
-    g.navWindowingHighlightTimer += IO.deltaTime
+    g.navWindowingHighlightTimer += io.deltaTime
     g.navWindowingTarget?.let {
         if (g.navWindowingInputSource == InputSource.NavGamepad) {
             /*  Highlight only appears after a brief time holding the button, so that a fast tap on PadMenu
@@ -945,8 +945,8 @@ fun navUpdateWindowing() {
             // Visuals only appears after a brief time after pressing TAB the first time, so that a fast CTRL+TAB doesn't add visual noise
             g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingHighlightTimer - 0.15f) / 0.04f)) // 1.0f
             if (Key.Tab.isPressed(true))
-                navUpdateWindowingHighlightWindow(if (IO.keyShift) 1 else -1)
-            if (!IO.keyCtrl)
+                navUpdateWindowingHighlightWindow(if (io.keyShift) 1 else -1)
+            if (!io.keyCtrl)
                 applyFocusWindow = g.navWindowingTarget
         }
     }
@@ -954,20 +954,20 @@ fun navUpdateWindowing() {
     // Keyboard: Press and Release ALT to toggle menu layer
     // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of back-end clearing releases all keys on ALT-TAB
     if ((g.activeId == 0 || g.activeIdAllowOverlap) && NavInput.KeyMenu.isPressed(InputReadMode.Released))
-        if (isMousePosValid(IO.mousePos) == isMousePosValid(IO.mousePosPrev))
+        if (isMousePosValid(io.mousePos) == isMousePosValid(io.mousePosPrev))
             applyToggleLayer = true
 
     // Move window
     g.navWindowingTarget?.let {
         if (it.flags hasnt Wf.NoMove) {
             var moveDelta = Vec2()
-            if (g.navWindowingInputSource == InputSource.NavKeyboard && !IO.keyShift)
+            if (g.navWindowingInputSource == InputSource.NavKeyboard && !io.keyShift)
                 moveDelta = getNavInputAmount2d(NavDirSourceFlags.Keyboard.i, InputReadMode.Down)
             if (g.navWindowingInputSource == InputSource.NavGamepad)
                 moveDelta = getNavInputAmount2d(NavDirSourceFlags.PadLStick.i, InputReadMode.Down)
             if (moveDelta.x != 0f || moveDelta.y != 0f) {
                 val NAV_MOVE_SPEED = 800f
-                val moveSpeed = glm.floor(NAV_MOVE_SPEED * IO.deltaTime * min(IO.displayFramebufferScale.x, IO.displayFramebufferScale.y))
+                val moveSpeed = glm.floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
                 it.posF plusAssign moveDelta * moveSpeed
                 g.navDisableMouseHover = true
                 markIniSettingsDirty(it)
@@ -1011,7 +1011,7 @@ fun navUpdateWindowing() {
 /** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)    */
 fun navProcessItem(window: Window, navBb: Rect, id: Int) {
 
-    //if (!g.IO.NavActive)  // [2017/10/06] Removed this possibly redundant test but I am not sure of all the side-effects yet. Some of the feature here will need to work regardless of using a _NoNavInputs flag.
+    //if (!g.io.NavActive)  // [2017/10/06] Removed this possibly redundant test but I am not sure of all the side-effects yet. Some of the feature here will need to work regardless of using a _NoNavInputs flag.
     //    return;
 
     val itemFlags = window.dc.itemFlags
@@ -1067,7 +1067,7 @@ private var i0 = 0
 
 
 fun navCalcPreferredMousePos(): Vec2 {
-    val window = g.navWindow ?: return IO.mousePos
+    val window = g.navWindow ?: return io.mousePos
     val rectRel = Rect(window.navRectRel[g.navLayer])
     val pos = window.pos + Vec2(rectRel.min.x + min(g.style.framePadding.x * 4, rectRel.width),
             rectRel.max.y - min(g.style.framePadding.y, rectRel.height))

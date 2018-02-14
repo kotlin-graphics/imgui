@@ -3,80 +3,81 @@ package imgui.imgui
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.IO
 import imgui.ImGui.calcTypematicPressedRepeatAmount
+import imgui.ImGui.io
 import imgui.MOUSE_INVALID
+import imgui.g
 import imgui.internal.Rect
-import imgui.Context as g
 
 
 interface imgui_inputs {
 
-    fun getKeyIndex(imguiKey: Int) = IO.keyMap[imguiKey]
+    fun getKeyIndex(imguiKey: Int) = io.keyMap[imguiKey]
 
     /** is key being held. == io.KeysDown[user_key_index]. note that imgui doesn't know the semantic of each entry of io.KeyDown[].
      *  Use your own indices/enums according to how your back-end/engine stored them into KeyDown[]! */
-    fun isKeyDown(userKeyIndex: Int) = if (userKeyIndex < 0) false else IO.keysDown[userKeyIndex]
+    fun isKeyDown(userKeyIndex: Int) = if (userKeyIndex < 0) false else io.keysDown[userKeyIndex]
 
     /** uses user's key indices as stored in the keys_down[] array. if repeat=true.
      *  uses io.KeyRepeatDelay / KeyRepeatRate  */
     fun isKeyPressed(userKeyIndex: Int, repeat: Boolean = true) = if (userKeyIndex < 0) false
     else {
-        val t = IO.keysDownDuration[userKeyIndex]
+        val t = io.keysDownDuration[userKeyIndex]
         when {
             t == 0f -> true
-            repeat && t > IO.keyRepeatDelay -> getKeyPressedAmount(userKeyIndex, IO.keyRepeatDelay, IO.keyRepeatRate) > 0
+            repeat && t > io.keyRepeatDelay -> getKeyPressedAmount(userKeyIndex, io.keyRepeatDelay, io.keyRepeatRate) > 0
             else -> false
         }
     }
 
     /** was key released (went from Down to !Down)..    */
-    fun isKeyReleased(userKeyIndex: Int) = if (userKeyIndex < 0) false else IO.keysDownDurationPrev[userKeyIndex] >= 0f && !IO.keysDown[userKeyIndex]
+    fun isKeyReleased(userKeyIndex: Int) = if (userKeyIndex < 0) false else io.keysDownDurationPrev[userKeyIndex] >= 0f && !io.keysDown[userKeyIndex]
 
     /** Uses provided repeat rate/delay. return a count, most often 0 or 1 but might be >1 if RepeatRate is small enough
      *  that DeltaTime > RepeatRate */
     fun getKeyPressedAmount(keyIndex: Int, repeatDelay: Float, repeatRate: Float): Int {
         if (keyIndex < 0) return 0
-        assert(keyIndex in 0 until IO.keysDown.size)
-        val t = IO.keysDownDuration[keyIndex]
-        return calcTypematicPressedRepeatAmount(t, t - IO.deltaTime, repeatDelay, repeatRate)
+        assert(keyIndex in 0 until io.keysDown.size)
+        val t = io.keysDownDuration[keyIndex]
+        return calcTypematicPressedRepeatAmount(t, t - io.deltaTime, repeatDelay, repeatRate)
     }
 
     /** is mouse button held */
     fun isMouseDown(button: Int): Boolean {
-        assert(button in IO.mouseDown.indices)
-        return IO.mouseDown[button]
+        assert(button in io.mouseDown.indices)
+        return io.mouseDown[button]
     }
 
     /** did mouse button clicked (went from !Down to Down)  */
     fun isMouseClicked(button: Int, repeat: Boolean = false): Boolean {
 
-        assert(button >= 0 && button < IO.mouseDown.size)
-        val t = IO.mouseDownDuration[button]
+        assert(button >= 0 && button < io.mouseDown.size)
+        val t = io.mouseDownDuration[button]
         if (t == 0f)
             return true
 
-        if (repeat && t > IO.keyRepeatDelay) {
-            val delay = IO.keyRepeatDelay
-            val rate = IO.keyRepeatRate
-            if ((glm.mod(t - delay, rate) > rate * 0.5f) != (glm.mod(t - delay - IO.deltaTime, rate) > rate * 0.5f))
+        if (repeat && t > io.keyRepeatDelay) {
+            val delay = io.keyRepeatDelay
+            val rate = io.keyRepeatRate
+            if ((glm.mod(t - delay, rate) > rate * 0.5f) != (glm.mod(t - delay - io.deltaTime, rate) > rate * 0.5f))
                 return true
         }
         return false
     }
 
     /** did mouse button double-clicked. a double-click returns false in IsMouseClicked(). uses io.MouseDoubleClickTime.    */
-    fun isMouseDoubleClicked(button: Int) = IO.mouseDoubleClicked[button]
+    fun isMouseDoubleClicked(button: Int) = io.mouseDoubleClicked[button]
 
     /** did mouse button released (went from Down to !Down) */
-    fun isMouseReleased(button: Int) = IO.mouseReleased[button]
+    fun isMouseReleased(button: Int) = io.mouseReleased[button]
 
     /** is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold */
     fun isMouseDragging(button: Int = 0, lockThreshold: Float = -1f): Boolean {
-        if (!IO.mouseDown[button]) return false
-        val lockThreshold = if (lockThreshold < 0f) IO.mouseDragThreshold else lockThreshold
-        return IO.mouseDragMaxDistanceSqr[button] >= lockThreshold * lockThreshold
+        if (!io.mouseDown[button]) return false
+        val lockThreshold = if (lockThreshold < 0f) io.mouseDragThreshold else lockThreshold
+        return io.mouseDragMaxDistanceSqr[button] >= lockThreshold * lockThreshold
     }
 
     /** Test if mouse cursor is hovering given rectangle
@@ -97,45 +98,45 @@ interface imgui_inputs {
 
         // Expand for touch input
         val rectForTouch = Rect(rectClipped.min - style.touchExtraPadding, rectClipped.max + style.touchExtraPadding)
-        return rectForTouch contains IO.mousePos
+        return rectForTouch contains io.mousePos
     }
 
     /** We typically use ImVec2(-FLT_MAX,-FLT_MAX) to denote an invalid mouse position  */
-    fun isMousePosValid(mousePos: Vec2? = null) = (mousePos ?: IO.mousePos) greaterThan MOUSE_INVALID
+    fun isMousePosValid(mousePos: Vec2? = null) = (mousePos ?: io.mousePos) greaterThan MOUSE_INVALID
 
-    /** shortcut to IO.mousePos provided by user, to be consistent with other calls */
-    val mousePos get() = IO.mousePos
+    /** shortcut to io.mousePos provided by user, to be consistent with other calls */
+    val mousePos get() = io.mousePos
 
     /** retrieve backup of mouse positioning at the time of opening popup we have BeginPopup() into */
-    val mousePosOnOpeningCurrentPopup get() = Vec2(g.currentPopupStack.lastOrNull()?.openMousePos ?: IO.mousePos)
+    val mousePosOnOpeningCurrentPopup get() = Vec2(g.currentPopupStack.lastOrNull()?.openMousePos ?: io.mousePos)
 
     /** dragging amount since clicking. if lockThreshold < -1.0f uses io.MouseDraggingThreshold
      *  NB: This is only valid if isMousePosValid(). Back-ends in theory should always keep mouse position valid
      *  when dragging even outside the client window. */
     fun getMouseDragDelta(button: Int = 0, lockThreshold: Float = -1f): Vec2 {
 
-        assert(button >= 0 && button < IO.mouseDown.size)
+        assert(button >= 0 && button < io.mouseDown.size)
         var lockThreshold = lockThreshold
         if (lockThreshold < 0f)
-            lockThreshold = IO.mouseDragThreshold
-        if (IO.mouseDown[button])
-            if (IO.mouseDragMaxDistanceSqr[button] >= lockThreshold * lockThreshold)
-                return IO.mousePos - IO.mouseClickedPos[button] // Assume we can only get active with left-mouse button (at the moment).
+            lockThreshold = io.mouseDragThreshold
+        if (io.mouseDown[button])
+            if (io.mouseDragMaxDistanceSqr[button] >= lockThreshold * lockThreshold)
+                return io.mousePos - io.mouseClickedPos[button] // Assume we can only get active with left-mouse button (at the moment).
         return Vec2()
     }
 
-    fun resetMouseDragDelta(button: Int = 0) = IO.mouseClickedPos.get(button).put(IO.mousePos) // NB: We don't need to reset g.IO.MouseDragMaxDistanceSqr
+    fun resetMouseDragDelta(button: Int = 0) = io.mouseClickedPos.get(button).put(io.mousePos) // NB: We don't need to reset g.io.MouseDragMaxDistanceSqr
 
     var mouseCursor
         /** Get desired cursor type, reset in newFrame(), this is updated during the frame. valid before render().
-         *  If you use software rendering by setting IO.mouseDrawCursor ImGui will render those for you */
+         *  If you use software rendering by setting io.mouseDrawCursor ImGui will render those for you */
         get() = g.mouseCursor
         /** set desired cursor type */
         set(value) {
             g.mouseCursor = value
         }
 
-    /** Manually override IO.wantCaptureKeyboard flag next frame (said flag is entirely left for your application handle).
+    /** Manually override io.wantCaptureKeyboard flag next frame (said flag is entirely left for your application handle).
      *  e.g. force capture keyboard when your widget is being hovered.  */
     fun captureKeyboardFromApp(capture: Boolean = true) {
         g.wantCaptureKeyboardNextFrame = capture.i

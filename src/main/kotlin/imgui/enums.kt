@@ -1,6 +1,7 @@
 package imgui
 
 import imgui.ImGui.getNavInputAmount
+import imgui.ImGui.io
 import imgui.ImGui.isKeyPressed
 import imgui.internal.InputReadMode
 
@@ -46,7 +47,7 @@ enum class WindowFlags(val i: Int) {
     /** Ensure child windows without border uses style.WindowPadding (ignored by default for non-bordered child windows),
      *  because more convenient)  */
     AlwaysUseWindowPadding(1 shl 16),
-    /** (WIP) Enable resize from any corners and borders. Your back-end needs to honor the different values of IO.mouseCursor set by imgui. */
+    /** (WIP) Enable resize from any corners and borders. Your back-end needs to honor the different values of io.mouseCursor set by imgui. */
     ResizeFromAnySide(1 shl 17),
     /** No gamepad/keyboard navigation within the window    */
     NoNavInputs(1 shl 18),
@@ -305,7 +306,7 @@ val PAYLOAD_TYPE_COLOR_3F = "_COL3F"
 /** float[4], Standard type for colors. User code may use this type. */
 val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 
-/** User fill ImGuiIO.KeyMap[] array with indices into the ImGuiIO.KeysDown[512] array  */
+/** User fill ImGuiio.KeyMap[] array with indices into the ImGuiio.KeysDown[512] array  */
 enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
     Space, Enter, Escape, A, C, V, X, Y, Z;
 
@@ -316,7 +317,7 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
     val i = ordinal
 
     /** JVM implementation of IsKeyPressedMap   */
-    fun isPressed(repeat: Boolean) = isKeyPressed(IO.keyMap[i], repeat)
+    fun isPressed(repeat: Boolean) = isKeyPressed(io.keyMap[i], repeat)
 
     val isPressed get() = isPressed(true)
 
@@ -325,10 +326,10 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
 }
 
 /** [BETA] Gamepad/Keyboard directional navigation
- *  Keyboard: Set IO.navFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill IO.navInputs[]
- *  based on your IO.keyDown[] + IO.keyMap[] arrays.
- *  Gamepad:  Set IO.navFlags |= NavFlags.EnableGamepad to enable. Fill the IO.navInputs[] fields before calling
- *  ::newFrame(). Note that IO.navInputs[] is cleared by ::endFrame().
+ *  Keyboard: Set io.navFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[]
+ *  based on your io.keyDown[] + io.keyMap[] arrays.
+ *  Gamepad:  Set io.navFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling
+ *  ::newFrame(). Note that io.navInputs[] is cleared by ::endFrame().
  *  Read instructions in imgui.cpp for more details.    */
 enum class NavInput {
     // Gamepad Mapping
@@ -368,9 +369,9 @@ enum class NavInput {
     /*  [Internal] Don't use directly! This is used internally to differentiate keyboard from gamepad inputs for
         behaviors that require to differentiate them.
         Keyboard behavior that have no corresponding gamepad mapping (e.g. CTRL + TAB) may be directly reading from
-        IO.keyDown[] instead of IO.navInputs[]. */
+        io.keyDown[] instead of io.navInputs[]. */
 
-    /** toggle menu = IO.keyAlt */
+    /** toggle menu = io.keyAlt */
     KeyMenu,
     /** move left = Arrow keys  */
     KeyLeft,
@@ -389,7 +390,7 @@ enum class NavInput {
     }
 
     /** Equivalent of isKeyDown() for NavInputs[]   */ // JVM TODO check for semantic Key.isPressed/Down
-    fun isDown() = IO.navInputs[i] > 0f
+    fun isDown() = io.navInputs[i] > 0f
 
     /** Equivalent of isKeyPressed() for NavInputs[]    */
     fun isPressed(mode: InputReadMode) = getNavInputAmount(this, mode) > 0f
@@ -397,12 +398,12 @@ enum class NavInput {
 
 /** [BETA] Gamepad/Keyboard directional navigation options  */
 enum class NavFlags {
-    /** Master keyboard navigation enable flag. ::newFrame() will automatically fill IO.navInputs[] based on IO.keyDown[].    */
+    /** Master keyboard navigation enable flag. ::newFrame() will automatically fill io.navInputs[] based on io.keyDown[].    */
     EnableKeyboard,
-    /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill IO.navInputs[].   */
+    /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.navInputs[].   */
     EnableGamepad,
     /** Request navigation to allow moving the mouse cursor. May be useful on TV/console systems where moving a virtual
-     *  mouse is awkward. Will update IO.mousePos and set IO.WantMoveMouse = true. If enabled you MUST honor IO.wantMoveMouse
+     *  mouse is awkward. Will update io.mousePos and set io.WantMoveMouse = true. If enabled you MUST honor io.wantMoveMouse
      *  requests in your binding, otherwise ImGui will react as if the mouse is jumping around back and forth.  */
     MoveMouse,
     /** Do not set the io.WantCaptureKeyboard flag with io.NavActive is set.    */

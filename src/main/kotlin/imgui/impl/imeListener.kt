@@ -6,6 +6,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.DEBUG
+import imgui.g
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.system.*
@@ -13,8 +14,6 @@ import org.lwjgl.system.MemoryUtil.*
 import org.lwjgl.system.windows.RECT
 import org.lwjgl.system.windows.User32.*
 import org.lwjgl.system.windows.WindowProc
-import java.nio.ByteBuffer
-import imgui.Context as g
 
 object imeListner : WindowProc() {
 

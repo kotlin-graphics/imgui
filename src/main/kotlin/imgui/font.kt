@@ -7,7 +7,8 @@ import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
 import glm_.vec2.operators.times
 import glm_.vec4.Vec4
-import imgui.Context.style
+import imgui.ImGui.io
+import imgui.ImGui.style
 import imgui.internal.fileLoadToCharArray
 import imgui.internal.isSpace
 import imgui.internal.upperPowerOfTwo
@@ -22,7 +23,6 @@ import uno.buffer.isNotEmpty
 import uno.convert.decode85
 import uno.stb.stb
 import java.nio.ByteBuffer
-import imgui.Context as g
 
 
 class FontConfig {
@@ -119,7 +119,7 @@ class FontAtlas {
             fonts += Font()
         else
             assert(fonts.isNotEmpty())  /*  When using MergeMode make sure that a font has already been added before.
-                                You can use IO.fonts.addFontDefault to add the default imgui font.  */
+                                You can use io.fonts.addFontDefault to add the default imgui font.  */
         configData.add(fontCfg)
         if (fontCfg.dstFont == null)
             fontCfg.dstFont = fonts.last()
@@ -1456,7 +1456,7 @@ class Font {
         assert(isLoaded)    // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
         assert(scale > 0f)
         g.font = this
-        g.fontBaseSize = IO.fontGlobalScale * g.font.fontSize * g.font.scale
+        g.fontBaseSize = io.fontGlobalScale * g.font.fontSize * g.font.scale
         g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
 
         val atlas = g.font.containerAtlas

@@ -14,6 +14,7 @@ import imgui.ImGui.endChild
 import imgui.ImGui.fontSize
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.inputText
+import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemFocused
 import imgui.ImGui.isItemHovered
@@ -60,83 +61,83 @@ object inputNavigationAndFocus {
 
         collapsingHeader("Inputs, Navigation & Focus") {
 
-            text("WantCaptureMouse: ${IO.wantCaptureMouse}")
-            text("WantCaptureKeyboard: ${IO.wantCaptureKeyboard}")
-            text("WantTextInput: ${IO.wantTextInput}")
-            text("WantMoveMouse: ${IO.wantMoveMouse}")
-            text("NavActive: ${IO.navActive}, NavVisible: ${IO.navVisible}")
+            text("WantCaptureMouse: ${io.wantCaptureMouse}")
+            text("WantCaptureKeyboard: ${io.wantCaptureKeyboard}")
+            text("WantTextInput: ${io.wantTextInput}")
+            text("WantMoveMouse: ${io.wantMoveMouse}")
+            text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
 
-            checkbox("io.MouseDrawCursor", IO::mouseDrawCursor)
+            checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
             sameLine(); showHelpMarker("Request ImGui to render a mouse cursor for you in software. Note that " +
                 "a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware " +
                 "cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both " +
                 "kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
-            checkboxFlags("io.NavFlags: EnableGamepad", IO::navFlags, NavFlags.EnableGamepad.i)
-            checkboxFlags("io.NavFlags: EnableKeyboard", IO::navFlags, NavFlags.EnableKeyboard.i)
-            checkboxFlags("io.NavFlags: MoveMouse", IO::navFlags, NavFlags.MoveMouse.i)
+            checkboxFlags("io.NavFlags: EnableGamepad", io::navFlags, NavFlags.EnableGamepad.i)
+            checkboxFlags("io.NavFlags: EnableKeyboard", io::navFlags, NavFlags.EnableKeyboard.i)
+            checkboxFlags("io.NavFlags: MoveMouse", io::navFlags, NavFlags.MoveMouse.i)
             sameLine(); showHelpMarker("Request ImGui to move your move cursor when using gamepad/keyboard " +
                 "navigation. NewFrame() will change io.MousePos and set the io.WantMoveMouse flag, your backend will " +
                 "need to apply the new mouse position.")
 
             treeNode("Keyboard, Mouse & Navigation State") {
-                if (isMousePosValid()) text("Mouse pos: (%g, %g)", IO.mousePos.x, IO.mousePos.y)
+                if (isMousePosValid()) text("Mouse pos: (%g, %g)", io.mousePos.x, io.mousePos.y)
                 else text("Mouse pos: <INVALID>")
                 text("Mouse down:")
-                for (i in 0 until IO.mouseDown.size)
-                    if (IO.mouseDownDuration[i] >= 0f) {
+                for (i in 0 until io.mouseDown.size)
+                    if (io.mouseDownDuration[i] >= 0f) {
                         sameLine()
-                        text("b$i (%.02f secs)", IO.mouseDownDuration[i])
+                        text("b$i (%.02f secs)", io.mouseDownDuration[i])
                     }
                 text("Mouse clicked:")
-                for (i in 0 until IO.mouseDown.size)
+                for (i in 0 until io.mouseDown.size)
                     if (isMouseClicked(i)) {
                         sameLine()
                         text("b$i")
                     }
                 text("Mouse dbl-clicked:")
-                for (i in 0 until IO.mouseDown.size)
+                for (i in 0 until io.mouseDown.size)
                     if (isMouseDoubleClicked(i)) {
                         sameLine()
                         text("b$i")
                     }
                 text("Mouse released:")
-                for (i in 0 until IO.mouseDown.size)
+                for (i in 0 until io.mouseDown.size)
                     if (isMouseReleased(i)) {
                         sameLine()
                         text("b$i")
                     }
-                text("Mouse wheel: %.1f", IO.mouseWheel)
+                text("Mouse wheel: %.1f", io.mouseWheel)
 
                 text("Keys down:")
-                for (i in IO.keysDown.indices)
-                    if (IO.keysDownDuration[i] >= 0f) {
+                for (i in io.keysDown.indices)
+                    if (io.keysDownDuration[i] >= 0f) {
                         sameLine()
-                        text("$i (%.02f secs)", IO.keysDownDuration[i])
+                        text("$i (%.02f secs)", io.keysDownDuration[i])
                     }
                 text("Keys pressed:")
-                for (i in IO.keysDown.indices)
+                for (i in io.keysDown.indices)
                     if (isKeyPressed(i)) {
                         sameLine()
                         text("$i")
                     }
                 text("Keys release:")
-                for (i in IO.keysDown.indices)
+                for (i in io.keysDown.indices)
                     if (isKeyReleased(i)) {
                         sameLine()
                         text("$i")
                     }
-                val ctrl = if (IO.keyCtrl) "CTRL " else ""
-                val shift = if (IO.keyShift) "SHIFT " else ""
-                val alt = if (IO.keyAlt) "ALT " else ""
-                val super_ = if (IO.keySuper) "SUPER " else ""
+                val ctrl = if (io.keyCtrl) "CTRL " else ""
+                val shift = if (io.keyShift) "SHIFT " else ""
+                val alt = if (io.keyAlt) "ALT " else ""
+                val super_ = if (io.keySuper) "SUPER " else ""
                 text("Keys mods: $ctrl$shift$alt$super_")
 
                 text("NavInputs down:")
-                IO.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
+                io.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
                 text("NavInputs pressed:")
-                IO.navInputsDownDuration.filter { it == 0f }.forEachIndexed { i, it -> sameLine(); text("[$i]") }
+                io.navInputsDownDuration.filter { it == 0f }.forEachIndexed { i, it -> sameLine(); text("[$i]") }
                 text("NavInputs duration:")
-                IO.navInputsDownDuration.filter { it >= 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
+                io.navInputsDownDuration.filter { it >= 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
 
                 button("Hovering me sets the\nkeyboard capture flag")
                 if (isItemHovered()) captureKeyboardFromApp(true)
@@ -238,17 +239,17 @@ object inputNavigationAndFocus {
                     // Draw a line between the button and the mouse cursor
                     with(windowDrawList) {
                         pushClipRectFullScreen()
-                        addLine(IO.mouseClickedPos[0], IO.mousePos, Col.Button.u32, 4f)
+                        addLine(io.mouseClickedPos[0], io.mousePos, Col.Button.u32, 4f)
                         popClipRect()
                     }
 
                     /*  Drag operations gets "unlocked" when the mouse has moved past a certain threshold (the default
-                        threshold is stored in IO.mouseDragThreshold)
+                        threshold is stored in io.mouseDragThreshold)
                         You can request a lower or higher threshold using the second parameter of isMouseDragging() and
                         getMouseDragDelta()     */
                     val valueRaw = getMouseDragDelta(0, 0f)
                     val valueWithLockThreshold = getMouseDragDelta(0)
-                    val mouseDelta = IO.mouseDelta
+                    val mouseDelta = io.mouseDelta
                     sameLine(); text("Raw (${valueRaw.x.i}, ${valueRaw.y.i}), WithLockThresold (${valueWithLockThreshold.x.i}, " +
                             "${valueWithLockThreshold.y.i}), MouseDelta (${mouseDelta.x.i}, ${mouseDelta.y.i})")
                 }

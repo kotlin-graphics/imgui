@@ -9,7 +9,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec3.Vec3i
 import glm_.vec4.Vec4i
-import imgui.Context.style
+import imgui.ImGui.style
 import imgui.IO
 import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemWidth
@@ -22,6 +22,7 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.inputScalarAsWidgetReplacement
+import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
@@ -37,9 +38,9 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
 import imgui.ImGui.textUnformatted
 import imgui.Ref
+import imgui.g
 import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
-import imgui.Context as g
 
 /** Widgets: Drags (tip: ctrl+click on a drag box to input with keyboard. manually input values aren't clamped, can go
  *  off-bounds)
@@ -89,12 +90,12 @@ interface imgui_widgetsDrag {
         // Tabbing or CTRL-clicking on Drag turns it into an input box
         var startTextInput = false
         val tabFocusRequested = focusableItemRegister(window, id)
-        if (tabFocusRequested || (hovered && (IO.mouseClicked[0] || IO.mouseDoubleClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id))) {
+        if (tabFocusRequested || (hovered && (io.mouseClicked[0] || io.mouseDoubleClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id))) {
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()
             g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-            if (tabFocusRequested || IO.keyCtrl || IO.mouseDoubleClicked[0] || g.navInputId == id) {
+            if (tabFocusRequested || io.keyCtrl || io.mouseDoubleClicked[0] || g.navInputId == id) {
                 startTextInput = true
                 g.scalarAsInputTextId = 0
             }

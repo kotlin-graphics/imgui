@@ -23,20 +23,23 @@ import imgui.ImGui.setNextWindowSize
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
-import imgui.Context as g
 import imgui.WindowFlags as Wf
 import imgui.internal.DrawListFlags as Dlf
 
 interface imgui_main {
 
-    var style
-        get() = g.style
-        set(value) {
-            g.style = value
-        }
+    val io get() = gImGui?.io ?: throw Error("No current context. Did you call ImGui::Context() or ImGui::setCurrentContext()?")
 
-    /** Same value as passed to your RenderDrawListsFn() function. valid after Render() and
-     *  until the next call to NewFrame()   */
+    val style get() = gImGui?.style ?: throw Error("No current context. Did you call ImGui::Context() or ImGui::setCurrentContext()?")
+
+//    val style
+//        get() = g.style
+//        set(value) {
+//            g.style = value
+//        }
+
+    /** Same value as passed to your ::renderDrawListsFn() function. Valid after ::render() and
+     *  until the next call to ::newFrame()   */
     val drawData get() = g.drawData.takeIf { it.valid }
 
     /** start a new ImGui frame, you can submit any command from this point until NewFrame()/Render().  */
@@ -46,36 +49,36 @@ interface imgui_main {
 
         /* (We pass an error message in the assert expression as a trick to get it visible to programmers who are not 
             using a debugger, as most assert handlers display their argument)         */
-        assert(IO.deltaTime >= 0f) { "Need a positive deltaTime (zero is tolerated but will cause some timing issues)" }
-        assert(IO.displaySize greaterThanEqual 0) { "Invalid displaySize value" }
-        assert(IO.fonts.fonts.size > 0) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
-        assert(IO.fonts.fonts[0].isLoaded) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
+        assert(io.deltaTime >= 0f) { "Need a positive deltaTime (zero is tolerated but will cause some timing issues)" }
+        assert(io.displaySize greaterThanEqual 0) { "Invalid displaySize value" }
+        assert(io.fonts.fonts.size > 0) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
+        assert(io.fonts.fonts[0].isLoaded) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
         assert(style.curveTessellationTol > 0f) { "Invalid style setting" }
         assert(style.alpha in 0f..1f) { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)" }
         assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount) { "Forgot to call render() or endFrame() at the end of the previous frame?" }
         for (k in Key.values())
-            assert(IO.keyMap[k.i] >= -1 && IO.keyMap[k.i] < IO.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
+            assert(io.keyMap[k.i] >= -1 && io.keyMap[k.i] < io.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
 
         /*  Do a simple check for required key mapping (we intentionally do NOT check all keys to not pressure user into
             setting up everything, but Space is required and was super recently added in 1.54 WIP)         */
-        if (IO.navFlags has NavFlags.EnableKeyboard)
-            assert(IO.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
+        if (io.navFlags has NavFlags.EnableKeyboard)
+            assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
         // Initialize on first frame
         if (!g.initialized) initialize()
 
-        g.time += IO.deltaTime
+        g.time += io.deltaTime
         g.frameCount += 1
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
 
         defaultFont.setCurrent()
         assert(g.font.isLoaded)
-        g.drawListSharedData.clipRectFullscreen.put(0f, 0f, IO.displaySize)
+        g.drawListSharedData.clipRectFullscreen.put(0f, 0f, io.displaySize)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
 
         g.overlayDrawList.clear()
-        g.overlayDrawList.pushTextureId(IO.fonts.texId)
+        g.overlayDrawList.pushTextureId(io.fonts.texId)
         g.overlayDrawList.pushClipRectFullScreen()
         g.overlayDrawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
 
@@ -89,7 +92,7 @@ interface imgui_main {
         g.hoveredIdAllowOverlap = false
         if (!g.activeIdIsAlive && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
             clearActiveId()
-        if (g.activeId != 0) g.activeIdTimer += IO.deltaTime
+        if (g.activeId != 0) g.activeIdTimer += io.deltaTime
         g.activeIdPreviousFrame = g.activeId
         g.activeIdIsAlive = false
         g.activeIdIsJustActivated = false
@@ -97,12 +100,12 @@ interface imgui_main {
             g.scalarAsInputTextId = 0
 
         // Update keyboard input state
-        for (i in 0 until IO.keysDownDuration.size) IO.keysDownDurationPrev[i] = IO.keysDownDuration[i]
-        for (i in 0 until IO.keysDown.size)
-            IO.keysDownDuration[i] =
-                    if (IO.keysDown[i])
-                        if (IO.keysDownDuration[i] < 0f) 0f
-                        else IO.keysDownDuration[i] + IO.deltaTime
+        for (i in 0 until io.keysDownDuration.size) io.keysDownDurationPrev[i] = io.keysDownDuration[i]
+        for (i in 0 until io.keysDown.size)
+            io.keysDownDuration[i] =
+                    if (io.keysDown[i])
+                        if (io.keysDownDuration[i] < 0f) 0f
+                        else io.keysDownDuration[i] + io.deltaTime
                     else -1f
 
         // Elapse drag & drop payload
@@ -122,55 +125,55 @@ interface imgui_main {
         /*  Update mouse input state
             If mouse just appeared or disappeared (usually denoted by -Float.MAX_VALUE component, but in reality we test
             for -256000.0f) we cancel out movement in MouseDelta         */
-        if (isMousePosValid(IO.mousePos) && isMousePosValid(IO.mousePosPrev))
-            IO.mouseDelta = IO.mousePos - IO.mousePosPrev
+        if (isMousePosValid(io.mousePos) && isMousePosValid(io.mousePosPrev))
+            io.mouseDelta = io.mousePos - io.mousePosPrev
         else
-            IO.mouseDelta put 0f
-        if (IO.mouseDelta.x != 0f || IO.mouseDelta.y != 0f)
+            io.mouseDelta put 0f
+        if (io.mouseDelta.x != 0f || io.mouseDelta.y != 0f)
             g.navDisableMouseHover = false
-        IO.mousePosPrev put IO.mousePos
+        io.mousePosPrev put io.mousePos
 
-        for (i in IO.mouseDown.indices) {
-            IO.mouseClicked[i] = IO.mouseDown[i] && IO.mouseDownDuration[i] < 0f
-            IO.mouseReleased[i] = !IO.mouseDown[i] && IO.mouseDownDuration[i] >= 0f
-            IO.mouseDownDurationPrev[i] = IO.mouseDownDuration[i]
-            IO.mouseDownDuration[i] = when (IO.mouseDown[i]) {
-                true -> if (IO.mouseDownDuration[i] < 0f) 0f else IO.mouseDownDuration[i] + IO.deltaTime
+        for (i in io.mouseDown.indices) {
+            io.mouseClicked[i] = io.mouseDown[i] && io.mouseDownDuration[i] < 0f
+            io.mouseReleased[i] = !io.mouseDown[i] && io.mouseDownDuration[i] >= 0f
+            io.mouseDownDurationPrev[i] = io.mouseDownDuration[i]
+            io.mouseDownDuration[i] = when (io.mouseDown[i]) {
+                true -> if (io.mouseDownDuration[i] < 0f) 0f else io.mouseDownDuration[i] + io.deltaTime
                 else -> -1f
             }
-            IO.mouseDoubleClicked[i] = false
-            if (IO.mouseClicked[i]) {
-                if (g.time - IO.mouseClickedTime[i] < IO.mouseDoubleClickTime) {
-                    if ((IO.mousePos - IO.mouseClickedPos[i]).lengthSqr < IO.mouseDoubleClickMaxDist * IO.mouseDoubleClickMaxDist)
-                        IO.mouseDoubleClicked[i] = true
-                    IO.mouseClickedTime[i] = -Float.MAX_VALUE   // so the third click isn't turned into a double-click
+            io.mouseDoubleClicked[i] = false
+            if (io.mouseClicked[i]) {
+                if (g.time - io.mouseClickedTime[i] < io.mouseDoubleClickTime) {
+                    if ((io.mousePos - io.mouseClickedPos[i]).lengthSqr < io.mouseDoubleClickMaxDist * io.mouseDoubleClickMaxDist)
+                        io.mouseDoubleClicked[i] = true
+                    io.mouseClickedTime[i] = -Float.MAX_VALUE   // so the third click isn't turned into a double-click
                 } else
-                    IO.mouseClickedTime[i] = g.time
-                IO.mouseClickedPos[i] put IO.mousePos
-                IO.mouseDragMaxDistanceSqr[i] = 0f
-            } else if (IO.mouseDown[i]) {
-                val mouseDelta = IO.mousePos - IO.mouseClickedPos[i]
-                IO.mouseDragMaxDistanceAbs[i].x = max(IO.mouseDragMaxDistanceAbs[i].x, if (mouseDelta.x < 0f) -mouseDelta.x else mouseDelta.x)
-                IO.mouseDragMaxDistanceAbs[i].y = max(IO.mouseDragMaxDistanceAbs[i].y, if (mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y)
-                IO.mouseDragMaxDistanceSqr[i] = max(IO.mouseDragMaxDistanceSqr[i], mouseDelta.lengthSqr)
+                    io.mouseClickedTime[i] = g.time
+                io.mouseClickedPos[i] put io.mousePos
+                io.mouseDragMaxDistanceSqr[i] = 0f
+            } else if (io.mouseDown[i]) {
+                val mouseDelta = io.mousePos - io.mouseClickedPos[i]
+                io.mouseDragMaxDistanceAbs[i].x = max(io.mouseDragMaxDistanceAbs[i].x, if (mouseDelta.x < 0f) -mouseDelta.x else mouseDelta.x)
+                io.mouseDragMaxDistanceAbs[i].y = max(io.mouseDragMaxDistanceAbs[i].y, if (mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y)
+                io.mouseDragMaxDistanceSqr[i] = max(io.mouseDragMaxDistanceSqr[i], mouseDelta.lengthSqr)
             }
         }
 
         // Calculate frame-rate for the user, as a purely luxurious feature
-        g.framerateSecPerFrameAccum += IO.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
-        g.framerateSecPerFrame[g.framerateSecPerFrameIdx] = IO.deltaTime
+        g.framerateSecPerFrameAccum += io.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
+        g.framerateSecPerFrame[g.framerateSecPerFrameIdx] = io.deltaTime
         g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
-        IO.framerate = 1.0f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
+        io.framerate = 1.0f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
 
         // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering).
         if (g.movingWindow?.moveId == g.activeId && g.activeIdSource == InputSource.Mouse) {
             keepAliveId(g.activeId)
             assert(g.movingWindow != null)
-            if (IO.mouseDown[0]) {
+            if (io.mouseDown[0]) {
                 /*  MovingWindow = window we clicked on, could be a child window. We track it to preserve Focus and
                     so that ActiveIdWindow == MovingWindow and ActiveId == MovingWindow->MoveId for consistency.    */
                 val actuallyMovingWindow = g.movingWindow!!.rootWindow!!
-                val pos = IO.mousePos - g.activeIdClickOffset
+                val pos = io.mousePos - g.activeIdClickOffset
                 if (actuallyMovingWindow.posF.x != pos.x || actuallyMovingWindow.posF.y != pos.y) {
                     markIniSettingsDirty(actuallyMovingWindow)
                     actuallyMovingWindow.posF put pos
@@ -186,7 +189,7 @@ interface imgui_main {
             g.activeIdWindow?.let {
                 if (it.moveId == g.activeId) {
                     keepAliveId(g.activeId)
-                    if (!IO.mouseDown[0])
+                    if (!io.mouseDown[0])
                         clearActiveId()
                 }
             }
@@ -195,9 +198,9 @@ interface imgui_main {
 
         // Delay saving settings so we don't spam disk too much
         if (g.settingsDirtyTimer > 0.0f) {
-            g.settingsDirtyTimer -= IO.deltaTime
+            g.settingsDirtyTimer -= io.deltaTime
             if (g.settingsDirtyTimer <= 0.0f)
-                saveIniSettingsToDisk(IO.iniFilename)
+                saveIniSettingsToDisk(io.iniFilename)
         }
 
         /*  Find the window we are hovering
@@ -206,12 +209,12 @@ interface imgui_main {
                 is lagging as this point.
             - We also support the moved window toggling the NoInputs flag after moving has started in order to be able to detect
                 windows below it, which is useful for e.g. docking mechanisms.  */
-        g.hoveredWindow = if (g.movingWindow?.flags?.hasnt(Wf.NoInputs) == true) g.movingWindow else findHoveredWindow(IO.mousePos)
+        g.hoveredWindow = if (g.movingWindow?.flags?.hasnt(Wf.NoInputs) == true) g.movingWindow else findHoveredWindow(io.mousePos)
         g.hoveredRootWindow = g.hoveredWindow?.rootWindow
 
         val modalWindow = frontMostModalRootWindow
         if (modalWindow != null) {
-            g.modalWindowDarkeningRatio = glm.min(g.modalWindowDarkeningRatio + IO.deltaTime * 6f, 1f)
+            g.modalWindowDarkeningRatio = glm.min(g.modalWindowDarkeningRatio + io.deltaTime * 6f, 1f)
             g.hoveredRootWindow?.let {
                 if (!it.isChildOf(modalWindow)) {
                     g.hoveredWindow = null
@@ -226,25 +229,25 @@ interface imgui_main {
             We need to track click ownership.   */
         var mouseEarliestButtonDown = -1
         var mouseAnyDown = false
-        for (i in IO.mouseDown.indices) {
-            if (IO.mouseClicked[i])
-                IO.mouseDownOwned[i] = g.hoveredWindow != null || g.openPopupStack.isNotEmpty()
-            mouseAnyDown = mouseAnyDown || IO.mouseDown[i]
-            if (IO.mouseDown[i])
-                if (mouseEarliestButtonDown == -1 || IO.mouseClickedTime[i] < IO.mouseClickedTime[mouseEarliestButtonDown])
+        for (i in io.mouseDown.indices) {
+            if (io.mouseClicked[i])
+                io.mouseDownOwned[i] = g.hoveredWindow != null || g.openPopupStack.isNotEmpty()
+            mouseAnyDown = mouseAnyDown || io.mouseDown[i]
+            if (io.mouseDown[i])
+                if (mouseEarliestButtonDown == -1 || io.mouseClickedTime[i] < io.mouseClickedTime[mouseEarliestButtonDown])
                     mouseEarliestButtonDown = i
         }
-        val mouseAvailToImgui = mouseEarliestButtonDown == -1 || IO.mouseDownOwned[mouseEarliestButtonDown]
-        IO.wantCaptureMouse =
+        val mouseAvailToImgui = mouseEarliestButtonDown == -1 || io.mouseDownOwned[mouseEarliestButtonDown]
+        io.wantCaptureMouse =
                 if (g.wantCaptureMouseNextFrame != -1) g.wantCaptureMouseNextFrame != 0
                 else (mouseAvailToImgui && (g.hoveredWindow != null || mouseAnyDown)) || g.openPopupStack.isNotEmpty()
-        IO.wantCaptureKeyboard =
+        io.wantCaptureKeyboard =
                 if (g.wantCaptureKeyboardNextFrame != -1) g.wantCaptureKeyboardNextFrame != 0
                 else g.activeId != 0 || modalWindow != null
-        if (IO.navActive && IO.navFlags has NavFlags.EnableKeyboard && IO.navFlags hasnt NavFlags.NoCaptureKeyboard)
-            IO.wantCaptureKeyboard = true
+        if (io.navActive && io.navFlags has NavFlags.EnableKeyboard && io.navFlags hasnt NavFlags.NoCaptureKeyboard)
+            io.wantCaptureKeyboard = true
 
-        IO.wantTextInput = g.wantTextInputNextFrame != -1 && g.wantTextInputNextFrame != 0
+        io.wantTextInput = g.wantTextInputNextFrame != -1 && g.wantTextInputNextFrame != 0
         g.mouseCursor = MouseCursor.Arrow
         g.wantCaptureKeyboardNextFrame = -1
         g.wantCaptureMouseNextFrame = -1
@@ -259,7 +262,7 @@ interface imgui_main {
         }
 
         // Mouse wheel scrolling, scale
-        if (g.hoveredWindow != null && !g.hoveredWindow!!.collapsed && (IO.mouseWheel != 0f || IO.mouseWheelH != 0f)) {
+        if (g.hoveredWindow != null && !g.hoveredWindow!!.collapsed && (io.mouseWheel != 0f || io.mouseWheelH != 0f)) {
             /*  If a child window has the WindowFlags.NoScrollWithMouse flag, we give a chance to scroll its parent
                 (unless either WindowFlags.NoInputs or WindowFlags.NoScrollbar are also set).             */
             val window = g.hoveredWindow!!
@@ -269,41 +272,41 @@ interface imgui_main {
                 scrollWindow.parentWindow?.let { scrollWindow = it }
             val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs
 
-            if (IO.mouseWheel != 0f)
-                if (IO.keyCtrl && IO.fontAllowUserScaling) {
+            if (io.mouseWheel != 0f)
+                if (io.keyCtrl && io.fontAllowUserScaling) {
                     // Zoom / Scale window
-                    val newFontScale = glm.clamp(window.fontWindowScale + IO.mouseWheel * 0.1f, 0.5f, 2.5f)
+                    val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
                     val scale = newFontScale / window.fontWindowScale
                     window.fontWindowScale = newFontScale
 
-                    val offset = window.size * (1f - scale) * (IO.mousePos - window.pos) / window.size
+                    val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
                     with(window) {
                         pos plusAssign offset
                         posF plusAssign offset
                         size timesAssign scale
                         sizeFull timesAssign scale
                     }
-                } else if (!IO.keyCtrl && scrollAllowed) {
+                } else if (!io.keyCtrl && scrollAllowed) {
                     // Mouse wheel vertical scrolling
                     var scrollAmount = 5 * scrollWindow.calcFontSize()
                     scrollAmount = min(scrollAmount,
                             (scrollWindow.contentsRegionRect.height + scrollWindow.windowPadding.y * 2f) * 0.67f).i.f
-                    scrollWindow.setScrollY(scrollWindow.scroll.y - IO.mouseWheel * scrollAmount)
+                    scrollWindow.setScrollY(scrollWindow.scroll.y - io.mouseWheel * scrollAmount)
                 }
-            if (IO.mouseWheelH != 0f && scrollAllowed) {
+            if (io.mouseWheelH != 0f && scrollAllowed) {
                 // Mouse wheel horizontal scrolling (for hardware that supports it)
                 val scrollAmount = scrollWindow.calcFontSize()
-                if (!IO.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse)
-                    window.setScrollX(window.scroll.x - IO.mouseWheelH * scrollAmount)
+                if (!io.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse)
+                    window.setScrollX(window.scroll.x - io.mouseWheelH * scrollAmount)
             }
         }
 
         // Pressing TAB activate widget focus
         g.navWindow?.let {
-            if (g.activeId == 0 && it.active && it.flags hasnt Wf.NoNavInputs && !IO.keyCtrl && Key.Tab.isPressed(false)) {
+            if (g.activeId == 0 && it.active && it.flags hasnt Wf.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed(false)) {
                 if (g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE)
-                    it.focusIdxTabRequestNext = g.navIdTabCounter + 1 + if (IO.keyShift) -1 else 1
-                else it.focusIdxTabRequestNext = if (IO.keyShift) -1 else 0
+                    it.focusIdxTabRequestNext = g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
+                else it.focusIdxTabRequestNext = if (io.keyShift) -1 else 0
             }
         }
         g.navIdTabCounter = Int.MAX_VALUE
@@ -348,9 +351,9 @@ interface imgui_main {
             windows in the first place, or consistently respond to Begin() returning false. */
         if (style.alpha > 0f) {
             // Gather windows to render
-            IO.metricsActiveWindows = 0
-            IO.metricsRenderIndices = 0
-            IO.metricsRenderVertices = 0
+            io.metricsActiveWindows = 0
+            io.metricsRenderIndices = 0
+            io.metricsRenderVertices = 0
             g.drawDataBuilder.clear()
             val windowToRenderFrontMost = g.navWindowingTarget.takeIf {
                 it?.flags?.hasnt(Wf.NoBringToFrontOnFocus) ?: false
@@ -367,9 +370,9 @@ interface imgui_main {
             val offset = Vec2()
             val size = Vec2()
             val uv = Array(4) { Vec2() }
-            if (IO.mouseDrawCursor && IO.fonts.getMouseCursorTexData(g.mouseCursor, offset, size, uv)) {
-                val pos = IO.mousePos - offset
-                val texId = IO.fonts.texId
+            if (io.mouseDrawCursor && io.fonts.getMouseCursorTexData(g.mouseCursor, offset, size, uv)) {
+                val pos = io.mousePos - offset
+                val texId = io.fonts.texId
                 val sc = style.mouseCursorScale
                 g.overlayDrawList.pushTextureId(texId)
                 g.overlayDrawList.addImage(texId, pos + Vec2(1, 0) * sc, pos + Vec2(1, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
@@ -383,12 +386,12 @@ interface imgui_main {
 
             // Setup ImDrawData structure for end-user
             setupDrawData(g.drawDataBuilder.layers[0], g.drawData)
-            IO.metricsRenderVertices = g.drawData.totalVtxCount
-            IO.metricsRenderIndices = g.drawData.totalIdxCount
+            io.metricsRenderVertices = g.drawData.totalVtxCount
+            io.metricsRenderIndices = g.drawData.totalIdxCount
 
             // Render. If user hasn't set a callback then they may retrieve the draw data via GetDrawData()
-            if (g.drawData.cmdListsCount > 0 && IO.renderDrawListsFn != null)
-                IO.renderDrawListsFn!!(g.drawData)
+            if (g.drawData.cmdListsCount > 0 && io.renderDrawListsFn != null)
+                io.renderDrawListsFn!!(g.drawData)
         }
     }
 
@@ -404,9 +407,9 @@ interface imgui_main {
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
-        if (/*IO.imeSetInputScreenPosFn &&*/ (g.osImePosRequest - g.osImePosSet).lengthSqr > 0.0001f) {
+        if (/*io.imeSetInputScreenPosFn &&*/ (g.osImePosRequest - g.osImePosSet).lengthSqr > 0.0001f) {
 //            (LwjglGL3.windowProc!! as WindowProc).in
-//            g.IO.ImeSetInputScreenPosFn((int) g . OsImePosRequest . x, (int) g . OsImePosRequest . y)
+//            g.io.ImeSetInputScreenPosFn((int) g . OsImePosRequest . x, (int) g . OsImePosRequest . y)
             g.osImePosSet put g.osImePosRequest
         }
 
@@ -421,14 +424,14 @@ interface imgui_main {
         if (g.activeId == 0 && g.hoveredId == 0)
             if (g.navWindow == null || !g.navWindow!!.appearing) { // Unless we just made a window/popup appear
                 // Click to focus window and start moving (after we're done with all our widgets)
-                if (IO.mouseClicked[0])
+                if (io.mouseClicked[0])
                     if (g.hoveredRootWindow != null) {
                         /*  Set ActiveId even if the _NoMove flag is set, without it dragging away from a window
                             with _NoMove would activate hover on other windows.                         */
                         g.hoveredWindow.focus()
                         setActiveId(g.hoveredWindow!!.moveId, g.hoveredWindow)
                         g.navDisableHighlight = true
-                        g.activeIdClickOffset = IO.mousePos - g.hoveredRootWindow!!.pos
+                        g.activeIdClickOffset = io.mousePos - g.hoveredRootWindow!!.pos
                         if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove)
                             g.movingWindow = g.hoveredWindow
                     } else if (g.navWindow != null && frontMostModalRootWindow == null)
@@ -436,7 +439,7 @@ interface imgui_main {
 
                 /*  With right mouse button we close popups without changing focus
                 (The left mouse button path calls FocusWindow which will lead NewFrame::closePopupsOverWindow to trigger) */
-                if (IO.mouseClicked[1]) {
+                if (io.mouseClicked[1]) {
                     /*  Find the top-most window between HoveredWindow and the front most Modal Window.
                         This is where we can trim the popup stack.  */
                     val modal = frontMostModalRootWindow
@@ -466,62 +469,15 @@ interface imgui_main {
         g.windows.addAll(g.windowsSortBuffer)
 
         // Clear Input data for next frame
-        IO.mouseWheel = 0f
-        IO.mouseWheelH = 0f
-        IO.inputCharacters.fill(NUL)
-        IO.navInputs.fill(0f)
+        io.mouseWheel = 0f
+        io.mouseWheelH = 0f
+        io.inputCharacters.fill(NUL)
+        io.navInputs.fill(0f)
 
         g.frameCountEnded = g.frameCount
     }
 
-    /** This function is merely here to free heap allocations.     */
-    fun shutdown() {
-
-        /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
-            (which would happen if we never called NewFrame)         */
-//        if (IO.fonts) // Testing for NULL to allow user to NULLify in case of running Shutdown() on multiple contexts. Bit hacky.
-        IO.fonts.clear()
-
-        // Cleanup of other data are conditional on actually having initialize ImGui.
-        if (!g.initialized) return
-
-        saveIniSettingsToDisk(IO.iniFilename)
-
-        for (window in g.windows) window.clear()
-        g.windows.clear()
-        g.windowsSortBuffer.clear()
-        g.currentWindow = null
-        g.currentWindowStack.clear()
-        g.windowsById.clear()
-        g.navWindow = null
-        g.hoveredWindow = null
-        g.hoveredRootWindow = null
-        g.activeIdWindow = null
-        g.movingWindow = null
-        g.settings.clear()
-        g.colorModifiers.clear()
-        g.styleModifiers.clear()
-        g.fontStack.clear()
-        g.openPopupStack.clear()
-        g.currentPopupStack.clear()
-        g.drawDataBuilder.clear()
-        g.overlayDrawList.clearFreeMemory()
-        g.privateClipboard = ""
-        g.inputTextState.text = charArrayOf()
-        g.inputTextState.initialText = charArrayOf()
-        g.inputTextState.tempTextBuffer = charArrayOf()
-
-//        if (g.logFile != null && g.logFile != stdout) { TODO
-//            fclose(g.LogFile)
-//            g.LogFile = NULL
-//        }
-        g.logClipboard.setLength(0)
-
-        g.initialized = false
-    }
-
     companion object {
-
 
         /** Handle resize for: Resize Grips, Borders, Gamepad
          * @return borderHelf   */
@@ -555,14 +511,14 @@ interface imgui_main {
                 if (hovered || held)
                     g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
 
-                if (g.hoveredWindow === window && held && IO.mouseDoubleClicked[0] && resizeGripN == 0) {
+                if (g.hoveredWindow === window && held && g.io.mouseDoubleClicked[0] && resizeGripN == 0) {
                     // Manual auto-fit when double-clicking
                     sizeTarget put window.calcSizeAfterConstraint(sizeAutoFit)
                     clearActiveId()
                 } else if (held) {
                     // Resize from any of the four corners
                     // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
-                    val cornerTarget = IO.mousePos - g.activeIdClickOffset + resizeRect.size * grip.cornerPos // Corner of the window corresponding to our corner grip
+                    val cornerTarget = g.io.mousePos - g.activeIdClickOffset + resizeRect.size * grip.cornerPos // Corner of the window corresponding to our corner grip
                     window.calcResizePosSizeFromAnyCorner(cornerTarget, grip.cornerPos, posTarget, sizeTarget)
                 }
                 if (resizeGripN == 0 || held || hovered)
@@ -581,19 +537,19 @@ interface imgui_main {
                     val borderTarget = Vec2(window.pos)
                     val borderPosN = when (borderN) {
                         0 -> {
-                            borderTarget.y = IO.mousePos.y - g.activeIdClickOffset.y
+                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y
                             Vec2(0, 0)
                         }
                         1 -> {
-                            borderTarget.x = IO.mousePos.x - g.activeIdClickOffset.x + BORDER_SIZE
+                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + BORDER_SIZE
                             Vec2(1, 0)
                         }
                         2 -> {
-                            borderTarget.y = IO.mousePos.y - g.activeIdClickOffset.y + BORDER_SIZE
+                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + BORDER_SIZE
                             Vec2(0, 1)
                         }
                         3 -> {
-                            borderTarget.x = IO.mousePos.x - g.activeIdClickOffset.x
+                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x
                             Vec2(0, 0)
                         }
                         else -> Vec2(0, 0)
@@ -606,13 +562,13 @@ interface imgui_main {
             // Navigation/gamepad resize
             if (g.navWindowingTarget === window) {
                 val navResizeDelta = Vec2()
-                if (g.navWindowingInputSource == InputSource.NavKeyboard && IO.keyShift)
+                if (g.navWindowingInputSource == InputSource.NavKeyboard && g.io.keyShift)
                     navResizeDelta put getNavInputAmount2d(NavDirSourceFlags.Keyboard.i, InputReadMode.Down)
                 if (g.navWindowingInputSource == InputSource.NavGamepad)
                     navResizeDelta put getNavInputAmount2d(NavDirSourceFlags.PadDPad.i, InputReadMode.Down)
                 if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
                     val NAV_RESIZE_SPEED = 600f
-                    navResizeDelta *= glm.floor(NAV_RESIZE_SPEED * IO.deltaTime * min(IO.displayFramebufferScale.x, IO.displayFramebufferScale.y))
+                    navResizeDelta *= glm.floor(NAV_RESIZE_SPEED * g.io.deltaTime * min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
                     g.navWindowingToggleLayer = false
                     g.navDisableMouseHover = true
                     resizeGripCol[0] = Col.ResizeGripActive.u32
