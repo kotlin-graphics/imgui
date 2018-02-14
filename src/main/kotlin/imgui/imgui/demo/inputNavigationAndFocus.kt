@@ -9,11 +9,13 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.captureKeyboardFromApp
 import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
 import imgui.ImGui.endChild
 import imgui.ImGui.fontSize
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.inputText
 import imgui.ImGui.isItemActive
+import imgui.ImGui.isItemFocused
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isKeyPressed
 import imgui.ImGui.isKeyReleased
@@ -30,6 +32,7 @@ import imgui.ImGui.pushAllowKeyboardFocus
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setKeyboardFocusHere
+import imgui.ImGui.sliderFloat3
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.windowDrawList
@@ -39,7 +42,7 @@ import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 import imgui.FocusedFlags as Ff
 import imgui.HoveredFlags as Hf
 
-object inputAndFocus {
+object inputNavigationAndFocus {
 
     /* Tabbing */
     var buf0 = "dummy".toCharArray(CharArray(32))
@@ -47,24 +50,35 @@ object inputAndFocus {
 
     /* Focus from code */
     var buf1 = "click on a button to set focus".toCharArray(CharArray(128))
+    val f3 = FloatArray(3)
+    var float3 = 0f
 
     /** Focused & Hovered Test */
     var embedAllInsideAchildWindow = false
 
     operator fun invoke() {
 
-        collapsingHeader("Inputs & Focus") {
-
-            checkbox("io.MouseDrawCursor", IO::mouseDrawCursor)
-            sameLine(); showHelpMarker("Request ImGui to render a mouse cursor for you in software. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals." +
-                "\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
+        collapsingHeader("Inputs, Navigation & Focus") {
 
             text("WantCaptureMouse: ${IO.wantCaptureMouse}")
             text("WantCaptureKeyboard: ${IO.wantCaptureKeyboard}")
             text("WantTextInput: ${IO.wantTextInput}")
             text("WantMoveMouse: ${IO.wantMoveMouse}")
+            text("NavActive: ${IO.navActive}, NavVisible: ${IO.navVisible}")
 
-            treeNode("Keyboard & Mouse State") {
+            checkbox("io.MouseDrawCursor", IO::mouseDrawCursor)
+            sameLine(); showHelpMarker("Request ImGui to render a mouse cursor for you in software. Note that " +
+                "a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware " +
+                "cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both " +
+                "kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
+            checkboxFlags("io.NavFlags: EnableGamepad", IO::navFlags, NavFlags.EnableGamepad.i)
+            checkboxFlags("io.NavFlags: EnableKeyboard", IO::navFlags, NavFlags.EnableKeyboard.i)
+            checkboxFlags("io.NavFlags: MoveMouse", IO::navFlags, NavFlags.MoveMouse.i)
+            sameLine(); showHelpMarker("Request ImGui to move your move cursor when using gamepad/keyboard " +
+                "navigation. NewFrame() will change io.MousePos and set the io.WantMoveMouse flag, your backend will " +
+                "need to apply the new mouse position.")
+
+            treeNode("Keyboard, Mouse & Navigation State") {
                 if (isMousePosValid()) text("Mouse pos: (%g, %g)", IO.mousePos.x, IO.mousePos.y)
                 else text("Mouse pos: <INVALID>")
                 text("Mouse down:")
@@ -114,8 +128,15 @@ object inputAndFocus {
                 val ctrl = if (IO.keyCtrl) "CTRL " else ""
                 val shift = if (IO.keyShift) "SHIFT " else ""
                 val alt = if (IO.keyAlt) "ALT " else ""
-                val `super` = if (IO.keySuper) "SUPER " else ""
-                text("Keys mods: $ctrl$shift$alt$`super`")
+                val super_ = if (IO.keySuper) "SUPER " else ""
+                text("Keys mods: $ctrl$shift$alt$super_")
+
+                text("NavInputs down:")
+                IO.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
+                text("NavInputs pressed:")
+                IO.navInputsDownDuration.filter { it == 0f }.forEachIndexed { i, it -> sameLine(); text("[$i]") }
+                text("NavInputs duration:")
+                IO.navInputsDownDuration.filter { it >= 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
 
                 button("Hovering me sets the\nkeyboard capture flag")
                 if (isItemHovered()) captureKeyboardFromApp(true)
@@ -157,7 +178,16 @@ object inputAndFocus {
                 popAllowKeyboardFocus()
 
                 text("Item with focus: ${if (hasFocus != 0) "$hasFocus" else "<none>"}")
-                textWrapped("Cursor & selection are preserved when refocusing last used item in code.")
+
+                // Use >= 0 parameter to SetKeyboardFocusHere() to focus an upcoming item
+                var focusAhead = -1
+                if (button("Focus on X")) focusAhead = 0; sameLine()
+                if (button("Focus on Y")) focusAhead = 1; sameLine()
+                if (button("Focus on Z")) focusAhead = 2
+                if (focusAhead != -1) setKeyboardFocusHere(focusAhead)
+                sliderFloat3("Float3", f3, 0f, 1f)
+
+                textWrapped("NB: Cursor & selection are preserved when refocusing last used item in code.")
             }
 
             treeNode("Focused & Hovered Test") {
@@ -230,7 +260,8 @@ object inputAndFocus {
                 sameLine(); showHelpMarker("Your application can render a different mouse cursor based on what GetMouseCursor() returns. If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, otherwise your backend needs to handle it.")
                 for (i in 0 until MouseCursor.Count.i) {
                     bullet(); selectable("Mouse cursor $i: ${MouseCursor.of(i)}", false)
-                    if (isItemHovered()) mouseCursor = MouseCursor.of(i)
+                    if (isItemHovered() || isItemFocused)
+                        mouseCursor = MouseCursor.of(i)
                 }
             }
         }

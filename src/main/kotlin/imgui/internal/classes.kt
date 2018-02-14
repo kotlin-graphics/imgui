@@ -33,6 +33,11 @@ class Rect {
 
     constructor()
 
+    constructor(min: Vec2i, max: Vec2i) {
+        this.min put min
+        this.max put max
+    }
+
     constructor(min: Vec2i, max: Vec2) {
         this.min put min
         this.max = max
@@ -143,6 +148,11 @@ class Rect {
 
     val isInverted get() = min.x > max.x || min.y > max.y
     val isFinite get() = min.x != Float.MAX_VALUE
+
+    fun put(min: Vec2, max: Vec2) {
+        this.min put min
+        this.max put max
+    }
 
     fun put(x1: Float, y1: Float, x2: Float, y2: Float) {
         min.put(x1, y1)
@@ -334,6 +344,33 @@ class DrawDataBuilder {
     }
 }
 
+class NavMoveResult {
+    /** Best candidate  */
+    var id = 0
+    /** Best candidate window.idStack.last() - to compare context  */
+    var parentId = 0
+    /** Best candidate window   */
+    var window: Window? = null
+    /** Best candidate box distance to current NavId    */
+    var distBox = Float.MAX_VALUE
+    /** Best candidate center distance to current NavId */
+    var distCenter = Float.MAX_VALUE
+
+    var distAxial = Float.MAX_VALUE
+    /** Best candidate bounding box in window relative space    */
+    var rectRel = Rect()
+
+    fun clear() {
+        id = 0
+        parentId = 0
+        window = null
+        distBox = Float.MAX_VALUE
+        distCenter = Float.MAX_VALUE
+        distAxial = Float.MAX_VALUE
+        rectRel = Rect()
+    }
+}
+
 /** Storage for SetNexWindow** functions    */
 class NextWindowData {
     var posCond = Cond.Null
@@ -390,6 +427,8 @@ class DrawContext {
     var logLinePosY = -1f
 
     var treeDepth = 0
+    /** Store a copy of !g.NavIdIsAlive for TreeDepth 0..31 */
+    var treeDepthMayCloseOnPop = 0
 
     var lastItemId = 0
     /** ItemStatusFlags */
@@ -398,6 +437,18 @@ class DrawContext {
     var lastItemRect = Rect()
     /** End-user display rect (only valid if LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) */
     var lastItemDisplayRect = Rect()
+
+    var navHideHighlightOneFrame = false
+    /** Set when scrolling can be used (ScrollMax > 0.0f)   */
+    var navHasScroll = false
+    /** Current layer, 0..31 (we currently only use 0..1)   */
+    var navLayerCurrent = 0
+    /** = (1 << navLayerCurrent) used by ::itemAdd prior to clipping. */
+    var navLayerCurrentMask = 1 shl 0
+    /** Which layer have been written to (result from previous frame)   */
+    var navLayerActiveMask = 0
+    /** Which layer have been written to (buffer for current frame) */
+    var navLayerActiveMaskNext = 0
 
     var menuBarAppending = false
 
@@ -408,6 +459,8 @@ class DrawContext {
     var stateStorage = Storage()
 
     var layoutType = LayoutType.Vertical
+
+    var parentLayoutType = LayoutType.Vertical
 
 
     /*  We store the current settings outside of the vectors to increase memory locality (reduce cache misses).
@@ -477,6 +530,8 @@ class Window(var context: imgui.Context, var name: String) {
     var windowBorderSize = 1f
     /** == window->GetID("#MOVE")   */
     var moveId: Int
+    /** Id of corresponding item in parent window (for child windows)   */
+    var childId = 0
 
     var scroll = Vec2()
     /** target scroll position. stored as cursor position with scrolling canceled out, so the highest point is always
@@ -498,6 +553,8 @@ class Window(var context: imgui.Context, var name: String) {
     var writeAccessed = false
     /** Set when collapsing window to become only title-bar */
     var collapsed = false
+
+    var collapseToggleWanted = false
     /** Set when items can safely be all clipped (e.g. window not visible or collapsed) */
     var skipItems = false
     /** Set during the frame where the window is appearing (or re-appearing)    */
@@ -543,6 +600,7 @@ class Window(var context: imgui.Context, var name: String) {
     init {
         idStack.add(id)
         moveId = getId("#MOVE")
+        childId = 0
     }
 
     /** = DrawList->clip_rect_stack.back(). Scissoring / clipping rectangle. x1, y1, x2, y2.    */
@@ -572,6 +630,17 @@ class Window(var context: imgui.Context, var name: String) {
     var rootWindow: Window? = null
     /** Generally point to ourself. Used to display TitleBgActive color and for selecting which window to use for NavWindowing  */
     var rootNonPopupWindow: Window? = null
+
+
+    /** Generally point to ourself. If we are a child window with the NavFlattened flag, point to a parent window.  */
+    var navRootWindow: Window? = null
+    /** When going to the menu bar, we remember the child window we came from. (This could probably be made implicit if
+     *  we kept g.Windows sorted by last focused including child window.)   */
+    var navLastChildNavWindow: Window? = null
+    /** Last known NavId for this window, per layer (0/1)   */
+    val navLastIds = IntArray(2)
+    /** Reference rectangle, in window relative space   */
+    val navRectRel = Array(2) { Rect() }
 
     // -----------------------------------------------------------------------------------------------------------------
     // Navigation / Focus
@@ -829,6 +898,9 @@ class Window(var context: imgui.Context, var name: String) {
         return false
     }
 
+    /** Can we focus this window with CTRL+TAB (or PadMenu + PadFocusPrev/PadFocusNext) */
+    val isNavFocusable get() = active && this === rootNonPopupWindow && (flags hasnt Wf.NoNavFocus || this === g.navWindow)
+
     fun calcResizePosSizeFromAnyCorner(cornerTarget: Vec2, cornerNorm: Vec2, outPos: Vec2, outSize: Vec2) {
         val posMin = cornerTarget.lerp(pos, cornerNorm)             // Expected window upper-left
         val posMax = (size + pos).lerp(cornerTarget, cornerNorm)    // Expected window lower-right
@@ -879,8 +951,15 @@ fun Window?.setCurrent() {
 /** Moving window to front of display (which happens to be back of our sorted list) */
 fun Window?.focus() {
 
-    // Always mark the window we passed as focused. This is used for keyboard interactions such as tabbing.
-    g.navWindow = this
+    if (g.navWindow !== this) {
+        g.navWindow = this
+        if (this != null && g.navDisableMouseHover)
+            g.navMousePosDirty = true
+        g.navInitRequest = false
+        g.navId = this?.navLastIds?.get(0) ?: 0 // Restore NavId
+        g.navIdIsAlive = false
+        g.navLayer = 0
+    }
 
     // Passing NULL allow to disable keyboard focus
     if (this == null) return

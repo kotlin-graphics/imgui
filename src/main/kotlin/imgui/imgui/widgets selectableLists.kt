@@ -27,14 +27,18 @@ import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.pushId
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderFrame
+import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
+import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.windowContentRegionMax
+import imgui.internal.NavHighlightFlags
 import imgui.internal.Rect
 import imgui.internal.or
 import kotlin.reflect.KMutableProperty0
+import imgui.Context as g
 import imgui.ItemFlags as If
 import imgui.SelectableFlags as Sf
 import imgui.WindowFlags as Wf
@@ -86,7 +90,7 @@ interface imgui_widgetsSelectableLists {
         bbWithSpacing.min.y -= spacingU
         bbWithSpacing.max.x += spacingR
         bbWithSpacing.max.y += spacingD
-        if (!itemAdd(bbWithSpacing, id)) {
+        if (!itemAdd(bbWithSpacing, if (flags has Sf.Disabled) 0 else id)) {
             if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null)
                 pushColumnClipRect()
             return false
@@ -102,10 +106,19 @@ interface imgui_widgetsSelectableLists {
         if (flags has Sf.Disabled)
             selected = false
 
+        /*  Hovering selectable with mouse updates navId accordingly so navigation can be resumed with gamepad/keyboard
+            (this doesn't happen on most widgets)         */
+        if (pressed || hovered)// && (g.IO.MouseDelta.x != 0.0f || g.IO.MouseDelta.y != 0.0f))
+            if (!g.navDisableMouseHover && g.navWindow === window && g.navLayer == window.dc.navLayerActiveMask) {
+                g.navDisableHighlight = true;
+                setNavId(id, window.dc.navLayerCurrent)
+            }
+
         // Render
         if (hovered || selected) {
             val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             renderFrame(bbWithSpacing.min, bbWithSpacing.max, col.u32, false, 0f)
+            renderNavHighlight(bbWithSpacing, id, NavHighlightFlags.TypeThin or NavHighlightFlags.NoRounding)
         }
 
         if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null) {
@@ -159,7 +172,8 @@ interface imgui_widgetsSelectableLists {
         val clipper = ListClipper(itemsCount, textLineHeightWithSpacing)
         while (clipper.step())
             for (i in clipper.display.start until clipper.display.last) withBool { b ->
-                b.set(i == currentItem())
+                val itemSelected = i == currentItem()
+                b.set(itemSelected)
                 val itemText = arrayOf("")
                 if (!itemsGetter(data, i, itemText)) itemText[0] = "*Unknown item*"
                 pushId(i)
@@ -167,6 +181,7 @@ interface imgui_widgetsSelectableLists {
                     currentItem.set(i)
                     valueChanged = true
                 }
+                if (itemSelected) setItemDefaultFocus()
                 popId()
             }
         listBoxFooter()

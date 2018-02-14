@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import gli_.has
 import glm_.glm
 import glm_.vec2.Vec2
 import imgui.Cond
@@ -11,7 +12,7 @@ import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
-import imgui.internal.itemHoveredDataBackup
+import imgui.internal.Dir
 import imgui.or
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
@@ -73,8 +74,17 @@ interface imgui_widgetsTrees {
 
     /** ~ Unindent()+PopId()    */
     fun treePop() {
+        val window = g.currentWindow!!
         unindent()
+
         currentWindow.dc.treeDepth--
+        if (g.navMoveDir == Dir.Left && g.navWindow === window && navMoveRequestButNoResultYet())
+            if (g.navIdIsAlive && window.dc.treeDepthMayCloseOnPop has (1 shl window.dc.treeDepth)) {
+                setNavId(window.idStack.last(), g.navLayer)
+                navMoveRequestCancel()
+            }
+        window.dc.treeDepthMayCloseOnPop = window.dc.treeDepthMayCloseOnPop and (1 shl window.dc.treeDepth) - 1
+
         popId()
     }
 
@@ -123,9 +133,9 @@ interface imgui_widgetsTrees {
             // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
             val buttonSz = g.fontSize * 0.5f
 //            itemHoveredDataBackup {
-                if (closeButton(window.getId(id + 1), Vec2(glm.min(window.dc.lastItemRect.max.x, window.clipRect.max.x) -
-                        style.framePadding.x - buttonSz, window.dc.lastItemRect.min.y + style.framePadding.y + buttonSz), buttonSz))
-                    open.set(false)
+            if (closeButton(window.getId(id + 1), Vec2(glm.min(window.dc.lastItemRect.max.x, window.clipRect.max.x) -
+                            style.framePadding.x - buttonSz, window.dc.lastItemRect.min.y + style.framePadding.y + buttonSz), buttonSz))
+                open.set(false)
 //            }
         }
         return isOpen

@@ -15,6 +15,8 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.checkbox
 import imgui.ImGui.colorButton
 import imgui.ImGui.combo
+import imgui.ImGui.cursorScreenPos
+import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
@@ -36,6 +38,7 @@ import imgui.ImGui.styleColorsLight
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
+import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
@@ -44,7 +47,6 @@ import imgui.ImGui.windowDrawList
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withIndent
-import imgui.functionalProgramming.withStyleVar
 import imgui.imgui.demo.ExampleApp
 import imgui.internal.DrawListFlags
 import imgui.internal.Rect
@@ -119,9 +121,13 @@ interface imgui_demoDebugInformations {
                 /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
                     information or not                 */
                 text("HoveredId: 0x%08X/0x%08X (%.2f sec)", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)
-                text("ActiveId: 0x%08X/0x%08X (%.2f sec)", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
+                text("ActiveId: 0x%08X/0x%08X (%.2f sec), ActiveIdSource: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
                 text("NavWindow: '${g.navWindow?.name}'")
+                text("NavId: 0x%08X, NavLayer: ${g.navLayer}", g.navId)
+                text("NavActive: ${IO.navActive}, NavVisible: ${IO.navVisible}")
+                text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
+                text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
                 text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" " +
                         "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
                 treePop()
@@ -231,14 +237,16 @@ interface imgui_demoDebugInformations {
                 checkbox("Check", Companion::check)
             }
             menu("Colors") {
-                withStyleVar(StyleVar.FramePadding, Vec2()) {
-                    for (col in Col.values()) {
-                        val name = col.name
-                        colorButton(name, getStyleColorVec4(col))
-                        sameLine()
-                        menuItem(name)
-                    }
+                val sz = textLineHeight
+                for (col in Col.values()) {
+                    val name = col.name
+                    val p = Vec2(cursorScreenPos)
+                    windowDrawList.addRectFilled(p, Vec2(p.x+sz, p.y+sz), col.u32)
+                    dummy(Vec2(sz))
+                    sameLine()
+                    menuItem(name)
                 }
+
             }
             menu("Disabled", false) { assert(false) } // Disabled
             menuItem("Checked", selected = true)
@@ -345,11 +353,17 @@ interface imgui_demoDebugInformations {
                 if (flags has Wf.Tooltip) builder += "Tooltip "
                 if (flags has Wf.Popup) builder += "Popup "
                 if (flags has Wf.Modal) builder += "Modal "
-                if(flags has Wf.ChildMenu) builder += "ChildMenu "
-                if(flags has Wf.NoSavedSettings) builder += "NoSavedSettings "
+                if (flags has Wf.ChildMenu) builder += "ChildMenu "
+                if (flags has Wf.NoSavedSettings) builder += "NoSavedSettings "
                 bulletText("Flags: 0x%08X ($builder..)", flags)
                 bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f)", window.scroll.x, window.scrollMaxX, window.scroll.y, window.scrollMaxY)
                 bulletText("Active: ${window.active}, WriteAccessed: ${window.writeAccessed}")
+                bulletText("NavLastIds: 0x%08X,0x%08X, NavLayerActiveMask: %X", window.navLastIds[0], window.navLastIds[1], window.dc.navLayerActiveMask)
+                bulletText("NavLastChildNavWindow: ${window.navLastChildNavWindow?.name}")
+                if (window.navRectRel[0].isFinite)
+                    bulletText("NavRectRel[0]: (%.1f,%.1f)(%.1f,%.1f)", window.navRectRel[0].min.x, window.navRectRel[0].min.y, window.navRectRel[0].max.x, window.navRectRel[0].max.y)
+                else
+                    bulletText("NavRectRel[0]: <None>")
                 if (window.rootWindow !== window) nodeWindow(window.rootWindow!!, "RootWindow")
                 if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
                 bulletText("Storage: %d bytes", window.stateStorage.data.size * Int.BYTES * 2)

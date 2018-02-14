@@ -45,11 +45,14 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.openPopup
 import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popId
+import imgui.ImGui.popItemFlag
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
+import imgui.ImGui.pushItemFlag
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.renderColorRectWithAlphaCheckerboard
 import imgui.ImGui.renderFrameBorder
+import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.rgbToHSV
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
@@ -347,6 +350,7 @@ interface imgui_widgetsColorEditorPicker {
         var valueChangedH = false
         var valueChangedSv = false
 
+        pushItemFlag(ItemFlags.NoNav.i, true)
         if (flags has Cef.PickerHueWheel) {
             // Hue wheel + SV triangle logic
             invisibleButton("hsv", Vec2(svPickerSize + style.itemInnerSpacing.x + barsWidth, svPickerSize))
@@ -407,6 +411,7 @@ interface imgui_widgetsColorEditorPicker {
                 valueChanged = true
             }
         }
+        popItemFlag() // ItemFlags.NoNav
 
         if (flags hasnt Cef.NoSidePreview) {
             sameLine(0f, style.itemInnerSpacing.x)
@@ -422,6 +427,7 @@ interface imgui_widgetsColorEditorPicker {
             }
         }
         if (flags hasnt Cef.NoSidePreview) {
+            pushItemFlag(ItemFlags.NoNavDefaultFocus.i, true)
             val colV4 = Vec4(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
             if (flags has Cef.NoLabel)
                 text("Current")
@@ -435,6 +441,7 @@ interface imgui_widgetsColorEditorPicker {
                     valueChanged = true
                 }
             }
+            popItemFlag()
             endGroup()
         }
 
@@ -613,6 +620,7 @@ interface imgui_widgetsColorEditorPicker {
             else
                 window.drawList.addRectFilled(bbInner.min, bbInner.max, getColorU32(colSource), rounding, Dcf.All.i)
         }
+        renderNavHighlight(bb, id)
         if (style.frameBorderSize > 0f)
             renderFrameBorder(bb.min, bb.max, rounding)
         else

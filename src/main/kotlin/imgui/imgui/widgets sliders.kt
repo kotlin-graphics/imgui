@@ -21,13 +21,12 @@ import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setActiveId
+import imgui.ImGui.setFocusId
 import imgui.ImGui.sliderBehavior
 import imgui.ImGui.sliderFloatN
 import imgui.ImGui.sliderIntN
 import imgui.Ref
-import imgui.internal.Rect
-import imgui.internal.SliderFlags
-import imgui.internal.focus
+import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 
@@ -64,7 +63,7 @@ interface imgui_widgetsSliders {
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
         // NB- we don't call ItemSize() yet because we may turn into a text edit box below
-        if (!itemAdd(totalBb, id)) {
+        if (!itemAdd(totalBb, id, frameBb)) {
             itemSize(totalBb, style.framePadding.y)
             return false
         }
@@ -76,10 +75,12 @@ interface imgui_widgetsSliders {
         // Tabbing or CTRL-clicking on Slider turns it into an input box
         var startTextInput = false
         val tabFocusRequested = focusableItemRegister(window, id)
-        if (tabFocusRequested || (hovered && IO.mouseClicked[0])) {
+        if (tabFocusRequested || (hovered && IO.mouseClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id)) {
             setActiveId(id, window)
+            setFocusId(id, window)
             window.focus()
-            if (tabFocusRequested || IO.keyCtrl) {
+            g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
+            if (tabFocusRequested || IO.keyCtrl || g.navInputId == id) {
                 startTextInput = true
                 g.scalarAsInputTextId = 0
             }
@@ -197,9 +198,11 @@ interface imgui_widgetsSliders {
 
         val decimalPrecision = parseFormatPrecision(displayFormat, 3)
 
-        if (hovered && IO.mouseClicked[0]) {
+        if ((hovered && IO.mouseClicked[0])  || g.navActivateId == id || g.navInputId == id) {
             setActiveId(id, window)
+            setFocusId(id, window)
             window.focus()
+            g.activeIdAllowNavDirFlags = (1 shl Dir.Left) or (1 shl Dir.Right)
         }
 
         // Actual slider behavior + render grab

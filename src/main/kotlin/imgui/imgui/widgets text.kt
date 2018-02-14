@@ -113,7 +113,7 @@ interface imgui_widgetsText {
             }
             val bb = Rect(textPos, textPos + textSize)
             itemSize(bb)
-            itemAdd(bb)
+            itemAdd(bb, 0)
         } else {
             val wrapWidth = if (wrapEnabled) calcWrapWidthForPos(window.dc.cursorPos, wrapPosX) else 0f
             val textSize = calcTextSize(text, textEnd, false, wrapWidth)
@@ -121,7 +121,7 @@ interface imgui_widgetsText {
             // Account of baseline offset
             val bb = Rect(textPos, textPos + textSize)
             itemSize(textSize)
-            if (!itemAdd(bb)) return
+            if (!itemAdd(bb, 0)) return
 
             // Render (we don't hide text after ## in this end-user function)
             renderTextWrapped(bb.min, text, textEnd, wrapWidth)
@@ -185,7 +185,7 @@ interface imgui_widgetsText {
         val valueBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2))
         val totalBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w + if (labelSize.x > 0f) style.itemInnerSpacing.x else 0f, style.framePadding.y * 2) + labelSize)
         itemSize(totalBb, style.framePadding.y)
-        if (!itemAdd(totalBb)) return
+        if (!itemAdd(totalBb, 0)) return
         // Render
         val text = fmt.format(style.locale, *args)
         renderTextClipped(valueBb.min, valueBb.max, text, text.length, null, Vec2(0f, 0.5f))
@@ -210,7 +210,7 @@ interface imgui_widgetsText {
         // Empty text doesn't add padding
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(x, glm.max(lineHeight, labelSize.y)))
         itemSize(bb)
-        if (!itemAdd(bb)) return
+        if (!itemAdd(bb, 0)) return
 
         // Render
         renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
@@ -227,7 +227,7 @@ interface imgui_widgetsText {
         val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), g.fontSize)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(g.fontSize, lineHeight))
         itemSize(bb)
-        if (!itemAdd(bb)) {
+        if (!itemAdd(bb, 0)) {
             sameLine(0f, style.framePadding.x * 2)
             return
         }

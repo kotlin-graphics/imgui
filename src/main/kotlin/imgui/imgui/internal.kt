@@ -75,9 +75,7 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 import java.util.*
 import kotlin.apply
-import kotlin.math.floor
-import kotlin.math.max
-import kotlin.math.min
+import kotlin.math.*
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlags as Cef
 import imgui.Context as g
@@ -123,9 +121,40 @@ interface imgui_internal {
         g.activeIdIsJustActivated = g.activeId != id
         if (g.activeIdIsJustActivated) g.activeIdTimer = 0f
         g.activeId = id
+        g.activeIdAllowNavDirFlags = 0
         g.activeIdAllowOverlap = false
-        g.activeIdIsAlive = g.activeIdIsAlive || id != 0
         g.activeIdWindow = window
+        if (id != 0) {
+            g.activeIdIsAlive = true
+            g.activeIdSource = when (id) {
+                g.navActivateId, g.navInputId, g.navJustTabbedId, g.navJustMovedToId -> InputSource.Nav
+                else -> InputSource.Mouse
+            }
+        }
+    }
+
+    fun getActiveId() = g.activeId
+
+    fun setFocusId(id: Int, window: Window) {
+
+        assert(id != 0)
+
+        /*  Assume that setFocusId() is called in the context where its ::navLayer is the current layer,
+            which is the case everywhere we call it.         */
+        val navLayer = window.dc.navLayerCurrent
+        if (g.navWindow !== window)
+            g.navInitRequest = false
+        g.navId = id
+        g.navWindow = window
+        g.navLayer = navLayer
+        window.navLastIds[navLayer] = id
+        if (window.dc.lastItemId == id)
+            window.navRectRel[navLayer].put(window.dc.lastItemRect.min - window.pos, window.dc.lastItemRect.max - window.pos)
+
+        if (g.activeIdSource == InputSource.Nav)
+            g.navDisableMouseHover = true
+        else
+            g.navDisableHighlight = true
     }
 
     fun clearActiveId() = setActiveId(0, null)
@@ -174,17 +203,34 @@ interface imgui_internal {
 
     /** Declare item bounding box for clipping and interaction.
      *  Note that the size can be different than the one provided to ItemSize(). Typically, widgets that spread over
-     *  available surface declares their minimum size requirement to ItemSize() and then use a larger region for
+     *  available surface declare their minimum size requirement to ItemSize() and then use a larger region for
      *  drawing/interaction, which is passed to ItemAdd().  */
-    fun itemAdd(bb: Rect, id: Int = 0): Boolean {
+    fun itemAdd(bb: Rect, id: Int, navBbArg: Rect? = null): Boolean {
 
-        val isClipped = isClippedEx(bb, id, false)
+        val window = g.currentWindow!!
+        if (id != 0) {
+            /*  Navigation processing runs prior to clipping early-out
+                (a) So that NavInitRequest can be honored, for newly opened windows to select a default widget
+                (b) So that we can scroll up/down past clipped items. This adds a small O(N) cost to regular navigation
+                    requests unfortunately, but it is still limited to one window.
+                    it may not scale very well for windows with ten of thousands of item, but at least navMoveRequest
+                    is only set on user interaction, aka maximum once a frame.
+                    We could early out with "if (isClipped && !g.navInitRequest) return false" but when we wouldn't be
+                    able to reach unclipped widgets. This would work if user had explicit scrolling control (e.g. mapped on a stick)    */
+            window.dc.navLayerActiveMaskNext = window.dc.navLayerActiveMaskNext or window.dc.navLayerCurrentMask
+            if (g.navId == id || g.navAnyRequest)
+                if (g.navWindow!!.navRootWindow === window.navRootWindow)
+                    if (window == g.navWindow || (window.flags or g.navWindow!!.flags) has Wf.NavFlattened)
+                        navProcessItem(window, navBbArg ?: bb, id)
+        }
         val dc = g.currentWindow!!.dc.apply {
             lastItemId = id
             lastItemRect = bb
             lastItemStatusFlags = 0
         }
-        if (isClipped) return false
+
+        // Clipping test
+        if (isClippedEx(bb, id, false)) return false
         //if (g.IO.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
 
         /*  We need to calculate this now to take account of the current clipping rectangle (as items like Selectable
@@ -238,7 +284,11 @@ interface imgui_internal {
 
         if (window.focusIdxAllCounter == window.focusIdxAllRequestCurrent) return true
 
-        return allowKeyboardFocus && window.focusIdxTabCounter == window.focusIdxTabRequestCurrent
+        if (allowKeyboardFocus && window.focusIdxTabCounter == window.focusIdxTabRequestCurrent) {
+            g.navJustTabbedId = id
+            return true
+        }
+        return false
     }
 
     fun focusableItemUnregister(window: Window) {
@@ -310,8 +360,9 @@ interface imgui_internal {
         val parentWindow = g.currentWindow!!
         val currentStackSize = g.currentPopupStack.size
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
-        val popupRef = PopupRef(id, null, parentWindow, g.frameCount, parentWindow.idStack.last(), Vec2(IO.mousePos),
-                Vec2(IO.mousePos)) // NB: In the Navigation branch OpenPopupPos doesn't use the mouse position, hence the separation here.
+        val popupRef = PopupRef(popupId = id, window = null, parentWindow = parentWindow, openFrameCount = g.frameCount,
+                openParentId = parentWindow.idStack.last(), openMousePos = Vec2(IO.mousePos),
+                openPopupPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(IO.mousePos))
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack.push(popupRef)
         else {
@@ -411,9 +462,77 @@ interface imgui_internal {
                     windowName = "##Tooltip_%02d".format(++g.tooltipOverrideCount)
                 }
             }
-        val flags = Wf.Tooltip or Wf.NoInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
+        val flags = Wf.Tooltip or Wf.NoInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or
+                Wf.AlwaysAutoResize or Wf.NoNav
         begin(windowName, null, flags or extraFlags)
     }
+
+
+    fun navInitWindow(window: Window, forceReinit: Boolean) {
+
+        assert(window == g.navWindow)
+        var initForNav = false
+        if (window.flags hasnt Wf.NoNavInputs)
+            if (window.flags hasnt Wf.ChildWindow || window.flags has Wf.Popup || window.navLastIds[0] == 0 || forceReinit)
+                initForNav = true
+        if (initForNav) {
+            setNavId(0, g.navLayer)
+            g.navInitRequest = true
+            g.navInitRequestFromMove = false
+            g.navInitResultId = 0
+            g.navInitResultRectRel = Rect()
+            navUpdateAnyRequestFlag()
+        } else
+            g.navId = window.navLastIds[0]
+    }
+
+    /** Remotely activate a button, checkbox, tree node etc. given its unique ID. activation is queued and processed
+     *  on the next frame when the item is encountered again.  */
+    fun activateItem(id: Int) {
+        g.navNextActivateId = id
+    }
+
+    fun getNavInputAmount(n: NavInput, mode: InputReadMode): Float {    // TODO -> NavInput?
+
+        val i = n.i
+        if (mode == InputReadMode.Down) return IO.navInputs[i] // Instant, read analog input (0.0f..1.0f, as provided by user)
+
+        val t = IO.navInputsDownDuration[i]
+        return when {
+        // Return 1.0f when just released, no repeat, ignore analog input.
+            t < 0f && mode == InputReadMode.Released -> if (IO.navInputsDownDurationPrev[i] >= 0f) 1f else 0f
+            t < 0f -> 0f
+            else -> when (mode) {
+            // Return 1.0f when just pressed, no repeat, ignore analog input.
+                InputReadMode.Pressed -> if (t == 0f) 1 else 0
+                InputReadMode.Repeat -> calcTypematicPressedRepeatAmount(t, t - IO.deltaTime, IO.keyRepeatDelay * 0.8f,
+                        IO.keyRepeatRate * 0.8f)
+                InputReadMode.RepeatSlow -> calcTypematicPressedRepeatAmount(t, t - IO.deltaTime, IO.keyRepeatDelay * 1f, IO.keyRepeatRate * 2f)
+                InputReadMode.RepeatFast -> calcTypematicPressedRepeatAmount(t, t - IO.deltaTime, IO.keyRepeatDelay * 0.8f, IO.keyRepeatRate * 0.3f)
+                else -> 0
+            }.f
+        }
+    }
+
+    /** @param dirSources: NavDirSourceFlags    */
+    fun getNavInputAmount2d(dirSources: Int, mode: InputReadMode, slowFactor: Float = 0f, fastFactor: Float = 0f): Vec2 {
+        val delta = Vec2()
+        if (dirSources has NavDirSourceFlags.Keyboard)
+            delta += Vec2(getNavInputAmount(NavInput.KeyRight, mode) - getNavInputAmount(NavInput.KeyLeft, mode),
+                    getNavInputAmount(NavInput.KeyDown, mode) - getNavInputAmount(NavInput.KeyUp, mode))
+        if (dirSources has NavDirSourceFlags.PadDPad)
+            delta += Vec2(getNavInputAmount(NavInput.DpadRight, mode) - getNavInputAmount(NavInput.DpadLeft, mode),
+                    getNavInputAmount(NavInput.DpadDown, mode) - getNavInputAmount(NavInput.DpadUp, mode))
+        if (dirSources has NavDirSourceFlags.PadLStick)
+            delta += Vec2(getNavInputAmount(NavInput.LStickRight, mode) - getNavInputAmount(NavInput.LStickLeft, mode),
+                    getNavInputAmount(NavInput.LStickDown, mode) - getNavInputAmount(NavInput.LStickUp, mode))
+        if (slowFactor != 0f && NavInput.TweakSlow.isDown())
+            delta *= slowFactor
+        if (fastFactor != 0f && NavInput.TweakFast.isDown())
+            delta *= fastFactor
+        return delta
+    }
+
 
     fun calcTypematicPressedRepeatAmount(t: Float, tPrev: Float, repeatDelay: Float, repeatRate: Float) = when {
         t == 0f -> 1
@@ -480,7 +599,7 @@ interface imgui_internal {
 
         // Handle input right away. None of the code of Begin() is relying on scrolling position before calling Scrollbar().
         val previouslyHeld = g.activeId == id
-        val (_, hovered, held) = buttonBehavior(bb, id)
+        val (_, hovered, held) = buttonBehavior(bb, id, Bf.NoNavFocus)
 
         val scrollMax = glm.max(1f, winSizeContentsV - winSizeAvailV)
         var scrollRatio = saturate(scrollV / scrollMax)
@@ -550,7 +669,7 @@ interface imgui_internal {
         val y2 = window.dc.cursorPos.y + window.dc.currentLineHeight
         val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
         itemSize(Vec2(bb.width, 0f))
-        if (!itemAdd(bb)) return
+        if (!itemAdd(bb, 0)) return
 
         window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
         if (g.logEnabled) logText(" |")
@@ -562,7 +681,7 @@ interface imgui_internal {
 
         val itemFlagsBackup = window.dc.itemFlags
 
-        // TODO if(IMGUI_HAS_NAV) window->DC.ItemFlags |= ImGuiItemFlags_NoNav | ImGuiItemFlags_NoNavDefaultFocus;
+        window.dc.itemFlags = window.dc.itemFlags or (If.NoNav or If.NoNavDefaultFocus)
 
         val itemAdd = itemAdd(bb, id)
         window.dc.itemFlags = itemFlagsBackup
@@ -970,6 +1089,34 @@ interface imgui_internal {
         window.drawList.pathStroke(col, false, thickness)
     }
 
+    /** Navigation highlight
+     * @param flags: NavHighlightFlags  */
+    fun renderNavHighlight(bb: Rect, id: Int, flags: Int = NavHighlightFlags.TypeDefault.i) {
+
+        if (id != g.navId) return
+        if (g.navDisableHighlight && flags hasnt NavHighlightFlags.AlwaysDraw) return
+        val window = currentWindow
+        if (window.dc.navHideHighlightOneFrame) return
+
+        val rounding = if (flags hasnt NavHighlightFlags.NoRounding) 0f else g.style.frameRounding
+        val displayRect = Rect(bb)
+        displayRect clipWith window.clipRect
+        if (flags has NavHighlightFlags.TypeDefault) {
+            val THICKNESS = 2f
+            val DISTANCE = 3f + THICKNESS * 0.5f
+            displayRect expand Vec2(DISTANCE)
+            val fullyVisible = window.clipRect contains displayRect
+            if (!fullyVisible)
+                window.drawList.pushClipRect(displayRect) // check order here down
+            window.drawList.addRect(displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),
+                    Col.NavHighlight.u32, rounding, Dcf.All.i, THICKNESS)
+            if (!fullyVisible)
+                window.drawList.popClipRect()
+        }
+        if (flags has NavHighlightFlags.TypeThin)
+            window.drawList.addRect(displayRect.min, displayRect.max, Col.NavHighlight.u32, rounding, 0.inv(), 1f)
+    }
+
     /** FIXME: Cleanup and move code to ImDrawList. */
     fun renderRectFilledRangeH(drawList: DrawList, rect: Rect, col: Int, xStartNorm: Float, xEndNorm: Float, rounding: Float) {
         var xStartNorm = xStartNorm
@@ -1072,6 +1219,7 @@ interface imgui_internal {
         if (hovered && flags has Bf.AllowItemOverlap && g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)
             hovered = false
 
+        // Mouse
         if (hovered) {
             if (flags hasnt Bf.NoKeyModifiers || (!IO.keyCtrl && !IO.keyShift && !IO.keyAlt)) {
 
@@ -1081,8 +1229,11 @@ interface imgui_internal {
                 PressedOnClick         |  <on click>     |  <on click> <on repeat> <on repeat> ..
                 PressedOnRelease       |  <on release>   |  <on repeat> <on repeat> .. (NOT on release)
                 PressedOnDoubleClick   |  <on dclick>    |  <on dclick> <on repeat> <on repeat> ..   */
+                // FIXME-NAV: We don't honor those different behaviors.
                 if (flags has Bf.PressedOnClickRelease && IO.mouseClicked[0]) {
-                    setActiveId(id, window) // Hold on ID
+                    setActiveId(id, window)
+                    if (flags hasnt Bf.NoNavFocus)
+                        setFocusId(id, window)
                     window.focus()
                 }
                 if ((flags has Bf.PressedOnClick && IO.mouseClicked[0]) || (flags has Bf.PressedOnDoubleClick && IO.mouseDoubleClicked[0])) {
@@ -1104,20 +1255,50 @@ interface imgui_internal {
                 if (flags has Bf.Repeat && g.activeId == id && IO.mouseDownDuration[0] > 0f && isMouseClicked(0, true))
                     pressed = true
             }
+
+            if (pressed)
+                g.navDisableHighlight = true
+        }
+
+        /*  Gamepad/Keyboard navigation
+            We report navigated item as hovered but we don't set g.HoveredId to not interfere with mouse.         */
+        if (g.navId == id && !g.navDisableHighlight && g.navDisableMouseHover && (g.activeId == 0 || g.activeId == id || g.activeId == window.moveId))
+            hovered = true
+
+        if (g.navActivateDownId == id) {
+            val navActivatedByCode = g.navActivateId == id
+            val navActivatedByInputs = NavInput.Activate.isPressed(if (flags has Bf.Repeat) InputReadMode.Repeat else InputReadMode.Pressed)
+            if (navActivatedByCode || navActivatedByInputs)
+                pressed = true
+            if (navActivatedByCode || navActivatedByInputs || g.activeId == id) {
+                // Set active id so it can be queried by user via IsItemActive(), equivalent of holding the mouse button.
+                g.navActivateId = id // This is so SetActiveId assign a Nav source
+                setActiveId(id, window)
+                if (flags hasnt Bf.NoNavFocus)
+                    setFocusId(id, window)
+                g.activeIdAllowNavDirFlags = (1 shl Dir.Left) or (1 shl Dir.Right) or (1 shl Dir.Up) or (1 shl Dir.Down)
+            }
         }
         var held = false
         if (g.activeId == id) {
-            if (g.activeIdIsJustActivated)
-                g.activeIdClickOffset put IO.mousePos - bb.min
-            if (IO.mouseDown[0])
-                held = true
-            else {
-                if (hovered && flags has Bf.PressedOnClickRelease)
-                    if (!(flags has Bf.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay)) // Repeat mode trumps <on release>
-                        if (!g.dragDropActive)
-                            pressed = true
-                clearActiveId()
-            }
+            if (g.activeIdSource == InputSource.Mouse) {
+                if (g.activeIdIsJustActivated)
+                    g.activeIdClickOffset = IO.mousePos - bb.min
+                if (IO.mouseDown[0]) {
+                    held = true
+                } else {
+                    if (hovered && flags has Bf.PressedOnClickRelease)
+                    // Repeat mode trumps <on release>
+                        if (!(flags has Bf.Repeat && IO.mouseDownDurationPrev[0] >= IO.keyRepeatDelay))
+                            if (!g.dragDropActive)
+                                pressed = true
+                    clearActiveId()
+                }
+                if (flags hasnt Bf.NoNavFocus)
+                    g.navDisableHighlight = true
+            } else if (g.activeIdSource == InputSource.Nav)
+                if (g.navActivateDownId != id)
+                    clearActiveId()
         }
         return booleanArrayOf(pressed, hovered, held)
     }
@@ -1148,6 +1329,7 @@ interface imgui_internal {
 
         // Render
         val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
         renderTextClipped(bb.min + style.framePadding, bb.max - style.framePadding, label, 0, labelSize,
                 style.buttonTextAlign, bb)
@@ -1165,9 +1347,14 @@ interface imgui_internal {
 
         val window = currentWindow
 
+        /*  We intentionally allow interaction when clipped so that a mechanical Alt, Right, Validate sequence close
+            a window. (this isn't the regular behavior of buttons, but it doesn't affect the user much because
+            navigation tends to keep items visible).   */
         val bb = Rect(pos - radius, pos + radius)
+        val isClipped = !itemAdd(bb, id)
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
+        if (isClipped) return pressed
 
         // Render
         val col = if (held && hovered) Col.CloseButtonActive else if (hovered) Col.CloseButtonHovered else Col.CloseButton
@@ -1197,7 +1384,7 @@ interface imgui_internal {
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 
         val col = (if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button).u32
-        if (IMGUI_HAS_NAV) TODO() //renderNavHighlight(bb, id)
+        renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col, true, style.frameRounding)
         renderTriangle(bb.min + padding, dir, 1f)
         return pressed
@@ -1222,7 +1409,9 @@ interface imgui_internal {
         val window = currentWindow
 
         // Draw frame
-        renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
+        val frameCol = if (g.activeId == id && g.activeIdSource == InputSource.Nav) Col.FrameBgActive else Col.FrameBg
+        renderNavHighlight(frameBb, id)
+        renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
         val isNonLinear = (power < 1.0f - 0.00001f) || (power > 1.0f + 0.00001f)
         val isHorizontal = flags hasnt SliderFlags.Vertical
@@ -1250,26 +1439,49 @@ interface imgui_internal {
         } else  // Same sign
             linearZeroPos = if (vMin < 0f) 1f else 0f
 
-        // Process clicking on the slider
+        // Process interacting with the slider
         var valueChanged = false
         if (g.activeId == id) {
 
             var setNewValue = false
             var clickedT = 0f
 
-            if (IO.mouseDown[0]) {
-
-                val mouseAbsPos = if (isHorizontal) IO.mousePos.x else IO.mousePos.y
-                clickedT =
-                        if (sliderUsableSz > 0f)
-                            glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f)
-                        else 0f
-                if (!isHorizontal)
-                    clickedT = 1f - clickedT
-
-                setNewValue = true
-            } else
-                clearActiveId()
+            if (g.activeIdSource == InputSource.Mouse) {
+                if (!IO.mouseDown[0]) clearActiveId()
+                else {
+                    val mouseAbsPos = if (isHorizontal) IO.mousePos.x else IO.mousePos.y
+                    clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
+                    if (!isHorizontal)
+                        clickedT = 1f - clickedT
+                    setNewValue = true
+                }
+            } else if (g.activeIdSource == InputSource.Nav) {
+                val delta2 = getNavInputAmount2d(NavDirSourceFlags.Keyboard or NavDirSourceFlags.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                var delta = if (isHorizontal) delta2.x else -delta2.y
+                if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                    clearActiveId()
+                else if (delta != 0f) {
+                    clickedT = sliderBehaviorCalcRatioFromValue(v(), vMin, vMax, power, linearZeroPos)
+                    if (decimalPrecision == 0 && !isNonLinear) {
+                        delta =
+                                if (abs(vMax - vMin) <= 100f || NavInput.TweakSlow.isDown())
+                                    (if (delta < 0f) -1f else 1f) / (vMax - vMin) // Gamepad/keyboard tweak speeds in integer steps
+                                else delta / 100f
+                    } else {
+                        delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
+                        if (NavInput.TweakSlow.isDown())
+                            delta /= 10f
+                    }
+                    if (NavInput.TweakFast.isDown())
+                        delta *= 10f
+                    setNewValue = true
+                    // This is to avoid applying the saturation when already past the limits
+                    if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f))
+                        setNewValue = false
+                    else
+                        clickedT = saturate(clickedT + delta)
+                }
+            }
 
             if (setNewValue) {
                 var newValue =
@@ -1400,58 +1612,76 @@ interface imgui_internal {
             g.hoveredId -> Col.FrameBgHovered
             else -> Col.FrameBg
         }
+        renderNavHighlight(frameBb, id)
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
         var valueChanged = false
 
-        // Process clicking on the drag
-        if (g.activeId == id)
-            if (IO.mouseDown[0]) {
-                if (g.activeIdIsJustActivated) {
-                    // Lock current value on click
-                    g.dragCurrentValue = v()
-                    g.dragLastMouseDelta put 0f
-                }
-                var vSpeed = vSpeed
-                if (vSpeed == 0f && (vMax - vMin) != 0f && (vMax - vMin) < Float.MAX_VALUE)
-                    vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
-
-                var vCur = g.dragCurrentValue
-                val mouseDragDelta = getMouseDragDelta(0, 1f)
-                var adjustDelta = 0f
-                if (isMousePosValid()) {
-                    adjustDelta = mouseDragDelta.x - g.dragLastMouseDelta.x
-                    if (IO.keyShift && g.dragSpeedScaleFast >= 0f) adjustDelta *= g.dragSpeedScaleFast
-                    if (IO.keyAlt && g.dragSpeedScaleSlow >= 0f) adjustDelta *= g.dragSpeedScaleSlow
-                    g.dragLastMouseDelta.x = mouseDragDelta.x
-                }
-                adjustDelta *= vSpeed
-
-                if (glm.abs(adjustDelta) > 0f) {
-                    if (glm.abs(power - 1f) > 0.001f) {
-                        // Logarithmic curve on both side of 0.0
-                        val v0_abs = if (vCur >= 0f) vCur else -vCur
-                        val v0_sign = if (vCur >= 0f) 1f else -1f
-                        val v1 = glm.pow(v0_abs, 1f / power) + adjustDelta * v0_sign
-                        val v1_abs = if (v1 >= 0f) v1 else -v1
-                        val v1_sign = if (v1 >= 0f) 1f else -1f              // Crossed sign line
-                        vCur = glm.pow(v1_abs, power) * v0_sign * v1_sign   // Reapply sign
-                    } else
-                        vCur += adjustDelta
-
-                    // Clamp
-                    if (vMin < vMax)
-                        vCur = glm.clamp(vCur, vMin, vMax)
-                    g.dragCurrentValue = vCur
-                }
-                // Round to user desired precision, then apply
-                vCur = roundScalar(vCur, decimalPrecision)
-                if (v() != vCur) {
-                    v.set(vCur)
-                    valueChanged = true
-                }
-            } else
+        // Process interacting with the drag
+        if (g.activeId == id) {
+            if (g.activeIdSource == InputSource.Mouse && !IO.mouseDown[0])
                 clearActiveId()
+            else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                clearActiveId()
+        }
+        if (g.activeId == id) {
+            if (g.activeIdIsJustActivated) {
+                // Lock current value on click
+                g.dragCurrentValue = v()
+                g.dragLastMouseDelta put 0f
+            }
+
+            var vSpeed =
+                    if (vSpeed == 0f && (vMax - vMin) != 0f && (vMax - vMin) < Float.MAX_VALUE)
+                        (vMax - vMin) * g.dragSpeedDefaultRatio
+                    else vSpeed
+
+            var vCur = g.dragCurrentValue
+            val mouseDragDelta = getMouseDragDelta(0, 1f)
+            var adjustDelta = 0f
+            if (g.activeIdSource == InputSource.Mouse && isMousePosValid()) {
+                adjustDelta = mouseDragDelta.x - g.dragLastMouseDelta.x
+                if (IO.keyShift && g.dragSpeedScaleFast >= 0f)
+                    adjustDelta *= g.dragSpeedScaleFast
+                if (IO.keyAlt && g.dragSpeedScaleSlow >= 0f)
+                    adjustDelta *= g.dragSpeedScaleSlow
+                g.dragLastMouseDelta.x = mouseDragDelta.x
+            }
+            if (g.activeIdSource == InputSource.Nav) {
+                adjustDelta = getNavInputAmount2d(NavDirSourceFlags.Keyboard or NavDirSourceFlags.PadDPad,
+                        InputReadMode.RepeatFast, 1f / 10f, 10f).x
+                // This is to avoid applying the saturation when already past the limits
+                if (vMin < vMax && ((vCur >= vMax && adjustDelta > 0f) || (vCur <= vMin && adjustDelta < 0f)))
+                    adjustDelta = 0.0f
+                vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
+            }
+            adjustDelta *= vSpeed
+
+            if (abs(adjustDelta) > 0f) {
+                if (abs(power - 1f) > 0.001f) {
+                    // Logarithmic curve on both side of 0.0
+                    val v0_abs = if (vCur >= 0f) vCur else -vCur
+                    val v0_sign = if (vCur >= 0f) 1f else -1f
+                    val v1 = v0_abs.pow(1f / power) + adjustDelta * v0_sign
+                    val v1_abs = if (v1 >= 0f) v1 else -v1
+                    val v1_sign = if (v1 >= 0f) 1f else -1f          // Crossed sign line
+                    vCur = v1_abs.pow(power) * v0_sign * v1_sign    // Reapply sign
+                } else
+                    vCur += adjustDelta
+
+                // Clamp
+                if (vMin < vMax)
+                    vCur = glm.clamp(vCur, vMin, vMax)
+                g.dragCurrentValue = vCur
+            }
+
+            // Round to user desired precision, then apply
+            vCur = roundScalar(vCur, decimalPrecision)
+            if (v() != vCur) {
+                v.set(vCur)
+                valueChanged = true
+            }
+        }
         return valueChanged
     }
 
@@ -1539,7 +1769,7 @@ interface imgui_internal {
             size.x -= drawWindow.scrollbarSizes.x
         } else {
             itemSize(totalBb, style.framePadding.y)
-            if (!itemAdd(totalBb, id)) return false
+            if (!itemAdd(totalBb, id, frameBb)) return false
         }
         val hovered = itemHoverable(frameBb, id)
         if (hovered) g.mouseCursor = MouseCursor.TextInput
@@ -1573,9 +1803,9 @@ interface imgui_internal {
 
         var clearActiveId = false
 
-        var selectAll = g.activeId != id && flags has Itf.AutoSelectAll
+        var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || g.navInputId == id) && !isMultiline
 //        println(g.imeLastKey)
-        if (focusRequested || userClicked || userScrolled || g.imeLastKey != 0) {
+        if (focusRequested || userClicked || userScrolled || g.navInputId == id || g.imeLastKey != 0) {
             if (g.activeId != id || g.imeLastKey != 0) {
                 // JVM, put char if no more in ime mode and last key is valid
 //                println("${g.imeInProgress}, ${g.imeLastKey}")
@@ -1623,7 +1853,10 @@ interface imgui_internal {
                     selectAll = true
             }
             setActiveId(id, window)
+            setFocusId(id, window)
             window.focus()
+            if (!isMultiline && flags hasnt Itf.CallbackHistory)
+                g.activeIdAllowNavDirFlags = g.activeIdAllowNavDirFlags or ((1 shl Dir.Up) or (1 shl Dir.Down))
         } else if (IO.mouseClicked[0])
         // Release focus when we click outside
             clearActiveId = true
@@ -1927,6 +2160,7 @@ interface imgui_internal {
         val bufDisplay = if (g.activeId == id && isEditable) editState.tempTextBuffer else buf
 //        buf[0] = ""
 
+        renderNavHighlight(frameBb, id)
         if (!isMultiline)
             renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
 
@@ -2216,6 +2450,7 @@ interface imgui_internal {
         /*  Our replacement widget will override the focus ID (registered previously to allow for a TAB focus to happen)
             On the first frame, g.ScalarAsInputTextId == 0, then on subsequent frames it becomes == id  */
         setActiveId(g.scalarAsInputTextId, window)
+        g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
         setHoveredId(0)
         focusableItemUnregister(window)
 
@@ -2338,6 +2573,12 @@ interface imgui_internal {
         val interactBb = if (displayFrame) Rect(frameBb) else Rect(frameBb.min.x, frameBb.min.y, frameBb.min.x + textWidth + style.itemSpacing.x * 2, frameBb.max.y)
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
 
+        /*  Store a flag for the current depth to tell if we will allow closing this node when navigating one of its child.
+            For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
+            This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero. */
+        if (isOpen && !g.navIdIsAlive && flags has Tnf.NavCloseFromChild && flags hasnt Tnf.NoTreePushOnOpen)
+            window.dc.treeDepthMayCloseOnPop = window.dc.treeDepthMayCloseOnPop or (1 shl window.dc.treeDepth)
+
         val itemAdd = itemAdd(interactBb, id)
         window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlags.HasDisplayRect
         window.dc.lastItemDisplayRect put frameBb
@@ -2360,14 +2601,30 @@ interface imgui_internal {
             buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.Null)
 
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
-        if (pressed && flags hasnt Tnf.Leaf) {
-            var toggled = flags hasnt (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick)
-            if (flags has Tnf.OpenOnArrow)
-                toggled = toggled or isMouseHoveringRect(interactBb.min, Vec2(interactBb.min.x + textOffsetX, interactBb.max.y))
-            if (flags has Tnf.OpenOnDoubleClick)
-                toggled = toggled or IO.mouseDoubleClicked[0]
-            if (g.dragDropActive && isOpen) // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
-                toggled = false
+        if (flags hasnt Tnf.Leaf) {
+            var toggled = false
+            if (pressed) {
+                toggled = !(flags has (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick)) || g.navActivateId == id
+                if (flags has Tnf.OpenOnArrow) {
+                    val max = Vec2(interactBb.min.x + textOffsetX, interactBb.max.y)
+                    toggled = isMouseHoveringRect(interactBb.min, max) && !g.navDisableMouseHover || toggled
+                }
+                if (flags has Tnf.OpenOnDoubleClick)
+                    toggled = IO.mouseDoubleClicked[0] || toggled
+                // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
+                if (g.dragDropActive && isOpen)
+                    toggled = false
+            }
+
+            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Left && isOpen) {
+                toggled = true
+                navMoveRequestCancel()
+            }
+            // If there's something upcoming on the line we may want to give it the priority?
+            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Right && !isOpen) {
+                toggled = true
+                navMoveRequestCancel()
+            }
             if (toggled) {
                 isOpen = !isOpen
                 window.dc.stateStorage[id] = isOpen
@@ -2382,6 +2639,7 @@ interface imgui_internal {
         if (displayFrame) {
             // Framed type
             renderFrame(frameBb.min, frameBb.max, col.u32, true, style.frameRounding)
+            renderNavHighlight(frameBb, id, NavHighlightFlags.TypeThin.i)
             renderTriangle(frameBb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
@@ -2393,8 +2651,10 @@ interface imgui_internal {
                 renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
         } else {
             // Unframed typed for tree nodes
-            if (hovered || flags has Tnf.Selected)
+            if (hovered || flags has Tnf.Selected) {
                 renderFrame(frameBb.min, frameBb.max, col.u32, false)
+                renderNavHighlight(frameBb, id, NavHighlightFlags.TypeThin.i)
+            }
             if (flags has Tnf.Bullet)
                 TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
             else if (flags hasnt Tnf.Leaf)
@@ -2473,7 +2733,7 @@ interface imgui_internal {
         val innerBb = Rect(frameBb.min + style.framePadding, frameBb.max - style.framePadding)
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0))
         itemSize(totalBb, style.framePadding.y)
-        if (!itemAdd(totalBb)) return
+        if (!itemAdd(totalBb, 0, frameBb)) return
         val hovered = itemHoverable(innerBb, 0)
 
         // Determine scale from values if not specified

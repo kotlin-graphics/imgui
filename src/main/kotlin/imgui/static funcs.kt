@@ -1,6 +1,7 @@
 package imgui
 
 import gli_.has
+import gli_.hasnt
 import glm_.compareTo
 import glm_.f
 import glm_.glm
@@ -8,7 +9,15 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.Context.style
+import imgui.ImGui.clearActiveId
+import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.getColumnOffset
+import imgui.ImGui.getNavInputAmount
+import imgui.ImGui.getNavInputAmount2d
+import imgui.ImGui.isKeyDown
+import imgui.ImGui.isMousePosValid
+import imgui.ImGui.navInitWindow
+import imgui.imgui.*
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.internal.*
 import uno.kotlin.isPrintable
@@ -22,6 +31,7 @@ import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 import imgui.InputTextFlags as Itf
+import imgui.NavFlags as Nf
 import imgui.WindowFlags as Wf
 
 
@@ -259,9 +269,12 @@ fun getViewportRect(): Rect {
 }
 
 fun closePopupToLevel(remaining: Int) {
-    val focusWindow = if(remaining > 0) g.openPopupStack[remaining-1].window
-    else g.openPopupStack[0].parentWindow
+    var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
+        else g.openPopupStack[0].parentWindow
+    if (g.navLayer == 0)
+        focusWindow = navRestoreLastChildNavWindow(focusWindow)
     focusWindow.focus()
+    focusWindow.dc.navHideHighlightOneFrame = true
     for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
 }
 
@@ -578,6 +591,470 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
     }
 }
 
+
+/** NB: We modify rect_rel by the amount we scrolled for, so it is immediately updated. */
+fun navScrollToBringItemIntoView(window: Window, itemRectRel: Rect) {
+    // Scroll to keep newly navigated item fully into view
+    val windowRectRel = Rect(window.innerRect.min - window.pos - Vec2(1), window.innerRect.max - window.pos + Vec2(1))
+    //g.OverlayDrawList.AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
+    if (windowRectRel contains itemRectRel) return
+
+    if (window.scrollbar.x && itemRectRel.min.x < windowRectRel.min.x) {
+        window.scrollTarget.x = itemRectRel.min.x + window.scroll.x - style.itemSpacing.x
+        window.scrollTargetCenterRatio.x = 0f
+    } else if (window.scrollbar.x && itemRectRel.max.x >= windowRectRel.max.x) {
+        window.scrollTarget.x = itemRectRel.max.x + window.scroll.x + style.itemSpacing.x
+        window.scrollTargetCenterRatio.x = 1f
+    }
+    if (itemRectRel.min.y < windowRectRel.min.y) {
+        window.scrollTarget.y = itemRectRel.min.y + window.scroll.y - style.itemSpacing.y
+        window.scrollTargetCenterRatio.y = 0f
+    } else if (itemRectRel.max.y >= windowRectRel.max.y) {
+        window.scrollTarget.y = itemRectRel.max.y + window.scroll.y + style.itemSpacing.y
+        window.scrollTargetCenterRatio.y = 1f
+    }
+
+    // Estimate upcoming scroll so we can offset our relative mouse position so mouse position can be applied immediately (under this block)
+    val nextScroll = calcNextScrollFromScrollTargetAndClamp(window)
+    itemRectRel translate (window.scroll - nextScroll)
+}
+
+
+fun navUpdate() {
+
+    IO.wantMoveMouse = false
+
+//    if (g.NavScoringCount > 0) printf("[%05d] NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.FrameCount, g.NavScoringCount, g.NavWindow ? g . NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest)
+
+    // Update Keyboard->Nav inputs mapping
+    for (i in NavInput.InternalStart until NavInput.COUNT)
+        IO.navInputs[i] = 0f
+    if (IO.navFlags has Nf.EnableKeyboard) {
+        fun navMapKey(key: Key, navInput: NavInput) {
+            if (IO.keyMap[key] != -1 && isKeyDown(IO.keyMap[key]))
+                IO.navInputs[navInput] = 1f
+        }
+        navMapKey(Key.Space, NavInput.Activate)
+        navMapKey(Key.Enter, NavInput.Input)
+        navMapKey(Key.Escape, NavInput.Cancel)
+        navMapKey(Key.LeftArrow, NavInput.KeyLeft)
+        navMapKey(Key.RightArrow, NavInput.KeyRight)
+        navMapKey(Key.UpArrow, NavInput.KeyUp)
+        navMapKey(Key.DownArrow, NavInput.KeyDown)
+        if (IO.keyCtrl) IO.navInputs[NavInput.TweakSlow] = 1f
+        if (IO.keyShift) IO.navInputs[NavInput.TweakFast] = 1f
+        if (IO.keyAlt) IO.navInputs[NavInput.KeyMenu] = 1f
+    }
+
+    for (i in IO.navInputsDownDuration.indices)
+        IO.navInputsDownDurationPrev[i] = IO.navInputsDownDuration[i]
+    for (i in IO.navInputs.indices)
+        IO.navInputsDownDuration[i] = when (IO.navInputs[i] > 0f) {
+            true -> if (IO.navInputsDownDuration[i] < 0f) 0f else IO.navInputsDownDuration[i] + IO.deltaTime
+            else -> -1f
+        }
+
+    // Process navigation init request (select first/default focus)
+    if (g.navInitResultId != 0 && (!g.navDisableHighlight || g.navInitRequestFromMove)) {
+        /*  Apply result from previous navigation init request (will typically select the first item,
+            unless setItemDefaultFocus() has been called)         */
+//        assert(g.navWindow != null) !! later
+        if (g.navInitRequestFromMove)
+            setNavIdAndMoveMouse(g.navInitResultId, g.navLayer, g.navInitResultRectRel)
+        else
+            setNavId(g.navInitResultId, g.navLayer)
+        g.navWindow!!.navRectRel[g.navLayer] = g.navInitResultRectRel
+    }
+    g.navInitRequest = false
+    g.navInitRequestFromMove = false
+    g.navInitResultId = 0
+    g.navJustMovedToId = 0
+
+    // Process navigation move request
+    if (g.navMoveRequest && (g.navMoveResultLocal.id != 0 || g.navMoveResultOther.id != 0)) {
+        // Select which result to use
+        var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else g.navMoveResultOther
+        // Maybe entering a flattened child? In this case solve the tie using the regular scoring rules
+        if (g.navMoveResultOther.id != 0 && g.navMoveResultOther.window!!.parentWindow === g.navWindow)
+            if (g.navMoveResultOther.distBox < g.navMoveResultLocal.distBox || (g.navMoveResultOther.distBox == g.navMoveResultLocal.distBox && g.navMoveResultOther.distCenter < g.navMoveResultLocal.distCenter))
+                result = g.navMoveResultOther
+
+        assert(g.navWindow != null)
+
+        // Scroll to keep newly navigated item fully into view
+        if (g.navLayer == 0)
+            navScrollToBringItemIntoView(result.window!!, result.rectRel)
+
+        // Apply result from previous frame navigation directional move request
+        clearActiveId()
+        g.navWindow = result.window!!
+        setNavIdAndMoveMouse(result.id, g.navLayer, result.rectRel)
+        g.navJustMovedToId = result.id
+        g.navMoveFromClampedRefRect = false
+    }
+
+    // When a forwarded move request failed, we restore the highlight that we disabled during the forward frame
+    if (g.navMoveRequestForward == NavForward.ForwardActive) {
+        assert(g.navMoveRequest)
+        if (g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0)
+            g.navDisableHighlight = false
+        g.navMoveRequestForward = NavForward.None
+    }
+
+    // Apply application mouse position movement, after we had a chance to process move request result.
+    if (g.navMousePosDirty && g.navIdIsAlive) {
+        // Set mouse position given our knowledge of the nav widget position from last frame
+        if (IO.navFlags has Nf.MoveMouse) {
+            IO.mousePosPrev = navCalcPreferredMousePos()
+            IO.mousePos = IO.mousePosPrev
+            IO.wantMoveMouse = true
+        }
+        g.navMousePosDirty = false
+    }
+    g.navIdIsAlive = false
+    g.navJustTabbedId = 0
+    assert(g.navLayer == 0 || g.navLayer == 1)
+
+    // Store our return window (for returning from Layer 1 to Layer 0) and clear it as soon as we step back in our own Layer 0
+    g.navWindow?.let {
+        navSaveLastChildNavWindow(it)
+        if (it.navLastChildNavWindow != null && g.navLayer == 0)
+            it.navLastChildNavWindow = null
+    }
+
+    navUpdateWindowing()
+
+    // Set output flags for user application
+    IO.navActive = IO.navFlags has (Nf.EnableGamepad or Nf.EnableKeyboard) && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs
+    IO.navVisible = (IO.navActive && g.navId != 0 && !g.navDisableHighlight) || g.navWindowingTarget != null || g.navInitRequest
+
+    // Process NavCancel input (to close a popup, get back to parent, clear focus)
+    if (NavInput.Cancel.isPressed(InputReadMode.Pressed)) {
+        if (g.activeId != 0) {
+            clearActiveId()
+        } else if (g.navWindow != null && g.navWindow!!.flags has Wf.ChildWindow && g.navWindow!!.flags hasnt Wf.Popup && g.navWindow!!.parentWindow != null) {
+            // Exit child window
+            val childWindow = g.navWindow!!
+            val parentWindow = childWindow.parentWindow!!
+            assert(childWindow.childId != 0)
+            parentWindow.focus()
+            setNavId(childWindow.childId, 0)
+            g.navIdIsAlive = false
+            if (g.navDisableMouseHover)
+                g.navMousePosDirty = true
+        } else if (g.openPopupStack.isNotEmpty()) {
+            // Close open popup/menu
+            if (g.openPopupStack.last().window!!.flags hasnt Wf.Modal)
+                closePopupToLevel(g.openPopupStack.lastIndex)
+        } else if (g.navLayer != 0)
+            navRestoreLayer(0)  // Leave the "menu" layer
+        else {
+            // Clear NavLastId for popups but keep it for regular child window so we can leave one and come back where we were
+            if (g.navWindow != null && (g.navWindow!!.flags has Wf.Popup || g.navWindow!!.flags hasnt Wf.ChildWindow))
+                g.navWindow!!.navLastIds[0] = 0
+            g.navId = 0
+        }
+    }
+
+    // Process manual activation request
+    g.navActivateId = 0
+    g.navActivateDownId = 0
+    g.navActivatePressedId = 0
+    g.navInputId = 0
+    if (g.navId != 0 && !g.navDisableHighlight && g.navWindowingTarget == null && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs) {
+        val activateDown = NavInput.Activate.isDown()
+        val activatePressed = activateDown && NavInput.Activate.isPressed(InputReadMode.Pressed)
+        if (g.activeId == 0 && activatePressed)
+            g.navActivateId = g.navId
+        if ((g.activeId == 0 || g.activeId == g.navId) && activateDown)
+            g.navActivateDownId = g.navId
+        if ((g.activeId == 0 || g.activeId == g.navId) && activatePressed)
+            g.navActivatePressedId = g.navId
+        if ((g.activeId == 0 || g.activeId == g.navId) && NavInput.Input.isPressed(InputReadMode.Pressed))
+            g.navInputId = g.navId
+    }
+    g.navWindow?.let { if (it.flags has Wf.NoNavInputs) g.navDisableHighlight = true }
+    if (g.navActivateId != 0)
+        assert(g.navActivateDownId == g.navActivateId)
+    g.navMoveRequest = false
+
+    // Process programmatic activation request
+    if (g.navNextActivateId != 0) {
+        g.navInputId = g.navNextActivateId
+        g.navActivatePressedId = g.navNextActivateId
+        g.navActivateDownId = g.navNextActivateId
+        g.navActivateId = g.navNextActivateId
+    }
+    g.navNextActivateId = 0
+
+    // Initiate directional inputs request
+    val allowedDirFlags = if (g.activeId == 0) 0.inv() else g.activeIdAllowNavDirFlags
+    if (g.navMoveRequestForward == NavForward.None) {
+        g.navMoveDir = Dir.None
+        g.navWindow?.let {
+            if (g.navWindowingTarget == null && allowedDirFlags != 0 && it.flags hasnt Wf.NoNavInputs) {
+                if (allowedDirFlags has (1 shl Dir.Left) && isNavInputPressedAnyOfTwo(NavInput.DpadLeft, NavInput.KeyLeft, InputReadMode.Repeat))
+                    g.navMoveDir = Dir.Left
+                if (allowedDirFlags has (1 shl Dir.Right) && isNavInputPressedAnyOfTwo(NavInput.DpadRight, NavInput.KeyRight, InputReadMode.Repeat))
+                    g.navMoveDir = Dir.Right
+                if (allowedDirFlags has (1 shl Dir.Up) && isNavInputPressedAnyOfTwo(NavInput.DpadUp, NavInput.KeyUp, InputReadMode.Repeat))
+                    g.navMoveDir = Dir.Up
+                if (allowedDirFlags has (1 shl Dir.Down) && isNavInputPressedAnyOfTwo(NavInput.DpadDown, NavInput.KeyDown, InputReadMode.Repeat))
+                    g.navMoveDir = Dir.Down
+            }
+        }
+    } else {
+        /*  Forwarding previous request (which has been modified, e.g. wrap around menus rewrite the requests with
+            a starting rectangle at the other side of the window)   */
+        assert(g.navMoveDir != Dir.None)
+        assert(g.navMoveRequestForward == NavForward.ForwardQueued)
+        g.navMoveRequestForward = NavForward.ForwardActive
+    }
+
+    if (g.navMoveDir != Dir.None) {
+        g.navMoveRequest = true
+        g.navMoveDirLast = g.navMoveDir
+    }
+
+    /*  If we initiate a movement request and have no current navId, we initiate a InitDefautRequest that will be used
+        as a fallback if the direction fails to find a match     */
+    if (g.navMoveRequest && g.navId == 0) {
+        g.navInitRequest = true
+        g.navInitRequestFromMove = true
+        g.navInitResultId = 0
+        g.navDisableHighlight = false
+    }
+
+    navUpdateAnyRequestFlag()
+
+    // Scrolling
+    g.navWindow?.let {
+
+        if (it.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null) {
+            // *Fallback* manual-scroll with NavUp/NavDown when window has no navigable item
+            val scrollSpeed = glm.floor(it.calcFontSize() * 100 * IO.deltaTime + 0.5f) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
+            if (it.dc.navLayerActiveMask == 0 && it.dc.navHasScroll && g.navMoveRequest) {
+                if (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right)
+                    it.setScrollX(glm.floor(it.scroll.x + (if (g.navMoveDir == Dir.Left) -1f else 1f) * scrollSpeed))
+                if (g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down)
+                    it.setScrollY(glm.floor(it.scroll.y + (if (g.navMoveDir == Dir.Up) -1f else 1f) * scrollSpeed))
+            }
+
+            // *Normal* Manual scroll with NavScrollXXX keys
+            // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
+            val scrollDir = getNavInputAmount2d(NavDirSourceFlags.PadLStick.i, InputReadMode.Down, 1f / 10f, 10f)
+            if (scrollDir.x != 0f && it.scrollbar.x) {
+                it.setScrollX(glm.floor(it.scroll.x + scrollDir.x * scrollSpeed))
+                g.navMoveFromClampedRefRect = true
+            }
+            if (scrollDir.y != 0f) {
+                it.setScrollY(glm.floor(it.scroll.y + scrollDir.y * scrollSpeed))
+                g.navMoveFromClampedRefRect = true
+            }
+        }
+    }
+    // Reset search results
+    g.navMoveResultLocal.clear()
+    g.navMoveResultOther.clear()
+
+    // When we have manually scrolled (without using navigation) and NavId becomes out of bounds, we project its bounding box to the visible area to restart navigation within visible items
+    if (g.navMoveRequest && g.navMoveFromClampedRefRect && g.navLayer == 0) {
+        val window = g.navWindow!!
+        val windowRectRel = Rect(window.innerRect.min - window.pos - 1, window.innerRect.max - window.pos + 1)
+        if (!windowRectRel.contains(window.navRectRel[g.navLayer])) {
+            val pad = window.calcFontSize() * 0.5f
+            windowRectRel expand Vec2(-min(windowRectRel.width, pad), -min(windowRectRel.height, pad)) // Terrible approximation for the intent of starting navigation from first fully visible item
+            window.navRectRel[g.navLayer] clipWith windowRectRel
+            g.navId = 0
+        }
+        g.navMoveFromClampedRefRect = false
+    }
+
+    // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
+    g.navWindow.let {
+        if (it != null) {
+            val navRectRel = if (it.navRectRel[g.navLayer].isFinite) Rect(it.navRectRel[g.navLayer]) else Rect(0f, 0f, 0f, 0f)
+            g.navScoringRectScreen.put(navRectRel.min + it.pos, navRectRel.max + it.pos)
+        } else g.navScoringRectScreen put getViewportRect()
+
+    }
+    g.navScoringRectScreen.min.x = min(g.navScoringRectScreen.min.x + 1f, g.navScoringRectScreen.max.x)
+    g.navScoringRectScreen.max.x = g.navScoringRectScreen.min.x
+    // Ensure if we have a finite, non-inverted bounding box here will allows us to remove extraneous abs() calls in navScoreItem().
+    assert(!g.navScoringRectScreen.isInverted)
+    //g.OverlayDrawList.AddRect(g.NavScoringRectScreen.Min, g.NavScoringRectScreen.Max, IM_COL32(255,200,0,255)); // [DEBUG]
+    g.navScoringCount = 0
+    if (IMGUI_DEBUG_NAV_RECTS)
+        g.navWindow?.let {
+            for (layer in 0..1)
+                g.overlayDrawList.addRect(it.navRectRel[layer].min + it.pos, it.navRectRel[layer].max + it.pos, COL32(255, 200, 0, 255))
+            val col = if (it.hiddenFrames <= 0) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
+            val p = navCalcPreferredMousePos()
+            g.overlayDrawList.addCircleFilled(p, 3f, col)
+            g.overlayDrawList.addText(null, 13f, p + Vec2(8, -4), col, "${g.navLayer}".toCharArray())
+        }
+}
+
+// Window management mode (hold to: change focus/move/resize, tap to: toggle menu layer)
+fun navUpdateWindowing() {
+
+    var applyFocusWindow: Window? = null
+    var applyToggleLayer = false
+
+    val startWindowingWithGamepad = g.navWindowingTarget == null && NavInput.Menu.isPressed(InputReadMode.Pressed)
+    val startWindowingWithKeyboard = g.navWindowingTarget == null && IO.keyCtrl && Key.Tab.isPressed && IO.navFlags has Nf.EnableKeyboard
+    if (startWindowingWithGamepad || startWindowingWithKeyboard)
+        (g.navWindow ?: findWindowNavigable(g.windows.lastIndex, -Int.MAX_VALUE, -1))?.let {
+            g.navWindowingTarget = it.rootNonPopupWindow
+            g.navWindowingHighlightAlpha = 0f
+            g.navWindowingHighlightTimer = 0f
+            g.navWindowingToggleLayer = !startWindowingWithKeyboard
+            g.navWindowingInputSource = if (startWindowingWithKeyboard) InputSource.NavKeyboard else InputSource.NavGamepad
+        }
+
+    // Gamepad update
+    g.navWindowingHighlightTimer += IO.deltaTime
+    g.navWindowingTarget?.let {
+        if (g.navWindowingInputSource == InputSource.NavGamepad) {
+            /*  Highlight only appears after a brief time holding the button, so that a fast tap on PadMenu
+                (to toggle NavLayer) doesn't add visual noise             */
+            g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingHighlightTimer - 0.2f) / 0.05f))
+
+            // Select window to focus
+            val focusChangeDir = NavInput.FocusPrev.isPressed(InputReadMode.RepeatSlow).i - NavInput.FocusNext.isPressed(InputReadMode.RepeatSlow).i
+            if (focusChangeDir != 0) {
+                navUpdateWindowingHighlightWindow(focusChangeDir)
+                g.navWindowingHighlightAlpha = 1f
+            }
+
+            // Single press toggles NavLayer, long press with L/R apply actual focus on release (until then the window was merely rendered front-most)
+            if (!NavInput.Menu.isDown()) {
+                // Once button was held long enough we don't consider it a tap-to-toggle-layer press anymore.
+                g.navWindowingToggleLayer = g.navWindowingToggleLayer and (g.navWindowingHighlightAlpha < 1f)
+                if (g.navWindowingToggleLayer && g.navWindow != null)
+                    applyToggleLayer = true
+                else if (!g.navWindowingToggleLayer)
+                    applyFocusWindow = it
+                g.navWindowingTarget = null
+            }
+        }
+    }
+    // Keyboard: Focus
+    g.navWindowingTarget?.let {
+        if (g.navWindowingInputSource == InputSource.NavKeyboard) {
+            // Visuals only appears after a brief time after pressing TAB the first time, so that a fast CTRL+TAB doesn't add visual noise
+            g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingHighlightTimer - 0.15f) / 0.04f)) // 1.0f
+            if (Key.Tab.isPressed(true))
+                navUpdateWindowingHighlightWindow(if (IO.keyShift) 1 else -1)
+            if (!IO.keyCtrl)
+                applyFocusWindow = g.navWindowingTarget
+        }
+    }
+
+    // Keyboard: Press and Release ALT to toggle menu layer
+    // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of back-end clearing releases all keys on ALT-TAB
+    if ((g.activeId == 0 || g.activeIdAllowOverlap) && NavInput.KeyMenu.isPressed(InputReadMode.Released))
+        if (isMousePosValid(IO.mousePos) == isMousePosValid(IO.mousePosPrev))
+            applyToggleLayer = true
+
+    // Move window
+    g.navWindowingTarget?.let {
+        if (it.flags hasnt Wf.NoMove) {
+            var moveDelta = Vec2()
+            if (g.navWindowingInputSource == InputSource.NavKeyboard && !IO.keyShift)
+                moveDelta = getNavInputAmount2d(NavDirSourceFlags.Keyboard.i, InputReadMode.Down)
+            if (g.navWindowingInputSource == InputSource.NavGamepad)
+                moveDelta = getNavInputAmount2d(NavDirSourceFlags.PadLStick.i, InputReadMode.Down)
+            if (moveDelta.x != 0f || moveDelta.y != 0f) {
+                val NAV_MOVE_SPEED = 800f
+                val moveSpeed = glm.floor(NAV_MOVE_SPEED * IO.deltaTime * min(IO.displayFramebufferScale.x, IO.displayFramebufferScale.y))
+                it.posF plusAssign moveDelta * moveSpeed
+                g.navDisableMouseHover = true
+                markIniSettingsDirty(it)
+            }
+        }
+    }
+
+    // Apply final focus
+    if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootNonPopupWindow)) {
+        g.navDisableHighlight = false
+        g.navDisableMouseHover = true
+        applyFocusWindow = navRestoreLastChildNavWindow(applyFocusWindow!!)
+        closePopupsOverWindow(applyFocusWindow)
+        applyFocusWindow.focus()
+        if (applyFocusWindow!!.navLastIds[0] == 0)
+            navInitWindow(applyFocusWindow!!, false)
+
+        // If the window only has a menu layer, select it directly
+        if (applyFocusWindow!!.dc.navLayerActiveMask == 1 shl 1)
+            g.navLayer = 1
+    }
+    applyFocusWindow?.let { g.navWindowingTarget = null }
+
+    // Apply menu/layer toggle
+    if (applyToggleLayer)
+        g.navWindow?.let {
+            var newNavWindow = it
+            while (newNavWindow.dc.navLayerActiveMask hasnt (1 shl 1) && newNavWindow.flags has Wf.ChildWindow && newNavWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
+                newNavWindow = newNavWindow.parentWindow!!
+            if (newNavWindow !== it) {
+                val oldNavWindow = it
+                newNavWindow.focus()
+                newNavWindow.navLastChildNavWindow = oldNavWindow
+            }
+            g.navDisableHighlight = false
+            g.navDisableMouseHover = true
+            navRestoreLayer(if (it.dc.navLayerActiveMask has (1 shl 1)) g.navLayer xor 1 else 0)
+        }
+}
+
+/** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)    */
+fun navProcessItem(window: Window, navBb: Rect, id: Int) {
+
+    //if (!g.IO.NavActive)  // [2017/10/06] Removed this possibly redundant test but I am not sure of all the side-effects yet. Some of the feature here will need to work regardless of using a _NoNavInputs flag.
+    //    return;
+
+    val itemFlags = window.dc.itemFlags
+    val navBbRel = Rect(navBb.min - window.pos, navBb.max - window.pos)
+    if (g.navInitRequest && g.navLayer == window.dc.navLayerCurrent) {
+        // Even if 'ImGuiItemFlags_NoNavDefaultFocus' is on (typically collapse/close button) we record the first ResultId so they can be used as a fallback
+        if (itemFlags hasnt ItemFlags.NoNavDefaultFocus || g.navInitResultId == 0) {
+            g.navInitResultId = id
+            g.navInitResultRectRel = navBbRel
+        }
+        if (itemFlags hasnt ItemFlags.NoNavDefaultFocus) {
+            g.navInitRequest = false // Found a match, clear request
+            navUpdateAnyRequestFlag()
+        }
+    }
+
+    // Scoring for navigation
+    if (g.navId != id && itemFlags hasnt ItemFlags.NoNav) {
+        val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
+        val newBest =
+                if (IMGUI_DEBUG_NAV_SCORING) {  // [DEBUG] Score all items in NavWindow at all times
+                    if (!g.navMoveRequest) g.navMoveDir = g.navMoveDirLast
+                    navScoreItem(result, navBb) && g.navMoveRequest
+                } else g.navMoveRequest && navScoreItem(result, navBb)
+        if (newBest) {
+            result.id = id
+            result.parentId = window.idStack.last()
+            result.window = window
+            result.rectRel put navBbRel
+        }
+    }
+
+    // Update window-relative bounding box of navigated item
+    if (g.navId == id) {
+        g.navWindow = window    // Always refresh g.NavWindow, because some operations such as FocusItem() don't have a window.
+        g.navLayer = window.dc.navLayerCurrent
+        g.navIdIsAlive = true
+        g.navIdTabCounter = window.focusIdxTabCounter
+        window.navRectRel[window.dc.navLayerCurrent] = navBbRel    // Store item bounding box (relative to window position)
+    }
+}
+
+
 //-----------------------------------------------------------------------------
 // Platform dependent default implementations
 //-----------------------------------------------------------------------------
@@ -587,3 +1064,49 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 //static void             ImeSetInputScreenPosFn_DefaultImpl(int x, int y);
 
 private var i0 = 0
+
+
+fun navCalcPreferredMousePos(): Vec2 {
+    val window = g.navWindow ?: return IO.mousePos
+    val rectRel = Rect(window.navRectRel[g.navLayer])
+    val pos = window.pos + Vec2(rectRel.min.x + min(g.style.framePadding.x * 4, rectRel.width),
+            rectRel.max.y - min(g.style.framePadding.y, rectRel.height))
+    val visibleRect = getViewportRect()
+    return glm.floor(glm.clamp(Vec2(pos), visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
+}
+
+fun isNavInputPressedAnyOfTwo(n1: NavInput, n2: NavInput, mode: InputReadMode) = getNavInputAmount(n1, mode) + getNavInputAmount(n2, mode) > 0f
+
+// FIXME-OPT O(N)
+fun findWindowNavigable(iStart: Int, iStop: Int, dir: Int): Window? {
+    var i = iStart
+    while (i in g.windows.indices && i != iStop) {
+        if (g.windows[i].isNavFocusable)
+            return g.windows[i]
+        i += dir
+    }
+    return null
+}
+
+fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
+
+    val target = g.navWindowingTarget!!
+    if (target.flags has Wf.Modal) return
+
+    val iCurrent = findWindowIndex(target)
+    val windowTarget = findWindowNavigable(iCurrent + focusChangeDir, -Int.MAX_VALUE, focusChangeDir)
+            ?: findWindowNavigable(if (focusChangeDir < 0) g.windows.lastIndex else 0, iCurrent, focusChangeDir)
+    g.navWindowingTarget = windowTarget
+    g.navWindowingToggleLayer = false
+}
+
+// FIXME-OPT O(N)
+fun findWindowIndex(window: Window): Int {
+    var i = g.windows.lastIndex
+    while (i >= 0) {
+        if (g.windows[i] == window)
+            return i
+        i--
+    }
+    return -1
+}

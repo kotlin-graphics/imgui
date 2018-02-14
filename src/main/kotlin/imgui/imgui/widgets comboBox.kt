@@ -20,6 +20,7 @@ import imgui.ImGui.openPopupEx
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.renderFrame
+import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTriangle
@@ -59,13 +60,14 @@ interface imgui_widgetsComboBox {
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
         itemSize(totalBb, style.framePadding.y)
-        if (!itemAdd(totalBb, id)) return false
+        if (!itemAdd(totalBb, id, frameBb)) return false
 
         val (pressed, hovered, held) = buttonBehavior(frameBb, id)
         var popupOpen = isPopupOpen(id)
 
         val arrowSize = frameHeight
         val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
+        renderNavHighlight(frameBb, id)
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
         val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
         renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, true, style.frameRounding) // FIXME-ROUNDING
@@ -75,7 +77,9 @@ interface imgui_widgetsComboBox {
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
-        if (pressed && !popupOpen) {
+        if ((pressed || g.navActivateId == id) && !popupOpen) {
+            if (window.dc.navLayerCurrent == 0)
+                window.navLastIds[0] = id
             openPopupEx(id)
             popupOpen = true
         }

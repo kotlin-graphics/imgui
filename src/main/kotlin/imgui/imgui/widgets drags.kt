@@ -34,11 +34,10 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.setActiveId
+import imgui.ImGui.setFocusId
 import imgui.ImGui.textUnformatted
 import imgui.Ref
-import imgui.internal.DataType
-import imgui.internal.Rect
-import imgui.internal.focus
+import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
 import imgui.Context as g
 
@@ -52,7 +51,9 @@ interface imgui_widgetsDrag {
 
     /** For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every functions, note that a 'float v[X]' function
      *  argument is the same as 'float* v', the array syntax is just a way to document the number of elements that are
-     *  expected to be accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x */
+     *  expected to be accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x
+     *  Speed are per-pixel of mouse movement (vSpeed = 0.2f: mouse needs to move by 5 pixels to increase value by 1).
+     *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
     fun dragFloat(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
                   power: Float = 1f) = dragFloat(label, v, 0, vSpeed, vMin, vMax, displayFormat, power)
 
@@ -76,7 +77,7 @@ interface imgui_widgetsDrag {
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
         // NB- we don't call ItemSize() yet because we may turn into a text edit box below
-        if (!itemAdd(totalBb, id)) {
+        if (!itemAdd(totalBb, id, frameBb)) {
             itemSize(totalBb, style.framePadding.y)
             return false
         }
@@ -88,10 +89,12 @@ interface imgui_widgetsDrag {
         // Tabbing or CTRL-clicking on Drag turns it into an input box
         var startTextInput = false
         val tabFocusRequested = focusableItemRegister(window, id)
-        if (tabFocusRequested || (hovered && (IO.mouseClicked[0] || IO.mouseDoubleClicked[0]))) {
+        if (tabFocusRequested || (hovered && (IO.mouseClicked[0] || IO.mouseDoubleClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id))) {
             setActiveId(id, window)
+            setFocusId(id, window)
             window.focus()
-            if (tabFocusRequested || IO.keyCtrl || IO.mouseDoubleClicked[0]) {
+            g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
+            if (tabFocusRequested || IO.keyCtrl || IO.mouseDoubleClicked[0] || g.navInputId == id) {
                 startTextInput = true
                 g.scalarAsInputTextId = 0
             }

@@ -12,6 +12,7 @@ import imgui.ImGui.clearActiveId
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.end
+import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.initialize
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
@@ -54,6 +55,11 @@ interface imgui_main {
         assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount) { "Forgot to call render() or endFrame() at the end of the previous frame?" }
         for (k in Key.values())
             assert(IO.keyMap[k.i] >= -1 && IO.keyMap[k.i] < IO.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
+
+        /*  Do a simple check for required key mapping (we intentionally do NOT check all keys to not pressure user into
+            setting up everything, but Space is required and was super recently added in 1.54 WIP)         */
+        if (IO.navFlags has NavFlags.EnableKeyboard)
+            assert(IO.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
         // Initialize on first frame
         if (!g.initialized) initialize()
@@ -110,13 +116,18 @@ interface imgui_main {
         g.dragDropAcceptIdCurr = 0
         g.dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
 
-        /*  Update mouse inputs state
+        // Update gamepad/keyboard directional navigation
+        navUpdate()
+
+        /*  Update mouse input state
             If mouse just appeared or disappeared (usually denoted by -Float.MAX_VALUE component, but in reality we test
             for -256000.0f) we cancel out movement in MouseDelta         */
         if (isMousePosValid(IO.mousePos) && isMousePosValid(IO.mousePosPrev))
             IO.mouseDelta = IO.mousePos - IO.mousePosPrev
         else
             IO.mouseDelta put 0f
+        if (IO.mouseDelta.x != 0f || IO.mouseDelta.y != 0f)
+            g.navDisableMouseHover = false
         IO.mousePosPrev put IO.mousePos
 
         for (i in IO.mouseDown.indices) {
@@ -152,7 +163,7 @@ interface imgui_main {
         IO.framerate = 1.0f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
 
         // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering).
-        if (g.movingWindow?.moveId == g.activeId) {
+        if (g.movingWindow?.moveId == g.activeId && g.activeIdSource == InputSource.Mouse) {
             keepAliveId(g.activeId)
             assert(g.movingWindow != null)
             if (IO.mouseDown[0]) {
@@ -209,7 +220,7 @@ interface imgui_main {
             }
         } else g.modalWindowDarkeningRatio = 0f
 
-        /*  Update the WantCaptureMouse/WantCAptureKeyboard flags, so user can capture/discard the inputs away from
+        /*  Update the WantCaptureMouse/WantCaptureKeyboard flags, so user can capture/discard the inputs away from
             the rest of their application.
             When clicking outside of a window we assume the click is owned by the application and won't request capture.
             We need to track click ownership.   */
@@ -227,7 +238,12 @@ interface imgui_main {
         IO.wantCaptureMouse =
                 if (g.wantCaptureMouseNextFrame != -1) g.wantCaptureMouseNextFrame != 0
                 else (mouseAvailToImgui && (g.hoveredWindow != null || mouseAnyDown)) || g.openPopupStack.isNotEmpty()
-        IO.wantCaptureKeyboard = if (g.wantCaptureKeyboardNextFrame != -1) g.wantCaptureKeyboardNextFrame != 0 else g.activeId != 0
+        IO.wantCaptureKeyboard =
+                if (g.wantCaptureKeyboardNextFrame != -1) g.wantCaptureKeyboardNextFrame != 0
+                else g.activeId != 0 || modalWindow != null
+        if (IO.navActive && IO.navFlags has NavFlags.EnableKeyboard && IO.navFlags hasnt NavFlags.NoCaptureKeyboard)
+            IO.wantCaptureKeyboard = true
+
         IO.wantTextInput = g.wantTextInputNextFrame != -1 && g.wantTextInputNextFrame != 0
         g.mouseCursor = MouseCursor.Arrow
         g.wantCaptureKeyboardNextFrame = -1
@@ -283,8 +299,14 @@ interface imgui_main {
         }
 
         // Pressing TAB activate widget focus
-        if (g.activeId == 0 && g.navWindow != null && g.navWindow!!.active && Key.Tab.isPressed(false))
-            g.navWindow!!.focusIdxTabRequestNext = 0
+        g.navWindow?.let {
+            if (g.activeId == 0 && it.active && it.flags hasnt Wf.NoNavInputs && !IO.keyCtrl && Key.Tab.isPressed(false)) {
+                if (g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE)
+                    it.focusIdxTabRequestNext = g.navIdTabCounter + 1 + if (IO.keyShift) -1 else 1
+                else it.focusIdxTabRequestNext = if (IO.keyShift) -1 else 0
+            }
+        }
+        g.navIdTabCounter = Int.MAX_VALUE
 
         // Mark all windows as not visible
         var i = 0
@@ -330,7 +352,15 @@ interface imgui_main {
             IO.metricsRenderIndices = 0
             IO.metricsRenderVertices = 0
             g.drawDataBuilder.clear()
-            g.windows.filter { it.active && it.hiddenFrames <= 0 && it.flags hasnt Wf.ChildWindow }.map(Window::addToDrawDataSelectLayer)
+            val windowToRenderFrontMost = g.navWindowingTarget.takeIf {
+                it?.flags?.hasnt(Wf.NoBringToFrontOnFocus) ?: false
+            }
+            g.windows.filter { it.active && it.hiddenFrames <= 0 && it.flags hasnt Wf.ChildWindow && it !== windowToRenderFrontMost }
+                    .map(Window::addToDrawDataSelectLayer)
+            windowToRenderFrontMost?.let {
+                if (it.active && it.hiddenFrames <= 0) // NavWindowingTarget is always temporarily displayed as the front-most window
+                    it.addToDrawDataSelectLayer()
+            }
             g.drawDataBuilder.flattenIntoSingleLayer()
 
             // Draw software mouse cursor if requested
@@ -397,6 +427,7 @@ interface imgui_main {
                             with _NoMove would activate hover on other windows.                         */
                         g.hoveredWindow.focus()
                         setActiveId(g.hoveredWindow!!.moveId, g.hoveredWindow)
+                        g.navDisableHighlight = true
                         g.activeIdClickOffset = IO.mousePos - g.hoveredRootWindow!!.pos
                         if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove)
                             g.movingWindow = g.hoveredWindow
@@ -438,6 +469,7 @@ interface imgui_main {
         IO.mouseWheel = 0f
         IO.mouseWheelH = 0f
         IO.inputCharacters.fill(NUL)
+        IO.navInputs.fill(0f)
 
         g.frameCountEnded = g.frameCount
     }
@@ -490,6 +522,7 @@ interface imgui_main {
 
     companion object {
 
+
         /** Handle resize for: Resize Grips, Borders, Gamepad
          * @return borderHelf   */
         fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld: Int, resizeGripCount: Int, resizeGripCol: IntArray): Int {
@@ -517,7 +550,8 @@ interface imgui_main {
                 val resizeRect = Rect(corner, corner + grip.innerDir * gripHoverSize)
                 resizeRect.fixInverted()
 
-                val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), ButtonFlags.FlattenChildren)
+                val flags = ButtonFlags.FlattenChildren or ButtonFlags.NoNavFocus
+                val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), flags)
                 if (hovered || held)
                     g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
 
@@ -569,6 +603,24 @@ interface imgui_main {
             }
             popId()
 
+            // Navigation/gamepad resize
+            if (g.navWindowingTarget === window) {
+                val navResizeDelta = Vec2()
+                if (g.navWindowingInputSource == InputSource.NavKeyboard && IO.keyShift)
+                    navResizeDelta put getNavInputAmount2d(NavDirSourceFlags.Keyboard.i, InputReadMode.Down)
+                if (g.navWindowingInputSource == InputSource.NavGamepad)
+                    navResizeDelta put getNavInputAmount2d(NavDirSourceFlags.PadDPad.i, InputReadMode.Down)
+                if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
+                    val NAV_RESIZE_SPEED = 600f
+                    navResizeDelta *= glm.floor(NAV_RESIZE_SPEED * IO.deltaTime * min(IO.displayFramebufferScale.x, IO.displayFramebufferScale.y))
+                    g.navWindowingToggleLayer = false
+                    g.navDisableMouseHover = true
+                    resizeGripCol[0] = Col.ResizeGripActive.u32
+                    // FIXME-NAV: Should store and accumulate into a separate size buffer to handle sizing constraints properly, right now a constraint will make us stuck.
+                    sizeTarget put window.calcSizeAfterConstraint(window.sizeFull + navResizeDelta)
+                }
+            }
+
             // Apply back modified position/size to window
             if (sizeTarget.x != Float.MAX_VALUE) {
                 window.sizeFull put sizeTarget
@@ -596,7 +648,8 @@ interface imgui_main {
         fun focusFrontMostActiveWindow(ignoreWindow: Window?) {
             for (i in g.windows.lastIndex downTo 0)
                 if (g.windows[i] !== ignoreWindow && g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
-                    g.windows[i].focus()
+                    val focusWindow = navRestoreLastChildNavWindow(g.windows[i])
+                    focusWindow.focus()
                     return
                 }
         }

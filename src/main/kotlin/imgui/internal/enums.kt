@@ -36,7 +36,9 @@ enum class ButtonFlags {
     /** don't set ActiveId while holding the mouse (ButtonFlags.PressedOnClick only) */
     NoHoldingActiveID,
     /** press when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
-    PressedOnDragDropHold;
+    PressedOnDragDropHold,
+    /** don't override navigation focus when activated; */
+    NoNavFocus;
 
     val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
@@ -119,7 +121,55 @@ enum class DataType { Int, Float, Vec2;
 enum class Dir { None, Left, Right, Up, Down, Count;
 
     val i = ordinal - 1
+
+    companion object {
+        fun of(i: Int) = values()[i]
+    }
 }
+
+infix fun Int.shl(b: Dir) = shl(b.i)
+
+enum class InputSource { None, Mouse, Nav,
+    /** Only used occasionally for storage, not tested/handled by most code */
+    NavKeyboard,
+    /** Only used occasionally for storage, not tested/handled by most code */
+    NavGamepad;
+
+    val i = ordinal
+
+    companion object {
+        val COUNT = values().size
+    }
+}
+
+// FIXME-NAV: Clarify/expose various repeat delay/rate
+enum class InputReadMode { Down, Pressed, Released, Repeat, RepeatSlow, RepeatFast;
+
+    val i = ordinal
+}
+
+enum class NavHighlightFlags { TypeDefault, TypeThin, AlwaysDraw, NoRounding;
+
+    val i = 1 shl ordinal
+}
+
+infix fun Int.has(b: NavHighlightFlags) = and(b.i) != 0
+infix fun Int.hasnt(b: NavHighlightFlags) = and(b.i) == 0
+infix fun NavHighlightFlags.or(b: NavHighlightFlags) = i or b.i
+
+enum class NavDirSourceFlags { Keyboard, PadDPad, PadLStick;
+
+    val i = 1 shl ordinal
+}
+
+infix fun NavDirSourceFlags.or(b: NavDirSourceFlags) = i or b.i
+infix fun Int.has(b: NavDirSourceFlags) = and(b.i) != 0
+
+enum class NavForward { None, ForwardQueued, ForwardActive;
+
+    val i = ordinal
+}
+
 
 // TODO check enum declarance position
 enum class DrawCornerFlags(val i: Int) {

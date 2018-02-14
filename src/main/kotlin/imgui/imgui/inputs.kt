@@ -16,7 +16,7 @@ interface imgui_inputs {
     fun getKeyIndex(imguiKey: Int) = IO.keyMap[imguiKey]
 
     /** is key being held. == io.KeysDown[user_key_index]. note that imgui doesn't know the semantic of each entry of io.KeyDown[].
-     *  Use your own indices/enums according to how your backend/engine stored them into KeyDown[]! */
+     *  Use your own indices/enums according to how your back-end/engine stored them into KeyDown[]! */
     fun isKeyDown(userKeyIndex: Int) = if (userKeyIndex < 0) false else IO.keysDown[userKeyIndex]
 
     /** uses user's key indices as stored in the keys_down[] array. if repeat=true.
@@ -110,7 +110,7 @@ interface imgui_inputs {
     val mousePosOnOpeningCurrentPopup get() = Vec2(g.currentPopupStack.lastOrNull()?.openMousePos ?: IO.mousePos)
 
     /** dragging amount since clicking. if lockThreshold < -1.0f uses io.MouseDraggingThreshold
-     *  NB: This is only valid if isMousePosValid(). Backends in theory should always keep mouse position valid
+     *  NB: This is only valid if isMousePosValid(). Back-ends in theory should always keep mouse position valid
      *  when dragging even outside the client window. */
     fun getMouseDragDelta(button: Int = 0, lockThreshold: Float = -1f): Vec2 {
 
