@@ -60,7 +60,7 @@ interface imgui_main {
             assert(io.keyMap[k.i] >= -1 && io.keyMap[k.i] < io.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
 
         /*  Do a simple check for required key mapping (we intentionally do NOT check all keys to not pressure user into
-            setting up everything, but Space is required and was super recently added in 1.54 WIP)         */
+            setting up everything, but Space is required and was super recently added in 1.60 WIP)         */
         if (io.navFlags has NavFlags.EnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
