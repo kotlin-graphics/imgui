@@ -608,7 +608,8 @@ class FontAtlas {
         // Start packing
         val maxTexHeight = 1024 * 32
         val spc = STBTTPackContext.create()
-        stbtt_PackBegin(spc, null, texSize.x, maxTexHeight, 0, texGlyphPadding, MemoryUtil.NULL)
+        if(!stbtt_PackBegin(spc, null, texSize.x, maxTexHeight, 0, texGlyphPadding, MemoryUtil.NULL))
+            return false
 
         /*  Pack our extra data rectangles first, so it will be on the upper-left corner of our texture (UV will have
             small values).  */
@@ -685,7 +686,7 @@ class FontAtlas {
             stbtt_PackSetOversampling(spc, cfg.oversample)
             val n = stbtt_PackFontRangesGatherRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
             assert(n == fontGlyphsCount)
-            stbrp_pack_rects(spc.packInfo, tmp.rects)
+            stbrp_pack_rects(spc.packInfo, tmp.rects)   // fuck, Omar modified his stb_rect_pack.h, we shall also have our own?
 
             // Extend texture height
             for (r in tmp.rects)
