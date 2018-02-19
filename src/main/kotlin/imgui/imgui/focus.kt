@@ -18,7 +18,7 @@ interface imgui_focusActivation {
         val window = g.currentWindow!!
         if (!window.appearing) return
         val nav = g.navWindow!!
-        if (nav === window.navRootWindow && (g.navInitRequest || g.navInitResultId != 0) && g.navLayer == nav.dc.navLayerCurrent) {
+        if (nav === window.rootWindowForNav && (g.navInitRequest || g.navInitResultId != 0) && g.navLayer == nav.dc.navLayerCurrent) {
             g.navInitRequest = false
             g.navInitResultId = nav.dc.lastItemId
             g.navInitResultRectRel = Rect(nav.dc.lastItemRect.min - nav.pos, nav.dc.lastItemRect.max - nav.pos)

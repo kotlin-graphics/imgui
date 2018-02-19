@@ -185,17 +185,20 @@ interface imgui_window {
 
             // Initialize
             window.parentWindow = parentWindow
-            window.rootNonPopupWindow = window
+            window.rootWindowForNav = window
+            window.rootWindowForTabbing = window
+            window.rootWindowForTitleBarHighlight = window
             window.rootWindow = window
             parentWindow?.let {
                 if (flags has Wf.ChildWindow && !windowIsChildTooltip)
                     window.rootWindow = it.rootWindow
-                if (flags hasnt Wf.Modal && flags has (Wf.ChildWindow or Wf.Popup))
-                    window.rootNonPopupWindow = it.rootNonPopupWindow
+                if (flags hasnt Wf.Modal && flags has (Wf.ChildWindow or Wf.Popup)) {
+                    window.rootWindowForTabbing = it.rootWindowForTitleBarHighlight // Same value in master branch, will differ for docking
+                    window.rootWindowForTitleBarHighlight = it.rootWindowForTitleBarHighlight
+                }
             }
-            window.navRootWindow = window
-            while (window.navRootWindow!!.flags has Wf.NavFlattened)
-                window.navRootWindow = window.navRootWindow!!.parentWindow
+            while (window.rootWindowForNav!!.flags has Wf.NavFlattened)
+                window.rootWindowForNav = window.rootWindowForNav!!.parentWindow
 
             window.active = true
             window.beginOrderWithinParent = 0
@@ -442,13 +445,13 @@ interface imgui_window {
             // Draw window + handle manual resize
             val windowRounding = window.windowRounding
             val windowBorderSize = window.windowBorderSize
+            val titleBarIsHighlight = wantFocus || g.navWindow?.rootWindowForTitleBarHighlight === window.rootWindowForTitleBarHighlight // TODO check
             val titleBarRect = window.titleBarRect()
-            val windowIsFocused = wantFocus || (g.navWindow?.rootNonPopupWindow === window.rootNonPopupWindow ?: false)
             if (window.collapsed) {
                 // Title bar only
                 val backupBorderSize = style.frameBorderSize
                 g.style.frameBorderSize = window.windowBorderSize
-                val titleBarCol = (if (windowIsFocused && !g.navDisableHighlight) Col.TitleBgActive else Col.TitleBgCollapsed)
+                val titleBarCol = (if (titleBarIsHighlight && !g.navDisableHighlight) Col.TitleBgActive else Col.TitleBgCollapsed)
                 renderFrame(titleBarRect.min, titleBarRect.max, titleBarCol.u32, true, windowRounding)
                 style.frameBorderSize = backupBorderSize
             } else {
@@ -463,7 +466,7 @@ interface imgui_window {
                         bgCol, windowRounding, if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
 
                 // Title bar
-                val titleBarCol = if (window.collapsed) Col.TitleBgCollapsed else if (windowIsFocused) Col.TitleBgActive else Col.TitleBg
+                val titleBarCol = if (window.collapsed) Col.TitleBgCollapsed else if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
                 if (flags hasnt Wf.NoTitleBar)
                     window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, Dcf.Top.i)
 

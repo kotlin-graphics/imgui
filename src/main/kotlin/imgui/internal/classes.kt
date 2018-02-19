@@ -500,7 +500,7 @@ class DrawContext {
 }
 
 /** Windows data    */
-class Window(var context: imgui.Context, var name: String) {
+class Window(var context: Context, var name: String) {
     /** == ImHash(Name) */
     val id = hash(name, 0)
     /** See enum ImGuiWindowFlags_  */
@@ -626,14 +626,16 @@ class Window(var context: imgui.Context, var name: String) {
     var drawList = DrawList(context.drawListSharedData).apply { _ownerName = name }
     /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
-    /** Generally point to ourself. If we are a child window, this is pointing to the first non-child parent window.    */
+    /** Point to ourself or first ancestor that is not a child window.  */
     var rootWindow: Window? = null
-    /** Generally point to ourself. Used to display TitleBgActive color and for selecting which window to use for NavWindowing  */
-    var rootNonPopupWindow: Window? = null
+    /** Point to ourself or first ancestor which will display TitleBgActive color when this window is active.   */
+    var rootWindowForTitleBarHighlight: Window? = null
+    /** Point to ourself or first ancestor which can be CTRL-Tabbed into.   */
+    var rootWindowForTabbing: Window? = null
+    /** Point to ourself or first ancestor which doesn't have the NavFlattened flag.    */
+    var rootWindowForNav: Window? = null
 
 
-    /** Generally point to ourself. If we are a child window with the NavFlattened flag, point to a parent window.  */
-    var navRootWindow: Window? = null
     /** When going to the menu bar, we remember the child window we came from. (This could probably be made implicit if
      *  we kept g.Windows sorted by last focused including child window.)   */
     var navLastChildNavWindow: Window? = null
@@ -899,7 +901,7 @@ class Window(var context: imgui.Context, var name: String) {
     }
 
     /** Can we focus this window with CTRL+TAB (or PadMenu + PadFocusPrev/PadFocusNext) */
-    val isNavFocusable get() = active && this === rootNonPopupWindow && (flags hasnt Wf.NoNavFocus || this === g.navWindow)
+    val isNavFocusable get() = active && this === rootWindowForTabbing && (flags hasnt Wf.NoNavFocus || this === g.navWindow)
 
     fun calcResizePosSizeFromAnyCorner(cornerTarget: Vec2, cornerNorm: Vec2, outPos: Vec2, outSize: Vec2) {
         val posMin = cornerTarget.lerp(pos, cornerNorm)             // Expected window upper-left

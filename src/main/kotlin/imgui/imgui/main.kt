@@ -14,6 +14,7 @@ import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.end
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.initialize
+import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
 import imgui.ImGui.popId
@@ -28,9 +29,13 @@ import imgui.internal.DrawListFlags as Dlf
 
 interface imgui_main {
 
-    val io get() = gImGui?.io ?: throw Error("No current context. Did you call ImGui::Context() or ImGui::setCurrentContext()?")
+    val io
+        get() = gImGui?.io
+                ?: throw Error("No current context. Did you call ImGui::Context() or ImGui::setCurrentContext()?")
 
-    val style get() = gImGui?.style ?: throw Error("No current context. Did you call ImGui::Context() or ImGui::setCurrentContext()?")
+    val style
+        get() = gImGui?.style
+                ?: throw Error("No current context. Did you call ImGui::Context() or ImGui::setCurrentContext()?")
 
 //    val style
 //        get() = g.style
@@ -165,36 +170,8 @@ interface imgui_main {
         g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
         io.framerate = 1.0f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
 
-        // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering).
-        if (g.movingWindow?.moveId == g.activeId && g.activeIdSource == InputSource.Mouse) {
-            keepAliveId(g.activeId)
-            assert(g.movingWindow != null)
-            if (io.mouseDown[0]) {
-                /*  MovingWindow = window we clicked on, could be a child window. We track it to preserve Focus and
-                    so that ActiveIdWindow == MovingWindow and ActiveId == MovingWindow->MoveId for consistency.    */
-                val actuallyMovingWindow = g.movingWindow!!.rootWindow!!
-                val pos = io.mousePos - g.activeIdClickOffset
-                if (actuallyMovingWindow.posF.x != pos.x || actuallyMovingWindow.posF.y != pos.y) {
-                    markIniSettingsDirty(actuallyMovingWindow)
-                    actuallyMovingWindow.posF put pos
-                }
-                g.movingWindow.focus()
-            } else {
-                clearActiveId()
-                g.movingWindow = null
-            }
-        } else {
-            /*  When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order
-                to prevent hovering others.             */
-            g.activeIdWindow?.let {
-                if (it.moveId == g.activeId) {
-                    keepAliveId(g.activeId)
-                    if (!io.mouseDown[0])
-                        clearActiveId()
-                }
-            }
-            g.movingWindow = null
-        }
+        // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering)
+        updateMovingWindow()
 
         // Delay saving settings so we don't spam disk too much
         if (g.settingsDirtyTimer > 0.0f) {
@@ -478,6 +455,40 @@ interface imgui_main {
     }
 
     companion object {
+
+        fun updateMovingWindow() {
+
+            val mov = g.movingWindow
+            if (mov != null && mov.moveId == g.activeId && g.activeIdSource == InputSource.Mouse) {
+                /*  We actually want to move the root window. g.movingWindow === window we clicked on
+                    (could be a child window).
+                    We track it to preserve Focus and so that activeIdWindow === movingWindow and
+                    activeId == movingWindow.moveId for consistency.    */
+                keepAliveId(g.activeId)
+                assert(mov.rootWindow != null)
+                val movingWindow = mov.rootWindow!!
+                if (io.mouseDown[0]) {
+                    val pos = io.mousePos - g.activeIdClickOffset
+                    if (movingWindow.posF != pos) {
+                        markIniSettingsDirty(movingWindow)
+                        movingWindow.posF put pos
+                    }
+                    mov.focus()
+                } else {
+                    clearActiveId()
+                    g.movingWindow = null
+                }
+            } else {
+                /*  When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order
+                    to prevent hovering others.                 */
+                if (g.activeIdWindow?.moveId == g.activeId) {
+                    keepAliveId(g.activeId)
+                    if (!io.mouseDown[0])
+                        clearActiveId()
+                }
+                g.movingWindow = null
+            }
+        }
 
         /** Handle resize for: Resize Grips, Borders, Gamepad
          * @return borderHelf   */
