@@ -146,6 +146,7 @@ class HelloWorld_lwjgl {
         glClear(GL_COLOR_BUFFER_BIT)
 
         ImGui.render()
+        LwjglGL3.renderDrawData(ImGui.drawData!!)
         window.swapBuffers()
 
         checkError("loop") // TODO remove

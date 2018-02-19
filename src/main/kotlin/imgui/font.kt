@@ -506,6 +506,8 @@ class FontAtlas {
 
         if (cursor <= MouseCursor.None || cursor >= MouseCursor.Count) return false
 
+        if (flags has Flags.NoMouseCursors) return false
+
         val r = customRects[customRectIds[0]]
         assert(r.id == DefaultTexData.id)
         val pos = DefaultTexData.cursorDatas[cursor.i][0] + Vec2(r.x, r.y)
@@ -526,6 +528,20 @@ class FontAtlas {
     // Members
     //-------------------------------------------
 
+    enum class Flags {
+        /** Don't round the height to next power of two */
+        NoPowerOfTwoHeight,
+        /** Don't build software mouse cursors into the atlas   */
+        NoMouseCursors;
+
+        val i = 1 shl ordinal
+    }
+
+    infix fun Int.has(flag: Flags) = and(flag.i) != 0
+    infix fun Int.hasnt(flag: Flags) = and(flag.i) == 0
+
+    /** Build flags (see ImFontAtlasFlags_) */
+    var flags = 0
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
     var texId = -1
@@ -608,7 +624,7 @@ class FontAtlas {
         // Start packing
         val maxTexHeight = 1024 * 32
         val spc = STBTTPackContext.create()
-        if(!stbtt_PackBegin(spc, null, texSize.x, maxTexHeight, 0, texGlyphPadding, MemoryUtil.NULL))
+        if (!stbtt_PackBegin(spc, null, texSize.x, maxTexHeight, 0, texGlyphPadding, MemoryUtil.NULL))
             return false
 
         /*  Pack our extra data rectangles first, so it will be on the upper-left corner of our texture (UV will have
@@ -698,7 +714,7 @@ class FontAtlas {
         assert(bufRangesN == totalRangesCount)
 
         // Create texture
-        texSize.y = texSize.y.upperPowerOfTwo
+        texSize.y = if (flags has Flags.NoPowerOfTwoHeight) texSize.y + 1 else texSize.y.upperPowerOfTwo
         texUvScale = 1f / Vec2(texSize)
         texPixelsAlpha8 = bufferBig(texSize.x * texSize.y)
         spc.pixels = texPixelsAlpha8!!
@@ -768,8 +784,11 @@ class FontAtlas {
     }
 
     fun buildRegisterDefaultCustomRects() {
-        if (customRectIds[0] < 0)
-            customRectIds[0] = addCustomRectRegular(DefaultTexData.id, DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
+        if (customRectIds[0] >= 0) return
+        customRectIds[0] = when {
+            flags hasnt Flags.NoMouseCursors -> addCustomRectRegular(DefaultTexData.id, DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
+            else -> addCustomRectRegular(DefaultTexData.id, 2, 2)
+        }
     }
 
     fun buildSetupFont(font: Font, fontConfig: FontConfig, ascent: Float, descent: Float) {
@@ -828,21 +847,34 @@ class FontAtlas {
 
     fun buildRenderDefaultTexData() {
 
+        assert(customRectIds[0] >= 0 && texPixelsAlpha8 != null)
         val r = customRects[customRectIds[0]]
-        assert(r.width == DefaultTexData.wHalf * 2 + 1 && r.height == DefaultTexData.h)
-        assert(r.isPacked && texPixelsAlpha8 != null)
+        assert(r.id == DefaultTexData.id && r.isPacked)
 
-        // Render/copy pixels
-        var n = 0
-        for (y in 0 until DefaultTexData.h)
-            for (x in 0 until DefaultTexData.wHalf) {
-                val offset0 = r.x + x + (r.y + y) * texSize.x
-                val offset1 = offset0 + DefaultTexData.wHalf + 1
-                texPixelsAlpha8!![offset0] = if (DefaultTexData.pixels[n] == '.') 0xFF.b else 0x00.b
-                texPixelsAlpha8!![offset1] = if (DefaultTexData.pixels[n] == 'X') 0xFF.b else 0x00.b
-                n++
+        val w = texSize.x
+        if (flags hasnt Flags.NoMouseCursors) {
+            // Render/copy pixels
+            assert(r.width == DefaultTexData.wHalf * 2 + 1 && r.height == DefaultTexData.h)
+            var n = 0
+            for (y in 0 until DefaultTexData.h)
+                for (x in 0 until DefaultTexData.wHalf) {
+                    val offset0 = r.x + x + (r.y + y) * w
+                    val offset1 = offset0 + DefaultTexData.wHalf + 1
+                    texPixelsAlpha8!![offset0] = if (DefaultTexData.pixels[n] == '.') 0xFF.b else 0x00.b
+                    texPixelsAlpha8!![offset1] = if (DefaultTexData.pixels[n] == 'X') 0xFF.b else 0x00.b
+                    n++
+                }
+        } else {
+            assert(r.width == 2 && r.height == 2)
+            val offset = r.x.i + r.y.i * w
+            with(texPixelsAlpha8!!) {
+                put(offset + w + 1, 0xFF.b)
+                put(offset + w, 0xFF.b)
+                put(offset + 1, 0xFF.b)
+                put(offset, 0xFF.b)
             }
-        texUvWhitePixel = (r.x + 0.5f) * texUvScale
+        }
+        texUvWhitePixel = (Vec2(r.x, r.y) + 0.5f) * texUvScale
     }
 
     fun buildMultiplyCalcLookupTable(inBrightenFactor: Float) = CharArray(256, {

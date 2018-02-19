@@ -85,10 +85,6 @@ object LwjglGL3 {
             keyMap[Key.X] = GLFW_KEY_X
             keyMap[Key.Y] = GLFW_KEY_Y
             keyMap[Key.Z] = GLFW_KEY_Z
-
-            /* Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the
-               same ImDrawData pointer.             */
-            renderDrawListsFn = this@LwjglGL3::renderDrawLists
         }
 
         if (installCallbacks) {
@@ -254,6 +250,7 @@ object LwjglGL3 {
         initTexture2d(fontTexture) {
             minFilter = linear
             magFilter = linear
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
             image(GL_RGBA, size, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
         }
 
@@ -266,14 +263,13 @@ object LwjglGL3 {
         return checkError("createFontsTexture")
     }
 
-    /** This is the main rendering function that you have to implement and provide to ImGui (via setting up
-     *  'RenderDrawListsFn' in the ImGuiIO structure)
+    /** OpenGL3 Render function.
+     *  (this used to be set in io.renderDrawListsFn and called by ImGui::render(), but you can now call this directly
+     *  from your main loop)
      *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL
-     *  state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.
-     *  If text or lines are blurry when integrating ImGui in your engine: in your Render function, try translating your
-     *  projection matrix by (0.5f,0.5f) or (0.375f,0.375f) */
-    fun renderDrawLists(drawData: DrawData) {
-        checkError("init")
+     *  state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.   */
+    fun renderDrawData(drawData: DrawData) {
+
         /** Avoid rendering when minimized, scale coordinates for retina displays
          *  (screen coordinates != framebuffer coordinates) */
         val fbSize = io.displaySize * io.displayFramebufferScale

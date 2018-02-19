@@ -13,7 +13,6 @@ import imgui.ImGui.clearDragDrop
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.end
 import imgui.ImGui.getNavInputAmount2d
-import imgui.ImGui.initialize
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
@@ -37,16 +36,6 @@ interface imgui_main {
         get() = gImGui?.style
                 ?: throw Error("No current context. Did you call ImGui::Context() or ImGui::setCurrentContext()?")
 
-//    val style
-//        get() = g.style
-//        set(value) {
-//            g.style = value
-//        }
-
-    /** Same value as passed to your ::renderDrawListsFn() function. Valid after ::render() and
-     *  until the next call to ::newFrame()   */
-    val drawData get() = g.drawData.takeIf { it.valid }
-
     /** start a new ImGui frame, you can submit any command from this point until NewFrame()/Render().  */
     fun newFrame() {
 
@@ -54,6 +43,7 @@ interface imgui_main {
 
         /* (We pass an error message in the assert expression as a trick to get it visible to programmers who are not 
             using a debugger, as most assert handlers display their argument)         */
+        assert(g.initialized)
         assert(io.deltaTime >= 0f) { "Need a positive deltaTime (zero is tolerated but will cause some timing issues)" }
         assert(io.displaySize greaterThanEqual 0) { "Invalid displaySize value" }
         assert(io.fonts.fonts.size > 0) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
@@ -69,8 +59,12 @@ interface imgui_main {
         if (io.navFlags has NavFlags.EnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
-        // Initialize on first frame
-        if (!g.initialized) initialize()
+        // Load settings on first frame
+        if (!g.settingsLoaded) {
+            assert(g.settingsWindows.isEmpty())
+            loadIniSettingsFromDisk(io.iniFilename)
+            g.settingsLoaded = true
+        }
 
         g.time += io.deltaTime
         g.frameCount += 1
@@ -186,7 +180,7 @@ interface imgui_main {
                 is lagging as this point.
             - We also support the moved window toggling the NoInputs flag after moving has started in order to be able to detect
                 windows below it, which is useful for e.g. docking mechanisms.  */
-        g.hoveredWindow = if (g.movingWindow?.flags?.hasnt(Wf.NoInputs) == true) g.movingWindow else findHoveredWindow(io.mousePos)
+        g.hoveredWindow = if (g.movingWindow?.flags?.hasnt(Wf.NoInputs) == true) g.movingWindow else findHoveredWindow()
         g.hoveredRootWindow = g.hoveredWindow?.rootWindow
 
         val modalWindow = frontMostModalRootWindow
@@ -315,7 +309,8 @@ interface imgui_main {
     }
 
 
-    /** ends the ImGui frame, finalize rendering data, then call your io.RenderDrawListsFn() function if set.   */
+    /** Ends the ImGui frame, finalize the draw data. (Obsolete: optionally call io.renderDrawListsFn if set.
+     *  Nowadays, prefer calling your render function yourself.)   */
     fun render() {
 
         assert(g.initialized)   // Forgot to call ImGui::NewFrame()
@@ -365,12 +360,12 @@ interface imgui_main {
             setupDrawData(g.drawDataBuilder.layers[0], g.drawData)
             io.metricsRenderVertices = g.drawData.totalVtxCount
             io.metricsRenderIndices = g.drawData.totalIdxCount
-
-            // Render. If user hasn't set a callback then they may retrieve the draw data via GetDrawData()
-            if (g.drawData.cmdListsCount > 0 && io.renderDrawListsFn != null)
-                io.renderDrawListsFn!!(g.drawData)
         }
     }
+
+    /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
+     *  ::newFrame()   */
+    val drawData get() = g.drawData.takeIf { it.valid }
 
     /** Ends the ImGui frame. Automatically called by Render()! you most likely don't need to ever call that yourself
      *  directly. If you don't need to render you can call EndFrame() but you'll have wasted CPU already. If you don't

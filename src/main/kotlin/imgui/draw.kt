@@ -1023,7 +1023,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     val currentClipRect get() = if (_clipRectStack.isNotEmpty()) _clipRectStack.last()!! else _data.clipRectFullscreen
     val currentTextureId get() = if (_textureIdStack.isNotEmpty()) _textureIdStack.last()!! else null
 
-    infix fun addTo(renderList: ArrayList<DrawList>) {
+    infix fun addTo(outList: ArrayList<DrawList>) {
 
         if (cmdBuffer.empty()) return
 
@@ -1057,7 +1057,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 beginChild()/endChild() before reaching the 64K limit to split your draw commands in multiple draw lists.*/
 //        assert(_vtxCurrentIdx <= (1L shl (Int.BYTES * 8))) // Too many vertices in same Im See comment above.
 
-        renderList += this
+        outList += this
         io.metricsRenderVertices += vtxBuffer.size
         io.metricsRenderIndices += idxBuffer.size
     }
