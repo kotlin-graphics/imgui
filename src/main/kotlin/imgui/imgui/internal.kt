@@ -219,7 +219,7 @@ interface imgui_internal {
                     able to reach unclipped widgets. This would work if user had explicit scrolling control (e.g. mapped on a stick)    */
             window.dc.navLayerActiveMaskNext = window.dc.navLayerActiveMaskNext or window.dc.navLayerCurrentMask
             if (g.navId == id || g.navAnyRequest)
-                if (g.navWindow!!.navRootWindow === window.navRootWindow)
+                if (g.navWindow!!.rootWindowForNav === window.rootWindowForNav)
                     if (window == g.navWindow || (window.flags or g.navWindow!!.flags) has Wf.NavFlattened)
                         navProcessItem(window, navBbArg ?: bb, id)
         }

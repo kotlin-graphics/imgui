@@ -50,6 +50,9 @@ interface imgui_inputs {
         return io.mouseDown[button]
     }
 
+    /** is any mouse button held    */
+    val isAnyMouseDown get() = io.mouseDown.any()
+
     /** did mouse button clicked (went from !Down to Down)  */
     fun isMouseClicked(button: Int, repeat: Boolean = false): Boolean {
 

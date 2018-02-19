@@ -905,7 +905,7 @@ fun navUpdateWindowing() {
     val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.navFlags has Nf.EnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavigable(g.windows.lastIndex, -Int.MAX_VALUE, -1))?.let {
-            g.navWindowingTarget = it.rootNonPopupWindow
+            g.navWindowingTarget = it.rootWindowForTabbing
             g.navWindowingHighlightAlpha = 0f
             g.navWindowingHighlightTimer = 0f
             g.navWindowingToggleLayer = !startWindowingWithKeyboard
@@ -976,7 +976,7 @@ fun navUpdateWindowing() {
     }
 
     // Apply final focus
-    if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootNonPopupWindow)) {
+    if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootWindowForTabbing)) {
         g.navDisableHighlight = false
         g.navDisableMouseHover = true
         applyFocusWindow = navRestoreLastChildNavWindow(applyFocusWindow!!)
