@@ -84,10 +84,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Track the window we clicked on (in order to preserve focus).
      *  The actually window that is moved is generally MovingWindow.rootWindow.  */
     var movingWindow: Window? = null
-    /** .ini Settings   */
-    val settings = ArrayList<WindowSettings>()
-    /** Save .ini Settings on disk when time reaches zero   */
-    var settingsDirtyTimer = 0f
     /** Stack for PushStyleColor()/PopStyleColor()  */
     var colorModifiers = Stack<ColMod>()
     /** Stack for PushStyleVar()/PopStyleVar()  */
@@ -265,6 +261,15 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var imeInProgress = false
     var imeLastKey = 0
 
+    //------------------------------------------------------------------
+    // Settings
+    //------------------------------------------------------------------
+
+    var settingsLoaded = false
+    /** Save .ini Settings on disk when time reaches zero   */
+    var settingsDirtyTimer = 0f
+    /** .ini Settings for Window  */
+    val settingsWindows = ArrayList<WindowSettings>()
 
     //------------------------------------------------------------------
     // Logging
@@ -306,6 +311,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         All those functions are not reliant on the current context. */
     init {
         if (gImGui == null) setCurrent()
+
+        // ~initialize(ctx)
+        assert(!g.initialized && !g.settingsLoaded)
+        g.logClipboard = StringBuilder()
+
+        g.initialized = true
     }
 
     /** This function is merely here to free heap allocations.     */
@@ -321,7 +332,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
         saveIniSettingsToDisk(io.iniFilename)
 
-        for (window in g.windows) window.clear()
+        // Clear everything else
+        g.windows.forEach { it.clear() }
         g.windows.clear()
         g.windowsSortBuffer.clear()
         g.currentWindow = null
@@ -332,7 +344,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.hoveredRootWindow = null
         g.activeIdWindow = null
         g.movingWindow = null
-        g.settings.clear()
+        g.settingsWindows.clear()
         g.colorModifiers.clear()
         g.styleModifiers.clear()
         g.fontStack.clear()
@@ -433,11 +445,6 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // User Functions
     //------------------------------------------------------------------
 
-    /** Rendering function, will be called in Render().
-     *  Alternatively you can keep this to NULL and call GetDrawData() after Render() to get the same pointer.
-     *  See example applications if you are unsure of how to implement this.    */
-    var renderDrawListsFn: ((DrawData) -> Unit)? = null
-
     // Optional: access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
     var getClipboardTextFn: ((userData: Any) -> Unit)? = null
@@ -467,7 +474,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     val mouseDown = BooleanArray(5)
     /** Mouse wheel: 1 unit scrolls about 5 lines text. */
     var mouseWheel = 0f
-    /** Mouse wheel (Horizontal). Most users don't have a mouse with an horizontal wheel, may not be filled by all back ends.   */
+    /** Mouse wheel (Horizontal). Most users don't have a mouse with an horizontal wheel, may not be filled by all back-ends.   */
     var mouseWheelH = 0f
     /** Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor). */
     var mouseDrawCursor = false

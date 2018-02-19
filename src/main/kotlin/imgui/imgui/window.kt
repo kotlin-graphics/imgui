@@ -8,7 +8,6 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
@@ -34,6 +33,7 @@ import imgui.ImGui.renderTriangle
 import imgui.ImGui.scrollbar
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.style
 import imgui.imgui.imgui_main.Companion.resizeGripDef
 import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
@@ -512,12 +512,14 @@ interface imgui_window {
 
             // Draw navigation selection/windowing rectangle border
             if (g.navWindowingTarget === window) {
+                var rounding = max(window.windowRounding, style.windowRounding)
                 val bb = window.rect()
                 bb expand g.fontSize
-                if (bb contains viewportRect)
-                    bb expand (-g.fontSize - 2f)
-                val col = getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha)
-                window.drawList.addRect(bb.min, bb.max, col, g.style.windowRounding, 0.inv(), 3f)
+                if (bb contains viewportRect) { // If a window fits the entire viewport, adjust its highlight inward
+                    bb expand (-g.fontSize - 1f)
+                    rounding = window.windowRounding
+                }
+                window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha), rounding, 0.inv(), 3f)
             }
 
             // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars.
@@ -712,14 +714,13 @@ interface imgui_window {
 
             if (dc.columnsSet != null) // close columns set if any is open
                 endColumns()
-            popClipRect()   // inner window clip rectangle
+            popClipRect()   // Inner window clip rectangle
 
             // Stop logging
 //TODO            if (flags hasnt WindowFlags.ChildWindow)    // FIXME: add more options for scope of logging
 //                logFinish()
 
-            // Pop
-            // NB: we don't clear 'window->RootWindow'. The pointer is allowed to live until the next call to Begin().
+            // Pop from window stack
             g.currentWindowStack.pop()
             if (flags has Wf.Popup)
                 g.currentPopupStack.pop()

@@ -142,6 +142,7 @@ class HelloWorld_jogl : GLEventListener {
         glClear(GL_COLOR_BUFFER_BIT)
 
         ImGui.render()
+        JoglGL3.renderDrawData(ImGui.drawData!!)
         if (glGetError() != GL_NO_ERROR) throw Error("display")
     }
 

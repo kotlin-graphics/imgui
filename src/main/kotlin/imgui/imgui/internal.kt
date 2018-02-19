@@ -104,15 +104,6 @@ interface imgui_internal {
 
     fun findWindowByName(name: String) = g.windowsById[hash(name, 0)]
 
-    fun initialize() {
-
-        g.logClipboard = StringBuilder()
-
-        assert(g.settings.isEmpty())
-        loadIniSettingsFromDisk(io.iniFilename)
-        g.initialized = true
-    }
-
     fun markIniSettingsDirty() {
         if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = io.iniSavingRate
     }
@@ -2772,13 +2763,14 @@ interface imgui_internal {
             }
 
             val tStep = 1f / resW
+            val invScale = if(scaleMin == scaleMax) 0f else 1f / (scaleMax - scaleMin)
 
             val v0 = data[(0 + valuesOffset) % valuesCount]
             var t0 = 0f
             // Point in the normalized space of our target rectangle
-            val tp0 = Vec2(t0, 1f - saturate((v0 - scaleMin) / (scaleMax - scaleMin)))
+            val tp0 = Vec2(t0, 1f - saturate((v0 - scaleMin) * invScale))
             // Where does the zero line stands
-            val histogramZeroLineT = if (scaleMin * scaleMax < 0f) -scaleMin / (scaleMax - scaleMin) else if (scaleMin < 0f) 0f else 1f
+            val histogramZeroLineT = if (scaleMin * scaleMax < 0f) -scaleMin * invScale else if (scaleMin < 0f) 0f else 1f
 
             val colBase = (if (plotType == PlotType.Lines) Col.PlotLines else Col.PlotHistogram).u32
             val colHovered = (if (plotType == PlotType.Lines) Col.PlotLinesHovered else Col.PlotHistogramHovered).u32
@@ -2788,7 +2780,7 @@ interface imgui_internal {
                 val v1Idx = (t0 * itemCount + 0.5f).i
                 assert(v1Idx in 0 until valuesCount)
                 val v1 = data[(v1Idx + valuesOffset + 1) % valuesCount]
-                val tp1 = Vec2(t1, 1f - saturate((v1 - scaleMin) / (scaleMax - scaleMin)))
+                val tp1 = Vec2(t1, 1f - saturate((v1 - scaleMin) * invScale))
 
                 // NB: Draw calls are merged together by the DrawList system. Still, we should render our batch are lower level to save a bit of CPU.
                 val pos0 = innerBb.min.lerp(innerBb.max, tp0)

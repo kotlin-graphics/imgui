@@ -396,7 +396,7 @@ enum class NavInput {
     fun isPressed(mode: InputReadMode) = getNavInputAmount(this, mode) > 0f
 }
 
-/** [BETA] Gamepad/Keyboard directional navigation options  */
+/** [BETA] Gamepad/Keyboard directional navigation flags, stored in io.NavFlags  */
 enum class NavFlags {
     /** Master keyboard navigation enable flag. ::newFrame() will automatically fill io.navInputs[] based on io.keyDown[].    */
     EnableKeyboard,
@@ -609,7 +609,7 @@ enum class MouseCursor(val i: Int) {
     /** When hovering over InputText, etc.  */
     TextInput(1),
     /** Unused  */
-    Move(2),
+    ResizeAll(2),
     /** When hovering over an horizontal border  */
     ResizeNS(3),
     /** When hovering over a vertical border or a column */

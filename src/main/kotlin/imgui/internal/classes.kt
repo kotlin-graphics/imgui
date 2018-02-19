@@ -835,10 +835,10 @@ class Window(var context: Context, var name: String) {
     val scrollMaxX get() = max(0f, sizeContents.x - (sizeFull.x - scrollbarSizes.x))
     val scrollMaxY get() = max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y))
 
-    infix fun addTo(renderList: ArrayList<DrawList>) {
-        drawList addTo renderList
+    infix fun addTo(outList: ArrayList<DrawList>) {
+        drawList addTo outList
         dc.childWindows.filter { it.active && it.hiddenFrames <= 0 }  // clipped children may have been marked not active
-                .forEach { it addTo renderList }
+                .forEach { it addTo outList }
     }
 
     fun addToSortedBuffer() {

@@ -2,6 +2,7 @@ package imgui;
 
 import glm_.vec2.Vec2;
 import glm_.vec4.Vec4;
+import imgui.impl.JoglGL3;
 import imgui.impl.LwjglGL3;
 import org.lwjgl.opengl.GL;
 import uno.glfw.GlfwWindow;
@@ -141,6 +142,7 @@ public class Test_lwjgl {
         glClear(GL_COLOR_BUFFER_BIT);
 
         imgui.render();
+        LwjglGL3.INSTANCE.renderDrawData(imgui.getDrawData());
         window.swapBuffers();
 
         gln.GlnKt.checkError("loop", true); // TODO remove

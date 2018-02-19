@@ -75,10 +75,6 @@ object JoglVrGL3 {
             keyMap[Key.X] = KeyEvent.VK_X.i
             keyMap[Key.Y] = KeyEvent.VK_Y.i
             keyMap[Key.Z] = KeyEvent.VK_Z.i
-
-            /* Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the
-               same ImDrawData pointer.             */
-            renderDrawListsFn = this@JoglVrGL3::renderDrawLists
         }
 
         if (installCallbacks) {
@@ -248,6 +244,7 @@ object JoglVrGL3 {
         glBindTexture(GL_TEXTURE_2D, fontTexture[0])
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
 
         // Store our identifier
@@ -261,13 +258,12 @@ object JoglVrGL3 {
         return true
     }
 
-    /** This is the main rendering function that you have to implement and provide to ImGui (via setting up
-     *  'RenderDrawListsFn' in the ImGuiIO structure)
+    /** OpenGL3 Render function.
+     *  (this used to be set in io.renderDrawListsFn and called by ImGui::render(), but you can now call this directly
+     *  from your main loop)
      *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL
-     *  state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.
-     *  If text or lines are blurry when integrating ImGui in your engine: in your Render function, try translating your
-     *  projection matrix by (0.5f,0.5f) or (0.375f,0.375f) */
-    fun renderDrawLists(drawData: DrawData) = with(gl) {
+     *  state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.   */
+    fun renderDrawData(drawData: DrawData) = with(gl) {
 
         /** Avoid rendering when minimized, scale coordinates for retina displays
          *  (screen coordinates != framebuffer coordinates) */

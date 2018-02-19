@@ -66,7 +66,7 @@ val defaultFont get() = io.fontDefault ?: io.fonts.fonts[0]
 FIXME: Note that we have a lag here because WindowRectClipped is updated in Begin() so windows moved by user via
 SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time
 FindHoveredWindow() is called, aka before the next Begin(). Moving window thankfully isn't affected.    */
-fun findHoveredWindow(pos: Vec2): Window? {
+fun findHoveredWindow(): Window? {
     for (i in g.windows.size - 1 downTo 0) {
         val window = g.windows[i]
         if (!window.active)
@@ -76,7 +76,7 @@ fun findHoveredWindow(pos: Vec2): Window? {
 
         // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
         val bb = Rect(window.windowRectClipped.min - style.touchExtraPadding, window.windowRectClipped.max + style.touchExtraPadding)
-        if (bb contains pos)
+        if (bb contains io.mousePos)
             return window
     }
     return null
@@ -190,9 +190,9 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window): Vec2 {  // TODO -> w
     return scroll
 }
 
-fun findWindowSettings(id: Int) = g.settings.firstOrNull { it.id == id }
+fun findWindowSettings(id: Int) = g.settingsWindows.firstOrNull { it.id == id }
 
-fun addWindowSettings(name: String) = WindowSettings(name).apply { g.settings.add(this) }
+fun addWindowSettings(name: String) = WindowSettings(name).apply { g.settingsWindows.add(this) }
 
 fun loadIniSettingsFromDisk(iniFilename: String?) {
     if (iniFilename == null) return
@@ -221,6 +221,7 @@ fun loadIniSettingsFromDisk(iniFilename: String?) {
             }
         }
     }
+    g.settingsLoaded = true
 }
 
 fun saveIniSettingsToDisk(iniFilename: String?) {
@@ -244,7 +245,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
     /*  Write .ini file
         If a window wasn't opened in this session we preserve its settings     */
     File(Paths.get(iniFilename).toUri()).printWriter().use {
-        for (setting in g.settings) {
+        for (setting in g.settingsWindows) {
             if (setting.pos.x == Int.MAX_VALUE) continue
             // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
             val name = setting.name.substringBefore("###")
@@ -269,6 +270,7 @@ fun getViewportRect(): Rect {
 }
 
 fun closePopupToLevel(remaining: Int) {
+    assert(remaining >= 0)
     var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
         else g.openPopupStack[0].parentWindow
     if (g.navLayer == 0)
