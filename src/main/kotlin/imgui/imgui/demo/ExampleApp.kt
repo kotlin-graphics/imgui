@@ -1227,6 +1227,7 @@ object StyleEditor {
                     val scale = floatArrayOf(font.scale)
                     // Scale only this font
                     dragFloat("Font scale", scale, 0.005f, 0.3f, 2f, "%.1f")
+                    inputFloat("Font offset", font.displayOffset::y, 1f, 1f, 0)
                     font.scale = scale[0]
                     sameLine()
                     showHelpMarker("""
