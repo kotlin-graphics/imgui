@@ -22,6 +22,7 @@ import uno.buffer.destroy
 import uno.buffer.isNotEmpty
 import uno.convert.decode85
 import uno.stb.stb
+import unsigned.toULong
 import java.nio.ByteBuffer
 
 
@@ -468,7 +469,7 @@ class FontAtlas {
 
     /** Id needs to be >= 0x10000. Id >= 0x80000000 are reserved for ImGui and DrawList   */
     fun addCustomRectRegular(id: Int, width: Int, height: Int): Int {
-        assert(id >= 0x10000 && width in 0..0xFFFF && height in 0..0xFFFF)
+        assert(id.toULong() >= 0x10000 && width in 0..0xFFFF && height in 0..0xFFFF)
         val r = CustomRect()
         r.id = id
         r.width = width
