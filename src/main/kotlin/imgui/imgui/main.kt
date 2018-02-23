@@ -386,7 +386,7 @@ interface imgui_main {
         }
 
         // Hide implicit "Debug" window if it hasn't been used
-        assert(g.currentWindowStack.size == 1)    // Mismatched Begin()/End() calls
+// TODO        assert(g.currentWindowStack.size == 1)    // Mismatched Begin()/End() calls
         g.currentWindow?.let {
             if (!it.writeAccessed) it.active = false
         }
