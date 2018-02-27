@@ -2,8 +2,8 @@
 
 [![Build Status](https://travis-ci.org/kotlin-graphics/imgui.svg?branch=master)](https://travis-ci.org/kotlin-graphics/imgui) 
 [![license](https://img.shields.io/badge/License-MIT-orange.svg)](https://github.com/kotlin-graphics/imgui/blob/master/LICENSE) 
-![](https://reposs.herokuapp.com/?path=kotlin-graphics/imgui&color=yellow) 
 [![Release](https://jitpack.io/v/kotlin-graphics/imgui.svg)](https://jitpack.io/#kotlin-graphics/imgui) 
+![](https://reposs.herokuapp.com/?path=kotlin-graphics/imgui&color=yellow) 
 [![Github All Releases](https://img.shields.io/github/downloads/kotlin-graphics/imgui/total.svg)]()
 [![Slack Status](http://slack.kotlinlang.org/badge.svg)](http://slack.kotlinlang.org/)
 
