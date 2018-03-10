@@ -40,7 +40,7 @@ interface imgui_colums {
     fun nextColumn() {
 
         val window = currentWindow
-        if (window.skipItems || window.dc.columnsSet != null) return
+        if (window.skipItems || window.dc.columnsSet == null) return
 
         popItemWidth()
         popClipRect()
