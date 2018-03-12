@@ -357,7 +357,7 @@ interface imgui_demoDebugInformations {
                 bulletText("Active: ${window.active}, WriteAccessed: ${window.writeAccessed}")
                 bulletText("NavLastIds: 0x%08X,0x%08X, NavLayerActiveMask: %X", window.navLastIds[0], window.navLastIds[1], window.dc.navLayerActiveMask)
                 bulletText("NavLastChildNavWindow: ${window.navLastChildNavWindow?.name}")
-                if (window.navRectRel[0].isFinite)
+                if (window.navRectRel[0].isInverted)
                     bulletText("NavRectRel[0]: (%.1f,%.1f)(%.1f,%.1f)", window.navRectRel[0].min.x, window.navRectRel[0].min.y, window.navRectRel[0].max.x, window.navRectRel[0].max.y)
                 else
                     bulletText("NavRectRel[0]: <None>")

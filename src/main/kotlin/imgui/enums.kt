@@ -326,9 +326,9 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
 }
 
 /** [BETA] Gamepad/Keyboard directional navigation
- *  Keyboard: Set io.navFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[]
+ *  Keyboard: Set io.configFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[]
  *  based on your io.keyDown[] + io.keyMap[] arrays.
- *  Gamepad:  Set io.navFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling
+ *  Gamepad:  Set io.configFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling
  *  ::newFrame(). Note that io.navInputs[] is cleared by ::endFrame().
  *  Read instructions in imgui.cpp for more details.    */
 enum class NavInput {
@@ -396,26 +396,32 @@ enum class NavInput {
     fun isPressed(mode: InputReadMode) = getNavInputAmount(this, mode) > 0f
 }
 
-/** [BETA] Gamepad/Keyboard directional navigation flags, stored in io.NavFlags  */
-enum class NavFlags {
+/** Configuration flags stored in io.configFlags  */
+enum class ConfigFlags(val i: Int) {
     /** Master keyboard navigation enable flag. ::newFrame() will automatically fill io.navInputs[] based on io.keyDown[].    */
-    EnableKeyboard,
+    NavEnableKeyboard(1 shl 0),
     /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.navInputs[].   */
-    EnableGamepad,
+    NavEnableGamepad(1 shl 1),
     /** Request navigation to allow moving the mouse cursor. May be useful on TV/console systems where moving a virtual
      *  mouse is awkward. Will update io.mousePos and set io.WantMoveMouse = true. If enabled you MUST honor io.wantMoveMouse
      *  requests in your binding, otherwise ImGui will react as if the mouse is jumping around back and forth.  */
-    MoveMouse,
+    NavMoveMouse(1 shl 2),
     /** Do not set the io.WantCaptureKeyboard flag with io.NavActive is set.    */
-    NoCaptureKeyboard;
+    NavNoCaptureKeyboard (1 shl 3),
 
-    val i = 1 shl ordinal
+    /*  User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects.
+        Those flags are not used by core ImGui)     */
+
+    /** Back-end is SRGB-aware. */
+    IsSRGB               (1 shl 20),
+    /** Back-end is using a touch screen instead of a mouse.   */
+    IsTouchScreen        (1 shl 21);
 }
 
-infix fun Int.has(b: NavFlags) = and(b.i) != 0
-infix fun Int.hasnt(b: NavFlags) = and(b.i) == 0
-infix fun Int.or(b: NavFlags) = or(b.i)
-infix fun NavFlags.or(b: NavFlags) = i or b.i
+infix fun Int.has(b: ConfigFlags) = and(b.i) != 0
+infix fun Int.hasnt(b: ConfigFlags) = and(b.i) == 0
+infix fun Int.or(b: ConfigFlags) = or(b.i)
+infix fun ConfigFlags.or(b: ConfigFlags) = i or b.i
 
 /** Enumeration for PushStyleColor() / PopStyleColor()  */
 enum class Col {
