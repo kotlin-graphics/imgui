@@ -505,7 +505,7 @@ class FontAtlas {
 
     fun getMouseCursorTexData(cursor: MouseCursor, outOffset: Vec2, outSize: Vec2, outUv: Array<Vec2>): Boolean {
 
-        if (cursor != MouseCursor.None) return false
+        if (cursor == MouseCursor.None) return false
 
         if (flags has Flags.NoMouseCursors) return false
 

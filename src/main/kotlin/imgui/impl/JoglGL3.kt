@@ -1,5 +1,6 @@
 package imgui.impl
 
+import com.jogamp.newt.Display
 import com.jogamp.newt.event.KeyEvent
 import com.jogamp.newt.event.KeyListener
 import com.jogamp.newt.event.MouseEvent
@@ -135,7 +136,6 @@ object JoglGL3 {
             window.isPointerVisible = false
         else {
 //            window.pointerIcon =
-//            glfwSetCursor(g_Window, g_MouseCursors[cursor] ? g_MouseCursors [cursor] : g_MouseCursors[ImGuiMouseCursor_Arrow]);
             window.isPointerVisible = true
         }
 
