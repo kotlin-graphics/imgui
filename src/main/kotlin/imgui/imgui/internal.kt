@@ -477,6 +477,11 @@ interface imgui_internal {
             g.navId = window.navLastIds[0]
     }
 
+    fun navMoveRequestCancel() {
+        g.navMoveRequest = false
+        navUpdateAnyRequestFlag()
+    }
+
     /** Remotely activate a button, checkbox, tree node etc. given its unique ID. activation is queued and processed
      *  on the next frame when the item is encountered again.  */
     fun activateItem(id: Int) {

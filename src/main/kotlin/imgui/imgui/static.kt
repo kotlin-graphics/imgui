@@ -184,11 +184,6 @@ fun navUpdateAnyRequestFlag() {
 
 fun navMoveRequestButNoResultYet() = g.navMoveRequest && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
 
-fun navMoveRequestCancel() {
-    g.navMoveRequest = false
-    navUpdateAnyRequestFlag()
-}
-
 
 fun setCurrentWindow(window: Window?) {
     g.currentWindow = window
