@@ -17,6 +17,7 @@ import gln.buf
 import gln.glf.semantic
 import imgui.*
 import imgui.ImGui.io
+import imgui.ImGui.mouseCursor
 import org.lwjgl.opengl.GL11.GL_FILL
 import org.lwjgl.opengl.GL11.GL_POLYGON_MODE
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
@@ -74,12 +75,14 @@ object JoglGL3 {
             keyMap[Key.Z] = KeyEvent.VK_Z.i
         }
 
-        if (installCallbacks) {
-            window.addMouseListener(mouseCallback)
-            window.addKeyListener(keyCallback)
-        }
+        if (installCallbacks) installCallbacks()
 
         return true
+    }
+
+    fun installCallbacks() {
+        window.addMouseListener(mouseCallback)
+        window.addKeyListener(keyCallback)
     }
 
     var vtxSize = 1 shl 5 // 32768
@@ -124,6 +127,16 @@ object JoglGL3 {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
             io.mouseDown[it] = mouseJustPressed[it]
+        }
+
+        // Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
+        val cursor = mouseCursor
+        if (io.mouseDrawCursor || cursor == MouseCursor.None)
+            window.isPointerVisible = false
+        else {
+//            window.pointerIcon =
+//            glfwSetCursor(g_Window, g_MouseCursors[cursor] ? g_MouseCursors [cursor] : g_MouseCursors[ImGuiMouseCursor_Arrow]);
+            window.isPointerVisible = true
         }
 
         // Hide OS mouse cursor if ImGui is drawing it
@@ -177,7 +190,7 @@ object JoglGL3 {
         return true
     }
 
-    private fun GL3.checkSize(draws: ArrayList<DrawList>){
+    private fun GL3.checkSize(draws: ArrayList<DrawList>) {
 
         val minVtxSize = draws.map { it.vtxBuffer.size }.sum() * DrawVert.size
         val minIdxSize = draws.map { it.idxBuffer.size }.sum() * Int.BYTES
@@ -218,7 +231,7 @@ object JoglGL3 {
 
             if (glGetError() != GL.GL_NO_ERROR) throw Error("render")
 
-            if(DEBUG) println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
+            if (DEBUG) println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
         }
     }
 
