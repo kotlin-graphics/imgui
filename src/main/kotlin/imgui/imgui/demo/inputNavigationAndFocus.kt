@@ -72,9 +72,9 @@ object inputNavigationAndFocus {
                 "a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware " +
                 "cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both " +
                 "kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
-            checkboxFlags("io.NavFlags: EnableGamepad", io::navFlags, NavFlags.EnableGamepad.i)
-            checkboxFlags("io.NavFlags: EnableKeyboard", io::navFlags, NavFlags.EnableKeyboard.i)
-            checkboxFlags("io.NavFlags: MoveMouse", io::navFlags, NavFlags.MoveMouse.i)
+            checkboxFlags("io.ConfigFlags: EnableGamepad", io::configFlags, ConfigFlags.NavEnableGamepad.i)
+            checkboxFlags("io.ConfigFlags: EnableKeyboard", io::configFlags, ConfigFlags.NavEnableKeyboard.i)
+            checkboxFlags("io.ConfigFlags: MoveMouse", io::configFlags, ConfigFlags.NavMoveMouse.i)
             sameLine(); showHelpMarker("Request ImGui to move your move cursor when using gamepad/keyboard " +
                 "navigation. NewFrame() will change io.MousePos and set the io.WantMoveMouse flag, your backend will " +
                 "need to apply the new mouse position.")

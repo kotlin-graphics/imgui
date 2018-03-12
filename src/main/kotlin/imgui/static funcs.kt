@@ -31,7 +31,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlags as Itf
-import imgui.NavFlags as Nf
+import imgui.ConfigFlags as Cf
 import imgui.WindowFlags as Wf
 
 
@@ -631,7 +631,7 @@ fun navUpdate() {
     // Update Keyboard->Nav inputs mapping
     for (i in NavInput.InternalStart until NavInput.COUNT)
         io.navInputs[i] = 0f
-    if (io.navFlags has Nf.EnableKeyboard) {
+    if (io.configFlags has Cf.NavEnableKeyboard) {
         fun navMapKey(key: Key, navInput: NavInput) {
             if (io.keyMap[key] != -1 && isKeyDown(io.keyMap[key]))
                 io.navInputs[navInput] = 1f
@@ -706,7 +706,7 @@ fun navUpdate() {
     // Apply application mouse position movement, after we had a chance to process move request result.
     if (g.navMousePosDirty && g.navIdIsAlive) {
         // Set mouse position given our knowledge of the nav widget position from last frame
-        if (io.navFlags has Nf.MoveMouse) {
+        if (io.configFlags has Cf.NavMoveMouse) {
             io.mousePosPrev = navCalcPreferredMousePos()
             io.mousePos = io.mousePosPrev
             io.wantMoveMouse = true
@@ -727,7 +727,7 @@ fun navUpdate() {
     navUpdateWindowing()
 
     // Set output flags for user application
-    io.navActive = io.navFlags has (Nf.EnableGamepad or Nf.EnableKeyboard) && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs
+    io.navActive = io.configFlags has (Cf.NavEnableGamepad or Cf.NavEnableKeyboard) && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs
     io.navVisible = (io.navActive && g.navId != 0 && !g.navDisableHighlight) || g.navWindowingTarget != null || g.navInitRequest
 
     // Process NavCancel input (to close a popup, get back to parent, clear focus)
@@ -875,7 +875,7 @@ fun navUpdate() {
     // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
     g.navWindow.let {
         if (it != null) {
-            val navRectRel = if (it.navRectRel[g.navLayer].isFinite) Rect(it.navRectRel[g.navLayer]) else Rect(0f, 0f, 0f, 0f)
+            val navRectRel = if (!it.navRectRel[g.navLayer].isInverted) Rect(it.navRectRel[g.navLayer]) else Rect(0f, 0f, 0f, 0f)
             g.navScoringRectScreen.put(navRectRel.min + it.pos, navRectRel.max + it.pos)
         } else g.navScoringRectScreen put getViewportRect()
 
@@ -904,7 +904,7 @@ fun navUpdateWindowing() {
     var applyToggleLayer = false
 
     val startWindowingWithGamepad = g.navWindowingTarget == null && NavInput.Menu.isPressed(InputReadMode.Pressed)
-    val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.navFlags has Nf.EnableKeyboard
+    val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has Cf.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavigable(g.windows.lastIndex, -Int.MAX_VALUE, -1))?.let {
             g.navWindowingTarget = it.rootWindowForTabbing

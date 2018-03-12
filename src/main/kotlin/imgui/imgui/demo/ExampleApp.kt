@@ -1240,10 +1240,10 @@ object StyleEditor {
                     text("Fallback character: '${font.fallbackChar}' (${font.fallbackChar.i})")
                     val side = sqrt(font.metricsTotalSurface.f).i
                     text("Texture surface: ${font.metricsTotalSurface} pixels (approx) ~ ${side}x$side")
-                    for (cfgI in font.configData.indices) {
-                        val cfg = font.configData[cfgI]
-                        bulletText("Input $cfgI: '${cfg.name}', Oversample: ${cfg.oversample}, PixelSnapH: ${cfg.pixelSnapH}")
-                    }
+                    for (c in 0 until font.configDataCount)
+                        font.configData.getOrNull(c)?.let {
+                            bulletText("Input $c: '${it.name}', Oversample: ${it.oversample}, PixelSnapH: ${it.pixelSnapH}")
+                        }
                     treeNode("Glyphs", "Glyphs (${font.glyphs.size})") {
                         // Display all glyphs of the fonts in separate pages of 256 characters
                         // Forcefully/dodgily make FindGlyph() return NULL on fallback, which isn't the default behavior.

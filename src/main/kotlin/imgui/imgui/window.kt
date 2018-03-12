@@ -360,7 +360,7 @@ interface imgui_window {
                 val sc = style.mouseCursorScale
                 val refPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(io.mousePos)
                 val rectToAvoid =
-                        if (!g.navDisableHighlight && g.navDisableMouseHover && io.navFlags hasnt NavFlags.MoveMouse)
+                        if (!g.navDisableHighlight && g.navDisableMouseHover && io.configFlags hasnt ConfigFlags.NavMoveMouse)
                             Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
                         else
                             Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.

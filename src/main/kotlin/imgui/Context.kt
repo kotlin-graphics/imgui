@@ -145,10 +145,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navIdTabCounter = Int.MAX_VALUE
     /** Nav widget has been seen this frame ~~ NavRefRectRel is valid   */
     var navIdIsAlive = false
-    /** When set we will update mouse position if (NavFlags & ImGuiNavFlags_MoveMouse) if set (NB: this not enabled by default) */
+    /** When set we will update mouse position if (io.ConfigFlags & ConfigFlags.NavMoveMouse) if set (NB: this not enabled by default) */
     var navMousePosDirty = false
-    /** When user starts using mouse, we hide gamepad/keyboard highlight (nb: but they are still available, which is why
-     *  navDisableHighlight isn't always != navDisableMouseHover)  */
+    /** When user starts using mouse, we hide gamepad/keyboard highlight (NB: but they are still available, which is why
+     *  NavDisableHighlight isn't always != NavDisableMouseHover)   */
     var navDisableHighlight = true
     /** When user starts using gamepad/keyboard, we hide mouse hovering highlight until mouse is touched again. */
     var navDisableMouseHover = false
@@ -396,8 +396,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var iniFilename: String? = "imgui.ini"
     /** Path to .log file (default parameter to ImGui::LogToFile when no file is specified).    */
     var logFilename = "imgui_log.txt"
-    /** See NavFlags. Gamepad/keyboard navigation options.    */
-    var navFlags = 0
+    /** See ImGuiConfigFlags_ enum. Gamepad/keyboard navigation options, etc.    */
+    var configFlags = 0
     /** Time for a double-click, in seconds.    */
     var mouseDoubleClickTime = 0.3f
     /** Distance threshold to stay in to validate a double-click, in pixels.    */
@@ -523,8 +523,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** Mobile/console: when IO.wantTextInput is true, you may display an on-screen keyboard. This is set by ImGui when
      *  it wants textual keyboard input to happen (e.g. when a InputText widget is active). */
     var wantTextInput = false
-    /** MousePos has been altered, back-end should reposition mouse on next frame. Set only when NavFlags.MoveMouse flag
-     * is enabled in IO.navFlags.    */
+    /** MousePos has been altered, back-end should reposition mouse on next frame.
+     *  Set only when ConfigFlags.NavMoveMouse flag is enabled in IO.configFlags.    */
     var wantMoveMouse = false
     /** Directional navigation is currently allowed (will handle KeyNavXXX events) = a window is focused and it doesn't
      *  use the WindowFlags.NoNavInputs flag.   */

@@ -25,6 +25,7 @@ import kotlin.math.max
 import kotlin.math.min
 import imgui.WindowFlags as Wf
 import imgui.internal.DrawListFlags as Dlf
+import imgui.ConfigFlags as Cf
 
 interface imgui_main {
 
@@ -56,7 +57,7 @@ interface imgui_main {
 
         /*  Do a simple check for required key mapping (we intentionally do NOT check all keys to not pressure user into
             setting up everything, but Space is required and was super recently added in 1.60 WIP)         */
-        if (io.navFlags has NavFlags.EnableKeyboard)
+        if (io.configFlags has Cf.NavEnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
         // Load settings on first frame
@@ -215,7 +216,7 @@ interface imgui_main {
         io.wantCaptureKeyboard =
                 if (g.wantCaptureKeyboardNextFrame != -1) g.wantCaptureKeyboardNextFrame != 0
                 else g.activeId != 0 || modalWindow != null
-        if (io.navActive && io.navFlags has NavFlags.EnableKeyboard && io.navFlags hasnt NavFlags.NoCaptureKeyboard)
+        if (io.navActive && io.configFlags has Cf.NavEnableKeyboard && io.configFlags hasnt Cf.NavNoCaptureKeyboard)
             io.wantCaptureKeyboard = true
 
         io.wantTextInput = g.wantTextInputNextFrame != -1 && g.wantTextInputNextFrame != 0
