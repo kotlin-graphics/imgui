@@ -569,7 +569,7 @@ interface imgui_window {
                 dc.textWrapPosStack.clear()
                 dc.columnsSet = null
                 dc.treeDepth = 0
-                dc.treeDepthMayCloseOnPop = 0
+                dc.treeDepthMayJumpToParentOnPop = 0
                 dc.stateStorage = stateStorage
                 dc.groupStack.clear()
                 menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)

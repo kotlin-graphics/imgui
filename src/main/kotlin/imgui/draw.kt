@@ -194,7 +194,10 @@ class DrawList(sharedData: DrawListSharedData?) {
      * @param b: b: lower-right */
     fun addRect(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCornersFlags: Int = Dcf.All.i, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
-        pathRect(a + Vec2(0.5f), b - Vec2(0.5f), rounding, roundingCornersFlags)
+        if (flags has DrawListFlags.AntiAliasedLines)
+            pathRect(a + 0.5f, b - 0.5f, rounding, roundingCornersFlags)
+        else    // Better looking lower-right corner and rounded non-AA shapes.
+            pathRect(a + 0.5f, b - 0.49f, rounding, roundingCornersFlags)
         pathStroke(col, true, thickness)
     }
 

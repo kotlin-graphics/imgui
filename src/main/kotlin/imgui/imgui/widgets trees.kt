@@ -80,11 +80,11 @@ interface imgui_widgetsTrees {
 
         currentWindow.dc.treeDepth--
         if (g.navMoveDir == Dir.Left && g.navWindow === window && navMoveRequestButNoResultYet())
-            if (g.navIdIsAlive && window.dc.treeDepthMayCloseOnPop has (1 shl window.dc.treeDepth)) {
+            if (g.navIdIsAlive && window.dc.treeDepthMayJumpToParentOnPop has (1 shl window.dc.treeDepth)) {
                 setNavId(window.idStack.last(), g.navLayer)
                 navMoveRequestCancel()
             }
-        window.dc.treeDepthMayCloseOnPop = window.dc.treeDepthMayCloseOnPop and (1 shl window.dc.treeDepth) - 1
+        window.dc.treeDepthMayJumpToParentOnPop = window.dc.treeDepthMayJumpToParentOnPop and (1 shl window.dc.treeDepth) - 1
 
         popId()
     }

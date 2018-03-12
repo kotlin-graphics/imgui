@@ -165,8 +165,8 @@ enum class TreeNodeFlags(val i: Int) {
     FramePadding(1 shl 10),
     //ImGuITreeNodeFlags_SpanAllAvailWidth  = 1 << 11,  // FIXME: TODO: Extend hit box horizontally even if not framed
     //ImGuiTreeNodeFlags_NoScrollOnOpen     = 1 << 12,  // FIXME: TODO: Disable automatic scroll on TreePop() if node got just open and contents is not visible
-    /** (WIP) Nav: left direction may close this TreeNode() when focusing on any child (items submitted between TreeNode and TreePop)   */
-    NavCloseFromChild    (1 shl 13),
+    /** (WIP) Nav: left direction may move to this TreeNode() from any of its child (items submitted between TreeNode and TreePop)   */
+    NavLeftJumpsBackHere    (1 shl 13),
     CollapsingHeader(Framed or NoAutoOpenOnLog);
 
     infix fun or(treeNodeFlag: TreeNodeFlags) = i or treeNodeFlag.i

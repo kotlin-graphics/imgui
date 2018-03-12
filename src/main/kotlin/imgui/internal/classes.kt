@@ -428,7 +428,7 @@ class DrawContext {
 
     var treeDepth = 0
     /** Store a copy of !g.NavIdIsAlive for TreeDepth 0..31 */
-    var treeDepthMayCloseOnPop = 0
+    var treeDepthMayJumpToParentOnPop = 0
 
     var lastItemId = 0
     /** ItemStatusFlags */
