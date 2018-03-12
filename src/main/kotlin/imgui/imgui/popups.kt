@@ -13,6 +13,7 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseReleased
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowHovered
+import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
 import imgui.internal.Dir

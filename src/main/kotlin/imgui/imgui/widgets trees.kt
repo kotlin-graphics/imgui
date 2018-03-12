@@ -8,6 +8,7 @@ import imgui.ImGui.style
 import imgui.ImGui.closeButton
 import imgui.ImGui.currentWindow
 import imgui.ImGui.indent
+import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.treeNodeBehavior
