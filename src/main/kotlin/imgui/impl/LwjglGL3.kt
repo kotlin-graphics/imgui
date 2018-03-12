@@ -22,6 +22,7 @@ import gln.vertexArray.glVertexAttribPointer
 import gln.vertexArray.withVertexArray
 import imgui.*
 import imgui.ImGui.io
+import imgui.ImGui.mouseCursor
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.*
@@ -44,6 +45,7 @@ object LwjglGL3 {
     lateinit var window: GlfwWindow
     var time = 0f
     val mouseJustPressed = BooleanArray(3)
+    val mouseCursors = LongArray(MouseCursor.COUNT)
 
     object Buffer {
         val Vertex = 0
@@ -87,14 +89,28 @@ object LwjglGL3 {
             keyMap[Key.Z] = GLFW_KEY_Z
         }
 
-        if (installCallbacks) {
-            window.mouseButtonCallback = mouseButtonCallback
-            window.scrollCallback = scrollCallback
-            window.keyCallback = keyCallback
-            window.charCallback = charCallback // TODO check if used (jogl doesnt have)
-            imeListner.install(window.handle)
-        }
+        /*  Load cursors
+            FIXME: GLFW doesn't expose suitable cursors for ResizeAll, ResizeNESW, ResizeNWSE. 
+            We revert to arrow cursor for those.         */
+        mouseCursors[MouseCursor.Arrow.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
+        mouseCursors[MouseCursor.TextInput.i] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
+        mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
+        mouseCursors[MouseCursor.ResizeNS.i] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)
+        mouseCursors[MouseCursor.ResizeEW.i] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR)
+        mouseCursors[MouseCursor.ResizeNESW.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
+        mouseCursors[MouseCursor.ResizeNWSE.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
+
+        if (installCallbacks) installCallbacks()
+
         return true
+    }
+
+    fun installCallbacks() {
+        window.mouseButtonCallback = mouseButtonCallback
+        window.scrollCallback = scrollCallback
+        window.keyCallback = keyCallback
+        window.charCallback = charCallback // TODO check if used (jogl doesnt have)
+        imeListner.install(window.handle)
     }
 
     var vtxSize = 1 shl 5 // 32768
@@ -137,8 +153,14 @@ object LwjglGL3 {
             mouseJustPressed[it] = false
         }
 
-        // Hide OS mouse cursor if ImGui is drawing it
-        window.cursor = if (io.mouseDrawCursor) GlfwWindow.Cursor.Hidden else GlfwWindow.Cursor.Normal
+        // Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
+        val cursor = mouseCursor
+        if (io.mouseDrawCursor || cursor == MouseCursor.None)
+            window.cursor = GlfwWindow.Cursor.Hidden
+        else {
+            glfwSetCursor(window.handle, if(mouseCursors[cursor.i] != 0L) mouseCursors [cursor.i] else mouseCursors[MouseCursor.Arrow.i])
+            window.cursor = GlfwWindow.Cursor.Normal
+        }
 
         /*  Start the frame. This call will update the io.wantCaptureMouse, io.wantCaptureKeyboard flag that you can use
             to dispatch inputs (or not) to your application.         */
@@ -397,6 +419,11 @@ object LwjglGL3 {
     val charCallback = { c: Int -> if (c in 1..65535) io.addInputCharacter(c.c) }
 
     fun shutdown() {
+
+        // Destroy GLFW mouse cursors
+        mouseCursors.filter { it != 0L }.forEach(::glfwDestroyCursor)
+
+        // Destroy OpenGL objects
         invalidateDeviceObjects()
     }
 

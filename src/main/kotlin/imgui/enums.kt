@@ -602,27 +602,28 @@ infix fun Int.wo(b: ColorEditFlags) = this and b.i.inv()
 infix fun Int.wo(b: Int) = this and b.inv()
 
 /** Enumeration for GetMouseCursor()    */
-enum class MouseCursor(val i: Int) {
+enum class MouseCursor {
 
-    None(-1),
-    Arrow(0),
+    None,
+    Arrow,
     /** When hovering over InputText, etc.  */
-    TextInput(1),
+    TextInput,
     /** Unused  */
-    ResizeAll(2),
+    ResizeAll,
     /** When hovering over an horizontal border  */
-    ResizeNS(3),
+    ResizeNS,
     /** When hovering over a vertical border or a column */
-    ResizeEW(4),
+    ResizeEW,
     /** When hovering over the bottom-left corner of a window  */
-    ResizeNESW(5),
+    ResizeNESW,
     /** When hovering over the bottom-right corner of a window  */
-    ResizeNWSE(6),
+    ResizeNWSE;
 
-    Count(7);
+    val i = ordinal - 1
 
     companion object {
         fun of(i: Int) = values().first { it.i == i }
+        val COUNT = ResizeNWSE.i + 1
     }
 }
 
