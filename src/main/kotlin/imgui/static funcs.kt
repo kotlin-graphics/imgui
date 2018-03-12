@@ -43,9 +43,7 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
         enforce absolute positioning.   */
 
     val window = g.currentWindow!!
-    /*  We cannot drag column 0. If you get this assert you may have a conflict between the ID of your columns and
-        another widgets.    */
-    assert(columnIndex > 0)
+    assert(columnIndex > 0) // We are not supposed to drag column 0.
     assert(g.activeId == columns.id + columnIndex)
 
     var x = io.mousePos.x - g.activeIdClickOffset.x + columnsRectHalfWidth - window.pos.x

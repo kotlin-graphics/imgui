@@ -610,6 +610,8 @@ class Window(var context: Context, var name: String) {
 
     var innerRect = Rect()
 
+    var innerClipRect = Rect()
+
     var lastFrameActive = -1
 
     var itemWidthDefault = 0f

@@ -95,15 +95,7 @@ interface imgui_colums {
         val window = currentWindowRead!!
         val columns = window.dc.columnsSet!!
 
-        var columnIndex = columnIndex
-        if (columnIndex < 0)
-            columnIndex = columns.current
-
-//        if (g.activeId != 0) {
-//            val columnId = columns.setId + columnIndex
-//            if (g.activeId == columnId)
-//                return getDraggedColumnOffset(columns, columnIndex)
-//        }
+        val columnIndex = if (columnIndex < 0) columns.current else columnIndex
 
         val t = columns.columns[columnIndex].offsetNorm
         return lerp(columns.minX, columns.maxX, t) // xOffset
