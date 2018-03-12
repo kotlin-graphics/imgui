@@ -54,6 +54,15 @@ object LwjglGL3 {
     }
 
     val bufferName = intBufferBig(Buffer.MAX)
+    /*
+        JVM. We are not yet doing this because no user case. If ever needed:
+        https://github.com/ocornut/imgui/compare/a1a36e762eac707cc3f9c81ec5af7150f6620c4c...d7f97922b883aec0c873e0e405c46b154d382120
+
+
+        Recreate the VAO every time
+        (This is to easily allow multiple GL contexts. VAO are not shared among GL contexts, and we don't track
+        creation/deletion of windows so we don't have an obvious key to use to cache them.)
+     */
     val vaoName = intBufferBig(1)
     lateinit var program: ProgramA
     val fontTexture = intBufferOf(-1)
