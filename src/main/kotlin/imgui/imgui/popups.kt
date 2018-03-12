@@ -16,7 +16,6 @@ import imgui.ImGui.isWindowHovered
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
-import imgui.internal.Dir
 import imgui.internal.NavForward
 import imgui.internal.Window
 import kotlin.math.max

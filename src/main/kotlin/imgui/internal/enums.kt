@@ -118,17 +118,6 @@ enum class DataType { Int, Float, Vec2;
     val i = ordinal
 }
 
-enum class Dir { None, Left, Right, Up, Down, Count;
-
-    val i = ordinal - 1
-
-    companion object {
-        fun of(i: Int) = values()[i]
-    }
-}
-
-infix fun Int.shl(b: Dir) = shl(b.i)
-
 enum class InputSource { None, Mouse, Nav,
     /** Only used occasionally for storage, not tested/handled by most code */
     NavKeyboard,

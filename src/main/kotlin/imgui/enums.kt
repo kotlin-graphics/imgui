@@ -166,7 +166,7 @@ enum class TreeNodeFlags(val i: Int) {
     //ImGuITreeNodeFlags_SpanAllAvailWidth  = 1 << 11,  // FIXME: TODO: Extend hit box horizontally even if not framed
     //ImGuiTreeNodeFlags_NoScrollOnOpen     = 1 << 12,  // FIXME: TODO: Disable automatic scroll on TreePop() if node got just open and contents is not visible
     /** (WIP) Nav: left direction may move to this TreeNode() from any of its child (items submitted between TreeNode and TreePop)   */
-    NavLeftJumpsBackHere    (1 shl 13),
+    NavLeftJumpsBackHere(1 shl 13),
     CollapsingHeader(Framed or NoAutoOpenOnLog);
 
     infix fun or(treeNodeFlag: TreeNodeFlags) = i or treeNodeFlag.i
@@ -213,6 +213,10 @@ enum class ComboFlags(val i: Int) {
     HeightLarge(1 shl 3),
     /** As many fitting items as possible */
     HeightLargest(1 shl 4),
+    /** Display on the preview box without the square arrow button  */
+    NoArrowButton(1 shl 5),
+    /** Display only a square arrow button  */
+    NoPreview(1 shl 6),
     HeightMask_(HeightSmall or HeightRegular or HeightLarge or HeightLargest)
 }
 
@@ -305,6 +309,18 @@ infix fun Int.hasnt(b: DragDropFlags) = (this and b.i) == 0
 val PAYLOAD_TYPE_COLOR_3F = "_COL3F"
 /** float[4], Standard type for colors. User code may use this type. */
 val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
+
+/** A direction */
+enum class Dir { None, Left, Right, Up, Down, Count;
+
+    val i = ordinal - 1
+
+    companion object {
+        fun of(i: Int) = values()[i]
+    }
+}
+
+infix fun Int.shl(b: Dir) = shl(b.i)
 
 /** User fill ImGuiio.KeyMap[] array with indices into the ImGuiio.KeysDown[512] array  */
 enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
@@ -407,15 +423,15 @@ enum class ConfigFlags(val i: Int) {
      *  requests in your binding, otherwise ImGui will react as if the mouse is jumping around back and forth.  */
     NavMoveMouse(1 shl 2),
     /** Do not set the io.WantCaptureKeyboard flag with io.NavActive is set.    */
-    NavNoCaptureKeyboard (1 shl 3),
+    NavNoCaptureKeyboard(1 shl 3),
 
     /*  User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects.
         Those flags are not used by core ImGui)     */
 
     /** Back-end is SRGB-aware. */
-    IsSRGB               (1 shl 20),
+    IsSRGB(1 shl 20),
     /** Back-end is using a touch screen instead of a mouse.   */
-    IsTouchScreen        (1 shl 21);
+    IsTouchScreen(1 shl 21);
 }
 
 infix fun Int.has(b: ConfigFlags) = and(b.i) != 0

@@ -4,17 +4,17 @@ import gli_.has
 import glm_.glm
 import glm_.vec2.Vec2
 import imgui.Cond
-import imgui.ImGui.style
+import imgui.Dir
 import imgui.ImGui.closeButton
 import imgui.ImGui.currentWindow
 import imgui.ImGui.indent
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
+import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.g
-import imgui.internal.Dir
 import imgui.or
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlags as Tnf

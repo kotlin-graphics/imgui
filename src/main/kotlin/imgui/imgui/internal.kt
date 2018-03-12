@@ -1033,7 +1033,7 @@ interface imgui_internal {
     }
 
     /** Render a triangle to denote expanded/collapsed state    */
-    fun renderTriangle(pMin: Vec2, dir: Dir, scale: Float = 1.0f) {
+    fun renderArrow(pMin: Vec2, dir: Dir, scale: Float = 1.0f) {
 
         val window = g.currentWindow!!
 
@@ -1382,7 +1382,7 @@ interface imgui_internal {
         val col = (if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button).u32
         renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col, true, style.frameRounding)
-        renderTriangle(bb.min + padding, dir, 1f)
+        renderArrow(bb.min + padding, dir, 1f)
         return pressed
     }
 
@@ -1405,7 +1405,7 @@ interface imgui_internal {
         val window = currentWindow
 
         // Draw frame
-        val frameCol = if (g.activeId == id && g.activeIdSource == InputSource.Nav) Col.FrameBgActive else Col.FrameBg
+        val frameCol = if(g.activeId == id) Col.FrameBgActive else if(g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
         renderNavHighlight(frameBb, id)
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
@@ -2636,7 +2636,7 @@ interface imgui_internal {
             // Framed type
             renderFrame(frameBb.min, frameBb.max, col.u32, true, style.frameRounding)
             renderNavHighlight(frameBb, id, NavHighlightFlags.TypeThin.i)
-            renderTriangle(frameBb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
+            renderArrow(frameBb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
                     range to make sure the ## aren't stripped out here.                 */
@@ -2654,7 +2654,7 @@ interface imgui_internal {
             if (flags has Tnf.Bullet)
                 TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
             else if (flags hasnt Tnf.Leaf)
-                renderTriangle(frameBb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
+                renderArrow(frameBb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
                         if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
