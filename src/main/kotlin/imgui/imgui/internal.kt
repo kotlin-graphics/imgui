@@ -2572,8 +2572,8 @@ interface imgui_internal {
         /*  Store a flag for the current depth to tell if we will allow closing this node when navigating one of its child.
             For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
             This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero. */
-        if (isOpen && !g.navIdIsAlive && flags has Tnf.NavCloseFromChild && flags hasnt Tnf.NoTreePushOnOpen)
-            window.dc.treeDepthMayCloseOnPop = window.dc.treeDepthMayCloseOnPop or (1 shl window.dc.treeDepth)
+        if (isOpen && !g.navIdIsAlive && flags has Tnf.NavLeftJumpsBackHere && flags hasnt Tnf.NoTreePushOnOpen)
+            window.dc.treeDepthMayJumpToParentOnPop = window.dc.treeDepthMayJumpToParentOnPop or (1 shl window.dc.treeDepth)
 
         val itemAdd = itemAdd(interactBb, id)
         window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlags.HasDisplayRect
