@@ -46,6 +46,7 @@ import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withIndent
 import imgui.imgui.demo.ExampleApp
+import imgui.imgui.imgui_colums.Companion.offsetNormToPixels
 import imgui.internal.DrawListFlags
 import imgui.internal.Rect
 import imgui.internal.Window
@@ -238,7 +239,7 @@ interface imgui_demoDebugInformations {
                 for (col in Col.values()) {
                     val name = col.name
                     val p = Vec2(cursorScreenPos)
-                    windowDrawList.addRectFilled(p, Vec2(p.x+sz, p.y+sz), col.u32)
+                    windowDrawList.addRectFilled(p, Vec2(p.x + sz, p.y + sz), col.u32)
                     dummy(Vec2(sz))
                     sameLine()
                     menuItem(name)
@@ -363,6 +364,18 @@ interface imgui_demoDebugInformations {
                     bulletText("NavRectRel[0]: <None>")
                 if (window.rootWindow !== window) nodeWindow(window.rootWindow!!, "RootWindow")
                 if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
+                if (window.columnsStorage.isNotEmpty() && treeNode("Columns", "Columns sets (${window.columnsStorage.size})")) {
+                    window.columnsStorage.forEach {
+                        if (treeNode(it.id, "Columns Id: 0x%08X, Count: ${it.count}, Flags: 0x%04X", it.id, it.flags)) {
+                            bulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", it.maxX - it.minX, it.minX, it.maxX)
+                            it.columns.forEachIndexed { n, c ->
+                                bulletText("Column %02d: OffsetNorm %.3f (= %.1f px)", n, c.offsetNorm, offsetNormToPixels(it, c.offsetNorm))
+                            }
+                            treePop()
+                        }
+                    }
+                    treePop()
+                }
                 bulletText("Storage: %d bytes", window.stateStorage.data.size * Int.BYTES * 2)
                 treePop()
             }

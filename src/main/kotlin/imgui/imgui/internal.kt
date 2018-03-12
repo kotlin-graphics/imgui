@@ -771,11 +771,10 @@ interface imgui_internal {
             dc.columnsSet = columns
 
             // Set state for first column
-            val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else size.x - scrollbarSizes.x
+            val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else innerClipRect.max.x - pos.x
             with(columns) {
                 minX = dc.indentX - style.itemSpacing.x // Lock our horizontal range
-                //maxX = contentRegionWidth - window->Scroll.x - ((window->Flags & ImGuiWindowFlags_NoScrollbar) ? 0 : g.Style.ScrollbarSize);// - window->WindowPadding().x;
-                maxX = contentRegionWidth - scroll.x
+                maxX = max(contentRegionWidth - scroll.x, minX + 1f)
                 startPosY = dc.cursorPos.y
                 startMaxPosX = dc.cursorMaxPos.x
                 cellMaxY = dc.cursorPos.y
@@ -794,17 +793,10 @@ interface imgui_internal {
                 for (n in 0..columnsCount)
                     columns.columns += ColumnData().apply { offsetNorm = n / columnsCount.f }
 
-            for (n in 0..columnsCount) {
-                // Clamp position
-                val column = columns.columns[n]
-                var t = column.offsetNorm
-                if (columns.flags hasnt Cf.NoForceWithinWindow)
-                    t = min(t, pixelsToOffsetNorm(columns, (columns.maxX - columns.minX) - style.columnsMinSpacing * (columns.count - n)))
-                column.offsetNorm = t
-
-                if (n == columnsCount) continue
+            for (n in 0 until columnsCount) {
 
                 // Compute clipping rectangle
+                val column = columns.columns[n]
                 val clipX1 = floor(0.5f + pos.x + getColumnOffset(n) - 1f)
                 val clipX2 = floor(0.5f + pos.x + getColumnOffset(n + 1) - 1f)
                 column.clipRect = Rect(clipX1, -Float.MAX_VALUE, clipX2, +Float.MAX_VALUE)

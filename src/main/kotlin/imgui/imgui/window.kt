@@ -37,6 +37,7 @@ import imgui.ImGui.style
 import imgui.imgui.imgui_main.Companion.resizeGripDef
 import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.ItemFlags as If
@@ -659,6 +660,13 @@ interface imgui_window {
             window.innerRect.max.y = window.pos.y + window.size.y - window.scrollbarSizes.y - window.windowBorderSize
             //window->DrawList->AddRect(window->InnerRect.Min, window->InnerRect.Max, IM_COL32_WHITE);
 
+            // Inner clipping rectangle
+            // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
+            window.innerClipRect.min.x = floor(0.5f + window.innerRect.min.x + max(0f, floor(window.windowPadding.x*0.5f - window.windowBorderSize)))
+            window.innerClipRect.min.y = floor(0.5f + window.innerRect.min.y)
+            window.innerClipRect.max.x = floor(0.5f + window.innerRect.max.x - max(0f, floor(window.windowPadding.x*0.5f - window.windowBorderSize)))
+            window.innerClipRect.max.y = floor(0.5f + window.innerRect.max.y)
+
             /* After begin() we fill the last item / hovered data using the title bar data. Make that a standard behavior
                 (to allow usage of context menus on title bar only, etc.).             */
             window.dc.lastItemId = window.moveId
@@ -666,15 +674,7 @@ interface imgui_window {
             window.dc.lastItemRect = titleBarRect
         }
 
-        /*  Inner clipping rectangle
-            Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.         */
-        val borderSize = window.windowBorderSize
-        val clipRect = Rect()
-        clipRect.min.x = glm.floor(0.5f + window.innerRect.min.x + (0f max glm.floor(window.windowPadding.x * 0.5f - borderSize)))
-        clipRect.min.y = glm.floor(0.5f + window.innerRect.min.y)
-        clipRect.max.x = glm.floor(0.5f + window.innerRect.max.x - (0f max glm.floor(window.windowPadding.x * 0.5f - borderSize)))
-        clipRect.max.y = glm.floor(0.5f + window.innerRect.max.y)
-        pushClipRect(clipRect.min, clipRect.max, true)
+        pushClipRect(window.innerClipRect.min, window.innerClipRect.max, true)
 
         // Clear 'accessed' flag last thing
         if (firstBeginOfTheFrame) window.writeAccessed = false
