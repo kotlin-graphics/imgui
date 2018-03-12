@@ -5,7 +5,6 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
-import glm_.vec2.operators.times
 import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.ImGui.style
@@ -194,15 +193,8 @@ class FontAtlas {
         return addFontFromMemoryCompressedTTF(compressedTtf, sizePixels, fontCfg, glyphRanges)
     }
 
-    /** Clear the CPU-side texture data. Saves RAM once the texture has been copied to graphics memory. */
-    fun clearTexData() {
-        texPixelsAlpha8?.destroy()
-        texPixelsAlpha8 = null
-        texPixelsRGBA32?.destroy()
-        texPixelsRGBA32 = null
-    }
-
-    /** Clear the input TTF data (inc sizes, glyph ranges)  */
+    /** Clear input data (all FontConfig structures including sizes, TTF data, glyph ranges, etc.) = all the data used
+     *  to build the texture and fonts. */
     fun clearInputData() {
         configData.filter { it.fontData.isNotEmpty() && it.fontDataOwnedByAtlas }.forEach {
             it.fontData = charArrayOf()
@@ -218,13 +210,21 @@ class FontAtlas {
         customRectIds.fill(-1)
     }
 
-    /** Clear the ImGui-side font data (glyphs storage, UV coordinates) */
+    /** Clear output texture data (CPU side). Saves RAM once the texture has been copied to graphics memory. */
+    fun clearTexData() {
+        texPixelsAlpha8?.destroy()
+        texPixelsAlpha8 = null
+        texPixelsRGBA32?.destroy()
+        texPixelsRGBA32 = null
+    }
+
+    /** Clear output font data (glyphs storage, UV coordinates).    */
     fun clearFonts() {
         for (font in fonts) font.clearOutputData()
         fonts.clear()
     }
 
-    /** Clear all   */
+    /** Clear all input and output.   */
     fun clear() {
         clearInputData()
         clearTexData()
