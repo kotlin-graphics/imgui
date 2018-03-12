@@ -31,13 +31,14 @@ interface imgui_dragAndDrop {
      *      c) call endDragDropSource()
      *
      *  @param flags: DragDropFlags */
-    fun beginDragDropSource(flags: Int = 0, mouseButton: Int = 0): Boolean {
+    fun beginDragDropSource(flags: Int = 0): Boolean {
 
         val window = g.currentWindow!!
 
-        var sourceDragActive = false
-        var sourceId = 0
+        val sourceDragActive: Boolean
+        var sourceId: Int
         var sourceParentId = 0
+        val mouseButton = 0
         if (flags hasnt Ddf.SourceExtern) {
             sourceId = window.dc.lastItemId
             if (sourceId != 0 && g.activeId != sourceId) // Early out for most common case
