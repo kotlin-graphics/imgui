@@ -13,12 +13,14 @@ import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
+import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.plotEx
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
+import imgui.ImGui.renderArrow
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
@@ -46,6 +48,27 @@ interface imgui_widgetsMain {
         style.framePadding.y = 0f
         val pressed = buttonEx(label, Vec2(), Bf.AlignTextBaseLine.i)
         style.framePadding.y = backupPaddingY
+        return pressed
+    }
+
+    fun arrowButton(strId: String, dir: Dir): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId(strId)
+        val sz = frameHeight
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + sz)
+        itemSize(bb)
+        if (!itemAdd(bb, id)) return false
+
+        val (pressed, hovered, held) = buttonBehavior(bb, id)
+
+        // Render
+        val col = if(hovered && held) Col.ButtonActive else if(hovered ) Col.ButtonHovered else Col.Button
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
+        renderArrow(bb.min + g.style.framePadding, dir)
+
         return pressed
     }
 

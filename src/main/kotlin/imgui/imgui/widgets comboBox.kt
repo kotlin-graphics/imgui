@@ -3,7 +3,6 @@ package imgui.imgui
 import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcItemWidth
@@ -19,21 +18,20 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
-import imgui.ImGui.renderFrame
+import imgui.ImGui.renderArrow
+import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
-import imgui.ImGui.renderTriangle
 import imgui.ImGui.selectable
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
+import imgui.ImGui.style
 import imgui.ImGui.unindent
-import imgui.internal.Dir
+import imgui.internal.DrawCornerFlags
 import imgui.internal.Rect
 import imgui.internal.isPowerOfTwo
-import java.util.*
-import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlags as Cf
 import imgui.WindowFlags as Wf
@@ -52,10 +50,13 @@ interface imgui_widgetsComboBox {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
-        val w = calcItemWidth()
+        assert((flags and (Cf.NoArrowButton or Cf.NoPreview)) != (Cf.NoArrowButton or Cf.NoPreview)) // Can't use both flags together
 
+        val id = window.getId(label)
+
+        val arrowSize = if(flags has Cf.NoArrowButton) 0f else frameHeight
         val labelSize = calcTextSize(label, true)
+        val w = if(flags has Cf.NoPreview) arrowSize else calcItemWidth()
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
         itemSize(totalBb, style.framePadding.y)
@@ -64,14 +65,20 @@ interface imgui_widgetsComboBox {
         val (pressed, hovered, held) = buttonBehavior(frameBb, id)
         var popupOpen = isPopupOpen(id)
 
-        val arrowSize = frameHeight
         val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
+        val frameCol = if(hovered) Col.FrameBgHovered else Col.FrameBg
         renderNavHighlight(frameBb, id)
-        renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
-        val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
-        renderFrame(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, true, style.frameRounding) // FIXME-ROUNDING
-        renderTriangle(Vec2(frameBb.max.x - arrowSize, frameBb.min.y).apply { plusAssign(style.framePadding.y) }, Dir.Down)
-        if (previewValue != null)
+        if (flags hasnt Cf.NoPreview)
+            window.drawList.addRectFilled(frameBb.min, Vec2(frameBb.max.x - arrowSize, frameBb.max.y), frameCol.u32,
+                    style.frameRounding, DrawCornerFlags.Left.i)
+        if (flags hasnt Cf.NoArrowButton) {
+            val col = if(popupOpen || hovered) Col.ButtonHovered else Col.Button
+            val f = if(w <= arrowSize) DrawCornerFlags.All else DrawCornerFlags.Right
+            window.drawList.addRectFilled(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, style.frameRounding, f.i)
+            renderArrow(Vec2(frameBb.max.x - arrowSize + style.framePadding.y, frameBb.min.y + style.framePadding.y), Dir.Down)
+        }
+        renderFrameBorder(frameBb.min, frameBb.max, style.frameRounding)
+        if (previewValue != null && flags hasnt Cf.NoPreview)
             renderTextClipped(frameBb.min + style.framePadding, valueBb.max, previewValue)
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)

@@ -8,6 +8,7 @@ import glm_.vec2.operators.div
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
+import imgui.ImGui.arrowButton
 import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
@@ -270,6 +271,12 @@ object widgets {
                         }
                     }
                 }
+
+                // Arrow buttons
+                val spacing = style.itemInnerSpacing.x
+                if (arrowButton("##left", Dir.Left)) Unit
+                sameLine(0f, spacing)
+                if (arrowButton("##left", Dir.Right)) Unit
 
                 text("Hover over me")
                 if (isItemHovered()) setTooltip("I am a tooltip")

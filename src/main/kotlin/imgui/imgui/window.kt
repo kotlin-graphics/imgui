@@ -29,7 +29,7 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
-import imgui.ImGui.renderTriangle
+import imgui.ImGui.renderArrow
 import imgui.ImGui.scrollbar
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setNextWindowSize
@@ -605,7 +605,7 @@ interface imgui_window {
                     if (buttonBehavior(bb, id).first())
                         window.collapseToggleWanted = true // Defer collapsing to next frame as we are too far in the Begin() function
                     renderNavHighlight(bb, id)
-                    renderTriangle(Vec2(window.pos + style.framePadding), if (window.collapsed) Dir.Right else Dir.Down, 1f)
+                    renderArrow(Vec2(window.pos + style.framePadding), if (window.collapsed) Dir.Right else Dir.Down, 1f)
                 }
                 // Close button
                 if (pOpen != null) {

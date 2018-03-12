@@ -8,8 +8,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec3.Vec3i
 import glm_.vec4.Vec4i
-import imgui.ImGui.style
-import imgui.IO
+import imgui.Dir
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
@@ -26,9 +25,13 @@ import imgui.ImGui.setFocusId
 import imgui.ImGui.sliderBehavior
 import imgui.ImGui.sliderFloatN
 import imgui.ImGui.sliderIntN
+import imgui.ImGui.style
 import imgui.Ref
 import imgui.g
-import imgui.internal.*
+import imgui.internal.Rect
+import imgui.internal.SliderFlags
+import imgui.internal.focus
+import imgui.shl
 import kotlin.reflect.KMutableProperty0
 
 /** Widgets: Sliders (tip: ctrl+click on a slider to input with keyboard. manually input values aren't clamped, can go
@@ -96,7 +99,7 @@ interface imgui_widgetsSliders {
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
         val value = displayFormat.format(style.locale, v())
-        renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f, 0.5f))
+        renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)

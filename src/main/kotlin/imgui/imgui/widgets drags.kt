@@ -9,8 +9,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec3.Vec3i
 import glm_.vec4.Vec4i
-import imgui.ImGui.style
-import imgui.IO
+import imgui.Dir
 import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
@@ -36,10 +35,14 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
+import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
 import imgui.Ref
 import imgui.g
-import imgui.internal.*
+import imgui.internal.DataType
+import imgui.internal.Rect
+import imgui.internal.focus
+import imgui.shl
 import kotlin.reflect.KMutableProperty0
 
 /** Widgets: Drags (tip: ctrl+click on a drag box to input with keyboard. manually input values aren't clamped, can go

@@ -5,7 +5,6 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.beginPopup
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
@@ -34,8 +33,8 @@ import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.style
 import imgui.ImGui.textLineHeight
-import imgui.internal.Dir
 import imgui.internal.Rect
 import imgui.internal.strchr
 import imgui.ColorEditFlags as Cef

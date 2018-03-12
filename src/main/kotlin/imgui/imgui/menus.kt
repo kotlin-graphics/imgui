@@ -33,7 +33,7 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderText
-import imgui.ImGui.renderTriangle
+import imgui.ImGui.renderArrow
 import imgui.ImGui.selectable
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
@@ -198,7 +198,7 @@ interface imgui_menus {
             val flags = Sf.Menu or Sf.DontClosePopups or Sf.DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.Null else Sf.Disabled, Vec2(w, 0f))
             if (!enabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-            renderTriangle(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), Dir.Right)
+            renderArrow(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), Dir.Right)
             if (!enabled) popStyleColor()
         }
 
