@@ -1,6 +1,7 @@
 package imgui.stb
 
 import glm_.BYTES
+import glm_.bool
 import glm_.i
 import glm_.s
 import glm_.vec2.Vec2
@@ -11,7 +12,7 @@ import org.lwjgl.system.Pointer.POINTER_SIZE
 import java.nio.ByteBuffer
 
 
-val STBRPRect.wasPacked get() = was_packed() != 0
+val STBRPRect.wasPacked get() = was_packed().bool
 
 var STBRPRect.x
     set(value) {
