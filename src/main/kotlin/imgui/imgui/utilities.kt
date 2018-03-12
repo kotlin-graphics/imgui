@@ -129,7 +129,9 @@ interface imgui_utilities {
      *  @param flag HoveredFlags */
     fun isWindowHovered(flag: Hf) = isWindowHovered(flag.i)
 
-    /** is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
+    /** Is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
+     *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
+     *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!
      *  @param flags HoveredFlags */
     fun isWindowHovered(flags: Int = Hf.Default.i): Boolean {
         assert(flags hasnt Hf.AllowWhenOverlapped)   // Flags not supported by this function
