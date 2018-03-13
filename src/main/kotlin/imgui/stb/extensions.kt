@@ -12,7 +12,7 @@ import org.lwjgl.system.Pointer.POINTER_SIZE
 import java.nio.ByteBuffer
 
 
-val STBRPRect.wasPacked get() = was_packed().bool
+val STBRPRect.wasPacked get() = was_packed()
 
 var STBRPRect.x
     set(value) {
