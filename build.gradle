@@ -20,7 +20,6 @@ buildscript {
         mavenCentral()
         maven { setUrl("https://dl.bintray.com/kotlin/kotlin-eap") }
         maven { setUrl("https://oss.sonatype.org/content/repositories/snapshots/") }
-        maven { setUrl('https://jitpack.io') }
     }
 
     dependencies {
@@ -33,7 +32,7 @@ dependencies {
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-    compile 'com.github.kotlin-graphics:uno-sdk:814a86a24560d7d895e458bc5f0e7d68c095f6b0'
+    compile 'com.github.kotlin-graphics:uno-sdk:d42245460eae561eb8f8d3faac18e19d15a57105'
 
     testCompile 'io.kotlintest:kotlintest:2.0.7'
 
@@ -52,7 +51,7 @@ dependencies {
             ext.lwjglNatives = "natives-macos"
             break
     }
-    ext.lwjglVersion = "3.1.5"
+    ext.lwjglVersion = "3.1.7-SNAPSHOT"
     compile "org.lwjgl:lwjgl:${lwjglVersion}"
     compile "org.lwjgl:lwjgl-glfw:${lwjglVersion}"
     compile "org.lwjgl:lwjgl-jemalloc:${lwjglVersion}"
@@ -77,6 +76,7 @@ dependencies {
 repositories {
     mavenCentral()
     maven { setUrl("https://dl.bintray.com/kotlin/kotlin-eap") }
+    maven { setUrl("https://oss.sonatype.org/content/repositories/snapshots/") }
     maven { setUrl('https://jitpack.io') }
 }
 
