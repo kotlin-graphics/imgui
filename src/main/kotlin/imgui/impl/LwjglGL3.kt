@@ -11,10 +11,8 @@ import gln.glGetVec4i
 import gln.glScissor
 import gln.glViewport
 import gln.glf.semantic
-import gln.program.Program
-import gln.program.glDeleteProgram
-import gln.program.glUseProgram
-import gln.program.usingProgram
+import gln.program.*
+import gln.program.ProgramUse.unit
 import gln.texture.initTexture2d
 import gln.uniform.glUniform
 import gln.vertexArray.glBindVertexArray
@@ -54,18 +52,15 @@ object LwjglGL3 {
     }
 
     val bufferName = intBufferBig(Buffer.MAX)
-    /*
-        JVM. We are not yet doing this because no user case. If ever needed:
-        https://github.com/ocornut/imgui/compare/a1a36e762eac707cc3f9c81ec5af7150f6620c4c...d7f97922b883aec0c873e0e405c46b154d382120
+    /*  JVM. We are not yet doing this because no user case. If ever needed: https://github.com/ocornut/imgui/compare/a1a36e762eac707cc3f9c81ec5af7150f6620c4c...d7f97922b883aec0c873e0e405c46b154d382120
 
-
-        Recreate the VAO every time
-        (This is to easily allow multiple GL contexts. VAO are not shared among GL contexts, and we don't track
-        creation/deletion of windows so we don't have an obvious key to use to cache them.)
-     */
+        ~Recreate the VAO every time (This is to easily allow multiple GL contexts. VAO are not shared among GL contexts, and we don't track
+        creation/deletion of windows so we don't have an obvious key to use to cache them.)~     */
     val vaoName = intBufferBig(1)
-    lateinit var program: ProgramA
+    lateinit var program: Program
+    var matUL = -1
     val fontTexture = intBufferOf(-1)
+    var glslVersion = "#version 330"
 
     val mat = Mat4()
 
@@ -167,7 +162,7 @@ object LwjglGL3 {
         if (io.mouseDrawCursor || cursor == MouseCursor.None)
             window.cursor = GlfwWindow.Cursor.Hidden
         else {
-            glfwSetCursor(window.handle, if(mouseCursors[cursor.i] != 0L) mouseCursors [cursor.i] else mouseCursors[MouseCursor.Arrow.i])
+            glfwSetCursor(window.handle, if (mouseCursors[cursor.i] != 0L) mouseCursors[cursor.i] else mouseCursors[MouseCursor.Arrow.i])
             window.cursor = GlfwWindow.Cursor.Normal
         }
 
@@ -184,7 +179,12 @@ object LwjglGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
 
-        program = ProgramA("shader")
+//        program = ProgramA("shader")
+        program = Program.fromSources(arrayOf(glslVersion, vertexShader), arrayOf(glslVersion, fragmentShader))
+        usingProgram(program) {
+            matUL = "mat".uniform
+            "Texture".unit = semantic.sampler.DIFFUSE
+        }
 
         glGenBuffers(bufferName)
 
@@ -342,7 +342,7 @@ object LwjglGL3 {
         glViewport(fbSize)
         val ortho = glm.ortho(mat, 0f, io.displaySize.x.f, io.displaySize.y.f, 0f)
         glUseProgram(program)
-        glUniform(program.mat, ortho)
+        glUniform(matUL, ortho)
 
         checkSize(drawData.cmdLists)
 
@@ -449,4 +449,34 @@ object LwjglGL3 {
             fontTexture[0] = -1
         }
     }
+
+    val vertexShader = """
+        uniform mat4 mat;
+
+        layout (location = ${semantic.attr.POSITION}) in vec2 Position;
+        layout (location = ${semantic.attr.TEX_COORD}) in vec2 UV;
+        layout (location = ${semantic.attr.COLOR}) in vec4 Color;
+
+        out vec2 uv;
+        out vec4 color;
+
+        void main()
+        {
+            uv = UV;
+            color = Color;
+            gl_Position = mat * vec4(Position.xy, 0, 1);
+        }"""
+
+    val fragmentShader = """
+        uniform sampler2D Texture;
+
+        in vec2 uv;
+        in vec4 color;
+
+        layout (location = ${semantic.frag.COLOR}) out vec4 outColor;
+
+        void main()
+        {
+            outColor = color * texture(Texture, uv);
+        }"""
 }

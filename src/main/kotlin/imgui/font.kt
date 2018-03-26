@@ -18,8 +18,8 @@ import org.lwjgl.stb.STBTruetype.*
 import org.lwjgl.system.MemoryUtil
 import uno.buffer.bufferBig
 import uno.buffer.destroy
-import uno.buffer.isNotEmpty
 import uno.convert.decode85
+import uno.kotlin.buffers.isNotEmpty
 import uno.stb.stb
 import unsigned.toULong
 import java.nio.ByteBuffer
