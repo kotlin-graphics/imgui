@@ -738,7 +738,7 @@ interface imgui_window {
      *  size == 0f: use remaining window size
      *  size < 0f: use remaining window size minus abs(size)
      *  size > 0f: fixed size. each axis can use a different mode, e.g. Vec2(0, 400).   */
-    fun beginChild(id: Int, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: Int = 0): Boolean {
+    fun beginChild(id: ID, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: Int = 0): Boolean {
         assert(id != 0)
         return beginChildEx("", id, sizeArg, border, flags)
     }
@@ -961,7 +961,7 @@ interface imgui_window {
 
     companion object {
 
-        fun beginChildEx(name: String, id: Int, sizeArg: Vec2, border: Boolean, extraFlags: Int): Boolean {
+        fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, extraFlags: Int): Boolean {
 
             val parentWindow = currentWindow
             var flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf.ChildWindow

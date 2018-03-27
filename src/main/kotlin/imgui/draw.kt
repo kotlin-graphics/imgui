@@ -44,7 +44,7 @@ class DrawCmd {
     var clipRect = Vec4()
     /** User-provided texture ID. Set by user in ImfontAtlas::SetTexID() for fonts or passed to Image*() functions.
     Ignore if never using images or multiple fonts atlas.   */
-    var textureId: Int? = null
+    var textureId: TextureID? = null
     /** If != NULL, call the function instead of rendering the vertices. clip_rect and texture_id will be set normally. */
     var userCallback: DrawCallback? = null
 //    void*           UserCallbackData;       // The draw callback code can access this.
@@ -134,7 +134,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     val _clipRectStack = Stack<Vec4>()
     /** [Internal]  */
-    val _textureIdStack = Stack<Int>()
+    val _textureIdStack = Stack<TextureID>()
     /** [Internal] current path building    */
     val _path = ArrayList<Vec2>()
     /** [Internal] current channel number (0)   */
@@ -173,7 +173,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         updateClipRect()
     }
 
-    fun pushTextureId(textureId: Int) = _textureIdStack.push(textureId).run { updateTextureID() }
+    fun pushTextureId(textureId: TextureID) = _textureIdStack.push(textureId).run { updateTextureID() }
 
     fun popTextureId() = _textureIdStack.pop().also { updateTextureID() }
 
@@ -315,7 +315,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         font.renderText(this, fontSize, pos, col, clipRect, text, textEnd, wrapWidth, cpuFineClipRect != null)
     }
 
-    fun addImage(userTextureId: Int, a: Vec2, b: Vec2, uvA: Vec2 = Vec2(0), uvB: Vec2 = Vec2(1), col: Int = 0xFFFFFFFF.i) {
+    fun addImage(userTextureId: TextureID, a: Vec2, b: Vec2, uvA: Vec2 = Vec2(0), uvB: Vec2 = Vec2(1), col: Int = 0xFFFFFFFF.i) {
 
         if (col hasnt COL32_A_MASK) return
 
@@ -327,9 +327,25 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         if (pushTextureId) popTextureId()
     }
-//    IMGUI_API void  AddImageQuad(ImTextureID user_texture_id, const ImVec2& a, const ImVec2& b, const ImVec2& c, const ImVec2& d, const ImVec2& uv_a = ImVec2(0,0), const ImVec2& uv_b = ImVec2(1,0), const ImVec2& uv_c = ImVec2(1,1), const ImVec2& uv_d = ImVec2(0,1), ImU32 col = 0xFFFFFFFF);
 
-    fun addImageRounded(userTextureId: Int, a: Vec2, b: Vec2, uvA: Vec2, uvB: Vec2, col: Int, rounding: Float, roundingCorners: Int = Dcf.All.i) {
+    fun addImageQuad(userTextureId: TextureID, a: Vec2, b: Vec2, c: Vec2, d: Vec2, uvA: Vec2 = Vec2(0), uvB: Vec2 = Vec2(1,0),
+                     uvC: Vec2 = Vec2(1), uvD: Vec2 = Vec2(0,1), col: Int = 0xFFFFFFFF.i) {
+
+        if (col hasnt COL32_A_MASK) return
+
+        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
+        if (pushTextureId)
+            pushTextureId(userTextureId)
+
+        primReserve(6, 4)
+        primQuadUV(a, b, c, d, uvA, uvB, uvC, uvD, col)
+
+        if (pushTextureId)
+            popTextureId()
+    }
+
+    fun addImageRounded(userTextureId: TextureID, a: Vec2, b: Vec2, uvA: Vec2, uvB: Vec2, col: Int, rounding: Float,
+                        roundingCorners: Int = Dcf.All.i) {
         if (col hasnt COL32_A_MASK) return
 
         if (rounding <= 0f || roundingCorners hasnt Dcf.All) {
@@ -1023,8 +1039,8 @@ class DrawList(sharedData: DrawListSharedData?) {
 
 
     // Macros
-    val currentClipRect get() = if (_clipRectStack.isNotEmpty()) _clipRectStack.last()!! else _data.clipRectFullscreen
-    val currentTextureId get() = if (_textureIdStack.isNotEmpty()) _textureIdStack.last()!! else null
+    val currentClipRect get() = _clipRectStack.lastOrNull() ?: _data.clipRectFullscreen
+    val currentTextureId get() = _textureIdStack.lastOrNull()
 
     infix fun addTo(outList: ArrayList<DrawList>) {
 

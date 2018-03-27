@@ -5,7 +5,6 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import imgui.ImGui.style
 import imgui.ImGui.calcListClipping
 import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.currentWindow
@@ -14,6 +13,7 @@ import imgui.ImGui.cursorPosY
 import imgui.ImGui.inputText
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
+import imgui.ImGui.style
 
 class OnceUponAFrame {
     init {
@@ -82,7 +82,7 @@ to store their state).
 Types are NOT stored, so it is up to you to make sure your Key don't collide with different types.  */
 class Storage {
 
-    val data = HashMap<Int, Int>()
+    val data = HashMap<ID, Int>()
 
     // - Get***() functions find pair, never add/allocate. Pairs are sorted so a query is O(log N)
     // - Set***() functions find pair, insertion on demand if missing.
@@ -90,21 +90,15 @@ class Storage {
 
     fun clear() = data.clear()
 
-    fun int(key: Int, defaultVal: Int = 0): Int = data[key] ?: defaultVal // TODO rename back
+    fun int(key: ID, defaultVal: Int = 0): Int = data[key] ?: defaultVal
+    operator fun set(key: ID, value: Int) = data.set(key, value)
 
-    operator fun set(key: Int, value: Int) {
-        data[key] = value
-    }
+    fun bool(key: ID, defaultVal: Boolean = false) = data[key]?.bool ?: defaultVal
+    operator fun set(id: ID, value: Boolean) = data.set(id, value.i)
 
-    fun bool(key: Int, defaultVal: Boolean = false) = data[key]?.bool ?: defaultVal
-    operator fun set(id: Int, value: Boolean) {
-        data[id] = value.i
-    }
-
-    fun float(key: Int, defaultVal: Float = 0f) = data[key]?.let { glm.intBitsToFloat(it) } ?: defaultVal
-    operator fun set(key: Int, value: Float) {
-        data[key] = glm.floatBitsToInt(value)
-    }
+    fun float(key: ID, defaultVal: Float = 0f) = data[key]?.let { glm.intBitsToFloat(it) } ?: defaultVal
+    operator fun set(key: ID, value: Float) = data.set(key, glm.floatBitsToInt(value))
+    
 //    IMGUI_API void*     GetVoidPtr(ImGuiID key) const; // default_val is NULL
 //    IMGUI_API void      SetVoidPtr(ImGuiID key, void* val);
 
@@ -149,9 +143,9 @@ class Payload {
     // [Internal]
 
     /** Source item id */
-    var sourceId = 0
+    var sourceId: ID = 0
     /** Source parent id (if available) */
-    var sourceParentId = 0
+    var sourceParentId: ID = 0
     /** Data timestamp */
     var dataFrameCount = -1
     /** Data type tag (short user-supplied string, 12 characters max) */

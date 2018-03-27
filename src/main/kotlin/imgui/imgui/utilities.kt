@@ -225,7 +225,7 @@ interface imgui_utilities {
 
 
     /** helper to create a child window / scrolling region that looks like a normal widget frame    */
-    fun beginChildFrame(id: Int, size: Vec2, extraFlags: Int = 0): Boolean {
+    fun beginChildFrame(id: ID, size: Vec2, extraFlags: Int = 0): Boolean {
         pushStyleColor(Col.ChildBg, style.colors[Col.FrameBg])
         pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
         pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)

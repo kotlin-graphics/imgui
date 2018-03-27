@@ -192,13 +192,13 @@ fun setCurrentWindow(window: Window?) {
     g.drawListSharedData.fontSize = g.fontSize
 }
 
-fun setNavId(id: Int, navLayer: Int) {
+fun setNavId(id: ID, navLayer: Int) {
     assert(navLayer == 0 || navLayer == 1)
     g.navId = id
     g.navWindow!!.navLastIds[navLayer] = id
 }
 
-fun setNavIdAndMoveMouse(id: Int, navLayer: Int, rectRel: Rect) {
+fun setNavIdAndMoveMouse(id: ID, navLayer: Int, rectRel: Rect) {
     setNavId(id, navLayer)
     g.navWindow!!.navRectRel[navLayer] put rectRel
     g.navMousePosDirty = true

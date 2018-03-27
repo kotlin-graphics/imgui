@@ -9,7 +9,7 @@ import imgui.internal.isSpace
 class TextEditState {
 
     /** widget id owning the text state */
-    var id = 0
+    var id: ID = 0
     /** edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer. so we copy
     into own buffer.    */
     var text = charArrayOf()

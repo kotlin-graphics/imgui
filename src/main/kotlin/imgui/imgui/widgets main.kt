@@ -93,7 +93,7 @@ interface imgui_widgetsMain {
     }
 
 
-    fun image(userTextureId: Int, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(1), tintCol: Vec4 = Vec4(1),
+    fun image(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(1), tintCol: Vec4 = Vec4(1),
               borderCol: Vec4 = Vec4()) {
 
         val window = currentWindow
@@ -115,8 +115,8 @@ interface imgui_widgetsMain {
      *  frame_padding = 0: no framing/padding
      *  frame_padding > 0: set framing size
      *  The color used are the button colors.   */
-    fun imageButton(userTextureId: Int, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(), framePadding: Int = -1, bgCol: Vec4 = Vec4(),
-                    tintCol: Vec4 = Vec4(1)): Boolean {
+    fun imageButton(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(), framePadding: Int = -1,
+                    bgCol: Vec4 = Vec4(), tintCol: Vec4 = Vec4(1)): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false

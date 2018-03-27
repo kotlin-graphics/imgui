@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import imgui.ID
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.g
@@ -24,5 +25,5 @@ interface imgui_idScopes {
      *  yourself. otherwise rarely needed   */
     fun getId(strId: String) = g.currentWindow!!.getId(strId)
 
-    fun getId(ptrId: Any) = currentWindow.getId(ptrId)
+    fun getId(ptrId: Any): ID = currentWindow.getId(ptrId)
 }
