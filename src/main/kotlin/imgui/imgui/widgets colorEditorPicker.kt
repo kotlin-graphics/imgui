@@ -66,10 +66,10 @@ import imgui.ImGui.u32
 import imgui.imgui.imgui_widgetsText.Companion.colorPickerOptionsPopup
 import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
-import imgui.ColorEditFlags as Cef
+import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlags as Itf
 import imgui.WindowFlags as Wf
-import imgui.internal.DrawCornerFlags as Dcf
+import imgui.internal.DrawCornerFlag as Dcf
 
 /** Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little colored preview square that can be
  *  left-clicked to open a picker, and right-clicked to open an option menu.)
@@ -81,27 +81,27 @@ interface imgui_widgetsColorEditorPicker {
     /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
      *  Hint: 'float col[3]' function argument is same as 'float* col'.
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
-    fun colorEdit3(label: String, col: Vec4, flags: Int = 0): Boolean {
+    fun colorEdit3(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean {
         val floats = col to FloatArray(4)
         val res = colorEdit4(label, floats, flags or Cef.NoAlpha)
         col put floats
         return res
     }
 
-    fun colorEdit3(label: String, col: FloatArray, flags: Int = 0) = colorEdit4(label, col, flags or Cef.NoAlpha)
+    fun colorEdit3(label: String, col: FloatArray, flags: ColorEditFlags = 0) = colorEdit4(label, col, flags or Cef.NoAlpha)
 
     /** Edit colors components (each component in 0.0f..1.0f range).
      *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ColorEditFlags.NoAlpha flag is set.
      *  With typical options: Left-click on colored square to open color picker. Right-click to open option menu.
      *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
-    fun colorEdit4(label: String, col: Vec4, flags: Int = 0): Boolean {
+    fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean {
         val floats = col to FloatArray(4)
         val res = colorEdit4(label, floats, flags)
         col put floats
         return res
     }
 
-    fun colorEdit4(label: String, col: FloatArray, flags: Int = 0): Boolean {
+    fun colorEdit4(label: String, col: FloatArray, flags: ColorEditFlags = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -262,7 +262,7 @@ interface imgui_widgetsColorEditorPicker {
         return valueChanged
     }
 
-    fun colorEditVec4(label: String, col: Vec4, flags: Int = 0): Boolean {
+    fun colorEditVec4(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean {
         val col4 = floatArrayOf(col.x, col.y, col.z, col.w)
         val valueChanged = colorEdit4(label, col4, flags)
         col.x = col4[0]
@@ -272,7 +272,7 @@ interface imgui_widgetsColorEditorPicker {
         return valueChanged
     }
 
-    fun colorPicker3(label: String, col: FloatArray, flags: Int = 0): Boolean {
+    fun colorPicker3(label: String, col: FloatArray, flags: ColorEditFlags = 0): Boolean {
         val col4 = floatArrayOf(*col, 1f)
         if (!colorPicker4(label, col4, flags or Cef.NoAlpha)) return false
         col[0] = col4[0]; col[1] = col4[1]; col[2] = col4[2]
@@ -283,7 +283,7 @@ interface imgui_widgetsColorEditorPicker {
      *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
      *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)   */
-    fun colorPicker4(label: String, col: Vec4, flags: Int = 0, refCol: Vec4? = null): Boolean {
+    fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = 0, refCol: Vec4? = null): Boolean {
         val floats = col to FloatArray(4)
         val res = if (refCol == null) colorPicker4(label, floats, flags, refCol)
         else {
@@ -296,7 +296,7 @@ interface imgui_widgetsColorEditorPicker {
         return res
     }
 
-    fun colorPicker4(label: String, col: FloatArray, flags: Int = 0, refCol: FloatArray? = null): Boolean {
+    fun colorPicker4(label: String, col: FloatArray, flags: ColorEditFlags = 0, refCol: FloatArray? = null): Boolean {
 
         val window = currentWindow
         val drawList = window.drawList
@@ -576,7 +576,7 @@ interface imgui_widgetsColorEditorPicker {
     /**  A little colored square. Return true when clicked.
      *  FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip.
      *  'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.    */
-    fun colorButton(descId: String, col: Vec4, flags: Int = 0, size: Vec2 = Vec2()): Boolean {
+    fun colorButton(descId: String, col: Vec4, flags: ColorEditFlags = 0, size: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -651,7 +651,7 @@ interface imgui_widgetsColorEditorPicker {
 
     /** initialize current options (generally on application startup) if you want to select a default format, picker
      *  type, etc. User will be able to change many settings, unless you pass the _NoOptions flag to your calls.    */
-    fun setColorEditOptions(flags: Int) {
+    fun setColorEditOptions(flags: ColorEditFlags) {
         var flags = flags
         if (flags hasnt Cef._InputsMask)
             flags = flags or (Cef._OptionsDefault and Cef._InputsMask)

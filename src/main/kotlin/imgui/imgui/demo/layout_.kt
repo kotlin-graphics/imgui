@@ -72,7 +72,6 @@ import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
 import imgui.functionalProgramming.collapsingHeader
-import imgui.functionalProgramming.menuBar
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withGroup
@@ -83,7 +82,7 @@ import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
 import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
-import imgui.ColorEditFlags as Cef
+import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlags as Itf
 import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf

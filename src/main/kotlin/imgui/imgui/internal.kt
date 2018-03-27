@@ -69,7 +69,6 @@ import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.TextEditState.K
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
-import imgui.imgui.imgui_colums.Companion.pixelsToOffsetNorm
 import imgui.internal.*
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -78,7 +77,7 @@ import java.util.*
 import kotlin.apply
 import kotlin.math.*
 import kotlin.reflect.KMutableProperty0
-import imgui.ColorEditFlags as Cef
+import imgui.ColorEditFlag as Cef
 import imgui.DragDropFlags as Ddf
 import imgui.HoveredFlags as Hf
 import imgui.InputTextFlags as Itf
@@ -87,7 +86,7 @@ import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
 import imgui.internal.ColumnsFlags as Cf
-import imgui.internal.DrawCornerFlags as Dcf
+import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.LayoutType as Lt
 
 
@@ -2456,8 +2455,8 @@ interface imgui_internal {
         else false
     }
 
-    /** Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.   */
-    fun colorTooltip(text: String, col: FloatArray, flags: Int) {
+    /** Note: only access 3 floats if ColorEditFlag.NoAlpha flag is set.   */
+    fun colorTooltip(text: String, col: FloatArray, flags: ColorEditFlags) {
 
         val cr = F32_TO_INT8_SAT(col[0])
         val cg = F32_TO_INT8_SAT(col[1])
@@ -2482,7 +2481,7 @@ interface imgui_internal {
     }
 
     /** @param flags ColorEditFlags */
-    fun colorEditOptionsPopup(col: FloatArray, flags: Int) {
+    fun colorEditOptionsPopup(col: FloatArray, flags: ColorEditFlags) {
         val allowOptInputs = flags hasnt Cef._InputsMask
         val allowOptDatatype = flags hasnt Cef._DataTypeMask
         if ((!allowOptInputs && !allowOptDatatype) || !beginPopup("context")) return

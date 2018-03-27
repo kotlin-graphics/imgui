@@ -507,7 +507,7 @@ class FontAtlas {
 
         if (cursor == MouseCursor.None) return false
 
-        if (flags has Flags.NoMouseCursors) return false
+        if (flags has FontAtlasFlag.NoMouseCursors) return false
 
         val r = customRects[customRectIds[0]]
         assert(r.id == DefaultTexData.id)
@@ -528,8 +528,7 @@ class FontAtlas {
     //-------------------------------------------
     // Members
     //-------------------------------------------
-
-    enum class Flags {
+    enum class FontAtlasFlag {
         /** Don't round the height to next power of two */
         NoPowerOfTwoHeight,
         /** Don't build software mouse cursors into the atlas   */
@@ -538,11 +537,11 @@ class FontAtlas {
         val i = 1 shl ordinal
     }
 
-    infix fun Int.has(flag: Flags) = and(flag.i) != 0
-    infix fun Int.hasnt(flag: Flags) = and(flag.i) == 0
+    infix fun Int.has(flag: FontAtlasFlag) = and(flag.i) != 0
+    infix fun Int.hasnt(flag: FontAtlasFlag) = and(flag.i) == 0
 
     /** Build flags (see ImFontAtlasFlags_) */
-    var flags = 0
+    var flags: FontAtlasFlags = 0
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
     var texId: TextureID = -1
@@ -715,7 +714,7 @@ class FontAtlas {
         assert(bufRangesN == totalRangesCount)
 
         // Create texture
-        texSize.y = if (flags has Flags.NoPowerOfTwoHeight) texSize.y + 1 else texSize.y.upperPowerOfTwo
+        texSize.y = if (flags has FontAtlasFlag.NoPowerOfTwoHeight) texSize.y + 1 else texSize.y.upperPowerOfTwo
         texUvScale = 1f / Vec2(texSize)
         texPixelsAlpha8 = bufferBig(texSize.x * texSize.y)
         spc.pixels = texPixelsAlpha8!!
@@ -787,7 +786,7 @@ class FontAtlas {
     fun buildRegisterDefaultCustomRects() {
         if (customRectIds[0] >= 0) return
         customRectIds[0] = when {
-            flags hasnt Flags.NoMouseCursors -> addCustomRectRegular(DefaultTexData.id, DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
+            flags hasnt FontAtlasFlag.NoMouseCursors -> addCustomRectRegular(DefaultTexData.id, DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
             else -> addCustomRectRegular(DefaultTexData.id, 2, 2)
         }
     }
@@ -853,7 +852,7 @@ class FontAtlas {
         assert(r.id == DefaultTexData.id && r.isPacked)
 
         val w = texSize.x
-        if (flags hasnt Flags.NoMouseCursors) {
+        if (flags hasnt FontAtlasFlag.NoMouseCursors) {
             // Render/copy pixels
             assert(r.width == DefaultTexData.wHalf * 2 + 1 && r.height == DefaultTexData.h)
             var n = 0

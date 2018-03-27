@@ -440,6 +440,136 @@ infix fun Int.or(b: ConfigFlags) = or(b.i)
 infix fun ConfigFlags.or(b: ConfigFlags) = i or b.i
 
 /** Enumeration for PushStyleColor() / PopStyleColor()  */
+
+open class Enum(val i: Int) {
+
+    infix fun Int.has(b: Enum) = and(b.i) != 0
+    infix fun Int.hasnt(b: Enum) = and(b.i) == 0
+    infix fun Int.or(b: Enum) = or(b.i)
+    infix fun Enum.or(b: Enum) = i or b.i
+}
+//
+//sealed class Co(i: Int) : Enum(i) {
+//    object Text : Co(_i++)
+//    object TextDisabled : Co(_i++)
+//    /** Background of normal windows    */
+//    object WindowBg : Co(_i++)
+//
+//    /** Background of child windows */
+//    object ChildBg : Co(_i++)
+//
+//    /*-* Background of popups, menus, tooltips windows  */
+//    object PopupBg : Co(_i++)
+//
+//    object Border : Co(_i++)
+//    object BorderShadow : Co(_i++)
+//    /** Background of checkbox, radio button, plot, slider, text input  */
+//    object FrameBg : Co(_i++)
+//
+//    object FrameBgHovered : Co(_i++)
+//    object FrameBgActive : Co(_i++)
+//    object TitleBg : Co(_i++)
+//    object TitleBgActive : Co(_i++)
+//    object TitleBgCollapsed : Co(_i++)
+//    object MenuBarBg : Co(_i++)
+//    object ScrollbarBg : Co(_i++)
+//    object ScrollbarGrab : Co(_i++)
+//    object ScrollbarGrabHovered : Co(_i++)
+//    object ScrollbarGrabActive : Co(_i++)
+//    object CheckMark : Co(_i++)
+//    object SliderGrab : Co(_i++)
+//    object SliderGrabActive : Co(_i++)
+//    object Button : Co(_i++)
+//    object ButtonHovered : Co(_i++)
+//    object ButtonActive : Co(_i++)
+//    object Header : Co(_i++)
+//    object HeaderHovered : Co(_i++)
+//    object HeaderActive : Co(_i++)
+//    object Separator : Co(_i++)
+//    object SeparatorHovered : Co(_i++)
+//    object SeparatorActive : Co(_i++)
+//    object ResizeGrip : Co(_i++)
+//    object ResizeGripHovered : Co(_i++)
+//    object ResizeGripActive : Co(_i++)
+//    object CloseButton : Co(_i++)
+//    object CloseButtonHovered : Co(_i++)
+//    object CloseButtonActive : Co(_i++)
+//    object PlotLines : Co(_i++)
+//    object PlotLinesHovered : Co(_i++)
+//    object PlotHistogram : Co(_i++)
+//    object PlotHistogramHovered : Co(_i++)
+//    object TextSelectedBg : Co(_i++)
+//    /** darken entire screen when a modal window is active   */
+//    object ModalWindowDarkening : Co(_i++)
+//
+//    object DragDropTarget : Co(_i++)
+//    /** gamepad/keyboard: current highlighted item  */
+//    object NavHighlight : Co(_i++)
+//
+//    /** gamepad/keyboard: when holding NavMenu to focus/move/resize windows */
+//    object NavWindowingHighlight : Co(_i++)
+//
+//    init {
+//        values += this
+//    }
+//
+//    val count = _i
+//
+//    val name
+//        get() = when (this) {
+//            Co.Text -> "Text"
+//            Co.TextDisabled -> "TextDisabled"
+//            Co.WindowBg -> "WindowBg"
+//            Co.ChildBg -> "ChildBg"
+//            Co.PopupBg -> "PopupBg"
+//            Co.Border -> "Border"
+//            Co.BorderShadow -> "BorderShadow"
+//            Co.FrameBg -> "FrameBg"
+//            Co.FrameBgHovered -> "FrameBgHovered"
+//            Co.FrameBgActive -> "FrameBgActive"
+//            Co.TitleBg -> "TitleBg"
+//            Co.TitleBgActive -> "TitleBgActive"
+//            Co.TitleBgCollapsed -> "TitleBgCollapsed"
+//            Co.MenuBarBg -> "MenuBarBg"
+//            Co.ScrollbarBg -> "ScrollbarBg"
+//            Co.ScrollbarGrab -> "ScrollbarGrab"
+//            Co.ScrollbarGrabHovered -> "ScrollbarGrabHovered"
+//            Co.ScrollbarGrabActive -> "ScrollbarGrabActive"
+//            Co.CheckMark -> "CheckMark"
+//            Co.SliderGrab -> "SliderGrab"
+//            Co.SliderGrabActive -> "SliderGrabActive"
+//            Co.Button -> "Button"
+//            Co.ButtonHovered -> "ButtonHovered"
+//            Co.ButtonActive -> "ButtonActive"
+//            Co.Header -> "Header"
+//            Co.HeaderHovered -> "HeaderHovered"
+//            Co.HeaderActive -> "HeaderActive"
+//            Co.Separator -> "Separator"
+//            Co.SeparatorHovered -> "SeparatorHovered"
+//            Co.SeparatorActive -> "SeparatorActive"
+//            Co.ResizeGrip -> "ResizeGrip"
+//            Co.ResizeGripHovered -> "ResizeGripHovered"
+//            Co.ResizeGripActive -> "ResizeGripActive"
+//            Co.CloseButton -> "CloseButton"
+//            Co.CloseButtonHovered -> "CloseButtonHovered"
+//            Co.CloseButtonActive -> "CloseButtonActive"
+//            Co.PlotLines -> "PlotLines"
+//            Co.PlotLinesHovered -> "PlotLinesHovered"
+//            Co.PlotHistogram -> "PlotHistogram"
+//            Co.PlotHistogramHovered -> "PlotHistogramHovered"
+//            Co.TextSelectedBg -> "TextSelectedBg"
+//            Co.ModalWindowDarkening -> "ModalWindowDarkening"
+//            Co.DragDropTarget -> "DragDropTarget"
+//            Co.NavHighlight -> "NavHighlight"
+//            Co.NavWindowingHighlight -> "NavWindowingHighlight"
+//        }
+//
+//    companion object {
+//        var _i = 0
+//        val values = ArrayList<Co>()
+//    }
+//}
+
 enum class Col {
 
     Text,
@@ -558,7 +688,7 @@ enum class StyleVar {
 }
 
 /** Enumeration for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()   */
-enum class ColorEditFlags(val i: Int) {
+enum class ColorEditFlag(val i: Int) {
 
     Null(0),
     /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (read 3 components from the input pointer). */
@@ -613,14 +743,14 @@ enum class ColorEditFlags(val i: Int) {
     _OptionsDefault(Uint8 or RGB or PickerHueBar)
 }
 
-infix fun ColorEditFlags.and(other: ColorEditFlags) = i and other.i
-infix fun ColorEditFlags.or(other: ColorEditFlags) = i or other.i
-infix fun ColorEditFlags.or(other: Int) = i or other
-infix fun Int.and(other: ColorEditFlags) = this and other.i
-infix fun Int.or(other: ColorEditFlags) = this or other.i
-infix fun Int.has(b: ColorEditFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: ColorEditFlags) = (this and b.i) == 0
-infix fun Int.wo(b: ColorEditFlags) = this and b.i.inv()
+infix fun ColorEditFlag.and(other: ColorEditFlag): ColorEditFlags = i and other.i
+infix fun ColorEditFlag.or(other: ColorEditFlag): ColorEditFlags = i or other.i
+infix fun ColorEditFlag.or(other: Int):ColorEditFlags = i or other
+infix fun Int.and(other: ColorEditFlag):ColorEditFlags = this and other.i
+infix fun Int.or(other: ColorEditFlag):ColorEditFlags = this or other.i
+infix fun Int.has(b: ColorEditFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: ColorEditFlag) = (this and b.i) == 0
+infix fun Int.wo(b: ColorEditFlag) = this and b.i.inv()
 infix fun Int.wo(b: Int) = this and b.inv()
 
 /** Enumeration for GetMouseCursor()    */

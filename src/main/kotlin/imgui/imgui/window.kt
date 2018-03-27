@@ -3,7 +3,6 @@ package imgui.imgui
 import gli_.has
 import gli_.hasnt
 import glm_.f
-import glm_.func.common.max
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -43,8 +42,8 @@ import kotlin.reflect.KMutableProperty0
 import imgui.ItemFlags as If
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
-import imgui.internal.DrawCornerFlags as Dcf
-import imgui.internal.DrawListFlags as Dlf
+import imgui.internal.DrawCornerFlag as Dcf
+import imgui.internal.DrawListFlag as Dlf
 import imgui.internal.LayoutType as Lt
 
 

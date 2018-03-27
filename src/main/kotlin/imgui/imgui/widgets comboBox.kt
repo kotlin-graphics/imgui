@@ -29,7 +29,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.ImGui.unindent
-import imgui.internal.DrawCornerFlags
+import imgui.internal.DrawCornerFlag
 import imgui.internal.Rect
 import imgui.internal.isPowerOfTwo
 import kotlin.reflect.KMutableProperty0
@@ -70,10 +70,10 @@ interface imgui_widgetsComboBox {
         renderNavHighlight(frameBb, id)
         if (flags hasnt Cf.NoPreview)
             window.drawList.addRectFilled(frameBb.min, Vec2(frameBb.max.x - arrowSize, frameBb.max.y), frameCol.u32,
-                    style.frameRounding, DrawCornerFlags.Left.i)
+                    style.frameRounding, DrawCornerFlag.Left.i)
         if (flags hasnt Cf.NoArrowButton) {
             val col = if(popupOpen || hovered) Col.ButtonHovered else Col.Button
-            val f = if(w <= arrowSize) DrawCornerFlags.All else DrawCornerFlags.Right
+            val f = if(w <= arrowSize) DrawCornerFlag.All else DrawCornerFlag.Right
             window.drawList.addRectFilled(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, style.frameRounding, f.i)
             renderArrow(Vec2(frameBb.max.x - arrowSize + style.framePadding.y, frameBb.min.y + style.framePadding.y), Dir.Down)
         }

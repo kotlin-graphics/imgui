@@ -31,7 +31,7 @@ import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
 import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
 import kotlin.reflect.KMutableProperty0
-import imgui.ColorEditFlags as Cef
+import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlags as Itf
 import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf

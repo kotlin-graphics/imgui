@@ -37,7 +37,7 @@ import imgui.ImGui.style
 import imgui.ImGui.textLineHeight
 import imgui.internal.Rect
 import imgui.internal.strchr
-import imgui.ColorEditFlags as Cef
+import imgui.ColorEditFlag as Cef
 
 interface imgui_widgetsText {
 
@@ -259,7 +259,7 @@ interface imgui_widgetsText {
             renderArrow(drawList, Vec2(pos.x + barW - halfSz.x, pos.y), halfSz, Dir.Left, COL32_WHITE)
         }
 
-        fun colorPickerOptionsPopup(flags: Int, refCol: FloatArray) {
+        fun colorPickerOptionsPopup(flags: ColorEditFlags, refCol: FloatArray) {
             val allowOptPicker = flags hasnt Cef._PickerMask
             val allowOptAlphaBar = flags hasnt Cef.NoAlpha && flags hasnt Cef.AlphaBar
             if ((!allowOptPicker && !allowOptAlphaBar) || !beginPopup("context")) return
@@ -271,7 +271,7 @@ interface imgui_widgetsText {
                     // Draw small/thumbnail version of each picker type (over an invisible button for selection)
                     if (pickerType > 0) separator()
                     pushId(pickerType)
-                    var pickerFlags = Cef.NoInputs or Cef.NoOptions or Cef.NoLabel or
+                    var pickerFlags: ColorEditFlags = Cef.NoInputs or Cef.NoOptions or Cef.NoLabel or
                             Cef.NoSidePreview or (flags and Cef.NoAlpha)
                     if (pickerType == 0) pickerFlags = pickerFlags or Cef.PickerHueBar
                     if (pickerType == 1) pickerFlags = pickerFlags or Cef.PickerHueWheel
