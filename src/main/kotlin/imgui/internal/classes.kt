@@ -19,7 +19,7 @@ import kotlin.collections.ArrayList
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sin
-import imgui.HoveredFlags as Hf
+import imgui.HoveredFlag as Hf
 import imgui.WindowFlags as Wf
 
 
@@ -781,7 +781,7 @@ class Window(var context: Context, var name: String) {
         this.collapsed = collapsed
     }
 
-    fun isContentHoverable(flags: Int): Boolean {
+    fun isContentHoverable(flags: HoveredFlags): Boolean {
         // An active popup disable hovering on other windows (apart from its own children)
         // FIXME-OPT: This could be cached/stored within the window.
         val focusedRootWindow = g.navWindow?.rootWindow ?: return true

@@ -19,7 +19,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.internal.NavForward
 import imgui.internal.Window
 import kotlin.math.max
-import imgui.HoveredFlags as Hf
+import imgui.HoveredFlag as Hf
 import imgui.WindowFlags as Wf
 
 /** Popups  */

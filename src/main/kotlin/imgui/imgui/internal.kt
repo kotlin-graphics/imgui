@@ -79,8 +79,8 @@ import kotlin.math.*
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.DragDropFlag as Ddf
-import imgui.HoveredFlags as Hf
-import imgui.InputTextFlags as Itf
+import imgui.HoveredFlag as Hf
+import imgui.InputTextFlag as Itf
 import imgui.ItemFlags as If
 import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf
@@ -1719,7 +1719,7 @@ interface imgui_internal {
         return valueChanged
     }
 
-    fun inputTextEx(label: String, buf: CharArray, sizeArg: Vec2, flags: Int
+    fun inputTextEx(label: String, buf: CharArray, sizeArg: Vec2, flags: InputTextFlags
             /*, ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean {
 
         val window = currentWindow
@@ -2051,10 +2051,10 @@ interface imgui_internal {
                 valueChanged = true
             }
 
-            /*  When using `InputTextFlags.EnterReturnsTrue` as a special case we reapply the live buffer back to the
+            /*  When using `InputTextFlag.EnterReturnsTrue` as a special case we reapply the live buffer back to the
                 input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
-                If we didn't do that, code like `inputInt()` with `InputTextFlags.EnterReturnsTrue` would fail.
-                Also this allows the user to use `inputText()` with `InputTextFlags.EnterReturnsTrue` without
+                If we didn't do that, code like `inputInt()` with `InputTextFlag.EnterReturnsTrue` would fail.
+                Also this allows the user to use `inputText()` with `InputTextFlag.EnterReturnsTrue` without
                 maintaining any user-side storage.  */
             val applyEditBackToUserBuffer = !cancelEdit || (enterPressed && flags hasnt Itf.EnterReturnsTrue)
             if (applyEditBackToUserBuffer) {
@@ -2071,7 +2071,7 @@ interface imgui_internal {
                     //                        IM_ASSERT(callback != NULL);
 //
 //                        // The reason we specify the usage semantic (Completion/History) is that Completion needs to disable keyboard TABBING at the moment.
-//                        ImGuiInputTextFlags event_flag = 0;
+//                        val eventFlag: InputTextFlags = 0
 //                        ImGuiKey event_key = ImGuiKey_COUNT;
 //                        if ((flags & ImGuiInputTextFlags_CallbackCompletion) != 0 && IsKeyPressedMap(ImGuiKey_Tab))
 //                        {

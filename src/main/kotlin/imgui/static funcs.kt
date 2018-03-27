@@ -8,7 +8,6 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
-import imgui.ImGui.style
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.getColumnOffset
@@ -18,6 +17,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
+import imgui.ImGui.style
 import imgui.imgui.*
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.internal.*
@@ -25,13 +25,12 @@ import uno.kotlin.isPrintable
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
-import kotlin.collections.firstOrNull
 import kotlin.collections.set
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
-import imgui.InputTextFlags as Itf
 import imgui.ConfigFlags as Cf
+import imgui.InputTextFlag as Itf
 import imgui.WindowFlags as Wf
 
 
@@ -270,7 +269,7 @@ fun getViewportRect(): Rect {
 fun closePopupToLevel(remaining: Int) {
     assert(remaining >= 0)
     var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
-        else g.openPopupStack[0].parentWindow
+    else g.openPopupStack[0].parentWindow
     if (g.navLayer == 0)
         focusWindow = navRestoreLastChildNavWindow(focusWindow)
     focusWindow.focus()
@@ -341,7 +340,8 @@ fun findBestWindowPosForPopup(refPos: Vec2, size: Vec2, lastDir: KMutablePropert
 }
 
 /** Return false to discard a character.    */
-fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: Int/*, ImGuiTextEditCallback callback, void* user_data*/): Boolean {
+fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags/*, ImGuiTextEditCallback callback, void* user_data*/)
+        : Boolean {
 
     var c = char()
 

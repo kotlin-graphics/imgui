@@ -53,7 +53,7 @@ import imgui.internal.Window
 import java.util.*
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
-import imgui.InputTextFlags as Itf
+import imgui.InputTextFlag as Itf
 import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf

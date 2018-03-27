@@ -83,7 +83,7 @@ import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
-import imgui.InputTextFlags as Itf
+import imgui.InputTextFlag as Itf
 import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf
