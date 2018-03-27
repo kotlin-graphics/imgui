@@ -78,7 +78,7 @@ import kotlin.apply
 import kotlin.math.*
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
-import imgui.DragDropFlags as Ddf
+import imgui.DragDropFlag as Ddf
 import imgui.HoveredFlags as Hf
 import imgui.InputTextFlags as Itf
 import imgui.ItemFlags as If

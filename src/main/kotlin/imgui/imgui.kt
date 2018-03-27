@@ -111,7 +111,7 @@ typealias ColorEditFlags = Int
 ///** flags: for *Columns*()                   // enum ColumnsFlag */
 typealias ColumnsFlags = Int
 ///** flags: for *DragDrop*()                  // enum DragDropFlag */
-//typealias DragDropFlags = Int
+typealias DragDropFlags = Int
 ///** flags: for BeginCombo()                  // enum ComboFlag */
 //typealias ComboFlags = Int
 ///** flags: for ::isWindowFocused()             // enum FocusedFlag */

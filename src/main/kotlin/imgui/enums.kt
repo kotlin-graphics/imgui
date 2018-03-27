@@ -271,7 +271,7 @@ infix fun Int.has(b: HoveredFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: HoveredFlags) = (this and b.i) == 0
 
 /** Flags for beginDragDropSource(), acceptDragDropPayload() */
-enum class DragDropFlags(val i: Int) {
+enum class DragDropFlag(val i: Int) {
     // BeginDragDropSource() flags
     /** By default), a successful call to beginDragDropSource opens a tooltip so you can display a preview or
      *  description of the source contents. This flag disable this behavior. */
@@ -299,10 +299,10 @@ enum class DragDropFlags(val i: Int) {
     AcceptPeekOnly(AcceptBeforeDelivery or AcceptNoDrawDefaultRect)
 }
 
-infix fun DragDropFlags.or(other: DragDropFlags) = i or other.i
-infix fun Int.or(other: DragDropFlags) = this or other.i
-infix fun Int.has(b: DragDropFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: DragDropFlags) = (this and b.i) == 0
+infix fun DragDropFlag.or(other: DragDropFlag) = i or other.i
+infix fun Int.or(other: DragDropFlag) = this or other.i
+infix fun Int.has(b: DragDropFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: DragDropFlag) = (this and b.i) == 0
 
 // Standard Drag and Drop payload types. Types starting with '_' are defined by Dear ImGui.
 /** float[3], Standard type for colors, without alpha. User code may use this type. */

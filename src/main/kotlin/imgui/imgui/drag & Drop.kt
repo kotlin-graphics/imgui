@@ -3,21 +3,19 @@ package imgui.imgui
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginTooltip
-import imgui.ImGui.beginTooltipEx
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.endTooltip
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
-import imgui.ImGui.isMouseReleased
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setHoveredId
 import imgui.ImGui.setNextWindowPos
 import imgui.internal.*
-import imgui.DragDropFlags as Ddf
+import imgui.DragDropFlag as Ddf
 
 /** Drag and Drop
  *  [BETA API] Missing Demo code. API may evolve. */
@@ -28,10 +26,8 @@ interface imgui_dragAndDrop {
      *  When this returns true you need to:
      *      a) call setDragDropPayload() exactly once
      *      b) you may render the payload visual/description,
-     *      c) call endDragDropSource()
-     *
-     *  @param flags: DragDropFlags */
-    fun beginDragDropSource(flags: Int = 0): Boolean {
+     *      c) call endDragDropSource()     */
+    fun beginDragDropSource(flags: DragDropFlags = 0): Boolean {
 
         val window = g.currentWindow!!
 
@@ -49,7 +45,7 @@ interface imgui_dragAndDrop {
                 /*  If you want to use beginDragDropSource() on an item with no unique identifier for interaction,
                     such as text() or image(), you need to:
                     A) Read the explanation below
-                    B) Use the DragDropFlags.SourceAllowNullID flag
+                    B) Use the DragDropFlag.SourceAllowNullID flag
                      C) Swallow your programmer pride.  */
                 if (flags hasnt Ddf.SourceAllowNullID) throw Error()
                 /*  Magic fallback (=somehow reprehensible) to handle items with no assigned ID, e.g. text(), image()
@@ -186,9 +182,9 @@ interface imgui_dragAndDrop {
         return true
     }
 
-    /** Accept contents of a given type. If DragDropFlags.AcceptBeforeDelivery is set you can peek into the payload
+    /** Accept contents of a given type. If DragDropFlag.AcceptBeforeDelivery is set you can peek into the payload
      *  before the mouse button is released. */
-    fun acceptDragDropPayload(type: String, flags: Int = 0): Payload? {
+    fun acceptDragDropPayload(type: String, flags: DrawListFlags = 0): Payload? {
         val window = g.currentWindow!!
         val payload = g.dragDropPayload
         assert(g.dragDropActive)                        // Not called between BeginDragDropTarget() and EndDragDropTarget() ?

@@ -227,7 +227,7 @@ interface imgui_main {
 
         // If mouse was first clicked outside of ImGui bounds we also cancel out hovering.
         // FIXME: For patterns of drag and drop across OS windows, we may need to rework/remove this test (first committed 311c0ca9 on 2015/02)
-        val mouseDraggingExternPayload = g.dragDropActive && g.dragDropSourceFlags has DragDropFlags.SourceExtern
+        val mouseDraggingExternPayload = g.dragDropActive && g.dragDropSourceFlags has DragDropFlag.SourceExtern
         if (!mouseAvailToImgui && !mouseDraggingExternPayload) {
             g.hoveredRootWindow = null
             g.hoveredWindow = null
