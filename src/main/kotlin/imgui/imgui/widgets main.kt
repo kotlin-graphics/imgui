@@ -30,7 +30,7 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
-import imgui.ComboFlags as Cf
+import imgui.ComboFlag as Cf
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
 

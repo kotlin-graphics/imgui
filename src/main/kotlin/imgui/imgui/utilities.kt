@@ -19,7 +19,7 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
-import imgui.FocusedFlags as Ff
+import imgui.FocusedFlag as Ff
 import imgui.HoveredFlags as Hf
 import imgui.WindowFlags as Wf
 
@@ -104,13 +104,8 @@ interface imgui_utilities {
             g.activeIdAllowOverlap = true
     }
 
-    /** is current window focused? or its root/child, depending on flag. see flag for options.
-     *  @param flag FocusedFlags */
-    fun isWindowFocused(flag: Ff) = isWindowFocused(flag.i)
-
-    /** is current window focused? or its root/child, depending on flags. see flags for options.
-     *  @param flags FocusedFlags */
-    fun isWindowFocused(flags: Int = Ff.Null.i): Boolean {
+    /** is current window focused? or its root/child, depending on flags. see flags for options.    */
+    fun isWindowFocused(flags: FocusedFlags = Ff.Null.i): Boolean {
 
         val curr = g.currentWindow!!     // Not inside a Begin()/End()
 
