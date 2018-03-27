@@ -33,13 +33,13 @@ import imgui.internal.DrawCornerFlag
 import imgui.internal.Rect
 import imgui.internal.isPowerOfTwo
 import kotlin.reflect.KMutableProperty0
-import imgui.ComboFlags as Cf
+import imgui.ComboFlag as Cf
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
 
 interface imgui_widgetsComboBox {
 
-    fun beginCombo(label: String, previewValue: String?, flags: Int = 0): Boolean {
+    fun beginCombo(label: String, previewValue: String?, flags: ComboFlags = 0): Boolean {
 
         var flags = flags
 

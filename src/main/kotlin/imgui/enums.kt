@@ -202,7 +202,7 @@ infix fun Int.or(other: SelectableFlags) = this or other.i
 infix fun Int.has(b: SelectableFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: SelectableFlags) = (this and b.i) == 0
 
-enum class ComboFlags(val i: Int) {
+enum class ComboFlag(val i: Int) {
     /** Align the popup toward the left by default */
     PopupAlignLeft(1 shl 0),
     /** Max ~4 items visible */
@@ -220,14 +220,14 @@ enum class ComboFlags(val i: Int) {
     HeightMask_(HeightSmall or HeightRegular or HeightLarge or HeightLargest)
 }
 
-infix fun ComboFlags.or(other: ComboFlags) = i or other.i
-infix fun Int.and(other: ComboFlags) = and(other.i)
-infix fun Int.or(other: ComboFlags) = or(other.i)
-infix fun Int.has(b: ComboFlags) = and(b.i) != 0
-infix fun Int.hasnt(b: ComboFlags) = and(b.i) == 0
+infix fun ComboFlag.or(other: ComboFlag) = i or other.i
+infix fun Int.and(other: ComboFlag) = and(other.i)
+infix fun Int.or(other: ComboFlag) = or(other.i)
+infix fun Int.has(b: ComboFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: ComboFlag) = and(b.i) == 0
 
 // Flags for ImGui::IsWindowFocused()
-enum class FocusedFlags(val i: Int) {
+enum class FocusedFlag(val i: Int) {
     Null(0),
     /** isWindowFocused(): Return true if any children of the window is focused */
     ChildWindows(1 shl 0),
@@ -238,11 +238,11 @@ enum class FocusedFlags(val i: Int) {
     RootAndChildWindows(RootWindow or ChildWindows)
 }
 
-infix fun FocusedFlags.or(other: FocusedFlags) = i or other.i
-infix fun Int.and(other: FocusedFlags) = and(other.i)
-infix fun Int.or(other: FocusedFlags) = or(other.i)
-infix fun Int.has(b: FocusedFlags) = and(b.i) != 0
-infix fun Int.hasnt(b: FocusedFlags) = and(b.i) == 0
+infix fun FocusedFlag.or(other: FocusedFlag) = i or other.i
+infix fun Int.and(other: FocusedFlag) = and(other.i)
+infix fun Int.or(other: FocusedFlag) = or(other.i)
+infix fun Int.has(b: FocusedFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: FocusedFlag) = and(b.i) == 0
 
 enum class HoveredFlags(val i: Int) {
     /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active

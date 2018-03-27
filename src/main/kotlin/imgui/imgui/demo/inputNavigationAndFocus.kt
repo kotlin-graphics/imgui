@@ -40,7 +40,7 @@ import imgui.ImGui.windowDrawList
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.treeNode
 import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
-import imgui.FocusedFlags as Ff
+import imgui.FocusedFlag as Ff
 import imgui.HoveredFlags as Hf
 
 object inputNavigationAndFocus {
@@ -204,7 +204,7 @@ object inputNavigationAndFocus {
                     IsWindowFocused(_ChildWindows) = ${isWindowFocused(Ff.ChildWindows.i)}
                     IsWindowFocused(_ChildWindows|_RootWindow) = ${isWindowFocused(Ff.ChildWindows or Ff.RootWindow)}
                     IsWindowFocused(_RootWindow) = ${isWindowFocused(Ff.RootWindow.i)}
-                    IsWindowFocused(_AnyWindow) = ${isWindowFocused(Ff.AnyWindow)}""")
+                    IsWindowFocused(_AnyWindow) = ${isWindowFocused(Ff.AnyWindow.i)}""")
 
                 // Testing IsWindowHovered() function with its various flags (note that the flags can be combined)
                 bulletText("IsWindowHovered() = ${isWindowHovered()}\n" + // TODO triple quote?
