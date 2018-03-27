@@ -3,6 +3,7 @@ package imgui.imgui
 import glm_.f
 import glm_.glm
 import glm_.i
+import imgui.ColumnsFlags
 import imgui.ImGui.style
 import imgui.ImGui.beginColumns
 import imgui.ImGui.currentWindow
@@ -16,7 +17,7 @@ import imgui.g
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
-import imgui.internal.ColumnsFlags as Cf
+import imgui.internal.ColumnsFlag as Cf
 
 /** You can also use SameLine(pos_x) for simplified columning. The columns API is still work-in-progress and rather
  *  lacking.    */
@@ -30,7 +31,7 @@ interface imgui_colums {
 
         window.dc.columnsSet?.let { if(it.count != columnsCount) endColumns() }
 
-        val flags = if (border) 0 else Cf.NoBorder.i
+        val flags: ColumnsFlags = if (border) 0 else Cf.NoBorder.i
         //flags |= ImGuiColumnsFlags_NoPreserveWidths; // NB: Legacy behavior
         if (columnsCount != 1)
             beginColumns(id, columnsCount, flags)

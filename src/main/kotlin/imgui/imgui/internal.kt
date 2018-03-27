@@ -85,7 +85,7 @@ import imgui.ItemFlags as If
 import imgui.TreeNodeFlags as Tnf
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
-import imgui.internal.ColumnsFlags as Cf
+import imgui.internal.ColumnsFlag as Cf
 import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.LayoutType as Lt
 
@@ -744,7 +744,7 @@ interface imgui_internal {
     // FIXME-WIP: New Columns API
 
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
-    fun beginColumns(strId: String = "", columnsCount: Int, flags: Int) {
+    fun beginColumns(strId: String = "", columnsCount: Int, flags: ColumnsFlags) {
 
         with(currentWindow) {
 

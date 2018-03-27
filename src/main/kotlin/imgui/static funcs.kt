@@ -48,7 +48,7 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
 
     var x = io.mousePos.x - g.activeIdClickOffset.x + columnsRectHalfWidth - window.pos.x
     x = glm.max(x, getColumnOffset(columnIndex - 1) + style.columnsMinSpacing)
-    if (columns.flags has ColumnsFlags.NoPreserveWidths)
+    if (columns.flags has ColumnsFlag.NoPreserveWidths)
         x = glm.min(x, getColumnOffset(columnIndex + 1) - style.columnsMinSpacing)
 
     return x

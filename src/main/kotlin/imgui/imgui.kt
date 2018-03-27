@@ -109,7 +109,7 @@ typealias FontAtlasFlags = Int
 ///** flags: for ColorEdit*(), ColorPicker*()  // enum ColorEditFlag */
 typealias ColorEditFlags = Int
 ///** flags: for *Columns*()                   // enum ColumnsFlag */
-//typealias ColumnsFlags = Int
+typealias ColumnsFlags = Int
 ///** flags: for *DragDrop*()                  // enum DragDropFlag */
 //typealias DragDropFlags = Int
 ///** flags: for BeginCombo()                  // enum ComboFlag */

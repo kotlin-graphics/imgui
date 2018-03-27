@@ -53,7 +53,7 @@ enum class SliderFlags(val i: Int) { Vertical(1 shl 0) }
 
 infix fun Int.hasnt(b: SliderFlags) = (this and b.i) == 0
 
-enum class ColumnsFlags(val i: Int) {
+enum class ColumnsFlag(val i: Int) {
 
     /** Disable column dividers */
     NoBorder(1 shl 0),
@@ -68,8 +68,8 @@ enum class ColumnsFlags(val i: Int) {
     GrowParentContentsSize(1 shl 4)
 }
 
-infix fun Int.has(b: ColumnsFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: ColumnsFlags) = (this and b.i) == 0
+infix fun Int.has(b: ColumnsFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: ColumnsFlag) = (this and b.i) == 0
 
 enum class SeparatorFlags {
     /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
