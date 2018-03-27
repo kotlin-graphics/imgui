@@ -234,7 +234,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Temporary text input when CTRL+clicking on a slider, etc.   */
     var scalarAsInputTextId: ID = 0
     /** Store user options for color edit widgets   */
-    var colorEditOptions = ColorEditFlags._OptionsDefault.i
+    var colorEditOptions: ColorEditFlags = ColorEditFlag._OptionsDefault.i
 
     val colorPickerRef = Vec4()
     /** Currently dragged value, always float, not rounded by end-user precision settings   */
@@ -807,5 +807,5 @@ operator fun ArrayList<Vec4>.get(idx: Col) = this[idx.i]
 operator fun ArrayList<Vec4>.set(idx: Col, vec: Vec4) = this[idx.i] put vec
 
 operator fun MutableMap<Int, Float>.set(key: Int, value: Int) = set(key, glm.intBitsToFloat(value))
-operator fun MutableMap<Int, Float>.set(key: Int, value: ColorEditFlags) = set(key, glm.intBitsToFloat(value.i))
+operator fun MutableMap<Int, Float>.set(key: Int, value: ColorEditFlag) = set(key, glm.intBitsToFloat(value.i))
 //operator fun MutableMap<Int, Float>.getInt(key: Int) = 0 TODO float

@@ -13,16 +13,16 @@ import imgui.ImGui.shadeVertsLinearUV
 import imgui.internal.*
 import java.util.*
 import kotlin.collections.ArrayList
-import imgui.internal.DrawCornerFlags as Dcf
+import imgui.internal.DrawCornerFlag as Dcf
 
-        /** Draw callbacks for advanced uses.
-        NB- You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering
-        (you can poke into the draw list for that)
-        Draw callback may be useful, for example, to:
-        - change your GPU render state
-        - render a complex 3D scene inside a UI element (without an intermediate texture/render target), etc.
-        The expected behavior from your rendering function is
-        'if (cmd.UserCallback != NULL) cmd.UserCallback(parent_list, cmd); else RenderTriangles()'  */
+/** Draw callbacks for advanced uses.
+NB- You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering
+(you can poke into the draw list for that)
+Draw callback may be useful, for example, to:
+- change your GPU render state
+- render a complex 3D scene inside a UI element (without an intermediate texture/render target), etc.
+The expected behavior from your rendering function is
+'if (cmd.UserCallback != NULL) cmd.UserCallback(parent_list, cmd); else RenderTriangles()'  */
 typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
 /** Typically, 1 command = 1 gpu draw call (unless command is a callback)   */
@@ -120,7 +120,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
 
     /** Flags, you may poke into these to adjust anti-aliasing settings per-primitive. */
-    var flags = 0
+    var flags: DrawListFlags = 0
     /** Pointer to shared draw data (you can use ImGui::drawListSharedData to get the one from current ImGui context) */
     var _data: DrawListSharedData = sharedData ?: DrawListSharedData()
     /** Pointer to owner window's name for debugging    */
@@ -148,6 +148,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Render-level scissoring. This is passed down to your render function but not used for CPU-side coarse clipping.
      *  Prefer using higher-level ImGui::PushClipRect() to affect logic (hit-testing and widget culling)    */
     fun pushClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false) = pushClipRect(rect.min, rect.max, intersectWithCurrentClipRect)
+
     fun pushClipRect(crMin: Vec2, crMax: Vec2, intersectWithCurrentClipRect: Boolean = false) {
 
         val cr = Vec4(crMin, crMax)
@@ -194,7 +195,7 @@ class DrawList(sharedData: DrawListSharedData?) {
      * @param b: b: lower-right */
     fun addRect(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCornersFlags: Int = Dcf.All.i, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
-        if (flags has DrawListFlags.AntiAliasedLines)
+        if (flags has DrawListFlag.AntiAliasedLines)
             pathRect(a + 0.5f, b - 0.5f, rounding, roundingCornersFlags)
         else    // Better looking lower-right corner and rounded non-AA shapes.
             pathRect(a + 0.5f, b - 0.49f, rounding, roundingCornersFlags)
@@ -328,8 +329,8 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (pushTextureId) popTextureId()
     }
 
-    fun addImageQuad(userTextureId: TextureID, a: Vec2, b: Vec2, c: Vec2, d: Vec2, uvA: Vec2 = Vec2(0), uvB: Vec2 = Vec2(1,0),
-                     uvC: Vec2 = Vec2(1), uvD: Vec2 = Vec2(0,1), col: Int = 0xFFFFFFFF.i) {
+    fun addImageQuad(userTextureId: TextureID, a: Vec2, b: Vec2, c: Vec2, d: Vec2, uvA: Vec2 = Vec2(0), uvB: Vec2 = Vec2(1, 0),
+                     uvC: Vec2 = Vec2(1), uvD: Vec2 = Vec2(0, 1), col: Int = 0xFFFFFFFF.i) {
 
         if (col hasnt COL32_A_MASK) return
 
@@ -377,7 +378,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             count = points.lastIndex
 
         val thickLine = thickness > 1f
-        if (flags has DrawListFlags.AntiAliasedLines) {
+        if (flags has DrawListFlag.AntiAliasedLines) {
             // Anti-aliased stroke
             val AA_SIZE = 1f
             val colTrans = col wo COL32_A_MASK
@@ -580,7 +581,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         val uv = Vec2(_data.texUvWhitePixel)
 
-        if (flags has DrawListFlags.AntiAliasedFill) {
+        if (flags has DrawListFlag.AntiAliasedFill) {
             // Anti-aliased Fill
             val AA_SIZE = 1f
             val colTrans = col wo COL32_A_MASK
@@ -895,7 +896,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         cmdBuffer.clear()
         idxBuffer.clear()
         vtxBuffer.clear()
-        flags = DrawListFlags.AntiAliasedLines or DrawListFlags.AntiAliasedFill
+        flags = DrawListFlag.AntiAliasedLines or DrawListFlag.AntiAliasedFill
         _vtxCurrentIdx = 0
         _vtxWritePtr = -1
         _idxWritePtr = -1

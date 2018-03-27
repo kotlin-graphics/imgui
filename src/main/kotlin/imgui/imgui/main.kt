@@ -24,7 +24,7 @@ import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
 import imgui.WindowFlags as Wf
-import imgui.internal.DrawListFlags as Dlf
+import imgui.internal.DrawListFlag as Dlf
 import imgui.ConfigFlags as Cf
 
 interface imgui_main {

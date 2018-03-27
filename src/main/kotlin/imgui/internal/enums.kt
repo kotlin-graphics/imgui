@@ -161,7 +161,7 @@ enum class NavForward { None, ForwardQueued, ForwardActive;
 
 
 // TODO check enum declarance position
-enum class DrawCornerFlags(val i: Int) {
+enum class DrawCornerFlag(val i: Int) {
     TopLeft(1 shl 0), // 0x1
     TopRight(1 shl 1), // 0x2
     BotLeft(1 shl 2), // 0x4
@@ -174,20 +174,20 @@ enum class DrawCornerFlags(val i: Int) {
     All(0xF)
 }
 
-infix fun DrawCornerFlags.or(b: DrawCornerFlags) = i or b.i
-infix fun Int.or(b: DrawCornerFlags) = or(b.i)
-infix fun Int.and(b: DrawCornerFlags) = and(b.i)
-infix fun Int.has(b: DrawCornerFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: DrawCornerFlags) = (this and b.i) == 0
+infix fun DrawCornerFlag.or(b: DrawCornerFlag) = i or b.i
+infix fun Int.or(b: DrawCornerFlag) = or(b.i)
+infix fun Int.and(b: DrawCornerFlag) = and(b.i)
+infix fun Int.has(b: DrawCornerFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: DrawCornerFlag) = (this and b.i) == 0
 
 // TODO check enum declarance position
-enum class DrawListFlags { AntiAliasedLines, AntiAliasedFill;
+enum class DrawListFlag { AntiAliasedLines, AntiAliasedFill;
 
     val i = 1 shl ordinal
 }
 
-infix fun DrawListFlags.or(b: DrawListFlags) = i or b.i
-infix fun Int.or(b: DrawListFlags) = or(b.i)
-infix fun Int.and(b: DrawListFlags) = and(b.i)
-infix fun Int.has(b: DrawListFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: DrawListFlags) = (this and b.i) == 0
+infix fun DrawListFlag.or(b: DrawListFlag) = i or b.i
+infix fun Int.or(b: DrawListFlag) = or(b.i)
+infix fun Int.and(b: DrawListFlag) = and(b.i)
+infix fun Int.has(b: DrawListFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: DrawListFlag) = (this and b.i) == 0

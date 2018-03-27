@@ -83,10 +83,7 @@ var ptrId = Array(512, { java.lang.Byte.valueOf(it.b) })
 
 typealias SizeCallback = (SizeCallbackData) -> Unit
 
-// dummy main
-fun main(args: Array<String>) {
 
-}
 
 val NUL = '\u0000'
 
@@ -102,3 +99,37 @@ operator fun StringBuilder.plusAssign(string: String) {
 typealias ID = Int
 /** user data to identify a texture */
 typealias TextureID = Int
+
+/** flags: for DrawList::addRect*() etc.   // enum DrawCornerFlag */
+typealias DrawCornerFlags = Int
+/** flags: for DrawList                    // enum DrawListFlag */
+typealias DrawListFlags = Int
+///** flags: for FontAtlas                   // enum FontAtlasFlags */
+typealias FontAtlasFlags = Int
+///** flags: for ColorEdit*(), ColorPicker*()  // enum ColorEditFlag */
+typealias ColorEditFlags = Int
+///** flags: for *Columns*()                   // enum ColumnsFlag */
+//typealias ColumnsFlags = Int
+///** flags: for *DragDrop*()                  // enum DragDropFlag */
+//typealias DragDropFlags = Int
+///** flags: for BeginCombo()                  // enum ComboFlag */
+//typealias ComboFlags = Int
+///** flags: for ::isWindowFocused()             // enum FocusedFlag */
+//typealias FocusedFlags = Int
+///** flags: for ::isItemHovered() etc.          // enum HoveredFlag */
+//typealias HoveredFlags = Int
+///** flags: for ::inputText*()                  // enum InputTextFlag */
+//typealias InputTextFlags = Int
+///** flags: for io.NavFlags                   // enum NavFlag */
+//typealias NavFlags = Int
+///** flags: for Selectable()                  // enum SelectableFlag */
+//typealias SelectableFlags = Int
+///** flags: for TreeNode*(),CollapsingHeader()// enum TreeNodeFlag */
+//typealias TreeNodeFlags = Int
+///** flags: for Begin*()                      // enum WindowFlag */
+//typealias WindowFlags = Int
+
+// dummy main
+fun main(args: Array<String>) {
+
+}

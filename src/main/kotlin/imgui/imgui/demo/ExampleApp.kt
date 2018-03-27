@@ -94,7 +94,7 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.sqrt
 import kotlin.reflect.KMutableProperty0
-import imgui.ColorEditFlags as Cef
+import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlags as Itf
 import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf
@@ -1063,7 +1063,7 @@ object StyleEditor {
 
     var outputDest = 0
     var outputOnlyModified = true
-    var alphaFlags = 0
+    var alphaFlags: ColorEditFlags = 0
     val filter = TextFilter()
     var windowScale = 1f
 
@@ -1173,6 +1173,8 @@ object StyleEditor {
             checkbox("Only Modified Colors", ::outputOnlyModified)
 
             text("Tip: Left-click on colored square to open color picker,\nRight-click to open edit options menu.")
+
+            filter.draw("Filter colors", 200f)
 
             radioButton("Opaque", ::alphaFlags, 0); sameLine()
             radioButton("Alpha", ::alphaFlags, Cef.AlphaPreview.i); sameLine()

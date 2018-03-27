@@ -47,12 +47,12 @@ import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withIndent
 import imgui.imgui.demo.ExampleApp
 import imgui.imgui.imgui_colums.Companion.offsetNormToPixels
-import imgui.internal.DrawListFlags
+import imgui.internal.DrawListFlag
 import imgui.internal.Rect
 import imgui.internal.Window
 import java.util.*
 import kotlin.reflect.KMutableProperty0
-import imgui.ColorEditFlags as Cef
+import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlags as Itf
 import imgui.SelectableFlags as Sf
 import imgui.TreeNodeFlags as Tnf
@@ -318,7 +318,7 @@ interface imgui_demoDebugInformations {
                             if (isItemHovered()) {
                                 val backupFlags = overlayDrawList.flags
                                 // Disable AA on triangle outlines at is more readable for very large and thin triangles.
-                                overlayDrawList.flags = overlayDrawList.flags and DrawListFlags.AntiAliasedLines.i.inv()
+                                overlayDrawList.flags = overlayDrawList.flags and DrawListFlag.AntiAliasedLines.i.inv()
                                 overlayDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f)
                                 overlayDrawList.flags = backupFlags
                             }
