@@ -22,7 +22,7 @@ import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ListClipper
-import imgui.SelectableFlags
+import imgui.SelectableFlag
 import imgui.WindowFlags
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.selectable
@@ -77,7 +77,7 @@ object columns_ {
                     val names = listOf("One", "Two", "Three")
                     val paths = listOf("/path/one", "/path/two", "/path/three")
                     for (i in 0..2) {
-                        selectable("%04d".format(style.locale, i), selected == i, SelectableFlags.SpanAllColumns.i) {
+                        selectable("%04d".format(style.locale, i), selected == i, SelectableFlag.SpanAllColumns.i) {
                             selected = i
                         }
                         nextColumn()

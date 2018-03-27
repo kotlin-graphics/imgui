@@ -104,26 +104,26 @@ typealias TextureID = Int
 typealias DrawCornerFlags = Int
 /** flags: for DrawList                    // enum DrawListFlag */
 typealias DrawListFlags = Int
-///** flags: for FontAtlas                   // enum FontAtlasFlags */
+/** flags: for FontAtlas                   // enum FontAtlasFlags */
 typealias FontAtlasFlags = Int
-///** flags: for ColorEdit*(), ColorPicker*()  // enum ColorEditFlag */
+//typedef int ImGuiBackendFlags;      // flags: for io.BackendFlags               // enum ImGuiBackendFlags_
+/** flags: for ColorEdit*(), ColorPicker*()  // enum ColorEditFlag */
 typealias ColorEditFlags = Int
-///** flags: for *Columns*()                   // enum ColumnsFlag */
+/** flags: for *Columns*()                   // enum ColumnsFlag */
 typealias ColumnsFlags = Int
-///** flags: for *DragDrop*()                  // enum DragDropFlag */
+//typedef int ImGuiConfigFlags;       // flags: for io.ConfigFlags                // enum ImGuiConfigFlags_
+/** flags: for *DragDrop*()                  // enum DragDropFlag */
 typealias DragDropFlags = Int
-///** flags: for BeginCombo()                  // enum ComboFlag */
+/** flags: for BeginCombo()                  // enum ComboFlag */
 typealias ComboFlags = Int
-///** flags: for ::isWindowFocused()             // enum FocusedFlag */
+/** flags: for ::isWindowFocused()             // enum FocusedFlag */
 typealias FocusedFlags = Int
-///** flags: for ::isItemHovered() etc.          // enum HoveredFlag */
+/** flags: for ::isItemHovered() etc.          // enum HoveredFlag */
 typealias HoveredFlags = Int
-///** flags: for ::inputText*()                  // enum InputTextFlag */
+/** flags: for ::inputText*()                  // enum InputTextFlag */
 typealias InputTextFlags = Int
-///** flags: for io.NavFlags                   // enum NavFlag */
-//typealias NavFlags = Int
-///** flags: for Selectable()                  // enum SelectableFlag */
-//typealias SelectableFlags = Int
+/** flags: for Selectable()                  // enum SelectableFlag */
+typealias SelectableFlags = Int
 ///** flags: for TreeNode*(),CollapsingHeader()// enum TreeNodeFlag */
 //typealias TreeNodeFlags = Int
 ///** flags: for Begin*()                      // enum WindowFlag */

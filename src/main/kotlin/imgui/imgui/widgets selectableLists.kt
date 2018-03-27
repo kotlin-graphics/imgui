@@ -39,7 +39,7 @@ import imgui.internal.Rect
 import imgui.internal.or
 import kotlin.reflect.KMutableProperty0
 import imgui.ItemFlags as If
-import imgui.SelectableFlags as Sf
+import imgui.SelectableFlag as Sf
 import imgui.WindowFlags as Wf
 import imgui.internal.ButtonFlags as Bf
 
@@ -53,7 +53,7 @@ interface imgui_widgetsSelectableLists {
      *  size.x > 0f -> specify width
      *  size.y == 0f -> use label height
      *  size.y > 0f -> specify height   */
-    fun selectable(label: String, selected: Boolean = false, flags: Int = 0, sizeArg: Vec2 = Vec2()): Boolean {
+    fun selectable(label: String, selected: Boolean = false, flags: SelectableFlags = 0, sizeArg: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -136,7 +136,7 @@ interface imgui_widgetsSelectableLists {
     }
 
     /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
-    fun selectable(label: String, selected: BooleanArray, ptr: Int, flags: Int = 0, size: Vec2 = Vec2()) = withBool { b ->
+    fun selectable(label: String, selected: BooleanArray, ptr: Int, flags: SelectableFlags = 0, size: Vec2 = Vec2()) = withBool { b ->
         b.set(selected[ptr])
         val res = selectable(label, b, flags, size)
         selected[ptr] = b()
@@ -144,7 +144,7 @@ interface imgui_widgetsSelectableLists {
     }
 
     /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
-    fun selectable(label: String, selected: KMutableProperty0<Boolean>, flags: Int = 0, size: Vec2 = Vec2()): Boolean {
+    fun selectable(label: String, selected: KMutableProperty0<Boolean>, flags: SelectableFlags = 0, size: Vec2 = Vec2()): Boolean {
         if (selectable(label, selected(), flags, size)) {
             selected.set(!selected())
             return true

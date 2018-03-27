@@ -43,7 +43,7 @@ import imgui.internal.LayoutType
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
-import imgui.SelectableFlags as Sf
+import imgui.SelectableFlag as Sf
 import imgui.WindowFlags as Wf
 import imgui.internal.LayoutType as Lt
 
