@@ -268,13 +268,13 @@ class ColumnData {
     var offsetNorm = 0f
     var offsetNormBeforeResize = 0f
     /** Not exposed */
-    var flags = 0
+    var flags: ColumnsFlags = 0
     var clipRect = Rect()
 }
 
 class ColumnsSet {
     var id: ID = 0
-    var flags = 0
+    var flags: ColumnsFlags = 0
     var isFirstFrame = false
     var isBeingResized = false
     var current = 0
