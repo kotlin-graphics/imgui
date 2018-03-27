@@ -249,7 +249,7 @@ fun Vec2.invLength(failValue: Float): Float {
     return failValue
 }
 
-fun Vec2.rotate_(cosA: Float, sinA: Float) = put(x * cosA - y * sinA, x * sinA + y * cosA)
+fun Vec2.rotateAssign(cosA: Float, sinA: Float) = invoke(x * cosA - y * sinA, x * sinA + y * cosA)
 fun Vec2.rotate(cosA: Float, sinA: Float) = Vec2(x * cosA - y * sinA, x * sinA + y * cosA)
 fun linearSweep(current: Float, target: Float, speed: Float) = when {
     current < target -> glm.min(current + speed, target)

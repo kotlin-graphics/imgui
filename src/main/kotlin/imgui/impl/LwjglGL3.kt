@@ -4,12 +4,9 @@ import glm_.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
+import gln.*
 import gln.buffer.glBufferData
 import gln.buffer.glBufferSubData
-import gln.checkError
-import gln.glGetVec4i
-import gln.glScissor
-import gln.glViewport
 import gln.glf.semantic
 import gln.program.*
 import gln.program.ProgramUse.unit
@@ -42,27 +39,10 @@ object LwjglGL3 {
 
     lateinit var window: GlfwWindow
     var time = 0f
-    val mouseJustPressed = BooleanArray(3)
     val mouseCursors = LongArray(MouseCursor.COUNT)
 
-    object Buffer {
-        val Vertex = 0
-        val Element = 1
-        val MAX = 2
-    }
-
-    val bufferName = intBufferBig(Buffer.MAX)
-    /*  JVM. We are not yet doing this because no user case. If ever needed: https://github.com/ocornut/imgui/compare/a1a36e762eac707cc3f9c81ec5af7150f6620c4c...d7f97922b883aec0c873e0e405c46b154d382120
-
-        ~Recreate the VAO every time (This is to easily allow multiple GL contexts. VAO are not shared among GL contexts, and we don't track
-        creation/deletion of windows so we don't have an obvious key to use to cache them.)~     */
-    val vaoName = intBufferBig(1)
-    lateinit var program: Program
+    var program = -1
     var matUL = -1
-    val fontTexture = intBufferOf(-1)
-    var glslVersion = "#version 330"
-
-    val mat = Mat4()
 
     fun init(window: GlfwWindow, installCallbacks: Boolean): Boolean {
 
@@ -116,12 +96,6 @@ object LwjglGL3 {
         window.charCallback = charCallback // TODO check if used (jogl doesnt have)
         imeListner.install(window.handle)
     }
-
-    var vtxSize = 1 shl 5 // 32768
-    var idxSize = 1 shl 6 // 65536
-    var vtxBuffer = bufferBig(vtxSize)
-    var idxBuffer = intBufferBig(idxSize / Int.BYTES)
-
 
     fun newFrame() {
 
@@ -179,8 +153,20 @@ object LwjglGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
 
-//        program = ProgramA("shader")
-        program = Program.fromSources(arrayOf(glslVersion, vertexShader), arrayOf(glslVersion, fragmentShader))
+        program = glCreateProgram()
+        val vertHandle = Program.Companion.createShaderFromSource(vertexShader, GL_VERTEX_SHADER)
+        val fragHandle = Program.Companion.createShaderFromSource(fragmentShader, GL_FRAGMENT_SHADER)
+        glAttachShader(program, vertHandle)
+        glAttachShader(program, fragHandle)
+        glBindAttribLocation(program, semantic.attr.POSITION, "Position")
+        glBindAttribLocation(program, semantic.attr.TEX_COORD, "UV")
+        glBindAttribLocation(program, semantic.attr.COLOR, "Color")
+        glBindFragDataLocation(program, semantic.frag.COLOR, "outColor")
+        glLinkProgram(program)
+        glDetachShader(program, vertHandle)
+        glDetachShader(program, fragHandle)
+        glDeleteShader(vertHandle)
+        glDeleteShader(fragHandle)
         usingProgram(program) {
             matUL = "mat".uniform
             "Texture".unit = semantic.sampler.DIFFUSE
@@ -256,14 +242,6 @@ object LwjglGL3 {
             checkError("checkSize")
 
             if (DEBUG) println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
-        }
-    }
-
-    class ProgramA(shader: String) : Program("$shader.vert", "$shader.frag") {
-        val mat = glGetUniformLocation(name, "mat")
-
-        init {
-            usingProgram(name) { "Texture".unit = semantic.sampler.DIFFUSE }
         }
     }
 
@@ -441,7 +419,7 @@ object LwjglGL3 {
         glDeleteVertexArrays(vaoName)
         glDeleteBuffers(bufferName)
 
-        if (::program.isInitialized) glDeleteProgram(program)
+        if (program >= 0) glDeleteProgram(program)
 
         if (fontTexture[0] >= 0) {
             glDeleteTextures(fontTexture)
@@ -449,34 +427,4 @@ object LwjglGL3 {
             fontTexture[0] = -1
         }
     }
-
-    val vertexShader = """
-        uniform mat4 mat;
-
-        layout (location = ${semantic.attr.POSITION}) in vec2 Position;
-        layout (location = ${semantic.attr.TEX_COORD}) in vec2 UV;
-        layout (location = ${semantic.attr.COLOR}) in vec4 Color;
-
-        out vec2 uv;
-        out vec4 color;
-
-        void main()
-        {
-            uv = UV;
-            color = Color;
-            gl_Position = mat * vec4(Position.xy, 0, 1);
-        }"""
-
-    val fragmentShader = """
-        uniform sampler2D Texture;
-
-        in vec2 uv;
-        in vec4 color;
-
-        layout (location = ${semantic.frag.COLOR}) out vec4 outColor;
-
-        void main()
-        {
-            outColor = color * texture(Texture, uv);
-        }"""
 }
