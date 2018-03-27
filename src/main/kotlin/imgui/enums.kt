@@ -127,10 +127,10 @@ enum class InputTextFlag(val i: Int) {
     /** For internal use by InputTextMultiline()    */
     Multiline(1 shl 20);
 
-    infix fun or(b: InputTextFlag) = i or b.i
+    infix fun or(b: InputTextFlag): InputTextFlags = i or b.i
 }
 
-infix fun Int.or(b: InputTextFlag) = this or b.i
+infix fun Int.or(b: InputTextFlag): InputTextFlags = this or b.i
 infix fun Int.has(b: InputTextFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: InputTextFlag) = (this and b.i) == 0
 
@@ -177,7 +177,7 @@ infix fun Int.has(b: TreeNodeFlags) = (this and b.i) != 0
 infix fun Int.hasnt(b: TreeNodeFlags) = (this and b.i) == 0
 
 /** Flags for ImGui::Selectable()   */
-enum class SelectableFlags(val i: Int) {
+enum class SelectableFlag(val i: Int) {
 
     Null(0),
     /** Clicking this don't close parent popup window   */
@@ -195,12 +195,12 @@ enum class SelectableFlags(val i: Int) {
     /* private  */
     DrawFillAvailWidth(1 shl 6);
 
-    infix fun or(other: SelectableFlags) = i or other.i
+    infix fun or(other: SelectableFlag): SelectableFlags = i or other.i
 }
 
-infix fun Int.or(other: SelectableFlags) = this or other.i
-infix fun Int.has(b: SelectableFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: SelectableFlags) = (this and b.i) == 0
+infix fun Int.or(other: SelectableFlag): SelectableFlags = this or other.i
+infix fun Int.has(b: SelectableFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: SelectableFlag) = (this and b.i) == 0
 
 enum class ComboFlag(val i: Int) {
     /** Align the popup toward the left by default */
@@ -220,9 +220,9 @@ enum class ComboFlag(val i: Int) {
     HeightMask_(HeightSmall or HeightRegular or HeightLarge or HeightLargest)
 }
 
-infix fun ComboFlag.or(other: ComboFlag) = i or other.i
-infix fun Int.and(other: ComboFlag) = and(other.i)
-infix fun Int.or(other: ComboFlag) = or(other.i)
+infix fun ComboFlag.or(other: ComboFlag): ComboFlags = i or other.i
+infix fun Int.and(other: ComboFlag): ComboFlags = and(other.i)
+infix fun Int.or(other: ComboFlag): ComboFlags = or(other.i)
 infix fun Int.has(b: ComboFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ComboFlag) = and(b.i) == 0
 
@@ -238,9 +238,9 @@ enum class FocusedFlag(val i: Int) {
     RootAndChildWindows(RootWindow or ChildWindows)
 }
 
-infix fun FocusedFlag.or(other: FocusedFlag) = i or other.i
-infix fun Int.and(other: FocusedFlag) = and(other.i)
-infix fun Int.or(other: FocusedFlag) = or(other.i)
+infix fun FocusedFlag.or(other: FocusedFlag): FocusedFlags = i or other.i
+infix fun Int.and(other: FocusedFlag): FocusedFlags = and(other.i)
+infix fun Int.or(other: FocusedFlag): FocusedFlags = or(other.i)
 infix fun Int.has(b: FocusedFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: FocusedFlag) = and(b.i) == 0
 
@@ -265,10 +265,10 @@ enum class HoveredFlag(val i: Int) {
     RootAndChildWindows(RootWindow or ChildWindows)
 }
 
-infix fun HoveredFlag.or(other: HoveredFlag) = i or other.i
-infix fun Int.or(other: HoveredFlag) = this or other.i
-infix fun Int.has(b: HoveredFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: HoveredFlag) = (this and b.i) == 0
+infix fun HoveredFlag.or(other: HoveredFlag): HoveredFlags = i or other.i
+infix fun Int.or(other: HoveredFlag): HoveredFlags = or(other.i)
+infix fun Int.has(b: HoveredFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: HoveredFlag) = and(b.i) == 0
 
 /** Flags for beginDragDropSource(), acceptDragDropPayload() */
 enum class DragDropFlag(val i: Int) {
@@ -299,8 +299,8 @@ enum class DragDropFlag(val i: Int) {
     AcceptPeekOnly(AcceptBeforeDelivery or AcceptNoDrawDefaultRect)
 }
 
-infix fun DragDropFlag.or(other: DragDropFlag) = i or other.i
-infix fun Int.or(other: DragDropFlag) = this or other.i
+infix fun DragDropFlag.or(other: DragDropFlag): DragDropFlags = i or other.i
+infix fun Int.or(other: DragDropFlag): DragDropFlags = this or other.i
 infix fun Int.has(b: DragDropFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: DragDropFlag) = (this and b.i) == 0
 
@@ -745,13 +745,13 @@ enum class ColorEditFlag(val i: Int) {
 
 infix fun ColorEditFlag.and(other: ColorEditFlag): ColorEditFlags = i and other.i
 infix fun ColorEditFlag.or(other: ColorEditFlag): ColorEditFlags = i or other.i
-infix fun ColorEditFlag.or(other: Int):ColorEditFlags = i or other
-infix fun Int.and(other: ColorEditFlag):ColorEditFlags = this and other.i
-infix fun Int.or(other: ColorEditFlag):ColorEditFlags = this or other.i
+infix fun ColorEditFlag.or(other: Int): ColorEditFlags = i or other
+infix fun Int.and(other: ColorEditFlag): ColorEditFlags = this and other.i
+infix fun Int.or(other: ColorEditFlag): ColorEditFlags = this or other.i
 infix fun Int.has(b: ColorEditFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: ColorEditFlag) = (this and b.i) == 0
-infix fun Int.wo(b: ColorEditFlag) = this and b.i.inv()
-infix fun Int.wo(b: Int) = this and b.inv()
+infix fun Int.wo(b: ColorEditFlag): ColorEditFlags = this and b.i.inv()
+infix fun Int.wo(b: Int): ColorEditFlags = this and b.inv()
 
 /** Enumeration for GetMouseCursor()    */
 enum class MouseCursor {

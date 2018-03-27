@@ -1,5 +1,8 @@
 package imgui.internal
 
+import imgui.DrawCornerFlags
+import imgui.DrawListFlags
+
 //-----------------------------------------------------------------------------
 // Types
 //-----------------------------------------------------------------------------
@@ -170,13 +173,13 @@ enum class DrawCornerFlag(val i: Int) {
     Bot(BotLeft or BotRight),   // 0xC
     Left(TopLeft or BotLeft),    // 0x5
     Right(TopRight or BotRight),  // 0xA
-    /** In your function calls you may use ~0 (= all bits sets) instead of ImDrawCornerFlags_All, as a convenience  */
+    /** In your function calls you may use ~0 (= all bits sets) instead of DrawCornerFlags.All, as a convenience  */
     All(0xF)
 }
 
-infix fun DrawCornerFlag.or(b: DrawCornerFlag) = i or b.i
-infix fun Int.or(b: DrawCornerFlag) = or(b.i)
-infix fun Int.and(b: DrawCornerFlag) = and(b.i)
+infix fun DrawCornerFlag.or(b: DrawCornerFlag): DrawCornerFlags = i or b.i
+infix fun Int.or(b: DrawCornerFlag): DrawCornerFlags = or(b.i)
+infix fun Int.and(b: DrawCornerFlag): DrawCornerFlags = and(b.i)
 infix fun Int.has(b: DrawCornerFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: DrawCornerFlag) = (this and b.i) == 0
 
@@ -186,8 +189,8 @@ enum class DrawListFlag { AntiAliasedLines, AntiAliasedFill;
     val i = 1 shl ordinal
 }
 
-infix fun DrawListFlag.or(b: DrawListFlag) = i or b.i
-infix fun Int.or(b: DrawListFlag) = or(b.i)
-infix fun Int.and(b: DrawListFlag) = and(b.i)
+infix fun DrawListFlag.or(b: DrawListFlag): DrawListFlags = i or b.i
+infix fun Int.or(b: DrawListFlag): DrawListFlags = or(b.i)
+infix fun Int.and(b: DrawListFlag): DrawListFlags = and(b.i)
 infix fun Int.has(b: DrawListFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: DrawListFlag) = (this and b.i) == 0
