@@ -20,7 +20,7 @@ import imgui.ImGui.pushStyleVar
 import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
 import imgui.FocusedFlag as Ff
-import imgui.HoveredFlags as Hf
+import imgui.HoveredFlag as Hf
 import imgui.WindowFlags as Wf
 
 
@@ -120,15 +120,13 @@ interface imgui_utilities {
         }
     }
 
-    /** iis current window hovered (and typically: not blocked by a popup/modal)? see flag for options.
-     *  @param flag HoveredFlags */
+    /** iis current window hovered (and typically: not blocked by a popup/modal)? see flag for options. */
     fun isWindowHovered(flag: Hf) = isWindowHovered(flag.i)
 
     /** Is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
      *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
-     *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!
-     *  @param flags HoveredFlags */
-    fun isWindowHovered(flags: Int = Hf.Default.i): Boolean {
+     *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
+    fun isWindowHovered(flags: HoveredFlags = Hf.Default.i): Boolean {
         assert(flags hasnt Hf.AllowWhenOverlapped)   // Flags not supported by this function
         if (flags has Hf.AnyWindow) {
             if (g.hoveredWindow == null)

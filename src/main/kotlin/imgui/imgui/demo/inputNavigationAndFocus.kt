@@ -41,7 +41,7 @@ import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.treeNode
 import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 import imgui.FocusedFlag as Ff
-import imgui.HoveredFlags as Hf
+import imgui.HoveredFlag as Hf
 
 object inputNavigationAndFocus {
 

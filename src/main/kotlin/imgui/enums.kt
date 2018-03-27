@@ -81,7 +81,7 @@ infix fun Int.hasnt(b: WindowFlags) = (this and b.i) == 0
 infix fun Int.wo(b: WindowFlags) = this and b.i.inv()
 
 /** Flags for ImGui::InputText()    */
-enum class InputTextFlags(val i: Int) {
+enum class InputTextFlag(val i: Int) {
 
     Null(0),
     /** Allow 0123456789 . + - * /      */
@@ -127,12 +127,12 @@ enum class InputTextFlags(val i: Int) {
     /** For internal use by InputTextMultiline()    */
     Multiline(1 shl 20);
 
-    infix fun or(b: InputTextFlags) = i or b.i
+    infix fun or(b: InputTextFlag) = i or b.i
 }
 
-infix fun Int.or(b: InputTextFlags) = this or b.i
-infix fun Int.has(b: InputTextFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: InputTextFlags) = (this and b.i) == 0
+infix fun Int.or(b: InputTextFlag) = this or b.i
+infix fun Int.has(b: InputTextFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: InputTextFlag) = (this and b.i) == 0
 
 /** Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader*()   */
 enum class TreeNodeFlags(val i: Int) {
@@ -244,7 +244,7 @@ infix fun Int.or(other: FocusedFlag) = or(other.i)
 infix fun Int.has(b: FocusedFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: FocusedFlag) = and(b.i) == 0
 
-enum class HoveredFlags(val i: Int) {
+enum class HoveredFlag(val i: Int) {
     /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active
      *  popup or modal blocking inputs under them.  */
     Default(0),
@@ -265,10 +265,10 @@ enum class HoveredFlags(val i: Int) {
     RootAndChildWindows(RootWindow or ChildWindows)
 }
 
-infix fun HoveredFlags.or(other: HoveredFlags) = i or other.i
-infix fun Int.or(other: HoveredFlags) = this or other.i
-infix fun Int.has(b: HoveredFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: HoveredFlags) = (this and b.i) == 0
+infix fun HoveredFlag.or(other: HoveredFlag) = i or other.i
+infix fun Int.or(other: HoveredFlag) = this or other.i
+infix fun Int.has(b: HoveredFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: HoveredFlag) = (this and b.i) == 0
 
 /** Flags for beginDragDropSource(), acceptDragDropPayload() */
 enum class DragDropFlag(val i: Int) {

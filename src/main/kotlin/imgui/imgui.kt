@@ -117,9 +117,9 @@ typealias ComboFlags = Int
 ///** flags: for ::isWindowFocused()             // enum FocusedFlag */
 typealias FocusedFlags = Int
 ///** flags: for ::isItemHovered() etc.          // enum HoveredFlag */
-//typealias HoveredFlags = Int
+typealias HoveredFlags = Int
 ///** flags: for ::inputText*()                  // enum InputTextFlag */
-//typealias InputTextFlags = Int
+typealias InputTextFlags = Int
 ///** flags: for io.NavFlags                   // enum NavFlag */
 //typealias NavFlags = Int
 ///** flags: for Selectable()                  // enum SelectableFlag */

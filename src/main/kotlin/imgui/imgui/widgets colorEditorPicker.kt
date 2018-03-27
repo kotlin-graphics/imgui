@@ -67,7 +67,7 @@ import imgui.imgui.imgui_widgetsText.Companion.colorPickerOptionsPopup
 import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
 import imgui.ColorEditFlag as Cef
-import imgui.InputTextFlags as Itf
+import imgui.InputTextFlag as Itf
 import imgui.WindowFlags as Wf
 import imgui.internal.DrawCornerFlag as Dcf
 
