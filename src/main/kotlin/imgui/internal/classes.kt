@@ -239,7 +239,7 @@ class MenuColumns {
 
 // Data saved in imgui.ini file
 class WindowSettings(val name: String = "") {
-    var id = hash(name, 0)
+    var id: ID = hash(name, 0)
     var pos = Vec2i()
     var size = Vec2()
     var collapsed = false
@@ -248,7 +248,7 @@ class WindowSettings(val name: String = "") {
 /* Storage for current popup stack  */
 class PopupRef(
         /** Set on OpenPopup()  */
-        var popupId: Int,
+        var popupId: ID,
         /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
         var window: Window?,
         /** Set on OpenPopup()  */
@@ -257,7 +257,7 @@ class PopupRef(
         var openFrameCount: Int,
         /** Set on OpenPopup(), we need this to differenciate multiple menu sets from each others
          *  (e.g. inside menu bar vs loose menu items)    */
-        var openParentId: Int,
+        var openParentId: ID,
         /** Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)   */
         var openPopupPos: Vec2,
         /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
@@ -273,7 +273,7 @@ class ColumnData {
 }
 
 class ColumnsSet {
-    var id = 0
+    var id: ID = 0
     var flags = 0
     var isFirstFrame = false
     var isBeingResized = false
@@ -346,9 +346,9 @@ class DrawDataBuilder {
 
 class NavMoveResult {
     /** Best candidate  */
-    var id = 0
+    var id: ID = 0
     /** Best candidate window.idStack.last() - to compare context  */
-    var parentId = 0
+    var parentId: ID = 0
     /** Best candidate window   */
     var window: Window? = null
     /** Best candidate box distance to current NavId    */
@@ -430,7 +430,7 @@ class DrawContext {
     /** Store a copy of !g.NavIdIsAlive for TreeDepth 0..31 */
     var treeDepthMayJumpToParentOnPop = 0
 
-    var lastItemId = 0
+    var lastItemId: ID = 0
     /** ItemStatusFlags */
     var lastItemStatusFlags = 0
     /** Interaction rect    */
@@ -502,7 +502,7 @@ class DrawContext {
 /** Windows data    */
 class Window(var context: Context, var name: String) {
     /** == ImHash(Name) */
-    val id = hash(name, 0)
+    val id: ID = hash(name, 0)
     /** See enum ImGuiWindowFlags_  */
     var flags = 0
 
@@ -529,9 +529,9 @@ class Window(var context: Context, var name: String) {
     /** Window border size at the time of begin.    */
     var windowBorderSize = 1f
     /** == window->GetID("#MOVE")   */
-    var moveId: Int
+    var moveId: ID
     /** Id of corresponding item in parent window (for child windows)   */
-    var childId = 0
+    var childId: ID = 0
 
     var scroll = Vec2()
     /** target scroll position. stored as cursor position with scrolling canceled out, so the highest point is always
@@ -568,7 +568,7 @@ class Window(var context: Context, var name: String) {
     /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
     var beginCount = 0
     /** ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)   */
-    var popupId = 0
+    var popupId: ID = 0
 
     var autoFitFrames = Vec2i(-1)
 
@@ -595,7 +595,7 @@ class Window(var context: Context, var name: String) {
     /** Temporary per-window data, reset at the beginning of the frame  */
     var dc = DrawContext()
     /** ID stack. ID are hashes seeded with the value at the top of the stack   */
-    val idStack = Stack<Int>()
+    val idStack = Stack<ID>()
 
     init {
         idStack.add(id)
@@ -641,7 +641,7 @@ class Window(var context: Context, var name: String) {
     /** When going to the menu bar, we remember the child window we came from. (This could probably be made implicit if
      *  we kept g.Windows sorted by last focused including child window.)   */
     var navLastChildNavWindow: Window? = null
-    /** Last known NavId for this window, per layer (0/1)   */
+    /** Last known NavId for this window, per layer (0/1). ID-Array   */
     val navLastIds = IntArray(2)
     /** Reference rectangle, in window relative space   */
     val navRectRel = Array(2) { Rect() }
@@ -665,9 +665,9 @@ class Window(var context: Context, var name: String) {
     var focusIdxTabRequestNext = Int.MAX_VALUE
 
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
-    fun getId(str: String, end: Int = 0): Int {
-        val seed = idStack.last()
-        val id = hash(str, end, seed)
+    fun getId(str: String, end: Int = 0): ID {
+        val seed: ID = idStack.last()
+        val id: ID = hash(str, end, seed)
         keepAliveId(id)
         return id
     }
@@ -676,23 +676,23 @@ class Window(var context: Context, var name: String) {
         val ptrIndex = ++ptrIndices
         if (ptrIndex >= ptrId.size) {
             val newBufLength = ptrId.size + 512
-            val newBuf = Array(newBufLength, { java.lang.Byte(it.b) })
+            val newBuf = Array(newBufLength, { java.lang.Byte.valueOf(it.b) })
             System.arraycopy(ptrId, 0, newBuf, 0, ptrId.size)
             ptrId = newBuf
         }
-        val id = System.identityHashCode(ptrId[ptrIndex])
+        val id: ID = System.identityHashCode(ptrId[ptrIndex])
         keepAliveId(id)
         return id
     }
 
-    fun getIdNoKeepAlive(str: String, strEnd: Int = str.length): Int {
-        val seed = idStack.last()
+    fun getIdNoKeepAlive(str: String, strEnd: Int = str.length): ID {
+        val seed: ID = idStack.last()
         return hash(str, str.length - strEnd, seed)
     }
 
     /** This is only used in rare/specific situations to manufacture an ID out of nowhere. */
-    fun getIdFromRectangle(rAbs: Rect): Int {
-        val seed = idStack.last()
+    fun getIdFromRectangle(rAbs: Rect): ID {
+        val seed: ID = idStack.last()
         val rRel = intArrayOf((rAbs.min.x - pos.x).i, (rAbs.min.y - pos.y).i, (rAbs.max.x - pos.x).i, (rAbs.max.y - pos.y).i)
         return hash(rRel, seed).also { keepAliveId(it) } // id
     }
@@ -932,7 +932,7 @@ class Window(var context: Context, var name: String) {
             (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f,
             (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f) + windowPadding
 
-    fun findOrAddColumnsSet(id: Int): ColumnsSet {
+    fun findOrAddColumnsSet(id: ID): ColumnsSet {
         for (c in columnsStorage)
             if (c.id == id)
                 return c

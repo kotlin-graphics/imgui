@@ -54,17 +54,17 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Will catch mouse inputs (for focus/move only)   */
     var hoveredRootWindow: Window? = null
     /** Hovered widget  */
-    var hoveredId = 0
+    var hoveredId: ID = 0
 
     var hoveredIdAllowOverlap = false
 
-    var hoveredIdPreviousFrame = 0
+    var hoveredIdPreviousFrame: ID = 0
 
     var hoveredIdTimer = 0f
     /** Active widget   */
-    var activeId = 0
+    var activeId: ID = 0
 
-    var activeIdPreviousFrame = 0
+    var activeIdPreviousFrame: ID = 0
 
     var activeIdTimer = 0f
     /** Active widget has been seen this frame   */
@@ -109,21 +109,21 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Focused window for navigation. Could be called 'FocusWindow'    */
     var navWindow: Window? = null
     /** Focused item for navigation */
-    var navId = 0
+    var navId: ID = 0
     /** ~~ (g.activeId == 0) && NavInput.Activate.isPressed() ? navId : 0, also set when calling activateItem() */
-    var navActivateId = 0
+    var navActivateId: ID = 0
     /** ~~ isNavInputDown(NavInput.Activate) ? navId : 0   */
-    var navActivateDownId = 0
+    var navActivateDownId: ID = 0
     /** ~~ NavInput.Activate.isPressed() ? navId : 0    */
-    var navActivatePressedId = 0
+    var navActivatePressedId: ID = 0
     /** ~~ NavInput.Input.isPressed() ? navId : 0   */
-    var navInputId = 0
+    var navInputId: ID = 0
     /** Just tabbed to this id. */
-    var navJustTabbedId = 0
+    var navJustTabbedId: ID = 0
     /** Set by ActivateItem(), queued until next frame  */
-    var navNextActivateId = 0
+    var navNextActivateId: ID = 0
     /** Just navigated to this id (result of a successfully MoveRequest)    */
-    var navJustMovedToId = 0
+    var navJustMovedToId: ID = 0
     /** Rectangle used for scoring, in screen space. Based of window.dc.navRefRectRel[], modified for directional navigation scoring.  */
     var navScoringRectScreen = Rect()
     /** Metrics for debugging   */
@@ -159,7 +159,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var navInitRequestFromMove = false
 
-    var navInitResultId = 0
+    var navInitResultId: ID = 0
 
     var navInitResultRectRel = Rect()
     /** Set by manual scrolling, if we scroll to a point where NavId isn't visible we reset navigation from visible items   */
@@ -210,13 +210,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var dragDropTargetRect = Rect()
 
-    var dragDropTargetId = 0
+    var dragDropTargetId: ID = 0
 
     var dragDropAcceptIdCurrRectSurface = 0f
     /** Target item id (set at the time of accepting the payload) */
-    var dragDropAcceptIdCurr = 0
+    var dragDropAcceptIdCurr: ID = 0
     /** Target item id from previous frame (we need to store this to allow for overlapping drag and drop targets) */
-    var dragDropAcceptIdPrev = 0
+    var dragDropAcceptIdPrev: ID = 0
     /** Last time a target expressed a desire to accept the source */
     var dragDropAcceptFrameCount = -1
     /** We don't expose the ImVector<> directly */
@@ -232,7 +232,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var inputTextPasswordFont = Font()
     /** Temporary text input when CTRL+clicking on a slider, etc.   */
-    var scalarAsInputTextId = 0
+    var scalarAsInputTextId: ID = 0
     /** Store user options for color edit widgets   */
     var colorEditOptions = ColorEditFlags._OptionsDefault.i
 

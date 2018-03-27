@@ -108,7 +108,7 @@ interface imgui_internal {
         if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = io.iniSavingRate
     }
 
-    fun setActiveId(id: Int, window: Window?) {
+    fun setActiveId(id: ID, window: Window?) {
         g.activeIdIsJustActivated = g.activeId != id
         if (g.activeIdIsJustActivated) g.activeIdTimer = 0f
         g.activeId = id
@@ -126,7 +126,7 @@ interface imgui_internal {
 
     fun getActiveId() = g.activeId
 
-    fun setFocusId(id: Int, window: Window) {
+    fun setFocusId(id: ID, window: Window) {
 
         assert(id != 0)
 
@@ -151,7 +151,7 @@ interface imgui_internal {
     fun clearActiveId() = setActiveId(0, null)
 
     // TODO custom setter/getters?
-    fun setHoveredId(id: Int) {
+    fun setHoveredId(id: ID) {
         g.hoveredId = id
         g.hoveredIdAllowOverlap = false
         g.hoveredIdTimer = if (id != 0 && g.hoveredIdPreviousFrame == id) g.hoveredIdTimer + io.deltaTime else 0f
@@ -159,7 +159,7 @@ interface imgui_internal {
 
     fun getHoveredId() = if (g.hoveredId != 0) g.hoveredId else g.hoveredIdPreviousFrame
 
-    fun keepAliveId(id: Int) {
+    fun keepAliveId(id: ID) {
         if (g.activeId == id) g.activeIdIsAlive = true
     }
 
@@ -196,7 +196,7 @@ interface imgui_internal {
      *  Note that the size can be different than the one provided to ItemSize(). Typically, widgets that spread over
      *  available surface declare their minimum size requirement to ItemSize() and then use a larger region for
      *  drawing/interaction, which is passed to ItemAdd().  */
-    fun itemAdd(bb: Rect, id: Int, navBbArg: Rect? = null): Boolean {
+    fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null): Boolean {
 
         val window = g.currentWindow!!
         if (id != 0) {
@@ -232,7 +232,7 @@ interface imgui_internal {
     }
 
     /** Internal facing ItemHoverable() used when submitting widgets. Differs slightly from IsItemHovered().    */
-    fun itemHoverable(bb: Rect, id: Int): Boolean {
+    fun itemHoverable(bb: Rect, id: ID): Boolean {
         val window = g.currentWindow!!
         return when {
             g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> false
@@ -248,7 +248,7 @@ interface imgui_internal {
         }
     }
 
-    fun isClippedEx(bb: Rect, id: Int, clipEvenWhenLogged: Boolean): Boolean {
+    fun isClippedEx(bb: Rect, id: ID, clipEvenWhenLogged: Boolean): Boolean {
 
         val window = g.currentWindow!!
         if (!(bb overlaps window.clipRect))
@@ -259,7 +259,7 @@ interface imgui_internal {
     }
 
     /** Return true if focus is requested   */
-    fun focusableItemRegister(window: Window, id: Int, tabStop: Boolean = true): Boolean {
+    fun focusableItemRegister(window: Window, id: ID, tabStop: Boolean = true): Boolean {
 
         val allowKeyboardFocus = (window.dc.itemFlags and (If.AllowKeyboardFocus or If.Disabled)) == If.AllowKeyboardFocus.i
         window.focusIdxAllCounter++
@@ -346,7 +346,7 @@ interface imgui_internal {
      *  level).
      *  One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef
      *  to NULL)    */
-    fun openPopupEx(id: Int) {
+    fun openPopupEx(id: ID) {
 
         val parentWindow = g.currentWindow!!
         val currentStackSize = g.currentPopupStack.size
@@ -376,7 +376,7 @@ interface imgui_internal {
         }
     }
 
-    fun closePopup(id: Int) {
+    fun closePopup(id: ID) {
         if (!isPopupOpen(id)) return
         closePopupToLevel(g.openPopupStack.lastIndex)
     }
@@ -418,9 +418,9 @@ interface imgui_internal {
 
     // FIXME
     /** return true if the popup is open    */
-    fun isPopupOpen(id: Int) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
+    fun isPopupOpen(id: ID) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
 
-    fun beginPopupEx(id: Int, extraFlags: Int): Boolean {
+    fun beginPopupEx(id: ID, extraFlags: Int): Boolean {
 
         if (!isPopupOpen(id)) {
             g.nextWindowData.clear() // We behave like Begin() and need to consume those values
@@ -484,7 +484,7 @@ interface imgui_internal {
 
     /** Remotely activate a button, checkbox, tree node etc. given its unique ID. activation is queued and processed
      *  on the next frame when the item is encountered again.  */
-    fun activateItem(id: Int) {
+    fun activateItem(id: ID) {
         g.navNextActivateId = id
     }
 
@@ -671,7 +671,7 @@ interface imgui_internal {
         if (g.logEnabled) logText(" |")
     }
 
-    fun splitterBehavior(id: Int, bb: Rect, axis: Axis, size1: KMutableProperty0<Float>, size2: KMutableProperty0<Float>,
+    fun splitterBehavior(id: ID, bb: Rect, axis: Axis, size1: KMutableProperty0<Float>, size2: KMutableProperty0<Float>,
                          minSize1: Float, minSize2: Float, hoverExtend: Float): Boolean {
         val window = g.currentWindow!!
 
@@ -716,7 +716,7 @@ interface imgui_internal {
     }
 
 
-    fun beginDragDropTargetCustom(bb: Rect, id: Int): Boolean {
+    fun beginDragDropTargetCustom(bb: Rect, id: ID): Boolean {
         if (!g.dragDropActive) return false
 
         val window = g.currentWindow!!
@@ -831,7 +831,7 @@ interface imgui_internal {
             for (n in 1 until columns.count) {
 
                 val x = pos.x + getColumnOffset(n)
-                val columnId = columns.id + n
+                val columnId: ID = columns.id + n
                 val columnHw = columnsRectHalfWidth // Half-width for interaction
                 val columnRect = Rect(x - columnHw, y1, x + columnHw, y2)
                 keepAliveId(columnId)
@@ -1079,7 +1079,7 @@ interface imgui_internal {
 
     /** Navigation highlight
      * @param flags: NavHighlightFlags  */
-    fun renderNavHighlight(bb: Rect, id: Int, flags: Int = NavHighlightFlags.TypeDefault.i) {
+    fun renderNavHighlight(bb: Rect, id: ID, flags: Int = NavHighlightFlags.TypeDefault.i) {
 
         if (id != g.navId) return
         if (g.navDisableHighlight && flags hasnt NavHighlightFlags.AlwaysDraw) return
@@ -1164,9 +1164,9 @@ interface imgui_internal {
     }
 
 
-    fun buttonBehavior(bb: Rect, id: Int, flag: Bf) = buttonBehavior(bb, id, flag.i)
+    fun buttonBehavior(bb: Rect, id: ID, flag: Bf) = buttonBehavior(bb, id, flag.i)
 
-    fun buttonBehavior(bb: Rect, id: Int, flags: Int = 0): BooleanArray {
+    fun buttonBehavior(bb: Rect, id: ID, flags: Int = 0): BooleanArray {
 
         val window = currentWindow
         var flags = flags
@@ -1331,7 +1331,7 @@ interface imgui_internal {
 
 
     /* Button to close a window    */
-    fun closeButton(id: Int, pos: Vec2, radius: Float): Boolean {
+    fun closeButton(id: ID, pos: Vec2, radius: Float): Boolean {
 
         val window = currentWindow
 
@@ -1361,7 +1361,7 @@ interface imgui_internal {
 
     /** [Internal]
      *  @param flags: ButtonFlags */
-    fun arrowButton(id: Int, dir: Dir, padding: Vec2, flags: Int = 0): Boolean {
+    fun arrowButton(id: ID, dir: Dir, padding: Vec2, flags: Int = 0): Boolean {
         val window = g.currentWindow!!
         if (window.skipItems) return false
 
@@ -1379,10 +1379,10 @@ interface imgui_internal {
     }
 
 
-    fun sliderBehavior(frameBb: Rect, id: Int, v: FloatArray, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
+    fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
                        flags: Int = 0) = sliderBehavior(frameBb, id, v, 0, vMin, vMax, power, decimalPrecision, flags)
 
-    fun sliderBehavior(frameBb: Rect, id: Int, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
+    fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
                        flags: Int = 0): Boolean {
 
         f0 = v[ptr]
@@ -1582,7 +1582,7 @@ interface imgui_internal {
         return valueChanged
     }
 
-    fun dragBehavior(frameBb: Rect, id: Int, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
+    fun dragBehavior(frameBb: Rect, id: ID, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
                      power: Float): Boolean {
 
         f0 = v[ptr]
@@ -1591,7 +1591,7 @@ interface imgui_internal {
         return res
     }
 
-    fun dragBehavior(frameBb: Rect, id: Int, v: KMutableProperty0<Float>, vSpeed: Float, vMin: Float, vMax: Float,
+    fun dragBehavior(frameBb: Rect, id: ID, v: KMutableProperty0<Float>, vSpeed: Float, vMin: Float, vMax: Float,
                      decimalPrecision: Int, power: Float): Boolean {
 
         // Draw frame
@@ -2430,7 +2430,7 @@ interface imgui_internal {
 
     /** Create text input in place of a slider (when CTRL+Clicking on slider)
      *  FIXME: Logic is messy and confusing. */
-    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: KMutableProperty0<Int>, id: Int,
+    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: KMutableProperty0<Int>, id: ID,
                                        decimalPrecision: Int): Boolean {
 
         val window = currentWindow
@@ -2530,7 +2530,7 @@ interface imgui_internal {
         endPopup()
     }
 
-    fun treeNodeBehavior(id: Int, flags: Int, label: String, labelEnd: Int = 0): Boolean {
+    fun treeNodeBehavior(id: ID, flags: Int, label: String, labelEnd: Int = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -2659,7 +2659,7 @@ interface imgui_internal {
     }
 
     /** Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging */
-    fun treeNodeBehaviorIsOpen(id: Int, flags: Int = 0): Boolean {
+    fun treeNodeBehaviorIsOpen(id: ID, flags: Int = 0): Boolean {
 
         if (flags has Tnf.Leaf) return true
 
@@ -2695,7 +2695,7 @@ interface imgui_internal {
         return isOpen
     }
 
-    fun treePushRawId(id: Int) {
+    fun treePushRawId(id: ID) {
         val window = currentWindow
         indent()
         window.dc.treeDepth++

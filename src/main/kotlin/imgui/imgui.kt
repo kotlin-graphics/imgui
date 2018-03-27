@@ -77,7 +77,7 @@ object ImGui :
 }
 
 var ptrIndices = 0
-var ptrId = Array(512, { java.lang.Byte(it.b) })
+var ptrId = Array(512, { java.lang.Byte.valueOf(it.b) })
 
 // TODO get rid of local top value KMutableProperty in favor of the better with*{} solution
 
@@ -95,3 +95,10 @@ var DEBUG = true
 operator fun StringBuilder.plusAssign(string: String) {
     append(string)
 }
+
+// Typedefs and Enumerations (declared as int for compatibility and to not pollute the top of this file)
+
+/** unique ID used by widgets (typically hashed from a stack of string) */
+typealias ID = Int
+/** user data to identify a texture */
+typealias TextureID = Int

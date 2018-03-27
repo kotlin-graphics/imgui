@@ -545,7 +545,7 @@ class FontAtlas {
     var flags = 0
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
-    var texId = -1
+    var texId: TextureID = -1
     /** 1 component per pixel, each component is unsigned 8-bit. Total size = texSize.x * texSize.y  */
     var texPixelsAlpha8: ByteBuffer? = null
     /** 4 component per pixel, each component is unsigned 8-bit. Total size = texSize.x * texSize.y * 4  */

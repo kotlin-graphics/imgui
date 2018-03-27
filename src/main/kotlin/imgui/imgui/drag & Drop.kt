@@ -36,8 +36,8 @@ interface imgui_dragAndDrop {
         val window = g.currentWindow!!
 
         val sourceDragActive: Boolean
-        var sourceId: Int
-        var sourceParentId = 0
+        var sourceId: ID
+        var sourceParentId: ID = 0
         val mouseButton = 0
         if (flags hasnt Ddf.SourceExtern) {
             sourceId = window.dc.lastItemId

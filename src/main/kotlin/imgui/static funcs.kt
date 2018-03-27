@@ -44,7 +44,7 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
 
     val window = g.currentWindow!!
     assert(columnIndex > 0) // We are not supposed to drag column 0.
-    assert(g.activeId == columns.id + columnIndex)
+    assert(g.activeId == columns.id + columnIndex/* as ID */)
 
     var x = io.mousePos.x - g.activeIdClickOffset.x + columnsRectHalfWidth - window.pos.x
     x = glm.max(x, getColumnOffset(columnIndex - 1) + style.columnsMinSpacing)
@@ -188,7 +188,7 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window): Vec2 {  // TODO -> w
     return scroll
 }
 
-fun findWindowSettings(id: Int) = g.settingsWindows.firstOrNull { it.id == id }
+fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 
 fun addWindowSettings(name: String) = WindowSettings(name).apply { g.settingsWindows.add(this) }
 
@@ -1009,7 +1009,7 @@ fun navUpdateWindowing() {
 }
 
 /** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)    */
-fun navProcessItem(window: Window, navBb: Rect, id: Int) {
+fun navProcessItem(window: Window, navBb: Rect, id: ID) {
 
     //if (!g.io.NavActive)  // [2017/10/06] Removed this possibly redundant test but I am not sure of all the side-effects yet. Some of the feature here will need to work regardless of using a _NoNavInputs flag.
     //    return;
