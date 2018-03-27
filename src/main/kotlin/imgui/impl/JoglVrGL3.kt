@@ -18,6 +18,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4i
 import gln.buf
+import gln.get
 import gln.glf.semantic
 import imgui.*
 import imgui.ImGui.io
@@ -32,20 +33,8 @@ object JoglVrGL3 {
     lateinit var window: GLWindow
     val texSize = Vec2i()
     var time = 0.0
-    val mouseJustPressed = BooleanArray(3)
 
-    object Buffer {
-        val Vertex = 0
-        val Element = 1
-        val MAX = 2
-    }
-
-    val bufferName = intBufferBig(Buffer.MAX)
-    val vaoName = intBufferBig(1)
     lateinit var program: ProgramA
-    val fontTexture = intBufferOf(-1)
-
-    val mat = Mat4()
 
     fun init(window: GLWindow, texSize: Vec2i, installCallbacks: Boolean): Boolean {
 
@@ -84,11 +73,6 @@ object JoglVrGL3 {
 
         return true
     }
-
-    var vtxSize = 1 shl 5 // 32768
-    var idxSize = 1 shl 6 // 65536
-    var vtxBuffer = bufferBig(vtxSize)
-    var idxBuffer = intBufferBig(idxSize / Int.BYTES)
 
     val cursorPos = Vec2i()
     lateinit var gl: GL3
