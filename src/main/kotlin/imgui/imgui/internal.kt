@@ -776,8 +776,8 @@ interface imgui_internal {
                 maxX = max(contentRegionWidth - scroll.x, minX + 1f)
                 startPosY = dc.cursorPos.y
                 startMaxPosX = dc.cursorMaxPos.x
-                cellMaxY = dc.cursorPos.y
-                cellMinY = dc.cursorPos.y
+                lineMaxY = dc.cursorPos.y
+                lineMinY = dc.cursorPos.y
             }
             dc.columnsOffsetX = 0f
             dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
@@ -815,8 +815,8 @@ interface imgui_internal {
         popClipRect()
         drawList.channelsMerge()
 
-        columns.cellMaxY = glm.max(columns.cellMaxY, dc.cursorPos.y)
-        dc.cursorPos.y = columns.cellMaxY
+        columns.lineMaxY = glm.max(columns.lineMaxY, dc.cursorPos.y)
+        dc.cursorPos.y = columns.lineMaxY
         if (columns.flags hasnt Cf.GrowParentContentsSize)
             dc.cursorMaxPos.x = max(columns.startMaxPosX, columns.maxX) // Restore cursor max pos, as columns don't grow parent
 
@@ -1344,16 +1344,17 @@ interface imgui_internal {
         if (isClipped) return pressed
 
         // Render
-        val col = if (held && hovered) Col.CloseButtonActive else if (hovered) Col.CloseButtonHovered else Col.CloseButton
         val center = Vec2(bb.center)
-        window.drawList.addCircleFilled(center, glm.max(2f, radius), col.u32, 12)
-
-        val crossExtent = (radius * 0.7071f) - 1f
         if (hovered) {
-            center -= 0.5f
-            window.drawList.addLine(center + crossExtent, center - crossExtent, Col.Text.u32)
-            window.drawList.addLine(center + Vec2(crossExtent, -crossExtent), center + Vec2(-crossExtent, crossExtent), Col.Text.u32)
+            val col = if(held && hovered) Col.ButtonActive else Col.ButtonHovered
+            window.drawList.addCircleFilled(center, 2f max radius, col.u32, 9)
         }
+        
+        val crossExtent = (radius * 0.7071f) - 1f
+        val crossCol = Col.Text.u32
+        center -= 0.5f
+        window.drawList.addLine(center + crossExtent, center -crossExtent, crossCol, 1f)
+        window.drawList.addLine(center + Vec2(crossExtent,-crossExtent), center + Vec2(-crossExtent,crossExtent), crossCol, 1f)
 
         return pressed
     }
