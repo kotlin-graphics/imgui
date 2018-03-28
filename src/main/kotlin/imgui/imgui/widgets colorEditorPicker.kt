@@ -68,7 +68,7 @@ import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
-import imgui.WindowFlags as Wf
+import imgui.WindowFlag as Wf
 import imgui.internal.DrawCornerFlag as Dcf
 
 /** Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little colored preview square that can be
@@ -243,7 +243,7 @@ interface imgui_widgetsColorEditorPicker {
         // Drag and Drop Target
 
         // NB: The flag test is merely an optional micro-optimization, BeginDragDropTarget() does the same test.
-        if (window.dc.lastItemStatusFlags has ItemStatusFlags.HoveredRect && beginDragDropTarget()) {
+        if (window.dc.lastItemStatusFlags has ItemStatusFlag.HoveredRect && beginDragDropTarget()) {
             acceptDragDropPayload (PAYLOAD_TYPE_COLOR_3F)?.let {
                 for (j in 0..2) col[j] = (it.data as Vec4)[j]
                 valueChanged = true
@@ -350,7 +350,7 @@ interface imgui_widgetsColorEditorPicker {
         var valueChangedH = false
         var valueChangedSv = false
 
-        pushItemFlag(ItemFlags.NoNav.i, true)
+        pushItemFlag(ItemFlag.NoNav.i, true)
         if (flags has Cef.PickerHueWheel) {
             // Hue wheel + SV triangle logic
             invisibleButton("hsv", Vec2(svPickerSize + style.itemInnerSpacing.x + barsWidth, svPickerSize))
@@ -411,7 +411,7 @@ interface imgui_widgetsColorEditorPicker {
                 valueChanged = true
             }
         }
-        popItemFlag() // ItemFlags.NoNav
+        popItemFlag() // ItemFlag.NoNav
 
         if (flags hasnt Cef.NoSidePreview) {
             sameLine(0f, style.itemInnerSpacing.x)
@@ -427,7 +427,7 @@ interface imgui_widgetsColorEditorPicker {
             }
         }
         if (flags hasnt Cef.NoSidePreview) {
-            pushItemFlag(ItemFlags.NoNavDefaultFocus.i, true)
+            pushItemFlag(ItemFlag.NoNavDefaultFocus.i, true)
             val colV4 = Vec4(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
             if (flags has Cef.NoLabel)
                 text("Current")

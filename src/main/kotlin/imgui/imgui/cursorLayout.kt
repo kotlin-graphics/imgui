@@ -22,7 +22,7 @@ import imgui.internal.isPowerOfTwo
 import imgui.internal.or
 import imgui.logRenderedText
 import imgui.internal.LayoutType as Lt
-import imgui.internal.SeparatorFlags as Sf
+import imgui.internal.SeparatorFlag as Sf
 
 interface imgui_cursorLayout {
 

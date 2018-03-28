@@ -111,7 +111,8 @@ typealias FontAtlasFlags = Int
 typealias ColorEditFlags = Int
 /** flags: for *Columns*()                   // enum ColumnsFlag */
 typealias ColumnsFlags = Int
-//typedef int ImGuiConfigFlags;       // flags: for io.ConfigFlags                // enum ImGuiConfigFlags_
+/** flags: for io.ConfigFlags                // enum ConfigFlag */
+typealias ConfigFlags = Int
 /** flags: for *DragDrop*()                  // enum DragDropFlag */
 typealias DragDropFlags = Int
 /** flags: for BeginCombo()                  // enum ComboFlag */
@@ -124,10 +125,10 @@ typealias HoveredFlags = Int
 typealias InputTextFlags = Int
 /** flags: for Selectable()                  // enum SelectableFlag */
 typealias SelectableFlags = Int
-///** flags: for TreeNode*(),CollapsingHeader()// enum TreeNodeFlag */
-//typealias TreeNodeFlags = Int
-///** flags: for Begin*()                      // enum WindowFlag */
-//typealias WindowFlags = Int
+/** flags: for TreeNode*(),CollapsingHeader()// enum TreeNodeFlag */
+typealias TreeNodeFlags = Int
+/** flags: for Begin*()                      // enum WindowFlag */
+typealias WindowFlags = Int
 
 // dummy main
 fun main(args: Array<String>) {

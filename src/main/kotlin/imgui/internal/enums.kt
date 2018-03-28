@@ -10,7 +10,22 @@ import imgui.DrawListFlags
 // Internal Drag and Drop payload types. String starting with '_' are reserved for Dear ImGui.
 val PAYLOAD_TYPE_DOCKABLE = "_IMDOCK"   // ImGuiWindow* // [Internal] Docking/tabs
 
-enum class ButtonFlags {
+/** flags: for ButtonEx(), ButtonBehavior()  // enum ButtonFlag */
+typealias ButtonFlags = Int
+/** flags: for PushItemFlag()                // enum ItemFlag */
+typealias ItemFlags = Int
+/** flags: storage for DC.LastItemXXX        // enum ItemStatusFlag */
+typealias ItemStatusFlags = Int
+/** flags: for RenderNavHighlight()          // enum NavHighlightFlag */
+typealias NavHighlightFlags = Int
+/** flags: for GetNavInputAmount2d()         // enum NavDirSourceFlag */
+typealias NavDirSourceFlags = Int
+/** flags: for Separator() - internal        // enum SeparatorFlag */
+typealias SeparatorFlags = Int
+/** flags: for SliderBehavior()              // enum SliderFlag */
+typealias SliderFlags = Int
+
+enum class ButtonFlag {
 
     Null,
     /** hold to repeat  */
@@ -36,7 +51,7 @@ enum class ButtonFlags {
     AlignTextBaseLine,
     /** disable interaction if a key modifier is held */
     NoKeyModifiers,
-    /** don't set ActiveId while holding the mouse (ButtonFlags.PressedOnClick only) */
+    /** don't set ActiveId while holding the mouse (ButtonFlag.PressedOnClick only) */
     NoHoldingActiveID,
     /** press when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
     PressedOnDragDropHold,
@@ -45,16 +60,16 @@ enum class ButtonFlags {
 
     val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
-    infix fun or(b: ButtonFlags) = i or b.i
+    infix fun or(b: ButtonFlag): ButtonFlags = i or b.i
 }
 
-infix fun Int.or(b: ButtonFlags) = this or b.i
-infix fun Int.has(b: ButtonFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: ButtonFlags) = (this and b.i) == 0
+infix fun Int.or(b: ButtonFlag): ButtonFlags = this or b.i
+infix fun Int.has(b: ButtonFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: ButtonFlag) = (this and b.i) == 0
 
-enum class SliderFlags(val i: Int) { Vertical(1 shl 0) }
+enum class SliderFlag(val i: Int) { Vertical(1 shl 0) }
 
-infix fun Int.hasnt(b: SliderFlags) = (this and b.i) == 0
+infix fun Int.hasnt(b: SliderFlag) = (this and b.i) == 0
 
 enum class ColumnsFlag(val i: Int) {
 
@@ -74,7 +89,7 @@ enum class ColumnsFlag(val i: Int) {
 infix fun Int.has(b: ColumnsFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: ColumnsFlag) = (this and b.i) == 0
 
-enum class SeparatorFlags {
+enum class SeparatorFlag {
     /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
     Horizontal,
     Vertical;
@@ -82,21 +97,21 @@ enum class SeparatorFlags {
     val i = 1 shl ordinal
 }
 
-infix fun SeparatorFlags.or(b: SeparatorFlags) = i or b.i
-infix fun Int.or(b: SeparatorFlags) = this or b.i
-infix fun Int.has(b: SeparatorFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: SeparatorFlags) = (this and b.i) == 0
+infix fun SeparatorFlag.or(b: SeparatorFlag):SeparatorFlags = i or b.i
+infix fun Int.or(b: SeparatorFlag):SeparatorFlags = this or b.i
+infix fun Int.has(b: SeparatorFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: SeparatorFlag) = (this and b.i) == 0
 
 /** Storage for LastItem data   */
-enum class ItemStatusFlags { HoveredRect, HasDisplayRect;
+enum class ItemStatusFlag { HoveredRect, HasDisplayRect;
 
     val i = 1 shl ordinal
 }
 
-infix fun Int.wo(b: ItemStatusFlags) = and(b.i.inv())
-infix fun Int.or(b: ItemStatusFlags) = or(b.i)
-infix fun Int.has(b: ItemStatusFlags) = and(b.i) != 0
-infix fun Int.hasnt(b: ItemStatusFlags) = and(b.i) == 0
+infix fun Int.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv())
+infix fun Int.or(b: ItemStatusFlag): ItemStatusFlags = or(b.i)
+infix fun Int.has(b: ItemStatusFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: ItemStatusFlag) = and(b.i) == 0
 
 /** FIXME: this is in development, not exposed/functional as a generic feature yet. */
 enum class LayoutType { Vertical, Horizontal;
@@ -140,22 +155,22 @@ enum class InputReadMode { Down, Pressed, Released, Repeat, RepeatSlow, RepeatFa
     val i = ordinal
 }
 
-enum class NavHighlightFlags { TypeDefault, TypeThin, AlwaysDraw, NoRounding;
+enum class NavHighlightFlag { TypeDefault, TypeThin, AlwaysDraw, NoRounding;
 
     val i = 1 shl ordinal
 }
 
-infix fun Int.has(b: NavHighlightFlags) = and(b.i) != 0
-infix fun Int.hasnt(b: NavHighlightFlags) = and(b.i) == 0
-infix fun NavHighlightFlags.or(b: NavHighlightFlags) = i or b.i
+infix fun Int.has(b: NavHighlightFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: NavHighlightFlag) = and(b.i) == 0
+infix fun NavHighlightFlag.or(b: NavHighlightFlag): NavHighlightFlags = i or b.i
 
-enum class NavDirSourceFlags { Keyboard, PadDPad, PadLStick;
+enum class NavDirSourceFlag { Keyboard, PadDPad, PadLStick;
 
     val i = 1 shl ordinal
 }
 
-infix fun NavDirSourceFlags.or(b: NavDirSourceFlags) = i or b.i
-infix fun Int.has(b: NavDirSourceFlags) = and(b.i) != 0
+infix fun NavDirSourceFlag.or(b: NavDirSourceFlag): NavDirSourceFlags = i or b.i
+infix fun Int.has(b: NavDirSourceFlag) = and(b.i) != 0
 
 enum class NavForward { None, ForwardQueued, ForwardActive;
 

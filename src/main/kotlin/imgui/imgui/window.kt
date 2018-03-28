@@ -39,9 +39,9 @@ import imgui.internal.*
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
-import imgui.ItemFlags as If
-import imgui.WindowFlags as Wf
-import imgui.internal.ButtonFlags as Bf
+import imgui.ItemFlag as If
+import imgui.WindowFlag as Wf
+import imgui.internal.ButtonFlag as Bf
 import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.DrawListFlag as Dlf
 import imgui.internal.LayoutType as Lt
@@ -69,7 +69,7 @@ interface imgui_window {
                 res
             } else begin(name, null, flags)
 
-    fun begin(name: String, pOpen: BooleanArray? = null, flags: Int = 0): Boolean {
+    fun begin(name: String, pOpen: BooleanArray? = null, flags: WindowFlags = 0): Boolean {
 
         assert(name.isNotEmpty())   // Window name required
         assert(g.initialized)       // Forgot to call ImGui::NewFrame()
@@ -275,7 +275,7 @@ interface imgui_window {
             } else if (window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0) {
                 /*  Auto-fit only grows during the first few frames
                     We still process initial auto-fit on collapsed windows to get a window width,
-                    but otherwise don't honor WindowFlags.AlwaysAutoResize when collapsed.                 */
+                    but otherwise don't honor WindowFlag.AlwaysAutoResize when collapsed.                 */
                 if (!windowSizeXsetByApi && window.autoFitFrames.x > 0) {
                     sizeFullModified.x = if (window.autoFitOnlyGrows) max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
                     window.sizeFull.x = sizeFullModified.x
@@ -360,7 +360,7 @@ interface imgui_window {
                 val sc = style.mouseCursorScale
                 val refPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(io.mousePos)
                 val rectToAvoid =
-                        if (!g.navDisableHighlight && g.navDisableMouseHover && io.configFlags hasnt ConfigFlags.NavMoveMouse)
+                        if (!g.navDisableHighlight && g.navDisableMouseHover && io.configFlags hasnt ConfigFlag.NavMoveMouse)
                             Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
                         else
                             Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
@@ -669,7 +669,7 @@ interface imgui_window {
             /* After begin() we fill the last item / hovered data using the title bar data. Make that a standard behavior
                 (to allow usage of context menus on title bar only, etc.).             */
             window.dc.lastItemId = window.moveId
-            window.dc.lastItemStatusFlags = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max)) ItemStatusFlags.HoveredRect.i else 0
+            window.dc.lastItemStatusFlags = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max)) ItemStatusFlag.HoveredRect.i else 0
             window.dc.lastItemRect = titleBarRect
         }
 
@@ -716,7 +716,7 @@ interface imgui_window {
             popClipRect()   // Inner window clip rectangle
 
             // Stop logging
-//TODO            if (flags hasnt WindowFlags.ChildWindow)    // FIXME: add more options for scope of logging
+//TODO            if (flags hasnt WindowFlag.ChildWindow)    // FIXME: add more options for scope of logging
 //                logFinish()
 
             // Pop from window stack
@@ -730,14 +730,14 @@ interface imgui_window {
         }
     }
 
-    fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, flags: Int = 0) =
+    fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = 0) =
             beginChildEx(strId, currentWindow.getId(strId), size, border, flags)
 
     /** begin a scrolling region.
      *  size == 0f: use remaining window size
      *  size < 0f: use remaining window size minus abs(size)
      *  size > 0f: fixed size. each axis can use a different mode, e.g. Vec2(0, 400).   */
-    fun beginChild(id: ID, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: Int = 0): Boolean {
+    fun beginChild(id: ID, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = 0): Boolean {
         assert(id != 0)
         return beginChildEx("", id, sizeArg, border, flags)
     }
@@ -769,7 +769,7 @@ interface imgui_window {
 
                 // When browsing a window that has no activable items (scroll only) we keep a highlight on the child
                 if (window.dc.navLayerActiveMask == 0 && window === g.navWindow)
-                    renderNavHighlight(Rect(bb.min - 2, bb.max + 2), g.navId, NavHighlightFlags.TypeThin.i)
+                    renderNavHighlight(Rect(bb.min - 2, bb.max + 2), g.navId, NavHighlightFlag.TypeThin.i)
             } else // Not navigable into
                 itemAdd(bb, 0)
         }
@@ -960,7 +960,7 @@ interface imgui_window {
 
     companion object {
 
-        fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, extraFlags: Int): Boolean {
+        fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, extraFlags: WindowFlags): Boolean {
 
             val parentWindow = currentWindow
             var flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf.ChildWindow

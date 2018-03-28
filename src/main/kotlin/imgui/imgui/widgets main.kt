@@ -31,8 +31,8 @@ import imgui.ImGui.sameLine
 import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
-import imgui.WindowFlags as Wf
-import imgui.internal.ButtonFlags as Bf
+import imgui.WindowFlag as Wf
+import imgui.internal.ButtonFlag as Bf
 
 
 /** Widgets: Main   */
