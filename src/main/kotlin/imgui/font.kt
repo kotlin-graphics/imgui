@@ -767,7 +767,7 @@ class FontAtlas {
                     if (pc.x0 == 0 && pc.x1 == 0 && pc.y0 == 0 && pc.y1 == 0) continue
 
                     val codepoint = range.firstUnicodeCodepointInRange + charIdx
-                    if (cfg.mergeMode && dstFont.findGlyph(codepoint) != null) continue
+                    if (cfg.mergeMode && dstFont.findGlyphNoFallback(codepoint) != null) continue
 
                     val q = STBTTAlignedQuad.create()
                     stbtt_GetPackedQuad(range.chardataForRange, texSize, charIdx, Vec2(), q, false)
@@ -1040,8 +1040,7 @@ class Font {
             indexLookup[tabGlyph.codepoint.i] = glyphs.size - 1
         }
 
-        fallbackGlyph = null
-        fallbackGlyph = findGlyph(fallbackChar)
+        fallbackGlyph = findGlyphNoFallback(fallbackChar)
         fallbackAdvanceX = fallbackGlyph?.advanceX ?: 0f
         for (i in 0 until maxCodepoint + 1)
             if (indexAdvanceX[i] < 0f)
@@ -1049,13 +1048,9 @@ class Font {
     }
 
     fun findGlyph(c: Char) = findGlyph(c.i)
-    fun findGlyph(c: Int): FontGlyph? {
-        if (c < indexLookup.size) {
-            val i = indexLookup[c]
-            if (i != -1) return glyphs[i]
-        }
-        return fallbackGlyph
-    }
+    fun findGlyph(c: Int) = indexLookup.getOrNull(c)?.let { glyphs[it] } ?: fallbackGlyph
+    fun findGlyphNoFallback(c: Char) = findGlyphNoFallback(c.i)
+    fun findGlyphNoFallback(c: Int) = indexLookup.getOrNull(c)?.let { glyphs[it] }
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
     fun getCharAdvance(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
