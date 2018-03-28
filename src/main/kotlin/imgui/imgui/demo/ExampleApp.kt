@@ -1249,10 +1249,8 @@ object StyleEditor {
                     treeNode("Glyphs", "Glyphs (${font.glyphs.size})") {
                         // Display all glyphs of the fonts in separate pages of 256 characters
                         // Forcefully/dodgily make FindGlyph() return NULL on fallback, which isn't the default behavior.
-                        val glyphFallback = font.fallbackGlyph
-                        font.fallbackGlyph = null
                         for (base in 0 until 0x10000 step 256) {
-                            val count = (0 until 256).sumBy { if (font.findGlyph((base + it).c) != null) 1 else 0 }
+                            val count = (0 until 256).sumBy { if (font.findGlyphNoFallback((base + it).c) != null) 1 else 0 }
                             val s = if (count > 1) "glyphs" else "glyph"
                             if (count > 0 && treeNode(base, "U+%04X..U+%04X ($count $s)", base, base + 255)) {
                                 val cellSpacing = style.itemSpacing.y
@@ -1263,7 +1261,7 @@ object StyleEditor {
                                     val cellP1 = Vec2(basePos.x + (n % 16) * (cellSize.x + cellSpacing),
                                             basePos.y + (n / 16) * (cellSize.y + cellSpacing))
                                     val cellP2 = Vec2(cellP1.x + cellSize.x, cellP1.y + cellSize.y)
-                                    val glyph = font.findGlyph((base + n).c)
+                                    val glyph = font.findGlyphNoFallback((base + n).c)
                                     drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if (glyph != null) 100 else 50))
                                     /*  We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion
                                         functions available to generate a string.                                     */
@@ -1281,7 +1279,6 @@ object StyleEditor {
                                 treePop()
                             }
                         }
-                        font.fallbackGlyph = glyphFallback
                     }
                 }
             }
