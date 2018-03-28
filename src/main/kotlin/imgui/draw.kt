@@ -888,6 +888,17 @@ class DrawList(sharedData: DrawListSharedData?) {
         cmdBuffer.add(drawCmd)
     }
 
+    /** Create a clone of the CmdBuffer/IdxBuffer/VtxBuffer. */
+    fun cloneOutput() {
+        TODO()
+//        val dst = DrawList(null)
+//        dst.cmdBuffer = cmdBuffer.clone()
+//        dst.idxBuffer = idxBuffer
+//        dst.vtxBuffer = vtxBuffer
+//        dst.flags = flags
+//        return dst
+    }
+
     // -----------------------------------------------------------------------------------------------------------------
     // Internal helpers
     // NB: all primitives needs to be reserved via PrimReserve() beforehand!
@@ -1084,21 +1095,24 @@ class DrawList(sharedData: DrawListSharedData?) {
 }
 
 
-/** All draw data to render an ImGui frame  */
+/** All draw data to render an ImGui frame
+ *  (NB: the style and the naming convention here is a little inconsistent but we preserve them for backward compatibility purpose) */
 class DrawData {
 
     /** Only valid after Render() is called and before the next NewFrame() is called.   */
     var valid = false
+    /** Array of ImDrawList* to render. The ImDrawList are owned by ImGuiContext and only pointed to from here. */
     val cmdLists = ArrayList<DrawList>()
+    /** Number of ImDrawList* to render */
     var cmdListsCount = 0   // TODO remove?
-    /** For convenience, sum of all cmd_lists vtx_buffer.Size   */
+    /** For convenience, sum of all DrawList's VtxBuffer.Size   */
     var totalVtxCount = 0
-    /** For convenience, sum of all cmd_lists idx_buffer.Size   */
+    /** For convenience, sum of all DrawList's IdxBuffer.Size   */
     var totalIdxCount = 0
 
     // Functions
 
-    /** Draw lists are owned by the ImGuiContext and only pointed to here. */
+    /** The ImDrawList are owned by ImGuiContext! */
     fun clear() {
         valid = false
         cmdLists.clear()
@@ -1107,8 +1121,7 @@ class DrawData {
         cmdListsCount = 0
     }
 
-    /** For backward compatibility or convenience: convert all buffers from indexed to de-indexed, in case you cannot
-     *  render indexed.
+    /** Helper to convert all buffers from indexed to non-indexed, in case you cannot render indexed.
      *  Note: this is slow and most likely a waste of resources. Always prefer indexed rendering!   */
     fun deIndexAllBuffers() {
         val newVtxBuffer = mutableListOf<DrawVert>()
