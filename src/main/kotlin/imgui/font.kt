@@ -23,6 +23,7 @@ import uno.kotlin.buffers.isNotEmpty
 import uno.stb.stb
 import unsigned.toULong
 import java.nio.ByteBuffer
+import kotlin.math.floor
 
 
 class FontConfig {
@@ -147,6 +148,7 @@ class FontAtlas {
 
         val ttfCompressedBase85 = proggyCleanTtfCompressedDataBase85
         return addFontFromMemoryCompressedBase85TTF(ttfCompressedBase85, fontCfg.sizePixels, fontCfg, glyphRangesDefault)
+                .apply { displayOffset.y = 1f }
     }
 
     fun addFontFromFileTTF(filename: String, sizePixels: Float, fontCfg: FontConfig = FontConfig(),
@@ -746,12 +748,14 @@ class FontAtlas {
             val tmp = tmpArray[input]
             // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
             val dstFont = cfg.dstFont!!
+            if(cfg.mergeMode)
+                dstFont.buildLookupTable()
 
             val fontScale = stbtt_ScaleForPixelHeight(tmp.fontInfo, cfg.sizePixels)
             val (unscaledAscent, unscaledDescent, unscaledLineGap) = stbtt_GetFontVMetrics(tmp.fontInfo)
 
-            val ascent = unscaledAscent * fontScale
-            val descent = unscaledDescent * fontScale
+            val ascent = floor(unscaledAscent * fontScale + if(unscaledAscent > 0f) +1 else -1)
+            val descent = floor(unscaledDescent * fontScale + if(unscaledDescent > 0f) +1 else -1)
             buildSetupFont(dstFont, cfg, ascent, descent)
             val off = Vec2(cfg.glyphOffset.x, cfg.glyphOffset.y + (dstFont.ascent + 0.5f).i.f)
 
@@ -842,7 +846,7 @@ class FontAtlas {
                     uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
         }
         // Build all fonts lookup tables
-        fonts.forEach { it.buildLookupTable() }
+        fonts.filter { it.dirtyLookupTables }.forEach { it.buildLookupTable() }
     }
 
     fun buildRenderDefaultTexData() {
@@ -952,7 +956,7 @@ class Font {
     /** Base font scale, multiplied by the per-window font scale which you can adjust with SetFontScale()   */
     var scale = 1f
     /** Offset font rendering by xx pixels  */
-    var displayOffset = Vec2(0f, 1f)
+    var displayOffset = Vec2(0f, 0f)
     /** All glyphs. */
     val glyphs = ArrayList<FontGlyph>()
     /** Sparse. Glyphs.advanceX in a directly indexable way (more cache-friendly, for CalcTextSize functions which are
@@ -981,6 +985,8 @@ class Font {
     var ascent = 0f
 
     var descent = 0f
+
+    var dirtyLookupTables = true
     /** Total surface in pixels to get an idea of the font rasterization/texture cost (not exact, we approximate the cost of padding
     between glyphs)    */
     var metricsTotalSurface = 0
@@ -1003,6 +1009,7 @@ class Font {
 //        containerAtlas = NULL TODO check
         ascent = 0f
         descent = 0f
+        dirtyLookupTables = true
         metricsTotalSurface = 0
     }
 
@@ -1013,6 +1020,7 @@ class Font {
         assert(glyphs.size < 0xFFFF) // -1 is reserved
         indexAdvanceX.clear()
         indexLookup.clear()
+        dirtyLookupTables = false
         growIndex(maxCodepoint + 1)
         glyphs.forEachIndexed { i, g ->
             indexAdvanceX[g.codepoint.i] = g.advanceX
@@ -1465,6 +1473,7 @@ class Font {
         if (configData[0].pixelSnapH)
             glyph.advanceX = (glyph.advanceX + 0.5f).i.f
         // Compute rough surface usage metrics (+1 to account for average padding, +0.99 to round)
+        dirtyLookupTables = true
         metricsTotalSurface += ((glyph.u1 - glyph.u0) * containerAtlas.texSize.x + 1.99f).i *
                 ((glyph.v1 - glyph.v0) * containerAtlas.texSize.y + 1.99f).i
     }

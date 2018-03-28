@@ -221,7 +221,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var dragDropAcceptFrameCount = -1
     /** We don't expose the ImVector<> directly */
     lateinit var dragDropPayloadBufHeap: ByteBuffer
-
+    /** Local buffer for small payloads */
     var dragDropPayloadBufLocal = ByteArray(8)
 
     //------------------------------------------------------------------
