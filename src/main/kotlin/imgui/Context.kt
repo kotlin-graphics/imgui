@@ -145,7 +145,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navIdTabCounter = Int.MAX_VALUE
     /** Nav widget has been seen this frame ~~ NavRefRectRel is valid   */
     var navIdIsAlive = false
-    /** When set we will update mouse position if (io.ConfigFlags & ConfigFlags.NavMoveMouse) if set (NB: this not enabled by default) */
+    /** When set we will update mouse position if (io.ConfigFlag & ConfigFlag.NavMoveMouse) if set (NB: this not enabled by default) */
     var navMousePosDirty = false
     /** When user starts using mouse, we hide gamepad/keyboard highlight (NB: but they are still available, which is why
      *  NavDisableHighlight isn't always != NavDisableMouseHover)   */
@@ -396,8 +396,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var iniFilename: String? = "imgui.ini"
     /** Path to .log file (default parameter to ImGui::LogToFile when no file is specified).    */
     var logFilename = "imgui_log.txt"
-    /** See ImGuiConfigFlags_ enum. Gamepad/keyboard navigation options, etc.    */
-    var configFlags = 0
+    /** See ConfigFlag enum. Gamepad/keyboard navigation options, etc.    */
+    var configFlags: ConfigFlags = 0
     /** Time for a double-click, in seconds.    */
     var mouseDoubleClickTime = 0.3f
     /** Distance threshold to stay in to validate a double-click, in pixels.    */
@@ -524,10 +524,10 @@ class IO(sharedFontAtlas: FontAtlas?) {
      *  it wants textual keyboard input to happen (e.g. when a InputText widget is active). */
     var wantTextInput = false
     /** MousePos has been altered, back-end should reposition mouse on next frame.
-     *  Set only when ConfigFlags.NavMoveMouse flag is enabled in IO.configFlags.    */
+     *  Set only when ConfigFlag.NavMoveMouse flag is enabled in IO.configFlags.    */
     var wantMoveMouse = false
     /** Directional navigation is currently allowed (will handle KeyNavXXX events) = a window is focused and it doesn't
-     *  use the WindowFlags.NoNavInputs flag.   */
+     *  use the WindowFlag.NoNavInputs flag.   */
     var navActive = false
     /** Directional navigation is visible and allowed (will handle KeyNavXXX events). */
     var navVisible = false

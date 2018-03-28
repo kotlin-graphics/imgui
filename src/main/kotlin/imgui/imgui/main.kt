@@ -23,9 +23,9 @@ import imgui.ImGui.setNextWindowSize
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
-import imgui.WindowFlags as Wf
+import imgui.WindowFlag as Wf
 import imgui.internal.DrawListFlag as Dlf
-import imgui.ConfigFlags as Cf
+import imgui.ConfigFlag as Cf
 
 interface imgui_main {
 
@@ -235,8 +235,8 @@ interface imgui_main {
 
         // Mouse wheel scrolling, scale
         if (g.hoveredWindow != null && !g.hoveredWindow!!.collapsed && (io.mouseWheel != 0f || io.mouseWheelH != 0f)) {
-            /*  If a child window has the WindowFlags.NoScrollWithMouse flag, we give a chance to scroll its parent
-                (unless either WindowFlags.NoInputs or WindowFlags.NoScrollbar are also set).             */
+            /*  If a child window has the WindowFlag.NoScrollWithMouse flag, we give a chance to scroll its parent
+                (unless either WindowFlag.NoInputs or WindowFlag.NoScrollbar are also set).             */
             val window = g.hoveredWindow!!
             var scrollWindow = window
             while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
@@ -513,7 +513,7 @@ interface imgui_main {
                 val resizeRect = Rect(corner, corner + grip.innerDir * gripHoverSize)
                 resizeRect.fixInverted()
 
-                val flags = ButtonFlags.FlattenChildren or ButtonFlags.NoNavFocus
+                val flags = ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus
                 val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), flags)
                 if (hovered || held)
                     g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
@@ -535,7 +535,7 @@ interface imgui_main {
                 val BORDER_SIZE = 5f          // FIXME: Only works _inside_ window because of HoveredWindow check.
                 val BORDER_APPEAR_TIMER = 0.05f // Reduce visual noise
                 val borderRect = window.getBorderRect(borderN, gripHoverSize, BORDER_SIZE)
-                val (_, hovered, held) = buttonBehavior(borderRect, window.getId((borderN + 4)), ButtonFlags.FlattenChildren)
+                val (_, hovered, held) = buttonBehavior(borderRect, window.getId((borderN + 4)), ButtonFlag.FlattenChildren)
                 if ((hovered && g.hoveredIdTimer > BORDER_APPEAR_TIMER) || held) {
                     g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
                     if (held) borderHeld = borderN
@@ -570,9 +570,9 @@ interface imgui_main {
             if (g.navWindowingTarget === window) {
                 val navResizeDelta = Vec2()
                 if (g.navWindowingInputSource == InputSource.NavKeyboard && g.io.keyShift)
-                    navResizeDelta put getNavInputAmount2d(NavDirSourceFlags.Keyboard.i, InputReadMode.Down)
+                    navResizeDelta put getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)
                 if (g.navWindowingInputSource == InputSource.NavGamepad)
-                    navResizeDelta put getNavInputAmount2d(NavDirSourceFlags.PadDPad.i, InputReadMode.Down)
+                    navResizeDelta put getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, InputReadMode.Down)
                 if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
                     val NAV_RESIZE_SPEED = 600f
                     navResizeDelta *= glm.floor(NAV_RESIZE_SPEED * g.io.deltaTime * min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))

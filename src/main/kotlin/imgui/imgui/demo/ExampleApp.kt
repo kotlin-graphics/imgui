@@ -97,8 +97,8 @@ import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.SelectableFlag as Sf
-import imgui.TreeNodeFlags as Tnf
-import imgui.WindowFlags as Wf
+import imgui.TreeNodeFlag as Tnf
+import imgui.WindowFlag as Wf
 
 object ExampleApp {
 
@@ -858,8 +858,8 @@ object ConstrainedResize {
             5 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.square)          // Always Square
             6 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.step, 100)// Fixed Step
         }
-        val flags = if (autoResize) Wf.AlwaysAutoResize.i else 0
-        withWindow("Example: Constrained Resize", open) {
+        val flags: WindowFlags = if (autoResize) Wf.AlwaysAutoResize.i else 0
+        withWindow("Example: Constrained Resize", open, flags) {
             val desc = listOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
                     "Width 400-500", "Height 400-500", "Custom: Always Square", "Custom: Fixed Steps (100)")
             button("200x200") { setWindowSize(Vec2(200)) }; sameLine()

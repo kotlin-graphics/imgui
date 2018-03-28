@@ -90,11 +90,11 @@ object functionalProgramming {
         if (menuItem(label, shortcut, selected, enabled)) block()
     }
 
-    inline fun collapsingHeader(label: String, flags: Int = 0, block: () -> Unit) {
+    inline fun collapsingHeader(label: String, flags: TreeNodeFlags = 0, block: () -> Unit) {
         if (collapsingHeader(label, flags)) block()
     }
 
-    inline fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>, flags: Int = 0, block: () -> Unit) {
+    inline fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>, flags: TreeNodeFlags = 0, block: () -> Unit) {
         if (collapsingHeader(label, open, flags))
             block()
     }

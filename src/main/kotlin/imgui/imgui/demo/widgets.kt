@@ -113,8 +113,8 @@ import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.SelectableFlag as Sf
-import imgui.TreeNodeFlags as Tnf
-import imgui.WindowFlags as Wf
+import imgui.TreeNodeFlag as Tnf
+import imgui.WindowFlag as Wf
 
 object widgets {
 
@@ -386,7 +386,7 @@ object widgets {
                             } else {
                                 /*  Leaf: The only reason we have a TreeNode at all is to allow selection of the leaf.
                                     Otherwise we can use BulletText() or TreeAdvanceToLabelPos()+Text().                                 */
-                                nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // ImGuiTreeNodeFlags_Bullet
+                                nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // GuiTreeNodeFlags.Bullet
                                 treeNodeExV(i, nodeFlags, "Selectable Leaf $i")
                                 if (isItemClicked()) nodeClicked = i
                             }

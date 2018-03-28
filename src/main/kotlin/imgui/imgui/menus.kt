@@ -44,7 +44,7 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.SelectableFlag as Sf
-import imgui.WindowFlags as Wf
+import imgui.WindowFlag as Wf
 import imgui.internal.LayoutType as Lt
 
 /** Menu    */
@@ -81,7 +81,7 @@ interface imgui_menus {
         popStyleVar(2)
     }
 
-    /** Append to menu-bar of current window (requires WindowFlags.MenuBar flag set on parent window).
+    /** Append to menu-bar of current window (requires WindowFlag.MenuBar flag set on parent window).
      *  Only call endMenuBar() if this returns true!    */
     fun beginMenuBar(): Boolean {
 

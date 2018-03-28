@@ -21,7 +21,7 @@ import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
-import imgui.WindowFlags as Wf
+import imgui.WindowFlag as Wf
 
 
 interface imgui_utilities {
@@ -40,7 +40,7 @@ interface imgui_utilities {
         val window = g.currentWindow!!
         return when {
         // Test for bounding box overlap, as updated as ItemAdd()
-            window.dc.lastItemStatusFlags hasnt ItemStatusFlags.HoveredRect -> false
+            window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect -> false
             else -> {
                 assert(flags hasnt (Hf.RootWindow or Hf.ChildWindows)) // Flags not supported by this function
                 when {
@@ -57,7 +57,7 @@ interface imgui_utilities {
                 // Test if interactions on this window are blocked by an active popup or modal
                     g.navDisableMouseHover || !window.isContentHoverable(flags) -> false
                 // Test if the item is disabled
-                    window.dc.itemFlags has ItemFlags.Disabled -> false
+                    window.dc.itemFlags has ItemFlag.Disabled -> false
                 /*  Special handling for the 1st item after Begin() which represent the title bar. When the window is
                     collapsed (SkipItems==true) that last item will never be overwritten so we need to detect tht case.                 */
                     window.dc.lastItemId == window.moveId && window.writeAccessed -> false
@@ -218,7 +218,7 @@ interface imgui_utilities {
 
 
     /** helper to create a child window / scrolling region that looks like a normal widget frame    */
-    fun beginChildFrame(id: ID, size: Vec2, extraFlags: Int = 0): Boolean {
+    fun beginChildFrame(id: ID, size: Vec2, extraFlags: WindowFlags = 0): Boolean {
         pushStyleColor(Col.ChildBg, style.colors[Col.FrameBg])
         pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
         pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)

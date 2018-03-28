@@ -29,9 +29,9 @@ import kotlin.collections.set
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
-import imgui.ConfigFlags as Cf
+import imgui.ConfigFlag as Cf
 import imgui.InputTextFlag as Itf
-import imgui.WindowFlags as Wf
+import imgui.WindowFlag as Wf
 
 
 fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = 0): Nothing = TODO()
@@ -231,7 +231,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
 
         if (window.flags has Wf.NoSavedSettings) continue
         /** This will only return NULL in the rare instance where the window was first created with
-         *  WindowFlags.NoSavedSettings then had the flag disabled later on.
+         *  WindowFlag.NoSavedSettings then had the flag disabled later on.
          *  We don't bind settings in this case (bug #1000).    */
         val settings = findWindowSettings(window.id) ?: addWindowSettings(window.name)
         settings.pos put window.pos
@@ -842,7 +842,7 @@ fun navUpdate() {
 
             // *Normal* Manual scroll with NavScrollXXX keys
             // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
-            val scrollDir = getNavInputAmount2d(NavDirSourceFlags.PadLStick.i, InputReadMode.Down, 1f / 10f, 10f)
+            val scrollDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down, 1f / 10f, 10f)
             if (scrollDir.x != 0f && it.scrollbar.x) {
                 it.setScrollX(glm.floor(it.scroll.x + scrollDir.x * scrollSpeed))
                 g.navMoveFromClampedRefRect = true
@@ -962,9 +962,9 @@ fun navUpdateWindowing() {
         if (it.flags hasnt Wf.NoMove) {
             var moveDelta = Vec2()
             if (g.navWindowingInputSource == InputSource.NavKeyboard && !io.keyShift)
-                moveDelta = getNavInputAmount2d(NavDirSourceFlags.Keyboard.i, InputReadMode.Down)
+                moveDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)
             if (g.navWindowingInputSource == InputSource.NavGamepad)
-                moveDelta = getNavInputAmount2d(NavDirSourceFlags.PadLStick.i, InputReadMode.Down)
+                moveDelta = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down)
             if (moveDelta.x != 0f || moveDelta.y != 0f) {
                 val NAV_MOVE_SPEED = 800f
                 val moveSpeed = glm.floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
@@ -1018,18 +1018,18 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
     val navBbRel = Rect(navBb.min - window.pos, navBb.max - window.pos)
     if (g.navInitRequest && g.navLayer == window.dc.navLayerCurrent) {
         // Even if 'ImGuiItemFlags_NoNavDefaultFocus' is on (typically collapse/close button) we record the first ResultId so they can be used as a fallback
-        if (itemFlags hasnt ItemFlags.NoNavDefaultFocus || g.navInitResultId == 0) {
+        if (itemFlags hasnt ItemFlag.NoNavDefaultFocus || g.navInitResultId == 0) {
             g.navInitResultId = id
             g.navInitResultRectRel = navBbRel
         }
-        if (itemFlags hasnt ItemFlags.NoNavDefaultFocus) {
+        if (itemFlags hasnt ItemFlag.NoNavDefaultFocus) {
             g.navInitRequest = false // Found a match, clear request
             navUpdateAnyRequestFlag()
         }
     }
 
     // Scoring for navigation
-    if (g.navId != id && itemFlags hasnt ItemFlags.NoNav) {
+    if (g.navId != id && itemFlags hasnt ItemFlag.NoNav) {
         val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
         val newBest =
                 if (IMGUI_DEBUG_NAV_SCORING) {  // [DEBUG] Score all items in NavWindow at all times
