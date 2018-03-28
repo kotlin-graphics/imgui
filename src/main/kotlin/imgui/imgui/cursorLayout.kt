@@ -65,7 +65,7 @@ interface imgui_cursorLayout {
 
         window.dc.columnsSet?.let {
             pushColumnClipRect()
-            it.cellMinY = window.dc.cursorPos.y
+            it.lineMinY = window.dc.cursorPos.y
         }
     }
 

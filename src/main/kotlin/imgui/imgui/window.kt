@@ -609,9 +609,9 @@ interface imgui_window {
                 }
                 // Close button
                 if (pOpen != null) {
-                    val pad = 2f
-                    val rad = (window.titleBarHeight - pad * 2f) * 0.5f
-                    if (closeButton(window.getId("#CLOSE"), window.rect().tr + Vec2(-pad - rad, pad + rad), rad))
+                    val pad = style.framePadding.y
+                    val rad = g.fontSize * 0.5f
+                    if (closeButton(window.getId("#CLOSE"), window.rect().tr + Vec2(-pad - rad, pad + rad), rad + 1))
                         pOpen[0] = false
                 }
 

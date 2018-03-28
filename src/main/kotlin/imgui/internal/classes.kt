@@ -281,11 +281,12 @@ class ColumnsSet {
     var count = 1
     var minX = 0f
     var maxX = 0f
+    /** Copy of CursorPos */
     var startPosY = 0f
-    /** Backup of cursorMaxPos */
+    /** Copy of CursorMaxPos */
     var startMaxPosX = 0f
-    var cellMinY = 0f
-    var cellMaxY = 0f
+    var lineMinY = 0f
+    var lineMaxY = 0f
     val columns = ArrayList<ColumnData>()
 
     fun clear() {
@@ -299,8 +300,8 @@ class ColumnsSet {
         minX = 0f
         startPosY = 0f
         startMaxPosX = 0f
-        cellMaxY = 0f
-        cellMinY = 0f
+        lineMaxY = 0f
+        lineMinY = 0f
         columns.clear()
     }
 }
