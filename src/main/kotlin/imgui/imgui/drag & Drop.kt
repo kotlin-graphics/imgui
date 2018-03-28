@@ -105,7 +105,7 @@ interface imgui_dragAndDrop {
         return false
     }
 
-    /** Type is a user defined string of maximum 12 characters. Strings starting with '_' are reserved for dear imgui internal types.
+    /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
      *  Data is copied and held by imgui. */
     fun setDragDropPayload(type: String, data: Vec4, dataSize: Int, cond: Cond = Cond.Null): Boolean {
         val payload = g.dragDropPayload

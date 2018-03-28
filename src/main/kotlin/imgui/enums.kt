@@ -384,7 +384,7 @@ enum class NavInput {
 
     /*  [Internal] Don't use directly! This is used internally to differentiate keyboard from gamepad inputs for
         behaviors that require to differentiate them.
-        Keyboard behavior that have no corresponding gamepad mapping (e.g. CTRL + TAB) may be directly reading from
+        Keyboard behavior that have no corresponding gamepad mapping (e.g. CTRL + TAB) will be directly reading from
         io.keyDown[] instead of io.navInputs[]. */
 
     /** toggle menu = io.keyAlt */
