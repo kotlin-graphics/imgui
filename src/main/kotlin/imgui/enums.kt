@@ -305,12 +305,12 @@ infix fun Int.has(b: DragDropFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: DragDropFlag) = (this and b.i) == 0
 
 // Standard Drag and Drop payload types. Types starting with '_' are defined by Dear ImGui.
-/** float[3], Standard type for colors, without alpha. User code may use this type. */
+/** float[3]: Standard type for colors, without alpha. User code may use this type. */
 val PAYLOAD_TYPE_COLOR_3F = "_COL3F"
-/** float[4], Standard type for colors. User code may use this type. */
+/** float[4]: Standard type for colors. User code may use this type. */
 val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 
-/** A direction */
+/** A cardinal direction */
 enum class Dir { None, Left, Right, Up, Down, Count;
 
     val i = ordinal - 1
@@ -732,7 +732,8 @@ enum class ColorEditFlag(val i: Int) {
     PickerHueBar(1 shl 18),
     /** [PickerMode] ColorPicker: wheel for Hue, triangle for Sat/Value.    */
     PickerHueWheel(1 shl 19),
-    // Internals/Masks
+
+    // [Internal] Masks
     _InputsMask(RGB or HSV or HEX),
     _DataTypeMask(Uint8 or Float),
     _PickerMask(PickerHueWheel or PickerHueBar),
