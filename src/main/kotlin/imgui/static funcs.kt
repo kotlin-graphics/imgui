@@ -626,13 +626,18 @@ fun navUpdate() {
 
 //    if (g.NavScoringCount > 0) printf("[%05d] NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.FrameCount, g.NavScoringCount, g.NavWindow ? g . NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest)
 
+    if (g.io.configFlags has Cf.NavEnableGamepad)
+        if (g.io.navInputs[NavInput.Activate] > 0f || g.io.navInputs[NavInput.Input] > 0f ||
+                g.io.navInputs[NavInput.Cancel] > 0f || g.io.navInputs[NavInput.Menu] > 0f)
+            g.navInputSource = InputSource.NavGamepad
+
     // Update Keyboard->Nav inputs mapping
-    for (i in NavInput.InternalStart until NavInput.COUNT)
-        io.navInputs[i] = 0f
     if (io.configFlags has Cf.NavEnableKeyboard) {
         fun navMapKey(key: Key, navInput: NavInput) {
-            if (io.keyMap[key] != -1 && isKeyDown(io.keyMap[key]))
-                io.navInputs[navInput] = 1f
+            if (isKeyDown(g.io.keyMap[key])) {
+                g.io.navInputs[navInput] = 1f
+                g.navInputSource = InputSource.NavKeyboard
+            }
         }
         navMapKey(Key.Space, NavInput.Activate)
         navMapKey(Key.Enter, NavInput.Input)
@@ -909,13 +914,13 @@ fun navUpdateWindowing() {
             g.navWindowingHighlightAlpha = 0f
             g.navWindowingHighlightTimer = 0f
             g.navWindowingToggleLayer = !startWindowingWithKeyboard
-            g.navWindowingInputSource = if (startWindowingWithKeyboard) InputSource.NavKeyboard else InputSource.NavGamepad
+            g.navInputSource = if (startWindowingWithKeyboard) InputSource.NavKeyboard else InputSource.NavGamepad
         }
 
     // Gamepad update
     g.navWindowingHighlightTimer += io.deltaTime
     g.navWindowingTarget?.let {
-        if (g.navWindowingInputSource == InputSource.NavGamepad) {
+        if (g.navInputSource == InputSource.NavGamepad) {
             /*  Highlight only appears after a brief time holding the button, so that a fast tap on PadMenu
                 (to toggle NavLayer) doesn't add visual noise             */
             g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingHighlightTimer - 0.2f) / 0.05f))
@@ -941,7 +946,7 @@ fun navUpdateWindowing() {
     }
     // Keyboard: Focus
     g.navWindowingTarget?.let {
-        if (g.navWindowingInputSource == InputSource.NavKeyboard) {
+        if (g.navInputSource == InputSource.NavKeyboard) {
             // Visuals only appears after a brief time after pressing TAB the first time, so that a fast CTRL+TAB doesn't add visual noise
             g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingHighlightTimer - 0.15f) / 0.04f)) // 1.0f
             if (Key.Tab.isPressed(true))
@@ -961,9 +966,9 @@ fun navUpdateWindowing() {
     g.navWindowingTarget?.let {
         if (it.flags hasnt Wf.NoMove) {
             var moveDelta = Vec2()
-            if (g.navWindowingInputSource == InputSource.NavKeyboard && !io.keyShift)
+            if (g.navInputSource == InputSource.NavKeyboard && !io.keyShift)
                 moveDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)
-            if (g.navWindowingInputSource == InputSource.NavGamepad)
+            if (g.navInputSource == InputSource.NavGamepad)
                 moveDelta = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down)
             if (moveDelta.x != 0f || moveDelta.y != 0f) {
                 val NAV_MOVE_SPEED = 800f

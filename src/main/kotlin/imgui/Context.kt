@@ -119,10 +119,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navInputId: ID = 0
     /** Just tabbed to this id. */
     var navJustTabbedId: ID = 0
-    /** Set by ActivateItem(), queued until next frame  */
-    var navNextActivateId: ID = 0
     /** Just navigated to this id (result of a successfully MoveRequest)    */
     var navJustMovedToId: ID = 0
+    /** Set by ActivateItem(), queued until next frame  */
+    var navNextActivateId: ID = 0
+    /** Keyboard or Gamepad mode? */
+    var navInputSource = InputSource.None
     /** Rectangle used for scoring, in screen space. Based of window.dc.navRefRectRel[], modified for directional navigation scoring.  */
     var navScoringRectScreen = Rect()
     /** Metrics for debugging   */
@@ -135,8 +137,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navWindowingHighlightAlpha = 0f
 
     var navWindowingToggleLayer = false
-    /** Gamepad or keyboard mode    */
-    var navWindowingInputSource = InputSource.None
     /** Layer we are navigating on. For now the system is hard-coded for 0 = main contents and 1 = menu/title bar,
      *  may expose layers later. */
     var navLayer = 0
@@ -489,7 +489,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** List of characters input (translated by user from keypress + keyboard state). Fill using addInputCharacter()
      *  helper. */
     val inputCharacters = CharArray(16)
-    /** Gamepad inputs (keyboard keys will be auto-mapped and be written here by ::newFrame)   */
+    /** Gamepad inputs (keyboard keys will be auto-mapped and be written here by ::newFrame,
+     *  all values will be cleared back to zero in ImGui::EndFrame)   */
     val navInputs = FloatArray(NavInput.COUNT)
 
     // Functions
