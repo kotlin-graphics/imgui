@@ -284,7 +284,7 @@ interface imgui_menus {
         return menuIsOpen
     }
 
-    /** Only call EndBegin() if BeginMenu() returns true! */
+    /** Only call EndMenu() if BeginMenu() returns true! */
     fun endMenu() {
         /*  Nav: When a left move request _within our child menu_ failed, close the menu.
             A menu doesn't close itself because EndMenuBar() wants the catch the last Left<>Right inputs.

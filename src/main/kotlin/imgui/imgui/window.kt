@@ -45,8 +45,21 @@ import imgui.internal.ButtonFlag as Bf
 import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.DrawListFlag as Dlf
 import imgui.internal.LayoutType as Lt
+import imgui.FocusedFlag as Ff
+import imgui.HoveredFlag as Hf
 
 
+/** (Begin = push window to the stack and start appending to it. End = pop window from the stack.
+ *  You may append multiple times to the same window during the same frame)
+ *  Begin()/BeginChild() return false to indicate the window being collapsed or fully clipped, so you may early out and
+ *  omit submitting anything to the window.
+ *  However you need to always call a matching End()/EndChild() for a Begin()/BeginChild() call, regardless of
+ *  its return value (this is due to legacy reason and is inconsistent with BeginMenu/EndMenu, BeginPopup/EndPopup and
+ *  other functions where the End call should only be called if the corresponding Begin function returned true.)
+ *  Passing 'bool* p_open != NULL' shows a close widget in the upper-right corner of the window, which when clicking
+ *  will set the boolean to false.
+ *  Use child windows to introduce independent scrolling/clipping regions within a host window.
+ *  Child windows can embed their own child. */
 interface imgui_window {
 
     /*  Push a new ImGui window to add widgets to:
@@ -775,6 +788,64 @@ interface imgui_window {
         }
     }
 
+    val isWindowAppearing get() = currentWindowRead!!.appearing
+
+    val isWindowCollapsed get() = currentWindowRead!!.collapsed
+
+    /** is current window focused? or its root/child, depending on flags. see flags for options.    */
+    fun isWindowFocused(flags: FocusedFlags = Ff.Null.i): Boolean {
+
+        val curr = g.currentWindow!!     // Not inside a Begin()/End()
+
+        if (flags has Ff.AnyWindow)
+            return g.navWindow != null
+
+        return when (flags and (Ff.RootWindow or Ff.ChildWindows)) {
+            Ff.RootWindow or Ff.ChildWindows -> g.navWindow?.let { it.rootWindow === curr.rootWindow } ?: false
+            Ff.RootWindow.i -> g.navWindow === curr.rootWindow
+            Ff.ChildWindows.i -> g.navWindow?.isChildOf(curr) ?: false
+            else -> g.navWindow === curr
+        }
+    }
+
+    /** iis current window hovered (and typically: not blocked by a popup/modal)? see flag for options. */
+    fun isWindowHovered(flag: Hf) = isWindowHovered(flag.i)
+
+    /** Is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
+     *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
+     *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
+    fun isWindowHovered(flags: HoveredFlags = Hf.Default.i): Boolean {
+        assert(flags hasnt Hf.AllowWhenOverlapped)   // Flags not supported by this function
+        if (flags has Hf.AnyWindow) {
+            if (g.hoveredWindow == null)
+                return false
+        } else when (flags and (Hf.RootWindow or Hf.ChildWindows)) {
+            Hf.RootWindow or Hf.ChildWindows -> if (g.hoveredRootWindow !== g.currentWindow!!.rootWindow) return false
+            Hf.RootWindow.i -> if (g.hoveredWindow != g.currentWindow!!.rootWindow) return false
+            Hf.ChildWindows.i -> g.hoveredWindow.let { if (it == null || !it.isChildOf(g.currentWindow)) return false }
+            else -> if (g.hoveredWindow !== g.currentWindow) return false
+        }
+
+        return when {
+            !g.hoveredRootWindow!!.isContentHoverable(flags) -> false
+            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != g.hoveredWindow!!.moveId -> false
+            else -> true
+        }
+    }
+
+    /** get rendering command-list if you want to append your own draw primitives   */
+    val windowDrawList get() = currentWindow.drawList
+
+    /** get current window position in screen space (useful if you want to do your own drawing via the DrawList api)    */
+    val windowPos get() = g.currentWindow!!.pos
+
+    /** get current window size */
+    val windowSize get() = currentWindowRead!!.size
+
+    val windowWidth get() = g.currentWindow!!.size.x
+
+    val windowHeight get() = g.currentWindow!!.size.y
+
     /** current content boundaries (typically window boundaries including scrolling, or current column boundaries), in
      *  windows coordinates
      *  In window space (not screen space!) */
@@ -799,28 +870,7 @@ interface imgui_window {
     val windowContentRegionMax get() = currentWindowRead!!.contentsRegionRect.max
 
     val windowContentRegionWidth get() = with(currentWindowRead!!) { contentsRegionRect.max.x - contentsRegionRect.min.x }
-    /** get rendering command-list if you want to append your own draw primitives   */
-    val windowDrawList get() = currentWindow.drawList
-    /** get current window position in screen space (useful if you want to do your own drawing via the DrawList api)    */
-    val windowPos get() = g.currentWindow!!.pos
 
-    /** get current window size */
-    val windowSize get() = currentWindowRead!!.size
-
-    val windowWidth get() = g.currentWindow!!.size.x
-
-    val windowHeight get() = g.currentWindow!!.size.y
-
-    val isWindowCollapsed get() = currentWindowRead!!.collapsed
-
-    val isWindowAppearing get() = currentWindowRead!!.appearing
-
-    /** per-window font scale. Adjust io.FontGlobalScale if you want to scale all windows   */
-    fun setWindowFontScale(scale: Float) = with(currentWindow) {
-        fontWindowScale = scale
-        g.drawListSharedData.fontSize = calcFontSize()
-        g.fontSize = g.drawListSharedData.fontSize
-    }
 
     /** set next window position. call before Begin()   */
     fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always, pivot: Vec2 = Vec2()) {
@@ -908,54 +958,12 @@ interface imgui_window {
     /** Set named window to be focused / front-most. use NULL to remove focus.  */
     fun setWindowFocus(name: String) = findWindowByName(name).focus()
 
-    /** Scrolling amount [0..GetScrollMaxX()]   */
-    var scrollX
-        get() = g.currentWindow!!.scroll.x
-        set(value) = with(currentWindow) { scrollTarget.x = value; scrollTargetCenterRatio.x = 0f }
-
-    /** scrolling amount [0..GetScrollMaxY()]   */
-    var scrollY
-        get() = g.currentWindow!!.scroll.y
-        set(value) = with(currentWindow) {
-            // title bar height canceled out when using ScrollTargetRelY
-            scrollTarget.y = value + titleBarHeight + menuBarHeight
-            scrollTargetCenterRatio.y = 0f
-        }
-
-    /** get maximum scrolling amount ~~ ContentSize.X - WindowSize.X    */
-    val scrollMaxX get() = currentWindowRead!!.scrollMaxX
-
-    /** get maximum scrolling amount ~~ ContentSize.Y - WindowSize.Y    */
-    val scrollMaxY get() = currentWindowRead!!.scrollMaxY
-
-    /** adjust scrolling amount to make current cursor position visible.
-     *  centerYRatio = 0.0: top, 0.5: center, 1.0: bottom.
-     *   When using to make a "default/current item" visible, consider using setItemDefaultFocus() instead.*/
-    fun setScrollHere(centerYRatio: Float = 0.5f) = with(currentWindow) {
-        var targetY = dc.cursorPosPrevLine.y - pos.y  // Top of last item, in window space
-        // Precisely aim above, in the middle or below the last line.
-        targetY += (dc.prevLineHeight * centerYRatio) + style.itemSpacing.y * (centerYRatio - 0.5f) * 2f
-        setScrollFromPosY(targetY, centerYRatio)
+    /** per-window font scale. Adjust io.FontGlobalScale if you want to scale all windows   */
+    fun setWindowFontScale(scale: Float) = with(currentWindow) {
+        fontWindowScale = scale
+        g.drawListSharedData.fontSize = calcFontSize()
+        g.fontSize = g.drawListSharedData.fontSize
     }
-
-    /** adjust scrolling amount to make given position valid. use GetCursorPos() or GetCursorStartPos()+offset to get
-     *  valid positions.    */
-    fun setScrollFromPosY(posY: Float, centerYRatio: Float = 0.5f) = with(currentWindow) {
-        /*  We store a target position so centering can occur on the next frame when we are guaranteed to have a known
-            window size         */
-        assert(centerYRatio in 0f..1f)
-        scrollTarget.y = (posY + scroll.y).i.f
-        scrollTargetCenterRatio.y = centerYRatio
-        /*  Minor hack to to make scrolling to top/bottom of window take account of WindowPadding,
-            it looks more right to the user this way         */
-        if (centerYRatio <= 0f && scrollTarget.y <= windowPadding.y)
-            scrollTarget.y = 0f
-        else if (centerYRatio >= 1f && scrollTarget.y >= sizeContents.y - windowPadding.y + style.itemSpacing.y)
-            scrollTarget.y = sizeContents.y
-    }
-
-//IMGUI_API void          SetStateStorage(ImGuiStorage* tree);                                // replace tree state storage with our own (if you want to manipulate it yourself, typically clear subsection of it)
-//IMGUI_API ImGuiStorage* GetStateStorage();
 
 
     companion object {
