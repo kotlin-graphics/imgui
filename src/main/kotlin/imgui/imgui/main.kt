@@ -566,12 +566,12 @@ interface imgui_main {
             }
             popId()
 
-            // Navigation/gamepad resize
+            // Navigation resize (keyboard/gamepad)
             if (g.navWindowingTarget === window) {
                 val navResizeDelta = Vec2()
-                if (g.navWindowingInputSource == InputSource.NavKeyboard && g.io.keyShift)
+                if (g.navInputSource == InputSource.NavKeyboard && g.io.keyShift)
                     navResizeDelta put getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)
-                if (g.navWindowingInputSource == InputSource.NavGamepad)
+                if (g.navInputSource == InputSource.NavGamepad)
                     navResizeDelta put getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, InputReadMode.Down)
                 if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
                     val NAV_RESIZE_SPEED = 600f

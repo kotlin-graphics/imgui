@@ -222,6 +222,7 @@ enum class ComboFlag(val i: Int) {
 
 infix fun ComboFlag.or(other: ComboFlag): ComboFlags = i or other.i
 infix fun Int.and(other: ComboFlag): ComboFlags = and(other.i)
+infix fun Int.wo(other: ComboFlag): ComboFlags = and(other.i.inv())
 infix fun Int.or(other: ComboFlag): ComboFlags = or(other.i)
 infix fun Int.has(b: ComboFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ComboFlag) = and(b.i) == 0

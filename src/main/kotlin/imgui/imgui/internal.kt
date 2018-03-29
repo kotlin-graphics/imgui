@@ -1346,15 +1346,15 @@ interface imgui_internal {
         // Render
         val center = Vec2(bb.center)
         if (hovered) {
-            val col = if(held && hovered) Col.ButtonActive else Col.ButtonHovered
+            val col = if (held && hovered) Col.ButtonActive else Col.ButtonHovered
             window.drawList.addCircleFilled(center, 2f max radius, col.u32, 9)
         }
-        
+
         val crossExtent = (radius * 0.7071f) - 1f
         val crossCol = Col.Text.u32
         center -= 0.5f
-        window.drawList.addLine(center + crossExtent, center -crossExtent, crossCol, 1f)
-        window.drawList.addLine(center + Vec2(crossExtent,-crossExtent), center + Vec2(-crossExtent,crossExtent), crossCol, 1f)
+        window.drawList.addLine(center + crossExtent, center - crossExtent, crossCol, 1f)
+        window.drawList.addLine(center + Vec2(crossExtent, -crossExtent), center + Vec2(-crossExtent, crossExtent), crossCol, 1f)
 
         return pressed
     }
@@ -1397,7 +1397,7 @@ interface imgui_internal {
         val window = currentWindow
 
         // Draw frame
-        val frameCol = if(g.activeId == id) Col.FrameBgActive else if(g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
         renderNavHighlight(frameBb, id)
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
@@ -1788,12 +1788,13 @@ interface imgui_internal {
 
         val userClicked = hovered && io.mouseClicked[0]
         val userScrolled = isMultiline && g.activeId == 0 && editState.id == id && g.activeIdPreviousFrame == drawWindow.getIdNoKeepAlive("#SCROLLY")
+        val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.NavKeyboard))
 
         var clearActiveId = false
 
-        var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || g.navInputId == id) && !isMultiline
+        var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || userNavInputStart) && !isMultiline
 //        println(g.imeLastKey)
-        if (focusRequested || userClicked || userScrolled || g.navInputId == id || g.imeLastKey != 0) {
+        if (focusRequested || userClicked || userScrolled || userNavInputStart) {
             if (g.activeId != id || g.imeLastKey != 0) {
                 // JVM, put char if no more in ime mode and last key is valid
 //                println("${g.imeInProgress}, ${g.imeLastKey}")
@@ -1905,9 +1906,9 @@ interface imgui_internal {
             if (io.inputCharacters[0].i != 0) {
                 /*  Process text input (before we check for Return because using some IME will effectively send a
                     Return?)
-                    We ignore CTRL inputs, but need to allow CTRL+ALT as some keyboards (e.g. German) use AltGR - which
-                    is Alt+Ctrl - to input certain characters.  */
-                if (!(io.keyCtrl && !io.keyAlt) && isEditable)
+                    We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR
+                    (which _is_ Alt+Ctrl) to input certain characters. */
+                if (!(io.keyCtrl && !io.keyAlt) && isEditable && !userNavInputStart)
                     io.inputCharacters.filter { it != NUL }.map {
                         withChar { c ->
                             // Insert character if they pass filtering
@@ -2760,7 +2761,7 @@ interface imgui_internal {
             }
 
             val tStep = 1f / resW
-            val invScale = if(scaleMin == scaleMax) 0f else 1f / (scaleMax - scaleMin)
+            val invScale = if (scaleMin == scaleMax) 0f else 1f / (scaleMax - scaleMin)
 
             val v0 = data[(0 + valuesOffset) % valuesCount]
             var t0 = 0f

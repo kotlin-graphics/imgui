@@ -9,11 +9,13 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.arrowButton
+import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
 import imgui.ImGui.colorButton
 import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorEdit3
@@ -33,6 +35,7 @@ import imgui.ImGui.dragInt2
 import imgui.ImGui.dragInt3
 import imgui.ImGui.dragInt4
 import imgui.ImGui.dragIntRange2
+import imgui.ImGui.endCombo
 import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
@@ -68,6 +71,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setColorEditOptions
+import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderAngle
 import imgui.ImGui.sliderFloat
@@ -160,6 +164,13 @@ object widgets {
 
     /* Images */
     var pressedCount = 0
+
+
+    /* Combo */
+    var flags0: ComboFlags = 0
+    var currentItem3 = 0
+    var currentItem4 = 0
+    var currentItem5 = 0
 
 
     /* Selectables */
@@ -291,24 +302,10 @@ object widgets {
                 labelText("label", "Value")
 
                 run {
-                    // Simplified one-liner Combo() API, using values packed in a single constant string
-                    combo("combo", ::currentItem1, "aaaa\u0000bbbb\u0000cccc\u0000dddd\u0000eeee\u0000\u0000")
-                    //ImGui::Combo("combo w/ array of char*", &current_item_2_idx, items, IM_ARRAYSIZE(items));   // Combo using proper array. You can also pass a callback to retrieve array value, no need to create/copy an array just for that.
-
-                    // General BeginCombo() API, you have full control over your selection data and display type
-                    val items = arrayOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO", "PPPP", "QQQQQQQQQQ", "RRR", "SSSS")
-                    // Combo using proper array. You can also pass a callback to retrieve array value, no need to create/copy an array just for that.
-
-//                  jvm TODO  if (beginCombo("combo 2", ::currentItem2)) { // The second parameter is the label previewed before opening the combo.
-//                        for (n in items) {
-//                            val isSelected = currentItem2 == n // You can store your selection however you want, outside or inside your objects
-//                            if (selectable(n, isSelected))
-//                                currentItem2 = n
-//                            if (isSelected)
-//                                setItemDefaultFocus()   // Set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
-//                        }
-//                        endCombo()
-//                    }
+                    // Using the _simplified_ one-liner Combo() api here
+                    val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO")
+                    combo("combo", ::currentItem1, items)
+                    sameLine(); showHelpMarker("Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, and demonstration of various flags.\n")
                 }
 
                 run {
@@ -341,13 +338,17 @@ object widgets {
                     sliderAngle("slider angle", ::angle)
                 }
 
-                colorEdit3("color 1", col1)
-                sameLine(); showHelpMarker("Click on the colored square to open a color picker.\nRight-click on the colored square to show options.\nCTRL+click on individual component to input value.\n")
+                run {
+                    colorEdit3("color 1", col1)
+                    sameLine(); showHelpMarker("Click on the colored square to open a color picker.\nRight-click on the colored square to show options.\nCTRL+click on individual component to input value.\n")
 
-                colorEdit4("color 2", col2)
+                    colorEdit4("color 2", col2)
+                }
 
-                val listboxItems = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
-                listBox("listbox\n(single select)", ::listboxItemCurrent, listboxItems, 4)
+                run {
+                    val listboxItems = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
+                    listBox("listbox\n(single select)", ::listboxItemCurrent, listboxItems, 4)
+                }
             }
 
             treeNode("Trees") {
@@ -501,13 +502,16 @@ object widgets {
                 image(myTexId, myTexSize, Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
                 if (isItemHovered())
                     withTooltip {
-                        val focusSz = 32f
-                        val focus = glm.clamp(mousePos - pos - focusSz * 0.5f, Vec2(), myTexSize - focusSz)
-                        text("Min: (%.2f, %.2f)", focus.x, focus.y)
-                        text("Max: (%.2f, %.2f)", focus.x + focusSz, focus.y + focusSz)
-                        val uv0 = focus / myTexSize
-                        val uv1 = (focus + focusSz) / myTexSize
-                        image(myTexId, Vec2(128), uv0, uv1, Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
+                        val regionSz = 32f
+                        val region = io.mousePos - pos - regionSz * 0.5f
+                        region.x = if (region.x < 0f) 0f else if (region.x > myTexSize.x - regionSz) myTexSize.x - regionSz else region.x
+                        region.y = if (region.y < 0f) 0f else if (region.y > myTexSize.y - regionSz) myTexSize.y - regionSz else region.y
+                        val zoom = 4f
+                        text("Min: (%.2f, %.2f)", region.x, region.y)
+                        text("Max: (%.2f, %.2f)", region.x + regionSz, region.y + regionSz)
+                        val uv0 = Vec2(region.x / myTexSize.x, region.y / myTexSize.y)
+                        val uv1 = Vec2((region.x + regionSz) / myTexSize.x, (region.y + regionSz) / myTexSize.y)
+                        image(myTexId, Vec2(regionSz * zoom), uv0, uv1, Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
                     }
                 textWrapped("And now some textured buttons..")
                 for (i in 0..7)
@@ -519,6 +523,43 @@ object widgets {
                     }
                 newLine()
                 text("Pressed $pressedCount times.")
+            }
+
+            treeNode("Combo") {
+                // Expose flags as checkbox for the demo
+                checkboxFlags("ImGuiComboFlags_PopupAlignLeft", ::flags0, ComboFlag.PopupAlignLeft.i)
+                if (checkboxFlags("ImGuiComboFlags_NoArrowButton", ::flags0, ComboFlag.NoArrowButton.i))
+                    flags0 = flags0 wo ComboFlag.NoPreview     // Clear the other flag, as we cannot combine both
+                if (checkboxFlags("ImGuiComboFlags_NoPreview", ::flags0, ComboFlag.NoPreview.i))
+                    flags0 = flags0 wo ComboFlag.NoArrowButton // Clear the other flag, as we cannot combine both
+
+                /*  General BeginCombo() API, you have full control over your selection data and display type.
+                    (your selection data could be an index, a pointer to the object, an id for the object,
+                    a flag stored in the object itself, etc.)                 */
+                val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO")
+                if (beginCombo("combo 1", items[0], flags0)) { // The second parameter is the label previewed before opening the combo.
+                    items.forEachIndexed {i, it ->
+                        val isSelected = currentItem3 == i
+                        if (selectable(items[i], isSelected))
+                            currentItem3 = i
+                        if (isSelected)
+                        // Set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
+                            setItemDefaultFocus()
+                    }
+                    endCombo()
+                }
+
+                // Simplified one-liner Combo() API, using values packed in a single constant string
+                combo("combo 2 (one-liner)", ::currentItem4, "aaaa\u0000bbbb\u0000cccc\u0000dddd\u0000eeee\u0000\u0000")
+
+                /*  Simplified one-liner Combo() using an array of const char*
+                    If the selection isn't within 0..count, Combo won't display a preview                 */
+                combo("combo 3 (array)", ::currentItem5, items)
+
+                // Simplified one-liner Combo() using an accessor function TODO
+//                struct FuncHolder { static bool ItemGetter(void * data, int idx, const char * * out_str) { *out_str = ((const char * *) data)[idx]; return true; } };
+//                static int item_current_4 = 0;
+//                ImGui::Combo("combo 4 (function)", & item_current_4, &FuncHolder::ItemGetter, items, IM_ARRAYSIZE(items));
             }
 
             treeNode("Selectables") {
