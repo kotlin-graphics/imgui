@@ -11,6 +11,7 @@ import imgui.ImGui.buttonBehavior
 import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
+import imgui.ImGui.renderBullet
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.frameHeight
@@ -341,6 +342,26 @@ interface imgui_widgetsMain {
             val x = glm.clamp(fillBr.x + style.itemSpacing.x, bb.min.x, bb.max.x - overlaySize.x - style.itemInnerSpacing.x)
             renderTextClipped(Vec2(x, bb.min.y), bb.max, overlay, 0, overlaySize, Vec2(0f, 0.5f), bb)
         }
+    }
+
+    /** draw a small circle and keep the cursor on the same line. advance cursor x position
+     *  by GetTreeNodeToLabelSpacing(), same distance that TreeNode() uses  */
+    fun bullet() {
+
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), g.fontSize)
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(g.fontSize, lineHeight))
+        itemSize(bb)
+        if (!itemAdd(bb, 0)) {
+            sameLine(0f, style.framePadding.x * 2)
+            return
+        }
+
+        // Render and stay on same line
+        renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
+        sameLine(0f, style.framePadding.x * 2)
     }
 
     companion object {

@@ -110,7 +110,7 @@ interface imgui_inputs {
     /** shortcut to io.mousePos provided by user, to be consistent with other calls */
     val mousePos get() = io.mousePos
 
-    /** retrieve backup of mouse positioning at the time of opening popup we have BeginPopup() into */
+    /** retrieve backup of mouse position at the time of opening popup we have BeginPopup() into */
     val mousePosOnOpeningCurrentPopup get() = Vec2(g.currentPopupStack.lastOrNull()?.openMousePos ?: io.mousePos)
 
     /** dragging amount since clicking. if lockThreshold < -1.0f uses io.MouseDraggingThreshold

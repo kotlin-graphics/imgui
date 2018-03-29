@@ -46,6 +46,7 @@ object ImGui :
         imgui_main,
         imgui_demoDebugInformations,
         imgui_window,
+        imgui_windowScrolling,
         imgui_parametersStacks,
         imgui_cursorLayout,
         imgui_colums,
@@ -95,9 +96,9 @@ operator fun StringBuilder.plusAssign(string: String) {
 
 // Typedefs and Enumerations (declared as int for compatibility and to not pollute the top of this file)
 
-/** unique ID used by widgets (typically hashed from a stack of string) */
+/** Unique ID used by widgets (typically hashed from a stack of string) */
 typealias ID = Int
-/** user data to identify a texture */
+/** User data to identify a texture */
 typealias TextureID = Int
 
 /** flags: for DrawList::addRect*() etc.   // enum DrawCornerFlag */

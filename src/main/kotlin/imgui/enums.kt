@@ -614,7 +614,7 @@ enum class Col {
     PlotHistogram,
     PlotHistogramHovered,
     TextSelectedBg,
-    /** darken entire screen when a modal window is active   */
+    /** darken/colorize entire screen behind a modal window, when one is active   */
     ModalWindowDarkening,
     DragDropTarget,
     /** gamepad/keyboard: current highlighted item  */
@@ -751,14 +751,16 @@ infix fun Int.hasnt(b: ColorEditFlag) = (this and b.i) == 0
 infix fun Int.wo(b: ColorEditFlag): ColorEditFlags = this and b.i.inv()
 infix fun Int.wo(b: Int): ColorEditFlags = this and b.inv()
 
-/** Enumeration for GetMouseCursor()    */
+/** Enumeration for GetMouseCursor()
+ *  User code may request binding to display given cursor by calling SetMouseCursor(),
+ *  which is why we have some cursors that are marked unused here */
 enum class MouseCursor {
 
     None,
     Arrow,
     /** When hovering over InputText, etc.  */
     TextInput,
-    /** Unused  */
+    /** Unused by imgui functions */
     ResizeAll,
     /** When hovering over an horizontal border  */
     ResizeNS,
@@ -787,9 +789,9 @@ enum class Cond(val i: Int) {
     Always(1 shl 0),
     /** Set the variable once per runtime session (only the first call with succeed)    */
     Once(1 shl 1),
-    /** Set the variable if the window has no saved data (if doesn't exist in the .ini file)    */
+    /** Set the variable if the object/window has no persistently saved data (no entry in .ini file)    */
     FirstUseEver(1 shl 2),
-    /** Set the variable if the window is appearing after being hidden/inactive (or the first time) */
+    /** Set the variable if the object/window is appearing after being hidden/inactive (or the first time) */
     Appearing(1 shl 3);
 
     infix fun or(other: Cond) = i or other.i

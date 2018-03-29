@@ -136,7 +136,9 @@ interface imgui_demoDebugInformations {
 
     /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
      *  Here we use the simplified combo() api that packs items into a single literal string. Useful for quick combo
-     *  boxes where the choices are known locally.  */
+     *  boxes where the choices are known locally.
+     *
+     *  add style selector block (not a window), essentially a combo listing the default styles. */
     fun showStyleSelector(label: String) =
             if (combo(label, ::styleIdx, "Classic\u0000Dark\u0000Light\u0000")) {
                 when (styleIdx) {
@@ -148,7 +150,9 @@ interface imgui_demoDebugInformations {
             } else false
 
     /** Demo helper function to select among loaded fonts.
-     *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one. */
+     *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one.
+     *
+     *  add font selector block (not a window), essentially a combo listing the loaded fonts. */
     fun showFontSelector(label: String) {
         val fontCurrent = font
         if (beginCombo(label, fontCurrent.debugName)) {

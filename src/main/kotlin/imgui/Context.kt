@@ -29,7 +29,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var drawListSharedData = DrawListSharedData()
 
-
     var time = 0f
 
     var frameCount = 0
@@ -305,10 +304,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
 //    char                    TempBuffer[1024*3+1];               // temporary text buffer
 
-    /*  Context creation and access, if you want to use multiple context, share context between modules (e.g. DLL).
-        All contexts share a same FontAtlas by default. If you want different font atlas, you can new() them and
-        overwrite the ::io. Fonts variable of an ImGui context.
-        All those functions are not reliant on the current context. */
+    // Context creation and access
     init {
         if (gImGui == null) setCurrent()
 
@@ -371,6 +367,7 @@ fun Context?.setCurrent() {
     gImGui = this
 }
 
+/** Destroy current context */
 fun Context?.destroy() {
     val c = this ?: g
     c.shutdown()
@@ -615,8 +612,8 @@ operator fun FloatArray.set(index: NavInput, value: Float) {
 operator fun FloatArray.get(index: NavInput) = get(index.i)
 
 /** You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
- *  During the frame, prefer using ImGui::PushStyleVar(ImGuiStyleVar_XXXX)/PopStyleVar() to alter the main style values,
- *  and ImGui::PushStyleColor(ImGuiCol_XXX)/PopStyleColor() for colors. */
+ *  During the frame, use ImGui::PushStyleVar(StyleVar.XXXX)/PopStyleVar() to alter the main style values,
+ *  and ImGui::PushStyleColor(Col.XXX)/PopStyleColor() for colors. */
 class Style {
 
     /**  Global alpha applies to everything in ImGui.    */

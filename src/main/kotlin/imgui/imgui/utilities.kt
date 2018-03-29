@@ -104,47 +104,6 @@ interface imgui_utilities {
             g.activeIdAllowOverlap = true
     }
 
-    /** is current window focused? or its root/child, depending on flags. see flags for options.    */
-    fun isWindowFocused(flags: FocusedFlags = Ff.Null.i): Boolean {
-
-        val curr = g.currentWindow!!     // Not inside a Begin()/End()
-
-        if (flags has Ff.AnyWindow)
-            return g.navWindow != null
-
-        return when (flags and (Ff.RootWindow or Ff.ChildWindows)) {
-            Ff.RootWindow or Ff.ChildWindows -> g.navWindow?.let { it.rootWindow === curr.rootWindow } ?: false
-            Ff.RootWindow.i -> g.navWindow === curr.rootWindow
-            Ff.ChildWindows.i -> g.navWindow?.isChildOf(curr) ?: false
-            else -> g.navWindow === curr
-        }
-    }
-
-    /** iis current window hovered (and typically: not blocked by a popup/modal)? see flag for options. */
-    fun isWindowHovered(flag: Hf) = isWindowHovered(flag.i)
-
-    /** Is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
-     *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
-     *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
-    fun isWindowHovered(flags: HoveredFlags = Hf.Default.i): Boolean {
-        assert(flags hasnt Hf.AllowWhenOverlapped)   // Flags not supported by this function
-        if (flags has Hf.AnyWindow) {
-            if (g.hoveredWindow == null)
-                return false
-        } else when (flags and (Hf.RootWindow or Hf.ChildWindows)) {
-            Hf.RootWindow or Hf.ChildWindows -> if (g.hoveredRootWindow !== g.currentWindow!!.rootWindow) return false
-            Hf.RootWindow.i -> if (g.hoveredWindow != g.currentWindow!!.rootWindow) return false
-            Hf.ChildWindows.i -> g.hoveredWindow.let { if (it == null || !it.isChildOf(g.currentWindow)) return false }
-            else -> if (g.hoveredWindow !== g.currentWindow) return false
-        }
-
-        return when {
-            !g.hoveredRootWindow!!.isContentHoverable(flags) -> false
-            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != g.hoveredWindow!!.moveId -> false
-            else -> true
-        }
-    }
-
     /** test if rectangle (of given size, starting from cursor position) is visible / not clipped.  */
     fun isRectVisible(size: Vec2) = with(currentWindowRead!!) { clipRect overlaps Rect(dc.cursorPos, dc.cursorPos + size) }
 
@@ -158,9 +117,12 @@ interface imgui_utilities {
     /** this draw list will be the last rendered one, useful to quickly draw overlays shapes/text   */
     val overlayDrawList get() = g.overlayDrawList
 
+    /** you may use this when creating your own ImDrawList instances */
     val drawListSharedData get() = g.drawListSharedData
 
 //IMGUI_API const char*   GetStyleColorName(ImGuiCol idx);
+    //IMGUI_API void          SetStateStorage(ImGuiStorage* tree);                                // replace tree state storage with our own (if you want to manipulate it yourself, typically clear subsection of it)
+//IMGUI_API ImGuiStorage* GetStateStorage();
 
     /** Calculate text size. Text can be multi-line. Optionally ignore text after a ## marker.
      *  CalcTextSize("") should return ImVec2(0.0f, GImGui->FontSize)   */

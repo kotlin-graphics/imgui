@@ -6,10 +6,11 @@ import imgui.ImGui.currentWindowRead
 import imgui.g
 
 /** ID scopes
- *  If you are creating widgets in a loop you most likely want to push a unique identifier so ImGui can differentiate
- *  them.
- *  You can also use the "##foobar" syntax within widget label to distinguish them from each others. Read "A primer on
- *  the use of labels/IDs" in the FAQ for more details. */
+ *  Read the FAQ for more details about how ID are handled in dear imgui. If you are creating widgets in a loop you most
+ *  likely want to push a unique identifier (e.g. object pointer, loop index) to uniquely differentiate them.
+ *  You can also use the "##foobar" syntax within widget label to distinguish them from each others.
+ *  In this header file we use the "label"/"name" terminology to denote a string that will be displayed and used as an ID,
+ *  whereas "str_id" denote a string that is only used as an ID and not aimed to be displayed.  */
 interface imgui_idScopes {
 
 
