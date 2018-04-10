@@ -15,14 +15,10 @@ import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.style
 import imgui.ImGui.verticalSeparator
 import imgui.g
-import imgui.internal.GroupData
-import imgui.internal.Rect
-import imgui.internal.has
-import imgui.internal.isPowerOfTwo
-import imgui.internal.or
+import imgui.internal.*
 import imgui.logRenderedText
 import imgui.internal.LayoutType as Lt
-import imgui.internal.SeparatorFlags as Sf
+import imgui.internal.SeparatorFlag as Sf
 
 interface imgui_cursorLayout {
 
@@ -32,7 +28,7 @@ interface imgui_cursorLayout {
         val window = currentWindow
         if (window.skipItems) return
 
-        var flags = 0
+        var flags: SeparatorFlags = 0
         if (flags hasnt (Sf.Horizontal or Sf.Vertical))
             flags = flags or if (window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
         // Check that only 1 option is selected
@@ -65,7 +61,7 @@ interface imgui_cursorLayout {
 
         window.dc.columnsSet?.let {
             pushColumnClipRect()
-            it.cellMinY = window.dc.cursorPos.y
+            it.lineMinY = window.dc.cursorPos.y
         }
     }
 

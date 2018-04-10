@@ -49,8 +49,8 @@ class HelloWorld_lwjgl {
         // Setup ImGui binding
         // glslVersion = 330 // set here your desidered glsl version
         val ctx = Context()
-        //io.configFlags = io.configFlags or ConfigFlags.NavEnableKeyboard  // Enable Keyboard Controls
-        //io.configFlags = io.configFlags or ConfigFlags.NavEnableGamepad   // Enable Gamepad Controls
+        //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
+        //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
         LwjglGL3.init(window, true)
 
         // Setup style

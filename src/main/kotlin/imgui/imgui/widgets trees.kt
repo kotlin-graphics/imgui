@@ -3,8 +3,7 @@ package imgui.imgui
 import gli_.has
 import glm_.glm
 import glm_.vec2.Vec2
-import imgui.Cond
-import imgui.Dir
+import imgui.*
 import imgui.ImGui.closeButton
 import imgui.ImGui.currentWindow
 import imgui.ImGui.indent
@@ -14,10 +13,8 @@ import imgui.ImGui.pushId
 import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
-import imgui.g
-import imgui.or
 import kotlin.reflect.KMutableProperty0
-import imgui.TreeNodeFlags as Tnf
+import imgui.TreeNodeFlag as Tnf
 
 /** Widgets: Trees  */
 interface imgui_widgetsTrees {
@@ -43,7 +40,7 @@ interface imgui_widgetsTrees {
 //    IMGUI_API bool          TreeNodeEx(const char* str_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) IM_PRINTFARGS(3);
 //    IMGUI_API bool          TreeNodeEx(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) IM_PRINTFARGS(3);
 
-    fun treeNodeExV(strId: String, flags: Int, fmt: String, vararg args: Any): Boolean {
+    fun treeNodeExV(strId: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -53,7 +50,7 @@ interface imgui_widgetsTrees {
         return treeNodeBehavior(window.getId(strId), flags, label)
     }
 
-    fun treeNodeExV(ptrId: Any, flags: Int, fmt: String, vararg args: Any): Boolean {
+    fun treeNodeExV(ptrId: Any, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -108,10 +105,10 @@ interface imgui_widgetsTrees {
     /** CollapsingHeader returns true when opened but do not indent nor push into the ID stack (because of the
      *  ImGuiTreeNodeFlags_NoTreePushOnOpen flag).
      *  This is basically the same as calling
-     *      treeNodeEx(label, TreeNodeFlags.CollapsingHeader | TreeNodeFlags.NoTreePushOnOpen)
+     *      treeNodeEx(label, TreeNodeFlag.CollapsingHeader | TreeNodeFlag.NoTreePushOnOpen)
      *  You can remove the _NoTreePushOnOpen flag if you want behavior closer to normal TreeNode().
      *  If returning 'true' the header is open. doesn't indent nor push on ID stack. user doesn't have to call TreePop().   */
-    fun collapsingHeader(label: String, flags: Int = 0): Boolean {
+    fun collapsingHeader(label: String, flags: TreeNodeFlags = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -120,7 +117,7 @@ interface imgui_widgetsTrees {
     }
 
     /** when 'open' isn't NULL, display an additional small close button on upper right of the header */
-    fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>?, flags: Int = 0): Boolean {
+    fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>?, flags: TreeNodeFlags = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false

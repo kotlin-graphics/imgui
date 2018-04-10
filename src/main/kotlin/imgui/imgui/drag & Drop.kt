@@ -54,7 +54,7 @@ interface imgui_dragAndDrop {
                     your dragging operation will be canceled.
                     We don't need to maintain/call clearActiveID() as releasing the button will early out this function
                     and trigger !activeIdIsAlive. */
-                val isHovered = window.dc.lastItemStatusFlags has ItemStatusFlags.HoveredRect
+                val isHovered = window.dc.lastItemStatusFlags has ItemStatusFlag.HoveredRect
                 if (!isHovered && (g.activeId == 0 || g.activeIdWindow !== window))
                     return false
                 window.dc.lastItemId = window.getIdFromRectangle(window.dc.lastItemRect)
@@ -98,14 +98,14 @@ interface imgui_dragAndDrop {
             }
 
             if (flags hasnt Ddf.SourceNoDisableHover && flags hasnt Ddf.SourceExtern)
-                window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags wo ItemStatusFlags.HoveredRect
+                window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags wo ItemStatusFlag.HoveredRect
 
             return true
         }
         return false
     }
 
-    /** Type is a user defined string of maximum 12 characters. Strings starting with '_' are reserved for dear imgui internal types.
+    /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
      *  Data is copied and held by imgui. */
     fun setDragDropPayload(type: String, data: Vec4, dataSize: Int, cond: Cond = Cond.Null): Boolean {
         val payload = g.dragDropPayload
@@ -169,7 +169,7 @@ interface imgui_dragAndDrop {
         if (!g.dragDropActive) return false
 
         val window = g.currentWindow!!
-        if (window.dc.lastItemStatusFlags hasnt ItemStatusFlags.HoveredRect) return false
+        if (window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect) return false
         g.hoveredWindow.let { if (it == null || window.rootWindow !== it.rootWindow) return false }
 
         var id = window.dc.lastItemId

@@ -29,7 +29,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var drawListSharedData = DrawListSharedData()
 
-
     var time = 0f
 
     var frameCount = 0
@@ -120,10 +119,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navInputId: ID = 0
     /** Just tabbed to this id. */
     var navJustTabbedId: ID = 0
-    /** Set by ActivateItem(), queued until next frame  */
-    var navNextActivateId: ID = 0
     /** Just navigated to this id (result of a successfully MoveRequest)    */
     var navJustMovedToId: ID = 0
+    /** Set by ActivateItem(), queued until next frame  */
+    var navNextActivateId: ID = 0
+    /** Keyboard or Gamepad mode? */
+    var navInputSource = InputSource.None
     /** Rectangle used for scoring, in screen space. Based of window.dc.navRefRectRel[], modified for directional navigation scoring.  */
     var navScoringRectScreen = Rect()
     /** Metrics for debugging   */
@@ -136,8 +137,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navWindowingHighlightAlpha = 0f
 
     var navWindowingToggleLayer = false
-    /** Gamepad or keyboard mode    */
-    var navWindowingInputSource = InputSource.None
     /** Layer we are navigating on. For now the system is hard-coded for 0 = main contents and 1 = menu/title bar,
      *  may expose layers later. */
     var navLayer = 0
@@ -145,7 +144,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navIdTabCounter = Int.MAX_VALUE
     /** Nav widget has been seen this frame ~~ NavRefRectRel is valid   */
     var navIdIsAlive = false
-    /** When set we will update mouse position if (io.ConfigFlags & ConfigFlags.NavMoveMouse) if set (NB: this not enabled by default) */
+    /** When set we will update mouse position if (io.ConfigFlag & ConfigFlag.NavMoveMouse) if set (NB: this not enabled by default) */
     var navMousePosDirty = false
     /** When user starts using mouse, we hide gamepad/keyboard highlight (NB: but they are still available, which is why
      *  NavDisableHighlight isn't always != NavDisableMouseHover)   */
@@ -221,7 +220,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var dragDropAcceptFrameCount = -1
     /** We don't expose the ImVector<> directly */
     lateinit var dragDropPayloadBufHeap: ByteBuffer
-
+    /** Local buffer for small payloads */
     var dragDropPayloadBufLocal = ByteArray(8)
 
     //------------------------------------------------------------------
@@ -305,10 +304,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
 //    char                    TempBuffer[1024*3+1];               // temporary text buffer
 
-    /*  Context creation and access, if you want to use multiple context, share context between modules (e.g. DLL).
-        All contexts share a same FontAtlas by default. If you want different font atlas, you can new() them and
-        overwrite the ::io. Fonts variable of an ImGui context.
-        All those functions are not reliant on the current context. */
+    // Context creation and access
     init {
         if (gImGui == null) setCurrent()
 
@@ -371,6 +367,7 @@ fun Context?.setCurrent() {
     gImGui = this
 }
 
+/** Destroy current context */
 fun Context?.destroy() {
     val c = this ?: g
     c.shutdown()
@@ -396,8 +393,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var iniFilename: String? = "imgui.ini"
     /** Path to .log file (default parameter to ImGui::LogToFile when no file is specified).    */
     var logFilename = "imgui_log.txt"
-    /** See ImGuiConfigFlags_ enum. Gamepad/keyboard navigation options, etc.    */
-    var configFlags = 0
+    /** See ConfigFlag enum. Gamepad/keyboard navigation options, etc.    */
+    var configFlags: ConfigFlags = 0
     /** Time for a double-click, in seconds.    */
     var mouseDoubleClickTime = 0.3f
     /** Distance threshold to stay in to validate a double-click, in pixels.    */
@@ -492,7 +489,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** List of characters input (translated by user from keypress + keyboard state). Fill using addInputCharacter()
      *  helper. */
     val inputCharacters = CharArray(16)
-    /** Gamepad inputs (keyboard keys will be auto-mapped and be written here by ::newFrame)   */
+    /** Gamepad inputs (keyboard keys will be auto-mapped and be written here by ::newFrame,
+     *  all values will be cleared back to zero in ImGui::EndFrame)   */
     val navInputs = FloatArray(NavInput.COUNT)
 
     // Functions
@@ -524,10 +522,10 @@ class IO(sharedFontAtlas: FontAtlas?) {
      *  it wants textual keyboard input to happen (e.g. when a InputText widget is active). */
     var wantTextInput = false
     /** MousePos has been altered, back-end should reposition mouse on next frame.
-     *  Set only when ConfigFlags.NavMoveMouse flag is enabled in IO.configFlags.    */
+     *  Set only when ConfigFlag.NavMoveMouse flag is enabled in IO.configFlags.    */
     var wantMoveMouse = false
     /** Directional navigation is currently allowed (will handle KeyNavXXX events) = a window is focused and it doesn't
-     *  use the WindowFlags.NoNavInputs flag.   */
+     *  use the WindowFlag.NoNavInputs flag.   */
     var navActive = false
     /** Directional navigation is visible and allowed (will handle KeyNavXXX events). */
     var navVisible = false
@@ -615,8 +613,8 @@ operator fun FloatArray.set(index: NavInput, value: Float) {
 operator fun FloatArray.get(index: NavInput) = get(index.i)
 
 /** You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
- *  During the frame, prefer using ImGui::PushStyleVar(ImGuiStyleVar_XXXX)/PopStyleVar() to alter the main style values,
- *  and ImGui::PushStyleColor(ImGuiCol_XXX)/PopStyleColor() for colors. */
+ *  During the frame, use ImGui::PushStyleVar(StyleVar.XXXX)/PopStyleVar() to alter the main style values,
+ *  and ImGui::PushStyleColor(Col.XXX)/PopStyleColor() for colors. */
 class Style {
 
     /**  Global alpha applies to everything in ImGui.    */

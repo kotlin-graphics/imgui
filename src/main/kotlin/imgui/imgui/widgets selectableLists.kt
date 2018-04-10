@@ -34,14 +34,14 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.windowContentRegionMax
-import imgui.internal.NavHighlightFlags
+import imgui.internal.NavHighlightFlag
 import imgui.internal.Rect
 import imgui.internal.or
 import kotlin.reflect.KMutableProperty0
-import imgui.ItemFlags as If
+import imgui.ItemFlag as If
 import imgui.SelectableFlag as Sf
-import imgui.WindowFlags as Wf
-import imgui.internal.ButtonFlags as Bf
+import imgui.WindowFlag as Wf
+import imgui.internal.ButtonFlag as Bf
 
 /** Widgets: Selectable / Lists */
 interface imgui_widgetsSelectableLists {
@@ -117,7 +117,7 @@ interface imgui_widgetsSelectableLists {
         if (hovered || selected) {
             val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             renderFrame(bbWithSpacing.min, bbWithSpacing.max, col.u32, false, 0f)
-            renderNavHighlight(bbWithSpacing, id, NavHighlightFlags.TypeThin or NavHighlightFlags.NoRounding)
+            renderNavHighlight(bbWithSpacing, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
         }
 
         if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null) {

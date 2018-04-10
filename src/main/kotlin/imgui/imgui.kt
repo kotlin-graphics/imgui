@@ -46,6 +46,7 @@ object ImGui :
         imgui_main,
         imgui_demoDebugInformations,
         imgui_window,
+        imgui_windowScrolling,
         imgui_parametersStacks,
         imgui_cursorLayout,
         imgui_colums,
@@ -95,9 +96,9 @@ operator fun StringBuilder.plusAssign(string: String) {
 
 // Typedefs and Enumerations (declared as int for compatibility and to not pollute the top of this file)
 
-/** unique ID used by widgets (typically hashed from a stack of string) */
+/** Unique ID used by widgets (typically hashed from a stack of string) */
 typealias ID = Int
-/** user data to identify a texture */
+/** User data to identify a texture */
 typealias TextureID = Int
 
 /** flags: for DrawList::addRect*() etc.   // enum DrawCornerFlag */
@@ -111,7 +112,8 @@ typealias FontAtlasFlags = Int
 typealias ColorEditFlags = Int
 /** flags: for *Columns*()                   // enum ColumnsFlag */
 typealias ColumnsFlags = Int
-//typedef int ImGuiConfigFlags;       // flags: for io.ConfigFlags                // enum ImGuiConfigFlags_
+/** flags: for io.ConfigFlags                // enum ConfigFlag */
+typealias ConfigFlags = Int
 /** flags: for *DragDrop*()                  // enum DragDropFlag */
 typealias DragDropFlags = Int
 /** flags: for BeginCombo()                  // enum ComboFlag */
@@ -124,10 +126,10 @@ typealias HoveredFlags = Int
 typealias InputTextFlags = Int
 /** flags: for Selectable()                  // enum SelectableFlag */
 typealias SelectableFlags = Int
-///** flags: for TreeNode*(),CollapsingHeader()// enum TreeNodeFlag */
-//typealias TreeNodeFlags = Int
-///** flags: for Begin*()                      // enum WindowFlag */
-//typealias WindowFlags = Int
+/** flags: for TreeNode*(),CollapsingHeader()// enum TreeNodeFlag */
+typealias TreeNodeFlags = Int
+/** flags: for Begin*()                      // enum WindowFlag */
+typealias WindowFlags = Int
 
 // dummy main
 fun main(args: Array<String>) {

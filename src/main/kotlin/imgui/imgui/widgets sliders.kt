@@ -29,7 +29,7 @@ import imgui.ImGui.style
 import imgui.Ref
 import imgui.g
 import imgui.internal.Rect
-import imgui.internal.SliderFlags
+import imgui.internal.SliderFlag
 import imgui.internal.focus
 import imgui.shl
 import kotlin.reflect.KMutableProperty0
@@ -210,7 +210,7 @@ interface imgui_widgetsSliders {
         }
 
         // Actual slider behavior + render grab
-        val valueChanged = sliderBehavior(frameBb, id, v, vMin, vMax, power, decimalPrecision, SliderFlags.Vertical.i)
+        val valueChanged = sliderBehavior(frameBb, id, v, vMin, vMax, power, decimalPrecision, SliderFlag.Vertical.i)
 
         /*  Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
             For the vertical slider we allow centered text to overlap the frame padding         */
