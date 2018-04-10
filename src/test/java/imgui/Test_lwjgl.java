@@ -5,6 +5,7 @@ import glm_.vec4.Vec4;
 import imgui.impl.LwjglGL3;
 import org.lwjgl.opengl.GL;
 import uno.glfw.GlfwWindow;
+import static imgui.impl.CommonKt.setGlslVersion;
 
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
@@ -28,6 +29,7 @@ public class Test_lwjgl {
         init();
 
         // Setup ImGui binding
+        //setGlslVersion(330); // set here your desidered glsl version
         Context ctx = new Context(null);
         lwjglGL3.init(window, true);
 
