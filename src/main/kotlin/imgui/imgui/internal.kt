@@ -81,10 +81,10 @@ import imgui.ColorEditFlag as Cef
 import imgui.DragDropFlag as Ddf
 import imgui.HoveredFlag as Hf
 import imgui.InputTextFlag as Itf
-import imgui.ItemFlags as If
-import imgui.TreeNodeFlags as Tnf
-import imgui.WindowFlags as Wf
-import imgui.internal.ButtonFlags as Bf
+import imgui.ItemFlag as If
+import imgui.TreeNodeFlag as Tnf
+import imgui.WindowFlag as Wf
+import imgui.internal.ButtonFlag as Bf
 import imgui.internal.ColumnsFlag as Cf
 import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.LayoutType as Lt
@@ -226,7 +226,7 @@ interface imgui_internal {
         /*  We need to calculate this now to take account of the current clipping rectangle (as items like Selectable
             may change them)         */
         if (isMouseHoveringRect(bb.min, bb.max))
-            dc.lastItemStatusFlags = dc.lastItemStatusFlags or ItemStatusFlags.HoveredRect
+            dc.lastItemStatusFlags = dc.lastItemStatusFlags or ItemStatusFlag.HoveredRect
         return true
     }
 
@@ -324,8 +324,8 @@ interface imgui_internal {
     }
 
     /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets
-     *  @param option = ItemFlags   */
-    fun pushItemFlag(option: Int, enabled: Boolean) = with(ImGui.currentWindow.dc) {
+     *  @param option = ItemFlag   */
+    fun pushItemFlag(option: ItemFlags, enabled: Boolean) = with(ImGui.currentWindow.dc) {
         if (enabled)
             itemFlags = itemFlags or option
         else
@@ -419,7 +419,7 @@ interface imgui_internal {
     /** return true if the popup is open    */
     fun isPopupOpen(id: ID) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
 
-    fun beginPopupEx(id: ID, extraFlags: Int): Boolean {
+    fun beginPopupEx(id: ID, extraFlags: WindowFlags): Boolean {
 
         if (!isPopupOpen(id)) {
             g.nextWindowData.clear() // We behave like Begin() and need to consume those values
@@ -440,8 +440,8 @@ interface imgui_internal {
     }
 
     /** Not exposed publicly as BeginTooltip() because bool parameters are evil. Let's see if other needs arise first.
-     *  @param extraFlags WindowFlags   */
-    fun beginTooltipEx(extraFlags: Int, overridePreviousTooltip: Boolean = true) {
+     *  @param extraFlags WindowFlag   */
+    fun beginTooltipEx(extraFlags: WindowFlags, overridePreviousTooltip: Boolean = true) {
 
         var windowName = "##Tooltip_%02d".format(style.locale, g.tooltipOverrideCount)
         if (overridePreviousTooltip)
@@ -509,16 +509,16 @@ interface imgui_internal {
         }
     }
 
-    /** @param dirSources: NavDirSourceFlags    */
-    fun getNavInputAmount2d(dirSources: Int, mode: InputReadMode, slowFactor: Float = 0f, fastFactor: Float = 0f): Vec2 {
+    /** @param dirSources: NavDirSourceFlag    */
+    fun getNavInputAmount2d(dirSources: NavDirSourceFlags, mode: InputReadMode, slowFactor: Float = 0f, fastFactor: Float = 0f): Vec2 {
         val delta = Vec2()
-        if (dirSources has NavDirSourceFlags.Keyboard)
+        if (dirSources has NavDirSourceFlag.Keyboard)
             delta += Vec2(getNavInputAmount(NavInput.KeyRight, mode) - getNavInputAmount(NavInput.KeyLeft, mode),
                     getNavInputAmount(NavInput.KeyDown, mode) - getNavInputAmount(NavInput.KeyUp, mode))
-        if (dirSources has NavDirSourceFlags.PadDPad)
+        if (dirSources has NavDirSourceFlag.PadDPad)
             delta += Vec2(getNavInputAmount(NavInput.DpadRight, mode) - getNavInputAmount(NavInput.DpadLeft, mode),
                     getNavInputAmount(NavInput.DpadDown, mode) - getNavInputAmount(NavInput.DpadUp, mode))
-        if (dirSources has NavDirSourceFlags.PadLStick)
+        if (dirSources has NavDirSourceFlag.PadLStick)
             delta += Vec2(getNavInputAmount(NavInput.LStickRight, mode) - getNavInputAmount(NavInput.LStickLeft, mode),
                     getNavInputAmount(NavInput.LStickDown, mode) - getNavInputAmount(NavInput.LStickUp, mode))
         if (slowFactor != 0f && NavInput.TweakSlow.isDown())
@@ -776,8 +776,8 @@ interface imgui_internal {
                 maxX = max(contentRegionWidth - scroll.x, minX + 1f)
                 startPosY = dc.cursorPos.y
                 startMaxPosX = dc.cursorMaxPos.x
-                cellMaxY = dc.cursorPos.y
-                cellMinY = dc.cursorPos.y
+                lineMaxY = dc.cursorPos.y
+                lineMinY = dc.cursorPos.y
             }
             dc.columnsOffsetX = 0f
             dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
@@ -815,8 +815,8 @@ interface imgui_internal {
         popClipRect()
         drawList.channelsMerge()
 
-        columns.cellMaxY = glm.max(columns.cellMaxY, dc.cursorPos.y)
-        dc.cursorPos.y = columns.cellMaxY
+        columns.lineMaxY = glm.max(columns.lineMaxY, dc.cursorPos.y)
+        dc.cursorPos.y = columns.lineMaxY
         if (columns.flags hasnt Cf.GrowParentContentsSize)
             dc.cursorMaxPos.x = max(columns.startMaxPosX, columns.maxX) // Restore cursor max pos, as columns don't grow parent
 
@@ -1077,18 +1077,18 @@ interface imgui_internal {
     }
 
     /** Navigation highlight
-     * @param flags: NavHighlightFlags  */
-    fun renderNavHighlight(bb: Rect, id: ID, flags: Int = NavHighlightFlags.TypeDefault.i) {
+     * @param flags: NavHighlightFlag  */
+    fun renderNavHighlight(bb: Rect, id: ID, flags: NavHighlightFlags = NavHighlightFlag.TypeDefault.i) {
 
         if (id != g.navId) return
-        if (g.navDisableHighlight && flags hasnt NavHighlightFlags.AlwaysDraw) return
+        if (g.navDisableHighlight && flags hasnt NavHighlightFlag.AlwaysDraw) return
         val window = currentWindow
         if (window.dc.navHideHighlightOneFrame) return
 
-        val rounding = if (flags hasnt NavHighlightFlags.NoRounding) 0f else g.style.frameRounding
+        val rounding = if (flags hasnt NavHighlightFlag.NoRounding) 0f else g.style.frameRounding
         val displayRect = Rect(bb)
         displayRect clipWith window.clipRect
-        if (flags has NavHighlightFlags.TypeDefault) {
+        if (flags has NavHighlightFlag.TypeDefault) {
             val THICKNESS = 2f
             val DISTANCE = 3f + THICKNESS * 0.5f
             displayRect expand Vec2(DISTANCE)
@@ -1100,7 +1100,7 @@ interface imgui_internal {
             if (!fullyVisible)
                 window.drawList.popClipRect()
         }
-        if (flags has NavHighlightFlags.TypeThin)
+        if (flags has NavHighlightFlag.TypeThin)
             window.drawList.addRect(displayRect.min, displayRect.max, Col.NavHighlight.u32, rounding, 0.inv(), 1f)
     }
 
@@ -1344,22 +1344,23 @@ interface imgui_internal {
         if (isClipped) return pressed
 
         // Render
-        val col = if (held && hovered) Col.CloseButtonActive else if (hovered) Col.CloseButtonHovered else Col.CloseButton
         val center = Vec2(bb.center)
-        window.drawList.addCircleFilled(center, glm.max(2f, radius), col.u32, 12)
+        if (hovered) {
+            val col = if (held && hovered) Col.ButtonActive else Col.ButtonHovered
+            window.drawList.addCircleFilled(center, 2f max radius, col.u32, 9)
+        }
 
         val crossExtent = (radius * 0.7071f) - 1f
-        if (hovered) {
-            center -= 0.5f
-            window.drawList.addLine(center + crossExtent, center - crossExtent, Col.Text.u32)
-            window.drawList.addLine(center + Vec2(crossExtent, -crossExtent), center + Vec2(-crossExtent, crossExtent), Col.Text.u32)
-        }
+        val crossCol = Col.Text.u32
+        center -= 0.5f
+        window.drawList.addLine(center + crossExtent, center - crossExtent, crossCol, 1f)
+        window.drawList.addLine(center + Vec2(crossExtent, -crossExtent), center + Vec2(-crossExtent, crossExtent), crossCol, 1f)
 
         return pressed
     }
 
     /** [Internal]
-     *  @param flags: ButtonFlags */
+     *  @param flags: ButtonFlag */
     fun arrowButton(id: ID, dir: Dir, padding: Vec2, flags: Int = 0): Boolean {
         val window = g.currentWindow!!
         if (window.skipItems) return false
@@ -1379,10 +1380,10 @@ interface imgui_internal {
 
 
     fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
-                       flags: Int = 0) = sliderBehavior(frameBb, id, v, 0, vMin, vMax, power, decimalPrecision, flags)
+                       flags: SliderFlags = 0) = sliderBehavior(frameBb, id, v, 0, vMin, vMax, power, decimalPrecision, flags)
 
     fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
-                       flags: Int = 0): Boolean {
+                       flags: SliderFlags = 0): Boolean {
 
         f0 = v[ptr]
         val res = sliderBehavior(frameBb, id, ::f0, vMin, vMax, power, decimalPrecision, flags)
@@ -1396,12 +1397,12 @@ interface imgui_internal {
         val window = currentWindow
 
         // Draw frame
-        val frameCol = if(g.activeId == id) Col.FrameBgActive else if(g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
         renderNavHighlight(frameBb, id)
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
         val isNonLinear = (power < 1.0f - 0.00001f) || (power > 1.0f + 0.00001f)
-        val isHorizontal = flags hasnt SliderFlags.Vertical
+        val isHorizontal = flags hasnt SliderFlag.Vertical
 
         val grabPadding = 2f
         val sliderSz = (if (isHorizontal) frameBb.width else frameBb.height) - grabPadding * 2f
@@ -1443,7 +1444,7 @@ interface imgui_internal {
                     setNewValue = true
                 }
             } else if (g.activeIdSource == InputSource.Nav) {
-                val delta2 = getNavInputAmount2d(NavDirSourceFlags.Keyboard or NavDirSourceFlags.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
                 var delta = if (isHorizontal) delta2.x else -delta2.y
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveId()
@@ -1635,7 +1636,7 @@ interface imgui_internal {
                 g.dragLastMouseDelta.x = mouseDragDelta.x
             }
             if (g.activeIdSource == InputSource.Nav) {
-                adjustDelta = getNavInputAmount2d(NavDirSourceFlags.Keyboard or NavDirSourceFlags.PadDPad,
+                adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad,
                         InputReadMode.RepeatFast, 1f / 10f, 10f).x
                 // This is to avoid applying the saturation when already past the limits
                 if (vMin < vMax && ((vCur >= vMax && adjustDelta > 0f) || (vCur <= vMin && adjustDelta < 0f)))
@@ -1787,12 +1788,13 @@ interface imgui_internal {
 
         val userClicked = hovered && io.mouseClicked[0]
         val userScrolled = isMultiline && g.activeId == 0 && editState.id == id && g.activeIdPreviousFrame == drawWindow.getIdNoKeepAlive("#SCROLLY")
+        val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.NavKeyboard))
 
         var clearActiveId = false
 
-        var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || g.navInputId == id) && !isMultiline
+        var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || userNavInputStart) && !isMultiline
 //        println(g.imeLastKey)
-        if (focusRequested || userClicked || userScrolled || g.navInputId == id || g.imeLastKey != 0) {
+        if (focusRequested || userClicked || userScrolled || userNavInputStart) {
             if (g.activeId != id || g.imeLastKey != 0) {
                 // JVM, put char if no more in ime mode and last key is valid
 //                println("${g.imeInProgress}, ${g.imeLastKey}")
@@ -1904,9 +1906,9 @@ interface imgui_internal {
             if (io.inputCharacters[0].i != 0) {
                 /*  Process text input (before we check for Return because using some IME will effectively send a
                     Return?)
-                    We ignore CTRL inputs, but need to allow CTRL+ALT as some keyboards (e.g. German) use AltGR - which
-                    is Alt+Ctrl - to input certain characters.  */
-                if (!(io.keyCtrl && !io.keyAlt) && isEditable)
+                    We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR
+                    (which _is_ Alt+Ctrl) to input certain characters. */
+                if (!(io.keyCtrl && !io.keyAlt) && isEditable && !userNavInputStart)
                     io.inputCharacters.filter { it != NUL }.map {
                         withChar { c ->
                             // Insert character if they pass filtering
@@ -2529,7 +2531,7 @@ interface imgui_internal {
         endPopup()
     }
 
-    fun treeNodeBehavior(id: ID, flags: Int, label: String, labelEnd: Int = 0): Boolean {
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd: Int = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -2567,7 +2569,7 @@ interface imgui_internal {
             window.dc.treeDepthMayJumpToParentOnPop = window.dc.treeDepthMayJumpToParentOnPop or (1 shl window.dc.treeDepth)
 
         val itemAdd = itemAdd(interactBb, id)
-        window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlags.HasDisplayRect
+        window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HasDisplayRect
         window.dc.lastItemDisplayRect put frameBb
 
         if (!itemAdd) {
@@ -2626,7 +2628,7 @@ interface imgui_internal {
         if (displayFrame) {
             // Framed type
             renderFrame(frameBb.min, frameBb.max, col.u32, true, style.frameRounding)
-            renderNavHighlight(frameBb, id, NavHighlightFlags.TypeThin.i)
+            renderNavHighlight(frameBb, id, NavHighlightFlag.TypeThin.i)
             renderArrow(frameBb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
@@ -2640,7 +2642,7 @@ interface imgui_internal {
             // Unframed typed for tree nodes
             if (hovered || flags has Tnf.Selected) {
                 renderFrame(frameBb.min, frameBb.max, col.u32, false)
-                renderNavHighlight(frameBb, id, NavHighlightFlags.TypeThin.i)
+                renderNavHighlight(frameBb, id, NavHighlightFlag.TypeThin.i)
             }
             if (flags has Tnf.Bullet)
                 TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
@@ -2658,7 +2660,7 @@ interface imgui_internal {
     }
 
     /** Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging */
-    fun treeNodeBehaviorIsOpen(id: ID, flags: Int = 0): Boolean {
+    fun treeNodeBehaviorIsOpen(id: ID, flags: TreeNodeFlags = 0): Boolean {
 
         if (flags has Tnf.Leaf) return true
 
@@ -2759,7 +2761,7 @@ interface imgui_internal {
             }
 
             val tStep = 1f / resW
-            val invScale = if(scaleMin == scaleMax) 0f else 1f / (scaleMax - scaleMin)
+            val invScale = if (scaleMin == scaleMax) 0f else 1f / (scaleMax - scaleMin)
 
             val v0 = data[(0 + valuesOffset) % valuesCount]
             var t0 = 0f

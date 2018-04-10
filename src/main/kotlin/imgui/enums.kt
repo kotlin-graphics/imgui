@@ -6,7 +6,7 @@ import imgui.ImGui.isKeyPressed
 import imgui.internal.InputReadMode
 
 /** Flags for ImGui::Begin()    */
-enum class WindowFlags(val i: Int) {
+enum class WindowFlag(val i: Int) {
 
     Null(0),
     /** Disable title-bar   */
@@ -71,14 +71,14 @@ enum class WindowFlags(val i: Int) {
     /** Don't use! For internal use by BeginMenu()  */
     ChildMenu(1 shl 28);
 
-    infix fun or(b: WindowFlags) = i or b.i
-    infix fun or(b: Int) = i or b
+    infix fun or(b: WindowFlag): WindowFlags = i or b.i
+    infix fun or(b: Int): WindowFlags = i or b
 }
 
-infix fun Int.or(b: WindowFlags) = this or b.i
-infix fun Int.has(b: WindowFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: WindowFlags) = (this and b.i) == 0
-infix fun Int.wo(b: WindowFlags) = this and b.i.inv()
+infix fun Int.or(b: WindowFlag): WindowFlags = this or b.i
+infix fun Int.has(b: WindowFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: WindowFlag) = (this and b.i) == 0
+infix fun Int.wo(b: WindowFlag): WindowFlags = this and b.i.inv()
 
 /** Flags for ImGui::InputText()    */
 enum class InputTextFlag(val i: Int) {
@@ -135,7 +135,7 @@ infix fun Int.has(b: InputTextFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: InputTextFlag) = (this and b.i) == 0
 
 /** Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader*()   */
-enum class TreeNodeFlags(val i: Int) {
+enum class TreeNodeFlag(val i: Int) {
 
     Null(0),
     /** Draw as selected    */
@@ -169,12 +169,12 @@ enum class TreeNodeFlags(val i: Int) {
     NavLeftJumpsBackHere(1 shl 13),
     CollapsingHeader(Framed or NoAutoOpenOnLog);
 
-    infix fun or(treeNodeFlag: TreeNodeFlags) = i or treeNodeFlag.i
+    infix fun or(treeNodeFlag: TreeNodeFlag): TreeNodeFlags = i or treeNodeFlag.i
 }
 
-infix fun Int.or(b: TreeNodeFlags) = this or b.i
-infix fun Int.has(b: TreeNodeFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: TreeNodeFlags) = (this and b.i) == 0
+infix fun Int.or(b: TreeNodeFlag): TreeNodeFlags = this or b.i
+infix fun Int.has(b: TreeNodeFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: TreeNodeFlag) = (this and b.i) == 0
 
 /** Flags for ImGui::Selectable()   */
 enum class SelectableFlag(val i: Int) {
@@ -222,6 +222,7 @@ enum class ComboFlag(val i: Int) {
 
 infix fun ComboFlag.or(other: ComboFlag): ComboFlags = i or other.i
 infix fun Int.and(other: ComboFlag): ComboFlags = and(other.i)
+infix fun Int.wo(other: ComboFlag): ComboFlags = and(other.i.inv())
 infix fun Int.or(other: ComboFlag): ComboFlags = or(other.i)
 infix fun Int.has(b: ComboFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ComboFlag) = and(b.i) == 0
@@ -305,12 +306,12 @@ infix fun Int.has(b: DragDropFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: DragDropFlag) = (this and b.i) == 0
 
 // Standard Drag and Drop payload types. Types starting with '_' are defined by Dear ImGui.
-/** float[3], Standard type for colors, without alpha. User code may use this type. */
+/** float[3]: Standard type for colors, without alpha. User code may use this type. */
 val PAYLOAD_TYPE_COLOR_3F = "_COL3F"
-/** float[4], Standard type for colors. User code may use this type. */
+/** float[4]: Standard type for colors. User code may use this type. */
 val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 
-/** A direction */
+/** A cardinal direction */
 enum class Dir { None, Left, Right, Up, Down, Count;
 
     val i = ordinal - 1
@@ -384,7 +385,7 @@ enum class NavInput {
 
     /*  [Internal] Don't use directly! This is used internally to differentiate keyboard from gamepad inputs for
         behaviors that require to differentiate them.
-        Keyboard behavior that have no corresponding gamepad mapping (e.g. CTRL + TAB) may be directly reading from
+        Keyboard behavior that have no corresponding gamepad mapping (e.g. CTRL + TAB) will be directly reading from
         io.keyDown[] instead of io.navInputs[]. */
 
     /** toggle menu = io.keyAlt */
@@ -413,7 +414,7 @@ enum class NavInput {
 }
 
 /** Configuration flags stored in io.configFlags  */
-enum class ConfigFlags(val i: Int) {
+enum class ConfigFlag(val i: Int) {
     /** Master keyboard navigation enable flag. ::newFrame() will automatically fill io.navInputs[] based on io.keyDown[].    */
     NavEnableKeyboard(1 shl 0),
     /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.navInputs[].   */
@@ -434,10 +435,10 @@ enum class ConfigFlags(val i: Int) {
     IsTouchScreen(1 shl 21);
 }
 
-infix fun Int.has(b: ConfigFlags) = and(b.i) != 0
-infix fun Int.hasnt(b: ConfigFlags) = and(b.i) == 0
-infix fun Int.or(b: ConfigFlags) = or(b.i)
-infix fun ConfigFlags.or(b: ConfigFlags) = i or b.i
+infix fun Int.has(b: ConfigFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: ConfigFlag) = and(b.i) == 0
+infix fun Int.or(b: ConfigFlag): ConfigFlags = or(b.i)
+infix fun ConfigFlag.or(b: ConfigFlag): ConfigFlags = i or b.i
 
 /** Enumeration for PushStyleColor() / PopStyleColor()  */
 
@@ -609,15 +610,12 @@ enum class Col {
     ResizeGrip,
     ResizeGripHovered,
     ResizeGripActive,
-    CloseButton,
-    CloseButtonHovered,
-    CloseButtonActive,
     PlotLines,
     PlotLinesHovered,
     PlotHistogram,
     PlotHistogramHovered,
     TextSelectedBg,
-    /** darken entire screen when a modal window is active   */
+    /** darken/colorize entire screen behind a modal window, when one is active   */
     ModalWindowDarkening,
     DragDropTarget,
     /** gamepad/keyboard: current highlighted item  */
@@ -735,7 +733,8 @@ enum class ColorEditFlag(val i: Int) {
     PickerHueBar(1 shl 18),
     /** [PickerMode] ColorPicker: wheel for Hue, triangle for Sat/Value.    */
     PickerHueWheel(1 shl 19),
-    // Internals/Masks
+
+    // [Internal] Masks
     _InputsMask(RGB or HSV or HEX),
     _DataTypeMask(Uint8 or Float),
     _PickerMask(PickerHueWheel or PickerHueBar),
@@ -753,14 +752,16 @@ infix fun Int.hasnt(b: ColorEditFlag) = (this and b.i) == 0
 infix fun Int.wo(b: ColorEditFlag): ColorEditFlags = this and b.i.inv()
 infix fun Int.wo(b: Int): ColorEditFlags = this and b.inv()
 
-/** Enumeration for GetMouseCursor()    */
+/** Enumeration for GetMouseCursor()
+ *  User code may request binding to display given cursor by calling SetMouseCursor(),
+ *  which is why we have some cursors that are marked unused here */
 enum class MouseCursor {
 
     None,
     Arrow,
     /** When hovering over InputText, etc.  */
     TextInput,
-    /** Unused  */
+    /** Unused by imgui functions */
     ResizeAll,
     /** When hovering over an horizontal border  */
     ResizeNS,
@@ -789,9 +790,9 @@ enum class Cond(val i: Int) {
     Always(1 shl 0),
     /** Set the variable once per runtime session (only the first call with succeed)    */
     Once(1 shl 1),
-    /** Set the variable if the window has no saved data (if doesn't exist in the .ini file)    */
+    /** Set the variable if the object/window has no persistently saved data (no entry in .ini file)    */
     FirstUseEver(1 shl 2),
-    /** Set the variable if the window is appearing after being hidden/inactive (or the first time) */
+    /** Set the variable if the object/window is appearing after being hidden/inactive (or the first time) */
     Appearing(1 shl 3);
 
     infix fun or(other: Cond) = i or other.i
@@ -806,7 +807,7 @@ infix fun Int.wo(b: Cond) = and(b.i.inv())
 
 /** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
  *  This is going to be exposed in imgui.h when stabilized enough.  */
-enum class ItemFlags(val i: Int) {
+enum class ItemFlag(val i: Int) {
     /** true    */
     AllowKeyboardFocus(1 shl 0),
     /** false. Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.  */
@@ -823,8 +824,8 @@ enum class ItemFlags(val i: Int) {
     Default_(AllowKeyboardFocus.i)
 }
 
-infix fun ItemFlags.or(other: ItemFlags) = i or other.i
-infix fun Int.or(other: ItemFlags) = or(other.i)
-infix fun Int.has(b: ItemFlags) = (this and b.i) != 0
-infix fun Int.hasnt(b: ItemFlags) = (this and b.i) == 0
-infix fun Int.wo(b: ItemFlags) = and(b.i.inv())
+infix fun ItemFlag.or(other: ItemFlag) = i or other.i
+infix fun Int.or(other: ItemFlag) = or(other.i)
+infix fun Int.has(b: ItemFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: ItemFlag) = (this and b.i) == 0
+infix fun Int.wo(b: ItemFlag) = and(b.i.inv())

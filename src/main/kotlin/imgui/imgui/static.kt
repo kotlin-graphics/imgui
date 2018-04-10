@@ -11,7 +11,7 @@ import imgui.ImGui.navInitWindow
 import imgui.ImGui.style
 import imgui.internal.*
 import kotlin.math.abs
-import imgui.WindowFlags as Wf
+import imgui.WindowFlag as Wf
 
 fun navScoreItemGetQuadrant(dx: Float, dy: Float) = when {
     abs(dx) > abs(dy) -> when {

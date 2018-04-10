@@ -20,7 +20,7 @@ import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sin
 import imgui.HoveredFlag as Hf
-import imgui.WindowFlags as Wf
+import imgui.WindowFlag as Wf
 
 
 /** 2D axis aligned bounding-box
@@ -281,11 +281,12 @@ class ColumnsSet {
     var count = 1
     var minX = 0f
     var maxX = 0f
+    /** Copy of CursorPos */
     var startPosY = 0f
-    /** Backup of cursorMaxPos */
+    /** Copy of CursorMaxPos */
     var startMaxPosX = 0f
-    var cellMinY = 0f
-    var cellMaxY = 0f
+    var lineMinY = 0f
+    var lineMaxY = 0f
     val columns = ArrayList<ColumnData>()
 
     fun clear() {
@@ -299,8 +300,8 @@ class ColumnsSet {
         minX = 0f
         startPosY = 0f
         startMaxPosX = 0f
-        cellMaxY = 0f
-        cellMinY = 0f
+        lineMaxY = 0f
+        lineMinY = 0f
         columns.clear()
     }
 }
@@ -431,8 +432,8 @@ class DrawContext {
     var treeDepthMayJumpToParentOnPop = 0
 
     var lastItemId: ID = 0
-    /** ItemStatusFlags */
-    var lastItemStatusFlags = 0
+    /** ItemStatusFlag */
+    var lastItemStatusFlags: ItemStatusFlags = 0
     /** Interaction rect    */
     var lastItemRect = Rect()
     /** End-user display rect (only valid if LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) */
@@ -466,14 +467,14 @@ class DrawContext {
     /*  We store the current settings outside of the vectors to increase memory locality (reduce cache misses).
         The vectors are rarely modified. Also it allows us to not heap allocate for short-lived windows which are not
         using those settings.   */
-    /** == itemFlagsStack.last() [empty == ItemFlags.Default]   */
-    var itemFlags = 0
+    /** == itemFlagsStack.last() [empty == ItemFlag.Default]   */
+    var itemFlags: ItemFlags = 0
     /** == ItemWidthStack.back(). 0.0: default, >0.0: width in pixels, <0.0: align xx pixels to the right of window */
     var itemWidth = 0f
     /** == TextWrapPosStack.back() [empty == -1.0f] */
     var textWrapPos = -1f
 
-    val itemFlagsStack = Stack<Int>()
+    val itemFlagsStack = Stack<ItemFlags>()
 
     val itemWidthStack = Stack<Float>()
 
@@ -503,8 +504,8 @@ class DrawContext {
 class Window(var context: Context, var name: String) {
     /** == ImHash(Name) */
     val id: ID = hash(name, 0)
-    /** See enum ImGuiWindowFlags_  */
-    var flags = 0
+    /** See enum WindowFlags */
+    var flags: WindowFlags = 0
 
     var posF = Vec2()
     /** Position rounded-up to nearest pixel    */

@@ -34,8 +34,8 @@ import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.SelectableFlag as Sf
-import imgui.TreeNodeFlags as Tnf
-import imgui.WindowFlags as Wf
+import imgui.TreeNodeFlag as Tnf
+import imgui.WindowFlag as Wf
 
 object popupsAndModalWindows {
 

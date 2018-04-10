@@ -29,9 +29,9 @@ import kotlin.collections.set
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
-import imgui.ConfigFlags as Cf
+import imgui.ConfigFlag as Cf
 import imgui.InputTextFlag as Itf
-import imgui.WindowFlags as Wf
+import imgui.WindowFlag as Wf
 
 
 fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = 0): Nothing = TODO()
@@ -231,7 +231,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
 
         if (window.flags has Wf.NoSavedSettings) continue
         /** This will only return NULL in the rare instance where the window was first created with
-         *  WindowFlags.NoSavedSettings then had the flag disabled later on.
+         *  WindowFlag.NoSavedSettings then had the flag disabled later on.
          *  We don't bind settings in this case (bug #1000).    */
         val settings = findWindowSettings(window.id) ?: addWindowSettings(window.name)
         settings.pos put window.pos
@@ -626,13 +626,18 @@ fun navUpdate() {
 
 //    if (g.NavScoringCount > 0) printf("[%05d] NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.FrameCount, g.NavScoringCount, g.NavWindow ? g . NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest)
 
+    if (g.io.configFlags has Cf.NavEnableGamepad)
+        if (g.io.navInputs[NavInput.Activate] > 0f || g.io.navInputs[NavInput.Input] > 0f ||
+                g.io.navInputs[NavInput.Cancel] > 0f || g.io.navInputs[NavInput.Menu] > 0f)
+            g.navInputSource = InputSource.NavGamepad
+
     // Update Keyboard->Nav inputs mapping
-    for (i in NavInput.InternalStart until NavInput.COUNT)
-        io.navInputs[i] = 0f
     if (io.configFlags has Cf.NavEnableKeyboard) {
         fun navMapKey(key: Key, navInput: NavInput) {
-            if (io.keyMap[key] != -1 && isKeyDown(io.keyMap[key]))
-                io.navInputs[navInput] = 1f
+            if (isKeyDown(g.io.keyMap[key])) {
+                g.io.navInputs[navInput] = 1f
+                g.navInputSource = InputSource.NavKeyboard
+            }
         }
         navMapKey(Key.Space, NavInput.Activate)
         navMapKey(Key.Enter, NavInput.Input)
@@ -842,7 +847,7 @@ fun navUpdate() {
 
             // *Normal* Manual scroll with NavScrollXXX keys
             // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
-            val scrollDir = getNavInputAmount2d(NavDirSourceFlags.PadLStick.i, InputReadMode.Down, 1f / 10f, 10f)
+            val scrollDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down, 1f / 10f, 10f)
             if (scrollDir.x != 0f && it.scrollbar.x) {
                 it.setScrollX(glm.floor(it.scroll.x + scrollDir.x * scrollSpeed))
                 g.navMoveFromClampedRefRect = true
@@ -909,13 +914,13 @@ fun navUpdateWindowing() {
             g.navWindowingHighlightAlpha = 0f
             g.navWindowingHighlightTimer = 0f
             g.navWindowingToggleLayer = !startWindowingWithKeyboard
-            g.navWindowingInputSource = if (startWindowingWithKeyboard) InputSource.NavKeyboard else InputSource.NavGamepad
+            g.navInputSource = if (startWindowingWithKeyboard) InputSource.NavKeyboard else InputSource.NavGamepad
         }
 
     // Gamepad update
     g.navWindowingHighlightTimer += io.deltaTime
     g.navWindowingTarget?.let {
-        if (g.navWindowingInputSource == InputSource.NavGamepad) {
+        if (g.navInputSource == InputSource.NavGamepad) {
             /*  Highlight only appears after a brief time holding the button, so that a fast tap on PadMenu
                 (to toggle NavLayer) doesn't add visual noise             */
             g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingHighlightTimer - 0.2f) / 0.05f))
@@ -941,7 +946,7 @@ fun navUpdateWindowing() {
     }
     // Keyboard: Focus
     g.navWindowingTarget?.let {
-        if (g.navWindowingInputSource == InputSource.NavKeyboard) {
+        if (g.navInputSource == InputSource.NavKeyboard) {
             // Visuals only appears after a brief time after pressing TAB the first time, so that a fast CTRL+TAB doesn't add visual noise
             g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingHighlightTimer - 0.15f) / 0.04f)) // 1.0f
             if (Key.Tab.isPressed(true))
@@ -961,10 +966,10 @@ fun navUpdateWindowing() {
     g.navWindowingTarget?.let {
         if (it.flags hasnt Wf.NoMove) {
             var moveDelta = Vec2()
-            if (g.navWindowingInputSource == InputSource.NavKeyboard && !io.keyShift)
-                moveDelta = getNavInputAmount2d(NavDirSourceFlags.Keyboard.i, InputReadMode.Down)
-            if (g.navWindowingInputSource == InputSource.NavGamepad)
-                moveDelta = getNavInputAmount2d(NavDirSourceFlags.PadLStick.i, InputReadMode.Down)
+            if (g.navInputSource == InputSource.NavKeyboard && !io.keyShift)
+                moveDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)
+            if (g.navInputSource == InputSource.NavGamepad)
+                moveDelta = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down)
             if (moveDelta.x != 0f || moveDelta.y != 0f) {
                 val NAV_MOVE_SPEED = 800f
                 val moveSpeed = glm.floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
@@ -1018,18 +1023,18 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
     val navBbRel = Rect(navBb.min - window.pos, navBb.max - window.pos)
     if (g.navInitRequest && g.navLayer == window.dc.navLayerCurrent) {
         // Even if 'ImGuiItemFlags_NoNavDefaultFocus' is on (typically collapse/close button) we record the first ResultId so they can be used as a fallback
-        if (itemFlags hasnt ItemFlags.NoNavDefaultFocus || g.navInitResultId == 0) {
+        if (itemFlags hasnt ItemFlag.NoNavDefaultFocus || g.navInitResultId == 0) {
             g.navInitResultId = id
             g.navInitResultRectRel = navBbRel
         }
-        if (itemFlags hasnt ItemFlags.NoNavDefaultFocus) {
+        if (itemFlags hasnt ItemFlag.NoNavDefaultFocus) {
             g.navInitRequest = false // Found a match, clear request
             navUpdateAnyRequestFlag()
         }
     }
 
     // Scoring for navigation
-    if (g.navId != id && itemFlags hasnt ItemFlags.NoNav) {
+    if (g.navId != id && itemFlags hasnt ItemFlag.NoNav) {
         val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
         val newBest =
                 if (IMGUI_DEBUG_NAV_SCORING) {  // [DEBUG] Score all items in NavWindow at all times

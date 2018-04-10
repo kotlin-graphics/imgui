@@ -55,8 +55,8 @@ import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.SelectableFlag as Sf
-import imgui.TreeNodeFlags as Tnf
-import imgui.WindowFlags as Wf
+import imgui.TreeNodeFlag as Tnf
+import imgui.WindowFlag as Wf
 
 /**
  *  Message to the person tempted to delete this file when integrating ImGui into their code base:
@@ -123,6 +123,7 @@ interface imgui_demoDebugInformations {
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
                 text("NavWindow: '${g.navWindow?.name}'")
                 text("NavId: 0x%08X, NavLayer: ${g.navLayer}", g.navId)
+                text("NavInputSource: ${g.navInputSource}")
                 text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
                 text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
                 text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
@@ -136,7 +137,9 @@ interface imgui_demoDebugInformations {
 
     /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
      *  Here we use the simplified combo() api that packs items into a single literal string. Useful for quick combo
-     *  boxes where the choices are known locally.  */
+     *  boxes where the choices are known locally.
+     *
+     *  add style selector block (not a window), essentially a combo listing the default styles. */
     fun showStyleSelector(label: String) =
             if (combo(label, ::styleIdx, "Classic\u0000Dark\u0000Light\u0000")) {
                 when (styleIdx) {
@@ -148,7 +151,9 @@ interface imgui_demoDebugInformations {
             } else false
 
     /** Demo helper function to select among loaded fonts.
-     *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one. */
+     *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one.
+     *
+     *  add font selector block (not a window), essentially a combo listing the loaded fonts. */
     fun showFontSelector(label: String) {
         val fontCurrent = font
         if (beginCombo(label, fontCurrent.debugName)) {

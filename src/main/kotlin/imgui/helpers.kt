@@ -15,6 +15,9 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
 
+/** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within
+ *  deep-nested code that runs multiple times every frame.
+ *  Usage: static ImGuiOnceUponAFrame oaf; if (oaf) ImGui::Text("This will be called only once per frame"); */
 class OnceUponAFrame {
     init {
         TODO()
@@ -73,8 +76,9 @@ class TextBuffer {
 
 /** Helper: Simple Key->value storage
 Typically you don't have to worry about this since a storage is held within each Window.
-We use it to e.g. store collapse state for a tree (Int 0/1), store color edit options.
-You can use it as custom user storage for temporary values.
+We use it to e.g. store collapse state for a tree (Int 0/1)
+This is optimized for efficient lookup (dichotomy into a contiguous buffer) and rare insertion (typically tied to user
+interactions aka max once a frame)
 Declare your own storage if:
 - You want to manipulate the open/close state of a particular sub-tree in your interface (tree node uses Int 0/1
 to store their state).
@@ -148,7 +152,7 @@ class Payload {
     var sourceParentId: ID = 0
     /** Data timestamp */
     var dataFrameCount = -1
-    /** Data type tag (short user-supplied string, 12 characters max) */
+    /** Data type tag (short user-supplied string, 32 characters max) */
     var dataType = ""
     /** Set when AcceptDragDropPayload() was called and mouse has been hovering the target item (nb: handle overlapping drag targets) */
     var preview = false
@@ -334,8 +338,9 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
         fun setCursorPosYAndSetupDummyPrevLine(posY: Float, lineHeight: Float) {
             /*  Set cursor position and a few other things so that SetScrollHere() and Columns() can work when seeking
                 cursor.
-                FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would stumble
-                on the same issue. Consider moving within SetCursorXXX functions?   */
+                FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would
+                stumble on the same issue.
+                The clipper should probably have a 4th step to display the last item in a regular manner.   */
             cursorPosY = posY
             val window = currentWindow
             with(window.dc) {
@@ -344,7 +349,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
                 /*  If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a
                     fourth step to let user process and display the last item in their list.             */
                 prevLineHeight = lineHeight - style.itemSpacing.y
-                columnsSet?.cellMinY = window.dc.cursorPos.y // Setting this so that cell Y position are set properly
+                columnsSet?.lineMinY = window.dc.cursorPos.y // Setting this so that cell Y position are set properly
             }
         }
     }

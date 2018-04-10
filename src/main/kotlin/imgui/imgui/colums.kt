@@ -48,7 +48,7 @@ interface imgui_colums {
 
         with(window) {
             val columns = dc.columnsSet!!
-            columns.cellMaxY = max(columns.cellMaxY, dc.cursorPos.y)
+            columns.lineMaxY = max(columns.lineMaxY, dc.cursorPos.y)
             if (++columns.current < columns.count) {
                 // Columns 1+ cancel out IndentX
                 dc.columnsOffsetX = getColumnOffset(columns.current) - dc.indentX + style.itemSpacing.x
@@ -57,10 +57,10 @@ interface imgui_colums {
                 dc.columnsOffsetX = 0f
                 drawList.channelsSetCurrent(0)
                 columns.current = 0
-                columns.cellMinY = columns.cellMaxY
+                columns.lineMinY = columns.lineMaxY
             }
             dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
-            dc.cursorPos.y = columns.cellMinY
+            dc.cursorPos.y = columns.lineMinY
             dc.currentLineHeight = 0f
             dc.currentLineTextBaseOffset = 0f
         }

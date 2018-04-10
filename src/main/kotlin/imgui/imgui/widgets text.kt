@@ -215,26 +215,6 @@ interface imgui_widgetsText {
         renderText(bb.min + Vec2(g.fontSize + style.framePadding.x * 2, textBaseOffsetY), text, text.length, false)
     }
 
-    /** draw a small circle and keep the cursor on the same line. advance cursor x position
-     *  by GetTreeNodeToLabelSpacing(), same distance that TreeNode() uses  */
-    fun bullet() {
-
-        val window = currentWindow
-        if (window.skipItems) return
-
-        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), g.fontSize)
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(g.fontSize, lineHeight))
-        itemSize(bb)
-        if (!itemAdd(bb, 0)) {
-            sameLine(0f, style.framePadding.x * 2)
-            return
-        }
-
-        // Render and stay on same line
-        renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
-        sameLine(0f, style.framePadding.x * 2)
-    }
-
     // TODO, lambdas are so short, consider removing it
     object Items {
         // FIXME-OPT: we could pre-compute the indices to fasten this. But only 1 active combo means the waste is limited.

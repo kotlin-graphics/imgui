@@ -20,7 +20,7 @@ import imgui.internal.NavForward
 import imgui.internal.Window
 import kotlin.math.max
 import imgui.HoveredFlag as Hf
-import imgui.WindowFlags as Wf
+import imgui.WindowFlag as Wf
 
 /** Popups  */
 interface imgui_popups {
@@ -34,7 +34,7 @@ interface imgui_popups {
 
     /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returns true!
      *  @param flags = WindowFlag   */
-    fun beginPopup(strId: String, flags: Int = 0): Boolean {
+    fun beginPopup(strId: String, flags: WindowFlags = 0): Boolean {
         if (g.openPopupStack.size <= g.currentPopupStack.size) {    // Early out for performance
             g.nextWindowData.clear()    // We behave like Begin() and need to consume those values
             return false
@@ -76,7 +76,7 @@ interface imgui_popups {
     }
 
     /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside) */
-    fun beginPopupModal(name: String, pOpen: BooleanArray? = null, flags: Int = 0): Boolean {
+    fun beginPopupModal(name: String, pOpen: BooleanArray? = null, flags: WindowFlags = 0): Boolean {
 
         val window = g.currentWindow!!
         val id = window.getId(name)
