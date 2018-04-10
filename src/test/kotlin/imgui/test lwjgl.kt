@@ -8,6 +8,7 @@ import gln.glClearColor
 import gln.glViewport
 import imgui.functionalProgramming.button
 import imgui.impl.LwjglGL3
+import imgui.impl.glslVersion
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
@@ -46,6 +47,7 @@ class HelloWorld_lwjgl {
     fun run() {
 
         // Setup ImGui binding
+        // glslVersion = 330 // set here your desidered glsl version
         val ctx = Context()
         //io.configFlags = io.configFlags or ConfigFlags.NavEnableKeyboard  // Enable Keyboard Controls
         //io.configFlags = io.configFlags or ConfigFlags.NavEnableGamepad   // Enable Gamepad Controls
