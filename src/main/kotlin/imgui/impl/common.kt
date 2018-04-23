@@ -46,7 +46,7 @@ val fragmentShader
         }
         """
 
-var glslVersion = 150
+var glslVersion = 130
 
 
 val mouseJustPressed = BooleanArray(3)
