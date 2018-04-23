@@ -383,6 +383,10 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // Settings (fill once)
     //------------------------------------------------------------------
 
+    /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
+    var configFlags: ConfigFlags = 0
+    /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end. */
+    var backendFlags: BackendFlags = 0
     /** Display size, in pixels. For clamping windows positions.    */
     var displaySize = Vec2i(-1)
     /** Time elapsed since last frame, in seconds.  */
@@ -393,8 +397,6 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var iniFilename: String? = "imgui.ini"
     /** Path to .log file (default parameter to ImGui::LogToFile when no file is specified).    */
     var logFilename = "imgui_log.txt"
-    /** See ConfigFlag enum. Gamepad/keyboard navigation options, etc.    */
-    var configFlags: ConfigFlags = 0
     /** Time for a double-click, in seconds.    */
     var mouseDoubleClickTime = 0.3f
     /** Distance threshold to stay in to validate a double-click, in pixels.    */
@@ -522,8 +524,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
      *  it wants textual keyboard input to happen (e.g. when a InputText widget is active). */
     var wantTextInput = false
     /** MousePos has been altered, back-end should reposition mouse on next frame.
-     *  Set only when ConfigFlag.NavMoveMouse flag is enabled in IO.configFlags.    */
-    var wantMoveMouse = false
+     *  Set only when ConfigFlag.NavEnableSetMousePos flag is enabled in IO.configFlags.    */
+    var wantSetMousePos = false
     /** Directional navigation is currently allowed (will handle KeyNavXXX events) = a window is focused and it doesn't
      *  use the WindowFlag.NoNavInputs flag.   */
     var navActive = false

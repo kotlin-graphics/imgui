@@ -107,7 +107,7 @@ typealias DrawCornerFlags = Int
 typealias DrawListFlags = Int
 /** flags: for FontAtlas                   // enum FontAtlasFlags */
 typealias FontAtlasFlags = Int
-//typedef int ImGuiBackendFlags;      // flags: for io.BackendFlags               // enum ImGuiBackendFlags_
+//typedef int ImGuiBackendFlags;      // flags: for io.BackendFlag               // enum ImGuiBackendFlags_
 /** flags: for ColorEdit*(), ColorPicker*()  // enum ColorEditFlag */
 typealias ColorEditFlags = Int
 /** flags: for *Columns*()                   // enum ColumnsFlag */

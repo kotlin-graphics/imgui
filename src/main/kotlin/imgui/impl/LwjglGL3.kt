@@ -1,15 +1,14 @@
 package imgui.impl
 
 import glm_.*
-import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import gln.*
 import gln.buffer.glBufferData
 import gln.buffer.glBufferSubData
 import gln.glf.semantic
-import gln.program.*
-import gln.program.ProgramUse.unit
+import gln.program.Program
+import gln.program.usingProgram
 import gln.texture.initTexture2d
 import gln.uniform.glUniform
 import gln.vertexArray.glBindVertexArray
@@ -30,7 +29,6 @@ import org.lwjgl.opengl.GL33.glBindSampler
 import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
-import uno.buffer.intBufferOf
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
 
@@ -49,6 +47,11 @@ object LwjglGL3 {
         this.window = window
 
         with(io) {
+
+            // Setup back-end capabilities flags
+            backendFlags = backendFlags or BackendFlag.HasMouseCursors   // We can honor GetMouseCursor() values (optional)
+            backendFlags = backendFlags or BackendFlag.HasSetMousePos    // We can honor io.WantSetMousePos requests (optional, rarely used)
+
             // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
             keyMap[Key.Tab] = GLFW_KEY_TAB
             keyMap[Key.LeftArrow] = GLFW_KEY_LEFT
@@ -115,12 +118,11 @@ object LwjglGL3 {
             (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
             Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)   */
         if (window.focused)
-            if (io.wantMoveMouse)
-            /*  Set mouse position if requested by io.WantMoveMouse flag (used when io.NavMovesTrue is enabled by user
-                and using directional navigation)   */
+        // Set OS mouse position if requested (only used when ConfigFlags.NavEnableSetMousePos is enabled by user)
+            if (io.wantSetMousePos)
                 window.cursorPos = Vec2d(io.mousePos)
             else
-                io.mousePos put window.cursorPos
+                io.mousePos(window.cursorPos)
         else
             io.mousePos put -Float.MAX_VALUE
 
@@ -132,12 +134,58 @@ object LwjglGL3 {
         }
 
         // Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
-        val cursor = mouseCursor
-        if (io.mouseDrawCursor || cursor == MouseCursor.None)
-            window.cursor = GlfwWindow.Cursor.Hidden
-        else {
-            glfwSetCursor(window.handle, if (mouseCursors[cursor.i] != 0L) mouseCursors[cursor.i] else mouseCursors[MouseCursor.Arrow.i])
-            window.cursor = GlfwWindow.Cursor.Normal
+        if (io.configFlags hasnt ConfigFlag.NoSetMouseCursor && window.cursor != GlfwWindow.Cursor.Disabled) {
+            val cursor = mouseCursor
+            if (io.mouseDrawCursor || cursor == MouseCursor.None)
+                window.cursor = GlfwWindow.Cursor.Hidden
+            else {
+                glfwSetCursor(window.handle, if (mouseCursors[cursor.i] != 0L) mouseCursors[cursor.i] else mouseCursors[MouseCursor.Arrow.i])
+                window.cursor = GlfwWindow.Cursor.Normal
+            }
+        }
+
+        // Gamepad navigation mapping [BETA]
+        io.navInputs.fill(0f)
+        if (io.configFlags has ConfigFlag.NavEnableGamepad) {
+            // Update gamepad inputs
+            val buttons = window.getJoystickButtons(GLFW_JOYSTICK_1)!!
+            val buttonsCount = buttons.capacity()
+            val axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1)!!
+            val axesCount = axes.capacity()
+            fun mapButton(nav: NavInput, button: Int) {
+                if (buttonsCount > button && buttons[button] == GLFW_PRESS.b)
+                    io.navInputs[nav] = 1f
+            }
+
+            fun mapAnalog(nav: NavInput, axis: Int, v0: Float, v1: Float) {
+                var v = if (axesCount > axis) axes[axis] else v0
+                v = (v - v0) / (v1 - v0)
+                if (v > 1f) v = 1f
+                if (io.navInputs[nav] < v)
+                    io.navInputs[nav] = v
+            }
+
+            mapButton(NavInput.Activate, 0)     // Cross / A
+            mapButton(NavInput.Cancel, 1)     // Circle / B
+            mapButton(NavInput.Menu, 2)     // Square / X
+            mapButton(NavInput.Input, 3)     // Triangle / Y
+            mapButton(NavInput.DpadLeft, 13)    // D-Pad Left
+            mapButton(NavInput.DpadRight, 11)    // D-Pad Right
+            mapButton(NavInput.DpadUp, 10)    // D-Pad Up
+            mapButton(NavInput.DpadDown, 12)    // D-Pad Down
+            mapButton(NavInput.FocusPrev, 4)     // L1 / LB
+            mapButton(NavInput.FocusNext, 5)     // R1 / RB
+            mapButton(NavInput.TweakSlow, 4)     // L1 / LB
+            mapButton(NavInput.TweakFast, 5)     // R1 / RB
+            mapAnalog(NavInput.LStickLeft, 0, -0.3f, -0.9f)
+            mapAnalog(NavInput.LStickRight, 0, +0.3f, +0.9f)
+            mapAnalog(NavInput.LStickUp, 1, +0.3f, +0.9f)
+            mapAnalog(NavInput.LStickDown, 1, -0.3f, -0.9f)
+
+            if (axesCount > 0 && buttonsCount > 0)
+                io.backendFlags = io.backendFlags or BackendFlag.HasGamepad
+            else
+                io.backendFlags = io.backendFlags wo BackendFlag.HasGamepad
         }
 
         /*  Start the frame. This call will update the io.wantCaptureMouse, io.wantCaptureKeyboard flag that you can use
@@ -154,8 +202,8 @@ object LwjglGL3 {
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
 
         program = glCreateProgram()
-        val vertHandle = Program.Companion.createShaderFromSource(vertexShader, GL_VERTEX_SHADER)
-        val fragHandle = Program.Companion.createShaderFromSource(fragmentShader, GL_FRAGMENT_SHADER)
+        val vertHandle = Program.createShaderFromSource(vertexShader, GL_VERTEX_SHADER)
+        val fragHandle = Program.createShaderFromSource(fragmentShader, GL_FRAGMENT_SHADER)
         glAttachShader(program, vertHandle)
         glAttachShader(program, fragHandle)
         glBindAttribLocation(program, semantic.attr.POSITION, "Position")

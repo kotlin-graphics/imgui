@@ -131,7 +131,7 @@ interface imgui_menus {
                     We could remove it by scoring in advance for multiple window (probably not worth the hassle/cost)   */
                 assert(window.dc.navLayerActiveMaskNext has 0x02) // Sanity check
                 window.focus()
-                setNavIdAndMoveMouse(window.navLastIds[1], 1, window.navRectRel[1])
+                setNavIDWithRectRel(window.navLastIds[1], 1, window.navRectRel[1])
                 g.navLayer = 1
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
                 g.navMoveRequestForward = NavForward.ForwardQueued
