@@ -413,25 +413,31 @@ enum class NavInput {
     fun isPressed(mode: InputReadMode) = getNavInputAmount(this, mode) > 0f
 }
 
+typealias ConfidFlags = Int
+
 /** Configuration flags stored in io.configFlags  */
 enum class ConfigFlag(val i: Int) {
-    /** Master keyboard navigation enable flag. ::newFrame() will automatically fill io.navInputs[] based on io.keyDown[].    */
+    /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeyDown[]. */
     NavEnableKeyboard(1 shl 0),
-    /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.navInputs[].   */
+    /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.NavInputs[].
+     *  Back-end also needs to set ImGuiBackendFlags_HasGamepad. */
     NavEnableGamepad(1 shl 1),
     /** Request navigation to allow moving the mouse cursor. May be useful on TV/console systems where moving a virtual
-     *  mouse is awkward. Will update io.mousePos and set io.WantMoveMouse = true. If enabled you MUST honor io.wantMoveMouse
-     *  requests in your binding, otherwise ImGui will react as if the mouse is jumping around back and forth.  */
-    NavMoveMouse(1 shl 2),
-    /** Do not set the io.WantCaptureKeyboard flag with io.NavActive is set.    */
+     *  mouse is awkward. Will update io.mousePos and set io.wantSetMousePos=true.
+     *  If enabled you MUST honor io.wantSetMousePos requests in your binding, otherwise ImGui will react as
+     *  if the mouse is jumping around back and forth. */
+    NavEnableSetMousePos(1 shl 2),
+    /** Do not set the io.WantCaptureKeyboard flag with io.NavActive is set. */
     NavNoCaptureKeyboard(1 shl 3),
+    /** Request back-end to not alter mouse cursor configuration. */
+    NoSetMouseCursor(1 shl 4),
 
     /*  User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects.
         Those flags are not used by core ImGui)     */
 
-    /** Back-end is SRGB-aware. */
+    /** Application is SRGB-aware. */
     IsSRGB(1 shl 20),
-    /** Back-end is using a touch screen instead of a mouse.   */
+    /** Application is using a touch screen instead of a mouse. */
     IsTouchScreen(1 shl 21);
 }
 
@@ -440,15 +446,27 @@ infix fun Int.hasnt(b: ConfigFlag) = and(b.i) == 0
 infix fun Int.or(b: ConfigFlag): ConfigFlags = or(b.i)
 infix fun ConfigFlag.or(b: ConfigFlag): ConfigFlags = i or b.i
 
+typealias BackendFlags = Int
+
+/** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end. */
+enum class BackendFlag(val i: Int) {
+    /** Back-end has a connected gamepad. */
+    HasGamepad            (1 shl 0),
+    /** Back-end can honor GetMouseCursor() values and change the OS cursor shape. */
+    HasMouseCursors       (1 shl 1),
+    /** Back-end can honor io.wantSetMousePos and reposition the mouse (only used if ConfigFlags.NavEnableSetMousePos is set). */
+    HasSetMousePos        (1 shl 2)
+}
+
+
+infix fun Int.has(b: BackendFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: BackendFlag) = and(b.i) == 0
+infix fun Int.or(b: BackendFlag): BackendFlags = or(b.i)
+infix fun Int.wo(b: BackendFlag): BackendFlags = and(b.i.inv())
+infix fun BackendFlag.or(b: BackendFlag): BackendFlags = i or b.i
+
 /** Enumeration for PushStyleColor() / PopStyleColor()  */
 
-open class Enum(val i: Int) {
-
-    infix fun Int.has(b: Enum) = and(b.i) != 0
-    infix fun Int.hasnt(b: Enum) = and(b.i) == 0
-    infix fun Int.or(b: Enum) = or(b.i)
-    infix fun Enum.or(b: Enum) = i or b.i
-}
 //
 //sealed class Co(i: Int) : Enum(i) {
 //    object Text : Co(_i++)

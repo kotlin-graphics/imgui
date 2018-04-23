@@ -1,6 +1,5 @@
 package imgui.impl
 
-import com.jogamp.newt.Display
 import com.jogamp.newt.event.KeyEvent
 import com.jogamp.newt.event.KeyListener
 import com.jogamp.newt.event.MouseEvent
@@ -10,7 +9,6 @@ import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL2ES3.*
 import com.jogamp.opengl.GL3
 import glm_.*
-import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4i
@@ -26,7 +24,6 @@ import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import uno.buffer.bufferBig
 import uno.buffer.destroy
 import uno.buffer.intBufferBig
-import uno.buffer.intBufferOf
 import uno.glsl.Program
 
 object JoglGL3 {
@@ -99,7 +96,7 @@ object JoglGL3 {
             (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
             Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)   */
         if (window.hasFocus())
-            if (io.wantMoveMouse)
+            if (io.wantSetMousePos)
             /*  Set mouse position if requested by io.WantMoveMouse flag (used when io.NavMovesTrue is enabled by user
                 and using directional navigation)   */
                 window.warpPointer(io.mousePos.x.i, io.mousePos.y.i)

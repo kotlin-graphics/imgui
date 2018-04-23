@@ -622,11 +622,11 @@ fun navScrollToBringItemIntoView(window: Window, itemRectRel: Rect) {
 
 fun navUpdate() {
 
-    io.wantMoveMouse = false
+    io.wantSetMousePos = false
 
 //    if (g.NavScoringCount > 0) printf("[%05d] NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.FrameCount, g.NavScoringCount, g.NavWindow ? g . NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest)
 
-    if (g.io.configFlags has Cf.NavEnableGamepad)
+    if (g.io.configFlags has Cf.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad)
         if (g.io.navInputs[NavInput.Activate] > 0f || g.io.navInputs[NavInput.Input] > 0f ||
                 g.io.navInputs[NavInput.Cancel] > 0f || g.io.navInputs[NavInput.Menu] > 0f)
             g.navInputSource = InputSource.NavGamepad
@@ -665,7 +665,7 @@ fun navUpdate() {
             unless setItemDefaultFocus() has been called)         */
 //        assert(g.navWindow != null) !! later
         if (g.navInitRequestFromMove)
-            setNavIdAndMoveMouse(g.navInitResultId, g.navLayer, g.navInitResultRectRel)
+            setNavIDWithRectRel(g.navInitResultId, g.navLayer, g.navInitResultRectRel)
         else
             setNavId(g.navInitResultId, g.navLayer)
         g.navWindow!!.navRectRel[g.navLayer] = g.navInitResultRectRel
@@ -693,7 +693,7 @@ fun navUpdate() {
         // Apply result from previous frame navigation directional move request
         clearActiveId()
         g.navWindow = result.window!!
-        setNavIdAndMoveMouse(result.id, g.navLayer, result.rectRel)
+        setNavIDWithRectRel(result.id, g.navLayer, result.rectRel)
         g.navJustMovedToId = result.id
         g.navMoveFromClampedRefRect = false
     }
@@ -709,10 +709,10 @@ fun navUpdate() {
     // Apply application mouse position movement, after we had a chance to process move request result.
     if (g.navMousePosDirty && g.navIdIsAlive) {
         // Set mouse position given our knowledge of the nav widget position from last frame
-        if (io.configFlags has Cf.NavMoveMouse) {
+        if (io.configFlags has Cf.NavEnableSetMousePos && io.backendFlags has BackendFlag.HasSetMousePos) {
             io.mousePosPrev = navCalcPreferredMousePos()
             io.mousePos = io.mousePosPrev
-            io.wantMoveMouse = true
+            io.wantSetMousePos = true
         }
         g.navMousePosDirty = false
     }
@@ -731,6 +731,9 @@ fun navUpdate() {
 
     // Set output flags for user application
     io.navActive = io.configFlags has (Cf.NavEnableGamepad or Cf.NavEnableKeyboard) && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs
+    val navKeyboardActive = io.configFlags has Cf.NavEnableKeyboard
+    val navGamepadActive = io.configFlags has Cf.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
+    io.navActive = (navKeyboardActive || navGamepadActive) && g.navWindow?.flags?.hasnt(Wf.NoNavInputs) ?: false
     io.navVisible = (io.navActive && g.navId != 0 && !g.navDisableHighlight) || g.navWindowingTarget != null || g.navInitRequest
 
     // Process NavCancel input (to close a popup, get back to parent, clear focus)

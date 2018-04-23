@@ -173,7 +173,7 @@ fun navRestoreLayer(layer: Int) {
     if (layer == 0)
         g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!)
     if (layer == 0 && g.navWindow!!.navLastIds[0] != 0)
-        setNavIdAndMoveMouse(g.navWindow!!.navLastIds[0], layer, g.navWindow!!.navRectRel[0])
+        setNavIDWithRectRel(g.navWindow!!.navLastIds[0], layer, g.navWindow!!.navRectRel[0])
     else
         navInitWindow(g.navWindow!!, true)
 }
@@ -198,7 +198,7 @@ fun setNavId(id: ID, navLayer: Int) {
     g.navWindow!!.navLastIds[navLayer] = id
 }
 
-fun setNavIdAndMoveMouse(id: ID, navLayer: Int, rectRel: Rect) {
+fun setNavIDWithRectRel(id: ID, navLayer: Int, rectRel: Rect) {
     setNavId(id, navLayer)
     g.navWindow!!.navRectRel[navLayer] put rectRel
     g.navMousePosDirty = true

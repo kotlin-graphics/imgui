@@ -25,10 +25,10 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
+import imgui.ImGui.renderArrow
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
-import imgui.ImGui.renderArrow
 import imgui.ImGui.scrollbar
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setNextWindowSize
@@ -39,14 +39,14 @@ import imgui.internal.*
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
+import imgui.FocusedFlag as Ff
+import imgui.HoveredFlag as Hf
 import imgui.ItemFlag as If
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.DrawListFlag as Dlf
 import imgui.internal.LayoutType as Lt
-import imgui.FocusedFlag as Ff
-import imgui.HoveredFlag as Hf
 
 
 /** (Begin = push window to the stack and start appending to it. End = pop window from the stack.
@@ -373,7 +373,7 @@ interface imgui_window {
                 val sc = style.mouseCursorScale
                 val refPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(io.mousePos)
                 val rectToAvoid =
-                        if (!g.navDisableHighlight && g.navDisableMouseHover && io.configFlags hasnt ConfigFlag.NavMoveMouse)
+                        if (!g.navDisableHighlight && g.navDisableMouseHover && io.configFlags hasnt ConfigFlag.NavEnableSetMousePos)
                             Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
                         else
                             Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
@@ -397,11 +397,10 @@ interface imgui_window {
             window.pos put glm.floor(window.posF)
 
             // Default item width. Make it proportional to window size if window manually resizes
-            window.itemWidthDefault =
-                    if (window.size.x > 0f && flags hasnt Wf.Tooltip && flags hasnt Wf.AlwaysAutoResize)
-                        (window.size.x * 0.65f).i.f
-                    else (g.fontSize * 16f).i.f
-
+            window.itemWidthDefault = when {
+                window.size.x > 0f && flags hasnt Wf.Tooltip && flags hasnt Wf.AlwaysAutoResize -> window.size.x * 0.65f
+                else -> g.fontSize * 16f
+            }.i.f
             // Prepare for focus requests
             window.focusIdxAllRequestCurrent =
                     if (window.focusIdxAllRequestNext == Int.MAX_VALUE || window.focusIdxAllCounter == -1)
@@ -674,9 +673,9 @@ interface imgui_window {
 
             // Inner clipping rectangle
             // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
-            window.innerClipRect.min.x = floor(0.5f + window.innerRect.min.x + max(0f, floor(window.windowPadding.x*0.5f - window.windowBorderSize)))
+            window.innerClipRect.min.x = floor(0.5f + window.innerRect.min.x + max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
             window.innerClipRect.min.y = floor(0.5f + window.innerRect.min.y)
-            window.innerClipRect.max.x = floor(0.5f + window.innerRect.max.x - max(0f, floor(window.windowPadding.x*0.5f - window.windowBorderSize)))
+            window.innerClipRect.max.x = floor(0.5f + window.innerRect.max.x - max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
             window.innerClipRect.max.y = floor(0.5f + window.innerRect.max.y)
 
             /* After begin() we fill the last item / hovered data using the title bar data. Make that a standard behavior
