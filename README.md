@@ -139,8 +139,8 @@ I'm looking for feedbacks to report and get fixed as much bugs as possible, don'
 
 To check what has been already ported and working, simply run one of the tests in Kotlin:
 
-- [lwjgl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test lwjgl.kt) 
-- [jogl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test jogl.kt)
+- [lwjgl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test%20lwjgl.kt) 
+- [jogl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test%20jogl.kt)
 
 or in Java:
 
