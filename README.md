@@ -62,51 +62,6 @@ _A common misunderstanding is to think that immediate mode gui == immediate mode
 
 Dear ImGui allows you create elaborate tools as well as very short-lived ones. On the extreme side of short-liveness: using the Edit&Continue feature of modern compilers you can add a few widgets to tweaks variables while your application is running, and remove the code a minute later! ImGui is not just for tweaking values. You can use it to trace a running algorithm by just emitting text commands. You can use it along with your own reflection data to browse your dataset live. You can use it to expose the internals of a subsystem in your engine, to create a logger, an inspection tool, a profiler, a debugger, an entire game making editor/framework, etc.  
 
-### Gallery
--------
-
-User screenshots:
-<br>[Gallery Part 1](https://github.com/ocornut/imgui/issues/123) (Feb 2015 to Feb 2016)
-<br>[Gallery Part 2](https://github.com/ocornut/imgui/issues/539) (Feb 2016 to Aug 2016)
-<br>[Gallery Part 3](https://github.com/ocornut/imgui/issues/772) (Aug 2016 to Jan 2017)
-<br>[Gallery Part 4](https://github.com/ocornut/imgui/issues/973) (Jan 2017 to Aug 2017)
-<br>[Gallery Part 5](https://github.com/ocornut/imgui/issues/1269) (Aug 2017 onward)
-<br>Also see the [Mega screenshots](https://github.com/ocornut/imgui/issues/1273) for an idea of the available features.
-
-![screenshot 1](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v148/examples_01.png)
-
-Various tools
-<br>[![screenshot game](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v149/gallery_TheDragonsTrap-01-thumb.jpg)](https://cloud.githubusercontent.com/assets/8225057/20628927/33e14cac-b329-11e6-80f6-9524e93b048a.png)
-
-Custom profiler
-<br>[![screenshot profiler](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v148/profiler-880.jpg)](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v148/profiler.png)
-
-Color Pickers
-<br>![screenshot picker](https://user-images.githubusercontent.com/8225057/29062188-471e95ba-7c53-11e7-9618-c4484c0b75fe.PNG)
-
-Menus
-<br>![screenshot 5](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v151/menus.png)
-
-Colors
-<br>![screenshot 6](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v143/skinning_sample_02.png)
-
-Custom rendering
-<br>![screenshot 7](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v160/v160-drawdatabase.jpg)
-
-ImGui supports also other languages, such as japanese, initiliazed [here](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test_lwjgl.kt#L67) as:
-
-```kotlin
-IO.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, glyphRanges = IO.fonts.glyphRangesJapanese)!!
-```
-or [here](https://github.com/kotlin-graphics/imgui/blob/master/src/test/java/imgui/Test_lwjgl.java#L50-L51)
-```java
-Font font = io.getFonts().addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, new FontConfig(), io.getFonts().getGlyphRangesJapanese());
-assert (font != null);
-```
-
-![Imgur](https://i.imgur.com/vul0VbT.png?1)
-
-
 ### References
 ----------
 
@@ -184,8 +139,8 @@ I'm looking for feedbacks to report and get fixed as much bugs as possible, don'
 
 To check what has been already ported and working, simply run one of the tests in Kotlin:
 
-- [lwjgl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test_lwjgl.kt) 
-- [jogl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test_jogl.kt)
+- [lwjgl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test lwjgl.kt) 
+- [jogl](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test jogl.kt)
 
 or in Java:
 
@@ -200,6 +155,51 @@ Ps: `DEBUG = false` to turn off debugs `println()`
 
 - copy/cut/undo/redo text
 - text filters
+
+
+### Gallery
+-------
+
+User screenshots:
+<br>[Gallery Part 1](https://github.com/ocornut/imgui/issues/123) (Feb 2015 to Feb 2016)
+<br>[Gallery Part 2](https://github.com/ocornut/imgui/issues/539) (Feb 2016 to Aug 2016)
+<br>[Gallery Part 3](https://github.com/ocornut/imgui/issues/772) (Aug 2016 to Jan 2017)
+<br>[Gallery Part 4](https://github.com/ocornut/imgui/issues/973) (Jan 2017 to Aug 2017)
+<br>[Gallery Part 5](https://github.com/ocornut/imgui/issues/1269) (Aug 2017 onward)
+<br>Also see the [Mega screenshots](https://github.com/ocornut/imgui/issues/1273) for an idea of the available features.
+
+![screenshot 1](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v148/examples_01.png)
+
+Various tools
+<br>[![screenshot game](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v149/gallery_TheDragonsTrap-01-thumb.jpg)](https://cloud.githubusercontent.com/assets/8225057/20628927/33e14cac-b329-11e6-80f6-9524e93b048a.png)
+
+Custom profiler
+<br>[![screenshot profiler](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v148/profiler-880.jpg)](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v148/profiler.png)
+
+Color Pickers
+<br>![screenshot picker](https://user-images.githubusercontent.com/8225057/29062188-471e95ba-7c53-11e7-9618-c4484c0b75fe.PNG)
+
+Menus
+<br>![screenshot 5](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v151/menus.png)
+
+Colors
+<br>![screenshot 6](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v143/skinning_sample_02.png)
+
+Custom rendering
+<br>![screenshot 7](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v160/v160-drawdatabase.jpg)
+
+ImGui supports also other languages, such as japanese, initiliazed [here](https://github.com/kotlin-graphics/imgui/blob/master/src/test/kotlin/imgui/test_lwjgl.kt#L67) as:
+
+```kotlin
+IO.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, glyphRanges = IO.fonts.glyphRangesJapanese)!!
+```
+or [here](https://github.com/kotlin-graphics/imgui/blob/master/src/test/java/imgui/Test_lwjgl.java#L50-L51)
+```java
+Font font = io.getFonts().addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, new FontConfig(), io.getFonts().getGlyphRangesJapanese());
+assert (font != null);
+```
+
+![Imgur](https://i.imgur.com/vul0VbT.png?1)
 
 ### Credits
 -------
