@@ -42,7 +42,7 @@ object Ref {
     var bPtr = 0
     var cPtr = 0
 
-    val size = 500
+    val size = 1024
 
     val ints = IntArray(size)
     val floats = FloatArray(size)

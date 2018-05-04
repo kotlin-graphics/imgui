@@ -1720,14 +1720,14 @@ interface imgui_internal {
 
     fun inputTextEx(label: String, buf: CharArray, sizeArg: Vec2, flags: InputTextFlags
             /*, ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean {
-        println(label)
+
         val window = currentWindow
         if (window.skipItems) return false
 
         // Can't use both together (they both use up/down keys)
-        assert((flags has Itf.CallbackHistory) xor (flags has Itf.Multiline))
+        assert(!((flags has Itf.CallbackHistory) && (flags has Itf.Multiline)))
         // Can't use both together (they both use tab key)
-        assert((flags has Itf.CallbackCompletion) xor (flags has Itf.AllowTabInput))
+        assert(!((flags has Itf.CallbackCompletion) && (flags has Itf.AllowTabInput)))
 
         val isMultiline = flags has Itf.Multiline
         val isEditable = flags hasnt Itf.ReadOnly
@@ -2269,7 +2269,7 @@ interface imgui_internal {
                             inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
                         }
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_s(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_ssaaaaaaa(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)

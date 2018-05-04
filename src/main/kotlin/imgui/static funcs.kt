@@ -352,9 +352,6 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
     /*  Filter private Unicode range. I don't imagine anybody would want to input them. GLFW on OSX seems to send
         private characters for special keys like arrow keys.     */
     if (c >= 0xE000 && c <= 0xF8FF) return false
-
-    println(char())
-
     if (flags has (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsUppercase or Itf.CharsNoBlank or Itf.CharsScientific)) {
 
         if (flags has Itf.CharsDecimal)
@@ -431,8 +428,8 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
             continue
         }
         if (c == '\r') continue
-
-        val charWidth: Float = font.getCharAdvance_s(c) * scale
+        // renaming ::getCharAdvance continuously every build because of bug, https://youtrack.jetbrains.com/issue/KT-19612
+        val charWidth: Float = font.getCharAdvance_ssaaaaaaa(c) * scale
         lineWidth += charWidth
     }
 
@@ -466,8 +463,8 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
 fun KMutableProperty0<Number>.format(dataType: DataType, displayFormat: String, buf: CharArray): CharArray {
     val value: Number = when (dataType) {
         DataType.Int -> this()
-        DataType.Float -> Float.fromBits(this() as Int)
-        DataType.Double -> Double.fromBits(this() as Long)
+        DataType.Float -> this() as Float
+        DataType.Double -> this() as Double
         else -> throw Error()
     }
     return displayFormat.format(style.locale, value).toCharArray(buf)
@@ -589,7 +586,7 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
             DataType.Float -> {
                 // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
 //                val scalarFormat = scalarFormat ?: "%f"
-                var v = glm.intBitsToFloat(data() as Int)
+                var v = data() as Float
                 val oldV = v
                 var a = 0f
                 try {
@@ -612,13 +609,13 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                     }
                     else -> a   // Assign constant
                 }
-                data.set(glm.floatBitsToInt(v))
+                data.set(v)
                 oldV != v
             }
             DataType.Double -> {
                 // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
 //                val scalarFormat = scalarFormat ?: "%f"
-                var v = Double.fromBits(data() as Long)
+                var v = data() as Double
                 val oldV = v
                 var a = 0.0
                 try {
@@ -641,7 +638,7 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                     }
                     else -> a   // Assign constant
                 }
-                data.set(glm.doubleBitsToLong(v))
+                data.set(v)
                 oldV != v
             }
             else -> false
