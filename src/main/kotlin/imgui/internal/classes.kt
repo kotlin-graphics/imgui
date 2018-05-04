@@ -718,12 +718,14 @@ class Window(var context: Context, var name: String) {
         name = ""
     }
 
+    /** SetWindowScrollX */
     fun setScrollX(newScrollX: Float) {
         dc.cursorMaxPos.x += scroll.x // SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need to apply our change to it.
         scroll.x = newScrollX
         dc.cursorMaxPos.x -= scroll.x
     }
 
+    /** SetWindowScrollY */
     fun setScrollY(newScrollY: Float) {
         /*  SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need
             to apply our change to it.         */

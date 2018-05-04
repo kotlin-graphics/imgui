@@ -134,7 +134,7 @@ object LwjglGL3 {
         }
 
         // Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
-        if (io.configFlags hasnt ConfigFlag.NoSetMouseCursor && window.cursor != GlfwWindow.Cursor.Disabled) {
+        if (io.configFlags hasnt ConfigFlag.NoMouseCursorChange && window.cursor != GlfwWindow.Cursor.Disabled) {
             val cursor = mouseCursor
             if (io.mouseDrawCursor || cursor == MouseCursor.None)
                 window.cursor = GlfwWindow.Cursor.Hidden

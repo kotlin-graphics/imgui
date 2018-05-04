@@ -48,7 +48,7 @@ enum class WindowFlag(val i: Int) {
     /** Ensure child windows without border uses style.WindowPadding (ignored by default for non-bordered child windows),
      *  because more convenient)  */
     AlwaysUseWindowPadding(1 shl 16),
-    /** (WIP) Enable resize from any corners and borders. Your back-end needs to honor the different values of io.mouseCursor set by imgui. */
+    /** [BETA] Enable resize from any corners and borders. Your back-end needs to honor the different values of io.mouseCursor set by imgui. */
     ResizeFromAnySide(1 shl 17),
     /** No gamepad/keyboard navigation within the window    */
     NoNavInputs(1 shl 18),
@@ -59,7 +59,7 @@ enum class WindowFlag(val i: Int) {
 
     // [Internal]
 
-    /** (WIP) Allow gamepad/keyboard navigation to cross over parent border to this child (only use on child that have no scrolling!)   */
+    /** [BETA] Allow gamepad/keyboard navigation to cross over parent border to this child (only use on child that have no scrolling!)   */
     NavFlattened(1 shl 23),
     /** Don't use! For internal use by BeginChild() */
     ChildWindow(1 shl 24),
@@ -425,15 +425,16 @@ enum class ConfigFlag(val i: Int) {
     /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.NavInputs[].
      *  Back-end also needs to set ImGuiBackendFlags_HasGamepad. */
     NavEnableGamepad(1 shl 1),
-    /** Request navigation to allow moving the mouse cursor. May be useful on TV/console systems where moving a virtual
-     *  mouse is awkward. Will update io.mousePos and set io.wantSetMousePos=true.
-     *  If enabled you MUST honor io.wantSetMousePos requests in your binding, otherwise ImGui will react as
-     *  if the mouse is jumping around back and forth. */
+    /** Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward.
+     *  Will update io.MousePos and set io.wantSetMousePos=true. If enabled you MUST honor io.wantSetMousePos requests in your binding,
+     *  otherwise ImGui will react as if the mouse is jumping around back and forth. */
     NavEnableSetMousePos(1 shl 2),
-    /** Do not set the io.WantCaptureKeyboard flag with io.NavActive is set. */
+    /** Instruct navigation to not set the io.WantCaptureKeyboard flag with io.NavActive is set. */
     NavNoCaptureKeyboard(1 shl 3),
+    /** Instruct imgui to clear mouse position/buttons in NewFrame(). This allows ignoring the mouse information back-end */
+    NoMouse(1 shl 4),
     /** Request back-end to not alter mouse cursor configuration. */
-    NoSetMouseCursor(1 shl 4),
+    NoMouseCursorChange(1 shl 5),
 
     /*  User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects.
         Those flags are not used by core ImGui)     */

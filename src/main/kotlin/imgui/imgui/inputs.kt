@@ -139,13 +139,13 @@ interface imgui_inputs {
             g.mouseCursor = value
         }
 
-    /** Manually override io.wantCaptureKeyboard flag next frame (said flag is entirely left for your application handle).
+    /** Manually override io.wantCaptureKeyboard flag next frame (said flag is entirely left for your application to handle).
      *  e.g. force capture keyboard when your widget is being hovered.  */
     fun captureKeyboardFromApp(capture: Boolean = true) {
         g.wantCaptureKeyboardNextFrame = capture.i
     }
 
-    /** Manually override io.WantCaptureMouse flag next frame (said flag is entirely left for your application handle). */
+    /** Manually override io.WantCaptureMouse flag next frame (said flag is entirely left for your application to handle). */
     fun captureMouseFromApp(capture: Boolean = true) {
         g.wantCaptureMouseNextFrame = capture.i
     }

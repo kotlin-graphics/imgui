@@ -68,17 +68,16 @@ object inputNavigationAndFocus {
             text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
 
             checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
-            sameLine(); showHelpMarker("Request ImGui to render a mouse cursor for you in software. Note that " +
-                "a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware " +
-                "cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both " +
-                "kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
+            sameLine(); showHelpMarker("Instruct ImGui to render a mouse cursor for you in software. Note that a mouse cursor " +
+                "rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync " +
+                "with your other visuals.\\n\\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor " +
+                "only when resizing/dragging something).")
             checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
             checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
             checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
-            checkboxFlags("io.ConfigFlags: NoSetMouseCursor", io::configFlags, ConfigFlag.NoSetMouseCursor.i)
-            sameLine(); showHelpMarker("Request ImGui to move your move cursor when using gamepad/keyboard " +
-                "navigation. NewFrame() will change io.MousePos and set the io.WantMoveMouse flag, your backend will " +
-                "need to apply the new mouse position.")
+            sameLine(); showHelpMarker("Instruct navigation to move the mouse cursor. See comment for ConfigFlag.NavEnableSetMousePos.")
+            checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)
+            sameLine(); showHelpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
 
             treeNode("Keyboard, Mouse & Navigation State") {
                 if (isMousePosValid()) text("Mouse pos: (%g, %g)", io.mousePos.x, io.mousePos.y)
