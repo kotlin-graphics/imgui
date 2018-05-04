@@ -179,7 +179,9 @@ fun navRestoreLayer(layer: Int) {
 }
 
 fun navUpdateAnyRequestFlag() {
-    g.navAnyRequest = g.navMoveRequest || g.navInitRequest || IMGUI_DEBUG_NAV_SCORING
+    g.navAnyRequest = g.navMoveRequest || g.navInitRequest || (IMGUI_DEBUG_NAV_SCORING && g.navWindow != null)
+    if (g.navAnyRequest)
+        assert(g.navWindow != null)
 }
 
 fun navMoveRequestButNoResultYet() = g.navMoveRequest && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0

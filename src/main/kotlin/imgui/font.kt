@@ -1053,7 +1053,7 @@ class Font {
     fun findGlyphNoFallback(c: Int) = indexLookup.getOrNull(c)?.let { glyphs[it] }
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
-    fun getCharAdvance(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
+    fun getCharAdvance_s(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
 
     val isLoaded get() = ::containerAtlas.isInitialized
 

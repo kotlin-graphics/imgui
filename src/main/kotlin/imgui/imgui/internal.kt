@@ -2,12 +2,10 @@ package imgui.imgui
 
 import gli_.has
 import gli_.hasnt
-import glm_.c
-import glm_.f
+import glm_.*
+import glm_.pow as _
 import glm_.func.common.max
 import glm_.func.common.min
-import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -1722,7 +1720,7 @@ interface imgui_internal {
 
     fun inputTextEx(label: String, buf: CharArray, sizeArg: Vec2, flags: InputTextFlags
             /*, ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean {
-
+        println(label)
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -2271,7 +2269,7 @@ interface imgui_internal {
                             inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
                         }
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_s(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)
@@ -2375,12 +2373,12 @@ interface imgui_internal {
     fun inputScalarEx(label: String, dataType: DataType, data: IntArray, step: Number?, stepFast: Number?, scalarFormat: String,
                       extraFlags: Int): Boolean {
         i0 = data[0]
-        val res = inputScalarEx(label, dataType, ::i0, step, stepFast, scalarFormat, extraFlags)
+        val res = inputScalarEx(label, dataType, ::i0 as KMutableProperty0<Number>, step, stepFast, scalarFormat, extraFlags)
         data[0] = i0
         return res
     }
 
-    fun inputScalarEx(label: String, dataType: DataType, data: KMutableProperty0<Int>, step: Number?, stepFast: Number?,
+    fun inputScalarEx(label: String, dataType: DataType, data: KMutableProperty0<Number>, step: Number?, stepFast: Number?,
                       scalarFormat: String, extraFlags: Int): Boolean {
 
         val window = currentWindow
@@ -2396,11 +2394,11 @@ interface imgui_internal {
         val buf = data.format(dataType, scalarFormat, CharArray(64))
 
         var valueChanged = false
-        var extraFlags = extraFlags
-        if (extraFlags hasnt Itf.CharsHexadecimal)
-            extraFlags = extraFlags or Itf.CharsDecimal
-        extraFlags = extraFlags or Itf.AutoSelectAll
-        if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
+        var flags = extraFlags
+        if (flags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
+            flags = flags or Itf.CharsDecimal
+        flags = flags or Itf.AutoSelectAll
+        if (inputText("", buf, flags)) // PushId(label) + "" gives us the expected ID from outside point of view
             valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, scalarFormat)
 
         // Step buttons
@@ -2408,12 +2406,12 @@ interface imgui_internal {
             popItemWidth()
             sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("-", buttonSz, Bf.Repeat or Bf.DontClosePopups)) {
-                dataTypeApplyOp(dataType, '-', data, if (io.keyCtrl && stepFast != null) stepFast else step)
+                data.set(dataTypeApplyOp(dataType, '-', data(), if (io.keyCtrl && stepFast != null) stepFast else step))
                 valueChanged = true
             }
             sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("+", buttonSz, Bf.Repeat or Bf.DontClosePopups)) {
-                dataTypeApplyOp(dataType, '+', data, if (io.keyCtrl && stepFast != null) stepFast else step)
+                data.set(dataTypeApplyOp(dataType, '+', data(), if (io.keyCtrl && stepFast != null) stepFast else step))
                 valueChanged = true
             }
         }
@@ -2431,7 +2429,7 @@ interface imgui_internal {
 
     /** Create text input in place of a slider (when CTRL+Clicking on slider)
      *  FIXME: Logic is messy and confusing. */
-    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: KMutableProperty0<Int>, id: ID,
+    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: KMutableProperty0<Number>, id: ID,
                                        decimalPrecision: Int): Boolean {
 
         val window = currentWindow
@@ -2459,7 +2457,6 @@ interface imgui_internal {
 
     /** Note: only access 3 floats if ColorEditFlag.NoAlpha flag is set.   */
     fun colorTooltip(text: String, col: FloatArray, flags: ColorEditFlags) {
-
         val cr = F32_TO_INT8_SAT(col[0])
         val cg = F32_TO_INT8_SAT(col[1])
         val cb = F32_TO_INT8_SAT(col[2])
@@ -2808,7 +2805,7 @@ interface imgui_internal {
         if (fmt.contains('.')) {
             val s = fmt.substringAfter('.').filter { it.isDigit() }
             if (s.isNotEmpty()) {
-                precision = java.lang.Integer.parseInt(s)   // TODo glm
+                precision = s.parseInt
                 if (precision < 0 || precision > 10)
                     precision = defaultPrecision
             }
@@ -2881,7 +2878,7 @@ interface imgui_internal {
                 if (size.x != 0f) uvSize.x / size.x else 0f,
                 if (size.y != 0f) uvSize.y / size.y else 0f)
         if (clamp) {
-            val min = glm.min(uvA, uvB) // TODO glm min
+            val min = uvA min uvB
             val max = uvA max uvB
 
             for (i in vertStart until vertEnd) {

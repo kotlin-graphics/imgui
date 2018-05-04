@@ -2,10 +2,7 @@ package imgui
 
 import gli_.has
 import gli_.hasnt
-import glm_.compareTo
-import glm_.f
-import glm_.glm
-import glm_.i
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.ImGui.clearActiveId
@@ -356,13 +353,20 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
         private characters for special keys like arrow keys.     */
     if (c >= 0xE000 && c <= 0xF8FF) return false
 
-    if (flags has (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsUppercase or Itf.CharsNoBlank)) {
+    println(char())
+
+    if (flags has (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsUppercase or Itf.CharsNoBlank or Itf.CharsScientific)) {
 
         if (flags has Itf.CharsDecimal)
-            if (!(c in '0'..'9') && (c != '.') && (c != '-') && (c != '+') && (c != '*') && (c != '/')) return false
+            if (c !in '0'..'9' && c != '.' && c != '-' && c != '+' && c != '*' && c != '/')
+                return false
+
+        if (flags has Itf.CharsScientific)
+            if (c !in '0'..'9' && c != '.' && c != '-' && c != '+' && c != '*' && c != '/' && c != 'e' && c != 'E')
+                return false
 
         if (flags has Itf.CharsHexadecimal)
-            if (!(c in '0'..'9') && !(c in 'a'..'f') && !(c in 'A'..'F'))
+            if (c !in '0'..'9' && c !in 'a'..'f' && c !in 'A'..'F')
                 return false
 
         if (flags has Itf.CharsUppercase && c in 'a'..'z') {
@@ -370,7 +374,8 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
             char.set(c)
         }
 
-        if (flags has Itf.CharsNoBlank && c.isSpace) return false
+        if (flags has Itf.CharsNoBlank && c.isSpace)
+            return false
     }
 
     if (flags has Itf.CallbackCharFilter) {
@@ -427,7 +432,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
         }
         if (c == '\r') continue
 
-        val charWidth: Float = font.getCharAdvance(c) * scale
+        val charWidth: Float = font.getCharAdvance_s(c) * scale
         lineWidth += charWidth
     }
 
@@ -448,146 +453,199 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
     return textSize
 }
 
-fun IntArray.format(dataType: DataType, displayFormat: String, buf: CharArray): CharArray {
-    val value: Number = when (dataType) {
-        DataType.Int -> this[0]
-        DataType.Float -> glm.intBitsToFloat(this[0])
-        else -> throw Error()
-    }
-    return displayFormat.format(style.locale, value).toCharArray(buf)
-}
+// TODO check if needed
+//fun IntArray.format(dataType: DataType, displayFormat: String, buf: CharArray): CharArray {
+//    val value: Number = when (dataType) {
+//        DataType.Int -> this[0]
+//        DataType.Float -> glm.intBitsToFloat(this[0])
+//        else -> throw Error()
+//    }
+//    return displayFormat.format(style.locale, value).toCharArray(buf)
+//}
 
-fun KMutableProperty0<Int>.format(dataType: DataType, displayFormat: String, buf: CharArray): CharArray {
+fun KMutableProperty0<Number>.format(dataType: DataType, displayFormat: String, buf: CharArray): CharArray {
     val value: Number = when (dataType) {
         DataType.Int -> this()
-        DataType.Float -> glm.intBitsToFloat(this())
+        DataType.Float -> Float.fromBits(this() as Int)
+        DataType.Double -> Double.fromBits(this() as Long)
         else -> throw Error()
     }
     return displayFormat.format(style.locale, value).toCharArray(buf)
 }
 
-/** JVM Imgui, dataTypeFormatString replacement */
-fun IntArray.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) = when (dataType) {
+/** JVM Imgui, dataTypeFormatString replacement TODO check if needed */
+//fun IntArray.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) = when (dataType) {
+//
+//    DataType.Int -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}d".format(style.locale, this[0])
+///*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
+//    non-significant digits?         */
+//    DataType.Float -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f".format(style.locale, glm.intBitsToFloat(this[0]))
+//    DataType.Double -> TODO()//"%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f".format(style.locale, glm.intBitsToFloat(this[0]))
+//    else -> throw Error("unsupported format data type")
+//}.toCharArray(buf)
 
-    DataType.Int -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}d".format(style.locale, this[0])
+fun KMutableProperty0<Number>.format(dataType: DataType, decimalPrecision: Int, buf: CharArray): CharArray {
+    val precision = if (decimalPrecision < 0) "" else ".$decimalPrecision"
+    return when (dataType) {
+
+        DataType.Int -> "%${precision}d".format(style.locale, this())
 /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
     non-significant digits?         */
-    DataType.Float -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f".format(style.locale, glm.intBitsToFloat(this[0]))
-    else -> throw Error("unsupported format data type")
-}.toCharArray(buf)
-
-fun KMutableProperty0<Int>.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) = when (dataType) {
-
-    DataType.Int -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}d".format(style.locale, this())
-/*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
-    non-significant digits?         */
-    DataType.Float -> "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f".format(style.locale, glm.intBitsToFloat(this()))
-    else -> throw Error("unsupported format data type")
-}.toCharArray(buf)
-
-fun dataTypeApplyOp(dataType: DataType, op: Char, value1: IntArray, value2: Number) {
-    i0 = value1[0]
-    dataTypeApplyOp(dataType, op, ::i0, value2)
-    value1[0] = i0
+        DataType.Float -> "%${precision}f".format(style.locale, Float.fromBits(this() as Int))
+        DataType.Double -> "%${precision}f".format(style.locale, Double.fromBits(this() as Long))
+        else -> throw Error("unsupported format data type")
+    }.toCharArray(buf)
 }
 
-fun dataTypeApplyOp(dataType: DataType, op: Char, value1: KMutableProperty0<Int>, value2: Number) {
-    when (dataType) {
-        DataType.Int -> value1.set(when (op) {
-            '+' -> value1() + (value2 as Int)
-            '-' -> value1() - (value2 as Int)
+fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number): Number {
+    assert(op == '+' || op == '-')
+    return when (dataType) {
+        DataType.Int -> when (op) {
+            '+' -> value1 as Int + (value2 as Int)
+            '-' -> value1 as Int - (value2 as Int)
             else -> throw Error()
-        })
-        DataType.Float -> value1.set(glm.floatBitsToInt(when (op) {
-            '+' -> glm.intBitsToFloat(value1()) + (value2 as Float)
-            '-' -> glm.intBitsToFloat(value1()) - (value2 as Float)
+        }
+        DataType.Float -> when (op) {
+            '+' -> value1 as Float + (value2 as Float)
+            '-' -> value1 as Float - (value2 as Float)
             else -> throw Error()
-        }))
+        }
+        DataType.Double -> when (op) {
+            '+' -> value1 as Double + (value2 as Double)
+            '-' -> value1 as Double - (value2 as Double)
+            else -> throw Error()
+        }
         else -> throw Error()
     }
 }
 
-/** User can input math operators (e.g. +100) to edit a numerical values.   */
-fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: IntArray, scalarFormat: String? = null)
-        : Boolean {
+/** User can input math operators (e.g. +100) to edit a numerical values.
+ *  NB: This is _not_ a full expression evaluator. We should probably add one though.. */
+fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: IntArray,
+                            scalarFormat: String? = null): Boolean {
 
     i0 = data[0]
-    val res = dataTypeApplyOpFromText(buf, initialValueBuf, dataType, ::i0, scalarFormat)
+    val res = dataTypeApplyOpFromText(buf, initialValueBuf, dataType, ::i0 as KMutableProperty0<Number>, scalarFormat)
     data[0] = i0
     return res
 }
 
-fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: KMutableProperty0<Int>,
+fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: KMutableProperty0<Number>,
                             scalarFormat: String? = null): Boolean {
 
 //    var s = 0
-//    while (buf[s].isSpace) s++
+//    while (buf[s].isSpace)
+//        s++
 //
 //    /*  We don't support '-' op because it would conflict with inputing negative value.
 //        Instead you can use +-100 to subtract from an existing value     */
 //    var op = buf[s]
 //    if (op == '+' || op == '*' || op == '/') {
 //        s++
-//        while (buf[s].isSpace) s++
+//        while (buf[s].isSpace)
+//            s++
 //    } else
-//        op = 0.c
+//        op = NUL
 //
-//    if (buf[s] == 0.c) return false
-    val seq = String(buf).replace(Regex("\\s+"), "").replace("$NUL", "").split(Regex("-+\\*/"))
-    return if (buf[0] == NUL) false
-    else when (dataType) {
-        DataType.Int -> {
-            val scalarFormat = scalarFormat ?: "%d"
-            var v = data()
-            val oldV = v
-            var a = 0
-            try {
-                a = Scanner(seq[0]).useLocale(style.locale).nextInt()
-            } catch (_: Exception) {
-            }
+//    if (buf[s] == NUL)
+//        return false
 
-            if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
-
-                val op = seq[1][0]
-                /*  Store operand b in a float so we can use fractional value for multipliers (*1.1), but constant
-                    always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision  */
-                val b = seq[2].f
-                v = when (op) {
-                    '+' -> (a + b).i    // Add (use "+-" to subtract)
-                    '*' -> (a * b).i    // Multiply
-                    '/' -> (a / b).i    // Divide   TODO / 0 will throw
-                    else -> throw Error()
+    val seq = String(buf)
+            .replace(Regex("\\s+"), "")
+            .replace("$NUL", "")
+            .split(Regex("-+\\*/"))
+    return when (buf[0]) {
+        NUL -> false
+        else -> when (dataType) {
+            DataType.Int -> {
+//                val scalarFormat = scalarFormat ?: "%d"
+                var v = data() as Int
+                val oldV = v
+                val a: Int
+                try {
+                    a = Scanner(seq[0]).useLocale(style.locale).nextInt()
+                } catch (_: Exception) {
+                    return false
                 }
-            } else v = a   // Assign constant
-            data.set(v)
-            oldV != v
-        }
-        DataType.Float -> {
-            // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
-            val scalarFormat = scalarFormat ?: "%f"
-            var v = glm.intBitsToFloat(data())
-            val oldV = v
-            var a = 0f
-            try {
-                a = Scanner(seq[0]).useLocale(style.locale).nextFloat()
-            } catch (_: Exception) {
-            }
 
-            if (seq.size == 2) {   // TODO support more complex operations? i.e: a + b * c
-
-                val op = seq[1][0]
-                val b = seq[2].f
-                v = when (op) {
-                    '+' -> a + b    // Add (use "+-" to subtract)
-                    '*' -> a * b    // Multiply
-                    '/' -> a / b    // Divide   TODO / 0 will throw
-                    else -> throw Error()
+                v = when (seq.size) {
+                    2 -> {   // TODO support more complex operations? i.e: a + b * c
+                        val op = seq[1][0]
+                        /*  Store operand b in a float so we can use fractional value for multipliers (*1.1), but constant
+                                always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision  */
+                        val b = seq[2].f
+                        when (op) {
+                            '+' -> (a + b).i    // Add (use "+-" to subtract)
+                            '*' -> (a * b).i    // Multiply
+                            '/' -> (a / b).i    // Divide   TODO / 0 will throw
+                            else -> throw Error()
+                        }
+                    }
+                    else -> a   // Assign constant
                 }
-            } else v = a   // Assign constant
-            data.set(glm.floatBitsToInt(v))
-            oldV != v
+                data.set(v)
+                oldV != v
+            }
+            DataType.Float -> {
+                // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
+//                val scalarFormat = scalarFormat ?: "%f"
+                var v = glm.intBitsToFloat(data() as Int)
+                val oldV = v
+                var a = 0f
+                try {
+                    a = Scanner(seq[0]).useLocale(style.locale).nextFloat()
+                } catch (_: Exception) {
+                    return false
+                }
+
+                v = when (seq.size) {
+                    2 -> {   // TODO support more complex operations? i.e: a + b * c
+
+                        val op = seq[1][0]
+                        val b = seq[2].f
+                        when (op) {
+                            '+' -> a + b    // Add (use "+-" to subtract)
+                            '*' -> a * b    // Multiply
+                            '/' -> a / b    // Divide   TODO / 0 will throw
+                            else -> throw Error()
+                        }
+                    }
+                    else -> a   // Assign constant
+                }
+                data.set(glm.floatBitsToInt(v))
+                oldV != v
+            }
+            DataType.Double -> {
+                // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
+//                val scalarFormat = scalarFormat ?: "%f"
+                var v = Double.fromBits(data() as Long)
+                val oldV = v
+                var a = 0.0
+                try {
+                    a = Scanner(seq[0]).useLocale(style.locale).nextDouble()
+                } catch (_: Exception) {
+                    return false
+                }
+
+                v = when (seq.size) {
+                    2 -> {   // TODO support more complex operations? i.e: a + b * c
+
+                        val op = seq[1][0]
+                        val b = seq[2].d
+                        when (op) {
+                            '+' -> a + b    // Add (use "+-" to subtract)
+                            '*' -> a * b    // Multiply
+                            '/' -> a / b    // Divide   TODO / 0 will throw
+                            else -> throw Error()
+                        }
+                    }
+                    else -> a   // Assign constant
+                }
+                data.set(glm.doubleBitsToLong(v))
+                oldV != v
+            }
+            else -> false
         }
-        else -> false
     }
 }
 
