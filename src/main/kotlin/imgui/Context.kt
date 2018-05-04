@@ -514,11 +514,13 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // Output - Retrieve after calling NewFrame()
     //------------------------------------------------------------------
 
-    /** When IO.wantCaptureMouse is true, do not dispatch mouse input data to your main application. This is set by ImGui
-     *  when it wants to use your mouse (e.g. unclicked mouse is hovering a window, or a widget is active).     */
+    /** When io.wantCaptureMouse is true, imgui will use the mouse inputs, do not dispatch them to your main game/application
+     *  (in both cases, always pass on mouse inputs to imgui). (e.g. unclicked mouse is hovering over an imgui window,
+     *  widget is active, mouse was clicked over an imgui window, etc.). */
     var wantCaptureMouse = false
-    /** When IO.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application. This is set
-     *  by ImGui when it wants to use your keyboard inputs. */
+    /** When io.wantCaptureKeyboard is true, imgui will use the keyboard inputs, do not dispatch them to your main game/application
+     *  (in both cases, always pass keyboard inputs to imgui).
+     *  (e.g. InputText active, or an imgui window is focused and navigation is enabled, etc.). */
     var wantCaptureKeyboard = false
     /** Mobile/console: when IO.wantTextInput is true, you may display an on-screen keyboard. This is set by ImGui when
      *  it wants textual keyboard input to happen (e.g. when a InputText widget is active). */

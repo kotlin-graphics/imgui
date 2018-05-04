@@ -254,7 +254,8 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
 
 fun markIniSettingsDirty(window: Window) {
     if (window.flags hasnt Wf.NoSavedSettings)
-        if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = io.iniSavingRate
+        if (g.settingsDirtyTimer <= 0f)
+            g.settingsDirtyTimer = io.iniSavingRate
 }
 
 fun getViewportRect(): Rect {

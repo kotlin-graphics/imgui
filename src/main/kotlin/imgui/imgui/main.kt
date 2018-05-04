@@ -1,10 +1,9 @@
 package imgui.imgui
 
 import gli_.has
-import glm_.f
-import glm_.glm
-import glm_.i
+import glm_.*
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
@@ -16,9 +15,11 @@ import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
+import imgui.ImGui.newFrameUpdateHoveredWindowAndCaptureFlags
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.setActiveId
+import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.internal.*
 import kotlin.math.max
@@ -42,21 +43,23 @@ interface imgui_main {
 
         ptrIndices = 0
 
-        /* (We pass an error message in the assert expression as a trick to get it visible to programmers who are not 
-            using a debugger, as most assert handlers display their argument)         */
+        assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() or ImGui::SetCurrentContext()?" }
+
+        /*  Check user data
+            (We pass an error message in the assert expression as a trick to get it visible to programmers who are not using a debugger,
+            as most assert handlers display their argument)         */
         assert(g.initialized)
-        assert(io.deltaTime >= 0f) { "Need a positive deltaTime (zero is tolerated but will cause some timing issues)" }
-        assert(io.displaySize greaterThanEqual 0) { "Invalid displaySize value" }
-        assert(io.fonts.fonts.size > 0) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
+        assert(io.deltaTime >= 0f) { "Need a positive DeltaTime (zero is tolerated but will cause some timing issues)" }
+        assert(io.displaySize.x >= 0f && io.displaySize.y >= 0f) { "Invalid DisplaySize value" }
+        assert(io.fonts.fonts.isNotEmpty()) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
         assert(io.fonts.fonts[0].isLoaded) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
         assert(style.curveTessellationTol > 0f) { "Invalid style setting" }
         assert(style.alpha in 0f..1f) { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)" }
-        assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount) { "Forgot to call render() or endFrame() at the end of the previous frame?" }
-        for (k in Key.values())
-            assert(io.keyMap[k.i] >= -1 && io.keyMap[k.i] < io.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
+        assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount) { "Forgot to call Render() or EndFrame() at the end of the previous frame?" }
+        for (n in 0 until Key.COUNT)
+            assert(io.keyMap[n] >= -1 && io.keyMap[n] < io.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
 
-        /*  Do a simple check for required key mapping (we intentionally do NOT check all keys to not pressure user into
-            setting up everything, but Space is required and was super recently added in 1.60 WIP)         */
+        // Do a simple check for required key mapping (we intentionally do NOT check all keys to not pressure user into setting up everything, but Space is required and was super recently added in 1.60 WIP)
         if (io.configFlags has Cf.NavEnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
@@ -67,14 +70,21 @@ interface imgui_main {
             g.settingsLoaded = true
         }
 
+        // Save settings (with a delay so we don't spam disk too much)
+        if (g.settingsDirtyTimer > 0f) {
+            g.settingsDirtyTimer -= io.deltaTime
+            if (g.settingsDirtyTimer <= 0f)
+                saveIniSettingsToDisk(io.iniFilename)
+        }
+
         g.time += io.deltaTime
         g.frameCount += 1
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
 
-        defaultFont.setCurrent()
+        setCurrentFont(defaultFont)
         assert(g.font.isLoaded)
-        g.drawListSharedData.clipRectFullscreen.put(0f, 0f, io.displaySize)
+        g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
 
         g.overlayDrawList.clear()
@@ -86,225 +96,140 @@ interface imgui_main {
         g.drawData.clear()
 
         // Clear reference to active widget if the widget isn't alive anymore
-        if (g.hoveredIdPreviousFrame == 0) g.hoveredIdTimer = 0f
+        if (g.hoveredIdPreviousFrame == 0)
+            g.hoveredIdTimer = 0f
         g.hoveredIdPreviousFrame = g.hoveredId
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
         if (!g.activeIdIsAlive && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
             clearActiveId()
-        if (g.activeId != 0) g.activeIdTimer += io.deltaTime
+        if (g.activeId != 0)
+            g.activeIdTimer += io.deltaTime
         g.activeIdPreviousFrame = g.activeId
         g.activeIdIsAlive = false
         g.activeIdIsJustActivated = false
         if (g.scalarAsInputTextId != 0 && g.activeId != g.scalarAsInputTextId)
             g.scalarAsInputTextId = 0
 
-        // Update keyboard input state
-        for (i in 0 until io.keysDownDuration.size) io.keysDownDurationPrev[i] = io.keysDownDuration[i]
-        for (i in 0 until io.keysDown.size)
-            io.keysDownDuration[i] =
-                    if (io.keysDown[i])
-                        if (io.keysDownDuration[i] < 0f) 0f
-                        else io.keysDownDuration[i] + io.deltaTime
-                    else -1f
-
         // Elapse drag & drop payload
         if (g.dragDropActive && g.dragDropPayload.dataFrameCount + 1 < g.frameCount) {
             clearDragDrop()
             g.dragDropPayloadBufHeap.clear()
-            val size = g.dragDropPayloadBufLocal.size
-            g.dragDropPayloadBufLocal = ByteArray(size)
+            g.dragDropPayloadBufLocal.fill(0.b)
         }
         g.dragDropAcceptIdPrev = g.dragDropAcceptIdCurr
         g.dragDropAcceptIdCurr = 0
         g.dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
 
+        // Update keyboard input state
+        for (i in io.keysDownDuration.indices)
+            io.keysDownDurationPrev[i] = io.keysDownDuration[i]
+        for (i in io.keysDown.indices)
+            io.keysDownDuration[i] = when {
+                io.keysDown[i] -> when {
+                    io.keysDownDuration[i] < 0f -> 0f
+                    else -> io.keysDownDuration[i] + io.deltaTime
+                }
+                else -> -1f
+            }
         // Update gamepad/keyboard directional navigation
         navUpdate()
 
-        /*  Update mouse input state
-            If mouse just appeared or disappeared (usually denoted by -Float.MAX_VALUE component, but in reality we test
-            for -256000.0f) we cancel out movement in MouseDelta         */
-        if (isMousePosValid(io.mousePos) && isMousePosValid(io.mousePosPrev))
-            io.mouseDelta = io.mousePos - io.mousePosPrev
-        else
-            io.mouseDelta put 0f
-        if (io.mouseDelta.x != 0f || io.mouseDelta.y != 0f)
-            g.navDisableMouseHover = false
-        io.mousePosPrev put io.mousePos
-
-        for (i in io.mouseDown.indices) {
-            io.mouseClicked[i] = io.mouseDown[i] && io.mouseDownDuration[i] < 0f
-            io.mouseReleased[i] = !io.mouseDown[i] && io.mouseDownDuration[i] >= 0f
-            io.mouseDownDurationPrev[i] = io.mouseDownDuration[i]
-            io.mouseDownDuration[i] = when (io.mouseDown[i]) {
-                true -> if (io.mouseDownDuration[i] < 0f) 0f else io.mouseDownDuration[i] + io.deltaTime
-                else -> -1f
-            }
-            io.mouseDoubleClicked[i] = false
-            if (io.mouseClicked[i]) {
-                if (g.time - io.mouseClickedTime[i] < io.mouseDoubleClickTime) {
-                    if ((io.mousePos - io.mouseClickedPos[i]).lengthSqr < io.mouseDoubleClickMaxDist * io.mouseDoubleClickMaxDist)
-                        io.mouseDoubleClicked[i] = true
-                    io.mouseClickedTime[i] = -Float.MAX_VALUE   // so the third click isn't turned into a double-click
-                } else
-                    io.mouseClickedTime[i] = g.time
-                io.mouseClickedPos[i] put io.mousePos
-                io.mouseDragMaxDistanceSqr[i] = 0f
-            } else if (io.mouseDown[i]) {
-                val mouseDelta = io.mousePos - io.mouseClickedPos[i]
-                io.mouseDragMaxDistanceAbs[i].x = max(io.mouseDragMaxDistanceAbs[i].x, if (mouseDelta.x < 0f) -mouseDelta.x else mouseDelta.x)
-                io.mouseDragMaxDistanceAbs[i].y = max(io.mouseDragMaxDistanceAbs[i].y, if (mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y)
-                io.mouseDragMaxDistanceSqr[i] = max(io.mouseDragMaxDistanceSqr[i], mouseDelta.lengthSqr)
-            }
-        }
+        // Update mouse input state
+        newFrameUpdateMouseInputs()
 
         // Calculate frame-rate for the user, as a purely luxurious feature
         g.framerateSecPerFrameAccum += io.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
         g.framerateSecPerFrame[g.framerateSecPerFrameIdx] = io.deltaTime
         g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
-        io.framerate = 1.0f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
+        io.framerate = 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
 
         // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering)
-        updateMovingWindow()
-
-        // Delay saving settings so we don't spam disk too much
-        if (g.settingsDirtyTimer > 0.0f) {
-            g.settingsDirtyTimer -= io.deltaTime
-            if (g.settingsDirtyTimer <= 0.0f)
-                saveIniSettingsToDisk(io.iniFilename)
-        }
-
-        /*  Find the window we are hovering
-            - Child windows can extend beyond the limit of their parent so we need to derive HoveredRootWindow from HoveredWindow.
-            - When moving a window we can skip the search, which also conveniently bypasses the fact that window.windowRectClipped
-                is lagging as this point.
-            - We also support the moved window toggling the NoInputs flag after moving has started in order to be able to detect
-                windows below it, which is useful for e.g. docking mechanisms.  */
-        g.hoveredWindow = if (g.movingWindow?.flags?.hasnt(Wf.NoInputs) == true) g.movingWindow else findHoveredWindow()
-        g.hoveredRootWindow = g.hoveredWindow?.rootWindow
+        newFrameUpdateMovingWindow()
+        newFrameUpdateHoveredWindowAndCaptureFlags()
 
         val modalWindow = frontMostModalRootWindow
-        if (modalWindow != null) {
-            g.modalWindowDarkeningRatio = glm.min(g.modalWindowDarkeningRatio + io.deltaTime * 6f, 1f)
-            g.hoveredRootWindow?.let {
-                if (!it.isChildOf(modalWindow)) {
-                    g.hoveredWindow = null
-                    g.hoveredRootWindow = null
-                }
-            }
-        } else g.modalWindowDarkeningRatio = 0f
-
-        /*  Update the WantCaptureMouse/WantCaptureKeyboard flags, so user can capture/discard the inputs away from
-            the rest of their application.
-            When clicking outside of a window we assume the click is owned by the application and won't request capture.
-            We need to track click ownership.   */
-        var mouseEarliestButtonDown = -1
-        var mouseAnyDown = false
-        for (i in io.mouseDown.indices) {
-            if (io.mouseClicked[i])
-                io.mouseDownOwned[i] = g.hoveredWindow != null || g.openPopupStack.isNotEmpty()
-            mouseAnyDown = mouseAnyDown || io.mouseDown[i]
-            if (io.mouseDown[i])
-                if (mouseEarliestButtonDown == -1 || io.mouseClickedTime[i] < io.mouseClickedTime[mouseEarliestButtonDown])
-                    mouseEarliestButtonDown = i
+        g.modalWindowDarkeningRatio = when {
+            modalWindow == null -> 0f
+            else -> min(g.modalWindowDarkeningRatio + io.deltaTime * 6f, 1f)
         }
-        val mouseAvailToImgui = mouseEarliestButtonDown == -1 || io.mouseDownOwned[mouseEarliestButtonDown]
-        io.wantCaptureMouse =
-                if (g.wantCaptureMouseNextFrame != -1) g.wantCaptureMouseNextFrame != 0
-                else (mouseAvailToImgui && (g.hoveredWindow != null || mouseAnyDown)) || g.openPopupStack.isNotEmpty()
-        io.wantCaptureKeyboard =
-                if (g.wantCaptureKeyboardNextFrame != -1) g.wantCaptureKeyboardNextFrame != 0
-                else g.activeId != 0 || modalWindow != null
-        if (io.navActive && io.configFlags has Cf.NavEnableKeyboard && io.configFlags hasnt Cf.NavNoCaptureKeyboard)
-            io.wantCaptureKeyboard = true
-
-        io.wantTextInput = g.wantTextInputNextFrame != -1 && g.wantTextInputNextFrame != 0
         g.mouseCursor = MouseCursor.Arrow
+        g.wantTextInputNextFrame = -1
         g.wantCaptureKeyboardNextFrame = -1
         g.wantCaptureMouseNextFrame = -1
         g.osImePosRequest put 1f // OS Input Method Editor showing on top-left of our window by default
 
-        // If mouse was first clicked outside of ImGui bounds we also cancel out hovering.
-        // FIXME: For patterns of drag and drop across OS windows, we may need to rework/remove this test (first committed 311c0ca9 on 2015/02)
-        val mouseDraggingExternPayload = g.dragDropActive && g.dragDropSourceFlags has DragDropFlag.SourceExtern
-        if (!mouseAvailToImgui && !mouseDraggingExternPayload) {
-            g.hoveredRootWindow = null
-            g.hoveredWindow = null
-        }
-
         // Mouse wheel scrolling, scale
-        if (g.hoveredWindow != null && !g.hoveredWindow!!.collapsed && (io.mouseWheel != 0f || io.mouseWheelH != 0f)) {
-            /*  If a child window has the WindowFlag.NoScrollWithMouse flag, we give a chance to scroll its parent
-                (unless either WindowFlag.NoInputs or WindowFlag.NoScrollbar are also set).             */
-            val window = g.hoveredWindow!!
-            var scrollWindow = window
-            while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
-                    scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
-                scrollWindow.parentWindow?.let { scrollWindow = it }
-            val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs
+        g.hoveredWindow?.let { window ->
+            if (!window.collapsed && (io.mouseWheel != 0f || io.mouseWheelH != 0f)) {
+                // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent (unless either ImGuiWindowFlags_NoInputs or ImGuiWindowFlags_NoScrollbar are also set).
+                var scrollWindow = window
+                while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
+                        scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
+                    scrollWindow = scrollWindow.parentWindow!!
+                val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs
 
-            if (io.mouseWheel != 0f)
-                if (io.keyCtrl && io.fontAllowUserScaling) {
-                    // Zoom / Scale window
-                    val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
-                    val scale = newFontScale / window.fontWindowScale
-                    window.fontWindowScale = newFontScale
+                if (io.mouseWheel != 0f) {
+                    if (io.keyCtrl && io.fontAllowUserScaling) {
+                        // Zoom / Scale window
+                        val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
+                        val scale = newFontScale / window.fontWindowScale
+                        window.fontWindowScale = newFontScale
 
-                    val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
-                    with(window) {
-                        pos plusAssign offset
-                        posF plusAssign offset
-                        size timesAssign scale
-                        sizeFull timesAssign scale
+                        val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
+                        window.apply {
+                            pos plusAssign offset
+                            posF plusAssign offset
+                            size timesAssign scale
+                            sizeFull timesAssign scale
+                        }
+                    } else if (!io.keyCtrl && scrollAllowed) {
+                        // Mouse wheel vertical scrolling
+                        var scrollAmount = 5 * scrollWindow.calcFontSize()
+                        val amount = scrollWindow.contentsRegionRect.height + scrollWindow.windowPadding.y * 2f
+                        scrollAmount = min(scrollAmount, amount * 0.67f).i.f
+                        scrollWindow.setScrollY(scrollWindow.scroll.y - io.mouseWheel * scrollAmount)
                     }
-                } else if (!io.keyCtrl && scrollAllowed) {
-                    // Mouse wheel vertical scrolling
-                    var scrollAmount = 5 * scrollWindow.calcFontSize()
-                    scrollAmount = min(scrollAmount,
-                            (scrollWindow.contentsRegionRect.height + scrollWindow.windowPadding.y * 2f) * 0.67f).i.f
-                    scrollWindow.setScrollY(scrollWindow.scroll.y - io.mouseWheel * scrollAmount)
                 }
-            if (io.mouseWheelH != 0f && scrollAllowed) {
-                // Mouse wheel horizontal scrolling (for hardware that supports it)
-                val scrollAmount = scrollWindow.calcFontSize()
-                if (!io.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse)
-                    window.setScrollX(window.scroll.x - io.mouseWheelH * scrollAmount)
+                if (io.mouseWheelH != 0f && scrollAllowed) {
+                    // Mouse wheel horizontal scrolling (for hardware that supports it)
+                    val scrollAmount = scrollWindow.calcFontSize()
+                    if (!io.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse)
+                        window.setScrollX(window.scroll.x - io.mouseWheelH * scrollAmount)
+                }
             }
         }
 
         // Pressing TAB activate widget focus
-        g.navWindow?.let {
-            if (g.activeId == 0 && it.active && it.flags hasnt Wf.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed(false)) {
-                if (g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE)
-                    it.focusIdxTabRequestNext = g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
-                else it.focusIdxTabRequestNext = if (io.keyShift) -1 else 0
+        if (g.activeId == 0)
+            g.navWindow?.let {
+                if (it.active && it.flags hasnt Wf.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed(false))
+                    if (g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE)
+                        it.focusIdxTabRequestNext = g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
+                    else
+                        it.focusIdxTabRequestNext = if (io.keyShift) -1 else 0
             }
-        }
         g.navIdTabCounter = Int.MAX_VALUE
 
         // Mark all windows as not visible
-        var i = 0
-        while (i != g.windows.size) {
-            val window = g.windows[i]
-            window.wasActive = window.active
-            window.active = false
-            window.writeAccessed = false
-            i++
+        g.windows.forEach {
+            it.wasActive = it.active
+            it.active = false
+            it.writeAccessed = false
         }
 
         // Closing the focused window restore focus to the first active root window in descending z-order
-        if (g.navWindow != null && !g.navWindow!!.wasActive)
+        if (g.navWindow?.wasActive == false)
             focusFrontMostActiveWindow(null)
 
-        /*  No window should be open at the beginning of the frame.
-            But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an
-            explicit clear. */
+        // No window should be open at the beginning of the frame.
+        // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.
         g.currentWindowStack.clear()
         g.currentPopupStack.clear()
         closePopupsOverWindow(g.navWindow)
 
         // Create implicit window - we will only render it if the user has added something to it.
+        // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
         begin("Debug##Default")
     }
@@ -452,7 +377,7 @@ interface imgui_main {
 
     companion object {
 
-        fun updateMovingWindow() {
+        fun newFrameUpdateMovingWindow() {
 
             val mov = g.movingWindow
             if (mov != null && mov.moveId == g.activeId && g.activeIdSource == InputSource.Mouse) {
@@ -483,6 +408,52 @@ interface imgui_main {
                         clearActiveId()
                 }
                 g.movingWindow = null
+            }
+        }
+
+        fun newFrameUpdateMouseInputs() {
+            with(io) {
+                // If mouse just appeared or disappeared (usually denoted by -FLT_MAX component, but in reality we test for -256000.0f) we cancel out movement in MouseDelta
+                if (isMousePosValid(mousePos) && isMousePosValid(mousePosPrev))
+                    mouseDelta = mousePos - mousePosPrev
+                else
+                    mouseDelta put 0f
+                if (mouseDelta.x != 0f || mouseDelta.y != 0f)
+                    g.navDisableMouseHover = false
+
+                mousePosPrev put mousePos
+                for (i in mouseDown.indices) {
+                    mouseClicked[i] = mouseDown[i] && mouseDownDuration[i] < 0f
+                    mouseReleased[i] = !mouseDown[i] && mouseDownDuration[i] >= 0f
+                    mouseDownDurationPrev[i] = mouseDownDuration[i]
+                    mouseDownDuration[i] = when {
+                        mouseDown[i] -> when {
+                            mouseDownDuration[i] < 0f -> 0f
+                            else -> mouseDownDuration[i] + deltaTime
+                        }
+                        else -> -1f
+                    }
+                    mouseDoubleClicked[i] = false
+                    if (mouseClicked[i]) {
+                        if (g.time - mouseClickedTime[i] < mouseDoubleClickTime) {
+                            if ((mousePos - mouseClickedPos[i]).lengthSqr < mouseDoubleClickMaxDist * mouseDoubleClickMaxDist)
+                                mouseDoubleClicked[i] = true
+                            mouseClickedTime[i] = -Float.MAX_VALUE    // so the third click isn't turned into a double-click
+                        } else
+                            mouseClickedTime[i] = g.time
+                        mouseClickedPos[i] = mousePos
+                        mouseDragMaxDistanceAbs[i] put 0f
+                        mouseDragMaxDistanceSqr[i] = 0f
+                    } else if (mouseDown[i]) {
+                        val mouseDelta = mousePos - mouseClickedPos[i]
+                        mouseDragMaxDistanceAbs[i].x = mouseDragMaxDistanceAbs[i].x max  if (mouseDelta.x < 0f) -mouseDelta.x else mouseDelta.x
+                        mouseDragMaxDistanceAbs[i].y = mouseDragMaxDistanceAbs[i].y max if (mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y
+                        mouseDragMaxDistanceSqr[i] = mouseDragMaxDistanceSqr[i] max mouseDelta.lengthSqr
+                    }
+                    // Clicking any mouse button reactivate mouse hovering which may have been deactivated by gamepad/keyboard navigation
+                    if (mouseClicked[i])
+                        g.navDisableMouseHover = false
+                }
             }
         }
 

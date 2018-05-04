@@ -335,6 +335,19 @@ interface imgui_internal {
         itemFlags = itemFlagsStack.lastOrNull() ?: If.Default_.i
     }
 
+    fun setCurrentFont(font: Font)    {
+        assert(font.isLoaded){"Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?"}
+        assert(font.scale > 0f)
+        g.font = font
+        g.fontBaseSize = io.fontGlobalScale * g.font.fontSize * g.font.scale
+        g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
+
+        val atlas = g.font.containerAtlas
+        g.drawListSharedData.texUvWhitePixel = atlas.texUvWhitePixel
+        g.drawListSharedData.font = g.font
+        g.drawListSharedData.fontSize = g.fontSize
+    }
+
     /** Mark popup as open (toggle toward open state).
      *  Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within
      *  a BeginPopup()/EndPopup() block.
@@ -2798,6 +2811,70 @@ interface imgui_internal {
     }
 
 
+    /** The reason this is exposed in imgui_internal.h is: on touch-based system that don't have hovering,
+     *  we want to dispatch inputs to the right target (imgui vs imgui+app) */
+    fun newFrameUpdateHoveredWindowAndCaptureFlags() {
+
+        /*  Find the window hovered by mouse:
+            - Child windows can extend beyond the limit of their parent so we need to derive HoveredRootWindow from HoveredWindow.
+            - When moving a window we can skip the search, which also conveniently bypasses the fact that window.windowRectClipped
+                is lagging as this point of the frame.
+            - We also support the moved window toggling the NoInputs flag after moving has started in order
+                to be able to detect windows below it, which is useful for e.g. docking mechanisms. */
+        g.hoveredWindow = g.movingWindow?.flags?.hasnt(Wf.NoInputs)?.let { g.movingWindow } ?: findHoveredWindow()
+        g.hoveredRootWindow = g.hoveredWindow?.rootWindow
+
+        fun nullate() {
+            g.hoveredWindow = null
+            g.hoveredRootWindow = null
+        }
+
+        // Modal windows prevents cursor from hovering behind them.
+        val modalWindow = frontMostModalRootWindow
+        if(modalWindow != null)
+            if(g.hoveredRootWindow?.isChildOf(modalWindow) == true)
+                nullate()
+        // Disabled mouse?
+        if (io.configFlags has ConfigFlag.NoMouse)
+            nullate()
+
+        // We track click ownership. When clicked outside of a window the click is owned by the application and won't report hovering nor request capture even while dragging over our windows afterward.
+        var mouseEarliestButtonDown = - 1
+        var mouseAnyDown = false
+        for (i in io.mouseDown.indices)        {
+            if (io.mouseClicked[i])
+                io.mouseDownOwned[i] = g.hoveredWindow != null || g.openPopupStack.isNotEmpty()
+            mouseAnyDown = mouseAnyDown || io.mouseDown[i]
+            if (io.mouseDown[i])
+                if (mouseEarliestButtonDown == -1 || io.mouseClickedTime[i] < io.mouseClickedTime[mouseEarliestButtonDown])
+                    mouseEarliestButtonDown = i
+        }
+        val mouseAvailToImgui = mouseEarliestButtonDown == -1 || io.mouseDownOwned[mouseEarliestButtonDown]
+
+        // If mouse was first clicked outside of ImGui bounds we also cancel out hovering.
+        // FIXME: For patterns of drag and drop across OS windows, we may need to rework/remove this test (first committed 311c0ca9 on 2015/02)
+        val mouseDraggingExternPayload = g.dragDropActive && g.dragDropSourceFlags has Ddf.SourceExtern
+        if (!mouseAvailToImgui && !mouseDraggingExternPayload)
+            nullate()
+
+        // Update io.WantCaptureMouse for the user application (true = dispatch mouse info to imgui, false = dispatch mouse info to imgui + app)
+        if (g.wantCaptureMouseNextFrame != -1)
+            io.wantCaptureMouse = g.wantCaptureMouseNextFrame != 0
+        else
+            io.wantCaptureMouse = (mouseAvailToImgui && (g.hoveredWindow != null || mouseAnyDown)) || g.openPopupStack.isNotEmpty()
+
+        // Update io.WantCaptureKeyboard for the user application (true = dispatch keyboard info to imgui, false = dispatch keyboard info to imgui + app)
+        if (g.wantCaptureKeyboardNextFrame != -1)
+            io.wantCaptureKeyboard = g.wantCaptureKeyboardNextFrame != 0
+        else
+            io.wantCaptureKeyboard = g.activeId != 0 || modalWindow != null
+        if (io.navActive && io.configFlags has ConfigFlag.NavEnableKeyboard && io.configFlags hasnt ConfigFlag.NavNoCaptureKeyboard)
+            io.wantCaptureKeyboard = true
+
+        // Update io.WantTextInput flag, this is to allow systems without a keyboard (e.g. mobile, hand-held) to show a software keyboard if possible
+        io.wantTextInput = if(g.wantTextInputNextFrame != -1) g.wantTextInputNextFrame != 0 else false
+    }
+
     /** Parse display precision back from the display format string */
     fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
         var precision = defaultPrecision
@@ -2831,8 +2908,9 @@ interface imgui_internal {
         return if (negative) -value else value
     }
 
+
     //-----------------------------------------------------------------------------
-    // Shade functions
+    // Shade functions (write over already created vertices)
     //-----------------------------------------------------------------------------
 
     /** Generic linear color gradient, write to RGB fields, leave A untouched.  */

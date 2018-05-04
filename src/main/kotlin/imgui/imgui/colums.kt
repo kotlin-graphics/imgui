@@ -4,7 +4,6 @@ import glm_.f
 import glm_.glm
 import glm_.i
 import imgui.ColumnsFlags
-import imgui.ImGui.style
 import imgui.ImGui.beginColumns
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
@@ -13,6 +12,7 @@ import imgui.ImGui.popClipRect
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.pushItemWidth
+import imgui.ImGui.style
 import imgui.g
 import imgui.internal.*
 import kotlin.math.max
@@ -29,10 +29,16 @@ interface imgui_colums {
         val window = currentWindow
         assert(columnsCount >= 1)
 
-        window.dc.columnsSet?.let { if(it.count != columnsCount) endColumns() }
-
         val flags: ColumnsFlags = if (border) 0 else Cf.NoBorder.i
         //flags |= ImGuiColumnsFlags_NoPreserveWidths; // NB: Legacy behavior
+        window.dc.columnsSet?.let {
+            if (it.count == columnsCount && it.flags == flags)
+                return
+        }
+
+        if (window.dc.columnsSet != null)
+            endColumns()
+
         if (columnsCount != 1)
             beginColumns(id, columnsCount, flags)
     }
@@ -110,11 +116,11 @@ interface imgui_colums {
         val columnIndex = if (columnIndex < 0) columns.current else columnIndex
         assert(columnIndex < columns.columns.size)
 
-        val preserveWidth = columns.flags hasnt Cf.NoPreserveWidths && columnIndex < columns.count-1
-        val width = if(preserveWidth) getColumnWidthEx(columns, columnIndex, columns.isBeingResized) else 0f
+        val preserveWidth = columns.flags hasnt Cf.NoPreserveWidths && columnIndex < columns.count - 1
+        val width = if (preserveWidth) getColumnWidthEx(columns, columnIndex, columns.isBeingResized) else 0f
 
         val offset = if (columns.flags has Cf.NoForceWithinWindow) offset
-            else min(offset, columns.maxX - style.columnsMinSpacing * (columns.count - columnIndex))
+        else min(offset, columns.maxX - style.columnsMinSpacing * (columns.count - columnIndex))
         columns.columns[columnIndex].offsetNorm = pixelsToOffsetNorm(columns, offset - columns.minX)
 
         if (preserveWidth)
@@ -136,10 +142,10 @@ interface imgui_colums {
             val columnIndex = if (columnIndex < 0) columns.current else columnIndex
 
             val offsetNorm =
-                if (beforeResize)
-                    columns.columns[columnIndex + 1].offsetNormBeforeResize - columns.columns[columnIndex].offsetNormBeforeResize
-                else
-                    columns.columns[columnIndex + 1].offsetNorm - columns.columns[columnIndex].offsetNorm
+                    if (beforeResize)
+                        columns.columns[columnIndex + 1].offsetNormBeforeResize - columns.columns[columnIndex].offsetNormBeforeResize
+                    else
+                        columns.columns[columnIndex + 1].offsetNorm - columns.columns[columnIndex].offsetNorm
             return offsetNormToPixels(columns, offsetNorm)
         }
     }
