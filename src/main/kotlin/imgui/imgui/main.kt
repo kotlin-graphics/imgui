@@ -331,10 +331,10 @@ interface imgui_main {
             val windowToRenderFrontMost = g.navWindowingTarget.takeIf {
                 it?.flags?.hasnt(Wf.NoBringToFrontOnFocus) ?: false
             }
-            g.windows.filter { it.active && it.hiddenFrames <= 0 && it.flags hasnt Wf.ChildWindow && it !== windowToRenderFrontMost }
+            g.windows.filter { it.active && it.hiddenFrames == 0 && it.flags hasnt Wf.ChildWindow && it !== windowToRenderFrontMost }
                     .map(Window::addToDrawDataSelectLayer)
             windowToRenderFrontMost?.let {
-                if (it.active && it.hiddenFrames <= 0) // NavWindowingTarget is always temporarily displayed as the front-most window
+                if (it.active && it.hiddenFrames == 0) // NavWindowingTarget is always temporarily displayed as the front-most window
                     it.addToDrawDataSelectLayer()
             }
             g.drawDataBuilder.flattenIntoSingleLayer()

@@ -951,7 +951,7 @@ fun navUpdate() {
         g.navWindow?.let {
             for (layer in 0..1)
                 g.overlayDrawList.addRect(it.navRectRel[layer].min + it.pos, it.navRectRel[layer].max + it.pos, COL32(255, 200, 0, 255))
-            val col = if (it.hiddenFrames <= 0) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
+            val col = if (it.hiddenFrames == 0) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
             val p = navCalcPreferredMousePos()
             g.overlayDrawList.addCircleFilled(p, 3f, col)
             g.overlayDrawList.addText(null, 13f, p + Vec2(8, -4), col, "${g.navLayer}".toCharArray())

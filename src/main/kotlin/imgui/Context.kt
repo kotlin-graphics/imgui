@@ -635,9 +635,10 @@ class Style {
     var childRounding = 0f
     /** Thickness of border around child windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly). */
     var childBorderSize = 1f
-    /** Radius of popup window corners rounding.    */
+    /** Radius of popup window corners rounding. (Note that tooltip windows use WindowRounding) */
     var popupRounding = 0f
-    /** Thickness of border around popup windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly). */
+    /** Thickness of border around popup/tooltip windows. Generally set to 0f or 1f.
+     *  (Other values are not well tested and more CPU/GPU costly). */
     var popupBorderSize = 1f
     /** Padding within a framed rectangle (used by most widgets).    */
     var framePadding = Vec2(4, 3)

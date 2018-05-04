@@ -92,11 +92,11 @@ interface imgui_window {
         var flags = flags
 
         // Find or create
-        var windowIsNew = false
+        var windowJustCreated = false
         val window = findWindowByName(name) ?: run {
             // Any condition flag will do since we are creating a new window here.
             val sizeOnFirstUse = if (g.nextWindowData.sizeCond != Cond.Null) Vec2(g.nextWindowData.sizeVal) else Vec2()
-            windowIsNew = true
+            windowJustCreated = true
             createNewWindow(name, sizeOnFirstUse, flags)
         }
 
@@ -115,10 +115,9 @@ interface imgui_window {
             flags = window.flags
 
         // Update the Appearing flag
-
         // Not using !WasActive because the implicit "Debug" window would always toggle off->on
         var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1
-        val windowJustAppearingAfterHiddenForResize = window.hiddenFrames == 1
+        val windowJustAppearingAfterHiddenForResize = window.hiddenFrames > 0
         if (flags has Wf.Popup) {
             val popupRef = g.openPopupStack[g.currentPopupStack.size]
             // We recycle popups so treat window as activated if popup id changed
@@ -229,7 +228,7 @@ interface imgui_window {
             }
             window.windowBorderSize = when {
                 flags has Wf.ChildWindow -> style.childBorderSize
-                flags has Wf.Popup && flags hasnt Wf.Modal -> style.popupBorderSize
+                flags has (Wf.Popup or Wf.Tooltip) && flags hasnt Wf.Modal -> style.popupBorderSize
                 else -> style.windowBorderSize
             }
             window.windowPadding put style.windowPadding
@@ -257,7 +256,7 @@ interface imgui_window {
             // Hide popup/tooltip window when re-opening while we measure size (because we recycle the windows)
             if (window.hiddenFrames > 0)
                 window.hiddenFrames--
-            if (flags has (Wf.Popup or Wf.Tooltip) && windowJustActivatedByUser) {
+            if (windowJustActivatedByUser && flags has (Wf.Popup or Wf.Tooltip)) {
                 window.hiddenFrames = 1
                 if (flags has Wf.AlwaysAutoResize) {
                     if (!windowSizeXsetByApi) {
@@ -271,6 +270,10 @@ interface imgui_window {
                     window.sizeContents put 0f
                 }
             }
+
+            // Hide new windows for one frame until they calculate their size
+            if (windowJustCreated && (!windowSizeXsetByApi || !windowSizeYsetByApi))
+                window.hiddenFrames = 1
 
             // Calculate auto-fit size, handle automatic resize
             val sizeAutoFit = window.calcSizeAutoFit(window.sizeContents)
@@ -286,7 +289,7 @@ interface imgui_window {
                     window.sizeFull.y = sizeAutoFit.y
                 }
             } else if (window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0) {
-                /*  Auto-fit only grows during the first few frames
+                /*  Auto-fit may only grow window during the first few frames
                     We still process initial auto-fit on collapsed windows to get a window width,
                     but otherwise don't honor WindowFlag.AlwaysAutoResize when collapsed.                 */
                 if (!windowSizeXsetByApi && window.autoFitFrames.x > 0) {
@@ -871,6 +874,8 @@ interface imgui_window {
 
     /** set next window position. call before Begin()   */
     fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always, pivot: Vec2 = Vec2()) {
+//        JVM, useless
+//        assert(cond == Cond.Null || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             posVal put pos
             posPivotVal put pivot
@@ -880,6 +885,8 @@ interface imgui_window {
 
     /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
     fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Always) {
+//        JVM, useless
+//        assert(cond == Cond.Null || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             sizeVal put size
             sizeCond = cond
@@ -910,6 +917,8 @@ interface imgui_window {
 
     /** Set next window collapsed state. call before Begin()    */
     fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Always) {
+//        JVM, useless
+//        assert(cond == Cond.Null || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             collapsedVal = collapsed
             collapsedCond = cond

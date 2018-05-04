@@ -10,10 +10,10 @@ import glm_.vec2.Vec2bool
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.io
 import imgui.ImGui.keepAliveId
+import imgui.ImGui.style
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.cos
@@ -736,6 +736,8 @@ class Window(var context: Context, var name: String) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
         if (cond != Cond.Null && setWindowPosAllowFlags hasnt cond)
             return
+//        JVM, useless
+//        assert(cond == Cond.Null || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         setWindowPosAllowFlags = setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
         setWindowPosVal put Float.MAX_VALUE
         setWindowPosPivot put Float.MAX_VALUE
@@ -754,6 +756,8 @@ class Window(var context: Context, var name: String) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
         if (cond != Cond.Null && setWindowSizeAllowFlags hasnt cond)
             return
+//        JVM, useless
+//        assert(cond == Cond.Null || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         setWindowSizeAllowFlags = setWindowSizeAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
 
         // Set
@@ -819,7 +823,7 @@ class Window(var context: Context, var name: String) {
     }
 
     fun calcSizeAutoFit(sizeContents: Vec2) =
-            // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
+    // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
             if (flags has Wf.Tooltip) Vec2(sizeContents)
             else {
                 /*  When the window cannot fit all contents (either because of constraints, either because screen is too small):
@@ -838,9 +842,10 @@ class Window(var context: Context, var name: String) {
     val scrollMaxX get() = max(0f, sizeContents.x - (sizeFull.x - scrollbarSizes.x))
     val scrollMaxY get() = max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y))
 
+    /** AddWindowToDrawData */
     infix fun addTo(outList: ArrayList<DrawList>) {
         drawList addTo outList
-        dc.childWindows.filter { it.active && it.hiddenFrames <= 0 }  // clipped children may have been marked not active
+        dc.childWindows.filter { it.active && it.hiddenFrames == 0 }  // clipped children may have been marked not active
                 .forEach { it addTo outList }
     }
 
