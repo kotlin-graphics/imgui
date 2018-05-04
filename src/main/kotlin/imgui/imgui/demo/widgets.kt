@@ -41,6 +41,7 @@ import imgui.ImGui.fontSize
 import imgui.ImGui.image
 import imgui.ImGui.imageButton
 import imgui.ImGui.indent
+import imgui.ImGui.inputDouble
 import imgui.ImGui.inputFloat
 import imgui.ImGui.inputFloat2
 import imgui.ImGui.inputFloat3
@@ -132,6 +133,7 @@ object widgets {
     var str0 = "Hello, world!".toCharArray()
     var i0 = 123
     var f0 = 0.001f
+    var d0 = 999999.000001
     val vec4a = floatArrayOf(0.1f, 0.2f, 0.3f, 0.44f)
     var i1 = 50
     var i2 = 42
@@ -316,6 +318,10 @@ object widgets {
                     sameLine(); showHelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n")
 
                     inputFloat("input float", ::f0, 0.01f, 1f)
+
+                    // NB: You can use the %e notation as well.
+                    inputDouble("input double", ::d0, 0.01, 1.0, "%.6f")
+                    sameLine(); showHelpMarker("You can input value using the scientific notation,\n  e.g. \"1e+8\" becomes \"100000000\".\n")
 
                     inputFloat3("input float3", vec4a)
                 }

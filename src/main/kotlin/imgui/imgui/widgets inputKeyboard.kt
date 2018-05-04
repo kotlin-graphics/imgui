@@ -47,21 +47,21 @@ interface imgui_widgetsInputKeyboard {
 
     fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f,
                    decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0): Boolean {
+        val flags = extraFlags or Itf.CharsScientific
         /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float,
             while hiding non-significant digits? %f doesn't have a minimum of 1         */
         val fmt = "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f"
         return inputScalarEx(label, DataType.Float, v as KMutableProperty0<Number>, step.takeIf { it > 0f },
-                stepFast.takeIf { it > 0f }, fmt, extraFlags)
+                stepFast.takeIf { it > 0f }, fmt, flags)
     }
 
     fun inputDouble(label: String, v: KMutableProperty0<Double>, step: Double = 0.0, stepFast: Double = 0.0,
-                    decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0): Boolean {
-
+                    dispalyFormat: String = "%.6f", extraFlags: InputTextFlags = 0): Boolean {
+        val flags = extraFlags or Itf.CharsScientific
         /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float,
             while hiding non-significant digits? %f doesn't have a minimum of 1         */
-        val fmt = "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f"
-        return inputScalarEx(label, DataType.Float, v as KMutableProperty0<Number>, step.takeIf { it > 0.0 },
-                stepFast.takeIf { it > 0.0 }, fmt, extraFlags)
+        return inputScalarEx(label, DataType.Double, v as KMutableProperty0<Number>, step.takeIf { it > 0.0 },
+                stepFast.takeIf { it > 0.0 }, dispalyFormat, flags)
     }
 
     fun inputFloat2(label: String, v: FloatArray, decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0) =
