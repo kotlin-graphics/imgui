@@ -254,6 +254,8 @@ object ExampleApp {
         }
 
         inputNavigationAndFocus()
+
+        end()
     }
 }
 
