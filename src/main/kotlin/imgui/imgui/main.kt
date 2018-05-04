@@ -437,7 +437,7 @@ interface imgui_main {
             if (!it.active || it.flags hasnt Wf.ChildWindow)  // if a child is active its parent will add it
                 it.addToSortedBuffer()
         }
-        //assert(g.windows.size == g.windowsSortBuffer.size)  // we done something wrong
+        assert(g.windows.size == g.windowsSortBuffer.size) { "we done something wrong" }
         g.windows.clear()
         g.windows.addAll(g.windowsSortBuffer)
 
