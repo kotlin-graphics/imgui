@@ -512,6 +512,7 @@ class FontAtlas {
 
         if (flags has FontAtlasFlag.NoMouseCursors) return false
 
+        assert(customRectIds[0] != -1)
         val r = customRects[customRectIds[0]]
         assert(r.id == DefaultTexData.id)
         val pos = DefaultTexData.cursorDatas[cursor.i][0] + Vec2(r.x, r.y)

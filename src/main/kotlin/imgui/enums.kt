@@ -353,9 +353,9 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
  *  Read instructions in imgui.cpp for more details.    */
 enum class NavInput {
     // Gamepad Mapping
-    /** activate / open / toggle / tweak value       // e.g. Circle (PS4), A (Xbox), B (Switch), Space (Keyboard)   */
+    /** activate / open / toggle / tweak value       // e.g. Cross (PS4), A (Xbox), B (Switch), Space (Keyboard)   */
     Activate,
-    /** cancel / close / exit                        // e.g. Cross  (PS4), B (Xbox), A (Switch), Escape (Keyboard)  */
+    /** cancel / close / exit                        // e.g. Circle (PS4), B (Xbox), A (Switch), Escape (Keyboard)  */
     Cancel,
     /** text input / on-screen keyboard              // e.g. Triang.(PS4), Y (Xbox), X (Switch), Return (Keyboard)  */
     Input,
