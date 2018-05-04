@@ -148,9 +148,8 @@ interface imgui_main {
         newFrameUpdateMovingWindow()
         newFrameUpdateHoveredWindowAndCaptureFlags()
 
-        val modalWindow = frontMostModalRootWindow
-        g.modalWindowDarkeningRatio = when {
-            modalWindow == null -> 0f
+        g.modalWindowDarkeningRatio = when (frontMostModalRootWindow) {
+            null -> 0f
             else -> min(g.modalWindowDarkeningRatio + io.deltaTime * 6f, 1f)
         }
         g.mouseCursor = MouseCursor.Arrow

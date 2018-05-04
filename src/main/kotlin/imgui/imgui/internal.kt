@@ -1369,26 +1369,6 @@ interface imgui_internal {
         return pressed
     }
 
-    /** [Internal]
-     *  @param flags: ButtonFlag */
-    fun arrowButton(id: ID, dir: Dir, padding: Vec2, flags: Int = 0): Boolean {
-        val window = g.currentWindow!!
-        if (window.skipItems) return false
-
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + g.fontSize + padding * 2f)
-        itemSize(bb, style.framePadding.y)
-        if (!itemAdd(bb, id)) return false
-
-        val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
-
-        val col = (if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button).u32
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, col, true, style.frameRounding)
-        renderArrow(bb.min + padding, dir, 1f)
-        return pressed
-    }
-
-
     fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
                        flags: SliderFlags = 0) = sliderBehavior(frameBb, id, v, 0, vMin, vMax, power, decimalPrecision, flags)
 
