@@ -39,7 +39,7 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
         enforce absolute positioning.   */
 
     val window = g.currentWindow!!
-    assert(columnIndex > 0) // We are not supposed to drag column 0.
+    assert(columnIndex > 0) { "We are not supposed to drag column 0." }
     assert(g.activeId == columns.id + columnIndex/* as ID */)
 
     var x = io.mousePos.x - g.activeIdClickOffset.x + columnsRectHalfWidth - window.pos.x

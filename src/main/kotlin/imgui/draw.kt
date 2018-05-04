@@ -304,7 +304,9 @@ class DrawList(sharedData: DrawListSharedData?) {
         val font = font ?: _data.font!!
         val fontSize = if (fontSize == 0f) _data.fontSize else fontSize
 
-        assert(font.containerAtlas.texId == _textureIdStack.last())  // Use high-level ImGui::PushFont() or low-level ImDrawList::PushTextureId() to change font.
+        assert(font.containerAtlas.texId == _textureIdStack.last()) {
+            "Use high-level ImGui::pushFont() or low-level DrawList::pushTextureId() to change font"
+        }
 
         val clipRect = Vec4(_clipRectStack.last())
         cpuFineClipRect?.let {

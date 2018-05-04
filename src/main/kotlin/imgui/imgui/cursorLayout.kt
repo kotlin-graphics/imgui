@@ -161,7 +161,7 @@ interface imgui_cursorLayout {
 
         val window = currentWindow
 
-        assert(window.dc.groupStack.isNotEmpty())    // Mismatched BeginGroup()/EndGroup() calls
+        assert(window.dc.groupStack.isNotEmpty()) { "Mismatched BeginGroup()/EndGroup() calls" }
 
         val groupData = window.dc.groupStack.last()
 

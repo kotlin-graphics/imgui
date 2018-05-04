@@ -129,7 +129,7 @@ interface imgui_menus {
                 /*  To do so we claim focus back, restore NavId and then process the movement request for yet another
                     frame. This involve a one-frame delay which isn't very problematic in this situation.
                     We could remove it by scoring in advance for multiple window (probably not worth the hassle/cost)   */
-                assert(window.dc.navLayerActiveMaskNext has 0x02) // Sanity check
+                assert(window.dc.navLayerActiveMaskNext has 0x02) {"Sanity check"}
                 window.focus()
                 setNavIDWithRectRel(window.navLastIds[1], 1, window.navRectRel[1])
                 g.navLayer = 1

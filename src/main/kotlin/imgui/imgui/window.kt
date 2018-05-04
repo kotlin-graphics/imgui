@@ -85,10 +85,9 @@ interface imgui_window {
 
     fun begin(name: String, pOpen: BooleanArray? = null, flags: WindowFlags = 0): Boolean {
 
-        assert(name.isNotEmpty())   // Window name required
-        assert(g.initialized)       // Forgot to call ImGui::NewFrame()
-        // Called ImGui::Render() or ImGui::EndFrame() and haven't called ImGui::NewFrame() again yet
-        assert(g.frameCountEnded != g.frameCount)
+        assert(name.isNotEmpty()) { "Window name required" }
+        assert(g.initialized) { "Forgot to call ImGui::NewFrame()" }
+        assert(g.frameCountEnded != g.frameCount) { "Called ImGui::Render() or ImGui::EndFrame() and haven't called ImGui::NewFrame() again yet" }
 
         var flags = flags
 
@@ -758,7 +757,7 @@ interface imgui_window {
 
         val window = currentWindow
 
-        assert(window.flags has Wf.ChildWindow)   // Mismatched BeginChild()/EndChild() callss
+        assert(window.flags has Wf.ChildWindow) { "Mismatched BeginChild()/EndChild() callss" }
         if (window.beginCount > 1) end()
         else {
             /*  When using auto-filling child window, we don't provide full width/height to ItemSize so that it doesn't
@@ -813,7 +812,7 @@ interface imgui_window {
      *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
      *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
     fun isWindowHovered(flags: HoveredFlags = Hf.Default.i): Boolean {
-        assert(flags hasnt Hf.AllowWhenOverlapped)   // Flags not supported by this function
+        assert(flags hasnt Hf.AllowWhenOverlapped) { "Flags not supported by this function" }
         if (flags has Hf.AnyWindow) {
             if (g.hoveredWindow == null)
                 return false

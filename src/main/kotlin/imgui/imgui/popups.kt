@@ -52,7 +52,7 @@ interface imgui_popups {
         val window = currentWindow
         // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!
         val id = if (strId.isNotEmpty()) window.getId(strId) else window.dc.lastItemId
-        assert(id != 0) // However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)
+        assert(id != 0) { "However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)" }
         if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup))
             openPopupEx(id)
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
@@ -101,7 +101,7 @@ interface imgui_popups {
 
     /** Only call EndPopup() if BeginPopupXXX() returns true!   */
     fun endPopup() {
-        assert(currentWindow.flags has Wf.Popup)  // Mismatched BeginPopup()/EndPopup() calls
+        assert(currentWindow.flags has Wf.Popup) { "Mismatched BeginPopup()/EndPopup() calls" }
         assert(g.currentPopupStack.isNotEmpty())
 
         // Make all menus and popups wrap around for now, may need to expose that policy.
@@ -115,7 +115,7 @@ interface imgui_popups {
         if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
             // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
             val id = if (strId.isNotEmpty()) getId(strId) else dc.lastItemId
-            assert(id != 0) // However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)
+            assert(id != 0) { "However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)" }
             openPopupEx(id)
             true
         } else false
@@ -142,7 +142,7 @@ interface imgui_popups {
                 if ((g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down) && g.navMoveRequestForward == NavForward.None && g.navLayer == 0) {
                     g.navMoveRequestForward = NavForward.ForwardQueued
                     navMoveRequestCancel()
-                    val y = (if(g.navMoveDir == Dir.Up) max(window.sizeFull.y, window.sizeContents.y) else 0f)-window.scroll.y
+                    val y = (if (g.navMoveDir == Dir.Up) max(window.sizeFull.y, window.sizeContents.y) else 0f) - window.scroll.y
                     g.navWindow!!.navRectRel[0].max.y = y
                     g.navWindow!!.navRectRel[0].min.y = y
                 }

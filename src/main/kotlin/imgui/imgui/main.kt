@@ -23,9 +23,9 @@ import imgui.ImGui.setNextWindowSize
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
+import imgui.ConfigFlag as Cf
 import imgui.WindowFlag as Wf
 import imgui.internal.DrawListFlag as Dlf
-import imgui.ConfigFlag as Cf
 
 interface imgui_main {
 
@@ -314,7 +314,7 @@ interface imgui_main {
      *  Nowadays, prefer calling your render function yourself.)   */
     fun render() {
 
-        assert(g.initialized)   // Forgot to call ImGui::NewFrame()
+        assert(g.initialized) { "Forgot to call ImGui::NewFrame()" }
 
         if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount
@@ -376,7 +376,7 @@ interface imgui_main {
      *  the gain will be very minimal.  */
     fun endFrame() {
 
-        assert(g.initialized)                       // Forgot to call newFrame()
+        assert(g.initialized) { "Forgot to call newFrame()" }
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
@@ -387,7 +387,7 @@ interface imgui_main {
         }
 
         // Hide implicit "Debug" window if it hasn't been used
-        assert(g.currentWindowStack.size == 1)    // Mismatched Begin()/End() calls
+        assert(g.currentWindowStack.size == 1) { "Mismatched Begin()/End() calls" }
         g.currentWindow?.let {
             if (!it.writeAccessed) it.active = false
         }

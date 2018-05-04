@@ -115,7 +115,7 @@ interface imgui_dragAndDrop {
         assert(type.length < 8) { "Payload type can be at most 12 characters long" }
 //        assert((data != NULL && data_size > 0) || (data == NULL && data_size == 0))
         assert(cond == Cond.Always || cond == Cond.Once)
-        assert(payload.sourceId != 0) // Not called between beginDragDropSource() and endDragDropSource()
+        assert(payload.sourceId != 0) { "Not called between beginDragDropSource() and endDragDropSource()" }
 
         if (cond == Cond.Always || payload.dataFrameCount == -1) {
             // Copy payload
@@ -187,8 +187,8 @@ interface imgui_dragAndDrop {
     fun acceptDragDropPayload(type: String, flags: DrawListFlags = 0): Payload? {
         val window = g.currentWindow!!
         val payload = g.dragDropPayload
-        assert(g.dragDropActive)                        // Not called between BeginDragDropTarget() and EndDragDropTarget() ?
-        assert(payload.dataFrameCount != -1)            // Forgot to call EndDragDropTarget() ?
+        assert(g.dragDropActive) { "Not called between BeginDragDropTarget() and EndDragDropTarget() ?" }
+        assert(payload.dataFrameCount != -1) { "Forgot to call EndDragDropTarget() ?" }
         if (type.isNotEmpty() && !payload.isDataType(type)) return null
 
         /*  Accept smallest drag target bounding box, this allows us to nest drag targets conveniently without ordering constraints.
