@@ -983,9 +983,10 @@ interface imgui_window {
             if (!border) style.childBorderSize = 0f
             flags = flags or extraFlags
 
-            val title =
-                    if (name.isNotEmpty()) "%s/%s_%08X".format(style.locale, parentWindow.name, name, id)
-                    else "%s/%08X".format(style.locale, parentWindow.name, id)
+            val title = when {
+                name.isNotEmpty() -> "${parentWindow.name}/$name".format(style.locale)
+                else -> "${parentWindow.name}/%08X".format(style.locale, id)
+            }
             setNextWindowSize(size)
             val ret = ImGui.begin(title, null, flags)
             val childWindow = currentWindow
