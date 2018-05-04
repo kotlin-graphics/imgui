@@ -1,6 +1,5 @@
 package imgui.imgui
 
-import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec3.Vec3
@@ -26,7 +25,7 @@ interface imgui_widgetsInputKeyboard {
     fun inputText(label: String, buf: CharArray, flags: InputTextFlags = 0
             /*, callback: TextEditCallback  = NULL, void* user_data = NULL*/): Boolean {
 
-        assert(flags hasnt Itf.Multiline)    // call InputTextMultiline()
+        assert(flags hasnt Itf.Multiline) { "call InputTextMultiline()" }
         return inputTextEx(label, buf, Vec2(), flags/*, callback, user_data*/)
     }
 

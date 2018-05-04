@@ -11,7 +11,7 @@ import imgui.WindowFlag as Wf
 interface imgui_tooltips {
 
     fun setTooltipV(fmt: String, args: Array<out Any>) {
-        beginTooltipEx(0,true)
+        beginTooltipEx(0, true)
         textV(fmt, args)
         endTooltip()
     }
@@ -22,7 +22,7 @@ interface imgui_tooltips {
     fun beginTooltip() = beginTooltipEx(0, false)
 
     fun endTooltip() {
-        assert(currentWindowRead!!.flags has Wf.Tooltip)   // Mismatched BeginTooltip()/EndTooltip() calls
+        assert(currentWindowRead!!.flags has Wf.Tooltip) { "Mismatched BeginTooltip()/EndTooltip() calls" }
         end()
     }
 }

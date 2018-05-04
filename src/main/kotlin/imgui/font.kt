@@ -119,8 +119,9 @@ class FontAtlas {
         if (!fontCfg.mergeMode)
             fonts += Font()
         else
-            assert(fonts.isNotEmpty())  /*  When using MergeMode make sure that a font has already been added before.
-                                You can use io.fonts.addFontDefault to add the default imgui font.  */
+            assert(fonts.isNotEmpty()) {
+                " When using MergeMode make sure that a font has already been added before. You can use io.fonts.addFontDefault to add the default imgui font. "
+            }
         configData.add(fontCfg)
         if (fontCfg.dstFont == null)
             fontCfg.dstFont = fonts.last()
@@ -499,8 +500,8 @@ class FontAtlas {
     // Internals
 
     fun calcCustomRectUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
-        assert(texSize greaterThan 0)   // Font atlas needs to be built before we can calculate UV coordinates
-        assert(rect.isPacked)                // Make sure the rectangle has been packed
+        assert(texSize greaterThan 0) { "Font atlas needs to be built before we can calculate UV coordinates" }
+        assert(rect.isPacked) { "Make sure the rectangle has been packed" }
         outUvMin.put(rect.x.f * texUvScale.x, rect.y.f * texUvScale.y)
         outUvMax.put((rect.x + rect.width).f * texUvScale.x, (rect.y + rect.height).f * texUvScale.y)
     }
@@ -574,8 +575,8 @@ class FontAtlas {
     private val customRectIds = IntArray(1, { -1 })
 
     private fun customRectCalcUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
-        assert(texSize.x > 0 && texSize.y > 0)   // Font atlas needs to be built before we can calculate UV coordinates
-        assert(rect.isPacked)                // Make sure the rectangle has been packed
+        assert(texSize.x > 0 && texSize.y > 0) { "Font atlas needs to be built before we can calculate UV coordinates" }
+        assert(rect.isPacked) { "Make sure the rectangle has been packed " }
         outUvMin.put(rect.x / texSize.x, rect.y / texSize.y)
         outUvMax.put((rect.x + rect.width) / texSize.x, (rect.y + rect.height) / texSize.y)
     }
@@ -748,14 +749,14 @@ class FontAtlas {
             val tmp = tmpArray[input]
             // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
             val dstFont = cfg.dstFont!!
-            if(cfg.mergeMode)
+            if (cfg.mergeMode)
                 dstFont.buildLookupTable()
 
             val fontScale = stbtt_ScaleForPixelHeight(tmp.fontInfo, cfg.sizePixels)
             val (unscaledAscent, unscaledDescent, unscaledLineGap) = stbtt_GetFontVMetrics(tmp.fontInfo)
 
-            val ascent = floor(unscaledAscent * fontScale + if(unscaledAscent > 0f) +1 else -1)
-            val descent = floor(unscaledDescent * fontScale + if(unscaledDescent > 0f) +1 else -1)
+            val ascent = floor(unscaledAscent * fontScale + if (unscaledAscent > 0f) +1 else -1)
+            val descent = floor(unscaledDescent * fontScale + if (unscaledDescent > 0f) +1 else -1)
             buildSetupFont(dstFont, cfg, ascent, descent)
             val off = Vec2(cfg.glyphOffset.x, cfg.glyphOffset.y + (dstFont.ascent + 0.5f).i.f)
 
@@ -1017,7 +1018,7 @@ class Font {
 
         val maxCodepoint = glyphs.map { it.codepoint.i }.max()!!
 
-        assert(glyphs.size < 0xFFFF) // -1 is reserved
+        assert(glyphs.size < 0xFFFF) { "-1 is reserved" }
         indexAdvanceX.clear()
         indexLookup.clear()
         dirtyLookupTables = false
@@ -1490,7 +1491,7 @@ class Font {
     }
 
     fun setCurrent() {
-        assert(isLoaded)    // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
+        assert(isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
         assert(scale > 0f)
         g.font = this
         g.fontBaseSize = io.fontGlobalScale * g.font.fontSize * g.font.scale

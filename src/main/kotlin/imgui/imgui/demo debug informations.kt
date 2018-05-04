@@ -252,7 +252,7 @@ interface imgui_demoDebugInformations {
                 }
 
             }
-            menu("Disabled", false) { assert(false) } // Disabled
+            menu("Disabled", false) { assert(false) { "Disabled" } }
             menuItem("Checked", selected = true)
             menuItem("Quit", "Alt+F4")
         }

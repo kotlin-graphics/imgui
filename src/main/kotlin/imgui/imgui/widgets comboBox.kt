@@ -50,13 +50,13 @@ interface imgui_widgetsComboBox {
         val window = currentWindow
         if (window.skipItems) return false
 
-        assert((flags and (Cf.NoArrowButton or Cf.NoPreview)) != (Cf.NoArrowButton or Cf.NoPreview)) // Can't use both flags together
+        assert((flags and (Cf.NoArrowButton or Cf.NoPreview)) != (Cf.NoArrowButton or Cf.NoPreview)) { "Can't use both flags together" }
 
         val id = window.getId(label)
 
-        val arrowSize = if(flags has Cf.NoArrowButton) 0f else frameHeight
+        val arrowSize = if (flags has Cf.NoArrowButton) 0f else frameHeight
         val labelSize = calcTextSize(label, true)
-        val w = if(flags has Cf.NoPreview) arrowSize else calcItemWidth()
+        val w = if (flags has Cf.NoPreview) arrowSize else calcItemWidth()
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
         itemSize(totalBb, style.framePadding.y)
@@ -66,14 +66,14 @@ interface imgui_widgetsComboBox {
         var popupOpen = isPopupOpen(id)
 
         val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
-        val frameCol = if(hovered) Col.FrameBgHovered else Col.FrameBg
+        val frameCol = if (hovered) Col.FrameBgHovered else Col.FrameBg
         renderNavHighlight(frameBb, id)
         if (flags hasnt Cf.NoPreview)
             window.drawList.addRectFilled(frameBb.min, Vec2(frameBb.max.x - arrowSize, frameBb.max.y), frameCol.u32,
                     style.frameRounding, DrawCornerFlag.Left.i)
         if (flags hasnt Cf.NoArrowButton) {
-            val col = if(popupOpen || hovered) Col.ButtonHovered else Col.Button
-            val f = if(w <= arrowSize) DrawCornerFlag.All else DrawCornerFlag.Right
+            val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
+            val f = if (w <= arrowSize) DrawCornerFlag.All else DrawCornerFlag.Right
             window.drawList.addRectFilled(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, style.frameRounding, f.i)
             renderArrow(Vec2(frameBb.max.x - arrowSize + style.framePadding.y, frameBb.min.y + style.framePadding.y), Dir.Down)
         }
@@ -98,7 +98,7 @@ interface imgui_widgetsComboBox {
         } else {
             if (flags hasnt Cf.HeightMask_)
                 flags = flags or Cf.HeightRegular
-            assert((flags and Cf.HeightMask_).isPowerOfTwo)    // Only one
+            assert((flags and Cf.HeightMask_).isPowerOfTwo) { "Only one" }
             val popupMaxHeightInItems = when {
                 flags has Cf.HeightRegular -> 8
                 flags has Cf.HeightSmall -> 4
@@ -112,7 +112,7 @@ interface imgui_widgetsComboBox {
 
         // Peak into expected window size so we can position it
         findWindowByName(name)?.let {
-            if(it.wasActive) {
+            if (it.wasActive) {
                 val sizeContents = it.calcSizeContents()
                 val sizeExpected = it.calcSizeAfterConstraint(it.calcSizeAutoFit(sizeContents))
                 if (flags has Cf.PopupAlignLeft)
@@ -125,7 +125,7 @@ interface imgui_widgetsComboBox {
         val windowFlags = Wf.AlwaysAutoResize or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings
         if (!begin(name, null, windowFlags)) {
             endPopup()
-            assert(false)   // This should never happen as we tested for IsPopupOpen() above
+            assert(false) { "This should never happen as we tested for IsPopupOpen() above" }
             return false
         }
 

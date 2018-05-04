@@ -7,7 +7,6 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.beginChild
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endChild
@@ -17,6 +16,7 @@ import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
+import imgui.ImGui.style
 import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
 import imgui.FocusedFlag as Ff
@@ -42,7 +42,7 @@ interface imgui_utilities {
         // Test for bounding box overlap, as updated as ItemAdd()
             window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect -> false
             else -> {
-                assert(flags hasnt (Hf.RootWindow or Hf.ChildWindows)) // Flags not supported by this function
+                assert(flags hasnt (Hf.RootWindow or Hf.ChildWindows)) { "Flags not supported by this function" }
                 when {
                 /*  Test if we are hovering the right window (our window could be behind another window)
                     [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to

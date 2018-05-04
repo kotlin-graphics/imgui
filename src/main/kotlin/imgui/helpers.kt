@@ -102,7 +102,7 @@ class Storage {
 
     fun float(key: ID, defaultVal: Float = 0f) = data[key]?.let { glm.intBitsToFloat(it) } ?: defaultVal
     operator fun set(key: ID, value: Float) = data.set(key, glm.floatBitsToInt(value))
-    
+
 //    IMGUI_API void*     GetVoidPtr(ImGuiID key) const; // default_val is NULL
 //    IMGUI_API void      SetVoidPtr(ImGuiID key, void* val);
 
@@ -277,7 +277,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
                 false
             } else {
                 val itemsHeight = cursorPosY - startPosY
-                assert(itemsHeight > 0f)   // If this triggers, it means Item 0 hasn't moved the cursor vertically
+                assert(itemsHeight > 0f) { "If this triggers, it means Item 0 hasn't moved the cursor vertically" }
                 begin(itemsCount - 1, itemsHeight)
                 display = display.start + 1..display.last + 1
                 stepNo = 3

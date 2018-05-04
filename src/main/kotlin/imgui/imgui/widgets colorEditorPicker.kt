@@ -10,7 +10,6 @@ import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.F32_TO_INT8_UNBOUND
 import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.beginDragDropSource
@@ -60,6 +59,7 @@ import imgui.ImGui.separator
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.shadeVertsLinearColorGradientKeepAlpha
+import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.u32
@@ -244,11 +244,11 @@ interface imgui_widgetsColorEditorPicker {
 
         // NB: The flag test is merely an optional micro-optimization, BeginDragDropTarget() does the same test.
         if (window.dc.lastItemStatusFlags has ItemStatusFlag.HoveredRect && beginDragDropTarget()) {
-            acceptDragDropPayload (PAYLOAD_TYPE_COLOR_3F)?.let {
+            acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
                 for (j in 0..2) col[j] = (it.data as Vec4)[j]
                 valueChanged = true
             }
-            acceptDragDropPayload (PAYLOAD_TYPE_COLOR_4F)?.let {
+            acceptDragDropPayload(PAYLOAD_TYPE_COLOR_4F)?.let {
                 for (j in 0..components) col[j] = (it.data as Vec4)[j]
                 valueChanged = true
             }
@@ -315,7 +315,7 @@ interface imgui_widgetsColorEditorPicker {
         // Read stored options
         if (flags hasnt Cef._PickerMask)
             flags = flags or ((if (g.colorEditOptions has Cef._PickerMask) g.colorEditOptions else Cef._OptionsDefault.i) and Cef._PickerMask)
-        assert((flags and Cef._PickerMask).isPowerOfTwo) // Check that only 1 is selected
+        assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check that only 1 is selected" }
         if (flags hasnt Cef.NoOptions)
             flags = flags or (g.colorEditOptions and Cef.AlphaBar)
 
@@ -659,9 +659,9 @@ interface imgui_widgetsColorEditorPicker {
             flags = flags or (Cef._OptionsDefault and Cef._DataTypeMask)
         if (flags hasnt Cef._PickerMask)
             flags = flags or (Cef._OptionsDefault and Cef._PickerMask)
-        assert((flags and Cef._InputsMask).isPowerOfTwo)     // Check only 1 option is selected
-        assert((flags and Cef._DataTypeMask).isPowerOfTwo)   // Check only 1 option is selected
-        assert((flags and Cef._PickerMask).isPowerOfTwo)     // Check only 1 option is selected
+        assert((flags and Cef._InputsMask).isPowerOfTwo) { "Check only 1 option is selected" }
+        assert((flags and Cef._DataTypeMask).isPowerOfTwo) { "Check only 1 option is selected" }
+        assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check only 1 option is selected" }
         g.colorEditOptions = flags
     }
 }

@@ -3,13 +3,11 @@ package imgui.imgui
 import gli_.has
 import gli_.hasnt
 import glm_.*
-import glm_.pow as _
 import glm_.func.common.max
 import glm_.func.common.min
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.begin
 import imgui.ImGui.beginChildFrame
@@ -62,6 +60,7 @@ import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderInt
+import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
@@ -72,9 +71,9 @@ import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 import java.util.*
-import kotlin.apply
 import kotlin.math.*
 import kotlin.reflect.KMutableProperty0
+import glm_.pow as _
 import imgui.ColorEditFlag as Cef
 import imgui.DragDropFlag as Ddf
 import imgui.HoveredFlag as Hf
@@ -747,7 +746,7 @@ interface imgui_internal {
         with(currentWindow) {
 
             assert(columnsCount > 1)
-            assert(dc.columnsSet == null) // Nested columns are currently not supported
+            assert(dc.columnsSet == null) { "Nested columns are currently not supported" }
 
             /*  Differentiate column ID with an arbitrary prefix for cases where users name their columns set the same
                 as another widget.
