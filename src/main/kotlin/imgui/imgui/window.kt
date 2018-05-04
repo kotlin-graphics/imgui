@@ -80,7 +80,8 @@ interface imgui_window {
                 val res = begin(name, bool, flags)
                 pOpen.set(bool[0])
                 res
-            } else begin(name, null, flags)
+            } else
+                begin(name, null, flags)
 
     fun begin(name: String, pOpen: BooleanArray? = null, flags: WindowFlags = 0): Boolean {
 
@@ -139,7 +140,7 @@ interface imgui_window {
         assert(parentWindow != null || flags hasnt Wf.ChildWindow)
 
         // Add to stack
-        g.currentWindowStack.add(window)
+        g.currentWindowStack += window
         window.setCurrent()
         checkStacksSize(window, true)
         if (flags has Wf.Popup) {
@@ -736,9 +737,7 @@ interface imgui_window {
             if (flags has Wf.Popup)
                 g.currentPopupStack.pop()
             checkStacksSize(this, false)
-            val last = g.currentWindowStack.lastOrNull()
-            if (last != null) last.setCurrent()
-            else g.currentWindow = null
+            setCurrentWindow(g.currentWindowStack.lastOrNull())
         }
     }
 
