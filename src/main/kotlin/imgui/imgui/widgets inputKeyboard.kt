@@ -45,14 +45,23 @@ interface imgui_widgetsInputKeyboard {
         res
     }
 
-    fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1,
-                   extraFlags: InputTextFlags = 0): Boolean {
-
-        val pInt = intArrayOf(glm.floatBitsToInt(v()))
+    fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f,
+                   decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0): Boolean {
+        /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float,
+            while hiding non-significant digits? %f doesn't have a minimum of 1         */
         val fmt = "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f"
-        val res = inputScalarEx(label, DataType.Float, pInt, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, fmt, extraFlags)
-        v.set(glm.intBitsToFloat(pInt[0]))
-        return res
+        return inputScalarEx(label, DataType.Float, v as KMutableProperty0<Number>, step.takeIf { it > 0f },
+                stepFast.takeIf { it > 0f }, fmt, extraFlags)
+    }
+
+    fun inputDouble(label: String, v: KMutableProperty0<Double>, step: Double = 0.0, stepFast: Double = 0.0,
+                    decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0): Boolean {
+
+        /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float,
+            while hiding non-significant digits? %f doesn't have a minimum of 1         */
+        val fmt = "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f"
+        return inputScalarEx(label, DataType.Float, v as KMutableProperty0<Number>, step.takeIf { it > 0.0 },
+                stepFast.takeIf { it > 0.0 }, fmt, extraFlags)
     }
 
     fun inputFloat2(label: String, v: FloatArray, decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0) =
@@ -89,7 +98,7 @@ interface imgui_widgetsInputKeyboard {
         /*  Hexadecimal input provided as a convenience but the flag name is awkward. Typically you'd use inputText()
             to parse your own data, if you want to handle prefixes.             */
         val scalarFormat = if (extraFlags has Itf.CharsHexadecimal) "%08X" else "%d"
-        return inputScalarEx(label, DataType.Int, v, if (step > 0f) step else null, if (stepFast > 0f) stepFast else null,
+        return inputScalarEx(label, DataType.Int, v as KMutableProperty0<Number>, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f },
                 scalarFormat, extraFlags)
     }
 
@@ -119,5 +128,7 @@ interface imgui_widgetsInputKeyboard {
 
     companion object {
         private var f0 = 0f
+        private var i0 = 0
+        private var L0 = 0L
     }
 }

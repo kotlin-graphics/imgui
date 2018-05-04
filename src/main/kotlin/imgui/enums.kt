@@ -121,6 +121,8 @@ enum class InputTextFlag(val i: Int) {
     /** Disable undo/redo. Note that input text owns the text data while active, if you want to provide your own
      *  undo/redo stack you need e.g. to call clearActiveID(). */
     NoUndoRedo(1 shl 16),
+    /** Allow 0 1 2 3 4 5 6 7 8 9 . + - * / e E (Scientific notation input) */
+    CharsScientific(1 shl 17),
 
     // [Internal]
 

@@ -121,6 +121,7 @@ interface imgui_demoDebugInformations {
                 text("HoveredId: 0x%08X/0x%08X (%.2f sec)", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)
                 text("ActiveId: 0x%08X/0x%08X (%.2f sec), ActiveIdSource: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
+                text("MovingWindow: '${g.movingWindow?.name}'");
                 text("NavWindow: '${g.navWindow?.name}'")
                 text("NavId: 0x%08X, NavLayer: ${g.navLayer}", g.navId)
                 text("NavInputSource: ${g.navInputSource}")
