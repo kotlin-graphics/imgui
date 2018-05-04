@@ -4,6 +4,7 @@ import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
 import imgui.ImGui.isKeyPressed
 import imgui.internal.InputReadMode
+import imgui.internal.isPowerOfTwo
 
 /** Flags for ImGui::Begin()    */
 enum class WindowFlag(val i: Int) {
@@ -801,8 +802,8 @@ enum class MouseCursor {
 }
 
 /** Condition for setWindow***(), setNextWindow***(), setNextTreeNode***() functions
- *  All those functions treat 0 as a shortcut to Always.
- *  From the point of view of the user use this as an enum (don't combine multiple values into flags).    */
+ *  Important: Treat as a regular enum! Do NOT combine multiple values using binary operators!
+ *  All the functions above treat 0 as a shortcut to Cond.Always. */
 enum class Cond(val i: Int) {
 
     Null(0),
@@ -814,6 +815,8 @@ enum class Cond(val i: Int) {
     FirstUseEver(1 shl 2),
     /** Set the variable if the object/window is appearing after being hidden/inactive (or the first time) */
     Appearing(1 shl 3);
+
+//    val isPowerOfTwo = i.isPowerOfTwo // JVM, kind of useless since it's used on cpp to avoid Cond masks
 
     infix fun or(other: Cond) = i or other.i
 }

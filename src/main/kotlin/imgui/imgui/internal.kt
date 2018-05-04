@@ -444,7 +444,7 @@ interface imgui_internal {
         if (overridePreviousTooltip)
             findWindowByName(windowName)?.let {
                 if (it.active) {
-                    // Hide previous tooltips. We can't easily "reset" the content of a window so we create a new one.
+                    // Hide previous tooltip from being displayed. We can't easily "reset" the content of a window so we create a new one.
                     it.hiddenFrames = 1
                     windowName = "##Tooltip_%02d".format(++g.tooltipOverrideCount)
                 }
