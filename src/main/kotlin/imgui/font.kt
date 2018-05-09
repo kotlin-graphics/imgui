@@ -2,6 +2,8 @@ package imgui
 
 
 import glm_.*
+import glm_.buffer.bufferBig
+import glm_.buffer.free
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
@@ -16,8 +18,6 @@ import org.lwjgl.stb.*
 import org.lwjgl.stb.STBRectPack.stbrp_pack_rects
 import org.lwjgl.stb.STBTruetype.*
 import org.lwjgl.system.MemoryUtil
-import uno.buffer.bufferBig
-import uno.buffer.destroy
 import uno.convert.decode85
 import uno.kotlin.buffers.isNotEmpty
 import uno.stb.stb
@@ -215,9 +215,9 @@ class FontAtlas {
 
     /** Clear output texture data (CPU side). Saves RAM once the texture has been copied to graphics memory. */
     fun clearTexData() {
-        texPixelsAlpha8?.destroy()
+        texPixelsAlpha8?.free()
         texPixelsAlpha8 = null
-        texPixelsRGBA32?.destroy()
+        texPixelsRGBA32?.free()
         texPixelsRGBA32 = null
     }
 

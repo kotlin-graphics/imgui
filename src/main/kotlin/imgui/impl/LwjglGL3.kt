@@ -1,6 +1,9 @@
 package imgui.impl
 
 import glm_.*
+import glm_.buffer.bufferBig
+import glm_.buffer.free
+import glm_.buffer.intBufferBig
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import gln.*
@@ -26,8 +29,6 @@ import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
-import uno.buffer.bufferBig
-import uno.buffer.destroy
 import uno.buffer.intBufferBig
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
@@ -266,9 +267,9 @@ object LwjglGL3 {
             vtxSize = newVtxSize
             idxSize = newIdxSize
 
-            vtxBuffer.destroy()
+            vtxBuffer.free()
             vtxBuffer = bufferBig(vtxSize)
-            idxBuffer.destroy()
+            idxBuffer.free()
             idxBuffer = intBufferBig(idxSize / Int.BYTES)
 
             withVertexArray(vaoName) {
