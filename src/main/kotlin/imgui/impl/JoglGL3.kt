@@ -24,21 +24,24 @@ import imgui.ImGui.mouseCursor
 import org.lwjgl.opengl.GL11.GL_FILL
 import org.lwjgl.opengl.GL11.GL_POLYGON_MODE
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
-import uno.buffer.use
-import uno.kotlin.buffers.toByteArray
 
 object JoglGL3 {
 
     lateinit var window: GLWindow
     var time = 0.0
 
-    lateinit var program: Program
+    lateinit var program: JoglProgram
 
     fun init(window: GLWindow, installCallbacks: Boolean): Boolean {
 
         this.window = window
 
         with(io) {
+
+            // Setup back-end capabilities flags
+            backendFlags = backendFlags or BackendFlag.HasMouseCursors   // We can honor GetMouseCursor() values (optional)
+            backendFlags = backendFlags or BackendFlag.HasSetMousePos    // We can honor io.WantSetMousePos requests (optional, rarely used)
+
             // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
             keyMap[Key.Tab] = KeyEvent.VK_TAB.i
             keyMap[Key.LeftArrow] = KeyEvent.VK_LEFT.i
@@ -98,8 +101,7 @@ object JoglGL3 {
             Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)   */
         if (window.hasFocus())
             if (io.wantSetMousePos)
-            /*  Set mouse position if requested by io.WantMoveMouse flag (used when io.NavMovesTrue is enabled by user
-                and using directional navigation)   */
+            // Set OS mouse position if requested (only used when ConfigFlags.NavEnableSetMousePos is enabled by user)
                 window.warpPointer(io.mousePos.x.i, io.mousePos.y.i)
             else
                 io.mousePos put cursorPos
@@ -114,16 +116,59 @@ object JoglGL3 {
         }
 
         // Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
-        val cursor = mouseCursor
-        if (io.mouseDrawCursor || cursor == MouseCursor.None)
-            window.isPointerVisible = false
-        else {
-//            window.pointerIcon =
-            window.isPointerVisible = true
+        if (io.configFlags hasnt ConfigFlag.NoMouseCursorChange && window.isPointerVisible) {
+            val cursor = mouseCursor
+            if (io.mouseDrawCursor || cursor == MouseCursor.None)
+                window.isPointerVisible = false
+            else {
+                window.isPointerVisible = true
+                //            window.pointerIcon = Display.
+            }
         }
 
-        // Hide OS mouse cursor if ImGui is drawing it
-        window.isPointerVisible = !io.mouseDrawCursor
+        // Gamepad navigation mapping [BETA]
+//        io.navInputs.fill(0f)
+//        if (io.configFlags has ConfigFlag.NavEnableGamepad) {
+//            // Update gamepad inputs
+//            val buttons = window.getJoystickButtons(GLFW_JOYSTICK_1)!!
+//            val buttonsCount = buttons.capacity()
+//            val axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1)!!
+//            val axesCount = axes.capacity()
+//            fun mapButton(nav: NavInput, button: Int) {
+//                if (buttonsCount > button && buttons[button] == GLFW_PRESS.b)
+//                    io.navInputs[nav] = 1f
+//            }
+//
+//            fun mapAnalog(nav: NavInput, axis: Int, v0: Float, v1: Float) {
+//                var v = if (axesCount > axis) axes[axis] else v0
+//                v = (v - v0) / (v1 - v0)
+//                if (v > 1f) v = 1f
+//                if (io.navInputs[nav] < v)
+//                    io.navInputs[nav] = v
+//            }
+//
+//            mapButton(NavInput.Activate, 0)     // Cross / A
+//            mapButton(NavInput.Cancel, 1)     // Circle / B
+//            mapButton(NavInput.Menu, 2)     // Square / X
+//            mapButton(NavInput.Input, 3)     // Triangle / Y
+//            mapButton(NavInput.DpadLeft, 13)    // D-Pad Left
+//            mapButton(NavInput.DpadRight, 11)    // D-Pad Right
+//            mapButton(NavInput.DpadUp, 10)    // D-Pad Up
+//            mapButton(NavInput.DpadDown, 12)    // D-Pad Down
+//            mapButton(NavInput.FocusPrev, 4)     // L1 / LB
+//            mapButton(NavInput.FocusNext, 5)     // R1 / RB
+//            mapButton(NavInput.TweakSlow, 4)     // L1 / LB
+//            mapButton(NavInput.TweakFast, 5)     // R1 / RB
+//            mapAnalog(NavInput.LStickLeft, 0, -0.3f, -0.9f)
+//            mapAnalog(NavInput.LStickRight, 0, +0.3f, +0.9f)
+//            mapAnalog(NavInput.LStickUp, 1, +0.3f, +0.9f)
+//            mapAnalog(NavInput.LStickDown, 1, -0.3f, -0.9f)
+//
+//            if (axesCount > 0 && buttonsCount > 0)
+//                io.backendFlags = io.backendFlags or BackendFlag.HasGamepad
+//            else
+//                io.backendFlags = io.backendFlags wo BackendFlag.HasGamepad
+//        }
 
         /*  Start the frame. This call will update the io.wantCaptureMouse, io.wantCaptureKeyboard flag that you can use
             to dispatch inputs (or not) to your application.         */
@@ -138,7 +183,7 @@ object JoglGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
 
-        program = Program(this, vertexShader, fragmentShader)
+        program = JoglProgram(this)
 
         glGenBuffers(Buffer.MAX, bufferName)
 
@@ -215,64 +260,6 @@ object JoglGL3 {
             if (glGetError() != GL.GL_NO_ERROR) throw Error("render")
 
             if (DEBUG) println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
-        }
-    }
-
-    class Program(gl: GL3, vert: String, frag: String) {
-
-        val name = gl.glCreateProgram()
-
-        init {
-            with(gl) {
-
-                val v = shaderFromSource(vert, GL_VERTEX_SHADER)
-                val f = shaderFromSource(frag, GL_FRAGMENT_SHADER)
-
-                gl.glAttachShader(name, v)
-                gl.glAttachShader(name, f)
-
-                gl.glBindAttribLocation(name, semantic.attr.POSITION, "Position")
-                gl.glBindAttribLocation(name, semantic.attr.TEX_COORD, "UV")
-                gl.glBindAttribLocation(name, semantic.attr.COLOR, "Color")
-                gl.glBindFragDataLocation(name, semantic.frag.COLOR, "outColor")
-
-                gl.glLinkProgram(name)
-
-                intBufferBig(1).use { i ->
-                    gl.glGetProgramiv(name, GL_LINK_STATUS, i)
-                    if (i[0] == GL_FALSE) {
-                        bufferBig(100).use {
-                            gl.glGetProgramInfoLog(name, 100, i, it)
-                            throw Error(String(it.toByteArray()))
-                        }
-                    }
-                }
-                glDetachShader(name, v)
-                glDetachShader(name, f)
-                glDeleteShader(v)
-                glDeleteShader(f)
-
-                glUseProgram(name)
-                glUniform1i(glGetUniformLocation(name, "Texture"), semantic.sampler.DIFFUSE)
-                glUseProgram(0)
-            }
-        }
-
-        val mat = gl.glGetUniformLocation(name, "mat")
-
-        fun shaderFromSource(source: String, type: Int): Int {
-            return intBufferBig(1).use {
-                val shader = gl.glCreateShader(type)
-                gl.glShaderSource(shader, 1, arrayOf(source), null)
-
-                gl.glCompileShader(shader)
-
-                gl.glGetShaderiv(shader, GL_COMPILE_STATUS, it)
-                if (it[0] == GL_FALSE)
-                    throw Error()
-
-                shader
-            }
         }
     }
 
@@ -413,15 +400,19 @@ object JoglGL3 {
     private object mouseCallback : MouseListener {
 
         override fun mouseReleased(e: MouseEvent) {
-            if (e.button in MouseEvent.BUTTON1..MouseEvent.BUTTON3)
-                mouseJustPressed[e.button.i - 1] = false
+//            if (e.button in MouseEvent.BUTTON1..MouseEvent.BUTTON3)
+//                mouseJustPressed[e.button.i - 1] = false
         }
 
         override fun mouseMoved(e: MouseEvent) = cursorPos.put(e.x, e.y)
 
         override fun mouseEntered(e: MouseEvent) {}
 
-        override fun mouseDragged(e: MouseEvent) = cursorPos.put(e.x, e.y)
+        override fun mouseDragged(e: MouseEvent) {
+            cursorPos.put(e.x, e.y)
+            if (e.button in MouseEvent.BUTTON1..MouseEvent.BUTTON3)
+                mouseJustPressed[e.button.i - 1] = true
+        }
 
         override fun mouseClicked(e: MouseEvent) {}
 
