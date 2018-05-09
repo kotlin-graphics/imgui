@@ -1,11 +1,16 @@
 package imgui.impl
 
+import com.jogamp.opengl.GL2ES3
+import com.jogamp.opengl.GL3
 import glm_.BYTES
 import glm_.buffer.bufferBig
 import glm_.buffer.intBufferBig
 import glm_.mat4x4.Mat4
+import gln.glf.semantic
 import uno.buffer.intBufferBig
 import uno.buffer.intBufferOf
+import uno.buffer.use
+import uno.kotlin.buffers.toByteArray
 
 val vertexShader
     get() = """
@@ -76,3 +81,61 @@ var vtxSize = 1 shl 5 // 32768
 var idxSize = 1 shl 6 // 65536
 var vtxBuffer = bufferBig(vtxSize)
 var idxBuffer = intBufferBig(idxSize / Int.BYTES)
+
+class JoglProgram(gl: GL3) {
+
+    val name = gl.glCreateProgram()
+
+    init {
+        with(gl) {
+
+            val vert = shaderFromSource(vertexShader, GL2ES3.GL_VERTEX_SHADER)
+            val frag = shaderFromSource(fragmentShader, GL2ES3.GL_FRAGMENT_SHADER)
+
+            gl.glAttachShader(name, vert)
+            gl.glAttachShader(name, frag)
+
+            gl.glBindAttribLocation(name, semantic.attr.POSITION, "Position")
+            gl.glBindAttribLocation(name, semantic.attr.TEX_COORD, "UV")
+            gl.glBindAttribLocation(name, semantic.attr.COLOR, "Color")
+            gl.glBindFragDataLocation(name, semantic.frag.COLOR, "outColor")
+
+            gl.glLinkProgram(name)
+
+            intBufferBig(1).use { i ->
+                gl.glGetProgramiv(name, GL2ES3.GL_LINK_STATUS, i)
+                if (i[0] == GL2ES3.GL_FALSE) {
+                    bufferBig(100).use {
+                        gl.glGetProgramInfoLog(name, 100, i, it)
+                        throw Error(String(it.toByteArray()))
+                    }
+                }
+            }
+            glDetachShader(name, vert)
+            glDetachShader(name, frag)
+            glDeleteShader(vert)
+            glDeleteShader(frag)
+
+            glUseProgram(name)
+            glUniform1i(glGetUniformLocation(name, "Texture"), semantic.sampler.DIFFUSE)
+            glUseProgram(0)
+        }
+    }
+
+    val mat = gl.glGetUniformLocation(name, "mat")
+
+    fun shaderFromSource(source: String, type: Int): Int {
+        return intBufferBig(1).use {
+            val shader = JoglGL3.gl.glCreateShader(type)
+            JoglGL3.gl.glShaderSource(shader, 1, arrayOf(source), null)
+
+            JoglGL3.gl.glCompileShader(shader)
+
+            JoglGL3.gl.glGetShaderiv(shader, GL2ES3.GL_COMPILE_STATUS, it)
+            if (it[0] == GL2ES3.GL_FALSE)
+                throw Error()
+
+            shader
+        }
+    }
+}
