@@ -1,8 +1,9 @@
 package imgui.impl
 
 import glm_.BYTES
+import glm_.buffer.bufferBig
+import glm_.buffer.intBufferBig
 import glm_.mat4x4.Mat4
-import uno.buffer.bufferBig
 import uno.buffer.intBufferBig
 import uno.buffer.intBufferOf
 
