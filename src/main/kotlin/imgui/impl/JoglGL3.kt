@@ -417,15 +417,11 @@ object JoglGL3 {
                 mouseJustPressed[e.button.i - 1] = false
         }
 
-        override fun mouseMoved(e: MouseEvent) {
-            cursorPos.put(e.x, e.y)
-        }
+        override fun mouseMoved(e: MouseEvent) = cursorPos.put(e.x, e.y)
 
         override fun mouseEntered(e: MouseEvent) {}
 
-        override fun mouseDragged(e: MouseEvent) {
-            cursorPos.put(e.x, e.y)
-        }
+        override fun mouseDragged(e: MouseEvent) = cursorPos.put(e.x, e.y)
 
         override fun mouseClicked(e: MouseEvent) {}
 
