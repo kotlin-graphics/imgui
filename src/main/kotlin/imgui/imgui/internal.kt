@@ -2812,7 +2812,7 @@ interface imgui_internal {
         // Modal windows prevents cursor from hovering behind them.
         val modalWindow = frontMostModalRootWindow
         if(modalWindow != null)
-            if(g.hoveredRootWindow?.isChildOf(modalWindow) == true)
+            if(g.hoveredRootWindow?.isChildOf(modalWindow) == false)
                 nullate()
         // Disabled mouse?
         if (io.configFlags has ConfigFlag.NoMouse)
