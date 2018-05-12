@@ -1,14 +1,16 @@
 package imgui;
 
 import glm_.vec2.Vec2;
+import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
 import imgui.impl.LwjglGL3;
+import kotlin.Unit;
 import org.lwjgl.opengl.GL;
 import uno.glfw.GlfwWindow;
-import static imgui.impl.CommonKt.setGlslVersion;
 
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Test_lwjgl {
 
@@ -23,6 +25,14 @@ public class Test_lwjgl {
     private LwjglGL3 lwjglGL3 = LwjglGL3.INSTANCE;
     private ImGui imgui = ImGui.INSTANCE;
     private IO io;
+
+
+    private float[] f = {0f};
+    private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
+    private boolean[] showAnotherWindow = {false};
+    private boolean[] showDemo = {true};
+    private int[] counter = {0};
+
 
     public void run() {
 
@@ -59,7 +69,10 @@ public class Test_lwjgl {
 //        Font font = io.getFonts().addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f, new FontConfig(), io.getFonts().getGlyphRangesJapanese());
 //        assert (font != null);
 
-        while (window.isOpen()) loop();
+        window.loop(() -> {
+            loop();
+            return Unit.INSTANCE;
+        });
 
         lwjglGL3.shutdown();
         ContextKt.destroy(ctx);
@@ -73,11 +86,11 @@ public class Test_lwjgl {
         windowHint.getContext().setVersion("3.2");
         windowHint.setProfile("core");
 
-        window = new GlfwWindow(1280, 720, "ImGui Lwjgl OpenGL3 example");
+        window = new GlfwWindow(1280, 720, "ImGui Lwjgl OpenGL3 example", NULL, new Vec2i(Integer.MIN_VALUE), true);
 
         window.makeContextCurrent();
         glfw.setSwapInterval(1);    // Enable vsync
-        window.show();
+        window.show(true);
 
         /*  This line is critical for LWJGL's interoperation with GLFW's OpenGL context, or any context that is
             managed externally.
@@ -86,11 +99,6 @@ public class Test_lwjgl {
         GL.createCapabilities();
     }
 
-    private float[] f = {0f};
-    private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
-    private boolean[] showAnotherWindow = {false};
-    private boolean[] showDemo = {true};
-    private int[] counter = {0};
 
     private void loop() {
 
@@ -100,7 +108,6 @@ public class Test_lwjgl {
             - when Io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
             Generally you may always pass all inputs to dear imgui, and hide them from your application based on those
             two flags.  */
-        glfw.pollEvents();
         lwjglGL3.newFrame();
 
 
@@ -144,7 +151,6 @@ public class Test_lwjgl {
 
         imgui.render();
         lwjglGL3.renderDrawData(imgui.getDrawData());
-        window.swapBuffers();
 
         gln.GlnKt.checkError("loop", true); // TODO remove
     }

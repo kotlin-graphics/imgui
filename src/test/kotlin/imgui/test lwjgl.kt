@@ -6,9 +6,8 @@ import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.functionalProgramming.button
 import imgui.impl.LwjglGL3
-import imgui.impl.glslVersion
+import org.lwjgl.glfw.GLFW.glfwSwapBuffers
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
@@ -77,7 +76,7 @@ class HelloWorld_lwjgl {
 //        val a = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f)!!
 //        val b = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 30f)!!
 
-        while (window.isOpen) loop()
+        window.loop(this::loop)
 
         LwjglGL3.shutdown()
         ctx.destroy()
@@ -100,7 +99,6 @@ class HelloWorld_lwjgl {
             - when Io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
             Generally you may always pass all inputs to dear imgui, and hide them from your application based on those
             two flags.  */
-        glfw.pollEvents()
         LwjglGL3.newFrame()
 
         with(ImGui) {
@@ -151,8 +149,7 @@ class HelloWorld_lwjgl {
 
         ImGui.render()
         LwjglGL3.renderDrawData(ImGui.drawData!!)
-        window.swapBuffers()
 
-        checkError("loop") // TODO remove
+        checkError("loop") // TODO remove in production
     }
 }

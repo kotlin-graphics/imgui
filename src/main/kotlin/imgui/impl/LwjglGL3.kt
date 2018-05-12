@@ -29,7 +29,6 @@ import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
-import uno.buffer.intBufferBig
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
 
@@ -151,7 +150,7 @@ object LwjglGL3 {
             // Update gamepad inputs
             val buttons = window.getJoystickButtons(GLFW_JOYSTICK_1)!!
             val buttonsCount = buttons.capacity()
-            val axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1)!!
+            val axes = window.getJoystickAxes(GLFW_JOYSTICK_1)!!
             val axesCount = axes.capacity()
             fun mapButton(nav: NavInput, button: Int) {
                 if (buttonsCount > button && buttons[button] == GLFW_PRESS.b)
