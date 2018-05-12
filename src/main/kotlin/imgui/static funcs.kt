@@ -430,7 +430,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
         }
         if (c == '\r') continue
         // renaming ::getCharAdvance continuously every build because of bug, https://youtrack.jetbrains.com/issue/KT-19612
-        val charWidth: Float = font.getCharAdvance_ssaaaaaaa(c) * scale
+        val charWidth: Float = font.getCharAdvance_ssaaaaaaaa(c) * scale
         lineWidth += charWidth
     }
 
@@ -486,11 +486,11 @@ fun KMutableProperty0<Number>.format(dataType: DataType, decimalPrecision: Int, 
     val precision = if (decimalPrecision < 0) "" else ".$decimalPrecision"
     return when (dataType) {
 
-        DataType.Int -> "%${precision}d".format(style.locale, this())
+        DataType.Int -> "%${precision}d".format(style.locale, this() as Int)
 /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
     non-significant digits?         */
-        DataType.Float -> "%${precision}f".format(style.locale, Float.fromBits(this() as Int))
-        DataType.Double -> "%${precision}f".format(style.locale, Double.fromBits(this() as Long))
+        DataType.Float -> "%${precision}f".format(style.locale, this() as Float)
+        DataType.Double -> "%${precision}f".format(style.locale, this() as Double)
         else -> throw Error("unsupported format data type")
     }.toCharArray(buf)
 }

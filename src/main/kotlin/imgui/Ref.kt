@@ -51,16 +51,16 @@ object Ref {
 
     var int
         get() = ints[iPtr]
-        set(value) { ints[iPtr] = value }
+        set(value) = ints.set(iPtr, value)
     var float
         get() = floats[fPtr]
-        set(value) { floats[fPtr] = value }
+        set(value) = floats.set(fPtr, value)
     var bool
         get() = bools[bPtr]
-        set(value) { bools[bPtr] = value }
+        set(value) = bools.set(bPtr, value)
     var char
         get() = chars[cPtr]
-        set(value) { chars[cPtr] = value }
+        set(value) = chars.set(cPtr, value)
 }
 
 //inline fun <R>withInt(block: (KMutableProperty0<Int>) -> R): R {
