@@ -74,7 +74,7 @@ object ImGui :
 
         imgui_internal {
 
-    val beta = 5
+    val beta = 6
     val version = "1.60.0$beta"
 }
 
