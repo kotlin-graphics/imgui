@@ -104,9 +104,7 @@ interface imgui_widgetsDrag {
             }
         }
         if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
-            return withFloatAsInt(v) {
-                inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, it as KMutableProperty0<Number>, id, decimalPrecision)
-            }
+            return inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, v as KMutableProperty0<Number>, id, decimalPrecision)
 
         // Actual drag behavior
         itemSize(totalBb, style.framePadding.y)

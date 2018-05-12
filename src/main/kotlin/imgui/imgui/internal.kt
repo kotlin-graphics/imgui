@@ -335,8 +335,8 @@ interface imgui_internal {
         itemFlags = itemFlagsStack.lastOrNull() ?: If.Default_.i
     }
 
-    fun setCurrentFont(font: Font)    {
-        assert(font.isLoaded){"Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?"}
+    fun setCurrentFont(font: Font) {
+        assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
         assert(font.scale > 0f)
         g.font = font
         g.fontBaseSize = io.fontGlobalScale * g.font.fontSize * g.font.scale
@@ -2261,7 +2261,7 @@ interface imgui_internal {
                             inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
                         }
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_ssaaaaaaa(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_ssaaaaaaaa(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)
@@ -2442,9 +2442,10 @@ interface imgui_internal {
             g.scalarAsInputTextId = g.activeId
             setHoveredId(id)
         }
-        return if (textValueChanged)
-            dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data)
-        else false
+        return when {
+            textValueChanged -> dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data)
+            else -> false
+        }
     }
 
     /** Note: only access 3 floats if ColorEditFlag.NoAlpha flag is set.   */
@@ -2811,17 +2812,17 @@ interface imgui_internal {
 
         // Modal windows prevents cursor from hovering behind them.
         val modalWindow = frontMostModalRootWindow
-        if(modalWindow != null)
-            if(g.hoveredRootWindow?.isChildOf(modalWindow) == false)
+        if (modalWindow != null)
+            if (g.hoveredRootWindow?.isChildOf(modalWindow) == false)
                 nullate()
         // Disabled mouse?
         if (io.configFlags has ConfigFlag.NoMouse)
             nullate()
 
         // We track click ownership. When clicked outside of a window the click is owned by the application and won't report hovering nor request capture even while dragging over our windows afterward.
-        var mouseEarliestButtonDown = - 1
+        var mouseEarliestButtonDown = -1
         var mouseAnyDown = false
-        for (i in io.mouseDown.indices)        {
+        for (i in io.mouseDown.indices) {
             if (io.mouseClicked[i])
                 io.mouseDownOwned[i] = g.hoveredWindow != null || g.openPopupStack.isNotEmpty()
             mouseAnyDown = mouseAnyDown || io.mouseDown[i]
@@ -2852,7 +2853,7 @@ interface imgui_internal {
             io.wantCaptureKeyboard = true
 
         // Update io.WantTextInput flag, this is to allow systems without a keyboard (e.g. mobile, hand-held) to show a software keyboard if possible
-        io.wantTextInput = if(g.wantTextInputNextFrame != -1) g.wantTextInputNextFrame != 0 else false
+        io.wantTextInput = if (g.wantTextInputNextFrame != -1) g.wantTextInputNextFrame != 0 else false
     }
 
     /** Parse display precision back from the display format string */
