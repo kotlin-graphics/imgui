@@ -36,7 +36,7 @@ import uno.glfw.glfw
 object LwjglGL3 {
 
     lateinit var window: GlfwWindow
-    var time = 0f
+    var time = 0.0
     val mouseCursors = LongArray(MouseCursor.COUNT)
 
     var program = -1
@@ -110,7 +110,7 @@ object LwjglGL3 {
         io.displayFramebufferScale.y = if (window.size.y > 0) window.framebufferSize.y / window.size.y.f else 0f
 
         // Setup time step
-        val currentTime = glfw.time
+        val currentTime = glfwGetTime() // TODO move to uno
         io.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         time = currentTime
 
@@ -122,7 +122,7 @@ object LwjglGL3 {
             if (io.wantSetMousePos)
                 window.cursorPos = Vec2d(io.mousePos)
             else
-                io.mousePos(window.cursorPos)
+                io.mousePos put window.cursorPos
         else
             io.mousePos put -Float.MAX_VALUE
 
