@@ -111,7 +111,7 @@ object JoglGL3 {
         repeat(3) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
-            io.mouseDown[it] = mouseJustPressed[it]
+            io.mouseDown[it] = mouseJustPressed[it] || mouseCallback.lastEvent?.isButtonDown(it + 1) == true // MouseButton starts from 1
             mouseJustPressed[it] = false
         }
 
@@ -399,12 +399,17 @@ object JoglGL3 {
 
     private object mouseCallback : MouseListener {
 
+        var lastEvent: MouseEvent? = null
+
         override fun mouseReleased(e: MouseEvent) {
 //            if (e.button in MouseEvent.BUTTON1..MouseEvent.BUTTON3)
 //                mouseJustPressed[e.button.i - 1] = false
         }
 
-        override fun mouseMoved(e: MouseEvent) = cursorPos.put(e.x, e.y)
+        override fun mouseMoved(e: MouseEvent) {
+            cursorPos.put(e.x, e.y)
+            lastEvent = e
+        }
 
         override fun mouseEntered(e: MouseEvent) {}
 
@@ -421,6 +426,7 @@ object JoglGL3 {
         override fun mousePressed(e: MouseEvent) {
             if (e.button in MouseEvent.BUTTON1..MouseEvent.BUTTON3)
                 mouseJustPressed[e.button.i - 1] = true
+            lastEvent = e
         }
 
         override fun mouseWheelMoved(e: MouseEvent) {
