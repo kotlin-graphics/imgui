@@ -82,39 +82,40 @@ var idxSize = 1 shl 6 // 65536
 var vtxBuffer = bufferBig(vtxSize)
 var idxBuffer = intBufferBig(idxSize / Int.BYTES)
 
-class JoglProgram(gl: GL3) {
+
+class JoglProgram(gl: GL3, vert: String, frag: String) {
 
     val name = gl.glCreateProgram()
 
     init {
         with(gl) {
 
-            val vert = shaderFromSource(vertexShader, GL2ES3.GL_VERTEX_SHADER)
-            val frag = shaderFromSource(fragmentShader, GL2ES3.GL_FRAGMENT_SHADER)
+            val v = shaderFromSource(vert, GL2ES3.GL_VERTEX_SHADER)
+            val f = shaderFromSource(frag, GL2ES3.GL_FRAGMENT_SHADER)
 
-            gl.glAttachShader(name, vert)
-            gl.glAttachShader(name, frag)
+            glAttachShader(name, v)
+            glAttachShader(name, f)
 
-            gl.glBindAttribLocation(name, semantic.attr.POSITION, "Position")
-            gl.glBindAttribLocation(name, semantic.attr.TEX_COORD, "UV")
-            gl.glBindAttribLocation(name, semantic.attr.COLOR, "Color")
-            gl.glBindFragDataLocation(name, semantic.frag.COLOR, "outColor")
+            glBindAttribLocation(name, semantic.attr.POSITION, "Position")
+            glBindAttribLocation(name, semantic.attr.TEX_COORD, "UV")
+            glBindAttribLocation(name, semantic.attr.COLOR, "Color")
+            glBindFragDataLocation(name, semantic.frag.COLOR, "outColor")
 
-            gl.glLinkProgram(name)
+            glLinkProgram(name)
 
             intBufferBig(1).use { i ->
-                gl.glGetProgramiv(name, GL2ES3.GL_LINK_STATUS, i)
+                glGetProgramiv(name, GL2ES3.GL_LINK_STATUS, i)
                 if (i[0] == GL2ES3.GL_FALSE) {
                     bufferBig(100).use {
-                        gl.glGetProgramInfoLog(name, 100, i, it)
+                        glGetProgramInfoLog(name, 100, i, it)
                         throw Error(String(it.toByteArray()))
                     }
                 }
             }
-            glDetachShader(name, vert)
-            glDetachShader(name, frag)
-            glDeleteShader(vert)
-            glDeleteShader(frag)
+            glDetachShader(name, v)
+            glDetachShader(name, f)
+            glDeleteShader(v)
+            glDeleteShader(f)
 
             glUseProgram(name)
             glUniform1i(glGetUniformLocation(name, "Texture"), semantic.sampler.DIFFUSE)
@@ -124,18 +125,16 @@ class JoglProgram(gl: GL3) {
 
     val mat = gl.glGetUniformLocation(name, "mat")
 
-    fun shaderFromSource(source: String, type: Int): Int {
-        return intBufferBig(1).use {
-            val shader = JoglGL3.gl.glCreateShader(type)
-            JoglGL3.gl.glShaderSource(shader, 1, arrayOf(source), null)
+    fun GL3.shaderFromSource(source: String, type: Int): Int = intBufferBig(1).use {
+        val shader = glCreateShader(type)
+        glShaderSource(shader, 1, arrayOf(source), null)
 
-            JoglGL3.gl.glCompileShader(shader)
+        glCompileShader(shader)
 
-            JoglGL3.gl.glGetShaderiv(shader, GL2ES3.GL_COMPILE_STATUS, it)
-            if (it[0] == GL2ES3.GL_FALSE)
-                throw Error()
+        glGetShaderiv(shader, GL2ES3.GL_COMPILE_STATUS, it)
+        if (it[0] == GL2ES3.GL_FALSE)
+            throw Error()
 
-            shader
-        }
+        shader
     }
 }
