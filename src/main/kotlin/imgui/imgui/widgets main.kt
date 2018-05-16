@@ -6,12 +6,10 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
-import imgui.ImGui.renderBullet
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.frameHeight
@@ -22,6 +20,7 @@ import imgui.ImGui.plotEx
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.renderArrow
+import imgui.ImGui.renderBullet
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
@@ -29,6 +28,7 @@ import imgui.ImGui.renderRectFilledRangeH
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
+import imgui.ImGui.style
 import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
@@ -65,7 +65,7 @@ interface imgui_widgetsMain {
         val (pressed, hovered, held) = buttonBehavior(bb, id)
 
         // Render
-        val col = if(hovered && held) Col.ButtonActive else if(hovered ) Col.ButtonHovered else Col.Button
+        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
         renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
         renderArrow(bb.min + g.style.framePadding, dir)
@@ -148,11 +148,11 @@ interface imgui_widgetsMain {
         return pressed
     }
 
-
-    fun checkbox(label: String, v: BooleanArray): Boolean {
-        b = v[0]
+    fun checkbox(label: String, v: BooleanArray) = checkbox(label, v, 0)
+    fun checkbox(label: String, v: BooleanArray, i: Int): Boolean {
+        b = v[i]
         val res = checkbox(label, ::b)
-        v[0] = b
+        v[i] = b
         return res
     }
 

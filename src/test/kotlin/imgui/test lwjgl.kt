@@ -7,7 +7,6 @@ import gln.checkError
 import gln.glClearColor
 import gln.glViewport
 import imgui.impl.LwjglGL3
-import org.lwjgl.glfw.GLFW.glfwSwapBuffers
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
