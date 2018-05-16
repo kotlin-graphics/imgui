@@ -136,7 +136,7 @@ object JoglVrGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL2ES3.GL_VERTEX_ARRAY_BINDING)
 
-        program = JoglProgram(this)
+        program = JoglProgram(this, vertexShader, fragmentShader)
 
         glGenBuffers(Buffer.MAX, bufferName)
 
@@ -365,8 +365,6 @@ object JoglVrGL3 {
 
         override fun mouseDragged(e: MouseEvent) {
             cursorPos.put(e.x, e.y)
-            if (e.button in MouseEvent.BUTTON1..MouseEvent.BUTTON3)
-                mouseJustPressed[e.button.i - 1] = true
         }
 
         override fun mouseClicked(e: MouseEvent) {}
@@ -414,7 +412,7 @@ object JoglVrGL3 {
         glDeleteVertexArrays(1, vaoName)
         glDeleteBuffers(Buffer.MAX, bufferName)
 
-        glDeleteProgram(program.name)
+        if (program.name >= 0) glDeleteProgram(program.name)
 
         if (fontTexture[0] >= 0) {
             glDeleteTextures(1, fontTexture)
