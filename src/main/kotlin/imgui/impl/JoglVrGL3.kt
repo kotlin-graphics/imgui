@@ -24,7 +24,7 @@ import gln.get
 import gln.glf.semantic
 import imgui.*
 import imgui.ImGui.io
-import uno.buffer.intBufferBig
+import imgui.ImGui.mouseCursor
 
 object JoglVrGL3 {
 
@@ -96,11 +96,17 @@ object JoglVrGL3 {
         io.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         time = currentTime
 
-        //  Setup inputs
-//        if (window.hasFocus())
-        io.mousePos put cursorPos
-//        else
-//            io.mousePos put -Float.MAX_VALUE
+        /*  Setup inputs
+            (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
+            Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)   */
+        if (window.hasFocus())
+            if (io.wantSetMousePos)
+            // Set OS mouse position if requested (only used when ConfigFlags.NavEnableSetMousePos is enabled by user)
+                window.warpPointer(io.mousePos.x.i, io.mousePos.y.i)
+            else
+                io.mousePos put cursorPos
+        else
+            io.mousePos put -Float.MAX_VALUE
 
         repeat(3) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
@@ -108,8 +114,14 @@ object JoglVrGL3 {
             io.mouseDown[it] = mouseJustPressed[it]
         }
 
-        // Hide OS mouse cursor if ImGui is drawing it
-//        window.isPointerVisible = !io.mouseDrawCursor
+        // Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
+        val cursor = mouseCursor
+        if (io.mouseDrawCursor || cursor == MouseCursor.None)
+            window.isPointerVisible = false
+        else {
+//            window.pointerIcon =
+            window.isPointerVisible = true
+        }
 
         /*  Start the frame. This call will update the io.wantCaptureMouse, io.wantCaptureKeyboard flag that you can use
             to dispatch inputs (or not) to your application.         */
@@ -200,7 +212,7 @@ object JoglVrGL3 {
 
             if (glGetError() != GL.GL_NO_ERROR) throw Error("render")
 
-            if(DEBUG) println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
+            if (DEBUG) println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
         }
     }
 

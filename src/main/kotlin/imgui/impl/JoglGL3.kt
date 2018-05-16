@@ -455,6 +455,7 @@ object JoglGL3 {
     }
 
     fun shutdown(gl: GL3) {
+        // Destroy OpenGL objects
         invalidateDeviceObjects(gl)
         window.removeMouseListener(mouseCallback)
         window.removeKeyListener(keyCallback)
@@ -465,7 +466,7 @@ object JoglGL3 {
         glDeleteVertexArrays(1, vaoName)
         glDeleteBuffers(Buffer.MAX, bufferName)
 
-        glDeleteProgram(program.name)
+        if(program.name >= 0) glDeleteProgram(program.name)
 
         if (fontTexture[0] >= 0) {
             glDeleteTextures(1, fontTexture)
