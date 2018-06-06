@@ -277,16 +277,21 @@ fun closePopupToLevel(remaining: Int) {
 
 enum class PopupPositionPolicy { Default, ComboBox }
 
-fun findBestWindowPosForPopup(refPos: Vec2, size: Vec2, lastDir: KMutableProperty0<Dir>, rAvoid: Rect,
-                              policy: PopupPositionPolicy = PopupPositionPolicy.Default): Vec2 {
+fun findScreenRectForWindow(window: Window): Rect {
+    val padding = Vec2(style.displaySafeAreaPadding)
+    return getViewportRect().apply {
+        val x = if (window.size.x - width > padding.x * 2) -padding.x else 0f
+        val y = if (window.size.y - height > padding.y * 2) -padding.y else 0f
+        expand(Vec2(x, y))
+    }
+}
 
-    /*  rAvoid = the rectangle to avoid (e.g. for tooltip it is a rectangle around the mouse cursor which we want to avoid. 
-        for popups it's a small point around the cursor.)
-        rOuter = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding 
-        we ignore it.   */
-    val safePadding = Vec2(style.displaySafeAreaPadding)
-    val rOuter = Rect(getViewportRect())
-    rOuter expand Vec2(if (size.x - rOuter.width > safePadding.x * 2) -safePadding.x else 0f, if (size.y - rOuter.height > safePadding.y * 2) -safePadding.y else 0f)
+/** rAvoid = the rectangle to avoid (e.g. for tooltip it is a rectangle around the mouse cursor which we want to avoid. for popups it's a small point around the cursor.)
+ *  rOuter = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding we ignore it.
+ */
+fun findBestWindowPosForPopupEx(refPos: Vec2, size: Vec2, lastDir: KMutableProperty0<Dir>, rOuter: Rect, rAvoid: Rect,
+                                policy: PopupPositionPolicy = PopupPositionPolicy.Default): Vec2 {
+
     val basePosClamped = glm.clamp(refPos, rOuter.min, rOuter.max - size)
     //GImGui->OverlayDrawList.AddRect(r_avoid.Min, r_avoid.Max, IM_COL32(255,0,0,255));
     //GImGui->OverlayDrawList.AddRect(rOuter.Min, rOuter.Max, IM_COL32(0,255,0,255));
@@ -328,6 +333,48 @@ fun findBestWindowPosForPopup(refPos: Vec2, size: Vec2, lastDir: KMutablePropert
         x = max(min(x + size.x, rOuter.max.x) - size.x, rOuter.min.x)
         y = max(min(y + size.y, rOuter.max.y) - size.y, rOuter.min.y)
     }
+}
+
+fun findBestWindowPosForPopup(window: Window): Vec2 {
+
+    val rScreen = findScreenRectForWindow(window)
+    if (window.flags has Wf.ChildMenu) {
+        /*  Child menus typically request _any_ position within the parent menu item,
+            and then our FindBestPopupWindowPos() function will move the new menu outside the parent bounds.
+            This is how we end up with child menus appearing (most-commonly) on the right of the parent menu. */
+        assert(g.currentWindow === window)
+        val parentMenu = g.currentWindowStack[g.currentWindowStack.size - 2]
+        // We want some overlap to convey the relative depth of each menu (currently the amount of overlap is hard-coded to style.ItemSpacing.x).
+        val horizontalOverlap = style.itemSpacing.x
+        val rAvoid = parentMenu.run {
+            when {
+                dc.menuBarAppending -> Rect(-Float.MAX_VALUE, pos.y + titleBarHeight, Float.MAX_VALUE, pos.y + titleBarHeight + menuBarHeight)
+                else -> Rect(pos.x + horizontalOverlap, -Float.MAX_VALUE, pos.x + size.x - horizontalOverlap - scrollbarSizes.x, Float.MAX_VALUE)
+            }
+        }
+        return findBestWindowPosForPopupEx(window.posF, window.size, window::autoPosLastDirection, rScreen, rAvoid)
+    }
+    if (window.flags has Wf.Popup) {
+        val rAvoid = Rect(window.posF.x - 1, window.posF.y - 1, window.posF.x + 1, window.posF.y + 1)
+        return findBestWindowPosForPopupEx(window.posF, window.size, window::autoPosLastDirection, rScreen, rAvoid)
+    }
+    if (window.flags has Wf.Tooltip) {
+        // Position tooltip (always follows mouse)
+        val sc = style.mouseCursorScale
+        val refPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else io.mousePos
+        val rAvoid = when {
+            !g.navDisableHighlight && g.navDisableMouseHover && !(io.configFlags has Cf.NavEnableSetMousePos) ->
+                Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
+            else -> Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
+        }
+        val pos = findBestWindowPosForPopupEx(refPos, window.size, window::autoPosLastDirection, rScreen, rAvoid)
+        if (window.autoPosLastDirection == Dir.None)
+        // If there's not enough room, for tooltip we prefer avoiding the cursor at all cost even if it means that part of the tooltip won't be visible.
+            pos(refPos + 2)
+        return pos
+    }
+    assert(false)
+    return Vec2(window.pos)
 }
 
 /** Return false to discard a character.    */

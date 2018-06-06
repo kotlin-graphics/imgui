@@ -326,7 +326,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         // Cleanup of other data are conditional on actually having initialize ImGui.
         if (!g.initialized) return
 
-        saveIniSettingsToDisk(io.iniFilename)
+        // Save settings (unless we haven't attempted to load them: CreateContext/DestroyContext without a call to NewFrame shouldn't save an empty file)
+        if (g.settingsLoaded)
+            saveIniSettingsToDisk(io.iniFilename)
 
         // Clear everything else
         g.windows.forEach { it.clear() }

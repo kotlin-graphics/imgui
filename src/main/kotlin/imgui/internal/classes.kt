@@ -626,7 +626,9 @@ class Window(var context: Context, var name: String) {
     /** Scale multiplier per-window */
     var fontWindowScale = 1f
 
-    var drawList = DrawList(context.drawListSharedData).apply { _ownerName = name }
+    var drawListInst: DrawList = DrawList(context.drawListSharedData).apply { _ownerName = name }
+    /** == &DrawListInst (for backward compatibility reason with code using imgui_internal.h we keep this a pointer) */
+    var drawList = drawListInst
     /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
     /** Point to ourself or first ancestor that is not a child window.  */
@@ -949,6 +951,10 @@ class Window(var context: Context, var name: String) {
             columnsStorage += it
             it.id = id
         }
+    }
+
+    fun destroy() {
+        assert(drawList === drawListInst)
     }
 }
 

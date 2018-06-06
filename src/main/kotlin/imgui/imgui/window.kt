@@ -348,46 +348,14 @@ interface imgui_window {
             }
 
             val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFrames == 0
-            if (windowPosWithPivot) // Position given a pivot (e.g. for centering)
-                window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.Null)
-
-            else if (flags has Wf.ChildMenu) {
-                /*  Child menus typically request _any_ position within the parent menu item, and then our
-                FindBestPopupWindowPos() function will move the new menu outside the parent bounds.
-                This is how we end up with child menus appearing (most-commonly) on the right of the parent menu.   */
-                assert(windowPosSetByApi)
-                /*  We want some overlap to convey the relative depth of each popup (currently the amount of overlap it is
-                hard-coded to style.ItemSpacing.x, may need to introduce another style value).  */
-                val horizontalOverlap = style.itemSpacing.x
-                val parentMenu = parentWindowInStack!!
-                val rectToAvoid =
-                        if (parentMenu.dc.menuBarAppending)
-                            Rect(-Float.MAX_VALUE, parentMenu.pos.y + parentMenu.titleBarHeight,
-                                    Float.MAX_VALUE, parentMenu.pos.y + parentMenu.titleBarHeight + parentMenu.menuBarHeight)
-                        else
-                            Rect(parentMenu.pos.x + horizontalOverlap, -Float.MAX_VALUE,
-                                    parentMenu.pos.x + parentMenu.size.x - horizontalOverlap - parentMenu.scrollbarSizes.x, Float.MAX_VALUE)
-                window.posF put findBestWindowPosForPopup(window.posF, window.size, window::autoPosLastDirection, rectToAvoid)
-
-            } else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize) {
-                val rectToAvoid = Rect(window.posF.x - 1, window.posF.y - 1, window.posF.x + 1, window.posF.y + 1)
-                window.posF put findBestWindowPosForPopup(window.posF, window.size, window::autoPosLastDirection, rectToAvoid)
-
-            } else if (flags has Wf.Tooltip && !windowPosSetByApi && !windowIsChildTooltip) {
-                // Position tooltip (always follow mouse but avoid cursor)
-                val sc = style.mouseCursorScale
-                val refPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(io.mousePos)
-                val rectToAvoid =
-                        if (!g.navDisableHighlight && g.navDisableMouseHover && io.configFlags hasnt ConfigFlag.NavEnableSetMousePos)
-                            Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
-                        else
-                            Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
-                window.posF put findBestWindowPosForPopup(refPos, window.size, window::autoPosLastDirection, rectToAvoid)
-                if (window.autoPosLastDirection == Dir.None)
-                /*  If there's not enough room, for tooltip we prefer avoiding the cursor at all cost even if it
-                means that part of the tooltip won't be visible.    */
-                    window.posF = refPos + 2
-            }
+            if (windowPosWithPivot)
+                window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.Null) // Position given a pivot (e.g. for centering)
+            else if (flags has Wf.ChildMenu)
+                window.posF = findBestWindowPosForPopup(window)
+            else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize)
+                window.posF = findBestWindowPosForPopup(window)
+            else if (flags has Wf.Tooltip && !windowPosSetByApi && !windowIsChildTooltip)
+                window.posF = findBestWindowPosForPopup(window)
 
             // Clamp position so it stays visible
             if (flags hasnt Wf.ChildWindow && flags hasnt Wf.Tooltip)
