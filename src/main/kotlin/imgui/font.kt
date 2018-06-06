@@ -651,7 +651,7 @@ class FontAtlas {
             assert(with(cfg.dstFont!!) { !isLoaded || containerAtlas == this@FontAtlas })
 
             val fontOffset = stbtt_GetFontOffsetForIndex(cfg.fontDataBuffer, cfg.fontNo)
-            assert(fontOffset >= 0)
+            assert(fontOffset >= 0) { "FontData is incorrect, or FontNo cannot be found." }
             if (!stbtt_InitFont(tmp.fontInfo, cfg.fontDataBuffer, fontOffset)) {
                 texSize put 0   // Reset output on failure
                 return false

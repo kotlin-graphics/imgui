@@ -467,6 +467,12 @@ interface imgui_internal {
         begin(windowName, null, flags or extraFlags)
     }
 
+    val frontMostPopupModal: Window?
+        get() {
+            for (n in g.openPopupStack.size - 1 downTo 0)
+                g.openPopupStack[n].window?.let { if (it.flags has Wf.Modal) return it }
+            return null
+        }
 
     fun navInitWindow(window: Window, forceReinit: Boolean) {
 
@@ -2811,7 +2817,7 @@ interface imgui_internal {
         }
 
         // Modal windows prevents cursor from hovering behind them.
-        val modalWindow = frontMostModalRootWindow
+        val modalWindow = frontMostPopupModal
         if (modalWindow != null)
             if (g.hoveredRootWindow?.isChildOf(modalWindow) == false)
                 nullate()

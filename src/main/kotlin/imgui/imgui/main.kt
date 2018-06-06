@@ -11,6 +11,7 @@ import imgui.ImGui.clearActiveId
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.end
+import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
@@ -142,13 +143,16 @@ interface imgui_main {
         g.framerateSecPerFrameAccum += io.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
         g.framerateSecPerFrame[g.framerateSecPerFrameIdx] = io.deltaTime
         g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
-        io.framerate = 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
+        io.framerate = when {
+            g.framerateSecPerFrameAccum > 0f -> 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
+            else -> Float.MAX_VALUE
+        }
 
         // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering)
         newFrameUpdateMovingWindow()
         newFrameUpdateHoveredWindowAndCaptureFlags()
 
-        g.modalWindowDarkeningRatio = when (frontMostModalRootWindow) {
+        g.modalWindowDarkeningRatio = when (frontMostPopupModal) {
             null -> 0f
             else -> min(g.modalWindowDarkeningRatio + io.deltaTime * 6f, 1f)
         }
@@ -331,7 +335,7 @@ interface imgui_main {
                         g.activeIdClickOffset = io.mousePos - g.hoveredRootWindow!!.pos
                         if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove)
                             g.movingWindow = g.hoveredWindow
-                    } else if (g.navWindow != null && frontMostModalRootWindow == null)
+                    } else if (g.navWindow != null && frontMostPopupModal == null)
                         null.focus()   // Clicking on void disable focus
 
                 /*  With right mouse button we close popups without changing focus
@@ -339,7 +343,7 @@ interface imgui_main {
                 if (io.mouseClicked[1]) {
                     /*  Find the top-most window between HoveredWindow and the front most Modal Window.
                         This is where we can trim the popup stack.  */
-                    val modal = frontMostModalRootWindow
+                    val modal = frontMostPopupModal
                     var hoveredWindowAboveModal = false
                     if (modal == null)
                         hoveredWindowAboveModal = true
@@ -445,7 +449,7 @@ interface imgui_main {
                         mouseDragMaxDistanceSqr[i] = 0f
                     } else if (mouseDown[i]) {
                         val mouseDelta = mousePos - mouseClickedPos[i]
-                        mouseDragMaxDistanceAbs[i].x = mouseDragMaxDistanceAbs[i].x max  if (mouseDelta.x < 0f) -mouseDelta.x else mouseDelta.x
+                        mouseDragMaxDistanceAbs[i].x = mouseDragMaxDistanceAbs[i].x max if (mouseDelta.x < 0f) -mouseDelta.x else mouseDelta.x
                         mouseDragMaxDistanceAbs[i].y = mouseDragMaxDistanceAbs[i].y max if (mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y
                         mouseDragMaxDistanceSqr[i] = mouseDragMaxDistanceSqr[i] max mouseDelta.lengthSqr
                     }
