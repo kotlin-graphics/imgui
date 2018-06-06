@@ -275,13 +275,6 @@ fun closePopupToLevel(remaining: Int) {
     for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
 }
 
-val frontMostModalRootWindow: Window?
-    get() {
-        for (n in g.openPopupStack.size - 1 downTo 0)
-            g.openPopupStack[n].window?.let { if (it.flags has Wf.Modal) return it }
-        return null
-    }
-
 enum class PopupPositionPolicy { Default, ComboBox }
 
 fun findBestWindowPosForPopup(refPos: Vec2, size: Vec2, lastDir: KMutableProperty0<Dir>, rAvoid: Rect,

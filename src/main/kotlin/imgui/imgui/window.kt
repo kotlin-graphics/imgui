@@ -16,6 +16,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endColumns
 import imgui.ImGui.findWindowByName
+import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.io
@@ -349,6 +350,7 @@ interface imgui_window {
             val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFrames == 0
             if (windowPosWithPivot) // Position given a pivot (e.g. for centering)
                 window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.Null)
+
             else if (flags has Wf.ChildMenu) {
                 /*  Child menus typically request _any_ position within the parent menu item, and then our
                 FindBestPopupWindowPos() function will move the new menu outside the parent bounds.
@@ -366,13 +368,13 @@ interface imgui_window {
                             Rect(parentMenu.pos.x + horizontalOverlap, -Float.MAX_VALUE,
                                     parentMenu.pos.x + parentMenu.size.x - horizontalOverlap - parentMenu.scrollbarSizes.x, Float.MAX_VALUE)
                 window.posF put findBestWindowPosForPopup(window.posF, window.size, window::autoPosLastDirection, rectToAvoid)
+
             } else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize) {
                 val rectToAvoid = Rect(window.posF.x - 1, window.posF.y - 1, window.posF.x + 1, window.posF.y + 1)
                 window.posF put findBestWindowPosForPopup(window.posF, window.size, window::autoPosLastDirection, rectToAvoid)
-            }
 
-            // Position tooltip (always follows mouse)
-            if (flags has Wf.Tooltip && !windowPosSetByApi && !windowIsChildTooltip) {
+            } else if (flags has Wf.Tooltip && !windowPosSetByApi && !windowIsChildTooltip) {
+                // Position tooltip (always follow mouse but avoid cursor)
                 val sc = style.mouseCursorScale
                 val refPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(io.mousePos)
                 val rectToAvoid =
@@ -446,7 +448,7 @@ interface imgui_window {
                 pushClipRect(viewportRect.min, viewportRect.max, true)
 
             // Draw modal window background (darkens what is behind them)
-            if (flags has Wf.Modal && window === frontMostModalRootWindow)
+            if (flags has Wf.Modal && window === frontMostPopupModal)
                 window.drawList.addRectFilled(viewportRect.min, viewportRect.max, getColorU32(Col.ModalWindowDarkening, g.modalWindowDarkeningRatio))
 
             // Draw navigation selection/windowing rectangle background
