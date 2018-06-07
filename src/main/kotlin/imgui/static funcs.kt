@@ -280,9 +280,7 @@ enum class PopupPositionPolicy { Default, ComboBox }
 fun findScreenRectForWindow(window: Window): Rect {
     val padding = Vec2(style.displaySafeAreaPadding)
     return getViewportRect().apply {
-        val x = if (window.size.x - width > padding.x * 2) -padding.x else 0f
-        val y = if (window.size.y - height > padding.y * 2) -padding.y else 0f
-        expand(Vec2(x, y))
+        expand(Vec2(if (width > padding.x * 2) -padding.x else 0f, if (height > padding.y * 2) -padding.y else 0f))
     }
 }
 
@@ -340,7 +338,7 @@ fun findBestWindowPosForPopup(window: Window): Vec2 {
     val rScreen = findScreenRectForWindow(window)
     if (window.flags has Wf.ChildMenu) {
         /*  Child menus typically request _any_ position within the parent menu item,
-            and then our FindBestPopupWindowPos() function will move the new menu outside the parent bounds.
+            and then our FindBestWindowPosForPopup() function will move the new menu outside the parent bounds.
             This is how we end up with child menus appearing (most-commonly) on the right of the parent menu. */
         assert(g.currentWindow === window)
         val parentMenu = g.currentWindowStack[g.currentWindowStack.size - 2]

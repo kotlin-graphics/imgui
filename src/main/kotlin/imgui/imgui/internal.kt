@@ -907,11 +907,11 @@ interface imgui_internal {
         val window = g.currentWindow!!
 
         // Hide anything after a '##' string
-        val textDisplayEnd =
-                if (hideTextAfterHash)
-                    findRenderedTextEnd(text, textEnd)
-                else
-                    if (textEnd == 0) text.length else textEnd
+        val textDisplayEnd = when {
+            hideTextAfterHash -> findRenderedTextEnd(text, textEnd)
+            textEnd == 0 -> text.length
+            else -> textEnd
+        }
 
         if (textDisplayEnd > 0) {
             window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd)

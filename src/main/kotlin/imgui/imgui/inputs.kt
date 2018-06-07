@@ -16,8 +16,8 @@ interface imgui_inputs {
 
     fun getKeyIndex(imguiKey: Int) = io.keyMap[imguiKey]
 
-    /** is key being held. == io.KeysDown[user_key_index]. note that imgui doesn't know the semantic of each entry of io.KeyDown[].
-     *  Use your own indices/enums according to how your back-end/engine stored them into KeyDown[]! */
+    /** is key being held. == io.KeysDown[user_key_index]. note that imgui doesn't know the semantic of each entry of io.KeysDown[].
+     *  Use your own indices/enums according to how your back-end/engine stored them into io.KeysDown[]! */
     fun isKeyDown(userKeyIndex: Int) = if (userKeyIndex < 0) false else io.keysDown[userKeyIndex]
 
     /** uses user's key indices as stored in the keys_down[] array. if repeat=true.
@@ -92,12 +92,10 @@ interface imgui_inputs {
 
     fun isMouseHoveringRect(rMin: Vec2, rMax: Vec2, clip: Boolean = true): Boolean {
 
-        val window = g.currentWindow!!
-
         // Clip
         val rectClipped = Rect(rMin, rMax)
         if (clip)
-            rectClipped.clipWith(window.clipRect)
+            rectClipped.clipWith(g.currentWindow!!.clipRect)
 
         // Expand for touch input
         val rectForTouch = Rect(rectClipped.min - style.touchExtraPadding, rectClipped.max + style.touchExtraPadding)

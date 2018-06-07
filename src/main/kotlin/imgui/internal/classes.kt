@@ -391,6 +391,8 @@ class NextWindowData {
     var sizeCallback: SizeCallback? = null
     var sizeCallbackUserData: Any? = null
     var bgAlphaVal = Float.MAX_VALUE
+    /** This is not exposed publicly, so we don't clear it. */
+    var menuBarOffsetMinVal = Vec2()
 
     fun clear() {
         posCond = Cond.Null
@@ -452,8 +454,9 @@ class DrawContext {
     var navLayerActiveMaskNext = 0
 
     var menuBarAppending = false
-
-    var menuBarOffsetX = 0f
+    /** MenuBarOffset.x is sort of equivalent of a per-layer CursorPos.x, saved/restored as we switch to the menu bar.
+     *  The only situation when MenuBarOffset.y is > 0 if when (SafeAreaPadding.y > FramePadding.y), often used on TVs. */
+    var menuBarOffset = Vec2()
 
     val childWindows = ArrayList<Window>()
 
@@ -704,9 +707,19 @@ class Window(var context: Context, var name: String) {
     fun rect() = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
 
     fun calcFontSize() = g.fontBaseSize * fontWindowScale
-    val titleBarHeight get() = if (flags has Wf.NoTitleBar) 0f else calcFontSize() + style.framePadding.y * 2f
+    val titleBarHeight
+        get() = when {
+            flags has Wf.NoTitleBar -> 0f
+            else -> calcFontSize() + style.framePadding.y * 2f
+        }
+
     fun titleBarRect() = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight))
-    val menuBarHeight get() = if (flags has Wf.MenuBar) calcFontSize() + style.framePadding.y * 2f else 0f
+    val menuBarHeight
+        get() = when {
+            flags has Wf.MenuBar -> dc.menuBarOffset.y + calcFontSize() + style.framePadding.y * 2f
+            else -> 0f
+        }
+
     fun menuBarRect(): Rect {
         val y1 = pos.y + titleBarHeight
         return Rect(pos.x.f, y1, pos.x + sizeFull.x, y1 + menuBarHeight)
@@ -834,7 +847,7 @@ class Window(var context: Context, var name: String) {
                     we are growing the size on the other axis to compensate for expected scrollbar.
                     FIXME: Might turn bigger than DisplaySize-WindowPadding.                 */
                 val sizeAutoFit = glm.clamp(sizeContents, Vec2(style.windowMinSize),
-                        Vec2(glm.max(style.windowMinSize, io.displaySize - style.displaySafeAreaPadding)))
+                        Vec2(glm.max(style.windowMinSize, io.displaySize - style.displaySafeAreaPadding * 2f)))
                 val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
                 if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
                     sizeAutoFit.y += style.scrollbarSize
