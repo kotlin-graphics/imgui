@@ -143,25 +143,26 @@ fun checkStacksSize(window: Window, write: Boolean) {
         else assert(backup[ptr] == current, { "BeginMenu/EndMenu or BeginPopup/EndPopup Mismatch" })
         ptr++
     }
+    // For color, style and font stacks there is an incentive to use Push/Begin/Pop/.../End patterns, so we relax our checks a little to allow them.
     run {
         // Too few or too many PopStyleColor()
         val current = g.colorModifiers.size
         if (write) backup[ptr] = current
-        else assert(backup[ptr] == current, { "PushStyleColor/PopStyleColor Mismatch!" })
+        else assert(backup[ptr] >= current, { "PushStyleColor/PopStyleColor Mismatch!" })
         ptr++
     }
     run {
         // Too few or too many PopStyleVar()
         val current = g.styleModifiers.size
         if (write) backup[ptr] = current
-        else assert(backup[ptr] == current, { "PushStyleVar/PopStyleVar Mismatch!" })
+        else assert(backup[ptr] >= current, { "PushStyleVar/PopStyleVar Mismatch!" })
         ptr++
     }
     run {
         // Too few or too many PopFont()
         val current = g.fontStack.size
         if (write) backup[ptr] = current
-        else assert(backup[ptr] == current, { "PushFont/PopFont Mismatch!" })
+        else assert(backup[ptr] >= current, { "PushFont/PopFont Mismatch!" })
         ptr++
     }
     assert(ptr == window.dc.stackSizesBackup.size)
