@@ -52,7 +52,7 @@ object LwjglGL3 {
             backendFlags = backendFlags or BackendFlag.HasMouseCursors   // We can honor GetMouseCursor() values (optional)
             backendFlags = backendFlags or BackendFlag.HasSetMousePos    // We can honor io.WantSetMousePos requests (optional, rarely used)
 
-            // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
+            // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
             keyMap[Key.Tab] = GLFW_KEY_TAB
             keyMap[Key.LeftArrow] = GLFW_KEY_LEFT
             keyMap[Key.RightArrow] = GLFW_KEY_RIGHT
