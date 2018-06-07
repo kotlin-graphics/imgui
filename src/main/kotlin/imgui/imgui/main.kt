@@ -383,10 +383,10 @@ interface imgui_main {
         fun newFrameUpdateMovingWindow() {
 
             val mov = g.movingWindow
-            if (mov != null && mov.moveId == g.activeId && g.activeIdSource == InputSource.Mouse) {
+            if (mov != null) {
                 /*  We actually want to move the root window. g.movingWindow === window we clicked on
                     (could be a child window).
-                    We track it to preserve Focus and so that activeIdWindow === movingWindow and
+                    We track it to preserve Focus and so that generally activeIdWindow === movingWindow and
                     activeId == movingWindow.moveId for consistency.    */
                 keepAliveId(g.activeId)
                 assert(mov.rootWindow != null)
@@ -402,16 +402,14 @@ interface imgui_main {
                     clearActiveId()
                     g.movingWindow = null
                 }
-            } else {
-                /*  When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order
-                    to prevent hovering others.                 */
+            } else
+            /*  When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order
+                to prevent hovering others.                 */
                 if (g.activeIdWindow?.moveId == g.activeId) {
                     keepAliveId(g.activeId)
                     if (!io.mouseDown[0])
                         clearActiveId()
                 }
-                g.movingWindow = null
-            }
         }
 
         fun newFrameUpdateMouseInputs() {
@@ -485,7 +483,8 @@ interface imgui_main {
 
                 // Using the FlattenChilds button flag we make the resize button accessible even if we are hovering over a child window
                 val resizeRect = Rect(corner, corner + grip.innerDir * gripHoverSize)
-                resizeRect.fixInverted()
+                if (resizeRect.min.x > resizeRect.max.x) swap(resizeRect.min::x, resizeRect.max::x)
+                if (resizeRect.min.y > resizeRect.max.y) swap(resizeRect.min::y, resizeRect.max::y)
 
                 val flags = ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus
                 val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), flags)

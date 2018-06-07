@@ -59,7 +59,6 @@ import imgui.ImGui.showFontSelector
 import imgui.ImGui.showStyleSelector
 import imgui.ImGui.showUserGuide
 import imgui.ImGui.sliderFloat
-import imgui.ImGui.sliderFloat2
 import imgui.ImGui.sliderInt
 import imgui.ImGui.sliderVec2
 import imgui.ImGui.spacing
@@ -902,11 +901,14 @@ object FixedOverlay {
         val windowPos = Vec2(if (corner has 1) io.displaySize.x - DISTANCE else DISTANCE,
                 if (corner has 2) io.displaySize.y - DISTANCE else DISTANCE)
         val windowPosPivot = Vec2(if (corner has 1) 1f else 0f, if (corner has 2) 1f else 0f)
-        setNextWindowPos(windowPos, Cond.Always, windowPosPivot)
+        var flags = Wf.NoTitleBar or Wf.NoResize or Wf.AlwaysAutoResize or Wf.NoSavedSettings or Wf.NoFocusOnAppearing or Wf.NoNav
+        if (corner != -1) {
+            setNextWindowPos(windowPos, Cond.Always, windowPosPivot)
+            flags = flags or Wf.NoMove
+        }
         setNextWindowBgAlpha(0.3f)  // Transparent background
-        val flags = Wf.NoTitleBar or Wf.NoResize or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoSavedSettings or Wf.NoFocusOnAppearing or Wf.NoNav
         withWindow("Example: Fixed Overlay", open, flags) {
-            text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
+            text("Simple overlay\n", "in the corner of the screen.\n", "(right-click to change position)")
             separator()
             text("Mouse Position: (%.1f,%.1f)".format(io.mousePos.x, io.mousePos.y))
             popupContextWindow {
