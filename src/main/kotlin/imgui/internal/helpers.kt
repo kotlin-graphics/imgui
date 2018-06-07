@@ -6,6 +6,7 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.NUL
 import java.nio.ByteBuffer
+import kotlin.reflect.KMutableProperty0
 
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: UTF-8 <> wchar
@@ -233,6 +234,12 @@ fun CharArray.beginOfLine(midLine: Int): Int {
 val Vec2.lengthSqr get() = x * x + y * y
 
 fun saturate(f: Float) = if (f < 0f) 0f else if (f > 1f) 1f else f
+
+fun swap(a: KMutableProperty0<Float>, b: KMutableProperty0<Float>) {
+    val tmp = a()
+    a.set(b())
+    b.set(tmp)
+}
 
 fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float) = (a + (b - a) * t).i
