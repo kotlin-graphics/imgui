@@ -252,8 +252,8 @@ interface imgui_menus {
                 wantOpen = true
                 navMoveRequestCancel()
             }
-        } else {
-            // Menu bar
+        } else
+        // Menu bar
             if (menuIsOpen && pressed && menusetIsOpen) { // Click an open menu again to close it
                 wantClose = true
                 wantOpen = false
@@ -264,14 +264,14 @@ interface imgui_menus {
                 wantOpen = true
                 navMoveRequestCancel()
             }
-        }
         /*  explicitly close if an open menu becomes disabled, facilitate users code a lot in pattern such as
             'if (BeginMenu("options", has_object)) { ..use object.. }'         */
         if (!enabled)
             wantClose = true
         if (wantClose && isPopupOpen(id))
             closePopupToLevel(g.currentPopupStack.size)
-
+        if (stop) println("pressed: $pressed, hovered: $hovered, menusetIsOpen: $menusetIsOpen, enabled: $enabled")
+        if (stop) println("menuIsOpen :$menuIsOpen, wantOpen:$wantOpen, g.openPopupStack.size:${g.openPopupStack.size}, g.currentPopupStack.size: ${g.currentPopupStack.size}")
         if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.currentPopupStack.size) {
             // Don't recycle same menu level in the same frame, first close the other menu and yield for a frame.
             openPopup(label)
@@ -289,7 +289,7 @@ interface imgui_menus {
             // menuIsOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
             menuIsOpen = beginPopupEx(id, flags)
         }
-
+        if (stop) stop = false
         return menuIsOpen
     }
 

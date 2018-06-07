@@ -230,13 +230,35 @@ interface imgui_internal {
     /** Internal facing ItemHoverable() used when submitting widgets. Differs slightly from IsItemHovered().    */
     fun itemHoverable(bb: Rect, id: ID): Boolean {
         val window = g.currentWindow!!
+        if(stop)
+            println(g.navWindow?.rootWindow?.flags)
+//        println("" + g.navDisableMouseHover +", " + !window.isContentHoverable(Hf.Default.i))
+        println(window.name)
         return when {
-            g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> false
-            g.hoveredWindow !== g.currentWindow -> false
-            g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
-            !isMouseHoveringRect(bb) -> false
-            !window.isContentHoverable(Hf.Default.i) -> false
-            window.dc.itemFlags has If.Disabled -> false
+            g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> {
+                if(stop) println("0")
+                false
+            }
+            g.hoveredWindow !== window -> {
+                if(stop) println("1")
+                false
+            }
+            g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> {
+                if(stop) println("2")
+                false
+            }
+            !isMouseHoveringRect(bb) -> {
+                if(stop) println("3")
+                false
+            }
+            g.navDisableMouseHover || !window.isContentHoverable(Hf.Default.i) -> {
+                if(stop) println("4")
+                false
+            }
+            window.dc.itemFlags has If.Disabled -> {
+                if(stop) println("5")
+                false
+            }
             else -> {
                 setHoveredId(id)
                 true
@@ -363,11 +385,16 @@ interface imgui_internal {
         val popupRef = PopupRef(popupId = id, window = null, parentWindow = parentWindow, openFrameCount = g.frameCount,
                 openParentId = parentWindow.idStack.last(), openMousePos = Vec2(io.mousePos),
                 openPopupPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(io.mousePos))
+//        println("" + g.openPopupStack.size +", "+currentStackSize)
         if (g.openPopupStack.size < currentStackSize + 1)
-            g.openPopupStack.push(popupRef)
+            g.openPopupStack += popupRef
         else {
             // Close child popups if any
-            //g.OpenPopupStack.resize(current_stack_size + 1);  JVM, useless we add it automatically later at the end TODO check
+            if (g.openPopupStack.size > currentStackSize + 1)
+                for (i in currentStackSize + 1 until g.openPopupStack.size)
+                    g.openPopupStack.pop()
+            else if (g.openPopupStack.size < currentStackSize + 1)
+                TODO()
 
             /*  Gently handle the user mistakenly calling OpenPopup() every frame. It is a programming mistake!
                 However, if we were to run the regular code path, the ui would become completely unusable because
@@ -381,7 +408,7 @@ interface imgui_internal {
 
             /*  When reopening a popup we first refocus its parent, otherwise if its parent is itself a popup
                 it would get closed by closePopupsOverWindow().  This is equivalent to what ClosePopupToLevel() does. */
-            if (g.openPopupStack[currentStackSize].popupId == id) parentWindow.focus()
+            //if (g.openPopupStack[currentStackSize].popupId == id) parentWindow.focus()
         }
     }
 
@@ -438,7 +465,7 @@ interface imgui_internal {
 
         val name =
                 if (extraFlags has Wf.ChildMenu)
-                    "##Menu_%d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
+                    "##Menu_%02d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
                 else
                     "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
 
@@ -1178,10 +1205,11 @@ interface imgui_internal {
         return textDisplayEnd
     }
 
-
+    /** @return []pressed, hovered, held] */
     fun buttonBehavior(bb: Rect, id: ID, flag: Bf) = buttonBehavior(bb, id, flag.i)
 
-    fun buttonBehavior(bb: Rect, id: ID, flags: Int = 0): BooleanArray {
+    /** @return []pressed, hovered, held] */
+    fun buttonBehavior(bb: Rect, id: ID, flags: ButtonFlags = 0): BooleanArray {
 
         val window = currentWindow
         var flags = flags
@@ -1241,8 +1269,10 @@ interface imgui_internal {
                 }
                 if ((flags has Bf.PressedOnClick && io.mouseClicked[0]) || (flags has Bf.PressedOnDoubleClick && io.mouseDoubleClicked[0])) {
                     pressed = true
-                    if (flags has Bf.NoHoldingActiveID) clearActiveId()
-                    else setActiveId(id, window) // Hold on ID
+                    if (flags has Bf.NoHoldingActiveID)
+                        clearActiveId()
+                    else
+                        setActiveId(id, window) // Hold on ID
                     window.focus()
                 }
                 if (flags has Bf.PressedOnRelease && io.mouseReleased[0]) {
@@ -1287,12 +1317,11 @@ interface imgui_internal {
             if (g.activeIdSource == InputSource.Mouse) {
                 if (g.activeIdIsJustActivated)
                     g.activeIdClickOffset = io.mousePos - bb.min
-                if (io.mouseDown[0]) {
+                if (io.mouseDown[0])
                     held = true
-                } else {
+                else {
                     if (hovered && flags has Bf.PressedOnClickRelease)
-                    // Repeat mode trumps <on release>
-                        if (!(flags has Bf.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay))
+                        if (!(flags has Bf.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay)) // Repeat mode trumps <on release>
                             if (!g.dragDropActive)
                                 pressed = true
                     clearActiveId()
@@ -1996,7 +2025,7 @@ interface imgui_internal {
                     clearActiveId = true
                 }
                 isUndo || isRedo -> {
-                    editState.onKeyPressed(if(isUndo) K.UNDO else K.REDO)
+                    editState.onKeyPressed(if (isUndo) K.UNDO else K.REDO)
                     editState.clearSelection()
                 }
                 isShortcutKey && Key.A.isPressed -> {
