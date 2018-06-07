@@ -834,7 +834,7 @@ interface imgui_internal {
         columns.lineMaxY = glm.max(columns.lineMaxY, dc.cursorPos.y)
         dc.cursorPos.y = columns.lineMaxY
         if (columns.flags hasnt Cf.GrowParentContentsSize)
-            dc.cursorMaxPos.x = max(columns.startMaxPosX, columns.maxX) // Restore cursor max pos, as columns don't grow parent
+            dc.cursorMaxPos.x = columns.startMaxPosX // Restore cursor max pos, as columns don't grow parent
 
         // Draw columns borders and handle resize
         var isBeingResized = false

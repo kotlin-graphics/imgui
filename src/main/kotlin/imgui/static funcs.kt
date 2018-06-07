@@ -82,13 +82,13 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
     this.flags = flags
     g.windowsById[id] = this
 
+    // Default/arbitrary window position. Use SetNextWindowPos() with the appropriate condition flag to change the initial position of a window.
+    pos put 60f
+    posF put 60f
+
     // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
     if (flags hasnt Wf.NoSavedSettings) {
-        /*  Retrieve settings from .ini file
-            Use SetWindowPos() or SetNextWindowPos() with the appropriate condition flag to change the initial position
-            of a window.    */
-        posF put 60
-        pos put 60
+        //  Retrieve settings from .ini file
 
         findWindowSettings(id)?.let { s ->
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
