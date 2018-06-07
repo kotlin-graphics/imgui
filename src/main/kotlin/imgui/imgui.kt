@@ -136,3 +136,5 @@ typealias WindowFlags = Int
 fun main(args: Array<String>) {
 
 }
+
+var stop = false

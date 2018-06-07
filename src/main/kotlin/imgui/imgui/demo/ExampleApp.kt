@@ -184,6 +184,9 @@ object ExampleApp {
         // Menu
         menuBar {
             menu("Menu") { showExampleMenuFile() }
+//            stop = true
+//            println("nav window name " + g.navWindow?.rootWindow?.name)
+            println("Examples")
             menu("Examples") {
                 menuItem("Main menu bar", "", ExampleApp.show::mainMenuBar)
                 menuItem("Console", "", ExampleApp.show::console)

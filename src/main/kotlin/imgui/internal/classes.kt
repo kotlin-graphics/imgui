@@ -807,11 +807,14 @@ class Window(var context: Context, var name: String) {
         // An active popup disable hovering on other windows (apart from its own children)
         // FIXME-OPT: This could be cached/stored within the window.
         val focusedRootWindow = g.navWindow?.rootWindow ?: return true
+        //println(g.navWindow?.name)
         if (focusedRootWindow.wasActive && focusedRootWindow !== rootWindow) {
             /*  For the purpose of those flags we differentiate "standard popup" from "modal popup"
                 NB: The order of those two tests is important because Modal windows are also Popups.             */
-            if (focusedRootWindow.flags has Wf.Modal) return false
-            if (focusedRootWindow.flags has Wf.Popup && flags hasnt Hf.AllowWhenBlockedByPopup) return false
+            if (focusedRootWindow.flags has Wf.Modal)
+                return false
+            if (focusedRootWindow.flags has Wf.Popup && flags hasnt Hf.AllowWhenBlockedByPopup)
+                return false
         }
         return true
     }
@@ -1005,7 +1008,8 @@ fun Window?.focus() {
             clearActiveId()
 
     // Bring to front
-    if (window.flags hasnt Wf.NoBringToFrontOnFocus) window.bringToFront()
+    if (window.flags hasnt Wf.NoBringToFrontOnFocus)
+        window.bringToFront()
 }
 
 /** Backup and restore just enough data to be able to use isItemHovered() on item A after another B in the same window
