@@ -674,9 +674,9 @@ class Style {
     /** Window positions are clamped to be visible within the display area by at least this amount. Only covers regular
      *  windows.    */
     var displayWindowPadding = Vec2(22)
-    /** If you cannot see the edge of your screen (e.g. on a TV) increase the safe area padding. Covers popups/tooltips
-     *  as well regular windows.    */
-    var displaySafeAreaPadding = Vec2(4)
+    /** If you cannot see the edges of your screen (e.g. on a TV) increase the safe area padding. Apply to popups/tooltips
+     *  as well regular windows.  NB: Prefer configuring your TV sets correctly!   */
+    var displaySafeAreaPadding = Vec2(3)
     /** Scale software rendered mouse cursor (when io.MouseDrawCursor is enabled). May be removed later.    */
     var mouseCursorScale = 1f
     /** Enable anti-aliasing on lines/borders. Disable if you are really short on CPU/GPU.  */

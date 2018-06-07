@@ -7,7 +7,6 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
 import imgui.ImGui.beginGroup
@@ -31,15 +30,19 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushId
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
+import imgui.ImGui.renderArrow
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderText
-import imgui.ImGui.renderArrow
 import imgui.ImGui.selectable
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.style
 import imgui.imgui.imgui_main.Companion.focusFrontMostActiveWindow
-import imgui.internal.*
 import imgui.internal.LayoutType
+import imgui.internal.NavForward
+import imgui.internal.Rect
+import imgui.internal.focus
+import imgui.internal.triangleContainsPoint
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
@@ -51,21 +54,26 @@ import imgui.internal.LayoutType as Lt
 interface imgui_menus {
 
 
-    /** Create and append to a full screen menu-bar.  */
+    /** Create and append to a full screen menu-bar.
+     *  For the main menu bar, which cannot be moved, we honor g.Style.DisplaySafeAreaPadding to ensure text can be visible on a TV set. */
     fun beginMainMenuBar(): Boolean {
 
+        g.nextWindowData.menuBarOffsetMinVal.put(style.displaySafeAreaPadding.x, max(style.displaySafeAreaPadding.y - style.framePadding.y, 0f))
         setNextWindowPos(Vec2())
-        setNextWindowSize(Vec2(io.displaySize.x, g.fontBaseSize + style.framePadding.y * 2f))
+        setNextWindowSize(Vec2(io.displaySize.x, g.nextWindowData.menuBarOffsetMinVal.y + g.fontBaseSize + style.framePadding.y))
         pushStyleVar(StyleVar.WindowRounding, 0f)
         pushStyleVar(StyleVar.WindowMinSize, Vec2i())
         val flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
-        return if (!begin("##MainMenuBar", null, flags) || !beginMenuBar()) {
-            end()
-            popStyleVar(2)
-            false
-        } else {
-            g.currentWindow!!.dc.menuBarOffsetX += style.displaySafeAreaPadding.x
-            true
+        val windowFlags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
+        val isOpen = begin("##MainMenuBar", null, windowFlags) && beginMenuBar()
+        g.nextWindowData.menuBarOffsetMinVal put 0f
+        return when {
+            !isOpen -> {
+                end()
+                popStyleVar(2)
+                false
+            }
+            else -> true
         }
     }
 
@@ -93,10 +101,10 @@ interface imgui_menus {
         beginGroup() // Save position
         pushId("##menubar")
 
-        /*  We don't clip with regular window clipping rectangle as it is already set to the area below. However we clip
+        /*  We don't clip with current window clipping rectangle as it is already set to the area below. However we clip
             with window full rect.
-            We remove 1 worth of rounding to max.x to that text in long menus don't tend to display over the lower-right
-            rounded area, which looks particularly glitchy. */
+            We remove 1 worth of rounding to max.x to that text in long menus and small windows don't tend to display
+            over the lower-right rounded area, which looks particularly glitchy. */
         val barRect = window.menuBarRect()
         val clipRect = Rect(floor(barRect.min.x + 0.5f), floor(barRect.min.y + window.windowBorderSize + 0.5f),
                 floor(max(barRect.min.x, barRect.max.x - window.windowRounding) + 0.5f), floor(barRect.max.y + 0.5f))
@@ -104,7 +112,7 @@ interface imgui_menus {
         pushClipRect(clipRect.min, clipRect.max, false)
 
         with(window.dc) {
-            cursorPos.put(barRect.min.x + menuBarOffsetX, barRect.min.y) // + g.Style.FramePadding.y);
+            cursorPos.put(barRect.min.x + window.dc.menuBarOffset.x, barRect.min.y + window.dc.menuBarOffset.y)
             layoutType = LayoutType.Horizontal
             navLayerCurrent++
             navLayerCurrentMask = navLayerCurrentMask shl 1
@@ -129,7 +137,7 @@ interface imgui_menus {
                 /*  To do so we claim focus back, restore NavId and then process the movement request for yet another
                     frame. This involve a one-frame delay which isn't very problematic in this situation.
                     We could remove it by scoring in advance for multiple window (probably not worth the hassle/cost)   */
-                assert(window.dc.navLayerActiveMaskNext has 0x02) {"Sanity check"}
+                assert(window.dc.navLayerActiveMaskNext has 0x02) { "Sanity check" }
                 window.focus()
                 setNavIDWithRectRel(window.navLastIds[1], 1, window.navRectRel[1])
                 g.navLayer = 1
@@ -143,7 +151,8 @@ interface imgui_menus {
         popClipRect()
         popId()
         with(window.dc) {
-            menuBarOffsetX = cursorPos.x - window.menuBarRect().min.x
+            // Save horizontal position so next append can reuse it. This is kinda equivalent to a per-layer CursorPos.
+            menuBarOffset.x = cursorPos.x - window.menuBarRect().min.x
             groupStack.last().advanceCursor = false
             endGroup()
             layoutType = LayoutType.Vertical
@@ -173,13 +182,13 @@ interface imgui_menus {
             g.navWindow = window
 
         /*  The reference position stored in popupPos will be used by Begin() to find a suitable position for the child
-            menu (using FindBestPopupWindowPos).         */
+            menu (using FindBestWindowPosForPopup).         */
         val popupPos = Vec2()
         val pos = Vec2(window.dc.cursorPos)
         if (window.dc.layoutType == LayoutType.Horizontal) {
-            // Menu inside an horizontal menu bar
-            // Selectable extend their highlight by half ItemSpacing in each direction.
-            // For ChildMenu, the popup position will be overwritten by the call to findBestPopupWindowPos() in begin()
+            /*  Menu inside an horizontal menu bar
+                Selectable extend their highlight by half ItemSpacing in each direction.
+                For ChildMenu, the popup position will be overwritten by the call to FindBestWindowPosForPopup() in begin() */
             popupPos.put(pos.x - window.windowPadding.x, pos.y - style.framePadding.y + window.menuBarHeight)
             window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
             pushStyleVar(StyleVar.ItemSpacing, style.itemSpacing * 2f)

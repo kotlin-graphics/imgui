@@ -235,6 +235,8 @@ interface imgui_window {
             window.windowPadding put style.windowPadding
             if (flags has Wf.ChildWindow && !(flags has (Wf.AlwaysUseWindowPadding or Wf.Popup)) && window.windowBorderSize == 0f)
                 window.windowPadding.put(0f, if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
+            window.dc.menuBarOffset.x = max(max(window.windowPadding.x, style.itemSpacing.x), g.nextWindowData.menuBarOffsetMinVal.x)
+            window.dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
 
             /* Collapse window by double-clicking on title bar
             At this point we don't have a clipping rectangle setup yet, so we can use the title bar area for hit
@@ -358,7 +360,7 @@ interface imgui_window {
                 window.posF = findBestWindowPosForPopup(window)
 
             // Clamp position so it stays visible
-            if (flags hasnt Wf.ChildWindow && flags hasnt Wf.Tooltip)
+            if (flags hasnt Wf.ChildWindow)
             /*  Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized
             window when initializing or minimizing. */
                 if (!windowPosSetByApi && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 && io.displaySize greaterThan 0) {
@@ -369,11 +371,6 @@ interface imgui_window {
                 }
             window.pos put glm.floor(window.posF)
 
-            // Default item width. Make it proportional to window size if window manually resizes
-            window.itemWidthDefault = when {
-                window.size.x > 0f && flags hasnt Wf.Tooltip && flags hasnt Wf.AlwaysAutoResize -> window.size.x * 0.65f
-                else -> g.fontSize * 16f
-            }.i.f
             // Prepare for focus requests
             window.focusIdxAllRequestCurrent =
                     if (window.focusIdxAllRequestNext == Int.MAX_VALUE || window.focusIdxAllCounter == -1)
@@ -402,6 +399,13 @@ interface imgui_window {
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             if (!window.collapsed)
                 updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
+
+            // Default item width. Make it proportional to window size if window manually resizes
+            window.itemWidthDefault = when {
+                window.size.x > 0f && flags hasnt Wf.Tooltip && flags hasnt Wf.AlwaysAutoResize -> window.size.x * 0.65f
+                else -> g.fontSize * 16f
+            }.i.f
+
 
             /* ---------- DRAWING ---------- */
 
@@ -541,7 +545,6 @@ interface imgui_window {
                 dc.navLayerActiveMask = window.dc.navLayerActiveMaskNext
                 dc.navLayerActiveMaskNext = 0
                 dc.menuBarAppending = false
-                dc.menuBarOffsetX = glm.max(windowPadding.x, style.itemSpacing.x)
                 dc.logLinePosY = dc.cursorPos.y - 9999f
                 dc.childWindows.clear()
                 dc.layoutType = Lt.Vertical
@@ -604,15 +607,17 @@ interface imgui_window {
                 window.dc.navLayerCurrentMask = window.dc.navLayerCurrentMask ushr 1    // TODO unsigned necessary?
                 window.dc.itemFlags = itemFlagsBackup
 
-                // Title text (FIXME: refactor text alignment facilities along with RenderText helpers)
+                // Title text (FIXME: refactor text alignment facilities along with RenderText helpers, this is too much code for what it does.)
                 val textSize = calcTextSize(name, 0, true)
                 val textR = Rect(titleBarRect)
-                val padLeft =
-                        if (flags hasnt Wf.NoCollapse) style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
-                        else style.framePadding.x
-                var padRight =
-                        if (pOpen != null) style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
-                        else style.framePadding.x
+                val padLeft = when {
+                    flags has Wf.NoCollapse -> style.framePadding.x
+                    else -> style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
+                }
+                var padRight = when(pOpen) {
+                    null -> style.framePadding.x
+                    else -> style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
+                }
                 if (style.windowTitleAlign.x > 0f)
                     padRight = lerp(padRight, padLeft, style.windowTitleAlign.x)
                 textR.min.x += padLeft
@@ -637,7 +642,7 @@ interface imgui_window {
         */
             /*  Inner rectangle
             We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
-            Note that if our window is collapsed we will end up with a null clipping rectangle which is the correct behavior.   */
+            Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.   */
             window.innerRect.min.x = titleBarRect.min.x + window.windowBorderSize
             window.innerRect.min.y = titleBarRect.max.y + window.menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else window.windowBorderSize
             window.innerRect.max.x = window.pos.x + window.size.x - window.scrollbarSizes.x - window.windowBorderSize
@@ -651,8 +656,7 @@ interface imgui_window {
             window.innerClipRect.max.x = floor(0.5f + window.innerRect.max.x - max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
             window.innerClipRect.max.y = floor(0.5f + window.innerRect.max.y)
 
-            /* After begin() we fill the last item / hovered data using the title bar data. Make that a standard behavior
-                (to allow usage of context menus on title bar only, etc.).             */
+            /*  After Begin() we fill the last item / hovered data based on title bar data. It is a standard behavior (to allow creation of context menus on title bar only, etc.). */
             window.dc.lastItemId = window.moveId
             window.dc.lastItemStatusFlags = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max)) ItemStatusFlag.HoveredRect.i else 0
             window.dc.lastItemRect = titleBarRect
@@ -667,7 +671,7 @@ interface imgui_window {
         g.nextWindowData.sizeConstraintCond = Cond.Null
 
         // Child window can be out of sight and have "negative" clip windows.
-        // Mark them as collapsed so commands are skipped earlier (we can't manually collapse because they have no title bar).
+        // Mark them as collapsed so commands are skipped earlier (we can't manually collapse because them have no title bar).
         if (flags has Wf.ChildWindow) {
 
             assert(flags has Wf.NoTitleBar)

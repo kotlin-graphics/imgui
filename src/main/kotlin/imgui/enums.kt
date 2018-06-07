@@ -347,7 +347,7 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
 
 /** [BETA] Gamepad/Keyboard directional navigation
  *  Keyboard: Set io.configFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[]
- *  based on your io.keyDown[] + io.keyMap[] arrays.
+ *  based on your io.keysDown[] + io.keyMap[] arrays.
  *  Gamepad:  Set io.configFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling
  *  ::newFrame(). Note that io.navInputs[] is cleared by ::endFrame().
  *  Read instructions in imgui.cpp for more details.    */
@@ -389,7 +389,7 @@ enum class NavInput {
     /*  [Internal] Don't use directly! This is used internally to differentiate keyboard from gamepad inputs for
         behaviors that require to differentiate them.
         Keyboard behavior that have no corresponding gamepad mapping (e.g. CTRL + TAB) will be directly reading from
-        io.keyDown[] instead of io.navInputs[]. */
+        io.keysDown[] instead of io.navInputs[]. */
 
     /** toggle menu = io.keyAlt */
     KeyMenu,
@@ -420,7 +420,7 @@ typealias ConfidFlags = Int
 
 /** Configuration flags stored in io.configFlags  */
 enum class ConfigFlag(val i: Int) {
-    /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeyDown[]. */
+    /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeysDown[]. */
     NavEnableKeyboard(1 shl 0),
     /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.NavInputs[].
      *  Back-end also needs to set ImGuiBackendFlags_HasGamepad. */

@@ -59,6 +59,7 @@ import imgui.ImGui.showFontSelector
 import imgui.ImGui.showStyleSelector
 import imgui.ImGui.showUserGuide
 import imgui.ImGui.sliderFloat
+import imgui.ImGui.sliderFloat2
 import imgui.ImGui.sliderInt
 import imgui.ImGui.sliderVec2
 import imgui.ImGui.spacing
@@ -1149,8 +1150,10 @@ object StyleEditor {
             text("Alignment")
             sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
             sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f")
+            text("Safe Area Padding")
             sameLine()
-            showHelpMarker("Alignment applies when a button is larger than its text content.")
+            showHelpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
+            sliderVec2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f")
         }
 
         treeNode("Colors") {
