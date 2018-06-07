@@ -1904,7 +1904,8 @@ interface imgui_internal {
                     Return?)
                     We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR
                     (which _is_ Alt+Ctrl) to input certain characters. */
-                if (!(io.keyCtrl && !io.keyAlt) && isEditable && !userNavInputStart)
+                val ignoreInputs = (io.keyCtrl && !io.keyAlt) || (io.optMacOSXBehaviors && io.keySuper)
+                if (!ignoreInputs && isEditable && !userNavInputStart)
                     io.inputCharacters.filter { it != NUL }.map {
                         withChar { c ->
                             // Insert character if they pass filtering
