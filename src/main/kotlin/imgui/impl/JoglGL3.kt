@@ -42,7 +42,7 @@ object JoglGL3 {
             backendFlags = backendFlags or BackendFlag.HasMouseCursors   // We can honor GetMouseCursor() values (optional)
             backendFlags = backendFlags or BackendFlag.HasSetMousePos    // We can honor io.WantSetMousePos requests (optional, rarely used)
 
-            // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
+            // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
             keyMap[Key.Tab] = KeyEvent.VK_TAB.i
             keyMap[Key.LeftArrow] = KeyEvent.VK_LEFT.i
             keyMap[Key.RightArrow] = KeyEvent.VK_RIGHT.i
