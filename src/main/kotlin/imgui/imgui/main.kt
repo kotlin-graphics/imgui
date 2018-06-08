@@ -60,7 +60,7 @@ interface imgui_main {
         for (n in 0 until Key.COUNT)
             assert(io.keyMap[n] >= -1 && io.keyMap[n] < io.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
 
-        // Do a simple check for required key mapping (we intentionally do NOT check all keys to not pressure user into setting up everything, but Space is required and was super recently added in 1.60 WIP)
+        // Perform simple check for required key mapping (we intentionally do NOT check all keys to not pressure user into setting up everything, but Space is required and was only recently added in 1.60 WIP)
         if (io.configFlags has Cf.NavEnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
@@ -137,7 +137,7 @@ interface imgui_main {
         navUpdate()
 
         // Update mouse input state
-        newFrameUpdateMouseInputs()
+        updateMouseInputs()
 
         // Calculate frame-rate for the user, as a purely luxurious feature
         g.framerateSecPerFrameAccum += io.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
@@ -149,7 +149,7 @@ interface imgui_main {
         }
 
         // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering)
-        newFrameUpdateMovingWindow()
+        updateMovingWindow()
         newFrameUpdateHoveredWindowAndCaptureFlags()
 
         g.modalWindowDarkeningRatio = when (frontMostPopupModal) {
@@ -160,7 +160,7 @@ interface imgui_main {
         g.wantTextInputNextFrame = -1
         g.wantCaptureKeyboardNextFrame = -1
         g.wantCaptureMouseNextFrame = -1
-        g.osImePosRequest put 1f // OS Input Method Editor showing on top-left of our window by default
+        g.platformImePos put 1f // OS Input Method Editor showing on top-left of our window by default
 
         // Mouse wheel scrolling, scale
         g.hoveredWindow?.let { window ->
@@ -182,7 +182,6 @@ interface imgui_main {
                         val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
                         window.apply {
                             pos plusAssign offset
-                            posF plusAssign offset
                             size timesAssign scale
                             sizeFull timesAssign scale
                         }
@@ -308,10 +307,10 @@ interface imgui_main {
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
-        if (/*io.imeSetInputScreenPosFn &&*/ (g.osImePosRequest - g.osImePosSet).lengthSqr > 0.0001f) {
+        if (/*io.imeSetInputScreenPosFn &&*/ (g.platformImePos - g.osImePosSet).lengthSqr > 0.0001f) {
 //            (LwjglGL3.windowProc!! as WindowProc).in
 //            g.io.ImeSetInputScreenPosFn((int) g . OsImePosRequest . x, (int) g . OsImePosRequest . y)
-            g.osImePosSet put g.osImePosRequest
+            g.osImePosSet put g.platformImePos
         }
 
         // Hide implicit "Debug" window if it hasn't been used
@@ -380,7 +379,7 @@ interface imgui_main {
 
     companion object {
 
-        fun newFrameUpdateMovingWindow() {
+        fun updateMovingWindow() {
 
             val mov = g.movingWindow
             if (mov != null) {
@@ -391,11 +390,11 @@ interface imgui_main {
                 keepAliveId(g.activeId)
                 assert(mov.rootWindow != null)
                 val movingWindow = mov.rootWindow!!
-                if (io.mouseDown[0]) {
+                if (io.mouseDown[0] && isMousePosValid(io.mousePos)) {
                     val pos = io.mousePos - g.activeIdClickOffset
-                    if (movingWindow.posF != pos) {
+                    if (movingWindow.pos.x.f != pos.x || movingWindow.pos.y.f != pos.y) {
                         markIniSettingsDirty(movingWindow)
-                        movingWindow.posF put pos
+                        movingWindow.setPos(pos, Cond.Always)
                     }
                     mov.focus()
                 } else {
@@ -412,7 +411,7 @@ interface imgui_main {
                 }
         }
 
-        fun newFrameUpdateMouseInputs() {
+        fun updateMouseInputs() {
             with(io) {
                 // If mouse just appeared or disappeared (usually denoted by -FLT_MAX component, but in reality we test for -256000.0f) we cancel out movement in MouseDelta
                 if (isMousePosValid(mousePos) && isMousePosValid(mousePosPrev))
@@ -563,8 +562,7 @@ interface imgui_main {
                 markIniSettingsDirty(window)
             }
             if (posTarget.x != Float.MAX_VALUE) {
-                window.posF = glm.floor(posTarget)
-                window.pos put window.posF
+                window.pos = glm.floor(posTarget)
                 markIniSettingsDirty(window)
             }
 

@@ -107,11 +107,11 @@ class Rect {
         max.y += amount.y
     }
 
-    infix fun translate(v: Vec2) {
-        min.x += v.x
-        min.y += v.y
-        max.x -= v.x
-        max.y -= v.y
+    infix fun translate(d: Vec2) {
+        min.x += d.x
+        min.y += d.y
+        max.x -= d.x
+        max.y -= d.y
     }
 
     /** Simple version, may lead to an inverted rectangle, which is fine for Contains/Overlaps test but not for display. */
@@ -131,19 +131,6 @@ class Rect {
         min.y = min.y.i.f
         max.x = max.x.i.f
         max.y = max.y.i.f
-    }
-
-    fun fixInverted() {
-        if (min.x > max.x) {
-            val t = min.x
-            min.x = max.x
-            max.x = t
-        }
-        if (min.y > max.y) {
-            val t = min.y
-            min.y = max.y
-            max.y = t
-        }
     }
 
     val isInverted get() = min.x > max.x || min.y > max.y
@@ -240,7 +227,7 @@ class MenuColumns {
 // Data saved in imgui.ini file
 class WindowSettings(val name: String = "") {
     var id: ID = hash(name, 0)
-    var pos = Vec2i()
+    var pos = Vec2()
     var size = Vec2()
     var collapsed = false
 }
@@ -510,9 +497,8 @@ class Window(var context: Context, var name: String) {
     /** See enum WindowFlags */
     var flags: WindowFlags = 0
 
-    var posF = Vec2()
-    /** Position rounded-up to nearest pixel    */
-    var pos = Vec2i()
+    /** Position (always rounded-up to nearest pixel)    */
+    var pos = Vec2()
     /** Current size (==SizeFull or collapsed title bar size)   */
     var size = Vec2()
     /** Size when non collapsed */
@@ -544,9 +530,9 @@ class Window(var context: Context, var name: String) {
     /** 0.0f = scroll so that target position is at top, 0.5f = scroll so that target position is centered  */
     var scrollTargetCenterRatio = Vec2(.5f)
 
-    var scrollbar = Vec2bool()
-
     var scrollbarSizes = Vec2()
+
+    var scrollbar = Vec2bool()
 
     var borderSize = 0f
     /** Set to true on Begin(), unless Collapsed  */
@@ -583,11 +569,11 @@ class Window(var context: Context, var name: String) {
     var autoPosLastDirection = Dir.None
 
     var hiddenFrames = 0
-    /** store condition flags for next SetWindowPos() call. */
+    /** store acceptable condition flags for SetNextWindowPos() use. */
     var setWindowPosAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
-    /** store condition flags for next SetWindowSize() call.    */
+    /** store acceptable condition flags for SetNextWindowSize() use.    */
     var setWindowSizeAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
-    /** store condition flags for next SetWindowCollapsed() call.   */
+    /** store acceptable condition flags for SetNextWindowCollapsed() use.   */
     var setWindowCollapsedAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
     /** store window position when using a non-zero Pivot (position set needs to be processed when we know the window size) */
     var setWindowPosVal = Vec2(Float.MAX_VALUE)
@@ -626,7 +612,7 @@ class Window(var context: Context, var name: String) {
     var stateStorage = Storage()
 
     val columnsStorage = ArrayList<ColumnsSet>()
-    /** Scale multiplier per-window */
+    /** User scale multiplier per-window */
     var fontWindowScale = 1f
 
     var drawListInst: DrawList = DrawList(context.drawListSharedData).apply { _ownerName = name }
@@ -761,8 +747,7 @@ class Window(var context: Context, var name: String) {
 
         // Set
         val oldPos = Vec2(pos)
-        posF put pos
-        pos put glm.floor(pos)
+        this.pos put glm.floor(pos)
         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least
         // offset the cursor
         dc.cursorPos plusAssign pos - oldPos
@@ -842,22 +827,22 @@ class Window(var context: Context, var name: String) {
         return newSize
     }
 
-    fun calcSizeAutoFit(sizeContents: Vec2) =
-    // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
-            if (flags has Wf.Tooltip) Vec2(sizeContents)
-            else {
-                /*  When the window cannot fit all contents (either because of constraints, either because screen is too small):
+    fun calcSizeAutoFit(sizeContents: Vec2) = when {
+        flags has Wf.Tooltip -> Vec2(sizeContents) // Tooltip always resize
+        else -> {
+            /*  When the window cannot fit all contents (either because of constraints, either because screen is too small):
                     we are growing the size on the other axis to compensate for expected scrollbar.
                     FIXME: Might turn bigger than DisplaySize-WindowPadding.                 */
-                val sizeAutoFit = glm.clamp(sizeContents, Vec2(style.windowMinSize),
-                        Vec2(glm.max(style.windowMinSize, io.displaySize - style.displaySafeAreaPadding * 2f)))
-                val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
-                if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
-                    sizeAutoFit.y += style.scrollbarSize
-                if (sizeAutoFitAfterConstraint.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
-                    sizeAutoFit.x += style.scrollbarSize
-                sizeAutoFit
-            }
+            val sizeAutoFit = glm.clamp(sizeContents, Vec2(style.windowMinSize),
+                    Vec2(glm.max(style.windowMinSize, io.displaySize - style.displaySafeAreaPadding * 2f)))
+            val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
+            if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+                sizeAutoFit.y += style.scrollbarSize
+            if (sizeAutoFitAfterConstraint.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
+                sizeAutoFit.x += style.scrollbarSize
+            sizeAutoFit
+        }
+    }
 
     val scrollMaxX get() = max(0f, sizeContents.x - (sizeFull.x - scrollbarSizes.x))
     val scrollMaxY get() = max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y))

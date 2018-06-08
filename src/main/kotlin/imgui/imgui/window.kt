@@ -166,31 +166,25 @@ interface imgui_window {
                 window.setWindowPosAllowFlags = window.setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
             } else
                 window.setPos(g.nextWindowData.posVal, g.nextWindowData.posCond)
-            g.nextWindowData.posCond = Cond.Null
         }
         if (g.nextWindowData.sizeCond != Cond.Null) {
             windowSizeXsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.x > 0f
             windowSizeYsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.y > 0f
             window.setSize(g.nextWindowData.sizeVal, g.nextWindowData.sizeCond)
-            g.nextWindowData.sizeCond = Cond.Null
         }
         if (g.nextWindowData.contentSizeCond != Cond.Null) {
             // Adjust passed "client size" to become a "window size"
             window.sizeContentsExplicit put g.nextWindowData.contentSizeVal
             if (window.sizeContentsExplicit.y != 0f)
                 window.sizeContentsExplicit.y += window.titleBarHeight + window.menuBarHeight
-            g.nextWindowData.contentSizeCond = Cond.Null
         } else if (firstBeginOfTheFrame)
             window.sizeContentsExplicit put 0f
-        if (g.nextWindowData.collapsedCond != Cond.Null) {
+        if (g.nextWindowData.collapsedCond != Cond.Null)
             window.setCollapsed(g.nextWindowData.collapsedVal, g.nextWindowData.collapsedCond)
-            g.nextWindowData.collapsedCond = Cond.Null
-        }
-        if (g.nextWindowData.focusCond != Cond.Null) {
-            setWindowFocus()
-            g.nextWindowData.focusCond = Cond.Null
-        }
-        if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, false)
+        if (g.nextWindowData.focusCond != Cond.Null)
+            window.focus()
+        if (window.appearing)
+            window.setConditionAllowFlags(Cond.Appearing.i, false)
 
         // When reusing window again multiple times a frame, just append content (don't need to setup again)
         if (firstBeginOfTheFrame) {
@@ -221,12 +215,38 @@ interface imgui_window {
             window.lastFrameActive = currentFrame
             for (i in 1 until window.idStack.size) window.idStack.pop()  // resize 1
 
-            // Lock window rounding, border size and rounding so that altering the border sizes for children doesn't have side-effects.
-            window.windowRounding = when {
-                flags has Wf.ChildWindow -> style.childRounding
-                flags has Wf.Popup && flags hasnt Wf.Modal -> style.popupRounding
-                else -> style.windowRounding
+            // UPDATE CONTENTS SIZE, UPDATE HIDDEN STATUS
+
+            // Update contents size from last frame for auto-fitting (or use explicit size)
+            window.sizeContents = window.calcSizeContents()
+            if (window.hiddenFrames > 0)
+                window.hiddenFrames--
+
+            // Hide new windows for one frame until they calculate their size
+            if (windowJustCreated && (!windowSizeXsetByApi || !windowSizeYsetByApi))
+                window.hiddenFrames = 1
+
+            /*  Hide popup/tooltip window when re-opening while we measure size (because we recycle the windows)
+                We reset Size/SizeContents for reappearing popups/tooltips early in this function,
+                so further code won't be tempted to use the old size.             */
+            if (windowJustActivatedByUser && flags has (Wf.Popup or Wf.Tooltip)) {
+                window.hiddenFrames = 1
+                if (flags has Wf.AlwaysAutoResize) {
+                    if (!windowSizeXsetByApi) {
+                        window.sizeFull.x = 0f
+                        window.size.x = 0f
+                    }
+                    if (!windowSizeYsetByApi) {
+                        window.size.y = 0f
+                        window.sizeFull.y = 0f
+                    }
+                    window.sizeContents put 0f
+                }
             }
+
+            setCurrentWindow(window);
+
+            // Lock border size and padding for the frame (so that altering them doesn't cause inconsistencies)
             window.windowBorderSize = when {
                 flags has Wf.ChildWindow -> style.childBorderSize
                 flags has (Wf.Popup or Wf.Tooltip) && flags hasnt Wf.Modal -> style.popupBorderSize
@@ -252,31 +272,6 @@ interface imgui_window {
             window.collapseToggleWanted = false
 
             /* ---------- SIZE ---------- */
-
-            // Update contents size from last frame for auto-fitting (unless explicitly specified)
-            window.sizeContents put window.calcSizeContents()
-
-            // Hide popup/tooltip window when re-opening while we measure size (because we recycle the windows)
-            if (window.hiddenFrames > 0)
-                window.hiddenFrames--
-            if (windowJustActivatedByUser && flags has (Wf.Popup or Wf.Tooltip)) {
-                window.hiddenFrames = 1
-                if (flags has Wf.AlwaysAutoResize) {
-                    if (!windowSizeXsetByApi) {
-                        window.sizeFull.x = 0f
-                        window.size.x = 0f
-                    }
-                    if (!windowSizeYsetByApi) {
-                        window.sizeFull.y = 0f
-                        window.size.y = 0f
-                    }
-                    window.sizeContents put 0f
-                }
-            }
-
-            // Hide new windows for one frame until they calculate their size
-            if (windowJustCreated && (!windowSizeXsetByApi || !windowSizeYsetByApi))
-                window.hiddenFrames = 1
 
             // Calculate auto-fit size, handle automatic resize
             val sizeAutoFit = window.calcSizeAutoFit(window.sizeContents)
@@ -332,10 +327,8 @@ interface imgui_window {
             if (windowJustActivatedByUser) {
                 // Popup first latch mouse position, will position itself when it appears next frame
                 window.autoPosLastDirection = Dir.None
-                if (flags has Wf.Popup && !windowPosSetByApi) {
-                    window.posF put g.currentPopupStack.last().openPopupPos
-                    window.pos put window.posF
-                }
+                if (flags has Wf.Popup && !windowPosSetByApi)
+                    window.pos put g.currentPopupStack.last().openPopupPos
             }
 
             // Position child window
@@ -343,21 +336,19 @@ interface imgui_window {
                 window.beginOrderWithinParent = parentWindow!!.dc.childWindows.size
                 parentWindow.dc.childWindows += window
 
-                if (flags hasnt Wf.Popup && !windowPosSetByApi && !windowIsChildTooltip) {
-                    window.posF put parentWindow.dc.cursorPos
-                    window.pos put window.posF
-                }
+                if (flags hasnt Wf.Popup && !windowPosSetByApi && !windowIsChildTooltip)
+                    window.pos put parentWindow.dc.cursorPos
             }
 
             val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFrames == 0
             if (windowPosWithPivot)
                 window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.Null) // Position given a pivot (e.g. for centering)
             else if (flags has Wf.ChildMenu)
-                window.posF = findBestWindowPosForPopup(window)
+                window.pos = findBestWindowPosForPopup(window)
             else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize)
-                window.posF = findBestWindowPosForPopup(window)
+                window.pos = findBestWindowPosForPopup(window)
             else if (flags has Wf.Tooltip && !windowPosSetByApi && !windowIsChildTooltip)
-                window.posF = findBestWindowPosForPopup(window)
+                window.pos = findBestWindowPosForPopup(window)
 
             // Clamp position so it stays visible
             if (flags hasnt Wf.ChildWindow)
@@ -365,21 +356,30 @@ interface imgui_window {
             window when initializing or minimizing. */
                 if (!windowPosSetByApi && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 && io.displaySize greaterThan 0) {
                     val padding = glm.max(style.displayWindowPadding, style.displaySafeAreaPadding)
-                    window.posF put (glm.max(window.posF + window.size, padding) - window.size)
-                    window.posF.x = glm.min(window.posF.x, (io.displaySize.x - padding.x).f)
-                    window.posF.y = glm.min(window.posF.y, (io.displaySize.y - padding.y).f)
+                    window.pos = glm.max(window.pos + window.size, padding) - window.size
+                    window.pos.x = glm.min(window.pos.x, (io.displaySize.x - padding.x).f)
+                    window.pos.y = glm.min(window.pos.y, (io.displaySize.y - padding.y).f)
                 }
-            window.pos put glm.floor(window.posF)
+            window.pos put glm.floor(window.pos)
+
+            // Lock window rounding for the frame (so that altering them doesn't cause inconsistencies)
+            window.windowRounding = when {
+                flags has Wf.ChildWindow -> style.childRounding
+                else -> when {
+                    flags has Wf.Popup && flags hasnt Wf.Modal -> style.popupRounding
+                    else -> style.windowRounding
+                }
+            }
 
             // Prepare for focus requests
-            window.focusIdxAllRequestCurrent =
-                    if (window.focusIdxAllRequestNext == Int.MAX_VALUE || window.focusIdxAllCounter == -1)
-                        Int.MAX_VALUE
-                    else (window.focusIdxAllRequestNext + (window.focusIdxAllCounter + 1)) % (window.focusIdxAllCounter + 1)
-            window.focusIdxTabRequestCurrent =
-                    if (window.focusIdxTabRequestNext == Int.MAX_VALUE || window.focusIdxTabCounter == -1)
-                        Int.MAX_VALUE
-                    else (window.focusIdxTabRequestNext + (window.focusIdxTabCounter + 1)) % (window.focusIdxTabCounter + 1)
+            window.focusIdxAllRequestCurrent = when {
+                window.focusIdxAllRequestNext == Int.MAX_VALUE || window.focusIdxAllCounter == -1 -> Int.MAX_VALUE
+                else -> (window.focusIdxAllRequestNext + (window.focusIdxAllCounter + 1)) % (window.focusIdxAllCounter + 1)
+            }
+            window.focusIdxTabRequestCurrent = when {
+                window.focusIdxTabRequestNext == Int.MAX_VALUE || window.focusIdxTabCounter == -1 -> Int.MAX_VALUE
+                else -> (window.focusIdxTabRequestNext + (window.focusIdxTabCounter + 1)) % (window.focusIdxTabCounter + 1)
+            }
             window.focusIdxTabCounter = -1
             window.focusIdxAllCounter = -1
             window.focusIdxTabRequestNext = Int.MAX_VALUE
@@ -589,7 +589,7 @@ interface imgui_window {
                 if (flags hasnt Wf.NoCollapse) {
                     val id = window.getId("#COLLAPSE")
                     val bb = Rect(window.pos + style.framePadding + 1, window.pos + style.framePadding + g.fontSize - 1)
-                    itemAdd(bb, id) // To allow navigation
+                    itemAdd(bb, id)
                     if (buttonBehavior(bb, id).first())
                         window.collapseToggleWanted = true // Defer collapsing to next frame as we are too far in the Begin() function
                     renderNavHighlight(bb, id)
@@ -614,7 +614,7 @@ interface imgui_window {
                     flags has Wf.NoCollapse -> style.framePadding.x
                     else -> style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
                 }
-                var padRight = when(pOpen) {
+                var padRight = when (pOpen) {
                     null -> style.framePadding.x
                     else -> style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
                 }
@@ -668,7 +668,7 @@ interface imgui_window {
         if (firstBeginOfTheFrame) window.writeAccessed = false
 
         window.beginCount++
-        g.nextWindowData.sizeConstraintCond = Cond.Null
+        g.nextWindowData.clear()
 
         // Child window can be out of sight and have "negative" clip windows.
         // Mark them as collapsed so commands are skipped earlier (we can't manually collapse because them have no title bar).

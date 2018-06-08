@@ -283,8 +283,10 @@ interface imgui_menus {
             openPopup(label)
 
         if (menuIsOpen) {
+            /*  Sub-menus are ChildWindow so that mouse can be hovering across them (otherwise top-most popup menu
+                would steal focus and not allow hovering on parent menu)             */
             setNextWindowPos(popupPos, Cond.Always)
-            val flags = Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings or
+            val flags = Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoTitleBar or Wf.NoSavedSettings or
                     if (window.flags has (Wf.Popup or Wf.ChildMenu)) Wf.ChildMenu or Wf.ChildWindow else Wf.ChildMenu.i
             // menuIsOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
             menuIsOpen = beginPopupEx(id, flags)

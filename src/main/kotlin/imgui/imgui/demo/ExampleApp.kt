@@ -31,6 +31,7 @@ import imgui.ImGui.image
 import imgui.ImGui.inputFloat
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.isMousePosValid
 import imgui.ImGui.logButtons
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
@@ -911,10 +912,14 @@ object FixedOverlay {
         }
         setNextWindowBgAlpha(0.3f)  // Transparent background
         withWindow("Example: Fixed Overlay", open, flags) {
-            text("Simple overlay\n", "in the corner of the screen.\n", "(right-click to change position)")
+            text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
             separator()
-            text("Mouse Position: (%.1f,%.1f)".format(io.mousePos.x, io.mousePos.y))
+            text("Mouse Position: " + when {
+                isMousePosValid() -> "(%.1f,%.1f)".format(io.mousePos.x, io.mousePos.y)
+                else -> "<invalid>"
+            })
             popupContextWindow {
+                menuItem("Custom", "", corner == -1) { corner = -1 }
                 menuItem("Top-left", "", corner == 0) { corner = 0 }
                 menuItem("Top-right", "", corner == 1) { corner = 1 }
                 menuItem("Bottom-left", "", corner == 2) { corner = 2 }
