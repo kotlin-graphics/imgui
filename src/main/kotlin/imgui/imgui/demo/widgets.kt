@@ -60,7 +60,6 @@ import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectMin
 import imgui.ImGui.labelText
 import imgui.ImGui.listBox
-import imgui.ImGui.mousePos
 import imgui.ImGui.newLine
 import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
@@ -133,15 +132,16 @@ object widgets {
     var str0 = "Hello, world!".toCharArray()
     var i0 = 123
     var f0 = 0.001f
+    var f1 = 1e10f
     var d0 = 999999.000001
     val vec4a = floatArrayOf(0.1f, 0.2f, 0.3f, 0.44f)
     var i1 = 50
     var i2 = 42
-    var f1 = 1f
-    var f2 = 0.0067f
+    var f2 = 1f
+    var f3 = 0.0067f
     var i3 = 0
-    var f3 = 0.123f
-    var f4 = 0f
+    var f4 = 0.123f
+    var f5 = 0f
     var angle = 0f
     val col1 = floatArrayOf(1f, 0f, 0.2f)
     val col2 = floatArrayOf(0.4f, 0.7f, 0f, 0.5f)
@@ -319,8 +319,9 @@ object widgets {
 
                     inputFloat("input float", ::f0, 0.01f, 1f)
 
-                    // NB: You can use the %e notation as well.
                     inputDouble("input double", ::d0, 0.01, 1.0, "%.6f")
+
+                    inputFloat("input scientific", ::f1, 0f, 0f, "%e")
                     sameLine(); showHelpMarker("You can input value using the scientific notation,\n  e.g. \"1e+8\" becomes \"100000000\".\n")
 
                     inputFloat3("input float3", vec4a)
@@ -331,15 +332,15 @@ object widgets {
 
                     dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%.0f%%")
 
-                    dragFloat("drag float", ::f1, 0.005f)
-                    dragFloat("drag small float", ::f2, 0.0001f, 0f, 0f, "%.06f ns")
+                    dragFloat("drag float", ::f2, 0.005f)
+                    dragFloat("drag small float", ::f3, 0.0001f, 0f, 0f, "%.06f ns")
                 }
                 run {
                     sliderInt("slider int", ::i3, -1, 3)
                     sameLine(); showHelpMarker("CTRL+click to input value.")
 
-                    sliderFloat("slider float", ::f3, 0f, 1f, "ratio = %.3f")
-                    sliderFloat("slider log float", ::f4, -10f, 10f, "%.4f", 3f)
+                    sliderFloat("slider float", ::f4, 0f, 1f, "ratio = %.3f")
+                    sliderFloat("slider log float", ::f5, -10f, 10f, "%.4f", 3f)
 
                     sliderAngle("slider angle", ::angle)
                 }

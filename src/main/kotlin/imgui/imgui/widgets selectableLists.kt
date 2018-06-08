@@ -189,8 +189,8 @@ interface imgui_widgetsSelectableLists {
 
     /** Helper to calculate the size of a listbox and display a label on the right.
      *  Tip: To have a list filling the entire window width, PushItemWidth(-1) and pass an empty label "##empty"
-     *  use if you want to reimplement ListBox() will custom data or interactions. make sure to call ListBoxFooter()
-     *  afterwards. */
+     *  use if you want to reimplement ListBox() will custom data or interactions.
+     *  If the function return true, you can output elements then call ListBoxFooter() afterwards. */
     fun listBoxHeader(label: String, sizeArg: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
@@ -231,7 +231,7 @@ interface imgui_widgetsSelectableLists {
         return listBoxHeader(label, size)
     }
 
-    /** terminate the scrolling region  */
+    /** Terminate the scrolling region. Only call ListBoxFooter() if ListBoxHeader() returned true!  */
     fun listBoxFooter() {
         val parentWindow = currentWindow.parentWindow!!
         val bb = parentWindow.dc.lastItemRect // assign is safe, itemSize() won't modify bb

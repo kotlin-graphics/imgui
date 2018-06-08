@@ -236,7 +236,7 @@ interface imgui_demoDebugInformations {
                     for (i in 0 until 10) text("Scrolling Text %d", i)
                 }
                 sliderFloat("Value", Companion::float, 0f, 1f)
-                inputFloat("Input", Companion::float, 0.1f, 0f, 2)
+                inputFloat("Input", Companion::float, 0.1f)
                 combo("Combo", Companion::combo, "Yes\u0000No\u0000Maybe\u0000\u0000")
                 checkbox("Check", Companion::check)
             }

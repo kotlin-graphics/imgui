@@ -187,7 +187,7 @@ object ExampleApp {
             menu("Menu") { showExampleMenuFile() }
 //            stop = true
 //            println("nav window name " + g.navWindow?.rootWindow?.name)
-            println("Examples")
+//            println("Examples")
             menu("Examples") {
                 menuItem("Main menu bar", "", ExampleApp.show::mainMenuBar)
                 menuItem("Console", "", ExampleApp.show::console)
@@ -1244,7 +1244,7 @@ object StyleEditor {
                     val scale = floatArrayOf(font.scale)
                     // Scale only this font
                     dragFloat("Font scale", scale, 0.005f, 0.3f, 2f, "%.1f")
-                    inputFloat("Font offset", font.displayOffset::y, 1f, 1f, 0)
+                    inputFloat("Font offset", font.displayOffset::y, 1f, 1f)
                     font.scale = scale[0]
                     sameLine()
                     showHelpMarker("""

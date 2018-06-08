@@ -100,13 +100,13 @@ object columns_ {
 
                     text("ImGui")
                     button("Apple")
-                    inputFloat("red", ::foo, 0.05f, 0f, 3)
+                    inputFloat("red", ::foo, 0.05f, 0f, "%.3f")
                     text("An extra line here.")
                     nextColumn()
 
                     text("Sailor")
                     button("Corniflower")
-                    inputFloat("blue", ::bar, 0.05f, 0f, 3)
+                    inputFloat("blue", ::bar, 0.05f, 0f, "%.3f")
                     nextColumn()
 
                     collapsingHeader("Category A") { text("Blah blah blah") }; nextColumn()

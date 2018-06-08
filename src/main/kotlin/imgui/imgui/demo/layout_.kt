@@ -5,7 +5,6 @@ import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
@@ -63,6 +62,7 @@ import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderInt
 import imgui.ImGui.smallButton
+import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textWrapped
@@ -154,8 +154,8 @@ object layout_ {
 
                 // Child 2: rounded border
                 withStyleVar(StyleVar.ChildRounding, 5f) {
-                    withChild("Child2", Vec2(0, 300), true, flags or if(disableMenu) Wf.Null else Wf.MenuBar) {
-                        if(!disableMenu && beginMenuBar()) {
+                    withChild("Child2", Vec2(0, 300), true, flags or if (disableMenu) Wf.Null else Wf.MenuBar) {
+                        if (!disableMenu && beginMenuBar()) {
                             if (beginMenu("Menu")) {
                                 showExampleMenuFile()
                                 endMenu()
@@ -294,10 +294,11 @@ object layout_ {
                 button("LEVERAGE\nBUZZWORD", size)
                 sameLine()
 
-                listBoxHeader("List", size)
-                selectable("Selected", true)
-                selectable("Not Selected", false)
-                listBoxFooter()
+                if (listBoxHeader("List", size)) {
+                    selectable("Selected", true)
+                    selectable("Not Selected", false)
+                    listBoxFooter()
+                }
             }
 
             treeNode("Text Baseline Alignment") {
