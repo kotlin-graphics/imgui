@@ -82,6 +82,7 @@ object inputNavigationAndFocus {
             treeNode("Keyboard, Mouse & Navigation State") {
                 if (isMousePosValid()) text("Mouse pos: (%g, %g)", io.mousePos.x, io.mousePos.y)
                 else text("Mouse pos: <INVALID>")
+                text("Mouse delta: (%g, %g)", io.mouseDelta.x, io.mouseDelta.y)
                 text("Mouse down:")
                 for (i in 0 until io.mouseDown.size)
                     if (io.mouseDownDuration[i] >= 0f) {

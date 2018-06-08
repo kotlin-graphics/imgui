@@ -8,7 +8,7 @@ import imgui.imgui.*
  *      Context
  *  -----------------------------------------------------------------------------
  *
- *  Current context pointer. Implicitely used by all ImGui functions. Always assumed to be != null.
+ *  Current context pointer. Implicitly used by all ImGui functions. Always assumed to be != null.
  *  ::createContext() will automatically set this pointer if it is null. Change to a different context by calling
  *  ::setCurrentContext().
  *  If you use DLL hotreloading you might need to call ::setCurrentContext() after reloading code from this file.

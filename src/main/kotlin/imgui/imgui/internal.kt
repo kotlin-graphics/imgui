@@ -233,7 +233,7 @@ interface imgui_internal {
         if(stop)
             println(g.navWindow?.rootWindow?.flags)
 //        println("" + g.navDisableMouseHover +", " + !window.isContentHoverable(Hf.Default.i))
-        println(window.name)
+        //println(window.name)
         return when {
             g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> {
                 if(stop) println("0")
@@ -383,8 +383,7 @@ interface imgui_internal {
         val currentStackSize = g.currentPopupStack.size
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
         val popupRef = PopupRef(popupId = id, window = null, parentWindow = parentWindow, openFrameCount = g.frameCount,
-                openParentId = parentWindow.idStack.last(), openMousePos = Vec2(io.mousePos),
-                openPopupPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else Vec2(io.mousePos))
+                openParentId = parentWindow.idStack.last(), openMousePos = Vec2(io.mousePos), openPopupPos = navCalcPreferredRefPos())
 //        println("" + g.openPopupStack.size +", "+currentStackSize)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack += popupRef
@@ -2314,7 +2313,7 @@ interface imgui_internal {
             /*  Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor.
                 Bit of an extra nicety.)             */
             if (isEditable)
-                g.osImePosRequest = Vec2(cursorScreenPos.x - 1, cursorScreenPos.y - g.fontSize)
+                g.platformImePos = Vec2(cursorScreenPos.x - 1, cursorScreenPos.y - g.fontSize)
         } else {
             // Render text only
             val bufEnd = IntArray(1)
@@ -2682,7 +2681,7 @@ interface imgui_internal {
 
         if (flags has Tnf.Leaf) return true
 
-        // We only write to the tree storage if the user clicks (or explicitely use SetNextTreeNode*** functions)
+        // We only write to the tree storage if the user clicks (or explicitly use SetNextTreeNode*** functions)
         val window = g.currentWindow!!
         val storage = window.dc.stateStorage
 

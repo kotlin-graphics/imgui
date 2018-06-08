@@ -177,7 +177,7 @@ interface imgui_parametersStacks {
         }
     }
 
-    /** retrieve style color as stored in ImGuiStyle structure. use to feed back into PushStyleColor(), otherwhise use
+    /** retrieve style color as stored in ImGuiStyle structure. use to feed back into PushStyleColor(), otherwise use
      *  GetColorU32() to get style color + style alpha. */
     fun getStyleColorVec4(idx: Col): Vec4 = Vec4(style.colors[idx])
 

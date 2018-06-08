@@ -106,7 +106,7 @@ class FontGlyph {
  *  4. Call SetTexID(my_tex_id); and pass the pointer/identifier to your texture. This value will be passed back to you
  *          during rendering to identify the texture.
  *  IMPORTANT: If you pass a 'glyph_ranges' array to AddFont*** functions, you need to make sure that your array persist
- *  up until the ImFont is build (when calling GetTextData*** or Build()). We only copy the pointer, not the data.
+ *  up until the ImFont is build (when calling GetTexData*** or Build()). We only copy the pointer, not the data.
  *  We only copy the pointer, not the data. */
 class FontAtlas {
 

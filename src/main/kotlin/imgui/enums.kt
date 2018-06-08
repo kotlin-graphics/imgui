@@ -454,11 +454,11 @@ typealias BackendFlags = Int
 
 /** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end. */
 enum class BackendFlag(val i: Int) {
-    /** Back-end has a connected gamepad. */
+    /** Back-end supports and has a connected gamepad. */
     HasGamepad            (1 shl 0),
-    /** Back-end can honor GetMouseCursor() values and change the OS cursor shape. */
+    /** Back-end supports reading GetMouseCursor() to change the OS cursor shape. */
     HasMouseCursors       (1 shl 1),
-    /** Back-end can honor io.wantSetMousePos and reposition the mouse (only used if ConfigFlags.NavEnableSetMousePos is set). */
+    /** Back-end supports io.wantSetMousePos requests to reposition the OS mouse position (only used if ConfigFlags.NavEnableSetMousePos is set). */
     HasSetMousePos        (1 shl 2)
 }
 

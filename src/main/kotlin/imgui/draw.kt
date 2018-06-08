@@ -1056,6 +1056,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     val currentClipRect get() = _clipRectStack.lastOrNull() ?: _data.clipRectFullscreen
     val currentTextureId get() = _textureIdStack.lastOrNull()
 
+    /** AddDrawListToDrawData */
     infix fun addTo(outList: ArrayList<DrawList>) {
 
         if (cmdBuffer.empty()) return

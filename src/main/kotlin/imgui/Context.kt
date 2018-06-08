@@ -253,9 +253,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** If no custom clipboard handler is defined   */
     var privateClipboard = ""
     /** Cursor position request to the OS Input Method Editor   */
-    var osImePosRequest = Vec2(-1f)
+    var platformImePos = Vec2(Float.MAX_VALUE)
     /** Last cursor position passed to the OS Input Method Editor   */
-    var osImePosSet = Vec2(-1f)
+    var osImePosSet = Vec2(Float.MAX_VALUE)
 
     var imeInProgress = false
     var imeLastKey = 0
@@ -289,20 +289,20 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Misc
     //------------------------------------------------------------------
 
-    /** calculate estimate of framerate for user    */
+    /** Calculate estimate of framerate for user over the last 2 seconds.    */
     val framerateSecPerFrame = FloatArray(120)
 
     var framerateSecPerFrameIdx = 0
 
     var framerateSecPerFrameAccum = 0f
-    /** explicit capture via CaptureInputs() sets those flags   */
+    /** Explicit capture via CaptureKeyboardFromApp()/CaptureMouseFromApp() sets those flags   */
     var wantCaptureMouseNextFrame = -1
 
     var wantCaptureKeyboardNextFrame = -1
 
     var wantTextInputNextFrame = -1
 
-//    char                    TempBuffer[1024*3+1];               // temporary text buffer
+//    char                    TempBuffer[1024*3+1];               // Temporary text buffer
 
     // Context creation and access
     init {
@@ -473,9 +473,9 @@ class IO(sharedFontAtlas: FontAtlas?) {
     using right button). Others buttons allows us to track if the mouse is being used by your application +
     available to user as a convenience via IsMouse** API.   */
     val mouseDown = BooleanArray(5)
-    /** Mouse wheel: 1 unit scrolls about 5 lines text. */
+    /** Mouse wheel Vertical: 1 unit scrolls about 5 lines text. */
     var mouseWheel = 0f
-    /** Mouse wheel (Horizontal). Most users don't have a mouse with an horizontal wheel, may not be filled by all back-ends.   */
+    /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all back-ends.   */
     var mouseWheelH = 0f
     /** Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor). */
     var mouseDrawCursor = false
@@ -673,7 +673,7 @@ class Style {
     var buttonTextAlign = Vec2(0.5f)
     /** Window positions are clamped to be visible within the display area by at least this amount. Only covers regular
      *  windows.    */
-    var displayWindowPadding = Vec2(22)
+    var displayWindowPadding = Vec2(20)
     /** If you cannot see the edges of your screen (e.g. on a TV) increase the safe area padding. Apply to popups/tooltips
      *  as well regular windows.  NB: Prefer configuring your TV sets correctly!   */
     var displaySafeAreaPadding = Vec2(3)

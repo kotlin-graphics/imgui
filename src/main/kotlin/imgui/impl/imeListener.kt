@@ -4,10 +4,8 @@ import glm_.BYTES
 import glm_.bool
 import glm_.i
 import glm_.vec2.Vec2
-import glm_.vec2.Vec2i
 import imgui.DEBUG
 import imgui.g
-import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.system.*
 import org.lwjgl.system.MemoryUtil.*
@@ -143,7 +141,7 @@ object imeListner : WindowProc() {
                         IMR_COMPOSITIONWINDOW -> "IME needs information about the composition window."
                         IMR_CANDIDATEWINDOW -> {
                             val cf = CANDIDATEFORM(l).apply {
-                                ptCurrentPos = g.osImePosRequest
+                                ptCurrentPos = g.platformImePos
                             }
                             res = 1
                             "IME needs information about the candidate window."

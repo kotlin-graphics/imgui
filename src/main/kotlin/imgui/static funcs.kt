@@ -14,6 +14,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
+import imgui.ImGui.overlayDrawList
 import imgui.ImGui.style
 import imgui.imgui.*
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
@@ -84,7 +85,6 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
 
     // Default/arbitrary window position. Use SetNextWindowPos() with the appropriate condition flag to change the initial position of a window.
     pos put 60f
-    posF put 60f
 
     // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
     if (flags hasnt Wf.NoSavedSettings) {
@@ -92,10 +92,10 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
 
         findWindowSettings(id)?.let { s ->
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
-            posF put s.pos
-            pos put glm.floor(posF)
+            pos = glm.floor(s.pos)
             collapsed = s.collapsed
-            if (s.size.lengthSqr > 0.00001f) size put s.size
+            if (s.size.lengthSqr > 0.00001f)
+                size put glm.floor(s.size)
         }
     }
     sizeFullAtLastBegin put size
@@ -241,7 +241,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
         If a window wasn't opened in this session we preserve its settings     */
     File(Paths.get(iniFilename).toUri()).printWriter().use {
         for (setting in g.settingsWindows) {
-            if (setting.pos.x == Int.MAX_VALUE) continue
+            if (setting.pos.x == Float.MAX_VALUE) continue
             // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
             val name = setting.name.substringBefore("###")
             it.println("[Window][$name]")   // TODO [%s][%s]\n", handler->TypeName, name
@@ -278,7 +278,7 @@ fun closePopupToLevel(remaining: Int) {
 
 enum class PopupPositionPolicy { Default, ComboBox }
 
-fun findScreenRectForWindow(window: Window): Rect {
+fun findAllowedExtentRectForWindow(window: Window): Rect {
     val padding = Vec2(style.displaySafeAreaPadding)
     return getViewportRect().apply {
         expand(Vec2(if (width > padding.x * 2) -padding.x else 0f, if (height > padding.y * 2) -padding.y else 0f))
@@ -336,37 +336,37 @@ fun findBestWindowPosForPopupEx(refPos: Vec2, size: Vec2, lastDir: KMutablePrope
 
 fun findBestWindowPosForPopup(window: Window): Vec2 {
 
-    val rScreen = findScreenRectForWindow(window)
+    val rOuter = findAllowedExtentRectForWindow(window)
     if (window.flags has Wf.ChildMenu) {
         /*  Child menus typically request _any_ position within the parent menu item,
             and then our FindBestWindowPosForPopup() function will move the new menu outside the parent bounds.
             This is how we end up with child menus appearing (most-commonly) on the right of the parent menu. */
         assert(g.currentWindow === window)
-        val parentMenu = g.currentWindowStack[g.currentWindowStack.size - 2]
+        val parentWindow = g.currentWindowStack[g.currentWindowStack.size - 2]
         // We want some overlap to convey the relative depth of each menu (currently the amount of overlap is hard-coded to style.ItemSpacing.x).
         val horizontalOverlap = style.itemSpacing.x
-        val rAvoid = parentMenu.run {
+        val rAvoid = parentWindow.run {
             when {
                 dc.menuBarAppending -> Rect(-Float.MAX_VALUE, pos.y + titleBarHeight, Float.MAX_VALUE, pos.y + titleBarHeight + menuBarHeight)
                 else -> Rect(pos.x + horizontalOverlap, -Float.MAX_VALUE, pos.x + size.x - horizontalOverlap - scrollbarSizes.x, Float.MAX_VALUE)
             }
         }
-        return findBestWindowPosForPopupEx(window.posF, window.size, window::autoPosLastDirection, rScreen, rAvoid)
+        return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter, rAvoid)
     }
     if (window.flags has Wf.Popup) {
-        val rAvoid = Rect(window.posF.x - 1, window.posF.y - 1, window.posF.x + 1, window.posF.y + 1)
-        return findBestWindowPosForPopupEx(window.posF, window.size, window::autoPosLastDirection, rScreen, rAvoid)
+        val rAvoid = Rect(window.pos.x - 1, window.pos.y - 1, window.pos.x + 1, window.pos.y + 1)
+        return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter, rAvoid)
     }
     if (window.flags has Wf.Tooltip) {
         // Position tooltip (always follows mouse)
         val sc = style.mouseCursorScale
-        val refPos = if (!g.navDisableHighlight && g.navDisableMouseHover) navCalcPreferredMousePos() else io.mousePos
+        val refPos = navCalcPreferredRefPos()
         val rAvoid = when {
             !g.navDisableHighlight && g.navDisableMouseHover && !(io.configFlags has Cf.NavEnableSetMousePos) ->
                 Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
             else -> Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
         }
-        val pos = findBestWindowPosForPopupEx(refPos, window.size, window::autoPosLastDirection, rScreen, rAvoid)
+        val pos = findBestWindowPosForPopupEx(refPos, window.size, window::autoPosLastDirection, rOuter, rAvoid)
         if (window.autoPosLastDirection == Dir.None)
         // If there's not enough room, for tooltip we prefer avoiding the cursor at all cost even if it means that part of the tooltip won't be visible.
             pos(refPos + 2)
@@ -803,10 +803,11 @@ fun navUpdate() {
 
     // Apply application mouse position movement, after we had a chance to process move request result.
     if (g.navMousePosDirty && g.navIdIsAlive) {
-        // Set mouse position given our knowledge of the nav widget position from last frame
+        // Set mouse position given our knowledge of the navigated item position from last frame
         if (io.configFlags has Cf.NavEnableSetMousePos && io.backendFlags has BackendFlag.HasSetMousePos) {
-            io.mousePosPrev = navCalcPreferredMousePos()
-            io.mousePos = io.mousePosPrev
+            assert(!g.navDisableHighlight && g.navDisableMouseHover)
+            io.mousePosPrev = navCalcPreferredRefPos()
+            io.mousePos put io.mousePosPrev
             io.wantSetMousePos = true
         }
         g.navMousePosDirty = false
@@ -990,9 +991,9 @@ fun navUpdate() {
     if (IMGUI_DEBUG_NAV_RECTS)
         g.navWindow?.let {
             for (layer in 0..1)
-                g.overlayDrawList.addRect(it.navRectRel[layer].min + it.pos, it.navRectRel[layer].max + it.pos, COL32(255, 200, 0, 255))
+                overlayDrawList.addRect(it.navRectRel[layer].min + it.pos, it.navRectRel[layer].max + it.pos, COL32(255, 200, 0, 255))
             val col = if (it.hiddenFrames == 0) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
-            val p = navCalcPreferredMousePos()
+            val p = navCalcPreferredRefPos()
             g.overlayDrawList.addCircleFilled(p, 3f, col)
             g.overlayDrawList.addText(null, 13f, p + Vec2(8, -4), col, "${g.navLayer}".toCharArray())
         }
@@ -1070,8 +1071,9 @@ fun navUpdateWindowing() {
                 moveDelta = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down)
             if (moveDelta.x != 0f || moveDelta.y != 0f) {
                 val NAV_MOVE_SPEED = 800f
+                // FIXME: Doesn't code variable framerate very well
                 val moveSpeed = glm.floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
-                it.posF plusAssign moveDelta * moveSpeed
+                it.pos plusAssign moveDelta * moveSpeed
                 g.navDisableMouseHover = true
                 markIniSettingsDirty(it)
             }
@@ -1169,10 +1171,13 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
 private var i0 = 0
 
 
-fun navCalcPreferredMousePos(): Vec2 {
-    val window = g.navWindow ?: return io.mousePos
-    val rectRel = Rect(window.navRectRel[g.navLayer])
-    val pos = window.pos + Vec2(rectRel.min.x + min(g.style.framePadding.x * 4, rectRel.width),
+fun navCalcPreferredRefPos(): Vec2 {
+    if (g.navDisableHighlight || !g.navDisableMouseHover || g.navWindow == null)
+        return glm.floor(io.mousePos)
+
+    // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item
+    val rectRel = g.navWindow!!.navRectRel[g.navLayer]
+    val pos = g.navWindow!!.pos + Vec2(rectRel.min.x + min(g.style.framePadding.x * 4, rectRel.width),
             rectRel.max.y - min(g.style.framePadding.y, rectRel.height))
     val visibleRect = getViewportRect()
     return glm.floor(glm.clamp(Vec2(pos), visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
