@@ -129,8 +129,6 @@ interface imgui_styles {
         // @formatter:off
         colors[Col.Text]                   .put(0.00f, 0.00f, 0.00f, 1.00f)
         colors[Col.TextDisabled]           .put(0.60f, 0.60f, 0.60f, 1.00f)
-        //colors[Col.TextHovered]          .put(1.00f, 1.00f, 1.00f, 1.00f);
-        //colors[Col.TextActive]           .put(1.00f, 1.00f, 0.00f, 1.00f);
         colors[Col.WindowBg]               .put(0.94f, 0.94f, 0.94f, 1.00f)
         colors[Col.ChildBg]                .put(0.00f, 0.00f, 0.00f, 0.00f)
         colors[Col.PopupBg]                .put(1.00f, 1.00f, 1.00f, 0.98f)

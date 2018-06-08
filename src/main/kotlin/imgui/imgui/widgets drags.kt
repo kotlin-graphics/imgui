@@ -58,16 +58,16 @@ interface imgui_widgetsDrag {
      *  expected to be accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x
      *  Speed are per-pixel of mouse movement (vSpeed = 0.2f: mouse needs to move by 5 pixels to increase value by 1).
      *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
-    fun dragFloat(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
-                  power: Float = 1f) = dragFloat(label, v, 0, vSpeed, vMin, vMax, displayFormat, power)
+    fun dragFloat(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
+                  power: Float = 1f) = dragFloat(label, v, 0, vSpeed, vMin, vMax, format, power)
 
     /** If vMin >= vMax we have no bound  */
     fun dragFloat(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                  displayFormat: String = "%.3f", power: Float = 1f) =
-            withFloat(v, ptr) { dragFloat(label, it, vSpeed, vMin, vMax, displayFormat, power) }
+                  format: String = "%.3f", power: Float = 1f) =
+            withFloat(v, ptr) { dragFloat(label, it, vSpeed, vMin, vMax, format, power) }
 
     fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                  displayFormat: String = "%.3f", power: Float = 1f): Boolean {
+                  format: String = "%.3f", power: Float = 1f): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -88,7 +88,7 @@ interface imgui_widgetsDrag {
 
         val hovered = itemHoverable(frameBb, id)
 
-        val decimalPrecision = parseFormatPrecision(displayFormat, 3)
+        val decimalPrecision = parseFormatPrecision(format, 3)
 
         // Tabbing or CTRL-clicking on Drag turns it into an input box
         var startTextInput = false
@@ -111,7 +111,7 @@ interface imgui_widgetsDrag {
         val valueChanged = dragBehavior(frameBb, id, v, vSpeed, vMin, vMax, decimalPrecision, power)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = displayFormat.format(style.locale, v())
+        val value = format.format(style.locale, v())
         renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
@@ -120,41 +120,40 @@ interface imgui_widgetsDrag {
         return valueChanged
     }
 
-    fun dragFloat2(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
-                   power: Float = 1f) = dragFloatN(label, v, 2, vSpeed, vMin, vMax, displayFormat, power)
+    fun dragFloat2(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", power: Float = 1f) =
+            dragFloatN(label, v, 2, vSpeed, vMin, vMax, format, power)
 
-    fun dragVec2(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
-                 power: Float = 1f): Boolean {
+    fun dragVec2(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", power: Float = 1f): Boolean {
         val floats = v to FloatArray(2)
-        val res = dragFloatN(label, floats, 2, vSpeed, vMin, vMax, displayFormat, power)
+        val res = dragFloatN(label, floats, 2, vSpeed, vMin, vMax, format, power)
         v put floats
         return res
     }
 
-    fun dragFloat3(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
-                   power: Float = 1f) = dragFloatN(label, v, 3, vSpeed, vMin, vMax, displayFormat, power)
+    fun dragFloat3(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
+                   power: Float = 1f) = dragFloatN(label, v, 3, vSpeed, vMin, vMax, format, power)
 
-    fun dragVec3(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
+    fun dragVec3(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
                  power: Float = 1f): Boolean {
         val floats = v to FloatArray(3)
-        val res = dragFloatN(label, floats, 3, vSpeed, vMin, vMax, displayFormat, power)
+        val res = dragFloatN(label, floats, 3, vSpeed, vMin, vMax, format, power)
         v put floats
         return res
     }
 
-    fun dragFloat4(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
-                   power: Float = 1f) = dragFloatN(label, v, 4, vSpeed, vMin, vMax, displayFormat, power)
+    fun dragFloat4(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
+                   power: Float = 1f) = dragFloatN(label, v, 4, vSpeed, vMin, vMax, format, power)
 
-    fun dragVec4(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f",
+    fun dragVec4(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
                  power: Float = 1f): Boolean {
         val floats = v to FloatArray(4)
-        val res = dragFloatN(label, floats, 4, vSpeed, vMin, vMax, displayFormat, power)
+        val res = dragFloatN(label, floats, 4, vSpeed, vMin, vMax, format, power)
         v put floats
         return res
     }
 
     fun dragFloatRange2(label: String, vCurrentMin: KMutableProperty0<Float>, vCurrentMax: KMutableProperty0<Float>, vSpeed: Float = 1f,
-                        vMin: Float = 0f, vMax: Float = 0f, displayFormat: String = "%.3f", displayFormatMax: String = displayFormat,
+                        vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", formatMax: String = format,
                         power: Float = 1f): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
@@ -165,12 +164,12 @@ interface imgui_widgetsDrag {
 
         var min = if (vMin >= vMax) -Float.MAX_VALUE else vMin
         var max = if (vMin >= vMax) vCurrentMax() else vMax min vCurrentMax()
-        var valueChanged = dragFloat("##min", vCurrentMin, vSpeed, min, max, displayFormat, power)
+        var valueChanged = dragFloat("##min", vCurrentMin, vSpeed, min, max, format, power)
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
         min = if (vMin >= vMax) vCurrentMin() else vMin max vCurrentMin()
         max = if (vMin >= vMax) Float.MAX_VALUE else vMax
-        valueChanged = dragFloat("##max", vCurrentMax, vSpeed, min, max, displayFormatMax, power) || valueChanged
+        valueChanged = dragFloat("##max", vCurrentMax, vSpeed, min, max, formatMax, power) || valueChanged
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
@@ -183,44 +182,44 @@ interface imgui_widgetsDrag {
 
     /** If v_min >= v_max we have no bound
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
-    fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f") =
-            withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, displayFormat) }
+    fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f") =
+            withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, format) }
 
     fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                displayFormat: String = "%.0f") = withFloat(v) { dragFloat(label, it, vSpeed, vMin.f, vMax.f, displayFormat) }
+                format: String = "%.0f") = withFloat(v) { dragFloat(label, it, vSpeed, vMin.f, vMax.f, format) }
 
-    fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f") =
-            dragIntN(label, v, 2, vSpeed, vMin, vMax, displayFormat)
+    fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f") =
+            dragIntN(label, v, 2, vSpeed, vMin, vMax, format)
 
-    fun dragVec2i(label: String, v: Vec2i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f"): Boolean {
+    fun dragVec2i(label: String, v: Vec2i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f"): Boolean {
         val ints = v to IntArray(2)
-        val res = dragIntN(label, ints, 2, vSpeed, vMin, vMax, displayFormat)
+        val res = dragIntN(label, ints, 2, vSpeed, vMin, vMax, format)
         v put ints
         return res
     }
 
-    fun dragInt3(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f") =
-            dragIntN(label, v, 3, vSpeed, vMin, vMax, displayFormat)
+    fun dragInt3(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f") =
+            dragIntN(label, v, 3, vSpeed, vMin, vMax, format)
 
-    fun dragVec3i(label: String, v: Vec3i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f"): Boolean {
+    fun dragVec3i(label: String, v: Vec3i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f"): Boolean {
         val ints = v to IntArray(3)
-        val res = dragIntN(label, ints, 3, vSpeed, vMin, vMax, displayFormat)
+        val res = dragIntN(label, ints, 3, vSpeed, vMin, vMax, format)
         v put ints
         return res
     }
 
-    fun dragInt4(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f") =
-            dragIntN(label, v, 4, vSpeed, vMin, vMax, displayFormat)
+    fun dragInt4(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f") =
+            dragIntN(label, v, 4, vSpeed, vMin, vMax, format)
 
-    fun dragVec4i(label: String, v: Vec4i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f"): Boolean {
+    fun dragVec4i(label: String, v: Vec4i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f"): Boolean {
         val ints = v to IntArray(4)
-        val res = dragIntN(label, ints, 4, vSpeed, vMin, vMax, displayFormat)
+        val res = dragIntN(label, ints, 4, vSpeed, vMin, vMax, format)
         v put ints
         return res
     }
 
     fun dragIntRange2(label: String, vCurrentMin: KMutableProperty0<Int>, vCurrentMax: KMutableProperty0<Int>, vSpeed: Float = 1f,
-                      vMin: Int = 0, vMax: Int = 0, displayFormat: String = "%.0f", displayFormatMax: String = displayFormat): Boolean {
+                      vMin: Int = 0, vMax: Int = 0, format: String = "%.0f", formatMax: String = format): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -230,12 +229,12 @@ interface imgui_widgetsDrag {
 
         var min = if (vMin >= vMax) Int.MIN_VALUE else vMin
         var max = if (vMin >= vMax) vCurrentMax() else vMax min vCurrentMax()
-        var valueChanged = dragInt("##min", vCurrentMin, vSpeed, min, max, displayFormat)
+        var valueChanged = dragInt("##min", vCurrentMin, vSpeed, min, max, format)
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
         min = if (vMin >= vMax) vCurrentMin() else vMin max vCurrentMin()
         max = if (vMin >= vMax) Int.MAX_VALUE else vMax
-        valueChanged = dragInt("##max", vCurrentMax, vSpeed, min, max, displayFormatMax) || valueChanged
+        valueChanged = dragInt("##max", vCurrentMax, vSpeed, min, max, formatMax) || valueChanged
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
