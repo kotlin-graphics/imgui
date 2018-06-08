@@ -2351,7 +2351,7 @@ interface imgui_internal {
         return if (flags has Itf.EnterReturnsTrue) enterPressed else valueChanged
     }
 
-    fun inputFloatN(label: String, v: FloatArray, components: Int, decimalPrecision: Int, extraFlags: Int): Boolean {
+    fun inputFloatN(label: String, v: FloatArray, components: Int, format: String, extraFlags: Int): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
         var valueChanged = false
@@ -2360,7 +2360,7 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withFloat(v, i) { valueChanged = inputFloat("##v", it, 0f, 0f, decimalPrecision, extraFlags) || valueChanged }
+            withFloat(v, i) { valueChanged = inputFloat("##v", it, 0f, 0f, format, extraFlags) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()

@@ -33,23 +33,20 @@ interface imgui_widgetsInputKeyboard {
             /*,ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/) =
             inputTextEx(label, buf, size, flags or Itf.Multiline/*, callback, user_data*/)
 
-    fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1,
-                   extraFlags: InputTextFlags = 0) = inputFloat(label, v, 0, step, stepFast, decimalPrecision, extraFlags)
+    fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f",
+                   extraFlags: InputTextFlags = 0) = inputFloat(label, v, 0, step, stepFast, format, extraFlags)
 
-    fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f, decimalPrecision: Int = -1,
+    fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f",
                    extraFlags: InputTextFlags = 0) = withFloat { f ->
         f.set(v[ptr])
-        val res = inputFloat(label, f, step, stepFast, decimalPrecision, extraFlags)
+        val res = inputFloat(label, f, step, stepFast, format, extraFlags)
         v[ptr] = f()
         res
     }
 
     fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f,
-                   decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0): Boolean {
+                   format: String = "%.3f", extraFlags: InputTextFlags = 0): Boolean {
         val flags = extraFlags or Itf.CharsScientific
-        /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float,
-            while hiding non-significant digits? %f doesn't have a minimum of 1         */
-        val format = "%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f"
         return inputScalarEx(label, DataType.Float, v as KMutableProperty0<Number>, step.takeIf { it > 0f },
                 stepFast.takeIf { it > 0f }, format, flags)
     }
@@ -63,32 +60,32 @@ interface imgui_widgetsInputKeyboard {
                 stepFast.takeIf { it > 0.0 }, format, flags)
     }
 
-    fun inputFloat2(label: String, v: FloatArray, decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0) =
-            inputFloatN(label, v, 2, decimalPrecision, extraFlags)
+    fun inputFloat2(label: String, v: FloatArray, format: String = "%.3f", extraFlags: InputTextFlags = 0) =
+            inputFloatN(label, v, 2, format, extraFlags)
 
-    fun inputVec2(label: String, v: Vec2, decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec2(label: String, v: Vec2, format: String = "%.3f", extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(2)
-        val res = inputFloatN(label, floats, 2, decimalPrecision, extraFlags)
+        val res = inputFloatN(label, floats, 2, format, extraFlags)
         v put floats
         return res
     }
 
-    fun inputFloat3(label: String, v: FloatArray, decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0) =
-            inputFloatN(label, v, 3, decimalPrecision, extraFlags)
+    fun inputFloat3(label: String, v: FloatArray, format: String = "%.3f", extraFlags: InputTextFlags = 0) =
+            inputFloatN(label, v, 3, format, extraFlags)
 
-    fun inputVec3(label: String, v: Vec3, decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec3(label: String, v: Vec3, format: String = "%.3f", extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(3)
-        val res = inputFloatN(label, floats, 3, decimalPrecision, extraFlags)
+        val res = inputFloatN(label, floats, 3, format, extraFlags)
         v put floats
         return res
     }
 
-    fun inputFloat4(label: String, v: FloatArray, decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0) =
-            inputFloatN(label, v, 4, decimalPrecision, extraFlags)
+    fun inputFloat4(label: String, v: FloatArray, format: String = "%.3f", extraFlags: InputTextFlags = 0) =
+            inputFloatN(label, v, 4, format, extraFlags)
 
-    fun inputVec4(label: String, v: Vec4, decimalPrecision: Int = -1, extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec4(label: String, v: Vec4, format: String = "%.3f", extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(4)
-        val res = inputFloatN(label, floats, 4, decimalPrecision, extraFlags)
+        val res = inputFloatN(label, floats, 4, format, extraFlags)
         v put floats
         return res
     }
