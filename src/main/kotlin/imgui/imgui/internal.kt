@@ -71,7 +71,10 @@ import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 import java.util.*
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 import glm_.pow as _
 import imgui.ColorEditFlag as Cef
@@ -230,33 +233,33 @@ interface imgui_internal {
     /** Internal facing ItemHoverable() used when submitting widgets. Differs slightly from IsItemHovered().    */
     fun itemHoverable(bb: Rect, id: ID): Boolean {
         val window = g.currentWindow!!
-        if(stop)
+        if (stop)
             println(g.navWindow?.rootWindow?.flags)
 //        println("" + g.navDisableMouseHover +", " + !window.isContentHoverable(Hf.Default.i))
         //println(window.name)
         return when {
             g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> {
-                if(stop) println("0")
+                if (stop) println("0")
                 false
             }
             g.hoveredWindow !== window -> {
-                if(stop) println("1")
+                if (stop) println("1")
                 false
             }
             g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> {
-                if(stop) println("2")
+                if (stop) println("2")
                 false
             }
             !isMouseHoveringRect(bb) -> {
-                if(stop) println("3")
+                if (stop) println("3")
                 false
             }
             g.navDisableMouseHover || !window.isContentHoverable(Hf.Default.i) -> {
-                if(stop) println("4")
+                if (stop) println("4")
                 false
             }
             window.dc.itemFlags has If.Disabled -> {
-                if(stop) println("5")
+                if (stop) println("5")
                 false
             }
             else -> {
@@ -1560,7 +1563,7 @@ interface imgui_internal {
     }
 
     /** Add multiple sliders on 1 line for compact edition of multiple components   */
-    fun sliderFloatN(label: String, v: FloatArray, component: Int, vMin: Float, vMax: Float, displayFormat: String, power: Float)
+    fun sliderFloatN(label: String, v: FloatArray, component: Int, vMin: Float, vMax: Float, format: String, power: Float)
             : Boolean {
         val window = currentWindow
         if (window.skipItems) return false
@@ -1571,7 +1574,7 @@ interface imgui_internal {
         pushMultiItemsWidths(component)
         for (i in 0 until component) {
             pushId(i)
-            withFloat(v, i) { valueChanged = sliderFloat("##v", it, vMin, vMax, displayFormat, power) || valueChanged }
+            withFloat(v, i) { valueChanged = sliderFloat("##v", it, vMin, vMax, format, power) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -1583,7 +1586,7 @@ interface imgui_internal {
         return valueChanged
     }
 
-    fun sliderIntN(label: String, v: IntArray, components: Int, vMin: Int, vMax: Int, displayFormat: String): Boolean {
+    fun sliderIntN(label: String, v: IntArray, components: Int, vMin: Int, vMax: Int, format: String): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -1593,7 +1596,7 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withInt(v, i) { valueChanged = sliderInt("##v", it, vMin, vMax, displayFormat) || valueChanged }
+            withInt(v, i) { valueChanged = sliderInt("##v", it, vMin, vMax, format) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -1627,8 +1630,6 @@ interface imgui_internal {
         renderNavHighlight(frameBb, id)
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
-        var valueChanged = false
-
         // Process interacting with the drag
         if (g.activeId == id) {
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
@@ -1636,69 +1637,72 @@ interface imgui_internal {
             else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                 clearActiveId()
         }
-        if (g.activeId == id) {
-            if (g.activeIdIsJustActivated) {
-                // Lock current value on click
-                g.dragCurrentValue = v()
-                g.dragLastMouseDelta put 0f
-            }
+        if (g.activeId != id)
+            return false
 
-            var vSpeed =
-                    if (vSpeed == 0f && (vMax - vMin) != 0f && (vMax - vMin) < Float.MAX_VALUE)
-                        (vMax - vMin) * g.dragSpeedDefaultRatio
-                    else vSpeed
+        // Default tweak speed
+        var vSpeed = vSpeed
+        if (vSpeed == 0f && (vMax - vMin) != 0f && (vMax - vMin) < Float.MAX_VALUE)
+            vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
 
-            var vCur = g.dragCurrentValue
-            val mouseDragDelta = getMouseDragDelta(0, 1f)
-            var adjustDelta = 0f
-            if (g.activeIdSource == InputSource.Mouse && isMousePosValid()) {
-                adjustDelta = mouseDragDelta.x - g.dragLastMouseDelta.x
-                if (io.keyShift && g.dragSpeedScaleFast >= 0f)
-                    adjustDelta *= g.dragSpeedScaleFast
-                if (io.keyAlt && g.dragSpeedScaleSlow >= 0f)
-                    adjustDelta *= g.dragSpeedScaleSlow
-                g.dragLastMouseDelta.x = mouseDragDelta.x
-            }
-            if (g.activeIdSource == InputSource.Nav) {
-                adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad,
-                        InputReadMode.RepeatFast, 1f / 10f, 10f).x
-                // This is to avoid applying the saturation when already past the limits
-                if (vMin < vMax && ((vCur >= vMax && adjustDelta > 0f) || (vCur <= vMin && adjustDelta < 0f)))
-                    adjustDelta = 0.0f
-                vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
-            }
-            adjustDelta *= vSpeed
-
-            if (abs(adjustDelta) > 0f) {
-                if (abs(power - 1f) > 0.001f) {
-                    // Logarithmic curve on both side of 0.0
-                    val v0_abs = if (vCur >= 0f) vCur else -vCur
-                    val v0_sign = if (vCur >= 0f) 1f else -1f
-                    val v1 = v0_abs.pow(1f / power) + adjustDelta * v0_sign
-                    val v1_abs = if (v1 >= 0f) v1 else -v1
-                    val v1_sign = if (v1 >= 0f) 1f else -1f          // Crossed sign line
-                    vCur = v1_abs.pow(power) * v0_sign * v1_sign    // Reapply sign
-                } else
-                    vCur += adjustDelta
-
-                // Clamp
-                if (vMin < vMax)
-                    vCur = glm.clamp(vCur, vMin, vMax)
-                g.dragCurrentValue = vCur
-            }
-
-            // Round to user desired precision, then apply
-            vCur = roundScalar(vCur, decimalPrecision)
-            if (v() != vCur) {
-                v.set(vCur)
-                valueChanged = true
-            }
+        if (g.activeIdIsJustActivated) {
+            // Lock current value on click
+            g.dragCurrentValue = v()
+            g.dragLastMouseDelta put 0f
         }
+
+        val mouseDragDelta = getMouseDragDelta(0, 1f)
+        var adjustDelta = 0f
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid()) {
+            adjustDelta = mouseDragDelta.x - g.dragLastMouseDelta.x
+            if (io.keyShift && g.dragSpeedScaleFast >= 0f)
+                adjustDelta *= g.dragSpeedScaleFast
+            if (io.keyAlt && g.dragSpeedScaleSlow >= 0f)
+                adjustDelta *= g.dragSpeedScaleSlow
+            g.dragLastMouseDelta.x = mouseDragDelta.x
+        }
+        if (g.activeIdSource == InputSource.Nav) {
+            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
+            vSpeed = max(vSpeed, getMinimumStepAtDecimalPrecision(decimalPrecision))
+        }
+        adjustDelta *= vSpeed
+
+        /*  Avoid applying the saturation when we are _already_ past the limits and heading in the same direction,
+            so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300         */
+        var vCur = g.dragCurrentValue
+        if (vMin < vMax && ((vCur >= vMax && adjustDelta > 0f) || (vCur <= vMin && adjustDelta < 0f)))
+            adjustDelta = 0f
+
+        if (abs(adjustDelta) > 0f) {
+            if (abs(power - 1f) > 0.001f) {
+                // Logarithmic curve on both side of 0.0
+                val v0_abs = if (vCur >= 0f) vCur else -vCur
+                val v0_sign = if (vCur >= 0f) 1f else -1f
+                val v1 = glm.pow(v0_abs, 1f / power) + adjustDelta * v0_sign
+                val v1_abs = if (v1 >= 0f) v1 else -v1
+                val v1_sign = if (v1 >= 0f) 1f else -1f       // Crossed sign line
+                vCur = glm.pow(v1_abs, power) * v0_sign * v1_sign   // Reapply sign
+            } else
+                vCur += adjustDelta
+
+            // Clamp
+            if (vMin < vMax)
+                vCur = glm.clamp(vCur, vMin, vMax)
+            g.dragCurrentValue = vCur
+        }
+
+        // Round to user desired precision, then apply
+        var valueChanged = false
+        vCur = roundScalar(vCur, decimalPrecision)
+        if (v() != vCur) {
+            v.set(vCur)
+            valueChanged = true
+        }
+
         return valueChanged
     }
 
-    fun dragFloatN(label: String, v: FloatArray, components: Int, vSpeed: Float, vMin: Float, vMax: Float, displayFormat: String,
-                   power: Float): Boolean {
+    fun dragFloatN(label: String, v: FloatArray, components: Int, vSpeed: Float, vMin: Float, vMax: Float, format: String, power: Float): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -1708,7 +1712,7 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withFloat(v, i) { valueChanged = dragFloat("##v", it, vSpeed, vMin, vMax, displayFormat, power) || valueChanged }
+            withFloat(v, i) { valueChanged = dragFloat("##v", it, vSpeed, vMin, vMax, format, power) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -1721,7 +1725,7 @@ interface imgui_internal {
         return valueChanged
     }
 
-    fun dragIntN(label: String, v: IntArray, components: Int, vSpeed: Float, vMin: Int, vMax: Int, displayFormat: String): Boolean {
+    fun dragIntN(label: String, v: IntArray, components: Int, vSpeed: Float, vMin: Int, vMax: Int, format: String): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -1731,7 +1735,7 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withInt(v, i) { valueChanged = dragInt("##v", it, vSpeed, vMin, vMax, displayFormat) || valueChanged }
+            withInt(v, i) { valueChanged = dragInt("##v", it, vSpeed, vMin, vMax, format) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -2065,10 +2069,13 @@ interface imgui_internal {
         }
         if (g.activeId == id) {
 
-            if (cancelEdit && isEditable) { // Restore initial value
-                for (c in 0 until buf.size) buf[c] = editState.initialText[c]
-                valueChanged = true
-            }
+            if (cancelEdit)
+            // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
+                if (isEditable && !Arrays.equals(buf, editState.initialText)) {
+                    for (c in 0 until buf.size)
+                        buf[c] = editState.initialText[c]
+                    valueChanged = true
+                }
 
             /*  When using `InputTextFlag.EnterReturnsTrue` as a special case we reapply the live buffer back to the
                 input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
@@ -2388,7 +2395,7 @@ interface imgui_internal {
     }
 
     /** NB: scalar_format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
-     *  functions "display_format" argument)    */
+     *  functions "format" argument)    */
     fun inputScalarEx(label: String, dataType: DataType, data: IntArray, step: Number?, stepFast: Number?, scalarFormat: String,
                       extraFlags: Int): Boolean {
         i0 = data[0]
@@ -2397,6 +2404,8 @@ interface imgui_internal {
         return res
     }
 
+    /** NB: scalar_format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
+     *  functions "format" argument)    */
     fun inputScalarEx(label: String, dataType: DataType, data: KMutableProperty0<Number>, step: Number?, stepFast: Number?,
                       scalarFormat: String, extraFlags: Int): Boolean {
 
@@ -2410,7 +2419,8 @@ interface imgui_internal {
         val buttonSz = Vec2(frameHeight)
         step?.let { pushItemWidth(glm.max(1f, calcItemWidth() - (buttonSz.x + style.itemInnerSpacing.x) * 2)) }
 
-        val buf = data.format(dataType, scalarFormat, CharArray(64))
+        val buf = CharArray(64)
+        data.format(buf, dataType, scalarFormat)
 
         var valueChanged = false
         var flags = extraFlags
@@ -2461,8 +2471,12 @@ interface imgui_internal {
         focusableItemUnregister(window)
 
         val buf = CharArray(32)
-        data.format(dataType, decimalPrecision, buf)
-        val textValueChanged = inputTextEx(label, buf, aabb.size, Itf.CharsDecimal or Itf.AutoSelectAll)
+        data.format(buf, dataType, decimalPrecision)
+        val flags = Itf.AutoSelectAll or when (dataType) {
+            DataType.Float, DataType.Double -> Itf.CharsScientific
+            else -> Itf.CharsDecimal
+        }
+        val textValueChanged = inputTextEx(label, buf, aabb.size, flags)
         if (g.scalarAsInputTextId == 0) {   // First frame we started displaying the InputText widget
             // InputText ID expected to match the Slider ID (else we'd need to store them both, which is also possible)
             assert(g.activeId == id)

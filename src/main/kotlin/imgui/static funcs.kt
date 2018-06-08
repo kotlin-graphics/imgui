@@ -491,23 +491,23 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
 }
 
 // TODO check if needed
-//fun IntArray.format(dataType: DataType, displayFormat: String, buf: CharArray): CharArray {
+//fun IntArray.format(dataType: DataType, format: String, buf: CharArray): CharArray {
 //    val value: Number = when (dataType) {
 //        DataType.Int -> this[0]
 //        DataType.Float -> glm.intBitsToFloat(this[0])
 //        else -> throw Error()
 //    }
-//    return displayFormat.format(style.locale, value).toCharArray(buf)
+//    return Format.format(style.locale, value).toCharArray(buf)
 //}
 
-fun KMutableProperty0<Number>.format(dataType: DataType, displayFormat: String, buf: CharArray): CharArray {
+fun KMutableProperty0<Number>.format(buf: CharArray, dataType: DataType, format: String): Int {
     val value: Number = when (dataType) {
-        DataType.Int -> this()
+        DataType.Int -> this() as Int
         DataType.Float -> this() as Float
         DataType.Double -> this() as Double
         else -> throw Error()
     }
-    return displayFormat.format(style.locale, value).toCharArray(buf)
+    return format.format(style.locale, value).toCharArray(buf).size
 }
 
 /** JVM Imgui, dataTypeFormatString replacement TODO check if needed */
@@ -521,17 +521,24 @@ fun KMutableProperty0<Number>.format(dataType: DataType, displayFormat: String, 
 //    else -> throw Error("unsupported format data type")
 //}.toCharArray(buf)
 
-fun KMutableProperty0<Number>.format(dataType: DataType, decimalPrecision: Int, buf: CharArray): CharArray {
-    val precision = if (decimalPrecision < 0) "" else ".$decimalPrecision"
-    return when (dataType) {
-
-        DataType.Int -> "%${precision}d".format(style.locale, this() as Int)
+fun KMutableProperty0<Number>.format(buf: CharArray, dataType: DataType, decimalPrecision: Int): Int {
+    val string = when {
+        decimalPrecision < 0 -> when (dataType) {
+            DataType.Int -> "%d".format(style.locale, this() as Int)
 /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
     non-significant digits?         */
-        DataType.Float -> "%${precision}f".format(style.locale, this() as Float)
-        DataType.Double -> "%${precision}f".format(style.locale, this() as Double)
-        else -> throw Error("unsupported format data type")
-    }.toCharArray(buf)
+            DataType.Float -> "%f".format(style.locale, this() as Float)
+            DataType.Double -> "%f".format(style.locale, this() as Double)
+            else -> throw Error("unsupported format data type")
+        }
+        else -> when (dataType) {
+            DataType.Int -> "%${decimalPrecision}d".format(style.locale, this() as Int)
+            DataType.Float -> "%${decimalPrecision}f".format(style.locale, this() as Float)
+            DataType.Double -> "%${decimalPrecision}g".format(style.locale, this() as Double)
+            else -> throw Error("unsupported format data type")
+        }
+    }
+    return string.toCharArray(buf).size
 }
 
 fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number): Number {

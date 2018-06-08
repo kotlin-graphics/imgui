@@ -39,22 +39,19 @@ import kotlin.reflect.KMutableProperty0
 interface imgui_widgetsSliders {
 
 
-    /** adjust display_format to decorate the value with a prefix or a suffix for in-slider labels or unit display.
-     *  Use power!=1.0 for logarithmic sliders  */
-    fun sliderFloat(label: String, v: FloatArray, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f) =
-            sliderFloat(label, v, 0, vMin, vMax, displayFormat, power)
+    /** Use power!=1.0 for logarithmic sliders.
+     *  Adjust format to decorate the value with a prefix or a suffix. */
+    fun sliderFloat(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f) =
+            sliderFloat(label, v, 0, vMin, vMax, format, power)
 
-    fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, displayFormat: String = "%.3f",
-                    power: Float = 1f): Boolean {
-
+    fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean {
         f0 = v[ptr]
-        val res = sliderFloat(label, ::f0, vMin, vMax, displayFormat, power)
+        val res = sliderFloat(label, ::f0, vMin, vMax, format, power)
         v[ptr] = f0
         return res
     }
 
-    fun sliderFloat(label: String, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, displayFormat: String = "%.3f",
-                    power: Float = 1f): Boolean {
+    fun sliderFloat(label: String, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -74,7 +71,7 @@ interface imgui_widgetsSliders {
 
         val hovered = itemHoverable(frameBb, id)
 
-        val decimalPrecision = parseFormatPrecision(displayFormat, 3)
+        val decimalPrecision = parseFormatPrecision(format, 3)
 
         // Tabbing or CTRL-clicking on Slider turns it into an input box
         var startTextInput = false
@@ -98,7 +95,7 @@ interface imgui_widgetsSliders {
         val valueChanged = sliderBehavior(frameBb, id, v, vMin, vMax, power, decimalPrecision)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = displayFormat.format(style.locale, v())
+        val value = format.format(style.locale, v())
         renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
@@ -107,32 +104,32 @@ interface imgui_widgetsSliders {
         return valueChanged
     }
 
-    fun sliderFloat2(label: String, v: FloatArray, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f) =
-            sliderFloatN(label, v, 2, vMin, vMax, displayFormat, power)
+    fun sliderFloat2(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f) =
+            sliderFloatN(label, v, 2, vMin, vMax, format, power)
 
-    fun sliderVec2(label: String, v: Vec2, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f): Boolean {
+    fun sliderVec2(label: String, v: Vec2, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean {
         val floats = v to FloatArray(2)
-        val res = sliderFloatN(label, floats, 2, vMin, vMax, displayFormat, power)
+        val res = sliderFloatN(label, floats, 2, vMin, vMax, format, power)
         v put floats
         return res
     }
 
-    fun sliderFloat3(label: String, v: FloatArray, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f) =
-            sliderFloatN(label, v, 3, vMin, vMax, displayFormat, power)
+    fun sliderFloat3(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f) =
+            sliderFloatN(label, v, 3, vMin, vMax, format, power)
 
-    fun sliderVec3(label: String, v: Vec2, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f): Boolean {
+    fun sliderVec3(label: String, v: Vec2, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean {
         val floats = v to FloatArray(3)
-        val res = sliderFloatN(label, floats, 3, vMin, vMax, displayFormat, power)
+        val res = sliderFloatN(label, floats, 3, vMin, vMax, format, power)
         v put floats
         return res
     }
 
-    fun sliderFloat4(label: String, v: FloatArray, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f) =
-            sliderFloatN(label, v, 4, vMin, vMax, displayFormat, power)
+    fun sliderFloat4(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f) =
+            sliderFloatN(label, v, 4, vMin, vMax, format, power)
 
-    fun sliderVec4(label: String, v: Vec2, vMin: Float, vMax: Float, displayFormat: String = "%.3f", power: Float = 1f): Boolean {
+    fun sliderVec4(label: String, v: Vec2, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean {
         val floats = v to FloatArray(4)
-        val res = sliderFloatN(label, floats, 4, vMin, vMax, displayFormat, power)
+        val res = sliderFloatN(label, floats, 4, vMin, vMax, format, power)
         v put floats
         return res
     }
@@ -144,48 +141,47 @@ interface imgui_widgetsSliders {
         return valueChanged
     }
 
-    fun sliderInt(label: String, v: IntArray, vMin: Int, vMax: Int, displayFormat: String = "%.0f") =
-            sliderInt(label, ::i0.apply { set(v[0]) }, vMin, vMax, displayFormat).also { v[0] = i0 }
+    fun sliderInt(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%.0f") =
+            sliderInt(label, ::i0.apply { set(v[0]) }, vMin, vMax, format).also { v[0] = i0 }
 
-    fun sliderInt(label: String, v: KMutableProperty0<Int>, vMin: Int, vMax: Int, displayFormat: String = "%.0f"): Boolean {
+    fun sliderInt(label: String, v: KMutableProperty0<Int>, vMin: Int, vMax: Int, format: String = "%.0f"): Boolean {
         f0 = v().f
-        val valueChanged = sliderFloat(label, ::f0, vMin.f, vMax.f, displayFormat, 1f)
+        val valueChanged = sliderFloat(label, ::f0, vMin.f, vMax.f, format, 1f)
         v.set(f0.i)
         return valueChanged
     }
 
-    fun sliderInt2(label: String, v: IntArray, vMin: Int, vMax: Int, displayFormat: String = "%.0f") =
-            sliderIntN(label, v, 2, vMin, vMax, displayFormat)
+    fun sliderInt2(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%.0f") =
+            sliderIntN(label, v, 2, vMin, vMax, format)
 
-    fun sliderVec2i(label: String, v: Vec2i, vMin: Int, vMax: Int, displayFormat: String = "%.0f"): Boolean {
+    fun sliderVec2i(label: String, v: Vec2i, vMin: Int, vMax: Int, format: String = "%.0f"): Boolean {
         val ints = v to IntArray(2)
-        val res = sliderIntN(label, ints, 2, vMin, vMax, displayFormat)
+        val res = sliderIntN(label, ints, 2, vMin, vMax, format)
         v put ints
         return res
     }
 
-    fun sliderInt3(label: String, v: IntArray, vMin: Int, vMax: Int, displayFormat: String = "%.0f") =
-            sliderIntN(label, v, 3, vMin, vMax, displayFormat)
+    fun sliderInt3(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%.0f") =
+            sliderIntN(label, v, 3, vMin, vMax, format)
 
-    fun sliderVec3i(label: String, v: Vec3i, vMin: Int, vMax: Int, displayFormat: String = "%.0f"): Boolean {
+    fun sliderVec3i(label: String, v: Vec3i, vMin: Int, vMax: Int, format: String = "%.0f"): Boolean {
         val ints = v to IntArray(3)
-        val res = sliderIntN(label, ints, 3, vMin, vMax, displayFormat)
+        val res = sliderIntN(label, ints, 3, vMin, vMax, format)
         v put ints
         return res
     }
 
-    fun sliderInt4(label: String, v: IntArray, vMin: Int, vMax: Int, displayFormat: String = "%.0f") =
-            sliderIntN(label, v, 4, vMin, vMax, displayFormat)
+    fun sliderInt4(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%.0f") =
+            sliderIntN(label, v, 4, vMin, vMax, format)
 
-    fun sliderVec4i(label: String, v: Vec4i, vMin: Int, vMax: Int, displayFormat: String = "%.0f"): Boolean {
+    fun sliderVec4i(label: String, v: Vec4i, vMin: Int, vMax: Int, format: String = "%.0f"): Boolean {
         val ints = v to IntArray(4)
-        val res = sliderIntN(label, ints, 4, vMin, vMax, displayFormat)
+        val res = sliderIntN(label, ints, 4, vMin, vMax, format)
         v put ints
         return res
     }
 
-    fun vSliderFloat(label: String, size: Vec2, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, displayFormat: String = "%.3f",
-                     power: Float = 1f): Boolean {
+    fun vSliderFloat(label: String, size: Vec2, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean {
 
         val window = currentWindow
         if (window.skipItems)        return false
@@ -200,7 +196,7 @@ interface imgui_widgetsSliders {
         if (!itemAdd(frameBb, id))            return false
         val hovered = itemHoverable(frameBb, id)
 
-        val decimalPrecision = parseFormatPrecision(displayFormat, 3)
+        val decimalPrecision = parseFormatPrecision(format, 3)
 
         if ((hovered && io.mouseClicked[0])  || g.navActivateId == id || g.navInputId == id) {
             setActiveId(id, window)
@@ -214,7 +210,7 @@ interface imgui_widgetsSliders {
 
         /*  Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
             For the vertical slider we allow centered text to overlap the frame padding         */
-        val text =  displayFormat.format(style.locale, v())
+        val text =  format.format(style.locale, v())
         val posMin = Vec2(frameBb.min.x, frameBb.min.y + style.framePadding.y)
         renderTextClipped(posMin, frameBb.max, text, text.length, null, Vec2(0.5f,0f))
         if (labelSize.x > 0f)
@@ -223,10 +219,10 @@ interface imgui_widgetsSliders {
         return valueChanged
     }
 
-    fun vSliderInt(label: String, size: Vec2, v: KMutableProperty0<Int>, vMin: Int, vMax: Int, displayFormat: String = "%.0f") =
+    fun vSliderInt(label: String, size: Vec2, v: KMutableProperty0<Int>, vMin: Int, vMax: Int, format: String = "%.0f") =
             withFloat { f ->
                 f.set(v().f)
-                val valueChanged = vSliderFloat (label, size, f, vMin.f, vMax.f, displayFormat, 1f)
+                val valueChanged = vSliderFloat (label, size, f, vMin.f, vMax.f, format, 1f)
                 v.set(f().i)
                 valueChanged
             }

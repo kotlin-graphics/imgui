@@ -637,12 +637,12 @@ enum class Col {
     PlotHistogram,
     PlotHistogramHovered,
     TextSelectedBg,
-    /** darken/colorize entire screen behind a modal window, when one is active   */
+    /** Darken/colorize entire screen behind a modal window, when one is active   */
     ModalWindowDarkening,
     DragDropTarget,
-    /** gamepad/keyboard: current highlighted item  */
+    /** Gamepad/keyboard: current highlighted item  */
     NavHighlight,
-    /** gamepad/keyboard: when holding NavMenu to focus/move/resize windows */
+    /** Gamepad/keyboard: when holding NavMenu to focus/move/resize windows */
     NavWindowingHighlight;
 
     val i = ordinal
