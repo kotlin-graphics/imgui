@@ -502,7 +502,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
 
 fun KMutableProperty0<Number>.format(buf: CharArray, dataType: DataType, format: String): Int {
     val value: Number = when (dataType) {
-        DataType.Int -> this() as Int
+        DataType.Int, DataType.Uint -> this() as Int
         DataType.Float -> this() as Float
         DataType.Double -> this() as Double
         else -> throw Error()
@@ -520,31 +520,31 @@ fun KMutableProperty0<Number>.format(buf: CharArray, dataType: DataType, format:
 //    DataType.Double -> TODO()//"%${if (decimalPrecision < 0) "" else ".$decimalPrecision"}f".format(style.locale, glm.intBitsToFloat(this[0]))
 //    else -> throw Error("unsupported format data type")
 //}.toCharArray(buf)
-
-fun KMutableProperty0<Number>.format(buf: CharArray, dataType: DataType, decimalPrecision: Int): Int {
-    val string = when {
-        decimalPrecision < 0 -> when (dataType) {
-            DataType.Int -> "%d".format(style.locale, this() as Int)
-/*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
-    non-significant digits?         */
-            DataType.Float -> "%f".format(style.locale, this() as Float)
-            DataType.Double -> "%f".format(style.locale, this() as Double)
-            else -> throw Error("unsupported format data type")
-        }
-        else -> when (dataType) {
-            DataType.Int -> "%${decimalPrecision}d".format(style.locale, this() as Int)
-            DataType.Float -> "%${decimalPrecision}f".format(style.locale, this() as Float)
-            DataType.Double -> "%${decimalPrecision}g".format(style.locale, this() as Double)
-            else -> throw Error("unsupported format data type")
-        }
-    }
-    return string.toCharArray(buf).size
-}
+//
+//fun KMutableProperty0<Number>.format(buf: CharArray, dataType: DataType, decimalPrecision: Int): Int { TODO REMOVE
+//    val string = when {
+//        decimalPrecision < 0 -> when (dataType) {
+//            DataType.Int -> "%d".format(style.locale, this() as Int)
+///*  Ideally we'd have a minimum decimal precision of 1 to visually denote that it is a float, while hiding
+//    non-significant digits?         */
+//            DataType.Float -> "%f".format(style.locale, this() as Float)
+//            DataType.Double -> "%f".format(style.locale, this() as Double)
+//            else -> throw Error("unsupported format data type")
+//        }
+//        else -> when (dataType) {
+//            DataType.Int -> "%${decimalPrecision}d".format(style.locale, this() as Int)
+//            DataType.Float -> "%${decimalPrecision}f".format(style.locale, this() as Float)
+//            DataType.Double -> "%${decimalPrecision}g".format(style.locale, this() as Double)
+//            else -> throw Error("unsupported format data type")
+//        }
+//    }
+//    return string.toCharArray(buf).size
+//}
 
 fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number): Number {
     assert(op == '+' || op == '-')
     return when (dataType) {
-        DataType.Int -> when (op) {
+        DataType.Int, DataType.Uint -> when (op) {
             '+' -> value1 as Int + (value2 as Int)
             '-' -> value1 as Int - (value2 as Int)
             else -> throw Error()
@@ -564,7 +564,7 @@ fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number
 }
 
 /** User can input math operators (e.g. +100) to edit a numerical values.
- *  NB: This is _not_ a full expression evaluator. We should probably add one though.. */
+ *  NB: This is _not_ a full expression evaluator. We should probably add one and replace this dumb mess.. */
 fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: IntArray,
                             scalarFormat: String? = null): Boolean {
 
@@ -619,9 +619,38 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                                 always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision  */
                         val b = seq[2].f
                         when (op) {
-                            '+' -> (a + b).i    // Add (use "+-" to subtract)
-                            '*' -> (a * b).i    // Multiply
-                            '/' -> (a / b).i    // Divide   TODO / 0 will throw
+                            '+' -> (a + b).i                    // Add (use "+-" to subtract)
+                            '*' -> (a * b).i                    // Multiply
+                            '/' -> if (b != 0f) (a / b).i else v // Divide
+                            else -> throw Error()
+                        }
+                    }
+                    else -> a   // Assign constant
+                }
+                data.set(v)
+                oldV != v
+            }
+            DataType.Uint -> {
+//                val scalarFormat = scalarFormat ?: "%d"
+                var v = data() as Int
+                val oldV = v
+                val a: Int
+                try {
+                    a = Scanner(seq[0]).useLocale(style.locale).nextInt()
+                } catch (_: Exception) {
+                    return false
+                }
+
+                v = when (seq.size) {
+                    2 -> {   // TODO support more complex operations? i.e: a + b * c
+                        val op = seq[1][0]
+                        /*  Store operand b in a float so we can use fractional value for multipliers (*1.1), but constant
+                                always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision  */
+                        val b = seq[2].f
+                        when (op) {
+                            '+' -> (a + b).i                                    // Add (use "+-" to subtract)
+                            '*' -> (a * b).i                                    // Multiply
+                            '/' -> if (b != 0f) (a divideUnsigned b.i) else v    // Divide
                             else -> throw Error()
                         }
                     }
@@ -648,9 +677,9 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                         val op = seq[1][0]
                         val b = seq[2].f
                         when (op) {
-                            '+' -> a + b    // Add (use "+-" to subtract)
-                            '*' -> a * b    // Multiply
-                            '/' -> a / b    // Divide   TODO / 0 will throw
+                            '+' -> a + b                        // Add (use "+-" to subtract)
+                            '*' -> a * b                        // Multiply
+                            '/' -> if (b != 0f) a / b else v    // Divide
                             else -> throw Error()
                         }
                     }
@@ -677,9 +706,9 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                         val op = seq[1][0]
                         val b = seq[2].d
                         when (op) {
-                            '+' -> a + b    // Add (use "+-" to subtract)
-                            '*' -> a * b    // Multiply
-                            '/' -> a / b    // Divide   TODO / 0 will throw
+                            '+' -> a + b                        // Add (use "+-" to subtract)
+                            '*' -> a * b                        // Multiply
+                            '/' -> if (b != 0.0) a / b else v   // Divide
                             else -> throw Error()
                         }
                     }

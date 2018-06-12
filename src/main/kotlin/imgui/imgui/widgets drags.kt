@@ -88,8 +88,6 @@ interface imgui_widgetsDrag {
 
         val hovered = itemHoverable(frameBb, id)
 
-        val decimalPrecision = parseFormatPrecision(format, 3)
-
         // Tabbing or CTRL-clicking on Drag turns it into an input box
         var startTextInput = false
         val tabFocusRequested = focusableItemRegister(window, id)
@@ -104,11 +102,11 @@ interface imgui_widgetsDrag {
             }
         }
         if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
-            return inputScalarAsWidgetReplacement(frameBb, label, DataType.Float, v as KMutableProperty0<Number>, id, decimalPrecision)
+            return inputScalarAsWidgetReplacement(frameBb, id, label, DataType.Float, v as KMutableProperty0<Number>, format)
 
         // Actual drag behavior
         itemSize(totalBb, style.framePadding.y)
-        val valueChanged = dragBehavior(frameBb, id, v, vSpeed, vMin, vMax, decimalPrecision, power)
+        val valueChanged = dragBehavior(frameBb, id, v, vSpeed, vMin, vMax, format, power)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
         val value = format.format(style.locale, v())

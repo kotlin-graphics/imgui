@@ -131,7 +131,7 @@ enum class PlotType { Lines, Histogram;
     val i = ordinal
 }
 
-enum class DataType { Int, Float, Double, Vec2;
+enum class DataType { Int, Uint, Float, Double, Vec2;
 
     val i = ordinal
 }
