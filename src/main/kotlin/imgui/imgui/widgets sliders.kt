@@ -71,8 +71,6 @@ interface imgui_widgetsSliders {
 
         val hovered = itemHoverable(frameBb, id)
 
-        val decimalPrecision = parseFormatPrecision(format, 3)
-
         // Tabbing or CTRL-clicking on Slider turns it into an input box
         var startTextInput = false
         val tabFocusRequested = focusableItemRegister(window, id)
@@ -92,7 +90,7 @@ interface imgui_widgetsSliders {
 
         // Actual slider behavior + render grab
         itemSize(totalBb, style.framePadding.y)
-        val valueChanged = sliderBehavior(frameBb, id, v, vMin, vMax, power, decimalPrecision)
+        val valueChanged = sliderBehavior(frameBb, id, v, vMin, vMax, format, power)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
         val value = format.format(style.locale, v())
@@ -181,7 +179,8 @@ interface imgui_widgetsSliders {
         return res
     }
 
-    fun vSliderFloat(label: String, size: Vec2, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean {
+    fun vSliderFloat(label: String, size: Vec2, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String = "%.3f",
+                     power: Float = 1f): Boolean {
 
         val window = currentWindow
         if (window.skipItems)        return false
@@ -196,8 +195,6 @@ interface imgui_widgetsSliders {
         if (!itemAdd(frameBb, id))            return false
         val hovered = itemHoverable(frameBb, id)
 
-        val decimalPrecision = parseFormatPrecision(format, 3)
-
         if ((hovered && io.mouseClicked[0])  || g.navActivateId == id || g.navInputId == id) {
             setActiveId(id, window)
             setFocusId(id, window)
@@ -206,7 +203,7 @@ interface imgui_widgetsSliders {
         }
 
         // Actual slider behavior + render grab
-        val valueChanged = sliderBehavior(frameBb, id, v, vMin, vMax, power, decimalPrecision, SliderFlag.Vertical.i)
+        val valueChanged = sliderBehavior(frameBb, id, v, vMin, vMax, format, power, SliderFlag.Vertical.i)
 
         /*  Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
             For the vertical slider we allow centered text to overlap the frame padding         */

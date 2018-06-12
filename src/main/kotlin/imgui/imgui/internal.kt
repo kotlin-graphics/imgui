@@ -1406,20 +1406,20 @@ interface imgui_internal {
         return pressed
     }
 
-    fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
-                       flags: SliderFlags = 0) = sliderBehavior(frameBb, id, v, 0, vMin, vMax, power, decimalPrecision, flags)
+    fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
+                       flags: SliderFlags = 0) = sliderBehavior(frameBb, id, v, 0, vMin, vMax, format, power, flags)
 
-    fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, power: Float, decimalPrecision: Int,
+    fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String, power: Float,
                        flags: SliderFlags = 0): Boolean {
 
         f0 = v[ptr]
-        val res = sliderBehavior(frameBb, id, ::f0, vMin, vMax, power, decimalPrecision, flags)
+        val res = sliderBehavior(frameBb, id, ::f0, vMin, vMax, format, power, flags)
         v[ptr] = f0
         return res
     }
 
-    fun sliderBehavior(frameBb: Rect, id: Int, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, power: Float,
-                       decimalPrecision: Int, flags: Int = 0): Boolean {
+    fun sliderBehavior(frameBb: Rect, id: Int, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String, power: Float,
+                       flags: Int = 0): Boolean {
 
         val window = currentWindow
 
@@ -1430,16 +1430,16 @@ interface imgui_internal {
 
         val isNonLinear = (power < 1.0f - 0.00001f) || (power > 1.0f + 0.00001f)
         val isHorizontal = flags hasnt SliderFlag.Vertical
+        val isDecimal = parseFormatPrecision(format, 3) > 0
 
         val grabPadding = 2f
         val sliderSz = (if (isHorizontal) frameBb.width else frameBb.height) - grabPadding * 2f
-        val grabSz =
-                if (decimalPrecision != 0)
-                    glm.min(style.grabMinSize, sliderSz)
-                else
-                    glm.min(
-                            glm.max(1f * (sliderSz / ((if (vMin < vMax) vMax - vMin else vMin - vMax) + 1f)), style.grabMinSize),
-                            sliderSz)  // Integer sliders, if possible have the grab size represent 1 unit
+        val grabSz = when {
+            isDecimal -> glm.min(style.grabMinSize, sliderSz)
+            else -> glm.min(
+                    glm.max(1f * (sliderSz / ((if (vMin < vMax) vMax - vMin else vMin - vMax) + 1f)), style.grabMinSize),
+                    sliderSz)  // Integer sliders, if possible have the grab size represent 1 unit
+        }
         val sliderUsableSz = sliderSz - grabSz
         val sliderUsablePosMin = (if (isHorizontal) frameBb.min.x else frameBb.min.y) + grabPadding + grabSz * 0.5f
         val sliderUsablePosMax = (if (isHorizontal) frameBb.max.x else frameBb.max.y) - grabPadding - grabSz * 0.5f
@@ -1477,7 +1477,7 @@ interface imgui_internal {
                     clearActiveId()
                 else if (delta != 0f) {
                     clickedT = sliderBehaviorCalcRatioFromValue(v(), vMin, vMax, power, linearZeroPos)
-                    if (decimalPrecision == 0 && !isNonLinear) {
+                    if (!isDecimal && !isNonLinear) {
                         delta =
                                 if (abs(vMax - vMin) <= 100f || NavInput.TweakSlow.isDown())
                                     (if (delta < 0f) -1f else 1f) / (vMax - vMin) // Gamepad/keyboard tweak speeds in integer steps
@@ -1518,7 +1518,7 @@ interface imgui_internal {
                             }
                         } else lerp(vMin, vMax, clickedT) // Linear slider
                 // Round past decimal precision
-                newValue = roundScalar(newValue, decimalPrecision)
+                newValue = roundScalarWithFormat(format, newValue)
                 if (v() != newValue) {
                     v.set(newValue)
                     valueChanged = true
@@ -1609,17 +1609,17 @@ interface imgui_internal {
         return valueChanged
     }
 
-    fun dragBehavior(frameBb: Rect, id: ID, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float, vMax: Float, decimalPrecision: Int,
+    fun dragBehavior(frameBb: Rect, id: ID, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float, vMax: Float, format: String,
                      power: Float): Boolean {
 
         f0 = v[ptr]
-        val res = dragBehavior(frameBb, id, ::f0, vSpeed, vMin, vMax, decimalPrecision, power)
+        val res = dragBehavior(frameBb, id, ::f0, vSpeed, vMin, vMax, format, power)
         v[ptr] = f0
         return res
     }
 
-    fun dragBehavior(frameBb: Rect, id: ID, v: KMutableProperty0<Float>, vSpeed: Float, vMin: Float, vMax: Float,
-                     decimalPrecision: Int, power: Float): Boolean {
+    fun dragBehavior(frameBb: Rect, id: ID, v: KMutableProperty0<Float>, vSpeed: Float, vMin: Float, vMax: Float, format: String,
+                     power: Float): Boolean {
 
         // Draw frame
         val frameCol = when (id) {
@@ -1662,6 +1662,7 @@ interface imgui_internal {
             g.dragLastMouseDelta.x = mouseDragDelta.x
         }
         if (g.activeIdSource == InputSource.Nav) {
+            val decimalPrecision = parseFormatPrecision(format, 3)
             adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
             vSpeed = max(vSpeed, getMinimumStepAtDecimalPrecision(decimalPrecision))
         }
@@ -1693,7 +1694,7 @@ interface imgui_internal {
 
         // Round to user desired precision, then apply
         var valueChanged = false
-        vCur = roundScalar(vCur, decimalPrecision)
+        vCur = roundScalarWithFormat(format, vCur)
         if (v() != vCur) {
             v.set(vCur)
             valueChanged = true
@@ -2397,7 +2398,7 @@ interface imgui_internal {
     /** NB: scalar_format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
      *  functions "format" argument)    */
     fun inputScalarEx(label: String, dataType: DataType, data: IntArray, step: Number?, stepFast: Number?, scalarFormat: String,
-                      extraFlags: Int): Boolean {
+                      extraFlags: InputTextFlags = 0): Boolean {
         i0 = data[0]
         val res = inputScalarEx(label, dataType, ::i0 as KMutableProperty0<Number>, step, stepFast, scalarFormat, extraFlags)
         data[0] = i0
@@ -2412,13 +2413,6 @@ interface imgui_internal {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val labelSize = calcTextSize(label, true)
-
-        beginGroup()
-        pushId(label)
-        val buttonSz = Vec2(frameHeight)
-        step?.let { pushItemWidth(glm.max(1f, calcItemWidth() - (buttonSz.x + style.itemInnerSpacing.x) * 2)) }
-
         val buf = CharArray(64)
         data.format(buf, dataType, scalarFormat)
 
@@ -2427,39 +2421,44 @@ interface imgui_internal {
         if (flags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
             flags = flags or Itf.CharsDecimal
         flags = flags or Itf.AutoSelectAll
-        if (inputText("", buf, flags)) // PushId(label) + "" gives us the expected ID from outside point of view
-            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, scalarFormat)
 
-        // Step buttons
-        step?.let {
+        if(step != null) {
+            val buttonSize = frameHeight
+
+            beginGroup(); // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
+            pushId(label)
+            pushItemWidth(max(1f, calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
+            if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
+                valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, scalarFormat)
             popItemWidth()
+
+            // Step buttons
             sameLine(0f, style.itemInnerSpacing.x)
-            if (buttonEx("-", buttonSz, Bf.Repeat or Bf.DontClosePopups)) {
+            if (buttonEx("-", Vec2(buttonSize), Bf.Repeat or Bf.DontClosePopups)) {
                 data.set(dataTypeApplyOp(dataType, '-', data(), if (io.keyCtrl && stepFast != null) stepFast else step))
                 valueChanged = true
             }
             sameLine(0f, style.itemInnerSpacing.x)
-            if (buttonEx("+", buttonSz, Bf.Repeat or Bf.DontClosePopups)) {
+            if (buttonEx("+", Vec2(buttonSize), Bf.Repeat or Bf.DontClosePopups)) {
                 data.set(dataTypeApplyOp(dataType, '+', data(), if (io.keyCtrl && stepFast != null) stepFast else step))
                 valueChanged = true
             }
-        }
-        popId()
-
-        if (labelSize.x > 0) {
             sameLine(0f, style.itemInnerSpacing.x)
-            renderText(Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + style.framePadding.y), label)
-            itemSize(labelSize, style.framePadding.y)
+            textUnformatted(label, findRenderedTextEnd(label))
+
+            popId()
+            endGroup()
         }
-        endGroup()
+        else if (inputText(label, buf, extraFlags))
+            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, scalarFormat)
 
         return valueChanged
     }
 
     /** Create text input in place of a slider (when CTRL+Clicking on slider)
      *  FIXME: Logic is messy and confusing. */
-    fun inputScalarAsWidgetReplacement(aabb: Rect, label: String, dataType: DataType, data: KMutableProperty0<Number>, id: ID,
-                                       decimalPrecision: Int): Boolean {
+    fun inputScalarAsWidgetReplacement(bb: Rect, id: ID, label: String, dataType: DataType, data: KMutableProperty0<Number>,
+                                       format: String): Boolean {
 
         val window = currentWindow
 
@@ -2471,20 +2470,19 @@ interface imgui_internal {
         focusableItemUnregister(window)
 
         val buf = CharArray(32)
-        data.format(buf, dataType, decimalPrecision)
+        data.format(buf, dataType, format)
         val flags = Itf.AutoSelectAll or when (dataType) {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
-        val textValueChanged = inputTextEx(label, buf, aabb.size, flags)
+        val valueChanged = inputTextEx(label, buf, bb.size, flags)
         if (g.scalarAsInputTextId == 0) {   // First frame we started displaying the InputText widget
-            // InputText ID expected to match the Slider ID (else we'd need to store them both, which is also possible)
-            assert(g.activeId == id)
+            assert(g.activeId == id) // InputText ID expected to match the Slider ID
             g.scalarAsInputTextId = g.activeId
             setHoveredId(id)
         }
         return when {
-            textValueChanged -> dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data)
+            valueChanged -> dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data)
             else -> false
         }
     }
@@ -2897,37 +2895,77 @@ interface imgui_internal {
         io.wantTextInput = if (g.wantTextInputNextFrame != -1) g.wantTextInputNextFrame != 0 else false
     }
 
-    /** Parse display precision back from the display format string */
+    fun parseFormatTrimDecorationsLeading(fmt: String): Int {
+        var i = 0
+        var c = fmt[i++]
+        while (c != NUL) {
+            if (c == '%' && fmt[i + 1] != '%')
+                return i
+            else if (c == '%')
+                i++
+            c = fmt[i++]
+        }
+        return i
+    }
+
+    /** Extract the format out of a format string with leading or trailing decorations
+     *  fmt = "blah blah"  -> return fmt
+     *  fmt = "%.3f"       -> return fmt
+     *  fmt = "hello %.3f" -> return fmt + 6
+     *  fmt = "%.3f hello" -> return buf written with "%.3f" */
+    fun parseFormatTrimDecorations(fmt: String, buf: CharArray): String {
+        // We don't use strchr() because our strings are usually very short and often start with '%'
+        val fmtStart = parseFormatTrimDecorationsLeading(fmt)
+        if (fmt[fmtStart] != '%')
+            return fmt
+        var i = fmtStart
+        var c = fmt[i++]
+        while (c != NUL) {
+            if (c in 'A'..'Z' && c != 'L')  // L is a type modifier, other letters qualify as types aka end of the format
+                break
+            // h/j/l/t/w/z are type modifiers, other letters qualify as types aka end of the format
+            if (c in 'a'..'z' && c != 'h' && c != 'j' && c != 'l' && c != 't' && c != 'w' && c != 'z')
+                break
+            c = fmt[i++]
+        }
+        if (fmt[i] == NUL) // If we only have leading decoration, we don't need to copy the data.
+            return fmt.substring(fmtStart)
+        val size = min(i + 1 - fmtStart, buf.size)
+        for (j in 0 until size)
+            buf[j] = fmt[fmtStart + j]
+        return String(buf)
+    }
+
+    /** Parse display precision back from the display format string
+     *  FIXME: This is still used by some navigation code path to infer a minimum tweak step, but we should aim to rework widgets so it isn't needed. */
     fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
-        var precision = defaultPrecision
-        if (fmt.contains('.')) {
-            val s = fmt.substringAfter('.').filter { it.isDigit() }
+        var i = parseFormatTrimDecorationsLeading(fmt)
+        if (fmt[i] != '%')
+            return defaultPrecision
+        i++
+        while (fmt[i] in '0'..'9')
+            i++
+        var precision = Int.MAX_VALUE
+        if (fmt[i] == '.') {
+            val s = fmt.substring(i).filter { it.isDigit() }
             if (s.isNotEmpty()) {
                 precision = s.parseInt
-                if (precision < 0 || precision > 10)
+                if (precision < 0 || precision > 99)
                     precision = defaultPrecision
             }
         }
-        if (fmt.contains('e', ignoreCase = true))    // Maximum precision with scientific notation
+        if (fmt[i].toLowerCase() == 'e')    // Maximum precision with scientific notation
             precision = -1
-        return precision
+        if (fmt[i].toLowerCase() == 'g' && precision == Int.MAX_VALUE)
+            precision = -1
+        return when (precision) {
+            Int.MAX_VALUE -> defaultPrecision
+            else -> precision
+        }
     }
 
-    fun roundScalar(value: Float, decimalPrecision: Int): Float {
-
-        /*  Round past decimal precision
-            So when our value is 1.99999 with a precision of 0.001 we'll end up rounding to 2.0
-            FIXME: Investigate better rounding methods  */
-        if (decimalPrecision < 0) return value
-        val minStep = getMinimumStepAtDecimalPrecision(decimalPrecision)
-        val negative = value < 0f
-        var value = glm.abs(value)
-        val remainder = value % minStep
-        if (remainder <= minStep * 0.5f)
-            value -= remainder
-        else
-            value += minStep - remainder
-        return if (negative) -value else value
+    fun roundScalarWithFormat(format: String, value: Float): Float {
+        return format.substring(parseFormatTrimDecorationsLeading(format)).format(value).parseFloat
     }
 
 

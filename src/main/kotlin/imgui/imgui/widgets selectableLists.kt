@@ -107,9 +107,9 @@ interface imgui_widgetsSelectableLists {
 
         /*  Hovering selectable with mouse updates navId accordingly so navigation can be resumed with gamepad/keyboard
             (this doesn't happen on most widgets)         */
-        if (pressed || hovered)// && (g.IO.MouseDelta.x != 0.0f || g.IO.MouseDelta.y != 0.0f))
-            if (!g.navDisableMouseHover && g.navWindow === window && g.navLayer == window.dc.navLayerActiveMask) {
-                g.navDisableHighlight = true;
+        if (pressed || hovered)
+            if (!g.navDisableMouseHover && g.navWindow === window && g.navLayer == window.dc.navLayerCurrent) {
+                g.navDisableHighlight = true
                 setNavId(id, window.dc.navLayerCurrent)
             }
 
