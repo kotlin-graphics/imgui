@@ -3,7 +3,7 @@ package imgui
 import gli_.has
 import glm_.c
 import glm_.glm
-import imgui.internal.isSpace
+import imgui.internal.isBlankW
 
 /** Internal state of the currently focused/edited text input box   */
 class TextEditState {
@@ -98,7 +98,7 @@ class TextEditState {
     }
 
     val Char.isSeparator
-        get() = this.isSpace || this == ',' || this == ';' || this == '(' || this == ')' ||
+        get() = isBlankW || this == ',' || this == ';' || this == '(' || this == ')' ||
                 this == '{' || this == '}' || this == '[' || this == ']' || this == '|'
 
     fun isWordBoundaryFromRight(idx: Int) = if (idx > 0) text[idx - 1].isSeparator && !text[idx].isSeparator else true

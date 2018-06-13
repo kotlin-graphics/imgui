@@ -236,16 +236,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var colorEditOptions: ColorEditFlags = ColorEditFlag._OptionsDefault.i
 
     val colorPickerRef = Vec4()
-    /** Currently dragged value, always float, not rounded by end-user precision settings   */
-    var dragCurrentValue = 0f
 
-    var dragLastMouseDelta = Vec2()
+    var dragCurrentAccumDirty = false
+    /** Accumulator for dragging modification. Always high-precision, not rounded by end-user precision settings */
+    var dragCurrentAccum = 0f
     /** If speed == 0.0f, uses (max-min) * DragSpeedDefaultRatio    */
     var dragSpeedDefaultRatio = 1f / 100f
 
-    var dragSpeedScaleSlow = 1f / 100
-
-    var dragSpeedScaleFast = 10f
     /** Distance between mouse and center of grab box, normalized in parent space. Use storage? */
     var scrollbarClickDeltaToGrabCenter = Vec2()
 

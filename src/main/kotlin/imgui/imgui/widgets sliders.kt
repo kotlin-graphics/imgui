@@ -39,11 +39,21 @@ import kotlin.reflect.KMutableProperty0
 interface imgui_widgetsSliders {
 
 
-    /** Use power!=1.0 for logarithmic sliders.
-     *  Adjust format to decorate the value with a prefix or a suffix. */
+    /** Adjust format to decorate the value with a prefix or a suffix.
+     *  "%.3f"         1.234
+     *  "%5.2f secs"   01.23 secs
+     *  "Gold: %.0f"   Gold: 1
+     *  Use power != 1.0f for non-linear sliders.
+     *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
     fun sliderFloat(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f) =
             sliderFloat(label, v, 0, vMin, vMax, format, power)
 
+    /** Adjust format to decorate the value with a prefix or a suffix.
+     *  "%.3f"         1.234
+     *  "%5.2f secs"   01.23 secs
+     *  "Gold: %.0f"   Gold: 1
+     *  Use power != 1.0f for non-linear sliders.
+     *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
     fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean {
         f0 = v[ptr]
         val res = sliderFloat(label, ::f0, vMin, vMax, format, power)
@@ -51,6 +61,12 @@ interface imgui_widgetsSliders {
         return res
     }
 
+    /** Adjust format to decorate the value with a prefix or a suffix.
+     *  "%.3f"         1.234
+     *  "%5.2f secs"   01.23 secs
+     *  "Gold: %.0f"   Gold: 1
+     *  Use power != 1.0f for non-linear sliders.
+     *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
     fun sliderFloat(label: String, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean {
 
         val window = currentWindow

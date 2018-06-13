@@ -10,9 +10,7 @@ import glm_.vec2.operators.div
 import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.ImGui.style
-import imgui.internal.fileLoadToCharArray
-import imgui.internal.isSpace
-import imgui.internal.upperPowerOfTwo
+import imgui.internal.*
 import imgui.stb.*
 import org.lwjgl.stb.*
 import org.lwjgl.stb.STBRectPack.stbrp_pack_rects
@@ -1101,7 +1099,7 @@ class Font {
                     // Wrapping skips upcoming blanks
                     while (s < textEnd) {
                         val c = text[s]
-                        if (c.isSpace)
+                        if (c.isBlankA)
                             s++
                         else if (c == '\n') {
                             s++
@@ -1206,7 +1204,7 @@ class Font {
                 }
             }
             val charWidth = indexAdvanceX.getOrElse(c.i, { fallbackAdvanceX })
-            if (c.isSpace) {
+            if (c.isBlankW) {
                 if (insideWord) {
                     lineWidth += blankWidth
                     blankWidth = 0.0f
@@ -1308,7 +1306,7 @@ class Font {
                     // Wrapping skips upcoming blanks
                     while (s < textEnd) {
                         val c = text[s]
-                        if (c.isSpace) s++
+                        if (c.isBlankA) s++
                         else if (c == '\n') {
                             s++
                             break

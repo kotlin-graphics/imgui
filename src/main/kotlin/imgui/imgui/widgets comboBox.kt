@@ -205,8 +205,9 @@ interface imgui_widgetsComboBox {
 
     companion object {
         private var i = 0
-        fun calcMaxPopupHeightFromItemCount(itemsCount: Int) =
-                if (itemsCount <= 0) Float.MAX_VALUE
-                else (g.fontSize + style.itemSpacing.y) * itemsCount - style.itemSpacing.y + style.windowPadding.y * 2
+        fun calcMaxPopupHeightFromItemCount(itemsCount: Int) = when {
+                itemsCount <= 0 -> Float.MAX_VALUE
+                else -> (g.fontSize + style.itemSpacing.y) * itemsCount - style.itemSpacing.y + style.windowPadding.y * 2
+        }
     }
 }

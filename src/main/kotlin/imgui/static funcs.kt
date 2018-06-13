@@ -411,7 +411,7 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
             char.set(c)
         }
 
-        if (flags has Itf.CharsNoBlank && c.isSpace)
+        if (flags has Itf.CharsNoBlank && c.isBlankW)
             return false
     }
 
@@ -500,14 +500,16 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
 //    return Format.format(style.locale, value).toCharArray(buf)
 //}
 
-fun KMutableProperty0<Number>.format(buf: CharArray, dataType: DataType, format: String): Int {
+/** DataTypeFormatString */
+fun KMutableProperty0<Number>.format(dataType: DataType, format: String): CharArray {
     val value: Number = when (dataType) {
-        DataType.Int, DataType.Uint -> this() as Int
+        DataType.Int, DataType.Uint -> this() as Int    // Signedness doesn't matter when pushing the argument
+        DataType.Long, DataType.Ulong -> this() as Long // Signedness doesn't matter when pushing the argument
         DataType.Float -> this() as Float
         DataType.Double -> this() as Double
         else -> throw Error()
     }
-    return format.format(style.locale, value).toCharArray(buf).size
+    return format.format(style.locale, value).toCharArray()
 }
 
 /** JVM Imgui, dataTypeFormatString replacement TODO check if needed */
@@ -544,9 +546,14 @@ fun KMutableProperty0<Number>.format(buf: CharArray, dataType: DataType, format:
 fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number): Number {
     assert(op == '+' || op == '-')
     return when (dataType) {
-        DataType.Int, DataType.Uint -> when (op) {
+        DataType.Int, DataType.Uint -> when (op) {  // Signedness doesn't matter when adding or subtracting
             '+' -> value1 as Int + (value2 as Int)
             '-' -> value1 as Int - (value2 as Int)
+            else -> throw Error()
+        }
+        DataType.Long, DataType.Ulong -> when (op) {  // Signedness doesn't matter when adding or subtracting
+            '+' -> value1 as Long + (value2 as Long)
+            '-' -> value1 as Long - (value2 as Long)
             else -> throw Error()
         }
         DataType.Float -> when (op) {
@@ -565,17 +572,16 @@ fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number
 
 /** User can input math operators (e.g. +100) to edit a numerical values.
  *  NB: This is _not_ a full expression evaluator. We should probably add one and replace this dumb mess.. */
-fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: IntArray,
-                            scalarFormat: String? = null): Boolean {
+fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: IntArray, format: String? = null): Boolean {
 
     i0 = data[0]
-    val res = dataTypeApplyOpFromText(buf, initialValueBuf, dataType, ::i0 as KMutableProperty0<Number>, scalarFormat)
+    val res = dataTypeApplyOpFromText(buf, initialValueBuf, dataType, ::i0 as KMutableProperty0<Number>, format)
     data[0] = i0
     return res
 }
 
-fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: KMutableProperty0<Number>,
-                            scalarFormat: String? = null): Boolean {
+fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, dataPtr: KMutableProperty0<Number>,
+                            format: String? = null): Boolean {
 
 //    var s = 0
 //    while (buf[s].isSpace)
@@ -602,12 +608,11 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
         NUL -> false
         else -> when (dataType) {
             DataType.Int -> {
-//                val scalarFormat = scalarFormat ?: "%d"
-                var v = data() as Int
+                val format = format ?: "%d"
+                var v = dataPtr() as Int
                 val oldV = v
-                val a: Int
-                try {
-                    a = Scanner(seq[0]).useLocale(style.locale).nextInt()
+                val a = try {
+                    seq[0].format(style.locale, format).i
                 } catch (_: Exception) {
                     return false
                 }
@@ -617,65 +622,55 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                         val op = seq[1][0]
                         /*  Store operand b in a float so we can use fractional value for multipliers (*1.1), but constant
                                 always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision  */
-                        val b = seq[2].f
                         when (op) {
-                            '+' -> (a + b).i                    // Add (use "+-" to subtract)
-                            '*' -> (a * b).i                    // Multiply
-                            '/' -> if (b != 0f) (a / b).i else v // Divide
+                            '+' -> a + seq[2].i         // Add (use "+-" to subtract)
+                            '*' -> (a * seq[2].f).i     // Multiply
+                            '/' -> {                    // Divide
+                                val b = seq[2].f
+                                when (b) {
+                                    0f -> v
+                                    else -> (a / b).i
+                                }
+                            }
                             else -> throw Error()
                         }
                     }
-                    else -> a   // Assign constant
+                    else -> try { // Assign constant
+                        seq[1].format(style.locale, format).i
+                    } catch (_: Exception) {
+                        v
+                    }
                 }
-                data.set(v)
+                dataPtr.set(v)
                 oldV != v
             }
-            DataType.Uint -> {
-//                val scalarFormat = scalarFormat ?: "%d"
-                var v = data() as Int
-                val oldV = v
-                val a: Int
-                try {
-                    a = Scanner(seq[0]).useLocale(style.locale).nextInt()
-                } catch (_: Exception) {
-                    return false
-                }
 
-                v = when (seq.size) {
-                    2 -> {   // TODO support more complex operations? i.e: a + b * c
-                        val op = seq[1][0]
-                        /*  Store operand b in a float so we can use fractional value for multipliers (*1.1), but constant
-                                always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision  */
-                        val b = seq[2].f
-                        when (op) {
-                            '+' -> (a + b).i                                    // Add (use "+-" to subtract)
-                            '*' -> (a * b).i                                    // Multiply
-                            '/' -> if (b != 0f) (a divideUnsigned b.i) else v    // Divide
-                            else -> throw Error()
-                        }
-                    }
-                    else -> a   // Assign constant
-                }
-                data.set(v)
-                oldV != v
-            }
+            DataType.Uint, DataType.Long, DataType.Ulong ->
+                /*  Assign constant
+                    FIXME: We don't bother handling support for legacy operators since they are a little too crappy.
+                    Instead we may implement a proper expression evaluator in the future.                 */
+                //sscanf(buf, format, data_ptr)
+                false
+
             DataType.Float -> {
                 // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
-//                val scalarFormat = scalarFormat ?: "%f"
-                var v = data() as Float
+                val format = format ?: "%f"
+                var v = dataPtr() as Float
                 val oldV = v
-                var a = 0f
-                try {
-                    a = Scanner(seq[0]).useLocale(style.locale).nextFloat()
+                val a = try {
+                    seq[0].format(style.locale, format).f
+                } catch (_: Exception) {
+                    return false
+                }
+                val b = try {
+                    seq[2].f
                 } catch (_: Exception) {
                     return false
                 }
 
                 v = when (seq.size) {
                     2 -> {   // TODO support more complex operations? i.e: a + b * c
-
                         val op = seq[1][0]
-                        val b = seq[2].f
                         when (op) {
                             '+' -> a + b                        // Add (use "+-" to subtract)
                             '*' -> a * b                        // Multiply
@@ -683,28 +678,30 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                             else -> throw Error()
                         }
                     }
-                    else -> a   // Assign constant
+                    else -> b   // Assign constant
                 }
-                data.set(v)
+                dataPtr.set(v)
                 oldV != v
             }
             DataType.Double -> {
                 // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
 //                val scalarFormat = scalarFormat ?: "%f"
-                var v = data() as Double
+                var v = dataPtr() as Double
                 val oldV = v
-                var a = 0.0
-                try {
-                    a = Scanner(seq[0]).useLocale(style.locale).nextDouble()
+                val a = try {
+                    seq[0].format(style.locale, format).d
+                } catch (_: Exception) {
+                    return false
+                }
+                val b = try {
+                    seq[2].d
                 } catch (_: Exception) {
                     return false
                 }
 
                 v = when (seq.size) {
                     2 -> {   // TODO support more complex operations? i.e: a + b * c
-
                         val op = seq[1][0]
-                        val b = seq[2].d
                         when (op) {
                             '+' -> a + b                        // Add (use "+-" to subtract)
                             '*' -> a * b                        // Multiply
@@ -712,9 +709,9 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                             else -> throw Error()
                         }
                     }
-                    else -> a   // Assign constant
+                    else -> b   // Assign constant
                 }
-                data.set(v)
+                dataPtr.set(v)
                 oldV != v
             }
             else -> false

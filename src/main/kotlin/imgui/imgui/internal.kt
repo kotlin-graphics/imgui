@@ -18,8 +18,8 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.colorButton
 import imgui.ImGui.contentRegionMax
-import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
+import imgui.ImGui.dragScalar
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
@@ -28,16 +28,13 @@ import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
-import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.indent
-import imgui.ImGui.inputFloat
 import imgui.ImGui.inputInt
 import imgui.ImGui.inputText
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
-import imgui.ImGui.isMousePosValid
 import imgui.ImGui.logText
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.openPopup
@@ -66,6 +63,7 @@ import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.TextEditState.K
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
+import imgui.imgui.imgui_main.Companion.dragBehaviorT
 import imgui.internal.*
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -1430,7 +1428,7 @@ interface imgui_internal {
 
         val isNonLinear = (power < 1.0f - 0.00001f) || (power > 1.0f + 0.00001f)
         val isHorizontal = flags hasnt SliderFlag.Vertical
-        val isDecimal = parseFormatPrecision(format, 3) > 0
+        val isDecimal = parseFormatPrecision(format, 3) != 0
 
         val grabPadding = 2f
         val sliderSz = (if (isHorizontal) frameBb.width else frameBb.height) - grabPadding * 2f
@@ -1444,15 +1442,16 @@ interface imgui_internal {
         val sliderUsablePosMin = (if (isHorizontal) frameBb.min.x else frameBb.min.y) + grabPadding + grabSz * 0.5f
         val sliderUsablePosMax = (if (isHorizontal) frameBb.max.x else frameBb.max.y) - grabPadding - grabSz * 0.5f
 
-        // For logarithmic sliders that cross over sign boundary we want the exponential increase to be symmetric around 0.0f
-        var linearZeroPos = 0f   // 0.0->1.0f
-        if (vMin * vMax < 0f) {
-            // Different sign
-            val linearDistMinTo0 = glm.pow(glm.abs(0f - vMin), 1f / power)
-            val linearDistMaxTo0 = glm.pow(glm.abs(vMax - 0f), 1f / power)
-            linearZeroPos = linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
-        } else  // Same sign
-            linearZeroPos = if (vMin < 0f) 1f else 0f
+        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
+        val linearZeroPos = when {   // 0.0->1.0f
+            vMin * vMax < 0f -> {
+                // Different sign
+                val linearDistMinTo0 = glm.pow(glm.abs(0f - vMin), 1f / power)
+                val linearDistMaxTo0 = glm.pow(glm.abs(vMax - 0f), 1f / power)
+                linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
+            } // Same sign
+            else -> if (vMin < 0f) 1f else 0f
+        }
 
         // Process interacting with the slider
         var valueChanged = false
@@ -1477,15 +1476,16 @@ interface imgui_internal {
                     clearActiveId()
                 else if (delta != 0f) {
                     clickedT = sliderBehaviorCalcRatioFromValue(v(), vMin, vMax, power, linearZeroPos)
-                    if (!isDecimal && !isNonLinear) {
-                        delta =
-                                if (abs(vMax - vMin) <= 100f || NavInput.TweakSlow.isDown())
-                                    (if (delta < 0f) -1f else 1f) / (vMax - vMin) // Gamepad/keyboard tweak speeds in integer steps
-                                else delta / 100f
-                    } else {
-                        delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
-                        if (NavInput.TweakSlow.isDown())
-                            delta /= 10f
+                    delta = when {
+                        !isDecimal && !isNonLinear -> when {
+                        // Gamepad/keyboard tweak speeds in integer steps
+                            abs(vMax - vMin) <= 100f || NavInput.TweakSlow.isDown() -> (if (delta < 0f) -1f else 1f) / (vMax - vMin)
+                            else -> delta / 100f
+                        }
+                        else -> when {// Gamepad/keyboard tweak speeds in % of slider bounds
+                            NavInput.TweakSlow.isDown() -> delta / 1_000f
+                            else -> delta / 100f
+                        }
                     }
                     if (NavInput.TweakFast.isDown())
                         delta *= 10f
@@ -1501,7 +1501,7 @@ interface imgui_internal {
             if (setNewValue) {
                 var newValue =
                         if (isNonLinear) {
-                            // Account for logarithmic scale on both sides of the zero
+                            // Account for power curve scale on both sides of the zero
                             if (clickedT < linearZeroPos) {
                                 // Negative: rescale to the negative range before powering
                                 var a = 1f - (clickedT / linearZeroPos)
@@ -1518,7 +1518,7 @@ interface imgui_internal {
                             }
                         } else lerp(vMin, vMax, clickedT) // Linear slider
                 // Round past decimal precision
-                newValue = roundScalarWithFormat(format, newValue)
+                newValue = format.substring(parseFormatFindStart(format)).format(style.locale, newValue).f
                 if (v() != newValue) {
                     v.set(newValue)
                     valueChanged = true
@@ -1609,101 +1609,30 @@ interface imgui_internal {
         return valueChanged
     }
 
-    fun dragBehavior(frameBb: Rect, id: ID, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float, vMax: Float, format: String,
+    fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
                      power: Float): Boolean {
-
         f0 = v[ptr]
-        val res = dragBehavior(frameBb, id, ::f0, vSpeed, vMin, vMax, format, power)
+        val res = dragBehavior(id, DataType.Float, ::f0 as KMutableProperty0<Number>, vSpeed, vMin, vMax, format, power)
         v[ptr] = f0
         return res
     }
 
-    fun dragBehavior(frameBb: Rect, id: ID, v: KMutableProperty0<Float>, vSpeed: Float, vMin: Float, vMax: Float, format: String,
-                     power: Float): Boolean {
-
-        // Draw frame
-        val frameCol = when (id) {
-            g.activeId -> Col.FrameBgActive
-            g.hoveredId -> Col.FrameBgHovered
-            else -> Col.FrameBg
-        }
-        renderNavHighlight(frameBb, id)
-        renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
-
-        // Process interacting with the drag
-        if (g.activeId == id) {
-            if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
-                clearActiveId()
-            else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                clearActiveId()
-        }
-        if (g.activeId != id)
-            return false
-
-        // Default tweak speed
-        var vSpeed = vSpeed
-        if (vSpeed == 0f && (vMax - vMin) != 0f && (vMax - vMin) < Float.MAX_VALUE)
-            vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
-
-        if (g.activeIdIsJustActivated) {
-            // Lock current value on click
-            g.dragCurrentValue = v()
-            g.dragLastMouseDelta put 0f
-        }
-
-        val mouseDragDelta = getMouseDragDelta(0, 1f)
-        var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid()) {
-            adjustDelta = mouseDragDelta.x - g.dragLastMouseDelta.x
-            if (io.keyShift && g.dragSpeedScaleFast >= 0f)
-                adjustDelta *= g.dragSpeedScaleFast
-            if (io.keyAlt && g.dragSpeedScaleSlow >= 0f)
-                adjustDelta *= g.dragSpeedScaleSlow
-            g.dragLastMouseDelta.x = mouseDragDelta.x
-        }
-        if (g.activeIdSource == InputSource.Nav) {
-            val decimalPrecision = parseFormatPrecision(format, 3)
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
-            vSpeed = max(vSpeed, getMinimumStepAtDecimalPrecision(decimalPrecision))
-        }
-        adjustDelta *= vSpeed
-
-        /*  Avoid applying the saturation when we are _already_ past the limits and heading in the same direction,
-            so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300         */
-        var vCur = g.dragCurrentValue
-        if (vMin < vMax && ((vCur >= vMax && adjustDelta > 0f) || (vCur <= vMin && adjustDelta < 0f)))
-            adjustDelta = 0f
-
-        if (abs(adjustDelta) > 0f) {
-            if (abs(power - 1f) > 0.001f) {
-                // Logarithmic curve on both side of 0.0
-                val v0_abs = if (vCur >= 0f) vCur else -vCur
-                val v0_sign = if (vCur >= 0f) 1f else -1f
-                val v1 = glm.pow(v0_abs, 1f / power) + adjustDelta * v0_sign
-                val v1_abs = if (v1 >= 0f) v1 else -v1
-                val v1_sign = if (v1 >= 0f) 1f else -1f       // Crossed sign line
-                vCur = glm.pow(v1_abs, power) * v0_sign * v1_sign   // Reapply sign
-            } else
-                vCur += adjustDelta
-
-            // Clamp
-            if (vMin < vMax)
-                vCur = glm.clamp(vCur, vMin, vMax)
-            g.dragCurrentValue = vCur
-        }
-
-        // Round to user desired precision, then apply
-        var valueChanged = false
-        vCur = roundScalarWithFormat(format, vCur)
-        if (v() != vCur) {
-            v.set(vCur)
-            valueChanged = true
-        }
-
-        return valueChanged
+    fun dragBehavior(id: ID, dataType: DataType, v: KMutableProperty0<Number>, vSpeed: Float, vMin: Number?, vMax: Number?,
+                     format: String, power: Float): Boolean = when (dataType) {
+        DataType.Int, DataType.Uint -> dragBehaviorT(id, dataType, v as KMutableProperty0<Int>, vSpeed, vMin as? Int
+                ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power)
+        DataType.Long, DataType.Ulong -> dragBehaviorT(id, dataType, v as KMutableProperty0<Long>, vSpeed, vMin as? Long
+                ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power)
+        DataType.Float -> dragBehaviorT(id, dataType, v as KMutableProperty0<Float>, vSpeed, vMin as? Float
+                ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power)
+        DataType.Double -> dragBehaviorT(id, dataType, v as KMutableProperty0<Double>, vSpeed, vMin as? Double
+                ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power)
+        else -> throw Error()
     }
 
-    fun dragFloatN(label: String, v: FloatArray, components: Int, vSpeed: Float, vMin: Float, vMax: Float, format: String, power: Float): Boolean {
+    fun dragFloatN(label: String, v: FloatArray, components: Int, vSpeed: Float, vMin: Float, vMax: Float, format: String, power: Float)
+            : Boolean {
+
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -1713,7 +1642,9 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withFloat(v, i) { valueChanged = dragFloat("##v", it, vSpeed, vMin, vMax, format, power) || valueChanged }
+            withFloat(v, i) {
+                valueChanged = dragScalar("##v", DataType.Float, it as KMutableProperty0<Number>, vSpeed, vMin, vMax, format, power) || valueChanged
+            }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -1724,6 +1655,17 @@ interface imgui_internal {
         endGroup()
 
         return valueChanged
+    }
+
+    fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
+                  format: String = "%.3f", power: Float = 1f): Boolean =
+            dragScalar(label, DataType.Float, v as KMutableProperty0<Number>, vSpeed, vMin, vMax, format, power)
+
+    fun dragFloat(label: String, v: FloatArray, ptr: Int, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
+                  format: String = "%.3f", power: Float = 1f): Boolean {
+        return withFloat(v, ptr) {
+            dragScalar(label, DataType.Float, it as KMutableProperty0<Number>, vSpeed, vMin, vMax, format, power)
+        }
     }
 
     fun dragIntN(label: String, v: IntArray, components: Int, vSpeed: Float, vMin: Int, vMax: Int, format: String): Boolean {
@@ -2361,7 +2303,9 @@ interface imgui_internal {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withFloat(v, i) { valueChanged = inputFloat("##v", it, 0f, 0f, format, extraFlags) || valueChanged }
+            withFloat(v, i) {
+                valueChanged = inputScalar("##v", DataType.Float, it as KMutableProperty0<Number>, 0f, 0f, format, extraFlags) || valueChanged
+            }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -2395,37 +2339,36 @@ interface imgui_internal {
         return valueChanged
     }
 
-    /** NB: scalar_format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
+    /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
      *  functions "format" argument)    */
-    fun inputScalarEx(label: String, dataType: DataType, data: IntArray, step: Number?, stepFast: Number?, scalarFormat: String,
-                      extraFlags: InputTextFlags = 0): Boolean {
+    fun inputScalar(label: String, dataType: DataType, data: IntArray, step: Number?, stepFast: Number?, format: String,
+                    extraFlags: InputTextFlags = 0): Boolean {
         i0 = data[0]
-        val res = inputScalarEx(label, dataType, ::i0 as KMutableProperty0<Number>, step, stepFast, scalarFormat, extraFlags)
+        val res = inputScalar(label, dataType, ::i0 as KMutableProperty0<Number>, step, stepFast, format, extraFlags)
         data[0] = i0
         return res
     }
 
-    /** NB: scalar_format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
+    /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
      *  functions "format" argument)    */
-    fun inputScalarEx(label: String, dataType: DataType, data: KMutableProperty0<Number>, step: Number?, stepFast: Number?,
-                      scalarFormat: String, extraFlags: Int): Boolean {
+    fun inputScalar(label: String, dataType: DataType, data: KMutableProperty0<Number>, step: Number?, stepFast: Number?,
+                    scalarFormat: String, extraFlags: Int): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
-        val buf = CharArray(64)
-        data.format(buf, dataType, scalarFormat)
+        val buf = data.format(dataType, scalarFormat)
 
         var valueChanged = false
-        var flags = extraFlags
-        if (flags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
-            flags = flags or Itf.CharsDecimal
-        flags = flags or Itf.AutoSelectAll
+        var extraFlags = extraFlags
+        if (extraFlags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
+            extraFlags = extraFlags or Itf.CharsDecimal
+        extraFlags = extraFlags or Itf.AutoSelectAll
 
-        if(step != null) {
+        if (step != null) {
             val buttonSize = frameHeight
 
-            beginGroup(); // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
+            beginGroup() // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
             pushId(label)
             pushItemWidth(max(1f, calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
             if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
@@ -2448,8 +2391,7 @@ interface imgui_internal {
 
             popId()
             endGroup()
-        }
-        else if (inputText(label, buf, extraFlags))
+        } else if (inputText(label, buf, extraFlags))
             valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, scalarFormat)
 
         return valueChanged
@@ -2469,20 +2411,22 @@ interface imgui_internal {
         setHoveredId(0)
         focusableItemUnregister(window)
 
-        val buf = CharArray(32)
-        data.format(buf, dataType, format)
+        val fmtBuf = CharArray(32)
+        val format = parseFormatTrimDecorations(format, fmtBuf)
+        var dataBuf = data.format(dataType, format)
+        dataBuf = trimBlanks(dataBuf)
         val flags = Itf.AutoSelectAll or when (dataType) {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
-        val valueChanged = inputTextEx(label, buf, bb.size, flags)
+        val valueChanged = inputTextEx(label, dataBuf, bb.size, flags)
         if (g.scalarAsInputTextId == 0) {   // First frame we started displaying the InputText widget
             assert(g.activeId == id) // InputText ID expected to match the Slider ID
             g.scalarAsInputTextId = g.activeId
             setHoveredId(id)
         }
         return when {
-            valueChanged -> dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data)
+            valueChanged -> dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialText, dataType, data)
             else -> false
         }
     }
@@ -2895,15 +2839,33 @@ interface imgui_internal {
         io.wantTextInput = if (g.wantTextInputNextFrame != -1) g.wantTextInputNextFrame != 0 else false
     }
 
-    fun parseFormatTrimDecorationsLeading(fmt: String): Int {
+    fun parseFormatFindStart(fmt: String): Int {
         var i = 0
-        var c = fmt[i++]
+        var c = fmt[i]
         while (c != NUL) {
             if (c == '%' && fmt[i + 1] != '%')
                 return i
             else if (c == '%')
                 i++
-            c = fmt[i++]
+            c = fmt[++i]
+        }
+        return i
+    }
+
+    fun parseFormatFindEnd(fmt: String, i: Int = 0): Int {
+        var i = i
+        // Printf/scanf types modifiers: I/L/h/j/l/t/w/z. Other uppercase letters qualify as types aka end of the format.
+        if (fmt[i] != '%')
+            return i
+        val ignoredUppercaseMask = (1 shl ('I' - 'A')) or (1 shl ('L' - 'A'))
+        val ignoredLowercaseMask = (1 shl ('h' - 'a')) or (1 shl ('j' - 'a')) or (1 shl ('l' - 'a')) or (1 shl ('t' - 'a')) or (1 shl ('w' - 'a')) or (1 shl ('z' - 'a'))
+        var c = fmt[i]
+        while (c != NUL && i < fmt.length) {
+            if (c in 'A'..'Z' && (1 shl (c - 'A')) hasnt ignoredUppercaseMask)
+                return i + 1
+            if (c in 'a'..'z' && (1 shl (c - 'a')) hasnt ignoredLowercaseMask)
+                return i + 1
+            c = fmt[++i]
         }
         return i
     }
@@ -2914,32 +2876,19 @@ interface imgui_internal {
      *  fmt = "hello %.3f" -> return fmt + 6
      *  fmt = "%.3f hello" -> return buf written with "%.3f" */
     fun parseFormatTrimDecorations(fmt: String, buf: CharArray): String {
-        // We don't use strchr() because our strings are usually very short and often start with '%'
-        val fmtStart = parseFormatTrimDecorationsLeading(fmt)
+        val fmtStart = parseFormatFindStart(fmt)
         if (fmt[fmtStart] != '%')
             return fmt
-        var i = fmtStart
-        var c = fmt[i++]
-        while (c != NUL) {
-            if (c in 'A'..'Z' && c != 'L')  // L is a type modifier, other letters qualify as types aka end of the format
-                break
-            // h/j/l/t/w/z are type modifiers, other letters qualify as types aka end of the format
-            if (c in 'a'..'z' && c != 'h' && c != 'j' && c != 'l' && c != 't' && c != 'w' && c != 'z')
-                break
-            c = fmt[i++]
-        }
-        if (fmt[i] == NUL) // If we only have leading decoration, we don't need to copy the data.
+        val fmtEnd = parseFormatFindEnd(fmt.substring(fmtStart))
+        if (fmt[fmtEnd] == NUL) // If we only have leading decoration, we don't need to copy the data.
             return fmt.substring(fmtStart)
-        val size = min(i + 1 - fmtStart, buf.size)
-        for (j in 0 until size)
-            buf[j] = fmt[fmtStart + j]
-        return String(buf)
+        return String(buf, fmtStart, min((fmtEnd + 1 - fmtStart), buf.size))
     }
 
     /** Parse display precision back from the display format string
      *  FIXME: This is still used by some navigation code path to infer a minimum tweak step, but we should aim to rework widgets so it isn't needed. */
     fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
-        var i = parseFormatTrimDecorationsLeading(fmt)
+        var i = parseFormatFindStart(fmt)
         if (fmt[i] != '%')
             return defaultPrecision
         i++
@@ -2963,11 +2912,6 @@ interface imgui_internal {
             else -> precision
         }
     }
-
-    fun roundScalarWithFormat(format: String, value: Float): Float {
-        return format.substring(parseFormatTrimDecorationsLeading(format)).format(value).parseFloat
-    }
-
 
     //-----------------------------------------------------------------------------
     // Shade functions (write over already created vertices)
@@ -3042,7 +2986,11 @@ interface imgui_internal {
 
         fun getMinimumStepAtDecimalPrecision(decimalPrecision: Int): Float {
             val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
-            return if (decimalPrecision in 0..9) minSteps[decimalPrecision] else glm.pow(10f, -decimalPrecision.f)
+            return when {
+                decimalPrecision < 0 -> Float.MIN_VALUE
+                decimalPrecision in 0..9 -> minSteps[decimalPrecision]
+                else -> glm.pow(10f, -decimalPrecision.f)
+            }
         }
 
         fun acos01(x: Float) = when {
