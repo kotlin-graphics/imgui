@@ -26,6 +26,7 @@ import imgui.ImGui.combo
 import imgui.ImGui.cursorPos
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
+import imgui.ImGui.dragScalar
 import imgui.ImGui.dragFloat2
 import imgui.ImGui.dragFloat3
 import imgui.ImGui.dragFloat4
@@ -133,7 +134,7 @@ object widgets {
     var i0 = 123
     var f0 = 0.001f
     var f1 = 1e10f
-    var d0 = 999999.000001
+    var d0 = 999999.00000001
     val vec4a = floatArrayOf(0.1f, 0.2f, 0.3f, 0.44f)
     var i1 = 50
     var i2 = 42
@@ -319,7 +320,7 @@ object widgets {
 
                     inputFloat("input float", ::f0, 0.01f, 1f)
 
-                    inputDouble("input double", ::d0, 0.01, 1.0, "%.6f")
+                    inputDouble("input double", ::d0, 0.01, 1.0, "%.8f")
 
                     inputFloat("input scientific", ::f1, 0f, 0f, "%e")
                     sameLine(); showHelpMarker("You can input value using the scientific notation,\n  e.g. \"1e+8\" becomes \"100000000\".\n")
@@ -832,16 +833,16 @@ object widgets {
                 inputFloat2("input float2", vec4f)
                 dragFloat2("drag float2", vec4f, 0.01f, 0f, 1f)
                 sliderFloat2("slider float2", vec4f, 0f, 1f)
-                dragInt2("drag int2", vec4i, 1f, 0, 255)
                 inputInt2("input int2", vec4i)
+                dragInt2("drag int2", vec4i, 1f, 0, 255)
                 sliderInt2("slider int2", vec4i, 0, 255)
                 spacing()
 
                 inputFloat3("input float3", vec4f)
                 dragFloat3("drag float3", vec4f, 0.01f, 0.0f, 1.0f)
                 sliderFloat3("slider float3", vec4f, 0.0f, 1.0f)
-                dragInt3("drag int3", vec4i, 1f, 0, 255)
                 inputInt3("input int3", vec4i)
+                dragInt3("drag int3", vec4i, 1f, 0, 255)
                 sliderInt3("slider int3", vec4i, 0, 255)
                 spacing()
 

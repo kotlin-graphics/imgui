@@ -19,6 +19,7 @@ import imgui.ImGui.contentRegionAvailWidth
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.cursorStartPos
 import imgui.ImGui.dragFloat
+import imgui.ImGui.dragScalar
 import imgui.ImGui.dragInt
 import imgui.ImGui.dragVec2
 import imgui.ImGui.dummy

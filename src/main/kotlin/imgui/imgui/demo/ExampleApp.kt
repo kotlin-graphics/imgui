@@ -20,6 +20,7 @@ import imgui.ImGui.columns
 import imgui.ImGui.combo
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
+import imgui.ImGui.dragScalar
 import imgui.ImGui.dragInt
 import imgui.ImGui.dummy
 import imgui.ImGui.end
@@ -1243,7 +1244,7 @@ object StyleEditor {
                     popFont()
                     val scale = floatArrayOf(font.scale)
                     // Scale only this font
-                    dragFloat("Font scale", scale, 0.005f, 0.3f, 2f, "%.1f")
+                    dragScalar("Font scale", scale, 0.005f, 0.3f, 2f, "%.1f")
                     inputFloat("Font offset", font.displayOffset::y, 1f, 1f)
                     font.scale = scale[0]
                     sameLine()
@@ -1298,10 +1299,10 @@ object StyleEditor {
                 }
             }
             val pF = floatArrayOf(windowScale)
-            dragFloat("this window scale", pF, 0.005f, 0.3f, 2f, "%.1f")    // scale only this window
+            dragScalar("this window scale", pF, 0.005f, 0.3f, 2f, "%.1f")    // scale only this window
             windowScale = pF[0]
             pF[0] = io.fontGlobalScale
-            dragFloat("global scale", pF, 0.005f, 0.3f, 2f, "%.1f") // scale everything
+            dragScalar("global scale", pF, 0.005f, 0.3f, 2f, "%.1f") // scale everything
             io.fontGlobalScale = pF[0]
             popItemWidth()
             setWindowFontScale(windowScale)

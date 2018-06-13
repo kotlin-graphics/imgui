@@ -25,8 +25,8 @@ import imgui.ImGui.colorEditOptionsPopup
 import imgui.ImGui.colorTooltip
 import imgui.ImGui.currentWindow
 import imgui.ImGui.cursorScreenPos
-import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
+import imgui.ImGui.dragScalar
 import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.endGroup
@@ -83,9 +83,9 @@ interface imgui_widgetsColorEditorPicker {
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
     fun colorEdit3(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean {
         val floats = col to FloatArray(4)
-        val res = colorEdit4(label, floats, flags or Cef.NoAlpha)
-        col put floats
-        return res
+        return colorEdit4(label, floats, flags or Cef.NoAlpha).also {
+            col put floats
+        }
     }
 
     fun colorEdit3(label: String, col: FloatArray, flags: ColorEditFlags = 0) = colorEdit4(label, col, flags or Cef.NoAlpha)
@@ -96,9 +96,9 @@ interface imgui_widgetsColorEditorPicker {
      *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
     fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean {
         val floats = col to FloatArray(4)
-        val res = colorEdit4(label, floats, flags)
-        col put floats
-        return res
+        return colorEdit4(label, floats, flags).also {
+            col put floats
+        }
     }
 
     fun colorEdit4(label: String, col: FloatArray, flags: ColorEditFlags = 0): Boolean {
@@ -164,12 +164,14 @@ interface imgui_widgetsColorEditorPicker {
             for (n in 0 until components) {
                 if (n > 0) sameLine(0f, style.itemInnerSpacing.x)
                 if (n + 1 == components) pushItemWidth(wItemLast)
-                if (flags has Cef.Float) {
-                    // operands inverted to have dragFloat always executed, no matter valueChanged
-                    valueChangedAsFloat = dragFloat(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n]) || valueChanged
-                    valueChanged = valueChangedAsFloat
-                } else
-                    valueChanged = dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n]) || valueChanged
+                valueChanged = when {
+                    flags has Cef.Float -> {
+                        // operands inverted to have dragScalar always executed, no matter valueChanged
+                        valueChangedAsFloat = dragScalar(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n]) || valueChanged
+                        valueChangedAsFloat
+                    }
+                    else -> dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n]) || valueChanged
+                }
                 if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
             }
             popItemWidth()
@@ -184,7 +186,7 @@ interface imgui_widgetsColorEditorPicker {
             if (inputText("##Text", buf, Itf.CharsHexadecimal or Itf.CharsUppercase)) {
                 valueChanged = true
                 var p = 0
-                while (buf[p] == '#' || buf[p].isSpace) p++
+                while (buf[p] == '#' || buf[p].isBlankA) p++
                 i.fill(0)
                 String(buf, p, buf.strlen - p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
             }

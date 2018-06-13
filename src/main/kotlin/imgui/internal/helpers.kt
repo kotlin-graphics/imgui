@@ -78,6 +78,25 @@ import kotlin.reflect.KMutableProperty0
 //IMGUI_API int           ImTextCountUtf8BytesFromStr(const ImWchar* in_text, const ImWchar* in_text_end);                   // return number of bytes to express string as UTF-8 code-points
 
 
+// Helpers: String
+
+
+/** Trim str by offsetting contents when there's leading data + writing a \0 at the trailing position.
+ *  We use this in situation where the cost is negligible. */
+fun trimBlanks(buf: CharArray): CharArray {
+    var p = 0
+    while (buf[p] == ' ' || buf[p] == '\t')     // Leading blanks
+        p++
+    val start = p
+    p = buf.size    // end of string
+    while (p > start && (buf[p - 1] == ' ' || buf[p - 1] == '\t'))  // Trailing blanks
+        p--
+    return when (start) {
+        0 -> buf
+        else -> CharArray(p - start) { buf[start + it] }
+    }
+}
+
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: Misc
 // -----------------------------------------------------------------------------------------------------------------
@@ -188,7 +207,8 @@ fun triangleClosestPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Vec2 {
     }
 }
 
-val Char.isSpace get() = this == ' ' || this == '\t' || this.i == 0x3000
+val Char.isBlankA get() = this == ' ' || this == '\t'
+val Char.isBlankW get() = this == ' ' || this == '\t' || i == 0x3000
 val Int.isPowerOfTwo get() = this != 0 && (this and (this - 1)) == 0
 val Int.upperPowerOfTwo: Int
     get() {

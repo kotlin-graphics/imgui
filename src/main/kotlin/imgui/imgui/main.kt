@@ -17,14 +17,19 @@ import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
 import imgui.ImGui.newFrameUpdateHoveredWindowAndCaptureFlags
+import imgui.ImGui.parseFormatFindStart
+import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.style
+import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.reflect.KMutableProperty0
 import imgui.ConfigFlag as Cf
 import imgui.WindowFlag as Wf
 import imgui.internal.DrawListFlag as Dlf
@@ -586,6 +591,394 @@ interface imgui_main {
                     focusWindow.focus()
                     return
                 }
+        }
+
+        fun dragBehaviorT(id: ID, dataType: DataType, v: KMutableProperty0<Int>, vSpeed: Float, vMin: Int, vMax: Int, format: String,
+                          power: Float): Boolean {
+
+            // Process interacting with the drag
+            if (g.activeId == id)
+                if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
+                    clearActiveId()
+                else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                    clearActiveId()
+            if (g.activeId != id)
+                return false
+
+            // Default tweak speed
+            val hasMinMax = vMin != vMax && (vMax - vMax < Int.MAX_VALUE)
+            var vSpeed = vSpeed
+            if (vSpeed == 0f && hasMinMax)
+                vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
+
+            // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
+            var adjustDelta = 0f
+            if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+                adjustDelta = io.mouseDelta.x
+                if (io.keyAlt)
+                    adjustDelta *= 1f / 100f
+                if (io.keyShift)
+                    adjustDelta *= 10f
+            }
+            if (g.activeIdSource == InputSource.Nav) {
+                val decimalPrecision = parseFormatPrecision(format, 3)
+                adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
+                vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
+            }
+            adjustDelta *= vSpeed
+
+            /*  Clear current value on activation
+                Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
+                so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
+            val isJustActivated = g.activeIdIsJustActivated
+            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
+            if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
+                g.dragCurrentAccum = 0f
+                g.dragCurrentAccumDirty = false
+            } else if (adjustDelta != 0f) {
+                g.dragCurrentAccum += adjustDelta
+                g.dragCurrentAccumDirty = true
+            }
+
+            if (!g.dragCurrentAccumDirty)
+                return false
+
+            var vCur = v()
+            var vOldRefForAccumRemainder = 0f
+
+            val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
+            if (isPower) {
+                // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
+                val vOldNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
+                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
+                vCur = vMin + glm.pow(saturate(vNewNormCurved), power).i * (vMax - vMin)
+                vOldRefForAccumRemainder = vOldNormCurved
+            } else vCur += g.dragCurrentAccum.i
+
+            // Round to user desired precision based on format string
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vCur)
+            vCur = when (dataType) {
+                DataType.Float, DataType.Double -> vStr.f.i
+                else -> vStr.i
+            }
+            // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
+            g.dragCurrentAccumDirty = false
+            g.dragCurrentAccum -= when {
+                isPower -> {
+                    val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
+                    vCurNormCurved - vOldRefForAccumRemainder
+                }
+                else -> (vCur - v()).f
+            }
+
+            // Lose zero sign for float/double
+            if (vCur == -0)
+                vCur = 0
+
+            // Clamp values (handle overflow/wrap-around)
+            if (v() != vCur && hasMinMax) {
+                if (vCur < vMin || (vCur > v() && adjustDelta < 0f))
+                    vCur = vMin
+                if (vCur > vMax || (vCur < v() && adjustDelta > 0f))
+                    vCur = vMax
+            }
+
+            // Apply result
+            if (v() == vCur)
+                return false
+            v.set(vCur)
+            return true
+        }
+
+        fun dragBehaviorT(id: ID, dataType: DataType, v: KMutableProperty0<Long>, vSpeed: Float, vMin: Long, vMax: Long, format: String,
+                          power: Float): Boolean {
+
+            // Process interacting with the drag
+            if (g.activeId == id)
+                if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
+                    clearActiveId()
+                else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                    clearActiveId()
+            if (g.activeId != id)
+                return false
+
+            // Default tweak speed
+            val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
+            var vSpeed = vSpeed
+            if (vSpeed == 0f && hasMinMax)
+                vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
+
+            // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
+            var adjustDelta = 0f
+            if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+                adjustDelta = io.mouseDelta.x
+                if (io.keyAlt)
+                    adjustDelta *= 1f / 100f
+                if (io.keyShift)
+                    adjustDelta *= 10f
+            }
+            if (g.activeIdSource == InputSource.Nav) {
+                val decimalPrecision = parseFormatPrecision(format, 3)
+                adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
+                vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
+            }
+            adjustDelta *= vSpeed
+
+            /*  Clear current value on activation
+                Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
+                so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
+            val isJustActivated = g.activeIdIsJustActivated
+            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
+            if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
+                g.dragCurrentAccum = 0f
+                g.dragCurrentAccumDirty = false
+            } else if (adjustDelta != 0f) {
+                g.dragCurrentAccum += adjustDelta
+                g.dragCurrentAccumDirty = true
+            }
+
+            if (!g.dragCurrentAccumDirty)
+                return false
+
+            var vCur = v()
+            var vOldRefForAccumRemainder = 0.0
+
+            val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
+            if (isPower) {
+                // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
+                val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)
+                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
+                vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power).L * (vMax - vMin)
+                vOldRefForAccumRemainder = vOldNormCurved
+            } else vCur += g.dragCurrentAccum.i
+
+            // Round to user desired precision based on format string
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vCur)
+            vCur = when (dataType) {
+                DataType.Float, DataType.Double -> vStr.f.L
+                else -> vStr.L
+            }
+            // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
+            g.dragCurrentAccumDirty = false
+            g.dragCurrentAccum -= when {
+                isPower -> {
+                    val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
+                    (vCurNormCurved - vOldRefForAccumRemainder).f
+                }
+                else -> (vCur - v()).f
+            }
+
+            // Lose zero sign for float/double
+            if (vCur == -0L)
+                vCur = 0
+
+            // Clamp values (handle overflow/wrap-around)
+            if (v() != vCur && hasMinMax) {
+                if (vCur < vMin || (vCur > v() && adjustDelta < 0f))
+                    vCur = vMin
+                if (vCur > vMax || (vCur < v() && adjustDelta > 0f))
+                    vCur = vMax
+            }
+
+            // Apply result
+            if (v() == vCur)
+                return false
+            v.set(vCur)
+            return true
+        }
+
+        fun dragBehaviorT(id: ID, dataType: DataType, v: KMutableProperty0<Float>, vSpeed: Float, vMin: Float, vMax: Float, format: String,
+                          power: Float): Boolean {
+
+            // Process interacting with the drag
+            if (g.activeId == id)
+                if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
+                    clearActiveId()
+                else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                    clearActiveId()
+            if (g.activeId != id)
+                return false
+
+            // Default tweak speed
+            val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
+            var vSpeed = vSpeed
+            if (vSpeed == 0f && hasMinMax)
+                vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
+
+            // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
+            var adjustDelta = 0f
+            if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+                adjustDelta = io.mouseDelta.x
+                if (io.keyAlt)
+                    adjustDelta *= 1f / 100f
+                if (io.keyShift)
+                    adjustDelta *= 10f
+            }
+            if (g.activeIdSource == InputSource.Nav) {
+                val decimalPrecision = parseFormatPrecision(format, 3)
+                adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
+                vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
+            }
+            adjustDelta *= vSpeed
+
+            /*  Clear current value on activation
+                Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
+                so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
+            val isJustActivated = g.activeIdIsJustActivated
+            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
+            if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
+                g.dragCurrentAccum = 0f
+                g.dragCurrentAccumDirty = false
+            } else if (adjustDelta != 0f) {
+                g.dragCurrentAccum += adjustDelta
+                g.dragCurrentAccumDirty = true
+            }
+
+            if (!g.dragCurrentAccumDirty)
+                return false
+
+            var vCur = v()
+            var vOldRefForAccumRemainder = 0.0
+
+            val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
+            if (isPower) {
+                // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
+                val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)
+                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
+                vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power).L * (vMax - vMin)
+                vOldRefForAccumRemainder = vOldNormCurved
+            } else vCur += g.dragCurrentAccum.i
+
+            // Round to user desired precision based on format string
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vCur)
+            vCur = when (dataType) {
+                DataType.Float, DataType.Double -> vStr.f
+                else -> vStr.L.f
+            }
+            // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
+            g.dragCurrentAccumDirty = false
+            g.dragCurrentAccum -= when {
+                isPower -> {
+                    val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
+                    (vCurNormCurved - vOldRefForAccumRemainder).f
+                }
+                else -> (vCur - v()).f
+            }
+
+            // Lose zero sign for float/double
+            if (vCur == -0f)
+                vCur = 0f
+
+            // Clamp values (handle overflow/wrap-around)
+            if (v() != vCur && hasMinMax) {
+                if (vCur < vMin || (vCur > v() && adjustDelta < 0f))
+                    vCur = vMin
+                if (vCur > vMax || (vCur < v() && adjustDelta > 0f))
+                    vCur = vMax
+            }
+
+            // Apply result
+            if (v() == vCur)
+                return false
+            v.set(vCur)
+            return true
+        }
+
+        fun dragBehaviorT(id: ID, dataType: DataType, v: KMutableProperty0<Double>, vSpeed: Float, vMin: Double, vMax: Double, format: String,
+                          power: Float): Boolean {
+
+            // Process interacting with the drag
+            if (g.activeId == id)
+                if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
+                    clearActiveId()
+                else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                    clearActiveId()
+            if (g.activeId != id)
+                return false
+
+            // Default tweak speed
+            val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
+            var vSpeed = vSpeed
+            if (vSpeed == 0f && hasMinMax)
+                vSpeed = (vMax - vMin).f * g.dragSpeedDefaultRatio
+
+            // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
+            var adjustDelta = 0f
+            if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+                adjustDelta = io.mouseDelta.x
+                if (io.keyAlt)
+                    adjustDelta *= 1f / 100f
+                if (io.keyShift)
+                    adjustDelta *= 10f
+            }
+            if (g.activeIdSource == InputSource.Nav) {
+                val decimalPrecision = parseFormatPrecision(format, 3)
+                adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
+                vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
+            }
+            adjustDelta *= vSpeed
+
+            /*  Clear current value on activation
+                Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
+                so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
+            val isJustActivated = g.activeIdIsJustActivated
+            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
+            if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
+                g.dragCurrentAccum = 0f
+                g.dragCurrentAccumDirty = false
+            } else if (adjustDelta != 0f) {
+                g.dragCurrentAccum += adjustDelta
+                g.dragCurrentAccumDirty = true
+            }
+
+            if (!g.dragCurrentAccumDirty)
+                return false
+
+            var vCur = v()
+            var vOldRefForAccumRemainder = 0.0
+
+            val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
+            if (isPower) {
+                // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
+                val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)
+                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
+                vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power).L * (vMax - vMin)
+                vOldRefForAccumRemainder = vOldNormCurved
+            } else vCur += g.dragCurrentAccum.i
+
+            // Round to user desired precision based on format string
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vCur)
+            vCur = when (dataType) {
+                DataType.Float, DataType.Double -> vStr.d
+                else -> vStr.d
+            }
+            // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
+            g.dragCurrentAccumDirty = false
+            g.dragCurrentAccum -= when {
+                isPower -> {
+                    val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
+                    (vCurNormCurved - vOldRefForAccumRemainder).f
+                }
+                else -> (vCur - v()).f
+            }
+
+            // Lose zero sign for float/double
+            if (vCur == -0.0)
+                vCur = 0.0
+
+            // Clamp values (handle overflow/wrap-around)
+            if (v() != vCur && hasMinMax) {
+                if (vCur < vMin || (vCur > v() && adjustDelta < 0f))
+                    vCur = vMin
+                if (vCur > vMax || (vCur < v() && adjustDelta > 0f))
+                    vCur = vMax
+            }
+
+            // Apply result
+            if (v() == vCur)
+                return false
+            v.set(vCur)
+            return true
         }
 
         fun setupDrawData(drawLists: ArrayList<DrawList>, outDrawData: DrawData) = with(outDrawData) {

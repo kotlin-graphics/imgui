@@ -9,12 +9,13 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec3.Vec3i
 import glm_.vec4.Vec4i
-import imgui.Dir
+import imgui.*
 import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dragBehavior
+import imgui.ImGui.dragFloat
 import imgui.ImGui.dragFloatN
 import imgui.ImGui.dragIntN
 import imgui.ImGui.endGroup
@@ -25,11 +26,14 @@ import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
-import imgui.ImGui.parseFormatPrecision
+import imgui.ImGui.parseFormatFindEnd
+import imgui.ImGui.parseFormatFindStart
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
 import imgui.ImGui.pushMultiItemsWidths
+import imgui.ImGui.renderFrame
+import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
@@ -37,12 +41,9 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
 import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
-import imgui.Ref
-import imgui.g
 import imgui.internal.DataType
 import imgui.internal.Rect
 import imgui.internal.focus
-import imgui.shl
 import kotlin.reflect.KMutableProperty0
 
 /** Widgets: Drags (tip: ctrl+click on a drag box to input with keyboard. manually input values aren't clamped, can go
@@ -58,19 +59,21 @@ interface imgui_widgetsDrag {
      *  expected to be accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x
      *  Speed are per-pixel of mouse movement (vSpeed = 0.2f: mouse needs to move by 5 pixels to increase value by 1).
      *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
-    fun dragFloat(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
-                  power: Float = 1f) = dragFloat(label, v, 0, vSpeed, vMin, vMax, format, power)
+    fun dragScalar(label: String, v: FloatArray, vSpeed: Float, vMin: Float, vMax: Float, format: String, power: Float = 1f) =
+            dragScalar(label, v, 0, vSpeed, vMin, vMax, format, power)
 
     /** If vMin >= vMax we have no bound  */
-    fun dragFloat(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                  format: String = "%.3f", power: Float = 1f) =
-            withFloat(v, ptr) { dragFloat(label, it, vSpeed, vMin, vMax, format, power) }
+    fun dragScalar(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float, vMin: Float, vMax: Float, format: String, power: Float = 1f) =
+            withFloat(v, ptr) { dragScalar(label, DataType.Float, it as KMutableProperty0<Number>, vSpeed, vMin, vMax, format, power) }
 
-    fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                  format: String = "%.3f", power: Float = 1f): Boolean {
+    fun dragScalar(label: String, dataType: DataType, v: KMutableProperty0<Number>, vSpeed: Float, vMin: Number, vMax: Number,
+                   format: String, power: Float = 1f): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
+
+        if (power != 1f)
+            assert(vMin != vMax) // When using a power curve the drag needs to have known bounds
 
         val id = window.getId(label)
         val w = calcItemWidth()
@@ -88,6 +91,12 @@ interface imgui_widgetsDrag {
 
         val hovered = itemHoverable(frameBb, id)
 
+        // Patch old "%.0f" format string to use "%d", read function comments for more details.
+        val format = when {
+            dataType == DataType.Int && format != "%d" -> patchFormatStringFloatToInt(format)
+            else -> format
+        }
+
         // Tabbing or CTRL-clicking on Drag turns it into an input box
         var startTextInput = false
         val tabFocusRequested = focusableItemRegister(window, id)
@@ -102,14 +111,26 @@ interface imgui_widgetsDrag {
             }
         }
         if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
-            return inputScalarAsWidgetReplacement(frameBb, id, label, DataType.Float, v as KMutableProperty0<Number>, format)
+            return inputScalarAsWidgetReplacement(frameBb, id, label, dataType, v, format)
 
         // Actual drag behavior
         itemSize(totalBb, style.framePadding.y)
-        val valueChanged = dragBehavior(frameBb, id, v, vSpeed, vMin, vMax, format, power)
+        val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power)
+
+        // Draw frame
+        val frameCol = when(g.activeId) {
+        id -> Col.FrameBgActive
+            else -> when(g.hoveredId) {
+                id -> Col.FrameBgHovered
+                else -> Col.FrameBg
+            }
+        }
+        renderNavHighlight(frameBb, id)
+        renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = format.format(style.locale, v())
+        val valueBuf = v.format(dataType, format)
+        val value = String(valueBuf)
         renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
@@ -180,36 +201,36 @@ interface imgui_widgetsDrag {
 
     /** If v_min >= v_max we have no bound
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
-    fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f") =
+    fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
             withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, format) }
 
-    fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                format: String = "%.0f") = withFloat(v) { dragFloat(label, it, vSpeed, vMin.f, vMax.f, format) }
+    fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
+            withInt { dragScalar(label, DataType.Int, it as KMutableProperty0<Number>, vSpeed, vMin as Number, vMax as Number, format) }
 
-    fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f") =
+    fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
             dragIntN(label, v, 2, vSpeed, vMin, vMax, format)
 
-    fun dragVec2i(label: String, v: Vec2i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f"): Boolean {
+    fun dragVec2i(label: String, v: Vec2i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean {
         val ints = v to IntArray(2)
         val res = dragIntN(label, ints, 2, vSpeed, vMin, vMax, format)
         v put ints
         return res
     }
 
-    fun dragInt3(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f") =
+    fun dragInt3(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
             dragIntN(label, v, 3, vSpeed, vMin, vMax, format)
 
-    fun dragVec3i(label: String, v: Vec3i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f"): Boolean {
+    fun dragVec3i(label: String, v: Vec3i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean {
         val ints = v to IntArray(3)
         val res = dragIntN(label, ints, 3, vSpeed, vMin, vMax, format)
         v put ints
         return res
     }
 
-    fun dragInt4(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f") =
+    fun dragInt4(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
             dragIntN(label, v, 4, vSpeed, vMin, vMax, format)
 
-    fun dragVec4i(label: String, v: Vec4i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%.0f"): Boolean {
+    fun dragVec4i(label: String, v: Vec4i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean {
         val ints = v to IntArray(4)
         val res = dragIntN(label, ints, 4, vSpeed, vMin, vMax, format)
         v put ints
@@ -217,7 +238,7 @@ interface imgui_widgetsDrag {
     }
 
     fun dragIntRange2(label: String, vCurrentMin: KMutableProperty0<Int>, vCurrentMax: KMutableProperty0<Int>, vSpeed: Float = 1f,
-                      vMin: Int = 0, vMax: Int = 0, format: String = "%.0f", formatMax: String = format): Boolean {
+                      vMin: Int = 0, vMax: Int = 0, format: String = "%d", formatMax: String = format): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -293,6 +314,26 @@ interface imgui_widgetsDrag {
             value.set(f().i)
             Ref.fPtr--
             return res
+        }
+
+        /** FIXME-LEGACY: Prior to 1.61 our DragInt() function internally used floats and because of this the compile-time default value
+         *  for format was "%.0f".
+         *  Even though we changed the compile-time default, we expect users to have carried %f around, which would break
+         *  the display of DragInt() calls.
+         *  To honor backward compatibility we are rewriting the format string, unless IMGUI_DISABLE_OBSOLETE_FUNCTIONS is enabled.
+         *  What could possibly go wrong?! */
+        fun patchFormatStringFloatToInt(fmt: String): String {
+            if (fmt == "%.0f") // Fast legacy path for "%.0f" which is expected to be the most common case.
+                return "%d"
+            val fmtStart = parseFormatFindStart(fmt)    // Find % (if any, and ignore %%)
+            // Find end of format specifier, which itself is an exercise of confidence/recklessness (because snprintf is dependent on libc or user).
+            val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
+            if (fmtEnd > fmtStart && fmt[fmtEnd - 1] == 'f') {
+                if (fmtStart == 0 && fmtEnd == fmt.length)
+                    return "%d"
+                return fmt.substring(0, fmtStart) + "%d" + fmt.substring(fmtEnd, fmt.length)
+            }
+            return fmt
         }
     }
 }

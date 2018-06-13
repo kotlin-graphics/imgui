@@ -72,8 +72,9 @@ object inputNavigationAndFocus {
                 "rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync " +
                 "with your other visuals.\\n\\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor " +
                 "only when resizing/dragging something).")
-            checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
-            checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
+
+            checkboxFlags("io.ConfigFlags: NavEnableGamepad [beta]", io::configFlags, ConfigFlag.NavEnableGamepad.i)
+            checkboxFlags("io.ConfigFlags: NavEnableKeyboard [beta]", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
             checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
             sameLine(); showHelpMarker("Instruct navigation to move the mouse cursor. See comment for ConfigFlag.NavEnableSetMousePos.")
             checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)

@@ -8,7 +8,7 @@ import glm_.vec4.Vec4
 import glm_.vec4.Vec4i
 import imgui.ImGui.inputFloatN
 import imgui.ImGui.inputIntN
-import imgui.ImGui.inputScalarEx
+import imgui.ImGui.inputScalar
 import imgui.ImGui.inputTextEx
 import imgui.InputTextFlags
 import imgui.has
@@ -47,7 +47,7 @@ interface imgui_widgetsInputKeyboard {
     fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f,
                    format: String = "%.3f", extraFlags: InputTextFlags = 0): Boolean {
         val flags = extraFlags or Itf.CharsScientific
-        return inputScalarEx(label, DataType.Float, v as KMutableProperty0<Number>, step.takeIf { it > 0f },
+        return inputScalar(label, DataType.Float, v as KMutableProperty0<Number>, step.takeIf { it > 0f },
                 stepFast.takeIf { it > 0f }, format, flags)
     }
 
@@ -56,7 +56,7 @@ interface imgui_widgetsInputKeyboard {
         val flags = extraFlags or Itf.CharsScientific
         /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float,
             while hiding non-significant digits? %f doesn't have a minimum of 1         */
-        return inputScalarEx(label, DataType.Double, v as KMutableProperty0<Number>, step.takeIf { it > 0.0 },
+        return inputScalar(label, DataType.Double, v as KMutableProperty0<Number>, step.takeIf { it > 0.0 },
                 stepFast.takeIf { it > 0.0 }, format, flags)
     }
 
@@ -94,7 +94,7 @@ interface imgui_widgetsInputKeyboard {
         /*  Hexadecimal input provided as a convenience but the flag name is awkward. Typically you'd use inputText()
             to parse your own data, if you want to handle prefixes.             */
         val scalarFormat = if (extraFlags has Itf.CharsHexadecimal) "%08X" else "%d"
-        return inputScalarEx(label, DataType.Int, v as KMutableProperty0<Number>, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f },
+        return inputScalar(label, DataType.Int, v as KMutableProperty0<Number>, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f },
                 scalarFormat, extraFlags)
     }
 

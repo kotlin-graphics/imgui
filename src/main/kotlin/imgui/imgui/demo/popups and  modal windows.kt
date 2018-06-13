@@ -7,6 +7,7 @@ import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.dragFloat
+import imgui.ImGui.dragScalar
 import imgui.ImGui.inputText
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
