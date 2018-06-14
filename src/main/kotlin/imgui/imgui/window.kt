@@ -739,7 +739,7 @@ interface imgui_window {
         else {
             /*  When using auto-filling child window, we don't provide full width/height to ItemSize so that it doesn't
                 feed back into automatic size-fitting.             */
-            val sz = Vec2(windowSize)
+            val sz = Vec2(window.size)
             // Arbitrary minimum zero-ish child size of 4.0f causes less trouble than a 0.0f
             if (window.autoFitChildAxes has (1 shl Axis.X))
                 sz.x = glm.max(4f, sz.x)

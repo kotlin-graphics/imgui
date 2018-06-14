@@ -509,7 +509,7 @@ class Window(var context: Context, var name: String) {
     var sizeContents = Vec2()
     /** Size of contents explicitly set by the user via SetNextWindowContentSize()  */
     var sizeContentsExplicit = Vec2()
-    /** Maximum visible content position in window coordinates.
+    /** Maximum visible content position _in window coordinates_.
     ~~ (SizeContentsExplicit ? SizeContentsExplicit : Size - ScrollbarSizes) - CursorStartPos, per axis */
     var contentsRegionRect = Rect()
     /** Window padding at the time of begin. */
