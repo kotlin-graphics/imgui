@@ -6,10 +6,7 @@ import glm_.*
 import glm_.func.common.max
 import glm_.func.common.min
 import glm_.vec2.Vec2
-import glm_.vec2.Vec2i
-import glm_.vec3.Vec3i
 import glm_.vec4.Vec4
-import glm_.vec4.Vec4i
 import imgui.*
 import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.begin
@@ -21,20 +18,14 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.colorButton
 import imgui.ImGui.contentRegionMax
-import imgui.ImGui.dragInt
-import imgui.ImGui.dragScalar
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTooltip
-import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
 import imgui.ImGui.indent
-import imgui.ImGui.inputInt
-import imgui.ImGui.inputScalar
-import imgui.ImGui.inputText
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
@@ -60,8 +51,6 @@ import imgui.ImGui.setClipboardText
 import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setTooltip
-import imgui.ImGui.sliderFloat
-import imgui.ImGui.sliderInt
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
@@ -1408,6 +1397,71 @@ interface imgui_internal {
         return pressed
     }
 
+    fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
+                     power: Float): Boolean = withFloat(v, ptr) {
+        dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power)
+    }
+
+    fun dragBehavior(id: ID, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number?, vMax: Number?,
+                     format: String, power: Float): Boolean {
+
+        if (g.activeId == id)
+            if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
+                clearActiveId()
+            else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                clearActiveId()
+
+        return when (g.activeId) {
+            id -> when (dataType) {
+                DataType.Int, DataType.Uint -> dragBehaviorT(dataType, v, vSpeed, vMin as? Int
+                        ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power)
+                DataType.Long, DataType.Ulong -> dragBehaviorT(dataType, v, vSpeed, vMin as? Long
+                        ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power)
+                DataType.Float -> dragBehaviorT(dataType, v, vSpeed, vMin as? Float
+                        ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power)
+                DataType.Double -> dragBehaviorT(dataType, v, vSpeed, vMin as? Double
+                        ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power)
+                else -> throw Error()
+            }
+            else -> false
+        }
+    }
+
+    fun sliderBehavior(bb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
+                       flags: SliderFlags = 0) = sliderBehavior(bb, id, v, 0, vMin, vMax, format, power, flags)
+
+    fun sliderBehavior(bb: Rect, id: ID, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String, power: Float,
+                       flags: SliderFlags = 0): Boolean = withFloat(v, ptr) {
+        sliderBehavior(bb, id, DataType.Float, it, vMin, vMax, format, power, flags)
+    }
+
+    fun sliderBehavior(bb: Rect, id: ID, v: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String, power: Float,
+                       flags: SliderFlags = 0): Boolean = sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags)
+
+    fun sliderBehavior(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number,
+                       format: String, power: Float, flags: SliderFlags = 0): Boolean = when (dataType) {
+
+        DataType.Int, DataType.Uint -> {
+            assert(vMin as Int >= Int.MIN_VALUE / 2)
+            assert(vMax as Int <= Int.MAX_VALUE / 2)
+            sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+        }
+        DataType.Long, DataType.Ulong -> {
+            assert(vMin as Long >= Long.MIN_VALUE / 2)
+            assert(vMax as Long <= Long.MAX_VALUE / 2)
+            sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+        }
+        DataType.Float -> {
+            assert(vMin as Float >= -Float.MAX_VALUE / 2f && vMax as Float <= Float.MAX_VALUE / 2f)
+            sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Float, format, power, flags)
+        }
+        DataType.Double -> {
+            assert(vMin as Double >= -Double.MAX_VALUE / 2f && vMax as Double <= Double.MAX_VALUE / 2f)
+            sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Double, format, power, flags)
+        }
+        else -> throw Error()
+    }
+
     fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Int, vMax: Int, format: String,
                         power: Float, flags: SliderFlags = 0): Boolean {
 
@@ -2073,38 +2127,6 @@ interface imgui_internal {
             }
         // Linear slider
             else -> ((vClamped - vMin) / (vMax - vMin)).f
-        }
-    }
-
-    fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
-                     power: Float): Boolean {
-        f0 = v[ptr]
-        val res = dragBehavior(id, DataType.Float, ::f0, vSpeed, vMin, vMax, format, power)
-        v[ptr] = f0
-        return res
-    }
-
-    fun dragBehavior(id: ID, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number?, vMax: Number?,
-                     format: String, power: Float): Boolean {
-
-        if (g.activeId == id)
-            if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
-                clearActiveId()
-            else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                clearActiveId()
-        return when (g.activeId) {
-            id -> when (dataType) {
-                DataType.Int, DataType.Uint -> dragBehaviorT(dataType, v, vSpeed, vMin as? Int
-                        ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power)
-                DataType.Long, DataType.Ulong -> dragBehaviorT(dataType, v, vSpeed, vMin as? Long
-                        ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power)
-                DataType.Float -> dragBehaviorT(dataType, v, vSpeed, vMin as? Float
-                        ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power)
-                DataType.Double -> dragBehaviorT(dataType, v, vSpeed, vMin as? Double
-                        ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power)
-                else -> throw Error()
-            }
-            else -> false
         }
     }
 
@@ -3313,9 +3335,6 @@ interface imgui_internal {
             else -> glm.acos(x)
         //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
-
-        private var f0 = 0f // TODO remove
-        private var i0 = 0
 
         fun roundScalarWithFormat(format: String, dataType: DataType, v: Int): Int {
             val fmtStart = parseFormatFindStart(format)
