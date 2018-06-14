@@ -27,6 +27,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.sliderBehaviorT
 import imgui.ImGui.style
 import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
+import imgui.imgui.imgui_internal.Companion.roundScalarWithFormat
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
@@ -655,11 +656,8 @@ interface imgui_main {
             } else vCur += g.dragCurrentAccum.i
 
             // Round to user desired precision based on format string
-            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vCur)
-            vCur = when (dataType) {
-                DataType.Float, DataType.Double -> vStr.f.i
-                else -> vStr.i
-            }
+            vCur = roundScalarWithFormat(format, dataType, vCur)
+
             // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
             g.dragCurrentAccumDirty = false
             g.dragCurrentAccum -= when {
@@ -744,11 +742,8 @@ interface imgui_main {
             } else vCur += g.dragCurrentAccum.i
 
             // Round to user desired precision based on format string
-            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vCur)
-            vCur = when (dataType) {
-                DataType.Float, DataType.Double -> vStr.f.L
-                else -> vStr.L
-            }
+            vCur = roundScalarWithFormat(format, dataType, vCur)
+
             // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
             g.dragCurrentAccumDirty = false
             g.dragCurrentAccum -= when {
@@ -833,11 +828,8 @@ interface imgui_main {
             } else vCur += g.dragCurrentAccum.i
 
             // Round to user desired precision based on format string
-            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vCur)
-            vCur = when (dataType) {
-                DataType.Float, DataType.Double -> vStr.f
-                else -> vStr.L.f
-            }
+            vCur = roundScalarWithFormat(format, dataType, vCur)
+
             // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
             g.dragCurrentAccumDirty = false
             g.dragCurrentAccum -= when {
@@ -922,11 +914,8 @@ interface imgui_main {
             } else vCur += g.dragCurrentAccum.i
 
             // Round to user desired precision based on format string
-            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vCur)
-            vCur = when (dataType) {
-                DataType.Float, DataType.Double -> vStr.d
-                else -> vStr.d
-            }
+            vCur = roundScalarWithFormat(format, dataType, vCur)
+
             // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
             g.dragCurrentAccumDirty = false
             g.dragCurrentAccum -= when {
