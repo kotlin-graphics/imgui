@@ -945,49 +945,6 @@ interface imgui_main {
             return true
         }
 
-        // TODO check
-        fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
-                           flags: SliderFlags = 0) = sliderBehavior(frameBb, id, v, 0, vMin, vMax, format, power, flags)
-
-        var f0 = 0f
-
-        fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String, power: Float,
-                           flags: SliderFlags = 0): Boolean {
-            f0 = v[ptr]
-            return sliderBehavior(frameBb, id, DataType.Float, ::f0, vMin, vMax, format, power, flags).also {
-                v[ptr] = f0
-            }
-        }
-
-        fun sliderBehavior(frameBb: Rect, id: ID, v: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String, power: Float,
-                           flags: SliderFlags = 0): Boolean {
-            return sliderBehavior(frameBb, id, DataType.Float, v, vMin, vMax, format, power, flags)
-        }
-
-        fun sliderBehavior(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number,
-                           format: String, power: Float, flags: SliderFlags = 0): Boolean = when (dataType) {
-
-            DataType.Int, DataType.Uint -> {
-                assert(vMin as Int >= Int.MIN_VALUE / 2)
-                assert(vMax as Int <= Int.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
-            }
-            DataType.Long, DataType.Ulong -> {
-                assert(vMin as Long >= Long.MIN_VALUE / 2)
-                assert(vMax as Long <= Long.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
-            }
-            DataType.Float -> {
-                assert(vMin as Float >= -Float.MAX_VALUE / 2f && vMax as Float <= Float.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Float, format, power, flags)
-            }
-            DataType.Double -> {
-                assert(vMin as Double >= -Double.MAX_VALUE / 2f && vMax as Double <= Double.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Double, format, power, flags)
-            }
-            else -> throw Error()
-        }
-
         fun setupDrawData(drawLists: ArrayList<DrawList>, outDrawData: DrawData) = with(outDrawData) {
             valid = true
             cmdLists.clear()
