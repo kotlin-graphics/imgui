@@ -838,7 +838,7 @@ object widgets {
                     In practice, if you frequently use a given type that is not covered by the normal API entry points,
                     you may want to wrap it yourself inside a 1 line function which can take typed values argument instead of void*,
                     and then pass their address to the generic function. For example:
-                    bool SliderU64(const char *label, u64* value, u64 min = 0, u64 max = ~(u64)0, const char* format = "%d") { return SliderScalar(label, ImGuiDataType_U64, value, &min, &max, format); }
+                    bool SliderU64(const char *label, u64* value, u64 min = 0, u64 max = 0, const char* format = "%lld") { return SliderScalar(label, ImGuiDataType_U64, value, &min, &max, format); }
                     Below are helper variables we can take the address of to work-around this:
                     Note that the SliderScalar function has a maximum usable range of half the natural type maximum, hence the /2 below. */
 //                const ImS32   s32_zero = 0,   s32_one = 1,   s32_fifty = 50, s32_min = INT_MIN/2,   s32_max = INT_MAX/2,    s32_hi_a = INT_MAX/2 - 100,    s32_hi_b = INT_MAX/2;
