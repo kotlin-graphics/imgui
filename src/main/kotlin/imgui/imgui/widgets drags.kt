@@ -211,7 +211,7 @@ interface imgui_widgetsDrag {
         if (window.skipItems) return false
 
         if (power != 1f)
-            assert(vMin != vMax) // When using a power curve the drag needs to have known bounds
+            assert(vMin != null && vMax != null) // When using a power curve the drag needs to have known bounds
 
         val id = window.getId(label)
         val w = calcItemWidth()

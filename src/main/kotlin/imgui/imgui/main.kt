@@ -621,7 +621,10 @@ interface imgui_main {
                     adjustDelta *= 10f
             }
             if (g.activeIdSource == InputSource.Nav) {
-                val decimalPrecision = parseFormatPrecision(format, 3)
+                val decimalPrecision = when (dataType) {
+                    DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
+                    else -> 0
+                }
                 adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
                 vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
             }
@@ -707,7 +710,10 @@ interface imgui_main {
                     adjustDelta *= 10f
             }
             if (g.activeIdSource == InputSource.Nav) {
-                val decimalPrecision = parseFormatPrecision(format, 3)
+                val decimalPrecision = when (dataType) {
+                    DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
+                    else -> 0
+                }
                 adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
                 vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
             }
@@ -793,7 +799,10 @@ interface imgui_main {
                     adjustDelta *= 10f
             }
             if (g.activeIdSource == InputSource.Nav) {
-                val decimalPrecision = parseFormatPrecision(format, 3)
+                val decimalPrecision  = when (dataType) {
+                    DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
+                    else -> 0
+                }
                 adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
                 vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
             }
@@ -879,7 +888,10 @@ interface imgui_main {
                     adjustDelta *= 10f
             }
             if (g.activeIdSource == InputSource.Nav) {
-                val decimalPrecision = parseFormatPrecision(format, 3)
+                val decimalPrecision  = when (dataType) {
+                    DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
+                    else -> 0
+                }
                 adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
                 vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
             }
