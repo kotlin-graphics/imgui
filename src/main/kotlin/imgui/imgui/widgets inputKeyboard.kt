@@ -33,10 +33,10 @@ interface imgui_widgetsInputKeyboard {
             /*,ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/) =
             inputTextEx(label, buf, size, flags or Itf.Multiline/*, callback, user_data*/)
 
-    fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f",
+    fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, format: String? = null,
                    extraFlags: InputTextFlags = 0) = inputFloat(label, v, 0, step, stepFast, format, extraFlags)
 
-    fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f",
+    fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f, format: String? = null,
                    extraFlags: InputTextFlags = 0) = withFloat { f ->
         f.set(v[ptr])
         val res = inputFloat(label, f, step, stepFast, format, extraFlags)
@@ -44,46 +44,44 @@ interface imgui_widgetsInputKeyboard {
         res
     }
 
-    fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f,
-                   format: String = "%.3f", extraFlags: InputTextFlags = 0): Boolean {
+    fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f, format: String? = null,
+                   extraFlags: InputTextFlags = 0): Boolean {
         val flags = extraFlags or Itf.CharsScientific
-        return inputScalar(label, DataType.Float, v as KMutableProperty0<Number>, step.takeIf { it > 0f },
-                stepFast.takeIf { it > 0f }, format, flags)
+        return inputScalar(label, DataType.Float, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, flags)
     }
 
-    fun inputDouble(label: String, v: KMutableProperty0<Double>, step: Double = 0.0, stepFast: Double = 0.0,
-                    format: String = "%.6f", extraFlags: InputTextFlags = 0): Boolean {
+    fun inputDouble(label: String, v: KMutableProperty0<Double>, step: Double = 0.0, stepFast: Double = 0.0, format: String? = null,
+                    extraFlags: InputTextFlags = 0): Boolean {
         val flags = extraFlags or Itf.CharsScientific
         /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float,
             while hiding non-significant digits? %f doesn't have a minimum of 1         */
-        return inputScalar(label, DataType.Double, v as KMutableProperty0<Number>, step.takeIf { it > 0.0 },
-                stepFast.takeIf { it > 0.0 }, format, flags)
+        return inputScalar(label, DataType.Double, v, step.takeIf { it > 0.0 }, stepFast.takeIf { it > 0.0 }, format, flags)
     }
 
-    fun inputFloat2(label: String, v: FloatArray, format: String = "%.3f", extraFlags: InputTextFlags = 0) =
-            inputFloatN(label, v, 2, format, extraFlags)
+    fun inputFloat2(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
+            :Boolean = inputFloatN(label, v, 2, format, extraFlags)
 
-    fun inputVec2(label: String, v: Vec2, format: String = "%.3f", extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec2(label: String, v: Vec2, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(2)
         val res = inputFloatN(label, floats, 2, format, extraFlags)
         v put floats
         return res
     }
 
-    fun inputFloat3(label: String, v: FloatArray, format: String = "%.3f", extraFlags: InputTextFlags = 0) =
-            inputFloatN(label, v, 3, format, extraFlags)
+    fun inputFloat3(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
+            :Boolean = inputFloatN(label, v, 3, format, extraFlags)
 
-    fun inputVec3(label: String, v: Vec3, format: String = "%.3f", extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec3(label: String, v: Vec3, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(3)
         val res = inputFloatN(label, floats, 3, format, extraFlags)
         v put floats
         return res
     }
 
-    fun inputFloat4(label: String, v: FloatArray, format: String = "%.3f", extraFlags: InputTextFlags = 0) =
-            inputFloatN(label, v, 4, format, extraFlags)
+    fun inputFloat4(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
+            :Boolean = inputFloatN(label, v, 4, format, extraFlags)
 
-    fun inputVec4(label: String, v: Vec4, format: String = "%.3f", extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec4(label: String, v: Vec4, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(4)
         val res = inputFloatN(label, floats, 4, format, extraFlags)
         v put floats
@@ -93,9 +91,8 @@ interface imgui_widgetsInputKeyboard {
     fun inputInt(label: String, v: KMutableProperty0<Int>, step: Int = 1, stepFast: Int = 100, extraFlags: InputTextFlags = 0): Boolean {
         /*  Hexadecimal input provided as a convenience but the flag name is awkward. Typically you'd use inputText()
             to parse your own data, if you want to handle prefixes.             */
-        val scalarFormat = if (extraFlags has Itf.CharsHexadecimal) "%08X" else "%d"
-        return inputScalar(label, DataType.Int, v as KMutableProperty0<Number>, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f },
-                scalarFormat, extraFlags)
+        val format = if (extraFlags has Itf.CharsHexadecimal) "%08X" else "%d"
+        return inputScalar(label, DataType.Int, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, extraFlags)
     }
 
     fun inputInt2(label: String, v: IntArray, extraFlags: InputTextFlags = 0) = inputIntN(label, v, 2, extraFlags)
@@ -120,11 +117,5 @@ interface imgui_widgetsInputKeyboard {
         val res = inputIntN(label, ints, 4, extraFlags)
         v put ints
         return res
-    }
-
-    companion object {
-        private var f0 = 0f
-        private var i0 = 0
-        private var L0 = 0L
     }
 }

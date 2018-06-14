@@ -19,7 +19,6 @@ import imgui.ImGui.contentRegionAvailWidth
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.cursorStartPos
 import imgui.ImGui.dragFloat
-import imgui.ImGui.dragScalar
 import imgui.ImGui.dragInt
 import imgui.ImGui.dragVec2
 import imgui.ImGui.dummy
@@ -364,9 +363,9 @@ object layout_ {
                 textWrapped("(Use SetScrollHere() or SetScrollFromPosY() to scroll to a given position.)")
                 checkbox("Track", ::track)
                 pushItemWidth(100)
-                sameLine(130); track = track or dragInt("##line", ::trackLine, 0.25f, 0, 99, "Line = %.0f")
+                sameLine(130); track = track or dragInt("##line", ::trackLine, 0.25f, 0, 99, "Line = %d")
                 var scrollTo = button("Scroll To Pos")
-                sameLine(130); scrollTo = scrollTo or dragInt("##pos_y", ::scrollToPx, 1f, 0, 9999, "Y = %.0f px")
+                sameLine(130); scrollTo = scrollTo or dragInt("##pos_y", ::scrollToPx, 1f, 0, 9999, "Y = %d px")
                 popItemWidth()
                 if (scrollTo) track = false
 

@@ -265,7 +265,7 @@ interface imgui_window {
                 val titleBarRect = window.titleBarRect()
                 if (window.collapseToggleWanted || (g.hoveredWindow === window && isMouseHoveringRect(titleBarRect) && io.mouseDoubleClicked[0])) {
                     window.collapsed = !window.collapsed
-                    markIniSettingsDirty(window)
+                    window.markIniSettingsDirty()
                     window.focus()
                 }
             } else window.collapsed = false
@@ -298,7 +298,7 @@ interface imgui_window {
                     sizeFullModified.y = if (window.autoFitOnlyGrows) max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
                     window.sizeFull.y = sizeFullModified.y
                 }
-                if (!window.collapsed) markIniSettingsDirty(window)
+                if (!window.collapsed) window.markIniSettingsDirty()
             }
 
             // Apply minimum/maximum window size constraints and final size

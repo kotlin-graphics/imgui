@@ -26,7 +26,6 @@ import imgui.ImGui.combo
 import imgui.ImGui.cursorPos
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
-import imgui.ImGui.dragScalar
 import imgui.ImGui.dragFloat2
 import imgui.ImGui.dragFloat3
 import imgui.ImGui.dragFloat4
@@ -331,7 +330,7 @@ object widgets {
                     dragInt("drag int", ::i1, 1f)
                     sameLine(); showHelpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.\nDouble-click or CTRL+click to input value.")
 
-                    dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%.0f%%")
+                    dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%d%%")
 
                     dragFloat("drag float", ::f2, 0.005f)
                     dragFloat("drag small float", ::f3, 0.0001f, 0f, 0f, "%.06f ns")
@@ -341,7 +340,7 @@ object widgets {
                     sameLine(); showHelpMarker("CTRL+click to input value.")
 
                     sliderFloat("slider float", ::f4, 0f, 1f, "ratio = %.3f")
-                    sliderFloat("slider log float", ::f5, -10f, 10f, "%.4f", 3f)
+                    sliderFloat("slider float (curve)", ::f5, -10f, 10f, "%.4f", 2f)
 
                     sliderAngle("slider angle", ::angle)
                 }
@@ -825,7 +824,7 @@ object widgets {
 
             treeNode("Range Widgets") {
                 dragFloatRange2("range", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%")
-                dragIntRange2("range int (no bounds)", ::beginI, ::endI, 5f, 0, 0, "Min: %.0f units", "Max: %.0f units")
+                dragIntRange2("range int (no bounds)", ::beginI, ::endI, 5f, 0, 0, "Min: %d units", "Max: %d units")
             }
 
             treeNode("Multi-component Widgets") {

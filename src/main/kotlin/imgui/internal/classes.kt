@@ -957,6 +957,12 @@ class Window(var context: Context, var name: String) {
     fun destroy() {
         assert(drawList === drawListInst)
     }
+
+    fun markIniSettingsDirty() {
+        if (flags hasnt Wf.NoSavedSettings)
+            if (g.settingsDirtyTimer <= 0f)
+                g.settingsDirtyTimer = io.iniSavingRate
+    }
 }
 
 fun Window?.setCurrent() {

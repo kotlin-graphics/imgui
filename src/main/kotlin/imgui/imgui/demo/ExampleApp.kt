@@ -1281,7 +1281,8 @@ object StyleEditor {
                                     drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if (glyph != null) 100 else 50))
                                     /*  We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion
                                         functions available to generate a string.                                     */
-                                    font.renderChar(drawList, cellSize, cellP1, Col.Text.u32, (base + n).c)
+                                    if(glyph != null)
+                                        font.renderChar(drawList, cellSize, cellP1, Col.Text.u32, (base + n).c)
                                     if (glyph != null && isMouseHoveringRect(cellP1, cellP2))
                                         withTooltip {
                                             text("Codepoint: U+%04X", base + n)
