@@ -653,7 +653,7 @@ object widgets {
 //                inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
             }
 
-            treeNode("Plots widgets") {
+            treeNode("Plots Widgets") {
 
                 checkbox("Animate", ::animate)
 
