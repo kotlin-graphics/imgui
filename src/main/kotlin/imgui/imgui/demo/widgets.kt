@@ -816,11 +816,12 @@ object widgets {
                 }
                 colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
 
-                text("Programmatically set defaults/options:")
+                text("Programmatically set defaults:")
                 sameLine(); showHelpMarker("SetColorEditOptions() is designed to allow you to set boot-time default.\nWe don't have Push/Pop functions because you can force options on a per-widget basis if needed, and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid encouraging you to persistently save values that aren't forward-compatible.")
-                button("Uint8 + HSV") { setColorEditOptions(Cef.Uint8 or Cef.HSV) }
-                sameLine()
-                button("Float + HDR") { setColorEditOptions(Cef.Float or Cef.RGB) }
+                if (button("Default: Uint8 + HSV + Hue Bar"))
+                    setColorEditOptions(Cef.Uint8 or Cef.HSV or Cef.PickerHueBar)
+                if (button("Default: Float + HDR + Hue Wheel"))
+                    setColorEditOptions(Cef.Float or Cef.HDR or Cef.PickerHueWheel)
             }
 
             treeNode("Range Widgets") {

@@ -581,6 +581,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
+    /** Note: Anti-aliased filling requires points to be in clockwise order. */
     fun addConvexPolyFilled(points: ArrayList<Vec2>, col: Int) {
 
         val uv = Vec2(_data.texUvWhitePixel)
@@ -677,7 +678,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Stateful path API, add points then finish with PathFill() or PathStroke()
+    // Stateful path API, add points then finish with PathFillConvex() or PathStroke()
     // -----------------------------------------------------------------------------------------------------------------
 
     fun pathClear() = _path.clear()
@@ -688,6 +689,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (_path.isEmpty() || _path.last() != pos) _path.add(pos)
     }
 
+    /** Note: Anti-aliased filling requires points to be in clockwise order. */
     fun pathFillConvex(col: Int) = addConvexPolyFilled(_path, col).also { pathClear() }
 
     /** rounding_corners_flags: 4-bits corresponding to which corner to round   */
