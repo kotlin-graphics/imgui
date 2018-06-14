@@ -598,6 +598,9 @@ interface imgui_main {
                 }
         }
 
+        // Template widget behaviors
+        // This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
+
         fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Int, vMax: Int, format: String,
                           power: Float): Boolean {
 

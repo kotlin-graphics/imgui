@@ -219,7 +219,7 @@ interface imgui_widgetsSelectableLists {
     fun listBoxHeader(label: String, itemsCount: Int, heightInItems: Int = -1): Boolean {
         /*  Size default to hold ~7 items. Fractional number of items helps seeing that we can scroll down/up without
             looking at scrollbar.
-            However we don't add +0.40f if items_count <= height_in_items. It is slightly dodgy, because it means a
+            We don't add +0.40f if items_count <= height_in_items. It is slightly dodgy, because it means a
             dynamic list of items will make the widget resize occasionally when it crosses that size.
             I am expecting that someone will come and complain about this behavior in a remote future, then we can
             advise on a better solution.    */

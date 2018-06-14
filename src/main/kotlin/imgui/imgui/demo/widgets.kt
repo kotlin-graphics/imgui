@@ -471,16 +471,17 @@ object widgets {
                 }
                 treeNode("JVM UTF-16 Unicode with surrogate characters") {
                     /*  UTF-8 test with Japanese characters
-                        (needs a suitable font, try Arial Unicode or M+ fonts http://mplus-fonts.sourceforge.jp/mplus-outline-fonts/index-en.html)
+                        (Needs a suitable font, try Noto, or Arial Unicode, or M+ fonts. Read misc/fonts/README.txt for details.)
                         - From C++11 you can use the u8"my text" syntax to encode literal strings as UTF-8
                         - For earlier compiler, you may be able to encode your sources as UTF-8 (e.g. Visual Studio save your file
                             as 'UTF-8 without signature')
-                        - HOWEVER, FOR THIS DEMO FILE, BECAUSE WE WANT TO SUPPORT COMPILER, WE ARE *NOT* INCLUDING RAW UTF-8 CHARACTERS
-                            IN THIS SOURCE FILE.
-                        Instead we are encoding a few string with hexadecimal constants. Don't do this in your application!
+                        - FOR THIS DEMO FILE ONLY, BECAUSE WE WANT TO SUPPORT OLD COMPILERS, WE ARE *NOT* INCLUDING RAW UTF-8 CHARACTERS IN THIS SOURCE FILE.
+                            Instead we are encoding a few strings with hexadecimal constants. Don't do this in your application!
+                            Please use u8"text in any language" in your application!
                         Note that characters values are preserved even by inputText() if the font cannot be displayed,
                         so you can safely copy & paste garbled characters into another application. */
-                    textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.font.loadFromFileTTF() manually to load extra character ranges.")
+                    textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.font.loadFromFileTTF() manually to load extra character ranges. Read misc/fonts/README.txt for details.")
+                    // Normally we would use u8"blah blah" with the proper characters directly in the string.
                     text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)")
                     text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
                     inputText("UTF-16 input", buf)

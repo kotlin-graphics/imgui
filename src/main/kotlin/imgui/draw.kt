@@ -95,7 +95,9 @@ class DrawChannel {
  *  Each ImGui window contains its own DrawList. You can use ImGui::windowDrawList to access the current
  *  window draw list and draw custom primitives.
  *  You can interleave normal ImGui:: calls and adding primitives to the current draw list.
- *  All positions are in screen coordinates (0,0=top-left, 1 pixel per unit).
+ *  All positions are generally in pixel coordinates (top-left at (0,0), bottom-right at io.DisplaySize),
+ *  but you are totally free to apply whatever transformation matrix to want to the data
+ *  (if you apply such transformation you'll want to apply it to ClipRect as well)
  *  Important: Primitives are always added to the list and not culled (culling is done at render time and
  *  at a higher-level by ImGui::functions), if you use this API a lot consider coarse culling your drawn objects.
  *

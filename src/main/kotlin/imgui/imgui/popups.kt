@@ -52,7 +52,7 @@ interface imgui_popups {
         val window = currentWindow
         // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!
         val id = if (strId.isNotEmpty()) window.getId(strId) else window.dc.lastItemId
-        assert(id != 0) { "However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)" }
+        assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)" }
         if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup))
             openPopupEx(id)
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
@@ -115,7 +115,7 @@ interface imgui_popups {
         if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
             // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
             val id = if (strId.isNotEmpty()) getId(strId) else dc.lastItemId
-            assert(id != 0) { "However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)" }
+            assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)" }
             openPopupEx(id)
             true
         } else false
