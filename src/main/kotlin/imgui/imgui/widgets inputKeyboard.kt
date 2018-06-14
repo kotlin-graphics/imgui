@@ -1,22 +1,36 @@
 package imgui.imgui
 
+import gli_.hasnt
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec3.Vec3
 import glm_.vec3.Vec3i
 import glm_.vec4.Vec4
 import glm_.vec4.Vec4i
+import imgui.*
+import imgui.ImGui.beginGroup
+import imgui.ImGui.buttonEx
+import imgui.ImGui.calcItemWidth
+import imgui.ImGui.currentWindow
+import imgui.ImGui.endGroup
+import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.frameHeight
 import imgui.ImGui.inputFloatN
 import imgui.ImGui.inputIntN
-import imgui.ImGui.inputScalar
 import imgui.ImGui.inputTextEx
-import imgui.InputTextFlags
-import imgui.has
-import imgui.hasnt
-import imgui.internal.DataType
-import imgui.or
+import imgui.ImGui.io
+import imgui.ImGui.popId
+import imgui.ImGui.popItemWidth
+import imgui.ImGui.pushId
+import imgui.ImGui.pushItemWidth
+import imgui.ImGui.pushMultiItemsWidths
+import imgui.ImGui.sameLine
+import imgui.ImGui.style
+import imgui.ImGui.textUnformatted
+import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
+import imgui.internal.ButtonFlag as Bf
 
 /** Widgets: Input with Keyboard    */
 interface imgui_widgetsInputKeyboard {
@@ -59,7 +73,7 @@ interface imgui_widgetsInputKeyboard {
     }
 
     fun inputFloat2(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
-            :Boolean = inputFloatN(label, v, 2, format, extraFlags)
+            : Boolean = inputFloatN(label, v, 2, format, extraFlags)
 
     fun inputVec2(label: String, v: Vec2, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(2)
@@ -69,7 +83,7 @@ interface imgui_widgetsInputKeyboard {
     }
 
     fun inputFloat3(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
-            :Boolean = inputFloatN(label, v, 3, format, extraFlags)
+            : Boolean = inputFloatN(label, v, 3, format, extraFlags)
 
     fun inputVec3(label: String, v: Vec3, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(3)
@@ -79,7 +93,7 @@ interface imgui_widgetsInputKeyboard {
     }
 
     fun inputFloat4(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
-            :Boolean = inputFloatN(label, v, 4, format, extraFlags)
+            : Boolean = inputFloatN(label, v, 4, format, extraFlags)
 
     fun inputVec4(label: String, v: Vec4, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(4)
@@ -117,5 +131,114 @@ interface imgui_widgetsInputKeyboard {
         val res = inputIntN(label, ints, 4, extraFlags)
         v put ints
         return res
+    }
+
+    /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
+     *  functions "format" argument)    */
+    fun inputScalar(label: String, dataType: DataType, data: IntArray, step: Int?, stepFast: Int?, format: String? = null,
+                    extraFlags: InputTextFlags = 0): Boolean = withInt(data, 0) {
+        inputScalar(label, dataType, it, step, stepFast, format, extraFlags)
+    }
+
+    /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
+     *  functions "format" argument)    */
+    fun inputScalar(label: String, dataType: DataType, data: KMutableProperty0<*>, step: Number?, stepFast: Number?,
+                    format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
+
+        data as KMutableProperty0<Number>
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val format = when (format) {
+            null -> when (dataType) {
+                DataType.Float, DataType.Double -> "%f"
+                else -> "%d"
+            }
+            else -> format
+        }
+
+        val buf = data.format(dataType, format)
+
+        var valueChanged = false
+        var extraFlags = extraFlags
+        if (extraFlags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
+            extraFlags = extraFlags or Itf.CharsDecimal
+        extraFlags = extraFlags or Itf.AutoSelectAll
+
+        if (step != null) {
+            val buttonSize = frameHeight
+
+            beginGroup() // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
+            pushId(label)
+            pushItemWidth(max(1f, calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
+            if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
+                valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, format)
+            popItemWidth()
+
+            // Step buttons
+            sameLine(0f, style.itemInnerSpacing.x)
+            if (buttonEx("-", Vec2(buttonSize), Bf.Repeat or Bf.DontClosePopups)) {
+                data.set(dataTypeApplyOp(dataType, '-', data(), if (io.keyCtrl && stepFast != null) stepFast else step))
+                valueChanged = true
+            }
+            sameLine(0f, style.itemInnerSpacing.x)
+            if (buttonEx("+", Vec2(buttonSize), Bf.Repeat or Bf.DontClosePopups)) {
+                data.set(dataTypeApplyOp(dataType, '+', data(), if (io.keyCtrl && stepFast != null) stepFast else step))
+                valueChanged = true
+            }
+            sameLine(0f, style.itemInnerSpacing.x)
+            textUnformatted(label, findRenderedTextEnd(label))
+
+            popId()
+            endGroup()
+        } else if (inputText(label, buf, extraFlags))
+            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, format)
+
+        return valueChanged
+    }
+
+    fun inputFloatN(label: String, v: FloatArray, components: Int, format: String? = null, extraFlags: Int): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(components)
+        for (i in 0 until components) {
+            pushId(i)
+            withFloat(v, i) {
+                valueChanged = inputScalar("##v", DataType.Float, it, 0f, 0f, format, extraFlags) || valueChanged
+            }
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+        return valueChanged
+    }
+
+    fun inputIntN(label: String, v: IntArray, components: Int, extraFlags: Int): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(components)
+        for (i in 0 until components) {
+            pushId(i)
+            withInt(v, i) { valueChanged = inputInt("##v", it, 0, 0, extraFlags) || valueChanged }
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+
+        return valueChanged
     }
 }

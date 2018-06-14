@@ -6,7 +6,10 @@ import glm_.*
 import glm_.func.common.max
 import glm_.func.common.min
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
+import glm_.vec3.Vec3i
 import glm_.vec4.Vec4
+import glm_.vec4.Vec4i
 import imgui.*
 import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.begin
@@ -30,6 +33,7 @@ import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
 import imgui.ImGui.indent
 import imgui.ImGui.inputInt
+import imgui.ImGui.inputScalar
 import imgui.ImGui.inputText
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
@@ -2072,53 +2076,6 @@ interface imgui_internal {
         }
     }
 
-    /** Add multiple sliders on 1 line for compact edition of multiple components   */
-    fun sliderFloatN(label: String, v: FloatArray, component: Int, vMin: Float, vMax: Float, format: String?, power: Float = 1f)
-            : Boolean {
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        var valueChanged = false
-        beginGroup()
-        pushId(label)
-        pushMultiItemsWidths(component)
-        for (i in 0 until component) {
-            pushId(i)
-            withFloat(v, i) { valueChanged = sliderFloat("##v", it, vMin, vMax, format, power) || valueChanged }
-            sameLine(0f, style.itemInnerSpacing.x)
-            popId()
-            popItemWidth()
-        }
-        popId()
-
-        textUnformatted(label, findRenderedTextEnd(label))
-        endGroup()
-        return valueChanged
-    }
-
-    fun sliderIntN(label: String, v: IntArray, components: Int, vMin: Int, vMax: Int, format: String): Boolean {
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        var valueChanged = false
-        beginGroup()
-        pushId(label)
-        pushMultiItemsWidths(components)
-        for (i in 0 until components) {
-            pushId(i)
-            withInt(v, i) { valueChanged = sliderInt("##v", it, vMin, vMax, format) || valueChanged }
-            sameLine(0f, style.itemInnerSpacing.x)
-            popId()
-            popItemWidth()
-        }
-        popId()
-
-        textUnformatted(label, findRenderedTextEnd(label))
-        endGroup()
-
-        return valueChanged
-    }
-
     fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
                      power: Float): Boolean {
         f0 = v[ptr]
@@ -2149,67 +2106,6 @@ interface imgui_internal {
             }
             else -> false
         }
-    }
-
-    fun dragFloatN(label: String, v: FloatArray, components: Int, vSpeed: Float, vMin: Float, vMax: Float, format: String, power: Float)
-            : Boolean {
-
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        var valueChanged = false
-        beginGroup()
-        pushId(label)
-        pushMultiItemsWidths(components)
-        for (i in 0 until components) {
-            pushId(i)
-            withFloat(v, i) {
-                valueChanged = dragScalar("##v", DataType.Float, it, vSpeed, vMin, vMax, format, power) || valueChanged
-            }
-            sameLine(0f, style.itemInnerSpacing.x)
-            popId()
-            popItemWidth()
-        }
-        popId()
-
-        textUnformatted(label, findRenderedTextEnd(label))
-        endGroup()
-
-        return valueChanged
-    }
-
-    fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                  format: String = "%.3f", power: Float = 1f): Boolean =
-            dragScalar(label, DataType.Float, v, vSpeed, vMin, vMax, format, power)
-
-    fun dragFloat(label: String, v: FloatArray, ptr: Int, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                  format: String = "%.3f", power: Float = 1f): Boolean {
-        return withFloat(v, ptr) {
-            dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power)
-        }
-    }
-
-    fun dragIntN(label: String, v: IntArray, components: Int, vSpeed: Float, vMin: Int, vMax: Int, format: String): Boolean {
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        var valueChanged = false
-        beginGroup()
-        pushId(label)
-        pushMultiItemsWidths(components)
-        for (i in 0 until components) {
-            pushId(i)
-            withInt(v, i) { valueChanged = dragInt("##v", it, vSpeed, vMin, vMax, format) || valueChanged }
-            sameLine(0f, style.itemInnerSpacing.x)
-            popId()
-            popItemWidth()
-        }
-        popId()
-
-        textUnformatted(label, findRenderedTextEnd(label))
-        endGroup()
-
-        return valueChanged
     }
 
     fun inputTextEx(label: String, buf: CharArray, sizeArg: Vec2, flags: InputTextFlags
@@ -2813,118 +2709,6 @@ interface imgui_internal {
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
         return if (flags has Itf.EnterReturnsTrue) enterPressed else valueChanged
-    }
-
-    fun inputFloatN(label: String, v: FloatArray, components: Int, format: String? = null, extraFlags: Int): Boolean {
-        val window = currentWindow
-        if (window.skipItems) return false
-        var valueChanged = false
-        beginGroup()
-        pushId(label)
-        pushMultiItemsWidths(components)
-        for (i in 0 until components) {
-            pushId(i)
-            withFloat(v, i) {
-                valueChanged = inputScalar("##v", DataType.Float, it, 0f, 0f, format, extraFlags) || valueChanged
-            }
-            sameLine(0f, style.itemInnerSpacing.x)
-            popId()
-            popItemWidth()
-        }
-        popId()
-        textUnformatted(label, findRenderedTextEnd(label))
-        endGroup()
-        return valueChanged
-    }
-
-    fun inputIntN(label: String, v: IntArray, components: Int, extraFlags: Int): Boolean {
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        var valueChanged = false
-        beginGroup()
-        pushId(label)
-        pushMultiItemsWidths(components)
-        for (i in 0 until components) {
-            pushId(i)
-            withInt(v, i) { valueChanged = inputInt("##v", it, 0, 0, extraFlags) || valueChanged }
-            sameLine(0f, style.itemInnerSpacing.x)
-            popId()
-            popItemWidth()
-        }
-        popId()
-
-        textUnformatted(label, findRenderedTextEnd(label))
-        endGroup()
-
-        return valueChanged
-    }
-
-    /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
-     *  functions "format" argument)    */
-    fun inputScalar(label: String, dataType: DataType, data: IntArray, step: Int?, stepFast: Int?, format: String? = null,
-                    extraFlags: InputTextFlags = 0): Boolean {
-        i0 = data[0]
-        val res = inputScalar(label, dataType, ::i0, step, stepFast, format, extraFlags)
-        data[0] = i0
-        return res
-    }
-
-    /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
-     *  functions "format" argument)    */
-    fun inputScalar(label: String, dataType: DataType, data: KMutableProperty0<*>, step: Number?, stepFast: Number?,
-                    format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
-
-        data as KMutableProperty0<Number>
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        val format = when (format) {
-            null -> when (dataType) {
-                DataType.Float, DataType.Double -> "%f"
-                else -> "%d"
-            }
-            else -> format
-        }
-
-        val buf = data.format(dataType, format)
-
-        var valueChanged = false
-        var extraFlags = extraFlags
-        if (extraFlags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
-            extraFlags = extraFlags or Itf.CharsDecimal
-        extraFlags = extraFlags or Itf.AutoSelectAll
-
-        if (step != null) {
-            val buttonSize = frameHeight
-
-            beginGroup() // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
-            pushId(label)
-            pushItemWidth(max(1f, calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
-            if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
-                valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, format)
-            popItemWidth()
-
-            // Step buttons
-            sameLine(0f, style.itemInnerSpacing.x)
-            if (buttonEx("-", Vec2(buttonSize), Bf.Repeat or Bf.DontClosePopups)) {
-                data.set(dataTypeApplyOp(dataType, '-', data(), if (io.keyCtrl && stepFast != null) stepFast else step))
-                valueChanged = true
-            }
-            sameLine(0f, style.itemInnerSpacing.x)
-            if (buttonEx("+", Vec2(buttonSize), Bf.Repeat or Bf.DontClosePopups)) {
-                data.set(dataTypeApplyOp(dataType, '+', data(), if (io.keyCtrl && stepFast != null) stepFast else step))
-                valueChanged = true
-            }
-            sameLine(0f, style.itemInnerSpacing.x)
-            textUnformatted(label, findRenderedTextEnd(label))
-
-            popId()
-            endGroup()
-        } else if (inputText(label, buf, extraFlags))
-            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, format)
-
-        return valueChanged
     }
 
     /** Create text input in place of a slider (when CTRL+Clicking on slider)
@@ -3567,7 +3351,7 @@ interface imgui_internal {
     }
 }
 
-private inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
+inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
     Ref.fPtr++
     val f = Ref::float
     f.set(floats[ptr])
@@ -3577,7 +3361,7 @@ private inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableP
     return res
 }
 
-private inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
+inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
     Ref.iPtr++
     val i = Ref::int
     i.set(ints[ptr])

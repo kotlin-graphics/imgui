@@ -314,6 +314,12 @@ val PAYLOAD_TYPE_COLOR_3F = "_COL3F"
 /** float[4]: Standard type for colors. User code may use this type. */
 val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 
+/** A primary data type */
+enum class DataType { Int, Uint, Long, Ulong, Float, Double, Vec2;
+
+    val i = ordinal
+}
+
 /** A cardinal direction */
 enum class Dir { None, Left, Right, Up, Down, Count;
 

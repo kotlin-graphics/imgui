@@ -1,33 +1,39 @@
 package imgui.imgui
 
-import glm_.f
 import glm_.func.deg
 import glm_.func.rad
-import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec3.Vec3i
 import glm_.vec4.Vec4i
 import imgui.*
+import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
+import imgui.ImGui.endGroup
+import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.inputScalarAsWidgetReplacement
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
+import imgui.ImGui.popId
+import imgui.ImGui.popItemWidth
+import imgui.ImGui.pushId
+import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.sameLine
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
 import imgui.ImGui.sliderFloatN
 import imgui.ImGui.sliderIntN
 import imgui.ImGui.style
+import imgui.ImGui.textUnformatted
 import imgui.imgui.imgui_main.Companion.sliderBehavior
 import imgui.imgui.imgui_widgetsDrag.Companion.patchFormatStringFloatToInt
-import imgui.internal.DataType
 import imgui.internal.Rect
 import imgui.internal.SliderFlag
 import imgui.internal.focus
@@ -264,6 +270,53 @@ interface imgui_widgetsSliders {
 
     fun vSliderInt(label: String, size: Vec2, v: KMutableProperty0<*>, vMin: Int, vMax: Int, format: String = "%d")
             : Boolean = vSliderScalar(label, size, DataType.Int, v, vMin, vMax, format)
+
+    /** Add multiple sliders on 1 line for compact edition of multiple components   */
+    fun sliderFloatN(label: String, v: FloatArray, component: Int, vMin: Float, vMax: Float, format: String?, power: Float = 1f)
+            : Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(component)
+        for (i in 0 until component) {
+            pushId(i)
+            withFloat(v, i) { valueChanged = sliderFloat("##v", it, vMin, vMax, format, power) || valueChanged }
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+        return valueChanged
+    }
+
+    fun sliderIntN(label: String, v: IntArray, components: Int, vMin: Int, vMax: Int, format: String): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(components)
+        for (i in 0 until components) {
+            pushId(i)
+            withInt(v, i) { valueChanged = sliderInt("##v", it, vMin, vMax, format) || valueChanged }
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+
+        return valueChanged
+    }
 
     companion object {
         private var f0 = 0f

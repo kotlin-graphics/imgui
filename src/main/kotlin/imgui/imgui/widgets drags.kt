@@ -15,7 +15,6 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dragBehavior
-import imgui.ImGui.dragFloat
 import imgui.ImGui.dragFloatN
 import imgui.ImGui.dragIntN
 import imgui.ImGui.endGroup
@@ -41,7 +40,6 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
 import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
-import imgui.internal.DataType
 import imgui.internal.Rect
 import imgui.internal.focus
 import kotlin.reflect.KMutableProperty0
@@ -57,98 +55,13 @@ import kotlin.reflect.KMutableProperty0
  *  For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision). */
 interface imgui_widgetsDrag {
 
+    fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
+                  format: String = "%.3f", power: Float = 1f): Boolean =
+            dragScalar(label, DataType.Float, v, vSpeed, vMin, vMax, format, power)
 
-    /** For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every functions, note that a 'float v[X]' function
-     *  argument is the same as 'float* v', the array syntax is just a way to document the number of elements that are
-     *  expected to be accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x
-     *  Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
-     *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
-     *  Speed are per-pixel of mouse movement (vSpeed = 0.2f: mouse needs to move by 5 pixels to increase value by 1).
-     *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
-    fun dragScalar(label: String, v: FloatArray, vSpeed: Float, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f)
-            : Boolean = dragScalar(label, v, 0, vSpeed, vMin, vMax, format, power)
-
-    /** If vMin >= vMax we have no bound  */
-    fun dragScalar(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f)
-            : Boolean = withFloat(v, ptr) { dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power) }
-
-    fun dragScalar(label: String, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number, vMax: Number,
-                   format: String? = null, power: Float = 1f): Boolean {
-
-        v as KMutableProperty0<Number>
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        if (power != 1f)
-            assert(vMin != vMax) // When using a power curve the drag needs to have known bounds
-
-        val id = window.getId(label)
-        val w = calcItemWidth()
-
-        val labelSize = calcTextSize(label, 0, true)
-        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
-        val innerBb = Rect(frameBb.min + style.framePadding, frameBb.max - style.framePadding)
-        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
-
-        // NB- we don't call ItemSize() yet because we may turn into a text edit box below
-        if (!itemAdd(totalBb, id, frameBb)) {
-            itemSize(totalBb, style.framePadding.y)
-            return false
-        }
-
-        val hovered = itemHoverable(frameBb, id)
-
-        // Default format string when passing NULL
-        // Patch old "%.0f" format string to use "%d", read function comments for more details.
-        val format = when {
-            format == null -> when (dataType) {
-                DataType.Float, DataType.Double -> "%f"
-                else -> "%d"
-            }
-            dataType == DataType.Int && format != "%d" -> patchFormatStringFloatToInt(format)
-            else -> format
-        }
-
-        // Tabbing or CTRL-clicking on Drag turns it into an input box
-        var startTextInput = false
-        val tabFocusRequested = focusableItemRegister(window, id)
-        if (tabFocusRequested || (hovered && (io.mouseClicked[0] || io.mouseDoubleClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id))) {
-            setActiveId(id, window)
-            setFocusId(id, window)
-            window.focus()
-            g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-            if (tabFocusRequested || io.keyCtrl || io.mouseDoubleClicked[0] || g.navInputId == id) {
-                startTextInput = true
-                g.scalarAsInputTextId = 0
-            }
-        }
-        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
-            return inputScalarAsWidgetReplacement(frameBb, id, label, dataType, v, format)
-
-        // Actual drag behavior
-        itemSize(totalBb, style.framePadding.y)
-        val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power)
-
-        // Draw frame
-        val frameCol = when (g.activeId) {
-            id -> Col.FrameBgActive
-            else -> when (g.hoveredId) {
-                id -> Col.FrameBgHovered
-                else -> Col.FrameBg
-            }
-        }
-        renderNavHighlight(frameBb, id)
-        renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
-
-        // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val valueBuf = v.format(dataType, format)
-        val value = String(valueBuf)
-        renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
-
-        if (labelSize.x > 0f)
-            renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, innerBb.min.y), label)
-
-        return valueChanged
+    fun dragFloat(label: String, v: FloatArray, ptr: Int, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
+                  format: String = "%.3f", power: Float = 1f): Boolean = withFloat(v, ptr) {
+        dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power)
     }
 
     fun dragFloat2(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", power: Float = 1f) =
@@ -184,8 +97,8 @@ interface imgui_widgetsDrag {
     }
 
     fun dragFloatRange2(label: String, vCurrentMin: KMutableProperty0<Float>, vCurrentMax: KMutableProperty0<Float>, vSpeed: Float = 1f,
-                        vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", formatMax: String = format,
-                        power: Float = 1f): Boolean {
+                        vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", formatMax: String = format, power: Float = 1f)
+            : Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -276,6 +189,150 @@ interface imgui_widgetsDrag {
         return valueChanged
     }
 
+    /** For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every functions, note that a 'float v[X]' function
+     *  argument is the same as 'float* v', the array syntax is just a way to document the number of elements that are
+     *  expected to be accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x
+     *  Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
+     *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
+     *  Speed are per-pixel of mouse movement (vSpeed = 0.2f: mouse needs to move by 5 pixels to increase value by 1).
+     *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
+    fun dragScalar(label: String, v: FloatArray, vSpeed: Float, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f)
+            : Boolean = dragScalar(label, v, 0, vSpeed, vMin, vMax, format, power)
+
+    /** If vMin >= vMax we have no bound  */
+    fun dragScalar(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float, vMin: Float, vMax: Float, format: String? = null,
+                   power: Float = 1f): Boolean =
+            withFloat(v, ptr) { dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power) }
+
+    fun dragScalar(label: String, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number, vMax: Number,
+                   format: String? = null, power: Float = 1f): Boolean {
+
+        v as KMutableProperty0<Number>
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        if (power != 1f)
+            assert(vMin != vMax) // When using a power curve the drag needs to have known bounds
+
+        val id = window.getId(label)
+        val w = calcItemWidth()
+
+        val labelSize = calcTextSize(label, 0, true)
+        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
+        val innerBb = Rect(frameBb.min + style.framePadding, frameBb.max - style.framePadding)
+        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
+
+        // NB- we don't call ItemSize() yet because we may turn into a text edit box below
+        if (!itemAdd(totalBb, id, frameBb)) {
+            itemSize(totalBb, style.framePadding.y)
+            return false
+        }
+
+        val hovered = itemHoverable(frameBb, id)
+
+        // Default format string when passing NULL
+        // Patch old "%.0f" format string to use "%d", read function comments for more details.
+        val format = when {
+            format == null -> when (dataType) {
+                DataType.Float, DataType.Double -> "%f"
+                else -> "%d"
+            }
+            dataType == DataType.Int && format != "%d" -> patchFormatStringFloatToInt(format)
+            else -> format
+        }
+
+        // Tabbing or CTRL-clicking on Drag turns it into an input box
+        var startTextInput = false
+        val tabFocusRequested = focusableItemRegister(window, id)
+        if (tabFocusRequested || (hovered && (io.mouseClicked[0] || io.mouseDoubleClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id))) {
+            setActiveId(id, window)
+            setFocusId(id, window)
+            window.focus()
+            g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
+            if (tabFocusRequested || io.keyCtrl || io.mouseDoubleClicked[0] || g.navInputId == id) {
+                startTextInput = true
+                g.scalarAsInputTextId = 0
+            }
+        }
+        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
+            return inputScalarAsWidgetReplacement(frameBb, id, label, dataType, v, format)
+
+        // Actual drag behavior
+        itemSize(totalBb, style.framePadding.y)
+        val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power)
+
+        // Draw frame
+        val frameCol = when (g.activeId) {
+            id -> Col.FrameBgActive
+            else -> when (g.hoveredId) {
+                id -> Col.FrameBgHovered
+                else -> Col.FrameBg
+            }
+        }
+        renderNavHighlight(frameBb, id)
+        renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
+
+        // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
+        val valueBuf = v.format(dataType, format)
+        val value = String(valueBuf)
+        renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
+
+        if (labelSize.x > 0f)
+            renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, innerBb.min.y), label)
+
+        return valueChanged
+    }
+
+    fun dragFloatN(label: String, v: FloatArray, components: Int, vSpeed: Float, vMin: Float, vMax: Float, format: String? = null,
+                   power: Float = 1f): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(components)
+        for (i in 0 until components) {
+            pushId(i)
+            withFloat(v, i) {
+                valueChanged = dragScalar("##v", DataType.Float, it, vSpeed, vMin, vMax, format, power) || valueChanged
+            }
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+
+        return valueChanged
+    }
+
+    fun dragIntN(label: String, v: IntArray, components: Int, vSpeed: Float, vMin: Int, vMax: Int, format: String = "%d"): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(components)
+        for (i in 0 until components) {
+            pushId(i)
+            withInt(v, i) { valueChanged = dragInt("##v", it, vSpeed, vMin, vMax, format) || valueChanged }
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
+
+        textUnformatted(label, findRenderedTextEnd(label))
+        endGroup()
+
+        return valueChanged
+    }
+
     companion object {
 
         private inline fun <R> withFloat(block: (KMutableProperty0<Float>) -> R): R {
@@ -348,8 +405,4 @@ interface imgui_widgetsDrag {
             return fmt
         }
     }
-}
-
-fun main(args: Array<String>) {
-    println("%0.3f".format(0.0123456f))
 }
