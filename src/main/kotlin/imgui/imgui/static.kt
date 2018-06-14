@@ -9,11 +9,14 @@ import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.style
-import imgui.internal.*
+import imgui.internal.NavMoveResult
+import imgui.internal.Rect
+import imgui.internal.Window
+import imgui.internal.lerp
 import kotlin.math.abs
 import imgui.WindowFlag as Wf
 
-fun navScoreItemGetQuadrant(dx: Float, dy: Float) = when {
+inline fun navScoreItemGetQuadrant(dx: Float, dy: Float) = when {
     abs(dx) > abs(dy) -> when {
         dx > 0f -> Dir.Right
         else -> Dir.Left
@@ -24,10 +27,21 @@ fun navScoreItemGetQuadrant(dx: Float, dy: Float) = when {
     }
 }
 
-fun navScoreItemDistInterval(a0: Float, a1: Float, b0: Float, b1: Float) = when {
+inline fun navScoreItemDistInterval(a0: Float, a1: Float, b0: Float, b1: Float) = when {
     a1 < b0 -> a1 - b0
     b1 < a0 -> a0 - b1
     else -> 0f
+}
+
+fun navClampRectToVisibleAreaForMoveDir(moveDir: Dir, r: Rect, clipRect: Rect) = when (moveDir) {
+    Dir.Left, Dir.Right -> {
+        r.min.y = glm.clamp(r.min.y, clipRect.min.y, clipRect.max.y)
+        r.max.y = glm.clamp(r.max.y, clipRect.min.y, clipRect.max.y)
+    }
+    else -> {
+        r.min.x = glm.clamp(r.min.x, clipRect.min.x, clipRect.max.x)
+        r.max.x = glm.clamp(r.max.x, clipRect.min.x, clipRect.max.x)
+    }
 }
 
 /** Scoring function for directional navigation. Based on https://gist.github.com/rygorous/6981057  */
@@ -40,14 +54,10 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     val curr = Rect(g.navScoringRectScreen)
     g.navScoringCount++
 
-    // We perform scoring on items bounding box clipped by their parent window on the other axis (clipping on our movement axis would give us equal scores for all clipped items)
-    if (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right) {
-        cand.min.y = glm.clamp(cand.min.y, window.clipRect.min.y, window.clipRect.max.y)
-        cand.max.y = glm.clamp(cand.max.y, window.clipRect.min.y, window.clipRect.max.y)
-    } else {
-        cand.min.x = glm.clamp(cand.min.x, window.clipRect.min.x, window.clipRect.max.x)
-        cand.max.x = glm.clamp(cand.max.x, window.clipRect.min.x, window.clipRect.max.x)
-    }
+    /*  We perform scoring on items bounding box clipped by the current clipping rectangle on the other axis
+        (clipping on our movement axis would give us equal scores for all clipped items)
+        For example, this ensure that items in one column are not reached when moving vertically from items in another column. */
+    navClampRectToVisibleAreaForMoveDir(g.navMoveDir, cand, window.clipRect)
 
     // Compute distance between boxes
     // FIXME-NAV: Introducing biases for vertical navigation, needs to be removed.

@@ -1167,14 +1167,18 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         }
     }
 
-    // Scoring for navigation
+    /*  Scoring for navigation
+        FIXME-NAV: Consider policy for double scoring
+        (scoring from NavScoringRectScreen + scoring from a rect wrapped according to current wrapping policy)     */
     if (g.navId != id && itemFlags hasnt ItemFlag.NoNav) {
         val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
-        val newBest =
-                if (IMGUI_DEBUG_NAV_SCORING) {  // [DEBUG] Score all items in NavWindow at all times
+        val newBest = when {
+            IMGUI_DEBUG_NAV_SCORING -> {  // [DEBUG] Score all items in NavWindow at all times
                     if (!g.navMoveRequest) g.navMoveDir = g.navMoveDirLast
                     navScoreItem(result, navBb) && g.navMoveRequest
-                } else g.navMoveRequest && navScoreItem(result, navBb)
+            }
+            else -> g.navMoveRequest && navScoreItem(result, navBb)
+        }
         if (newBest) {
             result.id = id
             result.parentId = window.idStack.last()
