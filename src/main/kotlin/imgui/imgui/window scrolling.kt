@@ -45,11 +45,5 @@ interface imgui_windowScrolling {
         assert(centerYRatio in 0f..1f)
         scrollTarget.y = (posY + scroll.y).i.f
         scrollTargetCenterRatio.y = centerYRatio
-        /*  Minor hack to to make scrolling to top/bottom of window take account of WindowPadding,
-            it looks more right to the user this way         */
-        if (centerYRatio <= 0f && scrollTarget.y <= windowPadding.y)
-            scrollTarget.y = 0f
-        else if (centerYRatio >= 1f && scrollTarget.y >= sizeContents.y - windowPadding.y + ImGui.style.itemSpacing.y)
-            scrollTarget.y = sizeContents.y
     }
 }

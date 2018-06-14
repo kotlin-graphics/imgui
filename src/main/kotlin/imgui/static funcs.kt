@@ -167,15 +167,21 @@ fun checkStacksSize(window: Window, write: Boolean) {
     assert(ptr == window.dc.stackSizesBackup.size)
 }
 
-fun calcNextScrollFromScrollTargetAndClamp(window: Window): Vec2 {  // TODO -> window class?
+fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean): Vec2 {  // TODO -> window class?
     val scroll = Vec2(window.scroll)
-    val crX = window.scrollTargetCenterRatio.x
-    val crY = window.scrollTargetCenterRatio.y
     if (window.scrollTarget.x < Float.MAX_VALUE)
-        scroll.x = window.scrollTarget.x - crX * (window.sizeFull.x - window.scrollbarSizes.x)
-    if (window.scrollTarget.y < Float.MAX_VALUE)
-        scroll.y = window.scrollTarget.y - (1f - crY) * (window.titleBarHeight + window.menuBarHeight) -
-                crY * (window.sizeFull.y - window.scrollbarSizes.y)
+        scroll.x = window.scrollTarget.x - window.scrollTargetCenterRatio.x * (window.sizeFull.x - window.scrollbarSizes.x)
+    if (window.scrollTarget.y < Float.MAX_VALUE) {
+        /*  'snap_on_edges' allows for a discontinuity at the edge of scrolling limits to take account of WindowPadding
+            so that scrolling to make the last item visible scroll far enough to see the padding.         */
+        val crY = window.scrollTargetCenterRatio.y
+        var targetY = window.scrollTarget.y
+        if (snapOnEdges && crY <= 0f && targetY <= window.windowPadding.y)
+            targetY = 0f
+        if (snapOnEdges && crY >= 1f && targetY >= window.sizeContents.y - window.windowPadding.y + style.itemSpacing.y)
+            targetY = window.sizeContents.y
+        scroll.y = targetY - (1f - crY) * (window.titleBarHeight + window.menuBarHeight) - crY * (window.sizeFull.y - window.scrollbarSizes.y)
+    }
     scroll maxAssign 0f
     if (!window.collapsed && !window.skipItems) {
         scroll.x = glm.min(scroll.x, window.scrollMaxX)
@@ -742,8 +748,8 @@ fun navScrollToBringItemIntoView(window: Window, itemRectRel: Rect) {
         window.scrollTargetCenterRatio.y = 1f
     }
 
-    // Estimate upcoming scroll so we can offset our relative mouse position so mouse position can be applied immediately (under this block)
-    val nextScroll = calcNextScrollFromScrollTargetAndClamp(window)
+    // Estimate upcoming scroll so we can offset our relative mouse position so mouse position can be applied immediately after in NavUpdate()
+    val nextScroll = calcNextScrollFromScrollTargetAndClamp(window, false)
     itemRectRel translate (window.scroll - nextScroll)
 }
 

@@ -386,7 +386,7 @@ interface imgui_window {
             window.focusIdxAllRequestNext = Int.MAX_VALUE
 
             // Apply scrolling
-            window.scroll put calcNextScrollFromScrollTargetAndClamp(window)
+            window.scroll put calcNextScrollFromScrollTargetAndClamp(window, true)
             window.scrollTarget put Float.MAX_VALUE
 
             // Apply focus, new windows appears in front
