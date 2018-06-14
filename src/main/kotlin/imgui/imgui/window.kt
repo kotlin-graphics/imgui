@@ -516,13 +516,17 @@ interface imgui_window {
 
             with(window) {
 
-                // Update ContentsRegionMax. All the variable it depends on are set above in this function.
-                contentsRegionRect.min.x = -scroll.x + windowPadding.x
-                contentsRegionRect.min.y = -scroll.y + windowPadding.y + titleBarHeight + menuBarHeight
-                contentsRegionRect.max.x = -scroll.x - windowPadding.x + (
-                        if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else (size.x - scrollbarSizes.x))
-                contentsRegionRect.max.y = -scroll.y - windowPadding.y + (
-                        if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else (size.y - scrollbarSizes.y))
+                /*  Update ContentsRegionMax. All the variable it depends on are set above in this function.
+                    FIXME: window->ContentsRegion.Max is currently very misleading / partly faulty,
+                    but some BeginChild() patterns relies on it.                 */
+                contentsRegionRect.apply {
+                    min.put(pos.x - scroll.x + windowPadding.x,
+                            pos.y - scroll.y + windowPadding.y + titleBarHeight + menuBarHeight)
+                    val a = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else size.x - scrollbarSizes.x
+                    val b = if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else size.y - scrollbarSizes.y
+                    max.put(pos.x - scroll.x - windowPadding.x + a,
+                            pos.y - scroll.y - windowPadding.y + b)
+                }
 
                 /*  Setup drawing context
                     (NB: That term "drawing context / DC" lost its meaning a long time ago. Initially was meant to hold
@@ -629,8 +633,8 @@ interface imgui_window {
             }
 
             // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
-            window.windowRectClipped put window.rect()
-            window.windowRectClipped clipWith window.clipRect
+            window.outerRectClipped put window.rect()
+            window.outerRectClipped clipWith window.clipRect
 
             // Pressing CTRL+C while holding on a window copy its content to the clipboard
             // This works but 1. doesn't handle multiple Begin/End pairs, 2. recursing into another Begin/End pair - so we need to work that out and add better logging scope.
@@ -643,18 +647,18 @@ interface imgui_window {
             /*  Inner rectangle
             We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
             Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.   */
-            window.innerRect.min.x = titleBarRect.min.x + window.windowBorderSize
-            window.innerRect.min.y = titleBarRect.max.y + window.menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else window.windowBorderSize
-            window.innerRect.max.x = window.pos.x + window.size.x - window.scrollbarSizes.x - window.windowBorderSize
-            window.innerRect.max.y = window.pos.y + window.size.y - window.scrollbarSizes.y - window.windowBorderSize
+            window.innerMainRect.min.x = titleBarRect.min.x + window.windowBorderSize
+            window.innerMainRect.min.y = titleBarRect.max.y + window.menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else window.windowBorderSize
+            window.innerMainRect.max.x = window.pos.x + window.size.x - window.scrollbarSizes.x - window.windowBorderSize
+            window.innerMainRect.max.y = window.pos.y + window.size.y - window.scrollbarSizes.y - window.windowBorderSize
             //window->DrawList->AddRect(window->InnerRect.Min, window->InnerRect.Max, IM_COL32_WHITE);
 
             // Inner clipping rectangle
             // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
-            window.innerClipRect.min.x = floor(0.5f + window.innerRect.min.x + max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
-            window.innerClipRect.min.y = floor(0.5f + window.innerRect.min.y)
-            window.innerClipRect.max.x = floor(0.5f + window.innerRect.max.x - max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
-            window.innerClipRect.max.y = floor(0.5f + window.innerRect.max.y)
+            window.innerClipRect.min.x = floor(0.5f + window.innerMainRect.min.x + max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
+            window.innerClipRect.min.y = floor(0.5f + window.innerMainRect.min.y)
+            window.innerClipRect.max.x = floor(0.5f + window.innerMainRect.max.x - max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
+            window.innerClipRect.max.y = floor(0.5f + window.innerMainRect.max.y)
 
             /*  After Begin() we fill the last item / hovered data based on title bar data. It is a standard behavior (to allow creation of context menus on title bar only, etc.). */
             window.dc.lastItemId = window.moveId
@@ -678,8 +682,8 @@ interface imgui_window {
             window.collapsed = parentWindow?.collapsed == true
 
             if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames lessThanEqual 0)
-                window.collapsed = window.collapsed || (window.windowRectClipped.min.x >= window.windowRectClipped.max.x
-                        || window.windowRectClipped.min.y >= window.windowRectClipped.max.y)
+                window.collapsed = window.collapsed || (window.outerRectClipped.min.x >= window.outerRectClipped.max.x
+                        || window.outerRectClipped.min.y >= window.outerRectClipped.max.y)
 
             // We also hide the window from rendering because we've already added its border to the command list.
             // (we could perform the check earlier in the function but it is simpler at this point)
@@ -824,8 +828,8 @@ interface imgui_window {
      *  windows coordinates
      *  In window space (not screen space!) */
     val contentRegionMax: Vec2
-        get() = with(currentWindowRead!!) {
-            val mx = Vec2(contentsRegionRect.max)
+        get() = currentWindowRead!!.run {
+            val mx = contentsRegionRect.max - pos
             dc.columnsSet?.let { mx.x = getColumnOffset(it.current + 1) - windowPadding.x }
             mx
         }
@@ -838,12 +842,15 @@ interface imgui_window {
 
     val contentRegionAvailWidth get() = contentRegionAvail.x
     /** content boundaries min (roughly (0,0)-Scroll), in window coordinates    */
-    val windowContentRegionMin get() = currentWindowRead!!.contentsRegionRect.min
+    val windowContentRegionMin: Vec2
+        get() = currentWindowRead!!.run { contentsRegionRect.min - pos }
     /** content boundaries max (roughly (0,0)+Size-Scroll) where Size can be override with SetNextWindowContentSize(),
      * in window coordinates    */
-    val windowContentRegionMax get() = currentWindowRead!!.contentsRegionRect.max
+    val windowContentRegionMax: Vec2
+        get() = currentWindowRead!!.run { contentsRegionRect.max - pos }
 
-    val windowContentRegionWidth get() = with(currentWindowRead!!) { contentsRegionRect.max.x - contentsRegionRect.min.x }
+    val windowContentRegionWidth: Float
+        get() = currentWindowRead!!.contentsRegionRect.width
 
 
     /** set next window position. call before Begin()   */

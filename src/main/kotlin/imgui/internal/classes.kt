@@ -509,9 +509,6 @@ class Window(var context: Context, var name: String) {
     var sizeContents = Vec2()
     /** Size of contents explicitly set by the user via SetNextWindowContentSize()  */
     var sizeContentsExplicit = Vec2()
-    /** Maximum visible content position _in window coordinates_.
-    ~~ (SizeContentsExplicit ? SizeContentsExplicit : Size - ScrollbarSizes) - CursorStartPos, per axis */
-    var contentsRegionRect = Rect()
     /** Window padding at the time of begin. */
     var windowPadding = Vec2()
     /** Window rounding at the time of begin.   */
@@ -529,7 +526,7 @@ class Window(var context: Context, var name: String) {
     var scrollTarget = Vec2(Float.MAX_VALUE)
     /** 0.0f = scroll so that target position is at top, 0.5f = scroll so that target position is centered  */
     var scrollTargetCenterRatio = Vec2(.5f)
-
+    /** Size taken by scrollbars on each axis */
     var scrollbarSizes = Vec2()
 
     var scrollbar = Vec2bool()
@@ -593,14 +590,16 @@ class Window(var context: Context, var name: String) {
         childId = 0
     }
 
-    /** = DrawList->clip_rect_stack.back(). Scissoring / clipping rectangle. x1, y1, x2, y2.    */
+    /** Current clipping rectangle. = DrawList->clip_rect_stack.back(). Scissoring / clipping rectangle. x1, y1, x2, y2. */
     var clipRect = Rect()
-    /** = WindowRect just after setup in Begin(). == window->Rect() for root window.    */
-    var windowRectClipped = Rect()
+    /** = WindowRect just after setup in Begin(). == window->Rect() for root window. */
+    var outerRectClipped = Rect()
 
-    var innerRect = Rect()
+    var innerMainRect = Rect()
 
     var innerClipRect = Rect()
+    /** FIXME: This is currently confusing/misleading. Maximum visible content position ~~ Pos + (SizeContentsExplicit ? SizeContentsExplicit : Size - ScrollbarSizes) - CursorStartPos, per axis */
+    var contentsRegionRect = Rect()
 
     var lastFrameActive = -1
 

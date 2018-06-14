@@ -22,7 +22,6 @@ import imgui.internal.*
 import uno.kotlin.isPrintable
 import java.io.File
 import java.nio.file.Paths
-import java.util.*
 import kotlin.collections.set
 import kotlin.math.max
 import kotlin.math.min
@@ -70,7 +69,7 @@ fun findHoveredWindow(): Window? {
             continue
 
         // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
-        val bb = Rect(window.windowRectClipped.min - style.touchExtraPadding, window.windowRectClipped.max + style.touchExtraPadding)
+        val bb = Rect(window.outerRectClipped.min - style.touchExtraPadding, window.outerRectClipped.max + style.touchExtraPadding)
         if (bb contains io.mousePos)
             return window
     }
@@ -724,7 +723,7 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 /** NB: We modify rect_rel by the amount we scrolled for, so it is immediately updated. */
 fun navScrollToBringItemIntoView(window: Window, itemRectRel: Rect) {
     // Scroll to keep newly navigated item fully into view
-    val windowRectRel = Rect(window.innerRect.min - window.pos - Vec2(1), window.innerRect.max - window.pos + Vec2(1))
+    val windowRectRel = Rect(window.innerMainRect.min - window.pos - Vec2(1), window.innerMainRect.max - window.pos + Vec2(1))
     //g.OverlayDrawList.AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
     if (windowRectRel contains itemRectRel) return
 
@@ -998,7 +997,7 @@ fun navUpdate() {
     // When we have manually scrolled (without using navigation) and NavId becomes out of bounds, we project its bounding box to the visible area to restart navigation within visible items
     if (g.navMoveRequest && g.navMoveFromClampedRefRect && g.navLayer == 0) {
         val window = g.navWindow!!
-        val windowRectRel = Rect(window.innerRect.min - window.pos - 1, window.innerRect.max - window.pos + 1)
+        val windowRectRel = Rect(window.innerMainRect.min - window.pos - 1, window.innerMainRect.max - window.pos + 1)
         if (!windowRectRel.contains(window.navRectRel[g.navLayer])) {
             val pad = window.calcFontSize() * 0.5f
             windowRectRel expand Vec2(-min(windowRectRel.width, pad), -min(windowRectRel.height, pad)) // Terrible approximation for the intent of starting navigation from first fully visible item

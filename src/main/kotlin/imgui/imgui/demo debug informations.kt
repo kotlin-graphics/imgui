@@ -76,6 +76,7 @@ import imgui.WindowFlag as Wf
  *  -Your beloved friend, imgui_demo.cpp (that you won't delete)
  */
 interface imgui_demoDebugInformations {
+
     /** Create demo/test window.
      *  Demonstrate most ImGui features (big function!)
      *  Call this to learn about the library! try to make it always available in your application!   */
@@ -96,7 +97,7 @@ interface imgui_demoDebugInformations {
             text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
             text("%d vertices, %d indices (%d triangles)", io.metricsRenderVertices, io.metricsRenderIndices, io.metricsRenderIndices / 3)
             text("%d allocations", io.metricsAllocs)
-            checkbox("Show clipping rectangles when hovering draw commands", Companion::showClipRects)
+            checkbox("Show clipping rectangles when hovering draw commands", Companion::showDrawCmdClipRects)
             separator()
 
             Funcs0.nodeWindows(g.windows, "Windows")
@@ -195,6 +196,8 @@ interface imgui_demoDebugInformations {
 
     companion object {
 
+        var showDrawCmdClipRects = true
+
         var showWindow = false
 
         fun showHelpMarker(desc: String) {
@@ -292,7 +295,7 @@ interface imgui_demoDebugInformations {
                     val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
                     val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
                     val cmdNodeOpen = treeNode(i, "Draw %4d $mode vtx, tex = ${cmd.textureId!!.toHexString}, clip_rect = (%4.0f,%4.0f)-(%4.0f,%4.0f)", cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
-                    if (showClipRects && isItemHovered()) {
+                    if (showDrawCmdClipRects && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
                         val vtxsRect = Rect()
                         for (e in elemOffset until elemOffset + cmd.elemCount)
@@ -387,8 +390,6 @@ interface imgui_demoDebugInformations {
                 treePop()
             }
         }
-
-        var showClipRects = true
 
         val selected = BooleanArray(4 + 3 + 16 + 16, { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 })
 
