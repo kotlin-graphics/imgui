@@ -111,17 +111,13 @@ interface imgui_widgetsColorEditorPicker {
         val wItemsAll = calcItemWidth() - wExtra
         val labelDisplayEnd = findRenderedTextEnd(label)
 
-        val alpha = flags hasnt Cef.NoAlpha
-        val hdr = flags has Cef.HDR
-        val components = if (alpha) 4 else 3
-        val flagsUntouched = flags
-
         beginGroup()
         pushId(label)
 
         var flags = flags
 
         // If we're not showing any slider there's no point in doing any HSV conversions
+        val flagsUntouched = flags;
         if (flags has Cef.NoInputs) flags = (flags wo Cef._InputsMask) or Cef.RGB or Cef.NoOptions
 
         // Context menu: display and modify options (before defaults are applied)
@@ -132,6 +128,10 @@ interface imgui_widgetsColorEditorPicker {
         if (flags hasnt Cef._DataTypeMask) flags = flags or (g.colorEditOptions and Cef._DataTypeMask)
         if (flags hasnt Cef._PickerMask) flags = flags or (g.colorEditOptions and Cef._PickerMask)
         flags = flags or (g.colorEditOptions wo (Cef._InputsMask or Cef._DataTypeMask or Cef._PickerMask))
+
+        val alpha = flags hasnt Cef.NoAlpha
+        val hdr = flags has Cef.HDR
+        val components = if(alpha) 4 else 3
 
         // Convert to the formats we need
         val f = floatArrayOf(col[0], col[1], col[2], if (alpha) col[3] else 1f)
