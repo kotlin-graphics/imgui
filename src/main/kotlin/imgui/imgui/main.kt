@@ -17,15 +17,12 @@ import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
 import imgui.ImGui.newFrameUpdateHoveredWindowAndCaptureFlags
-import imgui.ImGui.parseFormatFindStart
 import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
-import imgui.ImGui.sliderBehaviorT
-import imgui.ImGui.style
 import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
 import imgui.imgui.imgui_internal.Companion.roundScalarWithFormat
 import imgui.internal.*
@@ -656,7 +653,7 @@ interface imgui_main {
             } else vCur += g.dragCurrentAccum.i
 
             // Round to user desired precision based on format string
-            vCur = roundScalarWithFormat(format, dataType, vCur)
+            vCur = roundScalarWithFormat(format, vCur)
 
             // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
             g.dragCurrentAccumDirty = false
@@ -742,7 +739,7 @@ interface imgui_main {
             } else vCur += g.dragCurrentAccum.i
 
             // Round to user desired precision based on format string
-            vCur = roundScalarWithFormat(format, dataType, vCur)
+            vCur = roundScalarWithFormat(format, vCur)
 
             // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
             g.dragCurrentAccumDirty = false
@@ -828,7 +825,7 @@ interface imgui_main {
             } else vCur += g.dragCurrentAccum.i
 
             // Round to user desired precision based on format string
-            vCur = roundScalarWithFormat(format, dataType, vCur)
+            vCur = roundScalarWithFormat(format, vCur)
 
             // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
             g.dragCurrentAccumDirty = false
@@ -914,7 +911,7 @@ interface imgui_main {
             } else vCur += g.dragCurrentAccum.i
 
             // Round to user desired precision based on format string
-            vCur = roundScalarWithFormat(format, dataType, vCur)
+            vCur = roundScalarWithFormat(format, vCur)
 
             // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
             g.dragCurrentAccumDirty = false
