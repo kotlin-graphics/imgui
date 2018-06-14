@@ -28,11 +28,9 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
-import imgui.ImGui.sliderFloatN
-import imgui.ImGui.sliderIntN
+import imgui.ImGui.sliderBehavior
 import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
-import imgui.imgui.imgui_main.Companion.sliderBehavior
 import imgui.imgui.imgui_widgetsDrag.Companion.patchFormatStringFloatToInt
 import imgui.internal.Rect
 import imgui.internal.SliderFlag
