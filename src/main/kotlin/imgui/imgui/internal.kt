@@ -1582,7 +1582,7 @@ interface imgui_internal {
                     }
                 }
                 // Round past decimal precision
-                vNew = roundScalarWithFormat(format, dataType, vNew)
+                vNew = roundScalarWithFormat(format, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1727,7 +1727,7 @@ interface imgui_internal {
                     }
                 }
                 // Round past decimal precision
-                vNew = roundScalarWithFormat(format, dataType, vNew)
+                vNew = roundScalarWithFormat(format, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1872,7 +1872,7 @@ interface imgui_internal {
                     }
                 }
                 // Round past decimal precision
-                vNew = roundScalarWithFormat(format, dataType, vNew)
+                vNew = roundScalarWithFormat(format, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -2017,7 +2017,7 @@ interface imgui_internal {
                     }
                 }
                 // Round past decimal precision
-                vNew = roundScalarWithFormat(format, dataType, vNew)
+                vNew = roundScalarWithFormat(format, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -3336,35 +3336,35 @@ interface imgui_internal {
         //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
 
-        fun roundScalarWithFormat(format: String, dataType: DataType, v: Int): Int {
+        fun roundScalarWithFormat(format: String, value: Int): Int {
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
-                return v
-            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, v)
+                return value
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
             return vStr.i
         }
 
-        fun roundScalarWithFormat(format: String, dataType: DataType, v: Long): Long {
+        fun roundScalarWithFormat(format: String, value: Long): Long {
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
-                return v
-            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, v)
+                return value
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
             return vStr.L
         }
 
-        fun roundScalarWithFormat(format: String, dataType: DataType, v: Float): Float {
+        fun roundScalarWithFormat(format: String, value: Float): Float {
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
-                return v
-            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, v)
+                return value
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
             return vStr.f
         }
 
-        fun roundScalarWithFormat(format: String, dataType: DataType, v: Double): Double {
+        fun roundScalarWithFormat(format: String, value: Double): Double {
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
-                return v
-            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, v)
+                return value
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
             return vStr.d
         }
     }
