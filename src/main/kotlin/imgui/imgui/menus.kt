@@ -299,7 +299,7 @@ interface imgui_menus {
     fun endMenu() {
         /*  Nav: When a left move request _within our child menu_ failed, close the menu.
             A menu doesn't close itself because EndMenuBar() wants the catch the last Left<>Right inputs.
-            However it means that with the current code, a beginMenu() from outside another menu or a menu-bar won't be
+            However, it means that with the current code, a beginMenu() from outside another menu or a menu-bar won't be
             closable with the Left direction.   */
         val window = g.currentWindow!!
         g.navWindow?.let {

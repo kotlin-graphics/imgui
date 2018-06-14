@@ -1462,6 +1462,8 @@ interface imgui_internal {
         else -> throw Error()
     }
 
+    // FIXME: Move some of the code into SliderBehavior(). Current responsability is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
+
     fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Int, vMax: Int, format: String,
                         power: Float, flags: SliderFlags = 0): Boolean {
 

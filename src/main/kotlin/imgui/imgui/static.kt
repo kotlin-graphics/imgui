@@ -154,7 +154,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
         You get good graphs without this too.
         2017/09/29: FIXME: This now currently only enabled inside menu bars, ideally we'd disable it everywhere.
         Menus in particular need to catch failure. For general navigation it feels awkward.
-        Disabling it may however lead to disconnected graphs when nodes are very spaced out on different axis.
+        Disabling it may lead to disconnected graphs when nodes are very spaced out on different axis.
         Perhaps consider offering this as an option?    */
     if (result.distBox == Float.MAX_VALUE && distAxial < result.distAxial)  // Check axial match
         if (g.navLayer == 1 && g.navWindow!!.flags hasnt Wf.ChildMenu)

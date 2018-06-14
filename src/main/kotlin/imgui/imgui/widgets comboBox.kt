@@ -178,7 +178,7 @@ interface imgui_widgetsComboBox {
 
         val previewText = items.getOrElse(currentItem(), { "" })
 
-        // The old Combo() API exposed "popup_max_height_in_items", however the new more general BeginCombo() API doesn't, so we emulate it here.
+        // The old Combo() API exposed "popup_max_height_in_items". The new more general BeginCombo() API doesn't, so we emulate it here.
         if (popupMaxHeightInItem != -1 && g.nextWindowData.sizeConstraintCond == Cond.Null) {
             val popupMaxHeight = calcMaxPopupHeightFromItemCount(popupMaxHeightInItem)
             setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, popupMaxHeight))

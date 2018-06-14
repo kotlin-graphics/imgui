@@ -54,7 +54,7 @@ import imgui.internal.LayoutType as Lt
  *  You may append multiple times to the same window during the same frame)
  *  Begin()/BeginChild() return false to indicate the window being collapsed or fully clipped, so you may early out and
  *  omit submitting anything to the window.
- *  However you need to always call a matching End()/EndChild() for a Begin()/BeginChild() call, regardless of
+ *  You need to always call a matching End()/EndChild() for a Begin()/BeginChild() call, regardless of
  *  its return value (this is due to legacy reason and is inconsistent with BeginMenu/EndMenu, BeginPopup/EndPopup and
  *  other functions where the End call should only be called if the corresponding Begin function returned true.)
  *  Passing 'bool* p_open != NULL' shows a close widget in the upper-right corner of the window, which when clicking
