@@ -3341,7 +3341,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return vStr.i
+            return vStr.trimStart().i
         }
 
         fun roundScalarWithFormat(format: String, value: Long): Long {
@@ -3349,7 +3349,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return vStr.L
+            return vStr.trimStart().L
         }
 
         fun roundScalarWithFormat(format: String, value: Float): Float {
@@ -3357,7 +3357,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return vStr.f
+            return vStr.trimStart().f
         }
 
         fun roundScalarWithFormat(format: String, value: Double): Double {
@@ -3365,7 +3365,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return vStr.d
+            return vStr.trimStart().d
         }
     }
 }

@@ -151,9 +151,9 @@ interface imgui_widgetsColorEditorPicker {
             val hidePrefix = wItemOne <= calcTextSize(if (flags has Cef.Float) "M:0.000" else "M:000").x
             val ids = arrayOf("##X", "##Y", "##Z", "##W")
             val fmtTableInt = arrayOf(
-                    arrayOf("%3.0f", "%3.0f", "%3.0f", "%3.0f"),             // Short display
-                    arrayOf("R:%3.0f", "G:%3.0f", "B:%3.0f", "A:%3.0f"),     // Long display for RGBA
-                    arrayOf("H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f"))     // Long display for HSVA
+                    arrayOf("%3d", "%3d", "%3d", "%3d"),             // Short display
+                    arrayOf("R:%3d", "G:%3d", "B:%3d", "A:%3d"),     // Long display for RGBA
+                    arrayOf("H:%3d", "S:%3d", "V:%3d", "A:%3d"))     // Long display for HSVA
             val fmtTableFloat = arrayOf(
                     arrayOf("%.3f", "%.3f", "%.3f", "%.3f"),            // Short display
                     arrayOf("R:%.3f", "G:%.3f", "B:%.3f", "A:%.3f"),    // Long display for RGBA
