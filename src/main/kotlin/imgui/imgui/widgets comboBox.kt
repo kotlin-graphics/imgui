@@ -17,7 +17,9 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popId
+import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushId
+import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderArrow
 import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderNavHighlight
@@ -123,25 +125,24 @@ interface imgui_widgetsComboBox {
             }
         }
 
+        // Horizontally align ourselves with the framed text
+        pushStyleVar(StyleVar.WindowPadding, Vec2(style.framePadding.x, style.windowPadding.y))
+
         val windowFlags = Wf.AlwaysAutoResize or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings
         if (!begin(name, null, windowFlags)) {
             endPopup()
+            popStyleVar()
             assert(false) { "This should never happen as we tested for IsPopupOpen() above" }
             return false
         }
-
-        // Horizontally align ourselves with the framed text
-        if (style.framePadding.x != style.windowPadding.x)
-            indent(style.framePadding.x - style.windowPadding.x)
 
         return true
     }
 
     /** Only call EndCombo() if BeginCombo() returns true! */
     fun endCombo() {
-        if (style.framePadding.x != style.windowPadding.x)
-            unindent(style.framePadding.x - style.windowPadding.x)
         endPopup()
+        popStyleVar()
     }
 
     /** Combo box helper allowing to pass an array of strings.  */
