@@ -38,6 +38,7 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logText
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.openPopup
+import imgui.ImGui.parseFormatFindStart
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
@@ -1523,11 +1524,7 @@ interface imgui_internal {
                     }
                 }
                 // Round past decimal precision
-                val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vNew)
-                vNew = when (dataType) {
-                    DataType.Float, DataType.Double -> vStr.f.i
-                    else -> vStr.i
-                }
+                vNew = roundScalarWithFormat(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1672,11 +1669,7 @@ interface imgui_internal {
                     }
                 }
                 // Round past decimal precision
-                val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vNew)
-                vNew = when (dataType) {
-                    DataType.Float, DataType.Double -> vStr.f.L
-                    else -> vStr.L
-                }
+                vNew = roundScalarWithFormat(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1821,11 +1814,7 @@ interface imgui_internal {
                     }
                 }
                 // Round past decimal precision
-                val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vNew)
-                vNew = when (dataType) {
-                    DataType.Float, DataType.Double -> vStr.f
-                    else -> vStr.f
-                }
+                vNew = roundScalarWithFormat(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1970,11 +1959,7 @@ interface imgui_internal {
                     }
                 }
                 // Round past decimal precision
-                val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vNew)
-                vNew = when (dataType) {
-                    DataType.Float, DataType.Double -> vStr.f.d
-                    else -> vStr.d
-                }
+                vNew = roundScalarWithFormat(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -2894,7 +2879,7 @@ interface imgui_internal {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val format = when(format) {
+        val format = when (format) {
             null -> when (dataType) {
                 DataType.Float, DataType.Double -> "%f"
                 else -> "%d"
@@ -3547,6 +3532,38 @@ interface imgui_internal {
 
         private var f0 = 0f // TODO remove
         private var i0 = 0
+
+        fun roundScalarWithFormat(format: String, dataType: DataType, v: Int): Int {
+            val fmtStart = parseFormatFindStart(format)
+            if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+                return v
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, v)
+            return vStr.i
+        }
+
+        fun roundScalarWithFormat(format: String, dataType: DataType, v: Long): Long {
+            val fmtStart = parseFormatFindStart(format)
+            if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+                return v
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, v)
+            return vStr.L
+        }
+
+        fun roundScalarWithFormat(format: String, dataType: DataType, v: Float): Float {
+            val fmtStart = parseFormatFindStart(format)
+            if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+                return v
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, v)
+            return vStr.f
+        }
+
+        fun roundScalarWithFormat(format: String, dataType: DataType, v: Double): Double {
+            val fmtStart = parseFormatFindStart(format)
+            if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+                return v
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, v)
+            return vStr.d
+        }
     }
 }
 
