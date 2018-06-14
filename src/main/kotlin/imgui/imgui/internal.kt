@@ -1427,6 +1427,9 @@ interface imgui_internal {
         }
     }
 
+    /** For 32-bits and larger types, slider bounds are limited to half the natural type range.
+     *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2.
+     *  It would be possible to life that limitation with some work but it doesn't seem to be work it for sliders. */
     fun sliderBehavior(bb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
                        flags: SliderFlags = 0) = sliderBehavior(bb, id, v, 0, vMin, vMax, format, power, flags)
 

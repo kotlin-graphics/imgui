@@ -547,6 +547,7 @@ fun KMutableProperty0<*>.format(dataType: DataType, format: String): CharArray {
 //    return string.toCharArray(buf).size
 //}
 
+// FIXME: Adding support for clamping on boundaries of the data type would be nice.
 fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number): Number {
     assert(op == '+' || op == '-')
     return when (dataType) {

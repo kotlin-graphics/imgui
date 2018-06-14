@@ -15,8 +15,6 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dragBehavior
-import imgui.ImGui.dragFloatN
-import imgui.ImGui.dragIntN
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
@@ -196,15 +194,16 @@ interface imgui_widgetsDrag {
      *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
      *  Speed are per-pixel of mouse movement (vSpeed = 0.2f: mouse needs to move by 5 pixels to increase value by 1).
      *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
-    fun dragScalar(label: String, v: FloatArray, vSpeed: Float, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f)
-            : Boolean = dragScalar(label, v, 0, vSpeed, vMin, vMax, format, power)
+    fun dragScalar(label: String, v: FloatArray, vSpeed: Float, vMin: Float? = null, vMax: Float? = null, format: String? = null,
+                   power: Float = 1f): Boolean = dragScalar(label, v, 0, vSpeed, vMin, vMax, format, power)
 
     /** If vMin >= vMax we have no bound  */
-    fun dragScalar(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float, vMin: Float, vMax: Float, format: String? = null,
-                   power: Float = 1f): Boolean =
-            withFloat(v, ptr) { dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power) }
+    fun dragScalar(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float, vMin: Float? = null, vMax: Float? = null,
+                   format: String? = null, power: Float = 1f): Boolean = withFloat(v, ptr) {
+        dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power)
+    }
 
-    fun dragScalar(label: String, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number, vMax: Number,
+    fun dragScalar(label: String, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number? = null, vMax: Number? = null,
                    format: String? = null, power: Float = 1f): Boolean {
 
         v as KMutableProperty0<Number>
