@@ -113,7 +113,7 @@ object ExampleApp {
         var longText = false
         var autoResize = false
         var constrainedResize = false
-        var fixedOverlay = false
+        var simpleOverlay = false
         var windowTitles = false
         var customRendering = false
         var styleEditor = false
@@ -145,7 +145,7 @@ object ExampleApp {
         if (show.longText) LongText(show::longText)
         if (show.autoResize) AutoResize(show::autoResize)
         if (show.constrainedResize) ConstrainedResize(show::constrainedResize)
-        if (show.fixedOverlay) FixedOverlay(show::fixedOverlay)
+        if (show.simpleOverlay) SimpleOverlay(show::simpleOverlay)
         if (show.windowTitles) WindowTitles(show::windowTitles)
         if (show.customRendering) CustomRendering(show::customRendering)
         if (show.metrics) ImGui.showMetricsWindow(show::metrics)
@@ -198,7 +198,7 @@ object ExampleApp {
                 menuItem("Long text display", "", ExampleApp.show::longText)
                 menuItem("Auto-resizing window", "", ExampleApp.show::autoResize)
                 menuItem("Constrained-resizing window", "", ExampleApp.show::constrainedResize)
-                menuItem("Simple overlay", "", ExampleApp.show::fixedOverlay)
+                menuItem("Simple overlay", "", ExampleApp.show::simpleOverlay)
                 menuItem("Manipulating window titles", "", ExampleApp.show::windowTitles)
                 menuItem("Custom rendering", "", ExampleApp.show::customRendering)
             }
@@ -894,7 +894,7 @@ object ConstrainedResize {
     }
 }
 
-object FixedOverlay {
+object SimpleOverlay {
 
     var corner = 0
 
@@ -912,7 +912,7 @@ object FixedOverlay {
             flags = flags or Wf.NoMove
         }
         setNextWindowBgAlpha(0.3f)  // Transparent background
-        withWindow("Example: Fixed Overlay", open, flags) {
+        withWindow("Example: Simple Overlay", open, flags) {
             text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
             separator()
             text("Mouse Position: " + when {

@@ -1536,8 +1536,8 @@ interface imgui_internal {
                             else -> delta / 100f
                         }
                         else -> when {
-                            vMax - vMin <= 100f || vMax - vMin >= -100f || NavInput.TweakSlow.isDown() ->
-                                (if (delta < 0f) -1f else +1f) / (vMax - vMin).f // Gamepad/keyboard tweak speeds in integer steps
+                            (vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown() ->
+                                (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                             else -> delta / 100f
                         }
                     }
@@ -1681,8 +1681,8 @@ interface imgui_internal {
                             else -> delta / 100f
                         }
                         else -> when {
-                            vMax - vMin <= 100f || vMax - vMin >= -100f || NavInput.TweakSlow.isDown() ->
-                                (if (delta < 0f) -1f else +1f) / (vMax - vMin).f // Gamepad/keyboard tweak speeds in integer steps
+                            (vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown() ->
+                                (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                             else -> delta / 100f
                         }
                     }
@@ -1826,8 +1826,8 @@ interface imgui_internal {
                             else -> delta / 100f
                         }
                         else -> when {
-                            vMax - vMin <= 100f || vMax - vMin >= -100f || NavInput.TweakSlow.isDown() ->
-                                (if (delta < 0f) -1f else +1f) / (vMax - vMin).f // Gamepad/keyboard tweak speeds in integer steps
+                            (vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown() ->
+                                (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                             else -> delta / 100f
                         }
                     }
@@ -1971,8 +1971,8 @@ interface imgui_internal {
                             else -> delta / 100f
                         }
                         else -> when {
-                            vMax - vMin <= 100f || vMax - vMin >= -100f || NavInput.TweakSlow.isDown() ->
-                                (if (delta < 0f) -1f else +1f) / (vMax - vMin).f // Gamepad/keyboard tweak speeds in integer steps
+                            (vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown() ->
+                                (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                             else -> delta / 100f
                         }
                     }
