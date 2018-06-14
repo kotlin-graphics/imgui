@@ -131,11 +131,6 @@ enum class PlotType { Lines, Histogram;
     val i = ordinal
 }
 
-enum class DataType { Int, Uint, Long, Ulong, Float, Double, Vec2;
-
-    val i = ordinal
-}
-
 enum class InputSource { None, Mouse, Nav,
     /** Only used occasionally for storage, not tested/handled by most code */
     NavKeyboard,
