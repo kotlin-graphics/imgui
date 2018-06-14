@@ -50,25 +50,32 @@ import kotlin.reflect.KMutableProperty0
  *  off-bounds)
  *  For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every functions, remember than a 'float v[3]' function
  *  argument is the same as 'float* v'. You can pass address of your first element out of a contiguous set,
- *  e.g. &myvector.x    */
+ *  e.g. &myvector.x
+ *  Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
+ *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
+ *  Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by 1).
+ *  For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision). */
 interface imgui_widgetsDrag {
 
 
     /** For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every functions, note that a 'float v[X]' function
      *  argument is the same as 'float* v', the array syntax is just a way to document the number of elements that are
      *  expected to be accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x
+     *  Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
+     *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
      *  Speed are per-pixel of mouse movement (vSpeed = 0.2f: mouse needs to move by 5 pixels to increase value by 1).
      *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
-    fun dragScalar(label: String, v: FloatArray, vSpeed: Float, vMin: Float, vMax: Float, format: String, power: Float = 1f) =
-            dragScalar(label, v, 0, vSpeed, vMin, vMax, format, power)
+    fun dragScalar(label: String, v: FloatArray, vSpeed: Float, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f)
+            : Boolean = dragScalar(label, v, 0, vSpeed, vMin, vMax, format, power)
 
     /** If vMin >= vMax we have no bound  */
-    fun dragScalar(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float, vMin: Float, vMax: Float, format: String, power: Float = 1f) =
-            withFloat(v, ptr) { dragScalar(label, DataType.Float, it as KMutableProperty0<Number>, vSpeed, vMin, vMax, format, power) }
+    fun dragScalar(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f)
+            : Boolean = withFloat(v, ptr) { dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power) }
 
-    fun dragScalar(label: String, dataType: DataType, v: KMutableProperty0<Number>, vSpeed: Float, vMin: Number, vMax: Number,
-                   format: String, power: Float = 1f): Boolean {
+    fun dragScalar(label: String, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number, vMax: Number,
+                   format: String? = null, power: Float = 1f): Boolean {
 
+        v as KMutableProperty0<Number>
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -91,8 +98,13 @@ interface imgui_widgetsDrag {
 
         val hovered = itemHoverable(frameBb, id)
 
+        // Default format string when passing NULL
         // Patch old "%.0f" format string to use "%d", read function comments for more details.
         val format = when {
+            format == null -> when (dataType) {
+                DataType.Float, DataType.Double -> "%f"
+                else -> "%d"
+            }
             dataType == DataType.Int && format != "%d" -> patchFormatStringFloatToInt(format)
             else -> format
         }
@@ -118,9 +130,9 @@ interface imgui_widgetsDrag {
         val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power)
 
         // Draw frame
-        val frameCol = when(g.activeId) {
-        id -> Col.FrameBgActive
-            else -> when(g.hoveredId) {
+        val frameCol = when (g.activeId) {
+            id -> Col.FrameBgActive
+            else -> when (g.hoveredId) {
                 id -> Col.FrameBgHovered
                 else -> Col.FrameBg
             }
@@ -205,7 +217,7 @@ interface imgui_widgetsDrag {
             withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, format) }
 
     fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
-            withInt { dragScalar(label, DataType.Int, it as KMutableProperty0<Number>, vSpeed, vMin as Number, vMax as Number, format) }
+            withInt { dragScalar(label, DataType.Int, it, vSpeed, vMin as Number, vMax as Number, format) }
 
     fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
             dragIntN(label, v, 2, vSpeed, vMin, vMax, format)

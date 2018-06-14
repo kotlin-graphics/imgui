@@ -69,7 +69,6 @@ import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 import java.util.*
-import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -1404,50 +1403,41 @@ interface imgui_internal {
         return pressed
     }
 
-    fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
-                       flags: SliderFlags = 0) = sliderBehavior(frameBb, id, v, 0, vMin, vMax, format, power, flags)
+    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Int, vMax: Int, format: String,
+                        power: Float, flags: SliderFlags = 0): Boolean {
 
-    fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String, power: Float,
-                       flags: SliderFlags = 0): Boolean {
-
-        f0 = v[ptr]
-        val res = sliderBehavior(frameBb, id, ::f0, vMin, vMax, format, power, flags)
-        v[ptr] = f0
-        return res
-    }
-
-    fun sliderBehavior(frameBb: Rect, id: Int, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String, power: Float,
-                       flags: Int = 0): Boolean {
-
+        v as KMutableProperty0<Int>
         val window = currentWindow
 
         // Draw frame
         val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
-        renderNavHighlight(frameBb, id)
-        renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
 
-        val isNonLinear = (power < 1.0f - 0.00001f) || (power > 1.0f + 0.00001f)
         val isHorizontal = flags hasnt SliderFlag.Vertical
-        val isDecimal = parseFormatPrecision(format, 3) != 0
+        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+        val isPower = power != 0f && isDecimal
 
         val grabPadding = 2f
-        val sliderSz = (if (isHorizontal) frameBb.width else frameBb.height) - grabPadding * 2f
-        val grabSz = when {
-            isDecimal -> glm.min(style.grabMinSize, sliderSz)
-            else -> glm.min(
-                    glm.max(1f * (sliderSz / ((if (vMin < vMax) vMax - vMin else vMin - vMax) + 1f)), style.grabMinSize),
-                    sliderSz)  // Integer sliders, if possible have the grab size represent 1 unit
+        val sliderSz = when {
+            isHorizontal -> bb.width - grabPadding * 2f
+            else -> bb.height - grabPadding * 2f
         }
+        var grabSz = style.grabMinSize
+        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
+        if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
+            grabSz = max(sliderSz / (vRange + 1), style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
+        grabSz = grabSz min sliderSz
         val sliderUsableSz = sliderSz - grabSz
-        val sliderUsablePosMin = (if (isHorizontal) frameBb.min.x else frameBb.min.y) + grabPadding + grabSz * 0.5f
-        val sliderUsablePosMax = (if (isHorizontal) frameBb.max.x else frameBb.max.y) - grabPadding - grabSz * 0.5f
+        val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
+        val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
 
         // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
         val linearZeroPos = when {   // 0.0->1.0f
             vMin * vMax < 0f -> {
                 // Different sign
-                val linearDistMinTo0 = glm.pow(glm.abs(0f - vMin), 1f / power)
-                val linearDistMaxTo0 = glm.pow(glm.abs(vMax - 0f), 1f / power)
+                val linearDistMinTo0 = glm.pow(if (vMin >= 0) vMin.f else -vMin.f, 1f / power)
+                val linearDistMaxTo0 = glm.pow(if (vMax >= 0) vMax.f else -vMax.f, 1f / power)
                 linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
             } // Same sign
             else -> if (vMin < 0f) 1f else 0f
@@ -1475,15 +1465,15 @@ interface imgui_internal {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveId()
                 else if (delta != 0f) {
-                    clickedT = sliderBehaviorCalcRatioFromValue(v(), vMin, vMax, power, linearZeroPos)
+                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
                     delta = when {
-                        !isDecimal && !isNonLinear -> when {
-                        // Gamepad/keyboard tweak speeds in integer steps
-                            abs(vMax - vMin) <= 100f || NavInput.TweakSlow.isDown() -> (if (delta < 0f) -1f else 1f) / (vMax - vMin)
+                        isDecimal || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
+                            NavInput.TweakSlow.isDown() -> delta / 1_000f
                             else -> delta / 100f
                         }
-                        else -> when {// Gamepad/keyboard tweak speeds in % of slider bounds
-                            NavInput.TweakSlow.isDown() -> delta / 1_000f
+                        else -> when {
+                            vMax - vMin <= 100f || vMax - vMin >= -100f || NavInput.TweakSlow.isDown() ->
+                                (if (delta < 0f) -1f else +1f) / (vMax - vMin).f // Gamepad/keyboard tweak speeds in integer steps
                             else -> delta / 100f
                         }
                     }
@@ -1499,71 +1489,606 @@ interface imgui_internal {
             }
 
             if (setNewValue) {
-                var newValue =
-                        if (isNonLinear) {
-                            // Account for power curve scale on both sides of the zero
-                            if (clickedT < linearZeroPos) {
-                                // Negative: rescale to the negative range before powering
-                                var a = 1f - (clickedT / linearZeroPos)
-                                a = glm.pow(a, power)
-                                lerp(glm.min(vMax, 0f), vMin, a)
-                            } else {
-                                // Positive: rescale to the positive range before powering
-                                var a =
-                                        if (glm.abs(linearZeroPos - 1f) > 1e-6f)
-                                            (clickedT - linearZeroPos) / (1f - linearZeroPos)
-                                        else clickedT
-                                a = glm.pow(a, power)
-                                lerp(glm.max(vMin, 0.0f), vMax, a)
+                var vNew = when {
+                    isPower -> {
+                        // Account for power curve scale on both sides of the zero
+                        if (clickedT < linearZeroPos) {
+                            // Negative: rescale to the negative range before powering
+                            var a = 1f - (clickedT / linearZeroPos)
+                            a = glm.pow(a, power)
+                            lerp(glm.min(vMax, 0), vMin, a)
+                        } else {
+                            // Positive: rescale to the positive range before powering
+                            var a = when {
+                                glm.abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
+                                else -> clickedT
                             }
-                        } else lerp(vMin, vMax, clickedT) // Linear slider
+                            a = glm.pow(a, power)
+                            lerp(glm.max(vMin, 0), vMax, a)
+                        }
+                    }
+                    else -> when {// Linear slider
+                        isDecimal -> lerp(vMin, vMax, clickedT)
+                        else -> {
+                            /*  For integer values we want the clicking position to match the grab box so we round above
+                                This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..                             */
+                            val vNewOff_f = (vMax - vMin) * clickedT
+                            val vNewOffFloor = vNewOff_f.i
+                            val vNewOffRound = (vNewOff_f + 0.5f).i
+                            if (!isDecimal && vNewOffFloor < vNewOffRound)
+                                vMin + vNewOffRound
+                            else
+                                vMin + vNewOffFloor
+                        }
+                    }
+                }
                 // Round past decimal precision
-                newValue = format.substring(parseFormatFindStart(format)).format(style.locale, newValue).f
-                if (v() != newValue) {
-                    v.set(newValue)
+                val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vNew)
+                vNew = when (dataType) {
+                    DataType.Float, DataType.Double -> vStr.f.i
+                    else -> vStr.i
+                }
+
+                // Apply result
+                if (v() != vNew) {
+                    v.set(vNew)
                     valueChanged = true
                 }
             }
         }
 
         // Draw
-        var grabT = sliderBehaviorCalcRatioFromValue(v(), vMin, vMax, power, linearZeroPos)
+        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
         if (!isHorizontal)
             grabT = 1f - grabT
         val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-        val grabBb =
-                if (isHorizontal)
-                    Rect(Vec2(grabPos - grabSz * 0.5f, frameBb.min.y + grabPadding),
-                            Vec2(grabPos + grabSz * 0.5f, frameBb.max.y - grabPadding))
-                else
-                    Rect(Vec2(frameBb.min.x + grabPadding, grabPos - grabSz * 0.5f),
-                            Vec2(frameBb.max.x - grabPadding, grabPos + grabSz * 0.5f))
+        val grabBb = when {
+            isHorizontal -> Rect(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+            else -> Rect(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+        }
         val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
         window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
 
         return valueChanged
     }
 
-    fun sliderBehaviorCalcRatioFromValue(v: Float, vMin: Float, vMax: Float, power: Float, linearZeroPos: Float): Float {
+    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Long, vMax: Long, format: String,
+                        power: Float, flags: SliderFlags = 0): Boolean {
+
+        v as KMutableProperty0<Long>
+        val window = currentWindow
+
+        // Draw frame
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
+
+        val isHorizontal = flags hasnt SliderFlag.Vertical
+        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+        val isPower = power != 0f && isDecimal
+
+        val grabPadding = 2f
+        val sliderSz = when {
+            isHorizontal -> bb.width - grabPadding * 2f
+            else -> bb.height - grabPadding * 2f
+        }
+        var grabSz = style.grabMinSize
+        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
+        if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
+            grabSz = max(sliderSz / (vRange + 1).f, style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
+        grabSz = grabSz min sliderSz
+        val sliderUsableSz = sliderSz - grabSz
+        val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
+        val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
+
+        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
+        val linearZeroPos = when {   // 0.0->1.0f
+            vMin * vMax < 0f -> {
+                // Different sign
+                val linearDistMinTo0 = glm.pow(if (vMin >= 0) vMin.f else -vMin.f, 1f / power)
+                val linearDistMaxTo0 = glm.pow(if (vMax >= 0) vMax.f else -vMax.f, 1f / power)
+                linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
+            } // Same sign
+            else -> if (vMin < 0f) 1f else 0f
+        }
+
+        // Process interacting with the slider
+        var valueChanged = false
+        if (g.activeId == id) {
+
+            var setNewValue = false
+            var clickedT = 0f
+
+            if (g.activeIdSource == InputSource.Mouse) {
+                if (!io.mouseDown[0]) clearActiveId()
+                else {
+                    val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
+                    clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
+                    if (!isHorizontal)
+                        clickedT = 1f - clickedT
+                    setNewValue = true
+                }
+            } else if (g.activeIdSource == InputSource.Nav) {
+                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                var delta = if (isHorizontal) delta2.x else -delta2.y
+                if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                    clearActiveId()
+                else if (delta != 0f) {
+                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    delta = when {
+                        isDecimal || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
+                            NavInput.TweakSlow.isDown() -> delta / 1_000f
+                            else -> delta / 100f
+                        }
+                        else -> when {
+                            vMax - vMin <= 100f || vMax - vMin >= -100f || NavInput.TweakSlow.isDown() ->
+                                (if (delta < 0f) -1f else +1f) / (vMax - vMin).f // Gamepad/keyboard tweak speeds in integer steps
+                            else -> delta / 100f
+                        }
+                    }
+                    if (NavInput.TweakFast.isDown())
+                        delta *= 10f
+                    setNewValue = true
+                    // This is to avoid applying the saturation when already past the limits
+                    if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f))
+                        setNewValue = false
+                    else
+                        clickedT = saturate(clickedT + delta)
+                }
+            }
+
+            if (setNewValue) {
+                var vNew = when {
+                    isPower -> {
+                        // Account for power curve scale on both sides of the zero
+                        if (clickedT < linearZeroPos) {
+                            // Negative: rescale to the negative range before powering
+                            var a = 1f - (clickedT / linearZeroPos)
+                            a = glm.pow(a, power)
+                            lerp(glm.min(vMax, 0L), vMin, a)
+                        } else {
+                            // Positive: rescale to the positive range before powering
+                            var a = when {
+                                glm.abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
+                                else -> clickedT
+                            }
+                            a = glm.pow(a, power)
+                            lerp(glm.max(vMin, 0L), vMax, a)
+                        }
+                    }
+                    else -> when {// Linear slider
+                        isDecimal -> lerp(vMin, vMax, clickedT)
+                        else -> {
+                            /*  For integer values we want the clicking position to match the grab box so we round above
+                                This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..                             */
+                            val vNewOff_f = (vMax - vMin) * clickedT
+                            val vNewOffFloor = vNewOff_f.L
+                            val vNewOffRound = (vNewOff_f + 0.5f).L
+                            if (!isDecimal && vNewOffFloor < vNewOffRound)
+                                vMin + vNewOffRound
+                            else
+                                vMin + vNewOffFloor
+                        }
+                    }
+                }
+                // Round past decimal precision
+                val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vNew)
+                vNew = when (dataType) {
+                    DataType.Float, DataType.Double -> vStr.f.L
+                    else -> vStr.L
+                }
+
+                // Apply result
+                if (v() != vNew) {
+                    v.set(vNew)
+                    valueChanged = true
+                }
+            }
+        }
+
+        // Draw
+        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+        if (!isHorizontal)
+            grabT = 1f - grabT
+        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+        val grabBb = when {
+            isHorizontal -> Rect(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+            else -> Rect(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+        }
+        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
+        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
+
+        return valueChanged
+    }
+
+    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String,
+                        power: Float, flags: SliderFlags = 0): Boolean {
+
+        v as KMutableProperty0<Float>
+        val window = currentWindow
+
+        // Draw frame
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
+
+        val isHorizontal = flags hasnt SliderFlag.Vertical
+        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+        val isPower = power != 0f && isDecimal
+
+        val grabPadding = 2f
+        val sliderSz = when {
+            isHorizontal -> bb.width - grabPadding * 2f
+            else -> bb.height - grabPadding * 2f
+        }
+        var grabSz = style.grabMinSize
+        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
+        if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
+            grabSz = max(sliderSz / (vRange + 1).f, style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
+        grabSz = grabSz min sliderSz
+        val sliderUsableSz = sliderSz - grabSz
+        val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
+        val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
+
+        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
+        val linearZeroPos = when {   // 0.0->1.0f
+            vMin * vMax < 0f -> {
+                // Different sign
+                val linearDistMinTo0 = glm.pow(if (vMin >= 0) vMin.f else -vMin.f, 1f / power)
+                val linearDistMaxTo0 = glm.pow(if (vMax >= 0) vMax.f else -vMax.f, 1f / power)
+                linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
+            } // Same sign
+            else -> if (vMin < 0f) 1f else 0f
+        }
+
+        // Process interacting with the slider
+        var valueChanged = false
+        if (g.activeId == id) {
+
+            var setNewValue = false
+            var clickedT = 0f
+
+            if (g.activeIdSource == InputSource.Mouse) {
+                if (!io.mouseDown[0]) clearActiveId()
+                else {
+                    val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
+                    clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
+                    if (!isHorizontal)
+                        clickedT = 1f - clickedT
+                    setNewValue = true
+                }
+            } else if (g.activeIdSource == InputSource.Nav) {
+                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                var delta = if (isHorizontal) delta2.x else -delta2.y
+                if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                    clearActiveId()
+                else if (delta != 0f) {
+                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    delta = when {
+                        isDecimal || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
+                            NavInput.TweakSlow.isDown() -> delta / 1_000f
+                            else -> delta / 100f
+                        }
+                        else -> when {
+                            vMax - vMin <= 100f || vMax - vMin >= -100f || NavInput.TweakSlow.isDown() ->
+                                (if (delta < 0f) -1f else +1f) / (vMax - vMin).f // Gamepad/keyboard tweak speeds in integer steps
+                            else -> delta / 100f
+                        }
+                    }
+                    if (NavInput.TweakFast.isDown())
+                        delta *= 10f
+                    setNewValue = true
+                    // This is to avoid applying the saturation when already past the limits
+                    if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f))
+                        setNewValue = false
+                    else
+                        clickedT = saturate(clickedT + delta)
+                }
+            }
+
+            if (setNewValue) {
+                var vNew = when {
+                    isPower -> {
+                        // Account for power curve scale on both sides of the zero
+                        if (clickedT < linearZeroPos) {
+                            // Negative: rescale to the negative range before powering
+                            var a = 1f - (clickedT / linearZeroPos)
+                            a = glm.pow(a, power)
+                            lerp(glm.min(vMax, 0f), vMin, a)
+                        } else {
+                            // Positive: rescale to the positive range before powering
+                            var a = when {
+                                glm.abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
+                                else -> clickedT
+                            }
+                            a = glm.pow(a, power)
+                            lerp(glm.max(vMin, 0f), vMax, a)
+                        }
+                    }
+                    else -> when {// Linear slider
+                        isDecimal -> lerp(vMin, vMax, clickedT)
+                        else -> {
+                            /*  For integer values we want the clicking position to match the grab box so we round above
+                                This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..                             */
+                            val vNewOff_f = (vMax - vMin) * clickedT
+                            val vNewOffFloor = vNewOff_f.L
+                            val vNewOffRound = (vNewOff_f + 0.5f).L
+                            if (!isDecimal && vNewOffFloor < vNewOffRound)
+                                vMin + vNewOffRound
+                            else
+                                vMin + vNewOffFloor
+                        }
+                    }
+                }
+                // Round past decimal precision
+                val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vNew)
+                vNew = when (dataType) {
+                    DataType.Float, DataType.Double -> vStr.f
+                    else -> vStr.f
+                }
+
+                // Apply result
+                if (v() != vNew) {
+                    v.set(vNew)
+                    valueChanged = true
+                }
+            }
+        }
+
+        // Draw
+        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+        if (!isHorizontal)
+            grabT = 1f - grabT
+        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+        val grabBb = when {
+            isHorizontal -> Rect(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+            else -> Rect(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+        }
+        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
+        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
+
+        return valueChanged
+    }
+
+    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Double, vMax: Double, format: String,
+                        power: Float, flags: SliderFlags = 0): Boolean {
+
+        v as KMutableProperty0<Double>
+        val window = currentWindow
+
+        // Draw frame
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
+
+        val isHorizontal = flags hasnt SliderFlag.Vertical
+        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+        val isPower = power != 0f && isDecimal
+
+        val grabPadding = 2f
+        val sliderSz = when {
+            isHorizontal -> bb.width - grabPadding * 2f
+            else -> bb.height - grabPadding * 2f
+        }
+        var grabSz = style.grabMinSize
+        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
+        if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
+            grabSz = max(sliderSz / (vRange + 1).f, style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
+        grabSz = grabSz min sliderSz
+        val sliderUsableSz = sliderSz - grabSz
+        val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
+        val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
+
+        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
+        val linearZeroPos = when {   // 0.0->1.0f
+            vMin * vMax < 0f -> {
+                // Different sign
+                val linearDistMinTo0 = glm.pow(if (vMin >= 0) vMin.f else -vMin.f, 1f / power)
+                val linearDistMaxTo0 = glm.pow(if (vMax >= 0) vMax.f else -vMax.f, 1f / power)
+                linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
+            } // Same sign
+            else -> if (vMin < 0f) 1f else 0f
+        }
+
+        // Process interacting with the slider
+        var valueChanged = false
+        if (g.activeId == id) {
+
+            var setNewValue = false
+            var clickedT = 0f
+
+            if (g.activeIdSource == InputSource.Mouse) {
+                if (!io.mouseDown[0]) clearActiveId()
+                else {
+                    val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
+                    clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
+                    if (!isHorizontal)
+                        clickedT = 1f - clickedT
+                    setNewValue = true
+                }
+            } else if (g.activeIdSource == InputSource.Nav) {
+                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                var delta = if (isHorizontal) delta2.x else -delta2.y
+                if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                    clearActiveId()
+                else if (delta != 0f) {
+                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    delta = when {
+                        isDecimal || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
+                            NavInput.TweakSlow.isDown() -> delta / 1_000f
+                            else -> delta / 100f
+                        }
+                        else -> when {
+                            vMax - vMin <= 100f || vMax - vMin >= -100f || NavInput.TweakSlow.isDown() ->
+                                (if (delta < 0f) -1f else +1f) / (vMax - vMin).f // Gamepad/keyboard tweak speeds in integer steps
+                            else -> delta / 100f
+                        }
+                    }
+                    if (NavInput.TweakFast.isDown())
+                        delta *= 10f
+                    setNewValue = true
+                    // This is to avoid applying the saturation when already past the limits
+                    if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f))
+                        setNewValue = false
+                    else
+                        clickedT = saturate(clickedT + delta)
+                }
+            }
+
+            if (setNewValue) {
+                var vNew = when {
+                    isPower -> {
+                        // Account for power curve scale on both sides of the zero
+                        if (clickedT < linearZeroPos) {
+                            // Negative: rescale to the negative range before powering
+                            var a = 1f - (clickedT / linearZeroPos)
+                            a = glm.pow(a, power)
+                            lerp(glm.min(vMax, 0.0), vMin, a)
+                        } else {
+                            // Positive: rescale to the positive range before powering
+                            var a = when {
+                                glm.abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
+                                else -> clickedT
+                            }
+                            a = glm.pow(a, power)
+                            lerp(glm.max(vMin, 0.0), vMax, a)
+                        }
+                    }
+                    else -> when {// Linear slider
+                        isDecimal -> lerp(vMin, vMax, clickedT)
+                        else -> {
+                            /*  For integer values we want the clicking position to match the grab box so we round above
+                                This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..                             */
+                            val vNewOff_f = (vMax - vMin) * clickedT
+                            val vNewOffFloor = vNewOff_f.L
+                            val vNewOffRound = (vNewOff_f + 0.5f).L
+                            if (!isDecimal && vNewOffFloor < vNewOffRound)
+                                vMin + vNewOffRound
+                            else
+                                vMin + vNewOffFloor
+                        }
+                    }
+                }
+                // Round past decimal precision
+                val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, vNew)
+                vNew = when (dataType) {
+                    DataType.Float, DataType.Double -> vStr.f.d
+                    else -> vStr.d
+                }
+
+                // Apply result
+                if (v() != vNew) {
+                    v.set(vNew)
+                    valueChanged = true
+                }
+            }
+        }
+
+        // Draw
+        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+        if (!isHorizontal)
+            grabT = 1f - grabT
+        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+        val grabBb = when {
+            isHorizontal -> Rect(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+            else -> Rect(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+        }
+        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
+        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
+
+        return valueChanged
+    }
+
+    fun sliderBehaviorCalcRatioFromValue(dataType: DataType, v: Int, vMin: Int, vMax: Int, power: Float, linearZeroPos: Float): Float {
 
         if (vMin == vMax) return 0f
 
-        val isNonLinear = power < 1f - 0.00001f || power > 1f + 0.00001f
+        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
         val vClamped = if (vMin < vMax) glm.clamp(v, vMin, vMax) else glm.clamp(v, vMax, vMin)
-        if (isNonLinear)
-            if (vClamped < 0f) {
-                val f = 1f - (vClamped - vMin) / (glm.min(0f, vMax) - vMin)
-                return (1f - glm.pow(f, 1f / power)) * linearZeroPos
-            } else {
-                val f = (vClamped - glm.max(0f, vMin)) / (vMax - glm.max(0f, vMin))
-                return linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
+        return when {
+            isPower -> when {
+                vClamped < 0f -> {
+                    val f = 1f - (vClamped - vMin) / (min(0, vMax) - vMin)
+                    (1f - glm.pow(f, 1f / power)) * linearZeroPos
+                }
+                else -> {
+                    val f = ((vClamped - max(0, vMin)) / (vMax - max(0, vMin))).f
+                    linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
+                }
             }
         // Linear slider
-        return (vClamped - vMin) / (vMax - vMin)
+            else -> (vClamped - vMin).f / (vMax - vMin).f
+        }
+    }
+
+    fun sliderBehaviorCalcRatioFromValue(dataType: DataType, v: Long, vMin: Long, vMax: Long, power: Float, linearZeroPos: Float): Float {
+
+        if (vMin == vMax) return 0f
+
+        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
+        val vClamped = if (vMin < vMax) glm.clamp(v, vMin, vMax) else glm.clamp(v, vMax, vMin)
+        return when {
+            isPower -> when {
+                vClamped < 0f -> {
+                    val f = 1f - (vClamped - vMin) / (min(0, vMax) - vMin)
+                    (1f - glm.pow(f, 1f / power)) * linearZeroPos
+                }
+                else -> {
+                    val f = ((vClamped - max(0, vMin)) / (vMax - max(0, vMin))).f
+                    linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
+                }
+            }
+        // Linear slider
+            else -> (vClamped - vMin).f / (vMax - vMin).f
+        }
+    }
+
+    fun sliderBehaviorCalcRatioFromValue(dataType: DataType, v: Float, vMin: Float, vMax: Float, power: Float, linearZeroPos: Float): Float {
+
+        if (vMin == vMax) return 0f
+
+        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
+        val vClamped = if (vMin < vMax) glm.clamp(v, vMin, vMax) else glm.clamp(v, vMax, vMin)
+        return when {
+            isPower -> when {
+                vClamped < 0f -> {
+                    val f = 1f - (vClamped - vMin) / (min(0f, vMax) - vMin)
+                    (1f - glm.pow(f, 1f / power)) * linearZeroPos
+                }
+                else -> {
+                    val f = (vClamped - max(0f, vMin)) / (vMax - max(0f, vMin))
+                    linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
+                }
+            }
+        // Linear slider
+            else -> (vClamped - vMin) / (vMax - vMin)
+        }
+    }
+
+    fun sliderBehaviorCalcRatioFromValue(dataType: DataType, v: Double, vMin: Double, vMax: Double, power: Float, linearZeroPos: Float): Float {
+
+        if (vMin == vMax) return 0f
+
+        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
+        val vClamped = if (vMin < vMax) glm.clamp(v, vMin, vMax) else glm.clamp(v, vMax, vMin)
+        return when {
+            isPower -> when {
+                vClamped < 0f -> {
+                    val f = 1f - ((vClamped - vMin) / (min(0.0, vMax) - vMin)).f
+                    (1f - glm.pow(f, 1f / power)) * linearZeroPos
+                }
+                else -> {
+                    val f = ((vClamped - max(0.0, vMin)) / (vMax - max(0.0, vMin))).f
+                    linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
+                }
+            }
+        // Linear slider
+            else -> ((vClamped - vMin) / (vMax - vMin)).f
+        }
     }
 
     /** Add multiple sliders on 1 line for compact edition of multiple components   */
-    fun sliderFloatN(label: String, v: FloatArray, component: Int, vMin: Float, vMax: Float, format: String, power: Float)
+    fun sliderFloatN(label: String, v: FloatArray, component: Int, vMin: Float, vMax: Float, format: String?, power: Float = 1f)
             : Boolean {
         val window = currentWindow
         if (window.skipItems) return false
@@ -1612,22 +2137,33 @@ interface imgui_internal {
     fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
                      power: Float): Boolean {
         f0 = v[ptr]
-        val res = dragBehavior(id, DataType.Float, ::f0 as KMutableProperty0<Number>, vSpeed, vMin, vMax, format, power)
+        val res = dragBehavior(id, DataType.Float, ::f0, vSpeed, vMin, vMax, format, power)
         v[ptr] = f0
         return res
     }
 
-    fun dragBehavior(id: ID, dataType: DataType, v: KMutableProperty0<Number>, vSpeed: Float, vMin: Number?, vMax: Number?,
-                     format: String, power: Float): Boolean = when (dataType) {
-        DataType.Int, DataType.Uint -> dragBehaviorT(id, dataType, v as KMutableProperty0<Int>, vSpeed, vMin as? Int
-                ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power)
-        DataType.Long, DataType.Ulong -> dragBehaviorT(id, dataType, v as KMutableProperty0<Long>, vSpeed, vMin as? Long
-                ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power)
-        DataType.Float -> dragBehaviorT(id, dataType, v as KMutableProperty0<Float>, vSpeed, vMin as? Float
-                ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power)
-        DataType.Double -> dragBehaviorT(id, dataType, v as KMutableProperty0<Double>, vSpeed, vMin as? Double
-                ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power)
-        else -> throw Error()
+    fun dragBehavior(id: ID, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number?, vMax: Number?,
+                     format: String, power: Float): Boolean {
+
+        if (g.activeId == id)
+            if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
+                clearActiveId()
+            else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                clearActiveId()
+        return when (g.activeId) {
+            id -> when (dataType) {
+                DataType.Int, DataType.Uint -> dragBehaviorT(dataType, v, vSpeed, vMin as? Int
+                        ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power)
+                DataType.Long, DataType.Ulong -> dragBehaviorT(dataType, v, vSpeed, vMin as? Long
+                        ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power)
+                DataType.Float -> dragBehaviorT(dataType, v, vSpeed, vMin as? Float
+                        ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power)
+                DataType.Double -> dragBehaviorT(dataType, v, vSpeed, vMin as? Double
+                        ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power)
+                else -> throw Error()
+            }
+            else -> false
+        }
     }
 
     fun dragFloatN(label: String, v: FloatArray, components: Int, vSpeed: Float, vMin: Float, vMax: Float, format: String, power: Float)
@@ -1643,7 +2179,7 @@ interface imgui_internal {
         for (i in 0 until components) {
             pushId(i)
             withFloat(v, i) {
-                valueChanged = dragScalar("##v", DataType.Float, it as KMutableProperty0<Number>, vSpeed, vMin, vMax, format, power) || valueChanged
+                valueChanged = dragScalar("##v", DataType.Float, it, vSpeed, vMin, vMax, format, power) || valueChanged
             }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
@@ -1659,12 +2195,12 @@ interface imgui_internal {
 
     fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                   format: String = "%.3f", power: Float = 1f): Boolean =
-            dragScalar(label, DataType.Float, v as KMutableProperty0<Number>, vSpeed, vMin, vMax, format, power)
+            dragScalar(label, DataType.Float, v, vSpeed, vMin, vMax, format, power)
 
     fun dragFloat(label: String, v: FloatArray, ptr: Int, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                   format: String = "%.3f", power: Float = 1f): Boolean {
         return withFloat(v, ptr) {
-            dragScalar(label, DataType.Float, it as KMutableProperty0<Number>, vSpeed, vMin, vMax, format, power)
+            dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power)
         }
     }
 
@@ -2294,7 +2830,7 @@ interface imgui_internal {
         return if (flags has Itf.EnterReturnsTrue) enterPressed else valueChanged
     }
 
-    fun inputFloatN(label: String, v: FloatArray, components: Int, format: String, extraFlags: Int): Boolean {
+    fun inputFloatN(label: String, v: FloatArray, components: Int, format: String? = null, extraFlags: Int): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
         var valueChanged = false
@@ -2304,7 +2840,7 @@ interface imgui_internal {
         for (i in 0 until components) {
             pushId(i)
             withFloat(v, i) {
-                valueChanged = inputScalar("##v", DataType.Float, it as KMutableProperty0<Number>, 0f, 0f, format, extraFlags) || valueChanged
+                valueChanged = inputScalar("##v", DataType.Float, it, 0f, 0f, format, extraFlags) || valueChanged
             }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
@@ -2341,23 +2877,32 @@ interface imgui_internal {
 
     /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
      *  functions "format" argument)    */
-    fun inputScalar(label: String, dataType: DataType, data: IntArray, step: Number?, stepFast: Number?, format: String,
+    fun inputScalar(label: String, dataType: DataType, data: IntArray, step: Int?, stepFast: Int?, format: String? = null,
                     extraFlags: InputTextFlags = 0): Boolean {
         i0 = data[0]
-        val res = inputScalar(label, dataType, ::i0 as KMutableProperty0<Number>, step, stepFast, format, extraFlags)
+        val res = inputScalar(label, dataType, ::i0, step, stepFast, format, extraFlags)
         data[0] = i0
         return res
     }
 
     /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
      *  functions "format" argument)    */
-    fun inputScalar(label: String, dataType: DataType, data: KMutableProperty0<Number>, step: Number?, stepFast: Number?,
-                    scalarFormat: String, extraFlags: Int): Boolean {
+    fun inputScalar(label: String, dataType: DataType, data: KMutableProperty0<*>, step: Number?, stepFast: Number?,
+                    format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
 
+        data as KMutableProperty0<Number>
         val window = currentWindow
         if (window.skipItems) return false
 
-        val buf = data.format(dataType, scalarFormat)
+        val format = when(format) {
+            null -> when (dataType) {
+                DataType.Float, DataType.Double -> "%f"
+                else -> "%d"
+            }
+            else -> format
+        }
+
+        val buf = data.format(dataType, format)
 
         var valueChanged = false
         var extraFlags = extraFlags
@@ -2372,7 +2917,7 @@ interface imgui_internal {
             pushId(label)
             pushItemWidth(max(1f, calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
             if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
-                valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, scalarFormat)
+                valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, format)
             popItemWidth()
 
             // Step buttons
@@ -2392,14 +2937,14 @@ interface imgui_internal {
             popId()
             endGroup()
         } else if (inputText(label, buf, extraFlags))
-            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, scalarFormat)
+            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, format)
 
         return valueChanged
     }
 
     /** Create text input in place of a slider (when CTRL+Clicking on slider)
      *  FIXME: Logic is messy and confusing. */
-    fun inputScalarAsWidgetReplacement(bb: Rect, id: ID, label: String, dataType: DataType, data: KMutableProperty0<Number>,
+    fun inputScalarAsWidgetReplacement(bb: Rect, id: ID, label: String, dataType: DataType, data: KMutableProperty0<*>,
                                        format: String): Boolean {
 
         val window = currentWindow

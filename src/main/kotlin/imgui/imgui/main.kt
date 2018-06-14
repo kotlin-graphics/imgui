@@ -24,6 +24,7 @@ import imgui.ImGui.pushId
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.sliderBehaviorT
 import imgui.ImGui.style
 import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
 import imgui.internal.*
@@ -69,18 +70,24 @@ interface imgui_main {
         if (io.configFlags has Cf.NavEnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
-        // Load settings on first frame
+        // Load settings on first frame (if not explicitly loaded manually before)
         if (!g.settingsLoaded) {
             assert(g.settingsWindows.isEmpty())
-            loadIniSettingsFromDisk(io.iniFilename)
+            io.iniFilename?.let(::loadIniSettingsFromDisk)
             g.settingsLoaded = true
         }
 
         // Save settings (with a delay so we don't spam disk too much)
         if (g.settingsDirtyTimer > 0f) {
             g.settingsDirtyTimer -= io.deltaTime
-            if (g.settingsDirtyTimer <= 0f)
-                saveIniSettingsToDisk(io.iniFilename)
+            if (g.settingsDirtyTimer <= 0f) {
+                val ini = io.iniFilename
+                if (ini != null)
+                    saveIniSettingsToDisk(ini)
+                else
+                    io.wantSaveIniSettings = true  // Let user know they can call SaveIniSettingsToMemory(). user will need to clear io.WantSaveIniSettings themselves.
+                g.settingsDirtyTimer = 0f
+            }
         }
 
         g.time += io.deltaTime
@@ -398,7 +405,7 @@ interface imgui_main {
                 if (io.mouseDown[0] && isMousePosValid(io.mousePos)) {
                     val pos = io.mousePos - g.activeIdClickOffset
                     if (movingWindow.pos.x.f != pos.x || movingWindow.pos.y.f != pos.y) {
-                        markIniSettingsDirty(movingWindow)
+                        movingWindow.markIniSettingsDirty()
                         movingWindow.setPos(pos, Cond.Always)
                     }
                     mov.focus()
@@ -564,11 +571,11 @@ interface imgui_main {
             // Apply back modified position/size to window
             if (sizeTarget.x != Float.MAX_VALUE) {
                 window.sizeFull put sizeTarget
-                markIniSettingsDirty(window)
+                window.markIniSettingsDirty()
             }
             if (posTarget.x != Float.MAX_VALUE) {
                 window.pos = glm.floor(posTarget)
-                markIniSettingsDirty(window)
+                window.markIniSettingsDirty()
             }
 
             window.size put window.sizeFull
@@ -593,18 +600,10 @@ interface imgui_main {
                 }
         }
 
-        fun dragBehaviorT(id: ID, dataType: DataType, v: KMutableProperty0<Int>, vSpeed: Float, vMin: Int, vMax: Int, format: String,
+        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Int, vMax: Int, format: String,
                           power: Float): Boolean {
 
-            // Process interacting with the drag
-            if (g.activeId == id)
-                if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
-                    clearActiveId()
-                else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                    clearActiveId()
-            if (g.activeId != id)
-                return false
-
+            v as KMutableProperty0<Int>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Int.MAX_VALUE)
             var vSpeed = vSpeed
@@ -690,18 +689,10 @@ interface imgui_main {
             return true
         }
 
-        fun dragBehaviorT(id: ID, dataType: DataType, v: KMutableProperty0<Long>, vSpeed: Float, vMin: Long, vMax: Long, format: String,
+        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Long, vMax: Long, format: String,
                           power: Float): Boolean {
 
-            // Process interacting with the drag
-            if (g.activeId == id)
-                if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
-                    clearActiveId()
-                else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                    clearActiveId()
-            if (g.activeId != id)
-                return false
-
+            v as KMutableProperty0<Long>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
             var vSpeed = vSpeed
@@ -787,18 +778,10 @@ interface imgui_main {
             return true
         }
 
-        fun dragBehaviorT(id: ID, dataType: DataType, v: KMutableProperty0<Float>, vSpeed: Float, vMin: Float, vMax: Float, format: String,
+        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Float, vMax: Float, format: String,
                           power: Float): Boolean {
 
-            // Process interacting with the drag
-            if (g.activeId == id)
-                if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
-                    clearActiveId()
-                else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                    clearActiveId()
-            if (g.activeId != id)
-                return false
-
+            v as KMutableProperty0<Float>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
             var vSpeed = vSpeed
@@ -884,18 +867,10 @@ interface imgui_main {
             return true
         }
 
-        fun dragBehaviorT(id: ID, dataType: DataType, v: KMutableProperty0<Double>, vSpeed: Float, vMin: Double, vMax: Double, format: String,
+        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Double, vMax: Double, format: String,
                           power: Float): Boolean {
 
-            // Process interacting with the drag
-            if (g.activeId == id)
-                if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
-                    clearActiveId()
-                else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                    clearActiveId()
-            if (g.activeId != id)
-                return false
-
+            v as KMutableProperty0<Double>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
             var vSpeed = vSpeed
@@ -979,6 +954,49 @@ interface imgui_main {
                 return false
             v.set(vCur)
             return true
+        }
+
+        // TODO check
+        fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
+                           flags: SliderFlags = 0) = sliderBehavior(frameBb, id, v, 0, vMin, vMax, format, power, flags)
+
+        var f0 = 0f
+
+        fun sliderBehavior(frameBb: Rect, id: ID, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String, power: Float,
+                           flags: SliderFlags = 0): Boolean {
+            f0 = v[ptr]
+            return sliderBehavior(frameBb, id, DataType.Float, ::f0, vMin, vMax, format, power, flags).also {
+                v[ptr] = f0
+            }
+        }
+
+        fun sliderBehavior(frameBb: Rect, id: ID, v: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String, power: Float,
+                           flags: SliderFlags = 0): Boolean {
+            return sliderBehavior(frameBb, id, DataType.Float, v, vMin, vMax, format, power, flags)
+        }
+
+        fun sliderBehavior(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number,
+                           format: String, power: Float, flags: SliderFlags = 0): Boolean = when (dataType) {
+
+            DataType.Int, DataType.Uint -> {
+                assert(vMin as Int >= Int.MIN_VALUE / 2)
+                assert(vMax as Int <= Int.MAX_VALUE / 2)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+            }
+            DataType.Long, DataType.Ulong -> {
+                assert(vMin as Long >= Long.MIN_VALUE / 2)
+                assert(vMax as Long <= Long.MAX_VALUE / 2)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+            }
+            DataType.Float -> {
+                assert(vMin as Float >= -Float.MAX_VALUE / 2f && vMax as Float <= Float.MAX_VALUE / 2f)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Float, format, power, flags)
+            }
+            DataType.Double -> {
+                assert(vMin as Double >= -Double.MAX_VALUE / 2f && vMax as Double <= Double.MAX_VALUE / 2f)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Double, format, power, flags)
+            }
+            else -> throw Error()
         }
 
         fun setupDrawData(drawLists: ArrayList<DrawList>, outDrawData: DrawData) = with(outDrawData) {

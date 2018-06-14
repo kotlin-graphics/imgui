@@ -248,9 +248,12 @@ fun CharArray.beginOfLine(midLine: Int): Int {
 //IMGUI_API int           ImFormatString(char* buf, int buf_size, const char* fmt, ...) IM_PRINTFARGS(3);
 //IMGUI_API int           ImFormatStringV(char* buf, int buf_size, const char* fmt, va_list args);
 
-// -----------------------------------------------------------------------------------------------------------------
-// Helpers: Math
-// -----------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+// Helpers: ImVec2/ImVec4 operators
+// We are keeping those disabled by default so they don't leak in user space, to allow user enabling
+// implicit cast operators between ImVec2 and their own types (using IM_VEC2_CLASS_EXTRA etc.)
+// We unfortunately don't have a unary- operator for Vec2 because this would needs to be defined inside the class itself.
+// ---------------------------------------------------------------------------------------------------------------------
 val Vec2.lengthSqr get() = x * x + y * y
 
 fun saturate(f: Float) = if (f < 0f) 0f else if (f > 1f) 1f else f
@@ -262,7 +265,9 @@ fun swap(a: KMutableProperty0<Float>, b: KMutableProperty0<Float>) {
 }
 
 fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
+fun lerp(a: Double, b: Double, t: Float) = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float) = (a + (b - a) * t).i
+fun lerp(a: Long, b: Long, t: Float) = (a + (b - a) * t).L
 fun Vec2.lerp(b: Vec2, t: Float) = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
 fun Vec2.lerp(b: Vec2, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
 fun Vec2.lerp(b: Vec2i, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)

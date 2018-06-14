@@ -189,6 +189,11 @@ fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 
 fun addWindowSettings(name: String) = WindowSettings(name).apply { g.settingsWindows.add(this) }
 
+/*  Settings/.Ini Utilities
+    The disk functions are automatically called if io.IniFilename != NULL (default is "imgui.ini").
+    Set io.IniFilename to NULL to load/save manually. Read io.WantSaveIniSettings description about handling .ini saving manually. */
+
+/** call after CreateContext() and before the first call to NewFrame(). NewFrame() automatically calls LoadIniSettingsFromDisk(io.IniFilename). */
 fun loadIniSettingsFromDisk(iniFilename: String?) {
     if (iniFilename == null) return
     var settings: WindowSettings? = null
@@ -251,12 +256,6 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
             it.println()
         }
     }
-}
-
-fun markIniSettingsDirty(window: Window) {
-    if (window.flags hasnt Wf.NoSavedSettings)
-        if (g.settingsDirtyTimer <= 0f)
-            g.settingsDirtyTimer = io.iniSavingRate
 }
 
 fun getViewportRect(): Rect {
@@ -501,7 +500,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
 //}
 
 /** DataTypeFormatString */
-fun KMutableProperty0<Number>.format(dataType: DataType, format: String): CharArray {
+fun KMutableProperty0<*>.format(dataType: DataType, format: String): CharArray {
     val value: Number = when (dataType) {
         DataType.Int, DataType.Uint -> this() as Int    // Signedness doesn't matter when pushing the argument
         DataType.Long, DataType.Ulong -> this() as Long // Signedness doesn't matter when pushing the argument
@@ -575,12 +574,12 @@ fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number
 fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: IntArray, format: String? = null): Boolean {
 
     i0 = data[0]
-    val res = dataTypeApplyOpFromText(buf, initialValueBuf, dataType, ::i0 as KMutableProperty0<Number>, format)
+    val res = dataTypeApplyOpFromText(buf, initialValueBuf, dataType, ::i0, format)
     data[0] = i0
     return res
 }
 
-fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, dataPtr: KMutableProperty0<Number>,
+fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, dataPtr: KMutableProperty0<*>,
                             format: String? = null): Boolean {
 
 //    var s = 0
@@ -599,6 +598,8 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 //
 //    if (buf[s] == NUL)
 //        return false
+
+    dataPtr as KMutableProperty0<Number>
 
     val seq = String(buf)
             .replace(Regex("\\s+"), "")
@@ -1108,7 +1109,7 @@ fun navUpdateWindowing() {
                 val moveSpeed = glm.floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
                 it.pos plusAssign moveDelta * moveSpeed
                 g.navDisableMouseHover = true
-                markIniSettingsDirty(it)
+                it.markIniSettingsDirty()
             }
         }
     }

@@ -10,7 +10,10 @@ import glm_.vec2.operators.div
 import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.ImGui.style
-import imgui.internal.*
+import imgui.internal.fileLoadToCharArray
+import imgui.internal.isBlankA
+import imgui.internal.isBlankW
+import imgui.internal.upperPowerOfTwo
 import imgui.stb.*
 import org.lwjgl.stb.*
 import org.lwjgl.stb.STBRectPack.stbrp_pack_rects
@@ -697,19 +700,37 @@ class FontAtlas {
                 bufPackedcharsN += range.numChars
             }
 
-            // Pack
+            // Gather the sizes of all rectangle we need
             tmp.rects = STBRPRect.create(bufRects.address() + bufRectsN * STBRPRect.SIZEOF, fontGlyphsCount)
             tmp.rectsCount = fontGlyphsCount
             bufRectsN += fontGlyphsCount
             stbtt_PackSetOversampling(spc, cfg.oversample)
             val n = stbtt_PackFontRangesGatherRects(spc, tmp.fontInfo, tmp.ranges, tmp.rects)
             assert(n == fontGlyphsCount)
+
+            /*  Detect missing glyphs and replace them with a zero-sized box instead of relying on the default glyphs
+                This allows us merging overlapping icon fonts more easily.
+                JVM, this provokes a jvm crash, probably it will work with the custom stb */
+//            var rectI = 0
+//            for (rangeI in 0 until tmp.rangesCount)
+//                for (charI in 0 until tmp.ranges[rangeI].numChars) {
+//                    if (stbtt_FindGlyphIndex(tmp.fontInfo, tmp.ranges[rangeI].firstUnicodeCodepointInRange + charI) == 0) {
+//                        tmp.rects[rectI].w = 0
+//                        tmp.rects[rectI].h = 0
+//                    }
+//                    rectI++
+//                }
+            // Pack
             stbrp_pack_rects(spc.packInfo, tmp.rects)   // fuck, Omar modified his stb_rect_pack.h, we shall also have our own?
 
-            // Extend texture height
-            for (r in tmp.rects)
+            /*  Extend texture height
+                Also mark missing glyphs as non-packed so we don't attempt to render into them             */
+            for (r in tmp.rects) {
+                if (tmp.rects[i].w == 0 && tmp.rects[i].h == 0)
+                    tmp.rects[i].wasPacked = false
                 if (r.wasPacked)
                     texSize.y = glm.max(texSize.y, r.y + r.h)
+            }
         }
         assert(bufRectsN == totalGlyphsCount)
         assert(bufPackedcharsN == totalGlyphsCount)

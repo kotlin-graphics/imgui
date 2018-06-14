@@ -262,9 +262,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     //------------------------------------------------------------------
 
     var settingsLoaded = false
-    /** Save .ini Settings on disk when time reaches zero   */
+    /** Save .ini Settings to memory when time reaches zero   */
     var settingsDirtyTimer = 0f
-    /** .ini Settings for Window  */
+    /** In memory .ini Settings for Window  */
+    var settingsIniData = ""
+    /** ImGuiWindow .ini settings entries (parsed from the last loaded .ini file and maintained on saving) */
     val settingsWindows = ArrayList<WindowSettings>()
 
     //------------------------------------------------------------------
@@ -274,8 +276,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var logEnabled = false
     /** If != NULL log to stdout/ file  */
     var logFile: File? = null
-    /** Else log to clipboard. This is pointer so our GImGui static constructor doesn't call heap allocators.   */
-    lateinit var logClipboard: StringBuilder
+    /** Accumulation buffer when log to clipboard. This is pointer so our GImGui static constructor doesn't call heap allocators.   */
+    var logClipboard = StringBuilder()
 
     var logStartDepth = 0
 
@@ -307,7 +309,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
         // ~initialize(ctx)
         assert(!g.initialized && !g.settingsLoaded)
-        g.logClipboard = StringBuilder()
 
         g.initialized = true
     }
@@ -317,15 +318,14 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
         /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
             (which would happen if we never called NewFrame)         */
-//        if (IO.fonts) // Testing for NULL to allow user to NULLify in case of running Shutdown() on multiple contexts. Bit hacky.
         io.fonts.clear()
 
-        // Cleanup of other data are conditional on actually having initialize ImGui.
+        // Cleanup of other data are conditional on actually having initialized ImGui.
         if (!g.initialized) return
 
         // Save settings (unless we haven't attempted to load them: CreateContext/DestroyContext without a call to NewFrame shouldn't save an empty file)
         if (g.settingsLoaded)
-            saveIniSettingsToDisk(io.iniFilename)
+            io.iniFilename?.let(::saveIniSettingsToDisk)
 
         // Clear everything else
         g.windows.forEach { it.clear() }
@@ -384,15 +384,15 @@ class IO(sharedFontAtlas: FontAtlas?) {
 
     /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
     var configFlags: ConfigFlags = 0
-    /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end. */
+    /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end to communicate features supported by the back-end. */
     var backendFlags: BackendFlags = 0
     /** Display size, in pixels. For clamping windows positions.    */
     var displaySize = Vec2i(-1)
     /** Time elapsed since last frame, in seconds.  */
     var deltaTime = 1f / 60f
-    /** Maximum time between saving positions/sizes to .ini file, in seconds.   */
+    /** Minimum time between saving positions/sizes to .ini file, in seconds.   */
     var iniSavingRate = 5f
-    /** Path to .ini file. NULL to disable .ini saving. */
+    /** Path to .ini file. Set NULL to disable automatic .ini loading/saving, if e.g. you want to manually load/save from memory. */
     var iniFilename: String? = "imgui.ini"
     /** Path to .log file (default parameter to ImGui::LogToFile when no file is specified).    */
     var logFilename = "imgui_log.txt"
@@ -527,6 +527,9 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** MousePos has been altered, back-end should reposition mouse on next frame.
      *  Set only when ConfigFlag.NavEnableSetMousePos flag is enabled in IO.configFlags.    */
     var wantSetMousePos = false
+    /** When manual .ini load/save is active (io.IniFilename == NULL), this will be set to notify your application that
+     *  you can call SaveIniSettingsToMemory() and save yourself. IMPORTANT: You need to clear io.WantSaveIniSettings yourself. */
+    var wantSaveIniSettings = false
     /** Directional navigation is currently allowed (will handle KeyNavXXX events) = a window is focused and it doesn't
      *  use the WindowFlag.NoNavInputs flag.   */
     var navActive = false
