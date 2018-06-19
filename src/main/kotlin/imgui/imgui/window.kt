@@ -519,12 +519,12 @@ interface imgui_window {
                 /*  Update ContentsRegionMax. All the variable it depends on are set above in this function.
                     FIXME: window->ContentsRegion.Max is currently very misleading / partly faulty,
                     but some BeginChild() patterns relies on it.                 */
-                contentsRegionRect.apply {
-                    min.put(pos.x - scroll.x + windowPadding.x,
+                contentsRegionRect.let {
+                    it.min.put(pos.x - scroll.x + windowPadding.x,
                             pos.y - scroll.y + windowPadding.y + titleBarHeight + menuBarHeight)
                     val a = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else size.x - scrollbarSizes.x
                     val b = if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else size.y - scrollbarSizes.y
-                    max.put(pos.x - scroll.x - windowPadding.x + a,
+                    it.max.put(pos.x - scroll.x - windowPadding.x + a,
                             pos.y - scroll.y - windowPadding.y + b)
                 }
 

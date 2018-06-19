@@ -2845,7 +2845,7 @@ interface imgui_internal {
         endPopup()
     }
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd: Int = 0): Boolean {
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd: Int = findRenderedTextEnd(label)): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -2853,7 +2853,6 @@ interface imgui_internal {
         val displayFrame = flags has Tnf.Framed
         val padding = if (displayFrame || flags has Tnf.FramePadding) Vec2(style.framePadding) else Vec2(style.framePadding.x, 0f)
 
-        val labelEnd = if (labelEnd == 0) findRenderedTextEnd(label) else labelEnd
         val labelSize = calcTextSize(label, labelEnd, false)
 
         // We vertically grow up to current line height up the typical widget height.
