@@ -137,7 +137,7 @@ interface imgui_widgetsColorEditorPicker {
         val f = floatArrayOf(col[0], col[1], col[2], if (alpha) col[3] else 1f)
         if (flags has Cef.HSV) f.rgbToHSV()
 
-        val i = IntArray(4, { F32_TO_INT8_UNBOUND(f[it]) })
+        val i = IntArray(4) { F32_TO_INT8_UNBOUND(f[it]) }
 
         var valueChanged = false
         var valueChangedAsFloat = false
@@ -333,7 +333,7 @@ interface imgui_widgetsColorEditorPicker {
         val bar1PosX = bar0PosX + barsWidth + style.itemInnerSpacing.x
         val barsTrianglesHalfSz = (barsWidth * 0.2f).i.f
 
-        val backupInitialCol = FloatArray(4, { col[it] })
+        val backupInitialCol = FloatArray(4) { col[it] }
 
         val wheelThickness = svPickerSize * 0.08f
         val wheelROuter = svPickerSize * 0.50f
