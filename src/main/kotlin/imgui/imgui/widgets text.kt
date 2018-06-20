@@ -262,9 +262,7 @@ interface imgui_widgetsText {
                     val dummyRefCol = Vec4()
                     for (i in 0..2) dummyRefCol[i] = refCol[i]
                     if (pickerFlags hasnt Cef.NoAlpha) dummyRefCol[3] = refCol[3]
-                    val pF = floatArrayOf(dummyRefCol.x)
-                    colorPicker4("##dummypicker", pF, pickerFlags)
-                    dummyRefCol.x = pF[0]
+                    colorPicker4("##dummypicker", dummyRefCol, pickerFlags)
                     popId()
                 }
                 popItemWidth()
