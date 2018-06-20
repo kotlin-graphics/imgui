@@ -1180,8 +1180,8 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
         val newBest = when {
             IMGUI_DEBUG_NAV_SCORING -> {  // [DEBUG] Score all items in NavWindow at all times
-                    if (!g.navMoveRequest) g.navMoveDir = g.navMoveDirLast
-                    navScoreItem(result, navBb) && g.navMoveRequest
+                if (!g.navMoveRequest) g.navMoveDir = g.navMoveDirLast
+                navScoreItem(result, navBb) && g.navMoveRequest
             }
             else -> g.navMoveRequest && navScoreItem(result, navBb)
         }

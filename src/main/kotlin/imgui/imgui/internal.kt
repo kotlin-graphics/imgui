@@ -224,35 +224,13 @@ interface imgui_internal {
     /** Internal facing ItemHoverable() used when submitting widgets. Differs slightly from IsItemHovered().    */
     fun itemHoverable(bb: Rect, id: ID): Boolean {
         val window = g.currentWindow!!
-        if (stop)
-            println(g.navWindow?.rootWindow?.flags)
-//        println("" + g.navDisableMouseHover +", " + !window.isContentHoverable(Hf.Default.i))
-        //println(window.name)
         return when {
-            g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> {
-                if (stop) println("0")
-                false
-            }
-            g.hoveredWindow !== window -> {
-                if (stop) println("1")
-                false
-            }
-            g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> {
-                if (stop) println("2")
-                false
-            }
-            !isMouseHoveringRect(bb) -> {
-                if (stop) println("3")
-                false
-            }
-            g.navDisableMouseHover || !window.isContentHoverable(Hf.Default.i) -> {
-                if (stop) println("4")
-                false
-            }
-            window.dc.itemFlags has If.Disabled -> {
-                if (stop) println("5")
-                false
-            }
+            g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> false
+            g.hoveredWindow !== window -> false
+            g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
+            !isMouseHoveringRect(bb) -> false
+            g.navDisableMouseHover || !window.isContentHoverable(Hf.Default.i) -> false
+            window.dc.itemFlags has If.Disabled -> false
             else -> {
                 setHoveredId(id)
                 true

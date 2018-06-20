@@ -175,10 +175,10 @@ interface imgui_menus {
         val pressed: Boolean
         var menuIsOpen = isPopupOpen(id)
         val menusetIsOpen = window.flags hasnt Wf.Popup && g.openPopupStack.size > g.currentPopupStack.size &&
-                g.openPopupStack[g.currentPopupStack.size].openParentId == window.getId("##Menus")
+                g.openPopupStack[g.currentPopupStack.size].openParentId == window.idStack.last()
         val backedNavWindow = g.navWindow
         if (menusetIsOpen)
-        // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent)
+            // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent)
             g.navWindow = window
 
         /*  The reference position stored in popupPos will be used by Begin() to find a suitable position for the child
@@ -210,7 +210,6 @@ interface imgui_menus {
             renderArrow(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), Dir.Right)
             if (!enabled) popStyleColor()
         }
-
         val hovered = enabled && itemHoverable(window.dc.lastItemRect, id)
 
         if (menusetIsOpen)
@@ -270,8 +269,7 @@ interface imgui_menus {
             wantClose = true
         if (wantClose && isPopupOpen(id))
             closePopupToLevel(g.currentPopupStack.size)
-        if (stop) println("pressed: $pressed, hovered: $hovered, menusetIsOpen: $menusetIsOpen, enabled: $enabled")
-        if (stop) println("menuIsOpen :$menuIsOpen, wantOpen:$wantOpen, g.openPopupStack.size:${g.openPopupStack.size}, g.currentPopupStack.size: ${g.currentPopupStack.size}")
+
         if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.currentPopupStack.size) {
             // Don't recycle same menu level in the same frame, first close the other menu and yield for a frame.
             openPopup(label)
@@ -291,7 +289,6 @@ interface imgui_menus {
             // menuIsOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
             menuIsOpen = beginPopupEx(id, flags)
         }
-        if (stop) stop = false
         return menuIsOpen
     }
 
