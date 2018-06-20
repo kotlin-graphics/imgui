@@ -104,7 +104,7 @@ fun trimBlanks(buf: CharArray): CharArray {
 fun hash(data: IntArray, seed: Int = 0): Int {
     val buffer = ByteBuffer.allocate(data.size * Int.BYTES)
     for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])
-    val bytes = ByteArray(buffer.size, { buffer[it] })
+    val bytes = ByteArray(buffer.size) { buffer[it] }
     return hash(String(bytes), bytes.size, seed)
 }
 
@@ -137,17 +137,17 @@ fun hash(data: String, dataSize: Int, seed: Int = 0): Int {
     return crc.inv()
 }
 
-val crc32Lut = IntArray(256, {
+val crc32Lut = IntArray(256) {
     val polynomial = 0xEDB88320.i
     var crc = it
     for (i in 0..7)
         crc = (crc ushr 1) xor ((-(crc and 1)) and polynomial)
     crc
-})
+}
 
 fun fileLoadToCharArray(filename: String, paddingBytes: Int = 0) = ClassLoader.getSystemResourceAsStream(filename)?.use {
     val bytes = it.readBytes()
-    CharArray(bytes.size, { bytes[it].c })
+    CharArray(bytes.size) { bytes[it].c }
 }
 
 fun fileLoadToLines(filename: String) = ClassLoader.getSystemResourceAsStream(filename)?.use { it.bufferedReader().readLines() }

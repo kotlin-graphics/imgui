@@ -787,11 +787,10 @@ class Window(var context: Context, var name: String) {
         this.collapsed = collapsed
     }
 
-    fun isContentHoverable(flags: HoveredFlags): Boolean {
+    infix fun isContentHoverable(flags: HoveredFlags): Boolean {
         // An active popup disable hovering on other windows (apart from its own children)
         // FIXME-OPT: This could be cached/stored within the window.
         val focusedRootWindow = g.navWindow?.rootWindow ?: return true
-        //println(g.navWindow?.name)
         if (focusedRootWindow.wasActive && focusedRootWindow !== rootWindow) {
             /*  For the purpose of those flags we differentiate "standard popup" from "modal popup"
                 NB: The order of those two tests is important because Modal windows are also Popups.             */
