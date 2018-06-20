@@ -128,7 +128,7 @@ interface imgui_widgetsDrag {
             withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, format) }
 
     fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
-            withInt { dragScalar(label, DataType.Int, it, vSpeed, vMin as Number, vMax as Number, format) }
+            dragScalar(label, DataType.Int, v, vSpeed, vMin as Number, vMax as Number, format)
 
     fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
             dragIntN(label, v, 2, vSpeed, vMin, vMax, format)
