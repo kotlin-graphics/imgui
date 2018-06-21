@@ -1074,7 +1074,7 @@ class Font {
     fun findGlyphNoFallback(c: Int) = indexLookup.getOrNull(c)?.let { glyphs[it] }
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
-    fun getCharAdvance_ssaaaaaaaaaaaa(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
+    fun getCharAdvance_ssaaaaaaaaaaaaa(c: Char) = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
 
     val isLoaded get() = ::containerAtlas.isInitialized
 
@@ -1173,7 +1173,7 @@ class Font {
         return textSize
     }
 
-    fun calcWordWrapPositionA(scale: Float, text: CharArray, ptr: Int, textEnd: Int, wrapWidth: Float): Int {
+    fun calcWordWrapPositionA(scale: Float, text: CharArray, ptr: Int, textEnd: Int, wrapWidth_: Float): Int {
 
         /*  Simple word-wrapping for English, not full-featured. Please submit failing cases!
             FIXME: Much possible improvements (don't cut things like "word !", "word!!!" but cut within "word,,,,",
@@ -1194,7 +1194,7 @@ class Font {
         var lineWidth = 0f
         var wordWidth = 0f
         var blankWidth = 0f
-        val wrapWidth = wrapWidth / scale   // We work with unscaled widths to avoid scaling every characters
+        val wrapWidth = wrapWidth_ / scale   // We work with unscaled widths to avoid scaling every characters
 
         var wordEnd = ptr
         var prevWordEnd = -1
@@ -1268,8 +1268,8 @@ class Font {
             val y = pos.y.i.f + displayOffset.y
             drawList.primReserve(6, 4)
             val a = Vec2(x + it.x0 * scale, y + it.y0 * scale)
-            val c = Vec2(x + it.x1 * scale, y + it.y1 * scale)
-            drawList.primRectUV(a, c, Vec2(it.u0, it.v0), Vec2(it.u1, it.v1), col)
+            val c_ = Vec2(x + it.x1 * scale, y + it.y1 * scale)
+            drawList.primRectUV(a, c_, Vec2(it.u0, it.v0), Vec2(it.u1, it.v1), col)
         }
     }
 

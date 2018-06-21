@@ -76,7 +76,7 @@ class TextEditState {
     fun getChar(idx: Int) = text[idx]
     fun getWidth(lineStartIdx: Int, charIdx: Int): Float {
         val c = text[lineStartIdx + charIdx]
-        return if (c == '\n') -1f else g.font.getCharAdvance_ssaaaaaaaaaaaa(c) * (g.fontSize / g.font.fontSize)
+        return if (c == '\n') -1f else g.font.getCharAdvance_ssaaaaaaaaaaaaa(c) * (g.fontSize / g.font.fontSize)
     }
 
     fun keyToText(key: Int) = if (key >= 0x10000) 0 else key
@@ -103,14 +103,14 @@ class TextEditState {
 
     fun isWordBoundaryFromRight(idx: Int) = if (idx > 0) text[idx - 1].isSeparator && !text[idx].isSeparator else true
 
-    fun moveWordLeft(idx: Int): Int {
-        var idx = idx - 1
+    fun moveWordLeft(idx_: Int): Int {
+        var idx = idx_ - 1
         while (idx >= 0 && !isWordBoundaryFromRight(idx)) idx--
         return if (idx < 0) 0 else idx
     }
 
-    fun moveWordRight(idx: Int): Int {
-        var idx = idx + 1
+    fun moveWordRight(idx_: Int): Int {
+        var idx = idx_ + 1
         val len = curLenW
         while (idx < len && !isWordBoundaryFromRight(idx)) idx++
         return if (idx > len) len else idx
@@ -862,7 +862,6 @@ class TextEditState {
             K.DOWN, K.DOWN or K.SHIFT -> {
                 val find = FindState()
                 val row = Row()
-                var i = 0
                 val sel = key has K.SHIFT
 
                 if (singleLine)
@@ -921,10 +920,9 @@ class TextEditState {
                 if (find.prevFirst != find.firstChar) {
                     // now find character position up a row
                     val goalX = if (hasPreferredX) preferredX else find.x
-                    var x = 0f
                     cursor = find.prevFirst
                     layout(row, cursor)
-                    x = row.x0
+                    var x = row.x0
                     while (i < row.numChars) {
                         val dx = getWidth(find.prevFirst, i++)
                         if (dx == GETWIDTH_NEWLINE)
