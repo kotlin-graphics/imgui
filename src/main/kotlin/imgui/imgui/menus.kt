@@ -178,7 +178,7 @@ interface imgui_menus {
                 g.openPopupStack[g.currentPopupStack.size].openParentId == window.idStack.last()
         val backedNavWindow = g.navWindow
         if (menusetIsOpen)
-            // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent)
+        // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent)
             g.navWindow = window
 
         /*  The reference position stored in popupPos will be used by Begin() to find a suitable position for the child
@@ -251,8 +251,7 @@ interface imgui_menus {
                 wantOpen = true
                 navMoveRequestCancel()
             }
-        } else
-        // Menu bar
+        } else  // Menu bar
             if (menuIsOpen && pressed && menusetIsOpen) { // Click an open menu again to close it
                 wantClose = true
                 wantOpen = false
@@ -277,8 +276,7 @@ interface imgui_menus {
         }
 
         menuIsOpen = menuIsOpen || wantOpen
-        if (wantOpen)
-            openPopup(label)
+        if (wantOpen) openPopup(label)
 
         if (menuIsOpen) {
             /*  Sub-menus are ChildWindow so that mouse can be hovering across them (otherwise top-most popup menu
@@ -289,6 +287,7 @@ interface imgui_menus {
             // menuIsOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
             menuIsOpen = beginPopupEx(id, flags)
         }
+
         return menuIsOpen
     }
 
