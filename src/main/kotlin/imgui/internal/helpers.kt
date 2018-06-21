@@ -181,15 +181,15 @@ fun triangleContainsPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Boolean {
     return ((b1 == b2) && (b2 == b3))
 }
 
-fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2, outU: Float = 0f, outV: Float = 0f, outW: Float = 0f): FloatArray {
+fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray {
     val v0 = b - a
     val v1 = c - a
     val v2 = p - a
     val denom = v0.x * v1.y - v1.x * v0.y
-    return floatArrayOf(
-            (v2.x * v1.y - v1.x * v2.y) / denom,
-            (v0.x * v2.y - v2.x * v0.y) / denom,
-            1f - outV - outW)
+    val outV = (v2.x * v1.y - v1.x * v2.y) / denom
+    val outW = (v0.x * v2.y - v2.x * v0.y) / denom
+    val outU = 1f - outV - outW
+    return floatArrayOf(outU, outV, outW)
 }
 
 fun triangleClosestPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Vec2 {
@@ -281,7 +281,6 @@ fun Vec2.invLength(failValue: Float): Float {
     return failValue
 }
 
-fun Vec2.rotateAssign(cosA: Float, sinA: Float) = invoke(x * cosA - y * sinA, x * sinA + y * cosA)
 fun Vec2.rotate(cosA: Float, sinA: Float) = Vec2(x * cosA - y * sinA, x * sinA + y * cosA)
 fun linearSweep(current: Float, target: Float, speed: Float) = when {
     current < target -> glm.min(current + speed, target)

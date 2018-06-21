@@ -369,12 +369,12 @@ interface imgui_widgetsColorEditorPicker {
                 }
                 val cosHueAngle = glm.cos(-h * 2f * glm.PIf)
                 val sinHueAngle = glm.sin(-h * 2f * glm.PIf)
-                if (triangleContainsPoint(trianglePa, trianglePb, trianglePc, initialOff.rotateAssign(cosHueAngle, sinHueAngle))) { // TODO check
+                if (triangleContainsPoint(trianglePa, trianglePb, trianglePc, initialOff.rotate(cosHueAngle, sinHueAngle))) {
                     // Interacting with SV triangle
-                    val currentOffUnrotated = currentOff.rotateAssign(cosHueAngle, sinHueAngle)
+                    val currentOffUnrotated = currentOff.rotate(cosHueAngle, sinHueAngle)
                     if (!triangleContainsPoint(trianglePa, trianglePb, trianglePc, currentOffUnrotated))
                         currentOffUnrotated put triangleClosestPoint(trianglePa, trianglePb, trianglePc, currentOffUnrotated)
-                    val (uu, vv, ww) = triangleBarycentricCoords(trianglePa, trianglePb, trianglePc, currentOffUnrotated)
+                    val (uu, vv, _) = triangleBarycentricCoords(trianglePa, trianglePb, trianglePc, currentOffUnrotated)
                     v = glm.clamp(1f - vv, 0.0001f, 1f)
                     s = glm.clamp(uu / v, 0.0001f, 1f)
                     valueChangedSv = true
