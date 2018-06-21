@@ -124,7 +124,7 @@ class HelloWorld_lwjgl {
 
             // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name your windows.
             if (showAnotherWindow) {
-                _begin("Another Window", ::showAnotherWindow)
+                begin_("Another Window", ::showAnotherWindow)
                 text("Hello from another window!")
                 if (button("Close Me"))
                     showAnotherWindow = false

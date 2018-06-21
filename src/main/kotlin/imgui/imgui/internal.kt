@@ -80,6 +80,8 @@ import imgui.internal.ColumnsFlag as Cf
 import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.LayoutType as Lt
 
+@Suppress("UNCHECKED_CAST")
+
 
 /** We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
  *  If this ever crash because g.CurrentWindow is NULL it means that either
@@ -288,12 +290,12 @@ interface imgui_internal {
         return size
     }
 
-    fun calcWrapWidthForPos(pos: Vec2, wrapPosX: Float): Float {
+    fun calcWrapWidthForPos(pos: Vec2, wrapPosX_: Float): Float {
 
-        if (wrapPosX < 0f) return 0f
+        if (wrapPosX_ < 0f) return 0f
 
         val window = currentWindowRead!!
-        var wrapPosX = wrapPosX
+        var wrapPosX = wrapPosX_
         if (wrapPosX == 0f)
             wrapPosX = contentRegionMax.x + window.pos.x
         else if (wrapPosX > 0f)
@@ -302,10 +304,10 @@ interface imgui_internal {
         return glm.max(wrapPosX - pos.x, 1f)
     }
 
-    fun pushMultiItemsWidths(components: Int, wFull: Float = 0f) {
+    fun pushMultiItemsWidths(components: Int, wFull_: Float = 0f) {
 
         val window = ImGui.currentWindow
-        val wFull = if (wFull <= 0f) calcItemWidth() else wFull
+        val wFull = if (wFull_ <= 0f) calcItemWidth() else wFull_
         val wItemOne = glm.max(1f, ((wFull - (style.itemInnerSpacing.x) * (components - 1)) / components.f).i.f)
         val wItemLast = glm.max(1f, (wFull - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
         window.dc.itemWidthStack.push(wItemLast)
@@ -887,11 +889,11 @@ interface imgui_internal {
         dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
     }
 
-    fun pushColumnClipRect(columnIndex: Int = -1) {
+    fun pushColumnClipRect(columnIndex_: Int = -1) {
 
         val window = currentWindowRead!!
         val columns = window.dc.columnsSet!!
-        val columnIndex = if (columnIndex < 0) columns.current else columnIndex
+        val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
 
         pushClipRect(columns.columns[columnIndex].clipRect.min, columns.columns[columnIndex].clipRect.max, false)
     }
@@ -918,11 +920,11 @@ interface imgui_internal {
         }
     }
 
-    fun renderTextWrapped(pos: Vec2, text: String, textEnd: Int, wrapWidth: Float) {
+    fun renderTextWrapped(pos: Vec2, text: String, textEnd_: Int, wrapWidth: Float) {
 
         val window = g.currentWindow!!
 
-        var textEnd = textEnd
+        var textEnd = textEnd_
         if (textEnd == 0)
             textEnd = text.length // FIXME-OPT
 
@@ -1072,12 +1074,12 @@ interface imgui_internal {
 
     fun renderBullet(pos: Vec2) = currentWindow.drawList.addCircleFilled(pos, g.fontSize * 0.2f, Col.Text.u32, 8)
 
-    fun renderCheckMark(pos: Vec2, col: Int, sz: Float) {
+    fun renderCheckMark(pos: Vec2, col: Int, sz_: Float) {
 
         val window = g.currentWindow!!
 
-        val thickness = glm.max(sz / 5f, 1f)
-        val sz = sz - thickness * 0.5f
+        val thickness = glm.max(sz_ / 5f, 1f)
+        val sz = sz_ - thickness * 0.5f
         pos += thickness * 0.25f
 
         val third = sz / 3f
@@ -1119,9 +1121,9 @@ interface imgui_internal {
     }
 
     /** FIXME: Cleanup and move code to ImDrawList. */
-    fun renderRectFilledRangeH(drawList: DrawList, rect: Rect, col: Int, xStartNorm: Float, xEndNorm: Float, rounding: Float) {
-        var xStartNorm = xStartNorm
-        var xEndNorm = xEndNorm
+    fun renderRectFilledRangeH(drawList: DrawList, rect: Rect, col: Int, xStartNorm_: Float, xEndNorm_: Float, rounding_: Float) {
+        var xStartNorm = xStartNorm_
+        var xEndNorm = xEndNorm_
         if (xEndNorm == xStartNorm) return
         if (xStartNorm > xEndNorm) {
             val tmp = xStartNorm
@@ -1130,11 +1132,11 @@ interface imgui_internal {
         }
         val p0 = Vec2(lerp(rect.min.x, rect.max.x, xStartNorm), rect.min.y)
         val p1 = Vec2(lerp(rect.min.x, rect.max.x, xEndNorm), rect.max.y)
-        if (rounding == 0f) {
+        if (rounding_ == 0f) {
             drawList.addRectFilled(p0, p1, col, 0f)
             return
         }
-        val rounding = glm.clamp(glm.min((rect.max.x - rect.min.x) * 0.5f, (rect.max.y - rect.min.y) * 0.5f) - 1f, 0f, rounding)
+        val rounding = glm.clamp(glm.min((rect.max.x - rect.min.x) * 0.5f, (rect.max.y - rect.min.y) * 0.5f) - 1f, 0f, rounding_)
         val invRounding = 1f / rounding
         val arc0B = acos01(1f - (p0.x - rect.min.x) * invRounding)
         val arc0E = acos01(1f - (p1.x - rect.min.x) * invRounding)
@@ -1168,8 +1170,8 @@ interface imgui_internal {
     }
 
     /** Find the optional ## from which we stop displaying text.    */
-    fun findRenderedTextEnd(text: String, textEnd: Int = text.length): Int {
-        val textEnd = if (textEnd == 0) text.length else textEnd
+    fun findRenderedTextEnd(text: String, textEnd_: Int = text.length): Int {
+        val textEnd = if (textEnd_ == 0) text.length else textEnd_
         var textDisplayEnd = 0
         while (textDisplayEnd < textEnd && (text[textDisplayEnd + 0] != '#' || text[textDisplayEnd + 1] != '#'))
             textDisplayEnd++
@@ -1180,10 +1182,10 @@ interface imgui_internal {
     fun buttonBehavior(bb: Rect, id: ID, flag: Bf) = buttonBehavior(bb, id, flag.i)
 
     /** @return []pressed, hovered, held] */
-    fun buttonBehavior(bb: Rect, id: ID, flags: ButtonFlags = 0): BooleanArray {
+    fun buttonBehavior(bb: Rect, id: ID, flags_: ButtonFlags = 0): BooleanArray {
 
         val window = currentWindow
-        var flags = flags
+        var flags = flags_
 
         if (flags has Bf.Disabled) {
             if (g.activeId == id) clearActiveId()
@@ -1307,7 +1309,7 @@ interface imgui_internal {
     }
 
 
-    fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags: Int = 0): Boolean {
+    fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags_: Int = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -1318,7 +1320,7 @@ interface imgui_internal {
         val pos = Vec2(window.dc.cursorPos)
         /*  Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky,
             since it shouldn't be a flag)         */
-        if (flags has Bf.AlignTextBaseLine && style.framePadding.y < window.dc.currentLineTextBaseOffset)
+        if (flags_ has Bf.AlignTextBaseLine && style.framePadding.y < window.dc.currentLineTextBaseOffset)
             pos.y += window.dc.currentLineTextBaseOffset - style.framePadding.y
         val size = calcItemSize(sizeArg, labelSize.x + style.framePadding.x * 2f, labelSize.y + style.framePadding.y * 2f)
 
@@ -1326,7 +1328,7 @@ interface imgui_internal {
         itemSize(bb, style.framePadding.y)
         if (!itemAdd(bb, id)) return false
 
-        var flags = flags
+        var flags = flags_
         if (window.dc.itemFlags has If.ButtonRepeat) flags = flags or Bf.Repeat
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 
@@ -2454,7 +2456,7 @@ interface imgui_internal {
                 // FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above incorrect.
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
                 if (isEditable)
-                    editState.tempTextBuffer = CharArray(editState.text.size * 4, { editState.text.getOrElse(it, { NUL }) })
+                    editState.tempTextBuffer = CharArray(editState.text.size * 4) { editState.text.getOrElse(it) { NUL } }
 
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
@@ -2524,7 +2526,7 @@ interface imgui_internal {
                 }
                 // Copy back to user buffer
                 if (isEditable && !Arrays.equals(editState.tempTextBuffer, buf)) {
-                    for (i in 0 until buf.size) buf[i] = editState.tempTextBuffer[i]
+                    for (i in buf.indices) buf[i] = editState.tempTextBuffer[i]
                     valueChanged = true
                 }
             }
@@ -2660,7 +2662,7 @@ interface imgui_internal {
                             inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
                         }
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_ssaaaaaaaa(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_ssaaaaaaaaaaaa(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)
@@ -2719,7 +2721,7 @@ interface imgui_internal {
     /** Create text input in place of a slider (when CTRL+Clicking on slider)
      *  FIXME: Logic is messy and confusing. */
     fun inputScalarAsWidgetReplacement(bb: Rect, id: ID, label: String, dataType: DataType, data: KMutableProperty0<*>,
-                                       format: String): Boolean {
+                                       format_: String): Boolean {
 
         val window = currentWindow
 
@@ -2731,7 +2733,7 @@ interface imgui_internal {
         focusableItemUnregister(window)
 
         val fmtBuf = CharArray(32)
-        val format = parseFormatTrimDecorations(format, fmtBuf)
+        val format = parseFormatTrimDecorations(format_, fmtBuf)
         var dataBuf = data.format(dataType, format)
         dataBuf = trimBlanks(dataBuf)
         val flags = Itf.AutoSelectAll or when (dataType) {
@@ -2996,13 +2998,13 @@ interface imgui_internal {
 
 
     fun plotEx(plotType: PlotType, label: String, data: imgui_widgetsMain.PlotArray, valuesOffset: Int, overlayText: String,
-               scaleMin: Float, scaleMax: Float, graphSize: Vec2) {
+               scaleMin_: Float, scaleMax_: Float, graphSize: Vec2) {
 
         val window = currentWindow
         if (window.skipItems) return
 
-        var scaleMin = scaleMin
-        var scaleMax = scaleMax
+        var scaleMin = scaleMin_
+        var scaleMax = scaleMax_
         val valuesCount = data.count()
 
         val labelSize = calcTextSize(label, 0, true)
@@ -3170,8 +3172,8 @@ interface imgui_internal {
         return i
     }
 
-    fun parseFormatFindEnd(fmt: String, i: Int = 0): Int {
-        var i = i
+    fun parseFormatFindEnd(fmt: String, i_: Int = 0): Int {
+        var i = i_
         // Printf/scanf types modifiers: I/L/h/j/l/t/w/z. Other uppercase letters qualify as types aka end of the format.
         if (fmt[i] != '%')
             return i
@@ -3198,7 +3200,7 @@ interface imgui_internal {
         if (fmt[fmtStart] != '%')
             return fmt
         val fmtEnd = parseFormatFindEnd(fmt.substring(fmtStart))
-        if (fmt[fmtEnd] == NUL) // If we only have leading decoration, we don't need to copy the data.
+        if (fmtStart + fmtEnd >= fmt.length) // If we only have leading decoration, we don't need to copy the data.
             return fmt.substring(fmtStart)
         return String(buf, fmtStart, min((fmtEnd + 1 - fmtStart), buf.size))
     }

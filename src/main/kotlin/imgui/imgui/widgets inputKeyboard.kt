@@ -15,8 +15,6 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.frameHeight
-import imgui.ImGui.inputFloatN
-import imgui.ImGui.inputIntN
 import imgui.ImGui.inputTextEx
 import imgui.ImGui.io
 import imgui.ImGui.popId
@@ -142,25 +140,26 @@ interface imgui_widgetsInputKeyboard {
 
     /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
      *  functions "format" argument)    */
+    @Suppress("UNCHECKED_CAST")
     fun inputScalar(label: String, dataType: DataType, data: KMutableProperty0<*>, step: Number?, stepFast: Number?,
-                    format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
+                    format_: String? = null, extraFlags_: InputTextFlags = 0): Boolean {
 
         data as KMutableProperty0<Number>
         val window = currentWindow
         if (window.skipItems) return false
 
-        val format = when (format) {
+        val format = when (format_) {
             null -> when (dataType) {
                 DataType.Float, DataType.Double -> "%f"
                 else -> "%d"
             }
-            else -> format
+            else -> format_
         }
 
         val buf = data.format(dataType, format)
 
         var valueChanged = false
-        var extraFlags = extraFlags
+        var extraFlags = extraFlags_
         if (extraFlags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
             extraFlags = extraFlags or Itf.CharsDecimal
         extraFlags = extraFlags or Itf.AutoSelectAll

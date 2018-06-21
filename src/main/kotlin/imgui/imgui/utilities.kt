@@ -247,7 +247,7 @@ interface imgui_utilities {
         return rgb.apply { set(0, f0); set(1, f1); set(2, f2) }
     }
 
-    fun colorConvertHSVtoRGB(h: Float, s: Float, v: Float, r: KMutableProperty0<Float>, g: KMutableProperty0<Float>,
+    fun colorConvertHSVtoRGB(h_: Float, s: Float, v: Float, r: KMutableProperty0<Float>, g: KMutableProperty0<Float>,
                              b: KMutableProperty0<Float>) {
 
         if (s == 0f) {
@@ -257,7 +257,7 @@ interface imgui_utilities {
             b.set(v)
         }
 
-        val h = glm.mod(h, 1f) / (60f / 360f)
+        val h = glm.mod(h_, 1f) / (60f / 360f)
         val i = h.i
         val f = h - i.f
         val p = v * (1f - s)

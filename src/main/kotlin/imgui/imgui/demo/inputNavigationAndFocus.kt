@@ -137,7 +137,7 @@ object inputNavigationAndFocus {
                 text("NavInputs down:")
                 io.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
                 text("NavInputs pressed:")
-                io.navInputsDownDuration.filter { it == 0f }.forEachIndexed { i, it -> sameLine(); text("[$i]") }
+                io.navInputsDownDuration.filter { it == 0f }.forEachIndexed { i, _ -> sameLine(); text("[$i]") }
                 text("NavInputs duration:")
                 io.navInputsDownDuration.filter { it >= 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
 

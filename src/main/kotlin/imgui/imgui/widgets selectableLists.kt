@@ -53,7 +53,7 @@ interface imgui_widgetsSelectableLists {
      *  size.x > 0f -> specify width
      *  size.y == 0f -> use label height
      *  size.y > 0f -> specify height   */
-    fun selectable(label: String, selected: Boolean = false, flags: SelectableFlags = 0, sizeArg: Vec2 = Vec2()): Boolean {
+    fun selectable(label: String, selected_: Boolean = false, flags: SelectableFlags = 0, sizeArg: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -101,9 +101,7 @@ interface imgui_widgetsSelectableLists {
         if (flags has Sf.Disabled) buttonFlags = buttonFlags or Bf.Disabled
         if (flags has Sf.AllowDoubleClick) buttonFlags = buttonFlags or Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
         val (pressed, hovered, held) = buttonBehavior(bbWithSpacing, id, buttonFlags)
-        var selected = selected
-        if (flags has Sf.Disabled)
-            selected = false
+        val selected = if (flags has Sf.Disabled) false else selected_
 
         /*  Hovering selectable with mouse updates navId accordingly so navigation can be resumed with gamepad/keyboard
             (this doesn't happen on most widgets)         */
@@ -216,14 +214,14 @@ interface imgui_widgetsSelectableLists {
 
     /** use if you want to reimplement ListBox() will custom data or interactions. make sure to call ListBoxFooter()
      *  afterwards. */
-    fun listBoxHeader(label: String, itemsCount: Int, heightInItems: Int = -1): Boolean {
+    fun listBoxHeader(label: String, itemsCount: Int, heightInItems_: Int = -1): Boolean {
         /*  Size default to hold ~7 items. Fractional number of items helps seeing that we can scroll down/up without
             looking at scrollbar.
             We don't add +0.40f if items_count <= height_in_items. It is slightly dodgy, because it means a
             dynamic list of items will make the widget resize occasionally when it crosses that size.
             I am expecting that someone will come and complain about this behavior in a remote future, then we can
             advise on a better solution.    */
-        val heightInItems = if (heightInItems < 0) glm.min(itemsCount, 7) else heightInItems
+        val heightInItems = if (heightInItems_ < 0) glm.min(itemsCount, 7) else heightInItems_
         val heightInItemsF = heightInItems + if (heightInItems < itemsCount) 0.4f else 0f
         /*  We include ItemSpacing.y so that a list sized for the exact number of items doesn't make a scrollbar
             appears. We could also enforce that by passing a flag to BeginChild().         */

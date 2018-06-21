@@ -320,7 +320,7 @@ interface imgui_widgetsMain {
         plotEx(PlotType.Histogram, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
     }
 
-    fun progressBar(fraction: Float, sizeArg: Vec2 = Vec2(-1f, 0f), overlay: String = "") {
+    fun progressBar(fraction_: Float, sizeArg: Vec2 = Vec2(-1f, 0f), overlay_: String = "") {
         val window = currentWindow
         if (window.skipItems) return
 
@@ -329,13 +329,13 @@ interface imgui_widgetsMain {
         itemSize(bb, style.framePadding.y)
         if (!itemAdd(bb, 0)) return
         // Render
-        val fraction = saturate(fraction)
+        val fraction = saturate(fraction_)
         renderFrame(bb.min, bb.max, Col.FrameBg.u32, true, style.frameRounding)
         bb expand Vec2(-style.frameBorderSize)
         val fillBr = Vec2(lerp(bb.min.x, bb.max.x, fraction), bb.max.y)
         renderRectFilledRangeH(window.drawList, bb, Col.PlotHistogram.u32, 0f, fraction, style.frameRounding)
         // Default displaying the fraction as percentage string, but user can override it
-        val overlay = if (overlay.isEmpty()) "%.0f%%".format(style.locale, fraction * 100 + 0.01f) else overlay
+        val overlay = if (overlay_.isEmpty()) "%.0f%%".format(style.locale, fraction * 100 + 0.01f) else overlay_
 
         val overlaySize = calcTextSize(overlay, 0)
         if (overlaySize.x > 0f) {

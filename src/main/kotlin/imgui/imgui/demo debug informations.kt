@@ -6,7 +6,7 @@ import glm_.toHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui._begin
+import imgui.ImGui.begin_
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
@@ -92,7 +92,7 @@ interface imgui_demoDebugInformations {
      *  basic internal state, etc.    */
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
-        if (_begin("ImGui Metrics", open)) {
+        if (begin_("ImGui Metrics", open)) {
             text("Dear ImGui $version")
             text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
             text("%d vertices, %d indices (%d triangles)", io.metricsRenderVertices, io.metricsRenderIndices, io.metricsRenderIndices / 3)

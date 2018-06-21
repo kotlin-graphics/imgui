@@ -101,23 +101,23 @@ interface imgui_widgetsColorEditorPicker {
         }
     }
 
-    fun colorEdit4(label: String, col: FloatArray, flags: ColorEditFlags = 0): Boolean {
+    fun colorEdit4(label: String, col: FloatArray, flags_: ColorEditFlags = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
         val squareSz = frameHeight
-        val wExtra = if (flags has Cef.NoSmallPreview) 0f else squareSz + style.itemInnerSpacing.x
+        val wExtra = if (flags_ has Cef.NoSmallPreview) 0f else squareSz + style.itemInnerSpacing.x
         val wItemsAll = calcItemWidth() - wExtra
         val labelDisplayEnd = findRenderedTextEnd(label)
 
         beginGroup()
         pushId(label)
 
-        var flags = flags
+        var flags = flags_
 
         // If we're not showing any slider there's no point in doing any HSV conversions
-        val flagsUntouched = flags;
+        val flagsUntouched = flags
         if (flags has Cef.NoInputs) flags = (flags wo Cef._InputsMask) or Cef.RGB or Cef.NoOptions
 
         // Context menu: display and modify options (before defaults are applied)
@@ -298,7 +298,7 @@ interface imgui_widgetsColorEditorPicker {
         return res
     }
 
-    fun colorPicker4(label: String, col: FloatArray, flags: ColorEditFlags = 0, refCol: FloatArray? = null): Boolean {
+    fun colorPicker4(label: String, col: FloatArray, flags_: ColorEditFlags = 0, refCol: FloatArray? = null): Boolean {
 
         val window = currentWindow
         val drawList = window.drawList
@@ -306,7 +306,7 @@ interface imgui_widgetsColorEditorPicker {
         pushId(label)
         beginGroup()
 
-        var flags = flags
+        var flags = flags_
         if (flags hasnt Cef.NoSidePreview)
             flags = flags or Cef.NoSmallPreview
 
@@ -577,7 +577,7 @@ interface imgui_widgetsColorEditorPicker {
     /**  A little colored square. Return true when clicked.
      *  FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip.
      *  'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.    */
-    fun colorButton(descId: String, col: Vec4, flags: ColorEditFlags = 0, size: Vec2 = Vec2()): Boolean {
+    fun colorButton(descId: String, col: Vec4, flags_: ColorEditFlags = 0, size: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -594,7 +594,7 @@ interface imgui_widgetsColorEditorPicker {
 
         var (pressed, hovered, held) = buttonBehavior(bb, id)
 
-        var flags = flags
+        var flags = flags_
         if (flags has Cef.NoAlpha)
             flags = flags and (Cef.AlphaPreview or Cef.AlphaPreviewHalf).inv()
 
@@ -652,8 +652,8 @@ interface imgui_widgetsColorEditorPicker {
 
     /** initialize current options (generally on application startup) if you want to select a default format, picker
      *  type, etc. User will be able to change many settings, unless you pass the _NoOptions flag to your calls.    */
-    fun setColorEditOptions(flags: ColorEditFlags) {
-        var flags = flags
+    fun setColorEditOptions(flags_: ColorEditFlags) {
+        var flags = flags_
         if (flags hasnt Cef._InputsMask)
             flags = flags or (Cef._OptionsDefault and Cef._InputsMask)
         if (flags hasnt Cef._DataTypeMask)

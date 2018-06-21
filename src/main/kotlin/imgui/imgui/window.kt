@@ -75,7 +75,7 @@ interface imgui_window {
             regardless. You always need to call ImGui::End() even if false is returned.
         - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
             be set to false when the button is pressed. */
-    fun _begin(name: String, pOpen: KMutableProperty0<Boolean>?, flags: Int = 0) =
+    fun begin_(name: String, pOpen: KMutableProperty0<Boolean>?, flags: Int = 0) =
             if (pOpen != null) {
                 val bool = booleanArrayOf(pOpen())
                 val res = begin(name, bool, flags)
@@ -84,13 +84,13 @@ interface imgui_window {
             } else
                 begin(name, null, flags)
 
-    fun begin(name: String, pOpen: BooleanArray? = null, flags: WindowFlags = 0): Boolean {
+    fun begin(name: String, pOpen: BooleanArray? = null, flags_: WindowFlags = 0): Boolean {
 
         assert(name.isNotEmpty()) { "Window name required" }
         assert(g.initialized) { "Forgot to call ImGui::NewFrame()" }
         assert(g.frameCountEnded != g.frameCount) { "Called ImGui::Render() or ImGui::EndFrame() and haven't called ImGui::NewFrame() again yet" }
 
-        var flags = flags
+        var flags = flags_
 
         // Find or create
         var windowJustCreated = false
