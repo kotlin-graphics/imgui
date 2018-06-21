@@ -740,17 +740,18 @@ class Window(var context: Context, var name: String) {
             return
 //        JVM, useless
 //        assert(cond == Cond.Null || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
-        setWindowPosAllowFlags = setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
+        setWindowPosAllowFlags = setWindowPosAllowFlags wo (Cond.Once or Cond.FirstUseEver or Cond.Appearing)
         setWindowPosVal put Float.MAX_VALUE
         setWindowPosPivot put Float.MAX_VALUE
 
         // Set
-        val oldPos = Vec2(pos)
+        val oldPos = Vec2(this.pos)
         this.pos put glm.floor(pos)
         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least
         // offset the cursor
-        dc.cursorPos plusAssign pos - oldPos
-        dc.cursorMaxPos plus (pos - oldPos) // And more importantly we need to adjust this so size calculation doesn't get affected.
+        val offset = pos - oldPos
+        dc.cursorPos plusAssign offset
+        dc.cursorMaxPos plusAssign offset // And more importantly we need to adjust this so size calculation doesn't get affected.
     }
 
     fun setSize(size: Vec2, cond: Cond) {
@@ -938,8 +939,8 @@ class Window(var context: Context, var name: String) {
     }
 
     fun calcSizeContents() = Vec2(
-            (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f,
-            (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f) + windowPadding
+            (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f + windowPadding.x,
+            (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f + windowPadding.y)
 
     fun findOrAddColumnsSet(id: ID): ColumnsSet {
         for (c in columnsStorage)

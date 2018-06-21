@@ -342,7 +342,8 @@ interface imgui_window {
 
             val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFrames == 0
             if (windowPosWithPivot)
-                window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.Null) // Position given a pivot (e.g. for centering)
+            // Position given a pivot (e.g. for centering)
+                window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.Null)
             else if (flags has Wf.ChildMenu)
                 window.pos = findBestWindowPosForPopup(window)
             else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize)
@@ -352,7 +353,7 @@ interface imgui_window {
 
             // Clamp position so it stays visible
             if (flags hasnt Wf.ChildWindow)
-            /*  Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized
+                /*  Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized
             window when initializing or minimizing. */
                 if (!windowPosSetByApi && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 && io.displaySize greaterThan 0) {
                     val padding = glm.max(style.displayWindowPadding, style.displaySafeAreaPadding)
@@ -516,7 +517,7 @@ interface imgui_window {
 
             with(window) {
 
-                /*  Update ContentsRegionMax. All the variable it depends on are set above in this function.
+                /*  Update ContentsRegionMax. Variables they depends on are set above in this function.
                     FIXME: window->ContentsRegion.Max is currently very misleading / partly faulty,
                     but some BeginChild() patterns relies on it.                 */
                 contentsRegionRect.let {

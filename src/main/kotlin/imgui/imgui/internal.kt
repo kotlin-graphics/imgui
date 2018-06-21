@@ -164,14 +164,14 @@ interface imgui_internal {
         // Always align ourselves on pixel boundaries
         val lineHeight = glm.max(window.dc.currentLineHeight, size.y)
         val textBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, textOffsetY)
-        //if (g.io.KeyAlt) window->DrawList->AddRect(window->DC.CursorPos, window->DC.CursorPos + ImVec2(size.x, line_height), IM_COL32(255,0,0,200)); // [DEBUG]
+        //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
         window.dc.cursorPosPrevLine.put(window.dc.cursorPos.x + size.x, window.dc.cursorPos.y)
         window.dc.cursorPos.x = (window.pos.x + window.dc.indentX + window.dc.columnsOffsetX).i.f
         window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + style.itemSpacing.y).i.f
         window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
         window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y - style.itemSpacing.y)
 
-        //if (g.io.KeyAlt) window->DrawList->AddCircle(window->DC.CursorMaxPos, 3.0f, IM_COL32(255,0,0,255), 4); // [DEBUG]
+        //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]
 
         window.dc.prevLineHeight = lineHeight
         window.dc.prevLineTextBaseOffset = textBaseOffset
@@ -436,12 +436,10 @@ interface imgui_internal {
             return false
         }
 
-        val name =
-                if (extraFlags has Wf.ChildMenu)
-                    "##Menu_%02d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
-                else
-                    "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
-
+        val name = when {
+            extraFlags has Wf.ChildMenu -> "##Menu_%02d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
+            else -> "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
+        }
         val isOpen = begin(name, null, extraFlags or Wf.Popup)
         if (!isOpen) // NB: Begin can return false when the popup is completely clipped (e.g. zero size display)
             endPopup()
