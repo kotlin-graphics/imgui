@@ -476,7 +476,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
         }
         if (c == '\r') continue
         // renaming ::getCharAdvance continuously every build because of bug, https://youtrack.jetbrains.com/issue/KT-19612
-        val charWidth: Float = font.getCharAdvance_ssaaaaaaaaaaaa(c) * scale
+        val charWidth: Float = font.getCharAdvance_ssaaaaaaaaaaaaa(c) * scale
         lineWidth += charWidth
     }
 
