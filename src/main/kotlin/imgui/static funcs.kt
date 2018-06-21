@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package imgui
 
 import gli_.has
@@ -29,6 +31,7 @@ import kotlin.reflect.KMutableProperty0
 import imgui.ConfigFlag as Cf
 import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
+
 
 
 fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = 0): Nothing = TODO()
@@ -473,7 +476,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
         }
         if (c == '\r') continue
         // renaming ::getCharAdvance continuously every build because of bug, https://youtrack.jetbrains.com/issue/KT-19612
-        val charWidth: Float = font.getCharAdvance_ssaaaaaaaa(c) * scale
+        val charWidth: Float = font.getCharAdvance_ssaaaaaaaaaaaa(c) * scale
         lineWidth += charWidth
     }
 
@@ -588,68 +591,53 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, dataPtr: KMutableProperty0<*>,
                             format: String? = null): Boolean {
 
-//    var s = 0
-//    while (buf[s].isSpace)
-//        s++
-//
-//    /*  We don't support '-' op because it would conflict with inputing negative value.
-//        Instead you can use +-100 to subtract from an existing value     */
-//    var op = buf[s]
-//    if (op == '+' || op == '*' || op == '/') {
-//        s++
-//        while (buf[s].isSpace)
-//            s++
-//    } else
-//        op = NUL
-//
-//    if (buf[s] == NUL)
-//        return false
-
     dataPtr as KMutableProperty0<Number>
 
     val seq = String(buf)
             .replace(Regex("\\s+"), "")
             .replace("$NUL", "")
             .split(Regex("-+\\*/"))
+
+    /*  We don't support '-' op because it would conflict with inputing negative value.
+        Instead you can use +-100 to subtract from an existing value     */
+    val op = seq.getOrNull(1)?.get(0)
+
     return when (buf[0]) {
         NUL -> false
         else -> when (dataType) {
             DataType.Int -> {
-                val format = format ?: "%d"
-                var v = dataPtr() as Int
-                val oldV = v
-                val a = try {
-                    seq[0].format(style.locale, format).i
+                val fmt = format ?: "%d"
+                val v = dataPtr as KMutableProperty0<Int>
+                val dataBackup = v()
+                val arg0i = try {
+                    seq[0].format(style.locale, fmt).i
                 } catch (_: Exception) {
                     return false
                 }
 
-                v = when (seq.size) {
-                    2 -> {   // TODO support more complex operations? i.e: a + b * c
-                        val op = seq[1][0]
-                        /*  Store operand b in a float so we can use fractional value for multipliers (*1.1), but constant
-                                always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision  */
-                        when (op) {
-                            '+' -> a + seq[2].i         // Add (use "+-" to subtract)
-                            '*' -> (a * seq[2].f).i     // Multiply
-                            '/' -> {                    // Divide
-                                val b = seq[2].f
-                                when (b) {
-                                    0f -> v
-                                    else -> (a / b).i
-                                }
-                            }
-                            else -> throw Error()
+                v.set(when (op) {
+                    '+' -> {    // Add (use "+-" to subtract)
+                        val arg1i = seq[2].format(style.locale, "%d").i
+                        (arg0i + arg1i).i
+                    }
+                    '*' -> {    // Multiply
+                        val arg1f = seq[2].format(style.locale, "%f").f
+                        (arg0i * arg1f).i
+                    }
+                    '/' -> {    // Divide
+                        val arg1f = seq[2].format(style.locale, "%f").f
+                        when (arg1f) {
+                            0f -> arg0i
+                            else -> (arg0i / arg1f).i
                         }
                     }
                     else -> try { // Assign constant
-                        seq[1].format(style.locale, format).i
+                        seq[1].format(style.locale, fmt).i
                     } catch (_: Exception) {
-                        v
+                        arg0i
                     }
-                }
-                dataPtr.set(v)
-                oldV != v
+                })
+                dataBackup != v()
             }
 
             DataType.Uint, DataType.Long, DataType.Ulong ->
@@ -661,65 +649,54 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 
             DataType.Float -> {
                 // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
-                val format = format ?: "%f"
-                var v = dataPtr() as Float
-                val oldV = v
-                val a = try {
-                    seq[0].format(style.locale, format).f
+                val fmt = format ?: "%f"
+                val v = dataPtr as KMutableProperty0<Float>
+                val dataBackup = v()
+                val arg0f = try {
+                    seq[0].format(style.locale, fmt).f
                 } catch (_: Exception) {
                     return false
                 }
-                val b = try {
-                    seq[2].f
+                val arg1f = try {
+                    seq[2].format(style.locale, fmt).f
                 } catch (_: Exception) {
                     return false
                 }
-
-                v = when (seq.size) {
-                    2 -> {   // TODO support more complex operations? i.e: a + b * c
-                        val op = seq[1][0]
-                        when (op) {
-                            '+' -> a + b                        // Add (use "+-" to subtract)
-                            '*' -> a * b                        // Multiply
-                            '/' -> if (b != 0f) a / b else v    // Divide
-                            else -> throw Error()
+                v.set(when (op) {
+                    '+' -> arg0f + arg1f    // Add (use "+-" to subtract)
+                    '*' -> arg0f * arg1f    // Multiply
+                    '/' -> when (arg1f) {   // Divide
+                            0f -> arg0f
+                            else -> arg0f / arg1f
                         }
-                    }
-                    else -> b   // Assign constant
-                }
-                dataPtr.set(v)
-                oldV != v
+                    else -> arg1f           // Assign constant
+                })
+                dataBackup != v()
             }
             DataType.Double -> {
-                // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
-//                val scalarFormat = scalarFormat ?: "%f"
-                var v = dataPtr() as Double
-                val oldV = v
-                val a = try {
-                    seq[0].format(style.locale, format).d
+                val fmt = format ?: "%f"
+                val v = dataPtr as KMutableProperty0<Double>
+                val dataBackup = v()
+                val arg0f = try {
+                    seq[0].format(style.locale, fmt).d
                 } catch (_: Exception) {
                     return false
                 }
-                val b = try {
-                    seq[2].d
+                val arg1f = try {
+                    seq[2].format(style.locale, fmt).d
                 } catch (_: Exception) {
                     return false
                 }
-
-                v = when (seq.size) {
-                    2 -> {   // TODO support more complex operations? i.e: a + b * c
-                        val op = seq[1][0]
-                        when (op) {
-                            '+' -> a + b                        // Add (use "+-" to subtract)
-                            '*' -> a * b                        // Multiply
-                            '/' -> if (b != 0.0) a / b else v   // Divide
-                            else -> throw Error()
-                        }
+                v.set(when (op) {
+                    '+' -> arg0f + arg1f    // Add (use "+-" to subtract)
+                    '*' -> arg0f * arg1f    // Multiply
+                    '/' -> when (arg1f) {   // Divide
+                        0.0 -> arg0f
+                        else -> arg0f / arg1f
                     }
-                    else -> b   // Assign constant
-                }
-                dataPtr.set(v)
-                oldV != v
+                    else -> arg1f           // Assign constant
+                })
+                dataBackup != v()
             }
             else -> false
         }

@@ -7,7 +7,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui._begin
+import imgui.ImGui.begin_
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
@@ -133,9 +133,9 @@ object ExampleApp {
 
     var filter = TextFilter()
 
-    operator fun invoke(open: KMutableProperty0<Boolean>?) {
+    operator fun invoke(open_: KMutableProperty0<Boolean>?) {
 
-        var open = open
+        var open = open_
 
         if (show.mainMenuBar) MainMenuBar()
         if (show.console) Console(show::console)
@@ -173,7 +173,7 @@ object ExampleApp {
         if (noClose) open = null // Don't pass our bool* to Begin
         if (noNav) windowFlags = windowFlags or Wf.NoNav
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
-        if (!_begin("ImGui Demo", open, windowFlags)) {
+        if (!begin_("ImGui Demo", open, windowFlags)) {
             end()   // Early out if the window is collapsed, as an optimization.
             return
         }
@@ -343,7 +343,7 @@ object Console {
         fun draw(title: String, open: KMutableProperty0<Boolean>) {
 
             setNextWindowSize(Vec2(520, 600), Cond.FirstUseEver)
-            if (!_begin(title, open)) {
+            if (!begin_(title, open)) {
                 end()
                 return
             }
@@ -623,7 +623,7 @@ object Log {
         fun draw(title: String, open: KMutableProperty0<Boolean>? = null) {
 
             setNextWindowSize(Vec2(500, 400), Cond.FirstUseEver)
-            _begin(title, open)
+            begin_(title, open)
             if (button("Clear")) clear()
             sameLine()
             val copy = button("Copy")
@@ -666,7 +666,7 @@ object Layout {
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         setNextWindowSize(Vec2(500, 440), Cond.FirstUseEver)
-        if (_begin("Example: Layout", open, Wf.MenuBar.i)) {
+        if (begin_("Example: Layout", open, Wf.MenuBar.i)) {
             menuBar {
                 menu("File") {
                     if (menuItem("Close")) open.set(false)
@@ -705,7 +705,7 @@ object PropertyEditor {
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         setNextWindowSize(Vec2(430, 450), Cond.FirstUseEver)
-        if (!_begin("Example: Property editor", open)) {
+        if (!begin_("Example: Property editor", open)) {
             end()
             return
         }
@@ -777,7 +777,7 @@ object LongText {
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         setNextWindowSize(Vec2(520, 600), Cond.FirstUseEver)
-        if (!_begin("Example: Long text display, TODO", open)) {
+        if (!begin_("Example: Long text display, TODO", open)) {
             end()
             return
         }
@@ -834,7 +834,7 @@ object AutoResize {
     /** Demonstrate creating a window which gets auto-resized according to its content. */
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
-        if (!_begin("Example: Auto-resizing window", open, Wf.AlwaysAutoResize.i)) {
+        if (!begin_("Example: Auto-resizing window", open, Wf.AlwaysAutoResize.i)) {
             end()
             return
         }
@@ -963,7 +963,7 @@ object CustomRendering {
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         setNextWindowSize(Vec2(350, 560), Cond.FirstUseEver)
-        if (!_begin("Example: Custom rendering", open)) {
+        if (!begin_("Example: Custom rendering", open)) {
             end()
             return
         }
@@ -1088,15 +1088,15 @@ object StyleEditor {
     val filter = TextFilter()
     var windowScale = 1f
 
-    operator fun invoke(ref: Style? = null) {
+    operator fun invoke(ref_: Style? = null) {
 
         /*  You can pass in a reference ImGuiStyle structure to compare to, revert to and save to
             (else it compares to the default style)         */
 
         // Default to using internal storage as reference
-        if (init && ref == null) refSavedStyle = Style(style)
+        if (init && ref_ == null) refSavedStyle = Style(style)
         init = false
-        var ref = ref ?: refSavedStyle
+        var ref = ref_ ?: refSavedStyle
 
         pushItemWidth(windowWidth * 0.55f)
         if (showStyleSelector("Colors##Selector"))

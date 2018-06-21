@@ -203,8 +203,9 @@ interface imgui_widgetsDrag {
         dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power)
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun dragScalar(label: String, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number? = null, vMax: Number? = null,
-                   format: String? = null, power: Float = 1f): Boolean {
+                   format_: String? = null, power: Float = 1f): Boolean {
 
         v as KMutableProperty0<Number>
         val window = currentWindow
@@ -232,12 +233,12 @@ interface imgui_widgetsDrag {
         // Default format string when passing NULL
         // Patch old "%.0f" format string to use "%d", read function comments for more details.
         val format = when {
-            format == null -> when (dataType) {
+            format_ == null -> when (dataType) {
                 DataType.Float, DataType.Double -> "%f"
                 else -> "%d"
             }
-            dataType == DataType.Int && format != "%d" -> patchFormatStringFloatToInt(format)
-            else -> format
+            dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
+            else -> format_
         }
 
         // Tabbing or CTRL-clicking on Drag turns it into an input box

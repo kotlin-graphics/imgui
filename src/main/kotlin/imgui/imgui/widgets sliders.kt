@@ -80,7 +80,7 @@ interface imgui_widgetsSliders {
      *  "Gold: %.0f"   Gold: 1
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
-    fun sliderScalar(label: String, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number, format: String? = null,
+    fun sliderScalar(label: String, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number, format_: String? = null,
                      power: Float = 1f): Boolean {
 
         val window = currentWindow
@@ -102,12 +102,12 @@ interface imgui_widgetsSliders {
         // Default format string when passing NULL
         // Patch old "%.0f" format string to use "%d", read function comments for more details.
         val format = when {
-            format == null -> when (dataType) {
+            format_ == null -> when (dataType) {
                 DataType.Float, DataType.Double -> "%f"
                 else -> "%d"
             }
-            dataType == DataType.Int && format != "%d" -> patchFormatStringFloatToInt(format)
-            else -> format
+            dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
+            else -> format_
         }
         // Tabbing or CTRL-clicking on Slider turns it into an input box
         var startTextInput = false
@@ -220,7 +220,7 @@ interface imgui_widgetsSliders {
     }
 
     fun vSliderScalar(label: String, size: Vec2, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number,
-                      format: String? = null, power: Float = 1f): Boolean {
+                      format_: String? = null, power: Float = 1f): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -237,12 +237,12 @@ interface imgui_widgetsSliders {
         // Default format string when passing NULL
         // Patch old "%.0f" format string to use "%d", read function comments for more details.
         val format = when {
-            format == null -> when (dataType) {
+            format_ == null -> when (dataType) {
                 DataType.Float, DataType.Double -> "%f"
                 else -> "%d"
             }
-            dataType == DataType.Int && format != "%d" -> patchFormatStringFloatToInt(format)
-            else -> format
+            dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
+            else -> format_
         }
         val hovered = itemHoverable(frameBb, id)
         if ((hovered && io.mouseClicked[0]) || g.navActivateId == id || g.navInputId == id) {

@@ -11,7 +11,6 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.endPopup
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.frameHeight
-import imgui.ImGui.indent
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
@@ -30,7 +29,6 @@ import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
-import imgui.ImGui.unindent
 import imgui.internal.DrawCornerFlag
 import imgui.internal.Rect
 import imgui.internal.isPowerOfTwo
@@ -41,9 +39,9 @@ import imgui.internal.ButtonFlag as Bf
 
 interface imgui_widgetsComboBox {
 
-    fun beginCombo(label: String, previewValue: String?, flags: ComboFlags = 0): Boolean {
+    fun beginCombo(label: String, previewValue: String?, flags_: ComboFlags = 0): Boolean {
 
-        var flags = flags
+        var flags = flags_
 
         // Always consume the SetNextWindowSizeConstraint() call in our early return paths
         val backupNextWindowSizeConstraint = g.nextWindowData.sizeConstraintCond

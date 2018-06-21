@@ -30,7 +30,6 @@ import imgui.ImGui.renderBullet
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
-import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.style
@@ -128,12 +127,12 @@ interface imgui_widgetsText {
 
     fun text(fmt: String, vararg args: Any) = textV(fmt, args)
 
-    fun textV(fmt: String, args: Array<out Any>) {
+    fun textV(fmt_: String, args: Array<out Any>) {
 
         val window = currentWindow
         if (window.skipItems) return
 
-        val fmt = if (args.isEmpty()) fmt else fmt.format(style.locale, *args)
+        val fmt = if (args.isEmpty()) fmt_ else fmt_.format(style.locale, *args)
 
         val textEnd = fmt.length
         textUnformatted(fmt, textEnd)

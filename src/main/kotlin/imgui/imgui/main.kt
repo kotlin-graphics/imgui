@@ -33,6 +33,8 @@ import imgui.ConfigFlag as Cf
 import imgui.WindowFlag as Wf
 import imgui.internal.DrawListFlag as Dlf
 
+@Suppress("UNCHECKED_CAST")
+
 interface imgui_main {
 
     val io
@@ -469,9 +471,9 @@ interface imgui_main {
 
         /** Handle resize for: Resize Grips, Borders, Gamepad
          * @return borderHelf   */
-        fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld: Int, resizeGripCount: Int, resizeGripCol: IntArray): Int {
+        fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int, resizeGripCol: IntArray): Int {
 
-            var borderHeld = borderHeld
+            var borderHeld = borderHeld_
 
             val flags = window.flags
             if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0)
@@ -495,8 +497,8 @@ interface imgui_main {
                 if (resizeRect.min.x > resizeRect.max.x) swap(resizeRect.min::x, resizeRect.max::x)
                 if (resizeRect.min.y > resizeRect.max.y) swap(resizeRect.min::y, resizeRect.max::y)
 
-                val flags = ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus
-                val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), flags)
+                val f = ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus
+                val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), f)
                 if (hovered || held)
                     g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
 
@@ -601,13 +603,13 @@ interface imgui_main {
         // Template widget behaviors
         // This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
 
-        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Int, vMax: Int, format: String,
+        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed_: Float, vMin: Int, vMax: Int, format: String,
                           power: Float): Boolean {
 
             v as KMutableProperty0<Int>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Int.MAX_VALUE)
-            var vSpeed = vSpeed
+            var vSpeed = vSpeed_
             if (vSpeed == 0f && hasMinMax)
                 vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
 
@@ -690,13 +692,13 @@ interface imgui_main {
             return true
         }
 
-        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Long, vMax: Long, format: String,
+        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed_: Float, vMin: Long, vMax: Long, format: String,
                           power: Float): Boolean {
 
             v as KMutableProperty0<Long>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
-            var vSpeed = vSpeed
+            var vSpeed = vSpeed_
             if (vSpeed == 0f && hasMinMax)
                 vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
 
@@ -779,13 +781,13 @@ interface imgui_main {
             return true
         }
 
-        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Float, vMax: Float, format: String,
+        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed_: Float, vMin: Float, vMax: Float, format: String,
                           power: Float): Boolean {
 
             v as KMutableProperty0<Float>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
-            var vSpeed = vSpeed
+            var vSpeed = vSpeed_
             if (vSpeed == 0f && hasMinMax)
                 vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
 
@@ -868,13 +870,13 @@ interface imgui_main {
             return true
         }
 
-        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Double, vMax: Double, format: String,
+        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed_: Float, vMin: Double, vMax: Double, format: String,
                           power: Float): Boolean {
 
             v as KMutableProperty0<Double>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
-            var vSpeed = vSpeed
+            var vSpeed = vSpeed_
             if (vSpeed == 0f && hasMinMax)
                 vSpeed = (vMax - vMin).f * g.dragSpeedDefaultRatio
 

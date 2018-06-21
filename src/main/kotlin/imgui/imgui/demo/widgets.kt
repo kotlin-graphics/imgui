@@ -548,7 +548,7 @@ object widgets {
                 if (beginCombo("combo 1", items[0], flags0)) { // The second parameter is the label previewed before opening the combo.
                     items.forEachIndexed {i, it ->
                         val isSelected = currentItem3 == i
-                        if (selectable(items[i], isSelected))
+                        if (selectable(it, isSelected))
                             currentItem3 = i
                         if (isSelected)
                         // Set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
