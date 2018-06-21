@@ -476,7 +476,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
         }
         if (c == '\r') continue
         // renaming ::getCharAdvance continuously every build because of bug, https://youtrack.jetbrains.com/issue/KT-19612
-        val charWidth: Float = font.getCharAdvance_ssaaaaaaaaaaaaa(c) * scale
+        val charWidth: Float = font.getCharAdvance_ssaaaaaaaaaaaaaa(c) * scale
         lineWidth += charWidth
     }
 
@@ -508,7 +508,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
 //}
 
 /** DataTypeFormatString */
-fun KMutableProperty0<*>.format(dataType: DataType, format: String): CharArray {
+fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 0): CharArray {
     val value: Number = when (dataType) {
         DataType.Int, DataType.Uint -> this() as Int    // Signedness doesn't matter when pushing the argument
         DataType.Long, DataType.Ulong -> this() as Long // Signedness doesn't matter when pushing the argument
@@ -516,7 +516,11 @@ fun KMutableProperty0<*>.format(dataType: DataType, format: String): CharArray {
         DataType.Double -> this() as Double
         else -> throw Error()
     }
-    return format.format(style.locale, value).toCharArray()
+    val string = format.format(style.locale, value)
+    return when(size) {
+        0 -> string.toCharArray()
+        else -> string.toCharArray(CharArray(size))
+    }
 }
 
 /** JVM Imgui, dataTypeFormatString replacement TODO check if needed */

@@ -76,7 +76,7 @@ class TextEditState {
     fun getChar(idx: Int) = text[idx]
     fun getWidth(lineStartIdx: Int, charIdx: Int): Float {
         val c = text[lineStartIdx + charIdx]
-        return if (c == '\n') -1f else g.font.getCharAdvance_ssaaaaaaaaaaaaa(c) * (g.fontSize / g.font.fontSize)
+        return if (c == '\n') -1f else g.font.getCharAdvance_ssaaaaaaaaaaaaaa(c) * (g.fontSize / g.font.fontSize)
     }
 
     fun keyToText(key: Int) = if (key >= 0x10000) 0 else key
@@ -196,12 +196,12 @@ class TextEditState {
         val UNDOSTATECOUNT = 99
         val UNDOCHARCOUNT = 999
         fun memmove(dst: CharArray, pDst: Int, src: CharArray, pSrc: Int, len: Int) {
-            val tmp = CharArray(len, { src[pSrc + it] })
+            val tmp = CharArray(len) { src[pSrc + it] }
             for (i in 0 until len) dst[pDst + i] = tmp[i]
         }
 
         fun memmove(dst: Array<UndoRecord>, pDst: Int, src: Array<UndoRecord>, pSrc: Int, len: Int) {
-            val tmp = Array(len, { UndoRecord(src[pSrc + it]) })
+            val tmp = Array(len) { UndoRecord(src[pSrc + it]) }
             for (i in 0 until len) dst[pDst + i] = tmp[i]
         }
 
@@ -231,7 +231,7 @@ class TextEditState {
     }
 
     class UndoState {
-        val undoRec = Array(UNDOSTATECOUNT, { UndoRecord() })
+        val undoRec = Array(UNDOSTATECOUNT) { UndoRecord() }
         val undoChar = CharArray(UNDOCHARCOUNT)
         var undoPoint = 0
         var redoPoint = 0

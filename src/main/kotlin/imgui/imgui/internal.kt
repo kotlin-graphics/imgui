@@ -2298,7 +2298,7 @@ interface imgui_internal {
             if (editState.selectedAllMouseLock && !io.mouseDown[0])
                 editState.selectedAllMouseLock = false
 
-            if (io.inputCharacters[0].i != 0) {
+            if (io.inputCharacters[0] != NUL) {
                 /*  Process text input (before we check for Return because using some IME will effectively send a
                     Return?)
                     We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR
@@ -2662,7 +2662,7 @@ interface imgui_internal {
                             inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
                         }
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_ssaaaaaaaaaaaaa(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance_ssaaaaaaaaaaaaaa(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect.clipWith(clipRect_)
@@ -2734,7 +2734,7 @@ interface imgui_internal {
 
         val fmtBuf = CharArray(32)
         val format = parseFormatTrimDecorations(format_, fmtBuf)
-        var dataBuf = data.format(dataType, format)
+        var dataBuf = data.format(dataType, format, 32)
         dataBuf = trimBlanks(dataBuf)
         val flags = Itf.AutoSelectAll or when (dataType) {
             DataType.Float, DataType.Double -> Itf.CharsScientific
