@@ -126,7 +126,7 @@ interface imgui_inputs {
         return Vec2()
     }
 
-    fun resetMouseDragDelta(button: Int = 0) = io.mouseClickedPos.get(button).put(io.mousePos) // NB: We don't need to reset g.io.MouseDragMaxDistanceSqr
+//    fun resetMouseDragDelta(button: Int = 0) = io.mouseClickedPos[button].put(io.mousePos) // NB: We don't need to reset g.io.MouseDragMaxDistanceSqr
 
     var mouseCursor
         /** Get desired cursor type, reset in newFrame(), this is updated during the frame. valid before render().

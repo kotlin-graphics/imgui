@@ -453,7 +453,7 @@ interface imgui_main {
                             mouseClickedTime[i] = -Float.MAX_VALUE    // so the third click isn't turned into a double-click
                         } else
                             mouseClickedTime[i] = g.time
-                        mouseClickedPos[i] = mousePos
+                        mouseClickedPos[i] put mousePos
                         mouseDragMaxDistanceAbs[i] put 0f
                         mouseDragMaxDistanceSqr[i] = 0f
                     } else if (mouseDown[i]) {
@@ -801,7 +801,7 @@ interface imgui_main {
                     adjustDelta *= 10f
             }
             if (g.activeIdSource == InputSource.Nav) {
-                val decimalPrecision  = when (dataType) {
+                val decimalPrecision = when (dataType) {
                     DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
                     else -> 0
                 }
@@ -890,7 +890,7 @@ interface imgui_main {
                     adjustDelta *= 10f
             }
             if (g.activeIdSource == InputSource.Nav) {
-                val decimalPrecision  = when (dataType) {
+                val decimalPrecision = when (dataType) {
                     DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
                     else -> 0
                 }
