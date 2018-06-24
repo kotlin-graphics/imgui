@@ -110,9 +110,9 @@ fun hash(data: IntArray, seed: Int = 0): Int {
 
 /** Pass data_size==0 for zero-terminated strings
 FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
-fun hash(data: String, dataSize: Int, seed: Int = 0): Int {
+fun hash(data: String, dataSize: Int, seed_: Int = 0): Int {
 
-    val seed = seed.inv()
+    val seed = seed_.inv()
     var crc = seed
     var current = 0
 
