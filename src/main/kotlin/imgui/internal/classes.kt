@@ -585,7 +585,7 @@ class Window(var context: Context, var name: String) {
     val idStack = Stack<ID>()
 
     init {
-        idStack.add(id)
+        idStack += id
         moveId = getId("#MOVE")
         childId = 0
     }

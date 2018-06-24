@@ -902,10 +902,10 @@ class FontAtlas {
         texUvWhitePixel = (Vec2(r.x, r.y) + 0.5f) * texUvScale
     }
 
-    fun buildMultiplyCalcLookupTable(inBrightenFactor: Float) = CharArray(256, {
+    fun buildMultiplyCalcLookupTable(inBrightenFactor: Float) = CharArray(256) {
         val value = (it * inBrightenFactor).i
         (if (value > 255) 255 else (value and 0xFF)).c
-    })
+    }
 
     fun buildMultiplyRectAlpha8(table: CharArray, pixels: ByteBuffer, rect: STBRPRect, stride: Int) {
         var ptr = rect.x + rect.y * stride
