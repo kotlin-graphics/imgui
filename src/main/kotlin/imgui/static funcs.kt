@@ -33,7 +33,6 @@ import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
 
 
-
 fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = 0): Nothing = TODO()
 
 fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
@@ -476,7 +475,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
         }
         if (c == '\r') continue
         // renaming ::getCharAdvance continuously every build because of bug, https://youtrack.jetbrains.com/issue/KT-19612
-        val charWidth: Float = font.getCharAdvance_ssaaaaaaaaaaaaaa(c) * scale
+        val charWidth = font.getCharAdvance_ssaaaaaaaaaaaaaa(c) * scale
         lineWidth += charWidth
     }
 
@@ -517,7 +516,7 @@ fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 
         else -> throw Error()
     }
     val string = format.format(style.locale, value)
-    return when(size) {
+    return when (size) {
         0 -> string.toCharArray()
         else -> string.toCharArray(CharArray(size))
     }
@@ -670,9 +669,9 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                     '+' -> arg0f + arg1f    // Add (use "+-" to subtract)
                     '*' -> arg0f * arg1f    // Multiply
                     '/' -> when (arg1f) {   // Divide
-                            0f -> arg0f
-                            else -> arg0f / arg1f
-                        }
+                        0f -> arg0f
+                        else -> arg0f / arg1f
+                    }
                     else -> arg1f           // Assign constant
                 })
                 dataBackup != v()
