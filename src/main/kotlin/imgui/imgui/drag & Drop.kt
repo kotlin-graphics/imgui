@@ -1,21 +1,17 @@
 package imgui.imgui
 
-import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.beginTooltip
+import imgui.ImGui.beginDragDropTooltip
 import imgui.ImGui.clearDragDrop
+import imgui.ImGui.endDragDropTooltip
 import imgui.ImGui.endTooltip
-import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.popStyleColor
-import imgui.ImGui.pushStyleColor
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setHoveredId
-import imgui.ImGui.setNextWindowPos
-import imgui.ImGui.style
 import imgui.internal.*
 import imgui.DragDropFlag as Ddf
 
@@ -94,17 +90,15 @@ interface imgui_dragAndDrop {
             }
 
             if (flags hasnt Ddf.SourceNoPreviewTooltip) {
-                // FIXME-DRAG
-                //SetNextWindowPos(g.io.MousePos - g.ActiveIdClickOffset - g.Style.WindowPadding);
-                //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This is better but e.g ColorButton with checkboard has issue with transparent colors :(
-
-                /*  The default tooltip position is a little offset to give space to see the context menu
-                    (it's also clamped within the current viewport/monitor)
-                    In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor. */
-                val tooltipPos = io.mousePos + Vec2(16 * style.mouseCursorScale, 8 * style.mouseCursorScale)
-                setNextWindowPos(tooltipPos)
-                pushStyleColor(Col.PopupBg, getStyleColorVec4(Col.PopupBg) * Vec4(1f, 1f, 1f, 0.6f))
-                beginTooltip()
+                /*  Target can request the Source to not display its tooltip (we use a dedicated flag to make this request explicit)
+                    We unfortunately can't just modify the source flags and skip the call to BeginTooltip, as caller may be emitting contents.
+                 */
+                beginDragDropTooltip()
+                if (g.dragDropActive && g.dragDropAcceptIdPrev != 0 && g.dragDropAcceptFlags has Ddf.AcceptNoPreviewTooltip)
+                    g.currentWindow!!.apply { // tooltipWindow
+                        skipItems = true
+                        hiddenFrames = 1
+                    }
             }
 
             if (flags hasnt Ddf.SourceNoDisableHover && flags hasnt Ddf.SourceExtern)
@@ -117,9 +111,9 @@ interface imgui_dragAndDrop {
 
     /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
      *  Data is copied and held by imgui. */
-    fun setDragDropPayload(type: String, data: Vec4, dataSize: Int, cond: Cond = Cond.Null): Boolean {
+    fun setDragDropPayload(type: String, data: Vec4, dataSize: Int, cond_: Cond = Cond.Null): Boolean {
         val payload = g.dragDropPayload
-        val cond = if (cond == Cond.Null) Cond.Always else cond
+        val cond = if (cond_ == Cond.Null) Cond.Always else cond_
 
         assert(type.isNotEmpty())
         assert(type.length < 8) { "Payload type can be at most 12 characters long" }
@@ -156,11 +150,8 @@ interface imgui_dragAndDrop {
     fun endDragDropSource() {
         assert(g.dragDropActive)
 
-        if (g.dragDropSourceFlags hasnt Ddf.SourceNoPreviewTooltip) {
-            endTooltip()
-            popStyleColor()
-            //PopStyleVar();
-        }
+        if (g.dragDropSourceFlags hasnt Ddf.SourceNoPreviewTooltip)
+            endDragDropTooltip()
 
         // Discard the drag if have not called setDragDropPayload()
         if (g.dragDropPayload.dataFrameCount == -1) clearDragDrop()
@@ -207,6 +198,7 @@ interface imgui_dragAndDrop {
         val r = Rect(g.dragDropTargetRect)
         val rSurface = r.width * r.height
         if (rSurface < g.dragDropAcceptIdCurrRectSurface) {
+            g.dragDropAcceptFlags = flags
             g.dragDropAcceptIdCurr = g.dragDropTargetId
             g.dragDropAcceptIdCurrRectSurface = rSurface
         }

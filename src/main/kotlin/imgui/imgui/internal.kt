@@ -50,6 +50,8 @@ import imgui.ImGui.separator
 import imgui.ImGui.setClipboardText
 import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setItemAllowOverlap
+import imgui.ImGui.setNextWindowBgAlpha
+import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setTooltip
 import imgui.ImGui.style
 import imgui.ImGui.text
@@ -102,7 +104,13 @@ interface imgui_internal {
 
     fun setActiveId(id: ID, window: Window?) {
         g.activeIdIsJustActivated = g.activeId != id
-        if (g.activeIdIsJustActivated) g.activeIdTimer = 0f
+        if (g.activeIdIsJustActivated) {
+            g.activeIdTimer = 0f
+            if (id != 0) {
+                g.lastActiveId = id
+                g.lastActiveIdTimer = 0f
+            }
+        }
         g.activeId = id
         g.activeIdAllowNavDirFlags = 0
         g.activeIdAllowOverlap = false
@@ -803,6 +811,7 @@ interface imgui_internal {
     fun clearDragDrop() = with(g) {
         dragDropActive = false
         dragDropPayload.clear()
+        dragDropAcceptFlags = 0
         dragDropAcceptIdPrev = 0
         dragDropAcceptIdCurr = 0
         dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
@@ -811,6 +820,22 @@ interface imgui_internal {
 
     val isDragDropPayloadBeingAccepted get() = g.dragDropActive && g.dragDropAcceptIdPrev != 0
 
+    fun beginDragDropTooltip() {
+        /*  The default tooltip position is a little offset to give space to see the context menu
+            (it's also clamped within the current viewport/monitor)
+            In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.
+            Whatever we do we want to call SetNextWindowPos() to enforce a tooltip position and
+            disable clipping the tooltip without our display area, like regular tooltip do. */
+
+        //ImVec2 tooltip_pos = g.IO.MousePos - g.ActiveIdClickOffset - g.Style.WindowPadding;
+        val tooltipPos = io.mousePos + Vec2(16 * style.mouseCursorScale, 8 * style.mouseCursorScale)
+        setNextWindowPos(tooltipPos)
+        setNextWindowBgAlpha(style.colors[Col.PopupBg].w * 0.6f)
+        //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This would be nice but e.g ColorButton with checkboard has issue with transparent colors :(
+        beginTooltipEx(0, true)
+    }
+
+    fun endDragDropTooltip() = endTooltip()
 
     // FIXME-WIP: New Columns API
 

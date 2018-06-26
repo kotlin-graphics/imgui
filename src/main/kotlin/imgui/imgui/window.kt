@@ -554,7 +554,7 @@ interface imgui_window {
                 dc.childWindows.clear()
                 dc.layoutType = Lt.Vertical
                 dc.parentLayoutType = parentWindow?.dc?.layoutType ?: Lt.Vertical
-                dc.itemFlags = If.Default_.i
+                dc.itemFlags = parentWindow?.dc?.itemFlags ?: If.Default_.i
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled
                 dc.itemFlagsStack.clear()
