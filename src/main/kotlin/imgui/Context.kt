@@ -11,6 +11,7 @@ import java.nio.ByteBuffer
 import java.util.*
 import kotlin.collections.ArrayList
 
+/** Main imgui context */
 class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var initialized = false
