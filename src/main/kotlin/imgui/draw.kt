@@ -89,7 +89,9 @@ class DrawChannel {
 }
 
 
-/** Draw command list
+/** A single draw command list (generally one per window, conceptually you may see this as a dynamic "mesh" builder)
+ *
+ *  Draw command list
  *  This is the low-level list of polygons that ImGui functions are filling. At the end of the frame, all command lists
  *  are passed to your IO.renderDrawListFn function for rendering.
  *  Each ImGui window contains its own DrawList. You can use ImGui::windowDrawList to access the current
