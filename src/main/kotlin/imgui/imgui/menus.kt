@@ -66,11 +66,11 @@ interface imgui_menus {
         val flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
         val windowFlags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
         val isOpen = begin("##MainMenuBar", null, windowFlags) && beginMenuBar()
+        popStyleVar(2)
         g.nextWindowData.menuBarOffsetMinVal put 0f
         return when {
             !isOpen -> {
                 end()
-                popStyleVar(2)
                 false
             }
             else -> true
@@ -86,7 +86,6 @@ interface imgui_menus {
             focusFrontMostActiveWindow(g.navWindow)
 
         end()
-        popStyleVar(2)
     }
 
     /** Append to menu-bar of current window (requires WindowFlag.MenuBar flag set on parent window).

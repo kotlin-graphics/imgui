@@ -124,12 +124,12 @@ interface imgui_widgetsComboBox {
         }
 
         // Horizontally align ourselves with the framed text
-        pushStyleVar(StyleVar.WindowPadding, Vec2(style.framePadding.x, style.windowPadding.y))
-
         val windowFlags = Wf.AlwaysAutoResize or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings
-        if (!begin(name, null, windowFlags)) {
+        pushStyleVar(StyleVar.WindowPadding, Vec2(style.framePadding.x, style.windowPadding.y))
+        val ret = begin(name, null, windowFlags)
+        popStyleVar()
+        if (!ret) {
             endPopup()
-            popStyleVar()
             assert(false) { "This should never happen as we tested for IsPopupOpen() above" }
             return false
         }
@@ -138,10 +138,7 @@ interface imgui_widgetsComboBox {
     }
 
     /** Only call EndCombo() if BeginCombo() returns true! */
-    fun endCombo() {
-        endPopup()
-        popStyleVar()
-    }
+    fun endCombo() = popStyleVar()
 
     /** Combo box helper allowing to pass an array of strings.  */
     fun combo(label: String, currentItem: KMutableProperty0<Int>, items: Array<String>, itemsCount: Int = items.size,

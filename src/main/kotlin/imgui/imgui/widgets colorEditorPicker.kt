@@ -627,8 +627,9 @@ interface imgui_widgetsColorEditorPicker {
         else
             window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
 
-        // Drag and Drop Source
-        if (g.activeId == id && beginDragDropSource()) { // NB: The ActiveId test is merely an optional micro-optimization
+        /*  Drag and Drop Source
+            NB: The ActiveId test is merely an optional micro-optimization, BeginDragDropSource() does the same test.         */
+        if (g.activeId == id && flags hasnt Cef.NoDragDrop && beginDragDropSource()) {
 
             if (flags has Cef.NoAlpha)
                 setDragDropPayload(PAYLOAD_TYPE_COLOR_3F, col, Vec3.size, Cond.Once)
