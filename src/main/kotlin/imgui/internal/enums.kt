@@ -183,7 +183,13 @@ enum class NavMoveFlag {
     /** On failed request, request from opposite side one line down (when NavDir==right) or one line up (when NavDir==left) */
     WrapX,
     /** This is not super useful for provided for completeness */
-    WrapY;
+    WrapY,
+    /** Allow scoring and considering the current NavId as a move target candidate.
+     *  This is used when the move source is offset (e.g. pressing PageDown actually needs to send a Up move request,
+     *  if we are pressing PageDown from the bottom-most item we need to stay in place) */
+    AllowCurrentNavId,
+    /** Store alternate result in NavMoveResultLocalVisibleSet that only comprise elements that are already fully visible.; */
+    AlsoScoreVisibleSet;
 
     val i = 1 shl ordinal
 

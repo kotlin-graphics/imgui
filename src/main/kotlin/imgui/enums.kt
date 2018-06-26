@@ -2,6 +2,7 @@ package imgui
 
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
+import imgui.ImGui.isKeyDown
 import imgui.ImGui.isKeyPressed
 import imgui.internal.InputReadMode
 
@@ -348,7 +349,11 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
     /** JVM implementation of IsKeyPressedMap   */
     fun isPressed(repeat: Boolean) = isKeyPressed(io.keyMap[i], repeat)
 
-    val isPressed get() = isPressed(true)
+    val isPressed:Boolean
+        get() = isPressed(true)
+
+    val isDown: Boolean
+        get() = isKeyDown(io.keyMap[i])
 
     /** map ImGuiKey_* values into user's key index. == io.KeyMap[key]   */
     val index get() = i

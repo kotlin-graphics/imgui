@@ -351,8 +351,6 @@ class DrawDataBuilder {
 class NavMoveResult {
     /** Best candidate  */
     var id: ID = 0
-    /** Best candidate window.idStack.last() - to compare context  */
-    var parentId: ID = 0
     /** Best candidate window   */
     var window: Window? = null
     /** Best candidate box distance to current NavId    */
@@ -366,7 +364,6 @@ class NavMoveResult {
 
     fun clear() {
         id = 0
-        parentId = 0
         window = null
         distBox = Float.MAX_VALUE
         distCenter = Float.MAX_VALUE

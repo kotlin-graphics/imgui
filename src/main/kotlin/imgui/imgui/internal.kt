@@ -526,7 +526,7 @@ interface imgui_internal {
             bbRel.min.x = max(window.sizeFull.x, window.sizeContents.x) - window.scroll.x
             bbRel.max.x = bbRel.min.x
             if (moveFlags has NavMoveFlag.WrapX) {
-                bbRel.translateY(-bbRel.height)
+                bbRel translateY -bbRel.height
                 clipDir = Dir.Up
             }
             navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
@@ -535,7 +535,7 @@ interface imgui_internal {
             bbRel.min.x = -window.scroll.x
             bbRel.max.x = bbRel.min.x
             if (moveFlags has NavMoveFlag.WrapX) {
-                bbRel.translateY(+bbRel.height)
+                bbRel translateY +bbRel.height
                 clipDir = Dir.Down
             }
             navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
@@ -544,7 +544,7 @@ interface imgui_internal {
             bbRel.min.y = max(window.sizeFull.y, window.sizeContents.y) - window.scroll.y
             bbRel.max.y = max(window.sizeFull.y, window.sizeContents.y) - window.scroll.y
             if (moveFlags has NavMoveFlag.WrapY) {
-                bbRel.translateX(-bbRel.width)
+                bbRel translateX -bbRel.width
                 clipDir = Dir.Left
             }
             navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
@@ -553,7 +553,7 @@ interface imgui_internal {
             bbRel.min.y = -window.scroll.y
             bbRel.max.y = bbRel.min.y
             if (moveFlags has NavMoveFlag.WrapY) {
-                bbRel.translateX(+bbRel.width)
+                bbRel translateX +bbRel.width
                 clipDir = Dir.Right
             }
             navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
@@ -2233,6 +2233,8 @@ interface imgui_internal {
                 return false
             }
             drawWindow = currentWindow
+            // This is to ensure that EndChild() will display a navigation highlight
+            drawWindow.dc.navLayerActiveMaskNext = drawWindow.dc.navLayerActiveMaskNext or drawWindow.dc.navLayerCurrentMask
             size.x -= drawWindow.scrollbarSizes.x
         } else {
             itemSize(totalBb, style.framePadding.y)
@@ -2624,9 +2626,10 @@ interface imgui_internal {
         val bufDisplay = if (g.activeId == id && isEditable) editState.tempTextBuffer else buf
 //        buf[0] = ""
 
-        renderNavHighlight(frameBb, id)
-        if (!isMultiline)
+        if (!isMultiline) {
+            renderNavHighlight(frameBb, id)
             renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
+        }
 
         val clipRect = Vec4(frameBb.min, frameBb.min + size) // Not using frameBb.Max because we have adjusted size
         val renderPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + style.framePadding
