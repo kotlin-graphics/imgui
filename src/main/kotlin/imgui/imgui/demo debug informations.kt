@@ -119,8 +119,8 @@ interface imgui_demoDebugInformations {
                 text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
                 /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
                     information or not                 */
-                text("HoveredId: 0x%08X/0x%08X (%.2f sec)", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)
-                text("ActiveId: 0x%08X/0x%08X (%.2f sec), ActiveIdSource: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
+                text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap}", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)
+                text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
                 text("MovingWindow: '${g.movingWindow?.name}'");
                 text("NavWindow: '${g.navWindow?.name}'")

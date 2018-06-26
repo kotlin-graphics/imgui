@@ -639,7 +639,6 @@ interface imgui_widgetsColorEditorPicker {
             sameLine()
             textUnformatted("Color")
             endDragDropSource()
-            hovered = false
         }
         // Tooltip
         if (flags hasnt Cef.NoTooltip && hovered) {

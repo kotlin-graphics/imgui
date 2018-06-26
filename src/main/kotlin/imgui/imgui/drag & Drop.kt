@@ -67,7 +67,10 @@ interface imgui_dragAndDrop {
                     window.focus()
                 }
                 // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.
-                if (g.activeId == sourceId) g.activeIdAllowOverlap = isHovered
+                g.activeIdAllowOverlap = when(g.activeId) {
+                    sourceId -> isHovered
+                    else -> false
+                }
             }
             if (g.activeId != sourceId) return false
             sourceParentId = window.idStack.last()
