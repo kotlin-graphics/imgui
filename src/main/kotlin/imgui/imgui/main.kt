@@ -449,7 +449,11 @@ interface imgui_main {
                     mouseDoubleClicked[i] = false
                     if (mouseClicked[i]) {
                         if (g.time - mouseClickedTime[i] < mouseDoubleClickTime) {
-                            if ((mousePos - mouseClickedPos[i]).lengthSqr < mouseDoubleClickMaxDist * mouseDoubleClickMaxDist)
+                            val deltaFromClickPos = when {
+                                isMousePosValid(io.mousePos) -> io.mousePos - io.mouseClickedPos[i]
+                                else -> Vec2()
+                            }
+                            if (deltaFromClickPos.lengthSqr < io.mouseDoubleClickMaxDist * io.mouseDoubleClickMaxDist)
                                 mouseDoubleClicked[i] = true
                             mouseClickedTime[i] = -Float.MAX_VALUE    // so the third click isn't turned into a double-click
                         } else
@@ -458,6 +462,20 @@ interface imgui_main {
                         mouseDragMaxDistanceAbs[i] put 0f
                         mouseDragMaxDistanceSqr[i] = 0f
                     } else if (mouseDown[i]) {
+                        // Maintain the maximum distance we reaching from the initial click position, which is used with dragging threshold
+                        val deltaFromClickPos = when {
+                            isMousePosValid(io.mousePos) -> io.mousePos - io.mouseClickedPos[i]
+                            else -> Vec2()
+                        }
+                        io.mouseDragMaxDistanceSqr[i] = io.mouseDragMaxDistanceSqr[i] max deltaFromClickPos.lengthSqr
+                        io.mouseDragMaxDistanceAbs[i].x = io.mouseDragMaxDistanceAbs[i].x max when {
+                            deltaFromClickPos.x < 0f -> -deltaFromClickPos.x
+                            else -> deltaFromClickPos.x
+                        }
+                        io.mouseDragMaxDistanceAbs[i].y = io.mouseDragMaxDistanceAbs[i].y max when {
+                            deltaFromClickPos.y < 0f -> -deltaFromClickPos.y
+                            else -> deltaFromClickPos.y
+                        }
                         val mouseDelta = mousePos - mouseClickedPos[i]
                         mouseDragMaxDistanceAbs[i].x = mouseDragMaxDistanceAbs[i].x max if (mouseDelta.x < 0f) -mouseDelta.x else mouseDelta.x
                         mouseDragMaxDistanceAbs[i].y = mouseDragMaxDistanceAbs[i].y max if (mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y
