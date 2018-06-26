@@ -54,6 +54,14 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     val curr = Rect(g.navScoringRectScreen)
     g.navScoringCount++
 
+    // When entering through a NavFlattened border, we consider child window items as fully clipped for scoring
+    if (window.parentWindow === g.navWindow) {
+        assert((window.flags or g.navWindow!!.flags) has Wf.NavFlattened)
+        if (!window.clipRect.contains(cand))
+            return false
+        cand clipWithFull window.clipRect // This allows the scored item to not overlap other candidates in the parent window
+    }
+
     /*  We perform scoring on items bounding box clipped by the current clipping rectangle on the other axis
         (clipping on our movement axis would give us equal scores for all clipped items)
         For example, this ensure that items in one column are not reached when moving vertically from items in another column. */

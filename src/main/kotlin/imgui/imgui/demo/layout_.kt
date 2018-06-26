@@ -164,9 +164,9 @@ object layout_ {
                         }
                         columns(2)
                         for (i in 0..99) {
-                            if (i == 50) nextColumn()
-                            val text = "%08x".format(style.locale, i * 5731)
+                            val text = "%03d".format(style.locale, i)
                             button(text, Vec2(-1f, 0f))
+                            nextColumn()
                         }
                     }
                 }

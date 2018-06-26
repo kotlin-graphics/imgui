@@ -116,7 +116,7 @@ interface imgui_dragAndDrop {
         val cond = if (cond_ == Cond.Null) Cond.Always else cond_
 
         assert(type.isNotEmpty())
-        assert(type.length < 8) { "Payload type can be at most 12 characters long" }
+        assert(type.length < 32) { "Payload type can be at most 32 characters long" }
 //        assert((data != NULL && data_size > 0) || (data == NULL && data_size == 0))
         assert(cond == Cond.Always || cond == Cond.Once)
         assert(payload.sourceId != 0) { "Not called between beginDragDropSource() and endDragDropSource()" }

@@ -182,7 +182,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navMoveClipDir = Dir.None
     /** Best move request candidate within NavWindow    */
     val navMoveResultLocal = NavMoveResult()
-    /** Best move request candidate within NavWindow's flattened hierarchy (when using the NavFlattened flag)   */
+    /** Best move request candidate within NavWindow that are mostly visible (when using NavMoveFlags.AlsoScoreVisibleSet flag) */
+    val navMoveResultLocalVisibleSet = NavMoveResult()
+    /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     val navMoveResultOther = NavMoveResult()
 
 

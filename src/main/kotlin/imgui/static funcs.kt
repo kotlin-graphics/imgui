@@ -707,9 +707,9 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 }
 
 
-/** NB: We modify rect_rel by the amount we scrolled for, so it is immediately updated. */
+/** Scroll to keep newly navigated item fully into view
+ *  NB: We modify rect_rel by the amount we scrolled for, so it is immediately updated. */
 fun navScrollToBringItemIntoView(window: Window, itemRect: Rect) {
-    // Scroll to keep newly navigated item fully into view
     val windowRectRel = Rect(window.innerMainRect.min - 1, window.innerMainRect.max + 1)
     //g.OverlayDrawList.AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
     if (windowRectRel contains itemRect) return
@@ -737,13 +737,17 @@ fun navUpdate() {
 
 //    if (g.NavScoringCount > 0) printf("[%05d] NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.FrameCount, g.NavScoringCount, g.NavWindow ? g . NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest)
 
-    if (g.io.configFlags has Cf.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad)
+    val navKeyboardActive = io.configFlags has Cf.NavEnableKeyboard
+    val navGamepadActive = io.configFlags has Cf.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
+
+    // Set input source as Gamepad when buttons are pressed before we map Keyboard (some features differs when used with Gamepad vs Keyboard)
+    if (navGamepadActive)
         if (g.io.navInputs[NavInput.Activate] > 0f || g.io.navInputs[NavInput.Input] > 0f ||
                 g.io.navInputs[NavInput.Cancel] > 0f || g.io.navInputs[NavInput.Menu] > 0f)
             g.navInputSource = InputSource.NavGamepad
 
     // Update Keyboard->Nav inputs mapping
-    if (io.configFlags has Cf.NavEnableKeyboard) {
+    if (navKeyboardActive) {
         fun navMapKey(key: Key, navInput: NavInput) {
             if (isKeyDown(g.io.keyMap[key])) {
                 g.io.navInputs[navInput] = 1f
@@ -790,24 +794,32 @@ fun navUpdate() {
     if (g.navMoveRequest && (g.navMoveResultLocal.id != 0 || g.navMoveResultOther.id != 0)) {
         // Select which result to use
         var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else g.navMoveResultOther
-        // Maybe entering a flattened child? In this case solve the tie using the regular scoring rules
-        if (g.navMoveResultOther.id != 0 && g.navMoveResultOther.window!!.parentWindow === g.navWindow)
-            if (g.navMoveResultOther.distBox < g.navMoveResultLocal.distBox || (g.navMoveResultOther.distBox == g.navMoveResultLocal.distBox && g.navMoveResultOther.distCenter < g.navMoveResultLocal.distCenter))
-                result = g.navMoveResultOther
 
+        // PageUp/PageDown behavior first jumps to the bottom/top mostly visible item, _otherwise_ use the result from the previous/next page.
+        if (g.navMoveRequestFlags has NavMoveFlag.AlsoScoreVisibleSet)
+            if (g.navMoveResultLocalVisibleSet.id != 0 && g.navMoveResultLocalVisibleSet.id != g.navId)
+                result = g.navMoveResultLocalVisibleSet
+
+        // Maybe entering a flattened child from the outside? In this case solve the tie using the regular scoring rules.
+        if (result != g.navMoveResultOther && g.navMoveResultOther.id != 0 && g.navMoveResultOther.window!!.parentWindow === g.navWindow)
+            if (g.navMoveResultOther.distBox < result.distBox || (g.navMoveResultOther.distBox == result.distBox && g.navMoveResultOther.distCenter < result.distCenter))
+                result = g.navMoveResultOther
         assert(g.navWindow != null)
 
-        // Scroll to keep newly navigated item fully into view. Also scroll parent window if necessary.
+        // Scroll to keep newly navigated item fully into view
         if (g.navLayer == 0) {
             val win = result.window!!
             val rectAbs = Rect(result.rectRel.min + win.pos, result.rectRel.max + win.pos)
             navScrollToBringItemIntoView(win, rectAbs)
-            if (win.flags has Wf.ChildWindow)
-                navScrollToBringItemIntoView(win.parentWindow!!, rectAbs)
 
             // Estimate upcoming scroll so we can offset our result position so mouse position can be applied immediately after in NavUpdate()
             val nextScroll = calcNextScrollFromScrollTargetAndClamp(win, false)
-            result.rectRel.translate(win.scroll - nextScroll)
+            val deltaScroll = win.scroll - nextScroll
+            result.rectRel translate deltaScroll
+
+            // Also scroll parent window to keep us into view if necessary (we could/should technically recurse back the whole the parent hierarchy).
+            if (win.flags has Wf.ChildWindow)
+                navScrollToBringItemIntoView(win.parentWindow!!, Rect(rectAbs.min + deltaScroll, rectAbs.max + deltaScroll))
         }
 
         // Apply result from previous frame navigation directional move request
@@ -851,9 +863,6 @@ fun navUpdate() {
     navUpdateWindowing()
 
     // Set output flags for user application
-    io.navActive = io.configFlags has (Cf.NavEnableGamepad or Cf.NavEnableKeyboard) && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs
-    val navKeyboardActive = io.configFlags has Cf.NavEnableKeyboard
-    val navGamepadActive = io.configFlags has Cf.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
     io.navActive = (navKeyboardActive || navGamepadActive) && g.navWindow?.flags?.hasnt(Wf.NoNavInputs) ?: false
     io.navVisible = (io.navActive && g.navId != 0 && !g.navDisableHighlight) || g.navWindowingTarget != null || g.navInitRequest
 
@@ -943,6 +952,38 @@ fun navUpdate() {
         g.navMoveRequestForward = NavForward.ForwardActive
     }
 
+    // PageUp/PageDown scroll
+    var navScoringRectOffsetY = 0f
+    if (navKeyboardActive && g.navMoveDir == Dir.None)
+        g.navWindow?.let { window ->
+            if (window.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null && g.navLayer == 0) {
+                val pageUpHeld = Key.PageUp.isDown && allowedDirFlags has (1 shl Dir.Up.i)
+                val pageDownHeld = Key.PageDown.isDown && allowedDirFlags has (1 shl Dir.Down.i)
+                if ((pageUpHeld && !pageDownHeld) || (pageDownHeld && !pageUpHeld))
+                    if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {
+                        // Fallback manual-scroll when window has no navigable item
+                        if (Key.PageUp.isPressed)
+                            window.setScrollY(window.scroll.y - window.innerClipRect.height)
+                        else if (Key.PageDown.isPressed)
+                            window.setScrollY(window.scroll.y + window.innerClipRect.height)
+                    } else {
+                        val navRectRel = window.navRectRel[g.navLayer]
+                        val pageOffsetY = max(0f, window.innerClipRect.height-window.calcFontSize()+navRectRel.height)
+                        if (Key.PageUp.isPressed) {
+                            navScoringRectOffsetY = -pageOffsetY
+                            g.navMoveDir = Dir.Down // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
+                            g.navMoveClipDir = Dir.Up
+                            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
+                        } else if (Key.PageDown.isPressed) {
+                            navScoringRectOffsetY = +pageOffsetY
+                            g.navMoveDir = Dir.Up // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
+                            g.navMoveClipDir = Dir.Down
+                            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
+                        }
+                    }
+            }
+        }
+
     if (g.navMoveDir != Dir.None) {
         g.navMoveRequest = true
         g.navMoveDirLast = g.navMoveDir
@@ -963,7 +1004,7 @@ fun navUpdate() {
     g.navWindow?.let {
 
         if (it.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null) {
-            // *Fallback* manual-scroll with NavUp/NavDown when window has no navigable item
+            // *Fallback* manual-scroll with Nav directional keys when window has no navigable item
             val scrollSpeed = glm.floor(it.calcFontSize() * 100 * io.deltaTime + 0.5f) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
             if (it.dc.navLayerActiveMask == 0 && it.dc.navHasScroll && g.navMoveRequest) {
                 if (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right)
@@ -987,6 +1028,7 @@ fun navUpdate() {
     }
     // Reset search results
     g.navMoveResultLocal.clear()
+    g.navMoveResultLocalVisibleSet.clear()
     g.navMoveResultOther.clear()
 
     // When we have manually scrolled (without using navigation) and NavId becomes out of bounds, we project its bounding box to the visible area to restart navigation within visible items
@@ -1008,8 +1050,8 @@ fun navUpdate() {
             val navRectRel = if (!it.navRectRel[g.navLayer].isInverted) Rect(it.navRectRel[g.navLayer]) else Rect(0f, 0f, 0f, 0f)
             g.navScoringRectScreen.put(navRectRel.min + it.pos, navRectRel.max + it.pos)
         } else g.navScoringRectScreen put getViewportRect()
-
     }
+    g.navScoringRectScreen translateY navScoringRectOffsetY
     g.navScoringRectScreen.min.x = min(g.navScoringRectScreen.min.x + 1f, g.navScoringRectScreen.max.x)
     g.navScoringRectScreen.max.x = g.navScoringRectScreen.min.x
     // Ensure if we have a finite, non-inverted bounding box here will allows us to remove extraneous abs() calls in navScoreItem().
@@ -1149,6 +1191,8 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
 
     val itemFlags = window.dc.itemFlags
     val navBbRel = Rect(navBb.min - window.pos, navBb.max - window.pos)
+
+    // Process Init Request
     if (g.navInitRequest && g.navLayer == window.dc.navLayerCurrent) {
         // Even if 'ImGuiItemFlags_NoNavDefaultFocus' is on (typically collapse/close button) we record the first ResultId so they can be used as a fallback
         if (itemFlags hasnt ItemFlag.NoNavDefaultFocus || g.navInitResultId == 0) {
@@ -1161,11 +1205,11 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         }
     }
 
-    /*  Scoring for navigation
+    /*  Process Move Request (scoring for navigation)
         FIXME-NAV: Consider policy for double scoring
         (scoring from NavScoringRectScreen + scoring from a rect wrapped according to current wrapping policy)     */
-    if (g.navId != id && itemFlags hasnt ItemFlag.NoNav) {
-        val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
+    if ((g.navId != id || g.navMoveRequestFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt ItemFlag.NoNav) {
+        var result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
         val newBest = when {
             IMGUI_DEBUG_NAV_SCORING -> {  // [DEBUG] Score all items in NavWindow at all times
                 if (!g.navMoveRequest) g.navMoveDir = g.navMoveDirLast
@@ -1175,10 +1219,21 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         }
         if (newBest) {
             result.id = id
-            result.parentId = window.idStack.last()
             result.window = window
             result.rectRel put navBbRel
         }
+
+        val VISIBLE_RATIO = 0.7f
+        if (g.navMoveRequestFlags has NavMoveFlag.AlsoScoreVisibleSet && window.clipRect overlaps navBb)
+            if (glm.clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) -
+                    glm.clamp(navBb.min.y, window.clipRect.min.y, window.clipRect.max.y) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO)
+                if (navScoreItem(g.navMoveResultLocalVisibleSet, navBb)) {
+                    result = g.navMoveResultLocalVisibleSet.also {
+                        it.id = id
+                        it.window = window
+                        it.rectRel = navBbRel
+                    }
+                }
     }
 
     // Update window-relative bounding box of navigated item
