@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginTooltip
@@ -14,6 +15,7 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setHoveredId
 import imgui.ImGui.setNextWindowPos
+import imgui.ImGui.style
 import imgui.internal.*
 import imgui.DragDropFlag as Ddf
 
@@ -92,7 +94,12 @@ interface imgui_dragAndDrop {
                 // FIXME-DRAG
                 //SetNextWindowPos(g.io.MousePos - g.ActiveIdClickOffset - g.Style.WindowPadding);
                 //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This is better but e.g ColorButton with checkboard has issue with transparent colors :(
-                setNextWindowPos(io.mousePos)
+
+                /*  The default tooltip position is a little offset to give space to see the context menu
+                    (it's also clamped within the current viewport/monitor)
+                    In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor. */
+                val tooltipPos = io.mousePos + Vec2(16 * style.mouseCursorScale, 8 * style.mouseCursorScale)
+                setNextWindowPos(tooltipPos)
                 pushStyleColor(Col.PopupBg, getStyleColorVec4(Col.PopupBg) * Vec4(1f, 1f, 1f, 0.6f))
                 beginTooltip()
             }

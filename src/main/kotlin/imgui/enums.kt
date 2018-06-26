@@ -4,7 +4,6 @@ import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
 import imgui.ImGui.isKeyPressed
 import imgui.internal.InputReadMode
-import imgui.internal.isPowerOfTwo
 
 /** Flags for ImGui::Begin()    */
 enum class WindowFlag(val i: Int) {
@@ -463,11 +462,11 @@ typealias BackendFlags = Int
 /** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end. */
 enum class BackendFlag(val i: Int) {
     /** Back-end supports and has a connected gamepad. */
-    HasGamepad            (1 shl 0),
+    HasGamepad(1 shl 0),
     /** Back-end supports reading GetMouseCursor() to change the OS cursor shape. */
-    HasMouseCursors       (1 shl 1),
+    HasMouseCursors(1 shl 1),
     /** Back-end supports io.wantSetMousePos requests to reposition the OS mouse position (only used if ConfigFlags.NavEnableSetMousePos is set). */
-    HasSetMousePos        (1 shl 2)
+    HasSetMousePos(1 shl 2)
 }
 
 
@@ -735,34 +734,36 @@ enum class ColorEditFlag(val i: Int) {
     NoLabel(1 shl 7),
     /** ColorPicker: disable bigger color preview on right side of the picker, use small colored square preview instead.    */
     NoSidePreview(1 shl 8),
+    /** ColorEdit: disable drag and drop target. ColorButton: disable drag and drop source. */
+    NoDragDrop(1 shl 9),
 
     /*  User Options (right-click on widget to change some of them). You can set application defaults using
         SetColorEditOptions(). The idea is that you probably don't want to override them in most of your calls,
         let the user choose and/or call SetColorEditOptions() during startup.     */
     /** ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker. */
-    AlphaBar(1 shl 9),
+    AlphaBar(1 shl 16),
     /** ColorEdit, ColorPicker, ColorButton: display preview as a transparent color over a checkerboard, instead of opaque. */
-    AlphaPreview(1 shl 10),
+    AlphaPreview(1 shl 17),
     /** ColorEdit, ColorPicker, ColorButton: display half opaque / half checkerboard, instead of opaque.    */
-    AlphaPreviewHalf(1 shl 11),
+    AlphaPreviewHalf(1 shl 18),
     /** (WIP) ColorEdit: Currently only disable 0.0f..1.0f limits in RGBA edition (note: you probably want to use
      *  ColorEditFlags.Float flag as well). */
-    HDR(1 shl 12),
+    HDR(1 shl 19),
     /** [Inputs] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
-    RGB(1 shl 13),
+    RGB(1 shl 20),
     /** [Inputs] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
-    HSV(1 shl 14),
+    HSV(1 shl 21),
     /** [Inputs] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
-    HEX(1 shl 15),
+    HEX(1 shl 22),
     /** [DataType] ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0..255.   */
-    Uint8(1 shl 16),
+    Uint8(1 shl 23),
     /** [DataType] ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0.0f..1.0f floats instead of 0..255 integers.
      *  No round-trip of value via integers.    */
-    Float(1 shl 17),
+    Float(1 shl 24),
     /** [PickerMode] ColorPicker: bar for Hue, rectangle for Sat/Value. */
-    PickerHueBar(1 shl 18),
+    PickerHueBar(1 shl 25),
     /** [PickerMode] ColorPicker: wheel for Hue, triangle for Sat/Value.    */
-    PickerHueWheel(1 shl 19),
+    PickerHueWheel(1 shl 26),
 
     // [Internal] Masks
     _InputsMask(RGB or HSV or HEX),

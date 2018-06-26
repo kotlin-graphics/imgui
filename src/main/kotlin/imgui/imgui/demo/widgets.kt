@@ -98,7 +98,6 @@ import imgui.ImGui.unindent
 import imgui.ImGui.vSliderFloat
 import imgui.ImGui.vSliderInt
 import imgui.ImGui.windowDrawList
-import imgui.functionalProgramming.button
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.popup
 import imgui.functionalProgramming.smallButton
@@ -205,6 +204,7 @@ object widgets {
     val color = Vec4.fromColor(114, 144, 154, 200)
     var alphaPreview = true
     var alphaHalfPreview = false
+    var dragAndDrop = true
     var optionsMenu = true
     var hdr = false
     // Generate a dummy palette
@@ -546,7 +546,7 @@ object widgets {
                     a flag stored in the object itself, etc.)                 */
                 val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO")
                 if (beginCombo("combo 1", items[0], flags0)) { // The second parameter is the label previewed before opening the combo.
-                    items.forEachIndexed {i, it ->
+                    items.forEachIndexed { i, it ->
                         val isSelected = currentItem3 == i
                         if (selectable(it, isSelected))
                             currentItem3 = i
@@ -711,11 +711,13 @@ object widgets {
 
                 checkbox("With Alpha Preview", ::alphaPreview)
                 checkbox("With Half Alpha Preview", ::alphaHalfPreview)
+                checkbox("With Drag and Drop", ::dragAndDrop)
                 checkbox("With Options Menu", ::optionsMenu); sameLine(); showHelpMarker("Right-click on the individual color widget to show options.")
                 checkbox("With HDR", ::hdr); sameLine(); showHelpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.")
                 var miscFlags = if (hdr) Cef.HDR.i else 0
+                if (dragAndDrop) miscFlags = miscFlags or Cef.NoDragDrop
                 if (alphaHalfPreview) miscFlags = miscFlags or Cef.AlphaPreviewHalf
-                if (alphaPreview) miscFlags = miscFlags or Cef.AlphaPreview
+                else if (alphaPreview) miscFlags = miscFlags or Cef.AlphaPreview
                 if (!optionsMenu) miscFlags = miscFlags or Cef.NoOptions
 
                 text("Color widget:")

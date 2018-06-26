@@ -52,6 +52,8 @@ val fragmentShader
         }
         """
 
+/** Store GLSL version string so we can refer to it later in case we recreate shaders.
+ * Note: GLSL version is NOT the same as GL version. Leave this to default if unsure. */
 var glslVersion = 130
 
 

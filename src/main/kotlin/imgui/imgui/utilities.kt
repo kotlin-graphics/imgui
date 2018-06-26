@@ -187,15 +187,14 @@ interface imgui_utilities {
         pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)
         pushStyleVar(StyleVar.WindowPadding, style.framePadding)
         val flags = Wf.NoMove or Wf.AlwaysUseWindowPadding or extraFlags
-        return beginChild(id, size, true, Wf.NoMove or Wf.AlwaysUseWindowPadding or extraFlags)
+        return beginChild(id, size, true, Wf.NoMove or Wf.AlwaysUseWindowPadding or extraFlags).also {
+            popStyleVar(3)
+            popStyleColor()
+        }
     }
 
     /** Always call EndChildFrame() regardless of BeginChildFrame() return values (which indicates a collapsed/clipped window)  */
-    fun endChildFrame() {
-        endChild()
-        popStyleVar(3)
-        popStyleColor()
-    }
+    fun endChildFrame() = endChild()
 
     val Int.vec4: Vec4
         get() {
