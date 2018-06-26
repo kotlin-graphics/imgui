@@ -118,6 +118,7 @@ interface imgui_main {
             clearActiveId()
         if (g.activeId != 0)
             g.activeIdTimer += io.deltaTime
+        g.lastActiveIdTimer += io.deltaTime
         g.activeIdPreviousFrame = g.activeId
         g.activeIdIsAlive = false
         g.activeIdIsJustActivated = false

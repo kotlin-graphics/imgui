@@ -81,6 +81,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdWindow: Window? = null
     /** Activating with mouse or nav (gamepad/keyboard) */
     var activeIdSource = InputSource.None
+    /** Store the last non-zero ActiveId, useful for animation. */
+    var lastActiveId: ID = 0
+    /** Store the last non-zero ActiveId timer since the beginning of activation, useful for animation. */
+    var lastActiveIdTimer = 0f
     /** Track the window we clicked on (in order to preserve focus).
      *  The actually window that is moved is generally MovingWindow.rootWindow.  */
     var movingWindow: Window? = null
@@ -216,6 +220,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var dragDropTargetId: ID = 0
 
+    var dragDropAcceptFlags: DragDropFlags = 0
+    /** Target item surface (we resolve overlapping targets by prioritizing the smaller surface) */
     var dragDropAcceptIdCurrRectSurface = 0f
     /** Target item id (set at the time of accepting the payload) */
     var dragDropAcceptIdCurr: ID = 0

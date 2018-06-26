@@ -300,6 +300,8 @@ enum class DragDropFlag(val i: Int) {
     AcceptBeforeDelivery(1 shl 10),
     /** Do not draw the default highlight rectangle when hovering over target. */
     AcceptNoDrawDefaultRect(1 shl 11),
+    /** Request hiding the BeginDragDropSource tooltip from the BeginDragDropTarget site. */
+    AcceptNoPreviewTooltip(1 shl 12),
     /** For peeking ahead and inspecting the payload before delivery. */
     AcceptPeekOnly(AcceptBeforeDelivery or AcceptNoDrawDefaultRect)
 }

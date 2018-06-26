@@ -66,8 +66,8 @@ interface imgui_widgetsSelectableLists {
         val size = Vec2(if (sizeArg.x != 0f) sizeArg.x else labelSize.x, if (sizeArg.y != 0f) sizeArg.y else labelSize.y)
         val pos = Vec2(window.dc.cursorPos)
         pos.y += window.dc.currentLineTextBaseOffset
-        val bb = Rect(pos, pos + size)
-        itemSize(bb)
+        val bbInner = Rect(pos, pos + size)
+        itemSize(bbInner)
 
         // Fill horizontal space.
         val windowPadding = Vec2(window.windowPadding)
@@ -76,20 +76,20 @@ interface imgui_widgetsSelectableLists {
         val sizeDraw = Vec2(
                 if (sizeArg.x != 0f && flags hasnt Sf.DrawFillAvailWidth) sizeArg.x else wDraw,
                 if (sizeArg.y != 0f) sizeArg.y else size.y)
-        val bbWithSpacing = Rect(pos, pos + sizeDraw)
+        val bb = Rect(pos, pos + sizeDraw)
         if (sizeArg.x == 0f || flags has Sf.DrawFillAvailWidth)
-            bbWithSpacing.max.x += windowPadding.x
+            bb.max.x += windowPadding.x
 
         // Selectables are tightly packed together, we extend the box to cover spacing between selectable.
         val spacingL = (style.itemSpacing.x * 0.5f).i.f
         val spacingU = (style.itemSpacing.y * 0.5f).i.f
         val spacingR = style.itemSpacing.x - spacingL
         val spacingD = style.itemSpacing.y - spacingU
-        bbWithSpacing.min.x -= spacingL
-        bbWithSpacing.min.y -= spacingU
-        bbWithSpacing.max.x += spacingR
-        bbWithSpacing.max.y += spacingD
-        if (!itemAdd(bbWithSpacing, if (flags has Sf.Disabled) 0 else id)) {
+        bb.min.x -= spacingL
+        bb.min.y -= spacingU
+        bb.max.x += spacingR
+        bb.max.y += spacingD
+        if (!itemAdd(bb, if (flags has Sf.Disabled) 0 else id)) {
             if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null)
                 pushColumnClipRect()
             return false
@@ -102,7 +102,7 @@ interface imgui_widgetsSelectableLists {
         if (flags has Sf.PressedOnRelease) buttonFlags = buttonFlags or Bf.PressedOnRelease
         if (flags has Sf.Disabled) buttonFlags = buttonFlags or Bf.Disabled
         if (flags has Sf.AllowDoubleClick) buttonFlags = buttonFlags or Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
-        val (pressed, hovered, held) = buttonBehavior(bbWithSpacing, id, buttonFlags)
+        val (pressed, hovered, held) = buttonBehavior(bb, id, buttonFlags)
         val selected = if (flags has Sf.Disabled) false else selected_
 
         /*  Hovering selectable with mouse updates navId accordingly so navigation can be resumed with gamepad/keyboard
@@ -116,17 +116,17 @@ interface imgui_widgetsSelectableLists {
         // Render
         if (hovered || selected) {
             val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
-            renderFrame(bbWithSpacing.min, bbWithSpacing.max, col.u32, false, 0f)
-            renderNavHighlight(bbWithSpacing, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
+            renderFrame(bb.min, bb.max, col.u32, false, 0f)
+            renderNavHighlight(bb, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
         }
 
         if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null) {
             pushColumnClipRect()
-            bbWithSpacing.max.x -= contentRegionMax.x - maxX
+            bb.max.x -= contentRegionMax.x - maxX
         }
 
         if (flags has Sf.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-        renderTextClipped(bb.min, bbWithSpacing.max, label, 0, labelSize, Vec2())
+        renderTextClipped(bbInner.min, bb.max, label, 0, labelSize, Vec2())
         if (flags has Sf.Disabled) popStyleColor()
 
         // Automatically close popups
