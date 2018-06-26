@@ -1593,8 +1593,9 @@ interface imgui_internal {
                     clearActiveId()
                 else if (delta != 0f) {
                     clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    val decimalPrecision = if(isDecimal) parseFormatPrecision(format, 3) else 0
                     delta = when {
-                        isDecimal || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
+                        decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
                             NavInput.TweakSlow.isDown() -> delta / 1_000f
                             else -> delta / 100f
                         }
@@ -1738,8 +1739,9 @@ interface imgui_internal {
                     clearActiveId()
                 else if (delta != 0f) {
                     clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    val decimalPrecision = if(isDecimal) parseFormatPrecision(format, 3) else 0
                     delta = when {
-                        isDecimal || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
+                        decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
                             NavInput.TweakSlow.isDown() -> delta / 1_000f
                             else -> delta / 100f
                         }
@@ -1883,8 +1885,9 @@ interface imgui_internal {
                     clearActiveId()
                 else if (delta != 0f) {
                     clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    val decimalPrecision = if(isDecimal) parseFormatPrecision(format, 3) else 0
                     delta = when {
-                        isDecimal || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
+                        decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
                             NavInput.TweakSlow.isDown() -> delta / 1_000f
                             else -> delta / 100f
                         }
@@ -2028,8 +2031,9 @@ interface imgui_internal {
                     clearActiveId()
                 else if (delta != 0f) {
                     clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    val decimalPrecision = if(isDecimal) parseFormatPrecision(format, 3) else 0
                     delta = when {
-                        isDecimal || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
+                        decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
                             NavInput.TweakSlow.isDown() -> delta / 1_000f
                             else -> delta / 100f
                         }

@@ -841,12 +841,12 @@ fun navUpdate() {
     // Apply application mouse position movement, after we had a chance to process move request result.
     if (g.navMousePosDirty && g.navIdIsAlive) {
         // Set mouse position given our knowledge of the navigated item position from last frame
-        if (io.configFlags has Cf.NavEnableSetMousePos && io.backendFlags has BackendFlag.HasSetMousePos) {
-            assert(!g.navDisableHighlight && g.navDisableMouseHover)
-            io.mousePosPrev = navCalcPreferredRefPos()
-            io.mousePos put io.mousePosPrev
-            io.wantSetMousePos = true
-        }
+        if (io.configFlags has Cf.NavEnableSetMousePos && io.backendFlags has BackendFlag.HasSetMousePos)
+            if (!g.navDisableHighlight && g.navDisableMouseHover && g.navWindow != null) {
+                io.mousePos = navCalcPreferredRefPos()
+                io.mousePosPrev = Vec2(io.mousePos)
+                io.wantSetMousePos = true
+            }
         g.navMousePosDirty = false
     }
     g.navIdIsAlive = false
