@@ -708,30 +708,26 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 
 
 /** NB: We modify rect_rel by the amount we scrolled for, so it is immediately updated. */
-fun navScrollToBringItemIntoView(window: Window, itemRectRel: Rect) {
+fun navScrollToBringItemIntoView(window: Window, itemRect: Rect) {
     // Scroll to keep newly navigated item fully into view
-    val windowRectRel = Rect(window.innerMainRect.min - window.pos - Vec2(1), window.innerMainRect.max - window.pos + Vec2(1))
+    val windowRectRel = Rect(window.innerMainRect.min - 1, window.innerMainRect.max + 1)
     //g.OverlayDrawList.AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
-    if (windowRectRel contains itemRectRel) return
+    if (windowRectRel contains itemRect) return
 
-    if (window.scrollbar.x && itemRectRel.min.x < windowRectRel.min.x) {
-        window.scrollTarget.x = itemRectRel.min.x + window.scroll.x - style.itemSpacing.x
+    if (window.scrollbar.x && itemRect.min.x < windowRectRel.min.x) {
+        window.scrollTarget.x = itemRect.min.x - window.pos.x + window.scroll.x - style.itemSpacing.x
         window.scrollTargetCenterRatio.x = 0f
-    } else if (window.scrollbar.x && itemRectRel.max.x >= windowRectRel.max.x) {
-        window.scrollTarget.x = itemRectRel.max.x + window.scroll.x + style.itemSpacing.x
+    } else if (window.scrollbar.x && itemRect.max.x >= windowRectRel.max.x) {
+        window.scrollTarget.x = itemRect.max.x - window.pos.x + window.scroll.x + style.itemSpacing.x
         window.scrollTargetCenterRatio.x = 1f
     }
-    if (itemRectRel.min.y < windowRectRel.min.y) {
-        window.scrollTarget.y = itemRectRel.min.y + window.scroll.y - style.itemSpacing.y
+    if (itemRect.min.y < windowRectRel.min.y) {
+        window.scrollTarget.y = itemRect.min.y - window.pos.y + window.scroll.y - style.itemSpacing.y
         window.scrollTargetCenterRatio.y = 0f
-    } else if (itemRectRel.max.y >= windowRectRel.max.y) {
-        window.scrollTarget.y = itemRectRel.max.y + window.scroll.y + style.itemSpacing.y
+    } else if (itemRect.max.y >= windowRectRel.max.y) {
+        window.scrollTarget.y = itemRect.max.y - window.pos.y + window.scroll.y + style.itemSpacing.y
         window.scrollTargetCenterRatio.y = 1f
     }
-
-    // Estimate upcoming scroll so we can offset our relative mouse position so mouse position can be applied immediately after in NavUpdate()
-    val nextScroll = calcNextScrollFromScrollTargetAndClamp(window, false)
-    itemRectRel translate (window.scroll - nextScroll)
 }
 
 
@@ -801,9 +797,18 @@ fun navUpdate() {
 
         assert(g.navWindow != null)
 
-        // Scroll to keep newly navigated item fully into view
-        if (g.navLayer == 0)
-            navScrollToBringItemIntoView(result.window!!, result.rectRel)
+        // Scroll to keep newly navigated item fully into view. Also scroll parent window if necessary.
+        if (g.navLayer == 0) {
+            val win = result.window!!
+            val rectAbs = Rect(result.rectRel.min + win.pos, result.rectRel.max + win.pos)
+            navScrollToBringItemIntoView(win, rectAbs)
+            if (win.flags has Wf.ChildWindow)
+                navScrollToBringItemIntoView(win.parentWindow!!, rectAbs)
+
+            // Estimate upcoming scroll so we can offset our result position so mouse position can be applied immediately after in NavUpdate()
+            val nextScroll = calcNextScrollFromScrollTargetAndClamp(win, false)
+            result.rectRel.translate(win.scroll - nextScroll)
+        }
 
         // Apply result from previous frame navigation directional move request
         clearActiveId()
@@ -915,6 +920,7 @@ fun navUpdate() {
     val allowedDirFlags = if (g.activeId == 0) 0.inv() else g.activeIdAllowNavDirFlags
     if (g.navMoveRequestForward == NavForward.None) {
         g.navMoveDir = Dir.None
+        g.navMoveRequestFlags = 0
         g.navWindow?.let {
             if (g.navWindowingTarget == null && allowedDirFlags != 0 && it.flags hasnt Wf.NoNavInputs) {
                 if (allowedDirFlags has (1 shl Dir.Left) && isNavInputPressedAnyOfTwo(NavInput.DpadLeft, NavInput.KeyLeft, InputReadMode.Repeat))
@@ -927,10 +933,12 @@ fun navUpdate() {
                     g.navMoveDir = Dir.Down
             }
         }
+        g.navMoveDir = g.navMoveDir
     } else {
         /*  Forwarding previous request (which has been modified, e.g. wrap around menus rewrite the requests with
-            a starting rectangle at the other side of the window)   */
-        assert(g.navMoveDir != Dir.None)
+            a starting rectangle at the other side of the window)
+            (Preserve g.NavMoveRequestFlags, g.NavMoveClipDir which were set by the NavMoveRequestForward() function) */
+        assert(g.navMoveDir != Dir.None && g.navMoveDir != Dir.None)
         assert(g.navMoveRequestForward == NavForward.ForwardQueued)
         g.navMoveRequestForward = NavForward.ForwardActive
     }

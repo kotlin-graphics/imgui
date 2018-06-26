@@ -14,9 +14,11 @@ import imgui.ImGui.isMouseReleased
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowHovered
 import imgui.ImGui.navMoveRequestCancel
+import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
 import imgui.internal.NavForward
+import imgui.internal.NavMoveFlag
 import imgui.internal.Window
 import kotlin.math.max
 import imgui.HoveredFlag as Hf
@@ -105,7 +107,7 @@ interface imgui_popups {
         assert(g.currentPopupStack.isNotEmpty())
 
         // Make all menus and popups wrap around for now, may need to expose that policy.
-        navProcessMoveRequestWrapAround(g.currentWindow!!)
+        navMoveRequestTryWrapping(g.currentWindow!!, NavMoveFlag.LoopY.i)
 
         end()
     }
@@ -134,18 +136,5 @@ interface imgui_popups {
         while (popupIdx > 0 && g.openPopupStack[popupIdx].window != null && (g.openPopupStack[popupIdx].window!!.flags has Wf.ChildMenu))
             popupIdx--
         closePopupToLevel(popupIdx)
-    }
-
-    companion object {
-        fun navProcessMoveRequestWrapAround(window: Window) {
-            if (g.navWindow === window && navMoveRequestButNoResultYet())
-                if ((g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down) && g.navMoveRequestForward == NavForward.None && g.navLayer == 0) {
-                    g.navMoveRequestForward = NavForward.ForwardQueued
-                    navMoveRequestCancel()
-                    val y = (if (g.navMoveDir == Dir.Up) max(window.sizeFull.y, window.sizeContents.y) else 0f) - window.scroll.y
-                    g.navWindow!!.navRectRel[0].max.y = y
-                    g.navWindow!!.navRectRel[0].min.y = y
-                }
-        }
     }
 }

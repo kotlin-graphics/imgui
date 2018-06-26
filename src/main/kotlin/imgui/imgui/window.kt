@@ -518,7 +518,7 @@ interface imgui_window {
             with(window) {
 
                 /*  Update ContentsRegionMax. Variables they depends on are set above in this function.
-                    FIXME: window->ContentsRegion.Max is currently very misleading / partly faulty,
+                    FIXME: window->ContentsRegionRect.Max is currently very misleading / partly faulty,
                     but some BeginChild() patterns relies on it.                 */
                 contentsRegionRect.let {
                     it.min.put(pos.x - scroll.x + windowPadding.x,

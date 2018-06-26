@@ -36,8 +36,19 @@ interface imgui_widgetsTrees {
     fun treeNode(ptrId: Any, fmt: String, vararg args: Any) = treeNodeExV(ptrId, 0, fmt, *args)
 //    IMGUI_API bool          TreeNodeV(const char* str_id, const char* fmt, va_list args);           // "
 //    IMGUI_API bool          TreeNodeV(const void* ptr_id, const char* fmt, va_list args);           // "
-//    IMGUI_API bool          TreeNodeEx(const char* label, ImGuiTreeNodeFlags flags = 0);
-//    IMGUI_API bool          TreeNodeEx(const char* str_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) IM_PRINTFARGS(3);
+
+    fun treeNodeEx(label: String, flags: TreeNodeFlags = 0): Boolean    {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        return treeNodeBehavior(window.getId(label), flags, label)
+    }
+
+    fun treeNodeEx(strId: String, flags: TreeNodeFlags , fmt: String, vararg args: Any): Boolean {
+        val isOpen = treeNodeExV(strId, flags, fmt, args)
+        return isOpen
+    }
+
 //    IMGUI_API bool          TreeNodeEx(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) IM_PRINTFARGS(3);
 
     fun treeNodeExV(strId: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {

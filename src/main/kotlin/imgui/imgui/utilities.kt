@@ -166,6 +166,7 @@ interface imgui_utilities {
                 val pos = window.dc.cursorPos
                 var start = ((window.clipRect.min.y - pos.y) / itemsHeight).i
                 var end = ((window.clipRect.max.y - pos.y) / itemsHeight).i
+
                 // When performing a navigation request, ensure we have one item extra in the direction we are moving to
                 if (g.navMoveRequest && g.navMoveDir == Dir.Up)
                     start--

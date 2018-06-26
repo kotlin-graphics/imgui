@@ -12,16 +12,25 @@ val PAYLOAD_TYPE_DOCKABLE = "_IMDOCK"   // ImGuiWindow* // [Internal] Docking/ta
 
 /** flags: for ButtonEx(), ButtonBehavior()  // enum ButtonFlag */
 typealias ButtonFlags = Int
+
 /** flags: for PushItemFlag()                // enum ItemFlag */
 typealias ItemFlags = Int
+
 /** flags: storage for DC.LastItemXXX        // enum ItemStatusFlag */
 typealias ItemStatusFlags = Int
+
 /** flags: for RenderNavHighlight()          // enum NavHighlightFlag */
 typealias NavHighlightFlags = Int
+
 /** flags: for GetNavInputAmount2d()         // enum NavDirSourceFlag */
 typealias NavDirSourceFlags = Int
+
+/** flags: for navigation requests           // enum ImGuiNavMoveFlags */
+typealias NavMoveFlags = Int
+
 /** flags: for Separator() - internal        // enum SeparatorFlag */
 typealias SeparatorFlags = Int
+
 /** flags: for SliderBehavior()              // enum SliderFlag */
 typealias SliderFlags = Int
 
@@ -97,8 +106,8 @@ enum class SeparatorFlag {
     val i = 1 shl ordinal
 }
 
-infix fun SeparatorFlag.or(b: SeparatorFlag):SeparatorFlags = i or b.i
-infix fun Int.or(b: SeparatorFlag):SeparatorFlags = this or b.i
+infix fun SeparatorFlag.or(b: SeparatorFlag): SeparatorFlags = i or b.i
+infix fun Int.or(b: SeparatorFlag): SeparatorFlags = this or b.i
 infix fun Int.has(b: SeparatorFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: SeparatorFlag) = (this and b.i) == 0
 
@@ -166,6 +175,22 @@ enum class NavDirSourceFlag { Keyboard, PadDPad, PadLStick;
 
 infix fun NavDirSourceFlag.or(b: NavDirSourceFlag): NavDirSourceFlags = i or b.i
 infix fun Int.has(b: NavDirSourceFlag) = and(b.i) != 0
+
+enum class NavMoveFlag {
+    /** On failed request, restart from opposite side */
+    LoopX,
+    LoopY,
+    /** On failed request, request from opposite side one line down (when NavDir==right) or one line up (when NavDir==left) */
+    WrapX,
+    /** This is not super useful for provided for completeness */
+    WrapY;
+
+    val i = 1 shl ordinal
+
+    infix fun or(b: NavMoveFlag): NavMoveFlags = i or b.i
+}
+
+infix fun Int.has(b: NavMoveFlag) = and(b.i) != 0
 
 enum class NavForward { None, ForwardQueued, ForwardActive;
 

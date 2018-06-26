@@ -165,12 +165,16 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navMoveFromClampedRefRect = false
     /** Move request for this frame */
     var navMoveRequest = false
+
+    var navMoveRequestFlags: NavMoveFlags = 0
     /** None / ForwardQueued / ForwardActive (this is used to navigate sibling parent menus from a child menu)  */
     var navMoveRequestForward = NavForward.None
     /** Direction of the move request (left/right/up/down), direction of the previous move request  */
     var navMoveDir = Dir.None
     /** Direction of the move request (left/right/up/down), direction of the previous move request  */
     var navMoveDirLast = Dir.None
+
+    var navMoveClipDir = Dir.None
     /** Best move request candidate within NavWindow    */
     val navMoveResultLocal = NavMoveResult()
     /** Best move request candidate within NavWindow's flattened hierarchy (when using the NavFlattened flag)   */

@@ -495,6 +495,63 @@ interface imgui_internal {
         navUpdateAnyRequestFlag()
     }
 
+    fun navMoveRequestForward(moveDir: Dir, clipDir: Dir, bbRel: Rect, moveFlags: NavMoveFlags) {
+
+        assert(g.navMoveRequestForward == NavForward.None)
+        navMoveRequestCancel()
+        g.navMoveDir = moveDir
+        g.navMoveDir = clipDir
+        g.navMoveRequestForward = NavForward.ForwardQueued
+        g.navMoveRequestFlags = moveFlags
+        g.navWindow!!.navRectRel[g.navLayer] = bbRel
+    }
+
+    fun navMoveRequestTryWrapping(window: Window, moveFlags: NavMoveFlags) {
+
+        if (g.navWindow !== window || !navMoveRequestButNoResultYet() || g.navMoveRequestForward != NavForward.None || g.navLayer != 0)
+            return
+        assert(moveFlags != 0) // No points calling this with no wrapping
+        val bbRel = window.navRectRel[0]
+
+        var clipDir = g.navMoveDir
+        if (g.navMoveDir == Dir.Left && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
+            bbRel.min.x = max(window.sizeFull.x, window.sizeContents.x) - window.scroll.x
+            bbRel.max.x = bbRel.min.x
+            if (moveFlags has NavMoveFlag.WrapX) {
+                bbRel.translateY(-bbRel.height)
+                clipDir = Dir.Up
+            }
+            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+        }
+        if (g.navMoveDir == Dir.Right && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
+            bbRel.min.x = -window.scroll.x
+            bbRel.max.x = bbRel.min.x
+            if (moveFlags has NavMoveFlag.WrapX) {
+                bbRel.translateY(+bbRel.height)
+                clipDir = Dir.Down
+            }
+            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+        }
+        if (g.navMoveDir == Dir.Up && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
+            bbRel.min.y = max(window.sizeFull.y, window.sizeContents.y) - window.scroll.y
+            bbRel.max.y = max(window.sizeFull.y, window.sizeContents.y) - window.scroll.y
+            if (moveFlags has NavMoveFlag.WrapY) {
+                bbRel.translateX(-bbRel.width)
+                clipDir = Dir.Left
+            }
+            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+        }
+        if (g.navMoveDir == Dir.Down && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
+            bbRel.min.y = -window.scroll.y
+            bbRel.max.y = bbRel.min.y
+            if (moveFlags has NavMoveFlag.WrapY) {
+                bbRel.translateX(+bbRel.width)
+                clipDir = Dir.Right
+            }
+            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+        }
+    }
+
     /** Remotely activate a button, checkbox, tree node etc. given its unique ID. activation is queued and processed
      *  on the next frame when the item is encountered again.  */
     fun activateItem(id: ID) {
@@ -2953,7 +3010,7 @@ interface imgui_internal {
     /** Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging */
     fun treeNodeBehaviorIsOpen(id: ID, flags: TreeNodeFlags = 0): Boolean {
 
-        if (flags has Tnf.Leaf) return true
+        if (flags has Tnf.Leaf) return false
 
         // We only write to the tree storage if the user clicks (or explicitly use SetNextTreeNode*** functions)
         val window = g.currentWindow!!
