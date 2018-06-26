@@ -70,6 +70,7 @@ import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
 import imgui.ImGui.treeNode
+import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
 import imgui.ImGui.version
 import imgui.ImGui.windowDrawList
@@ -747,11 +748,9 @@ object PropertyEditor {
                 if (i < 2)
                     showDummyObject("Child", 424242)
                 else {
+                    // Here we use a TreeNode to highlight on hover (we could use e.g. Selectable as well)
                     alignTextToFramePadding()
-                    // Here we use a Selectable (instead of Text) to highlight on hover
-                    //Text("Field_%d", i);
-                    bullet()
-                    selectable("Field_$i")
+                    treeNodeEx("Field", Tnf.Leaf or Tnf.Bullet, "Field_$i")
                     nextColumn()
                     pushItemWidth(-1)
                     if (i >= 5)

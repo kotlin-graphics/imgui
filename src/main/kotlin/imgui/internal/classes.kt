@@ -1,7 +1,6 @@
 package imgui.internal
 
 import gli_.hasnt
-import glm_.b
 import glm_.f
 import glm_.glm
 import glm_.i
@@ -112,6 +111,16 @@ class Rect {
         min.y += d.y
         max.x -= d.x
         max.y -= d.y
+    }
+
+    infix fun translateX(dx: Float) {
+        min.x += dx
+        max.x += dx
+    }
+
+    infix fun translateY(dy: Float) {
+        min.y += dy
+        max.y += dy
     }
 
     /** Simple version, may lead to an inverted rectangle, which is fine for Contains/Overlaps test but not for display. */
