@@ -370,13 +370,6 @@ interface imgui_internal {
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack += popupRef
         else {
-            // Close child popups if any
-            if (g.openPopupStack.size > currentStackSize + 1)
-                for (i in currentStackSize + 1 until g.openPopupStack.size)
-                    g.openPopupStack.pop()
-            else if (g.openPopupStack.size < currentStackSize + 1)
-                TODO()
-
             /*  Gently handle the user mistakenly calling OpenPopup() every frame. It is a programming mistake!
                 However, if we were to run the regular code path, the ui would become completely unusable because
                 the popup will always be in hidden-while-calculating-size state _while_ claiming focus.
@@ -384,9 +377,15 @@ interface imgui_internal {
                 to proceed, it will keep reappearing and the programming error will be more obvious to understand.  */
             if (g.openPopupStack[currentStackSize].popupId == id && g.openPopupStack[currentStackSize].openFrameCount == g.frameCount - 1)
                 g.openPopupStack[currentStackSize].openFrameCount = popupRef.openFrameCount
-            else
+            else {
+                // Close child popups if any
+                if (g.openPopupStack.size > currentStackSize + 1) // ~resize
+                    for (i in currentStackSize + 1 until g.openPopupStack.size)
+                        g.openPopupStack.pop()
+                else if (g.openPopupStack.size < currentStackSize + 1)
+                    TODO()
                 g.openPopupStack[currentStackSize] = popupRef
-
+            }
             /*  When reopening a popup we first refocus its parent, otherwise if its parent is itself a popup
                 it would get closed by closePopupsOverWindow().  This is equivalent to what ClosePopupToLevel() does. */
             //if (g.openPopupStack[currentStackSize].popupId == id) parentWindow.focus()

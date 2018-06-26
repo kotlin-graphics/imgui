@@ -170,7 +170,7 @@ enum class TreeNodeFlag(val i: Int) {
     //ImGuiTreeNodeFlags_NoScrollOnOpen     = 1 << 12,  // FIXME: TODO: Disable automatic scroll on TreePop() if node got just open and contents is not visible
     /** (WIP) Nav: left direction may move to this TreeNode() from any of its child (items submitted between TreeNode and TreePop)   */
     NavLeftJumpsBackHere(1 shl 13),
-    CollapsingHeader(Framed or NoAutoOpenOnLog);
+    CollapsingHeader(Framed or NoTreePushOnOpen or NoAutoOpenOnLog);
 
     infix fun or(treeNodeFlag: TreeNodeFlag): TreeNodeFlags = i or treeNodeFlag.i
 }

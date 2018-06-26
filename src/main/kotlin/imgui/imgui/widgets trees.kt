@@ -116,7 +116,7 @@ interface imgui_widgetsTrees {
     /** CollapsingHeader returns true when opened but do not indent nor push into the ID stack (because of the
      *  ImGuiTreeNodeFlags_NoTreePushOnOpen flag).
      *  This is basically the same as calling
-     *      treeNodeEx(label, TreeNodeFlag.CollapsingHeader | TreeNodeFlag.NoTreePushOnOpen)
+     *      treeNodeEx(label, TreeNodeFlag.CollapsingHeader)
      *  You can remove the _NoTreePushOnOpen flag if you want behavior closer to normal TreeNode().
      *  If returning 'true' the header is open. doesn't indent nor push on ID stack. user doesn't have to call TreePop().   */
     fun collapsingHeader(label: String, flags: TreeNodeFlags = 0): Boolean {
@@ -124,11 +124,11 @@ interface imgui_widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        return treeNodeBehavior(window.getId(label), flags or Tnf.CollapsingHeader or Tnf.NoTreePushOnOpen, label)
+        return treeNodeBehavior(window.getId(label), flags or Tnf.CollapsingHeader, label)
     }
 
     /** when 'open' isn't NULL, display an additional small close button on upper right of the header */
-    fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>?, flags: TreeNodeFlags = 0): Boolean {
+    fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>?, flags_: TreeNodeFlags = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -136,8 +136,8 @@ interface imgui_widgetsTrees {
         if (open != null && !open()) return false
 
         val id = window.getId(label)
-        val isOpen = treeNodeBehavior(id, flags or Tnf.CollapsingHeader or Tnf.NoTreePushOnOpen or
-                if (open != null) Tnf.AllowItemOverlap else Tnf.Null, label)
+        val flags = flags_ or Tnf.CollapsingHeader or if (open != null) Tnf.AllowItemOverlap else Tnf.Null
+        val isOpen = treeNodeBehavior(id, flags, label)
         if (open != null) {
             // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
             val buttonSz = g.fontSize * 0.5f
