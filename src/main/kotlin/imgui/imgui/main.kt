@@ -326,7 +326,7 @@ interface imgui_main {
         }
 
         // Hide implicit "Debug" window if it hasn't been used
-        assert(g.currentWindowStack.size == 1) { "Mismatched Begin()/End() calls" }
+        assert(g.currentWindowStack.size == 1) { "Mismatched Begin()/End() calls, did you forget to call end on g.currentWindow.name?" }
         g.currentWindow?.let {
             if (!it.writeAccessed) it.active = false
         }

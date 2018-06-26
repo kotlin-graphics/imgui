@@ -193,7 +193,7 @@ interface imgui_menus {
             window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
             pushStyleVar(StyleVar.ItemSpacing, style.itemSpacing * 2f)
             val w = labelSize.x
-            val flags = Sf.Menu or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
+            val flags = Sf.NoHoldingActiveID or Sf.PressedOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
             pressed = selectable(label, menuIsOpen, flags, Vec2(w, 0f))
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
@@ -204,7 +204,7 @@ interface imgui_menus {
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
             val w = window.menuColumns.declColumns(labelSize.x, 0f, (g.fontSize * 1.2f).i.f) // Feedback to next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
-            val flags = Sf.Menu or Sf.DontClosePopups or Sf.DrawFillAvailWidth
+            val flags = Sf.NoHoldingActiveID or Sf.PressedOnClick or Sf.DontClosePopups or Sf.DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.Null else Sf.Disabled, Vec2(w, 0f))
             if (!enabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
             renderArrow(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), Dir.Right)
@@ -315,7 +315,7 @@ interface imgui_menus {
 
         val pos = Vec2(window.dc.cursorPos)
         val labelSize = calcTextSize(label, true)
-        val flags = Sf.MenuItem or if (enabled) Sf.Null else Sf.Disabled
+        val flags = Sf.PressedOnRelease or if (enabled) Sf.Null else Sf.Disabled
         val pressed: Boolean
         if (window.dc.layoutType == Lt.Horizontal) {
             /*  Mimic the exact layout spacing of beginMenu() to allow menuItem() inside a menu bar, which is a little 

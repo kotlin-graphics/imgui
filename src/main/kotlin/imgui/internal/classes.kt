@@ -22,8 +22,9 @@ import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
 
 
-/** 2D axis aligned bounding-box
-NB: we can't rely on ImVec2 math operators being available here */
+/** An axis-aligned rectangle (2 points)
+ *  2D axis aligned bounding-box
+ *  NB: we can't rely on ImVec2 math operators being available here */
 class Rect {
     /** Upper-left  */
     var min = Vec2(Float.MAX_VALUE, Float.MAX_VALUE)
@@ -179,7 +180,7 @@ class StyleMod(val idx: StyleVar) {
     val floats = FloatArray(2)
 }
 
-/* Stacked data for BeginGroup()/EndGroup() */
+/* Stacked storage data for BeginGroup()/EndGroup() */
 class GroupData {
     var backupCursorPos = Vec2()
     var backupCursorMaxPos = Vec2()
@@ -192,7 +193,7 @@ class GroupData {
     var advanceCursor = false
 }
 
-// Simple column measurement currently used for MenuItem() only. This is very short-sighted/throw-away code and NOT a generic helper.
+/** Simple column measurement, currently used for MenuItem() only.. This is very short-sighted/throw-away code and NOT a generic helper. */
 class MenuColumns {
 
     var count = 0
@@ -233,7 +234,8 @@ class MenuColumns {
     fun calcExtraSpace(availW: Float) = glm.max(0f, availW - width)
 }
 
-// Data saved in imgui.ini file
+/** Storage for window settings stored in .ini file (we keep one of those even if the actual window wasn't instanced during this session)
+ *  Windows data saved in imgui.ini file */
 class WindowSettings(val name: String = "") {
     var id: ID = hash(name, 0)
     var pos = Vec2()
@@ -259,6 +261,7 @@ class PopupRef(
         /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
         var openMousePos: Vec2)
 
+/** Storage data for a single column */
 class ColumnData {
     /** Column start offset, normalized 0f (far left) -> 1f (far right) */
     var offsetNorm = 0f
@@ -268,6 +271,7 @@ class ColumnData {
     var clipRect = Rect()
 }
 
+/** Storage data for a columns set */
 class ColumnsSet {
     var id: ID = 0
     var flags: ColumnsFlags = 0
@@ -302,7 +306,8 @@ class ColumnsSet {
     }
 }
 
-/** Data shared among multiple draw lists (typically owned by parent ImGui context, but you may create one yourself) */
+/** Data shared between all ImDrawList instances
+ * Data shared among multiple draw lists (typically owned by parent ImGui context, but you may create one yourself) */
 class DrawListSharedData {
     /** UV of white pixel in the atlas  */
     var texUvWhitePixel = Vec2()
@@ -317,12 +322,13 @@ class DrawListSharedData {
 
     // Const data
     // FIXME: Bake rounded corners fill/borders in atlas
-    var circleVtx12 = Array(12, {
+    var circleVtx12 = Array(12) {
         val a = it * 2 * glm.PIf / 12
         Vec2(cos(a), sin(a))
-    })
+    }
 }
 
+/** Helper to build a ImDrawData instance */
 class DrawDataBuilder {
     /** Global layers for: regular, tooltip */
     val layers = Array(2) { ArrayList<DrawList>() }
@@ -341,6 +347,7 @@ class DrawDataBuilder {
     }
 }
 
+/** Result of a directional navigation move query result */
 class NavMoveResult {
     /** Best candidate  */
     var id: ID = 0
@@ -401,10 +408,10 @@ class NextWindowData {
     }
 }
 
-/** Transient per-window data, reset at the beginning of the frame
-FIXME: That's theory, in practice the delimitation between ImGuiWindow and ImGuiDrawContext is quite tenuous and
-could be reconsidered.  */
-class DrawContext {
+/** Temporary storage for one, that's the data which in theory we could ditch at the end of the frame
+ *  Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
+ *  FIXME: That's theory, in practice the delimitation between Window and WindowTempData is quite tenuous and could be reconsidered.  */
+class WindowTempData {
 
     var cursorPos = Vec2()
 
@@ -499,7 +506,7 @@ class DrawContext {
     var columnsSet: ColumnsSet? = null
 }
 
-/** Windows data    */
+/** Storage for one window */
 class Window(var context: Context, var name: String) {
     /** == ImHash(Name) */
     val id: ID = hash(name, 0)
@@ -588,8 +595,8 @@ class Window(var context: Context, var name: String) {
     var setWindowPosPivot = Vec2(Float.MAX_VALUE)
 
 
-    /** Temporary per-window data, reset at the beginning of the frame  */
-    var dc = DrawContext()
+    /** Temporary per-window data, reset at the beginning of the frame. This used to be called DrawContext, hence the "DC" variable name.  */
+    var dc = WindowTempData()
     /** ID stack. ID are hashes seeded with the value at the top of the stack   */
     val idStack = Stack<ID>()
 
