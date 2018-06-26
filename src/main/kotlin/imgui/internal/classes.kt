@@ -667,7 +667,7 @@ class Window(var context: Context, var name: String) {
         val ptrIndex = ++ptrIndices
         if (ptrIndex >= ptrId.size) {
             val newBufLength = ptrId.size + 512
-            val newBuf = Array(newBufLength, { java.lang.Byte.valueOf(it.b) })
+            val newBuf = Array(newBufLength) { it }
             System.arraycopy(ptrId, 0, newBuf, 0, ptrId.size)
             ptrId = newBuf
         }
