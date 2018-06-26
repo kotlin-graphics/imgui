@@ -1258,8 +1258,12 @@ interface imgui_internal {
         var pressed = false
         var hovered = itemHoverable(bb, id)
 
+        // Drag source doesn't report as hovered
+        if (hovered && g.dragDropActive && g.dragDropPayload.sourceId == id)
+            hovered = false
+
         // Special mode for Drag and Drop where holding button pressed for a long time while dragging another item triggers the button
-        if (flags has Bf.PressedOnDragDropHold && g.dragDropActive && g.dragDropSourceFlags hasnt Ddf.SourceNoHoldToOpenOthers)
+        if (g.dragDropActive && flags has Bf.PressedOnDragDropHold && g.dragDropSourceFlags hasnt Ddf.SourceNoHoldToOpenOthers)
             if (isItemHovered(Hf.AllowWhenBlockedByActiveItem)) {
                 hovered = true
                 setHoveredId(id)
