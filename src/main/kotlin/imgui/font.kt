@@ -38,7 +38,7 @@ class FontConfig {
     var fontDataOwnedByAtlas = true
     /** Index of font within TTF/OTF file   */
     var fontNo = 0
-    /** Size in pixels for rasterizer.  */
+    /** Size in pixels for rasterizer (more or less maps to the resulting font height).  */
     var sizePixels = 0f
     /** Rasterize at higher quality for sub-pixel positioning. We don't use sub-pixel positions on the Y axis.  */
     var oversample = Vec2i(3, 1)
@@ -52,6 +52,10 @@ class FontConfig {
     /** Pointer to a user-provided list of Unicode range (2 value per range, values are inclusive, zero-terminated
      *  list). THE ARRAY DATA NEEDS TO PERSIST AS LONG AS THE FONT IS ALIVE.    */
     var glyphRanges = intArrayOf()
+    /** Minimum AdvanceX for glyphs, set Min to align font icons, set both Min/Max to enforce mono-space font */
+    var glyphMinAdvanceX = 0f
+    /** Maximum AdvanceX for glyphs */
+    var glyphMaxAdvanceX = Float.MAX_VALUE
     /** Merge into previous ImFont, so you can combine multiple inputs font into one ImFont (e.g. ASCII font + icons +
      *  Japanese glyphs). You may want to use GlyphOffset.y when merge font of different heights.   */
     var mergeMode = false
@@ -120,9 +124,7 @@ class FontAtlas {
         if (!fontCfg.mergeMode)
             fonts += Font()
         else
-            assert(fonts.isNotEmpty()) {
-                " When using MergeMode make sure that a font has already been added before. You can use io.fonts.addFontDefault to add the default imgui font. "
-            }
+            assert(fonts.isNotEmpty()) { " When using MergeMode make sure that a font has already been added before. You can use io.fonts.addFontDefault to add the default imgui font. " }
         configData.add(fontCfg)
         if (fontCfg.dstFont == null)
             fontCfg.dstFont = fonts.last()
@@ -246,6 +248,9 @@ class FontAtlas {
     /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
     private fun build() = buildWithStbTrueType()
 
+    val isBuilt: Boolean
+        get() = fonts.size > 0 && (texPixelsAlpha8 != null || texPixelsRGBA32 != null)
+
     /** 1 byte per-pixel    */
     fun getTexDataAsAlpha8(): Triple<ByteBuffer, Vec2i, Int> {
 
@@ -288,7 +293,7 @@ class FontAtlas {
 //            void           SetBit(int n)        { UsedChars[n >> 3] |= 1 << (n & 7); }  // Set bit 'c' in the array
 //            void           AddChar(ImWchar c)   { SetBit(c); }                          // Add character
 //            IMGUI_API void AddText(const char* text, const char* text_end = NULL);      // Add string (each character of the UTF-8 string are added)
-//            IMGUI_API void AddRanges(const ImWchar* ranges);                            // Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault) to force add all of ASCII/Latin+Ext
+//            IMGUI_API void AddRanges(const ImWchar* ranges);                            // Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault()) to force add all of ASCII/Latin+Ext
 //            IMGUI_API void BuildRanges(ImVector<ImWchar>* out_ranges);                  // Output new ranges
 //        };
 //    //-----------------------------------------------------------------------------
@@ -438,7 +443,7 @@ class FontAtlas {
     var flags: FontAtlasFlags = 0
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
-    var texId: TextureID = -1
+    var texId: TextureID = 0
     /** 1 component per pixel, each component is unsigned 8-bit. Total size = texSize.x * texSize.y  */
     var texPixelsAlpha8: ByteBuffer? = null
     /** 4 component per pixel, each component is unsigned 8-bit. Total size = texSize.x * texSize.y * 4  */
@@ -463,7 +468,7 @@ class FontAtlas {
     /** Internal data   */
     private val configData = ArrayList<FontConfig>()
     /** Identifiers of custom texture rectangle used by FontAtlas/DrawList  */
-    private val customRectIds = IntArray(1, { -1 })
+    private val customRectIds = intArrayOf(-1)
 
     private fun customRectCalcUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
         assert(texSize.x > 0 && texSize.y > 0) { "Font atlas needs to be built before we can calculate UV coordinates" }
@@ -480,7 +485,7 @@ class FontAtlas {
 
         buildRegisterDefaultCustomRects()
 
-        texId = -1
+        texId = 0
         texSize put 0
         texUvScale put 0f
         texUvWhitePixel put 0f
@@ -667,7 +672,8 @@ class FontAtlas {
             val ascent = floor(unscaledAscent * fontScale + if (unscaledAscent > 0f) +1 else -1)
             val descent = floor(unscaledDescent * fontScale + if (unscaledDescent > 0f) +1 else -1)
             buildSetupFont(dstFont, cfg, ascent, descent)
-            val off = Vec2(cfg.glyphOffset.x, cfg.glyphOffset.y + (dstFont.ascent + 0.5f).i.f)
+            val fontOffX = cfg.glyphOffset.x
+            val fontOffY = cfg.glyphOffset.y + (dstFont.ascent + 0.5f).i.f
 
             tmp.ranges.forEach { range ->
 
@@ -679,11 +685,19 @@ class FontAtlas {
                     val codepoint = range.firstUnicodeCodepointInRange + charIdx
                     if (cfg.mergeMode && dstFont.findGlyphNoFallback(codepoint) != null) continue
 
+                    val charAdvanceXOrg = pc.xAdvance
+                    val charAdvanceXMod = glm.clamp(charAdvanceXOrg, cfg.glyphMinAdvanceX, cfg.glyphMaxAdvanceX)
+                    var charOffX = fontOffX
+                    if (charAdvanceXOrg != charAdvanceXMod) {
+                        val t = (charAdvanceXMod - charAdvanceXOrg) * 0.5f
+                        charOffX += if(cfg.pixelSnapH) t.i.f else t
+                    }
                     val q = STBTTAlignedQuad.create()
                     stbtt_GetPackedQuad(range.chardataForRange, texSize, charIdx, Vec2(), q, false)
 
-                    dstFont.addGlyph(codepoint, q.x0 + off.x, q.y0 + off.y,
-                            q.x1 + off.x, q.y1 + off.y, q.s0, q.t0, q.s1, q.t1, pc.advanceX)
+                    dstFont.addGlyph(codepoint, q.x0 + charOffX, q.y0 + fontOffY,
+                            q.x1 + charOffX, q.y1 + fontOffY, q.s0, q.t0, q.s1, q.t1, charAdvanceXMod)
+                    q.free()
                 }
             }
         }
@@ -869,14 +883,14 @@ class Font {
     var displayOffset = Vec2(0f, 0f)
     /** All glyphs. */
     val glyphs = ArrayList<FontGlyph>()
-    /** Sparse. Glyphs.advanceX in a directly indexable way (more cache-friendly, for CalcTextSize functions which are
+    /** Sparse. Glyphs.xAdvance in a directly indexable way (more cache-friendly, for CalcTextSize functions which are
     often bottleneck in large UI).  */
     val indexAdvanceX = ArrayList<Float>()
     /** Sparse. Index glyphs by Unicode code-point. */
     val indexLookup = ArrayList<Int>()
     /** == FindGlyph(FontFallbackChar)  */
     var fallbackGlyph: FontGlyph? = null
-    /** == FallbackGlyph.advanceX  */
+    /** == FallbackGlyph.xAdvance  */
     var fallbackAdvanceX = 0f
     /** Replacement glyph if one isn't found. Only set via SetFallbackChar()    */
     var fallbackChar = '?'
@@ -1373,7 +1387,7 @@ class Font {
         glyph.v0 = v0
         glyph.u1 = u1
         glyph.v1 = v1
-        glyph.advanceX = advanceX + configData[0].glyphExtraSpacing.x  // Bake spacing into advanceX
+        glyph.advanceX = advanceX + configData[0].glyphExtraSpacing.x  // Bake spacing into xAdvance
 
         if (configData[0].pixelSnapH)
             glyph.advanceX = (glyph.advanceX + 0.5f).i.f

@@ -12,6 +12,10 @@ import uno.buffer.intBufferOf
 import uno.buffer.use
 import uno.kotlin.buffers.toByteArray
 
+enum class GlfwClientApi { Unknown, OpenGL, Vulkan }
+
+var clientApi = GlfwClientApi.OpenGL
+
 val vertexShader
     get() = """
 
@@ -57,7 +61,7 @@ val fragmentShader
 var glslVersion = 130
 
 
-val mouseJustPressed = BooleanArray(3)
+val mouseJustPressed = BooleanArray(5)
 
 enum class Buffer { Vertex, Element;
 
@@ -74,7 +78,7 @@ val bufferName = intBufferBig<Buffer>()
     and we don't track creation/deletion of windows so we don't have an obvious key to use to cache them.)~     */
 val vaoName = intBufferBig(1)
 
-val fontTexture = intBufferOf(-1)
+val fontTexture = intBufferBig(1)
 
 val mat = Mat4()
 

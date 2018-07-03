@@ -83,7 +83,9 @@ object JoglGL3 {
 
         this.gl = gl
 
-        if (fontTexture[0] < 0) gl.createDeviceObjects()
+        if (fontTexture[0] == 0) gl.createDeviceObjects()
+
+        assert(io.fonts.isBuilt) { "Font atlas needs to be built" }
 
         // Setup display size (every frame to accommodate for window resizing)
         io.displaySize.x = window.width
@@ -96,42 +98,57 @@ object JoglGL3 {
         io.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         time = currentTime
 
-        /*  Setup inputs
-            (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
-            Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)   */
-        if (window.hasFocus())
-            if (io.wantSetMousePos)
-            // Set OS mouse position if requested (only used when ConfigFlags.NavEnableSetMousePos is enabled by user)
-                window.warpPointer(io.mousePos.x.i, io.mousePos.y.i)
-            else
-                io.mousePos put cursorPos
-        else
-            io.mousePos put -Float.MAX_VALUE
-
-        repeat(3) {
-            /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
-                events that are shorter than 1 frame.   */
-            io.mouseDown[it] = mouseJustPressed[it] || mouseCallback.lastEvent?.isButtonDown(it + 1) == true // MouseButton starts from 1
-            mouseJustPressed[it] = false
-        }
-
-        // Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
-        val cursor = mouseCursor
-        if (io.mouseDrawCursor || cursor == MouseCursor.None)
-            window.isPointerVisible = false
-        else {
-//            window.pointerIcon =
-            window.isPointerVisible = true
-        }
+        updateMousePosAndButtons()
+        updateMouseCursor()
 
         /*  Start the frame. This call will update the io.wantCaptureMouse, io.wantCaptureKeyboard flag that you can use
             to dispatch inputs (or not) to your application.         */
         ImGui.newFrame()
     }
 
+    private fun updateMousePosAndButtons() {
+
+        repeat(io.mouseDown.size) {
+            /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
+                events that are shorter than 1 frame.   */
+            io.mouseDown[it] = mouseJustPressed[it]
+            mouseJustPressed[it] = false
+        }
+
+        // Update mouse position
+        val mousePosBackup = Vec2i(io.mousePos)
+        io.mousePos put -Float.MAX_VALUE
+        if (window.hasFocus())
+            if (io.wantSetMousePos)
+                window.warpPointer(mousePosBackup.x, mousePosBackup.y)
+            else
+                io.mousePos put cursorPos
+    }
+
+    private fun updateMouseCursor() {
+
+        if (io.configFlags has ConfigFlag.NoMouseCursorChange || !window.isPointerVisible)
+            return
+
+        val imguiCursor = mouseCursor
+        if (imguiCursor == MouseCursor.None || io.mouseDrawCursor)
+        // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
+            window.isPointerVisible = false
+        else {
+            // Show OS mouse cursor
+            // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
+//            window.cursor = when (mouseCursors[imguiCursor.i]) {
+//                0L -> mouseCursors[MouseCursor.Arrow.i]
+//                else -> mouseCursors[imguiCursor.i]
+//            }
+            window.isPointerVisible = true
+        }
+    }
+
     private fun GL3.createDeviceObjects(): Boolean {
 
         // Backup GL state
+        // we have to save also program since we do the uniform mat and texture setup once here
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
@@ -257,10 +274,11 @@ object JoglGL3 {
          *  (screen coordinates != framebuffer coordinates) */
         val fbSize = io.displaySize * io.displayFramebufferScale
         if (fbSize equal 0) return
-        drawData.scaleClipRects(io.displayFramebufferScale)
+        drawData scaleClipRects io.displayFramebufferScale
 
         // Backup GL state
         val lastActiveTexture = glGetInteger(GL_ACTIVE_TEXTURE)
+        glActiveTexture(GL_TEXTURE0 + semantic.sampler.DIFFUSE)
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastSampler = glGetInteger(GL_SAMPLER_BINDING)
@@ -319,10 +337,8 @@ object JoglGL3 {
                 if (cmd.userCallback != null)
                     cmd.userCallback!!(cmdList, cmd)
                 else {
-                    glActiveTexture(GL_TEXTURE0 + semantic.sampler.DIFFUSE)
                     glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                    glScissor(cmd.clipRect.x.i, fbSize.y - cmd.clipRect.w.i,
-                            (cmd.clipRect.z - cmd.clipRect.x).i, (cmd.clipRect.w - cmd.clipRect.y).i)
+                    glScissor(cmd.clipRect.x.i, fbSize.y - cmd.clipRect.w.i, (cmd.clipRect.z - cmd.clipRect.x).i, (cmd.clipRect.w - cmd.clipRect.y).i)
                     glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
                 }
                 idxBufferOffset += cmd.elemCount * Int.BYTES
@@ -408,22 +424,26 @@ object JoglGL3 {
 
     fun shutdown(gl: GL3) {
         // Destroy OpenGL objects
-        invalidateDeviceObjects(gl)
+        destroyDeviceObjects(gl)
         window.removeMouseListener(mouseCallback)
         window.removeKeyListener(keyCallback)
     }
 
-    private fun invalidateDeviceObjects(gl: GL3) = with(gl) {
+    private fun destroyDeviceObjects(gl: GL3) = with(gl) {
 
         glDeleteVertexArrays(1, vaoName)
         glDeleteBuffers(Buffer.MAX, bufferName)
 
         if(program.name >= 0) glDeleteProgram(program.name)
 
-        if (fontTexture[0] >= 0) {
-            glDeleteTextures(1, fontTexture)
-            io.fonts.texId = -1
-            fontTexture[0] = -1
+        destroyFontsTexture(gl)
+    }
+
+    private fun destroyFontsTexture(gl: GL3) {
+        if (fontTexture[0] != 0) {
+            gl.glDeleteTextures(1, fontTexture)
+            io.fonts.texId = 0
+            fontTexture[0] = 0
         }
     }
 

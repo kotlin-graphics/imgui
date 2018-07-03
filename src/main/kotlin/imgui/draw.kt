@@ -40,7 +40,7 @@ class DrawCmd {
     /** Number of indices (multiple of 3) to be rendered as triangles. Vertices are stored in the callee ImDrawList's
      *  vtx_buffer[] array, indices in idx_buffer[].    */
     var elemCount = 0
-    /** Clipping rectangle (x1, y1, x2, y2) */
+    /** Clipping rectangle (x1, y1, x2, y2). Subtract ImDrawData->DisplayPos to get clipping rectangle in "viewport" coordinates */
     var clipRect = Vec4()
     /** User-provided texture ID. Set by user in ImfontAtlas::SetTexID() for fonts or passed to Image*() functions.
     Ignore if never using images or multiple fonts atlas.   */
@@ -293,23 +293,23 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun addText(pos: Vec2, col: Int, text: CharArray, textEnd: Int = text.size) = addText(g.font, g.fontSize, pos, col, text, textEnd)
 
-    fun addText(font: Font?, fontSize: Float, pos: Vec2, col: Int, text: CharArray, textEnd: Int = text.size, wrapWidth: Float = 0f,
+    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: CharArray, textEnd_: Int = text.size, wrapWidth: Float = 0f,
                 cpuFineClipRect: Vec4? = null) {
 
         if ((col and COL32_A_MASK) == 0) return
 
-        var textEnd = textEnd
+        var textEnd = textEnd_
         if (textEnd == 0)
             textEnd = text.strlen
         if (textEnd == 0)
             return
 
         // Pull default font/size from the shared ImDrawListSharedData instance
-        val font = font ?: _data.font!!
-        val fontSize = if (fontSize == 0f) _data.fontSize else fontSize
+        val font = font_ ?: _data.font!!
+        val fontSize = if (fontSize_ == 0f) _data.fontSize else fontSize_
 
         assert(font.containerAtlas.texId == _textureIdStack.last()) {
-            "Use high-level ImGui::pushFont() or low-level DrawList::pushTextureId() to change font"
+            "Use high-level ImGui::pushFont() or low-level DrawList::pushTextureId() to change font_"
         }
 
         val clipRect = Vec4(_clipRectStack.last())
@@ -1114,10 +1114,14 @@ class DrawData {
     val cmdLists = ArrayList<DrawList>()
     /** Number of ImDrawList* to render */
     var cmdListsCount = 0   // TODO remove?
-    /** For convenience, sum of all DrawList's VtxBuffer.Size   */
-    var totalVtxCount = 0
     /** For convenience, sum of all DrawList's IdxBuffer.Size   */
     var totalIdxCount = 0
+    /** For convenience, sum of all DrawList's VtxBuffer.Size   */
+    var totalVtxCount = 0
+    /** Upper-left position of the viewport to render (== upper-left of the orthogonal projection matrix to use) */
+    var displayPos = Vec2()
+    /** Size of the viewport to render (== io.displaySize for the main viewport) (displayPos + displaySize == lower-right of the orthogonal projection matrix to use) */
+    var displaySize = Vec2()
 
     // Functions
 
@@ -1128,6 +1132,8 @@ class DrawData {
         totalIdxCount = 0
         totalVtxCount = 0
         cmdListsCount = 0
+        displayPos put 0f
+        displaySize put 0f
     }
 
     /** Helper to convert all buffers from indexed to non-indexed, in case you cannot render indexed.
@@ -1148,7 +1154,7 @@ class DrawData {
 
     /** Helper to scale the ClipRect field of each ImDrawCmd. Use if your final output buffer is at a different scale
      *  than ImGui expects, or if there is a difference between your window resolution and framebuffer resolution.  */
-    fun scaleClipRects(scale: Vec2) {
+    infix fun scaleClipRects(scale: Vec2) {
         cmdLists.forEach {
             it.cmdBuffer.forEach { cmd ->
                 cmd.clipRect.timesAssign(scale.x, scale.y, scale.x, scale.y)

@@ -36,7 +36,12 @@ public class Test_lwjgl {
 
     public void run() {
 
-        init();
+        glfw.init("3.2", "core");
+
+        window = new GlfwWindow(1280, 720, "ImGui Lwjgl OpenGL3 example", NULL, new Vec2i(Integer.MIN_VALUE), true);
+        window.init();
+
+        glfw.setSwapInterval(1);    // Enable vsync
 
         // Setup ImGui binding
         //setGlslVersion(330); // set here your desidered glsl version
@@ -70,7 +75,7 @@ public class Test_lwjgl {
 //        assert (font != null);
 
         window.loop(() -> {
-            loop();
+            mainLoop();
             return Unit.INSTANCE;
         });
 
@@ -80,27 +85,7 @@ public class Test_lwjgl {
         glfw.terminate();
     }
 
-    private void init() {
-
-        glfw.init();
-        windowHint.getContext().setVersion("3.2");
-        windowHint.setProfile("core");
-
-        window = new GlfwWindow(1280, 720, "ImGui Lwjgl OpenGL3 example", NULL, new Vec2i(Integer.MIN_VALUE), true);
-
-        window.makeContextCurrent();
-        glfw.setSwapInterval(1);    // Enable vsync
-        window.show(true);
-
-        /*  This line is critical for LWJGL's interoperation with GLFW's OpenGL context, or any context that is
-            managed externally.
-            LWJGL detects the context that is current in the current thread, creates the GLCapabilities instance and
-            makes the OpenGL bindings available for use.    */
-        GL.createCapabilities();
-    }
-
-
-    private void loop() {
+    private void mainLoop() {
 
         /*  You can read the IO.wantCaptureMouse, IO.wantCaptureKeyboard flags to tell if dear imgui wants to use your
             inputs.

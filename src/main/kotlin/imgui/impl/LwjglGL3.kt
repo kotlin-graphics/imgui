@@ -2,6 +2,7 @@ package imgui.impl
 
 import glm_.*
 import glm_.buffer.bufferBig
+import glm_.buffer.cap
 import glm_.buffer.free
 import glm_.buffer.intBufferBig
 import glm_.vec2.Vec2
@@ -21,15 +22,12 @@ import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
 import org.lwjgl.glfw.GLFW.*
-import org.lwjgl.opengl.GL11.*
-import org.lwjgl.opengl.GL13.*
-import org.lwjgl.opengl.GL14.*
-import org.lwjgl.opengl.GL15.*
-import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
+import org.lwjgl.system.MemoryUtil.NULL
 import uno.glfw.GlfwWindow
+import uno.glfw.GlfwWindow.CursorStatus
 import uno.glfw.glfw
 
 
@@ -102,7 +100,9 @@ object LwjglGL3 {
 
     fun newFrame() {
 
-        if (fontTexture[0] < 0) createDeviceObjects()
+        if (fontTexture[0] == 0) createDeviceObjects()
+
+        assert(io.fonts.isBuilt) { "Font atlas needs to be built" }
 
         // Setup display size (every frame to accommodate for window resizing)
         io.displaySize put window.size
@@ -110,48 +110,22 @@ object LwjglGL3 {
         io.displayFramebufferScale.y = if (window.size.y > 0) window.framebufferSize.y / window.size.y.f else 0f
 
         // Setup time step
-        val currentTime = glfwGetTime() // TODO move to uno
+        val currentTime = glfw.time
         io.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         time = currentTime
 
-        /*  Setup inputs
-            (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
-            Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)   */
-        if (window.focused)
-        // Set OS mouse position if requested (only used when ConfigFlags.NavEnableSetMousePos is enabled by user)
-            if (io.wantSetMousePos)
-                window.cursorPos = Vec2d(io.mousePos)
-            else
-                io.mousePos put window.cursorPos
-        else
-            io.mousePos put -Float.MAX_VALUE
-
-        repeat(3) {
-            /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
-                events that are shorter than 1 frame.   */
-            io.mouseDown[it] = mouseJustPressed[it] || window.mouseButton(it) != 0
-            mouseJustPressed[it] = false
-        }
-
-        // Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
-        if (io.configFlags hasnt ConfigFlag.NoMouseCursorChange && window.cursor != GlfwWindow.Cursor.Disabled) {
-            val cursor = mouseCursor
-            if (io.mouseDrawCursor || cursor == MouseCursor.None)
-                window.cursor = GlfwWindow.Cursor.Hidden
-            else {
-                glfwSetCursor(window.handle, if (mouseCursors[cursor.i] != 0L) mouseCursors[cursor.i] else mouseCursors[MouseCursor.Arrow.i])
-                window.cursor = GlfwWindow.Cursor.Normal
-            }
-        }
+        updateMousePosAndButtons()
+        updateMouseCursor()
 
         // Gamepad navigation mapping [BETA]
         io.navInputs.fill(0f)
         if (io.configFlags has ConfigFlag.NavEnableGamepad) {
             // Update gamepad inputs
-            val buttons = window.getJoystickButtons(GLFW_JOYSTICK_1)!!
-            val buttonsCount = buttons.capacity()
-            val axes = window.getJoystickAxes(GLFW_JOYSTICK_1)!!
-            val axesCount = axes.capacity()
+            val buttons = window.joystick1Buttons!!
+            val buttonsCount = buttons.cap
+            val axes = window.joystick1Axes!!
+            val axesCount = axes.cap
+
             fun mapButton(nav: NavInput, button: Int) {
                 if (buttonsCount > button && buttons[button] == GLFW_PRESS.b)
                     io.navInputs[nav] = 1f
@@ -182,10 +156,10 @@ object LwjglGL3 {
             mapAnalog(NavInput.LStickUp, 1, +0.3f, +0.9f)
             mapAnalog(NavInput.LStickDown, 1, -0.3f, -0.9f)
 
-            if (axesCount > 0 && buttonsCount > 0)
-                io.backendFlags = io.backendFlags or BackendFlag.HasGamepad
-            else
-                io.backendFlags = io.backendFlags wo BackendFlag.HasGamepad
+            io.backendFlags = when {
+                axesCount > 0 && buttonsCount > 0 -> io.backendFlags or BackendFlag.HasGamepad
+                else -> io.backendFlags wo BackendFlag.HasGamepad
+            }
         }
 
         /*  Start the frame. This call will update the io.wantCaptureMouse, io.wantCaptureKeyboard flag that you can use
@@ -193,9 +167,46 @@ object LwjglGL3 {
         ImGui.newFrame()
     }
 
+    private fun updateMousePosAndButtons() {
+
+        repeat(io.mouseDown.size) {
+            /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
+                events that are shorter than 1 frame.   */
+            io.mouseDown[it] = mouseJustPressed[it] || window.mouseButton(it) != 0
+            mouseJustPressed[it] = false
+        }
+
+        // Update mouse position
+        val mousePosBackup = Vec2d(io.mousePos)
+        io.mousePos put -Float.MAX_VALUE
+        if (window.focused)
+            if (io.wantSetMousePos)
+                window.cursorPos = mousePosBackup
+            else
+                io.mousePos put window.cursorPos
+    }
+
+    private fun updateMouseCursor() {
+
+        if (io.configFlags has ConfigFlag.NoMouseCursorChange || window.cursorStatus == CursorStatus.Disabled)
+            return
+
+        val imguiCursor = mouseCursor
+        if (imguiCursor == MouseCursor.None || io.mouseDrawCursor)
+        // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
+            window.cursorStatus = CursorStatus.Hidden
+        else {
+            // Show OS mouse cursor
+            // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
+            window.cursor = mouseCursors[imguiCursor.i].takeIf { it != NULL } ?: mouseCursors[MouseCursor.Arrow.i]
+            window.cursorStatus = CursorStatus.Normal
+        }
+    }
+
     private fun createDeviceObjects(): Boolean {
 
         // Backup GL state
+        // we have to save also program since we do the uniform mat and texture setup once here
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
@@ -331,10 +342,11 @@ object LwjglGL3 {
          *  (screen coordinates != framebuffer coordinates) */
         val fbSize = io.displaySize * io.displayFramebufferScale
         if (fbSize equal 0) return
-        drawData.scaleClipRects(io.displayFramebufferScale)
+        drawData scaleClipRects io.displayFramebufferScale
 
         // Backup GL state
         val lastActiveTexture = glGetInteger(GL_ACTIVE_TEXTURE)
+        glActiveTexture(GL_TEXTURE0 + semantic.sampler.DIFFUSE)
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastSampler = glGetInteger(GL_SAMPLER_BINDING)
@@ -393,10 +405,8 @@ object LwjglGL3 {
                 if (cmd.userCallback != null)
                     cmd.userCallback!!(cmdList, cmd)
                 else {
-                    glActiveTexture(GL_TEXTURE0 + semantic.sampler.DIFFUSE)
                     glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                    glScissor(cmd.clipRect.x.i, fbSize.y - cmd.clipRect.w.i,
-                            (cmd.clipRect.z - cmd.clipRect.x).i, (cmd.clipRect.w - cmd.clipRect.y).i)
+                    glScissor(cmd.clipRect.x.i, fbSize.y - cmd.clipRect.w.i, (cmd.clipRect.z - cmd.clipRect.x).i, (cmd.clipRect.w - cmd.clipRect.y).i)
                     glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
                 }
                 idxBufferOffset += cmd.elemCount * Int.BYTES
@@ -454,23 +464,30 @@ object LwjglGL3 {
     fun shutdown() {
 
         // Destroy GLFW mouse cursors
-        mouseCursors.filter { it != 0L }.forEach(::glfwDestroyCursor)
+        mouseCursors.forEach(::glfwDestroyCursor)
+        mouseCursors.fill(NULL)
+
+        clientApi = GlfwClientApi.Unknown
 
         // Destroy OpenGL objects
-        invalidateDeviceObjects()
+        destroyDeviceObjects()
     }
 
-    private fun invalidateDeviceObjects() {
+    private fun destroyDeviceObjects() {
 
         glDeleteVertexArrays(vaoName)
         glDeleteBuffers(bufferName)
 
         if (program >= 0) glDeleteProgram(program)
 
-        if (fontTexture[0] >= 0) {
+        destroyFontsTexture()
+    }
+
+    private fun destroyFontsTexture() {
+        if (fontTexture[0] != 0) {
             glDeleteTextures(fontTexture)
-            io.fonts.texId = -1
-            fontTexture[0] = -1
+            io.fonts.texId = 0
+            fontTexture[0] = 0
         }
     }
 }
