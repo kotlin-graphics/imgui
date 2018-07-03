@@ -9,6 +9,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.arrowButton
+import imgui.ImGui.beginChild
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.bullet
@@ -35,6 +36,7 @@ import imgui.ImGui.dragInt2
 import imgui.ImGui.dragInt3
 import imgui.ImGui.dragInt4
 import imgui.ImGui.dragIntRange2
+import imgui.ImGui.endChild
 import imgui.ImGui.endCombo
 import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.fontSize
@@ -54,8 +56,13 @@ import imgui.ImGui.inputText
 import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemClicked
+import imgui.ImGui.isItemDeactivated
+import imgui.ImGui.isItemFocused
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.isItemVisible
 import imgui.ImGui.isMouseDoubleClicked
+import imgui.ImGui.isWindowFocused
+import imgui.ImGui.isWindowHovered
 import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectMin
 import imgui.ImGui.labelText
@@ -256,6 +263,10 @@ object widgets {
     val values1 = floatArrayOf(0f, 0.6f, 0.35f, 0.9f, 0.7f, 0.2f, 0f)
     val values2 = floatArrayOf(0.2f, 0.8f, 0.4f, 0.25f)
 
+    /* Active, Focused, Hovered & Focused Tests */
+    var itemType = 1
+    val col = Vec4(1f, 0.5, 0f, 1f)
+    var embedAllInsideAChildWindow = false
 
     operator fun invoke() {
 
@@ -305,6 +316,7 @@ object widgets {
 
                 run {
                     // Using the _simplified_ one-liner Combo() api here
+                    // See "Combo" section for examples of how to use the more complete BeginCombo()/EndCombo() api.
                     val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO")
                     combo("combo", ::currentItem1, items)
                     sameLine(); showHelpMarker("Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, and demonstration of various flags.\n")
@@ -355,6 +367,7 @@ object widgets {
                 run {
                     val listboxItems = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
                     listBox("listbox\n(single select)", ::listboxItemCurrent, listboxItems, 4)
+                    text("Hovered ${isItemHovered()}, Active $isItemActive, Deactivated $isItemDeactivated")
                 }
             }
 
@@ -992,6 +1005,61 @@ object widgets {
                         }
                     }
                 }
+            }
+
+            treeNode("Active, Focused, Hovered & Focused Tests") {
+                /*  Testing ::isItemHovered and other functions with their various flags. Note that the flags can be combined.
+                    (because BulletText is an item itself and that would affect the output of ::isItemHovered
+                    we pass all state in a single call to simplify the code).   */
+                radioButton("Text", ::itemType, 0); sameLine()
+                radioButton("Button", ::itemType, 1); sameLine()
+                radioButton("Multi-Component", ::itemType, 2)
+                var returnRalue = false
+                if (itemType == 0)
+                    text("ITEM: Text")
+                if (itemType == 1)
+                    returnRalue = button("ITEM: Button")
+                if (itemType == 2)
+                    returnRalue = colorEdit4("ITEM: ColorEdit4", col)
+                bulletText(
+                        "Return value = $returnRalue\n" +
+                                "isItemFocused = $isItemFocused\n" +
+                                "isItemHovered() = ${isItemHovered()}\n" +
+                        "isItemHovered(AllowWhenBlockedByPopup) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)}\n" +
+                        "isItemHovered(AllowWhenBlockedByActiveItem) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}\n" +
+                        "isItemHovered(AllowWhenOverlapped) = ${isItemHovered(HoveredFlag.AllowWhenOverlapped)}\n" +
+                        "isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly)}\n" +
+                        "isItemActive = $isItemActive\n" +
+                        "isItemDeactivated = $isItemDeactivated\n" +
+                        "isItemVisible = $isItemVisible\n")
+
+                checkbox("Embed everything inside a child window (for additional testing)", ::embedAllInsideAChildWindow)
+                if (embedAllInsideAChildWindow)
+                    beginChild("outer_child", Vec2(0, fontSize * 20), true)
+
+                // Testing IsWindowFocused() function with its various flags. Note that the flags can be combined.
+                bulletText(
+                        "isWindowFocused() = ${isWindowFocused()}\n" +
+                        "isWindowFocused(ChildWindows) = ${isWindowFocused(FocusedFlag.ChildWindows)}\n" +
+                        "isWindowFocused(ChildWindows | RootWindow) = ${isWindowFocused(FocusedFlag.ChildWindows or FocusedFlag.RootWindow)}\n" +
+                        "isWindowFocused(RootWindow) = ${isWindowFocused(FocusedFlag.RootWindow)}\n" +
+                        "isWindowFocused(AnyWindow) = ${isWindowFocused(FocusedFlag.AnyWindow)}\n")
+
+                // Testing IsWindowHovered() function with its various flags. Note that the flags can be combined.
+                bulletText(
+                        "isWindowHovered() = ${isWindowHovered()}\n" +
+                        "isWindowHovered(AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByPopup)}\n" +
+                        "isWindowHovered(AllowWhenBlockedByActiveItem) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}\n" +
+                        "isWindowHovered(ChildWindows) = ${isWindowHovered(HoveredFlag.ChildWindows)}\n" +
+                        "isWindowHovered(ChildWindows | RootWindow) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.RootWindow)}\n" +
+                        "isWindowHovered(RootWindow) = ${isWindowHovered(HoveredFlag.RootWindow)}\n" +
+                        "isWindowHovered(AnyWindow) = ${isWindowHovered(HoveredFlag.AnyWindow)}\n")
+
+                beginChild("child", Vec2(0, 50), true)
+                text("This is another child window for testing with the _ChildWindows flag.")
+                endChild()
+                if (embedAllInsideAChildWindow)
+                    endChild()
             }
         }
     }

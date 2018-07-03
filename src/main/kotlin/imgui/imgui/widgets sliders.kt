@@ -312,7 +312,6 @@ interface imgui_widgetsSliders {
 
         textUnformatted(label, findRenderedTextEnd(label))
         endGroup()
-
         return valueChanged
     }
 

@@ -69,31 +69,44 @@ interface imgui_utilities {
 
     /** Is the last item active? (e.g. button being held, text field being edited- items that don't interact will always
      *  return false)   */
-    val isItemActive get() = if (g.activeId != 0) g.activeId == g.currentWindow!!.dc.lastItemId else false
+    val isItemActive
+        get() = if (g.activeId != 0) g.activeId == g.currentWindow!!.dc.lastItemId else false
 
     /** is the last item focused for keyboard/gamepad navigation?   */
-    val isItemFocused get() = g.navId != 0 && !g.navDisableHighlight && g.navId == g.currentWindow!!.dc.lastItemId
+    val isItemFocused
+        get() = g.navId != 0 && !g.navDisableHighlight && g.navId == g.currentWindow!!.dc.lastItemId
 
-    /** Is the last item clicked? (e.g. button/node just clicked on)   */
+    /** Is the last item clicked? (e.g. button/node just clicked on)  == isMouseClicked(0) && isItemHovered()  */
     fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemHovered(Hf.Default)
 
     /** Is the last item visible? (aka not out of sight due to clipping/scrolling.)    */
-    val isItemVisible get() = with(currentWindowRead!!) { clipRect overlaps dc.lastItemRect }
+    val isItemVisible
+        get() = with(currentWindowRead!!) { clipRect overlaps dc.lastItemRect }
 
-    val isAnyItemHovered get() = g.hoveredId != 0 || g.hoveredIdPreviousFrame != 0
+    /** is the last item just made inactive (item was previously active), useful for Undo/Redo patterns. */
+    val isItemDeactivated
+        get() = g.currentWindow!!.dc.let { g.activeIdPreviousFrame == it.lastItemId && g.activeIdPreviousFrame != 0 && g.activeId != it.lastItemId }
 
-    val isAnyItemActive get() = g.activeId != 0
+    val isAnyItemHovered
+        get() = g.hoveredId != 0 || g.hoveredIdPreviousFrame != 0
 
-    val isAnyItemFocused get() = g.navId != 0 && !g.navDisableHighlight
+    val isAnyItemActive
+        get() = g.activeId != 0
+
+    val isAnyItemFocused
+        get() = g.navId != 0 && !g.navDisableHighlight
 
     /** get bounding rect of last item in screen space  */
-    val itemRectMin get() = currentWindowRead!!.dc.lastItemRect.min
+    val itemRectMin
+        get() = currentWindowRead!!.dc.lastItemRect.min
 
     /** get bounding rect of last item in screen space  */
-    val itemRectMax get() = currentWindowRead!!.dc.lastItemRect.max
+    val itemRectMax
+        get() = currentWindowRead!!.dc.lastItemRect.max
 
     /** get bounding rect of last item in screen space  */
-    val itemRectSize get() = currentWindowRead!!.dc.lastItemRect.size
+    val itemRectSize
+        get() = currentWindowRead!!.dc.lastItemRect.size
 
     /** allow last item to be overlapped by a subsequent item. sometimes useful with invisible buttons, selectables, etc.
      *  to catch unused area.   */
@@ -110,15 +123,19 @@ interface imgui_utilities {
     /** test if rectangle (in screen space) is visible / not clipped. to perform coarse clipping on user's side.    */
     fun isRectVisible(rectMin: Vec2, rectMax: Vec2) = currentWindowRead!!.clipRect overlaps Rect(rectMin, rectMax)
 
-    val time get() = g.time
+    val time
+        get() = g.time
 
-    val frameCount get() = g.frameCount
+    val frameCount
+        get() = g.frameCount
 
     /** this draw list will be the last rendered one, useful to quickly draw overlays shapes/text   */
-    val overlayDrawList get() = g.overlayDrawList
+    val overlayDrawList
+        get() = g.overlayDrawList
 
     /** you may use this when creating your own ImDrawList instances */
-    val drawListSharedData get() = g.drawListSharedData
+    val drawListSharedData
+        get() = g.drawListSharedData
 
 //IMGUI_API const char*   GetStyleColorName(ImGuiCol idx);
     //IMGUI_API void          SetStateStorage(ImGuiStorage* tree);                                // replace tree state storage with our own (if you want to manipulate it yourself, typically clear subsection of it)

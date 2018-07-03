@@ -118,7 +118,6 @@ interface imgui_widgetsDrag {
         textUnformatted(label, findRenderedTextEnd(label))
         endGroup()
         popId()
-
         return valueChanged
     }
 
@@ -183,7 +182,6 @@ interface imgui_widgetsDrag {
         textUnformatted(label, findRenderedTextEnd(label))
         endGroup()
         popId()
-
         return valueChanged
     }
 
@@ -306,7 +304,6 @@ interface imgui_widgetsDrag {
 
         textUnformatted(label, findRenderedTextEnd(label))
         endGroup()
-
         return valueChanged
     }
 
@@ -329,7 +326,6 @@ interface imgui_widgetsDrag {
 
         textUnformatted(label, findRenderedTextEnd(label))
         endGroup()
-
         return valueChanged
     }
 

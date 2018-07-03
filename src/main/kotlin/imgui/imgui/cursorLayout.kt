@@ -147,20 +147,20 @@ interface imgui_cursorLayout {
                         backupCurrentLineTextBaseOffset = dc.currentLineTextBaseOffset
                         backupLogLinePosY = dc.logLinePosY
                         backupActiveIdIsAlive = g.activeIdIsAlive
+                        backupActiveIdPreviousFrameIsAlive = g.activeIdPreviousFrameIsAlive
                         advanceCursor = true
                     })
             dc.groupOffsetX = dc.cursorPos.x - pos.x - dc.columnsOffsetX
             dc.indentX = dc.groupOffsetX
             dc.cursorMaxPos put dc.cursorPos
             dc.currentLineHeight = 0f
-            dc.logLinePosY = dc.cursorPos.y - 9999f
+            dc.logLinePosY = dc.cursorPos.y - 9999f // To enforce Log carriage return
         }
     }
 
     fun endGroup() {
 
         val window = currentWindow
-
         assert(window.dc.groupStack.isNotEmpty()) { "Mismatched BeginGroup()/EndGroup() calls" }
 
         val groupData = window.dc.groupStack.last()
@@ -171,11 +171,11 @@ interface imgui_cursorLayout {
         with(window.dc) {
             cursorPos put groupData.backupCursorPos
             cursorMaxPos put glm.max(groupData.backupCursorMaxPos, cursorMaxPos)
-            currentLineHeight = groupData.backupCurrentLineHeight
-            currentLineTextBaseOffset = groupData.backupCurrentLineTextBaseOffset
             indentX = groupData.backupIndentX
             groupOffsetX = groupData.backupGroupOffsetX
-            logLinePosY = cursorPos.y - 9999f
+            currentLineHeight = groupData.backupCurrentLineHeight
+            currentLineTextBaseOffset = groupData.backupCurrentLineTextBaseOffset
+            logLinePosY = cursorPos.y - 9999f // To enforce Log carriage return
         }
 
         if (groupData.advanceCursor) {
@@ -184,14 +184,15 @@ interface imgui_cursorLayout {
             itemAdd(groupBb, 0)
         }
 
-        /*  If the current ActiveId was declared within the boundary of our group, we copy it to LastItemId so
-            IsItemActive() will be functional on the entire group.
-            It would be be neater if we replaced window.DC.LastItemId by e.g. 'bool LastItemIsActive', but if you
-            search for LastItemId you'll notice it is only used in that context.    */
-        val activeIdWithinGroup = !groupData.backupActiveIdIsAlive && g.activeIdIsAlive && g.activeId != 0 &&
-                g.activeIdWindow!!.rootWindow === window.rootWindow
-        if (activeIdWithinGroup)
+        /*  If the current ActiveId was declared within the boundary of our group, we copy it to ::lastItemId so ::isItemActive,
+            ::isItemDeactivated etc. will be functional on the entire group.
+            It would be be neater if we replaced window.dc.lastItemId by e.g. 'lastItemIsActive: Boolean',
+            but put a little more burden on individual widgets.
+            (and if you grep for LastItemId you'll notice it is only used in that context.    */
+        if (!groupData.backupActiveIdIsAlive && g.activeIdIsAlive && g.activeId != 0) // && g.ActiveIdWindow->RootWindow == window->RootWindow)
             window.dc.lastItemId = g.activeId
+        else if (!groupData.backupActiveIdPreviousFrameIsAlive && g.activeIdPreviousFrameIsAlive) // && g.ActiveIdPreviousFrameWindow->RootWindow == window->RootWindow)
+            window.dc.lastItemId = g.activeIdPreviousFrame
         window.dc.lastItemRect put groupBb
         window.dc.groupStack.pop() // TODO last() on top -> pop?
 
