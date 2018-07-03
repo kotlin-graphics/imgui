@@ -697,7 +697,6 @@ class FontAtlas {
 
                     dstFont.addGlyph(codepoint, q.x0 + charOffX, q.y0 + fontOffY,
                             q.x1 + charOffX, q.y1 + fontOffY, q.s0, q.t0, q.s1, q.t1, charAdvanceXMod)
-                    q.free()
                 }
             }
         }
