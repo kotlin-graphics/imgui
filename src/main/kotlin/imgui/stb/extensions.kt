@@ -1,7 +1,6 @@
 package imgui.stb
 
 import glm_.BYTES
-import glm_.bool
 import glm_.i
 import glm_.s
 import glm_.vec2.Vec2
@@ -93,11 +92,52 @@ var STBTTPackRange.chardataForRange: STBTTPackedchar.Buffer
     get() = chardata_for_range()
 
 
-val STBTTPackedchar.x0 get() = x0().i
-val STBTTPackedchar.x1 get() = x1().i
-val STBTTPackedchar.y0 get() = y0().i
-val STBTTPackedchar.y1 get() = y1().i
-val STBTTPackedchar.advanceX get() = xadvance()
+var STBTTPackedchar.x0
+    get() = x0().i
+    set(value) {
+        x0(value.s)
+    }
+var STBTTPackedchar.y0
+    get() = y0().i
+    set(value) {
+        y0(value.s)
+    }
+var STBTTPackedchar.x1
+    get() = x1().i
+    set(value) {
+        x1(value.s)
+    }
+var STBTTPackedchar.y1
+    get() = y1().i
+    set(value) {
+        y1(value.s)
+    }
+var STBTTPackedchar.xOff
+    get() = xoff()
+    set(value) {
+        xoff(value)
+    }
+var STBTTPackedchar.yOff
+    get() = yoff()
+    set(value) {
+        yoff(value)
+    }
+var STBTTPackedchar.xAdvance
+    get() = xadvance()
+    set(value) {
+        xadvance(value)
+    }
+var STBTTPackedchar.xOff2
+    get() = xoff2()
+    set(value) {
+        xoff2(value)
+    }
+var STBTTPackedchar.yOff2
+    get() = yoff2()
+    set(value) {
+        yoff2(value)
+    }
+
 
 var STBTTPackContext.packInfo: STBRPContext
     get() {
@@ -132,11 +172,9 @@ fun stbClear() {
     Private.pixels = null
 }
 
-fun stbtt_PackSetOversampling(spc: STBTTPackContext, oversample: Vec2i)
-        = STBTruetype.stbtt_PackSetOversampling(spc, oversample.x, oversample.y)
+fun stbtt_PackSetOversampling(spc: STBTTPackContext, oversample: Vec2i) = STBTruetype.stbtt_PackSetOversampling(spc, oversample.x, oversample.y)
 
-fun stbtt_PackSetOversampling(spc: STBTTPackContext, oversample: Int)
-        = STBTruetype.stbtt_PackSetOversampling(spc, oversample, oversample)
+fun stbtt_PackSetOversampling(spc: STBTTPackContext, oversample: Int) = STBTruetype.stbtt_PackSetOversampling(spc, oversample, oversample)
 
 fun stbtt_GetFontVMetrics(info: STBTTFontinfo): Triple<Int, Int, Int> {
     val ascent = IntArray(1)
@@ -147,7 +185,7 @@ fun stbtt_GetFontVMetrics(info: STBTTFontinfo): Triple<Int, Int, Int> {
 }
 
 
-fun stbtt_GetPackedQuad(chardata: STBTTPackedchar.Buffer, p: Vec2i, charIndex: Int, pos:Vec2, q: STBTTAlignedQuad, alignToInteger: Boolean) {
+fun stbtt_GetPackedQuad(chardata: STBTTPackedchar.Buffer, p: Vec2i, charIndex: Int, pos: Vec2, q: STBTTAlignedQuad, alignToInteger: Boolean) {
 
     val xPos = FloatArray(1)
     val yPos = FloatArray(1)
@@ -165,11 +203,6 @@ val STBTTAlignedQuad.s0 get() = s0()
 val STBTTAlignedQuad.s1 get() = s1()
 val STBTTAlignedQuad.t0 get() = t0()
 val STBTTAlignedQuad.t1 get() = t1()
-
-
-
-
-
 
 
 

@@ -986,6 +986,8 @@ interface imgui_main {
             cmdListsCount = drawLists.size
             outDrawData.totalIdxCount = 0
             totalVtxCount = 0
+            outDrawData.displayPos put 0f
+            outDrawData.displaySize put io.displaySize
             for (n in 0 until drawLists.size) {
                 totalVtxCount += drawLists[n].vtxBuffer.size
                 totalIdxCount += drawLists[n].idxBuffer.size
