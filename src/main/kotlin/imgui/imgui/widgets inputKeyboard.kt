@@ -237,7 +237,6 @@ interface imgui_widgetsInputKeyboard {
 
         textUnformatted(label, findRenderedTextEnd(label))
         endGroup()
-
         return valueChanged
     }
 }

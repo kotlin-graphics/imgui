@@ -190,6 +190,7 @@ class GroupData {
     var backupCurrentLineTextBaseOffset = 0f
     var backupLogLinePosY = 0f
     var backupActiveIdIsAlive = false
+    var backupActiveIdPreviousFrameIsAlive = false
     var advanceCursor = false
 }
 
@@ -613,7 +614,7 @@ class Window(var context: Context, var name: String) {
     var innerClipRect = Rect()
     /** FIXME: This is currently confusing/misleading. Maximum visible content position ~~ Pos + (SizeContentsExplicit ? SizeContentsExplicit : Size - ScrollbarSizes) - CursorStartPos, per axis */
     var contentsRegionRect = Rect()
-
+    /** Last frame number the window was Active. */
     var lastFrameActive = -1
 
     var itemWidthDefault = 0f

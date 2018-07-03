@@ -73,12 +73,16 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdIsJustActivated = false
     /** Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)   */
     var activeIdAllowOverlap = false
+
+    var activeIdPreviousFrameIsAlive = false
     /** Active widget allows using directional navigation (e.g. can activate a button and move away from it)    */
     var activeIdAllowNavDirFlags = 0
     /** Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior) */
     var activeIdClickOffset = Vec2(-1)
 
     var activeIdWindow: Window? = null
+
+    var activeIdPreviousFrameWindow: Window? = null
     /** Activating with mouse or nav (gamepad/keyboard) */
     var activeIdSource = InputSource.None
     /** Store the last non-zero ActiveId, useful for animation. */
@@ -351,6 +355,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.hoveredWindow = null
         g.hoveredRootWindow = null
         g.activeIdWindow = null
+        g.activeIdPreviousFrameWindow = null
         g.movingWindow = null
         g.settingsWindows.clear()
         g.colorModifiers.clear()

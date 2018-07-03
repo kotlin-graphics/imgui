@@ -97,7 +97,7 @@ interface imgui_menus {
         if (window.flags hasnt Wf.MenuBar) return false
 
         assert(!window.dc.menuBarAppending)
-        beginGroup() // Save position
+        beginGroup() // Backup position on layer 0
         pushId("##menubar")
 
         /*  We don't clip with current window clipping rectangle as it is already set to the area below. However we clip
@@ -153,7 +153,7 @@ interface imgui_menus {
             // Save horizontal position so next append can reuse it. This is kinda equivalent to a per-layer CursorPos.
             menuBarOffset.x = cursorPos.x - window.menuBarRect().min.x
             groupStack.last().advanceCursor = false
-            endGroup()
+            endGroup() // Restore position on layer 0
             layoutType = LayoutType.Vertical
             navLayerCurrent--
             navLayerCurrentMask = navLayerCurrentMask ushr 1    // TODO needs uns?

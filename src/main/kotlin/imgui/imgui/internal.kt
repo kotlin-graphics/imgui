@@ -160,7 +160,10 @@ interface imgui_internal {
     fun getHoveredId() = if (g.hoveredId != 0) g.hoveredId else g.hoveredIdPreviousFrame
 
     fun keepAliveId(id: ID) {
-        if (g.activeId == id) g.activeIdIsAlive = true
+        if (g.activeId == id)
+            g.activeIdIsAlive = true
+        if (g.activeIdPreviousFrame == id)
+            g.activeIdPreviousFrameIsAlive = true
     }
 
     /** Advance cursor given item size for layout.  */
@@ -2218,7 +2221,7 @@ interface imgui_internal {
         val isPassword = flags has Itf.Password
         val isUndoable = flags has Itf.NoUndoRedo
 
-        if (isMultiline) // Open group before calling GetID() because groups tracks id created during their spawn
+        if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope
             beginGroup()
         val id = window.getId(label)
         val labelSize = calcTextSize(label, 0, true)

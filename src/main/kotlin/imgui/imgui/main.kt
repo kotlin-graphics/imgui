@@ -120,7 +120,9 @@ interface imgui_main {
             g.activeIdTimer += io.deltaTime
         g.lastActiveIdTimer += io.deltaTime
         g.activeIdPreviousFrame = g.activeId
+        g.activeIdPreviousFrameWindow = g.activeIdWindow
         g.activeIdIsAlive = false
+        g.activeIdPreviousFrameIsAlive = false
         g.activeIdIsJustActivated = false
         if (g.scalarAsInputTextId != 0 && g.activeId != g.scalarAsInputTextId)
             g.scalarAsInputTextId = 0

@@ -772,6 +772,9 @@ interface imgui_window {
     val isWindowCollapsed get() = currentWindowRead!!.collapsed
 
     /** is current window focused? or its root/child, depending on flags. see flags for options.    */
+    fun isWindowFocused(flag: Ff) = isWindowFocused(flag.i)
+
+    /** is current window focused? or its root/child, depending on flags. see flags for options.    */
     fun isWindowFocused(flags: FocusedFlags = Ff.Null.i): Boolean {
 
         val curr = g.currentWindow!!     // Not inside a Begin()/End()
