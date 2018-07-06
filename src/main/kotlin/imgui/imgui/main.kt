@@ -254,71 +254,9 @@ interface imgui_main {
         begin("Debug##Default")
     }
 
-
-    /** Ends the ImGui frame, finalize the draw data. (Obsolete: optionally call io.renderDrawListsFn if set.
-     *  Nowadays, prefer calling your render function yourself.)   */
-    fun render() {
-
-        assert(g.initialized) { "Forgot to call ImGui::NewFrame()" }
-
-        if (g.frameCountEnded != g.frameCount) endFrame()
-        g.frameCountRendered = g.frameCount
-
-        /*  Skip render altogether if alpha is 0.0
-            Note that vertex buffers have been created and are wasted, so it is best practice that you don't create
-            windows in the first place, or consistently respond to Begin() returning false. */
-        if (style.alpha > 0f) {
-            // Gather windows to render
-            io.metricsActiveWindows = 0
-            io.metricsRenderIndices = 0
-            io.metricsRenderVertices = 0
-            g.drawDataBuilder.clear()
-            val windowToRenderFrontMost = g.navWindowingTarget.takeIf {
-                it?.flags?.hasnt(Wf.NoBringToFrontOnFocus) ?: false
-            }
-            g.windows.filter { it.active && it.hiddenFrames == 0 && it.flags hasnt Wf.ChildWindow && it !== windowToRenderFrontMost }
-                    .map(Window::addToDrawDataSelectLayer)
-            windowToRenderFrontMost?.let {
-                if (it.active && it.hiddenFrames == 0) // NavWindowingTarget is always temporarily displayed as the front-most window
-                    it.addToDrawDataSelectLayer()
-            }
-            g.drawDataBuilder.flattenIntoSingleLayer()
-
-            // Draw software mouse cursor if requested
-            val offset = Vec2()
-            val size = Vec2()
-            val uv = Array(4) { Vec2() }
-            if (io.mouseDrawCursor && io.fonts.getMouseCursorTexData(g.mouseCursor, offset, size, uv)) {
-                val pos = io.mousePos - offset
-                val texId = io.fonts.texId
-                val sc = style.mouseCursorScale
-                g.overlayDrawList.pushTextureId(texId)
-                g.overlayDrawList.addImage(texId, pos + Vec2(1, 0) * sc, pos + Vec2(1, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
-                g.overlayDrawList.addImage(texId, pos + Vec2(2, 0) * sc, pos + Vec2(2, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
-                g.overlayDrawList.addImage(texId, pos, pos + size * sc, uv[2], uv[3], COL32(0, 0, 0, 255))       // Black border
-                g.overlayDrawList.addImage(texId, pos, pos + size * sc, uv[0], uv[1], COL32(255, 255, 255, 255)) // White fill
-                g.overlayDrawList.popTextureId()
-            }
-            if (g.overlayDrawList.vtxBuffer.isNotEmpty())
-                g.overlayDrawList addTo g.drawDataBuilder.layers[0]
-
-            // Setup ImDrawData structure for end-user
-            setupDrawData(g.drawDataBuilder.layers[0], g.drawData)
-            io.metricsRenderVertices = g.drawData.totalVtxCount
-            io.metricsRenderIndices = g.drawData.totalIdxCount
-        }
-    }
-
-    /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
-     *  ::newFrame()   */
-    val drawData get() = g.drawData.takeIf { it.valid }
-
-    /** Ends the ImGui frame. Automatically called by Render()! you most likely don't need to ever call that yourself
-     *  directly. If you don't need to render you can call EndFrame() but you'll have wasted CPU already. If you don't
-     *  need to render, don't create any windows instead!
-     *
-     *  This is normally called by Render(). You may want to call it directly if you want to avoid calling Render() but
-     *  the gain will be very minimal.  */
+    /** Ends the ImGui frame. automatically called by ::render(), you likely don't need to call that yourself directly.
+     *  If you don't need to render data (skipping rendering) you may call ::endFrame() but you'll have wasted CPU already!
+     *  If you don't need to render, better to not create any imgui windows and not call ::newFrame() at all!  */
     fun endFrame() {
 
         assert(g.initialized) { "Forgot to call newFrame()" }
@@ -394,6 +332,65 @@ interface imgui_main {
 
         g.frameCountEnded = g.frameCount
     }
+
+
+    /** Ends the ImGui frame, finalize the draw data. (Obsolete: optionally call io.renderDrawListsFn if set.
+     *  Nowadays, prefer calling your render function yourself.)   */
+    fun render() {
+
+        assert(g.initialized) { "Forgot to call ImGui::NewFrame()" }
+
+        if (g.frameCountEnded != g.frameCount) endFrame()
+        g.frameCountRendered = g.frameCount
+
+        /*  Skip render altogether if alpha is 0.0
+            Note that vertex buffers have been created and are wasted, so it is best practice that you don't create
+            windows in the first place, or consistently respond to Begin() returning false. */
+        if (style.alpha > 0f) {
+            // Gather windows to render
+            io.metricsActiveWindows = 0
+            io.metricsRenderIndices = 0
+            io.metricsRenderVertices = 0
+            g.drawDataBuilder.clear()
+            val windowToRenderFrontMost = g.navWindowingTarget.takeIf {
+                it?.flags?.hasnt(Wf.NoBringToFrontOnFocus) ?: false
+            }
+            g.windows.filter { it.active && it.hiddenFrames == 0 && it.flags hasnt Wf.ChildWindow && it !== windowToRenderFrontMost }
+                    .map(Window::addToDrawDataSelectLayer)
+            windowToRenderFrontMost?.let {
+                if (it.active && it.hiddenFrames == 0) // NavWindowingTarget is always temporarily displayed as the front-most window
+                    it.addToDrawDataSelectLayer()
+            }
+            g.drawDataBuilder.flattenIntoSingleLayer()
+
+            // Draw software mouse cursor if requested
+            val offset = Vec2()
+            val size = Vec2()
+            val uv = Array(4) { Vec2() }
+            if (io.mouseDrawCursor && io.fonts.getMouseCursorTexData(g.mouseCursor, offset, size, uv)) {
+                val pos = io.mousePos - offset
+                val texId = io.fonts.texId
+                val sc = style.mouseCursorScale
+                g.overlayDrawList.pushTextureId(texId)
+                g.overlayDrawList.addImage(texId, pos + Vec2(1, 0) * sc, pos + Vec2(1, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
+                g.overlayDrawList.addImage(texId, pos + Vec2(2, 0) * sc, pos + Vec2(2, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
+                g.overlayDrawList.addImage(texId, pos, pos + size * sc, uv[2], uv[3], COL32(0, 0, 0, 255))       // Black border
+                g.overlayDrawList.addImage(texId, pos, pos + size * sc, uv[0], uv[1], COL32(255, 255, 255, 255)) // White fill
+                g.overlayDrawList.popTextureId()
+            }
+            if (g.overlayDrawList.vtxBuffer.isNotEmpty())
+                g.overlayDrawList addTo g.drawDataBuilder.layers[0]
+
+            // Setup ImDrawData structure for end-user
+            setupDrawData(g.drawDataBuilder.layers[0], g.drawData)
+            io.metricsRenderVertices = g.drawData.totalVtxCount
+            io.metricsRenderIndices = g.drawData.totalIdxCount
+        }
+    }
+
+    /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
+     *  ::newFrame()   */
+    val drawData get() = g.drawData.takeIf { it.valid }
 
     companion object {
 
