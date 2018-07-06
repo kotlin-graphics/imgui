@@ -141,7 +141,7 @@ object layout_ {
                     gotoLine = gotoLine or inputInt("##Line", ::line, 0, 0, Itf.EnterReturnsTrue.i)
                 }
 
-                val flags = if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.Null
+                val flags = if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.None
                 withChild("Child1", Vec2(windowContentRegionWidth * 0.5f, 300), false, flags or Wf.HorizontalScrollbar) {
                     for (i in 0..99) {
                         text("%04d: scrollable region", i)
@@ -154,7 +154,7 @@ object layout_ {
 
                 // Child 2: rounded border
                 withStyleVar(StyleVar.ChildRounding, 5f) {
-                    withChild("Child2", Vec2(0, 300), true, flags or if (disableMenu) Wf.Null else Wf.MenuBar) {
+                    withChild("Child2", Vec2(0, 300), true, flags or if (disableMenu) Wf.None else Wf.MenuBar) {
                         if (!disableMenu && beginMenuBar()) {
                             if (beginMenu("Menu")) {
                                 showExampleMenuFile()

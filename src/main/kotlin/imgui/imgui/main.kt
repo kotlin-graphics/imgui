@@ -37,13 +37,15 @@ import imgui.internal.DrawListFlag as Dlf
 
 interface imgui_main {
 
+    /** access the IO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags) */
     val io
         get() = gImGui?.io
-                ?: throw Error("No current context. Did you call ImGui::Context() or ImGui::setCurrentContext()?")
+                ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
 
+    /** access the Style structure (colors, sizes). Always use PushStyleCol(), PushStyleVar() to modify style mid-frame. */
     val style
         get() = gImGui?.style
-                ?: throw Error("No current context. Did you call ImGui::Context() or ImGui::setCurrentContext()?")
+                ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
 
     /** start a new ImGui frame, you can submit any command from this point until NewFrame()/Render().  */
     fun newFrame() {
@@ -121,6 +123,7 @@ interface imgui_main {
         g.lastActiveIdTimer += io.deltaTime
         g.activeIdPreviousFrame = g.activeId
         g.activeIdPreviousFrameWindow = g.activeIdWindow
+        g.activeIdPreviousFrameValueChanged = g.activeIdValueChanged
         g.activeIdIsAlive = false
         g.activeIdPreviousFrameIsAlive = false
         g.activeIdIsJustActivated = false

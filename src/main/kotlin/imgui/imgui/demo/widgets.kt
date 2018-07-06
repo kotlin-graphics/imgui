@@ -57,6 +57,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemClicked
 import imgui.ImGui.isItemDeactivated
+import imgui.ImGui.isItemDeactivatedAfterChange
 import imgui.ImGui.isItemFocused
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isItemVisible
@@ -89,6 +90,7 @@ import imgui.ImGui.sliderInt
 import imgui.ImGui.sliderInt2
 import imgui.ImGui.sliderInt3
 import imgui.ImGui.sliderInt4
+import imgui.ImGui.sliderVec4
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
@@ -134,7 +136,6 @@ object widgets {
     var e = 0
     val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
     var currentItem1 = 1
-    var currentItem2 = ""
     var str0 = "Hello, world!".toCharArray()
     var i0 = 123
     var f0 = 0.001f
@@ -265,7 +266,9 @@ object widgets {
 
     /* Active, Focused, Hovered & Focused Tests */
     var itemType = 1
+    var b0 = false
     val col = Vec4(1f, 0.5, 0f, 1f)
+    var currentItem2 = 1
     var embedAllInsideAChildWindow = false
 
     operator fun invoke() {
@@ -367,7 +370,6 @@ object widgets {
                 run {
                     val listboxItems = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
                     listBox("listbox\n(single select)", ::listboxItemCurrent, listboxItems, 4)
-                    text("Hovered ${isItemHovered()}, Active $isItemActive, Deactivated $isItemDeactivated")
                 }
             }
 
@@ -396,7 +398,7 @@ object widgets {
                             /*  Disable the default open on single-click behavior and pass in Selected flag according
                                 to our selection state.                             */
                             var nodeFlags = Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick or
-                                    if (selectionMask has (1 shl i)) Tnf.Selected else Tnf.Null
+                                    if (selectionMask has (1 shl i)) Tnf.Selected else Tnf.None
                             if (i < 3) {    // Node
                                 val nodeOpen = treeNodeExV(i, nodeFlags, "Selectable Node $i")
                                 if (isItemClicked()) nodeClicked = i
@@ -662,7 +664,7 @@ object widgets {
                 withStyleVar(StyleVar.FramePadding, Vec2()) {
                     checkbox("Read-only", ::readOnly)
                 }
-                val flags = Itf.AllowTabInput or if (readOnly) Itf.ReadOnly else Itf.Null
+                val flags = Itf.AllowTabInput or if (readOnly) Itf.ReadOnly else Itf.None
 //                inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
             }
 
@@ -820,14 +822,14 @@ object widgets {
                 flags = flags or when (pickerMode) {
                     1 -> Cef.PickerHueBar
                     2 -> Cef.PickerHueWheel
-                    else -> Cef.Null
+                    else -> Cef.None
                 }
                 flags = flags or when (inputsMode) {
                     1 -> Cef.NoInputs
                     2 -> Cef.RGB
                     3 -> Cef.HSV
                     4 -> Cef.HEX
-                    else -> Cef.Null
+                    else -> Cef.None
                 }
                 colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
 
@@ -1008,29 +1010,34 @@ object widgets {
             }
 
             treeNode("Active, Focused, Hovered & Focused Tests") {
-                /*  Testing ::isItemHovered and other functions with their various flags. Note that the flags can be combined.
+                /*  Display the value of IsItemHovered() and other common item state functions. Note that the flags can be combined.
                     (because BulletText is an item itself and that would affect the output of ::isItemHovered
                     we pass all state in a single call to simplify the code).   */
                 radioButton("Text", ::itemType, 0); sameLine()
                 radioButton("Button", ::itemType, 1); sameLine()
-                radioButton("Multi-Component", ::itemType, 2)
-                var returnRalue = false
-                if (itemType == 0)
-                    text("ITEM: Text")
-                if (itemType == 1)
-                    returnRalue = button("ITEM: Button")
-                if (itemType == 2)
-                    returnRalue = colorEdit4("ITEM: ColorEdit4", col)
-                bulletText(
-                        "Return value = $returnRalue\n" +
-                                "isItemFocused = $isItemFocused\n" +
-                                "isItemHovered() = ${isItemHovered()}\n" +
+                radioButton("CheckBox", ::itemType, 2); sameLine()
+                radioButton("SliderFloat", ::itemType, 3); sameLine()
+                radioButton("ColorEdit4", ::itemType, 4); sameLine()
+                radioButton("ListBox", ::itemType, 5)
+                val ret = when (itemType) {
+                    0 -> false.also { text("ITEM: Text") }   // Testing text items with no identifier/interaction
+                    1 -> button("ITEM: Button")   // Testing button
+                    2 -> checkbox("ITEM: CheckBox", ::b0)  // Testing checkbox
+                    3 -> sliderVec4("ITEM: SliderFloat", col, 0f, 1f)   // Testing basic item
+                    4 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
+                    5 -> listBox("ITEM: ListBox", ::currentItem2, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                    else -> false
+                }
+                bulletText("Return value = $ret\n" +
+                        "isItemFocused = $isItemFocused\n" +
+                        "isItemHovered() = ${isItemHovered()}\n" +
                         "isItemHovered(AllowWhenBlockedByPopup) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)}\n" +
                         "isItemHovered(AllowWhenBlockedByActiveItem) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}\n" +
                         "isItemHovered(AllowWhenOverlapped) = ${isItemHovered(HoveredFlag.AllowWhenOverlapped)}\n" +
                         "isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly)}\n" +
                         "isItemActive = $isItemActive\n" +
                         "isItemDeactivated = $isItemDeactivated\n" +
+                        "isItemDeactivatedAfterChange = $isItemDeactivatedAfterChange\n" +
                         "isItemVisible = $isItemVisible\n")
 
                 checkbox("Embed everything inside a child window (for additional testing)", ::embedAllInsideAChildWindow)
@@ -1040,20 +1047,20 @@ object widgets {
                 // Testing IsWindowFocused() function with its various flags. Note that the flags can be combined.
                 bulletText(
                         "isWindowFocused() = ${isWindowFocused()}\n" +
-                        "isWindowFocused(ChildWindows) = ${isWindowFocused(FocusedFlag.ChildWindows)}\n" +
-                        "isWindowFocused(ChildWindows | RootWindow) = ${isWindowFocused(FocusedFlag.ChildWindows or FocusedFlag.RootWindow)}\n" +
-                        "isWindowFocused(RootWindow) = ${isWindowFocused(FocusedFlag.RootWindow)}\n" +
-                        "isWindowFocused(AnyWindow) = ${isWindowFocused(FocusedFlag.AnyWindow)}\n")
+                                "isWindowFocused(ChildWindows) = ${isWindowFocused(FocusedFlag.ChildWindows)}\n" +
+                                "isWindowFocused(ChildWindows | RootWindow) = ${isWindowFocused(FocusedFlag.ChildWindows or FocusedFlag.RootWindow)}\n" +
+                                "isWindowFocused(RootWindow) = ${isWindowFocused(FocusedFlag.RootWindow)}\n" +
+                                "isWindowFocused(AnyWindow) = ${isWindowFocused(FocusedFlag.AnyWindow)}\n")
 
                 // Testing IsWindowHovered() function with its various flags. Note that the flags can be combined.
                 bulletText(
                         "isWindowHovered() = ${isWindowHovered()}\n" +
-                        "isWindowHovered(AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByPopup)}\n" +
-                        "isWindowHovered(AllowWhenBlockedByActiveItem) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}\n" +
-                        "isWindowHovered(ChildWindows) = ${isWindowHovered(HoveredFlag.ChildWindows)}\n" +
-                        "isWindowHovered(ChildWindows | RootWindow) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.RootWindow)}\n" +
-                        "isWindowHovered(RootWindow) = ${isWindowHovered(HoveredFlag.RootWindow)}\n" +
-                        "isWindowHovered(AnyWindow) = ${isWindowHovered(HoveredFlag.AnyWindow)}\n")
+                                "isWindowHovered(AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByPopup)}\n" +
+                                "isWindowHovered(AllowWhenBlockedByActiveItem) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}\n" +
+                                "isWindowHovered(ChildWindows) = ${isWindowHovered(HoveredFlag.ChildWindows)}\n" +
+                                "isWindowHovered(ChildWindows | RootWindow) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.RootWindow)}\n" +
+                                "isWindowHovered(RootWindow) = ${isWindowHovered(HoveredFlag.RootWindow)}\n" +
+                                "isWindowHovered(AnyWindow) = ${isWindowHovered(HoveredFlag.AnyWindow)}\n")
 
                 beginChild("child", Vec2(0, 50), true)
                 text("This is another child window for testing with the _ChildWindows flag.")

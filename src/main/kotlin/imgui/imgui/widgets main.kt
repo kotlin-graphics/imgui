@@ -16,6 +16,7 @@ import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.markItemValueChanged
 import imgui.ImGui.plotEx
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
@@ -36,7 +37,8 @@ import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
 
-/** Widgets: Main   */
+/** Widgets: Main
+ *  Most widgets return true when the value has been changed or when pressed/selected  */
 interface imgui_widgetsMain {
 
     /** button  */
@@ -49,27 +51,6 @@ interface imgui_widgetsMain {
         style.framePadding.y = 0f
         val pressed = buttonEx(label, Vec2(), Bf.AlignTextBaseLine.i)
         style.framePadding.y = backupPaddingY
-        return pressed
-    }
-
-    fun arrowButton(strId: String, dir: Dir): Boolean {
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        val id = window.getId(strId)
-        val sz = frameHeight
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + sz)
-        itemSize(bb)
-        if (!itemAdd(bb, id)) return false
-
-        val (pressed, hovered, held) = buttonBehavior(bb, id)
-
-        // Render
-        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
-        renderArrow(bb.min + g.style.framePadding, dir)
-
         return pressed
     }
 
@@ -89,6 +70,28 @@ interface imgui_widgetsMain {
         if (!itemAdd(bb, id)) return false
 
         val (pressed, _, _) = buttonBehavior(bb, id)
+
+        return pressed
+    }
+
+    /** square button with an arrow shape */
+    fun arrowButton(strId: String, dir: Dir): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId(strId)
+        val sz = frameHeight
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + sz)
+        itemSize(bb)
+        if (!itemAdd(bb, id)) return false
+
+        val (pressed, hovered, held) = buttonBehavior(bb, id)
+
+        // Render
+        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
+        renderArrow(bb.min + g.style.framePadding, dir)
 
         return pressed
     }
@@ -182,7 +185,10 @@ interface imgui_widgetsMain {
         if (!itemAdd(totalBb, id)) return false
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
-        if (pressed) v.set(!v())
+        if (pressed) {
+            v.set(!v())
+            markItemValueChanged(id)
+        }
 
         renderNavHighlight(totalBb, id)
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
@@ -249,6 +255,8 @@ interface imgui_widgetsMain {
         val radius = checkBb.height * 0.5f
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
+        if (pressed)
+            markItemValueChanged(id)
 
         renderNavHighlight(totalBb, id)
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg

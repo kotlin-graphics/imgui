@@ -16,7 +16,8 @@ import imgui.ImGui.unindent
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 
-/** Widgets: Trees  */
+/** Widgets: Trees
+ *  TreeNode functions return true when the node is open, in which case you need to also call TreePop() when you are finished displaying the tree node contents. */
 interface imgui_widgetsTrees {
 
     /** if returning 'true' the node is open and the tree id is pushed into the id stack. user is responsible for
@@ -72,8 +73,7 @@ interface imgui_widgetsTrees {
     }
 //    IMGUI_API void          TreePush(const char* str_id = NULL);                                    // ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for layout purpose
 
-    /** ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for
-     *  layout purpose  */
+    /** ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call TreePush/TreePop yourself if desired.  */
     fun treePush(ptrId: Any?) {
         val window = currentWindow
         indent()
@@ -136,7 +136,7 @@ interface imgui_widgetsTrees {
         if (open != null && !open()) return false
 
         val id = window.getId(label)
-        val flags = flags_ or Tnf.CollapsingHeader or if (open != null) Tnf.AllowItemOverlap else Tnf.Null
+        val flags = flags_ or Tnf.CollapsingHeader or if (open != null) Tnf.AllowItemOverlap else Tnf.None
         val isOpen = treeNodeBehavior(id, flags, label)
         if (open != null) {
             // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.

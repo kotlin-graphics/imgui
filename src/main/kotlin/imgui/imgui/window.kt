@@ -775,7 +775,7 @@ interface imgui_window {
     fun isWindowFocused(flag: Ff) = isWindowFocused(flag.i)
 
     /** is current window focused? or its root/child, depending on flags. see flags for options.    */
-    fun isWindowFocused(flags: FocusedFlags = Ff.Null.i): Boolean {
+    fun isWindowFocused(flags: FocusedFlags = Ff.None.i): Boolean {
 
         val curr = g.currentWindow!!     // Not inside a Begin()/End()
 
@@ -796,7 +796,7 @@ interface imgui_window {
     /** Is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
      *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
      *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
-    fun isWindowHovered(flags: HoveredFlags = Hf.Default.i): Boolean {
+    fun isWindowHovered(flags: HoveredFlags = Hf.None.i): Boolean {
         assert(flags hasnt Hf.AllowWhenOverlapped) { "Flags not supported by this function" }
         if (flags has Hf.AnyWindow) {
             if (g.hoveredWindow == null)
@@ -860,7 +860,7 @@ interface imgui_window {
     /** set next window position. call before Begin()   */
     fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always, pivot: Vec2 = Vec2()) {
 //        JVM, useless
-//        assert(cond == Cond.Null || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
+//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             posVal put pos
             posPivotVal put pivot
@@ -871,7 +871,7 @@ interface imgui_window {
     /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
     fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Always) {
 //        JVM, useless
-//        assert(cond == Cond.Null || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
+//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             sizeVal put size
             sizeCond = cond
@@ -903,7 +903,7 @@ interface imgui_window {
     /** Set next window collapsed state. call before Begin()    */
     fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Always) {
 //        JVM, useless
-//        assert(cond == Cond.Null || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
+//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             collapsedVal = collapsed
             collapsedCond = cond

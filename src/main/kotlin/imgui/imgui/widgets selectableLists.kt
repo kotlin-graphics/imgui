@@ -20,6 +20,7 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.getId
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.markItemValueChanged
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popId
 import imgui.ImGui.popStyleColor
@@ -112,6 +113,8 @@ interface imgui_widgetsSelectableLists {
                 g.navDisableHighlight = true
                 setNavId(id, window.dc.navLayerCurrent)
             }
+        if (pressed)
+            markItemValueChanged(id)
 
         // Render
         if (hovered || selected) {

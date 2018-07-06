@@ -4,7 +4,9 @@ import glm_.func.deg
 import glm_.func.rad
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
+import glm_.vec3.Vec3
 import glm_.vec3.Vec3i
+import glm_.vec4.Vec4
 import glm_.vec4.Vec4i
 import imgui.*
 import imgui.ImGui.beginGroup
@@ -19,6 +21,7 @@ import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
+import imgui.ImGui.markItemValueChanged
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
@@ -130,6 +133,8 @@ interface imgui_widgetsSliders {
         // Actual slider behavior + render grab
         itemSize(totalBb, style.framePadding.y)
         val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power)
+        if (valueChanged)
+            markItemValueChanged(id)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
         val value = format.format(style.locale, v())
@@ -154,7 +159,7 @@ interface imgui_widgetsSliders {
     fun sliderFloat3(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f) =
             sliderFloatN(label, v, 3, vMin, vMax, format, power)
 
-    fun sliderVec3(label: String, v: Vec2, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean {
+    fun sliderVec3(label: String, v: Vec3, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean {
         val floats = v to FloatArray(3)
         val res = sliderFloatN(label, floats, 3, vMin, vMax, format, power)
         v put floats
@@ -164,7 +169,7 @@ interface imgui_widgetsSliders {
     fun sliderFloat4(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f) =
             sliderFloatN(label, v, 4, vMin, vMax, format, power)
 
-    fun sliderVec4(label: String, v: Vec2, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean {
+    fun sliderVec4(label: String, v: Vec4, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean {
         val floats = v to FloatArray(4)
         val res = sliderFloatN(label, floats, 4, vMin, vMax, format, power)
         v put floats
@@ -254,6 +259,8 @@ interface imgui_widgetsSliders {
 
         // Actual slider behavior + render grab
         val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power, SliderFlag.Vertical.i)
+        if (valueChanged)
+            markItemValueChanged(id)
 
         /*  Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
             For the vertical slider we allow centered text to overlap the frame padding         */

@@ -5,13 +5,11 @@ import imgui.*
 import imgui.ImGui.beginDragDropTooltip
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.endDragDropTooltip
-import imgui.ImGui.endTooltip
+import imgui.ImGui.hoveredId
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
-import imgui.ImGui.popStyleColor
 import imgui.ImGui.setActiveId
-import imgui.ImGui.setHoveredId
 import imgui.internal.*
 import imgui.DragDropFlag as Ddf
 
@@ -57,7 +55,7 @@ interface imgui_dragAndDrop {
                     return false
                 window.dc.lastItemId = window.getIdFromRectangle(window.dc.lastItemRect)
                 sourceId = window.dc.lastItemId
-                if (isHovered) setHoveredId(sourceId)
+                if (isHovered) hoveredId = sourceId
                 if (isHovered && io.mouseClicked[mouseButton]) {
                     setActiveId(sourceId, window)
                     window.focus()
