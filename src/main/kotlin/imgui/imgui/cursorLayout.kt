@@ -22,19 +22,19 @@ import imgui.internal.SeparatorFlag as Sf
 
 interface imgui_cursorLayout {
 
-    /** Separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a vertical separator. */
+    /** Horizontal/vertical separating line
+     *  Separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a vertical separator. */
     fun separator() {
 
         val window = currentWindow
         if (window.skipItems) return
 
-        var flags: SeparatorFlags = 0
-        if (flags hasnt (Sf.Horizontal or Sf.Vertical))
-            flags = flags or if (window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
-        // Check that only 1 option is selected
-        assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo)
+        // Those flags should eventually be overridable by the user
+        val flag: Sf = if(window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
+        // useless on JVM with enums
+        // assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo)
 
-        if (flags has Sf.Vertical) {
+        if (flag == Sf.Vertical) {
             verticalSeparator()
             return
         }

@@ -32,7 +32,7 @@ interface imgui_utilities {
      *      - this should work even for non-interactive items that have no ID, so we cannot use LastItemId  */
     fun isItemHovered(flags: Hf) = isItemHovered(flags.i)
 
-    fun isItemHovered(flags: Int = Hf.Default.i): Boolean {
+    fun isItemHovered(flags: Int = Hf.None.i): Boolean {
 
         if (g.navDisableMouseHover && !g.navDisableHighlight)
             return isItemFocused
@@ -67,25 +67,32 @@ interface imgui_utilities {
         }
     }
 
-    /** Is the last item active? (e.g. button being held, text field being edited- items that don't interact will always
-     *  return false)   */
+    /** Is the last item active? (e.g. button being held, text field being edited.
+     *  This will continuously return true while holding mouse button on an item. Items that don't interact will always return false) */
     val isItemActive
         get() = if (g.activeId != 0) g.activeId == g.currentWindow!!.dc.lastItemId else false
 
-    /** is the last item focused for keyboard/gamepad navigation?   */
+    /** Is the last item focused for keyboard/gamepad navigation?   */
     val isItemFocused
         get() = g.navId != 0 && !g.navDisableHighlight && g.navId == g.currentWindow!!.dc.lastItemId
 
-    /** Is the last item clicked? (e.g. button/node just clicked on)  == isMouseClicked(0) && isItemHovered()  */
-    fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemHovered(Hf.Default)
+    /** Is the last item clicked? (e.g. button/node just clicked on) == IsMouseClicked(mouse_button) && IsItemHovered() */
+    fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemHovered(Hf.None)
 
-    /** Is the last item visible? (aka not out of sight due to clipping/scrolling.)    */
+    /** Is the last item visible? (items may be out of sight because of clipping/scrolling)    */
     val isItemVisible
         get() = with(currentWindowRead!!) { clipRect overlaps dc.lastItemRect }
 
-    /** is the last item just made inactive (item was previously active), useful for Undo/Redo patterns. */
+    /** Was the last item just made inactive (item was previously active).
+     *  Useful for Undo/Redo patterns with widgets that requires continuous editing. */
     val isItemDeactivated
         get() = g.currentWindow!!.dc.let { g.activeIdPreviousFrame == it.lastItemId && g.activeIdPreviousFrame != 0 && g.activeId != it.lastItemId }
+
+    /** Was the last item just made inactive and made a value change when it was active? (e.g. Slider/Drag moved).
+     *  Useful for Undo/Redo patterns with widgets that requires continuous editing.
+     *  Note that you may get false positives (some widgets such as Combo()/ListBox()/Selectable() will return true even when clicking an already selected item). */
+    val isItemDeactivatedAfterChange
+        get() = isItemDeactivated && (g.activeIdPreviousFrameValueChanged || (g.activeId == 0 && g.activeIdValueChanged))
 
     val isAnyItemHovered
         get() = g.hoveredId != 0 || g.hoveredIdPreviousFrame != 0

@@ -9,7 +9,7 @@ import imgui.internal.InputReadMode
 /** Flags for ImGui::Begin()    */
 enum class WindowFlag(val i: Int) {
 
-    Null(0),
+    None(0),
     /** Disable title-bar   */
     NoTitleBar(1 shl 0),
     /** Disable user resizing with the lower-right grip */
@@ -84,7 +84,7 @@ infix fun Int.wo(b: WindowFlag): WindowFlags = this and b.i.inv()
 /** Flags for ImGui::InputText()    */
 enum class InputTextFlag(val i: Int) {
 
-    Null(0),
+    None(0),
     /** Allow 0123456789 . + - * /      */
     CharsDecimal(1 shl 0),
     /** Allow 0123456789ABCDEFabcdef    */
@@ -140,7 +140,7 @@ infix fun Int.hasnt(b: InputTextFlag) = (this and b.i) == 0
 /** Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader*()   */
 enum class TreeNodeFlag(val i: Int) {
 
-    Null(0),
+    None(0),
     /** Draw as selected    */
     Selected(1 shl 0),
     /** Full colored frame (e.g. for CollapsingHeader)  */
@@ -182,7 +182,7 @@ infix fun Int.hasnt(b: TreeNodeFlag) = (this and b.i) == 0
 /** Flags for ImGui::Selectable()   */
 enum class SelectableFlag(val i: Int) {
 
-    Null(0),
+    None(0),
     /** Clicking this don't close parent popup window   */
     DontClosePopups(1 shl 0),
     /** Selectable frame can span all columns (text will still fit in current column)   */
@@ -208,6 +208,7 @@ infix fun Int.has(b: SelectableFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: SelectableFlag) = (this and b.i) == 0
 
 enum class ComboFlag(val i: Int) {
+    None(0),
     /** Align the popup toward the left by default */
     PopupAlignLeft(1 shl 0),
     /** Max ~4 items visible */
@@ -234,7 +235,7 @@ infix fun Int.hasnt(b: ComboFlag) = and(b.i) == 0
 
 // Flags for ImGui::IsWindowFocused()
 enum class FocusedFlag(val i: Int) {
-    Null(0),
+    None(0),
     /** isWindowFocused(): Return true if any children of the window is focused */
     ChildWindows(1 shl 0),
     /** isWindowFocused(): Test from root window (top most parent of the current hierarchy) */
@@ -253,7 +254,7 @@ infix fun Int.hasnt(b: FocusedFlag) = and(b.i) == 0
 enum class HoveredFlag(val i: Int) {
     /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active
      *  popup or modal blocking inputs under them.  */
-    Default(0),
+    None(0),
     /** isWindowHovered() only: Return true if any children of the window is hovered */
     ChildWindows(1 shl 0),
     /** isWindowHovered() only: Test from root window (top most parent of the current hierarchy) */
@@ -279,6 +280,7 @@ infix fun Int.hasnt(b: HoveredFlag) = and(b.i) == 0
 /** Flags for beginDragDropSource(), acceptDragDropPayload() */
 enum class DragDropFlag(val i: Int) {
     // BeginDragDropSource() flags
+    None(0),
     /** By default), a successful call to beginDragDropSource opens a tooltip so you can display a preview or
      *  description of the source contents. This flag disable this behavior. */
     SourceNoPreviewTooltip(1 shl 0),
@@ -443,11 +445,13 @@ enum class ConfigFlag(val i: Int) {
      *  Will update io.MousePos and set io.wantSetMousePos=true. If enabled you MUST honor io.wantSetMousePos requests in your binding,
      *  otherwise ImGui will react as if the mouse is jumping around back and forth. */
     NavEnableSetMousePos(1 shl 2),
-    /** Instruct navigation to not set the io.WantCaptureKeyboard flag with io.NavActive is set. */
+    /** Instruct navigation to not set the io.WantCaptureKeyboard flag when io.NavActive is set. */
     NavNoCaptureKeyboard(1 shl 3),
-    /** Instruct imgui to clear mouse position/buttons in NewFrame(). This allows ignoring the mouse information back-end */
+    /** Instruct imgui to clear mouse position/buttons in NewFrame(). This allows ignoring the mouse information set by the back-end. */
     NoMouse(1 shl 4),
-    /** Request back-end to not alter mouse cursor configuration. */
+    /** Request back-end to not alter mouse cursor configuration.
+     *  Use if the back-end cursor changes are interfering with yours and you don't want to use setMouseCursor() to change mouse cursor.
+     *  You may want to honor requests from imgui by reading ::mouseCursor yourself instead. */
     NoMouseCursorChange(1 shl 5),
 
     /*  User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects.
@@ -468,9 +472,9 @@ typealias BackendFlags = Int
 
 /** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end. */
 enum class BackendFlag(val i: Int) {
-    /** Back-end supports and has a connected gamepad. */
+    /** Back-end supports gamepad and currently has one connected. */
     HasGamepad(1 shl 0),
-    /** Back-end supports reading GetMouseCursor() to change the OS cursor shape. */
+    /** Back-end supports honoring ::mouseCursor value to change the OS cursor shape. */
     HasMouseCursors(1 shl 1),
     /** Back-end supports io.wantSetMousePos requests to reposition the OS mouse position (only used if ConfigFlags.NavEnableSetMousePos is set). */
     HasSetMousePos(1 shl 2)
@@ -724,7 +728,7 @@ enum class StyleVar {
 /** Enumeration for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()   */
 enum class ColorEditFlag(val i: Int) {
 
-    Null(0),
+    None(0),
     /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (read 3 components from the input pointer). */
     NoAlpha(1 shl 1),
     /** ColorEdit: disable picker when clicking on colored square.  */

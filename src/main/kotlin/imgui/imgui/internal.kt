@@ -85,16 +85,18 @@ import imgui.internal.LayoutType as Lt
 @Suppress("UNCHECKED_CAST")
 
 
-/** We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
- *  If this ever crash because g.CurrentWindow is NULL it means that either
- *      - ImGui::NewFrame() has never been called, which is illegal.
- *      - You are calling ImGui functions after ImGui::Render() and before the next ImGui::NewFrame(), which is also
- *          illegal.   */
 interface imgui_internal {
 
-    val currentWindowRead get() = g.currentWindow
+    val currentWindowRead: Window?
+        get() = g.currentWindow
 
-    val currentWindow get() = g.currentWindow!!.apply { writeAccessed = true }
+    val currentWindow: Window
+        get() = g.currentWindow?.apply { writeAccessed = true } ?: throw Error(
+                "We should always have a CurrentWindow in the stack (there is an implicit \"Debug\" window)\n" +
+                        "If this ever crash because ::currentWindow is NULL it means that either\n" +
+                        "   - ::newFrame() has never been called, which is illegal.\n" +
+                        "   - You are calling ImGui functions after ::render() and before the next ::newFrame(), which is also illegal.\n" +
+                        "   - You are calling ImGui functions after ::endFrame()/::render() and before the next ImGui::newFrame(), which is also illegal.")
 
     fun findWindowByName(name: String) = g.windowsById[hash(name, 0)]
 
@@ -102,10 +104,20 @@ interface imgui_internal {
         if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = io.iniSavingRate
     }
 
+    val itemID: ID
+        get() = g.currentWindow!!.dc.lastItemId
+
+    val activeID: ID
+        get() = g.activeId
+
+    val focusID: ID
+        get() = g.navId
+
     fun setActiveId(id: ID, window: Window?) {
         g.activeIdIsJustActivated = g.activeId != id
         if (g.activeIdIsJustActivated) {
             g.activeIdTimer = 0f
+            g.activeIdValueChanged = false
             if (id != 0) {
                 g.lastActiveId = id
                 g.lastActiveIdTimer = 0f
@@ -123,8 +135,6 @@ interface imgui_internal {
             }
         }
     }
-
-    fun getActiveId() = g.activeId
 
     fun setFocusId(id: ID, window: Window) {
 
@@ -150,20 +160,27 @@ interface imgui_internal {
 
     fun clearActiveId() = setActiveId(0, null)
 
-    // TODO custom setter/getters?
-    fun setHoveredId(id: ID) {
-        g.hoveredId = id
-        g.hoveredIdAllowOverlap = false
-        g.hoveredIdTimer = if (id != 0 && g.hoveredIdPreviousFrame == id) g.hoveredIdTimer + io.deltaTime else 0f
-    }
-
-    fun getHoveredId() = if (g.hoveredId != 0) g.hoveredId else g.hoveredIdPreviousFrame
+    var hoveredId: ID
+        get() = if (g.hoveredId != 0) g.hoveredId else g.hoveredIdPreviousFrame
+        set(value) {
+            g.hoveredId = value
+            g.hoveredIdAllowOverlap = false
+            g.hoveredIdTimer = if (value != 0 && g.hoveredIdPreviousFrame == value) g.hoveredIdTimer + io.deltaTime else 0f
+        }
 
     fun keepAliveId(id: ID) {
         if (g.activeId == id)
             g.activeIdIsAlive = true
         if (g.activeIdPreviousFrame == id)
             g.activeIdPreviousFrameIsAlive = true
+    }
+
+    fun markItemValueChanged(id: ID) {
+        /*  This marking is solely to be able to provide info for ::isItemDeactivatedAfterChange().
+            ActiveId might have been released by the time we call this (as in the typical press/release button behavior)
+            but still need need to fill the data.         */
+        assert(g.activeId == id || g.activeId == 0)
+        g.activeIdValueChanged = true
     }
 
     /** Advance cursor given item size for layout.  */
@@ -242,10 +259,10 @@ interface imgui_internal {
             g.hoveredWindow !== window -> false
             g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
             !isMouseHoveringRect(bb) -> false
-            g.navDisableMouseHover || !window.isContentHoverable(Hf.Default.i) -> false
+            g.navDisableMouseHover || !window.isContentHoverable(Hf.None) -> false
             window.dc.itemFlags has If.Disabled -> false
             else -> {
-                setHoveredId(id)
+                hoveredId = id
                 true
             }
         }
@@ -687,7 +704,7 @@ interface imgui_internal {
 
             // Click position in scrollbar normalized space (0.0f->1.0f)
             val clickedVNorm = saturate((mousePosV - scrollbarPosV) / scrollbarSizeV)
-            setHoveredId(id)
+            hoveredId = id
 
             var seekAbsolute = false
             if (!previouslyHeld)
@@ -786,6 +803,8 @@ interface imgui_internal {
             size1.set(size1() + mouseDelta)
             size2.set(size2() - mouseDelta)
             bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
+
+            markItemValueChanged(id)
         }
 
         // Render
@@ -1293,7 +1312,7 @@ interface imgui_internal {
         if (g.dragDropActive && flags has Bf.PressedOnDragDropHold && g.dragDropSourceFlags hasnt Ddf.SourceNoHoldToOpenOthers)
             if (isItemHovered(Hf.AllowWhenBlockedByActiveItem)) {
                 hovered = true
-                setHoveredId(id)
+                hoveredId = id
                 if (calcTypematicPressedRepeatAmount(g.hoveredIdTimer + 0.0001f, g.hoveredIdTimer + 0.0001f - io.deltaTime,
                                 0.01f, 0.7f) != 0) { // FIXME: Our formula for CalcTypematicPressedRepeatAmount() is fishy
                     pressed = true
@@ -1417,6 +1436,8 @@ interface imgui_internal {
         var flags = flags_
         if (window.dc.itemFlags has If.ButtonRepeat) flags = flags or Bf.Repeat
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
+        if (pressed)
+            markItemValueChanged(id)
 
         // Render
         val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
@@ -1596,7 +1617,7 @@ interface imgui_internal {
                     clearActiveId()
                 else if (delta != 0f) {
                     clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
-                    val decimalPrecision = if(isDecimal) parseFormatPrecision(format, 3) else 0
+                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     delta = when {
                         decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
                             NavInput.TweakSlow.isDown() -> delta / 1_000f
@@ -1742,7 +1763,7 @@ interface imgui_internal {
                     clearActiveId()
                 else if (delta != 0f) {
                     clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
-                    val decimalPrecision = if(isDecimal) parseFormatPrecision(format, 3) else 0
+                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     delta = when {
                         decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
                             NavInput.TweakSlow.isDown() -> delta / 1_000f
@@ -1888,7 +1909,7 @@ interface imgui_internal {
                     clearActiveId()
                 else if (delta != 0f) {
                     clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
-                    val decimalPrecision = if(isDecimal) parseFormatPrecision(format, 3) else 0
+                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     delta = when {
                         decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
                             NavInput.TweakSlow.isDown() -> delta / 1_000f
@@ -2034,7 +2055,7 @@ interface imgui_internal {
                     clearActiveId()
                 else if (delta != 0f) {
                     clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
-                    val decimalPrecision = if(isDecimal) parseFormatPrecision(format, 3) else 0
+                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     delta = when {
                         decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
                             NavInput.TweakSlow.isDown() -> delta / 1_000f
@@ -2808,6 +2829,9 @@ interface imgui_internal {
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
+        if (valueChanged)
+            markItemValueChanged(id)
+
         return if (flags has Itf.EnterReturnsTrue) enterPressed else valueChanged
     }
 
@@ -2822,7 +2846,7 @@ interface imgui_internal {
             On the first frame, g.ScalarAsInputTextId == 0, then on subsequent frames it becomes == id  */
         setActiveId(g.scalarAsInputTextId, window)
         g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-        setHoveredId(0)
+        hoveredId = 0
         focusableItemUnregister(window)
 
         val fmtBuf = CharArray(32)
@@ -2837,7 +2861,7 @@ interface imgui_internal {
         if (g.scalarAsInputTextId == 0) {   // First frame we started displaying the InputText widget
             assert(g.activeId == id) // InputText ID expected to match the Slider ID
             g.scalarAsInputTextId = g.activeId
-            setHoveredId(id)
+            hoveredId = id
         }
         return when {
             valueChanged -> dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialText, dataType, data)

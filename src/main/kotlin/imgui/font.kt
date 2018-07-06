@@ -608,12 +608,14 @@ class FontAtlas {
 //            var rectI = 0
 //            for (rangeI in 0 until tmp.rangesCount)
 //                for (charI in 0 until tmp.ranges[rangeI].numChars) {
-//                    if (stbtt_FindGlyphIndex(tmp.fontInfo, tmp.ranges[rangeI].firstUnicodeCodepointInRange + charI) == 0) {
-//                        tmp.rects[rectI].w = 0
-//                        tmp.rects[rectI].h = 0
-//                    }
+//                    if (stbtt_FindGlyphIndex(tmp.fontInfo, tmp.ranges[rangeI].firstUnicodeCodepointInRange + charI) == 0)
+//                        tmp.rects[rectI].apply {
+////                            w = 0
+////                            h = 0
+//                        }
 //                    rectI++
 //                }
+
             // Pack
             stbrp_pack_rects(spc.packInfo, tmp.rects)   // fuck, Omar modified his stb_rect_pack.h, we shall also have our own?
 

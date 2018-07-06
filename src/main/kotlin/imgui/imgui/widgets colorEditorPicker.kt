@@ -42,6 +42,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.markItemValueChanged
 import imgui.ImGui.openPopup
 import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popId
@@ -260,6 +261,9 @@ interface imgui_widgetsColorEditorPicker {
         // When picker is being actively used, use its active id so IsItemActive() will function on ColorEdit4().
         if (pickerActiveWindow != null && g.activeId != 0 && g.activeIdWindow === pickerActiveWindow)
             window.dc.lastItemId = g.activeId
+
+        if (valueChanged)
+            markItemValueChanged(window.dc.lastItemId)
 
         return valueChanged
     }
@@ -566,12 +570,17 @@ interface imgui_widgetsColorEditorPicker {
         }
 
         endGroup()
-        popId()
 
         var compare = true
         repeat(components) { if (backupInitialCol[it] != col[it]) compare = false }
+        if (valueChanged && compare)
+            valueChanged = false
+        if (valueChanged)
+            markItemValueChanged(window.dc.lastItemId)
 
-        return valueChanged && !compare
+        popId()
+
+        return valueChanged
     }
 
     /**  A little colored square. Return true when clicked.
@@ -592,7 +601,7 @@ interface imgui_widgetsColorEditorPicker {
         itemSize(bb, if (size.y >= defaultSize) style.framePadding.y else 0f)
         if (!itemAdd(bb, id)) return false
 
-        var (pressed, hovered, held) = buttonBehavior(bb, id)
+        val (pressed, hovered, held) = buttonBehavior(bb, id)
 
         var flags = flags_
         if (flags has Cef.NoAlpha)
@@ -646,6 +655,9 @@ interface imgui_widgetsColorEditorPicker {
             colorTooltip(descId, pF, flags and (Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf))
             col.put(pF)
         }
+
+        if (pressed)
+            markItemValueChanged(id)
 
         return pressed
     }

@@ -753,7 +753,7 @@ class Window(var context: Context, var name: String) {
         if (cond != Cond.Null && setWindowPosAllowFlags hasnt cond)
             return
 //        JVM, useless
-//        assert(cond == Cond.Null || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
+//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         setWindowPosAllowFlags = setWindowPosAllowFlags wo (Cond.Once or Cond.FirstUseEver or Cond.Appearing)
         setWindowPosVal put Float.MAX_VALUE
         setWindowPosPivot put Float.MAX_VALUE
@@ -773,7 +773,7 @@ class Window(var context: Context, var name: String) {
         if (cond != Cond.Null && setWindowSizeAllowFlags hasnt cond)
             return
 //        JVM, useless
-//        assert(cond == Cond.Null || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
+//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         setWindowSizeAllowFlags = setWindowSizeAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
 
         // Set
@@ -801,6 +801,8 @@ class Window(var context: Context, var name: String) {
         // Set
         this.collapsed = collapsed
     }
+
+    infix fun isContentHoverable(flag: Hf) = isContentHoverable(flag.i)
 
     infix fun isContentHoverable(flags: HoveredFlags): Boolean {
         // An active popup disable hovering on other windows (apart from its own children)
