@@ -38,14 +38,14 @@ interface imgui_widgetsTrees {
 //    IMGUI_API bool          TreeNodeV(const char* str_id, const char* fmt, va_list args);           // "
 //    IMGUI_API bool          TreeNodeV(const void* ptr_id, const char* fmt, va_list args);           // "
 
-    fun treeNodeEx(label: String, flags: TreeNodeFlags = 0): Boolean    {
+    fun treeNodeEx(label: String, flags: TreeNodeFlags = 0): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
         return treeNodeBehavior(window.getId(label), flags, label)
     }
 
-    fun treeNodeEx(strId: String, flags: TreeNodeFlags , fmt: String, vararg args: Any): Boolean {
+    fun treeNodeEx(strId: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
         val isOpen = treeNodeExV(strId, flags, fmt, args)
         return isOpen
     }
@@ -94,6 +94,7 @@ interface imgui_widgetsTrees {
             }
         window.dc.treeDepthMayJumpToParentOnPop = window.dc.treeDepthMayJumpToParentOnPop and (1 shl window.dc.treeDepth) - 1
 
+        assert(window.idStack.size > 1) { "There should always be 1 element in the idStack (pushed during window creation). If this triggers you called ::treePop/popId() too much." }
         popId()
     }
 

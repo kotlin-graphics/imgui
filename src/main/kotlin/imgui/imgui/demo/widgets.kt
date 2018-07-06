@@ -409,7 +409,7 @@ object widgets {
                             } else {
                                 /*  Leaf: The only reason we have a TreeNode at all is to allow selection of the leaf.
                                     Otherwise we can use BulletText() or TreeAdvanceToLabelPos()+Text().                                 */
-                                nodeFlags = nodeFlags or Tnf.Leaf // or TreeNodeFlags.Bullet
+                                nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
                                 treeNodeExV(i, nodeFlags, "Selectable Leaf $i")
                                 if (isItemClicked()) nodeClicked = i
                             }

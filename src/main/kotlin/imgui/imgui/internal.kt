@@ -3072,7 +3072,7 @@ interface imgui_internal {
     /** Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging */
     fun treeNodeBehaviorIsOpen(id: ID, flags: TreeNodeFlags = 0): Boolean {
 
-        if (flags has Tnf.Leaf) return false
+        if (flags has Tnf.Leaf) return true
 
         // We only write to the tree storage if the user clicks (or explicitly use SetNextTreeNode*** functions)
         val window = g.currentWindow!!
