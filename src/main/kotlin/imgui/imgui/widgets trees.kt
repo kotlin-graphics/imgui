@@ -13,6 +13,7 @@ import imgui.ImGui.pushId
 import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
+import imgui.internal.itemHoveredDataBackup
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 
@@ -142,11 +143,11 @@ interface imgui_widgetsTrees {
         if (open != null) {
             // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
             val buttonSz = g.fontSize * 0.5f
-//            itemHoveredDataBackup {
-            if (closeButton(window.getId(id + 1), Vec2(glm.min(window.dc.lastItemRect.max.x, window.clipRect.max.x) -
-                            style.framePadding.x - buttonSz, window.dc.lastItemRect.min.y + style.framePadding.y + buttonSz), buttonSz))
-                open.set(false)
-//            }
+            itemHoveredDataBackup {
+                if (closeButton(window.getId(id + 1), Vec2(glm.min(window.dc.lastItemRect.max.x, window.clipRect.max.x) -
+                                style.framePadding.x - buttonSz, window.dc.lastItemRect.min.y + style.framePadding.y + buttonSz), buttonSz))
+                    open.set(false)
+            }
         }
         return isOpen
     }

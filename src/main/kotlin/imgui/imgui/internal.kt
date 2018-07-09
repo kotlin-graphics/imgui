@@ -244,8 +244,7 @@ interface imgui_internal {
         if (isClippedEx(bb, id, false)) return false
         //if (g.io.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
 
-        /*  We need to calculate this now to take account of the current clipping rectangle (as items like Selectable
-            may change them)         */
+        // We need to calculate this now to take account of the current clipping rectangle (as items like Selectable may change them)
         if (isMouseHoveringRect(bb.min, bb.max))
             dc.lastItemStatusFlags = dc.lastItemStatusFlags or ItemStatusFlag.HoveredRect
         return true
