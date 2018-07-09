@@ -316,13 +316,12 @@ interface imgui_main {
         /*  Sort the window list so that all child windows are after their parent
             We cannot do that on FocusWindow() because childs may not exist yet         */
         g.windowsSortBuffer.clear()
-        g.windows.forEach {
-            if (!it.active || it.flags hasnt Wf.ChildWindow)  // if a child is active its parent will add it
-                it.addToSortedBuffer()
-        }
+        g.windowsSortBuffer.ensureCapacity(g.windows.size)
+        g.windows.filter { !it.active || it.flags hasnt Wf.ChildWindow }  // if a child is active its parent will add it
+                .forEach { it addToSortedBuffer g.windowsSortBuffer }
         assert(g.windows.size == g.windowsSortBuffer.size) { "we done something wrong" }
         g.windows.clear()
-        g.windows.addAll(g.windowsSortBuffer)
+        g.windows += g.windowsSortBuffer
 
         // Clear Input data for next frame
         io.mouseWheel = 0f

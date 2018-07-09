@@ -7,10 +7,12 @@ import imgui.impl.LwjglGL3;
 import kotlin.Unit;
 import org.lwjgl.opengl.GL;
 import uno.glfw.GlfwWindow;
+import uno.glfw.windowHint;
 
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import uno.glfw.windowHint.Profile;
 
 public class Test_lwjgl {
 
@@ -36,10 +38,10 @@ public class Test_lwjgl {
 
     public void run() {
 
-        glfw.init("3.2", "core");
+        glfw.init("3.2", Profile.core, true);
 
         window = new GlfwWindow(1280, 720, "ImGui Lwjgl OpenGL3 example", NULL, new Vec2i(Integer.MIN_VALUE), true);
-        window.init();
+        window.init(true);
 
         glfw.setSwapInterval(1);    // Enable vsync
 
