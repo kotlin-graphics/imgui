@@ -241,17 +241,16 @@ class ListClipper
  *  begin()/end() api directly, but prefer calling step().   */
 constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
 
-    init {
-        /* NB: Begin() initialize every fields (as we allow user to call Begin/End multiple times on a same instance if
-            they want).         */
-        begin(itemsCount, itemsHeight)
-    }
-
     var startPosY = 0f
     var itemsHeight = 0f
     var itemsCount = 0
     var stepNo = 0
     var display = 0..0
+
+    init {
+        /* NB: Begin() initialize every fields (as we allow user to call Begin/End multiple times on a same instance if they want). */
+        begin(itemsCount, itemsHeight)
+    }
 
     /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those
      *  items.  */
@@ -306,7 +305,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
      *  FIXME-LEGACY: Ideally we should remove the Begin/End functions but they are part of the legacy API we still
      *  support. This is why some of the code in Step() calling Begin() and reassign some fields, spaghetti style.
      */
-    fun begin(itemsCount: Int, itemsHeight: Float = -1f) {
+    fun begin(itemsCount: Int = -1, itemsHeight: Float = -1f) {
 
         startPosY = cursorPosY
         this.itemsHeight = itemsHeight

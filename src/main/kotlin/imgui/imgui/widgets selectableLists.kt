@@ -155,18 +155,9 @@ interface imgui_widgetsSelectableLists {
         return false
     }
 
-    fun listBox(label: String, currentItem: KMutableProperty0<Int>, items: Array<String>, heightInItems: Int = -1) =
-            listBox(label, currentItem, imgui_widgetsText.Items.arrayGetter, items, heightInItems)
+    fun listBox(label: String, currentItem: KMutableProperty0<Int>, items: Array<String>, heightInItems: Int = -1): Boolean {
 
-    fun listBox(label: String, currentItem: IntArray, items: Array<String>, heightInItems: Int = -1) = withInt { i ->
-        i.set(currentItem[0])
-        listBox(label, i, imgui_widgetsText.Items.arrayGetter, items, heightInItems).also { currentItem[0] = i() }
-    }
-
-    fun listBox(label: String, currentItem: KMutableProperty0<Int>, itemsGetter: (Array<String>, Int, Array<String>) -> Boolean,
-                data: Array<String>, heightInItems: Int = -1): Boolean {
-
-        val itemsCount = data.size
+        val itemsCount = items.size
         if (!listBoxHeader(label, itemsCount, heightInItems)) return false
         // Assume all items have even height (= 1 line of text). If you need items of different or variable sizes you can create a custom version of ListBox() in your code without using the clipper.
         var valueChanged = false
@@ -174,17 +165,15 @@ interface imgui_widgetsSelectableLists {
         val clipper = ListClipper(itemsCount, textLineHeightWithSpacing)
         while (clipper.step())
             for (i in clipper.display.start until clipper.display.last)
-                withBool { b ->
-                    val itemSelected = i == currentItem()
-                    b.set(itemSelected)
-                    val itemText = arrayOf("")
-                    if (!itemsGetter(data, i, itemText)) itemText[0] = "*Unknown item*"
+                withBool { itemSelected ->
+                    itemSelected.set(i == currentItem())
+                    val itemText = items.getOrElse(i) { "*Unknown item*" }
                     pushId(i)
-                    if (selectable(itemText[0], b)) {
+                    if (selectable(itemText, itemSelected)) {
                         currentItem.set(i)
                         valueChanged = true
                     }
-                    if (itemSelected) setItemDefaultFocus()
+                    if (itemSelected()) setItemDefaultFocus()
                     popId()
                 }
         listBoxFooter()
