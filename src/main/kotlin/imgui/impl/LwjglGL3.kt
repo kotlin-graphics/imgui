@@ -179,7 +179,7 @@ object LwjglGL3 {
         // Update mouse position
         val mousePosBackup = Vec2d(io.mousePos)
         io.mousePos put -Float.MAX_VALUE
-        if (window.focused)
+        if (window.isFocused)
             if (io.wantSetMousePos)
                 window.cursorPos = mousePosBackup
             else
