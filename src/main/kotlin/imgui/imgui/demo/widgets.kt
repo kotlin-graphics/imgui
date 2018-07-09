@@ -136,7 +136,7 @@ object widgets {
     var e = 0
     val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
     var currentItem0 = 0
-    var str0 = "Hello, world!".toCharArray()
+    var str0 = "Hello, world!".toCharArray(CharArray(128))
     var i0 = 123
     var f0 = 0.001f
     var f1 = 1e10f
@@ -326,7 +326,7 @@ object widgets {
                 }
 
                 run {
-                    inputText("input text", str0, str0.size)
+                    inputText("input text", str0)
                     sameLine(); showHelpMarker("Hold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\nCTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\nESCAPE to revert.\n")
 
                     inputInt("input int", ::i0)
