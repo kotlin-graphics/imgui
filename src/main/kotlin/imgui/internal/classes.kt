@@ -869,13 +869,14 @@ class Window(var context: Context, var name: String) {
                 .forEach { it addTo outList }
     }
 
-    fun addToSortedBuffer() {
-        g.windowsSortBuffer.add(this)
+    /** AddWindowToSortedBuffer */
+    infix fun addToSortedBuffer(sortedWindows: ArrayList<Window>) {
+        sortedWindows += this
         if (active) {
             val count = dc.childWindows.size
             if (count > 1)
                 dc.childWindows.sortWith(childWindowComparer)
-            dc.childWindows.filter { active }.forEach { it.addToSortedBuffer() }
+            dc.childWindows.filter { it.active }.forEach { it addToSortedBuffer sortedWindows }
         }
     }
 
