@@ -446,7 +446,6 @@ object JoglGL3 {
             fontTexture[0] = 0
         }
     }
-
 }
 
 fun GL3.glGetInteger(name: Int): Int {
