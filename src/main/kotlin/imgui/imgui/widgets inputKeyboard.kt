@@ -71,31 +71,31 @@ interface imgui_widgetsInputKeyboard {
     }
 
     fun inputFloat2(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
-            : Boolean = inputFloatN(label, v, 2, format, extraFlags)
+            : Boolean = inputFloatN(label, v, 2, null, null, format, extraFlags)
 
     fun inputVec2(label: String, v: Vec2, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(2)
-        val res = inputFloatN(label, floats, 2, format, extraFlags)
+        val res = inputFloatN(label, floats, 2, null, null, format, extraFlags)
         v put floats
         return res
     }
 
     fun inputFloat3(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
-            : Boolean = inputFloatN(label, v, 3, format, extraFlags)
+            : Boolean = inputFloatN(label, v, 3, null, null, format, extraFlags)
 
     fun inputVec3(label: String, v: Vec3, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(3)
-        val res = inputFloatN(label, floats, 3, format, extraFlags)
+        val res = inputFloatN(label, floats, 3, null, null, format, extraFlags)
         v put floats
         return res
     }
 
     fun inputFloat4(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
-            : Boolean = inputFloatN(label, v, 4, format, extraFlags)
+            : Boolean = inputFloatN(label, v, 4, null, null, format, extraFlags)
 
     fun inputVec4(label: String, v: Vec4, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(4)
-        val res = inputFloatN(label, floats, 4, format, extraFlags)
+        val res = inputFloatN(label, floats, 4, null, null, format, extraFlags)
         v put floats
         return res
     }
@@ -107,26 +107,32 @@ interface imgui_widgetsInputKeyboard {
         return inputScalar(label, DataType.Int, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, extraFlags)
     }
 
-    fun inputInt2(label: String, v: IntArray, extraFlags: InputTextFlags = 0) = inputIntN(label, v, 2, extraFlags)
+    fun inputInt2(label: String, v: IntArray, extraFlags: InputTextFlags = 0) =
+            inputIntN(label, v, 2, null, null, "%d", extraFlags)
+
     fun inputVec2i(label: String, v: Vec2i, extraFlags: InputTextFlags = 0): Boolean {
         val ints = v to IntArray(2)
-        val res = inputIntN(label, ints, 2, extraFlags)
+        val res = inputIntN(label, ints, 2, null, null, "%d", extraFlags)
         v put ints
         return res
     }
 
-    fun inputInt3(label: String, v: IntArray, extraFlags: InputTextFlags = 0) = inputIntN(label, v, 3, extraFlags)
+    fun inputInt3(label: String, v: IntArray, extraFlags: InputTextFlags = 0) =
+            inputIntN(label, v, 3, null, null, "%d", extraFlags)
+
     fun inputVec3i(label: String, v: Vec3i, extraFlags: InputTextFlags = 0): Boolean {
         val ints = v to IntArray(3)
-        val res = inputIntN(label, ints, 3, extraFlags)
+        val res = inputIntN(label, ints, 3, null, null, "%d", extraFlags)
         v put ints
         return res
     }
 
-    fun inputInt4(label: String, v: IntArray, extraFlags: InputTextFlags = 0) = inputIntN(label, v, 4, extraFlags)
+    fun inputInt4(label: String, v: IntArray, extraFlags: InputTextFlags = 0) =
+            inputIntN(label, v, 4, null, null, "%d", extraFlags)
+
     fun inputVec4i(label: String, v: Vec4i, extraFlags: InputTextFlags = 0): Boolean {
         val ints = v to IntArray(4)
-        val res = inputIntN(label, ints, 4, extraFlags)
+        val res = inputIntN(label, ints, 4, null, null, "%d", extraFlags)
         v put ints
         return res
     }
@@ -196,9 +202,11 @@ interface imgui_widgetsInputKeyboard {
         return valueChanged
     }
 
-    fun inputFloatN(label: String, v: FloatArray, components: Int, format: String? = null, extraFlags: Int): Boolean {
+    fun inputFloatN(label: String, v: FloatArray, components: Int, step: Number? = null, stepFast: Number? = null,
+                    format: String? = null, extraFlags: Int): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
+
         var valueChanged = false
         beginGroup()
         pushId(label)
@@ -206,19 +214,21 @@ interface imgui_widgetsInputKeyboard {
         for (i in 0 until components) {
             pushId(i)
             withFloat(v, i) {
-                valueChanged = inputScalar("##v", DataType.Float, it, 0f, 0f, format, extraFlags) || valueChanged
+                valueChanged = inputScalar("##v", DataType.Float, it, step, stepFast, format, extraFlags) || valueChanged
             }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
         }
         popId()
+
         textUnformatted(label, findRenderedTextEnd(label))
         endGroup()
         return valueChanged
     }
 
-    fun inputIntN(label: String, v: IntArray, components: Int, extraFlags: Int): Boolean {
+    fun inputIntN(label: String, v: IntArray, components: Int, step: Int? = null, stepFast: Int? = null, format: String? = null,
+                  extraFlags: Int): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -228,7 +238,7 @@ interface imgui_widgetsInputKeyboard {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withInt(v, i) { valueChanged = inputInt("##v", it, 0, 0, extraFlags) || valueChanged }
+            withInt(v, i) { valueChanged = inputScalar("##v", DataType.Int, it, step, stepFast, format, extraFlags) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
