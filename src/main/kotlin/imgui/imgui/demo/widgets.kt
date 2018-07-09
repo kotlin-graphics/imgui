@@ -135,7 +135,7 @@ object widgets {
     var check = true
     var e = 0
     val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
-    var currentItem1 = 1
+    var currentItem0 = 0
     var str0 = "Hello, world!".toCharArray()
     var i0 = 123
     var f0 = 0.001f
@@ -268,7 +268,7 @@ object widgets {
     var itemType = 1
     var b0 = false
     val col = Vec4(1f, 0.5, 0f, 1f)
-    var currentItem2 = 1
+    var currentItem1 = 1
     var embedAllInsideAChildWindow = false
 
     operator fun invoke() {
@@ -321,7 +321,7 @@ object widgets {
                     // Using the _simplified_ one-liner Combo() api here
                     // See "Combo" section for examples of how to use the more complete BeginCombo()/EndCombo() api.
                     val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO")
-                    combo("combo", ::currentItem1, items)
+                    combo("combo", ::currentItem0, items)
                     sameLine(); showHelpMarker("Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, and demonstration of various flags.\n")
                 }
 
@@ -1025,7 +1025,7 @@ object widgets {
                     2 -> checkbox("ITEM: CheckBox", ::b0)  // Testing checkbox
                     3 -> sliderVec4("ITEM: SliderFloat", col, 0f, 1f)   // Testing basic item
                     4 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
-                    5 -> listBox("ITEM: ListBox", ::currentItem2, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                    5 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
                     else -> false
                 }
                 bulletText("Return value = $ret\n" +

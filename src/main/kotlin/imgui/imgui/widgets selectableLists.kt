@@ -5,7 +5,6 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
 import imgui.ImGui.buttonBehavior
@@ -33,6 +32,7 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.setItemDefaultFocus
+import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.windowContentRegionMax
 import imgui.internal.NavHighlightFlag
@@ -173,21 +173,22 @@ interface imgui_widgetsSelectableLists {
         // We know exactly our line height here so we pass it as a minor optimization, but generally you don't need to.
         val clipper = ListClipper(itemsCount, textLineHeightWithSpacing)
         while (clipper.step())
-            for (i in clipper.display.start until clipper.display.last) withBool { b ->
-                val itemSelected = i == currentItem()
-                b.set(itemSelected)
-                val itemText = arrayOf("")
-                if (!itemsGetter(data, i, itemText)) itemText[0] = "*Unknown item*"
-                pushId(i)
-                if (selectable(itemText[0], b)) {
-                    currentItem.set(i)
-                    valueChanged = true
+            for (i in clipper.display.start until clipper.display.last)
+                withBool { b ->
+                    val itemSelected = i == currentItem()
+                    b.set(itemSelected)
+                    val itemText = arrayOf("")
+                    if (!itemsGetter(data, i, itemText)) itemText[0] = "*Unknown item*"
+                    pushId(i)
+                    if (selectable(itemText[0], b)) {
+                        currentItem.set(i)
+                        valueChanged = true
+                    }
+                    if (itemSelected) setItemDefaultFocus()
+                    popId()
                 }
-                if (itemSelected) setItemDefaultFocus()
-                popId()
-            }
         listBoxFooter()
-        return false
+        return valueChanged
     }
 
     /** Helper to calculate the size of a listbox and display a label on the right.
