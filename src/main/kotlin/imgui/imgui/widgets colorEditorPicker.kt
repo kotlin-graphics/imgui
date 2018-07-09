@@ -132,7 +132,7 @@ interface imgui_widgetsColorEditorPicker {
 
         val alpha = flags hasnt Cef.NoAlpha
         val hdr = flags has Cef.HDR
-        val components = if(alpha) 4 else 3
+        val components = if (alpha) 4 else 3
 
         // Convert to the formats we need
         val f = floatArrayOf(col[0], col[1], col[2], if (alpha) col[3] else 1f)
@@ -336,7 +336,7 @@ interface imgui_widgetsColorEditorPicker {
         val bar1PosX = bar0PosX + barsWidth + style.itemInnerSpacing.x
         val barsTrianglesHalfSz = (barsWidth * 0.2f).i.f
 
-        val backupInitialCol = FloatArray(4) { col[it] }
+        val backupInitialCol = FloatArray(4) { col.getOrElse(it) { 0f } }
 
         val wheelThickness = svPickerSize * 0.08f
         val wheelROuter = svPickerSize * 0.50f
