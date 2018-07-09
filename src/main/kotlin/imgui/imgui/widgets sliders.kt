@@ -61,12 +61,8 @@ interface imgui_widgetsSliders {
      *  "Gold: %.0f"   Gold: 1
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
-    fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean {
-        f0 = v[ptr]
-        val res = sliderFloat(label, ::f0, vMin, vMax, format, power)
-        v[ptr] = f0
-        return res
-    }
+    fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean =
+        withFloat(v, ptr) { sliderFloat(label, it, vMin, vMax, format, power) }
 
     /** Adjust format to decorate the value with a prefix or a suffix.
      *  "%.3f"         1.234
@@ -75,7 +71,7 @@ interface imgui_widgetsSliders {
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
     fun sliderFloat(label: String, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f)
-            : Boolean = sliderScalar(label, DataType.Float, ::f0, vMin, vMax, format, power)
+            : Boolean = sliderScalar(label, DataType.Float, v, vMin, vMax, format, power)
 
     /** Adjust format to decorate the value with a prefix or a suffix.
      *  "%.3f"         1.234
@@ -177,14 +173,14 @@ interface imgui_widgetsSliders {
     }
 
     fun sliderAngle(label: String, vRad: KMutableProperty0<Float>, vDegreesMin: Float = -360f, vDegreesMax: Float = 360f): Boolean {
-        f0 = vRad().deg
-        val valueChanged = sliderFloat(label, ::f0, vDegreesMin, vDegreesMax, "%.0f deg", 1f)
-        vRad.set(f0.rad)
+        vRad.set(vRad().deg)
+        val valueChanged = sliderFloat(label, vRad, vDegreesMin, vDegreesMax, "%.0f deg", 1f)
+        vRad.set(vRad().rad)
         return valueChanged
     }
 
-    fun sliderInt(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
-            sliderInt(label, ::i0.apply { set(v[0]) }, vMin, vMax, format).also { v[0] = i0 }
+    fun sliderInt(label: String, v: IntArray, ptr: Int, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
+            withInt(v, ptr) { sliderInt(label, it, vMin, vMax, format) }
 
     fun sliderInt(label: String, v: KMutableProperty0<*>, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
             sliderScalar(label, DataType.Int, v, vMin, vMax, format)
@@ -321,14 +317,4 @@ interface imgui_widgetsSliders {
         endGroup()
         return valueChanged
     }
-
-    companion object {
-        private var f0 = 0f
-        private var i0 = 0
-    }
-}
-
-inline fun <R> withFloat(block: (KMutableProperty0<Float>) -> R): R {
-    Ref.fPtr++
-    return block(Ref::float).also { Ref.fPtr-- }
 }

@@ -436,7 +436,7 @@ object widgets {
                     for (i in 0..4) text("Some content $i")
                 }
                 collapsingHeader("Header with a close button", ::closableGroup) {
-                    text("IsItemHovered: ${isItemHovered()}")
+                    text("IsItemHovered: ${isItemHovered(-1)}")
                     for (i in 0..4) text("More content $i")
                 }
             }
@@ -451,8 +451,8 @@ object widgets {
             treeNode("Text") {
                 treeNode("Colored Text") {
                     // Using shortcut. You can use PushStyleColor()/PopStyleColor() for more flexibility.
-                    textColored(Vec4(1.0f, 0.0f, 1.0f, 1.0f), "Pink")
-                    textColored(Vec4(1.0f, 1.0f, 0.0f, 1.0f), "Yellow")
+                    textColored(Vec4(1f, 0f, 1f, 1f), "Pink")
+                    textColored(Vec4(1f, 1f, 0f, 1f), "Yellow")
                     textDisabled("Disabled")
                     sameLine(); showHelpMarker("The TextDisabled color is stored in ImGuiStyle.")
                 }
@@ -466,6 +466,7 @@ object widgets {
 
                     text("Test paragraph 1:")
                     val pos = cursorScreenPos
+                    println("pos (${pos.x}, ${pos.y}), wrapWidth $wrapWidth")
                     val a = Vec2(pos.x + wrapWidth, pos.y)
                     val b = Vec2(pos.x + wrapWidth + 10, pos.y + textLineHeight)
                     windowDrawList.addRectFilled(a, b, COL32(255, 0, 255, 255))
@@ -550,10 +551,10 @@ object widgets {
 
             treeNode("Combo") {
                 // Expose flags as checkbox for the demo
-                checkboxFlags("ImGuiComboFlags_PopupAlignLeft", ::flags0, ComboFlag.PopupAlignLeft.i)
-                if (checkboxFlags("ImGuiComboFlags_NoArrowButton", ::flags0, ComboFlag.NoArrowButton.i))
+                checkboxFlags("ComboFlag.PopupAlignLeft", ::flags0, ComboFlag.PopupAlignLeft.i)
+                if (checkboxFlags("ComboFlag.NoArrowButton", ::flags0, ComboFlag.NoArrowButton.i))
                     flags0 = flags0 wo ComboFlag.NoPreview     // Clear the other flag, as we cannot combine both
-                if (checkboxFlags("ImGuiComboFlags_NoPreview", ::flags0, ComboFlag.NoPreview.i))
+                if (checkboxFlags("ComboFlag.NoPreview", ::flags0, ComboFlag.NoPreview.i))
                     flags0 = flags0 wo ComboFlag.NoArrowButton // Clear the other flag, as we cannot combine both
 
                 /*  General BeginCombo() API, you have full control over your selection data and display type.

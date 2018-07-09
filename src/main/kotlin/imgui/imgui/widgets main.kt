@@ -221,9 +221,10 @@ interface imgui_widgetsMain {
         val v = booleanArrayOf((flags() and flagsValue) == flagsValue)
         val pressed = checkbox(label, v)
         if (pressed)
-            flags.set(
-                    if (v[0]) flags() or flagsValue
-                    else flags() wo flagsValue)
+            flags.set(when {
+                v[0] -> flags() or flagsValue
+                else -> flags() wo flagsValue
+            })
         return pressed
     }
 

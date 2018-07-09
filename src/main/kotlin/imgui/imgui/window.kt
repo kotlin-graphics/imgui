@@ -661,7 +661,7 @@ interface imgui_window {
             window.innerClipRect.max.x = floor(0.5f + window.innerMainRect.max.x - max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
             window.innerClipRect.max.y = floor(0.5f + window.innerMainRect.max.y)
 
-            /*  After Begin() we fill the last item / hovered data based on title bar data. It is a standard behavior (to allow creation of context menus on title bar only, etc.). */
+            // After Begin() we fill the last item / hovered data based on title bar data. It is a standard behavior (to allow creation of context menus on title bar only, etc.).
             window.dc.lastItemId = window.moveId
             window.dc.lastItemStatusFlags = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max)) ItemStatusFlag.HoveredRect.i else 0
             window.dc.lastItemRect = titleBarRect

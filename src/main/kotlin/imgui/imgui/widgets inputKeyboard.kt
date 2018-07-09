@@ -49,12 +49,7 @@ interface imgui_widgetsInputKeyboard {
                    extraFlags: InputTextFlags = 0) = inputFloat(label, v, 0, step, stepFast, format, extraFlags)
 
     fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f, format: String? = null,
-                   extraFlags: InputTextFlags = 0) = withFloat { f ->
-        f.set(v[ptr])
-        val res = inputFloat(label, f, step, stepFast, format, extraFlags)
-        v[ptr] = f()
-        res
-    }
+                   extraFlags: InputTextFlags = 0) = withFloat(v, ptr) { inputFloat(label, it, step, stepFast, format, extraFlags) }
 
     fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f, format: String? = null,
                    extraFlags: InputTextFlags = 0): Boolean {

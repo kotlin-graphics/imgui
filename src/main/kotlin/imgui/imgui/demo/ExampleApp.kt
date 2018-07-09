@@ -840,7 +840,7 @@ object AutoResize {
 
         text("Window will resize every-frame to the size of its content.\nNote that you probably don't want to " +
                 "query the window size to\noutput your content because that would create a feedback loop.")
-        sliderInt("Number of lines", lines, 1, 20)
+        sliderInt("Number of lines", lines, 0, 1, 20)
         for (i in 0 until lines[0])
             text(" ".repeat(i * 4) + "This is line $i") // Pad with space to extend size horizontally
         end()
