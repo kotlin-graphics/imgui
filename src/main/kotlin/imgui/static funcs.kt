@@ -387,7 +387,7 @@ fun findBestWindowPosForPopup(window: Window): Vec2 {
 fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags/*, ImGuiTextEditCallback callback, void* user_data*/)
         : Boolean {
 
-    var c by char
+    var c = char()
 
     if (c < 128 && c != ' ' && !c.isPrintable) {
         var pass = false
@@ -413,8 +413,10 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
             if (c !in '0'..'9' && c !in 'a'..'f' && c !in 'A'..'F')
                 return false
 
-        if (flags has Itf.CharsUppercase && c in 'a'..'z')
+        if (flags has Itf.CharsUppercase && c in 'a'..'z') {
             c += 'A' - 'a'
+            char.set(c)
+        }
 
         if (flags has Itf.CharsNoBlank && c.isBlankW)
             return false
