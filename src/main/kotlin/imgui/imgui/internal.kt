@@ -767,8 +767,11 @@ interface imgui_internal {
         if (g.logEnabled) logText(" |")
     }
 
-    fun splitterBehavior(id: ID, bb: Rect, axis: Axis, size1: KMutableProperty0<Float>, size2: KMutableProperty0<Float>,
+    fun splitterBehavior(id: ID, bb: Rect, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
                          minSize1: Float, minSize2: Float, hoverExtend: Float): Boolean {
+
+        var size1 by size1ptr
+        var size2 by size2ptr
         val window = g.currentWindow!!
 
         val itemFlagsBackup = window.dc.itemFlags
@@ -793,14 +796,14 @@ interface imgui_internal {
             var mouseDelta = if (axis == Axis.Y) mouseDelta2d.y else mouseDelta2d.x
 
             // Minimum pane size
-            if (mouseDelta < minSize1 - size1())
-                mouseDelta = minSize1 - size1()
-            if (mouseDelta > size2() - minSize2)
-                mouseDelta = size2() - minSize2
+            if (mouseDelta < minSize1 - size1)
+                mouseDelta = minSize1 - size1
+            if (mouseDelta > size2 - minSize2)
+                mouseDelta = size2 - minSize2
 
             // Apply resize
-            size1.set(size1() + mouseDelta)
-            size2.set(size2() - mouseDelta)
+            size1 = size1 + mouseDelta // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
+            size2 = size2 - mouseDelta
             bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
 
             markItemValueChanged(id)
@@ -3470,6 +3473,7 @@ interface imgui_internal {
     }
 }
 
+// TODO move in a more appropriate place
 inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
     Ref.fPtr++
     val f = Ref::float

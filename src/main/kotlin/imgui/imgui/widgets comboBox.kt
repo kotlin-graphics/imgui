@@ -169,9 +169,10 @@ interface imgui_widgetsComboBox {
         return res
     }
 
-    fun combo(label: String, currentItem: KMutableProperty0<Int>, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
+    fun combo(label: String, currentItemPtr: KMutableProperty0<Int>, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
 
-        val previewText = items.getOrElse(currentItem()) { "" }
+        var currentItem by currentItemPtr
+        val previewText = items.getOrElse(currentItem) { "" }
 
         // The old Combo() API exposed "popup_max_height_in_items". The new more general BeginCombo() API doesn't, so we emulate it here.
         if (popupMaxHeightInItem != -1 && g.nextWindowData.sizeConstraintCond == Cond.Null) {
@@ -186,11 +187,11 @@ interface imgui_widgetsComboBox {
         var valueChanged = false
         for (i in 0 until items.size) {
             pushId(i)
-            val itemSelected = i == currentItem()
+            val itemSelected = i == currentItem
             val itemText = items.getOrElse(i) { "*Unknown item*" }
             if (selectable(itemText, itemSelected)) {
                 valueChanged = true
-                currentItem.set(i)
+                currentItem = i
             }
             if (itemSelected) setItemDefaultFocus()
             popId()

@@ -387,7 +387,7 @@ fun findBestWindowPosForPopup(window: Window): Vec2 {
 fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags/*, ImGuiTextEditCallback callback, void* user_data*/)
         : Boolean {
 
-    var c = char()
+    var c by char
 
     if (c < 128 && c != ' ' && !c.isPrintable) {
         var pass = false
@@ -413,10 +413,8 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
             if (c !in '0'..'9' && c !in 'a'..'f' && c !in 'A'..'F')
                 return false
 
-        if (flags has Itf.CharsUppercase && c in 'a'..'z') {
-            c += 'A' - 'a'
-            char.set(c)
-        }
+        if (flags has Itf.CharsUppercase && c in 'a'..'z')
+            c = c + ('A' - 'a') // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
 
         if (flags has Itf.CharsNoBlank && c.isBlankW)
             return false
@@ -509,14 +507,15 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
 
 /** DataTypeFormatString */
 fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 0): CharArray {
-    val value: Number = when (dataType) {
-        DataType.Int, DataType.Uint -> this() as Int    // Signedness doesn't matter when pushing the argument
-        DataType.Long, DataType.Ulong -> this() as Long // Signedness doesn't matter when pushing the argument
-        DataType.Float -> this() as Float
-        DataType.Double -> this() as Double
-        else -> throw Error()
-    }
-    val string = format.format(style.locale, value)
+    // useless
+//    val value: Number = when (dataType) {
+//        DataType.Int, DataType.Uint -> this() as Int    // Signedness doesn't matter when pushing the argument
+//        DataType.Long, DataType.Ulong -> this() as Long // Signedness doesn't matter when pushing the argument
+//        DataType.Float -> this() as Float
+//        DataType.Double -> this() as Double
+//        else -> throw Error()
+//    }
+    val string = format.format(style.locale, this())
     return when (size) {
         0 -> string.toCharArray()
         else -> string.toCharArray(CharArray(size))

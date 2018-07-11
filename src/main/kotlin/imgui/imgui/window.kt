@@ -75,11 +75,13 @@ interface imgui_window {
             regardless. You always need to call ImGui::End() even if false is returned.
         - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
             be set to false when the button is pressed. */
+    // TODO mage begin pOpen default
     fun begin_(name: String, pOpen: KMutableProperty0<Boolean>?, flags: Int = 0) =
             if (pOpen != null) {
-                val bool = booleanArrayOf(pOpen())
+                var open by pOpen
+                val bool = booleanArrayOf(open)
                 val res = begin(name, bool, flags)
-                pOpen.set(bool[0])
+                open = bool[0]
                 res
             } else
                 begin(name, null, flags)
