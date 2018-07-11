@@ -1553,10 +1553,10 @@ interface imgui_internal {
 
     // FIXME: Move some of the code into SliderBehavior(). Current responsability is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
 
-    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Int, vMax: Int, format: String,
+    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutableProperty0<*>, vMin: Int, vMax: Int, format: String,
                         power: Float, flags: SliderFlags = 0): Boolean {
 
-        v as KMutableProperty0<Int>
+        var v by vPtr as KMutableProperty0<Int>
         val window = currentWindow
 
         // Draw frame
@@ -1615,7 +1615,7 @@ interface imgui_internal {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveId()
                 else if (delta != 0f) {
-                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     delta = when {
                         decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
@@ -1677,15 +1677,15 @@ interface imgui_internal {
                 vNew = roundScalarWithFormat(format, vNew)
 
                 // Apply result
-                if (v() != vNew) {
-                    v.set(vNew)
+                if (v != vNew) {
+                    v = vNew
                     valueChanged = true
                 }
             }
         }
 
         // Draw
-        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
         if (!isHorizontal)
             grabT = 1f - grabT
         val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1699,10 +1699,10 @@ interface imgui_internal {
         return valueChanged
     }
 
-    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Long, vMax: Long, format: String,
+    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutableProperty0<*>, vMin: Long, vMax: Long, format: String,
                         power: Float, flags: SliderFlags = 0): Boolean {
 
-        v as KMutableProperty0<Long>
+        var v by vPtr as KMutableProperty0<Long>
         val window = currentWindow
 
         // Draw frame
@@ -1761,7 +1761,7 @@ interface imgui_internal {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveId()
                 else if (delta != 0f) {
-                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     delta = when {
                         decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
@@ -1823,15 +1823,15 @@ interface imgui_internal {
                 vNew = roundScalarWithFormat(format, vNew)
 
                 // Apply result
-                if (v() != vNew) {
-                    v.set(vNew)
+                if (v != vNew) {
+                    v = vNew
                     valueChanged = true
                 }
             }
         }
 
         // Draw
-        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
         if (!isHorizontal)
             grabT = 1f - grabT
         val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1845,10 +1845,10 @@ interface imgui_internal {
         return valueChanged
     }
 
-    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String,
+    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String,
                         power: Float, flags: SliderFlags = 0): Boolean {
 
-        v as KMutableProperty0<Float>
+        var v by vPtr as KMutableProperty0<Float>
         val window = currentWindow
 
         // Draw frame
@@ -1907,7 +1907,7 @@ interface imgui_internal {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveId()
                 else if (delta != 0f) {
-                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     delta = when {
                         decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
@@ -1969,15 +1969,15 @@ interface imgui_internal {
                 vNew = roundScalarWithFormat(format, vNew)
 
                 // Apply result
-                if (v() != vNew) {
-                    v.set(vNew)
+                if (v != vNew) {
+                    v = vNew
                     valueChanged = true
                 }
             }
         }
 
         // Draw
-        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
         if (!isHorizontal)
             grabT = 1f - grabT
         val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
