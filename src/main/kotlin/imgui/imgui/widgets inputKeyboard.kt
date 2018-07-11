@@ -157,7 +157,7 @@ interface imgui_widgetsInputKeyboard {
             else -> format_
         }
 
-        val buf = dataPtr.format(dataType, format)
+        val buf = dataPtr.format(dataType, format, 64)
 
         var valueChanged = false
         var extraFlags = extraFlags_

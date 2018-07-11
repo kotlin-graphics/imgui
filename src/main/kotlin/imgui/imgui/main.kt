@@ -623,10 +623,10 @@ interface imgui_main {
         // Template widget behaviors
         // This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
 
-        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed_: Float, vMin: Int, vMax: Int, format: String,
+        fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Int, vMax: Int, format: String,
                           power: Float): Boolean {
 
-            v as KMutableProperty0<Int>
+            var v by vPtr as KMutableProperty0<Int>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Int.MAX_VALUE)
             var vSpeed = vSpeed_
@@ -656,7 +656,7 @@ interface imgui_main {
                 Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
                 so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
             val isJustActivated = g.activeIdIsJustActivated
-            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
+            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
             if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
                 g.dragCurrentAccum = 0f
                 g.dragCurrentAccumDirty = false
@@ -668,7 +668,7 @@ interface imgui_main {
             if (!g.dragCurrentAccumDirty)
                 return false
 
-            var vCur = v()
+            var vCur = v
             var vOldRefForAccumRemainder = 0f
 
             val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
@@ -690,7 +690,7 @@ interface imgui_main {
                     val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
                     vCurNormCurved - vOldRefForAccumRemainder
                 }
-                else -> (vCur - v()).f
+                else -> (vCur - v).f
             }
 
             // Lose zero sign for float/double
@@ -698,24 +698,24 @@ interface imgui_main {
                 vCur = 0
 
             // Clamp values (handle overflow/wrap-around)
-            if (v() != vCur && hasMinMax) {
-                if (vCur < vMin || (vCur > v() && adjustDelta < 0f))
+            if (v != vCur && hasMinMax) {
+                if (vCur < vMin || (vCur > v && adjustDelta < 0f))
                     vCur = vMin
-                if (vCur > vMax || (vCur < v() && adjustDelta > 0f))
+                if (vCur > vMax || (vCur < v && adjustDelta > 0f))
                     vCur = vMax
             }
 
             // Apply result
-            if (v() == vCur)
+            if (v == vCur)
                 return false
-            v.set(vCur)
+            v = vCur
             return true
         }
 
-        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed_: Float, vMin: Long, vMax: Long, format: String,
+        fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Long, vMax: Long, format: String,
                           power: Float): Boolean {
 
-            v as KMutableProperty0<Long>
+            var v by vPtr as KMutableProperty0<Long>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
             var vSpeed = vSpeed_
@@ -745,7 +745,7 @@ interface imgui_main {
                 Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
                 so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
             val isJustActivated = g.activeIdIsJustActivated
-            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
+            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
             if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
                 g.dragCurrentAccum = 0f
                 g.dragCurrentAccumDirty = false
@@ -757,7 +757,7 @@ interface imgui_main {
             if (!g.dragCurrentAccumDirty)
                 return false
 
-            var vCur = v()
+            var vCur = v
             var vOldRefForAccumRemainder = 0.0
 
             val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
@@ -779,7 +779,7 @@ interface imgui_main {
                     val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
                     (vCurNormCurved - vOldRefForAccumRemainder).f
                 }
-                else -> (vCur - v()).f
+                else -> (vCur - v).f
             }
 
             // Lose zero sign for float/double
@@ -787,24 +787,24 @@ interface imgui_main {
                 vCur = 0
 
             // Clamp values (handle overflow/wrap-around)
-            if (v() != vCur && hasMinMax) {
-                if (vCur < vMin || (vCur > v() && adjustDelta < 0f))
+            if (v != vCur && hasMinMax) {
+                if (vCur < vMin || (vCur > v && adjustDelta < 0f))
                     vCur = vMin
-                if (vCur > vMax || (vCur < v() && adjustDelta > 0f))
+                if (vCur > vMax || (vCur < v && adjustDelta > 0f))
                     vCur = vMax
             }
 
             // Apply result
-            if (v() == vCur)
+            if (v == vCur)
                 return false
-            v.set(vCur)
+            v = vCur
             return true
         }
 
-        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed_: Float, vMin: Float, vMax: Float, format: String,
+        fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Float, vMax: Float, format: String,
                           power: Float): Boolean {
 
-            v as KMutableProperty0<Float>
+            var v by vPtr as KMutableProperty0<Float>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
             var vSpeed = vSpeed_
@@ -834,7 +834,7 @@ interface imgui_main {
                 Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
                 so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
             val isJustActivated = g.activeIdIsJustActivated
-            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
+            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
             if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
                 g.dragCurrentAccum = 0f
                 g.dragCurrentAccumDirty = false
@@ -846,7 +846,7 @@ interface imgui_main {
             if (!g.dragCurrentAccumDirty)
                 return false
 
-            var vCur = v()
+            var vCur = v
             var vOldRefForAccumRemainder = 0.0
 
             val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
@@ -868,7 +868,7 @@ interface imgui_main {
                     val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
                     (vCurNormCurved - vOldRefForAccumRemainder).f
                 }
-                else -> (vCur - v()).f
+                else -> (vCur - v).f
             }
 
             // Lose zero sign for float/double
@@ -876,24 +876,24 @@ interface imgui_main {
                 vCur = 0f
 
             // Clamp values (handle overflow/wrap-around)
-            if (v() != vCur && hasMinMax) {
-                if (vCur < vMin || (vCur > v() && adjustDelta < 0f))
+            if (v != vCur && hasMinMax) {
+                if (vCur < vMin || (vCur > v && adjustDelta < 0f))
                     vCur = vMin
-                if (vCur > vMax || (vCur < v() && adjustDelta > 0f))
+                if (vCur > vMax || (vCur < v && adjustDelta > 0f))
                     vCur = vMax
             }
 
             // Apply result
-            if (v() == vCur)
+            if (v == vCur)
                 return false
-            v.set(vCur)
+            v = vCur
             return true
         }
 
-        fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<*>, vSpeed_: Float, vMin: Double, vMax: Double, format: String,
+        fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Double, vMax: Double, format: String,
                           power: Float): Boolean {
 
-            v as KMutableProperty0<Double>
+            var v by vPtr as KMutableProperty0<Double>
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
             var vSpeed = vSpeed_
@@ -923,7 +923,7 @@ interface imgui_main {
                 Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
                 so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
             val isJustActivated = g.activeIdIsJustActivated
-            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
+            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
             if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
                 g.dragCurrentAccum = 0f
                 g.dragCurrentAccumDirty = false
@@ -935,7 +935,7 @@ interface imgui_main {
             if (!g.dragCurrentAccumDirty)
                 return false
 
-            var vCur = v()
+            var vCur = v
             var vOldRefForAccumRemainder = 0.0
 
             val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
@@ -957,7 +957,7 @@ interface imgui_main {
                     val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
                     (vCurNormCurved - vOldRefForAccumRemainder).f
                 }
-                else -> (vCur - v()).f
+                else -> (vCur - v).f
             }
 
             // Lose zero sign for float/double
@@ -965,17 +965,17 @@ interface imgui_main {
                 vCur = 0.0
 
             // Clamp values (handle overflow/wrap-around)
-            if (v() != vCur && hasMinMax) {
-                if (vCur < vMin || (vCur > v() && adjustDelta < 0f))
+            if (v != vCur && hasMinMax) {
+                if (vCur < vMin || (vCur > v && adjustDelta < 0f))
                     vCur = vMin
-                if (vCur > vMax || (vCur < v() && adjustDelta > 0f))
+                if (vCur > vMax || (vCur < v && adjustDelta > 0f))
                     vCur = vMax
             }
 
             // Apply result
-            if (v() == vCur)
+            if (v == vCur)
                 return false
-            v.set(vCur)
+            v = vCur
             return true
         }
 

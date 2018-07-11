@@ -276,14 +276,17 @@ interface imgui_utilities {
         return rgb.apply { set(0, f0); set(1, f1); set(2, f2) }
     }
 
-    fun colorConvertHSVtoRGB(h_: Float, s: Float, v: Float, r: KMutableProperty0<Float>, g: KMutableProperty0<Float>,
-                             b: KMutableProperty0<Float>) {
+    fun colorConvertHSVtoRGB(h_: Float, s: Float, v: Float, rPtr: KMutableProperty0<Float>, gPtr: KMutableProperty0<Float>,
+                             bPtr: KMutableProperty0<Float>) {
 
+        var r by rPtr
+        var g by gPtr
+        var b by bPtr
         if (s == 0f) {
             // gray
-            r.set(v)
-            g.set(v)
-            b.set(v)
+            r = v
+            g = v
+            b = v
         }
 
         val h = glm.mod(h_, 1f) / (60f / 360f)
@@ -295,17 +298,17 @@ interface imgui_utilities {
 
         when (i) {
             0 -> {
-                r.set(v); g.set(t); b.set(p); }
+                r = v; g = t; b = p; }
             1 -> {
-                r.set(q); g.set(v); b.set(p); }
+                r = q; g = v; b = p; }
             2 -> {
-                r.set(p); g.set(v); b.set(t); }
+                r = p; g = v; b = t; }
             3 -> {
-                r.set(p); g.set(q); b.set(v); }
+                r = p; g = q; b = v; }
             4 -> {
-                r.set(t); g.set(p); b.set(v); }
+                r = t; g = p; b = v; }
             else -> {
-                r.set(v); g.set(p); b.set(q); }
+                r = v; g = p; b = q; }
         }
     }
 

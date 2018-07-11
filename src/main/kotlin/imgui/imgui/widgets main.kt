@@ -159,8 +159,9 @@ interface imgui_widgetsMain {
         return res
     }
 
-    fun checkbox(label: String, v: KMutableProperty0<Boolean>): Boolean {
+    fun checkbox(label: String, vPtr: KMutableProperty0<Boolean>): Boolean {
 
+        var v by vPtr
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -186,20 +187,20 @@ interface imgui_widgetsMain {
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
         if (pressed) {
-            v.set(!v())
+            v = !v
             markItemValueChanged(id)
         }
 
         renderNavHighlight(totalBb, id)
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         renderFrame(checkBb.min, checkBb.max, col.u32, true, style.frameRounding)
-        if (v()) {
+        if (v) {
             val checkSz = glm.min(checkBb.width, checkBb.height)
             val pad = glm.max(1f, (checkSz / 6f).i.f)
             renderCheckMark(checkBb.min + Vec2(pad), Col.CheckMark.u32, checkBb.width - pad * 2f)
         }
 
-        if (g.logEnabled) logRenderedText(textBb.min, if (v()) "[x]" else "[ ]")
+        if (g.logEnabled) logRenderedText(textBb.min, if (v) "[x]" else "[ ]")
         if (labelSize.x > 0f) renderText(textBb.min, label)
 
         return pressed
@@ -217,14 +218,15 @@ interface imgui_widgetsMain {
         return pressed
     }
 
-    fun checkboxFlags(label: String, flags: KMutableProperty0<Int>, flagsValue: Int): Boolean {
-        val v = booleanArrayOf((flags() and flagsValue) == flagsValue)
+    fun checkboxFlags(label: String, flagsPtr: KMutableProperty0<Int>, flagsValue: Int): Boolean {
+        var flags by flagsPtr
+        val v = booleanArrayOf((flags and flagsValue) == flagsValue)
         val pressed = checkbox(label, v)
         if (pressed)
-            flags.set(when {
-                v[0] -> flags() or flagsValue
-                else -> flags() wo flagsValue
-            })
+            flags = when {
+                v[0] -> flags or flagsValue
+                else -> flags wo flagsValue
+            }
         return pressed
     }
 

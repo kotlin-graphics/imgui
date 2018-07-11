@@ -436,7 +436,7 @@ object widgets {
                     for (i in 0..4) text("Some content $i")
                 }
                 collapsingHeader("Header with a close button", ::closableGroup) {
-                    text("IsItemHovered: ${isItemHovered(-1)}")
+                    text("IsItemHovered: ${isItemHovered()}")
                     for (i in 0..4) text("More content $i")
                 }
             }
