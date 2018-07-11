@@ -26,9 +26,8 @@ import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
 import org.lwjgl.system.MemoryUtil.NULL
-import uno.glfw.GlfwWindow
+import uno.glfw.*
 import uno.glfw.GlfwWindow.CursorStatus
-import uno.glfw.glfw
 
 
 object LwjglGL3 {
@@ -433,17 +432,17 @@ object LwjglGL3 {
         glScissor(lastScissorBox)
     }
 
-    val mouseButtonCallback = { button: Int, action: Int, _: Int ->
+    val mouseButtonCallback: MouseButtonCallbackT = { button: Int, action: Int, _: Int ->
         if (action == GLFW_PRESS && button in 0..2)
             mouseJustPressed[button] = true
     }
 
-    val scrollCallback = { offset: Vec2d ->
+    val scrollCallback: ScrollCallbackT = { offset: Vec2d ->
         io.mouseWheelH += offset.x.f
         io.mouseWheel += offset.y.f
     }
 
-    val keyCallback = { key: Int, _: Int, action: Int, _: Int ->
+    val keyCallback: KeyCallbackT = { key: Int, _: Int, action: Int, _: Int ->
         with(io) {
             if (key in keysDown.indices)
                 if (action == GLFW_PRESS)
@@ -459,7 +458,7 @@ object LwjglGL3 {
         }
     }
 
-    val charCallback = { c: Int -> if (c in 1..65535) io.addInputCharacter(c.c) }
+    val charCallback: CharCallbackT = { c: Int -> if (c in 1..65535) io.addInputCharacter(c.c) }
 
     fun shutdown() {
 
