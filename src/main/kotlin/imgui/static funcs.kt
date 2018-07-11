@@ -294,9 +294,10 @@ fun findAllowedExtentRectForWindow(window: Window): Rect {
 /** rAvoid = the rectangle to avoid (e.g. for tooltip it is a rectangle around the mouse cursor which we want to avoid. for popups it's a small point around the cursor.)
  *  rOuter = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding we ignore it.
  */
-fun findBestWindowPosForPopupEx(refPos: Vec2, size: Vec2, lastDir: KMutableProperty0<Dir>, rOuter: Rect, rAvoid: Rect,
+fun findBestWindowPosForPopupEx(refPos: Vec2, size: Vec2, lastDirPtr: KMutableProperty0<Dir>, rOuter: Rect, rAvoid: Rect,
                                 policy: PopupPositionPolicy = PopupPositionPolicy.Default): Vec2 {
 
+    var lastDir by lastDirPtr
     val basePosClamped = glm.clamp(refPos, rOuter.min, rOuter.max - size)
     //GImGui->OverlayDrawList.AddRect(r_avoid.Min, r_avoid.Max, IM_COL32(255,0,0,255));
     //GImGui->OverlayDrawList.AddRect(rOuter.Min, rOuter.Max, IM_COL32(0,255,0,255));
@@ -304,36 +305,36 @@ fun findBestWindowPosForPopupEx(refPos: Vec2, size: Vec2, lastDir: KMutablePrope
     // Combo Box policy (we want a connecting edge)
     if (policy == PopupPositionPolicy.ComboBox) {
         val dirPreferedOrder = arrayOf(Dir.Down, Dir.Right, Dir.Left, Dir.Up)
-        for (n in (if (lastDir() != Dir.None) -1 else 0) until Dir.Count.i) {
-            val dir = if (n == -1) lastDir() else dirPreferedOrder[n]
-            if (n != -1 && dir == lastDir.get()) continue // Already tried this direction?
+        for (n in (if (lastDir != Dir.None) -1 else 0) until Dir.Count.i) {
+            val dir = if (n == -1) lastDir else dirPreferedOrder[n]
+            if (n != -1 && dir == lastDir) continue // Already tried this direction?
             val pos = Vec2()
             if (dir == Dir.Down) pos.put(rAvoid.min.x, rAvoid.max.y)          // Below, Toward Right (default)
             if (dir == Dir.Right) pos.put(rAvoid.min.x, rAvoid.min.y - size.y) // Above, Toward Right
             if (dir == Dir.Left) pos.put(rAvoid.max.x - size.x, rAvoid.max.y) // Below, Toward Left
             if (dir == Dir.Up) pos.put(rAvoid.max.x - size.x, rAvoid.min.y - size.y) // Above, Toward Left
             if (!rOuter.contains(Rect(pos, pos + size))) continue
-            lastDir.set(dir)
+            lastDir = dir
             return pos
         }
     }
 
     // Default popup policy
     val dirPreferedOrder = arrayOf(Dir.Right, Dir.Down, Dir.Up, Dir.Left)
-    for (n in (if (lastDir() != Dir.None) -1 else 0) until Dir.values().size) {
-        val dir = if (n == -1) lastDir() else dirPreferedOrder[n]
-        if (n != -1 && dir == lastDir()) continue  // Already tried this direction?
+    for (n in (if (lastDir != Dir.None) -1 else 0) until Dir.values().size) {
+        val dir = if (n == -1) lastDir else dirPreferedOrder[n]
+        if (n != -1 && dir == lastDir) continue  // Already tried this direction?
         val availW = (if (dir == Dir.Left) rAvoid.min.x else rOuter.max.x) - if (dir == Dir.Right) rAvoid.max.x else rOuter.min.x
         val availH = (if (dir == Dir.Up) rAvoid.min.y else rOuter.max.y) - if (dir == Dir.Down) rAvoid.max.y else rOuter.min.y
         if (availW < size.x || availH < size.y) continue
         val pos = Vec2(
                 if (dir == Dir.Left) rAvoid.min.x - size.x else if (dir == Dir.Right) rAvoid.max.x else basePosClamped.x,
                 if (dir == Dir.Up) rAvoid.min.y - size.y else if (dir == Dir.Down) rAvoid.max.y else basePosClamped.y)
-        lastDir.set(dir)
+        lastDir = dir
         return pos
     }
     // Fallback, try to keep within display
-    lastDir.set(Dir.None)
+    lastDir = Dir.None
     return Vec2(refPos).apply {
         x = max(min(x + size.x, rOuter.max.x) - size.x, rOuter.min.x)
         y = max(min(y + size.y, rOuter.max.y) - size.y, rOuter.min.y)
@@ -386,7 +387,7 @@ fun findBestWindowPosForPopup(window: Window): Vec2 {
 fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags/*, ImGuiTextEditCallback callback, void* user_data*/)
         : Boolean {
 
-    var c = char()
+    var c by char
 
     if (c < 128 && c != ' ' && !c.isPrintable) {
         var pass = false
@@ -412,10 +413,8 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
             if (c !in '0'..'9' && c !in 'a'..'f' && c !in 'A'..'F')
                 return false
 
-        if (flags has Itf.CharsUppercase && c in 'a'..'z') {
+        if (flags has Itf.CharsUppercase && c in 'a'..'z')
             c += 'A' - 'a'
-            char.set(c)
-        }
 
         if (flags has Itf.CharsNoBlank && c.isBlankW)
             return false
@@ -594,8 +593,6 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
 fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, dataPtr: KMutableProperty0<*>,
                             format: String? = null): Boolean {
 
-    dataPtr as KMutableProperty0<Number>
-
     val seq = String(buf)
             .replace(Regex("\\s+"), "")
             .replace("$NUL", "")
@@ -610,15 +607,15 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
         else -> when (dataType) {
             DataType.Int -> {
                 val fmt = format ?: "%d"
-                val v = dataPtr as KMutableProperty0<Int>
-                val dataBackup = v()
+                var v by dataPtr as KMutableProperty0<Int>
+                val dataBackup = v
                 val arg0i = try {
                     seq[0].format(style.locale, fmt).i
                 } catch (_: Exception) {
                     return false
                 }
 
-                v.set(when (op) {
+                v = when (op) {
                     '+' -> {    // Add (use "+-" to subtract)
                         val arg1i = seq[2].format(style.locale, "%d").i
                         (arg0i + arg1i).i
@@ -639,8 +636,8 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                     } catch (_: Exception) {
                         arg0i
                     }
-                })
-                dataBackup != v()
+                }
+                dataBackup != v
             }
 
             DataType.Uint, DataType.Long, DataType.Ulong ->
@@ -653,8 +650,8 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
             DataType.Float -> {
                 // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
                 val fmt = format ?: "%f"
-                val v = dataPtr as KMutableProperty0<Float>
-                val dataBackup = v()
+                var v by dataPtr as KMutableProperty0<Float>
+                val dataBackup = v
                 val arg0f = try {
                     seq[0].format(style.locale, fmt).f
                 } catch (_: Exception) {
@@ -665,7 +662,7 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                 } catch (_: Exception) {
                     return false
                 }
-                v.set(when (op) {
+                v = when (op) {
                     '+' -> arg0f + arg1f    // Add (use "+-" to subtract)
                     '*' -> arg0f * arg1f    // Multiply
                     '/' -> when (arg1f) {   // Divide
@@ -673,13 +670,13 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                         else -> arg0f / arg1f
                     }
                     else -> arg1f           // Assign constant
-                })
-                dataBackup != v()
+                }
+                dataBackup != v
             }
             DataType.Double -> {
                 val fmt = format ?: "%f"
-                val v = dataPtr as KMutableProperty0<Double>
-                val dataBackup = v()
+                var v by dataPtr as KMutableProperty0<Double>
+                val dataBackup = v
                 val arg0f = try {
                     seq[0].format(style.locale, fmt).d
                 } catch (_: Exception) {
@@ -690,7 +687,7 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                 } catch (_: Exception) {
                     return false
                 }
-                v.set(when (op) {
+                v = when (op) {
                     '+' -> arg0f + arg1f    // Add (use "+-" to subtract)
                     '*' -> arg0f * arg1f    // Multiply
                     '/' -> when (arg1f) {   // Divide
@@ -698,8 +695,8 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                         else -> arg0f / arg1f
                     }
                     else -> arg1f           // Assign constant
-                })
-                dataBackup != v()
+                }
+                dataBackup != v
             }
             else -> false
         }

@@ -1,8 +1,9 @@
 package imgui
 
-import glm_.b
 import glm_.i
 import imgui.imgui.*
+import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KProperty
 
 /** -----------------------------------------------------------------------------
  *      Context
@@ -86,7 +87,6 @@ var ptrId = Array(512) { it } // it was: java.lang.Byte.valueOf(it.b)
 typealias SizeCallback = (SizeCallbackData) -> Unit
 
 
-
 val NUL = '\u0000'
 
 var DEBUG = true
@@ -99,36 +99,49 @@ operator fun StringBuilder.plusAssign(string: String) {
 
 /** Unique ID used by widgets (typically hashed from a stack of string) */
 typealias ID = Int
+
 /** User data to identify a texture */
 typealias TextureID = Int
 
 /** flags: for DrawList::addRect*() etc.   // enum DrawCornerFlag */
 typealias DrawCornerFlags = Int
+
 /** flags: for DrawList                    // enum DrawListFlag */
 typealias DrawListFlags = Int
+
 /** flags: for FontAtlas                   // enum FontAtlasFlags */
 typealias FontAtlasFlags = Int
 //typedef int ImGuiBackendFlags;      // flags: for io.BackendFlag               // enum ImGuiBackendFlags_
 /** flags: for ColorEdit*(), ColorPicker*()  // enum ColorEditFlag */
 typealias ColorEditFlags = Int
+
 /** flags: for *Columns*()                   // enum ColumnsFlag */
 typealias ColumnsFlags = Int
+
 /** flags: for io.ConfigFlags                // enum ConfigFlag */
 typealias ConfigFlags = Int
+
 /** flags: for *DragDrop*()                  // enum DragDropFlag */
 typealias DragDropFlags = Int
+
 /** flags: for BeginCombo()                  // enum ComboFlag */
 typealias ComboFlags = Int
+
 /** flags: for ::isWindowFocused()             // enum FocusedFlag */
 typealias FocusedFlags = Int
+
 /** flags: for ::isItemHovered() etc.          // enum HoveredFlag */
 typealias HoveredFlags = Int
+
 /** flags: for ::inputText*()                  // enum InputTextFlag */
 typealias InputTextFlags = Int
+
 /** flags: for Selectable()                  // enum SelectableFlag */
 typealias SelectableFlags = Int
+
 /** flags: for TreeNode*(),CollapsingHeader()// enum TreeNodeFlag */
 typealias TreeNodeFlags = Int
+
 /** flags: for Begin*()                      // enum WindowFlag */
 typealias WindowFlags = Int
 
@@ -138,3 +151,6 @@ fun main(args: Array<String>) {
 }
 
 var stop = false
+
+inline operator fun <R> KMutableProperty0<R>.setValue(host: Any?, property: KProperty<*>, value: R) = set(value)
+inline operator fun <R> KMutableProperty0<R>.getValue(host: Any?, property: KProperty<*>): R = get()
