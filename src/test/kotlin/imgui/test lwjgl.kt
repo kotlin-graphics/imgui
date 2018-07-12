@@ -35,7 +35,7 @@ class HelloWorld_lwjgl {
         val ctx = Context()
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
-        LwjglGL3.init(window, true)
+        LwjglGL3.init(window)
 
         // Setup style
         ImGui.styleColorsDark()

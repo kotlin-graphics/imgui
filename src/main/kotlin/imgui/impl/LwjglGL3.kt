@@ -39,7 +39,7 @@ object LwjglGL3 {
     var program = -1
     var matUL = -1
 
-    fun init(window: GlfwWindow, installCallbacks: Boolean): Boolean {
+    fun init(window: GlfwWindow, installCallbacks: Boolean = true): Boolean {
 
         this.window = window
 
@@ -90,10 +90,11 @@ object LwjglGL3 {
     }
 
     fun installCallbacks() {
-        window.mouseButtonCallback = mouseButtonCallback
-        window.scrollCallback = scrollCallback
-        window.keyCallback = keyCallback
-        window.charCallback = charCallback // TODO check if used (jogl doesnt have)
+        // native callbacks will be added at the GlfwWindow creation via default parameter
+        window.mouseButtonCallbacks["imgui"] = mouseButtonCallback
+        window.scrollCallbacks["imgui"] = scrollCallback
+        window.keyCallbacks["imgui"] = keyCallback
+        window.charCallbacks["imgui"] = charCallback // TODO check if used (jogl doesnt have)
         imeListner.install(window.handle)
     }
 
