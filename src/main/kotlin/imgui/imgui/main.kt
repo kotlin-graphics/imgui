@@ -264,7 +264,7 @@ interface imgui_main {
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (/*io.imeSetInputScreenPosFn &&*/ (g.platformImePos - g.osImePosSet).lengthSqr > 0.0001f) {
-//            (LwjglGL3.windowProc!! as WindowProc).in
+//            (LwjglGlfw.windowProc!! as WindowProc).in
 //            g.io.ImeSetInputScreenPosFn((int) g . OsImePosRequest . x, (int) g . OsImePosRequest . y)
             g.osImePosSet put g.platformImePos
         }

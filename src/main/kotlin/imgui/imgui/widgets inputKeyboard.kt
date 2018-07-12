@@ -146,6 +146,7 @@ interface imgui_widgetsInputKeyboard {
                     format_: String? = null, extraFlags_: InputTextFlags = 0): Boolean {
 
         data as KMutableProperty0<Number>
+        var d by (data as KMutableProperty0<Number>)
         val window = currentWindow
         if (window.skipItems) return false
 

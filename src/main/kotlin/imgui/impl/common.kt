@@ -12,9 +12,6 @@ import uno.buffer.intBufferOf
 import uno.buffer.use
 import uno.kotlin.buffers.toByteArray
 
-enum class GlfwClientApi { Unknown, OpenGL, Vulkan }
-
-var clientApi = GlfwClientApi.OpenGL
 
 val vertexShader
     get() = """
