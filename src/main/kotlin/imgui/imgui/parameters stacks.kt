@@ -145,7 +145,6 @@ interface imgui_parametersStacks {
                     style.buttonTextAlign to it.floats
                     style.buttonTextAlign put (value as Vec2)
                 }
-                else -> throw Error()
             }
         })
     }
@@ -163,6 +162,7 @@ interface imgui_parametersStacks {
             StyleVar.ChildBorderSize -> style.childBorderSize = backup.floats[0]
             StyleVar.PopupRounding -> style.popupRounding = backup.floats[0]
             StyleVar.PopupBorderSize -> style.popupBorderSize = backup.floats[0]
+            StyleVar.FrameBorderSize -> style.frameBorderSize = backup.floats[0]
             StyleVar.FramePadding -> style.framePadding put backup.floats
             StyleVar.FrameRounding -> style.frameRounding = backup.floats[0]
             StyleVar.ItemSpacing -> style.itemSpacing put backup.floats
@@ -173,7 +173,6 @@ interface imgui_parametersStacks {
             StyleVar.GrabMinSize -> style.grabMinSize = backup.floats[0]
             StyleVar.GrabRounding -> style.grabRounding = backup.floats[0]
             StyleVar.ButtonTextAlign -> style.buttonTextAlign put backup.floats
-            else -> throw Error()
         }
     }
 
