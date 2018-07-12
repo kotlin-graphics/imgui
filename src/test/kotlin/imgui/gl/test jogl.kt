@@ -1,45 +1,73 @@
-package imgui
+package imgui.gl
 
-
+import com.jogamp.newt.event.WindowAdapter
+import com.jogamp.newt.event.WindowEvent
+import com.jogamp.newt.opengl.GLWindow
+import com.jogamp.opengl.GL.GL_COLOR_BUFFER_BIT
+import com.jogamp.opengl.GL.GL_NO_ERROR
+import com.jogamp.opengl.GLAutoDrawable
+import com.jogamp.opengl.GLCapabilities
+import com.jogamp.opengl.GLEventListener
+import com.jogamp.opengl.GLProfile
+import com.jogamp.opengl.util.Animator
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import gln.checkError
-import gln.glClearColor
-import gln.glViewport
-import imgui.impl.LwjglGL3
-import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
-import org.lwjgl.opengl.GL11.glClear
-import uno.glfw.GlfwWindow
-import uno.glfw.glfw
+import imgui.Cond
+import imgui.Context
+import imgui.ImGui
+import imgui.destroy
+import imgui.impl.JoglGL3
+
 
 fun main(args: Array<String>) {
-    HelloWorld_lwjgl().run()
+    HelloWorld_jogl().setup()
 }
 
-class HelloWorld_lwjgl {
+private class HelloWorld_jogl : GLEventListener {
 
-    init {
-        glfw.init("3.2")
+    val window: GLWindow = run {
+
+        val glProfile = GLProfile.get(GLProfile.GL3)
+        val glCapabilities = GLCapabilities(glProfile)
+
+        GLWindow.create(glCapabilities).apply {
+            title = "ImGui Jogl OpenGL3 example"
+            setSize(1280, 720)
+        }
     }
 
-    val window = GlfwWindow(1280, 720, "ImGui Lwjgl OpenGL3 example").apply {
-        init()
+    val animator = Animator()
+
+    fun setup() {
+
+        window.addGLEventListener(this)
+        window.isVisible = true
+
+        animator.add(window)
+        animator.start()
+
+
+        window.addWindowListener(object : WindowAdapter() {
+            override fun windowDestroyed(e: WindowEvent) {
+                animator.stop()
+                System.exit(0)
+            }
+        })
     }
 
-    fun run() {
+    lateinit var ctx: Context
 
-        glfw.swapInterval = 1   // Enable vsync
+    override fun init(drawable: GLAutoDrawable) {
 
         // Setup ImGui binding
-//         glslVersion = 330 // set here your desidered glsl version
-        val ctx = Context()
-        //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
-        //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
-        LwjglGL3.init(window, true)
+        ctx = Context()
+        JoglGL3.init(window, true)
 
         // Setup style
         ImGui.styleColorsDark()
 //        ImGui.styleColorsClassic()
+
+        drawable.gl.swapInterval = 1    // Enable vsync
 
         // Load Fonts
         /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use
@@ -52,30 +80,14 @@ class HelloWorld_lwjgl {
             - Read 'misc/fonts/README.txt' for more instructions and details.
             - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write
                 a double backslash \\ ! */
+        //ImGuiIO& io = ImGui::GetIO();
         //io.Fonts->AddFontDefault();
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-//        IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f, glyphRanges = IO.fonts.glyphRangesJapanese)!!
-//        val a = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f)!!
-//        val b = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 30f)!!
-
-        /*  Main loop
-            This automatically also polls events, swaps buffers and resets the appBuffer
-
-            Poll and handle events (inputs, window resize, etc.)
-            You can read the io.wantCaptureMouse, io.wantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-            - When io.wantCaptureMouse is true, do not dispatch mouse input data to your main application.
-            - When io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-            Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
-        window.loop(::mainLoop)
-
-        LwjglGL3.shutdown()
-        ctx.destroy()
-
-        window.destroy()
-        glfw.terminate()
+        //ImFont* font = io.Fonts->AddFontFromFileTTF("misc/fonts/ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+        //IM_ASSERT(font != NULL);
     }
 
     var f = 0f
@@ -84,9 +96,9 @@ class HelloWorld_lwjgl {
     var showDemo = true
     var counter = 0
 
-    fun mainLoop() {
+    override fun display(drawable: GLAutoDrawable) = with(drawable.gl.gL3) {
 
-        LwjglGL3.newFrame()
+        JoglGL3.newFrame(this)
 
         with(ImGui) {
 
@@ -130,13 +142,19 @@ class HelloWorld_lwjgl {
         }
 
         // Rendering
-        glViewport(window.framebufferSize)
-        glClearColor(clearColor)
+        glViewport(0, 0, window.x, window.y)
+        glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3])  // TODO gln
         glClear(GL_COLOR_BUFFER_BIT)
 
         ImGui.render()
-        LwjglGL3.renderDrawData(ImGui.drawData!!)
+        JoglGL3.renderDrawData(ImGui.drawData!!)
+        if (glGetError() != GL_NO_ERROR) throw Error("display")
+    }
 
-        checkError("mainLoop") // TODO remove in production
+    override fun reshape(drawable: GLAutoDrawable, x: Int, y: Int, width: Int, height: Int) {}
+
+    override fun dispose(drawable: GLAutoDrawable) {
+        JoglGL3.shutdown(drawable.gl.gL3)
+        ctx.destroy()
     }
 }

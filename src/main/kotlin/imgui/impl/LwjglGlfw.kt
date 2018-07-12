@@ -31,16 +31,24 @@ import uno.glfw.GlfwWindow.CursorStatus
 import uno.glfw.glfw
 
 
-object LwjglGL3 {
+object LwjglGlfw {
 
     lateinit var window: GlfwWindow
     var time = 0.0
     val mouseCursors = LongArray(MouseCursor.COUNT)
 
-    var program = -1
-    var matUL = -1
+//    object Gl {
+        var program = -1
+        var matUL = -1
+//    }
 
-    fun init(window: GlfwWindow, installCallbacks: Boolean): Boolean {
+    enum class GlfwClientApi { OpenGL, Vulkan }
+
+    var clientApi = GlfwClientApi.OpenGL
+
+
+
+    fun init(window: GlfwWindow, installCallbacks: Boolean, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL): Boolean {
 
         this.window = window
 
@@ -79,13 +87,18 @@ object LwjglGL3 {
             We revert to arrow cursor for those.         */
         mouseCursors[MouseCursor.Arrow.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
         mouseCursors[MouseCursor.TextInput.i] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
-        mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
+        mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)  // FIXME: GLFW doesn't have this.
         mouseCursors[MouseCursor.ResizeNS.i] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)
         mouseCursors[MouseCursor.ResizeEW.i] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR)
-        mouseCursors[MouseCursor.ResizeNESW.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
-        mouseCursors[MouseCursor.ResizeNWSE.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
+        mouseCursors[MouseCursor.ResizeNESW.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR) // FIXME: GLFW doesn't have this.
+        mouseCursors[MouseCursor.ResizeNWSE.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR) // FIXME: GLFW doesn't have this.
 
         if (installCallbacks) installCallbacks()
+
+        clientApi = clientApi_
+
+        if(clientApi == GlfwClientApi.Vulkan)
+            ImplVk.init()
 
         return true
     }
@@ -467,7 +480,7 @@ object LwjglGL3 {
         mouseCursors.forEach(::glfwDestroyCursor)
         mouseCursors.fill(NULL)
 
-        clientApi = GlfwClientApi.Unknown
+        clientApi = GlfwClientApi.OpenGL
 
         // Destroy OpenGL objects
         destroyDeviceObjects()

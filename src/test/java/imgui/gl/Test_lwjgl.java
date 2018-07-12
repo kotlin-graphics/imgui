@@ -1,13 +1,12 @@
-package imgui;
+package imgui.gl;
 
 import glm_.vec2.Vec2;
 import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
-import imgui.impl.LwjglGL3;
+import imgui.*;
+import imgui.impl.LwjglGlfw;
 import kotlin.Unit;
-import org.lwjgl.opengl.GL;
 import uno.glfw.GlfwWindow;
-import uno.glfw.windowHint;
 
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
@@ -24,7 +23,7 @@ public class Test_lwjgl {
     private GlfwWindow window;
     private uno.glfw.glfw glfw = uno.glfw.glfw.INSTANCE;
     private uno.glfw.windowHint windowHint = uno.glfw.windowHint.INSTANCE;
-    private LwjglGL3 lwjglGL3 = LwjglGL3.INSTANCE;
+    private LwjglGlfw lwjglGL3 = LwjglGlfw.INSTANCE;
     private ImGui imgui = ImGui.INSTANCE;
     private IO io;
 

@@ -68,6 +68,9 @@ class DrawVert {
 
     companion object {
         val size = 2 * Vec2.size + Int.BYTES
+        val ofsPos = 0
+        val ofsUv = Vec2.size
+        val ofsCol = Vec2.size * 2
     }
 
     override fun toString() = "pos: $pos, uv: $uv, col: $col"

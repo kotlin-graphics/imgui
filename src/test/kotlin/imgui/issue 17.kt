@@ -6,7 +6,7 @@
 //import gln.glClearColor
 //import gln.glViewport
 //import imgui.functionalProgramming.button
-//import imgui.impl.LwjglGL3
+//import imgui.impl.LwjglGlfw
 //import org.lwjgl.opengl.GL
 //import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 //import org.lwjgl.opengl.GL11.glClear
@@ -45,7 +45,7 @@
 //    fun run() {
 //
 //        // Setup ImGui binding
-//        LwjglGL3.init(window, true)
+//        LwjglGlfw.init(window, true)
 //
 //        // Setup style
 //        ImGui.styleColorsClassic()
@@ -71,7 +71,7 @@
 //
 //        while (window.isOpen) loop()
 //
-//        LwjglGL3.shutdown()
+//        LwjglGlfw.shutdown()
 //
 //        window.destroy()
 //        glfw.terminate()
@@ -95,7 +95,7 @@
 //            Generally you may always pass all inputs to dear imgui, and hide them from your application based on those
 //            two flags.  */
 //        glfw.pollEvents()
-//        LwjglGL3.newFrame()
+//        LwjglGlfw.newFrame()
 //
 //        with(ImGui) {
 //
