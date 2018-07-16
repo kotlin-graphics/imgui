@@ -172,10 +172,11 @@ interface imgui_widgetsSliders {
         return res
     }
 
-    fun sliderAngle(label: String, vRad: KMutableProperty0<Float>, vDegreesMin: Float = -360f, vDegreesMax: Float = 360f): Boolean {
-        vRad.set(vRad().deg)
-        val valueChanged = sliderFloat(label, vRad, vDegreesMin, vDegreesMax, "%.0f deg", 1f)
-        vRad.set(vRad().rad)
+    fun sliderAngle(label: String, vRadPtr: KMutableProperty0<Float>, vDegreesMin: Float = -360f, vDegreesMax: Float = 360f): Boolean {
+        var vRad by vRadPtr
+        vRad = vRad.deg
+        val valueChanged = sliderFloat(label, vRadPtr, vDegreesMin, vDegreesMax, "%.0f deg", 1f)
+        vRad = vRad.rad
         return valueChanged
     }
 

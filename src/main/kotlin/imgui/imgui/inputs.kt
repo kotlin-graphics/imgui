@@ -4,7 +4,6 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.ImGui.style
-import imgui.IO
 import imgui.ImGui.calcTypematicPressedRepeatAmount
 import imgui.ImGui.io
 import imgui.MOUSE_INVALID
@@ -114,10 +113,10 @@ interface imgui_inputs {
     /** dragging amount since clicking. if lockThreshold < -1.0f uses io.MouseDraggingThreshold
      *  NB: This is only valid if isMousePosValid(). Back-ends in theory should always keep mouse position valid
      *  when dragging even outside the client window. */
-    fun getMouseDragDelta(button: Int = 0, lockThreshold: Float = -1f): Vec2 {
+    fun getMouseDragDelta(button: Int = 0, lockThreshold_: Float = -1f): Vec2 {
 
         assert(button >= 0 && button < io.mouseDown.size)
-        var lockThreshold = lockThreshold
+        var lockThreshold = lockThreshold_
         if (lockThreshold < 0f)
             lockThreshold = io.mouseDragThreshold
         if (io.mouseDown[button])

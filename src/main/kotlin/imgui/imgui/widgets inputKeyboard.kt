@@ -142,11 +142,10 @@ interface imgui_widgetsInputKeyboard {
     /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
      *  functions "format" argument)    */
     @Suppress("UNCHECKED_CAST")
-    fun inputScalar(label: String, dataType: DataType, data: KMutableProperty0<*>, step: Number?, stepFast: Number?,
+    fun inputScalar(label: String, dataType: DataType, dataPtr: KMutableProperty0<*>, step: Number?, stepFast: Number?,
                     format_: String? = null, extraFlags_: InputTextFlags = 0): Boolean {
 
-        data as KMutableProperty0<Number>
-        var d by (data as KMutableProperty0<Number>)
+        var data by dataPtr as KMutableProperty0<Number>
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -158,7 +157,7 @@ interface imgui_widgetsInputKeyboard {
             else -> format_
         }
 
-        val buf = data.format(dataType, format)
+        val buf = dataPtr.format(dataType, format, 64)
 
         var valueChanged = false
         var extraFlags = extraFlags_
@@ -173,18 +172,18 @@ interface imgui_widgetsInputKeyboard {
             pushId(label)
             pushItemWidth(max(1f, calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
             if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
-                valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, format)
+                valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, dataPtr, format)
             popItemWidth()
 
             // Step buttons
             sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("-", Vec2(buttonSize), Bf.Repeat or Bf.DontClosePopups)) {
-                data.set(dataTypeApplyOp(dataType, '-', data(), if (io.keyCtrl && stepFast != null) stepFast else step))
+                data = dataTypeApplyOp(dataType, '-', data, stepFast?.takeIf { io.keyCtrl } ?: step)
                 valueChanged = true
             }
             sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("+", Vec2(buttonSize), Bf.Repeat or Bf.DontClosePopups)) {
-                data.set(dataTypeApplyOp(dataType, '+', data(), if (io.keyCtrl && stepFast != null) stepFast else step))
+                data = dataTypeApplyOp(dataType, '+', data, stepFast?.takeIf { io.keyCtrl } ?: step)
                 valueChanged = true
             }
             sameLine(0f, style.itemInnerSpacing.x)
@@ -193,7 +192,7 @@ interface imgui_widgetsInputKeyboard {
             popId()
             endGroup()
         } else if (inputText(label, buf, extraFlags))
-            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, data, format)
+            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, dataPtr, format)
 
         return valueChanged
     }
