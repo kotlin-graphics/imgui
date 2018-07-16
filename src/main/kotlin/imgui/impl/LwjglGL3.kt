@@ -8,8 +8,7 @@ import glm_.buffer.intBufferBig
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import gln.*
-import gln.buffer.glBufferData
-import gln.buffer.glBufferSubData
+import gln.buffer.*
 import gln.glf.semantic
 import gln.program.Program
 import gln.program.usingProgram
@@ -236,7 +235,7 @@ object LwjglGL3 {
         glGenVertexArrays(vaoName)
         withVertexArray(vaoName) {
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-            glBufferData(GL_ARRAY_BUFFER, vtxSize, GL_STREAM_DRAW)
+            glBufferData(BufferTarget.Array, vtxSize, Usage.StreamDraw)
             glEnableVertexAttribArray(semantic.attr.POSITION)
             glEnableVertexAttribArray(semantic.attr.TEX_COORD)
             glEnableVertexAttribArray(semantic.attr.COLOR)
@@ -246,7 +245,7 @@ object LwjglGL3 {
             glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
 
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize, GL_STREAM_DRAW)
+            glBufferData(BufferTarget.ElementArray, idxSize, Usage.StreamDraw)
         }
 
         createFontsTexture()
@@ -285,7 +284,7 @@ object LwjglGL3 {
             withVertexArray(vaoName) {
 
                 glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-                glBufferData(GL_ARRAY_BUFFER, vtxSize, GL_STREAM_DRAW)
+                glBufferData(BufferTarget.Array, vtxSize, Usage.StreamDraw)
                 glEnableVertexAttribArray(semantic.attr.POSITION)
                 glEnableVertexAttribArray(semantic.attr.TEX_COORD)
                 glEnableVertexAttribArray(semantic.attr.COLOR)
@@ -295,7 +294,7 @@ object LwjglGL3 {
                 glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize, GL_STREAM_DRAW)
+                glBufferData(BufferTarget.ElementArray, idxSize, Usage.StreamDraw)
             }
 
             checkError("checkSize")
@@ -395,10 +394,10 @@ object LwjglGL3 {
                 vtxBuffer.putInt(offset + Vec2.size * 2, v.col)
             }
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-            glBufferSubData(GL_ARRAY_BUFFER, 0, cmdList._vtxWritePtr * DrawVert.size, vtxBuffer)
+            glBufferSubData(BufferTarget.Array, 0, cmdList._vtxWritePtr * DrawVert.size, vtxBuffer)
             cmdList.idxBuffer.forEachIndexed { i, idx -> idxBuffer[i] = idx }
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, cmdList._idxWritePtr * Int.BYTES, idxBuffer)
+            glBufferSubData(BufferTarget.ElementArray, 0, cmdList._idxWritePtr * Int.BYTES, idxBuffer)
 
             var idxBufferOffset = 0L
             for (cmd in cmdList.cmdBuffer) {
