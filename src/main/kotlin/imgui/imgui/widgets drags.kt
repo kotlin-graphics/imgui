@@ -94,9 +94,12 @@ interface imgui_widgetsDrag {
         return res
     }
 
-    fun dragFloatRange2(label: String, vCurrentMin: KMutableProperty0<Float>, vCurrentMax: KMutableProperty0<Float>, vSpeed: Float = 1f,
-                        vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", formatMax: String = format, power: Float = 1f)
-            : Boolean {
+    fun dragFloatRange2(label: String, vCurrentMinPtr: KMutableProperty0<Float>, vCurrentMaxPtr: KMutableProperty0<Float>,
+                        vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", formatMax: String = format,
+                        power: Float = 1f) : Boolean {
+
+        val vCurrentMin by vCurrentMinPtr
+        val vCurrentMax by vCurrentMaxPtr
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -105,13 +108,13 @@ interface imgui_widgetsDrag {
         pushMultiItemsWidths(2)
 
         var min = if (vMin >= vMax) -Float.MAX_VALUE else vMin
-        var max = if (vMin >= vMax) vCurrentMax() else vMax min vCurrentMax()
-        var valueChanged = dragFloat("##min", vCurrentMin, vSpeed, min, max, format, power)
+        var max = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
+        var valueChanged = dragFloat("##min", vCurrentMinPtr, vSpeed, min, max, format, power)
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
-        min = if (vMin >= vMax) vCurrentMin() else vMin max vCurrentMin()
+        min = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
         max = if (vMin >= vMax) Float.MAX_VALUE else vMax
-        valueChanged = dragFloat("##max", vCurrentMax, vSpeed, min, max, formatMax, power) || valueChanged
+        valueChanged = dragFloat("##max", vCurrentMaxPtr, vSpeed, min, max, formatMax, power) || valueChanged
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
@@ -159,8 +162,11 @@ interface imgui_widgetsDrag {
         return res
     }
 
-    fun dragIntRange2(label: String, vCurrentMin: KMutableProperty0<Int>, vCurrentMax: KMutableProperty0<Int>, vSpeed: Float = 1f,
+    fun dragIntRange2(label: String, vCurrentMinPtr: KMutableProperty0<Int>, vCurrentMaxPtr: KMutableProperty0<Int>, vSpeed: Float = 1f,
                       vMin: Int = 0, vMax: Int = 0, format: String = "%d", formatMax: String = format): Boolean {
+
+        val vCurrentMin by vCurrentMinPtr
+        val vCurrentMax by vCurrentMaxPtr
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -169,13 +175,13 @@ interface imgui_widgetsDrag {
         pushMultiItemsWidths(2)
 
         var min = if (vMin >= vMax) Int.MIN_VALUE else vMin
-        var max = if (vMin >= vMax) vCurrentMax() else vMax min vCurrentMax()
-        var valueChanged = dragInt("##min", vCurrentMin, vSpeed, min, max, format)
+        var max = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
+        var valueChanged = dragInt("##min", vCurrentMinPtr, vSpeed, min, max, format)
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
-        min = if (vMin >= vMax) vCurrentMin() else vMin max vCurrentMin()
+        min = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
         max = if (vMin >= vMax) Int.MAX_VALUE else vMax
-        valueChanged = dragInt("##max", vCurrentMax, vSpeed, min, max, formatMax) || valueChanged
+        valueChanged = dragInt("##max", vCurrentMaxPtr, vSpeed, min, max, formatMax) || valueChanged
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
@@ -271,8 +277,7 @@ interface imgui_widgetsDrag {
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val valueBuf = v.format(dataType, format)
-        val value = String(valueBuf)
+        val value = String(v.format(dataType, format))
         renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
@@ -331,6 +336,7 @@ interface imgui_widgetsDrag {
 
     companion object {
 
+        // TODO delete and use them in just one single place
         private inline fun <R> withFloat(block: (KMutableProperty0<Float>) -> R): R {
             Ref.fPtr++
             return block(Ref::float).also { Ref.fPtr-- }

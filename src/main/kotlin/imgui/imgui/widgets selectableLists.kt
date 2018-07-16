@@ -147,16 +147,18 @@ interface imgui_widgetsSelectableLists {
     }
 
     /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
-    fun selectable(label: String, selected: KMutableProperty0<Boolean>, flags: SelectableFlags = 0, size: Vec2 = Vec2()): Boolean {
-        if (selectable(label, selected(), flags, size)) {
-            selected.set(!selected())
+    fun selectable(label: String, selectedPtr: KMutableProperty0<Boolean>, flags: SelectableFlags = 0, size: Vec2 = Vec2()): Boolean {
+        var selected by selectedPtr
+        if (selectable(label, selected, flags, size)) {
+            selected = !selected
             return true
         }
         return false
     }
 
-    fun listBox(label: String, currentItem: KMutableProperty0<Int>, items: Array<String>, heightInItems: Int = -1): Boolean {
+    fun listBox(label: String, currentItemPtr: KMutableProperty0<Int>, items: Array<String>, heightInItems: Int = -1): Boolean {
 
+        var currentItem by currentItemPtr
         val itemsCount = items.size
         if (!listBoxHeader(label, itemsCount, heightInItems)) return false
         // Assume all items have even height (= 1 line of text). If you need items of different or variable sizes you can create a custom version of ListBox() in your code without using the clipper.
@@ -166,11 +168,11 @@ interface imgui_widgetsSelectableLists {
         while (clipper.step())
             for (i in clipper.display.start until clipper.display.last)
                 withBool { itemSelected ->
-                    itemSelected.set(i == currentItem())
+                    itemSelected.set(i == currentItem)
                     val itemText = items.getOrElse(i) { "*Unknown item*" }
                     pushId(i)
                     if (selectable(itemText, itemSelected)) {
-                        currentItem.set(i)
+                        currentItem = i
                         valueChanged = true
                     }
                     if (itemSelected()) setItemDefaultFocus()
@@ -240,8 +242,7 @@ interface imgui_widgetsSelectableLists {
     }
 
     companion object {
-        //        var i0 = 0
-//        var b0 = false
+        // TODO move/delete
         private inline fun <R> withBool(block: (KMutableProperty0<Boolean>) -> R): R {
             Ref.bPtr++
             return block(Ref::bool).also { Ref.bPtr-- }

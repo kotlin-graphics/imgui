@@ -8,8 +8,7 @@ import glm_.buffer.intBufferBig
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import gln.*
-import gln.buffer.glBufferData
-import gln.buffer.glBufferSubData
+import gln.buffer.*
 import gln.glf.semantic
 import gln.program.Program
 import gln.program.usingProgram
@@ -26,9 +25,8 @@ import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
 import org.lwjgl.system.MemoryUtil.NULL
-import uno.glfw.GlfwWindow
+import uno.glfw.*
 import uno.glfw.GlfwWindow.CursorStatus
-import uno.glfw.glfw
 
 
 object LwjglGlfw {
@@ -48,7 +46,7 @@ object LwjglGlfw {
 
 
 
-    fun init(window: GlfwWindow, installCallbacks: Boolean, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL): Boolean {
+    fun init(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL): Boolean {
 
         this.window = window
 
@@ -104,10 +102,11 @@ object LwjglGlfw {
     }
 
     fun installCallbacks() {
-        window.mouseButtonCallback = mouseButtonCallback
-        window.scrollCallback = scrollCallback
-        window.keyCallback = keyCallback
-        window.charCallback = charCallback // TODO check if used (jogl doesnt have)
+        // native callbacks will be added at the GlfwWindow creation via default parameter
+        window.mouseButtonCallbacks["imgui"] = mouseButtonCallback
+        window.scrollCallbacks["imgui"] = scrollCallback
+        window.keyCallbacks["imgui"] = keyCallback
+        window.charCallbacks["imgui"] = charCallback // TODO check if used (jogl doesnt have)
         imeListner.install(window.handle)
     }
 
@@ -249,7 +248,7 @@ object LwjglGlfw {
         glGenVertexArrays(vaoName)
         withVertexArray(vaoName) {
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-            glBufferData(GL_ARRAY_BUFFER, vtxSize, GL_STREAM_DRAW)
+            glBufferData(BufferTarget.Array, vtxSize, Usage.StreamDraw)
             glEnableVertexAttribArray(semantic.attr.POSITION)
             glEnableVertexAttribArray(semantic.attr.TEX_COORD)
             glEnableVertexAttribArray(semantic.attr.COLOR)
@@ -259,7 +258,7 @@ object LwjglGlfw {
             glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
 
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize, GL_STREAM_DRAW)
+            glBufferData(BufferTarget.ElementArray, idxSize, Usage.StreamDraw)
         }
 
         createFontsTexture()
@@ -298,7 +297,7 @@ object LwjglGlfw {
             withVertexArray(vaoName) {
 
                 glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-                glBufferData(GL_ARRAY_BUFFER, vtxSize, GL_STREAM_DRAW)
+                glBufferData(BufferTarget.Array, vtxSize, Usage.StreamDraw)
                 glEnableVertexAttribArray(semantic.attr.POSITION)
                 glEnableVertexAttribArray(semantic.attr.TEX_COORD)
                 glEnableVertexAttribArray(semantic.attr.COLOR)
@@ -308,7 +307,7 @@ object LwjglGlfw {
                 glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize, GL_STREAM_DRAW)
+                glBufferData(BufferTarget.ElementArray, idxSize, Usage.StreamDraw)
             }
 
             checkError("checkSize")
@@ -408,10 +407,10 @@ object LwjglGlfw {
                 vtxBuffer.putInt(offset + Vec2.size * 2, v.col)
             }
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-            glBufferSubData(GL_ARRAY_BUFFER, 0, cmdList._vtxWritePtr * DrawVert.size, vtxBuffer)
+            glBufferSubData(BufferTarget.Array, 0, cmdList._vtxWritePtr * DrawVert.size, vtxBuffer)
             cmdList.idxBuffer.forEachIndexed { i, idx -> idxBuffer[i] = idx }
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, cmdList._idxWritePtr * Int.BYTES, idxBuffer)
+            glBufferSubData(BufferTarget.ElementArray, 0, cmdList._idxWritePtr * Int.BYTES, idxBuffer)
 
             var idxBufferOffset = 0L
             for (cmd in cmdList.cmdBuffer) {
@@ -446,17 +445,17 @@ object LwjglGlfw {
         glScissor(lastScissorBox)
     }
 
-    val mouseButtonCallback = { button: Int, action: Int, _: Int ->
+    val mouseButtonCallback: MouseButtonCallbackT = { button: Int, action: Int, _: Int ->
         if (action == GLFW_PRESS && button in 0..2)
             mouseJustPressed[button] = true
     }
 
-    val scrollCallback = { offset: Vec2d ->
+    val scrollCallback: ScrollCallbackT = { offset: Vec2d ->
         io.mouseWheelH += offset.x.f
         io.mouseWheel += offset.y.f
     }
 
-    val keyCallback = { key: Int, _: Int, action: Int, _: Int ->
+    val keyCallback: KeyCallbackT = { key: Int, _: Int, action: Int, _: Int ->
         with(io) {
             if (key in keysDown.indices)
                 if (action == GLFW_PRESS)
@@ -464,7 +463,7 @@ object LwjglGlfw {
                 else if (action == GLFW_RELEASE)
                     keysDown[key] = false
 
-//        (void) mods // Modifiers are not reliable across systems
+            // Modifiers are not reliable across systems
             keyCtrl = keysDown[GLFW_KEY_LEFT_CONTROL] || keysDown[GLFW_KEY_RIGHT_CONTROL]
             keyShift = keysDown[GLFW_KEY_LEFT_SHIFT] || keysDown[GLFW_KEY_RIGHT_SHIFT]
             keyAlt = keysDown[GLFW_KEY_LEFT_ALT] || keysDown[GLFW_KEY_RIGHT_ALT]
@@ -472,7 +471,7 @@ object LwjglGlfw {
         }
     }
 
-    val charCallback = { c: Int -> if (c in 1..65535) io.addInputCharacter(c.c) }
+    val charCallback: CharCallbackT = { c: Int -> if (c in 1..65535) io.addInputCharacter(c.c) }
 
     fun shutdown() {
 

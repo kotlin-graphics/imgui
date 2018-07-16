@@ -130,23 +130,24 @@ interface imgui_widgetsTrees {
     }
 
     /** when 'open' isn't NULL, display an additional small close button on upper right of the header */
-    fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>?, flags_: TreeNodeFlags = 0): Boolean {
+    fun collapsingHeader(label: String, openPtr: KMutableProperty0<Boolean>?, flags_: TreeNodeFlags = 0): Boolean {
 
+        var open by openPtr
         val window = currentWindow
         if (window.skipItems) return false
 
-        if (open != null && !open()) return false
+        if (openPtr != null && !open) return false
 
         val id = window.getId(label)
-        val flags = flags_ or Tnf.CollapsingHeader or if (open != null) Tnf.AllowItemOverlap else Tnf.None
+        val flags = flags_ or Tnf.CollapsingHeader or if (openPtr != null) Tnf.AllowItemOverlap else Tnf.None
         val isOpen = treeNodeBehavior(id, flags, label)
-        if (open != null) {
+        if (openPtr != null) {
             // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
             val buttonSz = g.fontSize * 0.5f
             itemHoveredDataBackup {
                 if (closeButton(window.getId(id + 1), Vec2(glm.min(window.dc.lastItemRect.max.x, window.clipRect.max.x) -
                                 style.framePadding.x - buttonSz, window.dc.lastItemRect.min.y + style.framePadding.y + buttonSz), buttonSz))
-                    open.set(false)
+                    open = false
             }
         }
         return isOpen
