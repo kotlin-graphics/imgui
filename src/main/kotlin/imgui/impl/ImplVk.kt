@@ -1,12 +1,15 @@
 package imgui.impl
 
 import gli_.has
+import glm_.BYTES
 import glm_.L
 import glm_.buffer.adr
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4b
+import imgui.DrawData
+import imgui.DrawIdx
 import imgui.DrawVert
 import imgui.ImGui
 import org.lwjgl.system.MemoryUtil.NULL
@@ -16,6 +19,7 @@ import org.lwjgl.vulkan.VK10.VK_QUEUE_FAMILY_IGNORED
 import org.lwjgl.vulkan.VK10.VK_SUBPASS_EXTERNAL
 import uno.buffer.toBuffer
 import vkk.*
+import kotlin.reflect.KMutableProperty0
 
 object ImplVk {
 
@@ -27,6 +31,10 @@ object ImplVk {
 
     fun init(): Boolean {
 
+        assert(::instance.isInitialized)
+        assert(::physicalDevice.isInitialized)
+        assert(::device.isInitialized)
+        assert(::queue.isInitialized)
         assert(descriptorPool != NULL)
         assert(renderPass != NULL)
 
@@ -35,10 +43,160 @@ object ImplVk {
         return true
     }
 
-    fun vkShutdown() = vkInvalidateDeviceObjects()
+    fun shutdown() = invalidateDeviceObjects()
 
-    void ImGui_ImplVulkan_NewFrame()
-    {
+    fun newFrame() {}
+
+    /** Render function
+     *  (this used to be set in io.renderDrawListsFn and called by ImGui::render(),
+     *  but you can now call this directly from your main loop) */
+    fun renderDrawData(drawData: DrawData, commandBuffer: VkCommandBuffer) {
+
+        if (drawData.totalVtxCount == 0) return
+
+        val fd = framesDataBuffers[frameIndex]
+        frameIndex = (frameIndex + 1) % VK_QUEUED_FRAMES
+
+        // Create the Vertex and Index buffers:
+        val vertexSize = drawData.totalVtxCount * DrawVert.size
+        val indexSize = drawData.totalIdxCount * DrawIdx.BYTES
+        if (fd.vertexBuffer == NULL || fd.vertexBufferSize < vertexSize)
+            createOrResizeBuffer(fd::vertexBuffer, fd->VertexBufferMemory, fd->VertexBufferSize, vertex_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        if (!fd->IndexBuffer || fd->IndexBufferSize < index_size)
+        CreateOrResizeBuffer(fd->IndexBuffer, fd->IndexBufferMemory, fd->IndexBufferSize, index_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+
+        // Upload Vertex and index Data:
+        {
+            ImDrawVert * vtx_dst;
+            ImDrawIdx * idx_dst;
+            err = vkMapMemory(g_Device, fd->VertexBufferMemory, 0, vertex_size, 0, (void**)(&vtx_dst));
+            check_vk_result(err);
+            err = vkMapMemory(g_Device, fd->IndexBufferMemory, 0, index_size, 0, (void**)(&idx_dst));
+            check_vk_result(err);
+            for (int n = 0; n < drawData->CmdListsCount; n++)
+            {
+                const ImDrawList * cmd_list = draw_data->CmdLists[n];
+                memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+                memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+                vtx_dst += cmd_list->VtxBuffer.Size;
+                idx_dst += cmd_list->IdxBuffer.Size;
+            }
+            VkMappedMemoryRange range [2] = {};
+            range[0].sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+            range[0].memory = fd->VertexBufferMemory;
+            range[0].size = VK_WHOLE_SIZE;
+            range[1].sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+            range[1].memory = fd->IndexBufferMemory;
+            range[1].size = VK_WHOLE_SIZE;
+            err = vkFlushMappedMemoryRanges(g_Device, 2, range);
+            check_vk_result(err);
+            vkUnmapMemory(g_Device, fd->VertexBufferMemory);
+            vkUnmapMemory(g_Device, fd->IndexBufferMemory);
+        }
+
+        // Bind pipeline and descriptor sets:
+        {
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline);
+            VkDescriptorSet desc_set [1] = { g_DescriptorSet };
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_PipelineLayout, 0, 1, desc_set, 0, NULL);
+        }
+
+        // Bind Vertex And Index Buffer:
+        {
+            VkBuffer vertex_buffers [1] = { fd -> VertexBuffer };
+            VkDeviceSize vertex_offset [1] = { 0 };
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertex_buffers, vertex_offset);
+            vkCmdBindIndexBuffer(commandBuffer, fd->IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+        }
+
+        // Setup viewport:
+        {
+            VkViewport viewport;
+            viewport.x = 0;
+            viewport.y = 0;
+            viewport.width = drawData->DisplaySize.x;
+            viewport.height = drawData->DisplaySize.y;
+            viewport.minDepth = 0.0f;
+            viewport.maxDepth = 1.0f;
+            vkCmdSetViewport(commandBuffer, 0, 1, & viewport);
+        }
+
+        // Setup scale and translation:
+        // Our visible imgui space lies from draw_data->DisplayPps (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayMin is typically (0,0) for single viewport apps.
+        {
+            float scale [2];
+            scale[0] = 2.0f / drawData->DisplaySize.x;
+            scale[1] = 2.0f / drawData->DisplaySize.y;
+            float translate [2];
+            translate[0] = -1.0f - drawData->DisplayPos.x * scale[0];
+            translate[1] = -1.0f - drawData->DisplayPos.y * scale[1];
+            vkCmdPushConstants(commandBuffer, g_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 0, sizeof(float) * 2, scale);
+            vkCmdPushConstants(commandBuffer, g_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 2, sizeof(float) * 2, translate);
+        }
+
+        // Render the command lists:
+        int vtx_offset = 0;
+        int idx_offset = 0;
+        ImVec2 display_pos = draw_data->DisplayPos;
+        for (int n = 0; n < drawData->CmdListsCount; n++)
+        {
+            const ImDrawList * cmd_list = draw_data->CmdLists[n];
+            for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+            {
+                const ImDrawCmd * pcmd = &cmd_list->CmdBuffer[cmd_i];
+                if (pcmd->UserCallback)
+                { pcmd ->
+                    UserCallback(cmd_list, pcmd);
+                }
+                else
+                {
+                    // Apply scissor/clipping rectangle
+                    // FIXME: We could clamp width/height based on clamped min/max values.
+                    VkRect2D scissor;
+                    scissor.offset.x = (int32_t)(pcmd->ClipRect.x-display_pos.x) > 0 ? (int32_t)(pcmd->ClipRect.x-display_pos.x) : 0;
+                    scissor.offset.y = (int32_t)(pcmd->ClipRect.y-display_pos.y) > 0 ? (int32_t)(pcmd->ClipRect.y-display_pos.y) : 0;
+                    scissor.extent.width = (uint32_t)(pcmd->ClipRect.z-pcmd->ClipRect.x);
+                    scissor.extent.height = (uint32_t)(pcmd->ClipRect.w-pcmd->ClipRect.y+1); // FIXME: Why +1 here?
+                    vkCmdSetScissor(commandBuffer, 0, 1, & scissor);
+
+                    // Draw
+                    vkCmdDrawIndexed(commandBuffer, pcmd->ElemCount, 1, idx_offset, vtx_offset, 0);
+                }
+                idx_offset += pcmd->ElemCount;
+            }
+            vtx_offset += cmd_list->VtxBuffer.Size;
+        }
+    }
+
+    fun createOrResizeBuffer(bufferPtr: KMutableProperty0<VkBuffer>, bufferMemory: VkDeviceMemory, bufferSize: VkDeviceSize, newSize: Long, usage: VkBufferUsage) {
+
+        var buffer by bufferPtr
+        if (bufferPtr != NULL)
+            device destroyBuffer bufferPtr
+        if (bufferMemory != NULL)
+            device freeMemory bufferMemory
+
+        val vertexBufferSizeAligned: VkDeviceSize = ((newSize - 1) / bufferMemoryAlignment + 1) * bufferMemoryAlignment
+        val bufferInfo = vk.BufferCreateInfo {
+            size = vertexBufferSizeAligned
+            this.usage = usage.i
+            sharingMode = VkSharingMode.EXCLUSIVE
+        }
+        bufferPtr = device createBuffer bufferInfo
+
+        VkMemoryRequirements req;
+        vkGetBufferMemoryRequirements(g_Device, bufferPtr, & req);
+        g_BufferMemoryAlignment = (g_BufferMemoryAlignment > req.alignment) ? g_BufferMemoryAlignment : req.alignment;
+        VkMemoryAllocateInfo alloc_info = {};
+        alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        alloc_info.allocationSize = req.size;
+        alloc_info.memoryTypeIndex = ImGui_ImplVulkan_MemoryType(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, req.memoryTypeBits);
+        err = vkAllocateMemory(g_Device, & alloc_info, g_Allocator, &buffer_memory);
+        check_vk_result(err);
+
+        err = vkBindBufferMemory(g_Device, bufferPtr, buffer_memory, 0);
+        check_vk_result(err);
+        bufferSize = newSize;
     }
 
 // Called by Init/NewFrame/Shutdown
