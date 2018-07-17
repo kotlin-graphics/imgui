@@ -10,8 +10,9 @@ import imgui.Cond
 import imgui.Context
 import imgui.ImGui
 import imgui.destroy
-import imgui.impl.GlfwClientApi
+import imgui.impl.ImplGL3
 import imgui.impl.LwjglGlfw
+import imgui.impl.LwjglGlfw.GlfwClientApi
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
 import uno.glfw.GlfwWindow
@@ -141,7 +142,7 @@ private class HelloWorld_lwjgl {
         glClear(GL_COLOR_BUFFER_BIT)
 
         ImGui.render()
-        LwjglGlfw.renderDrawData(ImGui.drawData!!)
+        ImplGL3.renderDrawData(ImGui.drawData!!)
 
         checkError("mainLoop") // TODO remove in production
     }

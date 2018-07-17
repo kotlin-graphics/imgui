@@ -1,22 +1,16 @@
 package imgui.impl
 
+import ab.appBuffer
 import gli_.has
-import glm_.BYTES
-import glm_.L
+import glm_.*
 import glm_.buffer.adr
-import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4b
-import imgui.DrawData
-import imgui.DrawIdx
-import imgui.DrawVert
-import imgui.ImGui
-import org.lwjgl.system.MemoryUtil.NULL
-import org.lwjgl.system.MemoryUtil.memCopy
+import imgui.*
+import org.lwjgl.system.MemoryUtil.*
 import org.lwjgl.vulkan.*
-import org.lwjgl.vulkan.VK10.VK_QUEUE_FAMILY_IGNORED
-import org.lwjgl.vulkan.VK10.VK_SUBPASS_EXTERNAL
+import org.lwjgl.vulkan.VK10.*
 import uno.buffer.toBuffer
 import vkk.*
 import kotlin.reflect.KMutableProperty0
@@ -38,6 +32,8 @@ object ImplVk {
         assert(descriptorPool != NULL)
         assert(renderPass != NULL)
 
+        renderPass = wd.renderPass
+
         createDeviceObjects()
 
         return true
@@ -50,7 +46,7 @@ object ImplVk {
     /** Render function
      *  (this used to be set in io.renderDrawListsFn and called by ImGui::render(),
      *  but you can now call this directly from your main loop) */
-    fun renderDrawData(drawData: DrawData, commandBuffer: VkCommandBuffer) {
+    fun renderDrawData(drawData: DrawData) {
 
         if (drawData.totalVtxCount == 0) return
 
@@ -58,121 +54,102 @@ object ImplVk {
         frameIndex = (frameIndex + 1) % VK_QUEUED_FRAMES
 
         // Create the Vertex and Index buffers:
-        val vertexSize = drawData.totalVtxCount * DrawVert.size
-        val indexSize = drawData.totalIdxCount * DrawIdx.BYTES
+        val vertexSize = drawData.totalVtxCount * DrawVert.size.L
+        val indexSize = drawData.totalIdxCount * DrawIdx.BYTES.L
         if (fd.vertexBuffer == NULL || fd.vertexBufferSize < vertexSize)
-            createOrResizeBuffer(fd::vertexBuffer, fd->VertexBufferMemory, fd->VertexBufferSize, vertex_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        if (!fd->IndexBuffer || fd->IndexBufferSize < index_size)
-        CreateOrResizeBuffer(fd->IndexBuffer, fd->IndexBufferMemory, fd->IndexBufferSize, index_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+            fd.vertexBufferSize = createOrResizeBuffer(fd::vertexBuffer, fd::vertexBufferMemory, vertexSize, VkBufferUsage.VERTEX_BUFFER_BIT)
+        if (fd.indexBuffer == NULL || fd.indexBufferSize < indexSize)
+            fd.indexBufferSize = createOrResizeBuffer(fd::indexBuffer, fd::indexBufferMemory, indexSize, VkBufferUsage.INDEX_BUFFER_BIT)
 
         // Upload Vertex and index Data:
-        {
-            ImDrawVert * vtx_dst;
-            ImDrawIdx * idx_dst;
-            err = vkMapMemory(g_Device, fd->VertexBufferMemory, 0, vertex_size, 0, (void**)(&vtx_dst));
-            check_vk_result(err);
-            err = vkMapMemory(g_Device, fd->IndexBufferMemory, 0, index_size, 0, (void**)(&idx_dst));
-            check_vk_result(err);
-            for (int n = 0; n < drawData->CmdListsCount; n++)
-            {
-                const ImDrawList * cmd_list = draw_data->CmdLists[n];
-                memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
-                memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-                vtx_dst += cmd_list->VtxBuffer.Size;
-                idx_dst += cmd_list->IdxBuffer.Size;
+        run {
+            var vtxDst = device.mapMemory(fd.vertexBufferMemory, 0, vertexSize)
+            var idxDst = device.mapMemory(fd.indexBufferMemory, 0, indexSize)
+            for (n in 0 until drawData.cmdListsCount) {
+                val cmdList = drawData.cmdLists[n]
+                cmdList.vtxBuffer.forEachIndexed { i, v ->
+                    memPutFloat(vtxDst + DrawVert.size * i, v.pos.x)
+                    memPutFloat(vtxDst + DrawVert.size * i + Float.BYTES, v.pos.y)
+                    memPutFloat(vtxDst + DrawVert.size * i + Vec2.size, v.uv.x)
+                    memPutFloat(vtxDst + DrawVert.size * i + Vec2.size + Float.BYTES, v.uv.y)
+                    memPutInt(vtxDst + DrawVert.size * i + Vec2.size * 2, v.col)
+                }
+                cmdList.idxBuffer.forEachIndexed { i, it -> memPutInt(idxDst + DrawIdx.BYTES * i, it) }
+                vtxDst += cmdList.vtxBuffer.size.L
+                idxDst += cmdList.idxBuffer.size.L
             }
-            VkMappedMemoryRange range [2] = {};
-            range[0].sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-            range[0].memory = fd->VertexBufferMemory;
-            range[0].size = VK_WHOLE_SIZE;
-            range[1].sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-            range[1].memory = fd->IndexBufferMemory;
-            range[1].size = VK_WHOLE_SIZE;
-            err = vkFlushMappedMemoryRanges(g_Device, 2, range);
-            check_vk_result(err);
-            vkUnmapMemory(g_Device, fd->VertexBufferMemory);
-            vkUnmapMemory(g_Device, fd->IndexBufferMemory);
+            val range = vk.MappedMemoryRange(2).also {
+                it[0].apply {
+                    memory = fd.vertexBufferMemory
+                    size = VK_WHOLE_SIZE
+                }
+                it[1].apply {
+                    memory = fd.indexBufferMemory
+                    size = VK_WHOLE_SIZE
+                }
+            }
+            device.apply {
+                flushMappedMemoryRanges(range)
+                unmapMemory(fd.vertexBufferMemory)
+                unmapMemory(fd.indexBufferMemory)
+            }
         }
 
-        // Bind pipeline and descriptor sets:
-        {
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline);
-            VkDescriptorSet desc_set [1] = { g_DescriptorSet };
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_PipelineLayout, 0, 1, desc_set, 0, NULL);
-        }
+        val commandBuffer = wd.frame.commandBuffer.apply {
 
-        // Bind Vertex And Index Buffer:
-        {
-            VkBuffer vertex_buffers [1] = { fd -> VertexBuffer };
-            VkDeviceSize vertex_offset [1] = { 0 };
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertex_buffers, vertex_offset);
-            vkCmdBindIndexBuffer(commandBuffer, fd->IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
-        }
+            // Bind pipeline and descriptor sets:
+            bindPipeline(VkPipelineBindPoint.GRAPHICS, pipeline)
+            bindDescriptorSets(VkPipelineBindPoint.GRAPHICS, pipelineLayout, descriptorSet)
 
-        // Setup viewport:
-        {
-            VkViewport viewport;
-            viewport.x = 0;
-            viewport.y = 0;
-            viewport.width = drawData->DisplaySize.x;
-            viewport.height = drawData->DisplaySize.y;
-            viewport.minDepth = 0.0f;
-            viewport.maxDepth = 1.0f;
-            vkCmdSetViewport(commandBuffer, 0, 1, & viewport);
-        }
+            // Bind Vertex And Index Buffer:
+            bindVertexBuffers(fd.vertexBuffer)
+            bindIndexBuffer(fd.indexBuffer, 0, VkIndexType.UINT16)
 
-        // Setup scale and translation:
-        // Our visible imgui space lies from draw_data->DisplayPps (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayMin is typically (0,0) for single viewport apps.
-        {
-            float scale [2];
-            scale[0] = 2.0f / drawData->DisplaySize.x;
-            scale[1] = 2.0f / drawData->DisplaySize.y;
-            float translate [2];
-            translate[0] = -1.0f - drawData->DisplayPos.x * scale[0];
-            translate[1] = -1.0f - drawData->DisplayPos.y * scale[1];
-            vkCmdPushConstants(commandBuffer, g_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 0, sizeof(float) * 2, scale);
-            vkCmdPushConstants(commandBuffer, g_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 2, sizeof(float) * 2, translate);
+            // Setup viewport:
+            setViewport(vk.Viewport(drawData.displaySize.x, drawData.displaySize.y))
+
+            /*  Setup scale and translation:
+                Our visible imgui space lies from drawData.displayPps (top left) to drawData.displayPos+dataData.displaySize (bottom right).
+                DisplayMin is typically (0,0) for single viewport apps.         */
+            val scale = appBuffer.floatBufferOf(2f / drawData.displaySize.x, 2f / drawData.displaySize.y)
+            val translate = appBuffer.floatBufferOf(-1f - drawData.displayPos.x * scale[0], -1f - drawData.displayPos.y * scale[1])
+            pushConstants(pipelineLayout, VkShaderStage.VERTEX_BIT.i, 0, scale)
+            pushConstants(pipelineLayout, VkShaderStage.VERTEX_BIT.i, scale.size, translate)
         }
 
         // Render the command lists:
-        int vtx_offset = 0;
-        int idx_offset = 0;
-        ImVec2 display_pos = draw_data->DisplayPos;
-        for (int n = 0; n < drawData->CmdListsCount; n++)
-        {
-            const ImDrawList * cmd_list = draw_data->CmdLists[n];
-            for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
-            {
-                const ImDrawCmd * pcmd = &cmd_list->CmdBuffer[cmd_i];
-                if (pcmd->UserCallback)
-                { pcmd ->
-                    UserCallback(cmd_list, pcmd);
-                }
-                else
-                {
+        var vtxOffset = 0
+        var idxOffset = 0
+        val displayPos = drawData.displayPos
+        for (cmdList in drawData.cmdLists) {
+            for (cmd in cmdList.cmdBuffer) {
+                val cb = cmd.userCallback
+                if (cb != null)
+                    cb(cmdList, cmd)
+                else {
                     // Apply scissor/clipping rectangle
                     // FIXME: We could clamp width/height based on clamped min/max values.
-                    VkRect2D scissor;
-                    scissor.offset.x = (int32_t)(pcmd->ClipRect.x-display_pos.x) > 0 ? (int32_t)(pcmd->ClipRect.x-display_pos.x) : 0;
-                    scissor.offset.y = (int32_t)(pcmd->ClipRect.y-display_pos.y) > 0 ? (int32_t)(pcmd->ClipRect.y-display_pos.y) : 0;
-                    scissor.extent.width = (uint32_t)(pcmd->ClipRect.z-pcmd->ClipRect.x);
-                    scissor.extent.height = (uint32_t)(pcmd->ClipRect.w-pcmd->ClipRect.y+1); // FIXME: Why +1 here?
-                    vkCmdSetScissor(commandBuffer, 0, 1, & scissor);
+                    commandBuffer setScissor vk.Rect2D(
+                            offsetX = (cmd.clipRect.x - displayPos.x).i.takeIf { it > 0 } ?: 0,
+                            offsetY = (cmd.clipRect.y - displayPos.y).i.takeIf { it > 0 } ?: 0,
+                            width = (cmd.clipRect.z - cmd.clipRect.x).i,
+                            height = (cmd.clipRect.w - cmd.clipRect.y + 1).i) // FIXME: Why +1 here?
 
                     // Draw
-                    vkCmdDrawIndexed(commandBuffer, pcmd->ElemCount, 1, idx_offset, vtx_offset, 0);
+                    commandBuffer.drawIndexed(cmd.elemCount, 1, idxOffset, vtxOffset, 0)
                 }
-                idx_offset += pcmd->ElemCount;
+                idxOffset += cmd.elemCount * Int.BYTES // TODO check
             }
-            vtx_offset += cmd_list->VtxBuffer.Size;
+            vtxOffset += cmdList.vtxBuffer.size * DrawVert.size
         }
     }
 
-    fun createOrResizeBuffer(bufferPtr: KMutableProperty0<VkBuffer>, bufferMemory: VkDeviceMemory, bufferSize: VkDeviceSize, newSize: Long, usage: VkBufferUsage) {
+    fun createOrResizeBuffer(bufferPtr: KMutableProperty0<VkBuffer>, bufferMemoryPtr: KMutableProperty0<VkDeviceMemory>, newSize: Long, usage: VkBufferUsage): VkDeviceSize {
 
         var buffer by bufferPtr
-        if (bufferPtr != NULL)
-            device destroyBuffer bufferPtr
+        var bufferMemory by bufferMemoryPtr
+        if (buffer != NULL)
+            device destroyBuffer buffer
         if (bufferMemory != NULL)
             device freeMemory bufferMemory
 
@@ -182,249 +159,23 @@ object ImplVk {
             this.usage = usage.i
             sharingMode = VkSharingMode.EXCLUSIVE
         }
-        bufferPtr = device createBuffer bufferInfo
+        buffer = device createBuffer bufferInfo
 
-        VkMemoryRequirements req;
-        vkGetBufferMemoryRequirements(g_Device, bufferPtr, & req);
-        g_BufferMemoryAlignment = (g_BufferMemoryAlignment > req.alignment) ? g_BufferMemoryAlignment : req.alignment;
-        VkMemoryAllocateInfo alloc_info = {};
-        alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        alloc_info.allocationSize = req.size;
-        alloc_info.memoryTypeIndex = ImGui_ImplVulkan_MemoryType(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, req.memoryTypeBits);
-        err = vkAllocateMemory(g_Device, & alloc_info, g_Allocator, &buffer_memory);
-        check_vk_result(err);
+        val req = device getBufferMemoryRequirements buffer
+        bufferMemoryAlignment = bufferMemoryAlignment.takeIf { it > req.alignment } ?: req.alignment
+        val allocInfo = vk.MemoryAllocateInfo {
+            allocationSize = req.size
+            memoryTypeIndex = memoryType(VkMemoryProperty.HOST_VISIBLE_BIT, req.memoryTypeBits)
+        }
+        bufferMemory = device allocateMemory allocInfo
 
-        err = vkBindBufferMemory(g_Device, bufferPtr, buffer_memory, 0);
-        check_vk_result(err);
-        bufferSize = newSize;
+        device.bindBufferMemory(buffer, bufferMemory)
+
+        return newSize
     }
 
 // Called by Init/NewFrame/Shutdown
 
-    /** Window Data */
-    object wd {
-        var size = Vec2i()
-        var swapchain: VkSwapchainKHR = NULL
-        var surface: VkSurfaceKHR = NULL
-        lateinit var surfaceFormat: VkSurfaceFormatKHR
-        var presentMode = VkPresentMode.IMMEDIATE_KHR
-        var renderPass: VkRenderPass = NULL
-        var clearEnable = false
-        var clearValue: VkClearValue = VkClearValue.calloc()
-        var backBufferCount = 0
-        var backBuffer = VkImageArray(16)
-        var backBufferView = VkImageViewArray(16)
-        var framebuffer = VkFramebufferArray(16)
-        var frameIndex = 0
-        var frames = Array(VK_QUEUED_FRAMES) { VkFrameData() }
-        val frame: VkFrameData
-            get() = frames[frameIndex]
-    }
-
-    class VkFrameData {
-        /** keep track of recently rendered swapchain frame indices */
-        var backbufferIndex = 0
-        var commandPool: VkCommandPool = NULL
-        lateinit var commandBuffer: VkCommandBuffer
-        var fence: VkFence = NULL
-        var imageAcquiredSemaphore: VkSemaphore = NULL
-        var renderCompleteSemaphore: VkSemaphore = NULL
-    }
-
-    fun selectSurfaceFormat(physicalDevice: VkPhysicalDevice, surface: VkSurfaceKHR, requestFormats: Array<VkFormat>, requestColorSpace: VkColorSpace): VkSurfaceFormatKHR {
-        assert(requestFormats.isNotEmpty())
-
-        /*  Per Spec Format and View Format are expected to be the same unless VK_IMAGE_CREATE_MUTABLE_BIT was set at image creation
-            Assuming that the default behavior is without setting this bit, there is no need for separate Swapchain image and image view format
-            Additionally several new color spaces were introduced with Vulkan Spec v1.0.40,
-            hence we must make sure that a format with the mostly available color space, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, is found and used. */
-        val availFormat = physicalDevice getSurfaceFormatsKHR surface
-
-        // First check if only one format, VK_FORMAT_UNDEFINED, is available, which would imply that any format is available
-        return when (availFormat.size) {
-            1 -> when (availFormat[0].format) {
-                VkFormat.UNDEFINED -> vk.SurfaceFormatKHR(requestFormats[0], requestColorSpace)
-                else -> availFormat[0] // No point in searching another format
-            }
-            else -> {
-                // Request several formats, the first found will be used
-                for (request in requestFormats.indices)
-                    for (avail in availFormat.indices)
-                        if (availFormat[avail].format == requestFormats[request] && availFormat[avail].colorSpace == requestColorSpace)
-                            return availFormat[avail]
-
-                // If none of the requested image formats could be found, use the first available
-                return availFormat[0]
-            }
-        }
-    }
-
-    fun selectPresentMode(requestModes: Array<VkPresentMode>): VkPresentMode {
-
-        // Request a certain mode and confirm that it is available. If not use VK_PRESENT_MODE_FIFO_KHR which is mandatory
-        val availModes = physicalDevice getSurfacePresentModesKHR wd.surface
-        for (request in requestModes.indices)
-            for (avail in availModes.indices)
-                if (requestModes[request] == availModes[avail])
-                    return requestModes[request]
-
-        return VkPresentMode.FIFO_KHR // Always available
-    }
-
-    fun createWindowDataCommandBuffers() {
-
-        // Create Command Buffers
-        for (i in 0 until VK_QUEUED_FRAMES)
-
-            wd.frames[i].apply {
-
-                commandPool = device createCommandPool vk.CommandPoolCreateInfo {
-                    flag = VkCommandPoolCreate.RESET_COMMAND_BUFFER_BIT
-                    queueFamilyIndex = queueFamily
-                }
-
-                commandBuffer = device allocateCommandBuffer vk.CommandBufferAllocateInfo {
-                    this.commandPool = this@apply.commandPool
-                    level = VkCommandBufferLevel.PRIMARY
-                    commandBufferCount = 1
-                }
-                fence = device createFence VkFenceCreate.SIGNALED_BIT
-
-                val info = vk.SemaphoreCreateInfo()
-                imageAcquiredSemaphore = device createSemaphore info
-                renderCompleteSemaphore = device createSemaphore info
-            }
-    }
-
-    fun createWindowDataSwapChainAndFramebuffer(size: Vec2i) {
-
-        var minImageCount = 2    // FIXME: this should become a function parameter
-
-        val oldSwapchain = wd.swapchain
-        device.waitIdle()
-
-        // Destroy old Framebuffer
-        for (i in 0 until wd.backBufferCount) {
-            if (wd.backBufferView[i] != NULL)
-                device destroyImageView wd.backBufferView[i]
-            if (wd.framebuffer[i] != NULL)
-                device destroyFramebuffer wd.framebuffer[i]
-        }
-        wd.backBufferCount = 0
-        if (wd.renderPass != NULL)
-            device destroyRenderPass wd.renderPass
-
-        // If min image count was not specified, request different count of images dependent on selected present mode
-        if (minImageCount == 0)
-            minImageCount = getMinImageCountFromPresentMode(wd.presentMode)
-
-        // Create Swapchain
-        run {
-            val info = vk.SwapchainCreateInfoKHR {
-                surface = wd.surface
-                this.minImageCount = minImageCount
-                imageFormat = wd.surfaceFormat.format
-                imageColorSpace = wd.surfaceFormat.colorSpace
-                imageArrayLayers = 1
-                imageUsage = VkImageUsage.COLOR_ATTACHMENT_BIT.i
-                imageSharingMode = VkSharingMode.EXCLUSIVE           // Assume that graphics family == present family
-                preTransform = VkSurfaceTransform.IDENTITY_BIT_KHR
-                compositeAlpha = VkCompositeAlpha.OPAQUE_BIT_KHR
-                presentMode = wd.presentMode
-                clipped = true
-                this.oldSwapchain = oldSwapchain
-            }
-            val cap = physicalDevice getSurfaceCapabilitiesKHR wd.surface
-
-            if (info.minImageCount < cap.minImageCount)
-                info.minImageCount = cap.minImageCount
-            else if (info.minImageCount > cap.maxImageCount)
-                info.minImageCount = cap.maxImageCount
-
-            if (cap.currentExtent.width == 0xffffffff.i) {
-                wd.size(size)           // TODO bug cant inception
-                info.imageExtent(size)
-            } else {
-                wd.size(cap.currentExtent.width, cap.currentExtent.height)  // TOOD bug
-                info.imageExtent(wd.size)
-            }
-            wd.swapchain = device createSwapchainKHR info
-            wd.backBuffer = device getSwapchainImagesKHR wd.swapchain
-            wd.backBufferCount = wd.backBuffer.size
-        }
-        if (oldSwapchain != NULL)
-            device destroySwapchainKHR oldSwapchain
-
-        // Create the Render Pass
-        run {
-            val attachment = vk.AttachmentDescription {
-                format = wd.surfaceFormat.format
-                samples = VkSampleCount.`1_BIT`
-                loadOp = if (wd.clearEnable) VkAttachmentLoadOp.CLEAR else VkAttachmentLoadOp.DONT_CARE
-                storeOp = VkAttachmentStoreOp.STORE
-                stencilLoadOp = VkAttachmentLoadOp.DONT_CARE
-                stencilStoreOp = VkAttachmentStoreOp.DONT_CARE
-                initialLayout = VkImageLayout.UNDEFINED
-                finalLayout = VkImageLayout.PRESENT_SRC_KHR
-            }
-            val colorAttachment = vk.AttachmentReference(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
-            val subpass = vk.SubpassDescription {
-                pipelineBindPoint = VkPipelineBindPoint.GRAPHICS
-                colorAttachmentCount = 1
-                this.colorAttachment = colorAttachment
-            }
-            val dependency = vk.SubpassDependency {
-                srcSubpass = VK_SUBPASS_EXTERNAL
-                dstSubpass = 0
-                srcStageMask = VkPipelineStage.COLOR_ATTACHMENT_OUTPUT_BIT.i
-                dstStageMask = VkPipelineStage.COLOR_ATTACHMENT_OUTPUT_BIT.i
-                srcAccessMask = 0
-                dstAccessMask = VkAccess.COLOR_ATTACHMENT_WRITE_BIT.i
-            }
-            val info = vk.RenderPassCreateInfo().also {
-                it.attachment = attachment
-                it.subpass = subpass
-                it.dependency = dependency
-            }
-            wd.renderPass = device createRenderPass info
-        }
-
-        // Create The Image Views
-        run {
-            val info = vk.ImageViewCreateInfo {
-                viewType = VkImageViewType.`2D`
-                format = wd.surfaceFormat.format
-                components(VkComponentSwizzle.R, VkComponentSwizzle.G, VkComponentSwizzle.B, VkComponentSwizzle.A)
-            }
-            val imageRange = vk.ImageSubresourceRange(VkImageAspect.COLOR_BIT, 0, 1, 0, 1)
-            info.subresourceRange = imageRange
-            for (i in 0 until wd.backBufferCount) {
-                info.image = wd.backBuffer[i]
-                wd.backBufferView[i] = device createImageView info
-            }
-        }
-
-        // Create Framebuffer
-        run {
-            var attachment: VkImageView = NULL
-            val info = vk.FramebufferCreateInfo {
-                renderPass = wd.renderPass
-                this.attachment = attachment
-                extent(wd.size, 1)
-            }
-            for (i in 0 until wd.backBufferCount) {
-                attachment = wd.backBufferView[i]
-                wd.framebuffer[i] = device createFramebuffer info
-            }
-        }
-    }
-
-    fun getMinImageCountFromPresentMode(presentMode: VkPresentMode) = when (presentMode) {
-        VkPresentMode.MAILBOX_KHR -> 3
-        VkPresentMode.FIFO_KHR, VkPresentMode.FIFO_RELAXED_KHR -> 2
-        VkPresentMode.IMMEDIATE_KHR -> 1
-        else -> throw Error()
-    }
 
 // ===== impl_vk.cpp =====
 
@@ -434,6 +185,7 @@ object ImplVk {
     lateinit var device: VkDevice
     var queueFamily = -1
     lateinit var queue: VkQueue
+    var debugReport: VkDebugReportCallback = NULL
     var pipelineCache: VkPipelineCache = NULL
     var descriptorPool: VkDescriptorPool = NULL
     var renderPass: VkRenderPass = NULL
@@ -647,7 +399,12 @@ object ImplVk {
                 descriptorType = VkDescriptorType.COMBINED_IMAGE_SAMPLER
                 descriptorCount = 1
                 stageFlag = VkShaderStage.FRAGMENT_BIT
-                immutableSampler = fontSampler
+
+                val pSampler = appBuffer.long
+                memPutLong(pSampler, fontSampler)
+                memPutAddress(adr + VkDescriptorSetLayoutBinding.PIMMUTABLESAMPLERS, pSampler)
+                VkDescriptorSetLayoutBinding.ndescriptorCount(adr, 1)
+//                immutableSampler = fontSampler TODO BUG
             }
             val info = vk.DescriptorSetLayoutCreateInfo(binding)
             descriptorSetLayout = device createDescriptorSetLayout info
@@ -737,6 +494,267 @@ object ImplVk {
 
         return true
     }
+
+    /** -------------------------------------------------------------------------
+     *  Miscellaneous Vulkan Helpers
+     *  Generally we try to NOT provide any kind of superfluous high-level helpers in the examples.
+     *  But for the upcoming multi-viewport feature, the Vulkan will need this code anyway,
+     *  so we decided to shared it and use it in the examples' main.cpp
+     *  If your application/engine already has code to create all that data
+     *  (swap chain, render pass, frame buffers, etc.) you can ignore all of this.
+     *  -------------------------------------------------------------------------
+     *  NB: Those functions do NOT use any of the state used/affected by the regular ImplVk.XXX functions.
+     *  ------------------------------------------------------------------------- */
+
+    /** Window Data */
+    var wd = WindowData()
+
+    class WindowData {
+        var size = Vec2i()
+        var swapchain: VkSwapchainKHR = NULL
+        var surface: VkSurfaceKHR = NULL
+        lateinit var surfaceFormat: VkSurfaceFormatKHR
+        var presentMode = VkPresentMode.IMMEDIATE_KHR
+        var renderPass: VkRenderPass = NULL
+        var clearEnable = false
+        var clearValue: VkClearValue = VkClearValue.calloc()
+        var backBufferCount = 0
+        var backBuffer = VkImageArray(16)
+        var backBufferView = VkImageViewArray(16)
+        var framebuffer = VkFramebufferArray(16)
+        var frameIndex = 0
+        var frames = Array(VK_QUEUED_FRAMES) { FrameData() }
+        val frame: FrameData
+            get() = frames[frameIndex]
+    }
+
+    class FrameData {
+        /** keep track of recently rendered swapchain frame indices */
+        var backbufferIndex = 0
+        var commandPool: VkCommandPool = NULL
+        lateinit var commandBuffer: VkCommandBuffer
+        var fence: VkFence = NULL
+        var imageAcquiredSemaphore: VkSemaphore = NULL
+        var renderCompleteSemaphore: VkSemaphore = NULL
+    }
+
+    fun createWindowDataCommandBuffers() {
+
+        // Create Command Buffers
+        for (i in 0 until VK_QUEUED_FRAMES)
+
+            wd.frames[i].apply {
+
+                commandPool = device createCommandPool vk.CommandPoolCreateInfo {
+                    flag = VkCommandPoolCreate.RESET_COMMAND_BUFFER_BIT
+                    queueFamilyIndex = queueFamily
+                }
+
+                commandBuffer = device allocateCommandBuffer vk.CommandBufferAllocateInfo {
+                    this.commandPool = this@apply.commandPool
+                    level = VkCommandBufferLevel.PRIMARY
+                    commandBufferCount = 1
+                }
+                fence = device createFence VkFenceCreate.SIGNALED_BIT
+
+                val info = vk.SemaphoreCreateInfo()
+                imageAcquiredSemaphore = device createSemaphore info
+                renderCompleteSemaphore = device createSemaphore info
+            }
+    }
+
+    fun createWindowDataSwapChainAndFramebuffer(size: Vec2i) {
+
+        var minImageCount = 2    // FIXME: this should become a function parameter
+
+        val oldSwapchain = wd.swapchain
+        device.waitIdle()
+
+        // Destroy old Framebuffer
+        for (i in 0 until wd.backBufferCount) {
+            if (wd.backBufferView[i] != NULL)
+                device destroyImageView wd.backBufferView[i]
+            if (wd.framebuffer[i] != NULL)
+                device destroyFramebuffer wd.framebuffer[i]
+        }
+        wd.backBufferCount = 0
+        if (wd.renderPass != NULL)
+            device destroyRenderPass wd.renderPass
+
+        // If min image count was not specified, request different count of images dependent on selected present mode
+        if (minImageCount == 0)
+            minImageCount = getMinImageCountFromPresentMode(wd.presentMode)
+
+        // Create Swapchain
+        run {
+            val info = vk.SwapchainCreateInfoKHR {
+                surface = wd.surface
+                this.minImageCount = minImageCount
+                imageFormat = wd.surfaceFormat.format
+                imageColorSpace = wd.surfaceFormat.colorSpace
+                imageArrayLayers = 1
+                imageUsage = VkImageUsage.COLOR_ATTACHMENT_BIT.i
+                imageSharingMode = VkSharingMode.EXCLUSIVE           // Assume that graphics family == present family
+                preTransform = VkSurfaceTransform.IDENTITY_BIT_KHR
+                compositeAlpha = VkCompositeAlpha.OPAQUE_BIT_KHR
+                presentMode = wd.presentMode
+                clipped = true
+                this.oldSwapchain = oldSwapchain
+            }
+            val cap = physicalDevice getSurfaceCapabilitiesKHR wd.surface
+
+            if (info.minImageCount < cap.minImageCount)
+                info.minImageCount = cap.minImageCount
+            else if (info.minImageCount > cap.maxImageCount)
+                info.minImageCount = cap.maxImageCount
+
+            if (cap.currentExtent.width == 0xffffffff.i) {
+                wd.size(size)           // TODO bug cant inception
+                info.imageExtent(size)
+            } else {
+                wd.size(cap.currentExtent.width, cap.currentExtent.height)  // TOOD bug
+                info.imageExtent(wd.size)
+            }
+            wd.swapchain = device createSwapchainKHR info
+            wd.backBuffer = device getSwapchainImagesKHR wd.swapchain
+            wd.backBufferCount = wd.backBuffer.size
+        }
+        if (oldSwapchain != NULL)
+            device destroySwapchainKHR oldSwapchain
+
+        // Create the Render Pass
+        run {
+            val attachment = vk.AttachmentDescription {
+                format = wd.surfaceFormat.format
+                samples = VkSampleCount.`1_BIT`
+                loadOp = if (wd.clearEnable) VkAttachmentLoadOp.CLEAR else VkAttachmentLoadOp.DONT_CARE
+                storeOp = VkAttachmentStoreOp.STORE
+                stencilLoadOp = VkAttachmentLoadOp.DONT_CARE
+                stencilStoreOp = VkAttachmentStoreOp.DONT_CARE
+                initialLayout = VkImageLayout.UNDEFINED
+                finalLayout = VkImageLayout.PRESENT_SRC_KHR
+            }
+            val colorAttachment = vk.AttachmentReference(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
+            val subpass = vk.SubpassDescription {
+                pipelineBindPoint = VkPipelineBindPoint.GRAPHICS
+                colorAttachmentCount = 1
+                this.colorAttachment = colorAttachment
+            }
+            val dependency = vk.SubpassDependency {
+                srcSubpass = VK_SUBPASS_EXTERNAL
+                dstSubpass = 0
+                srcStageMask = VkPipelineStage.COLOR_ATTACHMENT_OUTPUT_BIT.i
+                dstStageMask = VkPipelineStage.COLOR_ATTACHMENT_OUTPUT_BIT.i
+                srcAccessMask = 0
+                dstAccessMask = VkAccess.COLOR_ATTACHMENT_WRITE_BIT.i
+            }
+            val info = vk.RenderPassCreateInfo().also {
+                it.attachment = attachment
+                it.subpass = subpass
+                it.dependency = dependency
+            }
+            wd.renderPass = device createRenderPass info
+        }
+
+        // Create The Image Views
+        run {
+            val info = vk.ImageViewCreateInfo {
+                viewType = VkImageViewType.`2D`
+                format = wd.surfaceFormat.format
+                components(VkComponentSwizzle.R, VkComponentSwizzle.G, VkComponentSwizzle.B, VkComponentSwizzle.A)
+            }
+            val imageRange = vk.ImageSubresourceRange(VkImageAspect.COLOR_BIT, 0, 1, 0, 1)
+            info.subresourceRange = imageRange
+            for (i in 0 until wd.backBufferCount) {
+                info.image = wd.backBuffer[i]
+                wd.backBufferView[i] = device createImageView info
+            }
+        }
+
+        // Create Framebuffer
+        run {
+            val attachment: VkImageViewBuffer = appBuffer.longBuffer
+            val info = vk.FramebufferCreateInfo {
+                renderPass = wd.renderPass
+                this.attachments = attachment //TODO bug
+                extent(wd.size, 1)
+            }
+            for (i in 0 until wd.backBufferCount) {
+                attachment[0] = wd.backBufferView[i]
+                wd.framebuffer[i] = device createFramebuffer info
+            }
+        }
+    }
+
+    fun destroyWindowData() {
+        device.apply {
+            waitIdle() // FIXME: We could wait on the Queue if we had the queue in wd-> (otherwise VulkanH functions can't use globals)
+            //vkQueueWaitIdle(g_Queue);
+
+            wd.frames.forEach { fd ->
+                destroyFence(fd.fence)
+                freeCommandBuffer(fd.commandPool, fd.commandBuffer)
+                destroyCommandPool(fd.commandPool)
+                destroySemaphores(fd.imageAcquiredSemaphore, fd.renderCompleteSemaphore)
+            }
+            for (i in 0 until wd.backBufferCount) {
+                destroyImageView(wd.backBufferView[i])
+                destroyFramebuffer(wd.framebuffer[i])
+            }
+            destroyRenderPass(wd.renderPass)
+            destroySwapchainKHR(wd.swapchain)
+            instance destroySurfaceKHR wd.surface
+            wd = WindowData()
+        }
+    }
+
+    fun selectSurfaceFormat(physicalDevice: VkPhysicalDevice, surface: VkSurfaceKHR, requestFormats: Array<VkFormat>, requestColorSpace: VkColorSpace): VkSurfaceFormatKHR {
+        assert(requestFormats.isNotEmpty())
+
+        /*  Per Spec Format and View Format are expected to be the same unless VK_IMAGE_CREATE_MUTABLE_BIT was set at image creation
+            Assuming that the default behavior is without setting this bit, there is no need for separate Swapchain image and image view format
+            Additionally several new color spaces were introduced with Vulkan Spec v1.0.40,
+            hence we must make sure that a format with the mostly available color space, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, is found and used. */
+        val availFormat = physicalDevice getSurfaceFormatsKHR surface
+
+        // First check if only one format, VK_FORMAT_UNDEFINED, is available, which would imply that any format is available
+        return when (availFormat.size) {
+            1 -> when (availFormat[0].format) {
+                VkFormat.UNDEFINED -> vk.SurfaceFormatKHR(requestFormats[0], requestColorSpace)
+                else -> availFormat[0] // No point in searching another format
+            }
+            else -> {
+                // Request several formats, the first found will be used
+                for (request in requestFormats.indices)
+                    for (avail in availFormat.indices)
+                        if (availFormat[avail].format == requestFormats[request] && availFormat[avail].colorSpace == requestColorSpace)
+                            return availFormat[avail]
+
+                // If none of the requested image formats could be found, use the first available
+                return availFormat[0]
+            }
+        }
+    }
+
+    fun selectPresentMode(requestModes: Array<VkPresentMode>): VkPresentMode {
+
+        // Request a certain mode and confirm that it is available. If not use VK_PRESENT_MODE_FIFO_KHR which is mandatory
+        val availModes = physicalDevice getSurfacePresentModesKHR wd.surface
+        for (request in requestModes.indices)
+            for (avail in availModes.indices)
+                if (requestModes[request] == availModes[avail])
+                    return requestModes[request]
+
+        return VkPresentMode.FIFO_KHR // Always available
+    }
+
+    fun getMinImageCountFromPresentMode(presentMode: VkPresentMode) = when (presentMode) {
+        VkPresentMode.MAILBOX_KHR -> 3
+        VkPresentMode.FIFO_KHR, VkPresentMode.FIFO_RELAXED_KHR -> 2
+        VkPresentMode.IMMEDIATE_KHR -> 1
+        else -> throw Error()
+    }
+
 
     fun memoryType(properties: VkMemoryProperty, typeBits: Int) = memoryType(properties.i, typeBits)
     fun memoryType(properties: VkMemoryPropertyFlags, typeBits: Int): Int {
