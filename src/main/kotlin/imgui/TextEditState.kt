@@ -419,7 +419,7 @@ class TextEditState {
         val r = Row()
         val n = curLenW
         var baseY = 0f
-        var prevX = 0f
+        var prevX: Float
         var i = 0
 
         // search rows to find one that straddles 'y'
@@ -626,7 +626,7 @@ class TextEditState {
         var prevStart = 0
         val z = curLenW
         var i = 0
-        var first = 0
+        var first: Int
 
         if (n == z) {
             // if it's at the end, then find the last line -- simpler than trying to
@@ -877,11 +877,10 @@ class TextEditState {
                 // now find character position down a row
                 if (find.length != 0) {
                     val goalX = if (hasPreferredX) preferredX else find.x
-                    var x = 0f
+                    var x = row.x0
                     val start = find.firstChar + find.length
                     cursor = start
                     layout(row, cursor)
-                    x = row.x0
                     for (i in 0 until row.numChars) {
                         val dx = getWidth(start, i)
                         if (dx == GETWIDTH_NEWLINE)

@@ -769,10 +769,10 @@ class DrawList(sharedData: DrawListSharedData?) {
 //        }
 //    }
 
-    fun pathRect(a: Vec2, b: Vec2, rounding: Float = 0f, roundingCorners: Int = Dcf.All.i) {
+    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, roundingCorners: Int = Dcf.All.i) {
 
         var cond = ((roundingCorners and Dcf.Top) == Dcf.Top.i) || ((roundingCorners and Dcf.Bot) == Dcf.Bot.i) // TODO consider simplyfing
-        var rounding = glm.min(rounding, glm.abs(b.x - a.x) * (if (cond) 0.5f else 1f) - 1f)
+        var rounding = glm.min(rounding_, glm.abs(b.x - a.x) * (if (cond) 0.5f else 1f) - 1f)
         cond = ((roundingCorners and Dcf.Left) == Dcf.Left.i) || ((roundingCorners and Dcf.Right) == Dcf.Right.i)
         rounding = glm.min(rounding, glm.abs(b.y - a.y) * (if (cond) 0.5f else 1f) - 1f)
 
