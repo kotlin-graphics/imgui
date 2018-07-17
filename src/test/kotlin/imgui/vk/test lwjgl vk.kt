@@ -1,14 +1,24 @@
 package imgui.vk
 
+import ab.appBuffer
+import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
+import imgui.Cond
 import imgui.Context
 import imgui.ImGui
+import imgui.ImGui.button
+import imgui.ImGui.setNextWindowPos
+import imgui.ImGui.showDemoWindow
+import imgui.ImGui.text
+import imgui.destroy
+import imgui.functionalProgramming.withWindow
 import imgui.impl.ImplVk
 import imgui.impl.LwjglGlfw
 import imgui.impl.LwjglGlfw.GlfwClientApi
 import imgui.impl.LwjglGlfw.window
-import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.MemoryUtil
+import org.lwjgl.vulkan.VkPresentInfoKHR
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
 import uno.glfw.windowHint.Api
@@ -23,13 +33,13 @@ var UNLIMITED_FRAME_RATE = false
 
 private class HelloWorld_lwjgl {
 
-    var debugReport: VkDebugReportCallback = NULL
-
     var resizeWanted = false
     var resizeSize = Vec2i()
 
-    val wd: ImplVk.wd
+    val wd: ImplVk.WindowData
         get() = ImplVk.wd
+
+    val ctx: Context
 
     init {
         // Setup window
@@ -37,7 +47,9 @@ private class HelloWorld_lwjgl {
         glfw.init()
 
         glfw.windowHint { api = Api.None }
-        val window = GlfwWindow(1280, 720, "ImGui GLFW+Vulkan example")
+        val window = GlfwWindow(1280, 720, "ImGui GLFW+Vulkan example").apply {
+            autoSwap = false // no swapBuffer with vk
+        }
 
         // Setup Vulkan
         if (!glfw.vulkanSupported)
@@ -54,7 +66,7 @@ private class HelloWorld_lwjgl {
         setupVulkanWindowData(size)
 
         // Setup Dear ImGui binding
-        val ctx = Context()
+        ctx = Context()
         //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
         //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
@@ -107,7 +119,7 @@ private class HelloWorld_lwjgl {
                         false
                     }
                 }
-                debugReport = ImplVk.instance createDebugReportCallbackEXT debugReportCi
+                ImplVk.debugReport = ImplVk.instance createDebugReportCallbackEXT debugReportCi
 
             } else  // Create Vulkan Instance without any debug feature
                 ImplVk.instance = vk.createInstance(createInfo)
@@ -199,7 +211,7 @@ private class HelloWorld_lwjgl {
         ImplVk.createWindowDataSwapChainAndFramebuffer(size)
     }
 
-    fun uploadFonts(){
+    fun uploadFonts() {
         // Use any command queue
         val commandPool = wd.frame.commandPool
         val commandBuffer = wd.frame.commandBuffer
@@ -222,7 +234,9 @@ private class HelloWorld_lwjgl {
 
     var showDemoWindow = true
     var showAnotherWindow = false
-    val clearColor = Vec4 (0.45f, 0.55f, 0.6f, 1f)
+    val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
+    var f = 0f
+    var counter = 0
 
     fun run() {
         // Main loop
@@ -239,65 +253,126 @@ private class HelloWorld_lwjgl {
             }
 
             // Start the ImGui frame
-            ImplVk.newFrame()
-            ImGui_ImplGlfw_NewFrame()
-            ImGui::NewFrame();
+            LwjglGlfw.newFrame()
 
             // 1. Show a simple window.
             // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets automatically appears in a window called "Debug".
-            {
-                static float f = 0.0f
-                static int counter = 0
-                ImGui::Text("Hello, world!")                           // Display some text (you can use a format string too)
-                ImGui::SliderFloat("float", & f, 0.0f, 1.0f)            // Edit 1 float using a slider from 0.0f to 1.0f
-                ImGui::ColorEdit3("clear color", (float *)& clear_color) // Edit 3 floats representing a color (nb: you could use (float*)&wd->ClearValue instead)
+            ImGui.apply {
+                text("Hello, world!")                           // Display some text (you can use a format string too)
+                sliderFloat("float", ::f, 0f, 1f)            // Edit 1 float using a slider from 0.0f to 1.0f
+                colorEdit3("clear color", clearColor) // Edit 3 floats representing a color (nb: you could use (float*)&wd->ClearValue instead)
 
-                ImGui::Checkbox("Demo Window", & show_demo_window)      // Edit bools storing our windows open/close state
-                ImGui::Checkbox("Another Window", & show_another_window)
+                checkbox("Demo Window", this@HelloWorld_lwjgl::showDemoWindow)      // Edit bools storing our windows open/close state
+                checkbox("Another Window", ::showAnotherWindow)
 
-                if (ImGui::Button("Button"))                            // Buttons return true when clicked (NB: most widgets return true when edited/activated)
+                if (button("Button"))                            // Buttons return true when clicked (NB: most widgets return true when edited/activated)
                     counter++
-                ImGui::SameLine()
-                ImGui::Text("counter = %d", counter)
+                sameLine()
+                text("counter = %d", counter)
 
-                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate)
+                text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
             }
 
             // 2. Show another simple window. In most cases you will use an explicit Begin/End pair to name your windows.
-            if (showAnotherWindow) {
-                ImGui::Begin("Another Window", & show_another_window)
-                ImGui::Text("Hello from another window!")
-                if (ImGui::Button("Close Me"))
-                    showAnotherWindow = false
-                ImGui::End()
-            }
+            if (showAnotherWindow)
+                withWindow("Another Window", ::showAnotherWindow) {
+                    text("Hello from another window!")
+                    if (button("Close Me"))
+                        showAnotherWindow = false
+                }
 
             // 3. Show the ImGui demo window. Most of the sample code is in ImGui::ShowDemoWindow(). Read its code to learn more about Dear ImGui!
             if (showDemoWindow) {
-                ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver) // Normally user code doesn't need/want to call this because positions are saved in .ini file anyway. Here we just want to make the demo initial state a bit more friendly!
-                ImGui::ShowDemoWindow(& show_demo_window)
+                setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver) // Normally user code doesn't need/want to call this because positions are saved in .ini file anyway. Here we just want to make the demo initial state a bit more friendly!
+                showDemoWindow(::showDemoWindow)
             }
 
             // Rendering
-            ImGui::Render()
-            memcpy(& wd->ClearValue.color.float32[0], &clear_color, 4 * sizeof(float))
-            FrameRender(wd)
+            ImGui.render()
+            wd.clearValue.color(clearColor)
+            frameRender()
 
-            FramePresent(wd)
+            framePresent()
         }
 
         // Cleanup
-        err = vkDeviceWaitIdle(g_Device)
-        check_vk_result(err)
-        ImGui_ImplVulkan_Shutdown()
-        ImGui_ImplGlfw_Shutdown()
-        ImGui::DestroyContext()
-        CleanupVulkan()
+        ImplVk.device.waitIdle()
+        LwjglGlfw.shutdown()
+        ctx.destroy()
+        cleanupVulkan()
 
-        glfwDestroyWindow(window)
-        glfwTerminate()
+        window.destroy()
+        glfw.terminate()
+    }
 
-        return 0
+    fun frameRender() {
+
+        val imageAcquiredSemaphore = wd.frame.imageAcquiredSemaphore
+        wd.frameIndex = ImplVk.device.acquireNextImageKHR(wd.swapchain, UINT64_MAX, imageAcquiredSemaphore)
+
+        val fd = wd.frame
+        ImplVk.device.apply {
+            waitForFence(fd.fence, true, UINT64_MAX)    // wait indefinitely instead of periodically checking
+            resetFence(fd.fence)
+        }
+        run {
+            ImplVk.device.resetCommandPool(fd.commandPool)
+            fd.commandBuffer begin vk.CommandBufferBeginInfo { flags = flags or VkCommandBufferUsage.ONE_TIME_SUBMIT_BIT }
+        }
+        run {
+            val info = vk.RenderPassBeginInfo {
+                renderPass = wd.renderPass
+                framebuffer = wd.framebuffer[wd.frameIndex]
+                renderArea.extent(wd.size)
+                clearValue = wd.clearValue
+            }
+            fd.commandBuffer.beginRenderPass(info, VkSubpassContents.INLINE)
+        }
+
+        // Record Imgui Draw Data and draw funcs into command buffer
+        ImplVk.renderDrawData(ImGui.drawData!!)
+
+        // Submit command buffer
+        fd.commandBuffer.endRenderPass()
+        run {
+            val waitStage = appBuffer intBufferOf VkPipelineStage.COLOR_ATTACHMENT_OUTPUT_BIT.i
+            val info = vk.SubmitInfo {
+                waitSemaphoreCount = 1
+                waitSemaphore = imageAcquiredSemaphore
+                waitDstStageMask = waitStage
+                commandBuffer = fd.commandBuffer
+                signalSemaphore = fd.renderCompleteSemaphore
+            }
+            fd.commandBuffer.end()
+            ImplVk.queue.submit(info, fd.fence)
+        }
+    }
+
+    fun framePresent() {
+        val fd = wd.frame
+        val info = vk.PresentInfoKHR {
+//            waitSemaphore = fd.renderCompleteSemaphore
+            val pLong = appBuffer.long
+            MemoryUtil.memPutLong(pLong, fd.renderCompleteSemaphore)
+            MemoryUtil.memPutAddress(adr + VkPresentInfoKHR.PWAITSEMAPHORES, pLong)
+            VkPresentInfoKHR.nwaitSemaphoreCount(adr, 1)
+            swapchainCount = 1
+            swapchain = ImplVk.wd.swapchain
+            imageIndex = wd.frameIndex
+        }
+        ImplVk.queue presentKHR info
+    }
+
+    fun cleanupVulkan() {
+        ImplVk.destroyWindowData()
+        ImplVk.device destroyDescriptorPool ImplVk.descriptorPool
+
+        if (DEBUG_REPORT)
+        // Remove the debug report callback
+            ImplVk.instance destroyDebugReportCallbackEXT ImplVk.debugReport
+
+        ImplVk.device.destroy()
+        ImplVk.instance.destroy()
     }
 }
 

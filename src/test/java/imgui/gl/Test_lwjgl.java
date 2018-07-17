@@ -4,13 +4,15 @@ import glm_.vec2.Vec2;
 import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
 import imgui.*;
+import imgui.impl.ImplGL3;
 import imgui.impl.LwjglGlfw;
-import kotlin.Unit;
+import imgui.impl.LwjglGlfw.GlfwClientApi;
 import uno.glfw.GlfwWindow;
 
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.system.MemoryUtil.NULL;
+
 import uno.glfw.windowHint.Profile;
 
 public class Test_lwjgl {
@@ -22,18 +24,10 @@ public class Test_lwjgl {
     // The window handle
     private GlfwWindow window;
     private uno.glfw.glfw glfw = uno.glfw.glfw.INSTANCE;
-    private uno.glfw.windowHint windowHint = uno.glfw.windowHint.INSTANCE;
-    private LwjglGlfw lwjglGL3 = LwjglGlfw.INSTANCE;
+    private LwjglGlfw lwjglGlfw = LwjglGlfw.INSTANCE;
+    private ImplGL3 implGL3 = ImplGL3.INSTANCE;
     private ImGui imgui = ImGui.INSTANCE;
     private IO io;
-
-
-    private float[] f = {0f};
-    private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
-    private boolean[] showAnotherWindow = {false};
-    private boolean[] showDemo = {true};
-    private int[] counter = {0};
-
 
     public void run() {
 
@@ -47,7 +41,7 @@ public class Test_lwjgl {
         // Setup ImGui binding
         //setGlslVersion(330); // set here your desidered glsl version
         Context ctx = new Context(null);
-        lwjglGL3.init(window, true);
+        lwjglGlfw.init(window, true, GlfwClientApi.OpenGL);
 
         io = imgui.getIo();
 
@@ -75,16 +69,28 @@ public class Test_lwjgl {
 //        Font font = io.getFonts().addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f, new FontConfig(), io.getFonts().getGlyphRangesJapanese());
 //        assert (font != null);
 
-        window.loop(() -> {
-            mainLoop();
-            return Unit.INSTANCE;
-        });
+        int i = 0;
+        while (!window.getShouldClose()) {
 
-        lwjglGL3.shutdown();
-        ContextKt.destroy(ctx);
+        }
 
+//        while (i++ < 100)
+//            System.out.println(window.getShouldClose());
+
+//        lwjglGlfw.shutdown();
+//        ContextKt.destroy(ctx);
+
+        window.destroy();
         glfw.terminate();
     }
+
+
+    private float[] f = {0f};
+    private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
+    private boolean[] showAnotherWindow = {false};
+    private boolean[] showDemo = {true};
+    private int[] counter = {0};
+
 
     private void mainLoop() {
 
@@ -94,50 +100,50 @@ public class Test_lwjgl {
             - when Io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
             Generally you may always pass all inputs to dear imgui, and hide them from your application based on those
             two flags.  */
-        lwjglGL3.newFrame();
+//        lwjglGlfw.newFrame();
 
 
-        imgui.text("Hello, world!");                                // Display some text (you can use a format string too)
-        imgui.sliderFloat("float", f, 0f, 1f, "%.3f", 1f);       // Edit 1 float using a slider from 0.0f to 1.0f
-        imgui.colorEdit3("clear color", clearColor, 0);               // Edit 3 floats representing a color
-
-        imgui.checkbox("Demo Window", showDemo);                 // Edit bools storing our windows open/close state
-        imgui.checkbox("Another Window", showAnotherWindow);
-
-        if (imgui.button("Button", new Vec2()))                               // Buttons return true when clicked (NB: most widgets return true when edited/activated)
-            counter[0]++;
-
-        imgui.sameLine(0f, -1f);
-        imgui.text("counter = $counter");
-
-        imgui.text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.getFramerate(), io.getFramerate());
-
-        // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name the window.
-        if (showAnotherWindow[0]) {
-            imgui.begin("Another Window", showAnotherWindow, 0);
-            imgui.text("Hello from another window!");
-            if (imgui.button("Close Me", new Vec2()))
-                showAnotherWindow[0] = false;
-            imgui.end();
-        }
-
-        /*  3. Show the ImGui demo window. Most of the sample code is in imgui.showDemoWindow().
-                Read its code to learn more about Dear ImGui!  */
-        if (showDemo[0]) {
-            /*  Normally user code doesn't need/want to call this because positions are saved in .ini file anyway.
-                    Here we just want to make the demo initial state a bit more friendly!                 */
-            imgui.setNextWindowPos(new Vec2(650, 20), Cond.FirstUseEver, new Vec2());
-            imgui.showDemoWindow(showDemo);
-        }
+//        imgui.text("Hello, world!");                                // Display some text (you can use a format string too)
+//        imgui.sliderFloat("float", f, 0f, 1f, "%.3f", 1f);       // Edit 1 float using a slider from 0.0f to 1.0f
+//        imgui.colorEdit3("clear color", clearColor, 0);               // Edit 3 floats representing a color
+//
+//        imgui.checkbox("Demo Window", showDemo);                 // Edit bools storing our windows open/close state
+//        imgui.checkbox("Another Window", showAnotherWindow);
+//
+//        if (imgui.button("Button", new Vec2()))                               // Buttons return true when clicked (NB: most widgets return true when edited/activated)
+//            counter[0]++;
+//
+//        imgui.sameLine(0f, -1f);
+//        imgui.text("counter = $counter");
+//
+//        imgui.text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.getFramerate(), io.getFramerate());
+//
+//        // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name the window.
+//        if (showAnotherWindow[0]) {
+//            imgui.begin("Another Window", showAnotherWindow, 0);
+//            imgui.text("Hello from another window!");
+//            if (imgui.button("Close Me", new Vec2()))
+//                showAnotherWindow[0] = false;
+//            imgui.end();
+//        }
+//
+//        /*  3. Show the ImGui demo window. Most of the sample code is in imgui.showDemoWindow().
+//                Read its code to learn more about Dear ImGui!  */
+//        if (showDemo[0]) {
+//            /*  Normally user code doesn't need/want to call this because positions are saved in .ini file anyway.
+//                    Here we just want to make the demo initial state a bit more friendly!                 */
+//            imgui.setNextWindowPos(new Vec2(650, 20), Cond.FirstUseEver, new Vec2());
+//            imgui.showDemoWindow(showDemo);
+//        }
 
         // Rendering
-        gln.GlnKt.glViewport(window.getFramebufferSize());
-        gln.GlnKt.glClearColor(clearColor);
-        glClear(GL_COLOR_BUFFER_BIT);
+//        gln.GlnKt.glViewport(window.getFramebufferSize());
+//        gln.GlnKt.glClearColor(clearColor);
+//        glClear(GL_COLOR_BUFFER_BIT);
+//
+//        imgui.render();
+//        implGL3.renderDrawData(imgui.getDrawData());
 
-        imgui.render();
-        lwjglGL3.renderDrawData(imgui.getDrawData());
-
-        gln.GlnKt.checkError("loop", true); // TODO remove
+//        gln.GlnKt.checkError("loop", true); // TODO remove
     }
 }
