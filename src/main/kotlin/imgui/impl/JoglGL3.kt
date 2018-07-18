@@ -273,7 +273,7 @@ object JoglGL3 {
         /** Avoid rendering when minimized, scale coordinates for retina displays
          *  (screen coordinates != framebuffer coordinates) */
         val fbSize = io.displaySize * io.displayFramebufferScale
-        if (fbSize equal 0) return
+        if (fbSize anyLessThanEqual 0) return
         drawData scaleClipRects io.displayFramebufferScale
 
         // Backup GL state

@@ -102,7 +102,7 @@ interface imgui_inputs {
     }
 
     /** We typically use ImVec2(-FLT_MAX,-FLT_MAX) to denote an invalid mouse position  */
-    fun isMousePosValid(mousePos: Vec2? = null) = (mousePos ?: io.mousePos) greaterThan MOUSE_INVALID
+    fun isMousePosValid(mousePos: Vec2? = null) = (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
 
     /** shortcut to io.mousePos provided by user, to be consistent with other calls */
     val mousePos get() = io.mousePos
