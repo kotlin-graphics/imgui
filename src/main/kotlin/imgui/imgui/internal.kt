@@ -2404,7 +2404,7 @@ interface imgui_internal {
                     editState.click(mouseX, mouseY)
                     editState.cursorAnimReset()
                 }
-            } else if (io.mouseDown[0] && !editState.selectedAllMouseLock && io.mouseDelta notEqual 0f) {
+            } else if (io.mouseDown[0] && !editState.selectedAllMouseLock && io.mouseDelta anyNotEqual 0f) {
                 editState.state.selectStart = editState.state.cursor
                 editState.state.selectEnd = editState.locateCoord(mouseX, mouseY)
                 editState.cursorFollow = true

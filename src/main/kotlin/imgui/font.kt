@@ -395,7 +395,7 @@ class FontAtlas {
     // Internals
 
     fun calcCustomRectUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
-        assert(texSize greaterThan 0) { "Font atlas needs to be built before we can calculate UV coordinates" }
+        assert(texSize allGreaterThan 0) { "Font atlas needs to be built before we can calculate UV coordinates" }
         assert(rect.isPacked) { "Make sure the rectangle has been packed" }
         outUvMin.put(rect.x.f * texUvScale.x, rect.y.f * texUvScale.y)
         outUvMax.put((rect.x + rect.width).f * texUvScale.x, (rect.y + rect.height).f * texUvScale.y)
