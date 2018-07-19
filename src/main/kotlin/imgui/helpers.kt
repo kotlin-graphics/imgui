@@ -140,7 +140,7 @@ class Payload {
     // Members
 
     /** Data (copied and owned by dear imgui) */
-    var data: Any? = null
+    var data: Any? = null // jvm TODO use ByteArray?
     /** Data size */
     var dataSize = 0
 
@@ -153,7 +153,8 @@ class Payload {
     /** Data timestamp */
     var dataFrameCount = -1
     /** Data type tag (short user-supplied string, 32 characters max) */
-    var dataType = ""
+    val dataType = CharArray(32)
+    val dataTypeS get() = String(dataType)
     /** Set when AcceptDragDropPayload() was called and mouse has been hovering the target item (nb: handle overlapping drag targets) */
     var preview = false
     /** Set when AcceptDragDropPayload() was called and mouse button is released over the target item. */
@@ -164,13 +165,13 @@ class Payload {
         sourceId = 0
         data = null
         dataSize = 0
-        dataType = ""
+        dataType.fill(NUL)
         dataFrameCount = -1
         delivery = false
         preview = false
     }
 
-    fun isDataType(type: String) = dataFrameCount != -1 && type == dataType
+    fun isDataType(type: String) = dataFrameCount != -1 && type cmp dataType
 }
 
 class Color {

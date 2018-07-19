@@ -129,7 +129,7 @@ interface imgui_demoDebugInformations {
                 text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
                 text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
                 text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
-                text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" " +
+                text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataTypeS}\" " +
                         "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
                 treePop()
             }
