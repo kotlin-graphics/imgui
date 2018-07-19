@@ -133,7 +133,7 @@ interface imgui_main {
         // Elapse drag & drop payload
         if (g.dragDropActive && g.dragDropPayload.dataFrameCount + 1 < g.frameCount) {
             clearDragDrop()
-            g.dragDropPayloadBufHeap.clear()
+            g.dragDropPayloadBufHeap = ByteArray(0)
             g.dragDropPayloadBufLocal.fill(0.b)
         }
         g.dragDropAcceptIdPrev = g.dragDropAcceptIdCurr
