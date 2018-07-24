@@ -850,11 +850,12 @@ class Window(var context: Context, var name: String) {
             /*  When the window cannot fit all contents (either because of constraints, either because screen is too small):
                     we are growing the size on the other axis to compensate for expected scrollbar.
                     FIXME: Might turn bigger than DisplaySize-WindowPadding.                 */
-            val isPopup = flags has Wf.Popup && flags has Wf.AlwaysAutoResize
+            val isPopup = flags has Wf.Popup
             val isMenu = flags has Wf.ChildMenu
-            val sizeMin = Vec2(1f)
-            if (!isPopup && !isMenu)
-                sizeMin put style.windowMinSize
+            val sizeMin = Vec2(style.windowMinSize)
+            // Popups and menus bypass style.WindowMinSize by default, but we give then a non-zero minimum size to facilitate understanding problematic cases (e.g. empty popups)
+            if (isPopup || isMenu)
+                sizeMin minAssign 4f
             val sizeAutoFit = glm.clamp(sizeContents, sizeMin, glm.max(sizeMin, Vec2(io.displaySize) - style.displaySafeAreaPadding * 2f))
             val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
             if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
