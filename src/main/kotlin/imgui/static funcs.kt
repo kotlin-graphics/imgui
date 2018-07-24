@@ -7,9 +7,14 @@ import gli_.hasnt
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
+import imgui.ImGui.begin
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.contentRegionAvail
+import imgui.ImGui.end
+import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.findWindowByName
+import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.getNavInputAmount2d
@@ -18,8 +23,13 @@ import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.overlayDrawList
+import imgui.ImGui.popStyleVar
+import imgui.ImGui.pushStyleVar
+import imgui.ImGui.selectable
 import imgui.ImGui.setActiveId
+import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.imgui.*
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
@@ -65,8 +75,12 @@ val defaultFont get() = io.fontDefault ?: io.fonts.fonts[0]
 FIXME: Note that we have a lag here because WindowRectClipped is updated in Begin() so windows moved by user via
 SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time
 FindHoveredWindow() is called, aka before the next Begin(). Moving window thankfully isn't affected.    */
-fun findHoveredWindow(): Window? {
-    for (i in g.windows.size - 1 downTo 0) {
+fun findHoveredWindow() {
+
+    var hoveredWindow = g.movingWindow?.takeIf { it.flags hasnt Wf.NoInputs }
+
+    var i = g.windows.lastIndex
+    while (i >= 0 && hoveredWindow == null) {
         val window = g.windows[i]
         if (!window.active)
             continue
@@ -75,10 +89,15 @@ fun findHoveredWindow(): Window? {
 
         // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
         val bb = Rect(window.outerRectClipped.min - style.touchExtraPadding, window.outerRectClipped.max + style.touchExtraPadding)
-        if (bb contains io.mousePos)
-            return window
+        if (bb contains io.mousePos) {
+            hoveredWindow = window
+            break
+        }
+        i--
     }
-    return null
+
+    g.hoveredWindow = hoveredWindow
+    g.hoveredRootWindow = g.hoveredWindow?.rootWindow
 }
 
 fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).apply {
@@ -92,9 +111,8 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
 
     // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
     if (flags hasnt Wf.NoSavedSettings) {
-        //  Retrieve settings from .ini file
-
         findWindowSettings(id)?.let { s ->
+            //  Retrieve settings from .ini file
             settingsIdx = g.settingsWindows.indexOf(s)
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
             pos = glm.floor(s.pos)
@@ -106,6 +124,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
     sizeFullAtLastBegin put size
     sizeFull put size
     this.size put size
+    dc.cursorMaxPos put pos // So first call to calcSizeContents() doesn't return crazy values
 
     if (flags has Wf.AlwaysAutoResize) {
         autoFitFrames put 2
@@ -1120,11 +1139,17 @@ fun navUpdateWindowing() {
     var applyFocusWindow: Window? = null
     var applyToggleLayer = false
 
+    val modalWindow = frontMostPopupModal
+    if (modalWindow != null) {
+        g.navWindowingTarget = null
+        return
+    }
+
     val startWindowingWithGamepad = g.navWindowingTarget == null && NavInput.Menu.isPressed(InputReadMode.Pressed)
     val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has Cf.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavigable(g.windows.lastIndex, -Int.MAX_VALUE, -1))?.let {
-            g.navWindowingTarget = it.rootWindowForTabbing
+            g.navWindowingTarget = it
             g.navWindowingHighlightAlpha = 0f
             g.navWindowingHighlightTimer = 0f
             g.navWindowingToggleLayer = !startWindowingWithKeyboard
@@ -1188,7 +1213,7 @@ fun navUpdateWindowing() {
                 val NAV_MOVE_SPEED = 800f
                 // FIXME: Doesn't code variable framerate very well
                 val moveSpeed = glm.floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
-                it.pos plusAssign moveDelta * moveSpeed
+                it.rootWindow!!.pos plusAssign moveDelta * moveSpeed
                 g.navDisableMouseHover = true
                 it.markIniSettingsDirty()
             }
@@ -1196,7 +1221,7 @@ fun navUpdateWindowing() {
     }
 
     // Apply final focus
-    if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootWindowForTabbing)) {
+    if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootWindow)) {
         g.navDisableHighlight = false
         g.navDisableMouseHover = true
         applyFocusWindow = navRestoreLastChildNavWindow(applyFocusWindow!!)
@@ -1214,9 +1239,11 @@ fun navUpdateWindowing() {
     // Apply menu/layer toggle
     if (applyToggleLayer)
         g.navWindow?.let {
+            // Move to parent menu if necessary
             var newNavWindow = it
             while (newNavWindow.dc.navLayerActiveMask hasnt (1 shl 1) && newNavWindow.flags has Wf.ChildWindow && newNavWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
                 newNavWindow = newNavWindow.parentWindow!!
+
             if (newNavWindow !== it) {
                 val oldNavWindow = it
                 newNavWindow.focus()
@@ -1226,6 +1253,35 @@ fun navUpdateWindowing() {
             g.navDisableMouseHover = true
             navRestoreLayer(if (it.dc.navLayerActiveMask has (1 shl 1)) g.navLayer xor 1 else 0)
         }
+}
+
+/** Overlay displayed when using CTRL+TAB. Called by EndFrame(). */
+fun navUpdateWindowingList() {
+
+    if (g.navWindowingTarget == null) {
+        g.navWindowingList.clear()
+        return
+    }
+
+    if (g.navWindowingList.isEmpty())
+        findWindowByName("###NavWindowList")?.let { g.navWindowingList += it }
+    setNextWindowSizeConstraints(Vec2(io.displaySize.x * 0.2f, io.displaySize.y * 0.2f), Vec2(Float.MAX_VALUE))
+    setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Always, Vec2(0.5f))
+    pushStyleVar(StyleVar.WindowPadding, style.windowPadding * 2f)
+    val flags = Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoNav or Wf.NoResize or Wf.NoMove or Wf.NoInputs or Wf.AlwaysAutoResize
+    begin("###NavWindowList", null, flags)
+    for (n in g.windows.lastIndex downTo 0) {
+        val window = g.windows[n]
+        if (!window.isNavFocusable)
+            continue
+        var label = window.name
+        val labelEnd = findRenderedTextEnd(label)
+        if (labelEnd != 0)
+            label = window.fallbackWindowName
+        selectable(label, g.navWindowingTarget == window)
+    }
+    end()
+    popStyleVar()
 }
 
 /** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)    */
@@ -1336,7 +1392,8 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
     val iCurrent = findWindowIndex(target)
     val windowTarget = findWindowNavigable(iCurrent + focusChangeDir, -Int.MAX_VALUE, focusChangeDir)
             ?: findWindowNavigable(if (focusChangeDir < 0) g.windows.lastIndex else 0, iCurrent, focusChangeDir)
-    g.navWindowingTarget = windowTarget
+    // Don't reset windowing target if there's a single window in the list
+    windowTarget?.let { g.navWindowingTarget = it }
     g.navWindowingToggleLayer = false
 }
 

@@ -11,7 +11,6 @@ import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
-import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endColumns
@@ -31,8 +30,6 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
-import imgui.ImGui.setActiveId
-import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
 import imgui.imgui.imgui_main.Companion.resizeGripDef
 import imgui.imgui.imgui_main.Companion.updateManualResize
@@ -117,6 +114,15 @@ interface imgui_window {
         else
             flags = window.flags
 
+        // Parent window is latched only on the first call to Begin() of the frame, so further append-calls can be done from a different window stack
+        val parentWindowInStack = g.currentWindowStack.lastOrNull()
+        val parentWindow = when {
+            firstBeginOfTheFrame -> parentWindowInStack.takeIf { flags has (Wf.ChildWindow or Wf.Popup) }
+            else -> window.parentWindow
+        }
+        assert(parentWindow != null || flags hasnt Wf.ChildWindow)
+        window.hasCloseButton = pOpen != null
+
         // Update the Appearing flag
         // Not using !WasActive because the implicit "Debug" window would always toggle off->on
         var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1
@@ -128,17 +134,7 @@ interface imgui_window {
             windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
         }
         window.appearing = windowJustActivatedByUser || windowJustAppearingAfterHiddenForResize
-        window.hasCloseButton = pOpen != null
         if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, true)
-
-        /*  Parent window is latched only on the first call to begin() of the frame, so further append-calls can be done
-            from a different window stack         */
-        val parentWindowInStack = g.currentWindowStack.lastOrNull()
-        val parentWindow = when (firstBeginOfTheFrame) {
-            true -> parentWindowInStack.takeIf { flags has (Wf.ChildWindow or Wf.Popup) }
-            else -> window.parentWindow
-        }
-        assert(parentWindow != null || flags hasnt Wf.ChildWindow)
 
         // Add to stack
         g.currentWindowStack += window
@@ -195,16 +191,13 @@ interface imgui_window {
             // Initialize
             window.parentWindow = parentWindow
             window.rootWindowForNav = window
-            window.rootWindowForTabbing = window
             window.rootWindowForTitleBarHighlight = window
             window.rootWindow = window
             parentWindow?.let {
                 if (flags has Wf.ChildWindow && !windowIsChildTooltip)
                     window.rootWindow = it.rootWindow
-                if (flags hasnt Wf.Modal && flags has (Wf.ChildWindow or Wf.Popup)) {
-                    window.rootWindowForTabbing = it.rootWindowForTitleBarHighlight // Same value in master branch, will differ for docking
+                if (flags hasnt Wf.Modal && flags has (Wf.ChildWindow or Wf.Popup))
                     window.rootWindowForTitleBarHighlight = it.rootWindowForTitleBarHighlight
-                }
             }
             while (window.rootWindowForNav!!.flags has Wf.NavFlattened)
                 window.rootWindowForNav = window.rootWindowForNav!!.parentWindow
@@ -379,7 +372,7 @@ interface imgui_window {
                 }
             }
 
-            // Prepare for focus requests
+            // Prepare for item focus requests
             window.focusIdxAllRequestCurrent = when {
                 window.focusIdxAllRequestNext == Int.MAX_VALUE || window.focusIdxAllCounter == -1 -> Int.MAX_VALUE
                 else -> (window.focusIdxAllRequestNext + (window.focusIdxAllCounter + 1)) % (window.focusIdxAllCounter + 1)
@@ -397,8 +390,9 @@ interface imgui_window {
             window.scroll put calcNextScrollFromScrollTargetAndClamp(window, true)
             window.scrollTarget put Float.MAX_VALUE
 
-            // Apply focus, new windows appears in front
-            val wantFocus = windowJustActivatedByUser && flags hasnt Wf.NoFocusOnAppearing && (flags hasnt (Wf.ChildWindow or Wf.Tooltip) || flags has Wf.Popup)
+            // Apply window focus (new and reactivated windows are moved to front)
+            val wantFocus = windowJustActivatedByUser && flags hasnt Wf.NoFocusOnAppearing &&
+                    (flags hasnt (Wf.ChildWindow or Wf.Tooltip) || flags has Wf.Popup)
 
             // Handle manual resize: Resize Grips, Borders, Gamepad
             val borderHeld = -1
@@ -427,22 +421,27 @@ interface imgui_window {
             else
                 pushClipRect(viewportRect.min, viewportRect.max, true)
 
-            // Draw modal window background (darkens what is behind them)
-            if (flags has Wf.Modal && window === frontMostPopupModal)
-                window.drawList.addRectFilled(viewportRect.min, viewportRect.max, getColorU32(Col.ModalWindowDarkening, g.modalWindowDarkeningRatio))
+            // Draw modal window background (darkens what is behind them, all viewports)
+            val dimBgForModal = flags has Wf.Modal && window === frontMostPopupModal && window.hiddenFrames <= 0
+            val dimBgForWindowList = g.navWindowingTarget?.rootWindow === window
+            if (dimBgForModal || dimBgForWindowList) {
+                val dimBgCol = getColorU32(if(dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowListDimBg, g.dimBgRatio)
+                window.drawList.addRectFilled(viewportRect.min, viewportRect.max, dimBgCol)
+            }
 
             // Draw navigation selection/windowing rectangle background
-            if (g.navWindowingTarget === window) {
+            if (dimBgForWindowList && window == g.navWindowingTarget!!.rootWindow) {
                 val bb = window.rect()
                 bb expand g.fontSize
                 if (!bb.contains(viewportRect)) // Avoid drawing if the window covers all the viewport anyway
-                    window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f), g.style.windowRounding)
+                    window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.NavWindowListHighlight, g.navWindowingHighlightAlpha * 0.25f), g.style.windowRounding)
             }
 
             // Draw window + handle manual resize
             val windowRounding = window.windowRounding
             val windowBorderSize = window.windowBorderSize
-            val titleBarIsHighlight = wantFocus || g.navWindow?.rootWindowForTitleBarHighlight === window.rootWindowForTitleBarHighlight // TODO check
+            val windowToHighlight = g.navWindowingTarget ?: g.navWindow
+            val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight } ?: false)
             val titleBarRect = window.titleBarRect()
             if (window.collapsed) {
                 // Title bar only
@@ -516,7 +515,7 @@ interface imgui_window {
                     bb expand (-g.fontSize - 1f)
                     rounding = window.windowRounding
                 }
-                window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha), rounding, 0.inv(), 3f)
+                window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowListHighlight, g.navWindowingHighlightAlpha), rounding, 0.inv(), 3f)
             }
 
             // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars.
@@ -682,9 +681,11 @@ interface imgui_window {
         window.beginCount++
         g.nextWindowData.clear()
 
-        // Child window can be out of sight and have "negative" clip windows.
-        // Mark them as collapsed so commands are skipped earlier (we can't manually collapse because them have no title bar).
+
         if (flags has Wf.ChildWindow) {
+
+            // Child window can be out of sight and have "negative" clip windows.
+            // Mark them as collapsed so commands are skipped earlier (we can't manually collapse them because they have no title bar).
 
             assert(flags has Wf.NoTitleBar)
             window.collapsed = parentWindow?.collapsed == true
@@ -698,6 +699,8 @@ interface imgui_window {
             if (window.collapsed)
                 window.active = false
         }
+
+        // Don't render if style alpha is 0.0 at the time of Begin(). This is arbitrary and inconsistent but has been there for a long while (may remove at some point)
         if (style.alpha <= 0f)
             window.active = false
 

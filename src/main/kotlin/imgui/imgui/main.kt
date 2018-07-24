@@ -15,14 +15,13 @@ import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.keepAliveId
-import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMovingWindow
 import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
 import imgui.imgui.imgui_internal.Companion.roundScalarWithFormat
@@ -177,9 +176,9 @@ interface imgui_main {
         updateMovingWindow()
         updateHoveredWindowAndCaptureFlags()
 
-        g.modalWindowDarkeningRatio = when (frontMostPopupModal) {
-            null -> 0f
-            else -> min(g.modalWindowDarkeningRatio + io.deltaTime * 6f, 1f)
+        g.dimBgRatio = when {
+            frontMostPopupModal != null || g.navWindowingTarget != null -> (g.dimBgRatio + io.deltaTime * 6f) min 1f
+            else -> 0f
         }
         g.mouseCursor = MouseCursor.Arrow
         g.wantTextInputNextFrame = -1
@@ -276,6 +275,8 @@ interface imgui_main {
             g.osImePosSet put g.platformImePos
         }
 
+        navUpdateWindowingList()
+
         // Hide implicit "Debug" window if it hasn't been used
         assert(g.currentWindowStack.size == 1) { "Mismatched Begin()/End() calls, did you forget to call end on g.currentWindow.name?" }
         g.currentWindow?.let {
@@ -349,49 +350,47 @@ interface imgui_main {
         if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount
 
-        /*  Skip render altogether if alpha is 0.0
-            Note that vertex buffers have been created and are wasted, so it is best practice that you don't create
-            windows in the first place, or consistently respond to Begin() returning false. */
-        if (style.alpha > 0f) {
-            // Gather windows to render
-            io.metricsActiveWindows = 0
-            io.metricsRenderIndices = 0
-            io.metricsRenderVertices = 0
-            g.drawDataBuilder.clear()
-            val windowToRenderFrontMost = g.navWindowingTarget.takeIf {
-                it?.flags?.hasnt(Wf.NoBringToFrontOnFocus) ?: false
-            }
-            g.windows.filter { it.active && it.hiddenFrames == 0 && it.flags hasnt Wf.ChildWindow && it !== windowToRenderFrontMost }
-                    .map(Window::addToDrawDataSelectLayer)
-            windowToRenderFrontMost?.let {
-                if (it.active && it.hiddenFrames == 0) // NavWindowingTarget is always temporarily displayed as the front-most window
-                    it.addToDrawDataSelectLayer()
-            }
-            g.drawDataBuilder.flattenIntoSingleLayer()
+        // Gather windows to render
+        io.metricsActiveWindows = 0
+        io.metricsRenderIndices = 0
+        io.metricsRenderVertices = 0
+        g.drawDataBuilder.clear()
+        val windowsToRenderFrontMost = arrayOf(
+                g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
+                g.navWindowingList.firstOrNull())
+        g.windows
+                .filter { it.isActiveAndVisible && it.flags hasnt Wf.ChildWindow && it !== windowsToRenderFrontMost[0] && it !== windowsToRenderFrontMost[1] }
+                .forEach { it.addToDrawDataSelectLayer() }
+        windowsToRenderFrontMost
+                .filterNotNull()
+                .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the front-most window
+                .forEach { it.addToDrawDataSelectLayer() }
+        g.drawDataBuilder.flattenIntoSingleLayer()
 
-            // Draw software mouse cursor if requested
-            val offset = Vec2()
-            val size = Vec2()
-            val uv = Array(4) { Vec2() }
-            if (io.mouseDrawCursor && io.fonts.getMouseCursorTexData(g.mouseCursor, offset, size, uv)) {
-                val pos = io.mousePos - offset
-                val texId = io.fonts.texId
-                val sc = style.mouseCursorScale
-                g.overlayDrawList.pushTextureId(texId)
-                g.overlayDrawList.addImage(texId, pos + Vec2(1, 0) * sc, pos + Vec2(1, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
-                g.overlayDrawList.addImage(texId, pos + Vec2(2, 0) * sc, pos + Vec2(2, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
-                g.overlayDrawList.addImage(texId, pos, pos + size * sc, uv[2], uv[3], COL32(0, 0, 0, 255))       // Black border
-                g.overlayDrawList.addImage(texId, pos, pos + size * sc, uv[0], uv[1], COL32(255, 255, 255, 255)) // White fill
-                g.overlayDrawList.popTextureId()
+        // Draw software mouse cursor if requested
+        val offset = Vec2()
+        val size = Vec2()
+        val uv = Array(4) { Vec2() }
+        if (io.mouseDrawCursor && io.fonts.getMouseCursorTexData(g.mouseCursor, offset, size, uv)) {
+            val pos = io.mousePos - offset
+            val texId = io.fonts.texId
+            val sc = style.mouseCursorScale
+            g.overlayDrawList.apply {
+                pushTextureId(texId)
+                addImage(texId, pos + Vec2(1, 0) * sc, pos + Vec2(1, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
+                addImage(texId, pos + Vec2(2, 0) * sc, pos + Vec2(2, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
+                addImage(texId, pos, pos + size * sc, uv[2], uv[3], COL32(0, 0, 0, 255))       // Black border
+                addImage(texId, pos, pos + size * sc, uv[0], uv[1], COL32(255, 255, 255, 255)) // White fill
+                popTextureId()
             }
-            if (g.overlayDrawList.vtxBuffer.isNotEmpty())
-                g.overlayDrawList addTo g.drawDataBuilder.layers[0]
-
-            // Setup ImDrawData structure for end-user
-            setupDrawData(g.drawDataBuilder.layers[0], g.drawData)
-            io.metricsRenderVertices = g.drawData.totalVtxCount
-            io.metricsRenderIndices = g.drawData.totalIdxCount
         }
+        if (g.overlayDrawList.vtxBuffer.isNotEmpty())
+            g.overlayDrawList addTo g.drawDataBuilder.layers[0]
+
+        // Setup ImDrawData structure for end-user
+        setupDrawData(g.drawDataBuilder.layers[0], g.drawData)
+        io.metricsRenderVertices = g.drawData.totalVtxCount
+        io.metricsRenderIndices = g.drawData.totalIdxCount
     }
 
     /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
@@ -474,7 +473,7 @@ interface imgui_main {
             if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0)
                 return borderHeld
 
-            val resizeBorderCount = if(io.optResizeWindowsFromEdges) 4 else 0
+            val resizeBorderCount = if (io.optResizeWindowsFromEdges) 4 else 0
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             val gripHoverSize = (gripDrawSize * 0.75f).i.f
 
@@ -546,7 +545,7 @@ interface imgui_main {
             popId()
 
             // Navigation resize (keyboard/gamepad)
-            if (g.navWindowingTarget === window) {
+            if(g.navWindowingTarget?.rootWindow === window) {
                 val navResizeDelta = Vec2()
                 if (g.navInputSource == InputSource.NavKeyboard && g.io.keyShift)
                     navResizeDelta put getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)

@@ -28,7 +28,7 @@ enum class WindowFlag(val i: Int) {
     @Deprecated("OBSOLETE! Use e.g. style.FrameBorderSize=1.0f to enable borders")
     /** Show borders around windows and items
      *  Deprecated, Set style.FrameBorderSize=1.0f / style.WindowBorderSize=1.0f to enable borders around windows and items */
-//    ShowBorders(1 shl 7),
+    ShowBorders(1 shl 7),
     /** Never load/save settings in .ini file   */
     NoSavedSettings(1 shl 8),
     /** Disable catching mouse or keyboard inputs   */
@@ -658,13 +658,15 @@ enum class Col {
     PlotHistogram,
     PlotHistogramHovered,
     TextSelectedBg,
-    /** Darken/colorize entire screen behind a modal window, when one is active   */
-    ModalWindowDarkening,
     DragDropTarget,
     /** Gamepad/keyboard: current highlighted item  */
     NavHighlight,
-    /** Gamepad/keyboard: when holding NavMenu to focus/move/resize windows */
-    NavWindowingHighlight;
+    /** Highlight window when using CTRL+TAB */
+    NavWindowListHighlight,
+    /** Darken/colorize entire screen behind the CTRL+TAB window list, when active */
+    NavWindowListDimBg,
+    /** Darken/colorize entire screen behind a modal window, when one is active; */
+    ModalWindowDimBg;
 
     val i = ordinal
 

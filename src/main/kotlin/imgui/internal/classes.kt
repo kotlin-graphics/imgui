@@ -639,8 +639,6 @@ class Window(var context: Context, var name: String) {
     var rootWindow: Window? = null
     /** Point to ourself or first ancestor which will display TitleBgActive color when this window is active.   */
     var rootWindowForTitleBarHighlight: Window? = null
-    /** Point to ourself or first ancestor which can be CTRL-Tabbed into.   */
-    var rootWindowForTabbing: Window? = null
     /** Point to ourself or first ancestor which doesn't have the NavFlattened flag.    */
     var rootWindowForNav: Window? = null
 
@@ -936,8 +934,9 @@ class Window(var context: Context, var name: String) {
         return false
     }
 
-    /** Can we focus this window with CTRL+TAB (or PadMenu + PadFocusPrev/PadFocusNext) */
-    val isNavFocusable get() = active && this === rootWindowForTabbing && (flags hasnt Wf.NoNavFocus || this === g.navWindow)
+    /** Can we focus this window with CTRL+TAB (or PadMenu + PadFocusPrev/PadFocusNext)
+     *  ~ IsWindowNavFocusable */
+    val isNavFocusable get() = active && this === rootWindow && (flags hasnt Wf.NoNavFocus || this === g.navWindow)
 
     fun calcResizePosSizeFromAnyCorner(cornerTarget: Vec2, cornerNorm: Vec2, outPos: Vec2, outSize: Vec2) {
         val posMin = cornerTarget.lerp(pos, cornerNorm)             // Expected window upper-left
@@ -986,6 +985,18 @@ class Window(var context: Context, var name: String) {
             if (g.settingsDirtyTimer <= 0f)
                 g.settingsDirtyTimer = io.iniSavingRate
     }
+
+    /** Window has already passed the IsWindowNavFocusable()
+     *  ~ getFallbackWindowNameForWindowingList */
+    val fallbackWindowName: String
+        get() = when {
+            flags has Wf.Popup -> "(Popup)"
+            flags has Wf.MenuBar && name == "##MainMenuBar" -> "(Main menu bar)"
+            else -> "(Untitled)"
+        }
+
+    /** ~ IsWindowActiveAndVisible */
+    val isActiveAndVisible: Boolean get() = hiddenFrames == 0 && active
 }
 
 fun Window?.setCurrent() {
