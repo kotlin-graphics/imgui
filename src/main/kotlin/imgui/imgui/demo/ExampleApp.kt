@@ -11,7 +11,6 @@ import imgui.ImGui.begin_
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
-import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
@@ -350,10 +349,12 @@ object Console {
 //            ScrollToBottom = true;
 //        }
 //
-        fun draw(title: String, open: KMutableProperty0<Boolean>) {
+        fun draw(title: String, pOpen: KMutableProperty0<Boolean>) {
+
+            var open by pOpen
 
             setNextWindowSize(Vec2(520, 600), Cond.FirstUseEver)
-            if (!begin_(title, open)) {
+            if (!begin_(title, pOpen)) {
                 end()
                 return
             }
@@ -361,7 +362,7 @@ object Console {
             /*  As a specific feature guaranteed by the library, after calling begin() the last Item represent the title bar.
                 So e.g. isItemHovered() will return true when hovering the title bar. */
             // Here we create a context menu only available from the title bar.
-            popupContextItem { if (menuItem("Close")) open.set(false) }
+            popupContextItem { if (menuItem("Close Console")) open = false }
 
             textWrapped("This example is not yet implemented, you are welcome to contribute")
 //            textWrapped("This example implements a console with basic coloring, completion and history. A more elaborate implementation may want to store entries along with extra data such as timestamp, emitter, etc.");
@@ -633,7 +634,10 @@ object Log {
         fun draw(title: String, open: KMutableProperty0<Boolean>? = null) {
 
             setNextWindowSize(Vec2(500, 400), Cond.FirstUseEver)
-            begin_(title, open)
+            if(!begin_(title, open)) {
+                end()
+                return
+            }
             if (button("Clear")) clear()
             sameLine()
             val copy = button("Copy")

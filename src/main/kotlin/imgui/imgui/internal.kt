@@ -3245,8 +3245,7 @@ interface imgui_internal {
                 is lagging as this point of the frame.
             - We also support the moved window toggling the NoInputs flag after moving has started in order
                 to be able to detect windows below it, which is useful for e.g. docking mechanisms. */
-        g.hoveredWindow = g.movingWindow?.flags?.hasnt(Wf.NoInputs)?.let { g.movingWindow } ?: findHoveredWindow()
-        g.hoveredRootWindow = g.hoveredWindow?.rootWindow
+        findHoveredWindow()
 
         fun nullate() {
             g.hoveredWindow = null

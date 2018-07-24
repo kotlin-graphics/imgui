@@ -145,6 +145,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed front-most.   */
     var navWindowingTarget: Window? = null
 
+    val navWindowingList = ArrayList<Window>()
+
     var navWindowingHighlightTimer = 0f
 
     var navWindowingHighlightAlpha = 0f
@@ -204,8 +206,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var drawData = DrawData()
 
     val drawDataBuilder = DrawDataBuilder()
-
-    var modalWindowDarkeningRatio = 0f
+    /** 0.0..1.0 animation when fading in a dimming background (for modal window and CTRL+TAB list) */
+    var dimBgRatio = 0f
     /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
     var overlayDrawList = DrawList(null).apply {
         _data = drawListSharedData
