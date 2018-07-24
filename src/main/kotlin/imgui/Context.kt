@@ -626,7 +626,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
 //                cf.ptCurrentPos.x = x;
 //                cf.ptCurrentPos.y = y;
 //                cf.dwStyle = CFS_FORCE_POSITION;
-//                ImmSetCompositionWindow(himc, & cf);
+//                ::ImmSetCompositionWindow(himc, & cf);
+//                ::ImmReleaseContext(hwnd, himc);
 //            }
 //    }
 }
