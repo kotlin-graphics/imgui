@@ -803,7 +803,7 @@ enum class MouseCursor {
     Arrow,
     /** When hovering over InputText, etc.  */
     TextInput,
-    /** Unused by imgui functions */
+    /** (Unused by imgui functions) */
     ResizeAll,
     /** When hovering over an horizontal border  */
     ResizeNS,
@@ -812,13 +812,15 @@ enum class MouseCursor {
     /** When hovering over the bottom-left corner of a window  */
     ResizeNESW,
     /** When hovering over the bottom-right corner of a window  */
-    ResizeNWSE;
+    ResizeNWSE,
+    /** (Unused by imgui functions. Use for e.g. hyperlinks) */
+    Hand;
 
     val i = ordinal - 1
 
     companion object {
         fun of(i: Int) = values().first { it.i == i }
-        val COUNT = ResizeNWSE.i + 1
+        val COUNT = Hand.i + 1
     }
 }
 

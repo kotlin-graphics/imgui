@@ -692,7 +692,7 @@ class FontAtlas {
                     var charOffX = fontOffX
                     if (charAdvanceXOrg != charAdvanceXMod) {
                         val t = (charAdvanceXMod - charAdvanceXOrg) * 0.5f
-                        charOffX += if(cfg.pixelSnapH) t.i.f else t
+                        charOffX += if (cfg.pixelSnapH) t.i.f else t
                     }
                     val q = STBTTAlignedQuad.create()
                     stbtt_GetPackedQuad(range.chardataForRange, texSize, charIdx, Vec2(), q, false)
@@ -826,47 +826,51 @@ class FontAtlas {
     /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
         The white texels on the top left are the ones we'll use everywhere in ImGui to render filled shapes.     */
     object DefaultTexData {
-        val wHalf = 90
+        val wHalf = 100
         val h = 27
         val id = 0x80000000.i
-        val pixels = (
-                "..-         -XXXXXXX-    X    -           X           -XXXXXXX          -          XXXXXXX" +
-                        "..-         -X.....X-   X.X   -          X.X          -X.....X          -          X.....X" +
-                        "---         -XXX.XXX-  X...X  -         X...X         -X....X           -           X....X" +
-                        "X           -  X.X  - X.....X -        X.....X        -X...X            -            X...X" +
-                        "XX          -  X.X  -X.......X-       X.......X       -X..X.X           -           X.X..X" +
-                        "X.X         -  X.X  -XXXX.XXXX-       XXXX.XXXX       -X.X X.X          -          X.X X.X" +
-                        "X..X        -  X.X  -   X.X   -          X.X          -XX   X.X         -         X.X   XX" +
-                        "X...X       -  X.X  -   X.X   -    XX    X.X    XX    -      X.X        -        X.X      " +
-                        "X....X      -  X.X  -   X.X   -   X.X    X.X    X.X   -       X.X       -       X.X       " +
-                        "X.....X     -  X.X  -   X.X   -  X..X    X.X    X..X  -        X.X      -      X.X        " +
-                        "X......X    -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -         X.X   XX-XX   X.X         " +
-                        "X.......X   -  X.X  -   X.X   -X.....................X-          X.X X.X-X.X X.X          " +
-                        "X........X  -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -           X.X..X-X..X.X           " +
-                        "X.........X -XXX.XXX-   X.X   -  X..X    X.X    X..X  -            X...X-X...X            " +
-                        "X..........X-X.....X-   X.X   -   X.X    X.X    X.X   -           X....X-X....X           " +
-                        "X......XXXXX-XXXXXXX-   X.X   -    XX    X.X    XX    -          X.....X-X.....X          " +
-                        "X...X..X    ---------   X.X   -          X.X          -          XXXXXXX-XXXXXXX          " +
-                        "X..X X..X   -       -XXXX.XXXX-       XXXX.XXXX       ------------------------------------" +
-                        "X.X  X..X   -       -X.......X-       X.......X       -    XX           XX    -           " +
-                        "XX    X..X  -       - X.....X -        X.....X        -   X.X           X.X   -           " +
-                        "      X..X          -  X...X  -         X...X         -  X..X           X..X  -           " +
-                        "       XX           -   X.X   -          X.X          - X...XXXXXXXXXXXXX...X -           " +
-                        "------------        -    X    -           X           -X.....................X-           " +
-                        "                    ----------------------------------- X...XXXXXXXXXXXXX...X -           " +
-                        "                                                      -  X..X           X..X  -           " +
-                        "                                                      -   X.X           X.X   -           " +
-                        "                                                      -    XX           XX    -           ").toCharArray()
+        val pixels = run {
+            val s = StringBuilder()
+            s += "..-         -XXXXXXX-    X    -           X           -XXXXXXX          -          XXXXXXX-     XX          "
+            s += "..-         -X.....X-   X.X   -          X.X          -X.....X          -          X.....X-    X..X         "
+            s += "---         -XXX.XXX-  X...X  -         X...X         -X....X           -           X....X-    X..X         "
+            s += "X           -  X.X  - X.....X -        X.....X        -X...X            -            X...X-    X..X         "
+            s += "XX          -  X.X  -X.......X-       X.......X       -X..X.X           -           X.X..X-    X..X         "
+            s += "X.X         -  X.X  -XXXX.XXXX-       XXXX.XXXX       -X.X X.X          -          X.X X.X-    X..XXX       "
+            s += "X..X        -  X.X  -   X.X   -          X.X          -XX   X.X         -         X.X   XX-    X..X..XXX    "
+            s += "X...X       -  X.X  -   X.X   -    XX    X.X    XX    -      X.X        -        X.X      -    X..X..X..XX  "
+            s += "X....X      -  X.X  -   X.X   -   X.X    X.X    X.X   -       X.X       -       X.X       -    X..X..X..X.X "
+            s += "X.....X     -  X.X  -   X.X   -  X..X    X.X    X..X  -        X.X      -      X.X        -XXX X..X..X..X..X"
+            s += "X......X    -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -         X.X   XX-XX   X.X         -X..XX........X..X"
+            s += "X.......X   -  X.X  -   X.X   -X.....................X-          X.X X.X-X.X X.X          -X...X...........X"
+            s += "X........X  -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -           X.X..X-X..X.X           - X..............X"
+            s += "X.........X -XXX.XXX-   X.X   -  X..X    X.X    X..X  -            X...X-X...X            -  X.............X"
+            s += "X..........X-X.....X-   X.X   -   X.X    X.X    X.X   -           X....X-X....X           -  X.............X"
+            s += "X......XXXXX-XXXXXXX-   X.X   -    XX    X.X    XX    -          X.....X-X.....X          -   X............X"
+            s += "X...X..X    ---------   X.X   -          X.X          -          XXXXXXX-XXXXXXX          -   X...........X "
+            s += "X..X X..X   -       -XXXX.XXXX-       XXXX.XXXX       -------------------------------------    X..........X "
+            s += "X.X  X..X   -       -X.......X-       X.......X       -    XX           XX    -           -    X..........X "
+            s += "XX    X..X  -       - X.....X -        X.....X        -   X.X           X.X   -           -     X........X  "
+            s += "      X..X          -  X...X  -         X...X         -  X..X           X..X  -           -     X........X  "
+            s += "       XX           -   X.X   -          X.X          - X...XXXXXXXXXXXXX...X -           -     XXXXXXXXXX  "
+            s += "------------        -    X    -           X           -X.....................X-           ------------------"
+            s += "                    ----------------------------------- X...XXXXXXXXXXXXX...X -                             "
+            s += "                                                      -  X..X           X..X  -                             "
+            s += "                                                      -   X.X           X.X   -                             "
+            s += "                                                      -    XX           XX    -                             "
+            s.toString().toCharArray()
+        }
 
         val cursorDatas = arrayOf(
                 // Pos ........ Size ......... Offset ......
                 arrayOf(Vec2(0, 3), Vec2(12, 19), Vec2(0)),         // MouseCursor.Arrow
-                arrayOf(Vec2(13, 0), Vec2(7, 16), Vec2(4, 8)),   // MouseCursor.TextInput
+                arrayOf(Vec2(13, 0), Vec2(7, 16), Vec2(1, 8)),   // MouseCursor.TextInput
                 arrayOf(Vec2(31, 0), Vec2(23), Vec2(11)),              // MouseCursor.Move
-                arrayOf(Vec2(21, 0), Vec2(9, 23), Vec2(5, 11)),  // MouseCursor.ResizeNS
-                arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 5)), // MouseCursor.ResizeEW
-                arrayOf(Vec2(73, 0), Vec2(17), Vec2(9)),               // MouseCursor.ResizeNESW
-                arrayOf(Vec2(55, 0), Vec2(17), Vec2(9)))               // MouseCursor.ResizeNWSE
+                arrayOf(Vec2(21, 0), Vec2(9, 23), Vec2(4, 11)),  // MouseCursor.ResizeNS
+                arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 4)), // MouseCursor.ResizeEW
+                arrayOf(Vec2(73, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNESW
+                arrayOf(Vec2(55, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNWSE
+                arrayOf(Vec2(91, 0), Vec2(17, 22), Vec2(5, 0))) // ImGuiMouseCursor_Hand
     }
 }
 
