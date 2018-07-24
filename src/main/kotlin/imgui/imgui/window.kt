@@ -966,46 +966,6 @@ interface imgui_window {
 
     companion object {
 
-        fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, extraFlags: WindowFlags): Boolean {
-
-            val parentWindow = currentWindow
-            var flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf.ChildWindow
-            flags = flags or (parentWindow.flags and Wf.NoMove.i)  // Inherit the NoMove flag
-
-            val contentAvail = contentRegionAvail
-            val size = glm.floor(sizeArg)
-            val autoFitAxes = (if (size.x == 0f) 1 shl Axis.X else 0x00) or (if (size.y == 0f) 1 shl Axis.Y else 0x00)
-            if (size.x <= 0f)   // Arbitrary minimum child size (0.0f causing too much issues)
-                size.x = glm.max(contentAvail.x + size.x, 4f)
-            if (size.y <= 0f)
-                size.y = glm.max(contentAvail.y + size.y, 4f)
-
-            val backupBorderSize = style.childBorderSize
-            if (!border) style.childBorderSize = 0f
-            flags = flags or extraFlags
-
-            val title = when {
-                name.isNotEmpty() -> "${parentWindow.name}/$name".format(style.locale)
-                else -> "${parentWindow.name}/%08X".format(style.locale, id)
-            }
-            setNextWindowSize(size)
-            val ret = ImGui.begin(title, null, flags)
-            val childWindow = currentWindow
-            childWindow.childId = id
-            childWindow.autoFitChildAxes = autoFitAxes
-            style.childBorderSize = backupBorderSize
-
-            // Process navigation-in immediately so NavInit can run on first frame
-            if (flags hasnt Wf.NavFlattened && (childWindow.dc.navLayerActiveMask != 0 || childWindow.dc.navHasScroll) && g.navActivateId == id) {
-                childWindow.focus()
-                navInitWindow(childWindow, false)
-                setActiveId(id + 1, childWindow) // Steal ActiveId with a dummy id so that key-press won't activate child item
-                g.activeIdSource = InputSource.Nav
-            }
-
-            return ret
-        }
-
         fun getWindowBgColorIdxFromFlags(flags: Int) = when {
             flags has (Wf.Tooltip or Wf.Popup) -> Col.PopupBg
             flags has Wf.ChildWindow -> Col.ChildBg
