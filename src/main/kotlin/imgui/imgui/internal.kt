@@ -1517,8 +1517,8 @@ interface imgui_internal {
     }
 
     /** For 32-bits and larger types, slider bounds are limited to half the natural type range.
-     *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2.
-     *  It would be possible to life that limitation with some work but it doesn't seem to be work it for sliders. */
+     *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2 will be ok.
+     *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
     fun sliderBehavior(bb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
                        flags: SliderFlags = 0) = sliderBehavior(bb, id, v, 0, vMin, vMax, format, power, flags)
 
@@ -1531,27 +1531,35 @@ interface imgui_internal {
                        flags: SliderFlags = 0): Boolean = sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags)
 
     fun sliderBehavior(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number,
-                       format: String, power: Float, flags: SliderFlags = 0): Boolean = when (dataType) {
+                       format: String, power: Float, flags: SliderFlags = 0): Boolean {
 
-        DataType.Int, DataType.Uint -> {
-            assert(vMin as Int >= Int.MIN_VALUE / 2)
-            assert(vMax as Int <= Int.MAX_VALUE / 2)
-            sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+        // Draw frame
+        val frameCol = if(g.activeId == id) Col.FrameBgActive else if(g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
+
+        return when (dataType) {
+
+            DataType.Int, DataType.Uint -> {
+                assert(vMin as Int >= Int.MIN_VALUE / 2)
+                assert(vMax as Int <= Int.MAX_VALUE / 2)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+            }
+            DataType.Long, DataType.Ulong -> {
+                assert(vMin as Long >= Long.MIN_VALUE / 2)
+                assert(vMax as Long <= Long.MAX_VALUE / 2)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+            }
+            DataType.Float -> {
+                assert(vMin as Float >= -Float.MAX_VALUE / 2f && vMax as Float <= Float.MAX_VALUE / 2f)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Float, format, power, flags)
+            }
+            DataType.Double -> {
+                assert(vMin as Double >= -Double.MAX_VALUE / 2f && vMax as Double <= Double.MAX_VALUE / 2f)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Double, format, power, flags)
+            }
+            else -> throw Error()
         }
-        DataType.Long, DataType.Ulong -> {
-            assert(vMin as Long >= Long.MIN_VALUE / 2)
-            assert(vMax as Long <= Long.MAX_VALUE / 2)
-            sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
-        }
-        DataType.Float -> {
-            assert(vMin as Float >= -Float.MAX_VALUE / 2f && vMax as Float <= Float.MAX_VALUE / 2f)
-            sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Float, format, power, flags)
-        }
-        DataType.Double -> {
-            assert(vMin as Double >= -Double.MAX_VALUE / 2f && vMax as Double <= Double.MAX_VALUE / 2f)
-            sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Double, format, power, flags)
-        }
-        else -> throw Error()
     }
 
     // FIXME: Move some of the code into SliderBehavior(). Current responsability is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
@@ -1560,12 +1568,7 @@ interface imgui_internal {
                         power: Float, flags: SliderFlags = 0): Boolean {
 
         var v by vPtr as KMutableProperty0<Int>
-        val window = currentWindow
-
-        // Draw frame
-        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
+        val window = g.currentWindow!!
 
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -1708,11 +1711,6 @@ interface imgui_internal {
         var v by vPtr as KMutableProperty0<Long>
         val window = currentWindow
 
-        // Draw frame
-        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
-
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isPower = power != 0f && isDecimal
@@ -1854,11 +1852,6 @@ interface imgui_internal {
         var v by vPtr as KMutableProperty0<Float>
         val window = currentWindow
 
-        // Draw frame
-        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
-
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isPower = power != 0f && isDecimal
@@ -1999,11 +1992,6 @@ interface imgui_internal {
 
         v as KMutableProperty0<Double>
         val window = currentWindow
-
-        // Draw frame
-        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
 
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
