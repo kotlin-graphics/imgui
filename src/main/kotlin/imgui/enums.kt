@@ -26,8 +26,9 @@ enum class WindowFlag(val i: Int) {
     /** Resize every window to its content every frame  */
     AlwaysAutoResize(1 shl 6),
     @Deprecated("OBSOLETE! Use e.g. style.FrameBorderSize=1.0f to enable borders")
-    /** Show borders around windows and items   */
-    ShowBorders(1 shl 7),
+    /** Show borders around windows and items
+     *  Deprecated, Set style.FrameBorderSize=1.0f / style.WindowBorderSize=1.0f to enable borders around windows and items */
+//    ShowBorders(1 shl 7),
     /** Never load/save settings in .ini file   */
     NoSavedSettings(1 shl 8),
     /** Disable catching mouse or keyboard inputs   */
@@ -48,8 +49,9 @@ enum class WindowFlag(val i: Int) {
     /** Ensure child windows without border uses style.WindowPadding (ignored by default for non-bordered child windows),
      *  because more convenient)  */
     AlwaysUseWindowPadding(1 shl 16),
-    /** [BETA] Enable resize from any corners and borders. Your back-end needs to honor the different values of io.mouseCursor set by imgui. */
-    ResizeFromAnySide(1 shl 17),
+    /** [BETA] Enable resize from any corners and borders. Your back-end needs to honor the different values of io.mouseCursor set by imgui.
+     *  Set io.OptResizeWindowsFromEdges and make sure mouse cursors are supported by back-end (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) */
+    // ResizeFromAnySide(1 shl 17),
     /** No gamepad/keyboard navigation within the window    */
     NoNavInputs(1 shl 18),
     /** No focusing toward this window with gamepad/keyboard navigation (e.g. skipped by CTRL+TAB)  */

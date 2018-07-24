@@ -3425,24 +3425,6 @@ interface imgui_internal {
         }
     }
 
-    /** Scan and shade backward from the end of given vertices. Assume vertices are text only (= vert_start..vert_end
-     *  going left to right) so we can break as soon as we are out the gradient bounds. */
-    fun shadeVertsLinearAlphaGradientForLeftToRightText(drawList: DrawList, vertStart: Int, vertEnd: Int,
-                                                        gradientP0x: Float, gradientP1x: Float) {
-        val gradientExtentX = gradientP1x - gradientP0x
-        val gradientInvLength2 = 1f / (gradientExtentX * gradientExtentX)
-        var fullAlphaCount = 0
-        for (i in vertEnd - 1 downTo vertStart) {
-            val vert = drawList.vtxBuffer[i]
-            val d = (vert.pos.x - gradientP0x) * gradientExtentX
-            val alphaMul = 1f - glm.clamp(d * gradientInvLength2, 0f, 1f)
-            ++fullAlphaCount
-            if (alphaMul >= 1f && fullAlphaCount > 2) return // Early out
-            val a = (((vert.col ushr COL32_A_SHIFT) and 0xFF) * alphaMul).i
-            vert.col = (vert.col wo COL32_A_MASK) or (a shl COL32_A_SHIFT)
-        }
-    }
-
     /** Distribute UV over (a, b) rectangle */
     fun shadeVertsLinearUV(list: ArrayList<DrawVert>, vertStart: Int, vertEnd: Int, a: Vec2, b: Vec2, uvA: Vec2, uvB: Vec2, clamp: Boolean) {
         val size = b - a
