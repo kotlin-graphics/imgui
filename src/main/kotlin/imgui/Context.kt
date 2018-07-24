@@ -240,9 +240,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Last time a target expressed a desire to accept the source */
     var dragDropAcceptFrameCount = -1
     /** We don't expose the ImVector<> directly */
-    var dragDropPayloadBufHeap = ByteArray(0)
+    var dragDropPayloadBufHeap = ByteBuffer.allocate(0)
     /** Local buffer for small payloads */
-    var dragDropPayloadBufLocal = ByteArray(8)
+    var dragDropPayloadBufLocal = ByteBuffer.allocate(8)
 
     //------------------------------------------------------------------
     // Widget state

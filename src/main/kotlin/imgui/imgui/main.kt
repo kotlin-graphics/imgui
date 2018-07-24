@@ -27,6 +27,8 @@ import imgui.ImGui.updateMovingWindow
 import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
 import imgui.imgui.imgui_internal.Companion.roundScalarWithFormat
 import imgui.internal.*
+import uno.kotlin.buffers.fill
+import java.nio.ByteBuffer
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
@@ -138,8 +140,8 @@ interface imgui_main {
         // Elapse drag & drop payload
         if (g.dragDropActive && g.dragDropPayload.dataFrameCount + 1 < g.frameCount) {
             clearDragDrop()
-            g.dragDropPayloadBufHeap = ByteArray(0)
-            g.dragDropPayloadBufLocal.fill(0.b)
+            g.dragDropPayloadBufHeap = ByteBuffer.allocate(0)
+            g.dragDropPayloadBufLocal.fill(0)
         }
         g.dragDropAcceptIdPrev = g.dragDropAcceptIdCurr
         g.dragDropAcceptIdCurr = 0

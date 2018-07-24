@@ -14,6 +14,7 @@ import imgui.ImGui.inputText
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
+import java.nio.ByteBuffer
 
 /** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within
  *  deep-nested code that runs multiple times every frame.
@@ -140,7 +141,7 @@ class Payload {
     // Members
 
     /** Data (copied and owned by dear imgui) */
-    var data: Any? = null // jvm TODO use ByteArray?
+    var data: ByteBuffer? = null
     /** Data size */
     var dataSize = 0
 
