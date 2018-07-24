@@ -48,7 +48,10 @@ import imgui.internal.ButtonFlag as Bf
 interface imgui_widgetsSelectableLists {
 
 
-    /** "bool selected" carry the selection state (read-only). Selectable() is clicked is returns true so you can modify
+    /** Tip: pass an empty label (e.g. "##dummy") then you can use the space to draw other text or image.
+     *  But you need to make sure the ID is unique, e.g. enclose calls in PushID/PopID or use ##unique_id.
+     *
+     *  "bool selected" carry the selection state (read-only). Selectable() is clicked is returns true so you can modify
      *  your selection state.
      *  size.x == 0f -> use remaining width
      *  size.x > 0f -> specify width
