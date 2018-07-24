@@ -128,7 +128,7 @@ interface imgui_window {
             windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
         }
         window.appearing = windowJustActivatedByUser || windowJustAppearingAfterHiddenForResize
-        window.closeButton = pOpen != null
+        window.hasCloseButton = pOpen != null
         if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, true)
 
         /*  Parent window is latched only on the first call to begin() of the frame, so further append-calls can be done

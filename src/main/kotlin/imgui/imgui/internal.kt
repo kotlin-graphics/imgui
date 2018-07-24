@@ -9,6 +9,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.F32_TO_INT8_SAT
+import imgui.ImGui.arrowButtonEx
 import imgui.ImGui.begin
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
@@ -22,6 +23,7 @@ import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTooltip
+import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
@@ -30,6 +32,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.isMousePosValid
 import imgui.ImGui.logText
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.openPopup
@@ -1486,6 +1489,36 @@ interface imgui_internal {
         return pressed
     }
 
+    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), 0)
+
+    /** square button with an arrow shape */
+    fun arrowButtonEx(strId: String, dir: Dir, size: Vec2, flags_: ButtonFlags): Boolean {
+
+        var flags = flags_
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId(strId)
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
+        val defaultSize = frameHeight
+        itemSize(bb, if(size.y >= defaultSize) style.framePadding.y else 0f)
+        if (!itemAdd(bb, id)) return false
+
+        if (window.dc.itemFlags has If.ButtonRepeat)
+            flags = flags or Bf.Repeat
+
+        val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
+
+        // Render
+        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
+        renderArrow(bb.min + Vec2(max(0f, size.x - g.fontSize - style.framePadding.x), max(0f, size.y - g.fontSize - style.framePadding.y)), dir)
+
+        return pressed
+    }
+
     fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
                      power: Float): Boolean = withFloat(v, ptr) {
         dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power)
@@ -1534,7 +1567,7 @@ interface imgui_internal {
                        format: String, power: Float, flags: SliderFlags = 0): Boolean {
 
         // Draw frame
-        val frameCol = if(g.activeId == id) Col.FrameBgActive else if(g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
         renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
 
@@ -3204,7 +3237,7 @@ interface imgui_internal {
 
     /** The reason this is exposed in imgui_internal.h is: on touch-based system that don't have hovering,
      *  we want to dispatch inputs to the right target (imgui vs imgui+app) */
-    fun newFrameUpdateHoveredWindowAndCaptureFlags() {
+    fun updateHoveredWindowAndCaptureFlags() {
 
         /*  Find the window hovered by mouse:
             - Child windows can extend beyond the limit of their parent so we need to derive HoveredRootWindow from HoveredWindow.
@@ -3264,6 +3297,38 @@ interface imgui_internal {
 
         // Update io.WantTextInput flag, this is to allow systems without a keyboard (e.g. mobile, hand-held) to show a software keyboard if possible
         io.wantTextInput = if (g.wantTextInputNextFrame != -1) g.wantTextInputNextFrame != 0 else false
+    }
+
+    fun updateMovingWindow() {
+
+        val mov = g.movingWindow
+        if (mov != null) {
+            /*  We actually want to move the root window. g.movingWindow === window we clicked on
+                (could be a child window).
+                We track it to preserve Focus and so that generally activeIdWindow === movingWindow and
+                activeId == movingWindow.moveId for consistency.    */
+            keepAliveId(g.activeId)
+            assert(mov.rootWindow != null)
+            val movingWindow = mov.rootWindow!!
+            if (io.mouseDown[0] && isMousePosValid(io.mousePos)) {
+                val pos = io.mousePos - g.activeIdClickOffset
+                if (movingWindow.pos.x.f != pos.x || movingWindow.pos.y.f != pos.y) {
+                    movingWindow.markIniSettingsDirty()
+                    movingWindow.setPos(pos, Cond.Always)
+                }
+                mov.focus()
+            } else {
+                clearActiveId()
+                g.movingWindow = null
+            }
+        } else
+        /*  When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order
+            to prevent hovering others.                 */
+            if (g.activeIdWindow?.moveId == g.activeId) {
+                keepAliveId(g.activeId)
+                if (!io.mouseDown[0])
+                    clearActiveId()
+            }
     }
 
     fun parseFormatFindStart(fmt: String): Int {

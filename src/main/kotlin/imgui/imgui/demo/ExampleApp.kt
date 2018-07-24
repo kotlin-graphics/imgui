@@ -26,6 +26,7 @@ import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
+import imgui.ImGui.fontSize
 import imgui.ImGui.frameCount
 import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.image
@@ -106,6 +107,7 @@ import imgui.WindowFlag as Wf
 object ExampleApp {
 
     object show {
+        // Examples Apps (accessible from the "Examples" menu)
         var mainMenuBar = false
         var console = false
         var log = false
@@ -117,12 +119,14 @@ object ExampleApp {
         var simpleOverlay = false
         var windowTitles = false
         var customRendering = false
-        var styleEditor = false
 
+        // Dear ImGui Apps (accessible from the "Help" menu)
         var metrics = false
+        var styleEditor = false
         var about = false
     }
 
+    // Demonstrate the various window flags. Typically you would just use the default!
     var noTitlebar = false
     var noScrollbar = false
     var noMenu = false
@@ -163,7 +167,6 @@ object ExampleApp {
                 text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
             }
 
-        // Demonstrate the various window flags. Typically you would just use the default.
         var windowFlags = 0
         if (noTitlebar) windowFlags = windowFlags or Wf.NoTitleBar
         if (noScrollbar) windowFlags = windowFlags or Wf.NoScrollbar
@@ -173,16 +176,22 @@ object ExampleApp {
         if (noCollapse) windowFlags = windowFlags or Wf.NoCollapse
         if (noClose) open = null // Don't pass our bool* to Begin
         if (noNav) windowFlags = windowFlags or Wf.NoNav
+        /*  We specify a default size in case there's no data in the .ini file. Typically this isn't required!
+            We only do it to make the Demo applications a little more welcoming.         */
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
+
+        // Main body of the Demo window starts here.
         if (!begin_("ImGui Demo", open, windowFlags)) {
             end()   // Early out if the window is collapsed, as an optimization.
             return
         }
 
-        //pushItemWidth(getWindowWidth() * 0.65f);    // 2/3 of the space for widget and 1/3 for labels
-        pushItemWidth(-140) // Right align, keep 140 pixels for labels
-
         text("dear imgui says hello. ($version)")
+
+        // Most "big" widgets share a common width settings by default.
+        //pushItemWidth(windowWidth * 0.65f)    // Use 2/3 of the space for widgets and 1/3 for labels (default)
+        // Use fixed width for labels (by passing a negative value), the rest goes to widgets. We choose a width proportional to our font size.
+        pushItemWidth(fontSize * -12)
 
         // Menu
         menuBar {

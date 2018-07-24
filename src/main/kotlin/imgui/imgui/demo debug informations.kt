@@ -78,8 +78,9 @@ import imgui.WindowFlag as Wf
 interface imgui_demoDebugInformations {
 
     /** Create demo/test window.
-     *  Demonstrate most ImGui features (big function!)
-     *  Call this to learn about the library! try to make it always available in your application!   */
+     *  Demonstrate most Dear ImGui features (this is big function!)
+     *  You may execute this function to experiment with the UI and understand what it does.
+     *  You may then search for keywords in the code when you are interested by a specific feature. */
     fun showDemoWindow(open: BooleanArray) {
         showWindow = open[0]
         showDemoWindow(Companion::showWindow)
@@ -172,7 +173,7 @@ interface imgui_demoDebugInformations {
             - If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame().""")
     }
 
-
+    /** Helper to display basic user controls. */
     fun showUserGuide() {
         bulletText("Double-click on title bar to collapse window.")
         bulletText("Click and drag on lower right corner to resize window\n(double-click to auto fit window to its contents).")
@@ -200,6 +201,7 @@ interface imgui_demoDebugInformations {
 
         var showWindow = false
 
+        /** Helper to display a little (?) mark which shows a tooltip when hovered. */
         fun showHelpMarker(desc: String) {
             textDisabled("(?)")
             if (isItemHovered()) {
