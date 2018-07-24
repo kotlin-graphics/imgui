@@ -641,8 +641,7 @@ interface imgui_main {
                     adjustDelta *= 1f / 100f
                 if (io.keyShift)
                     adjustDelta *= 10f
-            }
-            if (g.activeIdSource == InputSource.Nav) {
+            } else if (g.activeIdSource == InputSource.Nav) {
                 val decimalPrecision = when (dataType) {
                     DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
                     else -> 0
@@ -730,8 +729,7 @@ interface imgui_main {
                     adjustDelta *= 1f / 100f
                 if (io.keyShift)
                     adjustDelta *= 10f
-            }
-            if (g.activeIdSource == InputSource.Nav) {
+            } else if (g.activeIdSource == InputSource.Nav) {
                 val decimalPrecision = when (dataType) {
                     DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
                     else -> 0
@@ -819,8 +817,7 @@ interface imgui_main {
                     adjustDelta *= 1f / 100f
                 if (io.keyShift)
                     adjustDelta *= 10f
-            }
-            if (g.activeIdSource == InputSource.Nav) {
+            } else if (g.activeIdSource == InputSource.Nav) {
                 val decimalPrecision = when (dataType) {
                     DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
                     else -> 0
@@ -908,8 +905,7 @@ interface imgui_main {
                     adjustDelta *= 1f / 100f
                 if (io.keyShift)
                     adjustDelta *= 10f
-            }
-            if (g.activeIdSource == InputSource.Nav) {
+            } else if (g.activeIdSource == InputSource.Nav) {
                 val decimalPrecision = when (dataType) {
                     DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
                     else -> 0
