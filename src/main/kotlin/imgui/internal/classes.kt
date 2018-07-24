@@ -561,7 +561,7 @@ class Window(var context: Context, var name: String) {
     /** Set during the frame where the window is appearing (or re-appearing)    */
     var appearing = false
     /** Set when the window has a close button (p_open != NULL) */
-    var closeButton = false
+    var hasCloseButton = false
     /** Order within immediate parent window, if we are a child window. Otherwise 0. */
     var beginOrderWithinParent = -1
     /** Order within entire imgui context. This is mostly used for debugging submission order related issues. */

@@ -73,7 +73,9 @@ import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.plotLines
+import imgui.ImGui.popButtonRepeat
 import imgui.ImGui.progressBar
+import imgui.ImGui.pushButtonRepeat
 import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -131,6 +133,7 @@ import imgui.WindowFlag as Wf
 object widgets {
 
     /* Basic */
+    var counter = 0
     var clicked = 0
     var check = true
     var e = 0
@@ -301,9 +304,13 @@ object widgets {
 
                 // Arrow buttons
                 val spacing = style.itemInnerSpacing.x
-                if (arrowButton("##left", Dir.Left)) Unit
+                pushButtonRepeat(true)
+                if (arrowButton("##left", Dir.Left)) counter--
                 sameLine(0f, spacing)
-                if (arrowButton("##left", Dir.Right)) Unit
+                if (arrowButton("##right", Dir.Right)) counter++
+                popButtonRepeat()
+                sameLine()
+                text("$counter")
 
                 text("Hover over me")
                 if (isItemHovered()) setTooltip("I am a tooltip")
