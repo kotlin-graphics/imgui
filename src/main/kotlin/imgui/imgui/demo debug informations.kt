@@ -6,9 +6,9 @@ import glm_.toHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.begin_
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginTooltip
+import imgui.ImGui.begin_
 import imgui.ImGui.bulletText
 import imgui.ImGui.checkbox
 import imgui.ImGui.combo
@@ -364,6 +364,7 @@ interface imgui_demoDebugInformations {
                 if (flags has Wf.Modal) builder += "Modal "
                 if (flags has Wf.ChildMenu) builder += "ChildMenu "
                 if (flags has Wf.NoSavedSettings) builder += "NoSavedSettings "
+                if (flags has Wf.AlwaysAutoResize) builder += "AlwaysAutoResize"
                 bulletText("Flags: 0x%08X ($builder..)", flags)
                 bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f)", window.scroll.x, window.scrollMaxX, window.scroll.y, window.scrollMaxY)
                 bulletText("Active: ${window.active}, WriteAccessed: ${window.writeAccessed}")
