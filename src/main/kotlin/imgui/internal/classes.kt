@@ -531,7 +531,7 @@ class Window(var context: Context, var name: String) {
     var windowBorderSize = 1f
     /** == window->GetID("#MOVE")   */
     var moveId: ID
-    /** Id of corresponding item in parent window (for child windows)   */
+    /** ID of corresponding item in parent window (for navigation to return from child window to parent window)   */
     var childId: ID = 0
 
     var scroll = Vec2()

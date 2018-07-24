@@ -208,6 +208,7 @@ interface imgui_widgetsMain {
         return pressed
     }
 
+    /** use with e.g. if (radioButton("one", myValue==1))  myValue = 1 */
     fun radioButton(label: String, active: Boolean): Boolean {
 
         val window = currentWindow
@@ -261,7 +262,9 @@ interface imgui_widgetsMain {
         return pressed
     }
 
+    /** shortcut to handle the above pattern when value is an integer */
     fun radioButton(label: String, v: IntArray, vButton: Int) = radioButton(label, v[0] == vButton).also { if (it) v[0] = vButton }
+    /** shortcut to handle the above pattern when value is an integer */
     fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int) = radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
 
     interface PlotArray {

@@ -491,7 +491,7 @@ interface imgui_main {
                 if (hovered || held)
                     g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
 
-                if (g.hoveredWindow === window && held && g.io.mouseDoubleClicked[0] && resizeGripN == 0) {
+                if (held && g.io.mouseDoubleClicked[0] && resizeGripN == 0) {
                     // Manual auto-fit when double-clicking
                     sizeTarget put window.calcSizeAfterConstraint(sizeAutoFit)
                     clearActiveId()
