@@ -625,6 +625,8 @@ class Window(var context: Context, var name: String) {
     var stateStorage = Storage()
 
     val columnsStorage = ArrayList<ColumnsSet>()
+    /** Index into SettingsWindow[] (indices are always valid as we only grow the array from the back) */
+    var settingsIdx = -1
     /** User scale multiplier per-window */
     var fontWindowScale = 1f
 
@@ -848,8 +850,10 @@ class Window(var context: Context, var name: String) {
             /*  When the window cannot fit all contents (either because of constraints, either because screen is too small):
                     we are growing the size on the other axis to compensate for expected scrollbar.
                     FIXME: Might turn bigger than DisplaySize-WindowPadding.                 */
-            val sizeAutoFit = glm.clamp(sizeContents, Vec2(style.windowMinSize),
-                    Vec2(glm.max(style.windowMinSize, io.displaySize - style.displaySafeAreaPadding * 2f)))
+            val sizeMin = Vec2()
+            if (flags hasnt Wf.ChildMenu)
+                sizeMin put style.windowMinSize
+            val sizeAutoFit = glm.clamp(sizeContents, sizeMin, glm.max(sizeMin, Vec2(io.displaySize) - style.displaySafeAreaPadding * 2f))
             val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
             if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
                 sizeAutoFit.y += style.scrollbarSize

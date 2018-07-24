@@ -92,6 +92,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
         //  Retrieve settings from .ini file
 
         findWindowSettings(id)?.let { s ->
+            settingsIdx = g.settingsWindows.indexOf(s)
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
             pos = glm.floor(s.pos)
             collapsed = s.collapsed
@@ -243,7 +244,9 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
         /** This will only return NULL in the rare instance where the window was first created with
          *  WindowFlag.NoSavedSettings then had the flag disabled later on.
          *  We don't bind settings in this case (bug #1000).    */
-        val settings = findWindowSettings(window.id) ?: addWindowSettings(window.name)
+        val settings = g.settingsWindows.getOrNull(window.settingsIdx) ?: findWindowSettings(window.id)
+        ?: addWindowSettings(window.name).also { window.settingsIdx = g.settingsWindows.indexOf(it) }
+        assert(settings.id == window.id)
         settings.pos put window.pos
         settings.size put window.sizeFull
         settings.collapsed = window.collapsed
@@ -966,7 +969,7 @@ fun navUpdate() {
                             window.setScrollY(window.scroll.y + window.innerClipRect.height)
                     } else {
                         val navRectRel = window.navRectRel[g.navLayer]
-                        val pageOffsetY = max(0f, window.innerClipRect.height-window.calcFontSize()+navRectRel.height)
+                        val pageOffsetY = max(0f, window.innerClipRect.height - window.calcFontSize() + navRectRel.height)
                         if (Key.PageUp.isPressed) {
                             navScoringRectOffsetY = -pageOffsetY
                             g.navMoveDir = Dir.Down // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
