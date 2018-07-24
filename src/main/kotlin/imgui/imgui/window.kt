@@ -403,7 +403,7 @@ interface imgui_window {
             // Handle manual resize: Resize Grips, Borders, Gamepad
             val borderHeld = -1
             val resizeGripCol = IntArray(4)
-            val resizeGripCount = if (flags has Wf.ResizeFromAnySide) 2 else 1 // 4
+            val resizeGripCount = if (io.optResizeWindowsFromEdges) 2 else 1 // 4
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             if (!window.collapsed)
                 updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)

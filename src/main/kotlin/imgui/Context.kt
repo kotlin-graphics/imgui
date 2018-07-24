@@ -454,7 +454,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var displayVisibleMax = Vec2()
 
     //------------------------------------------------------------------
-    // Advanced/subtle behaviors
+    // Miscellaneous options
     //------------------------------------------------------------------
 
     /** = defined(__APPLE__), OS X style: Text editing cursor movement using Alt instead of Ctrl, Shortcuts using
@@ -463,6 +463,10 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var optMacOSXBehaviors = false  // JVM TODO
     /** Enable blinking cursor, for users who consider it annoying. */
     var optCursorBlink = true
+    /** [BETA] Enable resizing of windows from their edges and from the lower-left corner.
+     *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
+     *  (This used to be the WindowFlag.ResizeFromAnySide flag) */
+    var optResizeWindowsFromEdges = false
 
     //------------------------------------------------------------------
     // User Functions

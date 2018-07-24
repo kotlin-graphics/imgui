@@ -73,6 +73,10 @@ interface imgui_main {
         if (io.configFlags has Cf.NavEnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
+        // The beta io.OptResizeWindowsFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
+        if (io.optResizeWindowsFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
+            io.optResizeWindowsFromEdges = false
+
         // Load settings on first frame (if not explicitly loaded manually before)
         if (!g.settingsLoaded) {
             assert(g.settingsWindows.isEmpty())
@@ -468,7 +472,7 @@ interface imgui_main {
             if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0)
                 return borderHeld
 
-            val resizeBorderCount = if (flags has Wf.ResizeFromAnySide) 4 else 0
+            val resizeBorderCount = if(io.optResizeWindowsFromEdges) 4 else 0
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             val gripHoverSize = (gripDrawSize * 0.75f).i.f
 
