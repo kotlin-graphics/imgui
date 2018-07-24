@@ -182,7 +182,7 @@ interface imgui_internal {
         /*  This marking is solely to be able to provide info for ::isItemDeactivatedAfterChange().
             ActiveId might have been released by the time we call this (as in the typical press/release button behavior)
             but still need need to fill the data.         */
-        assert(g.activeId == id || g.activeId == 0)
+        assert(g.activeId == id || g.activeId == 0 || g.dragDropActive)
         g.activeIdValueChanged = true
     }
 
