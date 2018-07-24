@@ -750,7 +750,7 @@ object PropertyEditor {
                 else {
                     // Here we use a TreeNode to highlight on hover (we could use e.g. Selectable as well)
                     alignTextToFramePadding()
-                    treeNodeEx("Field", Tnf.Leaf or Tnf.Bullet, "Field_$i")
+                    treeNodeEx("Field", Tnf.Leaf or Tnf.NoTreePushOnOpen or Tnf.Bullet, "Field_$i")
                     nextColumn()
                     pushItemWidth(-1)
                     if (i >= 5)
