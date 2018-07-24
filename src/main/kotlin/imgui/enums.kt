@@ -286,8 +286,9 @@ enum class DragDropFlag(val i: Int) {
     /** By default), a successful call to beginDragDropSource opens a tooltip so you can display a preview or
      *  description of the source contents. This flag disable this behavior. */
     SourceNoPreviewTooltip(1 shl 0),
-    /** By default), when dragging we clear data so that isItemHovered() will return true), to avoid subsequent user code
-     *  submitting tooltips. This flag disable this behavior so you can still call IsItemHovered() on the source item. */
+    /** By default, when dragging we clear data so that IsItemHovered() will return false,
+     *  to avoid subsequent user code submitting tooltips.
+     *  This flag disable this behavior so you can still call IsItemHovered() on the source item. */
     SourceNoDisableHover(1 shl 1),
     /** Disable the behavior that allows to open tree nodes and collapsing header by holding over them while dragging
      *  a source item. */

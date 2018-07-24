@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import glm_.size
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginDragDropTooltip
@@ -11,11 +12,21 @@ import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.setActiveId
 import imgui.internal.*
+import uno.kotlin.buffers.fill
+import java.nio.ByteBuffer
 import imgui.DragDropFlag as Ddf
 
 /** Drag and Drop
  *  [BETA API] Missing Demo code. API may evolve. */
 interface imgui_dragAndDrop {
+
+    /** Call when the current item is active. If this return true, you can call SetDragDropPayload() + EndDragDropSource()
+     *
+     *  When this returns true you need to:
+     *      a) call setDragDropPayload() exactly once
+     *      b) you may render the payload visual/description,
+     *      c) call endDragDropSource()     */
+    fun beginDragDropSource(flag: Ddf): Boolean = beginDragDropSource(flag.i)
 
     /** Call when the current item is active. If this return true, you can call SetDragDropPayload() + EndDragDropSource()
      *
@@ -111,7 +122,7 @@ interface imgui_dragAndDrop {
     /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
      *  Data is copied and held by imgui.
      *  Use 'cond' to choose to submit payload on drag start or every frame */
-    fun setDragDropPayload(type: String, data: Vec4, dataSize: Int, cond_: Cond = Cond.Null): Boolean {
+    fun setDragDropPayload(type: String, data: Any, dataSize: Int, cond_: Cond = Cond.Null): Boolean {
         val payload = g.dragDropPayload
         val cond = if (cond_ == Cond.Null) Cond.Always else cond_
 
@@ -124,17 +135,23 @@ interface imgui_dragAndDrop {
         if (cond == Cond.Always || payload.dataFrameCount == -1) {
             // Copy payload
             type.toCharArray(payload.dataType)
-            g.dragDropPayloadBufHeap = ByteArray(0)
+            g.dragDropPayloadBufHeap = ByteBuffer.allocate(0)
             when {
                 dataSize > g.dragDropPayloadBufLocal.size -> { // Store in heap
-                    g.dragDropPayloadBufHeap = ByteArray(dataSize)
+                    g.dragDropPayloadBufHeap = ByteBuffer.allocate(dataSize)
                     payload.data = g.dragDropPayloadBufHeap
-                    data to payload.data as ByteArray
+                    when (data) {
+                        is Int -> payload.data!!.putInt(0, data)
+                        is Vec4 -> data to payload.data!!
+                    }
                 }
                 dataSize > 0 -> { // Store locally
                     g.dragDropPayloadBufLocal.fill(0)
                     payload.data = g.dragDropPayloadBufLocal
-                    data to payload.data as ByteArray
+                    when (data) {
+                        is Int -> payload.data!!.putInt(0, data)
+                        is Vec4 -> data to payload.data!!
+                    }
                 }
                 else -> payload.data = null
             }

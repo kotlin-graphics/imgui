@@ -1,6 +1,7 @@
 package imgui.imgui.demo
 
 import gli_.has
+import glm_.BYTES
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -11,6 +12,7 @@ import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.arrowButton
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginCombo
+import imgui.ImGui.beginDragDropSource
 import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
@@ -38,6 +40,7 @@ import imgui.ImGui.dragInt4
 import imgui.ImGui.dragIntRange2
 import imgui.ImGui.endChild
 import imgui.ImGui.endCombo
+import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
@@ -74,13 +77,16 @@ import imgui.ImGui.openPopup
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.plotLines
 import imgui.ImGui.popButtonRepeat
+import imgui.ImGui.popId
 import imgui.ImGui.progressBar
 import imgui.ImGui.pushButtonRepeat
+import imgui.ImGui.pushId
 import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setColorEditOptions
+import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderAngle
@@ -259,6 +265,16 @@ object widgets {
 
     var progress = 0f
     var progressDir = 1f
+
+    // Drag and Drop
+    val col3 = floatArrayOf(1f, 0f, 0.2f)
+    val col4 = floatArrayOf(0.4f, 0.7f, 0f, 0.5f)
+
+    enum class Mode { Copy, Move, Swap }
+
+    var mode = Mode.Copy
+
+    val names = arrayOf( "Bobby", "Beatrice", "Betty", "Brianna", "Barry", "Bernard", "Bibi", "Blaine", "Bryn" )
 
 
     /* Vertical Sliders */
@@ -1014,6 +1030,70 @@ object widgets {
                             }
                         }
                     }
+                }
+            }
+
+            treeNode("Drag and Drop") {
+                run {
+                    /*  ColorEdit widgets automatically act as drag source and drag target.
+                        They are using standardized payload strings IMGUI_PAYLOAD_TYPE_COLOR_3F and IMGUI_PAYLOAD_TYPE_COLOR_4F to allow your own widgets
+                        to use colors in their drag and drop interaction. Also see the demo in Color Picker -> Palette demo. */
+                    bulletText("Drag and drop in standard widgets")
+                    indent()
+                    colorEdit3("color 1", col3)
+                    colorEdit4("color 2", col4)
+                    unindent()
+                }
+
+                run {
+                    bulletText("Drag and drop to copy/swap items")
+                    indent()
+                    if (radioButton("Copy", mode == Mode.Copy))
+                        mode = Mode.Copy
+                    sameLine()
+                    if (radioButton("Move", mode == Mode.Move))
+                        mode = Mode.Move
+                    sameLine()
+                    if (radioButton("Swap", mode == Mode.Swap))
+                        mode = Mode.Swap
+                    names.forEachIndexed { n, name ->
+                        pushId(n)
+                        if ((n % 3) != 0) sameLine()
+                        button(name, Vec2(60))
+
+                        // Our buttons are both drag sources and drag targets here!
+                        if (beginDragDropSource(DragDropFlag.None)) {
+                            setDragDropPayload("DND_DEMO_CELL", n, Int.BYTES)        // Set payload to carry the index of our item (could be anything)
+                            when(mode) {
+                            // Display preview (could be anything, e.g. when dragging an image we could decide to display the filename and a small preview of the image, etc.)
+                                Mode.Copy -> text("Copy $name")
+                                Mode.Move -> text("Move $name")
+                                Mode.Swap -> text("Swap $name")
+                            }
+                            endDragDropSource()
+                        }
+                        if (beginDragDropTarget()) {
+                            acceptDragDropPayload("DND_DEMO_CELL")?.let { payload ->
+                                assert(payload.dataSize == Int.BYTES)
+                                val payloadN = payload.data!!.getInt(0)
+                                when (mode) {
+                                    Mode.Copy -> names[n] = names[payloadN]
+                                    Mode.Move -> {
+                                        names[n] = names[payloadN]
+                                        names[payloadN] = ""
+                                    }
+                                    Mode.Swap -> {
+                                        val tmp = names[n]
+                                        names[n] = names[payloadN]
+                                        names[payloadN] = tmp
+                                    }
+                                }
+                            }
+                            endDragDropTarget()
+                        }
+                        popId()
+                    }
+                    unindent()
                 }
             }
 
