@@ -102,6 +102,22 @@ interface imgui_internal {
 
     fun findWindowByName(name: String) = g.windowsById[hash(name, 0)]
 
+    fun setCurrentFont(font: Font) {
+        assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
+        assert(font.scale > 0f)
+        g.font = font
+        g.fontBaseSize = io.fontGlobalScale * g.font.fontSize * g.font.scale
+        g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
+
+        val atlas = g.font.containerAtlas
+        g.drawListSharedData.texUvWhitePixel = atlas.texUvWhitePixel
+        g.drawListSharedData.font = g.font
+        g.drawListSharedData.fontSize = g.fontSize
+    }
+
+    val defaultFont: Font
+        get() = io.fontDefault ?: io.fonts.fonts[0]
+
     fun markIniSettingsDirty() {
         if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = io.iniSavingRate
     }
@@ -359,22 +375,6 @@ interface imgui_internal {
         itemFlagsStack.pop()
         itemFlags = itemFlagsStack.lastOrNull() ?: If.Default_.i
     }
-
-    fun setCurrentFont(font: Font) {
-        assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
-        assert(font.scale > 0f)
-        g.font = font
-        g.fontBaseSize = io.fontGlobalScale * g.font.fontSize * g.font.scale
-        g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
-
-        val atlas = g.font.containerAtlas
-        g.drawListSharedData.texUvWhitePixel = atlas.texUvWhitePixel
-        g.drawListSharedData.font = g.font
-        g.drawListSharedData.fontSize = g.fontSize
-    }
-
-    val defaultFont: Font
-        get() = io.fontDefault ?: io.fonts.fonts[0]
 
     /** Mark popup as open (toggle toward open state).
      *  Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within
