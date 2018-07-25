@@ -8,7 +8,10 @@ import glm_.buffer.intBufferBig
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import gln.*
-import gln.buffer.*
+import gln.buffer.BufferTarget
+import gln.buffer.Usage
+import gln.buffer.glBufferData
+import gln.buffer.glBufferSubData
 import gln.glf.semantic
 import gln.program.Program
 import gln.program.usingProgram
@@ -20,11 +23,14 @@ import gln.vertexArray.withVertexArray
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
+import imgui.impl.windowsIme.imeListner
 import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
 import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.Platform
 import uno.glfw.*
 import uno.glfw.GlfwWindow.CursorStatus
 
@@ -70,6 +76,13 @@ object LwjglGL3 {
             keyMap[Key.X] = GLFW_KEY_X
             keyMap[Key.Y] = GLFW_KEY_Y
             keyMap[Key.Z] = GLFW_KEY_Z
+
+//            io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText; TODO
+//            io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;
+//            io.ClipboardUserData = g_Window;
+
+            if (Platform.get() == Platform.WINDOWS)
+                imeWindowHandle = glfwGetWin32Window(window.handle)
         }
 
         /*  Load cursors
@@ -95,7 +108,7 @@ object LwjglGL3 {
         window.scrollCallbacks["imgui"] = scrollCallback
         window.keyCallbacks["imgui"] = keyCallback
         window.charCallbacks["imgui"] = charCallback // TODO check if used (jogl doesnt have)
-        imeListner.install(window.handle)
+        imeListner.install(window)
     }
 
     fun newFrame() {
@@ -459,7 +472,7 @@ object LwjglGL3 {
         }
     }
 
-    val charCallback: CharCallbackT = { c: Int -> if (c in 1..65535) io.addInputCharacter(c.c) }
+    val charCallback: CharCallbackT = { c: Int -> if (!g.imeInProgress && c in 1..65535) io.addInputCharacter(c.c) }
 
     fun shutdown() {
 

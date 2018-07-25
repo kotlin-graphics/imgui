@@ -57,7 +57,7 @@ class HelloWorld_lwjgl {
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-//        IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f, glyphRanges = IO.fonts.glyphRangesJapanese)!!
+//        ImGui.io.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, glyphRanges = imgui.glyphRanges.japanese)!!
 //        val a = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f)!!
 //        val b = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 30f)!!
 

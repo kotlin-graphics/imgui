@@ -2326,17 +2326,17 @@ interface imgui_internal {
         var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || userNavInputStart) && !isMultiline
 //        println(g.imeLastKey)
         if (focusRequested || userClicked || userScrolled || userNavInputStart) {
-            if (g.activeId != id || g.imeLastKey != 0) {
+            if (g.activeId != id /*|| g.imeLastKey != 0*/) { // TODO clean outdated ime
                 // JVM, put char if no more in ime mode and last key is valid
 //                println("${g.imeInProgress}, ${g.imeLastKey}")
-                if (!g.imeInProgress && g.imeLastKey != 0) {
-                    for (i in 0 until buf.size)
-                        if (buf[i] == NUL) {
-                            buf[i] = g.imeLastKey.c
-                            break
-                        }
-                    g.imeLastKey = 0
-                }
+//                if (!g.imeInProgress && g.imeLastKey != 0) {
+//                    for (i in 0 until buf.size)
+//                        if (buf[i] == NUL) {
+//                            buf[i] = g.imeLastKey.c
+//                            break
+//                        }
+//                    g.imeLastKey = 0
+//                }
                 /*  Start edition
                     Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
@@ -2802,7 +2802,7 @@ interface imgui_internal {
                         if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
-                        rect.clipWith(clipRect_)
+                        rect clipWith clipRect_
                         if (rect overlaps clipRect_)
                             drawWindow.drawList.addRectFilled(rect.min, rect.max, bgColor)
                     }
