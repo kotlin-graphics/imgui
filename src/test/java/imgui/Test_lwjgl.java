@@ -76,6 +76,14 @@ public class Test_lwjgl {
 //        Font font = io.getFonts().addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f, new FontConfig(), io.getFonts().getGlyphRangesJapanese());
 //        assert (font != null);
 
+        /*  Main loop
+            This automatically also polls events, swaps buffers and resets the appBuffer
+
+            Poll and handle events (inputs, window resize, etc.)
+            You can read the io.wantCaptureMouse, io.wantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+            - When io.wantCaptureMouse is true, do not dispatch mouse input data to your main application.
+            - When io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
+            Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
         window.loop(() -> {
             mainLoop();
             return Unit.INSTANCE;
@@ -89,12 +97,7 @@ public class Test_lwjgl {
 
     private void mainLoop() {
 
-        /*  You can read the IO.wantCaptureMouse, IO.wantCaptureKeyboard flags to tell if dear imgui wants to use your
-            inputs.
-            - when IO.wantCaptureMouse is true, do not dispatch mouse input data to your main application.
-            - when Io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-            Generally you may always pass all inputs to dear imgui, and hide them from your application based on those
-            two flags.  */
+        // Start the Dear ImGui frame
         lwjglGL3.newFrame();
 
 

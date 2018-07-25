@@ -277,8 +277,6 @@ interface imgui_main {
             g.platformImeLastPos put g.platformImePos
         }
 
-        navUpdateWindowingList()
-
         // Hide implicit "Debug" window if it hasn't been used
         assert(g.currentWindowStack.size == 1) { "Mismatched Begin()/End() calls, did you forget to call end on g.currentWindow.name?" }
         g.currentWindow?.let {
@@ -287,6 +285,11 @@ interface imgui_main {
 
         end()
 
+        // Show CTRL+TAB list
+        if (g.navWindowingTarget != null)
+            navUpdateWindowingList()
+
+        // Initiate moving window
         if (g.activeId == 0 && g.hoveredId == 0)
             if (g.navWindow == null || !g.navWindow!!.appearing) { // Unless we just made a window/popup appear
                 // Click to focus window and start moving (after we're done with all our widgets)
@@ -352,7 +355,7 @@ interface imgui_main {
         g.drawDataBuilder.clear()
         val windowsToRenderFrontMost = arrayOf(
                 g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
-                g.navWindowingList.firstOrNull())
+                g.navWindowingList.getOrNull(0).takeIf { g.navWindowingTarget != null})
         g.windows
                 .filter { it.isActiveAndVisible && it.flags hasnt Wf.ChildWindow && it !== windowsToRenderFrontMost[0] && it !== windowsToRenderFrontMost[1] }
                 .forEach { it.addToDrawDataSelectLayer() }

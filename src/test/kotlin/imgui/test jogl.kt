@@ -94,6 +94,7 @@ class HelloWorld_jogl : GLEventListener {
 
     override fun display(drawable: GLAutoDrawable) = with(drawable.gl.gL3) {
 
+        // Start the Dear ImGui frame
         JoglGL3.newFrame(this)
 
         with(ImGui) {

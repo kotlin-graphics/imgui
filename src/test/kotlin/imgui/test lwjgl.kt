@@ -87,46 +87,48 @@ class HelloWorld_lwjgl {
 
     fun mainLoop() {
 
+        // Start the Dear ImGui frame
         LwjglGL3.newFrame()
 
         with(ImGui) {
 
-            text("Hello, world!")                                // Display some text (you can use a format string too)
-            sliderFloat("float", ::f, 0f, 1f)       // Edit 1 float using a slider from 0.0f to 1.0f
-            colorEdit3("clear color", clearColor)               // Edit 3 floats representing a color
-
-            checkbox("Demo Window", ::showDemo)                 // Edit bools storing our windows open/close state
-            checkbox("Another Window", ::showAnotherWindow)
-
-            if (button("Button"))                               // Buttons return true when clicked (NB: most widgets return true when edited/activated)
-                counter++
-
-            /* Or you can take advantage of functional programming and pass directly a lambda as last parameter:
-
-                button("Button") { counter++ }
-            */
-
-            sameLine()
-            text("counter = $counter")
-
-            text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.framerate, io.framerate)
-
-            // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name your windows.
-            if (showAnotherWindow) {
-                begin_("Another Window", ::showAnotherWindow)
-                text("Hello from another window!")
-                if (button("Close Me"))
-                    showAnotherWindow = false
-                end()
-            }
-
-            /*  3. Show the ImGui demo window. Most of the sample code is in imgui.showDemoWindow().
-                Read its code to learn more about Dear ImGui!  */
-            if (showDemo) {
-                /*  Normally user code doesn't need/want to call this because positions are saved in .ini file anyway.
-                    Here we just want to make the demo initial state a bit more friendly!                 */
-                setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
+            // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+            if (showDemo)
                 showDemoWindow(::showDemo)
+
+            // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+            run {
+                begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
+
+                text("This is some useful text.")                // Display some text (you can use a format strings too)
+                checkbox("Demo Window", ::showDemo)             // Edit bools storing our window open/close state
+                checkbox("Another Window", ::showAnotherWindow)
+
+                sliderFloat("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f
+                colorEdit3("clear color", clearColor)           // Edit 3 floats representing a color
+
+                if (button("Button"))                           // Buttons return true when clicked (most widgets return true when edited/activated)
+                    counter++
+
+                /*  Or you can take advantage of functional programming and pass directly a lambda as last parameter:
+                    button("Button") { counter++ }                */
+
+                sameLine()
+                text("counter = $counter")
+
+                text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.framerate, io.framerate)
+
+                end()
+
+                // 3. Show another simple window.
+                if (showAnotherWindow) {
+                    // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+                    begin_("Another Window", ::showAnotherWindow)
+                    text("Hello from another window!")
+                    if (button("Close Me"))
+                        showAnotherWindow = false
+                    end()
+                }
             }
         }
 
