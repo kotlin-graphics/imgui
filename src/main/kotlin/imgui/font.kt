@@ -117,8 +117,9 @@ class FontAtlas {
 
     fun addFont(fontCfg: FontConfig): Font {
 
+        assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
         assert(fontCfg.fontData.isNotEmpty())
-        assert(fontCfg.sizePixels > 0.0f)
+        assert(fontCfg.sizePixels > 0f)
 
         // Create new font
         if (!fontCfg.mergeMode)
@@ -158,6 +159,7 @@ class FontAtlas {
     fun addFontFromFileTTF(filename: String, sizePixels: Float, fontCfg: FontConfig = FontConfig(),
                            glyphRanges: IntArray = intArrayOf()): Font? {
 
+        assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
         val chars = fileLoadToCharArray(filename) ?: return null
         if (fontCfg.name.isEmpty())
         // Store a short copy of filename into into the font name for convenience
@@ -170,6 +172,7 @@ class FontAtlas {
     fun addFontFromMemoryTTF(fontData: CharArray, sizePixels: Float, fontCfg: FontConfig = FontConfig(),
                              glyphRanges: IntArray = intArrayOf()): Font {
 
+        assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
         assert(fontCfg.fontData.isEmpty())
         fontCfg.fontData = fontData
         fontCfg.fontDataBuffer = bufferBig(fontData.size).apply { fontData.forEachIndexed { i, c -> this[i] = c.b } }
@@ -202,6 +205,7 @@ class FontAtlas {
     /** Clear input data (all FontConfig structures including sizes, TTF data, glyph ranges, etc.) = all the data used
      *  to build the texture and fonts. */
     fun clearInputData() {
+        assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
         configData.filter { it.fontData.isNotEmpty() && it.fontDataOwnedByAtlas }.forEach {
             it.fontData = charArrayOf()
         }
@@ -218,6 +222,7 @@ class FontAtlas {
 
     /** Clear output texture data (CPU side). Saves RAM once the texture has been copied to graphics memory. */
     fun clearTexData() {
+        assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
         texPixelsAlpha8?.free()
         texPixelsAlpha8 = null
         texPixelsRGBA32?.free()
@@ -226,12 +231,14 @@ class FontAtlas {
 
     /** Clear output font data (glyphs storage, UV coordinates).    */
     fun clearFonts() {
+        assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
         for (font in fonts) font.clearOutputData()
         fonts.clear()
     }
 
-    /** Clear all input and output.   */
+    /** Clear all input and output. ~ destroy  */
     fun clear() {
+        assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
         clearInputData()
         clearTexData()
         clearFonts()
@@ -240,13 +247,16 @@ class FontAtlas {
 
     /*  Build atlas, retrieve pixel data.
         User is in charge of copying the pixels into graphics memory (e.g. create a texture with your engine).
-        Then store your texture handle with setTexID().
+        Then store your texture handle with setTexID().ClearInputData
         RGBA32 format is provided for convenience and compatibility, but note that unless you use CustomRect to draw
         color data, the RGB pixels emitted from Fonts will all be white (~75% of waste).
         Pitch = Width * BytesPerPixels  */
 
     /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
-    private fun build() = buildWithStbTrueType()
+    private fun build() {
+        assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
+        buildWithStbTrueType()
+    }
 
     val isBuilt: Boolean
         get() = fonts.size > 0 && (texPixelsAlpha8 != null || texPixelsRGBA32 != null)
@@ -439,6 +449,8 @@ class FontAtlas {
     infix fun Int.has(flag: FontAtlasFlag) = and(flag.i) != 0
     infix fun Int.hasnt(flag: FontAtlasFlag) = and(flag.i) == 0
 
+    /** Marked as Locked by ImGui::NewFrame() so attempt to modify the atlas will assert. */
+    var locked = false
     /** Build flags (see ImFontAtlasFlags_) */
     var flags: FontAtlasFlags = 0
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you

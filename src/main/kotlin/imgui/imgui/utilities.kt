@@ -130,18 +130,18 @@ interface imgui_utilities {
     /** test if rectangle (in screen space) is visible / not clipped. to perform coarse clipping on user's side.    */
     fun isRectVisible(rectMin: Vec2, rectMax: Vec2) = currentWindowRead!!.clipRect overlaps Rect(rectMin, rectMax)
 
-    val time
+    val time: Double
         get() = g.time
 
-    val frameCount
+    val frameCount: Int
         get() = g.frameCount
 
     /** this draw list will be the last rendered one, useful to quickly draw overlays shapes/text   */
-    val overlayDrawList
+    val overlayDrawList: DrawList
         get() = g.overlayDrawList
 
     /** you may use this when creating your own ImDrawList instances */
-    val drawListSharedData
+    val drawListSharedData: DrawListSharedData
         get() = g.drawListSharedData
 
 //IMGUI_API const char*   GetStyleColorName(ImGuiCol idx);

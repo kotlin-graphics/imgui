@@ -19,7 +19,6 @@ import imgui.ImGui.isMousePosValid
 import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
-import imgui.ImGui.setActiveId
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
@@ -104,6 +103,8 @@ interface imgui_main {
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
 
+        // Setup current font and draw list
+        io.fonts.locked = true
         setCurrentFont(defaultFont)
         assert(g.font.isLoaded)
         g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
@@ -188,44 +189,7 @@ interface imgui_main {
         g.platformImePos put 1f // OS Input Method Editor showing on top-left of our window by default
 
         // Mouse wheel scrolling, scale
-        g.hoveredWindow?.let { window ->
-            if (!window.collapsed && (io.mouseWheel != 0f || io.mouseWheelH != 0f)) {
-                // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent (unless either ImGuiWindowFlags_NoInputs or ImGuiWindowFlags_NoScrollbar are also set).
-                var scrollWindow = window
-                while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
-                        scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
-                    scrollWindow = scrollWindow.parentWindow!!
-                val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs
-
-                if (io.mouseWheel != 0f) {
-                    if (io.keyCtrl && io.fontAllowUserScaling) {
-                        // Zoom / Scale window
-                        val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
-                        val scale = newFontScale / window.fontWindowScale
-                        window.fontWindowScale = newFontScale
-
-                        val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
-                        window.apply {
-                            pos plusAssign offset
-                            size timesAssign scale
-                            sizeFull timesAssign scale
-                        }
-                    } else if (!io.keyCtrl && scrollAllowed) {
-                        // Mouse wheel vertical scrolling
-                        var scrollAmount = 5 * scrollWindow.calcFontSize()
-                        val amount = scrollWindow.contentsRegionRect.height + scrollWindow.windowPadding.y * 2f
-                        scrollAmount = min(scrollAmount, amount * 0.67f).i.f
-                        scrollWindow.setScrollY(scrollWindow.scroll.y - io.mouseWheel * scrollAmount)
-                    }
-                }
-                if (io.mouseWheelH != 0f && scrollAllowed) {
-                    // Mouse wheel horizontal scrolling (for hardware that supports it)
-                    val scrollAmount = scrollWindow.calcFontSize()
-                    if (!io.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse)
-                        window.setScrollX(window.scroll.x - io.mouseWheelH * scrollAmount)
-                }
-            }
-        }
+        updateMouseWheel()
 
         // Pressing TAB activate widget focus
         if (g.activeId == 0)
@@ -329,6 +293,9 @@ interface imgui_main {
         g.windows.clear()
         g.windows += g.windowsSortBuffer
 
+        // Unlock font atlas
+        io.fonts.locked = false
+
         // Clear Input data for next frame
         io.mouseWheel = 0f
         io.mouseWheelH = 0f
@@ -355,7 +322,7 @@ interface imgui_main {
         g.drawDataBuilder.clear()
         val windowsToRenderFrontMost = arrayOf(
                 g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
-                g.navWindowingList.getOrNull(0).takeIf { g.navWindowingTarget != null})
+                g.navWindowingList.getOrNull(0).takeIf { g.navWindowingTarget != null })
         g.windows
                 .filter { it.isActiveAndVisible && it.flags hasnt Wf.ChildWindow && it !== windowsToRenderFrontMost[0] && it !== windowsToRenderFrontMost[1] }
                 .forEach { it.addToDrawDataSelectLayer() }
@@ -421,14 +388,14 @@ interface imgui_main {
                     }
                     mouseDoubleClicked[i] = false
                     if (mouseClicked[i]) {
-                        if (g.time - mouseClickedTime[i] < mouseDoubleClickTime) {
+                        if (g.time - mouseClickedTime[i] < mouseDoubleClickTime) { // TODO check if ok or (g.time - mouseClickedTime[i]).f
                             val deltaFromClickPos = when {
                                 isMousePosValid(io.mousePos) -> io.mousePos - io.mouseClickedPos[i]
                                 else -> Vec2()
                             }
                             if (deltaFromClickPos.lengthSqr < io.mouseDoubleClickMaxDist * io.mouseDoubleClickMaxDist)
                                 mouseDoubleClicked[i] = true
-                            mouseClickedTime[i] = -Float.MAX_VALUE    // so the third click isn't turned into a double-click
+                            mouseClickedTime[i] = -Double.MAX_VALUE    // so the third click isn't turned into a double-click
                         } else
                             mouseClickedTime[i] = g.time
                         mouseClickedPos[i] put mousePos
@@ -458,6 +425,42 @@ interface imgui_main {
                     if (mouseClicked[i])
                         g.navDisableMouseHover = false
                 }
+            }
+        }
+
+        fun updateMouseWheel() {
+            val window = g.hoveredWindow
+            if (window == null || window.collapsed) return
+            if (io.mouseWheel == 0f && io.mouseWheelH == 0f) return
+
+            // If a child window has the Wf.NoScrollWithMouse flag, we give a chance to scroll its parent (unless either Wf.NoInputs or Wf.NoScrollbar are also set).
+            var scrollWindow: Window = window
+            while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
+                    scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
+                scrollWindow = scrollWindow.parentWindow!!
+            val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs
+
+            if (io.mouseWheel != 0f)
+                if (io.keyCtrl && io.fontAllowUserScaling) {
+                    // Zoom / Scale window
+                    val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
+                    val scale = newFontScale / window.fontWindowScale
+                    window.fontWindowScale = newFontScale
+
+                    val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
+                    window.pos plusAssign offset
+                    window.size timesAssign scale
+                    window.sizeFull timesAssign scale
+                } else if (!io.keyCtrl && scrollAllowed) {
+                    // Mouse wheel vertical scrolling
+                    var scrollAmount = 5 * scrollWindow.calcFontSize()
+                    scrollAmount = min(scrollAmount, (scrollWindow.contentsRegionRect.height + scrollWindow.windowPadding.y * 2f) * 0.67f).i.f
+                    scrollWindow.setScrollY(scrollWindow.scroll.y - io.mouseWheel * scrollAmount)
+                }
+            if (io.mouseWheelH != 0f && scrollAllowed && !io.keyCtrl) {
+                // Mouse wheel horizontal scrolling (for hardware that supports it)
+                val scrollAmount = scrollWindow.calcFontSize()
+                scrollWindow.setScrollX(scrollWindow.scroll.x - io.mouseWheelH * scrollAmount)
             }
         }
 

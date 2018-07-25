@@ -108,7 +108,7 @@ import imgui.WindowFlag as Wf
 object Log {
 
     val log = ExampleAppLog()
-    var lastTime = -1f
+    var lastTime = -1.0
     val randomWords = arrayOf("system", "info", "warning", "error", "fatal", "notice", "log")
     val random = Random()
     val rand get() = abs(random.nextInt() / 100_000)

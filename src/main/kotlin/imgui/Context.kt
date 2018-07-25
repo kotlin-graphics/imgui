@@ -32,7 +32,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var drawListSharedData = DrawListSharedData()
 
-    var time = 0f
+    var time = 0.0
 
     var frameCount = 0
 
@@ -593,7 +593,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** Position at time of clicking    */
     val mouseClickedPos = Array(5) { Vec2() }
     /** Time of last click (used to figure out double-click)    */
-    val mouseClickedTime = FloatArray(5)
+    val mouseClickedTime = DoubleArray(5)
     /** Mouse button went from !Down to Down    */
     val mouseClicked = BooleanArray(5)
     /** Has mouse button been double-clicked?    */

@@ -257,7 +257,7 @@ object widgets {
 
     /* Plots Widgets */
     var animate = true
-    var refreshTime = 0f
+    var refreshTime = 0.0
     val values0 = FloatArray(90)
     var valuesOffset = 0
     var phase = 0f
@@ -710,7 +710,7 @@ object widgets {
                     Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float
                     and the sizeof() of your structure in the Stride parameter.
                  */
-                if (!animate || refreshTime == 0f) refreshTime = time
+                if (!animate || refreshTime == 0.0) refreshTime = time
                 while (refreshTime < time) { // Create dummy data at fixed 60 hz rate for the demo
                     values0[valuesOffset] = cos(phase)
                     valuesOffset = (valuesOffset + 1) % values0.size
