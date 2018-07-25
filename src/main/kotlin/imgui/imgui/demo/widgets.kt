@@ -10,10 +10,13 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.arrowButton
+import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropSource
 import imgui.ImGui.beginDragDropTarget
+import imgui.ImGui.beginPopupContextItem
+import imgui.ImGui.begin_
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -38,10 +41,12 @@ import imgui.ImGui.dragInt2
 import imgui.ImGui.dragInt3
 import imgui.ImGui.dragInt4
 import imgui.ImGui.dragIntRange2
+import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endCombo
 import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endDragDropTarget
+import imgui.ImGui.endPopup
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
 import imgui.ImGui.imageButton
@@ -71,6 +76,7 @@ import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectMin
 import imgui.ImGui.labelText
 import imgui.ImGui.listBox
+import imgui.ImGui.menuItem
 import imgui.ImGui.newLine
 import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
@@ -274,7 +280,7 @@ object widgets {
 
     var mode = Mode.Copy
 
-    val names = arrayOf( "Bobby", "Beatrice", "Betty", "Brianna", "Barry", "Bernard", "Bibi", "Blaine", "Bryn" )
+    val names = arrayOf("Bobby", "Beatrice", "Betty", "Brianna", "Barry", "Bernard", "Bibi", "Blaine", "Bryn")
 
 
     /* Vertical Sliders */
@@ -289,6 +295,7 @@ object widgets {
     val col = Vec4(1f, 0.5, 0f, 1f)
     var currentItem1 = 1
     var embedAllInsideAChildWindow = false
+    var testWindow = false
 
     operator fun invoke() {
 
@@ -1064,7 +1071,7 @@ object widgets {
                         // Our buttons are both drag sources and drag targets here!
                         if (beginDragDropSource(DragDropFlag.None)) {
                             setDragDropPayload("DND_DEMO_CELL", n, Int.BYTES)        // Set payload to carry the index of our item (could be anything)
-                            when(mode) {
+                            when (mode) {
                             // Display preview (could be anything, e.g. when dragging an image we could decide to display the filename and a small preview of the image, etc.)
                                 Mode.Copy -> text("Copy $name")
                                 Mode.Move -> text("Move $name")
@@ -1155,6 +1162,22 @@ object widgets {
                 endChild()
                 if (embedAllInsideAChildWindow)
                     endChild()
+
+                /*  Calling IsItemHovered() after begin returns the hovered status of the title bar.
+                    This is useful in particular if you want to create a context menu (with BeginPopupContextItem)
+                    associated to the title bar of a window.                 */
+                checkbox("Hovered/Active tests after Begin() for title bar testing", ::testWindow)
+                if (testWindow) {
+                    begin_("Title bar Hovered/Active tests", ::testWindow)
+                    if (beginPopupContextItem()) { // <-- This is using IsItemHovered()
+                        if (menuItem("Close")) testWindow = false
+                        endPopup()
+                    }
+                    text(
+                            "IsItemHovered() after begin = ${isItemHovered()} (== is title bar hovered)\n" +
+                                    "IsItemActive() after begin = $isItemActive (== is window being clicked/moved)")
+                    end()
+                }
             }
         }
     }

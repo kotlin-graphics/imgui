@@ -11,6 +11,7 @@ import imgui.ImGui.menuItem
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
+import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.showUserGuide
 import imgui.ImGui.spacing
@@ -103,8 +104,9 @@ object ExampleApp {
         if (noCollapse) windowFlags = windowFlags or Wf.NoCollapse
         if (noClose) open = null // Don't pass our bool* to Begin
         if (noNav) windowFlags = windowFlags or Wf.NoNav
-        /*  We specify a default size in case there's no data in the .ini file. Typically this isn't required!
+        /*  We specify a default position/size in case there's no data in the .ini file. Typically this isn't required!
             We only do it to make the Demo applications a little more welcoming.         */
+        setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
 
         // Main body of the Demo window starts here.

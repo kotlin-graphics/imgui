@@ -219,7 +219,7 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean)
 
 fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 
-fun addWindowSettings(name: String) = WindowSettings(name).apply { g.settingsWindows.add(this) }
+fun createNewWindowSettings(name: String) = WindowSettings(name).also { g.settingsWindows += it }
 
 /*  Settings/.Ini Utilities
     The disk functions are automatically called if io.IniFilename != NULL (default is "imgui.ini").
@@ -229,6 +229,8 @@ fun addWindowSettings(name: String) = WindowSettings(name).apply { g.settingsWin
 fun loadIniSettingsFromDisk(iniFilename: String?) {
     if (iniFilename == null) return
     var settings: WindowSettings? = null
+    val a = ClassLoader.getSystemResourceAsStream(iniFilename)
+    val v = ClassLoader.getSystemResource(iniFilename)
     fileLoadToLines(iniFilename)?.filter { it.isNotEmpty() }?.forEach { s ->
         if (s[0] == '[' && s.last() == ']') {
             /*  Parse "[Type][Name]". Note that 'Name' can itself contains [] characters, which is acceptable with
@@ -244,7 +246,7 @@ fun loadIniSettingsFromDisk(iniFilename: String?) {
                 name = s.substring(1, firstCloseBracket)
             }
             val typeHash = hash(type, 0, 0)
-            settings = findWindowSettings(typeHash) ?: addWindowSettings(name)
+            settings = findWindowSettings(typeHash) ?: createNewWindowSettings(name)
         } else settings?.apply {
             when {
                 s.startsWith("Pos") -> pos.put(s.substring(4).split(","))
@@ -269,7 +271,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
          *  WindowFlag.NoSavedSettings then had the flag disabled later on.
          *  We don't bind settings in this case (bug #1000).    */
         val settings = g.settingsWindows.getOrNull(window.settingsIdx) ?: findWindowSettings(window.id)
-        ?: addWindowSettings(window.name).also { window.settingsIdx = g.settingsWindows.indexOf(it) }
+        ?: createNewWindowSettings(window.name).also { window.settingsIdx = g.settingsWindows.indexOf(it) }
         assert(settings.id == window.id)
         settings.pos put window.pos
         settings.size put window.sizeFull
@@ -1249,10 +1251,7 @@ fun navUpdateWindowing() {
 /** Overlay displayed when using CTRL+TAB. Called by EndFrame(). */
 fun navUpdateWindowingList() {
 
-    if (g.navWindowingTarget == null) {
-        g.navWindowingList.clear()
-        return
-    }
+    val target = g.navWindowingTarget!! // ~ assert
 
     if (g.navWindowingList.isEmpty())
         findWindowByName("###NavWindowingList")?.let { g.navWindowingList += it }
@@ -1269,7 +1268,7 @@ fun navUpdateWindowingList() {
         val labelEnd = findRenderedTextEnd(label)
         if (labelEnd != 0)
             label = window.fallbackWindowName
-        selectable(label, g.navWindowingTarget == window)
+        selectable(label, target == window)
     }
     end()
     popStyleVar()
