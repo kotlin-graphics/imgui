@@ -12,6 +12,7 @@ import imgui.*
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.io
 import imgui.ImGui.keepAliveId
+import imgui.ImGui.setActiveId
 import imgui.ImGui.style
 import java.util.*
 import kotlin.collections.ArrayList
@@ -997,6 +998,17 @@ class Window(var context: Context, var name: String) {
 
     /** ~ IsWindowActiveAndVisible */
     val isActiveAndVisible: Boolean get() = hiddenFrames == 0 && active
+
+    /** ~ StartMouseMovingWindow */
+    fun startMouseMoving() {
+    // Set ActiveId even if the _NoMove flag is set. Without it, dragging away from a window with _NoMove would activate hover on other windows.
+        focus()
+        setActiveId(moveId, this)
+        g.navDisableHighlight = true
+        g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
+        if (flags hasnt Wf.NoMove && rootWindow!!.flags hasnt Wf.NoMove)
+            g.movingWindow = this
+    }
 }
 
 fun Window?.setCurrent() {

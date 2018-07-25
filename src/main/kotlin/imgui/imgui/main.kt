@@ -22,7 +22,7 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
-import imgui.ImGui.updateMovingWindow
+import imgui.ImGui.updateMouseMovingWindow
 import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
 import imgui.imgui.imgui_internal.Companion.roundScalarWithFormat
 import imgui.internal.*
@@ -173,7 +173,7 @@ interface imgui_main {
         }
 
         // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering)
-        updateMovingWindow()
+        updateMouseMovingWindow()
         updateHoveredWindowAndCaptureFlags()
 
         g.dimBgRatio = when {
@@ -271,7 +271,8 @@ interface imgui_main {
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f) {
             println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
-            io.imeSetInputScreenPosFn!!(g.platformImePos.x.i, g.platformImePos.y.i)
+//            io.imeSetInputScreenPosFn!!(g.platformImePos.x.i, g.platformImePos.y.i)
+            io.imeSetInputScreenPosFn!!(1000, 1000)
             g.platformImeLastPos put g.platformImePos
         }
 
@@ -289,16 +290,9 @@ interface imgui_main {
             if (g.navWindow == null || !g.navWindow!!.appearing) { // Unless we just made a window/popup appear
                 // Click to focus window and start moving (after we're done with all our widgets)
                 if (io.mouseClicked[0])
-                    if (g.hoveredRootWindow != null) {
-                        /*  Set ActiveId even if the _NoMove flag is set, without it dragging away from a window
-                            with _NoMove would activate hover on other windows.                         */
-                        g.hoveredWindow.focus()
-                        setActiveId(g.hoveredWindow!!.moveId, g.hoveredWindow)
-                        g.navDisableHighlight = true
-                        g.activeIdClickOffset = io.mousePos - g.hoveredRootWindow!!.pos
-                        if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove)
-                            g.movingWindow = g.hoveredWindow
-                    } else if (g.navWindow != null && frontMostPopupModal == null)
+                    if (g.hoveredRootWindow != null)
+                        g.hoveredWindow!!.startMouseMoving()
+                    else if (g.navWindow != null && frontMostPopupModal == null)
                         null.focus()   // Clicking on void disable focus
 
                 /*  With right mouse button we close popups without changing focus

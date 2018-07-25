@@ -1371,8 +1371,10 @@ var imeSetInputScreenPosFn_Win32 = { x: Int, y: Int ->
                 ptCurrentPos.y = y.L
                 dwStyle = imm.CFS_FORCE_POSITION.L
             }
-            imm.setCompositionWindow(himc, cf)
-            imm.releaseContext(hwnd, himc)
+            if(imm.setCompositionWindow(himc, cf) == 0)
+                System.err.println("imm.setCompositionWindow failed")
+            if(imm.releaseContext(hwnd, himc) == 0)
+                System.err.println("imm.releaseContext failed")
         }
     }
 }

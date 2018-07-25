@@ -9,6 +9,7 @@ import gln.glViewport
 import imgui.impl.LwjglGL3
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
+import org.lwjgl.system.Platform
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
 
@@ -19,7 +20,7 @@ fun main(args: Array<String>) {
 class HelloWorld_lwjgl {
 
     init {
-        glfw.init("3.2")
+        glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
     }
 
     val window = GlfwWindow(1280, 720, "ImGui Lwjgl OpenGL3 example").apply {
