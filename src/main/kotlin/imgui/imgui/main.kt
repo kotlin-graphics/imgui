@@ -269,10 +269,10 @@ interface imgui_main {
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
-        if (/*io.imeSetInputScreenPosFn &&*/ (g.platformImePos - g.osImePosSet).lengthSqr > 0.0001f) {
-//            (LwjglGL3.windowProc!! as WindowProc).in
-//            g.io.ImeSetInputScreenPosFn((int) g . OsImePosRequest . x, (int) g . OsImePosRequest . y)
-            g.osImePosSet put g.platformImePos
+        if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f) {
+            println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
+            io.imeSetInputScreenPosFn!!(g.platformImePos.x.i, g.platformImePos.y.i)
+            g.platformImeLastPos put g.platformImePos
         }
 
         navUpdateWindowingList()
@@ -545,7 +545,7 @@ interface imgui_main {
             popId()
 
             // Navigation resize (keyboard/gamepad)
-            if(g.navWindowingTarget?.rootWindow === window) {
+            if (g.navWindowingTarget?.rootWindow === window) {
                 val navResizeDelta = Vec2()
                 if (g.navInputSource == InputSource.NavKeyboard && g.io.keyShift)
                     navResizeDelta put getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)

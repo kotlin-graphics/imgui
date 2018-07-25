@@ -5,6 +5,7 @@ package imgui
 import gli_.has
 import gli_.hasnt
 import glm_.*
+import glm_.buffer.bufferBig
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.ImGui.begin
@@ -33,7 +34,12 @@ import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.imgui.*
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
+import imgui.impl.windowsIme.COMPOSITIONFORM
+import imgui.impl.windowsIme.HIMC
+import imgui.impl.windowsIme.HWND
+import imgui.impl.windowsIme.imm
 import imgui.internal.*
+import org.lwjgl.system.MemoryUtil.NULL
 import uno.kotlin.isPrintable
 import java.io.File
 import java.nio.file.Paths
@@ -1354,7 +1360,22 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
 
 //static const char*      GetClipboardTextFn_DefaultImpl(void* user_data);
 //static void             SetClipboardTextFn_DefaultImpl(void* user_data, const char* text);
-//static void             ImeSetInputScreenPosFn_DefaultImpl(int x, int y);
+var imeSetInputScreenPosFn_Win32 = { x: Int, y: Int ->
+    // Notify OS Input Method Editor of text input position
+    val hwnd: HWND = io.imeWindowHandle
+    if (hwnd != NULL) {
+        val himc: HIMC = imm.getContext(hwnd)
+        if (himc != NULL) {
+            val cf = COMPOSITIONFORM(bufferBig(COMPOSITIONFORM.size)).apply {
+                ptCurrentPos.x = x.L
+                ptCurrentPos.y = y.L
+                dwStyle = imm.CFS_FORCE_POSITION.L
+            }
+            imm.setCompositionWindow(himc, cf)
+            imm.releaseContext(hwnd, himc)
+        }
+    }
+}
 
 private var i0 = 0
 

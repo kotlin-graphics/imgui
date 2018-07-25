@@ -6,6 +6,8 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.internal.*
+import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.Platform
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
@@ -275,10 +277,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Cursor position request to the OS Input Method Editor   */
     var platformImePos = Vec2(Float.MAX_VALUE)
     /** Last cursor position passed to the OS Input Method Editor   */
-    var osImePosSet = Vec2(Float.MAX_VALUE)
+    var platformImeLastPos = Vec2(Float.MAX_VALUE)
 
     var imeInProgress = false
-    var imeLastKey = 0
+//    var imeLastKey = 0
 
     //------------------------------------------------------------------
     // Settings
@@ -479,7 +481,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var getClipboardTextFn: ((userData: Any) -> Unit)? = null
     var setClipboardTextFn: ((userData: Any, text: String) -> Unit)? = null
     lateinit var clipboardUserData: Any
-    //
+
 //    // Optional: override memory allocations. MemFreeFn() may be called with a NULL pointer.
 //    // (default to posix malloc/free)
 //    void*       (*MemAllocFn)(size_t sz);
@@ -487,13 +489,13 @@ class IO(sharedFontAtlas: FontAtlas?) {
 //
     // Optional: notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
     // (default to use native imm32 api on Windows)
-//    var imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = null
+    val imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = imeSetInputScreenPosFn_Win32.takeIf { Platform.get() == Platform.WINDOWS }
     /** (Windows) Set this to your HWND to get automatic IME cursor positioning.    */
-    var imeWindowHandle = 0L
-//
-//    //------------------------------------------------------------------
-//    // Input - Fill before calling NewFrame()
-//    //------------------------------------------------------------------
+    var imeWindowHandle = NULL
+
+    //------------------------------------------------------------------
+    // Input - Fill before calling NewFrame()
+    //------------------------------------------------------------------
 
     /** Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)  */
     var mousePos = Vec2(-Float.MAX_VALUE)
@@ -617,21 +619,6 @@ class IO(sharedFontAtlas: FontAtlas?) {
     val navInputsDownDuration = FloatArray(NavInput.COUNT) { -1f }
 
     val navInputsDownDurationPrev = FloatArray(NavInput.COUNT)
-
-//    var imeSetInputScreenPosFn_DefaultImpl = { x: Int, y: Int -> TODO
-//        // Notify OS Input Method Editor of text input position
-//        val hwnd = imeWindowHandle
-//        val a = WindowProc
-//        if (hwnd != 0L)
-//            if (HIMC himc = ImmGetContext (hwnd)) {
-//                COMPOSITIONFORM cf;
-//                cf.ptCurrentPos.x = x;
-//                cf.ptCurrentPos.y = y;
-//                cf.dwStyle = CFS_FORCE_POSITION;
-//                ::ImmSetCompositionWindow(himc, & cf);
-//                ::ImmReleaseContext(hwnd, himc);
-//            }
-//    }
 }
 
 // for IO.keyMap
