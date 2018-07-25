@@ -7,6 +7,7 @@ import glm_.buffer.bufferBig
 import glm_.buffer.intBufferBig
 import glm_.mat4x4.Mat4
 import gln.glf.semantic
+import org.lwjgl.system.Platform
 import uno.buffer.intBufferBig
 import uno.buffer.intBufferOf
 import uno.buffer.use
@@ -58,7 +59,7 @@ val fragmentShader
 
 /** Store GLSL version string so we can refer to it later in case we recreate shaders.
  * Note: GLSL version is NOT the same as GL version. Leave this to default if unsure. */
-var glslVersion = 130
+var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
 
 
 val mouseJustPressed = BooleanArray(5)

@@ -270,6 +270,8 @@ enum class HoveredFlag(val i: Int) {
     AllowWhenBlockedByActiveItem(1 shl 5),
     /** Return true even if the position is overlapped by another window,   */
     AllowWhenOverlapped(1 shl 6),
+    /** Return true even if the item is disabled */
+    AllowWhenDisabled(1 shl 7),
     RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i),
     RootAndChildWindows(RootWindow or ChildWindows)
 }
@@ -354,7 +356,7 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
     /** JVM implementation of IsKeyPressedMap   */
     fun isPressed(repeat: Boolean) = isKeyPressed(io.keyMap[i], repeat)
 
-    val isPressed:Boolean
+    val isPressed: Boolean
         get() = isPressed(true)
 
     val isDown: Boolean
@@ -863,7 +865,7 @@ enum class ItemFlag(val i: Int) {
     AllowKeyboardFocus(1 shl 0),
     /** false. Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.  */
     ButtonRepeat(1 shl 1),
-    /** false. FIXME-WIP: Disable interactions but doesn't affect visuals. Should be: grey out and disable interactions with widgets that affect data + view widgets (WIP)     */
+    /** false. [BETA] Disable interactions but doesn't affect visuals. Should be: grey out and disable interactions with widgets that affect data + view widgets (WIP)     */
     Disabled(1 shl 2),
     /** false   */
     NoNav(1 shl 3),
