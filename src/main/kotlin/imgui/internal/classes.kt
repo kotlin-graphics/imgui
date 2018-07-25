@@ -237,7 +237,8 @@ class MenuColumns {
 }
 
 /** Storage for window settings stored in .ini file (we keep one of those even if the actual window wasn't instanced during this session)
- *  Windows data saved in imgui.ini file */
+ *  Windows data saved in imgui.ini file
+ *  aka CreateNewWindowSettings */
 class WindowSettings(val name: String = "") {
     var id: ID = hash(name, 0)
     var pos = Vec2()

@@ -664,9 +664,9 @@ enum class Col {
     /** Gamepad/keyboard: current highlighted item  */
     NavHighlight,
     /** Highlight window when using CTRL+TAB */
-    NavWindowListHighlight,
+    NavWindowingHighlight,
     /** Darken/colorize entire screen behind the CTRL+TAB window list, when active */
-    NavWindowListDimBg,
+    NavWindowingDimBg,
     /** Darken/colorize entire screen behind a modal window, when one is active; */
     ModalWindowDimBg;
 

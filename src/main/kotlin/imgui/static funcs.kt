@@ -10,6 +10,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.ImGui.begin
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.end
@@ -71,8 +72,6 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
     return x
 }
 
-val defaultFont get() = io.fontDefault ?: io.fonts.fonts[0]
-
 //-----------------------------------------------------------------------------
 // Internal API exposed in imgui_internal.h
 //-----------------------------------------------------------------------------
@@ -88,16 +87,13 @@ fun findHoveredWindow() {
     var i = g.windows.lastIndex
     while (i >= 0 && hoveredWindow == null) {
         val window = g.windows[i]
-        if (!window.active)
-            continue
-        if (window.flags has Wf.NoInputs)
-            continue
-
-        // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
-        val bb = Rect(window.outerRectClipped.min - style.touchExtraPadding, window.outerRectClipped.max + style.touchExtraPadding)
-        if (bb contains io.mousePos) {
-            hoveredWindow = window
-            break
+        if (window.active && window.flags hasnt Wf.NoInputs) {
+            // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
+            val bb = Rect(window.outerRectClipped.min - style.touchExtraPadding, window.outerRectClipped.max + style.touchExtraPadding)
+            if (bb contains io.mousePos) {
+                hoveredWindow = window
+                break
+            }
         }
         i--
     }
@@ -300,17 +296,6 @@ fun getViewportRect(): Rect {
     if (io.displayVisibleMin != io.displayVisibleMax)
         return Rect(io.displayVisibleMin, io.displayVisibleMax)
     return Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
-}
-
-fun closePopupToLevel(remaining: Int) {
-    assert(remaining >= 0)
-    var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
-    else g.openPopupStack[0].parentWindow
-    if (g.navLayer == 0)
-        focusWindow = navRestoreLastChildNavWindow(focusWindow)
-    focusWindow.focus()
-    focusWindow.dc.navHideHighlightOneFrame = true
-    for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
 }
 
 enum class PopupPositionPolicy { Default, ComboBox }
@@ -1270,12 +1255,12 @@ fun navUpdateWindowingList() {
     }
 
     if (g.navWindowingList.isEmpty())
-        findWindowByName("###NavWindowList")?.let { g.navWindowingList += it }
+        findWindowByName("###NavWindowingList")?.let { g.navWindowingList += it }
     setNextWindowSizeConstraints(Vec2(io.displaySize.x * 0.2f, io.displaySize.y * 0.2f), Vec2(Float.MAX_VALUE))
     setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Always, Vec2(0.5f))
     pushStyleVar(StyleVar.WindowPadding, style.windowPadding * 2f)
     val flags = Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoNav or Wf.NoResize or Wf.NoMove or Wf.NoInputs or Wf.AlwaysAutoResize
-    begin("###NavWindowList", null, flags)
+    begin("###NavWindowingList", null, flags)
     for (n in g.windows.lastIndex downTo 0) {
         val window = g.windows[n]
         if (!window.isNavFocusable)
