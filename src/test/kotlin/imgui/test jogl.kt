@@ -27,7 +27,7 @@ class HelloWorld_jogl : GLEventListener {
         val glCapabilities = GLCapabilities(glProfile)
 
         GLWindow.create(glCapabilities).apply {
-            title = "ImGui Jogl OpenGL3 example"
+            title = "Dear ImGui Jogl OpenGL3 example"
             setSize(1280, 720)
         }
     }
