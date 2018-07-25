@@ -5,6 +5,7 @@ import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.beginPopupEx
 import imgui.ImGui.closePopup
+import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.io

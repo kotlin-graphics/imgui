@@ -373,6 +373,9 @@ interface imgui_internal {
         g.drawListSharedData.fontSize = g.fontSize
     }
 
+    val defaultFont: Font
+        get() = io.fontDefault ?: io.fonts.fonts[0]
+
     /** Mark popup as open (toggle toward open state).
      *  Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within
      *  a BeginPopup()/EndPopup() block.
@@ -416,6 +419,17 @@ interface imgui_internal {
     fun closePopup(id: ID) {
         if (!isPopupOpen(id)) return
         closePopupToLevel(g.openPopupStack.lastIndex)
+    }
+
+    fun closePopupToLevel(remaining: Int) {
+        assert(remaining >= 0)
+        var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
+        else g.openPopupStack[0].parentWindow
+        if (g.navLayer == 0)
+            focusWindow = navRestoreLastChildNavWindow(focusWindow)
+        focusWindow.focus()
+        focusWindow.dc.navHideHighlightOneFrame = true
+        for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
     }
 
     fun closePopupsOverWindow(refWindow: Window?) {

@@ -63,8 +63,8 @@ interface imgui_styles {
         colors[Col.TextSelectedBg]         .put(0.26f, 0.59f, 0.98f, 0.35f)
         colors[Col.DragDropTarget]         .put(1.00f, 1.00f, 0.00f, 0.90f)
         colors[Col.NavHighlight]           .put(0.26f, 0.59f, 0.98f, 1.00f)
-        colors[Col.NavWindowListHighlight] .put(1.00f, 1.00f, 1.00f, 0.70f)
-        colors[Col.NavWindowListDimBg]     .put(0.80f, 0.80f, 0.80f, 0.20f)
+        colors[Col.NavWindowingHighlight] .put(1.00f, 1.00f, 1.00f, 0.70f)
+        colors[Col.NavWindowingDimBg]     .put(0.80f, 0.80f, 0.80f, 0.20f)
         colors[Col.ModalWindowDimBg]       .put(0.80f, 0.80f, 0.80f, 0.35f)
         // @formatter:on
         Unit    // neutralize lambda return show
@@ -116,8 +116,8 @@ interface imgui_styles {
         colors[Col.TextSelectedBg]         .put(0.00f, 0.00f, 1.00f, 0.35f)
         colors[Col.DragDropTarget]         .put(1.00f, 1.00f, 0.00f, 0.90f)
         colors[Col.NavHighlight]            put colors[Col.HeaderHovered]
-        colors[Col.NavWindowListHighlight] .put(1.00f, 1.00f, 1.00f, 0.70f)
-        colors[Col.NavWindowListDimBg]     .put(0.80f, 0.80f, 0.80f, 0.20f)
+        colors[Col.NavWindowingHighlight] .put(1.00f, 1.00f, 1.00f, 0.70f)
+        colors[Col.NavWindowingDimBg]     .put(0.80f, 0.80f, 0.80f, 0.20f)
         colors[Col.ModalWindowDimBg]       .put(0.20f, 0.20f, 0.20f, 0.35f)
         // @formatter:on
         Unit    // neutralize lambda return show
@@ -169,8 +169,8 @@ interface imgui_styles {
         colors[Col.TextSelectedBg]         .put(0.26f, 0.59f, 0.98f, 0.35f)
         colors[Col.DragDropTarget]         .put(0.26f, 0.59f, 0.98f, 0.95f)
         colors[Col.NavHighlight]           put colors[Col.HeaderHovered]
-        colors[Col.NavWindowListHighlight] .put(0.70f, 0.70f, 0.70f, 0.70f)
-        colors[Col.NavWindowListDimBg]     .put(0.20f, 0.20f, 0.20f, 0.20f)
+        colors[Col.NavWindowingHighlight] .put(0.70f, 0.70f, 0.70f, 0.70f)
+        colors[Col.NavWindowingDimBg]     .put(0.20f, 0.20f, 0.20f, 0.20f)
         colors[Col.ModalWindowDimBg]       .put(0.20f, 0.20f, 0.20f, 0.35f)
         // @formatter:on
         Unit    // neutralize lambda return show

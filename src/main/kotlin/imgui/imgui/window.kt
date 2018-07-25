@@ -425,7 +425,7 @@ interface imgui_window {
             val dimBgForModal = flags has Wf.Modal && window === frontMostPopupModal && window.hiddenFrames <= 0
             val dimBgForWindowList = g.navWindowingTarget?.rootWindow === window
             if (dimBgForModal || dimBgForWindowList) {
-                val dimBgCol = getColorU32(if(dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowListDimBg, g.dimBgRatio)
+                val dimBgCol = getColorU32(if(dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
                 window.drawList.addRectFilled(viewportRect.min, viewportRect.max, dimBgCol)
             }
 
@@ -434,7 +434,7 @@ interface imgui_window {
                 val bb = window.rect()
                 bb expand g.fontSize
                 if (!bb.contains(viewportRect)) // Avoid drawing if the window covers all the viewport anyway
-                    window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.NavWindowListHighlight, g.navWindowingHighlightAlpha * 0.25f), g.style.windowRounding)
+                    window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f), g.style.windowRounding)
             }
 
             // Draw window + handle manual resize
@@ -515,7 +515,7 @@ interface imgui_window {
                     bb expand (-g.fontSize - 1f)
                     rounding = window.windowRounding
                 }
-                window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowListHighlight, g.navWindowingHighlightAlpha), rounding, 0.inv(), 3f)
+                window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha), rounding, 0.inv(), 3f)
             }
 
             // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars.
