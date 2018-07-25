@@ -23,7 +23,7 @@ class HelloWorld_lwjgl {
         glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
     }
 
-    val window = GlfwWindow(1280, 720, "ImGui Lwjgl OpenGL3 example").apply {
+    val window = GlfwWindow(1280, 720, "Dear ImGui Lwjgl OpenGL3 example").apply {
         init()
     }
 

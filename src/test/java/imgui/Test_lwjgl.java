@@ -40,7 +40,7 @@ public class Test_lwjgl {
 
         glfw.init("3.2", Profile.core, true);
 
-        window = new GlfwWindow(1280, 720, "ImGui Lwjgl OpenGL3 example", NULL, new Vec2i(Integer.MIN_VALUE), true);
+        window = new GlfwWindow(1280, 720, "Dear ImGui Lwjgl OpenGL3 example", NULL, new Vec2i(Integer.MIN_VALUE), true);
         window.init(true);
 
         glfw.setSwapInterval(1);    // Enable vsync
