@@ -32,9 +32,7 @@ class TextFilter(defaultFilter: String? = "") {
     var countGrep = 0
 
     init {
-        defaultFilter?.let {
-            defaultFilter.toCharArray(inputBuf)
-        }
+        defaultFilter?.toCharArray(inputBuf)
     }
 
     class TextRange
@@ -44,7 +42,7 @@ class TextFilter(defaultFilter: String? = "") {
         if (width != 0f)
             pushItemWidth(width)
         val valueChanged = inputText(label, inputBuf)
-        if (width != 0.0f)
+        if (width != 0f)
             popItemWidth()
 //        if (valueChanged)
 //            Build()
@@ -67,6 +65,27 @@ class TextFilter(defaultFilter: String? = "") {
         // Implicit * grep
         return countGrep == 0
     }
+
+//    void ImGuiTextFilter::Build()
+//    {
+//        Filters.resize(0);
+//        TextRange input_range(InputBuf, InputBuf+strlen(InputBuf));
+//        input_range.split(',', &Filters);
+//
+//        CountGrep = 0;
+//        for (int i = 0; i != Filters.Size; i++)
+//        {
+//            TextRange& f = Filters[i];
+//            while (f.b < f.e && ImCharIsBlankA(f.b[0]))
+//                f.b++;
+//            while (f.e > f.b && ImCharIsBlankA(f.e[-1]))
+//                f.e--;
+//            if (f.empty())
+//                continue;
+//            if (Filters[i].b[0] != '-')
+//                CountGrep += 1;
+//        }
+//    }
 }
 
 class TextBuffer {
