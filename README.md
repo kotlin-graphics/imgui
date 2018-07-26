@@ -57,6 +57,7 @@ imgui.sliderFloat("float", f, 0f, 1f);
 Result:
 
 ![screenshot of sample code alongside its output with ImGui](https://raw.githubusercontent.com/wiki/ocornut/imgui/web/v160/code_sample_02.png)
+
 _(settings: Dark style (left), Light style (right) / Font: Roboto-Medium, 16px / Rounding: 5)_
 
 Code:
