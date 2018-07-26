@@ -14,6 +14,7 @@ import imgui.ImGui.inputText
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
+import java.nio.ByteBuffer
 
 /** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within
  *  deep-nested code that runs multiple times every frame.
@@ -31,9 +32,7 @@ class TextFilter(defaultFilter: String? = "") {
     var countGrep = 0
 
     init {
-        defaultFilter?.let {
-            defaultFilter.toCharArray(inputBuf)
-        }
+        defaultFilter?.toCharArray(inputBuf)
     }
 
     class TextRange
@@ -43,7 +42,7 @@ class TextFilter(defaultFilter: String? = "") {
         if (width != 0f)
             pushItemWidth(width)
         val valueChanged = inputText(label, inputBuf)
-        if (width != 0.0f)
+        if (width != 0f)
             popItemWidth()
 //        if (valueChanged)
 //            Build()
@@ -66,6 +65,27 @@ class TextFilter(defaultFilter: String? = "") {
         // Implicit * grep
         return countGrep == 0
     }
+
+//    void ImGuiTextFilter::Build()
+//    {
+//        Filters.resize(0);
+//        TextRange input_range(InputBuf, InputBuf+strlen(InputBuf));
+//        input_range.split(',', &Filters);
+//
+//        CountGrep = 0;
+//        for (int i = 0; i != Filters.Size; i++)
+//        {
+//            TextRange& f = Filters[i];
+//            while (f.b < f.e && ImCharIsBlankA(f.b[0]))
+//                f.b++;
+//            while (f.e > f.b && ImCharIsBlankA(f.e[-1]))
+//                f.e--;
+//            if (f.empty())
+//                continue;
+//            if (Filters[i].b[0] != '-')
+//                CountGrep += 1;
+//        }
+//    }
 }
 
 class TextBuffer {
@@ -140,7 +160,7 @@ class Payload {
     // Members
 
     /** Data (copied and owned by dear imgui) */
-    var data: Any? = null
+    var data: ByteBuffer? = null
     /** Data size */
     var dataSize = 0
 
@@ -153,7 +173,8 @@ class Payload {
     /** Data timestamp */
     var dataFrameCount = -1
     /** Data type tag (short user-supplied string, 32 characters max) */
-    var dataType = ""
+    val dataType = CharArray(32)
+    val dataTypeS get() = String(dataType)
     /** Set when AcceptDragDropPayload() was called and mouse has been hovering the target item (nb: handle overlapping drag targets) */
     var preview = false
     /** Set when AcceptDragDropPayload() was called and mouse button is released over the target item. */
@@ -164,13 +185,13 @@ class Payload {
         sourceId = 0
         data = null
         dataSize = 0
-        dataType = ""
+        dataType.fill(NUL)
         dataFrameCount = -1
         delivery = false
         preview = false
     }
 
-    fun isDataType(type: String) = dataFrameCount != -1 && type == dataType
+    fun isDataType(type: String) = dataFrameCount != -1 && type cmp dataType
 }
 
 class Color {

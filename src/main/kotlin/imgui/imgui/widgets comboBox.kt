@@ -37,6 +37,9 @@ import imgui.ComboFlag as Cf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
+/** Widgets: Combo Box
+ *  The new BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it,
+ *  by creating e.g. Selectable() items. */
 interface imgui_widgetsComboBox {
 
     fun beginCombo(label: String, previewValue: String?, flags_: ComboFlags = 0): Boolean {
@@ -144,8 +147,7 @@ interface imgui_widgetsComboBox {
     fun combo(label: String, currentItem: KMutableProperty0<Int>, items: Array<String>, itemsCount: Int = items.size,
               heightInItems: Int = -1) = combo(label, currentItem, items.toList(), heightInItems)
 
-    /** Combo box helper allowing to pass all items in a single string.
-     *  separate items with \0, end item-list with \0\0     */
+    /** Combo box helper allowing to pass all items in a single string literal holding multiple zero-terminated items "item1\0item2\0" */
     fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
         i = currentItem[0]
         val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
@@ -172,15 +174,14 @@ interface imgui_widgetsComboBox {
     fun combo(label: String, currentItemPtr: KMutableProperty0<Int>, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
 
         var currentItem by currentItemPtr
-        val previewText = items.getOrElse(currentItem) { "" }
+        val previewValue = items.getOrElse(currentItem) { "" }
 
-        // The old Combo() API exposed "popup_max_height_in_items". The new more general BeginCombo() API doesn't, so we emulate it here.
-        if (popupMaxHeightInItem != -1 && g.nextWindowData.sizeConstraintCond == Cond.Null) {
-            val popupMaxHeight = calcMaxPopupHeightFromItemCount(popupMaxHeightInItem)
-            setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, popupMaxHeight))
-        }
+        /*  The old Combo() API exposed "popup_max_height_in_items". The new more general BeginCombo() API doesn't,
+            have/need it, but we emulate it here.         */
+        if (popupMaxHeightInItem != -1 && g.nextWindowData.sizeConstraintCond == Cond.Null)
+            setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, calcMaxPopupHeightFromItemCount(popupMaxHeightInItem)))
 
-        if (!beginCombo(label, previewText, 0)) return false
+        if (!beginCombo(label, previewValue, Cf.None.i)) return false
 
         // Display items
         // FIXME-OPT: Use clipper (but we need to disable it on the appearing frame to make sure our call to setItemDefaultFocus() is processed)

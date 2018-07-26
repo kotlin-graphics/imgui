@@ -35,7 +35,7 @@ public class Test_lwjgl {
 
         glfw.init("3.3", Profile.core, true);
 
-        window = new GlfwWindow(1280, 720, "ImGui Lwjgl OpenGL3 example", NULL, new Vec2i(Integer.MIN_VALUE), true);
+        window = new GlfwWindow(1280, 720, "Dear ImGui Lwjgl OpenGL3 example", NULL, new Vec2i(Integer.MIN_VALUE), true);
         window.init(true);
 
         glfw.setSwapInterval(1);    // Enable vsync
@@ -74,18 +74,20 @@ public class Test_lwjgl {
 //        assert (font != null);
     }
 
-    public void run() {
+        /*  Main loop
+            This automatically also polls events, swaps buffers and resets the appBuffer
 
-        int i = 0;
-        while (i++ < 1000)
-//        while (!GLFW.glfwWindowShouldClose(window.getHandle())) {
+            Poll and handle events (inputs, window resize, etc.)
+            You can read the io.wantCaptureMouse, io.wantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+            - When io.wantCaptureMouse is true, do not dispatch mouse input data to your main application.
+            - When io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
+            Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
+        window.loop(() -> {
             mainLoop();
-//        }
+            return Unit.INSTANCE;
+        });
 
-//        while (i++ < 100)
-//            System.out.println(window.getShouldClose());
-
-        lwjglGlfw.shutdown();
+        lwjglGL3.shutdown();
         ContextKt.destroy(ctx);
 
         window.destroy();
@@ -102,12 +104,7 @@ public class Test_lwjgl {
 
     private void mainLoop() {
 
-        /*  You can read the IO.wantCaptureMouse, IO.wantCaptureKeyboard flags to tell if dear imgui wants to use your
-            inputs.
-            - when IO.wantCaptureMouse is true, do not dispatch mouse input data to your main application.
-            - when Io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-            Generally you may always pass all inputs to dear imgui, and hide them from your application based on those
-            two flags.  */
+        // Start the Dear ImGui frame
         lwjglGlfw.newFrame();
 
 

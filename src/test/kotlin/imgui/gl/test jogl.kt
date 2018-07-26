@@ -31,7 +31,7 @@ private class HelloWorld_jogl : GLEventListener {
         val glCapabilities = GLCapabilities(glProfile)
 
         GLWindow.create(glCapabilities).apply {
-            title = "ImGui Jogl OpenGL3 example"
+            title = "Dear ImGui Jogl OpenGL3 example"
             setSize(1280, 720)
         }
     }
@@ -98,6 +98,7 @@ private class HelloWorld_jogl : GLEventListener {
 
     override fun display(drawable: GLAutoDrawable) = with(drawable.gl.gL3) {
 
+        // Start the Dear ImGui frame
         JoglGL3.newFrame(this)
 
         with(ImGui) {

@@ -1,33 +1,35 @@
-package imgui.impl
+package imgui.impl.windowsIme
 
-import glm_.BYTES
 import glm_.bool
 import glm_.i
-import glm_.vec2.Vec2
+import glm_.toHexString
 import imgui.DEBUG
 import imgui.g
 import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
-import org.lwjgl.system.*
-import org.lwjgl.system.MemoryUtil.*
+import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.Platform
 import org.lwjgl.system.windows.RECT
 import org.lwjgl.system.windows.User32.*
 import org.lwjgl.system.windows.WindowProc
+import uno.glfw.GlfwWindow
+import vkk.adr
 
 object imeListner : WindowProc() {
 
-    var windowProc: Callback? = null
-    var hwnd = 0L
-    var glfwProc = 0L
+    var hwnd: HWND = NULL
+    var glfwProc = NULL
 
     var candidateWindow = 0
     var latestChange = 0
 
-    fun install(handle: Long) {
+    lateinit var window: GlfwWindow
+
+    fun install(window: GlfwWindow) {
+        this.window = window
         if (Platform.get() == Platform.WINDOWS) {
-            hwnd = glfwGetWin32Window(handle)
+            hwnd = glfwGetWin32Window(window.handle)
             glfwProc = GetWindowLongPtr(hwnd, GWL_WNDPROC)
-            windowProc = this
-            SetWindowLongPtr(hwnd, GWL_WNDPROC, windowProc!!.address())
+            SetWindowLongPtr(hwnd, GWL_WNDPROC, adr)
         }
     }
 
@@ -39,17 +41,17 @@ object imeListner : WindowProc() {
             NULL
         }
         WM_IME_STARTCOMPOSITION -> {
-            if(DEBUG) println("Ime startComposition")
-            g.imeInProgress = true
+            if (DEBUG) println("Ime startComposition")
+//            g.imeInProgress = true
             NULL
         }
         WM_IME_ENDCOMPOSITION -> {
-            if(DEBUG) println("Ime endComposition")
-            g.imeInProgress = false
-            g.imeLastKey = latestChange
+            if (DEBUG) println("Ime endComposition")
+//            g.imeInProgress = false
+//            g.imeLastKey = latestChange
             NULL
         }
-        WM_IME_COMPOSITION /*,WM_IME_KEYLAST*/ -> {
+        WM_IME_COMPOSITION, WM_IME_KEYLAST -> {
             val how = "Retrieve or update " + when (w.i) {
                 GCS_COMPATTR -> "the attribute of the composition string."
                 GCS_COMPCLAUSE -> "clause information of the composition string."
@@ -65,7 +67,8 @@ object imeListner : WindowProc() {
                 GCS_RESULTSTR -> "the string of the composition result."
                 else -> "new character> ${w.i}".also { latestChange = w.i }
             }
-            if(DEBUG) println("Ime composition/keyLast = latestChange: $w, how: $how")
+            if (DEBUG) println("Ime composition/keyLast = latestChange: 0x${w.toHexString}, how: $how")
+            window.charCallback!!(w.i)
             NULL
         }
         WM_IME_SETCONTEXT -> {
@@ -78,19 +81,25 @@ object imeListner : WindowProc() {
                 ISC_SHOWUICANDIDATEWINDOW_l3 -> "Show the candidate window of index 3 by user interface window."
                 else -> throw Error("${w.i}")
             }
-            if(DEBUG) println("Ime setContex: active: ${w.bool}, option: $option")
+            if (DEBUG) println("Ime setContex: active: ${w.bool}, option: $option")
             NULL
         }
         WM_IME_NOTIFY -> {
-            if(DEBUG) println("Ime notify: " +
+            if (DEBUG) println("Ime notify: " +
                     when (w.i) {
                         WM_IME_STARTCOMPOSITION -> "IME startComposition"
                         WM_IME_ENDCOMPOSITION -> "IME endComposition"
                         IMN_CHANGECANDIDATE -> "IME is about to change the content of the candidate window $l"
-                        IMN_CLOSECANDIDATE -> "IME is about to close the candidates window $l"
+                        IMN_CLOSECANDIDATE -> {
+                            g.imeInProgress = false
+                            "IME is about to close the candidates window $l"
+                        }
                         IMN_CLOSESTATUSWINDOW -> "IME is about to close the status window"
                         IMN_GUIDELINE -> "IME is about to show an error message or other information"
-                        IMN_OPENCANDIDATE -> "IME is about to open the candidate window $l"
+                        IMN_OPENCANDIDATE -> {
+                            g.imeInProgress = true
+                            "IME is about to open the candidate window $l"
+                        }
                         IMN_OPENSTATUSWINDOW -> "IME is about to create the status window"
                         IMN_PRIVATE -> "IME has updated its reading string as a result of the user typing or removing " +
                                 "characters. The application should retrieve the reading string and save it for rendering."
@@ -106,7 +115,7 @@ object imeListner : WindowProc() {
             NULL
         }
         WM_IME_CONTROL -> {
-            if(DEBUG) println("Ime control: Instructs the IME window to " +
+            if (DEBUG) println("Ime control: Instructs the IME window to " +
                     when (w.i) {
                         IMC_CLOSESTATUSWINDOW -> "hide the status window."
                         IMC_GETCANDIDATEPOS -> "Instructs an IME window to get the position of the candidate window."
@@ -120,29 +129,29 @@ object imeListner : WindowProc() {
                         IMC_SETSTATUSWINDOWPOS -> "Instructs an IME window to set the position of the status window."
                         else -> throw Error("${w.i}")
                     })
-            0L
+            NULL
         }
         WM_IME_COMPOSITIONFULL -> {
-            if(DEBUG) println("Ime compositionFull w: $w l: $l")
+            if (DEBUG) println("Ime compositionFull w: $w l: $l")
             NULL
         }
         WM_IME_SELECT -> {
-            if(DEBUG) println("Ime select w: $w l: $l")
+            if (DEBUG) println("Ime select w: $w l: $l")
             NULL
         }
         WM_IME_CHAR -> {
-            if(DEBUG) println("Ime char w: $w l: $l")
+            if (DEBUG) println("Ime char w: $w l: $l")
             NULL
         }
         WM_IME_REQUEST -> {
             var res = NULL
-            if(DEBUG) println("Ime request " +
+            if (DEBUG) println("Ime request " +
                     when (w.i) {
                         IMR_COMPOSITIONWINDOW -> "IME needs information about the composition window."
                         IMR_CANDIDATEWINDOW -> {
-                            val cf = CANDIDATEFORM(l).apply {
-                                ptCurrentPos = g.platformImePos
-                            }
+//                            val cf = CANDIDATEFORM(l).apply {
+//                                ptCurrentPos.x = g.platformImePos.x
+//                            }
                             res = 1
                             "IME needs information about the candidate window."
                         }
@@ -156,11 +165,11 @@ object imeListner : WindowProc() {
             res
         }
         WM_IME_KEYDOWN -> {
-            if(DEBUG) println("Ime keyDown w: $w l: $l")
+            if (DEBUG) println("Ime keyDown w: $w l: $l")
             NULL
         }
         WM_IME_KEYUP -> {
-            if(DEBUG) println("Ime keyUp w: $w l: $l")
+            if (DEBUG) println("Ime keyUp w: $w l: $l")
             NULL
         }
         else -> nCallWindowProc(glfwProc, hwnd, msg, w, l)
@@ -221,57 +230,4 @@ object imeListner : WindowProc() {
     val IMR_CONFIRMRECONVERTSTRING = 5
     val IMR_QUERYCHARPOSITION = 6
     val IMR_DOCUMENTFEED = 7
-
-
-    /**
-     * typedef struct tagCANDIDATEFORM {
-     *     DWORD dwIndex;
-     *     DWORD dwStyle;
-     *     POINT ptCurrentPos;
-     *     RECT  rcArea;
-     * } CANDIDATEFORM, *PCANDIDATEFORM;
-     *
-     * typedef struct tagPOINT {
-     *     LONG x;
-     *     LONG y;
-     * } POINT, *PPOINT;
-     *
-     * typedef struct _RECT {
-     *     LONG left;
-     *     LONG top;
-     *     LONG right;
-     *     LONG bottom;
-     * } RECT, *PRECT;
-     */
-    class CANDIDATEFORM constructor(address: Long) {
-
-        val buffer = MemoryUtil.memByteBuffer(address, size)
-
-        var ptCurrentPos: Vec2
-            get() = Vec2()
-            set(value) {
-                buffer.putInt(2 * Int.BYTES, value.x.i)
-                buffer.putInt(2 * Int.BYTES, value.y.i)
-            }
-        var dwStyle = 0
-            set(value) {
-                buffer.putInt(Int.BYTES, value)
-            }
-
-        companion object {
-            val size = 2 * Int.BYTES + POINT.size + RECT.size
-        }
-
-        class POINT {
-            companion object {
-                val size = 2 * Long.BYTES
-            }
-        }
-
-        class RECT {
-            companion object {
-                val size = 4 * Long.BYTES
-            }
-        }
-    }
 }

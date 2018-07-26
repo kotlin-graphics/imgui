@@ -43,7 +43,7 @@ interface imgui_inputs {
         return calcTypematicPressedRepeatAmount(t, t - io.deltaTime, repeatDelay, repeatRate)
     }
 
-    /** is mouse button held */
+    /** is mouse button held  (0=left, 1=right, 2=middle) */
     fun isMouseDown(button: Int): Boolean {
         assert(button in io.mouseDown.indices)
         return io.mouseDown[button]
@@ -52,7 +52,7 @@ interface imgui_inputs {
     /** is any mouse button held    */
     val isAnyMouseDown get() = io.mouseDown.any()
 
-    /** did mouse button clicked (went from !Down to Down)  */
+    /** did mouse button clicked (went from !Down to Down)  (0=left, 1=right, 2=middle) */
     fun isMouseClicked(button: Int, repeat: Boolean = false): Boolean {
 
         assert(button >= 0 && button < io.mouseDown.size)
@@ -102,7 +102,7 @@ interface imgui_inputs {
     }
 
     /** We typically use ImVec2(-FLT_MAX,-FLT_MAX) to denote an invalid mouse position  */
-    fun isMousePosValid(mousePos: Vec2? = null) = (mousePos ?: io.mousePos) greaterThan MOUSE_INVALID
+    fun isMousePosValid(mousePos: Vec2? = null) = (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
 
     /** shortcut to io.mousePos provided by user, to be consistent with other calls */
     val mousePos get() = io.mousePos

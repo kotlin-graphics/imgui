@@ -26,7 +26,8 @@ enum class WindowFlag(val i: Int) {
     /** Resize every window to its content every frame  */
     AlwaysAutoResize(1 shl 6),
     @Deprecated("OBSOLETE! Use e.g. style.FrameBorderSize=1.0f to enable borders")
-    /** Show borders around windows and items   */
+    /** Show borders around windows and items
+     *  Deprecated, Set style.FrameBorderSize=1.0f / style.WindowBorderSize=1.0f to enable borders around windows and items */
     ShowBorders(1 shl 7),
     /** Never load/save settings in .ini file   */
     NoSavedSettings(1 shl 8),
@@ -48,8 +49,9 @@ enum class WindowFlag(val i: Int) {
     /** Ensure child windows without border uses style.WindowPadding (ignored by default for non-bordered child windows),
      *  because more convenient)  */
     AlwaysUseWindowPadding(1 shl 16),
-    /** [BETA] Enable resize from any corners and borders. Your back-end needs to honor the different values of io.mouseCursor set by imgui. */
-    ResizeFromAnySide(1 shl 17),
+    /** [BETA] Enable resize from any corners and borders. Your back-end needs to honor the different values of io.mouseCursor set by imgui.
+     *  Set io.OptResizeWindowsFromEdges and make sure mouse cursors are supported by back-end (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) */
+    // ResizeFromAnySide(1 shl 17),
     /** No gamepad/keyboard navigation within the window    */
     NoNavInputs(1 shl 18),
     /** No focusing toward this window with gamepad/keyboard navigation (e.g. skipped by CTRL+TAB)  */
@@ -268,6 +270,8 @@ enum class HoveredFlag(val i: Int) {
     AllowWhenBlockedByActiveItem(1 shl 5),
     /** Return true even if the position is overlapped by another window,   */
     AllowWhenOverlapped(1 shl 6),
+    /** Return true even if the item is disabled */
+    AllowWhenDisabled(1 shl 7),
     RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i),
     RootAndChildWindows(RootWindow or ChildWindows)
 }
@@ -284,8 +288,9 @@ enum class DragDropFlag(val i: Int) {
     /** By default), a successful call to beginDragDropSource opens a tooltip so you can display a preview or
      *  description of the source contents. This flag disable this behavior. */
     SourceNoPreviewTooltip(1 shl 0),
-    /** By default), when dragging we clear data so that isItemHovered() will return true), to avoid subsequent user code
-     *  submitting tooltips. This flag disable this behavior so you can still call IsItemHovered() on the source item. */
+    /** By default, when dragging we clear data so that IsItemHovered() will return false,
+     *  to avoid subsequent user code submitting tooltips.
+     *  This flag disable this behavior so you can still call IsItemHovered() on the source item. */
     SourceNoDisableHover(1 shl 1),
     /** Disable the behavior that allows to open tree nodes and collapsing header by holding over them while dragging
      *  a source item. */
@@ -351,7 +356,7 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
     /** JVM implementation of IsKeyPressedMap   */
     fun isPressed(repeat: Boolean) = isKeyPressed(io.keyMap[i], repeat)
 
-    val isPressed:Boolean
+    val isPressed: Boolean
         get() = isPressed(true)
 
     val isDown: Boolean
@@ -655,13 +660,15 @@ enum class Col {
     PlotHistogram,
     PlotHistogramHovered,
     TextSelectedBg,
-    /** Darken/colorize entire screen behind a modal window, when one is active   */
-    ModalWindowDarkening,
     DragDropTarget,
     /** Gamepad/keyboard: current highlighted item  */
     NavHighlight,
-    /** Gamepad/keyboard: when holding NavMenu to focus/move/resize windows */
-    NavWindowingHighlight;
+    /** Highlight window when using CTRL+TAB */
+    NavWindowingHighlight,
+    /** Darken/colorize entire screen behind the CTRL+TAB window list, when active */
+    NavWindowingDimBg,
+    /** Darken/colorize entire screen behind a modal window, when one is active; */
+    ModalWindowDimBg;
 
     val i = ordinal
 
@@ -803,7 +810,7 @@ enum class MouseCursor {
     Arrow,
     /** When hovering over InputText, etc.  */
     TextInput,
-    /** Unused by imgui functions */
+    /** (Unused by imgui functions) */
     ResizeAll,
     /** When hovering over an horizontal border  */
     ResizeNS,
@@ -812,13 +819,15 @@ enum class MouseCursor {
     /** When hovering over the bottom-left corner of a window  */
     ResizeNESW,
     /** When hovering over the bottom-right corner of a window  */
-    ResizeNWSE;
+    ResizeNWSE,
+    /** (Unused by imgui functions. Use for e.g. hyperlinks) */
+    Hand;
 
     val i = ordinal - 1
 
     companion object {
         fun of(i: Int) = values().first { it.i == i }
-        val COUNT = ResizeNWSE.i + 1
+        val COUNT = Hand.i + 1
     }
 }
 
@@ -856,7 +865,7 @@ enum class ItemFlag(val i: Int) {
     AllowKeyboardFocus(1 shl 0),
     /** false. Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.  */
     ButtonRepeat(1 shl 1),
-    /** false. FIXME-WIP: Disable interactions but doesn't affect visuals. Should be: grey out and disable interactions with widgets that affect data + view widgets (WIP)     */
+    /** false. [BETA] Disable interactions but doesn't affect visuals. Should be: grey out and disable interactions with widgets that affect data + view widgets (WIP)     */
     Disabled(1 shl 2),
     /** false   */
     NoNav(1 shl 3),

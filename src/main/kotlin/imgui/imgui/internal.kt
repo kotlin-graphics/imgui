@@ -22,6 +22,7 @@ import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTooltip
+import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
@@ -30,6 +31,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.isMousePosValid
 import imgui.ImGui.logText
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.openPopup
@@ -99,6 +101,22 @@ interface imgui_internal {
                         "   - You are calling ImGui functions after ::endFrame()/::render() and before the next ImGui::newFrame(), which is also illegal.")
 
     fun findWindowByName(name: String) = g.windowsById[hash(name, 0)]
+
+    fun setCurrentFont(font: Font) {
+        assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
+        assert(font.scale > 0f)
+        g.font = font
+        g.fontBaseSize = io.fontGlobalScale * g.font.fontSize * g.font.scale
+        g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
+
+        val atlas = g.font.containerAtlas
+        g.drawListSharedData.texUvWhitePixel = atlas.texUvWhitePixel
+        g.drawListSharedData.font = g.font
+        g.drawListSharedData.fontSize = g.fontSize
+    }
+
+    val defaultFont: Font
+        get() = io.fontDefault ?: io.fonts.fonts[0]
 
     fun markIniSettingsDirty() {
         if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = io.iniSavingRate
@@ -179,7 +197,7 @@ interface imgui_internal {
         /*  This marking is solely to be able to provide info for ::isItemDeactivatedAfterChange().
             ActiveId might have been released by the time we call this (as in the typical press/release button behavior)
             but still need need to fill the data.         */
-        assert(g.activeId == id || g.activeId == 0)
+        assert(g.activeId == id || g.activeId == 0 || g.dragDropActive)
         g.activeIdValueChanged = true
     }
 
@@ -358,19 +376,6 @@ interface imgui_internal {
         itemFlags = itemFlagsStack.lastOrNull() ?: If.Default_.i
     }
 
-    fun setCurrentFont(font: Font) {
-        assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
-        assert(font.scale > 0f)
-        g.font = font
-        g.fontBaseSize = io.fontGlobalScale * g.font.fontSize * g.font.scale
-        g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
-
-        val atlas = g.font.containerAtlas
-        g.drawListSharedData.texUvWhitePixel = atlas.texUvWhitePixel
-        g.drawListSharedData.font = g.font
-        g.drawListSharedData.fontSize = g.fontSize
-    }
-
     /** Mark popup as open (toggle toward open state).
      *  Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within
      *  a BeginPopup()/EndPopup() block.
@@ -414,6 +419,17 @@ interface imgui_internal {
     fun closePopup(id: ID) {
         if (!isPopupOpen(id)) return
         closePopupToLevel(g.openPopupStack.lastIndex)
+    }
+
+    fun closePopupToLevel(remaining: Int) {
+        assert(remaining >= 0)
+        var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
+        else g.openPopupStack[0].parentWindow
+        if (g.navLayer == 0)
+            focusWindow = navRestoreLastChildNavWindow(focusWindow)
+        focusWindow.focus()
+        focusWindow.dc.navHideHighlightOneFrame = true
+        for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
     }
 
     fun closePopupsOverWindow(refWindow: Window?) {
@@ -1307,7 +1323,7 @@ interface imgui_internal {
         var hovered = itemHoverable(bb, id)
 
         // Drag source doesn't report as hovered
-        if (hovered && g.dragDropActive && g.dragDropPayload.sourceId == id)
+        if (hovered && g.dragDropActive && g.dragDropPayload.sourceId == id && g.dragDropSourceFlags hasnt Ddf.SourceNoDisableHover)
             hovered = false
 
         // Special mode for Drag and Drop where holding button pressed for a long time while dragging another item triggers the button
@@ -1486,6 +1502,36 @@ interface imgui_internal {
         return pressed
     }
 
+    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), 0)
+
+    /** square button with an arrow shape */
+    fun arrowButtonEx(strId: String, dir: Dir, size: Vec2, flags_: ButtonFlags): Boolean {
+
+        var flags = flags_
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId(strId)
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
+        val defaultSize = frameHeight
+        itemSize(bb, if(size.y >= defaultSize) style.framePadding.y else 0f)
+        if (!itemAdd(bb, id)) return false
+
+        if (window.dc.itemFlags has If.ButtonRepeat)
+            flags = flags or Bf.Repeat
+
+        val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
+
+        // Render
+        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
+        renderArrow(bb.min + Vec2(max(0f, size.x - g.fontSize - style.framePadding.x), max(0f, size.y - g.fontSize - style.framePadding.y)), dir)
+
+        return pressed
+    }
+
     fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
                      power: Float): Boolean = withFloat(v, ptr) {
         dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power)
@@ -1517,8 +1563,8 @@ interface imgui_internal {
     }
 
     /** For 32-bits and larger types, slider bounds are limited to half the natural type range.
-     *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2.
-     *  It would be possible to life that limitation with some work but it doesn't seem to be work it for sliders. */
+     *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2 will be ok.
+     *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
     fun sliderBehavior(bb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
                        flags: SliderFlags = 0) = sliderBehavior(bb, id, v, 0, vMin, vMax, format, power, flags)
 
@@ -1531,27 +1577,35 @@ interface imgui_internal {
                        flags: SliderFlags = 0): Boolean = sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags)
 
     fun sliderBehavior(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number,
-                       format: String, power: Float, flags: SliderFlags = 0): Boolean = when (dataType) {
+                       format: String, power: Float, flags: SliderFlags = 0): Boolean {
 
-        DataType.Int, DataType.Uint -> {
-            assert(vMin as Int >= Int.MIN_VALUE / 2)
-            assert(vMax as Int <= Int.MAX_VALUE / 2)
-            sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+        // Draw frame
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
+
+        return when (dataType) {
+
+            DataType.Int, DataType.Uint -> {
+                assert(vMin as Int >= Int.MIN_VALUE / 2)
+                assert(vMax as Int <= Int.MAX_VALUE / 2)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+            }
+            DataType.Long, DataType.Ulong -> {
+                assert(vMin as Long >= Long.MIN_VALUE / 2)
+                assert(vMax as Long <= Long.MAX_VALUE / 2)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+            }
+            DataType.Float -> {
+                assert(vMin as Float >= -Float.MAX_VALUE / 2f && vMax as Float <= Float.MAX_VALUE / 2f)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Float, format, power, flags)
+            }
+            DataType.Double -> {
+                assert(vMin as Double >= -Double.MAX_VALUE / 2f && vMax as Double <= Double.MAX_VALUE / 2f)
+                sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Double, format, power, flags)
+            }
+            else -> throw Error()
         }
-        DataType.Long, DataType.Ulong -> {
-            assert(vMin as Long >= Long.MIN_VALUE / 2)
-            assert(vMax as Long <= Long.MAX_VALUE / 2)
-            sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
-        }
-        DataType.Float -> {
-            assert(vMin as Float >= -Float.MAX_VALUE / 2f && vMax as Float <= Float.MAX_VALUE / 2f)
-            sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Float, format, power, flags)
-        }
-        DataType.Double -> {
-            assert(vMin as Double >= -Double.MAX_VALUE / 2f && vMax as Double <= Double.MAX_VALUE / 2f)
-            sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Double, format, power, flags)
-        }
-        else -> throw Error()
     }
 
     // FIXME: Move some of the code into SliderBehavior(). Current responsability is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
@@ -1560,12 +1614,7 @@ interface imgui_internal {
                         power: Float, flags: SliderFlags = 0): Boolean {
 
         var v by vPtr as KMutableProperty0<Int>
-        val window = currentWindow
-
-        // Draw frame
-        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
+        val window = g.currentWindow!!
 
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -1708,11 +1757,6 @@ interface imgui_internal {
         var v by vPtr as KMutableProperty0<Long>
         val window = currentWindow
 
-        // Draw frame
-        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
-
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isPower = power != 0f && isDecimal
@@ -1854,11 +1898,6 @@ interface imgui_internal {
         var v by vPtr as KMutableProperty0<Float>
         val window = currentWindow
 
-        // Draw frame
-        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
-
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isPower = power != 0f && isDecimal
@@ -1999,11 +2038,6 @@ interface imgui_internal {
 
         v as KMutableProperty0<Double>
         val window = currentWindow
-
-        // Draw frame
-        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
 
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -2305,17 +2339,17 @@ interface imgui_internal {
         var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || userNavInputStart) && !isMultiline
 //        println(g.imeLastKey)
         if (focusRequested || userClicked || userScrolled || userNavInputStart) {
-            if (g.activeId != id || g.imeLastKey != 0) {
+            if (g.activeId != id /*|| g.imeLastKey != 0*/) { // TODO clean outdated ime
                 // JVM, put char if no more in ime mode and last key is valid
 //                println("${g.imeInProgress}, ${g.imeLastKey}")
-                if (!g.imeInProgress && g.imeLastKey != 0) {
-                    for (i in 0 until buf.size)
-                        if (buf[i] == NUL) {
-                            buf[i] = g.imeLastKey.c
-                            break
-                        }
-                    g.imeLastKey = 0
-                }
+//                if (!g.imeInProgress && g.imeLastKey != 0) {
+//                    for (i in 0 until buf.size)
+//                        if (buf[i] == NUL) {
+//                            buf[i] = g.imeLastKey.c
+//                            break
+//                        }
+//                    g.imeLastKey = 0
+//                }
                 /*  Start edition
                     Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
@@ -2404,7 +2438,7 @@ interface imgui_internal {
                     editState.click(mouseX, mouseY)
                     editState.cursorAnimReset()
                 }
-            } else if (io.mouseDown[0] && !editState.selectedAllMouseLock && io.mouseDelta notEqual 0f) {
+            } else if (io.mouseDown[0] && !editState.selectedAllMouseLock && io.mouseDelta anyNotEqual 0f) {
                 editState.state.selectStart = editState.state.cursor
                 editState.state.selectEnd = editState.locateCoord(mouseX, mouseY)
                 editState.cursorFollow = true
@@ -2781,7 +2815,7 @@ interface imgui_internal {
                         if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance(' ') * 0.5f).i.f
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
-                        rect.clipWith(clipRect_)
+                        rect clipWith clipRect_
                         if (rect overlaps clipRect_)
                             drawWindow.drawList.addRectFilled(rect.min, rect.max, bgColor)
                     }
@@ -2995,11 +3029,11 @@ interface imgui_internal {
                 - OpenOnDoubleClick .............. double-click anywhere to open
                 - OpenOnArrow .................... single-click on arrow to open
                 - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
-        var buttonFlags = Bf.NoKeyModifiers or if (flags has Tnf.AllowItemOverlap) Bf.AllowItemOverlap else Bf.Null
+        var buttonFlags = Bf.NoKeyModifiers or if (flags has Tnf.AllowItemOverlap) Bf.AllowItemOverlap else Bf.None
         if (flags hasnt Tnf.Leaf)
             buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
         if (flags has Tnf.OpenOnDoubleClick)
-            buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.Null)
+            buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.None)
 
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
         if (flags hasnt Tnf.Leaf) {
@@ -3216,7 +3250,7 @@ interface imgui_internal {
 
     /** The reason this is exposed in imgui_internal.h is: on touch-based system that don't have hovering,
      *  we want to dispatch inputs to the right target (imgui vs imgui+app) */
-    fun newFrameUpdateHoveredWindowAndCaptureFlags() {
+    fun updateHoveredWindowAndCaptureFlags() {
 
         /*  Find the window hovered by mouse:
             - Child windows can extend beyond the limit of their parent so we need to derive HoveredRootWindow from HoveredWindow.
@@ -3224,8 +3258,7 @@ interface imgui_internal {
                 is lagging as this point of the frame.
             - We also support the moved window toggling the NoInputs flag after moving has started in order
                 to be able to detect windows below it, which is useful for e.g. docking mechanisms. */
-        g.hoveredWindow = g.movingWindow?.flags?.hasnt(Wf.NoInputs)?.let { g.movingWindow } ?: findHoveredWindow()
-        g.hoveredRootWindow = g.hoveredWindow?.rootWindow
+        findHoveredWindow()
 
         fun nullate() {
             g.hoveredWindow = null
@@ -3276,6 +3309,40 @@ interface imgui_internal {
 
         // Update io.WantTextInput flag, this is to allow systems without a keyboard (e.g. mobile, hand-held) to show a software keyboard if possible
         io.wantTextInput = if (g.wantTextInputNextFrame != -1) g.wantTextInputNextFrame != 0 else false
+    }
+
+    /** Handle mouse moving window
+     *  Note: moving window with the navigation keys (Square + d-pad / CTRL+TAB + Arrows) are processed in NavUpdateWindowing() */
+    fun updateMouseMovingWindow() {
+
+        val mov = g.movingWindow
+        if (mov != null) {
+            /*  We actually want to move the root window. g.movingWindow === window we clicked on
+                (could be a child window).
+                We track it to preserve Focus and so that generally activeIdWindow === movingWindow and
+                activeId == movingWindow.moveId for consistency.    */
+            keepAliveId(g.activeId)
+            assert(mov.rootWindow != null)
+            val movingWindow = mov.rootWindow!!
+            if (io.mouseDown[0] && isMousePosValid(io.mousePos)) {
+                val pos = io.mousePos - g.activeIdClickOffset
+                if (movingWindow.pos.x.f != pos.x || movingWindow.pos.y.f != pos.y) {
+                    movingWindow.markIniSettingsDirty()
+                    movingWindow.setPos(pos, Cond.Always)
+                }
+                mov.focus()
+            } else {
+                clearActiveId()
+                g.movingWindow = null
+            }
+        } else
+        /*  When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order
+            to prevent hovering others.                 */
+            if (g.activeIdWindow?.moveId == g.activeId) {
+                keepAliveId(g.activeId)
+                if (!io.mouseDown[0])
+                    clearActiveId()
+            }
     }
 
     fun parseFormatFindStart(fmt: String): Int {
@@ -3369,24 +3436,6 @@ interface imgui_internal {
             val g = lerp((col0 ushr COL32_G_SHIFT) and 0xFF, (col1 ushr COL32_G_SHIFT) and 0xFF, t)
             val b = lerp((col0 ushr COL32_B_SHIFT) and 0xFF, (col1 ushr COL32_B_SHIFT) and 0xFF, t)
             vert.col = (r shl COL32_R_SHIFT) or (g shl COL32_G_SHIFT) or (b shl COL32_B_SHIFT) or (vert.col and COL32_A_MASK)
-        }
-    }
-
-    /** Scan and shade backward from the end of given vertices. Assume vertices are text only (= vert_start..vert_end
-     *  going left to right) so we can break as soon as we are out the gradient bounds. */
-    fun shadeVertsLinearAlphaGradientForLeftToRightText(drawList: DrawList, vertStart: Int, vertEnd: Int,
-                                                        gradientP0x: Float, gradientP1x: Float) {
-        val gradientExtentX = gradientP1x - gradientP0x
-        val gradientInvLength2 = 1f / (gradientExtentX * gradientExtentX)
-        var fullAlphaCount = 0
-        for (i in vertEnd - 1 downTo vertStart) {
-            val vert = drawList.vtxBuffer[i]
-            val d = (vert.pos.x - gradientP0x) * gradientExtentX
-            val alphaMul = 1f - glm.clamp(d * gradientInvLength2, 0f, 1f)
-            ++fullAlphaCount
-            if (alphaMul >= 1f && fullAlphaCount > 2) return // Early out
-            val a = (((vert.col ushr COL32_A_SHIFT) and 0xFF) * alphaMul).i
-            vert.col = (vert.col wo COL32_A_MASK) or (a shl COL32_A_SHIFT)
         }
     }
 

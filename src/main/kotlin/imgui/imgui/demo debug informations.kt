@@ -6,9 +6,9 @@ import glm_.toHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.begin_
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginTooltip
+import imgui.ImGui.begin_
 import imgui.ImGui.bulletText
 import imgui.ImGui.checkbox
 import imgui.ImGui.combo
@@ -23,6 +23,7 @@ import imgui.ImGui.inputFloat
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
+import imgui.ImGui.overlayDrawList
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
@@ -78,8 +79,9 @@ import imgui.WindowFlag as Wf
 interface imgui_demoDebugInformations {
 
     /** Create demo/test window.
-     *  Demonstrate most ImGui features (big function!)
-     *  Call this to learn about the library! try to make it always available in your application!   */
+     *  Demonstrate most Dear ImGui features (this is big function!)
+     *  You may execute this function to experiment with the UI and understand what it does.
+     *  You may then search for keywords in the code when you are interested by a specific feature. */
     fun showDemoWindow(open: BooleanArray) {
         showWindow = open[0]
         showDemoWindow(Companion::showWindow)
@@ -98,6 +100,7 @@ interface imgui_demoDebugInformations {
             text("%d vertices, %d indices (%d triangles)", io.metricsRenderVertices, io.metricsRenderIndices, io.metricsRenderIndices / 3)
             text("%d allocations", io.metricsAllocs)
             checkbox("Show clipping rectangles when hovering draw commands", Companion::showDrawCmdClipRects)
+            checkbox("Ctrl shows window begin order", Companion::showWindowBeginOrder)
             separator()
 
             Funcs0.nodeWindows(g.windows, "Windows")
@@ -105,7 +108,7 @@ interface imgui_demoDebugInformations {
                 g.drawDataBuilder.layers.forEach { layer -> layer.forEach { Funcs0.nodeDrawList(null, it, "DrawList") } }
                 treePop()
             }
-            if (treeNode("Popups", "Open Popups Stack (${g.openPopupStack.size})")) {
+            if (treeNode("Popups", "Popups (${g.openPopupStack.size})")) {
                 for (popup in g.openPopupStack) {
                     val window = popup.window
                     val childWindow = if (window != null && window.flags has Wf.ChildWindow) " ChildWindow" else ""
@@ -122,17 +125,30 @@ interface imgui_demoDebugInformations {
                 text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap}", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)
                 text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
-                text("MovingWindow: '${g.movingWindow?.name}'");
+                text("MovingWindow: '${g.movingWindow?.name}'")
                 text("NavWindow: '${g.navWindow?.name}'")
                 text("NavId: 0x%08X, NavLayer: ${g.navLayer}", g.navId)
                 text("NavInputSource: ${g.navInputSource}")
                 text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
                 text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
                 text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
-                text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" " +
+                text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
+                text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataTypeS}\" " +
                         "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
                 treePop()
             }
+            if (io.keyCtrl && showWindowBeginOrder)
+                for (window in g.windows) {
+                    if (window.flags has Wf.ChildWindow || !window.wasActive)
+                        continue
+                    val buf = CharArray(32)
+                    "${window.beginOrderWithinContext}".toCharArray(buf)
+                    val fontSize = fontSize * 2
+                    overlayDrawList.apply {
+                        addRectFilled(Vec2(window.pos), window.pos+ fontSize, COL32(200, 100, 100, 255))
+                        addText(null, fontSize, Vec2(window.pos), COL32(255, 255, 255, 255), buf)
+                    }
+                }
         }
         end()
     }
@@ -172,7 +188,7 @@ interface imgui_demoDebugInformations {
             - If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame().""")
     }
 
-
+    /** Helper to display basic user controls. */
     fun showUserGuide() {
         bulletText("Double-click on title bar to collapse window.")
         bulletText("Click and drag on lower right corner to resize window\n(double-click to auto fit window to its contents).")
@@ -197,9 +213,11 @@ interface imgui_demoDebugInformations {
     companion object {
 
         var showDrawCmdClipRects = true
+        var showWindowBeginOrder = false
 
         var showWindow = false
 
+        /** Helper to display a little (?) mark which shows a tooltip when hovered. */
         fun showHelpMarker(desc: String) {
             textDisabled("(?)")
             if (isItemHovered()) {
@@ -362,9 +380,12 @@ interface imgui_demoDebugInformations {
                 if (flags has Wf.Modal) builder += "Modal "
                 if (flags has Wf.ChildMenu) builder += "ChildMenu "
                 if (flags has Wf.NoSavedSettings) builder += "NoSavedSettings "
+                if (flags has Wf.NoInputs) builder += "NoInputs"
+                if (flags has Wf.AlwaysAutoResize) builder += "AlwaysAutoResize"
                 bulletText("Flags: 0x%08X ($builder..)", flags)
                 bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f)", window.scroll.x, window.scrollMaxX, window.scroll.y, window.scrollMaxY)
-                bulletText("Active: ${window.active}, WriteAccessed: ${window.writeAccessed}")
+                val order = if (window.active || window.wasActive) window.beginOrderWithinContext else -1
+                bulletText("Active: ${window.active}/${window.wasActive}, WriteAccessed: ${window.writeAccessed} BeginOrderWithinContext: $order")
                 bulletText("NavLastIds: 0x%08X,0x%08X, NavLayerActiveMask: %X", window.navLastIds[0], window.navLastIds[1], window.dc.navLayerActiveMask)
                 bulletText("NavLastChildNavWindow: ${window.navLastChildNavWindow?.name}")
                 if (!window.navRectRel[0].isInverted)

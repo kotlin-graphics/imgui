@@ -13,7 +13,7 @@ group = 'com.github.kotlin-graphics'
 
 buildscript {
 
-    ext.kotlinVersion = '1.2.50'
+    ext.kotlinVersion = '1.2.51'
 
     repositories {
         jcenter()   // shadow
@@ -24,7 +24,7 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.3'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
         classpath "org.junit.platform:junit-platform-gradle-plugin:1.1.0"
     }
 }
@@ -33,7 +33,7 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-    implementation 'com.github.kotlin-graphics:uno-sdk:9d3a02f'
+    implementation 'com.github.kotlin-graphics:uno-sdk:86ee602'
 
     testImplementation 'io.kotlintest:kotlintest-runner-junit5:3.0.6'
 
