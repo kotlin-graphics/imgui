@@ -250,7 +250,7 @@ Embeds [stb_textedit.h, stb_truetype.h, stb_rectpack.h](https://github.com/nothi
 
 Inspiration, feedback, and testing for early versions: Casey Muratori, Atman Binstock, Mikko Mononen, Emmanuel Briney, Stefan Kamoda, Anton Mikhailov, Matt Willis. And everybody posting feedback, questions and patches on the GitHub.
 
-Ongoing native dear imgui development is financially supported on [**Patreon**](http://www.patreon.com/imgui) and by private sponsors. Kotlin imgui [here](https://www.patreon.com/jvmImGui)
+Ongoing native dear imgui development is financially supported on [**Patreon**](http://www.patreon.com/imgui) and by private sponsors (Kotlin imgui [here](https://www.patreon.com/jvmImGui))
 
 Double-chocolate native sponsors:
 - Blizzard Entertainment
@@ -262,6 +262,8 @@ Double-chocolate native sponsors:
 - Greggman
 - DotEmu
 - Nadeo
+
+and many other [private persons](https://github.com/ocornut/imgui#credits)
 
 License
 -------
