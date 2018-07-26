@@ -1,5 +1,6 @@
 package imgui.imgui
 
+import glm_.size
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginDragDropTooltip
@@ -11,11 +12,21 @@ import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.setActiveId
 import imgui.internal.*
+import uno.kotlin.buffers.fill
+import java.nio.ByteBuffer
 import imgui.DragDropFlag as Ddf
 
 /** Drag and Drop
  *  [BETA API] Missing Demo code. API may evolve. */
 interface imgui_dragAndDrop {
+
+    /** Call when the current item is active. If this return true, you can call SetDragDropPayload() + EndDragDropSource()
+     *
+     *  When this returns true you need to:
+     *      a) call setDragDropPayload() exactly once
+     *      b) you may render the payload visual/description,
+     *      c) call endDragDropSource()     */
+    fun beginDragDropSource(flag: Ddf): Boolean = beginDragDropSource(flag.i)
 
     /** Call when the current item is active. If this return true, you can call SetDragDropPayload() + EndDragDropSource()
      *
@@ -61,7 +72,7 @@ interface imgui_dragAndDrop {
                     window.focus()
                 }
                 // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.
-                g.activeIdAllowOverlap = when(g.activeId) {
+                g.activeIdAllowOverlap = when (g.activeId) {
                     sourceId -> isHovered
                     else -> false
                 }
@@ -93,7 +104,8 @@ interface imgui_dragAndDrop {
                  */
                 beginDragDropTooltip()
                 if (g.dragDropActive && g.dragDropAcceptIdPrev != 0 && g.dragDropAcceptFlags has Ddf.AcceptNoPreviewTooltip)
-                    g.currentWindow!!.apply { // tooltipWindow
+                    g.currentWindow!!.apply {
+                        // tooltipWindow
                         skipItems = true
                         hiddenFrames = 1
                     }
@@ -108,8 +120,9 @@ interface imgui_dragAndDrop {
     }
 
     /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
-     *  Data is copied and held by imgui. */
-    fun setDragDropPayload(type: String, data: Vec4, dataSize: Int, cond_: Cond = Cond.Null): Boolean {
+     *  Data is copied and held by imgui.
+     *  Use 'cond' to choose to submit payload on drag start or every frame */
+    fun setDragDropPayload(type: String, data: Any, dataSize: Int, cond_: Cond = Cond.Null): Boolean {
         val payload = g.dragDropPayload
         val cond = if (cond_ == Cond.Null) Cond.Always else cond_
 
@@ -121,23 +134,28 @@ interface imgui_dragAndDrop {
 
         if (cond == Cond.Always || payload.dataFrameCount == -1) {
             // Copy payload
-            payload.dataType = type
-//            g.dragDropPayloadBufHeap.resize(0)
-            TODO()
-//            if (data_size > sizeof(g.dragDropPayloadBufLocal)) {
-//                // Store in heap
-//                g.DragDropPayloadBufHeap.resize((int) data_size)
-//                payload.Data = g.DragDropPayloadBufHeap.Data
-//                memcpy((void *) payload . Data, data, data_size)
-//            } else if (data_size > 0) {
-//                // Store locally
-//                memset(& g . DragDropPayloadBufLocal, 0, sizeof(g.DragDropPayloadBufLocal))
-//                payload.Data = g.DragDropPayloadBufLocal
-//                memcpy((void *) payload . Data, data, data_size)
-//            } else {
-//                payload.Data = NULL
-//            }
-//            payload.DataSize = (int) data_size
+            type.toCharArray(payload.dataType)
+            g.dragDropPayloadBufHeap = ByteBuffer.allocate(0)
+            when {
+                dataSize > g.dragDropPayloadBufLocal.size -> { // Store in heap
+                    g.dragDropPayloadBufHeap = ByteBuffer.allocate(dataSize)
+                    payload.data = g.dragDropPayloadBufHeap
+                    when (data) {
+                        is Int -> payload.data!!.putInt(0, data)
+                        is Vec4 -> data to payload.data!!
+                    }
+                }
+                dataSize > 0 -> { // Store locally
+                    g.dragDropPayloadBufLocal.fill(0)
+                    payload.data = g.dragDropPayloadBufLocal
+                    when (data) {
+                        is Int -> payload.data!!.putInt(0, data)
+                        is Vec4 -> data to payload.data!!
+                    }
+                }
+                else -> payload.data = null
+            }
+            payload.dataSize = dataSize
         }
         payload.dataFrameCount = g.frameCount
 

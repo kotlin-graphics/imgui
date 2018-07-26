@@ -1,6 +1,7 @@
 package imgui.imgui.demo
 
 import gli_.has
+import glm_.BYTES
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -9,9 +10,13 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.arrowButton
+import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginCombo
+import imgui.ImGui.beginDragDropSource
 import imgui.ImGui.beginDragDropTarget
+import imgui.ImGui.beginPopupContextItem
+import imgui.ImGui.begin_
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -36,9 +41,12 @@ import imgui.ImGui.dragInt2
 import imgui.ImGui.dragInt3
 import imgui.ImGui.dragInt4
 import imgui.ImGui.dragIntRange2
+import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endCombo
+import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endDragDropTarget
+import imgui.ImGui.endPopup
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
 import imgui.ImGui.imageButton
@@ -68,17 +76,23 @@ import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectMin
 import imgui.ImGui.labelText
 import imgui.ImGui.listBox
+import imgui.ImGui.menuItem
 import imgui.ImGui.newLine
 import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.plotLines
+import imgui.ImGui.popButtonRepeat
+import imgui.ImGui.popId
 import imgui.ImGui.progressBar
+import imgui.ImGui.pushButtonRepeat
+import imgui.ImGui.pushId
 import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setColorEditOptions
+import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderAngle
@@ -131,6 +145,7 @@ import imgui.WindowFlag as Wf
 object widgets {
 
     /* Basic */
+    var counter = 0
     var clicked = 0
     var check = true
     var e = 0
@@ -242,7 +257,7 @@ object widgets {
 
     /* Plots Widgets */
     var animate = true
-    var refreshTime = 0f
+    var refreshTime = 0.0
     val values0 = FloatArray(90)
     var valuesOffset = 0
     var phase = 0f
@@ -257,6 +272,16 @@ object widgets {
     var progress = 0f
     var progressDir = 1f
 
+    // Drag and Drop
+    val col3 = floatArrayOf(1f, 0f, 0.2f)
+    val col4 = floatArrayOf(0.4f, 0.7f, 0f, 0.5f)
+
+    enum class Mode { Copy, Move, Swap }
+
+    var mode = Mode.Copy
+
+    val names = arrayOf("Bobby", "Beatrice", "Betty", "Brianna", "Barry", "Bernard", "Bibi", "Blaine", "Bryn")
+
 
     /* Vertical Sliders */
     var spacing = 4f
@@ -270,6 +295,7 @@ object widgets {
     val col = Vec4(1f, 0.5, 0f, 1f)
     var currentItem1 = 1
     var embedAllInsideAChildWindow = false
+    var testWindow = false
 
     operator fun invoke() {
 
@@ -301,9 +327,13 @@ object widgets {
 
                 // Arrow buttons
                 val spacing = style.itemInnerSpacing.x
-                if (arrowButton("##left", Dir.Left)) Unit
+                pushButtonRepeat(true)
+                if (arrowButton("##left", Dir.Left)) counter--
                 sameLine(0f, spacing)
-                if (arrowButton("##left", Dir.Right)) Unit
+                if (arrowButton("##right", Dir.Right)) counter++
+                popButtonRepeat()
+                sameLine()
+                text("$counter")
 
                 text("Hover over me")
                 if (isItemHovered()) setTooltip("I am a tooltip")
@@ -680,7 +710,7 @@ object widgets {
                     Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float
                     and the sizeof() of your structure in the Stride parameter.
                  */
-                if (!animate || refreshTime == 0f) refreshTime = time
+                if (!animate || refreshTime == 0.0) refreshTime = time
                 while (refreshTime < time) { // Create dummy data at fixed 60 hz rate for the demo
                     values0[valuesOffset] = cos(phase)
                     valuesOffset = (valuesOffset + 1) % values0.size
@@ -1010,6 +1040,70 @@ object widgets {
                 }
             }
 
+            treeNode("Drag and Drop") {
+                run {
+                    /*  ColorEdit widgets automatically act as drag source and drag target.
+                        They are using standardized payload strings IMGUI_PAYLOAD_TYPE_COLOR_3F and IMGUI_PAYLOAD_TYPE_COLOR_4F to allow your own widgets
+                        to use colors in their drag and drop interaction. Also see the demo in Color Picker -> Palette demo. */
+                    bulletText("Drag and drop in standard widgets")
+                    indent()
+                    colorEdit3("color 1", col3)
+                    colorEdit4("color 2", col4)
+                    unindent()
+                }
+
+                run {
+                    bulletText("Drag and drop to copy/swap items")
+                    indent()
+                    if (radioButton("Copy", mode == Mode.Copy))
+                        mode = Mode.Copy
+                    sameLine()
+                    if (radioButton("Move", mode == Mode.Move))
+                        mode = Mode.Move
+                    sameLine()
+                    if (radioButton("Swap", mode == Mode.Swap))
+                        mode = Mode.Swap
+                    names.forEachIndexed { n, name ->
+                        pushId(n)
+                        if ((n % 3) != 0) sameLine()
+                        button(name, Vec2(60))
+
+                        // Our buttons are both drag sources and drag targets here!
+                        if (beginDragDropSource(DragDropFlag.None)) {
+                            setDragDropPayload("DND_DEMO_CELL", n, Int.BYTES)        // Set payload to carry the index of our item (could be anything)
+                            when (mode) {
+                            // Display preview (could be anything, e.g. when dragging an image we could decide to display the filename and a small preview of the image, etc.)
+                                Mode.Copy -> text("Copy $name")
+                                Mode.Move -> text("Move $name")
+                                Mode.Swap -> text("Swap $name")
+                            }
+                            endDragDropSource()
+                        }
+                        if (beginDragDropTarget()) {
+                            acceptDragDropPayload("DND_DEMO_CELL")?.let { payload ->
+                                assert(payload.dataSize == Int.BYTES)
+                                val payloadN = payload.data!!.getInt(0)
+                                when (mode) {
+                                    Mode.Copy -> names[n] = names[payloadN]
+                                    Mode.Move -> {
+                                        names[n] = names[payloadN]
+                                        names[payloadN] = ""
+                                    }
+                                    Mode.Swap -> {
+                                        val tmp = names[n]
+                                        names[n] = names[payloadN]
+                                        names[payloadN] = tmp
+                                    }
+                                }
+                            }
+                            endDragDropTarget()
+                        }
+                        popId()
+                    }
+                    unindent()
+                }
+            }
+
             treeNode("Active, Focused, Hovered & Focused Tests") {
                 /*  Display the value of IsItemHovered() and other common item state functions. Note that the flags can be combined.
                     (because BulletText is an item itself and that would affect the output of ::isItemHovered
@@ -1068,6 +1162,22 @@ object widgets {
                 endChild()
                 if (embedAllInsideAChildWindow)
                     endChild()
+
+                /*  Calling IsItemHovered() after begin returns the hovered status of the title bar.
+                    This is useful in particular if you want to create a context menu (with BeginPopupContextItem)
+                    associated to the title bar of a window.                 */
+                checkbox("Hovered/Active tests after Begin() for title bar testing", ::testWindow)
+                if (testWindow) {
+                    begin_("Title bar Hovered/Active tests", ::testWindow)
+                    if (beginPopupContextItem()) { // <-- This is using IsItemHovered()
+                        if (menuItem("Close")) testWindow = false
+                        endPopup()
+                    }
+                    text(
+                            "IsItemHovered() after begin = ${isItemHovered()} (== is title bar hovered)\n" +
+                                    "IsItemActive() after begin = $isItemActive (== is window being clicked/moved)")
+                    end()
+                }
             }
         }
     }

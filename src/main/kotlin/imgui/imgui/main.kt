@@ -10,22 +10,24 @@ import imgui.ImGui.buttonBehavior
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.closePopupsOverWindow
+import imgui.ImGui.defaultFont
 import imgui.ImGui.end
 import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.keepAliveId
-import imgui.ImGui.newFrameUpdateHoveredWindowAndCaptureFlags
 import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
-import imgui.ImGui.setActiveId
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.updateHoveredWindowAndCaptureFlags
+import imgui.ImGui.updateMouseMovingWindow
 import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
 import imgui.imgui.imgui_internal.Companion.roundScalarWithFormat
 import imgui.internal.*
+import uno.kotlin.buffers.fill
+import java.nio.ByteBuffer
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
@@ -72,6 +74,10 @@ interface imgui_main {
         if (io.configFlags has Cf.NavEnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
+        // The beta io.OptResizeWindowsFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
+        if (io.optResizeWindowsFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
+            io.optResizeWindowsFromEdges = false
+
         // Load settings on first frame (if not explicitly loaded manually before)
         if (!g.settingsLoaded) {
             assert(g.settingsWindows.isEmpty())
@@ -97,6 +103,8 @@ interface imgui_main {
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
 
+        // Setup current font and draw list
+        io.fonts.locked = true
         setCurrentFont(defaultFont)
         assert(g.font.isLoaded)
         g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
@@ -133,8 +141,8 @@ interface imgui_main {
         // Elapse drag & drop payload
         if (g.dragDropActive && g.dragDropPayload.dataFrameCount + 1 < g.frameCount) {
             clearDragDrop()
-            g.dragDropPayloadBufHeap.clear()
-            g.dragDropPayloadBufLocal.fill(0.b)
+            g.dragDropPayloadBufHeap = ByteBuffer.allocate(0)
+            g.dragDropPayloadBufLocal.fill(0)
         }
         g.dragDropAcceptIdPrev = g.dragDropAcceptIdCurr
         g.dragDropAcceptIdCurr = 0
@@ -167,12 +175,12 @@ interface imgui_main {
         }
 
         // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering)
-        updateMovingWindow()
-        newFrameUpdateHoveredWindowAndCaptureFlags()
+        updateMouseMovingWindow()
+        updateHoveredWindowAndCaptureFlags()
 
-        g.modalWindowDarkeningRatio = when (frontMostPopupModal) {
-            null -> 0f
-            else -> min(g.modalWindowDarkeningRatio + io.deltaTime * 6f, 1f)
+        g.dimBgRatio = when {
+            frontMostPopupModal != null || g.navWindowingTarget != null -> (g.dimBgRatio + io.deltaTime * 6f) min 1f
+            else -> 0f
         }
         g.mouseCursor = MouseCursor.Arrow
         g.wantTextInputNextFrame = -1
@@ -181,44 +189,7 @@ interface imgui_main {
         g.platformImePos put 1f // OS Input Method Editor showing on top-left of our window by default
 
         // Mouse wheel scrolling, scale
-        g.hoveredWindow?.let { window ->
-            if (!window.collapsed && (io.mouseWheel != 0f || io.mouseWheelH != 0f)) {
-                // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent (unless either ImGuiWindowFlags_NoInputs or ImGuiWindowFlags_NoScrollbar are also set).
-                var scrollWindow = window
-                while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
-                        scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
-                    scrollWindow = scrollWindow.parentWindow!!
-                val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs
-
-                if (io.mouseWheel != 0f) {
-                    if (io.keyCtrl && io.fontAllowUserScaling) {
-                        // Zoom / Scale window
-                        val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
-                        val scale = newFontScale / window.fontWindowScale
-                        window.fontWindowScale = newFontScale
-
-                        val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
-                        window.apply {
-                            pos plusAssign offset
-                            size timesAssign scale
-                            sizeFull timesAssign scale
-                        }
-                    } else if (!io.keyCtrl && scrollAllowed) {
-                        // Mouse wheel vertical scrolling
-                        var scrollAmount = 5 * scrollWindow.calcFontSize()
-                        val amount = scrollWindow.contentsRegionRect.height + scrollWindow.windowPadding.y * 2f
-                        scrollAmount = min(scrollAmount, amount * 0.67f).i.f
-                        scrollWindow.setScrollY(scrollWindow.scroll.y - io.mouseWheel * scrollAmount)
-                    }
-                }
-                if (io.mouseWheelH != 0f && scrollAllowed) {
-                    // Mouse wheel horizontal scrolling (for hardware that supports it)
-                    val scrollAmount = scrollWindow.calcFontSize()
-                    if (!io.keyCtrl && window.flags hasnt Wf.NoScrollWithMouse)
-                        window.setScrollX(window.scroll.x - io.mouseWheelH * scrollAmount)
-                }
-            }
-        }
+        updateMouseWheel()
 
         // Pressing TAB activate widget focus
         if (g.activeId == 0)
@@ -263,10 +234,11 @@ interface imgui_main {
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
-        if (/*io.imeSetInputScreenPosFn &&*/ (g.platformImePos - g.osImePosSet).lengthSqr > 0.0001f) {
-//            (LwjglGlfw.windowProc!! as WindowProc).in
-//            g.io.ImeSetInputScreenPosFn((int) g . OsImePosRequest . x, (int) g . OsImePosRequest . y)
-            g.osImePosSet put g.platformImePos
+        if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f) {
+            println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
+//            io.imeSetInputScreenPosFn!!(g.platformImePos.x.i, g.platformImePos.y.i)
+            io.imeSetInputScreenPosFn!!(1000, 1000)
+            g.platformImeLastPos put g.platformImePos
         }
 
         // Hide implicit "Debug" window if it hasn't been used
@@ -277,20 +249,18 @@ interface imgui_main {
 
         end()
 
+        // Show CTRL+TAB list
+        if (g.navWindowingTarget != null)
+            navUpdateWindowingList()
+
+        // Initiate moving window
         if (g.activeId == 0 && g.hoveredId == 0)
             if (g.navWindow == null || !g.navWindow!!.appearing) { // Unless we just made a window/popup appear
                 // Click to focus window and start moving (after we're done with all our widgets)
                 if (io.mouseClicked[0])
-                    if (g.hoveredRootWindow != null) {
-                        /*  Set ActiveId even if the _NoMove flag is set, without it dragging away from a window
-                            with _NoMove would activate hover on other windows.                         */
-                        g.hoveredWindow.focus()
-                        setActiveId(g.hoveredWindow!!.moveId, g.hoveredWindow)
-                        g.navDisableHighlight = true
-                        g.activeIdClickOffset = io.mousePos - g.hoveredRootWindow!!.pos
-                        if (g.hoveredWindow!!.flags hasnt Wf.NoMove && g.hoveredRootWindow!!.flags hasnt Wf.NoMove)
-                            g.movingWindow = g.hoveredWindow
-                    } else if (g.navWindow != null && frontMostPopupModal == null)
+                    if (g.hoveredRootWindow != null)
+                        g.hoveredWindow!!.startMouseMoving()
+                    else if (g.navWindow != null && frontMostPopupModal == null)
                         null.focus()   // Clicking on void disable focus
 
                 /*  With right mouse button we close popups without changing focus
@@ -323,6 +293,9 @@ interface imgui_main {
         g.windows.clear()
         g.windows += g.windowsSortBuffer
 
+        // Unlock font atlas
+        io.fonts.locked = false
+
         // Clear Input data for next frame
         io.mouseWheel = 0f
         io.mouseWheelH = 0f
@@ -342,49 +315,47 @@ interface imgui_main {
         if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount
 
-        /*  Skip render altogether if alpha is 0.0
-            Note that vertex buffers have been created and are wasted, so it is best practice that you don't create
-            windows in the first place, or consistently respond to Begin() returning false. */
-        if (style.alpha > 0f) {
-            // Gather windows to render
-            io.metricsActiveWindows = 0
-            io.metricsRenderIndices = 0
-            io.metricsRenderVertices = 0
-            g.drawDataBuilder.clear()
-            val windowToRenderFrontMost = g.navWindowingTarget.takeIf {
-                it?.flags?.hasnt(Wf.NoBringToFrontOnFocus) ?: false
-            }
-            g.windows.filter { it.active && it.hiddenFrames == 0 && it.flags hasnt Wf.ChildWindow && it !== windowToRenderFrontMost }
-                    .map(Window::addToDrawDataSelectLayer)
-            windowToRenderFrontMost?.let {
-                if (it.active && it.hiddenFrames == 0) // NavWindowingTarget is always temporarily displayed as the front-most window
-                    it.addToDrawDataSelectLayer()
-            }
-            g.drawDataBuilder.flattenIntoSingleLayer()
+        // Gather windows to render
+        io.metricsActiveWindows = 0
+        io.metricsRenderIndices = 0
+        io.metricsRenderVertices = 0
+        g.drawDataBuilder.clear()
+        val windowsToRenderFrontMost = arrayOf(
+                g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
+                g.navWindowingList.getOrNull(0).takeIf { g.navWindowingTarget != null })
+        g.windows
+                .filter { it.isActiveAndVisible && it.flags hasnt Wf.ChildWindow && it !== windowsToRenderFrontMost[0] && it !== windowsToRenderFrontMost[1] }
+                .forEach { it.addToDrawDataSelectLayer() }
+        windowsToRenderFrontMost
+                .filterNotNull()
+                .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the front-most window
+                .forEach { it.addToDrawDataSelectLayer() }
+        g.drawDataBuilder.flattenIntoSingleLayer()
 
-            // Draw software mouse cursor if requested
-            val offset = Vec2()
-            val size = Vec2()
-            val uv = Array(4) { Vec2() }
-            if (io.mouseDrawCursor && io.fonts.getMouseCursorTexData(g.mouseCursor, offset, size, uv)) {
-                val pos = io.mousePos - offset
-                val texId = io.fonts.texId
-                val sc = style.mouseCursorScale
-                g.overlayDrawList.pushTextureId(texId)
-                g.overlayDrawList.addImage(texId, pos + Vec2(1, 0) * sc, pos + Vec2(1, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
-                g.overlayDrawList.addImage(texId, pos + Vec2(2, 0) * sc, pos + Vec2(2, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
-                g.overlayDrawList.addImage(texId, pos, pos + size * sc, uv[2], uv[3], COL32(0, 0, 0, 255))       // Black border
-                g.overlayDrawList.addImage(texId, pos, pos + size * sc, uv[0], uv[1], COL32(255, 255, 255, 255)) // White fill
-                g.overlayDrawList.popTextureId()
+        // Draw software mouse cursor if requested
+        val offset = Vec2()
+        val size = Vec2()
+        val uv = Array(4) { Vec2() }
+        if (io.mouseDrawCursor && io.fonts.getMouseCursorTexData(g.mouseCursor, offset, size, uv)) {
+            val pos = io.mousePos - offset
+            val texId = io.fonts.texId
+            val sc = style.mouseCursorScale
+            g.overlayDrawList.apply {
+                pushTextureId(texId)
+                addImage(texId, pos + Vec2(1, 0) * sc, pos + Vec2(1, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
+                addImage(texId, pos + Vec2(2, 0) * sc, pos + Vec2(2, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
+                addImage(texId, pos, pos + size * sc, uv[2], uv[3], COL32(0, 0, 0, 255))       // Black border
+                addImage(texId, pos, pos + size * sc, uv[0], uv[1], COL32(255, 255, 255, 255)) // White fill
+                popTextureId()
             }
-            if (g.overlayDrawList.vtxBuffer.isNotEmpty())
-                g.overlayDrawList addTo g.drawDataBuilder.layers[0]
-
-            // Setup ImDrawData structure for end-user
-            setupDrawData(g.drawDataBuilder.layers[0], g.drawData)
-            io.metricsRenderVertices = g.drawData.totalVtxCount
-            io.metricsRenderIndices = g.drawData.totalIdxCount
         }
+        if (g.overlayDrawList.vtxBuffer.isNotEmpty())
+            g.overlayDrawList addTo g.drawDataBuilder.layers[0]
+
+        // Setup ImDrawData structure for end-user
+        setupDrawData(g.drawDataBuilder.layers[0], g.drawData)
+        io.metricsRenderVertices = g.drawData.totalVtxCount
+        io.metricsRenderIndices = g.drawData.totalIdxCount
     }
 
     /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
@@ -392,38 +363,6 @@ interface imgui_main {
     val drawData get() = g.drawData.takeIf { it.valid }
 
     companion object {
-
-        fun updateMovingWindow() {
-
-            val mov = g.movingWindow
-            if (mov != null) {
-                /*  We actually want to move the root window. g.movingWindow === window we clicked on
-                    (could be a child window).
-                    We track it to preserve Focus and so that generally activeIdWindow === movingWindow and
-                    activeId == movingWindow.moveId for consistency.    */
-                keepAliveId(g.activeId)
-                assert(mov.rootWindow != null)
-                val movingWindow = mov.rootWindow!!
-                if (io.mouseDown[0] && isMousePosValid(io.mousePos)) {
-                    val pos = io.mousePos - g.activeIdClickOffset
-                    if (movingWindow.pos.x.f != pos.x || movingWindow.pos.y.f != pos.y) {
-                        movingWindow.markIniSettingsDirty()
-                        movingWindow.setPos(pos, Cond.Always)
-                    }
-                    mov.focus()
-                } else {
-                    clearActiveId()
-                    g.movingWindow = null
-                }
-            } else
-            /*  When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order
-                to prevent hovering others.                 */
-                if (g.activeIdWindow?.moveId == g.activeId) {
-                    keepAliveId(g.activeId)
-                    if (!io.mouseDown[0])
-                        clearActiveId()
-                }
-        }
 
         fun updateMouseInputs() {
             with(io) {
@@ -449,14 +388,14 @@ interface imgui_main {
                     }
                     mouseDoubleClicked[i] = false
                     if (mouseClicked[i]) {
-                        if (g.time - mouseClickedTime[i] < mouseDoubleClickTime) {
+                        if (g.time - mouseClickedTime[i] < mouseDoubleClickTime) { // TODO check if ok or (g.time - mouseClickedTime[i]).f
                             val deltaFromClickPos = when {
                                 isMousePosValid(io.mousePos) -> io.mousePos - io.mouseClickedPos[i]
                                 else -> Vec2()
                             }
                             if (deltaFromClickPos.lengthSqr < io.mouseDoubleClickMaxDist * io.mouseDoubleClickMaxDist)
                                 mouseDoubleClicked[i] = true
-                            mouseClickedTime[i] = -Float.MAX_VALUE    // so the third click isn't turned into a double-click
+                            mouseClickedTime[i] = -Double.MAX_VALUE    // so the third click isn't turned into a double-click
                         } else
                             mouseClickedTime[i] = g.time
                         mouseClickedPos[i] put mousePos
@@ -489,6 +428,42 @@ interface imgui_main {
             }
         }
 
+        fun updateMouseWheel() {
+            val window = g.hoveredWindow
+            if (window == null || window.collapsed) return
+            if (io.mouseWheel == 0f && io.mouseWheelH == 0f) return
+
+            // If a child window has the Wf.NoScrollWithMouse flag, we give a chance to scroll its parent (unless either Wf.NoInputs or Wf.NoScrollbar are also set).
+            var scrollWindow: Window = window
+            while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
+                    scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
+                scrollWindow = scrollWindow.parentWindow!!
+            val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs
+
+            if (io.mouseWheel != 0f)
+                if (io.keyCtrl && io.fontAllowUserScaling) {
+                    // Zoom / Scale window
+                    val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
+                    val scale = newFontScale / window.fontWindowScale
+                    window.fontWindowScale = newFontScale
+
+                    val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
+                    window.pos plusAssign offset
+                    window.size timesAssign scale
+                    window.sizeFull timesAssign scale
+                } else if (!io.keyCtrl && scrollAllowed) {
+                    // Mouse wheel vertical scrolling
+                    var scrollAmount = 5 * scrollWindow.calcFontSize()
+                    scrollAmount = min(scrollAmount, (scrollWindow.contentsRegionRect.height + scrollWindow.windowPadding.y * 2f) * 0.67f).i.f
+                    scrollWindow.setScrollY(scrollWindow.scroll.y - io.mouseWheel * scrollAmount)
+                }
+            if (io.mouseWheelH != 0f && scrollAllowed && !io.keyCtrl) {
+                // Mouse wheel horizontal scrolling (for hardware that supports it)
+                val scrollAmount = scrollWindow.calcFontSize()
+                scrollWindow.setScrollX(scrollWindow.scroll.x - io.mouseWheelH * scrollAmount)
+            }
+        }
+
         /** Handle resize for: Resize Grips, Borders, Gamepad
          * @return borderHelf   */
         fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int, resizeGripCol: IntArray): Int {
@@ -499,7 +474,7 @@ interface imgui_main {
             if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0)
                 return borderHeld
 
-            val resizeBorderCount = if (flags has Wf.ResizeFromAnySide) 4 else 0
+            val resizeBorderCount = if (io.optResizeWindowsFromEdges) 4 else 0
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             val gripHoverSize = (gripDrawSize * 0.75f).i.f
 
@@ -522,7 +497,7 @@ interface imgui_main {
                 if (hovered || held)
                     g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
 
-                if (g.hoveredWindow === window && held && g.io.mouseDoubleClicked[0] && resizeGripN == 0) {
+                if (held && g.io.mouseDoubleClicked[0] && resizeGripN == 0) {
                     // Manual auto-fit when double-clicking
                     sizeTarget put window.calcSizeAfterConstraint(sizeAutoFit)
                     clearActiveId()
@@ -571,7 +546,7 @@ interface imgui_main {
             popId()
 
             // Navigation resize (keyboard/gamepad)
-            if (g.navWindowingTarget === window) {
+            if (g.navWindowingTarget?.rootWindow === window) {
                 val navResizeDelta = Vec2()
                 if (g.navInputSource == InputSource.NavKeyboard && g.io.keyShift)
                     navResizeDelta put getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)
@@ -641,8 +616,7 @@ interface imgui_main {
                     adjustDelta *= 1f / 100f
                 if (io.keyShift)
                     adjustDelta *= 10f
-            }
-            if (g.activeIdSource == InputSource.Nav) {
+            } else if (g.activeIdSource == InputSource.Nav) {
                 val decimalPrecision = when (dataType) {
                     DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
                     else -> 0
@@ -730,8 +704,7 @@ interface imgui_main {
                     adjustDelta *= 1f / 100f
                 if (io.keyShift)
                     adjustDelta *= 10f
-            }
-            if (g.activeIdSource == InputSource.Nav) {
+            } else if (g.activeIdSource == InputSource.Nav) {
                 val decimalPrecision = when (dataType) {
                     DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
                     else -> 0
@@ -819,8 +792,7 @@ interface imgui_main {
                     adjustDelta *= 1f / 100f
                 if (io.keyShift)
                     adjustDelta *= 10f
-            }
-            if (g.activeIdSource == InputSource.Nav) {
+            } else if (g.activeIdSource == InputSource.Nav) {
                 val decimalPrecision = when (dataType) {
                     DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
                     else -> 0
@@ -908,8 +880,7 @@ interface imgui_main {
                     adjustDelta *= 1f / 100f
                 if (io.keyShift)
                     adjustDelta *= 10f
-            }
-            if (g.activeIdSource == InputSource.Nav) {
+            } else if (g.activeIdSource == InputSource.Nav) {
                 val decimalPrecision = when (dataType) {
                     DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
                     else -> 0

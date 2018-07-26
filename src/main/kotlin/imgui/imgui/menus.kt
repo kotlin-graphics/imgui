@@ -12,6 +12,7 @@ import imgui.ImGui.begin
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginPopupEx
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end

@@ -6,6 +6,8 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.internal.*
+import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.Platform
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
@@ -30,7 +32,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var drawListSharedData = DrawListSharedData()
 
-    var time = 0f
+    var time = 0.0
 
     var frameCount = 0
 
@@ -145,6 +147,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed front-most.   */
     var navWindowingTarget: Window? = null
 
+    val navWindowingList = ArrayList<Window>()
+
     var navWindowingHighlightTimer = 0f
 
     var navWindowingHighlightAlpha = 0f
@@ -204,8 +208,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var drawData = DrawData()
 
     val drawDataBuilder = DrawDataBuilder()
-
-    var modalWindowDarkeningRatio = 0f
+    /** 0.0..1.0 animation when fading in a dimming background (for modal window and CTRL+TAB list) */
+    var dimBgRatio = 0f
     /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
     var overlayDrawList = DrawList(null).apply {
         _data = drawListSharedData
@@ -240,9 +244,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Last time a target expressed a desire to accept the source */
     var dragDropAcceptFrameCount = -1
     /** We don't expose the ImVector<> directly */
-    lateinit var dragDropPayloadBufHeap: ByteBuffer
+    var dragDropPayloadBufHeap = ByteBuffer.allocate(0)
     /** Local buffer for small payloads */
-    var dragDropPayloadBufLocal = ByteArray(8)
+    var dragDropPayloadBufLocal = ByteBuffer.allocate(8)
 
     //------------------------------------------------------------------
     // Widget state
@@ -273,10 +277,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Cursor position request to the OS Input Method Editor   */
     var platformImePos = Vec2(Float.MAX_VALUE)
     /** Last cursor position passed to the OS Input Method Editor   */
-    var osImePosSet = Vec2(Float.MAX_VALUE)
+    var platformImeLastPos = Vec2(Float.MAX_VALUE)
 
     var imeInProgress = false
-    var imeLastKey = 0
+//    var imeLastKey = 0
 
     //------------------------------------------------------------------
     // Settings
@@ -454,7 +458,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var displayVisibleMax = Vec2()
 
     //------------------------------------------------------------------
-    // Advanced/subtle behaviors
+    // Miscellaneous options
     //------------------------------------------------------------------
 
     /** = defined(__APPLE__), OS X style: Text editing cursor movement using Alt instead of Ctrl, Shortcuts using
@@ -463,6 +467,10 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var optMacOSXBehaviors = false  // JVM TODO
     /** Enable blinking cursor, for users who consider it annoying. */
     var optCursorBlink = true
+    /** [BETA] Enable resizing of windows from their edges and from the lower-left corner.
+     *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
+     *  (This used to be the WindowFlag.ResizeFromAnySide flag) */
+    var optResizeWindowsFromEdges = false
 
     //------------------------------------------------------------------
     // User Functions
@@ -473,7 +481,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var getClipboardTextFn: ((userData: Any) -> Unit)? = null
     var setClipboardTextFn: ((userData: Any, text: String) -> Unit)? = null
     lateinit var clipboardUserData: Any
-    //
+
 //    // Optional: override memory allocations. MemFreeFn() may be called with a NULL pointer.
 //    // (default to posix malloc/free)
 //    void*       (*MemAllocFn)(size_t sz);
@@ -481,17 +489,17 @@ class IO(sharedFontAtlas: FontAtlas?) {
 //
     // Optional: notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
     // (default to use native imm32 api on Windows)
-//    var imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = null
+    val imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = imeSetInputScreenPosFn_Win32.takeIf { Platform.get() == Platform.WINDOWS }
     /** (Windows) Set this to your HWND to get automatic IME cursor positioning.    */
-    var imeWindowHandle = 0L
-//
-//    //------------------------------------------------------------------
-//    // Input - Fill before calling NewFrame()
-//    //------------------------------------------------------------------
+    var imeWindowHandle = NULL
+
+    //------------------------------------------------------------------
+    // Input - Fill before calling NewFrame()
+    //------------------------------------------------------------------
 
     /** Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)  */
     var mousePos = Vec2(-Float.MAX_VALUE)
-    /** Mouse buttons: left, right, middle + extras. ImGui itself mostly only uses left button (BeginPopupContext** are
+    /** Mouse buttons: 0=left, 1=right, 2=middle + extras. ImGui itself mostly only uses left button (BeginPopupContext** are
     using right button). Others buttons allows us to track if the mouse is being used by your application +
     available to user as a convenience via IsMouse** API.   */
     val mouseDown = BooleanArray(5)
@@ -585,7 +593,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** Position at time of clicking    */
     val mouseClickedPos = Array(5) { Vec2() }
     /** Time of last click (used to figure out double-click)    */
-    val mouseClickedTime = FloatArray(5)
+    val mouseClickedTime = DoubleArray(5)
     /** Mouse button went from !Down to Down    */
     val mouseClicked = BooleanArray(5)
     /** Has mouse button been double-clicked?    */
@@ -611,20 +619,6 @@ class IO(sharedFontAtlas: FontAtlas?) {
     val navInputsDownDuration = FloatArray(NavInput.COUNT) { -1f }
 
     val navInputsDownDurationPrev = FloatArray(NavInput.COUNT)
-
-//    var imeSetInputScreenPosFn_DefaultImpl = { x: Int, y: Int -> TODO
-//        // Notify OS Input Method Editor of text input position
-//        val hwnd = imeWindowHandle
-//        val a = WindowProc
-//        if (hwnd != 0L)
-//            if (HIMC himc = ImmGetContext (hwnd)) {
-//                COMPOSITIONFORM cf;
-//                cf.ptCurrentPos.x = x;
-//                cf.ptCurrentPos.y = y;
-//                cf.dwStyle = CFS_FORCE_POSITION;
-//                ImmSetCompositionWindow(himc, & cf);
-//            }
-//    }
 }
 
 // for IO.keyMap

@@ -12,6 +12,7 @@ import imgui.*
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.io
 import imgui.ImGui.keepAliveId
+import imgui.ImGui.setActiveId
 import imgui.ImGui.style
 import java.util.*
 import kotlin.collections.ArrayList
@@ -236,7 +237,8 @@ class MenuColumns {
 }
 
 /** Storage for window settings stored in .ini file (we keep one of those even if the actual window wasn't instanced during this session)
- *  Windows data saved in imgui.ini file */
+ *  Windows data saved in imgui.ini file
+ *  ~ CreateNewWindowSettings */
 class WindowSettings(val name: String = "") {
     var id: ID = hash(name, 0)
     var pos = Vec2()
@@ -531,7 +533,7 @@ class Window(var context: Context, var name: String) {
     var windowBorderSize = 1f
     /** == window->GetID("#MOVE")   */
     var moveId: ID
-    /** Id of corresponding item in parent window (for child windows)   */
+    /** ID of corresponding item in parent window (for navigation to return from child window to parent window)   */
     var childId: ID = 0
 
     var scroll = Vec2()
@@ -561,7 +563,7 @@ class Window(var context: Context, var name: String) {
     /** Set during the frame where the window is appearing (or re-appearing)    */
     var appearing = false
     /** Set when the window has a close button (p_open != NULL) */
-    var closeButton = false
+    var hasCloseButton = false
     /** Order within immediate parent window, if we are a child window. Otherwise 0. */
     var beginOrderWithinParent = -1
     /** Order within entire imgui context. This is mostly used for debugging submission order related issues. */
@@ -625,6 +627,8 @@ class Window(var context: Context, var name: String) {
     var stateStorage = Storage()
 
     val columnsStorage = ArrayList<ColumnsSet>()
+    /** Index into SettingsWindow[] (indices are always valid as we only grow the array from the back) */
+    var settingsIdx = -1
     /** User scale multiplier per-window */
     var fontWindowScale = 1f
 
@@ -637,8 +641,6 @@ class Window(var context: Context, var name: String) {
     var rootWindow: Window? = null
     /** Point to ourself or first ancestor which will display TitleBgActive color when this window is active.   */
     var rootWindowForTitleBarHighlight: Window? = null
-    /** Point to ourself or first ancestor which can be CTRL-Tabbed into.   */
-    var rootWindowForTabbing: Window? = null
     /** Point to ourself or first ancestor which doesn't have the NavFlattened flag.    */
     var rootWindowForNav: Window? = null
 
@@ -848,8 +850,13 @@ class Window(var context: Context, var name: String) {
             /*  When the window cannot fit all contents (either because of constraints, either because screen is too small):
                     we are growing the size on the other axis to compensate for expected scrollbar.
                     FIXME: Might turn bigger than DisplaySize-WindowPadding.                 */
-            val sizeAutoFit = glm.clamp(sizeContents, Vec2(style.windowMinSize),
-                    Vec2(glm.max(style.windowMinSize, io.displaySize - style.displaySafeAreaPadding * 2f)))
+            val isPopup = flags has Wf.Popup
+            val isMenu = flags has Wf.ChildMenu
+            val sizeMin = Vec2(style.windowMinSize)
+            // Popups and menus bypass style.WindowMinSize by default, but we give then a non-zero minimum size to facilitate understanding problematic cases (e.g. empty popups)
+            if (isPopup || isMenu)
+                sizeMin minAssign 4f
+            val sizeAutoFit = glm.clamp(sizeContents, sizeMin, glm.max(sizeMin, Vec2(io.displaySize) - style.displaySafeAreaPadding * 2f))
             val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
             if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
                 sizeAutoFit.y += style.scrollbarSize
@@ -929,8 +936,9 @@ class Window(var context: Context, var name: String) {
         return false
     }
 
-    /** Can we focus this window with CTRL+TAB (or PadMenu + PadFocusPrev/PadFocusNext) */
-    val isNavFocusable get() = active && this === rootWindowForTabbing && (flags hasnt Wf.NoNavFocus || this === g.navWindow)
+    /** Can we focus this window with CTRL+TAB (or PadMenu + PadFocusPrev/PadFocusNext)
+     *  ~ IsWindowNavFocusable */
+    val isNavFocusable get() = active && this === rootWindow && (flags hasnt Wf.NoNavFocus || this === g.navWindow)
 
     fun calcResizePosSizeFromAnyCorner(cornerTarget: Vec2, cornerNorm: Vec2, outPos: Vec2, outSize: Vec2) {
         val posMin = cornerTarget.lerp(pos, cornerNorm)             // Expected window upper-left
@@ -978,6 +986,29 @@ class Window(var context: Context, var name: String) {
         if (flags hasnt Wf.NoSavedSettings)
             if (g.settingsDirtyTimer <= 0f)
                 g.settingsDirtyTimer = io.iniSavingRate
+    }
+
+    /** Window has already passed the IsWindowNavFocusable()
+     *  ~ getFallbackWindowNameForWindowingList */
+    val fallbackWindowName: String
+        get() = when {
+            flags has Wf.Popup -> "(Popup)"
+            flags has Wf.MenuBar && name == "##MainMenuBar" -> "(Main menu bar)"
+            else -> "(Untitled)"
+        }
+
+    /** ~ IsWindowActiveAndVisible */
+    val isActiveAndVisible: Boolean get() = hiddenFrames == 0 && active
+
+    /** ~ StartMouseMovingWindow */
+    fun startMouseMoving() {
+    // Set ActiveId even if the _NoMove flag is set. Without it, dragging away from a window with _NoMove would activate hover on other windows.
+        focus()
+        setActiveId(moveId, this)
+        g.navDisableHighlight = true
+        g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
+        if (flags hasnt Wf.NoMove && rootWindow!!.flags hasnt Wf.NoMove)
+            g.movingWindow = this
     }
 }
 

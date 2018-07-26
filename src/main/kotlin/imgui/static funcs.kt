@@ -5,10 +5,18 @@ package imgui
 import gli_.has
 import gli_.hasnt
 import glm_.*
+import glm_.buffer.bufferBig
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
+import imgui.ImGui.begin
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.closePopupsOverWindow
+import imgui.ImGui.contentRegionAvail
+import imgui.ImGui.end
+import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.findWindowByName
+import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.getNavInputAmount2d
@@ -17,10 +25,22 @@ import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.overlayDrawList
+import imgui.ImGui.popStyleVar
+import imgui.ImGui.pushStyleVar
+import imgui.ImGui.selectable
+import imgui.ImGui.setActiveId
+import imgui.ImGui.setNextWindowPos
+import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.imgui.*
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
+import imgui.impl.windowsIme.COMPOSITIONFORM
+import imgui.impl.windowsIme.HIMC
+import imgui.impl.windowsIme.HWND
+import imgui.impl.windowsIme.imm
 import imgui.internal.*
+import org.lwjgl.system.MemoryUtil.NULL
 import uno.kotlin.isPrintable
 import java.io.File
 import java.nio.file.Paths
@@ -52,8 +72,6 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
     return x
 }
 
-val defaultFont get() = io.fontDefault ?: io.fonts.fonts[0]
-
 //-----------------------------------------------------------------------------
 // Internal API exposed in imgui_internal.h
 //-----------------------------------------------------------------------------
@@ -62,20 +80,26 @@ val defaultFont get() = io.fontDefault ?: io.fonts.fonts[0]
 FIXME: Note that we have a lag here because WindowRectClipped is updated in Begin() so windows moved by user via
 SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time
 FindHoveredWindow() is called, aka before the next Begin(). Moving window thankfully isn't affected.    */
-fun findHoveredWindow(): Window? {
-    for (i in g.windows.size - 1 downTo 0) {
-        val window = g.windows[i]
-        if (!window.active)
-            continue
-        if (window.flags has Wf.NoInputs)
-            continue
+fun findHoveredWindow() {
 
-        // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
-        val bb = Rect(window.outerRectClipped.min - style.touchExtraPadding, window.outerRectClipped.max + style.touchExtraPadding)
-        if (bb contains io.mousePos)
-            return window
+    var hoveredWindow = g.movingWindow?.takeIf { it.flags hasnt Wf.NoInputs }
+
+    var i = g.windows.lastIndex
+    while (i >= 0 && hoveredWindow == null) {
+        val window = g.windows[i]
+        if (window.active && window.flags hasnt Wf.NoInputs) {
+            // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
+            val bb = Rect(window.outerRectClipped.min - style.touchExtraPadding, window.outerRectClipped.max + style.touchExtraPadding)
+            if (bb contains io.mousePos) {
+                hoveredWindow = window
+                break
+            }
+        }
+        i--
     }
-    return null
+
+    g.hoveredWindow = hoveredWindow
+    g.hoveredRootWindow = g.hoveredWindow?.rootWindow
 }
 
 fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).apply {
@@ -89,9 +113,9 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
 
     // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
     if (flags hasnt Wf.NoSavedSettings) {
-        //  Retrieve settings from .ini file
-
         findWindowSettings(id)?.let { s ->
+            //  Retrieve settings from .ini file
+            settingsIdx = g.settingsWindows.indexOf(s)
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
             pos = glm.floor(s.pos)
             collapsed = s.collapsed
@@ -102,6 +126,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
     sizeFullAtLastBegin put size
     sizeFull put size
     this.size put size
+    dc.cursorMaxPos put pos // So first call to calcSizeContents() doesn't return crazy values
 
     if (flags has Wf.AlwaysAutoResize) {
         autoFitFrames put 2
@@ -194,7 +219,7 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean)
 
 fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 
-fun addWindowSettings(name: String) = WindowSettings(name).apply { g.settingsWindows.add(this) }
+fun createNewWindowSettings(name: String) = WindowSettings(name).also { g.settingsWindows += it }
 
 /*  Settings/.Ini Utilities
     The disk functions are automatically called if io.IniFilename != NULL (default is "imgui.ini").
@@ -204,6 +229,7 @@ fun addWindowSettings(name: String) = WindowSettings(name).apply { g.settingsWin
 fun loadIniSettingsFromDisk(iniFilename: String?) {
     if (iniFilename == null) return
     var settings: WindowSettings? = null
+    val a = fileLoadToLines(iniFilename)
     fileLoadToLines(iniFilename)?.filter { it.isNotEmpty() }?.forEach { s ->
         if (s[0] == '[' && s.last() == ']') {
             /*  Parse "[Type][Name]". Note that 'Name' can itself contains [] characters, which is acceptable with
@@ -219,7 +245,7 @@ fun loadIniSettingsFromDisk(iniFilename: String?) {
                 name = s.substring(1, firstCloseBracket)
             }
             val typeHash = hash(type, 0, 0)
-            settings = findWindowSettings(typeHash) ?: addWindowSettings(name)
+            settings = findWindowSettings(typeHash) ?: createNewWindowSettings(name)
         } else settings?.apply {
             when {
                 s.startsWith("Pos") -> pos.put(s.substring(4).split(","))
@@ -243,7 +269,9 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
         /** This will only return NULL in the rare instance where the window was first created with
          *  WindowFlag.NoSavedSettings then had the flag disabled later on.
          *  We don't bind settings in this case (bug #1000).    */
-        val settings = findWindowSettings(window.id) ?: addWindowSettings(window.name)
+        val settings = g.settingsWindows.getOrNull(window.settingsIdx) ?: findWindowSettings(window.id)
+        ?: createNewWindowSettings(window.name).also { window.settingsIdx = g.settingsWindows.indexOf(it) }
+        assert(settings.id == window.id)
         settings.pos put window.pos
         settings.size put window.sizeFull
         settings.collapsed = window.collapsed
@@ -269,17 +297,6 @@ fun getViewportRect(): Rect {
     if (io.displayVisibleMin != io.displayVisibleMax)
         return Rect(io.displayVisibleMin, io.displayVisibleMax)
     return Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
-}
-
-fun closePopupToLevel(remaining: Int) {
-    assert(remaining >= 0)
-    var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
-    else g.openPopupStack[0].parentWindow
-    if (g.navLayer == 0)
-        focusWindow = navRestoreLastChildNavWindow(focusWindow)
-    focusWindow.focus()
-    focusWindow.dc.navHideHighlightOneFrame = true
-    for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
 }
 
 enum class PopupPositionPolicy { Default, ComboBox }
@@ -728,6 +745,47 @@ fun navScrollToBringItemIntoView(window: Window, itemRect: Rect) {
     }
 }
 
+fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, flags_: WindowFlags): Boolean {
+
+    val parentWindow = g.currentWindow!!
+    var flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf.ChildWindow
+    flags = flags or (parentWindow.flags and Wf.NoMove.i)  // Inherit the NoMove flag
+
+    // Size
+    val contentAvail = contentRegionAvail
+    val size = glm.floor(sizeArg)
+    val autoFitAxes = (if (size.x == 0f) 1 shl Axis.X else 0x00) or (if (size.y == 0f) 1 shl Axis.Y else 0x00)
+    if (size.x <= 0f)   // Arbitrary minimum child size (0.0f causing too much issues)
+        size.x = glm.max(contentAvail.x + size.x, 4f)
+    if (size.y <= 0f)
+        size.y = glm.max(contentAvail.y + size.y, 4f)
+    setNextWindowSize(size)
+
+    // name
+    val title = when {
+        name.isNotEmpty() -> "${parentWindow.name}/$name".format(style.locale)
+        else -> "${parentWindow.name}/%08X".format(style.locale, id)
+    }
+    val backupBorderSize = style.childBorderSize
+    if (!border) style.childBorderSize = 0f
+    flags = flags or flags_
+    val ret = ImGui.begin(title, null, flags)
+    style.childBorderSize = backupBorderSize
+
+    val childWindow = g.currentWindow!!.apply {
+        childId = id
+        autoFitChildAxes = autoFitAxes
+    }
+    // Process navigation-in immediately so NavInit can run on first frame
+    if (g.navActivateId == id && flags hasnt Wf.NavFlattened && (childWindow.dc.navLayerActiveMask != 0 || childWindow.dc.navHasScroll)) {
+        childWindow.focus()
+        navInitWindow(childWindow, false)
+        setActiveId(id + 1, childWindow) // Steal ActiveId with a dummy id so that key-press won't activate child item
+        g.activeIdSource = InputSource.Nav
+    }
+
+    return ret
+}
 
 fun navUpdate() {
 
@@ -966,7 +1024,7 @@ fun navUpdate() {
                             window.setScrollY(window.scroll.y + window.innerClipRect.height)
                     } else {
                         val navRectRel = window.navRectRel[g.navLayer]
-                        val pageOffsetY = max(0f, window.innerClipRect.height-window.calcFontSize()+navRectRel.height)
+                        val pageOffsetY = max(0f, window.innerClipRect.height - window.calcFontSize() + navRectRel.height)
                         if (Key.PageUp.isPressed) {
                             navScoringRectOffsetY = -pageOffsetY
                             g.navMoveDir = Dir.Down // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
@@ -1073,11 +1131,17 @@ fun navUpdateWindowing() {
     var applyFocusWindow: Window? = null
     var applyToggleLayer = false
 
+    val modalWindow = frontMostPopupModal
+    if (modalWindow != null) {
+        g.navWindowingTarget = null
+        return
+    }
+
     val startWindowingWithGamepad = g.navWindowingTarget == null && NavInput.Menu.isPressed(InputReadMode.Pressed)
     val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has Cf.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavigable(g.windows.lastIndex, -Int.MAX_VALUE, -1))?.let {
-            g.navWindowingTarget = it.rootWindowForTabbing
+            g.navWindowingTarget = it
             g.navWindowingHighlightAlpha = 0f
             g.navWindowingHighlightTimer = 0f
             g.navWindowingToggleLayer = !startWindowingWithKeyboard
@@ -1141,7 +1205,7 @@ fun navUpdateWindowing() {
                 val NAV_MOVE_SPEED = 800f
                 // FIXME: Doesn't code variable framerate very well
                 val moveSpeed = glm.floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
-                it.pos plusAssign moveDelta * moveSpeed
+                it.rootWindow!!.pos plusAssign moveDelta * moveSpeed
                 g.navDisableMouseHover = true
                 it.markIniSettingsDirty()
             }
@@ -1149,7 +1213,7 @@ fun navUpdateWindowing() {
     }
 
     // Apply final focus
-    if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootWindowForTabbing)) {
+    if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootWindow)) {
         g.navDisableHighlight = false
         g.navDisableMouseHover = true
         applyFocusWindow = navRestoreLastChildNavWindow(applyFocusWindow!!)
@@ -1167,9 +1231,11 @@ fun navUpdateWindowing() {
     // Apply menu/layer toggle
     if (applyToggleLayer)
         g.navWindow?.let {
+            // Move to parent menu if necessary
             var newNavWindow = it
             while (newNavWindow.dc.navLayerActiveMask hasnt (1 shl 1) && newNavWindow.flags has Wf.ChildWindow && newNavWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
                 newNavWindow = newNavWindow.parentWindow!!
+
             if (newNavWindow !== it) {
                 val oldNavWindow = it
                 newNavWindow.focus()
@@ -1179,6 +1245,32 @@ fun navUpdateWindowing() {
             g.navDisableMouseHover = true
             navRestoreLayer(if (it.dc.navLayerActiveMask has (1 shl 1)) g.navLayer xor 1 else 0)
         }
+}
+
+/** Overlay displayed when using CTRL+TAB. Called by EndFrame(). */
+fun navUpdateWindowingList() {
+
+    val target = g.navWindowingTarget!! // ~ assert
+
+    if (g.navWindowingList.isEmpty())
+        findWindowByName("###NavWindowingList")?.let { g.navWindowingList += it }
+    setNextWindowSizeConstraints(Vec2(io.displaySize.x * 0.2f, io.displaySize.y * 0.2f), Vec2(Float.MAX_VALUE))
+    setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Always, Vec2(0.5f))
+    pushStyleVar(StyleVar.WindowPadding, style.windowPadding * 2f)
+    val flags = Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoNav or Wf.NoResize or Wf.NoMove or Wf.NoInputs or Wf.AlwaysAutoResize
+    begin("###NavWindowingList", null, flags)
+    for (n in g.windows.lastIndex downTo 0) {
+        val window = g.windows[n]
+        if (!window.isNavFocusable)
+            continue
+        var label = window.name
+        val labelEnd = findRenderedTextEnd(label)
+        if (labelEnd != 0)
+            label = window.fallbackWindowName
+        selectable(label, target == window)
+    }
+    end()
+    popStyleVar()
 }
 
 /** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)    */
@@ -1251,7 +1343,24 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
 
 //static const char*      GetClipboardTextFn_DefaultImpl(void* user_data);
 //static void             SetClipboardTextFn_DefaultImpl(void* user_data, const char* text);
-//static void             ImeSetInputScreenPosFn_DefaultImpl(int x, int y);
+var imeSetInputScreenPosFn_Win32 = { x: Int, y: Int ->
+    // Notify OS Input Method Editor of text input position
+    val hwnd: HWND = io.imeWindowHandle
+    if (hwnd != NULL) {
+        val himc: HIMC = imm.getContext(hwnd)
+        if (himc != NULL) {
+            val cf = COMPOSITIONFORM(bufferBig(COMPOSITIONFORM.size)).apply {
+                ptCurrentPos.x = x.L
+                ptCurrentPos.y = y.L
+                dwStyle = imm.CFS_FORCE_POSITION.L
+            }
+            if(imm.setCompositionWindow(himc, cf) == 0)
+                System.err.println("imm.setCompositionWindow failed")
+            if(imm.releaseContext(hwnd, himc) == 0)
+                System.err.println("imm.releaseContext failed")
+        }
+    }
+}
 
 private var i0 = 0
 
@@ -1289,7 +1398,8 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
     val iCurrent = findWindowIndex(target)
     val windowTarget = findWindowNavigable(iCurrent + focusChangeDir, -Int.MAX_VALUE, focusChangeDir)
             ?: findWindowNavigable(if (focusChangeDir < 0) g.windows.lastIndex else 0, iCurrent, focusChangeDir)
-    g.navWindowingTarget = windowTarget
+    // Don't reset windowing target if there's a single window in the list
+    windowTarget?.let { g.navWindowingTarget = it }
     g.navWindowingToggleLayer = false
 }
 

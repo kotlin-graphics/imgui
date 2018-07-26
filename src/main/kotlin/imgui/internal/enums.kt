@@ -36,7 +36,7 @@ typealias SliderFlags = Int
 
 enum class ButtonFlag {
 
-    Null,
+    None,
     /** hold to repeat  */
     Repeat,
     /** return true on click + release on same item [DEFAULT if no PressedOn* flag is set]  */
@@ -76,12 +76,13 @@ infix fun Int.or(b: ButtonFlag): ButtonFlags = this or b.i
 infix fun Int.has(b: ButtonFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: ButtonFlag) = (this and b.i) == 0
 
-enum class SliderFlag(val i: Int) { Vertical(1 shl 0) }
+enum class SliderFlag(val i: Int) { None(0), Vertical(1 shl 0) }
 
 infix fun Int.hasnt(b: SliderFlag) = (this and b.i) == 0
 
 enum class ColumnsFlag(val i: Int) {
 
+    None(0),
     /** Disable column dividers */
     NoBorder(1 shl 0),
     /** Disable resizing columns when clicking on the dividers  */
@@ -99,11 +100,12 @@ infix fun Int.has(b: ColumnsFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: ColumnsFlag) = (this and b.i) == 0
 
 enum class SeparatorFlag {
+    None,
     /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
     Horizontal,
     Vertical;
 
-    val i = 1 shl ordinal
+    val i = if(ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun SeparatorFlag.or(b: SeparatorFlag): SeparatorFlags = i or b.i

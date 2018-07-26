@@ -31,6 +31,7 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.internal.*
+import java.lang.Float.max
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
 import imgui.WindowFlag as Wf
@@ -73,29 +74,6 @@ interface imgui_widgetsMain {
 
         return pressed
     }
-
-    /** square button with an arrow shape */
-    fun arrowButton(strId: String, dir: Dir): Boolean {
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        val id = window.getId(strId)
-        val sz = frameHeight
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + sz)
-        itemSize(bb)
-        if (!itemAdd(bb, id)) return false
-
-        val (pressed, hovered, held) = buttonBehavior(bb, id)
-
-        // Render
-        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
-        renderArrow(bb.min + g.style.framePadding, dir)
-
-        return pressed
-    }
-
 
     fun image(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(1), tintCol: Vec4 = Vec4(1),
               borderCol: Vec4 = Vec4()) {
@@ -230,6 +208,7 @@ interface imgui_widgetsMain {
         return pressed
     }
 
+    /** use with e.g. if (radioButton("one", myValue==1))  myValue = 1 */
     fun radioButton(label: String, active: Boolean): Boolean {
 
         val window = currentWindow
@@ -283,7 +262,9 @@ interface imgui_widgetsMain {
         return pressed
     }
 
+    /** shortcut to handle the above pattern when value is an integer */
     fun radioButton(label: String, v: IntArray, vButton: Int) = radioButton(label, v[0] == vButton).also { if (it) v[0] = vButton }
+    /** shortcut to handle the above pattern when value is an integer */
     fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int) = radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
 
     interface PlotArray {

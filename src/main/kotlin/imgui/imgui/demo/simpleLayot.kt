@@ -88,7 +88,7 @@ import imgui.SelectableFlag as Sf
 import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 
-object layout_ {
+object simpleLayot {
 
     /* Child regions */
     var disableMouseWheel = false
@@ -128,7 +128,7 @@ object layout_ {
 
     operator fun invoke() {
 
-        collapsingHeader("Layout") {
+        collapsingHeader("SimpleLayout") {
 
             treeNode("Child regions") {
 
@@ -195,7 +195,7 @@ object layout_ {
                 withItemWidth(-1) { dragFloat("float##5", ::f) }
             }
 
-            treeNode("Basic Horizontal Layout") {
+            treeNode("Basic Horizontal SimpleLayout") {
 
                 textWrapped("(Use SameLine() to keep adding items to the right of the preceding item)")
 
