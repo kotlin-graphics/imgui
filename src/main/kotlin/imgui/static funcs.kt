@@ -229,8 +229,7 @@ fun createNewWindowSettings(name: String) = WindowSettings(name).also { g.settin
 fun loadIniSettingsFromDisk(iniFilename: String?) {
     if (iniFilename == null) return
     var settings: WindowSettings? = null
-    val a = ClassLoader.getSystemResourceAsStream(iniFilename)
-    val v = ClassLoader.getSystemResource(iniFilename)
+    val a = fileLoadToLines(iniFilename)
     fileLoadToLines(iniFilename)?.filter { it.isNotEmpty() }?.forEach { s ->
         if (s[0] == '[' && s.last() == ']') {
             /*  Parse "[Type][Name]". Note that 'Name' can itself contains [] characters, which is acceptable with

@@ -5,7 +5,9 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.NUL
+import java.io.File
 import java.nio.ByteBuffer
+import java.nio.file.Paths
 import kotlin.reflect.KMutableProperty0
 
 // -----------------------------------------------------------------------------------------------------------------
@@ -150,7 +152,10 @@ fun fileLoadToCharArray(filename: String, paddingBytes: Int = 0) = ClassLoader.g
     CharArray(bytes.size) { bytes[it].c }
 }
 
-fun fileLoadToLines(filename: String) = ClassLoader.getSystemResourceAsStream(filename)?.use { it.bufferedReader().readLines() }
+fun fileLoadToLines(filename: String): List<String>? {
+    val file = File(Paths.get("imgui.ini").toUri())
+    return file.takeIf { it.exists() && it.canRead() }?.readLines()
+}
 
 
 //IMGUI_API FILE*         ImFileOpen(const char* filename, const char* file_open_mode);
