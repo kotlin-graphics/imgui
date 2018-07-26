@@ -7,6 +7,7 @@ import imgui.*;
 import imgui.impl.ImplGL3;
 import imgui.impl.LwjglGlfw;
 import imgui.impl.LwjglGlfw.GlfwClientApi;
+import kotlin.Unit;
 import org.lwjgl.glfw.GLFW;
 import uno.glfw.GlfwWindow;
 
@@ -19,7 +20,7 @@ import uno.glfw.windowHint.Profile;
 public class Test_lwjgl {
 
     public static void main(String[] args) {
-        new Test_lwjgl().run();
+        new Test_lwjgl();
     }
 
     // The window handle
@@ -72,7 +73,6 @@ public class Test_lwjgl {
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
 //        Font font = io.getFonts().addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f, new FontConfig(), io.getFonts().getGlyphRangesJapanese());
 //        assert (font != null);
-    }
 
         /*  Main loop
             This automatically also polls events, swaps buffers and resets the appBuffer
@@ -87,7 +87,7 @@ public class Test_lwjgl {
             return Unit.INSTANCE;
         });
 
-        lwjglGL3.shutdown();
+        lwjglGlfw.shutdown();
         ContextKt.destroy(ctx);
 
         window.destroy();
