@@ -20,7 +20,7 @@ import uno.glfw.GlfwWindow
 import uno.glfw.glfw
 
 fun main(args: Array<String>) {
-    HelloWorld_lwjgl().run()
+    HelloWorld_lwjgl()
 }
 
 private class HelloWorld_lwjgl {
@@ -30,11 +30,10 @@ private class HelloWorld_lwjgl {
 
     init {
         glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
-    }
 
-    val window = GlfwWindow(1280, 720, "Dear ImGui Lwjgl OpenGL3 example").apply {
-        init()
-    }
+        window = GlfwWindow(1280, 720, "Dear ImGui Lwjgl OpenGL3 example").apply {
+            init()
+        }
 
         glfw.swapInterval = 1   // Enable vsync
 
@@ -68,9 +67,6 @@ private class HelloWorld_lwjgl {
 //        ImGui.io.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, glyphRanges = imgui.glyphRanges.japanese)!!
 //        val a = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f)!!
 //        val b = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 30f)!!
-    }
-
-    fun run() {
 
         /*  Main loop
             This automatically also polls events, swaps buffers and resets the appBuffer

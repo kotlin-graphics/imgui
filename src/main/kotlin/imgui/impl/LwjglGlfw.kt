@@ -1,32 +1,24 @@
 package imgui.impl
 
-import glm_.*
-import glm_.buffer.bufferBig
+import glm_.b
 import glm_.buffer.cap
-import glm_.buffer.free
-import glm_.buffer.intBufferBig
-import glm_.vec2.Vec2
+import glm_.c
+import glm_.f
 import glm_.vec2.Vec2d
-import gln.*
-import gln.buffer.*
-import gln.glf.semantic
-import gln.program.Program
-import gln.program.usingProgram
-import gln.texture.initTexture2d
-import gln.uniform.glUniform
-import gln.vertexArray.glBindVertexArray
-import gln.vertexArray.glVertexAttribPointer
-import gln.vertexArray.withVertexArray
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
+import imgui.impl.windowsIme.imeListner
 import org.lwjgl.glfw.GLFW.*
-import org.lwjgl.opengl.GL30.*
-import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
-import org.lwjgl.opengl.GL33.glBindSampler
+import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.Platform
 import uno.glfw.*
 import uno.glfw.GlfwWindow.CursorStatus
+import kotlin.collections.fill
+import kotlin.collections.forEach
+import kotlin.collections.indices
+import kotlin.collections.set
 
 
 object LwjglGlfw {
@@ -72,11 +64,15 @@ object LwjglGlfw {
             keyMap[Key.X] = GLFW_KEY_X
             keyMap[Key.Y] = GLFW_KEY_Y
             keyMap[Key.Z] = GLFW_KEY_Z
+
+//            io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText; TODO
+//            io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;
+//            io.ClipboardUserData = g_Window;
+
+            if (Platform.get() == Platform.WINDOWS)
+                imeWindowHandle = glfwGetWin32Window(window.handle)
         }
 
-        /*  Load cursors
-            FIXME: GLFW doesn't expose suitable cursors for ResizeAll, ResizeNESW, ResizeNWSE. 
-            We revert to arrow cursor for those.         */
         mouseCursors[MouseCursor.Arrow.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
         mouseCursors[MouseCursor.TextInput.i] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
         mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)  // FIXME: GLFW doesn't have this.
@@ -84,6 +80,7 @@ object LwjglGlfw {
         mouseCursors[MouseCursor.ResizeEW.i] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR)
         mouseCursors[MouseCursor.ResizeNESW.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR) // FIXME: GLFW doesn't have this.
         mouseCursors[MouseCursor.ResizeNWSE.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR) // FIXME: GLFW doesn't have this.
+        mouseCursors[MouseCursor.Hand.i] = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
 
         if (installCallbacks) installCallbacks()
 
@@ -101,7 +98,7 @@ object LwjglGlfw {
         window.scrollCallbacks["imgui"] = scrollCallback
         window.keyCallbacks["imgui"] = keyCallback
         window.charCallbacks["imgui"] = charCallback // TODO check if used (jogl doesnt have)
-        imeListner.install(window.handle)
+        imeListner.install(window)
     }
 
     fun newFrame() {
@@ -236,7 +233,7 @@ object LwjglGlfw {
         }
     }
 
-    val charCallback: CharCallbackT = { c: Int -> if (c in 1..65535) io.addInputCharacter(c.c) }
+    val charCallback: CharCallbackT = { c: Int -> if (!g.imeInProgress && c in 1..65535) io.addInputCharacter(c.c) }
 
     fun shutdown() {
 
