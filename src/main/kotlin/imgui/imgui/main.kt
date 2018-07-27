@@ -740,7 +740,7 @@ interface imgui_main {
                 val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
                 vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power).L * (vMax - vMin)
                 vOldRefForAccumRemainder = vOldNormCurved
-            } else vCur += g.dragCurrentAccum.i
+            } else vCur += g.dragCurrentAccum.L
 
             // Round to user desired precision based on format string
             vCur = roundScalarWithFormat(format, vCur)
@@ -829,7 +829,7 @@ interface imgui_main {
                 val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
                 vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power) * (vMax - vMin)
                 vOldRefForAccumRemainder = vOldNormCurved
-            } else vCur += g.dragCurrentAccum.i
+            } else vCur += g.dragCurrentAccum
             // Round to user desired precision based on format string
             vCur = roundScalarWithFormat(format, vCur)
 
@@ -916,7 +916,7 @@ interface imgui_main {
                 val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
                 vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power).d * (vMax - vMin)
                 vOldRefForAccumRemainder = vOldNormCurved
-            } else vCur += g.dragCurrentAccum.i
+            } else vCur += g.dragCurrentAccum.d
 
             // Round to user desired precision based on format string
             vCur = roundScalarWithFormat(format, vCur)
