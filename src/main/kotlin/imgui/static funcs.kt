@@ -152,21 +152,21 @@ fun checkStacksSize(window: Window, write: Boolean) {
         // Too few or too many PopID()/TreePop()
         val current = window.idStack.size
         if (write) backup[ptr] = current
-        else assert(backup[ptr] == current, { "PushID/PopID or TreeNode/TreePop Mismatch!" })
+        else assert(backup[ptr] == current) { "PushID/PopID or TreeNode/TreePop Mismatch!" }
         ptr++
     }
     run {
         // Too few or too many EndGroup()
         val current = window.dc.groupStack.size
         if (write) backup[ptr] = current
-        else assert(backup[ptr] == current, { "BeginGroup/EndGroup Mismatch!" })
+        else assert(backup[ptr] == current) { "BeginGroup/EndGroup Mismatch!" }
         ptr++
     }
     run {
         // Too few or too many EndMenu()/EndPopup()
         val current = g.currentPopupStack.size
         if (write) backup[ptr] = current
-        else assert(backup[ptr] == current, { "BeginMenu/EndMenu or BeginPopup/EndPopup Mismatch" })
+        else assert(backup[ptr] == current) { "BeginMenu/EndMenu or BeginPopup/EndPopup Mismatch" }
         ptr++
     }
     // For color, style and font stacks there is an incentive to use Push/Begin/Pop/.../End patterns, so we relax our checks a little to allow them.
@@ -174,21 +174,21 @@ fun checkStacksSize(window: Window, write: Boolean) {
         // Too few or too many PopStyleColor()
         val current = g.colorModifiers.size
         if (write) backup[ptr] = current
-        else assert(backup[ptr] >= current, { "PushStyleColor/PopStyleColor Mismatch!" })
+        else assert(backup[ptr] >= current) { "PushStyleColor/PopStyleColor Mismatch!" }
         ptr++
     }
     run {
         // Too few or too many PopStyleVar()
         val current = g.styleModifiers.size
         if (write) backup[ptr] = current
-        else assert(backup[ptr] >= current, { "PushStyleVar/PopStyleVar Mismatch!" })
+        else assert(backup[ptr] >= current) { "PushStyleVar/PopStyleVar Mismatch!" }
         ptr++
     }
     run {
         // Too few or too many PopFont()
         val current = g.fontStack.size
         if (write) backup[ptr] = current
-        else assert(backup[ptr] >= current, { "PushFont/PopFont Mismatch!" })
+        else assert(backup[ptr] >= current) { "PushFont/PopFont Mismatch!" }
         ptr++
     }
     assert(ptr == window.dc.stackSizesBackup.size)
