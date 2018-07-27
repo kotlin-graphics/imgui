@@ -119,7 +119,7 @@ OpenGL Java:
 
 Vulkan Kotlin:
 
-- [lwjgl](src/test/kotlin/imgui/vk/test%20lwjgl%20vk.kt) 
+- [lwjgl](src/test/kotlin/imgui/vk/test%20lwjgl%20vk.kt) (broken, to fix)
 
 
 You should refer to those also to learn how to use the imgui library.
