@@ -778,6 +778,7 @@ interface imgui_main {
                           power: Float): Boolean {
 
             var v by vPtr as KMutableProperty0<Float>
+
             // Default tweak speed
             val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
             var vSpeed = vSpeed_
@@ -819,7 +820,6 @@ interface imgui_main {
                 return false
 
             var vCur = v
-//            println(v)
             var vOldRefForAccumRemainder = 0f
 
             val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
@@ -827,10 +827,9 @@ interface imgui_main {
                 // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
                 val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power).f
                 val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-                vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power).L * (vMax - vMin)
+                vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power) * (vMax - vMin)
                 vOldRefForAccumRemainder = vOldNormCurved
             } else vCur += g.dragCurrentAccum.i
-
             // Round to user desired precision based on format string
             vCur = roundScalarWithFormat(format, vCur)
 
@@ -915,7 +914,7 @@ interface imgui_main {
                 // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
                 val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)
                 val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-                vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power).L * (vMax - vMin)
+                vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power).d * (vMax - vMin)
                 vOldRefForAccumRemainder = vOldNormCurved
             } else vCur += g.dragCurrentAccum.i
 
