@@ -28,6 +28,14 @@ private class HelloWorld_lwjgl {
     val window: GlfwWindow
     val ctx: Context
 
+
+    var f = 0f
+    val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
+    var showAnotherWindow = false
+    var showDemo = true
+    var counter = 0
+
+
     init {
         glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
 
@@ -84,12 +92,6 @@ private class HelloWorld_lwjgl {
         window.destroy()
         glfw.terminate()
     }
-
-    var f = 0f
-    val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
-    var showAnotherWindow = false
-    var showDemo = true
-    var counter = 0
 
     fun mainLoop() {
 
