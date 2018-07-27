@@ -993,11 +993,7 @@ object widgets {
                                         Col.FrameBgActive, Color.hsv(i / 7f, 0.7f, 0.5f),
                                         Col.SliderGrab, Color.hsv(i / 7f, 0.9f, 0.9f)) {
 
-                                    withFloat { f ->
-                                        f.set(values1[i])
-                                        vSliderFloat("##v", Vec2(18, 160), f, 0f, 1f, "")
-                                        values1[i] = f()
-                                    }
+                                    withFloat(values1, i) { vSliderFloat("##v", Vec2(18, 160), it, 0f, 1f, "") }
                                     if (isItemActive || isItemHovered()) setTooltip("%.3f", values1[i])
                                 }
                             }

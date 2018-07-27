@@ -607,11 +607,11 @@ interface imgui_internal {
 
         val t = io.navInputsDownDuration[i]
         return when {
-        // Return 1.0f when just released, no repeat, ignore analog input.
+            // Return 1.0f when just released, no repeat, ignore analog input.
             t < 0f && mode == InputReadMode.Released -> if (io.navInputsDownDurationPrev[i] >= 0f) 1f else 0f
             t < 0f -> 0f
             else -> when (mode) {
-            // Return 1.0f when just pressed, no repeat, ignore analog input.
+                // Return 1.0f when just pressed, no repeat, ignore analog input.
                 InputReadMode.Pressed -> if (t == 0f) 1 else 0
                 InputReadMode.Repeat -> calcTypematicPressedRepeatAmount(t, t - io.deltaTime, io.keyRepeatDelay * 0.8f,
                         io.keyRepeatRate * 0.8f)
@@ -1515,7 +1515,7 @@ interface imgui_internal {
         val id = window.getId(strId)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         val defaultSize = frameHeight
-        itemSize(bb, if(size.y >= defaultSize) style.framePadding.y else 0f)
+        itemSize(bb, if (size.y >= defaultSize) style.framePadding.y else 0f)
         if (!itemAdd(bb, id)) return false
 
         if (window.dc.itemFlags has If.ButtonRepeat)
@@ -2191,7 +2191,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-        // Linear slider
+            // Linear slider
             else -> (vClamped - vMin).f / (vMax - vMin).f
         }
     }
@@ -2213,7 +2213,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-        // Linear slider
+            // Linear slider
             else -> (vClamped - vMin).f / (vMax - vMin).f
         }
     }
@@ -2235,7 +2235,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-        // Linear slider
+            // Linear slider
             else -> (vClamped - vMin) / (vMax - vMin)
         }
     }
@@ -2257,7 +2257,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-        // Linear slider
+            // Linear slider
             else -> ((vClamped - vMin) / (vMax - vMin)).f
         }
     }
@@ -3347,7 +3347,7 @@ interface imgui_internal {
 
     fun parseFormatFindStart(fmt: String): Int {
         var i = 0
-        var c = fmt[i]
+        var c = fmt[i] // if this crashes again -> fmt.getOrNull(i) ?: return 0
         while (c != NUL) {
             if (c == '%' && fmt[i + 1] != '%')
                 return i
@@ -3485,10 +3485,11 @@ interface imgui_internal {
             x <= 0f -> glm.PIf * 0.5f
             x >= 1f -> 0f
             else -> glm.acos(x)
-        //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
+            //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
 
         fun roundScalarWithFormat(format: String, value: Int): Int {
+            if(format.isEmpty()) return value
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
@@ -3497,6 +3498,7 @@ interface imgui_internal {
         }
 
         fun roundScalarWithFormat(format: String, value: Long): Long {
+            if(format.isEmpty()) return value
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
@@ -3505,6 +3507,7 @@ interface imgui_internal {
         }
 
         fun roundScalarWithFormat(format: String, value: Float): Float {
+            if(format.isEmpty()) return value
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
@@ -3513,6 +3516,7 @@ interface imgui_internal {
         }
 
         fun roundScalarWithFormat(format: String, value: Double): Double {
+            if(format.isEmpty()) return value
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
