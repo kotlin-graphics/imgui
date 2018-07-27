@@ -124,7 +124,7 @@ object StyleEditor {
             if (style.curveTessellationTol < 0f) style.curveTessellationTol = 0.1f
             /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
                 But application code could have a toggle to switch between zero and non-zero.             */
-            dragFloat("Global Alpha", style::alpha, 0.005f, 0.2f, 1f, "%.2f")
+            dragFloat("Global Alpha", style::alpha, 0.005f, 0.2f, 1f, "%.2f") // TODO fix me dragging
             popItemWidth()
         }
 
@@ -227,9 +227,9 @@ object StyleEditor {
 
                 val font = atlas.fonts[i]
                 val name = font.configData.getOrNull(0)?.name ?: ""
-                val fontDetailsOpened = bulletText("Font $i: '$name', %.2f px, ${font.glyphs.size} glyphs", font.fontSize)
+                val fontDetailsOpened = treeNode(font, "Font $i: '$name', %.2f px, ${font.glyphs.size} glyphs", font.fontSize)
                 sameLine(); smallButton("Set as default") { io.fontDefault = font }
-                if (fontsOpened) {
+                if (fontDetailsOpened) {
                     pushFont(font)
                     text("The quick brown fox jumps over the lazy dog")
                     popFont()
@@ -257,7 +257,9 @@ object StyleEditor {
                         // Display all glyphs of the fonts in separate pages of 256 characters
                         // Forcefully/dodgily make FindGlyph() return NULL on fallback, which isn't the default behavior.
                         for (base in 0 until 0x10000 step 256) {
-                            val count = (0 until 256).sumBy { if (font.findGlyphNoFallback((base + it).c) != null) 1 else 0 }
+                            val count = (0 until 256).count {
+                                font.findGlyphNoFallback(base + it) != null
+                            }
                             val s = if (count > 1) "glyphs" else "glyph"
                             if (count > 0 && treeNode(base, "U+%04X..U+%04X ($count $s)", base, base + 255)) {
                                 val cellSize = font.fontSize * 1
@@ -272,7 +274,7 @@ object StyleEditor {
                                     drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if (glyph != null) 100 else 50))
                                     /*  We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion
                                         functions available to generate a string.                                     */
-                                    if(glyph != null)
+                                    if (glyph != null)
                                         font.renderChar(drawList, cellSize, cellP1, Col.Text.u32, (base + n).c)
                                     if (glyph != null && isMouseHoveringRect(cellP1, cellP2))
                                         withTooltip {
