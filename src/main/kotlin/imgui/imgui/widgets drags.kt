@@ -54,7 +54,7 @@ import kotlin.reflect.KMutableProperty0
 interface imgui_widgetsDrag {
 
     fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                  format: String = "%.3f", power: Float = 1f): Boolean =
+                  format: String? = "%.3f", power: Float = 1f): Boolean =
             dragScalar(label, DataType.Float, v, vSpeed, vMin, vMax, format, power)
 
     fun dragFloat(label: String, v: FloatArray, ptr: Int, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,

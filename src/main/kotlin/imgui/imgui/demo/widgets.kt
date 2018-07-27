@@ -817,10 +817,10 @@ object widgets {
 
                                 if (beginDragDropTarget()) {
                                     acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
-                                        for (i in 0..2) savedPalette[n][i] = (it.data as Vec4)[i]
+                                        for (i in 0..2) savedPalette[n][i] = it.data!!.getFloat(i)
                                     }
                                     acceptDragDropPayload(PAYLOAD_TYPE_COLOR_4F)?.let {
-                                        for (i in 0..3) savedPalette[n][i] = (it.data as Vec4)[i]
+                                        for (i in 0..3) savedPalette[n][i] = it.data!!.getFloat(i)
                                     }
                                     endDragDropTarget()
                                 }
