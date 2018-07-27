@@ -911,8 +911,8 @@ class Font {
     var fallbackAdvanceX = 0f
     /** Replacement glyph if one isn't found. Only set via SetFallbackChar()    */
     var fallbackChar = '?'
-//
-//    // Members: Cold ~18/26 bytes
+
+    // Members: Cold ~18/26 bytes
     /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
     var configDataCount = 0
 
@@ -1387,8 +1387,8 @@ class Font {
         if (newSize <= indexLookup.size)
             return
         for (i in indexLookup.size until newSize) {
-            indexAdvanceX.add(-1f)
-            indexLookup.add(-1)
+            indexAdvanceX += -1f
+            indexLookup += 65535 // -1 signed
         }
     }
 
@@ -1420,14 +1420,14 @@ class Font {
         assert(indexLookup.isNotEmpty())
         val indexSize = indexLookup.size
 
-        if (dst < indexSize && indexLookup[dst] == -1 && !overwriteDst) // 'dst' already exists
+        if (dst < indexSize && indexLookup[dst] == 65535 && !overwriteDst) // 'dst' already exists
             return
         if (src >= indexSize && dst >= indexSize) // both 'dst' and 'src' don't exist -> no-op
             return
 
         growIndex(dst + 1)
-        indexLookup[dst] = indexLookup.getOrElse(src, { -1 })
-        indexAdvanceX[dst] = indexAdvanceX.getOrElse(src, { 1f })
+        indexLookup[dst] = indexLookup.getOrElse(src) { 65535 } // -1 signed
+        indexAdvanceX[dst] = indexAdvanceX.getOrElse(src) { 1f }
     }
 
     fun setCurrent() {
