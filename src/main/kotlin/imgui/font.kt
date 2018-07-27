@@ -972,7 +972,7 @@ class Font {
         // FIXME: Needs proper TAB handling but it needs to be contextualized (or we could arbitrary say that each string starts at "column 0" ?)
         if (findGlyph(' ') != null) {
             if (glyphs.last().codepoint != '\t')   // So we can call this function multiple times
-                glyphs.add(FontGlyph())
+                glyphs += FontGlyph()
             val tabGlyph = glyphs.last()
             tabGlyph put findGlyph(' ')!!
             tabGlyph.codepoint = '\t'
@@ -991,7 +991,7 @@ class Font {
     fun findGlyph(c: Char) = findGlyph(c.i)
     fun findGlyph(c: Int) = indexLookup.getOrNull(c)?.let { glyphs[it] } ?: fallbackGlyph
     fun findGlyphNoFallback(c: Char) = findGlyphNoFallback(c.i)
-    fun findGlyphNoFallback(c: Int) = indexLookup.getOrNull(c)?.let { glyphs[it] }
+    fun findGlyphNoFallback(c: Int) = indexLookup.getOrNull(c)?.let { glyphs.getOrNull(it) }
 
     //    IMGUI_API void              SetFallbackChar(ImWchar c);
     fun getCharAdvance(c: Char): Float = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
@@ -1388,13 +1388,13 @@ class Font {
             return
         for (i in indexLookup.size until newSize) {
             indexAdvanceX += -1f
-            indexLookup += 65535 // -1 signed
+            indexLookup += -1
         }
     }
 
     fun addGlyph(codepoint: Int, x0: Float, y0: Float, x1: Float, y1: Float, u0: Float, v0: Float, u1: Float, v1: Float, advanceX: Float) {
         val glyph = FontGlyph()
-        glyphs.add(glyph)
+        glyphs += glyph
         glyph.codepoint = codepoint.toChar()
         glyph.x0 = x0
         glyph.y0 = y0
@@ -1420,13 +1420,13 @@ class Font {
         assert(indexLookup.isNotEmpty())
         val indexSize = indexLookup.size
 
-        if (dst < indexSize && indexLookup[dst] == 65535 && !overwriteDst) // 'dst' already exists
+        if (dst < indexSize && indexLookup[dst] == -1 && !overwriteDst) // 'dst' already exists
             return
         if (src >= indexSize && dst >= indexSize) // both 'dst' and 'src' don't exist -> no-op
             return
 
         growIndex(dst + 1)
-        indexLookup[dst] = indexLookup.getOrElse(src) { 65535 } // -1 signed
+        indexLookup[dst] = indexLookup.getOrElse(src) { -1 }
         indexAdvanceX[dst] = indexAdvanceX.getOrElse(src) { 1f }
     }
 
