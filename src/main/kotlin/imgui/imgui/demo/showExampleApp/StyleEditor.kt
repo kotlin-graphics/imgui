@@ -257,9 +257,7 @@ object StyleEditor {
                         // Display all glyphs of the fonts in separate pages of 256 characters
                         // Forcefully/dodgily make FindGlyph() return NULL on fallback, which isn't the default behavior.
                         for (base in 0 until 0x10000 step 256) {
-                            val count = (0 until 256).count {
-                                font.findGlyphNoFallback(base + it) != null
-                            }
+                            val count = (0 until 256).count { font.findGlyphNoFallback(base + it) != null }
                             val s = if (count > 1) "glyphs" else "glyph"
                             if (count > 0 && treeNode(base, "U+%04X..U+%04X ($count $s)", base, base + 255)) {
                                 val cellSize = font.fontSize * 1
