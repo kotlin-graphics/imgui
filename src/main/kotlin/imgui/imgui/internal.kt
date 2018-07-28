@@ -66,6 +66,7 @@ import imgui.internal.*
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
+import java.text.DecimalFormat
 import java.util.*
 import kotlin.math.floor
 import kotlin.math.max
@@ -3494,7 +3495,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return vStr.trimStart().i
+            return DecimalFormat().parse(vStr).toInt()
         }
 
         fun roundScalarWithFormat(format: String, value: Long): Long {
@@ -3503,7 +3504,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return vStr.trimStart().L
+            return DecimalFormat().parse(vStr).toLong()
         }
 
         fun roundScalarWithFormat(format: String, value: Float): Float {
@@ -3512,7 +3513,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return vStr.trimStart().split(Regex("\\s+"))[0].f
+            return DecimalFormat().parse(vStr).toFloat()
         }
 
         fun roundScalarWithFormat(format: String, value: Double): Double {
@@ -3521,7 +3522,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return vStr.trimStart().d
+            return DecimalFormat().parse(vStr).toDouble()
         }
     }
 }
