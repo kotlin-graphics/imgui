@@ -186,6 +186,8 @@ dependencies {
 Please refer to the [wiki](https://github.com/kotlin-graphics/imgui/wiki/Install) for a more detailed guide and for other
 systems (such as Maven, Sbt or Leiningen).
 
+Note: total repo size is around 24.1 MB, but there are included 22.6 MB of assets (mainly fonts), this means that the actual size is around 1.5 MB. I always thought a pairs of tens of MB is negligible, but if this is not your case, then just clone and throw away the fonts you don't need.
+
 ### LibGdx
 
 On the initiative to Catvert, ImGui plays now nice also with LibGdx.
