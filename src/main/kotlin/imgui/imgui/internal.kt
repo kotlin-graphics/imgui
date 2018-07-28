@@ -67,6 +67,7 @@ import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.*
 import kotlin.math.floor
 import kotlin.math.max
@@ -84,6 +85,9 @@ import imgui.internal.ButtonFlag as Bf
 import imgui.internal.ColumnsFlag as Cf
 import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.LayoutType as Lt
+import java.util.Locale
+import java.text.NumberFormat
+
 
 @Suppress("UNCHECKED_CAST")
 
@@ -3490,40 +3494,42 @@ interface imgui_internal {
         }
 
         fun roundScalarWithFormat(format: String, value: Int): Int {
-            if(format.isEmpty()) return value
+            if (format.isEmpty()) return value
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return DecimalFormat().parse(vStr).toInt()
+            return decimalFormat.parse(vStr).toInt()
         }
 
         fun roundScalarWithFormat(format: String, value: Long): Long {
-            if(format.isEmpty()) return value
+            if (format.isEmpty()) return value
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return DecimalFormat().parse(vStr).toLong()
+            return decimalFormat.parse(vStr).toLong()
         }
 
         fun roundScalarWithFormat(format: String, value: Float): Float {
-            if(format.isEmpty()) return value
+            if (format.isEmpty()) return value
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return DecimalFormat().parse(vStr).toFloat()
+            return decimalFormat.parse(vStr).toFloat()
         }
 
         fun roundScalarWithFormat(format: String, value: Double): Double {
-            if(format.isEmpty()) return value
+            if (format.isEmpty()) return value
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return DecimalFormat().parse(vStr).toDouble()
+            return decimalFormat.parse(vStr).toDouble()
         }
+
+        val decimalFormat = DecimalFormat().apply { decimalFormatSymbols = DecimalFormatSymbols(style.locale) }
     }
 }
 
