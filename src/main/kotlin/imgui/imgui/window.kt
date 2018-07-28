@@ -11,6 +11,7 @@ import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
+import imgui.ImGui.collapseButton
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endColumns
@@ -597,15 +598,10 @@ interface imgui_window {
                 window.dc.navLayerCurrentMask = window.dc.navLayerCurrentMask shl 1
 
                 // Collapse button
-                if (flags hasnt Wf.NoCollapse) {
-                    val id = window.getId("#COLLAPSE")
-                    val bb = Rect(window.pos + style.framePadding + 1, window.pos + style.framePadding + g.fontSize - 1)
-                    itemAdd(bb, id)
-                    if (buttonBehavior(bb, id).first())
+                if (flags hasnt Wf.NoCollapse)
+                    if (collapseButton(window.getId("#COLLAPSE"), window.pos + style.framePadding))
                         window.collapseToggleWanted = true // Defer collapsing to next frame as we are too far in the Begin() function
-                    renderNavHighlight(bb, id)
-                    renderArrow(Vec2(window.pos + style.framePadding), if (window.collapsed) Dir.Right else Dir.Down, 1f)
-                }
+
                 // Close button
                 if (pOpen != null) {
                     val pad = style.framePadding.y

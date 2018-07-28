@@ -28,8 +28,10 @@ import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
 import imgui.ImGui.indent
 import imgui.ImGui.io
+import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.logText
@@ -788,8 +790,9 @@ interface imgui_internal {
         if (g.logEnabled) logText(" |")
     }
 
+    /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
     fun splitterBehavior(id: ID, bb: Rect, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
-                         minSize1: Float, minSize2: Float, hoverExtend: Float): Boolean {
+                         minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float): Boolean {
 
         var size1 by size1ptr
         var size2 by size2ptr
@@ -808,7 +811,7 @@ interface imgui_internal {
         val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
         if (g.activeId != id) setItemAllowOverlap()
 
-        if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id))
+        if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
             mouseCursor = if (axis == Axis.Y) MouseCursor.ResizeNS else MouseCursor.ResizeEW
 
         val bbRender = Rect(bb)
@@ -831,7 +834,11 @@ interface imgui_internal {
         }
 
         // Render
-        val col = if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator
+        val col = when {
+            held -> Col.SeparatorActive
+            hovered && g.hoveredIdTimer >= hoverVisibilityDelay -> Col.SeparatorHovered
+            else -> Col.Separator
+        }
         window.drawList.addRectFilled(bbRender.min, bbRender.max, col.u32, style.frameRounding)
 
         return held
@@ -1163,10 +1170,8 @@ interface imgui_internal {
             window.drawList.addRectFilled(pMin, pMax, col, rounding, roundingCornerFlags)
     }
 
-    /** Render a triangle to denote expanded/collapsed state    */
-    fun renderArrow(pMin: Vec2, dir: Dir, scale: Float = 1.0f) {
-
-        val window = g.currentWindow!!
+    /** Render an arrow aimed to be aligned with text (p_min is a position in the same space text would be positioned). To e.g. denote expanded/collapsed state  */
+    fun renderArrow(pMin: Vec2, dir: Dir, scale: Float = 1f) {
 
         val h = g.fontSize * 1f
         var r = h * 0.4f * scale
@@ -1178,22 +1183,32 @@ interface imgui_internal {
         when (dir) {
             Dir.Up, Dir.Down -> {
                 if (dir == Dir.Up) r = -r
-                center.y -= r * 0.25f
-                a = Vec2(0, 1) * r
-                b = Vec2(-0.866f, -0.5f) * r
-                c = Vec2(+0.866f, -0.5f) * r
+                a = Vec2(+0.000f, +0.75f) * r
+                b = Vec2(-0.866f, -0.75f) * r
+                c = Vec2(+0.866f, -0.75f) * r
             }
             Dir.Left, Dir.Right -> {
                 if (dir == Dir.Left) r = -r
-                center.x -= r * 0.25f
-                a = Vec2(1, 0) * r
-                b = Vec2(-0.500f, +0.866f) * r
-                c = Vec2(-0.500f, -0.866f) * r
+                a = Vec2(+0.75f, +0.000f) * r
+                b = Vec2(-0.75f, +0.866f) * r
+                c = Vec2(-0.75f, -0.866f) * r
             }
             else -> throw Error()
         }
 
-        window.drawList.addTriangleFilled(center + a, center + b, center + c, Col.Text.u32)
+        g.currentWindow!!.drawList.addTriangleFilled(center + a, center + b, center + c, Col.Text.u32)
+    }
+
+    /** Render an arrow. 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
+    fun renderArrowPointingAt(drawList: DrawList, pos: Vec2, halfSz: Vec2, direction: Dir, col: Int) {
+        drawList.apply {
+            when (direction) {
+                Dir.Left -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y + halfSz.y), pos, col)
+                Dir.Right -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
+                Dir.Up -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y + halfSz.y), pos, col)
+                Dir.Down -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y - halfSz.y), pos, col)
+            }
+        }
     }
 
     fun renderBullet(pos: Vec2) = currentWindow.drawList.addCircleFilled(pos, g.fontSize * 0.2f, Col.Text.u32, 8)
@@ -1476,7 +1491,6 @@ interface imgui_internal {
         return pressed
     }
 
-
     /* Button to close a window    */
     fun closeButton(id: ID, pos: Vec2, radius: Float): Boolean {
 
@@ -1505,6 +1519,19 @@ interface imgui_internal {
         window.drawList.addLine(center + Vec2(crossExtent, -crossExtent), center + Vec2(-crossExtent, crossExtent), crossCol, 1f)
 
         return pressed
+    }
+
+    fun collapseButton(id: ID, pos: Vec2): Boolean {
+        val window = g.currentWindow!!
+        val bb = Rect(pos, pos + g.fontSize)
+        itemAdd(bb, id)
+        return buttonBehavior(bb, id, Bf.None)[0].also {
+            renderNavHighlight(bb, id)
+            renderArrow(bb.min, if(window.collapsed) Dir.Right else Dir.Down, 1f)
+            // Switch to moving the window after mouse is moved beyond the initial drag threshold
+            if (isItemActive && isMouseDragging())
+                window.startMouseMoving()
+        }
     }
 
     fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), 0)
