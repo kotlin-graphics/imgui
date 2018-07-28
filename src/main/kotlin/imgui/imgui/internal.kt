@@ -3528,6 +3528,16 @@ interface imgui_internal {
 }
 
 // TODO move in a more appropriate place
+inline fun <R> withBoolean(bools: BooleanArray, ptr: Int = 0, block: (KMutableProperty0<Boolean>) -> R): R {
+    Ref.bPtr++
+    val bool = Ref::bool
+    bool.set(bools[ptr])
+    val res = block(bool)
+    bools[ptr] = bool()
+    Ref.bPtr--
+    return res
+}
+
 inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
     Ref.fPtr++
     val f = Ref::float
