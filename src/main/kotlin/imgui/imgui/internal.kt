@@ -3499,7 +3499,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return decimalFormat.parse(vStr).toInt()
+            return decimalFormat.parse(vStr.trimStart()).toInt()
         }
 
         fun roundScalarWithFormat(format: String, value: Long): Long {
@@ -3508,7 +3508,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return decimalFormat.parse(vStr).toLong()
+            return decimalFormat.parse(vStr.trimStart()).toLong()
         }
 
         fun roundScalarWithFormat(format: String, value: Float): Float {
@@ -3517,7 +3517,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return decimalFormat.parse(vStr).toFloat()
+            return decimalFormat.parse(vStr.trimStart()).toFloat()
         }
 
         fun roundScalarWithFormat(format: String, value: Double): Double {
@@ -3526,7 +3526,7 @@ interface imgui_internal {
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            return decimalFormat.parse(vStr).toDouble()
+            return decimalFormat.parse(vStr.trimStart()).toDouble()
         }
 
         val decimalFormat = DecimalFormat().apply { decimalFormatSymbols = DecimalFormatSymbols(style.locale) }
