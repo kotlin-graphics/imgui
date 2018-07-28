@@ -989,7 +989,7 @@ class Font {
     }
 
     fun findGlyph(c: Char) = findGlyph(c.i)
-    fun findGlyph(c: Int) = indexLookup.getOrNull(c)?.let { glyphs[it] } ?: fallbackGlyph
+    fun findGlyph(c: Int) = indexLookup.getOrNull(c)?.let { glyphs.getOrNull(it) } ?: fallbackGlyph
     fun findGlyphNoFallback(c: Char) = findGlyphNoFallback(c.i)
     fun findGlyphNoFallback(c: Int) = indexLookup.getOrNull(c)?.let { glyphs.getOrNull(it) }
 
