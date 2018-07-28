@@ -10,6 +10,7 @@ import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
 import java.io.File
 import java.nio.ByteBuffer
+import java.text.DecimalFormatSymbols
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -482,7 +483,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var setClipboardTextFn: ((userData: Any, text: String) -> Unit)? = null
     lateinit var clipboardUserData: Any
 
-//    // Optional: override memory allocations. MemFreeFn() may be called with a NULL pointer.
+    //    // Optional: override memory allocations. MemFreeFn() may be called with a NULL pointer.
 //    // (default to posix malloc/free)
 //    void*       (*MemAllocFn)(size_t sz);
 //    void        (*MemFreeFn)(void* ptr);
@@ -709,7 +710,7 @@ class Style {
     val colors = ArrayList<Vec4>()
 
     /** JVM IMGUI   */
-    val locale = Locale.US
+    var locale: Locale = Locale.US
 //    val locale = Locale.getDefault()
 
     init {
