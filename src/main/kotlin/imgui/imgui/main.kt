@@ -178,9 +178,10 @@ interface imgui_main {
         updateMouseMovingWindow()
         updateHoveredWindowAndCaptureFlags()
 
+        // Background darkening/whitening
         g.dimBgRatio = when {
-            frontMostPopupModal != null || g.navWindowingTarget != null -> (g.dimBgRatio + io.deltaTime * 6f) min 1f
-            else -> 0f
+            frontMostPopupModal != null || (g.navWindowingTarget != null  && g.navWindowingHighlightAlpha > 0f)-> (g.dimBgRatio + io.deltaTime * 6f) min 1f
+            else -> (g.dimBgRatio - io.deltaTime * 10f) max 0f
         }
         g.mouseCursor = MouseCursor.Arrow
         g.wantTextInputNextFrame = -1

@@ -42,6 +42,12 @@ val MOUSE_INVALID = -256000f
 val IMGUI_DEBUG_NAV_SCORING = false
 val IMGUI_DEBUG_NAV_RECTS = false
 
+// When using CTRL+TAB (or Gamepad Square+L/R) we delay the visual a little in order to reduce visual noise doing a fast switch.
+/** Time before the highlight and screen dimming starts fading in */
+const val NAV_WINDOWING_HIGHLIGHT_DELAY = 0.2f
+/** Time before the window list starts to appear */
+const val NAV_WINDOWING_LIST_APPEAR_DELAY = 0.15f
+
 object ImGui :
 
         imgui_main,

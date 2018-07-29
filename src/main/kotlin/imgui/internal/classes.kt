@@ -1,5 +1,6 @@
 package imgui.internal
 
+import gli_.has
 import gli_.hasnt
 import glm_.f
 import glm_.glm
@@ -562,6 +563,8 @@ class Window(var context: Context, var name: String) {
     var skipItems = false
     /** Set during the frame where the window is appearing (or re-appearing)    */
     var appearing = false
+    /** Do not display (== (HiddenFramesForResize > 0) || */
+    var hidden = false
     /** Set when the window has a close button (p_open != NULL) */
     var hasCloseButton = false
     /** Order within immediate parent window, if we are a child window. Otherwise 0. */
@@ -580,8 +583,10 @@ class Window(var context: Context, var name: String) {
     var autoFitChildAxes = 0x00
 
     var autoPosLastDirection = Dir.None
-
-    var hiddenFrames = 0
+    /** Hide the window for N frames */
+    var hiddenFramesRegular = 0
+    /** Hide the window for N frames while allowing items to be submitted so we can measure their size */
+    var hiddenFramesForResize = 0
     /** store acceptable condition flags for SetNextWindowPos() use. */
     var setWindowPosAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
     /** store acceptable condition flags for SetNextWindowSize() use.    */
@@ -872,7 +877,7 @@ class Window(var context: Context, var name: String) {
     /** AddWindowToDrawData */
     infix fun addTo(outList: ArrayList<DrawList>) {
         drawList addTo outList
-        dc.childWindows.filter { it.active && it.hiddenFrames == 0 }  // clipped children may have been marked not active
+        dc.childWindows.filter { it.isActiveAndVisible }  // clipped children may have been marked not active
                 .forEach { it addTo outList }
     }
 
@@ -917,6 +922,7 @@ class Window(var context: Context, var name: String) {
             }
     }
 
+    /** ~ BringWindowToBack */
     fun bringToBack() {
         if (g.windows[0] === this) return
         for (i in 0 until g.windows.size)
@@ -982,6 +988,10 @@ class Window(var context: Context, var name: String) {
         assert(drawList === drawListInst)
     }
 
+
+    // Settings
+
+
     fun markIniSettingsDirty() {
         if (flags hasnt Wf.NoSavedSettings)
             if (g.settingsDirtyTimer <= 0f)
@@ -998,17 +1008,33 @@ class Window(var context: Context, var name: String) {
         }
 
     /** ~ IsWindowActiveAndVisible */
-    val isActiveAndVisible: Boolean get() = hiddenFrames == 0 && active
+    val isActiveAndVisible: Boolean get() = active && !hidden
 
     /** ~ StartMouseMovingWindow */
     fun startMouseMoving() {
-    // Set ActiveId even if the _NoMove flag is set. Without it, dragging away from a window with _NoMove would activate hover on other windows.
+        // Set ActiveId even if the _NoMove flag is set. Without it, dragging away from a window with _NoMove would activate hover on other windows.
         focus()
         setActiveId(moveId, this)
         g.navDisableHighlight = true
         g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
         if (flags hasnt Wf.NoMove && rootWindow!!.flags hasnt Wf.NoMove)
             g.movingWindow = this
+    }
+
+    /** ~UpdateWindowParentAndRootLinks */
+    fun updateParentAndRootLinks(flags: WindowFlags, parentWindow: Window?) {
+        this.parentWindow = parentWindow
+        rootWindow = this
+        rootWindowForTitleBarHighlight = this
+        rootWindowForNav = this
+        parentWindow?.let {
+            if (flags has Wf.ChildWindow && flags hasnt Wf.Tooltip)
+                rootWindow = it.rootWindow
+            if (flags hasnt Wf.Modal && flags has (Wf.ChildWindow or Wf.Popup))
+                rootWindowForTitleBarHighlight = it.rootWindowForTitleBarHighlight
+        }
+        while (rootWindowForNav!!.flags has Wf.NavFlattened)
+            rootWindowForNav = rootWindowForNav!!.parentWindow
     }
 }
 

@@ -87,7 +87,7 @@ fun findHoveredWindow() {
     var i = g.windows.lastIndex
     while (i >= 0 && hoveredWindow == null) {
         val window = g.windows[i]
-        if (window.active && window.flags hasnt Wf.NoInputs) {
+        if (window.active && !window.hidden && window.flags hasnt Wf.NoInputs) {
             // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
             val bb = Rect(window.outerRectClipped.min - style.touchExtraPadding, window.outerRectClipped.max + style.touchExtraPadding)
             if (bb contains io.mousePos) {
@@ -1116,12 +1116,12 @@ fun navUpdate() {
     g.navScoringCount = 0
     if (IMGUI_DEBUG_NAV_RECTS)
         g.navWindow?.let {
-            for (layer in 0..1)
-                overlayDrawList.addRect(it.navRectRel[layer].min + it.pos, it.navRectRel[layer].max + it.pos, COL32(255, 200, 0, 255))
-            val col = if (it.hiddenFrames == 0) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
-            val p = navCalcPreferredRefPos()
-            g.overlayDrawList.addCircleFilled(p, 3f, col)
-            g.overlayDrawList.addText(null, 13f, p + Vec2(8, -4), col, "${g.navLayer}".toCharArray())
+//            for (layer in 0..1)
+//                overlayDrawList.addRect(it.navRectRel[layer].min + it.pos, it.navRectRel[layer].max + it.pos, COL32(255, 200, 0, 255))
+//            val col = if (it.hiddenFrames == 0) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
+//            val p = navCalcPreferredRefPos()
+//            g.overlayDrawList.addCircleFilled(p, 3f, col)
+//            g.overlayDrawList.addText(null, 13f, p + Vec2(8, -4), col, "${g.navLayer}".toCharArray())
         }
 }
 
@@ -1137,24 +1137,32 @@ fun navUpdateWindowing() {
         return
     }
 
+    // Fade out
+    if (g.navWindowingTargetAnim != null && g.navWindowingTarget == null) {
+        g.navWindowingHighlightAlpha = (g.navWindowingHighlightAlpha - io.deltaTime * 10f) max 0f
+        if (g.dimBgRatio <= 0f && g.navWindowingHighlightAlpha <= 0f)
+            g.navWindowingTargetAnim = null
+    }
+    // Start CTRL-TAB or Square+L/R window selection
     val startWindowingWithGamepad = g.navWindowingTarget == null && NavInput.Menu.isPressed(InputReadMode.Pressed)
     val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has Cf.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavigable(g.windows.lastIndex, -Int.MAX_VALUE, -1))?.let {
             g.navWindowingTarget = it
+            g.navWindowingTargetAnim = it
             g.navWindowingHighlightAlpha = 0f
-            g.navWindowingHighlightTimer = 0f
+            g.navWindowingTimer = 0f
             g.navWindowingToggleLayer = !startWindowingWithKeyboard
             g.navInputSource = if (startWindowingWithKeyboard) InputSource.NavKeyboard else InputSource.NavGamepad
         }
 
     // Gamepad update
-    g.navWindowingHighlightTimer += io.deltaTime
+    g.navWindowingTimer += io.deltaTime
     g.navWindowingTarget?.let {
         if (g.navInputSource == InputSource.NavGamepad) {
             /*  Highlight only appears after a brief time holding the button, so that a fast tap on PadMenu
                 (to toggle NavLayer) doesn't add visual noise             */
-            g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingHighlightTimer - 0.2f) / 0.05f))
+            g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f))
 
             // Select window to focus
             val focusChangeDir = NavInput.FocusPrev.isPressed(InputReadMode.RepeatSlow).i - NavInput.FocusNext.isPressed(InputReadMode.RepeatSlow).i
@@ -1179,7 +1187,7 @@ fun navUpdateWindowing() {
     g.navWindowingTarget?.let {
         if (g.navInputSource == InputSource.NavKeyboard) {
             // Visuals only appears after a brief time after pressing TAB the first time, so that a fast CTRL+TAB doesn't add visual noise
-            g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingHighlightTimer - 0.15f) / 0.04f)) // 1.0f
+            g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f)) // 1.0f
             if (Key.Tab.isPressed(true))
                 navUpdateWindowingHighlightWindow(if (io.keyShift) 1 else -1)
             if (!io.keyCtrl)
@@ -1251,6 +1259,8 @@ fun navUpdateWindowing() {
 fun navUpdateWindowingList() {
 
     val target = g.navWindowingTarget!! // ~ assert
+
+    if (g.navWindowingTimer < NAV_WINDOWING_LIST_APPEAR_DELAY) return
 
     if (g.navWindowingList.isEmpty())
         findWindowByName("###NavWindowingList")?.let { g.navWindowingList += it }
@@ -1354,9 +1364,9 @@ var imeSetInputScreenPosFn_Win32 = { x: Int, y: Int ->
                 ptCurrentPos.y = y.L
                 dwStyle = imm.CFS_FORCE_POSITION.L
             }
-            if(imm.setCompositionWindow(himc, cf) == 0)
+            if (imm.setCompositionWindow(himc, cf) == 0)
                 System.err.println("imm.setCompositionWindow failed")
-            if(imm.releaseContext(hwnd, himc) == 0)
+            if (imm.releaseContext(hwnd, himc) == 0)
                 System.err.println("imm.releaseContext failed")
         }
     }
@@ -1399,7 +1409,10 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
     val windowTarget = findWindowNavigable(iCurrent + focusChangeDir, -Int.MAX_VALUE, focusChangeDir)
             ?: findWindowNavigable(if (focusChangeDir < 0) g.windows.lastIndex else 0, iCurrent, focusChangeDir)
     // Don't reset windowing target if there's a single window in the list
-    windowTarget?.let { g.navWindowingTarget = it }
+    windowTarget?.let {
+        g.navWindowingTarget = it
+        g.navWindowingTargetAnim = it
+    }
     g.navWindowingToggleLayer = false
 }
 

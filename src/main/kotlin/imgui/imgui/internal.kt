@@ -129,6 +129,10 @@ interface imgui_internal {
         if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = io.iniSavingRate
     }
 
+
+    // Basic Accessors
+
+
     val itemID: ID
         get() = g.currentWindow!!.dc.lastItemId
 
@@ -207,6 +211,10 @@ interface imgui_internal {
         assert(g.activeId == id || g.activeId == 0 || g.dragDropActive)
         g.activeIdValueChanged = true
     }
+
+
+    // Basic Helpers for widget code
+
 
     /** Advance cursor given item size for layout.  */
     fun itemSize(size: Vec2, textOffsetY: Float = 0f) {
@@ -383,6 +391,10 @@ interface imgui_internal {
         itemFlags = itemFlagsStack.lastOrNull() ?: If.Default_.i
     }
 
+
+    // Popups, Modals, Tooltips
+
+
     /** Mark popup as open (toggle toward open state).
      *  Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within
      *  a BeginPopup()/EndPopup() block.
@@ -505,7 +517,8 @@ interface imgui_internal {
             findWindowByName(windowName)?.let {
                 if (it.active) {
                     // Hide previous tooltip from being displayed. We can't easily "reset" the content of a window so we create a new one.
-                    it.hiddenFrames = 1
+                    it.hidden = true
+                    it.hiddenFramesRegular = 1
                     windowName = "##Tooltip_%02d".format(++g.tooltipOverrideCount)
                 }
             }
@@ -520,6 +533,10 @@ interface imgui_internal {
                 g.openPopupStack[n].window?.let { if (it.flags has Wf.Modal) return it }
             return null
         }
+
+
+    // Navigation
+
 
     fun navInitWindow(window: Window, forceReinit: Boolean) {
 
@@ -601,12 +618,6 @@ interface imgui_internal {
         }
     }
 
-    /** Remotely activate a button, checkbox, tree node etc. given its unique ID. activation is queued and processed
-     *  on the next frame when the item is encountered again.  */
-    fun activateItem(id: ID) {
-        g.navNextActivateId = id
-    }
-
     fun getNavInputAmount(n: NavInput, mode: InputReadMode): Float {    // TODO -> NavInput?
 
         val i = n.i
@@ -648,7 +659,6 @@ interface imgui_internal {
         return delta
     }
 
-
     fun calcTypematicPressedRepeatAmount(t: Float, tPrev: Float, repeatDelay: Float, repeatRate: Float) = when {
         t == 0f -> 1
         t <= repeatDelay || repeatRate <= 0f -> 0
@@ -658,192 +668,11 @@ interface imgui_internal {
         }
     }
 
-    /** Vertical scrollbar
-     *  The entire piece of code below is rather confusing because:
-     *  - We handle absolute seeking (when first clicking outside the grab) and relative manipulation (afterward or when
-     *          clicking inside the grab)
-     *  - We store values as normalized ratio and in a form that allows the window content to change while we are holding on
-     *          a scrollbar
-     *  - We handle both horizontal and vertical scrollbars, which makes the terminology not ideal. */
-    fun scrollbar(direction: Lt) {
-
-        val window = g.currentWindow!!
-        val horizontal = direction == Lt.Horizontal
-
-        val id = window.getId(if (horizontal) "#SCROLLX" else "#SCROLLY")
-
-        // Render background
-        val otherScrollbar = if (horizontal) window.scrollbar.y else window.scrollbar.x
-        val otherScrollbarSizeW = if (otherScrollbar) style.scrollbarSize else 0f
-        val windowRect = window.rect()
-        val borderSize = window.windowBorderSize
-        val bb = when (horizontal) {
-            true -> Rect(window.pos.x + borderSize, windowRect.max.y - style.scrollbarSize,
-                    windowRect.max.x - otherScrollbarSizeW - borderSize, windowRect.max.y - borderSize)
-            else -> Rect(windowRect.max.x - style.scrollbarSize, window.pos.y + borderSize,
-                    windowRect.max.x - borderSize, windowRect.max.y - otherScrollbarSizeW - borderSize)
-        }
-        if (!horizontal)
-            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f
-        if (bb.width <= 0f || bb.height <= 0f) return
-
-        val windowRoundingCorners =
-                if (horizontal)
-                    Dcf.BotLeft.i or if (otherScrollbar) 0 else Dcf.BotRight.i
-                else
-                    (if (window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar) Dcf.TopRight.i else 0) or
-                            if (otherScrollbar) 0 else Dcf.BotRight.i
-        window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, window.windowRounding, windowRoundingCorners)
-        bb.expand(Vec2(
-                -glm.clamp(((bb.max.x - bb.min.x - 2f) * 0.5f).i.f, 0f, 3f),
-                -glm.clamp(((bb.max.y - bb.min.y - 2f) * 0.5f).i.f, 0f, 3f)))
-
-        // V denote the main, longer axis of the scrollbar (= height for a vertical scrollbar)
-        val scrollbarSizeV = if (horizontal) bb.width else bb.height
-        var scrollV = if (horizontal) window.scroll.x else window.scroll.y
-        val winSizeAvailV = (if (horizontal) window.sizeFull.x else window.sizeFull.y) - otherScrollbarSizeW
-        val winSizeContentsV = if (horizontal) window.sizeContents.x else window.sizeContents.y
-
-        /*  Calculate the height of our grabbable box. It generally represent the amount visible (vs the total scrollable amount)
-            But we maintain a minimum size in pixel to allow for the user to still aim inside.  */
-        // Adding this assert to check if the ImMax(XXX,1.0f) is still needed. PLEASE CONTACT ME if this triggers.
-        assert(glm.max(winSizeContentsV, winSizeAvailV) > 0f)
-        val winSizeV = glm.max(glm.max(winSizeContentsV, winSizeAvailV), 1f)
-        val grabHPixels = glm.clamp(scrollbarSizeV * (winSizeAvailV / winSizeV), style.grabMinSize, scrollbarSizeV)
-        val grabHNorm = grabHPixels / scrollbarSizeV
-
-        // Handle input right away. None of the code of Begin() is relying on scrolling position before calling Scrollbar().
-        val previouslyHeld = g.activeId == id
-        val (_, hovered, held) = buttonBehavior(bb, id, Bf.NoNavFocus)
-
-        val scrollMax = glm.max(1f, winSizeContentsV - winSizeAvailV)
-        var scrollRatio = saturate(scrollV / scrollMax)
-        var grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV
-        if (held && grabHNorm < 1f) {
-            val scrollbarPosV = if (horizontal) bb.min.x else bb.min.y
-            val mousePosV = if (horizontal) io.mousePos.x else io.mousePos.y
-            var clickDeltaToGrabCenterV = if (horizontal) g.scrollbarClickDeltaToGrabCenter.x else g.scrollbarClickDeltaToGrabCenter.y
-
-            // Click position in scrollbar normalized space (0.0f->1.0f)
-            val clickedVNorm = saturate((mousePosV - scrollbarPosV) / scrollbarSizeV)
-            hoveredId = id
-
-            var seekAbsolute = false
-            if (!previouslyHeld)
-            // On initial click calculate the distance between mouse and the center of the grab
-                if (clickedVNorm >= grabVNorm && clickedVNorm <= grabVNorm + grabHNorm)
-                    clickDeltaToGrabCenterV = clickedVNorm - grabVNorm - grabHNorm * 0.5f
-                else {
-                    seekAbsolute = true
-                    clickDeltaToGrabCenterV = 0f
-                }
-
-            /*  Apply scroll
-                It is ok to modify Scroll here because we are being called in Begin() after the calculation of SizeContents
-                and before setting up our starting position */
-            val scrollVNorm = saturate((clickedVNorm - clickDeltaToGrabCenterV - grabHNorm * 0.5f) / (1f - grabHNorm))
-            scrollV = (0.5f + scrollVNorm * scrollMax).i.f  //(winSizeContentsV - winSizeV));
-            if (horizontal)
-                window.scroll.x = scrollV
-            else
-                window.scroll.y = scrollV
-
-            // Update values for rendering
-            scrollRatio = saturate(scrollV / scrollMax)
-            grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV
-
-            // Update distance to grab now that we have seeked and saturated
-            if (seekAbsolute)
-                clickDeltaToGrabCenterV = clickedVNorm - grabVNorm - grabHNorm * 0.5f
-
-            if (horizontal)
-                g.scrollbarClickDeltaToGrabCenter.x = clickDeltaToGrabCenterV
-            else
-                g.scrollbarClickDeltaToGrabCenter.y = clickDeltaToGrabCenterV
-        }
-
-        // Render
-        val grabCol = (if (held) Col.ScrollbarGrabActive else if (hovered) Col.ScrollbarGrabHovered else Col.ScrollbarGrab).u32
-        val grabRect =
-                if (horizontal)
-                    Rect(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y,
-                            min(lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, windowRect.max.x), bb.max.y)
-                else
-                    Rect(bb.min.x, lerp(bb.min.y, bb.max.y, grabVNorm),
-                            bb.max.x, min(lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels, windowRect.max.y))
-        window.drawList.addRectFilled(grabRect.min, grabRect.max, grabCol, style.scrollbarRounding)
+    /** Remotely activate a button, checkbox, tree node etc. given its unique ID. activation is queued and processed
+     *  on the next frame when the item is encountered again.  */
+    fun activateItem(id: ID) {
+        g.navNextActivateId = id
     }
-
-    /** Vertical separator, for menu bars (use current line height). not exposed because it is misleading
-     *  what it doesn't have an effect on regular layout.   */
-    fun verticalSeparator() {
-        val window = currentWindow
-        if (window.skipItems) return
-
-        val y1 = window.dc.cursorPos.y
-        val y2 = window.dc.cursorPos.y + window.dc.currentLineHeight
-        val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
-        itemSize(Vec2(bb.width, 0f))
-        if (!itemAdd(bb, 0)) return
-
-        window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
-        if (g.logEnabled) logText(" |")
-    }
-
-    /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
-    fun splitterBehavior(id: ID, bb: Rect, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
-                         minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float): Boolean {
-
-        var size1 by size1ptr
-        var size2 by size2ptr
-        val window = g.currentWindow!!
-
-        val itemFlagsBackup = window.dc.itemFlags
-
-        window.dc.itemFlags = window.dc.itemFlags or (If.NoNav or If.NoNavDefaultFocus)
-
-        val itemAdd = itemAdd(bb, id)
-        window.dc.itemFlags = itemFlagsBackup
-        if (!itemAdd) return false
-
-        val bbInteract = Rect(bb)
-        bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
-        val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
-        if (g.activeId != id) setItemAllowOverlap()
-
-        if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
-            mouseCursor = if (axis == Axis.Y) MouseCursor.ResizeNS else MouseCursor.ResizeEW
-
-        val bbRender = Rect(bb)
-        if (held) {
-            val mouseDelta2d = io.mousePos - g.activeIdClickOffset - bbInteract.min
-            var mouseDelta = if (axis == Axis.Y) mouseDelta2d.y else mouseDelta2d.x
-
-            // Minimum pane size
-            if (mouseDelta < minSize1 - size1)
-                mouseDelta = minSize1 - size1
-            if (mouseDelta > size2 - minSize2)
-                mouseDelta = size2 - minSize2
-
-            // Apply resize
-            size1 = size1 + mouseDelta // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
-            size2 = size2 - mouseDelta
-            bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
-
-            markItemValueChanged(id)
-        }
-
-        // Render
-        val col = when {
-            held -> Col.SeparatorActive
-            hovered && g.hoveredIdTimer >= hoverVisibilityDelay -> Col.SeparatorHovered
-            else -> Col.Separator
-        }
-        window.drawList.addRectFilled(bbRender.min, bbRender.max, col.u32, style.frameRounding)
-
-        return held
-    }
-
 
     fun beginDragDropTargetCustom(bb: Rect, id: ID): Boolean {
         if (!g.dragDropActive) return false
@@ -888,7 +717,7 @@ interface imgui_internal {
 
     fun endDragDropTooltip() = endTooltip()
 
-    // FIXME-WIP: New Columns API
+    // New Columns API (FIXME-WIP)
 
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
     fun beginColumns(strId: String = "", columnsCount: Int, flags: ColumnsFlags) {
@@ -1030,9 +859,10 @@ interface imgui_internal {
     }
 
 
-    /** NB: All position are in absolute pixels coordinates (never using window coordinates internally)
-     *  AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND
-     *  BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT. */
+    /*  Render helpers
+        AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND
+        BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT.
+        NB: All position are in absolute pixels coordinates (never using window coordinates internally) */
     fun renderText(pos: Vec2, text: String, textEnd: Int = text.length, hideTextAfterHash: Boolean = true) {
 
         val window = g.currentWindow!!
@@ -1317,6 +1147,261 @@ interface imgui_internal {
         return textDisplayEnd
     }
 
+
+    // Widgets
+
+
+    fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags_: Int = 0): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId(label)
+        val labelSize = calcTextSize(label, true)
+
+        val pos = Vec2(window.dc.cursorPos)
+        /*  Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky,
+            since it shouldn't be a flag)         */
+        if (flags_ has Bf.AlignTextBaseLine && style.framePadding.y < window.dc.currentLineTextBaseOffset)
+            pos.y += window.dc.currentLineTextBaseOffset - style.framePadding.y
+        val size = calcItemSize(sizeArg, labelSize.x + style.framePadding.x * 2f, labelSize.y + style.framePadding.y * 2f)
+
+        val bb = Rect(pos, pos + size)
+        itemSize(bb, style.framePadding.y)
+        if (!itemAdd(bb, id)) return false
+
+        var flags = flags_
+        if (window.dc.itemFlags has If.ButtonRepeat) flags = flags or Bf.Repeat
+        val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
+        if (pressed)
+            markItemValueChanged(id)
+
+        // Render
+        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
+        renderTextClipped(bb.min + style.framePadding, bb.max - style.framePadding, label, 0, labelSize,
+                style.buttonTextAlign, bb)
+
+        // Automatically close popups
+        //if (pressed && !(flags & ImGuiButtonFlags_DontClosePopups) && (window->Flags & ImGuiWindowFlags_Popup))
+        //    CloseCurrentPopup();
+
+        return pressed
+    }
+
+    /* Button to close a window    */
+    fun closeButton(id: ID, pos: Vec2, radius: Float): Boolean {
+
+        val window = currentWindow
+
+        /*  We intentionally allow interaction when clipped so that a mechanical Alt, Right, Validate sequence close
+            a window. (this isn't the regular behavior of buttons, but it doesn't affect the user much because
+            navigation tends to keep items visible).   */
+        val bb = Rect(pos - radius, pos + radius)
+        val isClipped = !itemAdd(bb, id)
+
+        val (pressed, hovered, held) = buttonBehavior(bb, id)
+        if (isClipped) return pressed
+
+        // Render
+        val center = Vec2(bb.center)
+        if (hovered) {
+            val col = if (held && hovered) Col.ButtonActive else Col.ButtonHovered
+            window.drawList.addCircleFilled(center, 2f max radius, col.u32, 9)
+        }
+
+        val crossExtent = (radius * 0.7071f) - 1f
+        val crossCol = Col.Text.u32
+        center -= 0.5f
+        window.drawList.addLine(center + crossExtent, center - crossExtent, crossCol, 1f)
+        window.drawList.addLine(center + Vec2(crossExtent, -crossExtent), center + Vec2(-crossExtent, crossExtent), crossCol, 1f)
+
+        return pressed
+    }
+
+    fun collapseButton(id: ID, pos: Vec2): Boolean {
+        val window = g.currentWindow!!
+        val bb = Rect(pos, pos + g.fontSize)
+        itemAdd(bb, id)
+        return buttonBehavior(bb, id, Bf.None)[0].also {
+            renderNavHighlight(bb, id)
+            renderArrow(bb.min, if (window.collapsed) Dir.Right else Dir.Down, 1f)
+            // Switch to moving the window after mouse is moved beyond the initial drag threshold
+            if (isItemActive && isMouseDragging())
+                window.startMouseMoving()
+        }
+    }
+
+    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), 0)
+
+    /** square button with an arrow shape */
+    fun arrowButtonEx(strId: String, dir: Dir, size: Vec2, flags_: ButtonFlags): Boolean {
+
+        var flags = flags_
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getId(strId)
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
+        val defaultSize = frameHeight
+        itemSize(bb, if (size.y >= defaultSize) style.framePadding.y else 0f)
+        if (!itemAdd(bb, id)) return false
+
+        if (window.dc.itemFlags has If.ButtonRepeat)
+            flags = flags or Bf.Repeat
+
+        val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
+
+        // Render
+        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
+        renderArrow(bb.min + Vec2(max(0f, size.x - g.fontSize - style.framePadding.x), max(0f, size.y - g.fontSize - style.framePadding.y)), dir)
+
+        return pressed
+    }
+
+    /** Vertical scrollbar
+     *  The entire piece of code below is rather confusing because:
+     *  - We handle absolute seeking (when first clicking outside the grab) and relative manipulation (afterward or when
+     *          clicking inside the grab)
+     *  - We store values as normalized ratio and in a form that allows the window content to change while we are holding on
+     *          a scrollbar
+     *  - We handle both horizontal and vertical scrollbars, which makes the terminology not ideal. */
+    fun scrollbar(direction: Lt) {
+
+        val window = g.currentWindow!!
+        val horizontal = direction == Lt.Horizontal
+
+        val id = window.getId(if (horizontal) "#SCROLLX" else "#SCROLLY")
+
+        // Render background
+        val otherScrollbar = if (horizontal) window.scrollbar.y else window.scrollbar.x
+        val otherScrollbarSizeW = if (otherScrollbar) style.scrollbarSize else 0f
+        val windowRect = window.rect()
+        val borderSize = window.windowBorderSize
+        val bb = when (horizontal) {
+            true -> Rect(window.pos.x + borderSize, windowRect.max.y - style.scrollbarSize,
+                    windowRect.max.x - otherScrollbarSizeW - borderSize, windowRect.max.y - borderSize)
+            else -> Rect(windowRect.max.x - style.scrollbarSize, window.pos.y + borderSize,
+                    windowRect.max.x - borderSize, windowRect.max.y - otherScrollbarSizeW - borderSize)
+        }
+        if (!horizontal)
+            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f
+        if (bb.width <= 0f || bb.height <= 0f) return
+
+        val windowRoundingCorners =
+                if (horizontal)
+                    Dcf.BotLeft.i or if (otherScrollbar) 0 else Dcf.BotRight.i
+                else
+                    (if (window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar) Dcf.TopRight.i else 0) or
+                            if (otherScrollbar) 0 else Dcf.BotRight.i
+        window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, window.windowRounding, windowRoundingCorners)
+        bb.expand(Vec2(
+                -glm.clamp(((bb.max.x - bb.min.x - 2f) * 0.5f).i.f, 0f, 3f),
+                -glm.clamp(((bb.max.y - bb.min.y - 2f) * 0.5f).i.f, 0f, 3f)))
+
+        // V denote the main, longer axis of the scrollbar (= height for a vertical scrollbar)
+        val scrollbarSizeV = if (horizontal) bb.width else bb.height
+        var scrollV = if (horizontal) window.scroll.x else window.scroll.y
+        val winSizeAvailV = (if (horizontal) window.sizeFull.x else window.sizeFull.y) - otherScrollbarSizeW
+        val winSizeContentsV = if (horizontal) window.sizeContents.x else window.sizeContents.y
+
+        /*  Calculate the height of our grabbable box. It generally represent the amount visible (vs the total scrollable amount)
+            But we maintain a minimum size in pixel to allow for the user to still aim inside.  */
+        // Adding this assert to check if the ImMax(XXX,1.0f) is still needed. PLEASE CONTACT ME if this triggers.
+        assert(glm.max(winSizeContentsV, winSizeAvailV) > 0f)
+        val winSizeV = glm.max(glm.max(winSizeContentsV, winSizeAvailV), 1f)
+        val grabHPixels = glm.clamp(scrollbarSizeV * (winSizeAvailV / winSizeV), style.grabMinSize, scrollbarSizeV)
+        val grabHNorm = grabHPixels / scrollbarSizeV
+
+        // Handle input right away. None of the code of Begin() is relying on scrolling position before calling Scrollbar().
+        val previouslyHeld = g.activeId == id
+        val (_, hovered, held) = buttonBehavior(bb, id, Bf.NoNavFocus)
+
+        val scrollMax = glm.max(1f, winSizeContentsV - winSizeAvailV)
+        var scrollRatio = saturate(scrollV / scrollMax)
+        var grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV
+        if (held && grabHNorm < 1f) {
+            val scrollbarPosV = if (horizontal) bb.min.x else bb.min.y
+            val mousePosV = if (horizontal) io.mousePos.x else io.mousePos.y
+            var clickDeltaToGrabCenterV = if (horizontal) g.scrollbarClickDeltaToGrabCenter.x else g.scrollbarClickDeltaToGrabCenter.y
+
+            // Click position in scrollbar normalized space (0.0f->1.0f)
+            val clickedVNorm = saturate((mousePosV - scrollbarPosV) / scrollbarSizeV)
+            hoveredId = id
+
+            var seekAbsolute = false
+            if (!previouslyHeld)
+            // On initial click calculate the distance between mouse and the center of the grab
+                if (clickedVNorm >= grabVNorm && clickedVNorm <= grabVNorm + grabHNorm)
+                    clickDeltaToGrabCenterV = clickedVNorm - grabVNorm - grabHNorm * 0.5f
+                else {
+                    seekAbsolute = true
+                    clickDeltaToGrabCenterV = 0f
+                }
+
+            /*  Apply scroll
+                It is ok to modify Scroll here because we are being called in Begin() after the calculation of SizeContents
+                and before setting up our starting position */
+            val scrollVNorm = saturate((clickedVNorm - clickDeltaToGrabCenterV - grabHNorm * 0.5f) / (1f - grabHNorm))
+            scrollV = (0.5f + scrollVNorm * scrollMax).i.f  //(winSizeContentsV - winSizeV));
+            if (horizontal)
+                window.scroll.x = scrollV
+            else
+                window.scroll.y = scrollV
+
+            // Update values for rendering
+            scrollRatio = saturate(scrollV / scrollMax)
+            grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV
+
+            // Update distance to grab now that we have seeked and saturated
+            if (seekAbsolute)
+                clickDeltaToGrabCenterV = clickedVNorm - grabVNorm - grabHNorm * 0.5f
+
+            if (horizontal)
+                g.scrollbarClickDeltaToGrabCenter.x = clickDeltaToGrabCenterV
+            else
+                g.scrollbarClickDeltaToGrabCenter.y = clickDeltaToGrabCenterV
+        }
+
+        // Render
+        val grabCol = when {
+            held -> Col.ScrollbarGrabActive
+            hovered -> Col.ScrollbarGrabHovered
+            else -> Col.ScrollbarGrab
+        }.u32
+        val grabRect = when {
+            horizontal -> Rect(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y,
+                    min(lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, windowRect.max.x), bb.max.y)
+            else -> Rect(bb.min.x, lerp(bb.min.y, bb.max.y, grabVNorm),
+                    bb.max.x, min(lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels, windowRect.max.y))
+        }
+        window.drawList.addRectFilled(grabRect.min, grabRect.max, grabCol, style.scrollbarRounding)
+    }
+
+    /** Vertical separator, for menu bars (use current line height). not exposed because it is misleading
+     *  what it doesn't have an effect on regular layout.   */
+    fun verticalSeparator() {
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val y1 = window.dc.cursorPos.y
+        val y2 = window.dc.cursorPos.y + window.dc.currentLineHeight
+        val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
+        itemSize(Vec2(bb.width, 0f))
+        if (!itemAdd(bb, 0)) return
+
+        window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
+        if (g.logEnabled) logText(" |")
+    }
+
+
+    // Widgets low-level behaviors
+
+
     /** @return []pressed, hovered, held] */
     fun buttonBehavior(bb: Rect, id: ID, flag: Bf) = buttonBehavior(bb, id, flag.i)
 
@@ -1449,119 +1534,6 @@ interface imgui_internal {
                     clearActiveId()
         }
         return booleanArrayOf(pressed, hovered, held)
-    }
-
-
-    fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags_: Int = 0): Boolean {
-
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        val id = window.getId(label)
-        val labelSize = calcTextSize(label, true)
-
-        val pos = Vec2(window.dc.cursorPos)
-        /*  Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky,
-            since it shouldn't be a flag)         */
-        if (flags_ has Bf.AlignTextBaseLine && style.framePadding.y < window.dc.currentLineTextBaseOffset)
-            pos.y += window.dc.currentLineTextBaseOffset - style.framePadding.y
-        val size = calcItemSize(sizeArg, labelSize.x + style.framePadding.x * 2f, labelSize.y + style.framePadding.y * 2f)
-
-        val bb = Rect(pos, pos + size)
-        itemSize(bb, style.framePadding.y)
-        if (!itemAdd(bb, id)) return false
-
-        var flags = flags_
-        if (window.dc.itemFlags has If.ButtonRepeat) flags = flags or Bf.Repeat
-        val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
-        if (pressed)
-            markItemValueChanged(id)
-
-        // Render
-        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
-        renderTextClipped(bb.min + style.framePadding, bb.max - style.framePadding, label, 0, labelSize,
-                style.buttonTextAlign, bb)
-
-        // Automatically close popups
-        //if (pressed && !(flags & ImGuiButtonFlags_DontClosePopups) && (window->Flags & ImGuiWindowFlags_Popup))
-        //    CloseCurrentPopup();
-
-        return pressed
-    }
-
-    /* Button to close a window    */
-    fun closeButton(id: ID, pos: Vec2, radius: Float): Boolean {
-
-        val window = currentWindow
-
-        /*  We intentionally allow interaction when clipped so that a mechanical Alt, Right, Validate sequence close
-            a window. (this isn't the regular behavior of buttons, but it doesn't affect the user much because
-            navigation tends to keep items visible).   */
-        val bb = Rect(pos - radius, pos + radius)
-        val isClipped = !itemAdd(bb, id)
-
-        val (pressed, hovered, held) = buttonBehavior(bb, id)
-        if (isClipped) return pressed
-
-        // Render
-        val center = Vec2(bb.center)
-        if (hovered) {
-            val col = if (held && hovered) Col.ButtonActive else Col.ButtonHovered
-            window.drawList.addCircleFilled(center, 2f max radius, col.u32, 9)
-        }
-
-        val crossExtent = (radius * 0.7071f) - 1f
-        val crossCol = Col.Text.u32
-        center -= 0.5f
-        window.drawList.addLine(center + crossExtent, center - crossExtent, crossCol, 1f)
-        window.drawList.addLine(center + Vec2(crossExtent, -crossExtent), center + Vec2(-crossExtent, crossExtent), crossCol, 1f)
-
-        return pressed
-    }
-
-    fun collapseButton(id: ID, pos: Vec2): Boolean {
-        val window = g.currentWindow!!
-        val bb = Rect(pos, pos + g.fontSize)
-        itemAdd(bb, id)
-        return buttonBehavior(bb, id, Bf.None)[0].also {
-            renderNavHighlight(bb, id)
-            renderArrow(bb.min, if(window.collapsed) Dir.Right else Dir.Down, 1f)
-            // Switch to moving the window after mouse is moved beyond the initial drag threshold
-            if (isItemActive && isMouseDragging())
-                window.startMouseMoving()
-        }
-    }
-
-    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), 0)
-
-    /** square button with an arrow shape */
-    fun arrowButtonEx(strId: String, dir: Dir, size: Vec2, flags_: ButtonFlags): Boolean {
-
-        var flags = flags_
-
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        val id = window.getId(strId)
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        val defaultSize = frameHeight
-        itemSize(bb, if (size.y >= defaultSize) style.framePadding.y else 0f)
-        if (!itemAdd(bb, id)) return false
-
-        if (window.dc.itemFlags has If.ButtonRepeat)
-            flags = flags or Bf.Repeat
-
-        val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
-
-        // Render
-        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
-        renderArrow(bb.min + Vec2(max(0f, size.x - g.fontSize - style.framePadding.x), max(0f, size.y - g.fontSize - style.framePadding.y)), dir)
-
-        return pressed
     }
 
     fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
@@ -2294,6 +2266,231 @@ interface imgui_internal {
         }
     }
 
+    /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
+    fun splitterBehavior(bb: Rect, id: ID, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
+                         minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float): Boolean {
+
+        var size1 by size1ptr
+        var size2 by size2ptr
+        val window = g.currentWindow!!
+
+        val itemFlagsBackup = window.dc.itemFlags
+
+        window.dc.itemFlags = window.dc.itemFlags or (If.NoNav or If.NoNavDefaultFocus)
+
+        val itemAdd = itemAdd(bb, id)
+        window.dc.itemFlags = itemFlagsBackup
+        if (!itemAdd) return false
+
+        val bbInteract = Rect(bb)
+        bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
+        val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
+        if (g.activeId != id) setItemAllowOverlap()
+
+        if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
+            mouseCursor = if (axis == Axis.Y) MouseCursor.ResizeNS else MouseCursor.ResizeEW
+
+        val bbRender = Rect(bb)
+        if (held) {
+            val mouseDelta2d = io.mousePos - g.activeIdClickOffset - bbInteract.min
+            var mouseDelta = if (axis == Axis.Y) mouseDelta2d.y else mouseDelta2d.x
+
+            // Minimum pane size
+            if (mouseDelta < minSize1 - size1)
+                mouseDelta = minSize1 - size1
+            if (mouseDelta > size2 - minSize2)
+                mouseDelta = size2 - minSize2
+
+            // Apply resize
+            size1 = size1 + mouseDelta // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
+            size2 = size2 - mouseDelta
+            bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
+
+            markItemValueChanged(id)
+        }
+
+        // Render
+        val col = when {
+            held -> Col.SeparatorActive
+            hovered && g.hoveredIdTimer >= hoverVisibilityDelay -> Col.SeparatorHovered
+            else -> Col.Separator
+        }
+        window.drawList.addRectFilled(bbRender.min, bbRender.max, col.u32, style.frameRounding)
+
+        return held
+    }
+
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd: Int = findRenderedTextEnd(label)): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val displayFrame = flags has Tnf.Framed
+        val padding = if (displayFrame || flags has Tnf.FramePadding) Vec2(style.framePadding) else Vec2(style.framePadding.x, 0f)
+
+        val labelSize = calcTextSize(label, labelEnd, false)
+
+        // We vertically grow up to current line height up the typical widget height.
+        val textBaseOffsetY = glm.max(padding.y, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
+        val frameHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
+        val frameBb = Rect(window.dc.cursorPos, Vec2(window.pos.x + contentRegionMax.x, window.dc.cursorPos.y + frameHeight))
+        if (displayFrame) {
+            // Framed header expand a little outside the default padding
+            frameBb.min.x -= (window.windowPadding.x * 0.5f).i.f - 1
+            frameBb.max.x += (window.windowPadding.x * 0.5f).i.f - 1
+        }
+
+        val textOffsetX = g.fontSize + padding.x * if (displayFrame) 3 else 2   // Collapser arrow width + Spacing
+        val textWidth = g.fontSize + if (labelSize.x > 0f) labelSize.x + padding.x * 2 else 0f   // Include collapser
+        itemSize(Vec2(textWidth, frameHeight), textBaseOffsetY)
+
+        /*  For regular tree nodes, we arbitrary allow to click past 2 worth of ItemSpacing
+            (Ideally we'd want to add a flag for the user to specify if we want the hit test to be done up to the
+            right side of the content or not)         */
+        val interactBb = if (displayFrame) Rect(frameBb) else Rect(frameBb.min.x, frameBb.min.y, frameBb.min.x + textWidth + style.itemSpacing.x * 2, frameBb.max.y)
+        var isOpen = treeNodeBehaviorIsOpen(id, flags)
+
+        /*  Store a flag for the current depth to tell if we will allow closing this node when navigating one of its child.
+            For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
+            This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero. */
+        if (isOpen && !g.navIdIsAlive && flags has Tnf.NavLeftJumpsBackHere && flags hasnt Tnf.NoTreePushOnOpen)
+            window.dc.treeDepthMayJumpToParentOnPop = window.dc.treeDepthMayJumpToParentOnPop or (1 shl window.dc.treeDepth)
+
+        val itemAdd = itemAdd(interactBb, id)
+        window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HasDisplayRect
+        window.dc.lastItemDisplayRect put frameBb
+
+        if (!itemAdd) {
+            if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
+                treePushRawId(id)
+            return isOpen
+        }
+
+        /*  Flags that affects opening behavior:
+                - 0(default) ..................... single-click anywhere to open
+                - OpenOnDoubleClick .............. double-click anywhere to open
+                - OpenOnArrow .................... single-click on arrow to open
+                - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
+        var buttonFlags = Bf.NoKeyModifiers or if (flags has Tnf.AllowItemOverlap) Bf.AllowItemOverlap else Bf.None
+        if (flags hasnt Tnf.Leaf)
+            buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
+        if (flags has Tnf.OpenOnDoubleClick)
+            buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.None)
+
+        val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
+        if (flags hasnt Tnf.Leaf) {
+            var toggled = false
+            if (pressed) {
+                toggled = !(flags has (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick)) || g.navActivateId == id
+                if (flags has Tnf.OpenOnArrow) {
+                    val max = Vec2(interactBb.min.x + textOffsetX, interactBb.max.y)
+                    toggled = isMouseHoveringRect(interactBb.min, max) && !g.navDisableMouseHover || toggled
+                }
+                if (flags has Tnf.OpenOnDoubleClick)
+                    toggled = io.mouseDoubleClicked[0] || toggled
+                // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
+                if (g.dragDropActive && isOpen)
+                    toggled = false
+            }
+
+            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Left && isOpen) {
+                toggled = true
+                navMoveRequestCancel()
+            }
+            // If there's something upcoming on the line we may want to give it the priority?
+            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Right && !isOpen) {
+                toggled = true
+                navMoveRequestCancel()
+            }
+            if (toggled) {
+                isOpen = !isOpen
+                window.dc.stateStorage[id] = isOpen
+            }
+        }
+        if (flags has Tnf.AllowItemOverlap)
+            setItemAllowOverlap()
+
+        // Render
+        val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
+        val textPos = frameBb.min + Vec2(textOffsetX, textBaseOffsetY)
+        if (displayFrame) {
+            // Framed type
+            renderFrame(frameBb.min, frameBb.max, col.u32, true, style.frameRounding)
+            renderNavHighlight(frameBb, id, NavHighlightFlag.TypeThin.i)
+            renderArrow(frameBb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
+            if (g.logEnabled) {
+                /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
+                    range to make sure the ## aren't stripped out here.                 */
+                logRenderedText(textPos, "\n##", 3)
+                renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
+                logRenderedText(textPos, "#", 3)
+            } else
+                renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
+        } else {
+            // Unframed typed for tree nodes
+            if (hovered || flags has Tnf.Selected) {
+                renderFrame(frameBb.min, frameBb.max, col.u32, false)
+                renderNavHighlight(frameBb, id, NavHighlightFlag.TypeThin.i)
+            }
+            if (flags has Tnf.Bullet)
+                TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
+            else if (flags hasnt Tnf.Leaf)
+                renderArrow(frameBb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
+                        if (isOpen) Dir.Down else Dir.Right, 0.7f)
+            if (g.logEnabled)
+                logRenderedText(textPos, ">")
+            renderText(textPos, label, labelEnd, false)
+        }
+
+        if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
+            treePushRawId(id)
+        return isOpen
+    }
+
+    /** Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging */
+    fun treeNodeBehaviorIsOpen(id: ID, flags: TreeNodeFlags = 0): Boolean {
+
+        if (flags has Tnf.Leaf) return true
+
+        // We only write to the tree storage if the user clicks (or explicitly use SetNextTreeNode*** functions)
+        val window = g.currentWindow!!
+        val storage = window.dc.stateStorage
+
+        var isOpen: Boolean
+        if (g.nextTreeNodeOpenCond != Cond.Null) {
+            if (g.nextTreeNodeOpenCond has Cond.Always) {
+                isOpen = g.nextTreeNodeOpenVal
+                storage[id] = isOpen
+            } else {
+                /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
+                    are not saved persistently.                 */
+                val storedValue = storage.int(id, -1)
+                if (storedValue == -1) {
+                    isOpen = g.nextTreeNodeOpenVal
+                    storage[id] = isOpen
+                } else
+                    isOpen = storedValue != 0
+            }
+            g.nextTreeNodeOpenCond = Cond.Null
+        } else
+            isOpen = storage.int(id, if (flags has Tnf.DefaultOpen) 1 else 0) != 0 // TODO rename back
+
+        /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
+            sensible behavior).
+            NB- If we are above max depth we still allow manually opened nodes to be logged.    */
+        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && window.dc.treeDepth < g.logAutoExpandMaxDepth)
+            isOpen = true
+
+        return isOpen
+    }
+
+    fun treePushRawId(id: ID) {
+        val window = currentWindow
+        indent()
+        window.dc.treeDepth++
+        window.idStack.push(id)
+    }
+
     fun inputTextEx(label: String, buf: CharArray, sizeArg: Vec2, flags: InputTextFlags
             /*, ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean {
 
@@ -3010,178 +3207,6 @@ interface imgui_internal {
         endPopup()
     }
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd: Int = findRenderedTextEnd(label)): Boolean {
-
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        val displayFrame = flags has Tnf.Framed
-        val padding = if (displayFrame || flags has Tnf.FramePadding) Vec2(style.framePadding) else Vec2(style.framePadding.x, 0f)
-
-        val labelSize = calcTextSize(label, labelEnd, false)
-
-        // We vertically grow up to current line height up the typical widget height.
-        val textBaseOffsetY = glm.max(padding.y, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
-        val frameHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
-        val frameBb = Rect(window.dc.cursorPos, Vec2(window.pos.x + contentRegionMax.x, window.dc.cursorPos.y + frameHeight))
-        if (displayFrame) {
-            // Framed header expand a little outside the default padding
-            frameBb.min.x -= (window.windowPadding.x * 0.5f).i.f - 1
-            frameBb.max.x += (window.windowPadding.x * 0.5f).i.f - 1
-        }
-
-        val textOffsetX = g.fontSize + padding.x * if (displayFrame) 3 else 2   // Collapser arrow width + Spacing
-        val textWidth = g.fontSize + if (labelSize.x > 0f) labelSize.x + padding.x * 2 else 0f   // Include collapser
-        itemSize(Vec2(textWidth, frameHeight), textBaseOffsetY)
-
-        /*  For regular tree nodes, we arbitrary allow to click past 2 worth of ItemSpacing
-            (Ideally we'd want to add a flag for the user to specify if we want the hit test to be done up to the
-            right side of the content or not)         */
-        val interactBb = if (displayFrame) Rect(frameBb) else Rect(frameBb.min.x, frameBb.min.y, frameBb.min.x + textWidth + style.itemSpacing.x * 2, frameBb.max.y)
-        var isOpen = treeNodeBehaviorIsOpen(id, flags)
-
-        /*  Store a flag for the current depth to tell if we will allow closing this node when navigating one of its child.
-            For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
-            This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero. */
-        if (isOpen && !g.navIdIsAlive && flags has Tnf.NavLeftJumpsBackHere && flags hasnt Tnf.NoTreePushOnOpen)
-            window.dc.treeDepthMayJumpToParentOnPop = window.dc.treeDepthMayJumpToParentOnPop or (1 shl window.dc.treeDepth)
-
-        val itemAdd = itemAdd(interactBb, id)
-        window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HasDisplayRect
-        window.dc.lastItemDisplayRect put frameBb
-
-        if (!itemAdd) {
-            if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
-                treePushRawId(id)
-            return isOpen
-        }
-
-        /*  Flags that affects opening behavior:
-                - 0(default) ..................... single-click anywhere to open
-                - OpenOnDoubleClick .............. double-click anywhere to open
-                - OpenOnArrow .................... single-click on arrow to open
-                - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
-        var buttonFlags = Bf.NoKeyModifiers or if (flags has Tnf.AllowItemOverlap) Bf.AllowItemOverlap else Bf.None
-        if (flags hasnt Tnf.Leaf)
-            buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
-        if (flags has Tnf.OpenOnDoubleClick)
-            buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.None)
-
-        val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
-        if (flags hasnt Tnf.Leaf) {
-            var toggled = false
-            if (pressed) {
-                toggled = !(flags has (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick)) || g.navActivateId == id
-                if (flags has Tnf.OpenOnArrow) {
-                    val max = Vec2(interactBb.min.x + textOffsetX, interactBb.max.y)
-                    toggled = isMouseHoveringRect(interactBb.min, max) && !g.navDisableMouseHover || toggled
-                }
-                if (flags has Tnf.OpenOnDoubleClick)
-                    toggled = io.mouseDoubleClicked[0] || toggled
-                // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
-                if (g.dragDropActive && isOpen)
-                    toggled = false
-            }
-
-            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Left && isOpen) {
-                toggled = true
-                navMoveRequestCancel()
-            }
-            // If there's something upcoming on the line we may want to give it the priority?
-            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Right && !isOpen) {
-                toggled = true
-                navMoveRequestCancel()
-            }
-            if (toggled) {
-                isOpen = !isOpen
-                window.dc.stateStorage[id] = isOpen
-            }
-        }
-        if (flags has Tnf.AllowItemOverlap)
-            setItemAllowOverlap()
-
-        // Render
-        val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
-        val textPos = frameBb.min + Vec2(textOffsetX, textBaseOffsetY)
-        if (displayFrame) {
-            // Framed type
-            renderFrame(frameBb.min, frameBb.max, col.u32, true, style.frameRounding)
-            renderNavHighlight(frameBb, id, NavHighlightFlag.TypeThin.i)
-            renderArrow(frameBb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
-            if (g.logEnabled) {
-                /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
-                    range to make sure the ## aren't stripped out here.                 */
-                logRenderedText(textPos, "\n##", 3)
-                renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
-                logRenderedText(textPos, "#", 3)
-            } else
-                renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
-        } else {
-            // Unframed typed for tree nodes
-            if (hovered || flags has Tnf.Selected) {
-                renderFrame(frameBb.min, frameBb.max, col.u32, false)
-                renderNavHighlight(frameBb, id, NavHighlightFlag.TypeThin.i)
-            }
-            if (flags has Tnf.Bullet)
-                TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
-            else if (flags hasnt Tnf.Leaf)
-                renderArrow(frameBb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
-                        if (isOpen) Dir.Down else Dir.Right, 0.7f)
-            if (g.logEnabled)
-                logRenderedText(textPos, ">")
-            renderText(textPos, label, labelEnd, false)
-        }
-
-        if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
-            treePushRawId(id)
-        return isOpen
-    }
-
-    /** Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging */
-    fun treeNodeBehaviorIsOpen(id: ID, flags: TreeNodeFlags = 0): Boolean {
-
-        if (flags has Tnf.Leaf) return true
-
-        // We only write to the tree storage if the user clicks (or explicitly use SetNextTreeNode*** functions)
-        val window = g.currentWindow!!
-        val storage = window.dc.stateStorage
-
-        var isOpen: Boolean
-        if (g.nextTreeNodeOpenCond != Cond.Null) {
-            if (g.nextTreeNodeOpenCond has Cond.Always) {
-                isOpen = g.nextTreeNodeOpenVal
-                storage[id] = isOpen
-            } else {
-                /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
-                    are not saved persistently.                 */
-                val storedValue = storage.int(id, -1)
-                if (storedValue == -1) {
-                    isOpen = g.nextTreeNodeOpenVal
-                    storage[id] = isOpen
-                } else
-                    isOpen = storedValue != 0
-            }
-            g.nextTreeNodeOpenCond = Cond.Null
-        } else
-            isOpen = storage.int(id, if (flags has Tnf.DefaultOpen) 1 else 0) != 0 // TODO rename back
-
-        /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
-            sensible behavior).
-            NB- If we are above max depth we still allow manually opened nodes to be logged.    */
-        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && window.dc.treeDepth < g.logAutoExpandMaxDepth)
-            isOpen = true
-
-        return isOpen
-    }
-
-    fun treePushRawId(id: ID) {
-        val window = currentWindow
-        indent()
-        window.dc.treeDepth++
-        window.idStack.push(id)
-    }
-
-
     fun plotEx(plotType: PlotType, label: String, data: imgui_widgetsMain.PlotArray, valuesOffset: Int, overlayText: String,
                scaleMin_: Float, scaleMax_: Float, graphSize: Vec2) {
 
@@ -3278,6 +3303,9 @@ interface imgui_internal {
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, innerBb.min.y), label)
     }
+
+
+    // NewFrame
 
 
     /** The reason this is exposed in imgui_internal.h is: on touch-based system that don't have hovering,
