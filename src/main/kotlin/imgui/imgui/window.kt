@@ -127,7 +127,7 @@ interface imgui_window {
         // Update the Appearing flag
         // Not using !WasActive because the implicit "Debug" window would always toggle off->on
         var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1
-        val windowJustAppearingAfterHiddenForResize = window.hiddenFrames > 0
+        val windowJustAppearingAfterHiddenForResize = window.hiddenFramesForResize > 0
         if (flags has Wf.Popup) {
             val popupRef = g.openPopupStack[g.currentPopupStack.size]
             // We recycle popups so treat window as activated if popup id changed
@@ -187,21 +187,9 @@ interface imgui_window {
 
         // When reusing window again multiple times a frame, just append content (don't need to setup again)
         if (firstBeginOfTheFrame) {
-            val windowIsChildTooltip = flags has Wf.ChildWindow && flags has Wf.Tooltip // FIXME-WIP: Undocumented behavior of Child+Tooltip for pinned tooltip (#1345)
-
             // Initialize
-            window.parentWindow = parentWindow
-            window.rootWindowForNav = window
-            window.rootWindowForTitleBarHighlight = window
-            window.rootWindow = window
-            parentWindow?.let {
-                if (flags has Wf.ChildWindow && !windowIsChildTooltip)
-                    window.rootWindow = it.rootWindow
-                if (flags hasnt Wf.Modal && flags has (Wf.ChildWindow or Wf.Popup))
-                    window.rootWindowForTitleBarHighlight = it.rootWindowForTitleBarHighlight
-            }
-            while (window.rootWindowForNav!!.flags has Wf.NavFlattened)
-                window.rootWindowForNav = window.rootWindowForNav!!.parentWindow
+            val windowIsChildTooltip = flags has Wf.ChildWindow && flags has Wf.Tooltip // FIXME-WIP: Undocumented behavior of Child+Tooltip for pinned tooltip (#1345)
+            window.updateParentAndRootLinks(flags, parentWindow)
 
             window.active = true
             window.beginOrderWithinParent = 0
@@ -215,18 +203,20 @@ interface imgui_window {
 
             // Update contents size from last frame for auto-fitting (or use explicit size)
             window.sizeContents = window.calcSizeContents()
-            if (window.hiddenFrames > 0)
-                window.hiddenFrames--
+            if (window.hiddenFramesRegular > 0)
+                window.hiddenFramesRegular--
+            if (window.hiddenFramesForResize > 0)
+                window.hiddenFramesForResize--
 
             // Hide new windows for one frame until they calculate their size
             if (windowJustCreated && (!windowSizeXsetByApi || !windowSizeYsetByApi))
-                window.hiddenFrames = 1
+                window.hiddenFramesForResize = 1
 
             /*  Hide popup/tooltip window when re-opening while we measure size (because we recycle the windows)
                 We reset Size/SizeContents for reappearing popups/tooltips early in this function,
                 so further code won't be tempted to use the old size.             */
             if (windowJustActivatedByUser && flags has (Wf.Popup or Wf.Tooltip)) {
-                window.hiddenFrames = 1
+                window.hiddenFramesForResize = 1
                 if (flags has Wf.AlwaysAutoResize) {
                     if (!windowSizeXsetByApi) {
                         window.sizeFull.x = 0f
@@ -341,7 +331,7 @@ interface imgui_window {
                     window.pos put parentWindow.dc.cursorPos
             }
 
-            val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFrames == 0
+            val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesForResize == 0
             if (windowPosWithPivot)
             // Position given a pivot (e.g. for centering)
                 window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.Null)
@@ -354,8 +344,8 @@ interface imgui_window {
 
             // Clamp position so it stays visible
             if (flags hasnt Wf.ChildWindow)
-                /*  Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized
-            window when initializing or minimizing. */
+            /*  Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized
+        window when initializing or minimizing. */
                 if (!windowPosSetByApi && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 && io.displaySize allGreaterThan 0) {
                     val padding = glm.max(style.displayWindowPadding, style.displaySafeAreaPadding)
                     window.pos = glm.max(window.pos + window.size, padding) - window.size
@@ -423,15 +413,15 @@ interface imgui_window {
                 pushClipRect(viewportRect.min, viewportRect.max, true)
 
             // Draw modal window background (darkens what is behind them, all viewports)
-            val dimBgForModal = flags has Wf.Modal && window === frontMostPopupModal && window.hiddenFrames <= 0
-            val dimBgForWindowList = g.navWindowingTarget?.rootWindow === window
+            val dimBgForModal = flags has Wf.Modal && window === frontMostPopupModal && window.hiddenFramesForResize <= 0
+            val dimBgForWindowList = g.navWindowingTargetAnim?.rootWindow === window
             if (dimBgForModal || dimBgForWindowList) {
-                val dimBgCol = getColorU32(if(dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
+                val dimBgCol = getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
                 window.drawList.addRectFilled(viewportRect.min, viewportRect.max, dimBgCol)
             }
 
             // Draw navigation selection/windowing rectangle background
-            if (dimBgForWindowList && window == g.navWindowingTarget!!.rootWindow) {
+            if (dimBgForWindowList && window == g.navWindowingTargetAnim!!.rootWindow) {
                 val bb = window.rect()
                 bb expand g.fontSize
                 if (!bb.contains(viewportRect)) // Avoid drawing if the window covers all the viewport anyway
@@ -442,7 +432,8 @@ interface imgui_window {
             val windowRounding = window.windowRounding
             val windowBorderSize = window.windowBorderSize
             val windowToHighlight = g.navWindowingTarget ?: g.navWindow
-            val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight } ?: false)
+            val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
+                    ?: false)
             val titleBarRect = window.titleBarRect()
             if (window.collapsed) {
                 // Title bar only
@@ -508,7 +499,7 @@ interface imgui_window {
             }
 
             // Draw navigation selection/windowing rectangle border
-            if (g.navWindowingTarget === window) {
+            if (g.navWindowingTargetAnim === window) {
                 var rounding = max(window.windowRounding, style.windowRounding)
                 val bb = window.rect()
                 bb expand g.fontSize
@@ -677,31 +668,34 @@ interface imgui_window {
         window.beginCount++
         g.nextWindowData.clear()
 
-
         if (flags has Wf.ChildWindow) {
 
             // Child window can be out of sight and have "negative" clip windows.
             // Mark them as collapsed so commands are skipped earlier (we can't manually collapse them because they have no title bar).
-
             assert(flags has Wf.NoTitleBar)
-            window.collapsed = parentWindow?.collapsed == true
 
             if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames allLessThanEqual 0)
-                window.collapsed = window.collapsed || (window.outerRectClipped.min.x >= window.outerRectClipped.max.x
-                        || window.outerRectClipped.min.y >= window.outerRectClipped.max.y)
+                if (window.outerRectClipped.min anyGreaterThanEqual window.outerRectClipped.max)
+                    window.hiddenFramesRegular = 1
 
-            // We also hide the window from rendering because we've already added its border to the command list.
-            // (we could perform the check earlier in the function but it is simpler at this point)
-            if (window.collapsed)
-                window.active = false
+            // Completely hide along with parent or if parent is collapsed
+            parentWindow?.let {
+                if (it.collapsed || it.hidden)
+                    window.hiddenFramesRegular = 1
+            }
         }
 
         // Don't render if style alpha is 0.0 at the time of Begin(). This is arbitrary and inconsistent but has been there for a long while (may remove at some point)
         if (style.alpha <= 0f)
-            window.active = false
+            window.hiddenFramesRegular = 1
+
+        // Update the Hidden flag
+        window.hidden = window.hiddenFramesRegular > 0 || window.hiddenFramesForResize != 0
 
         // Return false if we don't intend to display anything to allow user to perform an early out optimization
-        window.skipItems = (window.collapsed || !window.active) && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0
+        window.apply {
+            skipItems = (collapsed || !active || hidden) && autoFitFrames allLessThanEqual 0 && hiddenFramesForResize <= 0
+        }
         return !window.skipItems
     }
 

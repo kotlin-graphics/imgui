@@ -107,7 +107,7 @@ interface imgui_dragAndDrop {
                     g.currentWindow!!.apply {
                         // tooltipWindow
                         skipItems = true
-                        hiddenFrames = 1
+                        hiddenFramesRegular = 1
                     }
             }
 
@@ -225,7 +225,7 @@ interface imgui_dragAndDrop {
             // FIXME-DRAG: Settle on a proper default visuals for drop target.
             r expand 3.5f
             val pushClipRect = !window.clipRect.contains(r)
-            if (pushClipRect) window.drawList.pushClipRectFullScreen()
+            if (pushClipRect) window.drawList.pushClipRect(r.min - 1, r.max + 1)
             window.drawList.addRect(r.min, r.max, Col.DragDropTarget.u32, 0f, 0.inv(), 2f)
             if (pushClipRect) window.drawList.popClipRect()
         }
