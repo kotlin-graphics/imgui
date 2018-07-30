@@ -3551,8 +3551,12 @@ interface imgui_internal {
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
-            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-            val number = decimalFormat.parse(vStr.trimStart().replace('\u002D', '\u2212')) //https://github.com/kotlin-graphics/imgui/issues/51
+            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value).trimStart()
+            val v = when(style.locale.country) {
+                "no" -> vStr.replace('\u002D', '\u2212') //https://github.com/kotlin-graphics/imgui/issues/51
+                else -> vStr
+            }
+            val number = decimalFormat.parse(v)
             return when (value) {
                 is Int -> number.toInt() as N
                 is Long -> number.toLong() as N
