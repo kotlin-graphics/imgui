@@ -2,7 +2,8 @@ package imgui
 
 import glm_.i
 import imgui.imgui.*
-import java.text.NumberFormat
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.*
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
@@ -155,7 +156,10 @@ typealias WindowFlags = Int
 
 // dummy main
 fun main(args: Array<String>) {
-    NumberFormat.getInstance(Locale("it", "IT")).parse("-5")
+    val dec = DecimalFormat().apply {
+        decimalFormatSymbols = DecimalFormatSymbols(Locale("no", "NO"))
+    }
+    dec.parse("-5".replace('\u002D', '\u2212'))
 }
 
 var stop = false
@@ -164,8 +168,8 @@ inline operator fun <R> KMutableProperty0<R>.setValue(host: Any?, property: KPro
 inline operator fun <R> KMutableProperty0<R>.getValue(host: Any?, property: KProperty<*>): R = get()
 
 infix fun String.cmp(charArray: CharArray): Boolean {
-    for(i in indices)
-        if(get(i) != charArray[i])
+    for (i in indices)
+        if (get(i) != charArray[i])
             return false
     return true
 }
