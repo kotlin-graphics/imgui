@@ -2,6 +2,8 @@ package imgui
 
 import glm_.i
 import imgui.imgui.*
+import java.text.NumberFormat
+import java.util.*
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
@@ -153,7 +155,7 @@ typealias WindowFlags = Int
 
 // dummy main
 fun main(args: Array<String>) {
-
+    NumberFormat.getInstance(Locale("it", "IT")).parse("-5")
 }
 
 var stop = false
