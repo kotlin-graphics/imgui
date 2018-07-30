@@ -87,9 +87,6 @@ import imgui.internal.ButtonFlag as Bf
 import imgui.internal.ColumnsFlag as Cf
 import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.LayoutType as Lt
-import java.util.Locale
-import java.text.NumberFormat
-import java.text.ParseException
 
 
 @Suppress("UNCHECKED_CAST")
@@ -3549,20 +3546,20 @@ interface imgui_internal {
             //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
 
-        fun <N : Number>roundScalarWithFormat(format: String, value: N): N {
+        fun <N : Number> roundScalarWithFormat(format: String, value: N): N {
             if (format.isEmpty()) return value
             val fmtStart = parseFormatFindStart(format)
             if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
                 return value
             val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
             val number = decimalFormat.parse(vStr.trimStart().replace('\u002D', '\u2212')) //https://github.com/kotlin-graphics/imgui/issues/51
-            return when(value) {
-                is Int -> number.toInt()
-                is Long -> number.toLong()
-                is Float -> number.toFloat()
-                is Double -> number.toDouble()
+            return when (value) {
+                is Int -> number.toInt() as N
+                is Long -> number.toLong() as N
+                is Float -> number.toFloat() as N
+                is Double -> number.toDouble() as N
                 else -> throw Error("not supported")
-            } as N
+            }
         }
 
 //        fun roundScalarWithFormat(format: String, value: Int): Int {
