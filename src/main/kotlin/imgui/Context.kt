@@ -712,8 +712,8 @@ class Style {
     val colors = ArrayList<Vec4>()
 
     /** JVM IMGUI   */
-//    var locale: Locale = Locale.US
-    var locale: Locale = Locale("no", "NO")
+    var locale: Locale = Locale.US
+//    var locale: Locale = Locale("no", "NO")
 //    val locale = Locale.getDefault()
 
     init {
