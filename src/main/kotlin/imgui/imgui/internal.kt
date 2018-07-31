@@ -22,6 +22,7 @@ import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTooltip
+import imgui.ImGui.formatArgPattern
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
@@ -37,7 +38,6 @@ import imgui.ImGui.isMousePosValid
 import imgui.ImGui.logText
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.openPopup
-import imgui.ImGui.parseFormatFindStart
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
@@ -68,9 +68,8 @@ import imgui.internal.*
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 import java.util.*
+import java.util.regex.Pattern
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -3403,35 +3402,29 @@ interface imgui_internal {
             }
     }
 
+    val formatArgPattern: Pattern
+        get() = Pattern.compile("%(\\d+\\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])")
+
     fun parseFormatFindStart(fmt: String): Int {
+        val matcher = formatArgPattern.matcher(fmt)
         var i = 0
-        var c = fmt[i] // if this crashes again -> fmt.getOrNull(i) ?: return 0
-        while (c != NUL) {
-            if (c == '%' && fmt[i + 1] != '%')
-                return i
-            else if (c == '%')
-                i++
-            c = fmt[++i]
+        while (matcher.find(i)) {
+            if (fmt[matcher.end()-1] != '%')
+                return matcher.start()
+            i = matcher.end()
         }
-        return i
+        return 0
     }
 
     fun parseFormatFindEnd(fmt: String, i_: Int = 0): Int {
-        var i = i_
-        // Printf/scanf types modifiers: I/L/h/j/l/t/w/z. Other uppercase letters qualify as types aka end of the format.
-        if (fmt[i] != '%')
-            return i
-        val ignoredUppercaseMask = (1 shl ('I' - 'A')) or (1 shl ('L' - 'A'))
-        val ignoredLowercaseMask = (1 shl ('h' - 'a')) or (1 shl ('j' - 'a')) or (1 shl ('l' - 'a')) or (1 shl ('t' - 'a')) or (1 shl ('w' - 'a')) or (1 shl ('z' - 'a'))
-        var c = fmt[i]
-        while (c != NUL && i < fmt.length) {
-            if (c in 'A'..'Z' && (1 shl (c - 'A')) hasnt ignoredUppercaseMask)
-                return i + 1
-            if (c in 'a'..'z' && (1 shl (c - 'a')) hasnt ignoredLowercaseMask)
-                return i + 1
-            c = fmt[++i]
+        val matcher = formatArgPattern.matcher(fmt)
+        var i = 0
+        while (matcher.find(i)) {
+            if (fmt[matcher.end()-1] != '%')
+                return matcher.end()
+            i = matcher.end()
         }
-        return i
+        return 0
     }
 
     /** Extract the format out of a format string with leading or trailing decorations
@@ -3548,61 +3541,48 @@ interface imgui_internal {
 
         fun <N : Number> roundScalarWithFormat(format: String, value: N): N {
             if (format.isEmpty()) return value
-            val fmtStart = parseFormatFindStart(format)
-            if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
-                return value
-            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value).trimStart()
-            val v = when(style.locale.country) {
-                "no" -> vStr.replace('\u002D', '\u2212') //https://github.com/kotlin-graphics/imgui/issues/51
-                else -> vStr
+            val matcher = formatArgPattern.matcher(format)
+            var arg = ""
+            var i = 0
+            while (matcher.find(i)) {
+                if (format[matcher.end()-1] != '%') {
+                    arg = matcher.group()
+                    break
+                }
+                i = matcher.end()
             }
-            val number = decimalFormat.parse(v)
+            if (arg.isEmpty()) // Don't apply if the value is not visible in the format string
+                return value
+            var formattedValue = arg.format(Locale.US, value).trim().replace(",", "")
+            if (formattedValue.contains('(')) {
+                formattedValue = formattedValue.replace("(", "").replace(")", "")
+                formattedValue = "-$formattedValue"
+            }
+            var radix = 10
+            if (arg.endsWith('x') || arg.endsWith('X') ||
+                arg.endsWith('h') || arg.endsWith('H')) {
+                    if (arg.contains('#')) formattedValue = formattedValue.substring(2)
+                    radix = 16
+            }
+            if (arg.endsWith('o')) radix = 8
             return when (value) {
-                is Int -> number.toInt() as N
-                is Long -> number.toLong() as N
-                is Float -> number.toFloat() as N
-                is Double -> number.toDouble() as N
+                is Int -> {
+                    if (radix != 10)
+                        formattedValue.parseUnsignedInt(radix) as N
+                    else
+                        formattedValue.parseInt(radix) as N
+                }
+                is Long -> {
+                    if (radix != 10)
+                        formattedValue.parseUnsignedLong(radix) as N
+                    else
+                        formattedValue.parseLong(radix) as N
+                }
+                is Float -> formattedValue.parseFloat as N
+                is Double -> formattedValue.parseDouble as N
                 else -> throw Error("not supported")
             }
         }
-
-//        fun roundScalarWithFormat(format: String, value: Int): Int {
-//            if (format.isEmpty()) return value
-//            val fmtStart = parseFormatFindStart(format)
-//            if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
-//                return value
-//            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-//            return decimalFormat.parse(vStr.trimStart()).toInt()
-//        }
-//
-//        fun roundScalarWithFormat(format: String, value: Long): Long {
-//            if (format.isEmpty()) return value
-//            val fmtStart = parseFormatFindStart(format)
-//            if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
-//                return value
-//            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-//            return decimalFormat.parse(vStr.trimStart()).toLong()
-//        }
-//
-//        fun roundScalarWithFormat(format: String, value: Float): Float {
-//            if (format.isEmpty()) return value
-//            val fmtStart = parseFormatFindStart(format)
-//            if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
-//                return value
-//            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-//            return decimalFormat.parse(vStr.trimStart()).toFloat()
-//        }
-//
-//        fun roundScalarWithFormat(format: String, value: Double): Double {
-//            if (format.isEmpty()) return value
-//            val fmtStart = parseFormatFindStart(format)
-//            if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
-//                return value
-//            val vStr = format.substring(parseFormatFindStart(format)).format(style.locale, value)
-//            return decimalFormat.parse(vStr.trimStart()).toDouble()
-//        }
-
-        val decimalFormat = DecimalFormat().apply { decimalFormatSymbols = DecimalFormatSymbols(style.locale) }
     }
 }
 
