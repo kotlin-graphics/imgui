@@ -10,7 +10,6 @@ import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
 import java.io.File
 import java.nio.ByteBuffer
-import java.text.DecimalFormatSymbols
 import java.util.*
 import kotlin.collections.ArrayList
 
