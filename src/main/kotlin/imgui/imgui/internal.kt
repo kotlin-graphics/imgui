@@ -65,9 +65,11 @@ import imgui.TextEditState.K
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.imgui.imgui_main.Companion.dragBehaviorT
 import imgui.internal.*
+import uno.kotlin.buffers.fill
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
+import java.nio.ByteBuffer
 import java.util.*
 import java.util.regex.Pattern
 import kotlin.math.floor
@@ -680,6 +682,7 @@ interface imgui_internal {
         assert(id != 0)
         if (!isMouseHoveringRect(bb.min, bb.max) || id == g.dragDropPayload.sourceId)
             return false
+        if (window.skipItems) return false
 
         g.dragDropTargetRect put bb
         g.dragDropTargetId = id
@@ -694,6 +697,9 @@ interface imgui_internal {
         dragDropAcceptIdCurr = 0
         dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
         dragDropAcceptFrameCount = -1
+
+        g.dragDropPayloadBufHeap = ByteBuffer.allocate(0)
+        g.dragDropPayloadBufLocal.fill(0)
     }
 
     val isDragDropPayloadBeingAccepted get() = g.dragDropActive && g.dragDropAcceptIdPrev != 0

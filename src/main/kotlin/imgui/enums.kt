@@ -302,6 +302,8 @@ enum class DragDropFlag(val i: Int) {
     /** External source (from outside of imgui), won't attempt to read current item/window info. Will always return true.
      *  Only one Extern source can be active simultaneously.    */
     SourceExtern(1 shl 4),
+    /** Automatically expire the payload if the source cease to be submitted (otherwise payloads are persisting while being dragged) */
+    SourceAutoExpirePayload(1 shl 5),
     // AcceptDragDropPayload() flags
     /** AcceptDragDropPayload() will returns true even before the mouse button is released.
      *  You can then call isDelivery() to test if the payload needs to be delivered. */

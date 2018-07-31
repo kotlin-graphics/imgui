@@ -229,7 +229,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     //------------------------------------------------------------------
     var dragDropActive = false
 
+    var dragDropWithinSourceOrTarget = false
+
     var dragDropSourceFlags: DragDropFlags = 0
+
+    var dragDropSourceFrameCount = -1
 
     var dragDropMouseButton = -1
 

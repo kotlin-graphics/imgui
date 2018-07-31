@@ -20,7 +20,10 @@ interface imgui_tooltips {
 
     /** set a text-only tooltip, typically use with ImGui::IsItemHovered(). overidde any previous call to SetTooltip(). */
     fun setTooltipV(fmt: String, args: Array<out Any>) {
-        beginTooltipEx(0, true)
+        if (g.dragDropWithinSourceOrTarget)
+            beginTooltip()
+        else
+            beginTooltipEx(0, true)
         textV(fmt, args)
         endTooltip()
     }

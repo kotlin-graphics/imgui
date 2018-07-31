@@ -15,12 +15,15 @@ import imgui.ImGui.end
 import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
+import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.keepAliveId
 import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.setTooltip
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindow
 import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
@@ -119,6 +122,10 @@ interface imgui_main {
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it
         g.drawData.clear()
 
+        // Drag and drop keep the source ID alive so even if the source disappear our state is consistent
+        if (g.dragDropActive && g.dragDropPayload.sourceId == g.activeId)
+            keepAliveId(g.dragDropPayload.sourceId)
+
         // Clear reference to active widget if the widget isn't alive anymore
         if (g.hoveredIdPreviousFrame == 0)
             g.hoveredIdTimer = 0f
@@ -141,12 +148,7 @@ interface imgui_main {
         if (g.scalarAsInputTextId != 0 && g.activeId != g.scalarAsInputTextId)
             g.scalarAsInputTextId = 0
 
-        // Elapse drag & drop payload
-        if (g.dragDropActive && g.dragDropPayload.dataFrameCount + 1 < g.frameCount) {
-            clearDragDrop()
-            g.dragDropPayloadBufHeap = ByteBuffer.allocate(0)
-            g.dragDropPayloadBufLocal.fill(0)
-        }
+        // Drag and drop
         g.dragDropAcceptIdPrev = g.dragDropAcceptIdCurr
         g.dragDropAcceptIdCurr = 0
         g.dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
@@ -237,7 +239,6 @@ interface imgui_main {
         assert(g.initialized)
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
         assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()" }
-        g.frameScopeActive = false
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f) {
@@ -258,6 +259,18 @@ interface imgui_main {
         // Show CTRL+TAB list
         if (g.navWindowingTarget != null)
             navUpdateWindowingList()
+
+        // Drag and Drop: Elapse payload (if source stops being submitted)
+        if (g.dragDropActive && g.dragDropPayload.dataFrameCount + 1 < g.frameCount)
+            if ((g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload) || !isMouseDown(g.dragDropMouseButton))
+                clearDragDrop()
+
+        // Drag and Drop: Fallback for source tooltip. This is not ideal but better than nothing.
+        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount)        {
+            g.dragDropWithinSourceOrTarget = true
+            setTooltip("...")
+            g.dragDropWithinSourceOrTarget = false
+        }
 
         // Initiate moving window
         if (g.activeId == 0 && g.hoveredId == 0)
@@ -308,6 +321,7 @@ interface imgui_main {
         io.inputCharacters.fill(NUL)
         io.navInputs.fill(0f)
 
+        g.frameScopeActive = false
         g.frameCountEnded = g.frameCount
     }
 
