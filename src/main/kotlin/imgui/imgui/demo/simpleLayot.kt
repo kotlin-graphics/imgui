@@ -36,6 +36,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseDragging
+import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectSize
 import imgui.ImGui.listBox
 import imgui.ImGui.listBoxFooter
@@ -68,8 +69,10 @@ import imgui.ImGui.textColored
 import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
+import imgui.ImGui.windowContentRegionMax
 import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
+import imgui.ImGui.windowPos
 import imgui.ImGui.windowWidth
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.treeNode
@@ -256,10 +259,24 @@ object simpleLayot {
                 }
 
                 // Dummy
-                val sz = Vec2(30)
-                button("A", sz); sameLine()
-                dummy(sz); sameLine()
-                button("B", sz)
+                val buttonSz = Vec2(40)
+                button("A", buttonSz); sameLine()
+                dummy(buttonSz); sameLine()
+                button("B", buttonSz)
+
+                // Manually wrapping (we should eventually provide this as an automatic layout feature, but for now you can do it manually)
+                text("Manually wrapping:")
+                val buttonsCount = 20
+                val windowVisibleX2 = windowPos.x + windowContentRegionMax.x
+                for (n in 0 until buttonsCount) {
+                    pushId(n)
+                    button("Box", buttonSz)
+                    val lastButtonX2 = itemRectMax.x
+                    val nextButtonX2 = lastButtonX2 + style.itemSpacing.x + buttonSz.x // Expected position if next button was on same line
+                    if (n + 1 < buttonsCount && nextButtonX2 < windowVisibleX2)
+                        sameLine()
+                    popId()
+                }
             }
 
             treeNode("Groups") {

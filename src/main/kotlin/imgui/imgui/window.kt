@@ -87,8 +87,8 @@ interface imgui_window {
     fun begin(name: String, pOpen: BooleanArray? = null, flags_: WindowFlags = 0): Boolean {
 
         assert(name.isNotEmpty()) { "Window name required" }
-        assert(g.initialized) { "Forgot to call ImGui::NewFrame()" }
-        assert(g.frameCountEnded != g.frameCount) { "Called ImGui::Render() or ImGui::EndFrame() and haven't called ImGui::NewFrame() again yet" }
+        assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()" }
+        assert(g.frameCountEnded != g.frameCount) { "Called ImGui::render() or ImGui::rndFrame() and haven't called ImGui::newFrame() again yet" }
 
         var flags = flags_
 

@@ -152,7 +152,8 @@ class FontAtlas {
         if (fontCfg.sizePixels <= 0f) fontCfg.sizePixels = 13f
 
         val ttfCompressedBase85 = proggyCleanTtfCompressedDataBase85
-        return addFontFromMemoryCompressedBase85TTF(ttfCompressedBase85, fontCfg.sizePixels, fontCfg, glyphRanges.default)
+        val glyphRanges = fontCfg.glyphRanges.takeIf { it.isNotEmpty() } ?: glyphRanges.default
+        return addFontFromMemoryCompressedBase85TTF(ttfCompressedBase85, fontCfg.sizePixels, fontCfg, glyphRanges)
                 .apply { displayOffset.y = 1f }
     }
 

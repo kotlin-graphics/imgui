@@ -14,7 +14,7 @@ import org.lwjgl.system.windows.WindowProc
 import uno.glfw.GlfwWindow
 import vkk.adr
 
-object imeListner : WindowProc() {
+object imeListener : WindowProc() {
 
     var hwnd: HWND = NULL
     var glfwProc = NULL

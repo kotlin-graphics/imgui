@@ -8,7 +8,7 @@ import glm_.vec2.Vec2d
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
-import imgui.impl.windowsIme.imeListner
+import imgui.impl.windowsIme.imeListener
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.system.MemoryUtil.NULL
@@ -70,7 +70,7 @@ object LwjglGlfw {
 //            io.ClipboardUserData = g_Window;
 
             if (Platform.get() == Platform.WINDOWS)
-                imeWindowHandle = glfwGetWin32Window(window.handle)
+                imeWindowHandle = window.hwnd
         }
 
         mouseCursors[MouseCursor.Arrow.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
@@ -98,7 +98,7 @@ object LwjglGlfw {
         window.scrollCallbacks["imgui"] = scrollCallback
         window.keyCallbacks["imgui"] = keyCallback
         window.charCallbacks["imgui"] = charCallback // TODO check if used (jogl doesnt have)
-        imeListner.install(window)
+        imeListener.install(window)
     }
 
     fun newFrame() {
