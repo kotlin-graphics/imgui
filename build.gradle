@@ -33,7 +33,7 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-    implementation 'com.github.kotlin-graphics:uno-sdk:4aeda84'
+    implementation 'com.github.kotlin-graphics:uno-sdk:2e34d01'
 
     testImplementation 'io.kotlintest:kotlintest-runner-junit5:3.0.6'
 
@@ -41,7 +41,7 @@ dependencies {
     implementation "org.jogamp.gluegen:gluegen-rt-main:$joglVersion"
     implementation "org.jogamp.jogl:jogl-all-main:$joglVersion"
 
-    ext.lwjglVersion = "3.1.7-SNAPSHOT"
+    ext.lwjglVersion = "3.2.0"
     switch (OperatingSystem.current()) {
         case OperatingSystem.WINDOWS:
             ext.lwjglNatives = "natives-windows"

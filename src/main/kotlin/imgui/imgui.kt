@@ -156,10 +156,6 @@ typealias WindowFlags = Int
 
 // dummy main
 fun main(args: Array<String>) {
-    val dec = DecimalFormat().apply {
-        decimalFormatSymbols = DecimalFormatSymbols(Locale("no", "NO"))
-    }
-    dec.parse("-5".replace('\u002D', '\u2212'))
 }
 
 var stop = false
