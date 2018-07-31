@@ -1,3 +1,9 @@
-/build/
+# Folders related to build output
+build/
 
-.idea/
+# Gradle internal
+/.gradle/
+
+# IntellJ IDEA specific folders
+/.idea/
+out/
