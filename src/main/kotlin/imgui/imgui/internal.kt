@@ -1565,7 +1565,8 @@ interface imgui_internal {
 
     /** For 32-bits and larger types, slider bounds are limited to half the natural type range.
      *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2 will be ok.
-     *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
+     *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders.
+     *  ------------- JVM imgui does *not* have this limitations!! -------------  */
     fun sliderBehavior(bb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
                        flags: SliderFlags = 0) = sliderBehavior(bb, id, v, 0, vMin, vMax, format, power, flags)
 
@@ -1588,22 +1589,24 @@ interface imgui_internal {
         return when (dataType) {
 
             DataType.Int, DataType.Uint -> {
-                assert(vMin as Int >= Int.MIN_VALUE / 2)
-                assert(vMax as Int <= Int.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+//                assert(vMin as Int >= Int.MIN_VALUE / 2)
+//                assert(vMax as Int <= Int.MAX_VALUE / 2)
+                sliderBehaviorT(bb, id, dataType, v, vMin as Int, vMax as Int, format, power, flags)
             }
             DataType.Long, DataType.Ulong -> {
-                assert(vMin as Long >= Long.MIN_VALUE / 2)
-                assert(vMax as Long <= Long.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags)
+//                assert(vMin as Long >= Long.MIN_VALUE / 2)
+//                assert(vMax as Long <= Long.MAX_VALUE / 2)
+                sliderBehaviorT(bb, id, dataType, v, vMin as Long, vMax as Long, format, power, flags)
             }
             DataType.Float -> {
-                assert(vMin as Float >= -Float.MAX_VALUE / 2f && vMax as Float <= Float.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Float, format, power, flags)
+//                assert(vMin as Float >= -Float.MAX_VALUE / 2f)
+//                assert(vMax as Float <= Float.MAX_VALUE / 2f)
+                sliderBehaviorT(bb, id, dataType, v, vMin as Float, vMax as Float, format, power, flags)
             }
             DataType.Double -> {
-                assert(vMin as Double >= -Double.MAX_VALUE / 2f && vMax as Double <= Double.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, v, vMin, vMax as Double, format, power, flags)
+//                assert(vMin as Double >= -Double.MAX_VALUE / 2f)
+//                assert(vMax as Double <= Double.MAX_VALUE / 2f)
+                sliderBehaviorT(bb, id, dataType, v, vMin as Double, vMax as Double, format, power, flags)
             }
             else -> throw Error()
         }
@@ -3409,7 +3412,7 @@ interface imgui_internal {
         val matcher = formatArgPattern.matcher(fmt)
         var i = 0
         while (matcher.find(i)) {
-            if (fmt[matcher.end()-1] != '%')
+            if (fmt[matcher.end() - 1] != '%')
                 return matcher.start()
             i = matcher.end()
         }
@@ -3420,7 +3423,7 @@ interface imgui_internal {
         val matcher = formatArgPattern.matcher(fmt)
         var i = 0
         while (matcher.find(i)) {
-            if (fmt[matcher.end()-1] != '%')
+            if (fmt[matcher.end() - 1] != '%')
                 return matcher.end()
             i = matcher.end()
         }
@@ -3546,7 +3549,7 @@ interface imgui_internal {
             var arg = ""
             var i = 0
             while (matcher.find(i)) {
-                if (format[matcher.end()-1] != '%') {
+                if (format[matcher.end() - 1] != '%') {
                     arg = matcher.group()
                     break
                 }
