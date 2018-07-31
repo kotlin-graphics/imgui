@@ -3541,6 +3541,7 @@ interface imgui_internal {
 
         fun <N : Number> roundScalarWithFormat(format: String, value: N): N {
             if (format.isEmpty()) return value
+            if (value is Int || value is Long) return value
             val matcher = formatArgPattern.matcher(format)
             var arg = ""
             var i = 0
@@ -3558,26 +3559,7 @@ interface imgui_internal {
                 formattedValue = formattedValue.replace("(", "").replace(")", "")
                 formattedValue = "-$formattedValue"
             }
-            var radix = 10
-            if (arg.endsWith('x') || arg.endsWith('X') ||
-                arg.endsWith('h') || arg.endsWith('H')) {
-                    if (arg.contains('#')) formattedValue = formattedValue.substring(2)
-                    radix = 16
-            }
-            if (arg.endsWith('o')) radix = 8
             return when (value) {
-                is Int -> {
-                    if (radix != 10)
-                        formattedValue.parseUnsignedInt(radix) as N
-                    else
-                        formattedValue.parseInt(radix) as N
-                }
-                is Long -> {
-                    if (radix != 10)
-                        formattedValue.parseUnsignedLong(radix) as N
-                    else
-                        formattedValue.parseLong(radix) as N
-                }
                 is Float -> formattedValue.parseFloat as N
                 is Double -> formattedValue.parseDouble as N
                 else -> throw Error("not supported")
