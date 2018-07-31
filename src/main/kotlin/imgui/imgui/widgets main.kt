@@ -64,6 +64,8 @@ interface imgui_widgetsMain {
         val window = currentWindow
         if (window.skipItems) return false
 
+        assert(sizeArg allNotEqual 0f) { "Cannot use zero-size for InvisibleButton(). Unlike Button() there is not way to fallback using the label size." }
+
         val id = window.getId(strId)
         val size = calcItemSize(sizeArg, 0f, 0f)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)

@@ -504,7 +504,7 @@ interface imgui_widgetsColorEditorPicker {
                 // Paint colors over existing vertices
                 val gradientP0 = Vec2(wheelCenter.x + a0.cos * wheelRInner, wheelCenter.y + a0.sin * wheelRInner)
                 val gradientP1 = Vec2(wheelCenter.x + a1.cos * wheelRInner, wheelCenter.y + a1.sin * wheelRInner)
-                shadeVertsLinearColorGradientKeepAlpha(drawList.vtxBuffer, vertStartIdx, vertEndIdx, gradientP0, gradientP1, hueColors[n], hueColors[n + 1])
+                shadeVertsLinearColorGradientKeepAlpha(drawList, vertStartIdx, vertEndIdx, gradientP0, gradientP1, hueColors[n], hueColors[n + 1])
             }
 
             // Render Cursor + preview on Hue Wheel

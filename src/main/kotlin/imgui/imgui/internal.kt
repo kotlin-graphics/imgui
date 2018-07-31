@@ -191,7 +191,8 @@ interface imgui_internal {
         set(value) {
             g.hoveredId = value
             g.hoveredIdAllowOverlap = false
-            g.hoveredIdTimer = if (value != 0 && g.hoveredIdPreviousFrame == value) g.hoveredIdTimer + io.deltaTime else 0f
+            if (value != 0 && g.hoveredIdPreviousFrame != value)
+                g.hoveredIdTimer = 0f
         }
 
     fun keepAliveId(id: ID) {
@@ -3478,12 +3479,12 @@ interface imgui_internal {
     //-----------------------------------------------------------------------------
 
     /** Generic linear color gradient, write to RGB fields, leave A untouched.  */
-    fun shadeVertsLinearColorGradientKeepAlpha(list: ArrayList<DrawVert>, vertStart: Int, vertEnd: Int, gradientP0: Vec2,
+    fun shadeVertsLinearColorGradientKeepAlpha(drawList: DrawList, vertStart: Int, vertEnd: Int, gradientP0: Vec2,
                                                gradientP1: Vec2, col0: Int, col1: Int) {
         val gradientExtent = gradientP1 - gradientP0
         val gradientInvLength2 = 1f / gradientExtent.lengthSqr
         for (i in vertStart until vertEnd) {
-            val vert = list[i]
+            val vert = drawList.vtxBuffer[i]
             val d = vert.pos - gradientP0 dot gradientExtent
             val t = glm.clamp(d * gradientInvLength2, 0f, 1f)
             val r = lerp((col0 ushr COL32_R_SHIFT) and 0xFF, (col1 ushr COL32_R_SHIFT) and 0xFF, t)
@@ -3494,7 +3495,7 @@ interface imgui_internal {
     }
 
     /** Distribute UV over (a, b) rectangle */
-    fun shadeVertsLinearUV(list: ArrayList<DrawVert>, vertStart: Int, vertEnd: Int, a: Vec2, b: Vec2, uvA: Vec2, uvB: Vec2, clamp: Boolean) {
+    fun shadeVertsLinearUV(drawList: DrawList, vertStart: Int, vertEnd: Int, a: Vec2, b: Vec2, uvA: Vec2, uvB: Vec2, clamp: Boolean) {
         val size = b - a
         val uvSize = uvB - uvA
         val scale = Vec2(
@@ -3503,17 +3504,15 @@ interface imgui_internal {
         if (clamp) {
             val min = uvA min uvB
             val max = uvA max uvB
-
             for (i in vertStart until vertEnd) {
-                val vertex = list[i]
+                val vertex = drawList.vtxBuffer[i]
                 vertex.uv = glm.clamp(uvA + (vertex.pos - a) * scale, min, max)
             }
-        } else {
+        } else
             for (i in vertStart until vertEnd) {
-                val vertex = list[i]
+                val vertex = drawList.vtxBuffer[i]
                 vertex.uv = uvA + (vertex.pos - a) * scale
             }
-        }
     }
 
     companion object {

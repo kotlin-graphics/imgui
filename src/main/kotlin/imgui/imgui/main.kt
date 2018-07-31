@@ -99,6 +99,7 @@ interface imgui_main {
         }
 
         g.time += io.deltaTime
+        g.frameScopeActive = true
         g.frameCount += 1
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
@@ -121,6 +122,8 @@ interface imgui_main {
         // Clear reference to active widget if the widget isn't alive anymore
         if (g.hoveredIdPreviousFrame == 0)
             g.hoveredIdTimer = 0f
+        if (g.hoveredId != 0)
+            g.hoveredIdTimer += io.deltaTime
         g.hoveredIdPreviousFrame = g.hoveredId
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
@@ -231,8 +234,10 @@ interface imgui_main {
      *  If you don't need to render, better to not create any imgui windows and not call ::newFrame() at all!  */
     fun endFrame() {
 
-        assert(g.initialized) { "Forgot to call newFrame()" }
+        assert(g.initialized)
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
+        assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()" }
+        g.frameScopeActive = false
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f) {
@@ -311,7 +316,7 @@ interface imgui_main {
      *  Nowadays, prefer calling your render function yourself.)   */
     fun render() {
 
-        assert(g.initialized) { "Forgot to call ImGui::NewFrame()" }
+        assert(g.initialized)
 
         if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount

@@ -370,7 +370,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathRect(a, b, rounding, roundingCorners)
         pathFillConvex(col)
         val vertEndIdx = vtxBuffer.size
-        shadeVertsLinearUV(vtxBuffer, vertStartIdx, vertEndIdx, a, b, uvA, uvB, true)
+        shadeVertsLinearUV(this, vertStartIdx, vertEndIdx, a, b, uvA, uvB, true)
 
         if (pushTextureId) popTextureId()
     }

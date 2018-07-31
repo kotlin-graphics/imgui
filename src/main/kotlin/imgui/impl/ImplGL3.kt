@@ -2,11 +2,9 @@ package imgui.impl
 
 import glm_.*
 import glm_.buffer.bufferBig
-import glm_.buffer.cap
 import glm_.buffer.free
 import glm_.buffer.intBufferBig
 import glm_.vec2.Vec2
-import glm_.vec2.Vec2d
 import gln.*
 import gln.buffer.BufferTarget
 import gln.buffer.Usage
@@ -22,21 +20,9 @@ import gln.vertexArray.glVertexAttribPointer
 import gln.vertexArray.withVertexArray
 import imgui.*
 import imgui.ImGui.io
-import imgui.ImGui.mouseCursor
-import imgui.impl.LwjglGlfw.charCallback
-import imgui.impl.LwjglGlfw.keyCallback
-import imgui.impl.LwjglGlfw.mouseButtonCallback
-import imgui.impl.LwjglGlfw.scrollCallback
-import imgui.impl.windowsIme.imeListner
-import org.lwjgl.glfw.GLFW.*
-import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
-import org.lwjgl.system.MemoryUtil.NULL
-import org.lwjgl.system.Platform
-import uno.glfw.*
-import uno.glfw.GlfwWindow.CursorStatus
 
 object ImplGL3 {
 
