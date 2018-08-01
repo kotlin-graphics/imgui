@@ -684,7 +684,7 @@ class Window(var context: Context, var name: String) {
         return id
     }
 
-    fun getId(ptr: Any): Int {
+    fun getId(ptr: Any): ID {
         val ptrIndex = ++ptrIndices
         if (ptrIndex >= ptrId.size) {
             val newBufLength = ptrId.size + 512
@@ -700,6 +700,17 @@ class Window(var context: Context, var name: String) {
     fun getIdNoKeepAlive(str: String, strEnd: Int = str.length): ID {
         val seed: ID = idStack.last()
         return hash(str, str.length - strEnd, seed)
+    }
+
+    fun getIdNoKeepAlive(ptr: Any): ID {
+        val ptrIndex = ++ptrIndices
+        if (ptrIndex >= ptrId.size) {
+            val newBufLength = ptrId.size + 512
+            val newBuf = Array(newBufLength) { it }
+            System.arraycopy(ptrId, 0, newBuf, 0, ptrId.size)
+            ptrId = newBuf
+        }
+        return System.identityHashCode(ptrId[ptrIndex])
     }
 
     /** This is only used in rare/specific situations to manufacture an ID out of nowhere. */

@@ -29,8 +29,6 @@ import imgui.ImGui.updateMouseMovingWindow
 import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
 import imgui.imgui.imgui_internal.Companion.roundScalarWithFormat
 import imgui.internal.*
-import uno.kotlin.buffers.fill
-import java.nio.ByteBuffer
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
@@ -185,7 +183,7 @@ interface imgui_main {
 
         // Background darkening/whitening
         g.dimBgRatio = when {
-            frontMostPopupModal != null || (g.navWindowingTarget != null  && g.navWindowingHighlightAlpha > 0f)-> (g.dimBgRatio + io.deltaTime * 6f) min 1f
+            frontMostPopupModal != null || (g.navWindowingTarget != null && g.navWindowingHighlightAlpha > 0f) -> (g.dimBgRatio + io.deltaTime * 6f) min 1f
             else -> (g.dimBgRatio - io.deltaTime * 10f) max 0f
         }
         g.mouseCursor = MouseCursor.Arrow
@@ -260,13 +258,16 @@ interface imgui_main {
         if (g.navWindowingTarget != null)
             navUpdateWindowingList()
 
-        // Drag and Drop: Elapse payload (if source stops being submitted)
-        if (g.dragDropActive && g.dragDropPayload.dataFrameCount + 1 < g.frameCount)
-            if ((g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload) || !isMouseDown(g.dragDropMouseButton))
+        // Drag and Drop: Elapse payload (if delivered, or if source stops being submitted)
+        if (g.dragDropActive) {
+            val isDelivered = g.dragDropPayload.delivery
+            val isElapsed = g.dragDropPayload.dataFrameCount + 1 < g.frameCount && (g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload || !isMouseDown(g.dragDropMouseButton))
+            if (isDelivered || isElapsed)
                 clearDragDrop()
+        }
 
         // Drag and Drop: Fallback for source tooltip. This is not ideal but better than nothing.
-        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount)        {
+        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount) {
             g.dragDropWithinSourceOrTarget = true
             setTooltip("...")
             g.dragDropWithinSourceOrTarget = false

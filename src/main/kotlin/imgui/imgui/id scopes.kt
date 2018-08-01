@@ -15,10 +15,13 @@ interface imgui_idScopes {
 
 
     /** push identifier into the ID stack. IDs are hash of the entire stack!  */
-    fun pushId(strId: String) = with(currentWindowRead!!) { idStack.push(getId(strId)) }
+    fun pushId(strId: String) = with(currentWindowRead!!) { idStack += getIdNoKeepAlive(strId) }
 
-    /** Includes Int IDs as well    */
-    fun pushId(ptrId: Any) = with(currentWindowRead!!) { idStack.push(getId(ptrId)) }
+    fun pushId(strId: String, strIdEnd: Int) = with(currentWindowRead!!) { idStack += getIdNoKeepAlive(strId, strIdEnd) }
+
+    fun pushId(ptrId: Any) = with(currentWindowRead!!) { idStack += getIdNoKeepAlive(ptrId) }
+
+    fun pushId(intId: Int) = with(currentWindowRead!!) { idStack += getIdNoKeepAlive(intId) }
 
     fun popId() = currentWindowRead!!.idStack.pop()
 
