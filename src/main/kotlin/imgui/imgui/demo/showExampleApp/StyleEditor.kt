@@ -22,8 +22,10 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.popFont
+import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushFont
+import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
@@ -223,9 +225,8 @@ object StyleEditor {
                         Vec4.fromColor(255, 255, 255, 128))
             }
             pushItemWidth(100)
-            for (i in 0 until atlas.fonts.size) {
-
-                val font = atlas.fonts[i]
+            atlas.fonts.forEachIndexed { i, font ->
+                pushId(font)
                 val name = font.configData.getOrNull(0)?.name ?: ""
                 val fontDetailsOpened = treeNode(font, "Font $i: '$name', %.2f px, ${font.glyphs.size} glyphs", font.fontSize)
                 sameLine(); smallButton("Set as default") { io.fontDefault = font }
@@ -233,11 +234,7 @@ object StyleEditor {
                     pushFont(font)
                     text("The quick brown fox jumps over the lazy dog")
                     popFont()
-                    val scale = floatArrayOf(font.scale)
-                    // Scale only this font
-                    dragScalar("Font scale", scale, 0.005f, 0.3f, 2f, "%.1f")
-                    inputFloat("Font offset", font.displayOffset::y, 1f, 1f)
-                    font.scale = scale[0]
+                    dragFloat("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")
                     sameLine()
                     showHelpMarker("""
                         |Note than the default embedded font is NOT meant to be scaled.
@@ -245,6 +242,7 @@ object StyleEditor {
                         |Font are currently rendered into bitmaps at a given size at the time of building the atlas. You may oversample them to get some flexibility with scaling. You can also render at multiple sizes and select which one to use at runtime.
                         |
                         |(Glimmer of hope: the atlas system should hopefully be rewritten in the future to make scaling more natural and automatic.)""".trimMargin())
+                    inputFloat("Font offset", font.displayOffset::y, 1f, 1f)
                     text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
                     text("Fallback character: '${font.fallbackChar}' (${font.fallbackChar.i})")
                     val side = sqrt(font.metricsTotalSurface.f).i
@@ -288,16 +286,15 @@ object StyleEditor {
                             }
                         }
                     }
+                    treePop()
                 }
+                popId()
             }
-            val pF = floatArrayOf(windowScale)
-            dragScalar("this window scale", pF, 0.005f, 0.3f, 2f, "%.1f")    // scale only this window
-            windowScale = pF[0]
-            pF[0] = io.fontGlobalScale
-            dragScalar("global scale", pF, 0.005f, 0.3f, 2f, "%.1f") // scale everything
-            io.fontGlobalScale = pF[0]
+            dragFloat("this window scale", ::windowScale, 0.005f, 0.3f, 2f, "%.1f")    // scale only this window
+            dragFloat("global scale", io::fontGlobalScale, 0.005f, 0.3f, 2f, "%.1f") // scale everything
             popItemWidth()
             setWindowFontScale(windowScale)
+            treePop()
         }
         popItemWidth()
     }
