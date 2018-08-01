@@ -118,9 +118,10 @@ object LwjglGlfw {
         io.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         time = currentTime
 
-        updateMousePosAndButtons()
-        updateMouseCursor()
-
+        if(io.backendFlags hasnt BackendFlag.NoCaptureMouse) {
+            updateMousePosAndButtons()
+            updateMouseCursor()
+        }
         // Gamepad navigation mapping [BETA]
         io.navInputs.fill(0f)
         if (io.configFlags has ConfigFlag.NavEnableGamepad) {
