@@ -484,7 +484,11 @@ enum class BackendFlag(val i: Int) {
     /** Back-end supports honoring ::mouseCursor value to change the OS cursor shape. */
     HasMouseCursors(1 shl 1),
     /** Back-end supports io.wantSetMousePos requests to reposition the OS mouse position (only used if ConfigFlags.NavEnableSetMousePos is set). */
-    HasSetMousePos(1 shl 2)
+    HasSetMousePos(1 shl 2),
+    /** JVM custom, set it to disable imgui from auto-updating mouse status */
+    NoCaptureMouse(1 shl 3),
+    /** JVM custom */
+    NoCaptureKeyboard(1 shl 4)
 }
 
 
