@@ -273,6 +273,16 @@ Double-chocolate native sponsors:
 
 and many other [private persons](https://github.com/ocornut/imgui#credits)
 
+I'm very grateful for the support of the persons that have directly contributed to this port via bugs reports, bug fixes, discussions and other forms of support (in alphabetical order):
+
+- Balázs Bódi, [bbodi](https://github.com/bbodi)
+- [Catvert](https://github.com/Catvert)
+- Christer Jensen, [chrjen](https://github.com/chrjen)
+- Florian Schäfers, [Sunny1337](https://github.com/Sunny1337)
+- [klianc09](https://github.com/klianc09)
+- Leon Linhart, [TheMrMilchmann](https://github.com/TheMrMilchmann)
+- Nick Johnson, [Sylvyrfysh](https://github.com/Sylvyrfysh)
+
 License
 -------
 
