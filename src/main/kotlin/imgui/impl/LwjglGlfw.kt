@@ -173,7 +173,7 @@ object LwjglGlfw {
 
     private fun updateMousePosAndButtons() {
 
-        if (io.configFlags has ConfigFlag.NoCaptureMouse)
+        if (io.configFlags has ConfigFlag.NoMouseUpdate)
             return
 
         repeat(io.mouseDown.size) {
