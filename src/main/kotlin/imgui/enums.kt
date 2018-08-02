@@ -462,9 +462,9 @@ enum class ConfigFlag(val i: Int) {
     NoMouseCursorChange(1 shl 5),
 
     /** JVM custom, request back-end to not read the mouse status allowing you to provide your own custom input */
-    NoCaptureMouse(1 shl 12),
+    NoMouseUpdate(1 shl 12),
     /** JVM custom */
-    NoCaptureKeyboard(1 shl 13),
+    NoKeyboardUpdate(1 shl 13),
 
     /*  User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects.
         Those flags are not used by core ImGui)     */
