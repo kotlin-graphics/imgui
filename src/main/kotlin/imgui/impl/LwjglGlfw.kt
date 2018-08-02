@@ -118,10 +118,9 @@ object LwjglGlfw {
         io.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         time = currentTime
 
-        if(io.backendFlags hasnt BackendFlag.NoCaptureMouse) {
-            updateMousePosAndButtons()
-            updateMouseCursor()
-        }
+        updateMousePosAndButtons()
+        updateMouseCursor()
+
         // Gamepad navigation mapping [BETA]
         io.navInputs.fill(0f)
         if (io.configFlags has ConfigFlag.NavEnableGamepad) {
@@ -173,6 +172,9 @@ object LwjglGlfw {
     }
 
     private fun updateMousePosAndButtons() {
+
+        if (io.configFlags has ConfigFlag.NoCaptureMouse)
+            return
 
         repeat(io.mouseDown.size) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
