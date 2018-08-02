@@ -461,6 +461,11 @@ enum class ConfigFlag(val i: Int) {
      *  You may want to honor requests from imgui by reading ::mouseCursor yourself instead. */
     NoMouseCursorChange(1 shl 5),
 
+    /** JVM custom, request back-end to not read the mouse status allowing you to provide your own custom input */
+    NoCaptureMouse(1 shl 12),
+    /** JVM custom */
+    NoCaptureKeyboard(1 shl 13),
+
     /*  User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects.
         Those flags are not used by core ImGui)     */
 
@@ -485,10 +490,6 @@ enum class BackendFlag(val i: Int) {
     HasMouseCursors(1 shl 1),
     /** Back-end supports io.wantSetMousePos requests to reposition the OS mouse position (only used if ConfigFlags.NavEnableSetMousePos is set). */
     HasSetMousePos(1 shl 2),
-    /** JVM custom, set it to disable imgui from auto-updating mouse status */
-    NoCaptureMouse(1 shl 3),
-    /** JVM custom */
-    NoCaptureKeyboard(1 shl 4)
 }
 
 
