@@ -70,6 +70,12 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
+task lightJar(type: Jar) {
+    classifier = 'light'
+    from sourceSets.main.output
+    exclude 'extraFonts'
+}
+
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
@@ -81,6 +87,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 artifacts {
+    archives lightJar
     archives sourcesJar
     archives javadocJar
 }
