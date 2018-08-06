@@ -194,6 +194,7 @@ interface imgui_widgetsInputKeyboard {
         } else if (inputText(label, buf, extraFlags))
             valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, dataPtr, format)
 
+
         return valueChanged
     }
 

@@ -2,9 +2,6 @@ package imgui
 
 import glm_.i
 import imgui.imgui.*
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.util.*
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
@@ -167,5 +164,17 @@ infix fun String.cmp(charArray: CharArray): Boolean {
     for (i in indices)
         if (get(i) != charArray[i])
             return false
+    return true
+}
+
+fun strcmp(charsA: CharArray, charsB: CharArray): Boolean {
+    for (i in charsA.indices) {
+        val a = charsA[i]
+        if(a == NUL) return true
+        val b = charsB.getOrElse(i) { return false }
+        if(b == NUL) return true
+        if(a != b)
+            return false
+    }
     return true
 }
