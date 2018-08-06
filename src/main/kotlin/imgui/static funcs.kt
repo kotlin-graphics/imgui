@@ -24,7 +24,6 @@ import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
-import imgui.ImGui.overlayDrawList
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.selectable
@@ -608,19 +607,24 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
     return res
 }
 
-fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, dataPtr: KMutableProperty0<*>,
+fun dataTypeApplyOpFromText(buf_: CharArray, initialValueBuf_: CharArray, dataType: DataType, dataPtr: KMutableProperty0<*>,
                             format: String? = null): Boolean {
 
-    val seq = String(buf)
+    val buf = String(buf_)
+            .replace(Regex("\\s+"), "")
+            .replace("$NUL", "")
+            .split(Regex("-+\\*/"))
+
+    val initialValueBuf = String(initialValueBuf_)
             .replace(Regex("\\s+"), "")
             .replace("$NUL", "")
             .split(Regex("-+\\*/"))
 
     /*  We don't support '-' op because it would conflict with inputing negative value.
         Instead you can use +-100 to subtract from an existing value     */
-    val op = seq.getOrNull(1)?.get(0)
+    val op = buf.getOrNull(1)?.get(0)
 
-    return when (buf[0]) {
+    return when (buf_[0]) {
         NUL -> false
         else -> when (dataType) {
             DataType.Int -> {
@@ -628,29 +632,29 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                 var v by dataPtr as KMutableProperty0<Int>
                 val dataBackup = v
                 val arg0i = try {
-                    seq[0].format(style.locale, fmt).i
+                    buf[0].format(style.locale, fmt).i
                 } catch (_: Exception) {
                     return false
                 }
 
                 v = when (op) {
                     '+' -> {    // Add (use "+-" to subtract)
-                        val arg1i = seq[2].format(style.locale, "%d").i
+                        val arg1i = buf[2].format(style.locale, "%d").i
                         (arg0i + arg1i).i
                     }
                     '*' -> {    // Multiply
-                        val arg1f = seq[2].format(style.locale, "%f").f
+                        val arg1f = buf[2].format(style.locale, "%f").f
                         (arg0i * arg1f).i
                     }
                     '/' -> {    // Divide
-                        val arg1f = seq[2].format(style.locale, "%f").f
+                        val arg1f = buf[2].format(style.locale, "%f").f
                         when (arg1f) {
                             0f -> arg0i
                             else -> (arg0i / arg1f).i
                         }
                     }
                     else -> try { // Assign constant
-                        seq[1].format(style.locale, fmt).i
+                        buf[1].format(style.locale, fmt).i
                     } catch (_: Exception) {
                         arg0i
                     }
@@ -671,12 +675,12 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                 var v by dataPtr as KMutableProperty0<Float>
                 val dataBackup = v
                 val arg0f = try {
-                    seq[0].format(style.locale, fmt).f
+                    initialValueBuf[0].format(style.locale, fmt).f
                 } catch (_: Exception) {
                     return false
                 }
                 val arg1f = try {
-                    seq[2].format(style.locale, fmt).f
+                    buf.getOrElse(2) { buf[0] }.format(style.locale, fmt).f
                 } catch (_: Exception) {
                     return false
                 }
@@ -696,12 +700,12 @@ fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType
                 var v by dataPtr as KMutableProperty0<Double>
                 val dataBackup = v
                 val arg0f = try {
-                    seq[0].format(style.locale, fmt).d
+                    buf[0].format(style.locale, fmt).d
                 } catch (_: Exception) {
                     return false
                 }
                 val arg1f = try {
-                    seq[2].format(style.locale, fmt).d
+                    buf[2].format(style.locale, fmt).d
                 } catch (_: Exception) {
                     return false
                 }
@@ -1116,7 +1120,7 @@ fun navUpdate() {
     g.navScoringCount = 0
     if (IMGUI_DEBUG_NAV_RECTS)
         g.navWindow?.let {
-//            for (layer in 0..1)
+            //            for (layer in 0..1)
 //                overlayDrawList.addRect(it.navRectRel[layer].min + it.pos, it.navRectRel[layer].max + it.pos, COL32(255, 200, 0, 255))
 //            val col = if (it.hiddenFrames == 0) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
 //            val p = navCalcPreferredRefPos()

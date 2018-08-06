@@ -2910,7 +2910,7 @@ interface imgui_internal {
 //                        }
                 }
                 // Copy back to user buffer
-                if (isEditable && !Arrays.equals(editState.tempTextBuffer, buf)) {
+                if (isEditable && !strcmp(editState.tempTextBuffer, buf)) {
                     for (i in buf.indices) buf[i] = editState.tempTextBuffer[i]
                     valueChanged = true
                 }
