@@ -558,7 +558,7 @@ class Window(var context: Context, var name: String) {
     /** Set when collapsing window to become only title-bar */
     var collapsed = false
 
-    var collapseToggleWanted = false
+    var wantCollapseToggle = false
     /** Set when items can safely be all clipped (e.g. window not visible or collapsed) */
     var skipItems = false
     /** Set during the frame where the window is appearing (or re-appearing)    */
@@ -887,6 +887,7 @@ class Window(var context: Context, var name: String) {
 
     /** AddWindowToDrawData */
     infix fun addTo(outList: ArrayList<DrawList>) {
+        io.metricsRenderWindows++
         drawList addTo outList
         dc.childWindows.filter { it.isActiveAndVisible }  // clipped children may have been marked not active
                 .forEach { it addTo outList }
@@ -903,10 +904,8 @@ class Window(var context: Context, var name: String) {
         }
     }
 
-    fun addToDrawDataSelectLayer() {
-        io.metricsActiveWindows++
-        addTo(if (flags has Wf.Tooltip) g.drawDataBuilder.layers[1] else g.drawDataBuilder.layers[0])
-    }
+    /** ~ AddWindowToDrawDataSelectLayer */
+    fun addToDrawDataSelectLayer() = addTo(if (flags has Wf.Tooltip) g.drawDataBuilder.layers[1] else g.drawDataBuilder.layers[0])
 
     // FIXME: Add a more explicit sort order in the window structure.
     private val childWindowComparer = compareBy<Window>({ it.flags has Wf.Popup }, { it.flags has Wf.Tooltip }, { it.beginOrderWithinParent })

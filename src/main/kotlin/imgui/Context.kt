@@ -472,14 +472,15 @@ class IO(sharedFontAtlas: FontAtlas?) {
 
     /** = defined(__APPLE__), OS X style: Text editing cursor movement using Alt instead of Ctrl, Shortcuts using
      *  Cmd/Super instead of Ctrl, Line/Text Start and End using Cmd + Arrows instead of Home/End, Double click selects
-     *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl */
-    var optMacOSXBehaviors = false  // JVM TODO
-    /** Enable blinking cursor, for users who consider it annoying. */
-    var optCursorBlink = true
+     *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl
+     *  (was called io.OptMacOSXBehaviors prior to 1.63) */
+    var configMacOSXBehaviors = false  // JVM TODO
+    /** Set to false to disable blinking cursor, for users who consider it distracting. (was called: io.OptCursorBlink prior to 1.63) */
+    var configCursorBlink = true
     /** [BETA] Enable resizing of windows from their edges and from the lower-left corner.
      *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
      *  (This used to be the WindowFlag.ResizeFromAnySide flag) */
-    var optResizeWindowsFromEdges = false
+    var configResizeWindowsFromEdges = false
 
     //------------------------------------------------------------------
     // User Functions
@@ -586,7 +587,9 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var metricsRenderVertices = 0
     /** Indices output during last call to Render() = number of triangles * 3   */
     var metricsRenderIndices = 0
-    /** Number of visible root windows (exclude child windows)  */
+    /** Number of visible windows */
+    var metricsRenderWindows = 0
+    /** Number of active windows */
     var metricsActiveWindows = 0
     /** Mouse delta. Note that this is zero if either current or previous position are invalid (-FLOAT_MAX_VALUE), so a
     disappearing/reappearing mouse won't have a huge delta.   */

@@ -75,9 +75,9 @@ interface imgui_main {
         if (io.configFlags has Cf.NavEnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
-        // The beta io.OptResizeWindowsFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
-        if (io.optResizeWindowsFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
-            io.optResizeWindowsFromEdges = false
+        // The beta io.configResizeWindowsFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
+        if (io.configResizeWindowsFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
+            io.configResizeWindowsFromEdges = false
 
         // Load settings on first frame (if not explicitly loaded manually before)
         if (!g.settingsLoaded) {
@@ -312,6 +312,7 @@ interface imgui_main {
         assert(g.windows.size == g.windowsSortBuffer.size) { "we done something wrong" }
         g.windows.clear()
         g.windows += g.windowsSortBuffer
+        io.metricsActiveWindows = g.windowsActiveCount
 
         // Unlock font atlas
         io.fonts.locked = false
@@ -337,7 +338,7 @@ interface imgui_main {
         g.frameCountRendered = g.frameCount
 
         // Gather windows to render
-        io.metricsActiveWindows = 0
+        io.metricsRenderWindows = 0
         io.metricsRenderIndices = 0
         io.metricsRenderVertices = 0
         g.drawDataBuilder.clear()
@@ -495,7 +496,7 @@ interface imgui_main {
             if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0)
                 return borderHeld
 
-            val resizeBorderCount = if (io.optResizeWindowsFromEdges) 4 else 0
+            val resizeBorderCount = if (io.configResizeWindowsFromEdges) 4 else 0
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             val gripHoverSize = (gripDrawSize * 0.75f).i.f
 

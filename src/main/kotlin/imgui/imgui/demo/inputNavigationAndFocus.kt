@@ -79,6 +79,10 @@ object inputNavigationAndFocus {
             sameLine(); showHelpMarker("Instruct navigation to move the mouse cursor. See comment for ConfigFlag.NavEnableSetMousePos.")
             checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)
             sameLine(); showHelpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
+            checkbox("io.ConfigCursorBlink", io::configCursorBlink)
+            sameLine(); showHelpMarker("Set to false to disable blinking cursor, for users who consider it distracting")
+            checkbox("io.ConfigResizeWindowsFromEdges [beta]", io::configResizeWindowsFromEdges)
+            sameLine(); showHelpMarker("Enable resizing of windows from their edges and from the lower-left corner. This requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")
 
             treeNode("Keyboard, Mouse & Navigation State") {
                 if (isMousePosValid()) text("Mouse pos: (%g, %g)", io.mousePos.x, io.mousePos.y)
