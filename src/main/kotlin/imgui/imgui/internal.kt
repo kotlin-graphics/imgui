@@ -2661,7 +2661,7 @@ interface imgui_internal {
                     else g.fontSize * 0.5f
 
             // OS X style: Double click selects by word instead of selecting whole text
-            val isOsx = io.optMacOSXBehaviors
+            val isOsx = io.configMacOSXBehaviors
             if (selectAll || (hovered && !isOsx && io.mouseDoubleClicked[0])) {
                 editState.selectAll()
                 editState.selectedAllMouseLock = true
@@ -2706,7 +2706,7 @@ interface imgui_internal {
         if (g.activeId == id && !g.activeIdIsJustActivated && !clearActiveId) {
             // Handle key-presses
             val kMask = if (io.keyShift) K.SHIFT else 0
-            val isOsx = io.optMacOSXBehaviors
+            val isOsx = io.configMacOSXBehaviors
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
             val isShortcutKey = (if (isOsx) io.keySuper && !io.keyCtrl else io.keyCtrl && !io.keySuper) && !io.keyAlt && !io.keyShift
             val isOsxShiftShortcut = isOsx && io.keySuper && io.keyShift && !io.keyCtrl && !io.keyAlt
@@ -3064,7 +3064,7 @@ interface imgui_internal {
                     editState.curLenA, 0f, clipRect.takeIf { isMultiline })
 
             // Draw blinking cursor
-            val cursorIsVisible = !io.optCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
+            val cursorIsVisible = !io.configCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
             val cursorScreenPos = renderPos + cursorOffset - renderScroll
             val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
             if (cursorIsVisible && cursorScreenRect overlaps Rect(clipRect))

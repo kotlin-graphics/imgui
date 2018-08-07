@@ -8,7 +8,6 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.F32_TO_INT8_SAT
-import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
 import imgui.ImGui.collapseButton
@@ -26,7 +25,6 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
-import imgui.ImGui.renderArrow
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
@@ -253,14 +251,14 @@ interface imgui_window {
                 val titleBarRect = window.titleBarRect()
                 if (g.hoveredWindow === window && g.hoveredId == 0 && g.hoveredIdPreviousFrame == 0 &&
                         isMouseHoveringRect(titleBarRect.min, titleBarRect.max) && io.mouseDoubleClicked[0])
-                    window.collapseToggleWanted = true
-                if (window.collapseToggleWanted) {
+                    window.wantCollapseToggle = true
+                if (window.wantCollapseToggle) {
                     window.collapsed = !window.collapsed
                     window.markIniSettingsDirty()
                     window.focus()
                 }
             } else window.collapsed = false
-            window.collapseToggleWanted = false
+            window.wantCollapseToggle = false
 
             /* ---------- SIZE ---------- */
 
@@ -388,7 +386,7 @@ interface imgui_window {
             // Handle manual resize: Resize Grips, Borders, Gamepad
             val borderHeld = -1
             val resizeGripCol = IntArray(4)
-            val resizeGripCount = if (io.optResizeWindowsFromEdges) 2 else 1 // 4
+            val resizeGripCount = if (io.configResizeWindowsFromEdges) 2 else 1 // 4
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             if (!window.collapsed)
                 updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
@@ -591,7 +589,7 @@ interface imgui_window {
                 // Collapse button
                 if (flags hasnt Wf.NoCollapse)
                     if (collapseButton(window.getId("#COLLAPSE"), window.pos + style.framePadding))
-                        window.collapseToggleWanted = true // Defer collapsing to next frame as we are too far in the Begin() function
+                        window.wantCollapseToggle = true // Defer collapsing to next frame as we are too far in the Begin() function
 
                 // Close button
                 if (pOpen != null) {

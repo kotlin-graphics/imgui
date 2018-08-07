@@ -97,7 +97,8 @@ interface imgui_demoDebugInformations {
         if (begin_("ImGui Metrics", open)) {
             text("Dear ImGui $version")
             text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
-            text("%d vertices, %d indices (%d triangles)", io.metricsRenderVertices, io.metricsRenderIndices, io.metricsRenderIndices / 3)
+            text("${io.metricsRenderVertices} vertices, ${io.metricsRenderIndices} indices (${io.metricsRenderIndices / 3} triangles)")
+            text("${io.metricsActiveWindows} active windows (${io.metricsRenderWindows} visible)")
             text("%d allocations", io.metricsAllocs)
             checkbox("Show clipping rectangles when hovering draw commands", Companion::showDrawCmdClipRects)
             checkbox("Ctrl shows window begin order", Companion::showWindowBeginOrder)
@@ -145,7 +146,7 @@ interface imgui_demoDebugInformations {
                     "${window.beginOrderWithinContext}".toCharArray(buf)
                     val fontSize = fontSize * 2
                     overlayDrawList.apply {
-                        addRectFilled(Vec2(window.pos), window.pos+ fontSize, COL32(200, 100, 100, 255))
+                        addRectFilled(Vec2(window.pos), window.pos + fontSize, COL32(200, 100, 100, 255))
                         addText(null, fontSize, Vec2(window.pos), COL32(255, 255, 255, 255), buf)
                     }
                 }
