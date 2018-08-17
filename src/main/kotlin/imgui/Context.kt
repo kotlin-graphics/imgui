@@ -70,10 +70,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeId: ID = 0
 
     var activeIdPreviousFrame: ID = 0
+    /** Active widget has been seen this frame (we can't use a bool as the ActiveId may change within the frame) */
+    var activeIdIsAlive: ID = 0
 
     var activeIdTimer = 0f
-    /** Active widget has been seen this frame   */
-    var activeIdIsAlive = false
     /** Set at the time of activation for one frame */
     var activeIdIsJustActivated = false
     /** Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)   */
@@ -591,6 +591,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var metricsRenderWindows = 0
     /** Number of active windows */
     var metricsActiveWindows = 0
+    /** Number of active allocations, updated by MemAlloc/MemFree based on current context. May be off if you have multiple imgui contexts. */
+    var metricsActiveAllocations = 0
     /** Mouse delta. Note that this is zero if either current or previous position are invalid (-FLOAT_MAX_VALUE), so a
     disappearing/reappearing mouse won't have a huge delta.   */
     var mouseDelta = Vec2()

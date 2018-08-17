@@ -156,7 +156,7 @@ interface imgui_internal {
         g.activeIdAllowOverlap = false
         g.activeIdWindow = window
         if (id != 0) {
-            g.activeIdIsAlive = true
+            g.activeIdIsAlive = id
             g.activeIdSource = when (id) {
                 g.navActivateId, g.navInputId, g.navJustTabbedId, g.navJustMovedToId -> InputSource.Nav
                 else -> InputSource.Mouse
@@ -199,7 +199,7 @@ interface imgui_internal {
 
     fun keepAliveId(id: ID) {
         if (g.activeId == id)
-            g.activeIdIsAlive = true
+            g.activeIdIsAlive = id
         if (g.activeIdPreviousFrame == id)
             g.activeIdPreviousFrameIsAlive = true
     }
