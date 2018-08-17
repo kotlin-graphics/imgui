@@ -1151,7 +1151,7 @@ fun navUpdateWindowing() {
     val startWindowingWithGamepad = g.navWindowingTarget == null && NavInput.Menu.isPressed(InputReadMode.Pressed)
     val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has Cf.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
-        (g.navWindow ?: findWindowNavigable(g.windows.lastIndex, -Int.MAX_VALUE, -1))?.let {
+        (g.navWindow ?: findWindowNavFocusable(g.windows.lastIndex, -Int.MAX_VALUE, -1))?.let {
             g.navWindowingTarget = it
             g.navWindowingTargetAnim = it
             g.navWindowingHighlightAlpha = 0f
@@ -1394,7 +1394,7 @@ fun navCalcPreferredRefPos(): Vec2 {
 fun isNavInputPressedAnyOfTwo(n1: NavInput, n2: NavInput, mode: InputReadMode) = getNavInputAmount(n1, mode) + getNavInputAmount(n2, mode) > 0f
 
 // FIXME-OPT O(N)
-fun findWindowNavigable(iStart: Int, iStop: Int, dir: Int): Window? {
+fun findWindowNavFocusable(iStart: Int, iStop: Int, dir: Int): Window? {
     var i = iStart
     while (i in g.windows.indices && i != iStop) {
         if (g.windows[i].isNavFocusable)
@@ -1410,8 +1410,8 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
     if (target.flags has Wf.Modal) return
 
     val iCurrent = findWindowIndex(target)
-    val windowTarget = findWindowNavigable(iCurrent + focusChangeDir, -Int.MAX_VALUE, focusChangeDir)
-            ?: findWindowNavigable(if (focusChangeDir < 0) g.windows.lastIndex else 0, iCurrent, focusChangeDir)
+    val windowTarget = findWindowNavFocusable(iCurrent + focusChangeDir, -Int.MAX_VALUE, focusChangeDir)
+            ?: findWindowNavFocusable(if (focusChangeDir < 0) g.windows.lastIndex else 0, iCurrent, focusChangeDir)
     // Don't reset windowing target if there's a single window in the list
     windowTarget?.let {
         g.navWindowingTarget = it
