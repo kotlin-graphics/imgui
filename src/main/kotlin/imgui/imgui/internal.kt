@@ -625,11 +625,11 @@ interface imgui_internal {
 
         val t = io.navInputsDownDuration[i]
         return when {
-            // Return 1.0f when just released, no repeat, ignore analog input.
+        // Return 1.0f when just released, no repeat, ignore analog input.
             t < 0f && mode == InputReadMode.Released -> if (io.navInputsDownDurationPrev[i] >= 0f) 1f else 0f
             t < 0f -> 0f
             else -> when (mode) {
-                // Return 1.0f when just pressed, no repeat, ignore analog input.
+            // Return 1.0f when just pressed, no repeat, ignore analog input.
                 InputReadMode.Pressed -> if (t == 0f) 1 else 0
                 InputReadMode.Repeat -> calcTypematicPressedRepeatAmount(t, t - io.deltaTime, io.keyRepeatDelay * 0.8f,
                         io.keyRepeatRate * 0.8f)
@@ -866,7 +866,7 @@ interface imgui_internal {
     /*  Render helpers
         AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND
         BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT.
-        NB: All position are in absolute pixels coordinates (never using window coordinates internally) */
+        NB: All position are in absolute pixels coordinates (we are never using window coordinates internally) */
     fun renderText(pos: Vec2, text: String, textEnd: Int = text.length, hideTextAfterHash: Boolean = true) {
 
         val window = g.currentWindow!!
@@ -1033,18 +1033,6 @@ interface imgui_internal {
         g.currentWindow!!.drawList.addTriangleFilled(center + a, center + b, center + c, Col.Text.u32)
     }
 
-    /** Render an arrow. 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
-    fun renderArrowPointingAt(drawList: DrawList, pos: Vec2, halfSz: Vec2, direction: Dir, col: Int) {
-        drawList.apply {
-            when (direction) {
-                Dir.Left -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y + halfSz.y), pos, col)
-                Dir.Right -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
-                Dir.Up -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y + halfSz.y), pos, col)
-                Dir.Down -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y - halfSz.y), pos, col)
-            }
-        }
-    }
-
     fun renderBullet(pos: Vec2) = currentWindow.drawList.addCircleFilled(pos, g.fontSize * 0.2f, Col.Text.u32, 8)
 
     fun renderCheckMark(pos: Vec2, col: Int, sz_: Float) {
@@ -1149,6 +1137,51 @@ interface imgui_internal {
         while (textDisplayEnd < textEnd && (text[textDisplayEnd + 0] != '#' || text[textDisplayEnd + 1] != '#'))
             textDisplayEnd++
         return textDisplayEnd
+    }
+
+
+
+    //-----------------------------------------------------------------------------
+    // Internals Render Helpers
+    // (progressively moved from imgui.cpp to here when they are redesigned to stop accessing ImGui global state)
+    //-----------------------------------------------------------------------------
+    // RenderMouseCursor()
+    // RenderArrowPointingAt()
+    // RenderRectFilledRangeH()
+    //-----------------------------------------------------------------------------
+    // Render helpers (those functions don't access any ImGui state!)
+
+
+    fun renderMouseCursor(drawList: DrawList, pos: Vec2, scale: Float, mouseCursor: MouseCursor) {
+        if (mouseCursor == MouseCursor.None) return
+        val colShadow = COL32(0, 0, 0, 48)
+        val colBorder = COL32(0, 0, 0, 255)          // Black
+        val colFill = COL32(255, 255, 255, 255)    // White
+        val fontAtlas = drawList._data.font!!.containerAtlas
+        val offset = Vec2()
+        val size = Vec2()
+        val uv = Array(2) { Vec2() }
+        if (fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv)) {
+            pos -= offset
+            val texId: TextureID = fontAtlas.texId
+            drawList.apply {
+                pushTextureId(texId)
+                addImage(texId, pos + Vec2(1, 0) * scale, pos + Vec2(1, 0) * scale + size * scale, uv[2], uv[3], colShadow)
+                addImage(texId, pos + Vec2(2, 0) * scale, pos + Vec2(2, 0) * scale + size * scale, uv[2], uv[3], colShadow)
+                addImage(texId, pos, pos + size * scale, uv[2], uv[3], colBorder)
+                addImage(texId, pos, pos + size * scale, uv[0], uv[1], colFill)
+                popTextureId()
+            }
+        }
+    }
+
+    /** Render an arrow. 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
+    fun renderArrowPointingAt(drawList: DrawList, pos: Vec2, halfSz: Vec2, direction: Dir, col: Int) = when (direction) {
+        Dir.Left -> drawList.addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y + halfSz.y), pos, col)
+        Dir.Right -> drawList.addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
+        Dir.Up -> drawList.addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y + halfSz.y), pos, col)
+        Dir.Down -> drawList.addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y - halfSz.y), pos, col)
+        else -> Unit
     }
 
 
@@ -2202,7 +2235,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-            // Linear slider
+        // Linear slider
             else -> (vClamped - vMin).f / (vMax - vMin).f
         }
     }
@@ -2224,7 +2257,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-            // Linear slider
+        // Linear slider
             else -> (vClamped - vMin).f / (vMax - vMin).f
         }
     }
@@ -2246,7 +2279,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-            // Linear slider
+        // Linear slider
             else -> (vClamped - vMin) / (vMax - vMin)
         }
     }
@@ -2268,7 +2301,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-            // Linear slider
+        // Linear slider
             else -> ((vClamped - vMin) / (vMax - vMin)).f
         }
     }
@@ -3544,7 +3577,7 @@ interface imgui_internal {
             x <= 0f -> glm.PIf * 0.5f
             x >= 1f -> 0f
             else -> glm.acos(x)
-            //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
+        //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
 
         fun <N : Number> roundScalarWithFormat(format: String, value: N): N {

@@ -14,10 +14,17 @@ import uno.buffer.use
 import uno.kotlin.buffers.toByteArray
 
 
+var USE_GL_ES3 = false
+
+/** Store GLSL version string so we can refer to it later in case we recreate shaders.
+ * Note: GLSL version is NOT the same as GL version. Leave this to default if unsure. */
+var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
+
+
 val vertexShader
     get() = """
 
-        #version $glslVersion
+        #version ${if (USE_GL_ES3) "300 es" else "$glslVersion"}
 
         uniform mat4 mat;
 
@@ -39,7 +46,7 @@ val vertexShader
 val fragmentShader
     get() = """
 
-        #version $glslVersion
+        #version ${if (USE_GL_ES3) "300 es" else "$glslVersion"}
 
         uniform sampler2D Texture;
 
@@ -53,10 +60,6 @@ val fragmentShader
             outColor = color * texture(Texture, uv);
         }
         """
-
-/** Store GLSL version string so we can refer to it later in case we recreate shaders.
- * Note: GLSL version is NOT the same as GL version. Leave this to default if unsure. */
-var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
 
 
 val mouseJustPressed = BooleanArray(5)

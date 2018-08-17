@@ -337,7 +337,7 @@ interface imgui_main {
         if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount
 
-        // Gather windows to render
+        // Gather DrawList to render (for each active window)
         io.metricsRenderWindows = 0
         io.metricsRenderIndices = 0
         io.metricsRenderVertices = 0

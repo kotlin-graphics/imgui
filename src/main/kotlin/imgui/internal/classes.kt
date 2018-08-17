@@ -954,7 +954,7 @@ class Window(var context: Context, var name: String) {
 
     /** Can we focus this window with CTRL+TAB (or PadMenu + PadFocusPrev/PadFocusNext)
      *  ~ IsWindowNavFocusable */
-    val isNavFocusable get() = active && this === rootWindow && (flags hasnt Wf.NoNavFocus || this === g.navWindow)
+    val isNavFocusable get() = active && this === rootWindow && flags hasnt Wf.NoNavFocus
 
     fun calcResizePosSizeFromAnyCorner(cornerTarget: Vec2, cornerNorm: Vec2, outPos: Vec2, outSize: Vec2) {
         val posMin = cornerTarget.lerp(pos, cornerNorm)             // Expected window upper-left

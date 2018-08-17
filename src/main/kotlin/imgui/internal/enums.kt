@@ -161,24 +161,25 @@ enum class InputReadMode { Down, Pressed, Released, Repeat, RepeatSlow, RepeatFa
     val i = ordinal
 }
 
-enum class NavHighlightFlag { TypeDefault, TypeThin, AlwaysDraw, NoRounding;
+enum class NavHighlightFlag { None, TypeDefault, TypeThin, AlwaysDraw, NoRounding;
 
-    val i = 1 shl ordinal
+    val i = if(ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun Int.has(b: NavHighlightFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: NavHighlightFlag) = and(b.i) == 0
 infix fun NavHighlightFlag.or(b: NavHighlightFlag): NavHighlightFlags = i or b.i
 
-enum class NavDirSourceFlag { Keyboard, PadDPad, PadLStick;
+enum class NavDirSourceFlag { None, Keyboard, PadDPad, PadLStick;
 
-    val i = 1 shl ordinal
+    val i = if(ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun NavDirSourceFlag.or(b: NavDirSourceFlag): NavDirSourceFlags = i or b.i
 infix fun Int.has(b: NavDirSourceFlag) = and(b.i) != 0
 
 enum class NavMoveFlag {
+    None,
     /** On failed request, restart from opposite side */
     LoopX,
     LoopY,
@@ -193,7 +194,7 @@ enum class NavMoveFlag {
     /** Store alternate result in NavMoveResultLocalVisibleSet that only comprise elements that are already fully visible.; */
     AlsoScoreVisibleSet;
 
-    val i = 1 shl ordinal
+    val i = if(ordinal == 0) 0 else 1 shl ordinal
 
     infix fun or(b: NavMoveFlag): NavMoveFlags = i or b.i
 }
