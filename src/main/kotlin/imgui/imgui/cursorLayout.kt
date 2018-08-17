@@ -189,7 +189,7 @@ interface imgui_cursorLayout {
             It would be be neater if we replaced window.dc.lastItemId by e.g. 'lastItemIsActive: Boolean',
             but put a little more burden on individual widgets.
             (and if you grep for LastItemId you'll notice it is only used in that context.    */
-        if (!groupData.backupActiveIdIsAlive && g.activeIdIsAlive && g.activeId != 0) // && g.ActiveIdWindow->RootWindow == window->RootWindow)
+        if (groupData.backupActiveIdIsAlive != g.activeId && g.activeIdIsAlive == g.activeId && g.activeId != 0) // && g.ActiveIdWindow->RootWindow == window->RootWindow)
             window.dc.lastItemId = g.activeId
         else if (!groupData.backupActiveIdPreviousFrameIsAlive && g.activeIdPreviousFrameIsAlive) // && g.ActiveIdPreviousFrameWindow->RootWindow == window->RootWindow)
             window.dc.lastItemId = g.activeIdPreviousFrame

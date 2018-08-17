@@ -191,7 +191,7 @@ class GroupData {
     var backupCurrentLineHeight = 0f
     var backupCurrentLineTextBaseOffset = 0f
     var backupLogLinePosY = 0f
-    var backupActiveIdIsAlive = false
+    var backupActiveIdIsAlive = 0
     var backupActiveIdPreviousFrameIsAlive = false
     var advanceCursor = false
 }

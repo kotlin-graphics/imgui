@@ -191,16 +191,16 @@ enum class SelectableFlag(val i: Int) {
     SpanAllColumns(1 shl 1),
     /** Generate press events on double clicks too  */
     AllowDoubleClick(1 shl 2),
+
+    Disabled (1 shl 3),
     /** private  */
-    NoHoldingActiveID(1 shl 3),
+    NoHoldingActiveID(1 shl 10),
     /** private  */
-    PressedOnClick(1 shl 4),
+    PressedOnClick(1 shl 11),
     /** private  */
-    PressedOnRelease(1 shl 5),
+    PressedOnRelease(1 shl 12),
     /** private  */
-    Disabled(1 shl 6),
-    /** private  */
-    DrawFillAvailWidth(1 shl 7);
+    DrawFillAvailWidth(1 shl 13);
 
     infix fun or(other: SelectableFlag): SelectableFlags = i or other.i
 }

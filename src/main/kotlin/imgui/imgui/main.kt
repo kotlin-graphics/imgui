@@ -132,7 +132,7 @@ interface imgui_main {
         g.hoveredIdPreviousFrame = g.hoveredId
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
-        if (!g.activeIdIsAlive && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
+        if (g.activeIdIsAlive != g.activeId && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
             clearActiveId()
         if (g.activeId != 0)
             g.activeIdTimer += io.deltaTime
@@ -140,7 +140,7 @@ interface imgui_main {
         g.activeIdPreviousFrame = g.activeId
         g.activeIdPreviousFrameWindow = g.activeIdWindow
         g.activeIdPreviousFrameValueChanged = g.activeIdValueChanged
-        g.activeIdIsAlive = false
+        g.activeIdIsAlive = 0
         g.activeIdPreviousFrameIsAlive = false
         g.activeIdIsJustActivated = false
         if (g.scalarAsInputTextId != 0 && g.activeId != g.scalarAsInputTextId)
