@@ -26,6 +26,8 @@ import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
 import imgui.ImGui.pushMultiItemsWidths
+import imgui.ImGui.renderFrame
+import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
@@ -126,11 +128,22 @@ interface imgui_widgetsSliders {
         if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
             return inputScalarAsWidgetReplacement(frameBb, id, label, DataType.Float, v, format)
 
-        // Actual slider behavior + render grab
         itemSize(totalBb, style.framePadding.y)
-        val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power)
+
+        // Draw frame
+        val frameCol = if(g.activeId == id) Col.FrameBgActive else if(g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        renderNavHighlight(frameBb, id)
+        renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
+        // Slider behavior
+        val grabBb = Rect()
+        val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power, SliderFlag.None.i, grabBb)
+
         if (valueChanged)
             markItemValueChanged(id)
+
+        // Render grab
+        val col = if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
+        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
         val value = format.format(style.locale, v())
@@ -254,10 +267,20 @@ interface imgui_widgetsSliders {
             g.activeIdAllowNavDirFlags = (1 shl Dir.Left) or (1 shl Dir.Right)
         }
 
-        // Actual slider behavior + render grab
-        val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power, SliderFlag.Vertical.i)
+        // Draw frame
+        val frameCol = if(g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        renderNavHighlight(frameBb, id)
+        renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
+        // Slider behavior
+        val grabBb = Rect()
+        val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power, SliderFlag.Vertical.i, grabBb)
+
         if (valueChanged)
             markItemValueChanged(id)
+
+        // Render grab
+        val col = if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
+        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
 
         /*  Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
             For the vertical slider we allow centered text to overlap the frame padding         */

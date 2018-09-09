@@ -625,11 +625,11 @@ interface imgui_internal {
 
         val t = io.navInputsDownDuration[i]
         return when {
-        // Return 1.0f when just released, no repeat, ignore analog input.
+            // Return 1.0f when just released, no repeat, ignore analog input.
             t < 0f && mode == InputReadMode.Released -> if (io.navInputsDownDurationPrev[i] >= 0f) 1f else 0f
             t < 0f -> 0f
             else -> when (mode) {
-            // Return 1.0f when just pressed, no repeat, ignore analog input.
+                // Return 1.0f when just pressed, no repeat, ignore analog input.
                 InputReadMode.Pressed -> if (t == 0f) 1 else 0
                 InputReadMode.Repeat -> calcTypematicPressedRepeatAmount(t, t - io.deltaTime, io.keyRepeatDelay * 0.8f,
                         io.keyRepeatRate * 0.8f)
@@ -1140,7 +1140,6 @@ interface imgui_internal {
     }
 
 
-
     //-----------------------------------------------------------------------------
     // Internals Render Helpers
     // (progressively moved from imgui.cpp to here when they are redesigned to stop accessing ImGui global state)
@@ -1608,45 +1607,40 @@ interface imgui_internal {
      *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders.
      *  ------------- JVM imgui does *not* have this limitations!! -------------  */
     fun sliderBehavior(bb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
-                       flags: SliderFlags = 0) = sliderBehavior(bb, id, v, 0, vMin, vMax, format, power, flags)
+                       flags: SliderFlags, outGrabBb: Rect) = sliderBehavior(bb, id, v, 0, vMin, vMax, format, power, flags, outGrabBb)
 
     fun sliderBehavior(bb: Rect, id: ID, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String, power: Float,
-                       flags: SliderFlags = 0): Boolean = withFloat(v, ptr) {
-        sliderBehavior(bb, id, DataType.Float, it, vMin, vMax, format, power, flags)
+                       flags: SliderFlags, outGrabBb: Rect): Boolean = withFloat(v, ptr) {
+        sliderBehavior(bb, id, DataType.Float, it, vMin, vMax, format, power, flags, outGrabBb)
     }
 
     fun sliderBehavior(bb: Rect, id: ID, v: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String, power: Float,
-                       flags: SliderFlags = 0): Boolean = sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags)
+                       flags: SliderFlags, outGrabBb: Rect): Boolean = sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags, outGrabBb)
 
     fun sliderBehavior(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number,
-                       format: String, power: Float, flags: SliderFlags = 0): Boolean {
-
-        // Draw frame
-        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, frameCol.u32, true, style.frameRounding)
+                       format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         return when (dataType) {
 
             DataType.Int, DataType.Uint -> {
 //                assert(vMin as Int >= Int.MIN_VALUE / 2)
 //                assert(vMax as Int <= Int.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, v, vMin as Int, vMax as Int, format, power, flags)
+                sliderBehaviorT(bb, id, dataType, v, vMin as Int, vMax as Int, format, power, flags, outGrabBb)
             }
             DataType.Long, DataType.Ulong -> {
 //                assert(vMin as Long >= Long.MIN_VALUE / 2)
 //                assert(vMax as Long <= Long.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, v, vMin as Long, vMax as Long, format, power, flags)
+                sliderBehaviorT(bb, id, dataType, v, vMin as Long, vMax as Long, format, power, flags, outGrabBb)
             }
             DataType.Float -> {
 //                assert(vMin as Float >= -Float.MAX_VALUE / 2f)
 //                assert(vMax as Float <= Float.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, v, vMin as Float, vMax as Float, format, power, flags)
+                sliderBehaviorT(bb, id, dataType, v, vMin as Float, vMax as Float, format, power, flags, outGrabBb)
             }
             DataType.Double -> {
 //                assert(vMin as Double >= -Double.MAX_VALUE / 2f)
 //                assert(vMax as Double <= Double.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, v, vMin as Double, vMax as Double, format, power, flags)
+                sliderBehaviorT(bb, id, dataType, v, vMin as Double, vMax as Double, format, power, flags, outGrabBb)
             }
             else -> throw Error()
         }
@@ -1655,10 +1649,9 @@ interface imgui_internal {
     // FIXME: Move some of the code into SliderBehavior(). Current responsability is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
 
     fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutableProperty0<*>, vMin: Int, vMax: Int, format: String,
-                        power: Float, flags: SliderFlags = 0): Boolean {
+                        power: Float, flags: SliderFlags = 0, outGrabBb: Rect): Boolean {
 
         var v by vPtr as KMutableProperty0<Int>
-        val window = g.currentWindow!!
 
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -1780,26 +1773,23 @@ interface imgui_internal {
             }
         }
 
-        // Draw
+        // Output grab position so it can be displayed by the caller
         var grabT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
         if (!isHorizontal)
             grabT = 1f - grabT
         val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-        val grabBb = when {
-            isHorizontal -> Rect(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-            else -> Rect(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
-        }
-        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
-        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
+        if (isHorizontal)
+            outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+        else
+            outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
 
         return valueChanged
     }
 
     fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutableProperty0<*>, vMin: Long, vMax: Long, format: String,
-                        power: Float, flags: SliderFlags = 0): Boolean {
+                        power: Float, flags: SliderFlags = 0, outGrabBb: Rect): Boolean {
 
         var v by vPtr as KMutableProperty0<Long>
-        val window = currentWindow
 
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -1921,26 +1911,23 @@ interface imgui_internal {
             }
         }
 
-        // Draw
+        // Output grab position so it can be displayed by the caller
         var grabT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
         if (!isHorizontal)
             grabT = 1f - grabT
         val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-        val grabBb = when {
-            isHorizontal -> Rect(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-            else -> Rect(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
-        }
-        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
-        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
+        if (isHorizontal)
+            outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+        else
+            outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
 
         return valueChanged
     }
 
     fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String,
-                        power: Float, flags: SliderFlags = 0): Boolean {
+                        power: Float, flags: SliderFlags = 0, outGrabBb: Rect): Boolean {
 
         var v by vPtr as KMutableProperty0<Float>
-        val window = currentWindow
 
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -2062,26 +2049,23 @@ interface imgui_internal {
             }
         }
 
-        // Draw
+        // Output grab position so it can be displayed by the caller
         var grabT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
         if (!isHorizontal)
             grabT = 1f - grabT
         val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-        val grabBb = when {
-            isHorizontal -> Rect(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-            else -> Rect(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
-        }
-        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
-        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
+        if (isHorizontal)
+            outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+        else
+            outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
 
         return valueChanged
     }
 
     fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Double, vMax: Double, format: String,
-                        power: Float, flags: SliderFlags = 0): Boolean {
+                        power: Float, flags: SliderFlags = 0, outGrabBb: Rect): Boolean {
 
         v as KMutableProperty0<Double>
-        val window = currentWindow
 
         val isHorizontal = flags hasnt SliderFlag.Vertical
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -2203,17 +2187,15 @@ interface imgui_internal {
             }
         }
 
-        // Draw
+        // Output grab position so it can be displayed by the caller
         var grabT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
         if (!isHorizontal)
             grabT = 1f - grabT
         val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-        val grabBb = when {
-            isHorizontal -> Rect(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-            else -> Rect(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
-        }
-        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
-        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
+        if (isHorizontal)
+            outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+        else
+            outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
 
         return valueChanged
     }
@@ -2235,7 +2217,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-        // Linear slider
+            // Linear slider
             else -> (vClamped - vMin).f / (vMax - vMin).f
         }
     }
@@ -2257,7 +2239,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-        // Linear slider
+            // Linear slider
             else -> (vClamped - vMin).f / (vMax - vMin).f
         }
     }
@@ -2279,7 +2261,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-        // Linear slider
+            // Linear slider
             else -> (vClamped - vMin) / (vMax - vMin)
         }
     }
@@ -2301,7 +2283,7 @@ interface imgui_internal {
                     linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
                 }
             }
-        // Linear slider
+            // Linear slider
             else -> ((vClamped - vMin) / (vMax - vMin)).f
         }
     }
@@ -2336,14 +2318,25 @@ interface imgui_internal {
             var mouseDelta = if (axis == Axis.Y) mouseDelta2d.y else mouseDelta2d.x
 
             // Minimum pane size
-            if (mouseDelta < minSize1 - size1)
-                mouseDelta = minSize1 - size1
-            if (mouseDelta > size2 - minSize2)
-                mouseDelta = size2 - minSize2
+            val size1MaximumDelta = max(0f, size1 - minSize1)
+            val size2MaximumDelta = max(0f, size2 - minSize2)
+            if (mouseDelta < -size1MaximumDelta)
+                mouseDelta = -size1MaximumDelta
+            if (mouseDelta > size2MaximumDelta)
+                mouseDelta = size2MaximumDelta
+
 
             // Apply resize
-            size1 = size1 + mouseDelta // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
-            size2 = size2 - mouseDelta
+            if (mouseDelta != 0f)            {
+                if (mouseDelta < 0f)
+                    assert(size1 + mouseDelta >= minSize1)
+                else if (mouseDelta > 0f)
+                    assert(size2 - mouseDelta >= minSize2)
+                size1 = size1 + mouseDelta // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
+                size2 = size2 - mouseDelta
+                bbRender translate if(axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
+                markItemValueChanged(id)
+            }
             bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
 
             markItemValueChanged(id)
@@ -3577,7 +3570,7 @@ interface imgui_internal {
             x <= 0f -> glm.PIf * 0.5f
             x >= 1f -> 0f
             else -> glm.acos(x)
-        //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
+            //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
 
         fun <N : Number> roundScalarWithFormat(format: String, value: N): N {
