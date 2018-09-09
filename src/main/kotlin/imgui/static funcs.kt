@@ -400,8 +400,7 @@ fun findBestWindowPosForPopup(window: Window): Vec2 {
 }
 
 /** Return false to discard a character.    */
-fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags/*, ImGuiTextEditCallback callback, void* user_data*/)
-        : Boolean {
+fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags, callback: TextEditCallback?, userData: Any?) : Boolean {
 
     var c by char
 

@@ -2327,14 +2327,14 @@ interface imgui_internal {
 
 
             // Apply resize
-            if (mouseDelta != 0f)            {
+            if (mouseDelta != 0f) {
                 if (mouseDelta < 0f)
                     assert(size1 + mouseDelta >= minSize1)
                 else if (mouseDelta > 0f)
                     assert(size2 - mouseDelta >= minSize2)
                 size1 = size1 + mouseDelta // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
                 size2 = size2 - mouseDelta
-                bbRender translate if(axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
+                bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
                 markItemValueChanged(id)
             }
             bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
@@ -2524,8 +2524,8 @@ interface imgui_internal {
         window.idStack.push(id)
     }
 
-    fun inputTextEx(label: String, buf: CharArray, sizeArg: Vec2, flags: InputTextFlags
-            /*, ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean {
+    fun inputTextEx(label: String, buf: CharArray/*, bufSize: Int*/, sizeArg: Vec2, flags: InputTextFlags,
+                    callback: TextEditCallback? = null, callbackUserData: Any? = null): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -2534,6 +2534,8 @@ interface imgui_internal {
         assert(!((flags has Itf.CallbackHistory) && (flags has Itf.Multiline)))
         // Can't use both together (they both use tab key)
         assert(!((flags has Itf.CallbackCompletion) && (flags has Itf.AllowTabInput)))
+        if (flags has Itf.CallbackResize)
+            assert(callback != null)
 
         val isMultiline = flags has Itf.Multiline
         val isEditable = flags hasnt Itf.ReadOnly
@@ -2623,7 +2625,7 @@ interface imgui_internal {
 //                editState.initialText.add(NUL)
                 editState.initialText strncpy buf
                 editState.curLenW = editState.text.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
-                /*  We can't get the result from ImFormatString() above because it is not UTF-8 aware.
+                /*  We can't get the result from ImStrncpy() above because it is not UTF-8 aware.
                     Here we'll cut off malformed UTF-8.                 */
                 editState.curLenA = editState.curLenW //TODO check (int)(bufEnd - buf)
                 editState.cursorAnimReset()
@@ -2658,21 +2660,27 @@ interface imgui_internal {
 
         var valueChanged = false
         var enterPressed = false
+        var backupCurrentTextLength = 0
 
         if (g.activeId == id) {
 
             if (!isEditable && !g.activeIdIsJustActivated) {
-                TODO()
                 // When read-only we always use the live data passed to the function
-//                editState.text.add(NUL)
-//                const char* buf_end = NULL
-//                        editState.CurLenW = ImTextStrFromUtf8(editState.Text.Data, editState.Text.Size, buf, NULL, &buf_end)
-//                editState.CurLenA = (int)(buf_end - buf)
-//                editState.CursorClamp()
+                val tmp = CharArray(buf.size)
+                System.arraycopy(editState.text, 0, tmp, 0, editState.text.size)
+                val bufEnd = -1
+                editState.curLenW = editState.text.textStr(buf) // TODO check
+                editState.curLenA = editState.curLenW // TODO check
+                editState.cursorClamp()
             }
 
-            editState.bufSizeA = buf.size
-
+            backupCurrentTextLength = editState.curLenA
+            editState.apply {
+                bufCapacityA = buf.size
+                userFlags = flags
+                userCallback = callback
+                userCallbackData = callbackUserData
+            }
             /*  Although we are active we don't prevent mouse from hovering other elements unless we are interacting
                 right now with the widget.
                 Down the line we should have a cleaner library-wide concept of Selected vs Active.  */
@@ -2719,7 +2727,7 @@ interface imgui_internal {
                     io.inputCharacters.filter { it != NUL }.map {
                         withChar { c ->
                             // Insert character if they pass filtering
-                            if (inputTextFilterCharacter(c.apply { set(it) }, flags/*, callback, user_data*/))
+                            if (inputTextFilterCharacter(c.apply { set(it) }, flags, callback, callbackUserData))
                                 editState.onKeyPressed(c().i)
                         }
                     }
@@ -2785,22 +2793,19 @@ interface imgui_internal {
                     if (!isMultiline || (ctrlEnterForNewLine && !io.keyCtrl) || (!ctrlEnterForNewLine && io.keyCtrl)) {
                         clearActiveId = true
                         enterPressed = true
-                    } else if (isEditable) {
-                        if (flags has Itf.EnterReturnsTrue) {
-                            enterPressed = true
-                            TODO()
-                        } else {
-                            editState.insertChars(editState.state.cursor, charArrayOf('\n'), 0, 1)
-                            editState.state.cursor += 1
+                    } else if (isEditable)
+                        withChar('\n') { c ->
+                            // Insert new line
+                            if (inputTextFilterCharacter(c, flags, callback, callbackUserData))
+                                editState.onKeyPressed(c().i)
                         }
+                }
+                flags has Itf.AllowTabInput && Key.Tab.isPressed && !io.keyCtrl && !io.keyShift && !io.keyAlt && isEditable ->
+                    withChar('\t') { c ->
+                        // Insert TAB
+                        if (inputTextFilterCharacter(c, flags, callback, callbackUserData))
+                            editState.onKeyPressed(c().i)
                     }
-                }
-                flags has Itf.AllowTabInput && Key.Tab.isPressed && !io.keyCtrl && !io.keyShift && !io.keyAlt && isEditable -> {
-                    if (flags hasnt Itf.AllowTabInput)
-                        TODO()
-                    editState.insertChars(editState.state.cursor, charArrayOf('\t'), 0, 1)
-                    editState.state.cursor += 1
-                }
                 Key.Escape.isPressed -> {
                     cancelEdit = true
                     clearActiveId = true
@@ -2847,12 +2852,15 @@ interface imgui_internal {
         }
         if (g.activeId == id) {
 
+            var applyNewText = CharArray(0)
+//            var applyNewTextPtr = 0
+            var applyNewTextLength = 0
+
             if (cancelEdit)
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
                 if (isEditable && !Arrays.equals(buf, editState.initialText)) {
-                    for (c in 0 until buf.size)
-                        buf[c] = editState.initialText[c]
-                    valueChanged = true
+                    applyNewText = editState.initialText
+                    applyNewTextLength = buf.size
                 }
 
             /*  When using `InputTextFlag.EnterReturnsTrue` as a special case we reapply the live buffer back to the
@@ -2871,9 +2879,8 @@ interface imgui_internal {
 
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
+                    callback!!
                     TODO()
-                    //                        IM_ASSERT(callback != NULL);
-//
 //                        // The reason we specify the usage semantic (Completion/History) is that Completion needs to disable keyboard TABBING at the moment.
 //                        val eventFlag: InputTextFlags = 0
 //                        ImGuiKey event_key = ImGuiKey_COUNT;
@@ -2901,13 +2908,12 @@ interface imgui_internal {
 //                            memset(&callback_data, 0, sizeof(ImGuiTextEditCallbackData));
 //                            callback_data.EventFlag = event_flag;
 //                            callback_data.Flags = flags;
-//                            callback_data.UserData = user_data;
-//                            callback_data.ReadOnly = !is_editable;
+//                            callback_data.UserData = callback_user_data;
 //
 //                            callback_data.EventKey = event_key;
 //                            callback_data.Buf = edit_state.TempTextBuffer.Data;
 //                            callback_data.BufTextLen = edit_state.CurLenA;
-//                            callback_data.BufSize = edit_state.BufSizeA;
+//                            callback_data.BufSize = edit_state.BufCapacityA;
 //                            callback_data.BufDirty = false;
 //
 //                            // We have to convert from wchar-positions to UTF-8-positions, which can be pretty slow (an incentive to ditch the ImWchar buffer, see https://github.com/nothings/stb/issues/188)
@@ -2921,7 +2927,7 @@ interface imgui_internal {
 //
 //                            // Read back what user may have modified
 //                            IM_ASSERT(callback_data.Buf == edit_state.TempTextBuffer.Data);  // Invalid to modify those fields
-//                            IM_ASSERT(callback_data.BufSize == edit_state.BufSizeA);
+//                            IM_ASSERT(callback_data.BufSize == edit_state.BufCapacityA);
 //                            IM_ASSERT(callback_data.Flags == flags);
 //                            if (callback_data.CursorPos != utf8_cursor_pos)            edit_state.StbState.cursor = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.CursorPos);
 //                            if (callback_data.SelectionStart != utf8_selection_start)  edit_state.StbState.select_start = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionStart);
@@ -2935,11 +2941,40 @@ interface imgui_internal {
 //                            }
 //                        }
                 }
-                // Copy back to user buffer
+                // Will copy result string if modified
                 if (isEditable && !strcmp(editState.tempTextBuffer, buf)) {
-                    for (i in buf.indices) buf[i] = editState.tempTextBuffer[i]
-                    valueChanged = true
+                    applyNewText = editState.tempTextBuffer
+                    applyNewTextLength = editState.curLenA
                 }
+            }
+
+            // Copy result to user buffer
+            if (applyNewText.isNotEmpty()) {
+                assert(applyNewTextLength >= 0)
+                if (backupCurrentTextLength != applyNewTextLength && flags has Itf.CallbackResize) {
+                    TODO("pass a reference to buf and bufSize")
+//                    val callbackData = TextEditCallbackData().apply {
+//                        eventFlag = Itf.CallbackResize.i
+//                        this.flags = flags
+//                        this.buf = buf
+//                        bufTextLen = editState.curLenA
+////                        bufSize = max(bufSize, applyNewTextLength)
+//                        userData = callbackUserData
+//                    }
+//                    callback!!(callbackData)
+//                    buf = callback_data.Buf
+//                    buf_size = callback_data.BufSize
+                }
+//                assert(applyNewTextLength <= bufSize)
+                buf.strncpy(editState.tempTextBuffer, applyNewTextLength)
+                valueChanged = true
+            }
+
+            // Clear temporary user storage
+            editState.apply {
+                userFlags = 0
+                userCallback = null
+                userCallbackData = null
             }
         }
         // Release active ID at the end of the function (so e.g. pressing Return still does a final application of the value)
@@ -3640,5 +3675,11 @@ private inline fun <R> withInt(block: (KMutableProperty0<Int>) -> R): R {
 
 private inline fun <R> withChar(block: (KMutableProperty0<Char>) -> R): R {
     Ref.cPtr++
+    return block(Ref::char).also { Ref.cPtr-- }
+}
+
+private inline fun <R> withChar(char: Char, block: (KMutableProperty0<Char>) -> R): R {
+    Ref.cPtr++
+    Ref.char = char
     return block(Ref::char).also { Ref.cPtr-- }
 }

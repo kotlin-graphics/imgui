@@ -105,8 +105,8 @@ enum class InputTextFlag(val i: Int) {
     CallbackHistory(1 shl 7),
     /** Call user function every time. User code may query cursor position), modify text buffer.    */
     CallbackAlways(1 shl 8),
-    /** Call user function to filter character. Modify data->EventChar to replace/filter input), or return 1 to discard
-     *  character.  */
+    /** Call user function to filter character. Modify data->EventChar to replace/filter input), or return 1 in callback
+     *  to discard character.  */
     CallbackCharFilter(1 shl 9),
     /** Pressing TAB input a '\t' character into the text field */
     AllowTabInput(1 shl 10),
@@ -124,8 +124,11 @@ enum class InputTextFlag(val i: Int) {
     /** Disable undo/redo. Note that input text owns the text data while active, if you want to provide your own
      *  undo/redo stack you need e.g. to call clearActiveID(). */
     NoUndoRedo(1 shl 16),
-    /** Allow 0 1 2 3 4 5 6 7 8 9 . + - * / e E (Scientific notation input) */
+    /** Allow 0123456789.+-* /eE (Scientific notation input) */
     CharsScientific(1 shl 17),
+    /** Allow buffer capacity resize + notify when the string wants to be resized
+     *  (for string types which hold a cache of their Size) */
+    CallbackResize(1 shl 18),
 
     // [Internal]
 
@@ -192,7 +195,7 @@ enum class SelectableFlag(val i: Int) {
     /** Generate press events on double clicks too  */
     AllowDoubleClick(1 shl 2),
 
-    Disabled (1 shl 3),
+    Disabled(1 shl 3),
     /** private  */
     NoHoldingActiveID(1 shl 10),
     /** private  */

@@ -4,25 +4,26 @@ import gli_.has
 import glm_.c
 import glm_.glm
 import imgui.internal.isBlankW
+import kotlin.math.max
 
 /** Internal state of the currently focused/edited text input box   */
 class TextEditState {
 
     /** widget id owning the text state */
     var id: ID = 0
-    /** edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer. so we copy
-    into own buffer.    */
-    var text = charArrayOf()
+    /** edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer.
+     *  So we copy into own buffer.    */
+    var text = CharArray(0)
     /** backup of end-user buffer at the time of focus (in UTF-8, unaltered)    */
-    var initialText = charArrayOf()
+    var initialText = CharArray(0)
 
-    var tempTextBuffer = charArrayOf()
+    var tempTextBuffer = CharArray(0)
     /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
     var curLenA = 0
-
+    /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
     var curLenW = 0
     /** end-user buffer size    */
-    var bufSizeA = 0
+    var bufCapacityA = 0
 
     var scrollX = 0f
 
@@ -33,6 +34,11 @@ class TextEditState {
     var cursorFollow = false
 
     var selectedAllMouseLock = false
+
+    // Temporarily set when active
+    var userFlags: InputTextFlags = 0
+    var userCallback: TextEditCallback? = null
+    var userCallbackData: Any? = null
 
     /** After a user-input the cursor stays on for a while without blinking */
     fun cursorAnimReset() {
@@ -132,12 +138,23 @@ class TextEditState {
 
     fun insertChars(pos: Int, newText: CharArray, ptr: Int, newTextLen: Int): Boolean {
 
+        val isResizable = userFlags has InputTextFlag.CallbackResize
         val textLen = curLenW
         assert(pos <= textLen)
-        if (newTextLen + textLen + 1 > text.size) return false
+//        if (newTextLen + textLen + 1 > text.size) return false
 
         val newTextLenUtf8 = newTextLen //TODO check textCountUtf8BytesFromStr(new_text, new_text + newTextLen)
-        if (newTextLenUtf8 + curLenA > bufSizeA) return false
+        if (!isResizable && newTextLenUtf8 + curLenA > bufCapacityA) return false
+
+        // Grow internal buffer if needed
+        if (newTextLen + textLen > text.size)        {
+            if (!isResizable)
+                return false
+            assert(textLen < text.size)
+            val tmp = CharArray(textLen + glm.clamp(newTextLen * 4, 32, max(256, newTextLen)))
+            System.arraycopy(text, 0, tmp, 0, text.size)
+            text = tmp
+        }
 
         if (pos != textLen)
             for (i in 0 until textLen - pos) text[textLen - 1 + newTextLen - i] = text[textLen - 1 - i]
