@@ -81,16 +81,19 @@ object ImGui :
 
         imgui_internal {
 
+    // Version
     val beta = 1
+    /** get the compiled version string e.g. "1.23" */
     val version = "1.63.$beta"
+    /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
+    Work in progress versions typically starts at XYY00 then bounced up to XYY01 when release tagging happens */
+    val versionNum = 16300 + beta
 }
 
 var ptrIndices = 0
 var ptrId = Array(512) { it } // it was: java.lang.Byte.valueOf(it.b)
 
 // TODO get rid of local top value KMutableProperty in favor of the better with*{} solution
-
-typealias SizeCallback = (SizeCallbackData) -> Unit
 
 
 val NUL = '\u0000'
@@ -151,6 +154,9 @@ typealias TreeNodeFlags = Int
 /** flags: for Begin*()                      // enum WindowFlag */
 typealias WindowFlags = Int
 
+typealias TextEditCallback = (TextEditCallbackData) -> Int
+typealias SizeCallback = (SizeCallbackData) -> Unit
+
 // dummy main
 fun main(args: Array<String>) {
 }
@@ -170,10 +176,10 @@ infix fun String.cmp(charArray: CharArray): Boolean {
 fun strcmp(charsA: CharArray, charsB: CharArray): Boolean {
     for (i in charsA.indices) {
         val a = charsA[i]
-        if(a == NUL) return true
+        if (a == NUL) return true
         val b = charsB.getOrElse(i) { return false }
-        if(b == NUL) return true
-        if(a != b)
+        if (b == NUL) return true
+        if (a != b)
             return false
     }
     return true

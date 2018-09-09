@@ -139,10 +139,51 @@ class Storage {
     fun setAllInt(value: Int) = data.replaceAll { _, _ -> value }
 }
 
+/** Shared state of InputText(), passed to callback when a ImGuiInputTextFlags_Callback* flag is used and the corresponding callback is triggered.
+ *  The callback function should return 0 by default.
+ *  Special processing:
+ *  - InputTextFlag.CallbackCharFilter:  return 1 if the character is not allowed. You may also set 'EventChar=0'
+ *                                       as any character replacement are allowed.
+ *  - InputTextFlag.CallbackResize:      BufTextLen is set to the new desired string length so you can allocate or update known size.
+ *                                       No need to initialize new characters or zero-terminator as InputText will do it. */
 class TextEditCallbackData {
-    init {
-        TODO()
-    }
+
+    /** One ImGuiInputTextFlags_Callback*    // Read-only */
+    var eventFlag: InputTextFlags = 0
+    /** What user passed to InputText()      // Read-only */
+    var flags: InputTextFlags = 0
+    /** What user passed to InputText()      // Read-only */
+    var userData: Any? = null
+
+    /*  Arguments for the different callback events
+     *  (If you modify the 'buf' contents make sure you update 'BufTextLen' and set 'BufDirty' to true!) */
+
+    /** Character input                     Read-write   [CharFilter] Replace character or set to zero. return 1 is equivalent to setting EventChar=0; */
+    var eventChar = NUL
+    /** Key pressed (Up/Down/TAB)           Read-only    [Completion,History] */
+    var eventKey = Key.Tab
+    /** Current text buffer                 Read-write   [Resize] Can replace pointer / [Completion,History,Always] Only write to pointed data, don't replace the actual pointer! */
+    var buf = CharArray(0)
+    /** JVM custom, current buf pointer */
+    var bufPtr = 0
+    /** Current text length in bytes        Read-write   [Resize,Completion,History,Always] */
+    var bufTextLen = 0
+    /** Capacity + 1 (max text length + 1)  Read-only    [Resize,Completion,History,Always] */
+    var bufSize = 0
+    /** Set if you modify Buf/BufTextLen!!  Write        [Completion,History,Always] */
+    var bufDirty = false
+    /** Read-write   [Completion,History,Always] */
+    var cursorPos = 0
+    /** Read-write   [Completion,History,Always] == to SelectionEnd when no selection) */
+    var selectionStart = 0
+    /** Read-write   [Completion,History,Always] */
+    var selectionEnd = 0
+
+
+//    IMGUI_API void      DeleteChars(int pos, int bytes_count);
+//    IMGUI_API void      InsertChars(int pos, const char* text, const char* text_end = NULL);
+    val hasSelection: Boolean
+    get() = selectionStart != selectionEnd
 }
 
 class SizeCallbackData(
@@ -281,16 +322,16 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
             itemsCount = -1
             false
         }
-    /*  Step 0: the clipper let you process the first element, regardless of it being visible or not, so we can measure
-        the element height.     */
+        /*  Step 0: the clipper let you process the first element, regardless of it being visible or not, so we can measure
+            the element height.     */
         stepNo == 0 -> {
             display = 0..1
             startPosY = cursorPosY
             stepNo = 1
             true
         }
-    /*  Step 1: the clipper infer height from first element, calculate the actual range of elements to display, and
-        position the cursor before the first element.     */
+        /*  Step 1: the clipper infer height from first element, calculate the actual range of elements to display, and
+            position the cursor before the first element.     */
         stepNo == 1 -> {
             if (itemsCount == 1) {
                 itemsCount = -1
@@ -304,8 +345,8 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
                 true
             }
         }
-    /*  Step 2: dummy step only required if an explicit items_height was passed to constructor or Begin() and user still
-        call Step(). Does nothing and switch to Step 3.     */
+        /*  Step 2: dummy step only required if an explicit items_height was passed to constructor or Begin() and user still
+            call Step(). Does nothing and switch to Step 3.     */
         stepNo == 2 -> {
             assert(display.start >= 0 && display.last >= 0)
             stepNo = 3

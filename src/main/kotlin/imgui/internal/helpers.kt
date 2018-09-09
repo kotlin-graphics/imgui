@@ -305,6 +305,7 @@ fun CharArray.strncpy(src: CharArray, count: Int) {
     }
 }
 
+/** ~ImTextStrFromUtf8 */
 fun CharArray.textStr(src: CharArray): Int {
     var i = 0
     while (i < size) {
