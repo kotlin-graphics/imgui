@@ -312,7 +312,8 @@ object Console {
 //                    // A better implementation would preserve the data on the current input line along with cursor position.
 //                    if (prev_history_pos != HistoryPos)
 //                        {
-//                            data->CursorPos = data->SelectionStart = data->SelectionEnd = data->BufTextLen = (int)snprintf(data->Buf, (size_t)data->BufSize, "%s", (HistoryPos >= 0) ? History[HistoryPos] : "");
+//                            int sz = (int)snprintf(data->Buf, (size_t)data->BufSize, "%s", (HistoryPos >= 0) ? History[HistoryPos] : "");
+//                            data->CursorPos = data->SelectionStart = data->SelectionEnd = data->BufTextLen = sz;
 //                            data->BufDirty = true;
 //                        }
 //                }
