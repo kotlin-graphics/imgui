@@ -162,14 +162,15 @@ object Console {
 //            bool reclaim_focus = false;
 //            if (ImGui::InputText("Input", InputBuf, IM_ARRAYSIZE(InputBuf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCompletion|ImGuiInputTextFlags_CallbackHistory, &TextEditCallbackStub, (void*)this))
 //            {
-//                Strtrim(InputBuf);
-//                if (InputBuf[0])
-//                    ExecCommand(InputBuf);
-//                strcpy(InputBuf, "");
+//                char* s = InputBuf;
+//                Strtrim(s);
+//                if (s[0])
+//                    ExecCommand(s);
+//                strcpy(s, "");
 //                reclaim_focus = true;
 //            }
 //
-//            // Demonstrate keeping focus on the input box
+//            // Auto-focus on window apparition
 //            ImGui::SetItemDefaultFocus();
 //            if (reclaim_focus)
 //                ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
@@ -218,10 +219,10 @@ object Console {
 //        static int TextEditCallbackStub(ImGuiTextEditCallbackData* data) // In C++11 you are better off using lambdas for this sort of forwarding callbacks
 //        {
 //            ExampleAppConsole* console = (ExampleAppConsole*)data->UserData;
-//            return console->TextEditCallback(data);
+//            return console->InputTextCallback(data);
 //        }
 //
-//        int     TextEditCallback(ImGuiTextEditCallbackData* data)
+//        int     InputTextCallback(ImGuiTextEditCallbackData* data)
 //        {
 //            //AddLog("cursor: %d, selection: %d-%d", data->CursorPos, data->SelectionStart, data->SelectionEnd);
 //            switch (data->EventFlag)
@@ -312,9 +313,9 @@ object Console {
 //                    // A better implementation would preserve the data on the current input line along with cursor position.
 //                    if (prev_history_pos != HistoryPos)
 //                        {
-//                            int sz = (int)snprintf(data->Buf, (size_t)data->BufSize, "%s", (HistoryPos >= 0) ? History[HistoryPos] : "");
-//                            data->CursorPos = data->SelectionStart = data->SelectionEnd = data->BufTextLen = sz;
-//                            data->BufDirty = true;
+//                          const char* history_str = (HistoryPos >= 0) ? History[HistoryPos] : "";
+//                          data->DeleteChars(0, data->BufTextLen);
+//                          data->InsertChars(0, history_str);
 //                        }
 //                }
 //            }

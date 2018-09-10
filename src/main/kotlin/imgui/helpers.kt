@@ -14,7 +14,9 @@ import imgui.ImGui.inputText
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
+import imgui.internal.strlen
 import java.nio.ByteBuffer
+import kotlin.math.max
 
 /** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within
  *  deep-nested code that runs multiple times every frame.
@@ -139,14 +141,18 @@ class Storage {
     fun setAllInt(value: Int) = data.replaceAll { _, _ -> value }
 }
 
-/** Shared state of InputText(), passed to callback when a ImGuiInputTextFlags_Callback* flag is used and the corresponding callback is triggered.
+/** Shared state of InputText(), passed as an argument to your callback when a ImGuiInputTextFlags_Callback* flag is used.
  *  The callback function should return 0 by default.
  *  Special processing:
  *  - InputTextFlag.CallbackCharFilter:  return 1 if the character is not allowed. You may also set 'EventChar=0'
  *                                       as any character replacement are allowed.
- *  - InputTextFlag.CallbackResize:      BufTextLen is set to the new desired string length so you can allocate or update known size.
- *                                       No need to initialize new characters or zero-terminator as InputText will do it. */
-class TextEditCallbackData {
+ *  - InputTextFlag.CallbackResize:      notified by InputText() when the string is resized.
+ *                                       BufTextLen is set to the new desired string length so you can allocate or update known size.
+ *                                       No need to initialize new characters or zero-terminator as InputText will do it.
+ *
+ *  Helper functions for text manipulation.
+ *  Use those function to benefit from the CallbackResize behaviors. Calling those function reset the selection. */
+class InputTextCallbackData {
 
     /** One ImGuiInputTextFlags_Callback*    // Read-only */
     var eventFlag: InputTextFlags = 0
@@ -156,19 +162,20 @@ class TextEditCallbackData {
     var userData: Any? = null
 
     /*  Arguments for the different callback events
-     *  (If you modify the 'buf' contents make sure you update 'BufTextLen' and set 'BufDirty' to true!) */
+     *  - To modify the text buffer in a callback, prefer using the InsertChars() / DeleteChars() function. InsertChars() will take care of calling the resize callback if necessary.
+     *  - If you know your edits are not going to resize the underlying buffer allocation, you may modify the contents of 'Buf[]' directly. You need to update 'BufTextLen' accordingly (0 <= BufTextLen < BufSize) and set 'BufDirty'' to true so InputText can update its internal state. */
 
     /** Character input                     Read-write   [CharFilter] Replace character or set to zero. return 1 is equivalent to setting EventChar=0; */
     var eventChar = NUL
     /** Key pressed (Up/Down/TAB)           Read-only    [Completion,History] */
     var eventKey = Key.Tab
-    /** Current text buffer                 Read-write   [Resize] Can replace pointer / [Completion,History,Always] Only write to pointed data, don't replace the actual pointer! */
+    /** Text buffer                 Read-write   [Resize] Can replace pointer / [Completion,History,Always] Only write to pointed data, don't replace the actual pointer! */
     var buf = CharArray(0)
     /** JVM custom, current buf pointer */
     var bufPtr = 0
-    /** Current text length in bytes        Read-write   [Resize,Completion,History,Always] */
+    /** Text length in bytes        Read-write   [Resize,Completion,History,Always] */
     var bufTextLen = 0
-    /** Capacity + 1 (max text length + 1)  Read-only    [Resize,Completion,History,Always] */
+    /** Buffer capacity in bytes    Read-only    [Resize,Completion,History,Always] */
     var bufSize = 0
     /** Set if you modify Buf/BufTextLen!!  Write        [Completion,History,Always] */
     var bufDirty = false
@@ -180,10 +187,65 @@ class TextEditCallbackData {
     var selectionEnd = 0
 
 
-//    IMGUI_API void      DeleteChars(int pos, int bytes_count);
-//    IMGUI_API void      InsertChars(int pos, const char* text, const char* text_end = NULL);
+    /** Public API to manipulate UTF-8 text
+     *  We expose UTF-8 to the user (unlike the STB_TEXTEDIT_* functions which are manipulating wchar)
+     *  FIXME: The existence of this rarely exercised code path is a bit of a nuisance. */
+    fun deleteChars(pos: Int, bytesCount: Int) {
+        assert(pos + bytesCount <= bufTextLen)
+        var dst = pos
+        var src = pos + bytesCount
+        var c = buf[src++]
+        while (c != NUL) {
+            buf[dst++] = c
+            c = buf.getOrElse(src++) { NUL }
+        }
+        if (cursorPos + bytesCount >= pos)
+            cursorPos -= bytesCount
+        else if (cursorPos >= pos)
+            cursorPos = pos
+        selectionEnd = cursorPos
+        selectionStart = cursorPos
+        bufDirty = true
+        bufTextLen -= bytesCount
+    }
+
+    fun insertChars(pos: Int, newText: CharArray, ptr: Int, newTextEnd: Int? = null) {
+
+        val isResizable = flags has InputTextFlag.CallbackResize
+        val newTextLen = newTextEnd ?: newText.strlen
+        if (newTextLen + bufTextLen >= bufSize) {
+
+            if (!isResizable) return
+
+            // Contrary to STB_TEXTEDIT_INSERTCHARS() this is working in the UTF8 buffer, hence the midly similar code (until we remove the U16 buffer alltogether!)
+            val editState = g.inputTextState
+            assert(editState.id != 0 && g.activeId == editState.id)
+            assert(buf === editState.tempBuffer)
+            val newBufSize = bufTextLen + glm.clamp(newTextLen * 4, 32, max(256, newTextLen))
+            val t = CharArray(newBufSize)
+            System.arraycopy(editState.tempBuffer, 0, t, 0, editState.tempBuffer.size)
+            editState.tempBuffer = t
+            buf = editState.tempBuffer
+            editState.bufCapacityA = newBufSize
+            bufSize = newBufSize
+        }
+
+        if (bufTextLen != pos)
+            for (i in 0 until bufTextLen - pos)
+                buf[pos + newTextLen + i] = buf[pos + i]
+        for (i in 0 until newTextLen)
+            buf[pos + i] = newText[i]
+
+        if (cursorPos >= pos)
+            cursorPos += newTextLen
+        selectionEnd = cursorPos
+        selectionStart = cursorPos
+        bufDirty = true
+        bufTextLen += newTextLen
+    }
+
     val hasSelection: Boolean
-    get() = selectionStart != selectionEnd
+        get() = selectionStart != selectionEnd
 }
 
 class SizeCallbackData(

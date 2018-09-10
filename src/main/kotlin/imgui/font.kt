@@ -1195,7 +1195,7 @@ class Font {
     }
 
     //    const ImVec4& clipRect, const char* text, const char* textEnd, float wrapWidth = 0.0f, bool cpuFineClip = false) const;
-    fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: CharArray, textEnd: Int = text.size,
+    fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: CharArray, textEnd_: Int = text.size, // TODO return it also?
                    wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
 
         // Align to be pixel perfect
@@ -1209,11 +1209,32 @@ class Font {
         val wordWrapEnabled = wrapWidth > 0f
         var wordWrapEol = 0
 
-        // Skip non-visible lines
+        // Fast-forward to first visible line
         var s = 0
-        if (!wordWrapEnabled && y + lineHeight < clipRect.y)
-            while (s < textEnd && text[s] != '\n')  // Fast-forward to next line
-                s++
+        if (y + lineHeight < clipRect.y && !wordWrapEnabled)
+            while (y + lineHeight < clipRect.y) {
+                while (s < textEnd_)
+                    if (text[s++] == '\n')
+                        break
+                y += lineHeight
+            }
+
+        /*  For large text, scan for the last visible line in order to avoid over-reserving in the call to PrimReserve()
+            Note that very large horizontal line will still be affected by the issue (e.g. a one megabyte string buffer without a newline will likely crash atm)         */
+        var textEnd = textEnd_
+        if (textEnd - s > 10000 && !wordWrapEnabled)        {
+            var sEnd = s
+            var yEnd = y
+            while (yEnd < clipRect.w)            {
+                while (sEnd < textEnd)
+                    if (text[sEnd++] == '\n')
+                        break
+                yEnd += lineHeight
+            }
+            textEnd = sEnd
+        }
+
+
 
         // Reserve vertices for remaining worse case (over-reserving is useful and easily amortized)
         val vtxCountMax = (textEnd - s) * 4
@@ -1274,12 +1295,8 @@ class Font {
                 if (c == '\n') {
                     x = pos.x
                     y += lineHeight
-
-                    if (y > clipRect.w) break
-
-                    if (!wordWrapEnabled && y + lineHeight < clipRect.y)
-                        while (s < textEnd && text[s] != '\n')  // Fast-forward to next line
-                            s++
+                    if (y > clipRect.w)
+                        break // break out of main loop
                     continue
                 }
                 if (c == '\r') continue

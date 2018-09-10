@@ -30,12 +30,13 @@ import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
 import imgui.internal.ButtonFlag as Bf
 
-/** Widgets: Input with Keyboard    */
+/** Widgets: Input with Keyboard
+ *  If you want to use InputText() with a dynamic string type such as std::string or your own, see misc/stl/imgui_stl.h */
 interface imgui_widgetsInputKeyboard {
 
 
     fun inputText(label: String, buf: CharArray, flags: InputTextFlags = 0
-            /*, callback: TextEditCallback  = NULL, void* user_data = NULL*/): Boolean {
+            /*, callback: InputTextCallback  = NULL, void* user_data = NULL*/): Boolean {
 
         assert(flags hasnt Itf.Multiline) { "call InputTextMultiline()" }
         return inputTextEx(label, buf, Vec2(), flags/*, callback, user_data*/)

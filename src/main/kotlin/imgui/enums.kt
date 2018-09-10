@@ -127,7 +127,7 @@ enum class InputTextFlag(val i: Int) {
     /** Allow 0123456789.+-* /eE (Scientific notation input) */
     CharsScientific(1 shl 17),
     /** Allow buffer capacity resize + notify when the string wants to be resized
-     *  (for string types which hold a cache of their Size) */
+     *  (for string types which hold a cache of their Size) (see misc/stl/imgui_stl.h for an example of using this) */
     CallbackResize(1 shl 18),
 
     // [Internal]

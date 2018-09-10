@@ -154,7 +154,7 @@ typealias TreeNodeFlags = Int
 /** flags: for Begin*()                      // enum WindowFlag */
 typealias WindowFlags = Int
 
-typealias TextEditCallback = (TextEditCallbackData) -> Int
+typealias InputTextCallback = (InputTextCallbackData) -> Int
 typealias SizeCallback = (SizeCallbackData) -> Unit
 
 // dummy main

@@ -13,11 +13,11 @@ class TextEditState {
     var id: ID = 0
     /** edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer.
      *  So we copy into own buffer.    */
-    var text = CharArray(0)
+    var textW = CharArray(0)
     /** backup of end-user buffer at the time of focus (in UTF-8, unaltered)    */
     var initialText = CharArray(0)
-
-    var tempTextBuffer = CharArray(0)
+    /** temporary buffer for callback and other other operations. size=capacity. */
+    var tempBuffer = CharArray(0)
     /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
     var curLenA = 0
     /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
@@ -37,7 +37,7 @@ class TextEditState {
 
     // Temporarily set when active
     var userFlags: InputTextFlags = 0
-    var userCallback: TextEditCallback? = null
+    var userCallback: InputTextCallback? = null
     var userCallbackData: Any? = null
 
     /** After a user-input the cursor stays on for a while without blinking */
@@ -63,6 +63,7 @@ class TextEditState {
         state.hasPreferredX = false
     }
 
+    /** Cannot be inline because we call in code in stb_textedit.h implementation */
     fun onKeyPressed(key: Int) {
         key(key)
         cursorFollow = true
@@ -79,9 +80,9 @@ class TextEditState {
 
     val stringLen get() = curLenW
 
-    fun getChar(idx: Int) = text[idx]
+    fun getChar(idx: Int) = textW[idx]
     fun getWidth(lineStartIdx: Int, charIdx: Int): Float {
-        val c = text[lineStartIdx + charIdx]
+        val c = textW[lineStartIdx + charIdx]
         return if (c == '\n') -1f else g.font.getCharAdvance(c) * (g.fontSize / g.font.fontSize)
     }
 
@@ -92,7 +93,7 @@ class TextEditState {
 
     fun layout(r: Row, lineStartIdx: Int) {
 
-        val size = inputTextCalcTextSizeW(text, lineStartIdx, curLenW, ::textRemaining, null, true)
+        val size = inputTextCalcTextSizeW(textW, lineStartIdx, curLenW, ::textRemaining, null, true)
         with(r) {
             r.x0 = 0f
             r.x1 = size.x
@@ -107,7 +108,7 @@ class TextEditState {
         get() = isBlankW || this == ',' || this == ';' || this == '(' || this == ')' ||
                 this == '{' || this == '}' || this == '[' || this == ']' || this == '|'
 
-    fun isWordBoundaryFromRight(idx: Int) = if (idx > 0) text[idx - 1].isSeparator && !text[idx].isSeparator else true
+    fun isWordBoundaryFromRight(idx: Int) = if (idx > 0) textW[idx - 1].isSeparator && !textW[idx].isSeparator else true
 
     fun moveWordLeft(idx_: Int): Int {
         var idx = idx_ - 1
@@ -131,9 +132,9 @@ class TextEditState {
         curLenW -= n
 
         // Offset remaining text
-        for (c in pos + n until text.size)
-            text[dst++] = text[c]
-        text[dst] = NUL
+        for (c in pos + n until textW.size)
+            textW[dst++] = textW[c]
+        textW[dst] = NUL
     }
 
     fun insertChars(pos: Int, newText: CharArray, ptr: Int, newTextLen: Int): Boolean {
@@ -147,22 +148,22 @@ class TextEditState {
         if (!isResizable && newTextLenUtf8 + curLenA > bufCapacityA) return false
 
         // Grow internal buffer if needed
-        if (newTextLen + textLen > text.size)        {
+        if (newTextLen + textLen > textW.size) {
             if (!isResizable)
                 return false
-            assert(textLen < text.size)
+            assert(textLen < textW.size)
             val tmp = CharArray(textLen + glm.clamp(newTextLen * 4, 32, max(256, newTextLen)))
-            System.arraycopy(text, 0, tmp, 0, text.size)
-            text = tmp
+            System.arraycopy(textW, 0, tmp, 0, textW.size)
+            textW = tmp
         }
 
         if (pos != textLen)
-            for (i in 0 until textLen - pos) text[textLen - 1 + newTextLen - i] = text[textLen - 1 - i]
-        for (i in 0 until newTextLen) text[pos + i] = newText[ptr + i]
+            for (i in 0 until textLen - pos) textW[textLen - 1 + newTextLen - i] = textW[textLen - 1 - i]
+        for (i in 0 until newTextLen) textW[pos + i] = newText[ptr + i]
 
         curLenW += newTextLen
         curLenA += newTextLenUtf8
-        text[curLenW] = NUL
+        textW[curLenW] = NUL
 
         return true
     }
@@ -478,7 +479,7 @@ class TextEditState {
         }
 
         // if the last character is a newline, return that. otherwise return 'after' the last character
-        return if (text[i + r.numChars - 1] == '\n') i + r.numChars - 1 else i + r.numChars
+        return if (textW[i + r.numChars - 1] == '\n') i + r.numChars - 1 else i + r.numChars
     }
 
     /** API click: on mouse down, move the cursor to the clicked location, and reset the selection  */
@@ -797,7 +798,7 @@ class TextEditState {
         clamp()
         deleteSelection()
         // try to insert the characters
-        if (insertChars(state.cursor, text, 0, len)) {
+        if (insertChars(state.cursor, textW, 0, len)) {
             makeundoInsert(state.cursor, len)
             state.cursor += len
             state.hasPreferredX = true
