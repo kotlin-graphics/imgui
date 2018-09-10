@@ -386,9 +386,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.drawDataBuilder.clear()
         g.overlayDrawList.clearFreeMemory()
         g.privateClipboard = ""
-        g.inputTextState.text = charArrayOf()
+        g.inputTextState.textW = charArrayOf()
         g.inputTextState.initialText = charArrayOf()
-        g.inputTextState.tempTextBuffer = charArrayOf()
+        g.inputTextState.tempBuffer = charArrayOf()
 
 //        if (g.logFile != null && g.logFile != stdout) { TODO
 //            fclose(g.LogFile)

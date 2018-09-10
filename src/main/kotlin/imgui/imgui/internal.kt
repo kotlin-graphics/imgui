@@ -18,6 +18,7 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.colorButton
 import imgui.ImGui.contentRegionMax
+import imgui.ImGui.dummy
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
@@ -2524,8 +2525,16 @@ interface imgui_internal {
         window.idStack.push(id)
     }
 
+    /** InputTextEx
+     *  - bufSize account for the zero-terminator, so a buf_size of 6 can hold "Hello" but not "Hello!".
+     *    This is so we can easily call InputText() on static arrays using ARRAYSIZE() and to match
+     *    Note that in std::string world, capacity() would omit 1 byte used by the zero-terminator.
+     *  - When active, hold on a privately held copy of the text (and apply back to 'buf'). So changing 'buf' while the InputText is active has no effect.
+     *  - If you want to use ImGui::InputText() with std::string, see misc/stl/imgui_stl.h
+     *  (FIXME: Rather messy function partly because we are doing UTF8 > u16 > UTF8 conversions on the go to more easily handle stb_textedit calls. Ideally we should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
+     */
     fun inputTextEx(label: String, buf: CharArray/*, bufSize: Int*/, sizeArg: Vec2, flags: InputTextFlags,
-                    callback: TextEditCallback? = null, callbackUserData: Any? = null): Boolean {
+                    callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -2534,13 +2543,14 @@ interface imgui_internal {
         assert(!((flags has Itf.CallbackHistory) && (flags has Itf.Multiline)))
         // Can't use both together (they both use tab key)
         assert(!((flags has Itf.CallbackCompletion) && (flags has Itf.AllowTabInput)))
-        if (flags has Itf.CallbackResize)
-            assert(callback != null)
 
         val isMultiline = flags has Itf.Multiline
         val isEditable = flags hasnt Itf.ReadOnly
         val isPassword = flags has Itf.Password
         val isUndoable = flags has Itf.NoUndoRedo
+        val isResizable = flags has Itf.CallbackResize
+        if (isResizable)
+            assert(callback != null) { "Must provide a callback if you set the ImGuiInputTextFlags_CallbackResize flag!" }
 
         if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope
             beginGroup()
@@ -2619,12 +2629,12 @@ interface imgui_internal {
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
                 val prevLenW = editState.curLenW
                 // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
-                editState.text = CharArray(buf.size)
+                editState.textW = CharArray(buf.size)
                 editState.initialText = CharArray(buf.size)
                 // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
 //                editState.initialText.add(NUL)
                 editState.initialText strncpy buf
-                editState.curLenW = editState.text.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
+                editState.curLenW = editState.textW.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
                 /*  We can't get the result from ImStrncpy() above because it is not UTF-8 aware.
                     Here we'll cut off malformed UTF-8.                 */
                 editState.curLenA = editState.curLenW //TODO check (int)(bufEnd - buf)
@@ -2667,9 +2677,9 @@ interface imgui_internal {
             if (!isEditable && !g.activeIdIsJustActivated) {
                 // When read-only we always use the live data passed to the function
                 val tmp = CharArray(buf.size)
-                System.arraycopy(editState.text, 0, tmp, 0, editState.text.size)
+                System.arraycopy(editState.textW, 0, tmp, 0, editState.textW.size)
                 val bufEnd = -1
-                editState.curLenW = editState.text.textStr(buf) // TODO check
+                editState.curLenW = editState.textW.textStr(buf) // TODO check
                 editState.curLenA = editState.curLenW // TODO check
                 editState.cursorClamp()
             }
@@ -2823,7 +2833,7 @@ interface imgui_internal {
                     val min = min(editState.state.selectStart, editState.state.selectEnd)
                     val max = max(editState.state.selectStart, editState.state.selectEnd)
 
-                    val copy = String(editState.text, min, max - editState.state.cursor)//for some reason this is needed.
+                    val copy = String(editState.textW, min, max - editState.state.cursor)//for some reason this is needed.
 
                     if (copy.isNotEmpty()) {
                         val stringSelection = StringSelection(copy)
@@ -2833,7 +2843,7 @@ interface imgui_internal {
                     if (isCut) {
                         if (!editState.hasSelection)
                             editState.selectAll()
-                        System.arraycopy(editState.text, max, editState.text, min, max - min)
+                        System.arraycopy(editState.textW, max, editState.textW, min, max - min)
                         editState.deleteChars(editState.state.cursor, max - min)
                         editState.state.cursor = min
                         editState.clearSelection()
@@ -2875,7 +2885,7 @@ interface imgui_internal {
                 // FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above incorrect.
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
                 if (isEditable)
-                    editState.tempTextBuffer = CharArray(editState.text.size * 4) { editState.text.getOrElse(it) { NUL } }
+                    editState.tempBuffer = CharArray(editState.textW.size * 4) { editState.textW.getOrElse(it) { NUL } }
 
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
@@ -2926,24 +2936,26 @@ interface imgui_internal {
 //                            callback(&callback_data);
 //
 //                            // Read back what user may have modified
-//                            IM_ASSERT(callback_data.Buf == edit_state.TempTextBuffer.Data);  // Invalid to modify those fields
+//                            IM_ASSERT(callback_data.Buf == edit_state.TempBuffer.Data);  // Invalid to modify those fields
 //                            IM_ASSERT(callback_data.BufSize == edit_state.BufCapacityA);
 //                            IM_ASSERT(callback_data.Flags == flags);
-//                            if (callback_data.CursorPos != utf8_cursor_pos)            edit_state.StbState.cursor = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.CursorPos);
-//                            if (callback_data.SelectionStart != utf8_selection_start)  edit_state.StbState.select_start = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionStart);
-//                            if (callback_data.SelectionEnd != utf8_selection_end)      edit_state.StbState.select_end = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionEnd);
+//                            if (callback_data.CursorPos != utf8_cursor_pos)            { edit_state.StbState.cursor = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.CursorPos); edit_state.CursorFollow = true; }
+//                            if (callback_data.SelectionStart != utf8_selection_start)  { edit_state.StbState.select_start = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionStart); }
+//                            if (callback_data.SelectionEnd != utf8_selection_end)      { edit_state.StbState.select_end = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionEnd); }
 //                            if (callback_data.BufDirty)
 //                            {
 //                                IM_ASSERT(callback_data.BufTextLen == (int)strlen(callback_data.Buf)); // You need to maintain BufTextLen if you change the text!
-//                                edit_state.CurLenW = ImTextStrFromUtf8(edit_state.Text.Data, edit_state.Text.Size, callback_data.Buf, NULL);
+//                                if (callback_data.BufTextLen > backup_current_text_length && is_resizable)
+//                                    edit_state.TextW.resize(edit_state.TextW.Size + (callback_data.BufTextLen - backup_current_text_length));
+//                                edit_state.CurLenW = ImTextStrFromUtf8(edit_state.TextW.Data, edit_state.TextW.Size, callback_data.Buf, NULL);
 //                                edit_state.CurLenA = callback_data.BufTextLen;  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
 //                                edit_state.CursorAnimReset();
 //                            }
 //                        }
                 }
                 // Will copy result string if modified
-                if (isEditable && !strcmp(editState.tempTextBuffer, buf)) {
-                    applyNewText = editState.tempTextBuffer
+                if (isEditable && !strcmp(editState.tempBuffer, buf)) {
+                    applyNewText = editState.tempBuffer
                     applyNewTextLength = editState.curLenA
                 }
             }
@@ -2951,9 +2963,9 @@ interface imgui_internal {
             // Copy result to user buffer
             if (applyNewText.isNotEmpty()) {
                 assert(applyNewTextLength >= 0)
-                if (backupCurrentTextLength != applyNewTextLength && flags has Itf.CallbackResize) {
+                if (backupCurrentTextLength != applyNewTextLength && isResizable) {
                     TODO("pass a reference to buf and bufSize")
-//                    val callbackData = TextEditCallbackData().apply {
+//                    val callbackData = InputTextCallbackData().apply {
 //                        eventFlag = Itf.CallbackResize.i
 //                        this.flags = flags
 //                        this.buf = buf
@@ -2966,7 +2978,7 @@ interface imgui_internal {
 //                    buf_size = callback_data.BufSize
                 }
 //                assert(applyNewTextLength <= bufSize)
-                buf.strncpy(editState.tempTextBuffer, applyNewTextLength)
+                buf.strncpy(editState.tempBuffer, applyNewTextLength)
                 valueChanged = true
             }
 
@@ -2983,8 +2995,12 @@ interface imgui_internal {
         // ------------------------- Render -------------------------
         /*  Select which buffer we are going to display. When ImGuiInputTextFlags_NoLiveEdit is set 'buf' might still
             be the old value. We set buf to NULL to prevent accidental usage from now on.         */
-        val bufDisplay = if (g.activeId == id && isEditable) editState.tempTextBuffer else buf
-//        buf[0] = ""
+        val bufDisplay = if (g.activeId == id && isEditable) editState.tempBuffer else buf
+
+        /*  Set upper limit of single-line InputTextEx() at 2 million characters strings. The current pathological worst case is a long line
+            without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
+            Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
+        val bufDisplayMaxLength = 2 * 1024 * 1024
 
         if (!isMultiline) {
             renderNavHighlight(frameBb, id)
@@ -3008,7 +3024,7 @@ interface imgui_internal {
                 (non-negligible for large amount of text) + 2nd pass for selection rendering (we could merge them by an
                 extra refactoring effort)   */
             // FIXME: This should occur on bufDisplay but we'd need to maintain cursor/select_start/select_end for UTF-8.
-            val text = editState.text
+            val text = editState.textW
             val cursorOffset = Vec2()
             val selectStartOffset = Vec2()
 
@@ -3121,8 +3137,9 @@ interface imgui_internal {
                 }
             }
 
-            drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, Col.Text.u32, bufDisplay,
-                    editState.curLenA, 0f, clipRect.takeIf { isMultiline })
+            val bufDisplayLen = editState.curLenA
+            if (isMultiline || bufDisplayLen < bufDisplayMaxLength)
+                drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, Col.Text.u32, bufDisplay, bufDisplayLen, 0f, clipRect.takeIf { isMultiline })
 
             // Draw blinking cursor
             val cursorIsVisible = !io.configCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
@@ -3141,15 +3158,16 @@ interface imgui_internal {
             if (isMultiline)
             // We don't need width
                 textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufEnd) * g.fontSize)
-            drawWindow.drawList.addText(g.font, g.fontSize, renderPos, Col.Text.u32, bufDisplay, bufEnd[0], 0f,
-                    if (isMultiline) null else clipRect)
+            else
+                bufEnd[0] = bufDisplay.strlen
+            if (isMultiline || bufEnd[0] < bufDisplayMaxLength)
+                drawWindow.drawList.addText(g.font, g.fontSize, renderPos, Col.Text.u32, bufDisplay, bufEnd[0], 0f, clipRect.takeIf { isMultiline })
         }
 
         if (isMultiline) {
-            TODO()
-//            dummy(textSize + ImVec2(0.0f, g.FontSize)) // Always add room to scroll an extra line
-//            EndChildFrame()
-//            EndGroup()
+            dummy(textSize + Vec2(0f, g.fontSize)) // Always add room to scroll an extra line
+            endChildFrame()
+            endGroup()
         }
 
         if (isPassword)

@@ -61,6 +61,7 @@ import imgui.ImGui.inputInt2
 import imgui.ImGui.inputInt3
 import imgui.ImGui.inputInt4
 import imgui.ImGui.inputText
+import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemClicked
@@ -357,7 +358,7 @@ object widgets {
 
                 run {
                     inputText("input text", str0)
-                    sameLine(); showHelpMarker("Hold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\nCTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\nESCAPE to revert.\n")
+                    sameLine(); showHelpMarker("USER:\nHold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\nCTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\nESCAPE to revert.\n\nPROGRAMMER:\nYou can use the InputTextFlag.CallbackResize facility if you need to wire InputText() to a dynamic string type. See misc/stl/imgui_stl.h for an example (this is not demonstrated in imgui_demo.cpp).")
 
                     inputInt("input int", ::i0)
                     sameLine(); showHelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n")
@@ -692,11 +693,11 @@ object widgets {
             }
 
             treeNode("Multi-line Text Input TODO") {
-                withStyleVar(StyleVar.FramePadding, Vec2()) {
-                    checkbox("Read-only", ::readOnly)
-                }
+                showHelpMarker("You can use the InputTextFlag.CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/stl/imgui_stl.h for an example. (This is not demonstrated in imgui_demo.cpp)")
+                checkbox("Read-only", ::readOnly)
+
                 val flags = Itf.AllowTabInput or if (readOnly) Itf.ReadOnly else Itf.None
-//                inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
+                inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
             }
 
             treeNode("Plots Widgets") {
@@ -1071,7 +1072,7 @@ object widgets {
                         if (beginDragDropSource(DragDropFlag.None)) {
                             setDragDropPayload("DND_DEMO_CELL", n, Int.BYTES)        // Set payload to carry the index of our item (could be anything)
                             when (mode) {
-                            // Display preview (could be anything, e.g. when dragging an image we could decide to display the filename and a small preview of the image, etc.)
+                                // Display preview (could be anything, e.g. when dragging an image we could decide to display the filename and a small preview of the image, etc.)
                                 Mode.Copy -> text("Copy $name")
                                 Mode.Move -> text("Move $name")
                                 Mode.Swap -> text("Swap $name")
