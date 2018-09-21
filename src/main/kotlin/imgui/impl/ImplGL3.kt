@@ -1,9 +1,9 @@
 package imgui.impl
 
 import glm_.*
-import glm_.buffer.bufferBig
-import glm_.buffer.free
-import glm_.buffer.intBufferBig
+import kool.bufferBig
+import kool.free
+import kool.intBufferBig
 import glm_.vec2.Vec2
 import gln.*
 import gln.buffer.BufferTarget

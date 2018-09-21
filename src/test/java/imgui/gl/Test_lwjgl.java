@@ -9,6 +9,7 @@ import imgui.impl.LwjglGlfw;
 import imgui.impl.LwjglGlfw.GlfwClientApi;
 import kotlin.Unit;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.MemoryStack;
 import uno.glfw.GlfwWindow;
 
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
@@ -82,7 +83,7 @@ public class Test_lwjgl {
             - When io.wantCaptureMouse is true, do not dispatch mouse input data to your main application.
             - When io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
             Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
-        window.loop(() -> {
+        window.loop((MemoryStack stack) -> {
             mainLoop();
             return Unit.INSTANCE;
         });

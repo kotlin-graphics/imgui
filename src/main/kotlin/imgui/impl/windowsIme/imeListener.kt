@@ -12,7 +12,7 @@ import org.lwjgl.system.windows.RECT
 import org.lwjgl.system.windows.User32.*
 import org.lwjgl.system.windows.WindowProc
 import uno.glfw.GlfwWindow
-import vkk.adr
+//import vkk.adr
 
 object imeListener : WindowProc() {
 
@@ -29,7 +29,7 @@ object imeListener : WindowProc() {
         if (Platform.get() == Platform.WINDOWS) {
             hwnd = glfwGetWin32Window(window.handle)
             glfwProc = GetWindowLongPtr(hwnd, GWL_WNDPROC)
-            SetWindowLongPtr(hwnd, GWL_WNDPROC, adr)
+            SetWindowLongPtr(hwnd, GWL_WNDPROC, address()) // TODO adr
         }
     }
 

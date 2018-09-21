@@ -1,9 +1,8 @@
 package imgui.impl.windowsIme
 
-import ab.advance
-import ab.appBuffer
 import glm_.BYTES
-import glm_.buffer.adr
+import glm_.L
+import kool.adr
 import org.lwjgl.system.JNI
 import org.lwjgl.system.Library
 import org.lwjgl.system.MemoryUtil
@@ -90,8 +89,7 @@ class COMPOSITIONFORM constructor(val adr: Long) {
 
     val buffer: ByteBuffer = MemoryUtil.memByteBuffer(adr, size)
 
-    constructor() : this(appBuffer.ptr.advance(size))
-    constructor(buffer: ByteBuffer) : this(buffer.adr)
+    constructor() : this(MemoryUtil.nmemAlloc(size.L))
 
     var dwStyle: DWORD
         get() = memGetLong(adr + ofs.dwStyle)
@@ -104,6 +102,8 @@ class COMPOSITIONFORM constructor(val adr: Long) {
     var rcArea: RECT
         get() = RECT(adr + ofs.rcArea)
         set(value) = value.to(adr + ofs.rcArea)
+
+    fun free() = MemoryUtil.nmemFree(adr)
 
     companion object {
         val size = 2 * Int.BYTES + POINT.size + RECT.size
@@ -132,7 +132,7 @@ class POINT constructor(val adr: Long) {
         get() = MemoryUtil.memGetLong(adr + ofs.y)
         set(value) = MemoryUtil.memPutLong(adr + ofs.y, value)
 
-    constructor() : this(appBuffer.ptr.advance(size))
+    constructor() : this(MemoryUtil.nmemAlloc(size.L))
 
     fun to(adr: Long) {
         MemoryUtil.memPutLong(adr + ofs.x, x)
@@ -174,7 +174,7 @@ class RECT(val adr: Long) {
         get() = MemoryUtil.memGetLong(adr + ofs.bottom)
         set(value) = MemoryUtil.memPutLong(adr + ofs.bottom, value)
 
-    constructor() : this(appBuffer.ptr.advance(size))
+    constructor() : this(MemoryUtil.nmemAlloc(size.L))
 
     fun to(adr: Long) {
         MemoryUtil.memPutLong(adr + ofs.left, left)
