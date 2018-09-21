@@ -1,7 +1,6 @@
 package imgui.impl
 
 import glm_.b
-import glm_.buffer.cap
 import glm_.c
 import glm_.f
 import glm_.vec2.Vec2d
@@ -9,15 +8,12 @@ import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
 import imgui.impl.windowsIme.imeListener
+import kool.cap
 import org.lwjgl.glfw.GLFW.*
-import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
 import uno.glfw.*
 import uno.glfw.GlfwWindow.CursorStatus
-import kotlin.collections.fill
-import kotlin.collections.forEach
-import kotlin.collections.indices
 import kotlin.collections.set
 
 
@@ -86,8 +82,8 @@ object LwjglGlfw {
 
         clientApi = clientApi_
 
-        if (clientApi == GlfwClientApi.Vulkan)
-            ImplVk.init()
+//        if (clientApi == GlfwClientApi.Vulkan)
+//            ImplVk.init()
 
         return true
     }
@@ -246,7 +242,7 @@ object LwjglGlfw {
 
         when (clientApi) {
             GlfwClientApi.OpenGL -> ImplGL3.destroyDeviceObjects()
-            else -> ImplVk.invalidateDeviceObjects()
+            else -> TODO()//ImplVk.invalidateDeviceObjects()
         }
 
     }

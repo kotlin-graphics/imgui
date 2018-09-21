@@ -13,18 +13,19 @@ import com.jogamp.opengl.GL2GL3.GL_POLYGON_MODE
 import com.jogamp.opengl.GL3
 import com.jogamp.opengl.GL3ES3.GL_SAMPLER_BINDING
 import glm_.*
-import glm_.buffer.bufferBig
-import glm_.buffer.free
-import glm_.buffer.intBufferBig
+import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4i
-import gln.buf
 import gln.get
 import gln.glf.semantic
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
+import kool.bufferBig
+import kool.free
+import kool.intBufferBig
+import kool.stak
 
 object JoglVrGL3 {
 
@@ -287,8 +288,8 @@ object JoglVrGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL2ES3.GL_VERTEX_ARRAY_BINDING)
         val lastPolygonMode = glGetInteger(GL_POLYGON_MODE)
-        val lastViewport = Vec4i(buf.apply { glGetIntegerv(GL_VIEWPORT, asIntBuffer()) })
-        val lastScissorBox = Vec4i(buf.apply { glGetIntegerv(GL_SCISSOR_BOX, asIntBuffer()) })
+        val lastViewport = Vec4i(stak { s -> s.callocInt(4).also { glGetIntegerv(GL_VIEWPORT, it) } })
+        val lastScissorBox = Vec4i(stak { s -> s.callocInt(4).also { glGetIntegerv(GL_SCISSOR_BOX, it) } })
         val lastBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
         val lastBlendDstRgb = glGetInteger(GL_BLEND_DST_RGB)
         val lastBlendSrcAlpha = glGetInteger(GL_BLEND_SRC_ALPHA)
@@ -313,7 +314,7 @@ object JoglVrGL3 {
         glViewport(0, 0, fbSize.x, fbSize.y)
         val ortho = glm.ortho(mat, 0f, io.displaySize.x.f, io.displaySize.y.f, 0f)
         glUseProgram(program.name)
-        glUniformMatrix4fv(program.mat, 1, false, (ortho to buf).asFloatBuffer())
+        glUniformMatrix4fv(program.mat, 1, false, ortho to stak { it.mallocFloat(Mat4.length) })
 
         checkSize(drawData.cmdLists)
 

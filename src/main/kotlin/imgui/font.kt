@@ -2,8 +2,8 @@ package imgui
 
 
 import glm_.*
-import glm_.buffer.bufferBig
-import glm_.buffer.free
+import kool.bufferBig
+import kool.free
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec2.operators.div

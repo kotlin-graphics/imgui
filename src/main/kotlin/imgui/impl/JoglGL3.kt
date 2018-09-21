@@ -9,18 +9,19 @@ import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL2ES3.*
 import com.jogamp.opengl.GL3
 import glm_.*
-import glm_.buffer.bufferBig
-import glm_.buffer.free
-import glm_.buffer.intBufferBig
+import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4i
-import gln.buf
 import gln.get
 import gln.glf.semantic
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
+import kool.bufferBig
+import kool.free
+import kool.intBufferBig
+import kool.stak
 import org.lwjgl.opengl.GL11.GL_FILL
 import org.lwjgl.opengl.GL11.GL_POLYGON_MODE
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
@@ -285,8 +286,8 @@ object JoglGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
         val lastPolygonMode = glGetInteger(GL_POLYGON_MODE)
-        val lastViewport = Vec4i(buf.apply { glGetIntegerv(GL_VIEWPORT, asIntBuffer()) })
-        val lastScissorBox = Vec4i(buf.apply { glGetIntegerv(GL_SCISSOR_BOX, asIntBuffer()) })
+        val lastViewport = Vec4i(stak { s -> s.callocInt(4).also { glGetIntegerv(GL_VIEWPORT, it) } })
+        val lastScissorBox = Vec4i(stak { s -> s.callocInt(4).also { glGetIntegerv(GL_SCISSOR_BOX, it) } })
         val lastBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
         val lastBlendDstRgb = glGetInteger(GL_BLEND_DST_RGB)
         val lastBlendSrcAlpha = glGetInteger(GL_BLEND_SRC_ALPHA)
@@ -311,7 +312,7 @@ object JoglGL3 {
         glViewport(0, 0, fbSize.x, fbSize.y)
         val ortho = glm.ortho(mat, 0f, io.displaySize.x.f, io.displaySize.y.f, 0f)
         glUseProgram(program.name)
-        glUniformMatrix4fv(program.mat, 1, false, (ortho to buf).asFloatBuffer())
+        glUniformMatrix4fv(program.mat, 1, false, ortho to stak { it.mallocFloat(Mat4.length) })
 
         checkSize(drawData.cmdLists)
 
@@ -434,7 +435,7 @@ object JoglGL3 {
         glDeleteVertexArrays(1, vaoName)
         glDeleteBuffers(Buffer.MAX, bufferName)
 
-        if(program.name >= 0) glDeleteProgram(program.name)
+        if (program.name >= 0) glDeleteProgram(program.name)
 
         destroyFontsTexture(gl)
     }
@@ -448,7 +449,8 @@ object JoglGL3 {
     }
 }
 
-fun GL3.glGetInteger(name: Int): Int {
-    glGetIntegerv(name, buf.asIntBuffer())
-    return buf.getInt(0)
+fun GL3.glGetInteger(name: Int): Int = stak {
+    val buff = it.mallocInt(1)
+    glGetIntegerv(name, buff)
+    return buff[0]
 }

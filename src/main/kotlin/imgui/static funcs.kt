@@ -5,7 +5,7 @@ package imgui
 import gli_.has
 import gli_.hasnt
 import glm_.*
-import glm_.buffer.bufferBig
+import kool.bufferBig
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.ImGui.begin
@@ -1362,7 +1362,7 @@ var imeSetInputScreenPosFn_Win32 = { x: Int, y: Int ->
     if (hwnd != NULL) {
         val himc: HIMC = imm.getContext(hwnd)
         if (himc != NULL) {
-            val cf = COMPOSITIONFORM(bufferBig(COMPOSITIONFORM.size)).apply {
+            val cf = COMPOSITIONFORM().apply {
                 ptCurrentPos.x = x.L
                 ptCurrentPos.y = y.L
                 dwStyle = imm.CFS_FORCE_POSITION.L

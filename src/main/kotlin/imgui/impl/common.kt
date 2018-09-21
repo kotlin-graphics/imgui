@@ -3,8 +3,8 @@ package imgui.impl
 import com.jogamp.opengl.GL2ES3
 import com.jogamp.opengl.GL3
 import glm_.BYTES
-import glm_.buffer.bufferBig
-import glm_.buffer.intBufferBig
+import kool.bufferBig
+import kool.intBufferBig
 import glm_.mat4x4.Mat4
 import gln.glf.semantic
 import org.lwjgl.system.Platform
