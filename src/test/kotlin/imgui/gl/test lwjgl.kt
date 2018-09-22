@@ -1,6 +1,7 @@
 package imgui.gl
 
 
+import glm_.BYTES
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import gln.checkError
@@ -13,6 +14,7 @@ import imgui.destroy
 import imgui.impl.ImplGL3
 import imgui.impl.LwjglGlfw
 import imgui.impl.LwjglGlfw.GlfwClientApi
+import kool.stak
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
 import org.lwjgl.system.MemoryStack
@@ -150,5 +152,7 @@ private class HelloWorld_lwjgl {
         ImplGL3.renderDrawData(ImGui.drawData!!)
 
         checkError("mainLoop") // TODO remove in production
+
+        println(stack.pointer)
     }
 }
