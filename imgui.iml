@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="imgui" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="GRADLE" external.system.module.group="com.github.kotlin-graphics" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="3" platform="JVM 1.6" useProjectSettings="false">
+        <compilerSettings />
+        <compilerArguments>
+          <option name="destination" value="$MODULE_DIR$/build/classes/kotlin/main" />
+          <option name="classpath" value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.kotlin-graphics/uno-sdk/4015f238ef03d37c080626620359b4f43f4d0a20/ead91a74bab205fdd32ccf59992674011d6bf06c/uno-sdk-4015f238ef03d37c080626620359b4f43f4d0a20.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/com.github.kotlin-graphics/gln/1e35c8c7a5f0f1e61a77f0a2cb803111da5ef4df/6685c899a8cce9a9cb81cd58e7ae7a462c6d7c9a/gln-1e35c8c7a5f0f1e61a77f0a2cb803111da5ef4df.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/com.github.kotlin-graphics/gli/6938a4b6cffc5af7ef6344d2f86ccc0f827b1f3a/fc76d97562b724e61d9615becb45656652286f43/gli-6938a4b6cffc5af7ef6344d2f86ccc0f827b1f3a.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/com.github.kotlin-graphics/glm/61994ccc67c7f3387515fe6de4165e1be43a974a/1e38920dd76e5fff00d0b0cc1fa53f594182ae97/glm-61994ccc67c7f3387515fe6de4165e1be43a974a.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/com.github.kotlin-graphics/kool/303b40161c516dfb11188a22b859ce41553ad7cd/88abf4cfdff085cd79d8f505acdd23e5ec608711/kool-303b40161c516dfb11188a22b859ce41553ad7cd.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.2.70/895ff3421bed43cef31459dc9f2e9c0e6e0cb64b/kotlin-reflect-1.2.70.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/com.github.kotlin-graphics/kotlin-unsigned/75287b442e5c25ec79ec56a741e6dc4b6f3cd479/3865022e2a6228462eba8622a28272edf61b2c73/kotlin-unsigned-75287b442e5c25ec79ec56a741e6dc4b6f3cd479.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.2.70/b5b9449f73ce7bf312e89a7560cb3c209a0fa13e/kotlin-stdlib-1.2.70.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt-main/2.3.2/6a86a9ce357c085e3052efcf639447f9957b82b8/gluegen-rt-main-2.3.2.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all-main/2.3.2/6a86a9ce357c085e3052efcf639447f9957b82b8/jogl-all-main-2.3.2.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-glfw/3.2.0/9ff0ed06de0a1d83dd182f2ead48ac4c90865c44/lwjgl-glfw-3.2.0.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-glfw/3.2.0/986cd6b09807ad2d67b5002b6d9dc089e3fc88f8/lwjgl-glfw-3.2.0-natives-windows.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-glfw/3.2.0/2d270a9146ae47e929f5b6295eeb4e51a5ff577b/lwjgl-glfw-3.2.0-natives-linux.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-jemalloc/3.2.0/4bdf37d27b1ee9bd9ed789d44c9c7fb022f1c246/lwjgl-jemalloc-3.2.0.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-jemalloc/3.2.0/d64da4dcdc15b3e7df50af37f1dda1777338d76f/lwjgl-jemalloc-3.2.0-natives-windows.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-jemalloc/3.2.0/f1c41f3a136237b32993d43d9157a42e017039e3/lwjgl-jemalloc-3.2.0-natives-linux.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-openal/3.2.0/28174519523e11c2f3227359f242d48edfa76654/lwjgl-openal-3.2.0.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-openal/3.2.0/f6017538443bb894faad58a3ccd0d400c4023a1c/lwjgl-openal-3.2.0-natives-windows.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-openal/3.2.0/7eb647d77d7be270bd494548860befab223687ed/lwjgl-openal-3.2.0-natives-linux.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-opengl/3.2.0/1c64c692473a70af297651d369debc93efa2e49f/lwjgl-opengl-3.2.0.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-opengl/3.2.0/b1f27bce30f8e40b03502a5d86687b30d844ba35/lwjgl-opengl-3.2.0-natives-windows.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-opengl/3.2.0/953ac48def909b1c67fc54299f5c403479ef8ac7/lwjgl-opengl-3.2.0-natives-linux.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-stb/3.2.0/cd60eafae0690e024fab99e9864a2ea8e56d86a8/lwjgl-stb-3.2.0.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-stb/3.2.0/cb5cb95f39fa83de93ce7fee1bb23dd1c7db4da3/lwjgl-stb-3.2.0-natives-windows.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-stb/3.2.0/1ea72c3849ca94669a9dafe69e8acc7f22fe3925/lwjgl-stb-3.2.0-natives-linux.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-vulkan/3.2.0/944fee3e63dc148f4bf523553bf0fac1c8b36048/lwjgl-vulkan-3.2.0.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl/3.2.0/7723544dc3fc740f0ee59cce9a3a0cecc8681747/lwjgl-3.2.0.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl/3.2.0/86c90ce2abe6129bfd5052a8b82f3dc2394c8dd1/lwjgl-3.2.0-natives-windows.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl/3.2.0/4c23e3f9ae657a52bddfa1c92d1b0ba770259eed/lwjgl-3.2.0-natives-linux.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.2.70/6ea722d7d0b9451293e739076ddb6a4108d57b6b/kotlin-stdlib-common-1.2.70.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/edc35ccfc13d4a4ad02c50d580874c18bf48bbef/gluegen-rt-2.3.2.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/4c104c7aef98cda5c404eacb96b1a4e04fe0dd68/gluegen-rt-2.3.2-natives-android-aarch64.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/2130295b94ef5c19f85fb4ba6107ca193e987858/gluegen-rt-2.3.2-natives-android-armv6.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/477a6bc4f9256d8c9935b75d55e2b7b01314440b/gluegen-rt-2.3.2-natives-linux-amd64.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/c55cd566d98d4fcd004b9aaa2c502c8c2dcec192/gluegen-rt-2.3.2-natives-linux-armv6.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/f6d3587b061d7ae6e68932fc62317e3500d2112d/gluegen-rt-2.3.2-natives-linux-armv6hf.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/da68aff010edd35a9ee89b1801dce6e284c7e673/gluegen-rt-2.3.2-natives-linux-i586.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/7227ae9e480354909d80f4df92b30bbb965387be/gluegen-rt-2.3.2-natives-macosx-universal.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/9a23cd22c59e3f04082e7589e850b79c9e696dc4/gluegen-rt-2.3.2-natives-solaris-amd64.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/a5d9ee96c7a365055fba41e30f9a10f42a3c1a3e/gluegen-rt-2.3.2-natives-solaris-i586.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/85213c97a5a50d8dd37de4c35ef32cd4b0ac2ef0/gluegen-rt-2.3.2-natives-windows-amd64.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.gluegen/gluegen-rt/2.3.2/f9b848384a343f39f454e59cead435c2c0cbf542/gluegen-rt-2.3.2-natives-windows-i586.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/99e0f64bb8882f054825ae4a8a527a17b544a0b5/jogl-all-2.3.2.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/166147f43cf7419c4d858cd31f4b5922d6d10c81/jogl-all-2.3.2-natives-android-aarch64.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/ab2c18b8a1327255cc354c19c720807d262baa75/jogl-all-2.3.2-natives-android-armv6.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/ffd1c6bd5f6fb088df6cad25e25721eb55ad2228/jogl-all-2.3.2-natives-linux-amd64.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/6d14f46336be9e2dc5f85d5df17490cee5d09a90/jogl-all-2.3.2-natives-linux-armv6.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/2c434c560dbd821b0ed569e44d3d441727491dac/jogl-all-2.3.2-natives-linux-armv6hf.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/59b7a336c0ee54161e33662d2ca8ac9d8f6c476d/jogl-all-2.3.2-natives-linux-i586.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/2da2215dbe1091c54cb83cf2484f8a54a4d0cf7a/jogl-all-2.3.2-natives-macosx-universal.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/bde11ff064181af9c307180d8f3f1744b7bdc11d/jogl-all-2.3.2-natives-solaris-amd64.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/94d1ed501fe53b7f75eab0f712f39802390d0f5b/jogl-all-2.3.2-natives-solaris-i586.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/becd519b1f741176561d93645abd90971ca0dca0/jogl-all-2.3.2-natives-windows-amd64.jar;C:/Users/elect/.gradle/caches/modules-2/files-2.1/org.jogamp.jogl/jogl-all/2.3.2/5db8db5eca6b4445db6cd14f68938736630ae976/jogl-all-2.3.2-natives-windows-i586.jar" />
+          <option name="noStdlib" value="true" />
+          <option name="noReflect" value="true" />
+          <option name="moduleName" value="imgui" />
+          <option name="addCompilerBuiltIns" value="true" />
+          <option name="loadBuiltInsFromDependencies" value="true" />
+          <option name="languageVersion" value="1.2" />
+          <option name="apiVersion" value="1.2" />
+          <option name="pluginOptions">
+            <array />
+          </option>
+          <option name="pluginClasspaths">
+            <array>
+              <option value="$APPLICATION_PLUGINS_DIR$/Kotlin/lib/kotlinx-serialization-ide-plugin.jar" />
+            </array>
+          </option>
+          <option name="coroutinesState" value="warn" />
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/out/production/classes" />
+    <output-test url="file://$MODULE_DIR$/out/test/classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/kotlin" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/.gradle" />
+      <excludeFolder url="file://$MODULE_DIR$/build" />
+      <excludeFolder url="file://$MODULE_DIR$/out" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Gradle: com.github.kotlin-graphics:uno-sdk:4015f238ef03d37c080626620359b4f43f4d0a20" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.kotlin-graphics:gln:1e35c8c7a5f0f1e61a77f0a2cb803111da5ef4df" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.kotlin-graphics:gli:6938a4b6cffc5af7ef6344d2f86ccc0f827b1f3a" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.kotlin-graphics:glm:61994ccc67c7f3387515fe6de4165e1be43a974a" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.kotlin-graphics:kool:303b40161c516dfb11188a22b859ce41553ad7cd" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-reflect:1.2.70" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.kotlin-graphics:kotlin-unsigned:75287b442e5c25ec79ec56a741e6dc4b6f3cd479" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.2.70" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt-main:2.3.2" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all-main:2.3.2" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-glfw:3.2.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.lwjgl:lwjgl-glfw:3.2.0:natives-windows" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-glfw:3.2.0:natives-linux" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-jemalloc:3.2.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.lwjgl:lwjgl-jemalloc:3.2.0:natives-windows" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-jemalloc:3.2.0:natives-linux" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-openal:3.2.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.lwjgl:lwjgl-openal:3.2.0:natives-windows" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-openal:3.2.0:natives-linux" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-opengl:3.2.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.lwjgl:lwjgl-opengl:3.2.0:natives-windows" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-opengl:3.2.0:natives-linux" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-stb:3.2.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.lwjgl:lwjgl-stb:3.2.0:natives-windows" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-stb:3.2.0:natives-linux" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl-vulkan:3.2.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl:3.2.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.lwjgl:lwjgl:3.2.0:natives-windows" level="project" />
+    <orderEntry type="library" name="Gradle: org.lwjgl:lwjgl:3.2.0:natives-linux" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.2.70" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains:annotations:13.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2:natives-android-aarch64" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2:natives-android-armv6" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2:natives-linux-amd64" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2:natives-linux-armv6" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2:natives-linux-armv6hf" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2:natives-linux-i586" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2:natives-macosx-universal" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2:natives-solaris-amd64" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2:natives-solaris-i586" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2:natives-windows-amd64" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.gluegen:gluegen-rt:2.3.2:natives-windows-i586" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2:natives-android-aarch64" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2:natives-android-armv6" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2:natives-linux-amd64" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2:natives-linux-armv6" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2:natives-linux-armv6hf" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2:natives-linux-i586" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2:natives-macosx-universal" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2:natives-solaris-amd64" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2:natives-solaris-i586" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2:natives-windows-amd64" level="project" />
+    <orderEntry type="library" name="Gradle: org.jogamp.jogl:jogl-all:2.3.2:natives-windows-i586" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Program Files/Java/lib/tools.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotlintest:kotlintest-runner-junit5:3.1.10" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotlintest:kotlintest-runner-jvm:3.1.10" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotlintest:kotlintest-core:3.1.10" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotlintest:kotlintest-assertions:3.1.10" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.arrow-kt:arrow-core:0.7.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.2.31" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.arrow-kt:arrow-annotations:0.7.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.junit.platform:junit-platform-launcher:1.2.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.junit.platform:junit-platform-engine:1.2.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.junit.platform:junit-platform-suite-api:1.2.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: com.univocity:univocity-parsers:2.6.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.reflections:reflections:0.9.11" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.slf4j:slf4j-api:1.7.25" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.junit.platform:junit-platform-commons:1.2.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.apiguardian:apiguardian-api:1.0.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.opentest4j:opentest4j:1.1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: com.google.guava:guava:20.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.javassist:javassist:3.21.0-GA" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kindedj:kindedj:1.1.0" level="project" />
+  </component>
+</module>
