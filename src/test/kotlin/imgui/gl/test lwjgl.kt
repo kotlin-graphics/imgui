@@ -1,12 +1,10 @@
 package imgui.gl
 
 
-import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.Cond
 import imgui.Context
 import imgui.ImGui
 import imgui.destroy
@@ -85,6 +83,7 @@ private class HelloWorld_lwjgl {
             - When io.wantCaptureMouse is true, do not dispatch mouse input data to your main application.
             - When io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
             Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
+        println("ciao")
         window.loop(::mainLoop)
 
         LwjglGlfw.shutdown()
@@ -100,6 +99,8 @@ private class HelloWorld_lwjgl {
         LwjglGlfw.newFrame()
 
         with(ImGui) {
+
+            println(MemoryStack.stackGet().pointer)
 
             // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
             if (showDemo)
