@@ -82,7 +82,7 @@ object ImGui :
         imgui_internal {
 
     // Version
-    val beta = 2
+    val beta = 3
     /** get the compiled version string e.g. "1.23" */
     val version = "1.63.$beta"
     /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
