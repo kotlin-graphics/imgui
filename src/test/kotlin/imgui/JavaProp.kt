@@ -2,7 +2,7 @@ package imgui
 
 import kotlin.reflect.*
 
-class JavaProp<T>(val g: () -> T, val s: (T) -> T) : KMutableProperty0<T> {
+class JavaProp<T>(val g: () -> T, val s: (T) -> T, override val isSuspend: Boolean) : KMutableProperty0<T> {
 
     override val isConst: Boolean = false
     override val isOpen: Boolean = false

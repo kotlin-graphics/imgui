@@ -2,13 +2,13 @@ package imgui.impl.windowsIme
 
 import glm_.BYTES
 import glm_.L
-import kool.adr
 import org.lwjgl.system.JNI
 import org.lwjgl.system.Library
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.MemoryUtil.memGetLong
 import org.lwjgl.system.MemoryUtil.memPutLong
 import org.lwjgl.system.SharedLibrary
+import uno.glfw.HWND
 import java.nio.ByteBuffer
 
 
@@ -20,9 +20,9 @@ object imm {
     val ImmSetCompositionWindow = lib.getFunctionAddress("ImmSetCompositionWindow")
     val ImmReleaseContext = lib.getFunctionAddress("ImmReleaseContext")
 
-    fun getContext(hwnd: HWND) = JNI.callPP(ImmGetContext, hwnd)
-    fun setCompositionWindow(himc: HIMC, compForm: COMPOSITIONFORM) = JNI.callPPI(ImmSetCompositionWindow, himc, compForm.adr)
-    fun releaseContext(hwnd: HWND, himc: HIMC) = JNI.callPPI(ImmReleaseContext, hwnd, himc)
+    fun getContext(hwnd: HWND) = JNI.callPP(ImmGetContext, hwnd.L)
+    fun setCompositionWindow(himc: HIMC, compForm: COMPOSITIONFORM) = JNI.callPPI(ImmSetCompositionWindow, himc.L, compForm.adr)
+    fun releaseContext(hwnd: HWND, himc: HIMC) = JNI.callPPI(ImmReleaseContext, hwnd.L, himc.L)
 
     // bit field for IMC_SETCOMPOSITIONWINDOW, IMC_SETCANDIDATEWINDOW
     val CFS_DEFAULT = 0x0000
@@ -34,9 +34,13 @@ object imm {
 }
 
 
-typealias HWND = Long
-typealias HIMC = Long
-typealias DWORD = Long
+// TODO -> uno
+inline class HIMC(val L: Long)
+inline class DWORD(val L: Long) {
+    companion object {
+        val BYTES get() = Long.BYTES
+    }
+}
 
 /**
  * typedef struct tagCANDIDATEFORM {
@@ -51,12 +55,12 @@ class CANDIDATEFORM constructor(val adr: Long) {
     val buffer: ByteBuffer = MemoryUtil.memByteBuffer(adr, size)
 
     var dwIndex: DWORD
-        get() = memGetLong(adr + ofs.dwIndex)
-        set(value) = memPutLong(adr + ofs.dwIndex, value)
+        get() = DWORD(memGetLong(adr + ofs.dwIndex))
+        set(value) = memPutLong(adr + ofs.dwIndex, value.L)
 
     var dwStyle: DWORD
-        get() = memGetLong(adr + ofs.dwStyle)
-        set(value) = memPutLong(adr + ofs.dwStyle, value)
+        get() = DWORD(memGetLong(adr + ofs.dwStyle))
+        set(value) = memPutLong(adr + ofs.dwStyle, value.L)
 
     var ptCurrentPos: POINT
         get() = POINT(adr + ofs.ptCurrentPos)
@@ -92,8 +96,8 @@ class COMPOSITIONFORM constructor(val adr: Long) {
     constructor() : this(MemoryUtil.nmemAlloc(size.L))
 
     var dwStyle: DWORD
-        get() = memGetLong(adr + ofs.dwStyle)
-        set(value) = memPutLong(adr + ofs.dwStyle, value)
+        get() = DWORD(memGetLong(adr + ofs.dwStyle))
+        set(value) = memPutLong(adr + ofs.dwStyle, value.L)
 
     var ptCurrentPos: POINT
         get() = POINT(adr + ofs.ptCurrentPos)
