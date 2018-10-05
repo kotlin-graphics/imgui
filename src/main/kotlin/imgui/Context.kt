@@ -5,10 +5,10 @@ import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
-import imgui.impl.windowsIme.HWND
 import imgui.internal.*
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
+import uno.glfw.HWND
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
@@ -501,7 +501,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // (default to use native imm32 api on Windows)
     val imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = imeSetInputScreenPosFn_Win32.takeIf { Platform.get() == Platform.WINDOWS }
     /** (Windows) Set this to your HWND to get automatic IME cursor positioning.    */
-    var imeWindowHandle: HWND = NULL
+    var imeWindowHandle: HWND = HWND(NULL)
 
     //------------------------------------------------------------------
     // Input - Fill before calling NewFrame()

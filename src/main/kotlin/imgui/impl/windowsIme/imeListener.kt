@@ -12,11 +12,13 @@ import org.lwjgl.system.windows.RECT
 import org.lwjgl.system.windows.User32.*
 import org.lwjgl.system.windows.WindowProc
 import uno.glfw.GlfwWindow
+import uno.glfw.HWND
+
 //import vkk.adr
 
 object imeListener : WindowProc() {
 
-    var hwnd: HWND = NULL
+    var hwnd: HWND = HWND(NULL)
     var glfwProc = NULL
 
     var candidateWindow = 0
@@ -27,9 +29,9 @@ object imeListener : WindowProc() {
     fun install(window: GlfwWindow) {
         this.window = window
         if (Platform.get() == Platform.WINDOWS) {
-            hwnd = glfwGetWin32Window(window.handle)
-            glfwProc = GetWindowLongPtr(hwnd, GWL_WNDPROC)
-            SetWindowLongPtr(hwnd, GWL_WNDPROC, address()) // TODO adr
+            hwnd = HWND(glfwGetWin32Window(window.handle.L))
+            glfwProc = GetWindowLongPtr(hwnd.L, GWL_WNDPROC)
+            SetWindowLongPtr(hwnd.L, GWL_WNDPROC, address()) // TODO adr
         }
     }
 
