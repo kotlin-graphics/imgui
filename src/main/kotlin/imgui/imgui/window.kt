@@ -33,6 +33,8 @@ import imgui.ImGui.style
 import imgui.imgui.imgui_main.Companion.resizeGripDef
 import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
+import uno.kotlin.getValue
+import uno.kotlin.setValue
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0

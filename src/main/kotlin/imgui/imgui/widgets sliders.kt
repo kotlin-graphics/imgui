@@ -40,6 +40,8 @@ import imgui.imgui.imgui_widgetsDrag.Companion.patchFormatStringFloatToInt
 import imgui.internal.Rect
 import imgui.internal.SliderFlag
 import imgui.internal.focus
+import uno.kotlin.getValue
+import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
 
 /** Widgets: Sliders (tip: ctrl+click on a slider to input with keyboard. manually input values aren't clamped, can go off-bounds)

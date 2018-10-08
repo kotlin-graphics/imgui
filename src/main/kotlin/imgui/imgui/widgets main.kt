@@ -31,6 +31,8 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.internal.*
+import uno.kotlin.getValue
+import uno.kotlin.setValue
 import java.lang.Float.max
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
