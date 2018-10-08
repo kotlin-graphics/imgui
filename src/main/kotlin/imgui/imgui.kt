@@ -163,9 +163,6 @@ fun main(args: Array<String>) {
 
 var stop = false
 
-inline operator fun <R> KMutableProperty0<R>.setValue(host: Any?, property: KProperty<*>, value: R) = set(value)
-inline operator fun <R> KMutableProperty0<R>.getValue(host: Any?, property: KProperty<*>): R = get()
-
 infix fun String.cmp(charArray: CharArray): Boolean {
     for (i in indices)
         if (get(i) != charArray[i])
