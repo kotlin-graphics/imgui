@@ -29,6 +29,8 @@ import imgui.ImGui.updateMouseMovingWindow
 import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
 import imgui.imgui.imgui_internal.Companion.roundScalarWithFormat
 import imgui.internal.*
+import uno.kotlin.getValue
+import uno.kotlin.setValue
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0

@@ -18,6 +18,8 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.style
 import imgui.internal.*
+import uno.kotlin.getValue
+import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf

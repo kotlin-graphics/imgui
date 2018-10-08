@@ -67,6 +67,8 @@ import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.imgui.imgui_main.Companion.dragBehaviorT
 import imgui.internal.*
 import uno.kotlin.buffers.fill
+import uno.kotlin.getValue
+import uno.kotlin.setValue
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection

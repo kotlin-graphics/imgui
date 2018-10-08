@@ -40,7 +40,9 @@ import imgui.impl.windowsIme.imm
 import imgui.internal.*
 import org.lwjgl.system.MemoryUtil.NULL
 import uno.glfw.HWND
+import uno.kotlin.getValue
 import uno.kotlin.isPrintable
+import uno.kotlin.setValue
 import java.io.File
 import java.nio.file.Paths
 import kotlin.collections.set
