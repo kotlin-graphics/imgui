@@ -210,7 +210,9 @@ interface imgui_internal {
             ActiveId might have been released by the time we call this (as in the typical press/release button behavior)
             but still need need to fill the data.         */
         assert(g.activeId == id || g.activeId == 0 || g.dragDropActive)
+        //IM_ASSERT(g.CurrentWindow->DC.LastItemId == id)
         g.activeIdValueChanged = true
+        g.currentWindow!!.dc.apply { lastItemStatusFlags = lastItemStatusFlags or ItemStatusFlag.ValueChanged }
     }
 
 
