@@ -2,8 +2,6 @@ package imgui
 
 import glm_.i
 import imgui.imgui.*
-import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KProperty
 
 /** -----------------------------------------------------------------------------
  *      Context
