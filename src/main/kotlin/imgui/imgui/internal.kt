@@ -2629,9 +2629,9 @@ interface imgui_internal {
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
                 val prevLenW = editState.curLenW
                 val initBufLen = buf.strlen
-                editState.textW = CharArray(bufSize)            // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
+                editState.textW = CharArray(buf.size)            // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
                 editState.initialText = CharArray(initBufLen)   // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
-                System.arraycopy(buf, 0, editState.initialText, 0, buf, initBufLen)
+                System.arraycopy(buf, 0, editState.initialText, 0, initBufLen)
                 // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
 //                editState.initialText.add(NUL)
                 editState.initialText strncpy buf
