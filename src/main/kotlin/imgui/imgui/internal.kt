@@ -2628,9 +2628,10 @@ interface imgui_internal {
                     Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
                 val prevLenW = editState.curLenW
-                // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
-                editState.textW = CharArray(buf.size)
-                editState.initialText = CharArray(buf.size)
+                val initBufLen = buf.strlen
+                editState.textW = CharArray(bufSize)            // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
+                editState.initialText = CharArray(initBufLen)   // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
+                System.arraycopy(buf, 0, editState.initialText, 0, buf, initBufLen)
                 // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
 //                editState.initialText.add(NUL)
                 editState.initialText strncpy buf
@@ -2870,7 +2871,7 @@ interface imgui_internal {
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
                 if (isEditable && !Arrays.equals(buf, editState.initialText)) {
                     applyNewText = editState.initialText
-                    applyNewTextLength = buf.size
+                    applyNewTextLength = editState.initialText.size
                 }
 
             /*  When using `InputTextFlag.EnterReturnsTrue` as a special case we reapply the live buffer back to the
