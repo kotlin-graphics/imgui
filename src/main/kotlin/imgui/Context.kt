@@ -78,7 +78,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdIsJustActivated = false
     /** Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)   */
     var activeIdAllowOverlap = false
-
+    /** Was the value associated to the widget changed over the course of the Active state. */
     var activeIdValueChanged = false
 
     var activeIdPreviousFrameIsAlive = false
@@ -102,7 +102,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
      *  The actually window that is moved is generally MovingWindow.rootWindow.  */
     var movingWindow: Window? = null
     /** Stack for PushStyleColor()/PopStyleColor()  */
-    var colorModifiers = Stack<ColMod>()
+    var colorModifiers = Stack<ColorMod>()
     /** Stack for PushStyleVar()/PopStyleVar()  */
     val styleModifiers = Stack<StyleMod>()
     /** Stack for PushFont()/PopFont()  */

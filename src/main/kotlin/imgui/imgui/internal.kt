@@ -2583,19 +2583,20 @@ interface imgui_internal {
         if (hovered) g.mouseCursor = MouseCursor.TextInput
 
         // Password pushes a temporary font with only a fallback glyph
-        if (isPassword) with(g.inputTextPasswordFont) {
-            val glyph = g.font.findGlyph('*')!!
-            fontSize = g.font.fontSize
-            scale = g.font.scale
-            displayOffset = g.font.displayOffset
-            ascent = g.font.ascent
-            descent = g.font.descent
-            containerAtlas = g.font.containerAtlas
-            fallbackGlyph = glyph
-            fallbackAdvanceX = glyph.advanceX
-            assert(glyphs.isEmpty() && indexAdvanceX.isEmpty() && indexLookup.isEmpty())
-            pushFont(this)
-        }
+        if (isPassword)
+            g.inputTextPasswordFont.apply {
+                val glyph = g.font.findGlyph('*')!!
+                fontSize = g.font.fontSize
+                scale = g.font.scale
+                displayOffset = g.font.displayOffset
+                ascent = g.font.ascent
+                descent = g.font.descent
+                containerAtlas = g.font.containerAtlas
+                fallbackGlyph = glyph
+                fallbackAdvanceX = glyph.advanceX
+                assert(glyphs.isEmpty() && indexAdvanceX.isEmpty() && indexLookup.isEmpty())
+                pushFont(this)
+            }
 
         // NB: we are only allowed to access 'editState' if we are the active widget.
         val editState = g.inputTextState

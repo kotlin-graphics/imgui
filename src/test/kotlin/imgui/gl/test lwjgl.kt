@@ -7,7 +7,6 @@ import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.Cond
 import imgui.Context
 import imgui.ImGui
 import imgui.destroy
@@ -152,7 +151,5 @@ private class HelloWorld_lwjgl {
         ImplGL3.renderDrawData(ImGui.drawData!!)
 
         checkError("mainLoop") // TODO remove in production
-
-        println(stack.pointer)
     }
 }

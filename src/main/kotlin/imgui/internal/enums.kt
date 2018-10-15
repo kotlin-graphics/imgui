@@ -105,7 +105,7 @@ enum class SeparatorFlag {
     Horizontal,
     Vertical;
 
-    val i = if(ordinal == 0) 0 else 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun SeparatorFlag.or(b: SeparatorFlag): SeparatorFlags = i or b.i
@@ -114,9 +114,11 @@ infix fun Int.has(b: SeparatorFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: SeparatorFlag) = (this and b.i) == 0
 
 /** Storage for LastItem data   */
-enum class ItemStatusFlag { HoveredRect, HasDisplayRect;
+enum class ItemStatusFlag { None, HoveredRect, HasDisplayRect,
+    /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
+    ValueChanged;
 
-    val i = 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 }
 
 infix fun Int.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv())
@@ -163,7 +165,7 @@ enum class InputReadMode { Down, Pressed, Released, Repeat, RepeatSlow, RepeatFa
 
 enum class NavHighlightFlag { None, TypeDefault, TypeThin, AlwaysDraw, NoRounding;
 
-    val i = if(ordinal == 0) 0 else 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun Int.has(b: NavHighlightFlag) = and(b.i) != 0
@@ -172,7 +174,7 @@ infix fun NavHighlightFlag.or(b: NavHighlightFlag): NavHighlightFlags = i or b.i
 
 enum class NavDirSourceFlag { None, Keyboard, PadDPad, PadLStick;
 
-    val i = if(ordinal == 0) 0 else 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun NavDirSourceFlag.or(b: NavDirSourceFlag): NavDirSourceFlags = i or b.i
@@ -194,7 +196,7 @@ enum class NavMoveFlag {
     /** Store alternate result in NavMoveResultLocalVisibleSet that only comprise elements that are already fully visible.; */
     AlsoScoreVisibleSet;
 
-    val i = if(ordinal == 0) 0 else 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl ordinal
 
     infix fun or(b: NavMoveFlag): NavMoveFlags = i or b.i
 }
