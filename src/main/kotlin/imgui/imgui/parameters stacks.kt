@@ -16,7 +16,7 @@ import imgui.ImGui.popItemFlag
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.u32
 import imgui.ImGui.vec4
-import imgui.internal.ColMod
+import imgui.internal.ColorMod
 import imgui.internal.StyleMod
 import imgui.ItemFlag as If
 
@@ -41,13 +41,13 @@ interface imgui_parametersStacks {
     /** FIXME: This may incur a round-trip (if the end user got their data from a float4) but eventually we aim to store
      *  the in-flight colors as ImU32   */
     fun pushStyleColor(idx: Col, col: Int) {
-        val backup = ColMod(idx, style.colors[idx])
+        val backup = ColorMod(idx, style.colors[idx])
         g.colorModifiers.push(backup)
         g.style.colors[idx] = col.vec4
     }
 
     fun pushStyleColor(idx: Col, col: Vec4) {
-        val backup = ColMod(idx, style.colors[idx])
+        val backup = ColorMod(idx, style.colors[idx])
         g.colorModifiers.push(backup)
         style.colors[idx] = col
     }

@@ -172,7 +172,7 @@ class Rect {
 }
 
 /** Stacked color modifier, backup of modified data so we can restore it    */
-class ColMod(val col: Col, value: Vec4) {
+class ColorMod(val col: Col, value: Vec4) {
     val backupValue = Vec4(value)
 }
 
