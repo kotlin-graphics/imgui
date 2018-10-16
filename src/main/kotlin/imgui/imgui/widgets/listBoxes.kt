@@ -1,52 +1,35 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
-import glm_.f
 import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
-import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
-import imgui.ImGui.closeCurrentPopup
-import imgui.ImGui.contentRegionMax
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.getId
-import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popClipRect
 import imgui.ImGui.popId
-import imgui.ImGui.popStyleColor
-import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.pushId
-import imgui.ImGui.pushStyleColor
-import imgui.ImGui.renderFrame
-import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
-import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
-import imgui.ImGui.windowContentRegionMax
-import imgui.functionalProgramming.selectable
-import imgui.internal.NavHighlightFlag
 import imgui.internal.Rect
-import imgui.internal.or
 import kotlin.reflect.KMutableProperty0
 import imgui.ItemFlag as If
 import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
-interface imgui_listBoxes {
+interface listBoxes {
 
     fun listBox(label: String, currentItemPtr: KMutableProperty0<Int>, items: Array<String>, heightInItems: Int = -1): Boolean {
 

@@ -5,6 +5,7 @@ import imgui.ImGui.isItemVisible
 import imgui.ImGui.setScrollHere
 import imgui.g
 import imgui.internal.Rect
+import imgui.navUpdateAnyRequestFlag
 
 
 /** Focus, Activation

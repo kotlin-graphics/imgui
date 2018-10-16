@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import gli_.hasnt
 import glm_.vec2.Vec2
@@ -25,6 +25,8 @@ import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
+import imgui.imgui.withFloat
+import imgui.imgui.withInt
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
@@ -32,7 +34,7 @@ import imgui.internal.ButtonFlag as Bf
 
 /** Widgets: Input with Keyboard
  *  If you want to use InputText() with a dynamic string type such as std::string or your own, see misc/stl/imgui_stl.h */
-interface imgui_widgetsInputKeyboard {
+interface inputKeyboard {
 
 
     fun inputText(label: String, buf: CharArray, flags: InputTextFlags = 0
