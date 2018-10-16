@@ -102,17 +102,24 @@ class FontGlyph {
     }
 }
 
-/** Load and rasterize multiple TTF/OTF fonts into a same texture.
- *  Sharing a texture for multiple fonts allows us to reduce the number of draw calls during rendering.
- *  We also add custom graphic data into the texture that serves for ImGui.
- *  1. (Optional) Call AddFont*** functions. If you don't call any, the default font will be loaded for you.
- *  2. Call GetTexDataAsAlpha8() or GetTexDataAsRGBA32() to build and retrieve pixels data.
- *  3. Upload the pixels data into a texture within your graphics system.
- *  4. Call SetTexID(my_tex_id); and pass the pointer/identifier to your texture. This value will be passed back to you
- *          during rendering to identify the texture.
- *  IMPORTANT: If you pass a 'glyph_ranges' array to AddFont*** functions, you need to make sure that your array persist
- *  up until the ImFont is build (when calling GetTexData*** or Build()). We only copy the pointer, not the data.
- *  We only copy the pointer, not the data. */
+/** Load and rasterize multiple TTF/OTF fonts into a same texture. The font atlas will build a single texture holding:
+ *      - One or more fonts.
+ *      - Custom graphics data needed to render the shapes needed by Dear ImGui.
+ *      - Mouse cursor shapes for software cursor rendering (unless setting 'Flags |= ImFontAtlasFlags_NoMouseCursors' in the font atlas).
+ *  It is the user-code responsibility to setup/build the atlas, then upload the pixel data into a texture accessible by your graphics api.
+ *      - Optionally, call any of the AddFont*** functions. If you don't call any, the default font embedded in the code will be loaded for you.
+ *      - Call GetTexDataAsAlpha8() or GetTexDataAsRGBA32() to build and retrieve pixels data.
+ *      - Upload the pixels data into a texture within your graphics system (see imgui_impl_xxxx.cpp examples)
+ *      - Call SetTexID(my_tex_id); and pass the pointer/identifier to your texture in a format natural to your graphics API.
+ *  This value will be passed back to you during rendering to identify the texture. Read FAQ entry about ImTextureID for more details.
+ *  Common pitfalls:
+ *      - If you pass a 'glyph_ranges' array to AddFont*** functions, you need to make sure that your array persist up until the
+ *          atlas is build (when calling GetTexData*** or Build()). We only copy the pointer, not the data.
+ *      - Important: By default, AddFontFromMemoryTTF() takes ownership of the data. Even though we are not writing to it,
+ *          we will free the pointer on destruction.
+ *  You can set font_cfg->FontDataOwnedByAtlas=false to keep ownership of your data and it won't be freed,
+ *      - Even though many functions are suffixed with "TTF", OTF data is supported just as well.
+ *      - This is an old API and it is currently awkward for those and and various other reasons! We will address them in the future! */
 class FontAtlas {
 
     fun addFont(fontCfg: FontConfig): Font {
@@ -168,8 +175,8 @@ class FontAtlas {
         return addFontFromMemoryTTF(chars, sizePixels, fontCfg, glyphRanges)
     }
 
-    /** Note: Transfer ownership of 'ttfData' to FontAtlas! Will be deleted after build(). Set fontCfg.fontDataOwnedByAtlas
-     *  to false to keep ownership. */
+    /** Note: Transfer ownership of 'ttfData' to FontAtlas! Will be deleted after destruction of the atlas.
+     *  Set font_cfg->FontDataOwnedByAtlas=false to keep ownership of your data and it won't be freed. */
     fun addFontFromMemoryTTF(fontData: CharArray, sizePixels: Float, fontCfg: FontConfig = FontConfig(),
                              glyphRanges: IntArray = intArrayOf()): Font {
 
@@ -249,9 +256,10 @@ class FontAtlas {
     /*  Build atlas, retrieve pixel data.
         User is in charge of copying the pixels into graphics memory (e.g. create a texture with your engine).
         Then store your texture handle with setTexID().ClearInputData
-        RGBA32 format is provided for convenience and compatibility, but note that unless you use CustomRect to draw
-        color data, the RGB pixels emitted from Fonts will all be white (~75% of waste).
-        Pitch = Width * BytesPerPixels  */
+        The pitch is always = Width * BytesPerPixels (1 or 4)
+        Building in RGBA32 format is provided for convenience and compatibility, but note that unless
+        you manually manipulate or copy color data into the texture (e.g. when using the AddCustomRect*** api),
+        then the RGB pixels emitted will always be white (~75% of memory/bandwidth waste.  */
 
     /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
     private fun build() {
@@ -439,12 +447,13 @@ class FontAtlas {
     // Members
     //-------------------------------------------
     enum class FontAtlasFlag {
+        None,
         /** Don't round the height to next power of two */
         NoPowerOfTwoHeight,
         /** Don't build software mouse cursors into the atlas   */
         NoMouseCursors;
 
-        val i = 1 shl ordinal
+        val i = if(ordinal == 0) 0 else 1 shl ordinal
     }
 
     infix fun Int.has(flag: FontAtlasFlag) = and(flag.i) != 0
@@ -453,7 +462,7 @@ class FontAtlas {
     /** Marked as Locked by ImGui::NewFrame() so attempt to modify the atlas will assert. */
     var locked = false
     /** Build flags (see ImFontAtlasFlags_) */
-    var flags: FontAtlasFlags = 0
+    var flags = FontAtlasFlag.None.i
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
     var texId: TextureID = 0
