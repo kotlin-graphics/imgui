@@ -612,7 +612,7 @@
 //
 //            if (info.minImageCount < cap.minImageCount)
 //                info.minImageCount = cap.minImageCount
-//            else if (info.minImageCount > cap.maxImageCount)
+//            else if (cap.maxImageCount != 0 && info.minImageCount > cap.maxImageCount)
 //                info.minImageCount = cap.maxImageCount
 //
 //            if (cap.currentExtent.width == 0xffffffff.i) {
@@ -747,6 +747,8 @@
 //
 //        // Request a certain mode and confirm that it is available. If not use VK_PRESENT_MODE_FIFO_KHR which is mandatory
 //        val availModes = physicalDevice getSurfacePresentModesKHR wd.surface
+//      for (uint32_t avail_i = 0; avail_i < avail_count; avail_i++)
+//      printf("[vulkan] avail_modes[%d] = %d\n", avail_i, avail_modes[avail_i]);
 //        for (request in requestModes.indices)
 //            for (avail in availModes.indices)
 //                if (requestModes[request] == availModes[avail])

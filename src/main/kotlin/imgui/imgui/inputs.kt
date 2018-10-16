@@ -76,17 +76,17 @@ interface imgui_inputs {
     fun isMouseReleased(button: Int) = io.mouseReleased[button]
 
     /** is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold */
-    fun isMouseDragging(button: Int = 0, lockThreshold: Float = -1f): Boolean {
+    fun isMouseDragging(button: Int = 0, lockThreshold_: Float = -1f): Boolean {
         if (!io.mouseDown[button]) return false
-        val lockThreshold = if (lockThreshold < 0f) io.mouseDragThreshold else lockThreshold
+        val lockThreshold = if (lockThreshold_ < 0f) io.mouseDragThreshold else lockThreshold_
         return io.mouseDragMaxDistanceSqr[button] >= lockThreshold * lockThreshold
     }
 
     /** Test if mouse cursor is hovering given rectangle
      *  NB- Rectangle is clipped by our current clip setting
      *  NB- Expand the rectangle to be generous on imprecise inputs systems (g.style.TouchExtraPadding)
-     *  is mouse hovering given bounding rect (in screen space). clipped by current clipping settings. disregarding of
-     *  consideration of focus/window ordering/blocked by a popup.  */
+     *  is mouse hovering given bounding rect (in screen space). clipped by current clipping settings, but disregarding
+     *  of other consideration of focus/window ordering/popup-block.  */
     fun isMouseHoveringRect(r: Rect, clip: Boolean = true) = isMouseHoveringRect(r.min, r.max, clip)
 
     fun isMouseHoveringRect(rMin: Vec2, rMax: Vec2, clip: Boolean = true): Boolean {

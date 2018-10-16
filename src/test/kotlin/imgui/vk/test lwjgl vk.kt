@@ -201,10 +201,11 @@
 //
 //        // Get Present Mode
 //        val presentMode = when {
-//            UNLIMITED_FRAME_RATE -> VkPresentMode.MAILBOX_KHR // VK_PRESENT_MODE_IMMEDIATE_KHR;
+//            UNLIMITED_FRAME_RATE -> { VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR };
 //            else -> VkPresentMode.FIFO_KHR
 //        }
 //        wd.presentMode = ImplVk.selectPresentMode(arrayOf(presentMode))
+//      printf("[vulkan] Selected PresentMode = %d\n", wd->PresentMode);
 //
 //        // Create SwapChain, RenderPass, Framebuffer, etc.
 //        ImplVk.createWindowDataCommandBuffers()
