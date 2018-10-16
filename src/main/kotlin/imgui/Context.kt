@@ -412,7 +412,7 @@ fun Context?.destroy() {
         c.setCurrent()
 }
 
-/** This is where your app communicate with ImGui. Access via ImGui::GetIO().
+/** This is where your app communicate with Dear ImGui. Access via ImGui::GetIO().
  *  Read 'Programmer guide' section in .cpp file for general usage. */
 class IO(sharedFontAtlas: FontAtlas?) {
 

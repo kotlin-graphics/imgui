@@ -409,7 +409,7 @@ class NextWindowData {
     }
 }
 
-/** Temporary storage for one, that's the data which in theory we could ditch at the end of the frame
+/** Temporary storage for one window(, that's the data which in theory we could ditch at the end of the frame)
  *  Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
  *  FIXME: That's theory, in practice the delimitation between Window and WindowTempData is quite tenuous and could be reconsidered.  */
 class WindowTempData {
