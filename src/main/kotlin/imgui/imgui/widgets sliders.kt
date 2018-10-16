@@ -21,7 +21,7 @@ import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
-import imgui.ImGui.markItemValueChanged
+import imgui.ImGui.markItemEdit
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
@@ -139,7 +139,7 @@ interface imgui_widgetsSliders {
         val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power, SliderFlag.None.i, grabBb)
 
         if (valueChanged)
-            markItemValueChanged(id)
+            markItemEdit(id)
 
         // Render grab
         val col = if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
@@ -276,7 +276,7 @@ interface imgui_widgetsSliders {
         val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power, SliderFlag.Vertical.i, grabBb)
 
         if (valueChanged)
-            markItemValueChanged(id)
+            markItemEdit(id)
 
         // Render grab
         val col = if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab

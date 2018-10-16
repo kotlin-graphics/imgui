@@ -12,15 +12,13 @@ import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
-import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.markItemValueChanged
+import imgui.ImGui.markItemEdit
 import imgui.ImGui.plotEx
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
-import imgui.ImGui.renderArrow
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
@@ -31,7 +29,6 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.internal.*
-import java.lang.Float.max
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
 import imgui.WindowFlag as Wf
@@ -168,7 +165,7 @@ interface imgui_widgetsMain {
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
         if (pressed) {
             v = !v
-            markItemValueChanged(id)
+            markItemEdit(id)
         }
 
         renderNavHighlight(totalBb, id)
@@ -240,7 +237,7 @@ interface imgui_widgetsMain {
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
         if (pressed)
-            markItemValueChanged(id)
+            markItemEdit(id)
 
         renderNavHighlight(totalBb, id)
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
