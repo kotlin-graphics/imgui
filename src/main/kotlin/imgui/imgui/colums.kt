@@ -56,18 +56,18 @@ interface imgui_colums {
             val columns = dc.columnsSet!!
             columns.lineMaxY = max(columns.lineMaxY, dc.cursorPos.y)
             if (++columns.current < columns.count) {
-                // Columns 1+ cancel out IndentX
-                dc.columnsOffsetX = getColumnOffset(columns.current) - dc.indentX + style.itemSpacing.x
+                // Columns 1+ cancel out Indent.x
+                dc.columnsOffset = getColumnOffset(columns.current) - dc.indent + style.itemSpacing.x
                 drawList.channelsSetCurrent(columns.current)
             } else {
-                dc.columnsOffsetX = 0f
+                dc.columnsOffset = 0f
                 drawList.channelsSetCurrent(0)
                 columns.current = 0
                 columns.lineMinY = columns.lineMaxY
             }
-            dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
+            dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
             dc.cursorPos.y = columns.lineMinY
-            dc.currentLineHeight = 0f
+            dc.currentLineSize.y = 0f
             dc.currentLineTextBaseOffset = 0f
         }
         pushColumnClipRect()

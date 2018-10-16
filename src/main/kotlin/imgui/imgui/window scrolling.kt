@@ -33,7 +33,7 @@ interface imgui_windowScrolling {
     fun setScrollHere(centerYRatio: Float = 0.5f) = with(ImGui.currentWindow) {
         var targetY = dc.cursorPosPrevLine.y - pos.y  // Top of last item, in window space
         // Precisely aim above, in the middle or below the last line.
-        targetY += (dc.prevLineHeight * centerYRatio) + ImGui.style.itemSpacing.y * (centerYRatio - 0.5f) * 2f
+        targetY += (dc.prevLineSize.y * centerYRatio) + ImGui.style.itemSpacing.y * (centerYRatio - 0.5f) * 2f
         setScrollFromPosY(targetY, centerYRatio)
     }
 

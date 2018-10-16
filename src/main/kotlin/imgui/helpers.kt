@@ -471,7 +471,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
                 cursorPosPrevLine.y = cursorPos.y - lineHeight
                 /*  If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a
                     fourth step to let user process and display the last item in their list.             */
-                prevLineHeight = lineHeight - style.itemSpacing.y
+                prevLineSize.y = lineHeight - style.itemSpacing.y
                 columnsSet?.lineMinY = window.dc.cursorPos.y // Setting this so that cell Y position are set properly
             }
         }
