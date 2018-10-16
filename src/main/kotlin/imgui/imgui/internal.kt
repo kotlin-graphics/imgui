@@ -2973,16 +2973,19 @@ interface imgui_internal {
 //                        eventFlag = Itf.CallbackResize.i
 //                        this.flags = flags
 //                        this.buf = buf
-//                        bufTextLen = editState.curLenA
+//                        bufTextLen = apply_new_text_length
 ////                        bufSize = max(bufSize, applyNewTextLength)
 //                        userData = callbackUserData
 //                    }
 //                    callback!!(callbackData)
 //                    buf = callback_data.Buf
 //                    buf_size = callback_data.BufSize
+//                    apply_new_text_length = ImMin(callback_data.BufTextLen, buf_size - 1);
+//                    IM_ASSERT(apply_new_text_length <= buf_size);
                 }
-//                assert(applyNewTextLength <= bufSize)
-                buf.strncpy(editState.tempBuffer, applyNewTextLength)
+                /*  If the underlying buffer resize was denied or not carried to the next frame,
+                    apply_new_text_length+1 may be >= buf_size.                 */
+                buf.strncpy(editState.tempBuffer, applyNewTextLength min buf.size)
                 valueChanged = true
             }
 
