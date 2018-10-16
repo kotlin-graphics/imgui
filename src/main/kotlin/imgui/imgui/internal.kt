@@ -205,14 +205,14 @@ interface imgui_internal {
             g.activeIdPreviousFrameIsAlive = true
     }
 
-    fun markItemValueChanged(id: ID) {
+    fun markItemEdit(id: ID) {
         /*  This marking is solely to be able to provide info for ::isItemDeactivatedAfterChange().
             ActiveId might have been released by the time we call this (as in the typical press/release button behavior)
             but still need need to fill the data.         */
         assert(g.activeId == id || g.activeId == 0 || g.dragDropActive)
         //IM_ASSERT(g.CurrentWindow->DC.LastItemId == id)
         g.activeIdValueChanged = true
-        g.currentWindow!!.dc.apply { lastItemStatusFlags = lastItemStatusFlags or ItemStatusFlag.ValueChanged }
+        g.currentWindow!!.dc.apply { lastItemStatusFlags = lastItemStatusFlags or ItemStatusFlag.Edit }
     }
 
 
@@ -1213,7 +1213,7 @@ interface imgui_internal {
         if (window.dc.itemFlags has If.ButtonRepeat) flags = flags or Bf.Repeat
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
         if (pressed)
-            markItemValueChanged(id)
+            markItemEdit(id)
 
         // Render
         val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
@@ -2338,11 +2338,11 @@ interface imgui_internal {
                 size1 = size1 + mouseDelta // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
                 size2 = size2 - mouseDelta
                 bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
-                markItemValueChanged(id)
+                markItemEdit(id)
             }
             bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
 
-            markItemValueChanged(id)
+            markItemEdit(id)
         }
 
         // Render
@@ -3184,7 +3184,7 @@ interface imgui_internal {
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
         if (valueChanged)
-            markItemValueChanged(id)
+            markItemEdit(id)
 
         return if (flags has Itf.EnterReturnsTrue) enterPressed else valueChanged
     }
