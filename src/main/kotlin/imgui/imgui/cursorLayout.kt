@@ -44,7 +44,7 @@ interface imgui_cursorLayout {
         var x1 = window.pos.x
         val x2 = window.pos.x + window.size.x
         if (window.dc.groupStack.isNotEmpty())
-            x1 += window.dc.indentX.i
+            x1 += window.dc.indent.i
 
         val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
         // NB: we don't provide our width so that it doesn't get feed back into AutoFit, we don't provide height to not alter layout.
@@ -81,11 +81,11 @@ interface imgui_cursorLayout {
         with(window) {
             dc.cursorPos.put(
                     if (posX != 0f)
-                        pos.x - scroll.x + posX + glm.max(0f, spacingW) + dc.groupOffsetX + dc.columnsOffsetX
+                        pos.x - scroll.x + posX + glm.max(0f, spacingW) + dc.groupOffset + dc.columnsOffset
                     else
                         dc.cursorPosPrevLine.x + if (spacingW < 0f) style.itemSpacing.x else spacingW
                     , dc.cursorPosPrevLine.y)
-            dc.currentLineHeight = dc.prevLineHeight
+            dc.currentLineSize.y = dc.prevLineSize.y
             dc.currentLineTextBaseOffset = dc.prevLineTextBaseOffset
         }
     }
@@ -98,7 +98,7 @@ interface imgui_cursorLayout {
         val backupLayoutType = window.dc.layoutType
         window.dc.layoutType = Lt.Vertical
         // In the event that we are on a line with items that is smaller that FontSize high, we will preserve its height.
-        itemSize(Vec2(0f, if (window.dc.currentLineHeight > 0f) 0f else g.fontSize))
+        itemSize(Vec2(0f, if (window.dc.currentLineSize.y > 0f) 0f else g.fontSize))
         window.dc.layoutType = backupLayoutType
     }
 
@@ -121,14 +121,14 @@ interface imgui_cursorLayout {
 
     /** move content position toward the right, by style.indentSpacing or indentW if != 0    */
     fun indent(indentW: Float = 0f) = with(currentWindow) {
-        dc.indentX += if (indentW != 0f) indentW else style.indentSpacing
-        dc.cursorPos.x = pos.x + dc.indentX + dc.columnsOffsetX
+        dc.indent += if (indentW != 0f) indentW else style.indentSpacing
+        dc.cursorPos.x = pos.x + dc.indent + dc.columnsOffset
     }
 
     /** move content position back to the left, by style.IndentSpacing or indentW if != 0    */
     fun unindent(indentW: Float = 0f) = with(currentWindow) {
-        dc.indentX -= if (indentW != 0f) indentW else style.indentSpacing
-        dc.cursorPos.x = pos.x + dc.indentX + dc.columnsOffsetX
+        dc.indent -= if (indentW != 0f) indentW else style.indentSpacing
+        dc.cursorPos.x = pos.x + dc.indent + dc.columnsOffset
     }
 
 
@@ -141,19 +141,19 @@ interface imgui_cursorLayout {
                     GroupData().apply {
                         backupCursorPos put dc.cursorPos
                         backupCursorMaxPos put dc.cursorMaxPos
-                        backupIndentX = dc.indentX
-                        backupGroupOffsetX = dc.groupOffsetX
-                        backupCurrentLineHeight = dc.currentLineHeight
+                        backupIndent = dc.indent
+                        backupGroupOffset = dc.groupOffset
+                        backupCurrentLineSize put dc.currentLineSize
                         backupCurrentLineTextBaseOffset = dc.currentLineTextBaseOffset
                         backupLogLinePosY = dc.logLinePosY
                         backupActiveIdIsAlive = g.activeIdIsAlive
                         backupActiveIdPreviousFrameIsAlive = g.activeIdPreviousFrameIsAlive
                         advanceCursor = true
                     })
-            dc.groupOffsetX = dc.cursorPos.x - pos.x - dc.columnsOffsetX
-            dc.indentX = dc.groupOffsetX
+            dc.groupOffset = dc.cursorPos.x - pos.x - dc.columnsOffset
+            dc.indent = dc.groupOffset
             dc.cursorMaxPos put dc.cursorPos
-            dc.currentLineHeight = 0f
+            dc.currentLineSize.y = 0f
             dc.logLinePosY = dc.cursorPos.y - 9999f // To enforce Log carriage return
         }
     }
@@ -171,9 +171,9 @@ interface imgui_cursorLayout {
         with(window.dc) {
             cursorPos put groupData.backupCursorPos
             cursorMaxPos put glm.max(groupData.backupCursorMaxPos, cursorMaxPos)
-            indentX = groupData.backupIndentX
-            groupOffsetX = groupData.backupGroupOffsetX
-            currentLineHeight = groupData.backupCurrentLineHeight
+            indent = groupData.backupIndent
+            groupOffset = groupData.backupGroupOffset
+            currentLineSize put groupData.backupCurrentLineSize
             currentLineTextBaseOffset = groupData.backupCurrentLineTextBaseOffset
             logLinePosY = cursorPos.y - 9999f // To enforce Log carriage return
         }
@@ -243,7 +243,7 @@ interface imgui_cursorLayout {
     fun alignTextToFramePadding() {
         val window = currentWindow
         if (window.skipItems) return
-        window.dc.currentLineHeight = glm.max(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2)
+        window.dc.currentLineSize.y = glm.max(window.dc.currentLineSize.y, g.fontSize + style.framePadding.y * 2)
         window.dc.currentLineTextBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, style.framePadding.y)
     }
 

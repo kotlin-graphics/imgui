@@ -186,9 +186,9 @@ class StyleMod(val idx: StyleVar) {
 class GroupData {
     var backupCursorPos = Vec2()
     var backupCursorMaxPos = Vec2()
-    var backupIndentX = 0f
-    var backupGroupOffsetX = 0f
-    var backupCurrentLineHeight = 0f
+    var backupIndent = 0f
+    var backupGroupOffset = 0f
+    var backupCurrentLineSize = Vec2()
     var backupCurrentLineTextBaseOffset = 0f
     var backupLogLinePosY = 0f
     var backupActiveIdIsAlive = 0
@@ -423,11 +423,11 @@ class WindowTempData {
      *  Turned into window.sizeContents at the beginning of next frame   */
     var cursorMaxPos = Vec2()
 
-    var currentLineHeight = 0f
+    var currentLineSize = Vec2()
 
     var currentLineTextBaseOffset = 0f
 
-    var prevLineHeight = 0f
+    var prevLineSize = Vec2()
 
     var prevLineTextBaseOffset = 0f
 
@@ -497,12 +497,12 @@ class WindowTempData {
 
 
     /** Indentation / start position from left of window (increased by TreePush/TreePop, etc.)  */
-    var indentX = 0f
+    var indent = 0f
 
-    var groupOffsetX = 0f
+    var groupOffset = 0f
     /** Offset to the current column (if ColumnsCurrent > 0). FIXME: This and the above should be a stack to allow use
     cases like Tree->Column->Tree. Need revamp columns API. */
-    var columnsOffsetX = 0f
+    var columnsOffset = 0f
     /** Current columns set */
     var columnsSet: ColumnsSet? = null
 }

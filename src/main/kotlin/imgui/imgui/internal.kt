@@ -226,21 +226,21 @@ interface imgui_internal {
         if (window.skipItems) return
 
         // Always align ourselves on pixel boundaries
-        val lineHeight = glm.max(window.dc.currentLineHeight, size.y)
+        val lineHeight = glm.max(window.dc.currentLineSize.y, size.y)
         val textBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, textOffsetY)
         //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
         window.dc.cursorPosPrevLine.put(window.dc.cursorPos.x + size.x, window.dc.cursorPos.y)
-        window.dc.cursorPos.x = (window.pos.x + window.dc.indentX + window.dc.columnsOffsetX).i.f
+        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
         window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + style.itemSpacing.y).i.f
         window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
         window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y - style.itemSpacing.y)
 
         //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]
 
-        window.dc.prevLineHeight = lineHeight
+        window.dc.prevLineSize.y = lineHeight
         window.dc.prevLineTextBaseOffset = textBaseOffset
         window.dc.currentLineTextBaseOffset = 0f
-        window.dc.currentLineHeight = 0f
+        window.dc.currentLineSize.y = 0f
 
         // Horizontal layout mode
         if (window.dc.layoutType == Lt.Horizontal) sameLine()
@@ -755,15 +755,15 @@ interface imgui_internal {
             // Set state for first column
             val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else innerClipRect.max.x - pos.x
             with(columns) {
-                minX = dc.indentX - style.itemSpacing.x // Lock our horizontal range
+                minX = dc.indent - style.itemSpacing.x // Lock our horizontal range
                 maxX = max(contentRegionWidth - scroll.x, minX + 1f)
                 startPosY = dc.cursorPos.y
                 startMaxPosX = dc.cursorMaxPos.x
                 lineMaxY = dc.cursorPos.y
                 lineMinY = dc.cursorPos.y
             }
-            dc.columnsOffsetX = 0f
-            dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
+            dc.columnsOffset = 0f
+            dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
 
             // Clear data if columns count changed
             if (columns.columns.isNotEmpty() && columns.columns.size != columnsCount + 1)
@@ -852,8 +852,8 @@ interface imgui_internal {
         columns.isBeingResized = isBeingResized
 
         dc.columnsSet = null
-        dc.columnsOffsetX = 0f
-        dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
+        dc.columnsOffset = 0f
+        dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
     }
 
     fun pushColumnClipRect(columnIndex_: Int = -1) {
@@ -1428,7 +1428,7 @@ interface imgui_internal {
         if (window.skipItems) return
 
         val y1 = window.dc.cursorPos.y
-        val y2 = window.dc.cursorPos.y + window.dc.currentLineHeight
+        val y2 = window.dc.cursorPos.y + window.dc.currentLineSize.y
         val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
         itemSize(Vec2(bb.width, 0f))
         if (!itemAdd(bb, 0)) return
@@ -2368,7 +2368,7 @@ interface imgui_internal {
 
         // We vertically grow up to current line height up the typical widget height.
         val textBaseOffsetY = glm.max(padding.y, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
-        val frameHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
+        val frameHeight = glm.max(glm.min(window.dc.currentLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
         val frameBb = Rect(window.dc.cursorPos, Vec2(window.pos.x + contentRegionMax.x, window.dc.cursorPos.y + frameHeight))
         if (displayFrame) {
             // Framed header expand a little outside the default padding

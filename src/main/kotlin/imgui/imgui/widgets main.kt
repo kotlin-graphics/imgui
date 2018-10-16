@@ -342,7 +342,7 @@ interface imgui_widgetsMain {
         val window = currentWindow
         if (window.skipItems) return
 
-        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), g.fontSize)
+        val lineHeight = glm.max(glm.min(window.dc.currentLineSize.y, g.fontSize + style.framePadding.y * 2), g.fontSize)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(g.fontSize, lineHeight))
         itemSize(bb)
         if (!itemAdd(bb, 0)) {

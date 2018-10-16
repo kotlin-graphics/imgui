@@ -529,16 +529,16 @@ interface imgui_window {
                     (NB: That term "drawing context / DC" lost its meaning a long time ago. Initially was meant to hold
                     transient data only. Nowadays difference between window-> and window->DC-> is dubious.)
                  */
-                dc.indentX = 0f + windowPadding.x - scroll.x
-                dc.groupOffsetX = 0f
-                dc.columnsOffsetX = 0.0f
-                dc.cursorStartPos.put(pos.x + dc.indentX + dc.columnsOffsetX,
+                dc.indent = 0f + windowPadding.x - scroll.x
+                dc.groupOffset = 0f
+                dc.columnsOffset = 0f
+                dc.cursorStartPos.put(pos.x + dc.indent + dc.columnsOffset,
                         pos.y + titleBarHeight + menuBarHeight + windowPadding.y - scroll.y)
                 dc.cursorPos put dc.cursorStartPos
                 dc.cursorPosPrevLine put dc.cursorPos
                 dc.cursorMaxPos put dc.cursorStartPos
-                dc.prevLineHeight = 0f
-                dc.currentLineHeight = 0f
+                dc.prevLineSize put 0f
+                dc.currentLineSize put 0f
                 dc.prevLineTextBaseOffset = 0f
                 dc.currentLineTextBaseOffset = 0f
                 dc.navHideHighlightOneFrame = false
