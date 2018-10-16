@@ -176,16 +176,6 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     return newBest
 }
 
-fun navSaveLastChildNavWindow(childWindow: Window?) {
-    var parentWindow = childWindow
-    while (parentWindow != null && parentWindow.flags has Wf.ChildWindow && parentWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
-        parentWindow = parentWindow.parentWindow
-    parentWindow?.let { if (it !== childWindow) it.navLastChildNavWindow = childWindow }
-}
-
-/** Call when we are expected to land on Layer 0 after FocusWindow()    */
-fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow ?: window
-
 fun navRestoreLayer(layer: Int) {
 
     g.navLayer = layer

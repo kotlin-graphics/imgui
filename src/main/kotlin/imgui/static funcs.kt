@@ -1280,6 +1280,17 @@ fun navCalcPreferredRefPos(): Vec2 {
     return glm.floor(glm.clamp(Vec2(pos), visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
 }
 
+fun navSaveLastChildNavWindow(childWindow: Window?) {
+    var parentWindow = childWindow
+    while (parentWindow != null && parentWindow.flags has Wf.ChildWindow && parentWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
+        parentWindow = parentWindow.parentWindow
+    parentWindow?.let { if (it !== childWindow) it.navLastChildNavWindow = childWindow }
+}
+
+
+/** Call when we are expected to land on Layer 0 after FocusWindow()    */
+fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow ?: window
+
 //-----------------------------------------------------------------------------
 // Platform dependent default implementations
 //-----------------------------------------------------------------------------
