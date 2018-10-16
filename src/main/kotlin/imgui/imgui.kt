@@ -84,9 +84,9 @@ object ImGui :
         imgui_internal {
 
     // Version
-    val beta = 4
+    val beta = 0
     /** get the compiled version string e.g. "1.23" */
-    val version = "1.63.$beta"
+    val version = "1.64.$beta"
     /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
     Work in progress versions typically starts at XYY00 then bounced up to XYY01 when release tagging happens */
     val versionNum = 16300 + beta
