@@ -22,6 +22,7 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorConvertRGBtoHSV
 import imgui.ImGui.colorEditOptionsPopup
+import imgui.ImGui.colorPickerOptionsPopup
 import imgui.ImGui.colorTooltip
 import imgui.ImGui.currentWindow
 import imgui.ImGui.cursorScreenPos
@@ -64,7 +65,6 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.u32
-import imgui.imgui.imgui_widgetsText.Companion.colorPickerOptionsPopup
 import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
 import imgui.ColorEditFlag as Cef
@@ -315,7 +315,7 @@ interface imgui_widgetsColorEditorPicker {
             flags = flags or Cef.NoSmallPreview
 
         // Context menu: display and store options.
-        if (flags hasnt Cef.NoOptions) colorPickerOptionsPopup(col, flags)
+//        if (flags hasnt Cef.NoOptions)
 
         // Read stored options
         if (flags hasnt Cef._PickerMask)
@@ -455,13 +455,20 @@ interface imgui_widgetsColorEditorPicker {
             colorConvertHSVtoRGB(if (h >= 1f) h - 10 * 1e-6f else h, if (s > 0f) s else 10 * 1e-6f, if (v > 0f) v else 1e-6f, col)
 
         // R,G,B and H,S,V slider color editor
+        var valueChangedFixHueWrap = false
         if (flags hasnt Cef.NoInputs) {
             pushItemWidth((if (alphaBar) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
             val subFlagsToForward = Cef._DataTypeMask or Cef.HDR or Cef.NoAlpha or Cef.NoOptions or Cef.NoSmallPreview or
                     Cef.AlphaPreview or Cef.AlphaPreviewHalf
             val subFlags = (flags and subFlagsToForward) or Cef.NoPicker
             valueChanged = when {
-                flags has Cef.RGB || flags hasnt Cef._InputsMask -> colorEdit4("##rgb", col, subFlags or Cef.RGB)
+                flags has Cef.RGB || flags hasnt Cef._InputsMask ->
+                    if (colorEdit4("##rgb", col, subFlags or Cef.RGB)) {
+                        // FIXME: Hackily differentiating using the DragInt (ActiveId != 0 && !ActiveIdAllowOverlap) vs. using the InputText or DropTarget.
+                        // For the later we don't want to run the hue-wrap canceling code. If you are well versed in HSV picker please provide your input! (See #2050)
+                        valueChangedFixHueWrap = g.activeId != 0 && !g.activeIdAllowOverlap
+                        true
+                    } else valueChanged
                 flags has Cef.HSV || flags hasnt Cef._InputsMask -> colorEdit4("##hsv", col, subFlags or Cef.HSV)
                 flags has Cef.HEX || flags hasnt Cef._InputsMask -> colorEdit4("##hex", col, subFlags or Cef.HEX)
                 else -> false
@@ -469,8 +476,8 @@ interface imgui_widgetsColorEditorPicker {
             popItemWidth()
         }
 
-        // Try to cancel hue wrap (after ColorEdit), if any
-        if (valueChanged) {
+        // Try to cancel hue wrap (after ColorEdit4 call), if any
+        if (valueChangedFixHueWrap) {
             val (newH, newS, newV) = colorConvertRGBtoHSV(col)
             if (newH <= 0 && h > 0) {
                 if (newV <= 0 && v != newV)

@@ -31,6 +31,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.internal.DrawCornerFlag
+import imgui.internal.PopupPositionPolicy
 import imgui.internal.Rect
 import imgui.internal.isPowerOfTwo
 import kotlin.reflect.KMutableProperty0

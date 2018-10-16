@@ -14,6 +14,7 @@ import imgui.ImGui.collapseButton
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endColumns
+import imgui.ImGui.findBestWindowPosForPopup
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getColorU32

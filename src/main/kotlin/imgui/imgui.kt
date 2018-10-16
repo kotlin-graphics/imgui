@@ -58,9 +58,11 @@ object ImGui :
         imgui_cursorLayout,
         imgui_colums,
         imgui_idScopes,
+        imgui_listBoxes,
         imgui_widgetsText,
         imgui_widgetsMain,
         imgui_widgetsComboBox,
+        imgui_widgetsDataPlotting,
         imgui_widgetsDrag,
         imgui_widgetsInputKeyboard,
         imgui_widgetsSliders,
@@ -82,7 +84,7 @@ object ImGui :
         imgui_internal {
 
     // Version
-    val beta = 3
+    val beta = 4
     /** get the compiled version string e.g. "1.23" */
     val version = "1.63.$beta"
     /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.

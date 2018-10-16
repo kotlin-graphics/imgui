@@ -10,13 +10,13 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.logRenderedText
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.style
 import imgui.ImGui.verticalSeparator
 import imgui.g
 import imgui.internal.*
-import imgui.logRenderedText
 import imgui.internal.LayoutType as Lt
 import imgui.internal.SeparatorFlag as Sf
 

@@ -28,6 +28,8 @@ import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.selectable
 import imgui.ImGui.setActiveId
+import imgui.ImGui.setNavIDWithRectRel
+import imgui.ImGui.setNavId
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
@@ -295,8 +297,6 @@ fun getViewportRect(): Rect {
         return Rect(io.displayVisibleMin, io.displayVisibleMax)
     return Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
 }
-
-enum class PopupPositionPolicy { Default, ComboBox }
 
 /** Return false to discard a character.    */
 fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags, callback: InputTextCallback?, userData: Any?) : Boolean {
