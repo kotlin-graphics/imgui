@@ -702,6 +702,7 @@ fun navUpdate() {
         if (g.io.navInputs[NavInput.Activate] > 0f || g.io.navInputs[NavInput.Input] > 0f ||
                 g.io.navInputs[NavInput.Cancel] > 0f || g.io.navInputs[NavInput.Menu] > 0f)
             g.navInputSource = InputSource.NavGamepad
+
     // Update Keyboard->Nav inputs mapping
     if (navKeyboardActive) {
         fun navMapKey(key: Key, navInput: NavInput) {
@@ -728,6 +729,7 @@ fun navUpdate() {
             true -> if (io.navInputsDownDuration[i] < 0f) 0f else io.navInputsDownDuration[i] + io.deltaTime
             else -> -1f
         }
+
     // Process navigation init request (select first/default focus)
     if (g.navInitResultId != 0 && (!g.navDisableHighlight || g.navInitRequestFromMove)) {
         /*  Apply result from previous navigation init request (will typically select the first item,
@@ -743,9 +745,11 @@ fun navUpdate() {
     g.navInitRequestFromMove = false
     g.navInitResultId = 0
     g.navJustMovedToId = 0
+
     // Process navigation move request
     if (g.navMoveRequest && (g.navMoveResultLocal.id != 0 || g.navMoveResultOther.id != 0))
         navUpdateMoveResult()
+
     // When a forwarded move request failed, we restore the highlight that we disabled during the forward frame
     if (g.navMoveRequestForward == NavForward.ForwardActive) {
         assert(g.navMoveRequest)
@@ -753,6 +757,7 @@ fun navUpdate() {
             g.navDisableHighlight = false
         g.navMoveRequestForward = NavForward.None
     }
+
     // Apply application mouse position movement, after we had a chance to process move request result.
     if (g.navMousePosDirty && g.navIdIsAlive) {
         // Set mouse position given our knowledge of the navigated item position from last frame
@@ -767,17 +772,21 @@ fun navUpdate() {
     g.navIdIsAlive = false
     g.navJustTabbedId = 0
     assert(g.navLayer == 0 || g.navLayer == 1)
+
     // Store our return window (for returning from Layer 1 to Layer 0) and clear it as soon as we step back in our own Layer 0
     g.navWindow?.let {
         navSaveLastChildNavWindow(it)
         if (it.navLastChildNavWindow != null && g.navLayer == 0)
             it.navLastChildNavWindow = null
     }
+
     // Update CTRL+TAB and Windowing features (hold Square to move/resize/etc.)
     navUpdateWindowing()
+
     // Set output flags for user application
     io.navActive = (navKeyboardActive || navGamepadActive) && g.navWindow?.flags?.hasnt(Wf.NoNavInputs) ?: false
     io.navVisible = (io.navActive && g.navId != 0 && !g.navDisableHighlight) || g.navWindowingTarget != null || g.navInitRequest
+
     // Process NavCancel input (to close a popup, get back to parent, clear focus)
     if (NavInput.Cancel.isPressed(InputReadMode.Pressed)) {
         if (g.activeId != 0) {
@@ -805,6 +814,7 @@ fun navUpdate() {
             g.navId = 0
         }
     }
+
     // Process manual activation request
     g.navActivateId = 0
     g.navActivateDownId = 0
@@ -826,6 +836,7 @@ fun navUpdate() {
     if (g.navActivateId != 0)
         assert(g.navActivateDownId == g.navActivateId)
     g.navMoveRequest = false
+
     // Process programmatic activation request
     if (g.navNextActivateId != 0) {
         g.navInputId = g.navNextActivateId
@@ -834,6 +845,7 @@ fun navUpdate() {
         g.navActivateId = g.navNextActivateId
     }
     g.navNextActivateId = 0
+
     // Initiate directional inputs request
     val allowedDirFlags = if (g.activeId == 0) 0.inv() else g.activeIdAllowNavDirFlags
     if (g.navMoveRequestForward == NavForward.None) {
@@ -860,11 +872,13 @@ fun navUpdate() {
         assert(g.navMoveRequestForward == NavForward.ForwardQueued)
         g.navMoveRequestForward = NavForward.ForwardActive
     }
+
     // Update PageUp/PageDown scroll
     val navScoringRectOffsetY = when{
         navKeyboardActive -> navUpdatePageUpPageDown(allowedDirFlags)
         else -> 0f
     }
+
     /*  If we initiate a movement request and have no current navId, we initiate a InitDefautRequest that will be used
         as a fallback if the direction fails to find a match     */
     if (g.navMoveDir != Dir.None) {
@@ -878,6 +892,7 @@ fun navUpdate() {
         g.navDisableHighlight = false
     }
     navUpdateAnyRequestFlag()
+
     // Scrolling
     g.navWindow?.let {
 
@@ -904,10 +919,12 @@ fun navUpdate() {
             }
         }
     }
+
     // Reset search results
     g.navMoveResultLocal.clear()
     g.navMoveResultLocalVisibleSet.clear()
     g.navMoveResultOther.clear()
+
     // When we have manually scrolled (without using navigation) and NavId becomes out of bounds, we project its bounding box to the visible area to restart navigation within visible items
     if (g.navMoveRequest && g.navMoveFromClampedRefRect && g.navLayer == 0) {
         val window = g.navWindow!!
@@ -920,6 +937,7 @@ fun navUpdate() {
         }
         g.navMoveFromClampedRefRect = false
     }
+
     // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
     g.navWindow.let {
         if (it != null) {
