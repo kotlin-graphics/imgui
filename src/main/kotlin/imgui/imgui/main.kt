@@ -215,7 +215,7 @@ interface imgui_main {
 
         // Closing the focused window restore focus to the first active root window in descending z-order
         if (g.navWindow?.wasActive == false)
-            focusFrontMostActiveWindow(null)
+            focusFrontMostActiveWindowIgnoringOne(null)
 
         // No window should be open at the beginning of the frame.
         // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.
@@ -607,15 +607,6 @@ interface imgui_main {
                 ResizeGripDef(Vec2(0, 1), Vec2(+1, -1), 3, 6),  // Lower left
                 ResizeGripDef(Vec2(0, 0), Vec2(+1, +1), 6, 9),  // Upper left
                 ResizeGripDef(Vec2(1, 0), Vec2(-1, +1), 9, 12)) // Upper right
-
-        fun focusFrontMostActiveWindow(ignoreWindow: Window?) {
-            for (i in g.windows.lastIndex downTo 0)
-                if (g.windows[i] !== ignoreWindow && g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
-                    val focusWindow = navRestoreLastChildNavWindow(g.windows[i])
-                    focusWindow.focus()
-                    return
-                }
-        }
 
         // Template widget behaviors
         // This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)

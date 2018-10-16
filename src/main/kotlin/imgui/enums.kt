@@ -359,7 +359,7 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
     val i = ordinal
 
     /** JVM implementation of IsKeyPressedMap   */
-    fun isPressed(repeat: Boolean) = isKeyPressed(io.keyMap[i], repeat)
+    fun isPressed(repeat: Boolean = true) = isKeyPressed(io.keyMap[i], repeat)
 
     val isPressed: Boolean
         get() = isPressed(true)
@@ -440,6 +440,8 @@ enum class NavInput {
 
     /** Equivalent of isKeyPressed() for NavInputs[]    */
     fun isPressed(mode: InputReadMode) = getNavInputAmount(this, mode) > 0f
+
+    fun isPressedAnyOfTwo(n2: NavInput, mode: InputReadMode) = (getNavInputAmount(this, mode) + getNavInputAmount(n2, mode)) > 0f
 }
 
 typealias ConfidFlags = Int

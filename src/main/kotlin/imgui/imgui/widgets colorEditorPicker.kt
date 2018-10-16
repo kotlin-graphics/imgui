@@ -315,7 +315,7 @@ interface imgui_widgetsColorEditorPicker {
             flags = flags or Cef.NoSmallPreview
 
         // Context menu: display and store options.
-        if (flags hasnt Cef.NoOptions) colorPickerOptionsPopup(flags, col)
+        if (flags hasnt Cef.NoOptions) colorPickerOptionsPopup(col, flags)
 
         // Read stored options
         if (flags hasnt Cef._PickerMask)
