@@ -119,7 +119,7 @@ enum class ItemStatusFlag {
     HoveredRect,
     HasDisplayRect,
     /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
-    ValueChanged;
+    Edited;
 
     val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 }

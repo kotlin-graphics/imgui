@@ -19,7 +19,7 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.getId
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.markItemValueChanged
+import imgui.ImGui.markItemEdited
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popId
 import imgui.ImGui.popStyleColor
@@ -117,7 +117,7 @@ interface imgui_widgetsSelectableLists {
                 setNavId(id, window.dc.navLayerCurrent)
             }
         if (pressed)
-            markItemValueChanged(id)
+            markItemEdited(id)
 
         // Render
         if (hovered || selected) {
@@ -182,6 +182,9 @@ interface imgui_widgetsSelectableLists {
                     popId()
                 }
         listBoxFooter()
+        if (valueChanged)
+            markItemEdited(g.currentWindow!!.dc.lastItemId)
+
         return valueChanged
     }
 

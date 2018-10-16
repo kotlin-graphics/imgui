@@ -78,12 +78,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdIsJustActivated = false
     /** Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)   */
     var activeIdAllowOverlap = false
-    /** Was the value associated to the widget changed over the course of the Active state. */
-    var activeIdValueChanged = false
+    /** Was the value associated to the widget edited over the course of the Active state. */
+    var activeIdHasBeenEdited = false
 
     var activeIdPreviousFrameIsAlive = false
 
-    var activeIdPreviousFrameValueChanged = false
+    var activeIdPreviousFrameHasBeenEdited = false
     /** Active widget allows using directional navigation (e.g. can activate a button and move away from it)    */
     var activeIdAllowNavDirFlags = 0
     /** Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior) */
