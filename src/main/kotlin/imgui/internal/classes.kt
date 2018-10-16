@@ -15,6 +15,7 @@ import imgui.ImGui.io
 import imgui.ImGui.keepAliveId
 import imgui.ImGui.setActiveId
 import imgui.ImGui.style
+import imgui.imgui.navRestoreLastChildNavWindow
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.cos
@@ -750,22 +751,6 @@ class Window(var context: Context, var name: String) {
         name = ""
     }
 
-    /** SetWindowScrollX */
-    fun setScrollX(newScrollX: Float) {
-        dc.cursorMaxPos.x += scroll.x // SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need to apply our change to it.
-        scroll.x = newScrollX
-        dc.cursorMaxPos.x -= scroll.x
-    }
-
-    /** SetWindowScrollY */
-    fun setScrollY(newScrollY: Float) {
-        /*  SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need
-            to apply our change to it.         */
-        dc.cursorMaxPos.y += scroll.y
-        scroll.y = newScrollY
-        dc.cursorMaxPos.y -= scroll.y
-    }
-
     fun setPos(pos: Vec2, cond: Cond) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
         if (cond != Cond.Null && setWindowPosAllowFlags hasnt cond)
@@ -921,6 +906,7 @@ class Window(var context: Context, var name: String) {
         setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags wo flags
     }
 
+    /** ~BringWindowToFront */
     fun bringToFront() {
         val currentFrontWindow = g.windows.last()
         if (currentFrontWindow === this || currentFrontWindow.rootWindow === this)
@@ -955,7 +941,31 @@ class Window(var context: Context, var name: String) {
 
     /** Can we focus this window with CTRL+TAB (or PadMenu + PadFocusPrev/PadFocusNext)
      *  ~ IsWindowNavFocusable */
-    val isNavFocusable get() = active && this === rootWindow && flags hasnt Wf.NoNavFocus
+    val isNavFocusable: Boolean
+        get() = active && this === rootWindow && flags hasnt Wf.NoNavFocus
+
+    /** SetWindowScrollX */
+    fun setScrollX(newScrollX: Float) {
+        dc.cursorMaxPos.x += scroll.x // SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need to apply our change to it.
+        scroll.x = newScrollX
+        dc.cursorMaxPos.x -= scroll.x
+    }
+
+    /** SetWindowScrollY */
+    fun setScrollY(newScrollY: Float) {
+        /*  SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need
+            to apply our change to it.         */
+        dc.cursorMaxPos.y += scroll.y
+        scroll.y = newScrollY
+        dc.cursorMaxPos.y -= scroll.y
+    }
+
+    fun getAllowedExtentRect(): Rect {
+        val padding = style.displaySafeAreaPadding
+        return getViewportRect().apply {
+            expand(Vec2(if (width > padding.x * 2) -padding.x else 0f, if (height > padding.y * 2) -padding.y else 0f))
+        }
+    }
 
     fun calcResizePosSizeFromAnyCorner(cornerTarget: Vec2, cornerNorm: Vec2, outPos: Vec2, outSize: Vec2) {
         val posMin = cornerTarget.lerp(pos, cornerNorm)             // Expected window upper-left
@@ -1047,6 +1057,11 @@ class Window(var context: Context, var name: String) {
         while (rootWindowForNav!!.flags has Wf.NavFlattened)
             rootWindowForNav = rootWindowForNav!!.parentWindow
     }
+
+    fun calcExpectedSize(): Vec2    {
+        val sizeContents = calcSizeContents()
+        return calcSizeAfterConstraint(calcSizeAutoFit(sizeContents))
+    }
 }
 
 fun Window?.setCurrent() {
@@ -1105,4 +1120,13 @@ fun itemHoveredDataBackup(block: () -> Unit) {
     window.dc.lastItemRect put lastItemRect
     window.dc.lastItemStatusFlags = lastItemStatusFlags
     window.dc.lastItemDisplayRect = lastItemDisplayRect
+}
+
+fun focusFrontMostActiveWindowIgnoringOne(ignoreWindow: Window?) {
+    for (i in g.windows.lastIndex downTo 0)
+        if (g.windows[i] !== ignoreWindow && g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
+            val focusWindow = navRestoreLastChildNavWindow(g.windows[i])
+            focusWindow.focus()
+            return
+        }
 }

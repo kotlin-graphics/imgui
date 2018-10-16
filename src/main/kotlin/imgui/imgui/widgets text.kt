@@ -230,42 +230,5 @@ interface imgui_widgetsText {
             renderArrowPointingAt(drawList, Vec2(pos.x + barW - halfSz.x - 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Left, COL32_BLACK)
             renderArrowPointingAt(drawList, Vec2(pos.x + barW - halfSz.x, pos.y), halfSz, Dir.Left, COL32_WHITE)
         }
-
-        fun colorPickerOptionsPopup(flags: ColorEditFlags, refCol: FloatArray) {
-            val allowOptPicker = flags hasnt Cef._PickerMask
-            val allowOptAlphaBar = flags hasnt Cef.NoAlpha && flags hasnt Cef.AlphaBar
-            if ((!allowOptPicker && !allowOptAlphaBar) || !beginPopup("context")) return
-            if (allowOptPicker) {
-                // FIXME: Picker size copied from main picker function
-                val pickerSize = Vec2(g.fontSize * 8, glm.max(g.fontSize * 8 - (frameHeight + style.itemInnerSpacing.x), 1f))
-                pushItemWidth(pickerSize.x)
-                for (pickerType in 0..1) {
-                    // Draw small/thumbnail version of each picker type (over an invisible button for selection)
-                    if (pickerType > 0) separator()
-                    pushId(pickerType)
-                    var pickerFlags: ColorEditFlags = Cef.NoInputs or Cef.NoOptions or Cef.NoLabel or
-                            Cef.NoSidePreview or (flags and Cef.NoAlpha)
-                    if (pickerType == 0) pickerFlags = pickerFlags or Cef.PickerHueBar
-                    if (pickerType == 1) pickerFlags = pickerFlags or Cef.PickerHueWheel
-                    val backupPos = Vec2(cursorScreenPos)
-                    if (selectable("##selectable", false, 0, pickerSize)) // By default, Selectable() is closing popup
-                        g.colorEditOptions = (g.colorEditOptions wo Cef._PickerMask) or (pickerFlags and Cef._PickerMask)
-                    cursorScreenPos = backupPos
-                    val dummyRefCol = Vec4()
-                    for (i in 0..2) dummyRefCol[i] = refCol[i]
-                    if (pickerFlags hasnt Cef.NoAlpha) dummyRefCol[3] = refCol[3]
-                    colorPicker4("##dummypicker", dummyRefCol, pickerFlags)
-                    popId()
-                }
-                popItemWidth()
-            }
-            if (allowOptAlphaBar) {
-                if (allowOptPicker) separator()
-                val pI = intArrayOf(g.colorEditOptions)
-                checkboxFlags("Alpha Bar", pI, Cef.AlphaBar.i)
-                g.colorEditOptions = pI[0]
-            }
-            endPopup()
-        }
     }
 }

@@ -38,12 +38,8 @@ import imgui.ImGui.selectable
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
-import imgui.imgui.imgui_main.Companion.focusFrontMostActiveWindow
+import imgui.internal.*
 import imgui.internal.LayoutType
-import imgui.internal.NavForward
-import imgui.internal.Rect
-import imgui.internal.focus
-import imgui.internal.triangleContainsPoint
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
@@ -84,7 +80,7 @@ interface imgui_menus {
 
         // When the user has left the menu layer (typically: closed menus through activation of an item), we restore focus to the previous window
         if (g.currentWindow == g.navWindow && g.navLayer == 0)
-            focusFrontMostActiveWindow(g.navWindow)
+            focusFrontMostActiveWindowIgnoringOne(g.navWindow)
 
         end()
     }

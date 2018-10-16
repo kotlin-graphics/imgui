@@ -9,6 +9,7 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endPopup
+import imgui.ImGui.findBestWindowPosForPopupEx
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.frameHeight
 import imgui.ImGui.isPopupOpen
@@ -116,11 +117,10 @@ interface imgui_widgetsComboBox {
         // Peak into expected window size so we can position it
         findWindowByName(name)?.let {
             if (it.wasActive) {
-                val sizeContents = it.calcSizeContents()
-                val sizeExpected = it.calcSizeAfterConstraint(it.calcSizeAutoFit(sizeContents))
+                val sizeExpected = it.calcExpectedSize()
                 if (flags has Cf.PopupAlignLeft)
                     it.autoPosLastDirection = Dir.Left
-                val rOuter = findAllowedExtentRectForWindow(it)
+                val rOuter = it.getAllowedExtentRect()
                 val pos = findBestWindowPosForPopupEx(frameBb.bl, sizeExpected, it::autoPosLastDirection, rOuter, frameBb, PopupPositionPolicy.ComboBox)
                 setNextWindowPos(pos)
             }

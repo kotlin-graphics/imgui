@@ -537,6 +537,97 @@ interface imgui_internal {
             return null
         }
 
+    fun findBestWindowPosForPopup(window: Window): Vec2 {
+
+        val rOuter = window.getAllowedExtentRect()
+        if (window.flags has Wf.ChildMenu) {
+            /*  Child menus typically request _any_ position within the parent menu item,
+                and then our FindBestWindowPosForPopup() function will move the new menu outside the parent bounds.
+                This is how we end up with child menus appearing (most-commonly) on the right of the parent menu. */
+            assert(g.currentWindow === window)
+            val parentWindow = g.currentWindowStack[g.currentWindowStack.size - 2]
+            // We want some overlap to convey the relative depth of each menu (currently the amount of overlap is hard-coded to style.ItemSpacing.x).
+            val horizontalOverlap = style.itemSpacing.x
+            val rAvoid = parentWindow.run {
+                when {
+                    dc.menuBarAppending -> Rect(-Float.MAX_VALUE, pos.y + titleBarHeight, Float.MAX_VALUE, pos.y + titleBarHeight + menuBarHeight)
+                    else -> Rect(pos.x + horizontalOverlap, -Float.MAX_VALUE, pos.x + size.x - horizontalOverlap - scrollbarSizes.x, Float.MAX_VALUE)
+                }
+            }
+            return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter, rAvoid)
+        }
+        if (window.flags has Wf.Popup) {
+            val rAvoid = Rect(window.pos.x - 1, window.pos.y - 1, window.pos.x + 1, window.pos.y + 1)
+            return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter, rAvoid)
+        }
+        if (window.flags has Wf.Tooltip) {
+            // Position tooltip (always follows mouse)
+            val sc = style.mouseCursorScale
+            val refPos = navCalcPreferredRefPos()
+            val rAvoid = when {
+                !g.navDisableHighlight && g.navDisableMouseHover && !(io.configFlags has ConfigFlag.NavEnableSetMousePos) ->
+                    Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
+                else -> Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
+            }
+            val pos = findBestWindowPosForPopupEx(refPos, window.size, window::autoPosLastDirection, rOuter, rAvoid)
+            if (window.autoPosLastDirection == Dir.None)
+            // If there's not enough room, for tooltip we prefer avoiding the cursor at all cost even if it means that part of the tooltip won't be visible.
+                pos(refPos + 2)
+            return pos
+        }
+        assert(false)
+        return Vec2(window.pos)
+    }
+
+    /** rAvoid = the rectangle to avoid (e.g. for tooltip it is a rectangle around the mouse cursor which we want to avoid. for popups it's a small point around the cursor.)
+     *  rOuter = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding we ignore it. */
+    fun findBestWindowPosForPopupEx(refPos: Vec2, size: Vec2, lastDirPtr: KMutableProperty0<Dir>, rOuter: Rect, rAvoid: Rect,
+                                    policy: PopupPositionPolicy = PopupPositionPolicy.Default): Vec2 {
+
+        var lastDir by lastDirPtr
+        val basePosClamped = glm.clamp(refPos, rOuter.min, rOuter.max - size)
+        //GImGui->OverlayDrawList.AddRect(r_avoid.Min, r_avoid.Max, IM_COL32(255,0,0,255));
+        //GImGui->OverlayDrawList.AddRect(rOuter.Min, rOuter.Max, IM_COL32(0,255,0,255));
+
+        // Combo Box policy (we want a connecting edge)
+        if (policy == PopupPositionPolicy.ComboBox) {
+            val dirPreferedOrder = arrayOf(Dir.Down, Dir.Right, Dir.Left, Dir.Up)
+            for (n in (if (lastDir != Dir.None) -1 else 0) until Dir.Count.i) {
+                val dir = if (n == -1) lastDir else dirPreferedOrder[n]
+                if (n != -1 && dir == lastDir) continue // Already tried this direction?
+                val pos = Vec2()
+                if (dir == Dir.Down) pos.put(rAvoid.min.x, rAvoid.max.y)          // Below, Toward Right (default)
+                if (dir == Dir.Right) pos.put(rAvoid.min.x, rAvoid.min.y - size.y) // Above, Toward Right
+                if (dir == Dir.Left) pos.put(rAvoid.max.x - size.x, rAvoid.max.y) // Below, Toward Left
+                if (dir == Dir.Up) pos.put(rAvoid.max.x - size.x, rAvoid.min.y - size.y) // Above, Toward Left
+                if (!rOuter.contains(Rect(pos, pos + size))) continue
+                lastDir = dir
+                return pos
+            }
+        }
+
+        // Default popup policy
+        val dirPreferedOrder = arrayOf(Dir.Right, Dir.Down, Dir.Up, Dir.Left)
+        for (n in (if (lastDir != Dir.None) -1 else 0) until Dir.values().size) {
+            val dir = if (n == -1) lastDir else dirPreferedOrder[n]
+            if (n != -1 && dir == lastDir) continue  // Already tried this direction?
+            val availW = (if (dir == Dir.Left) rAvoid.min.x else rOuter.max.x) - if (dir == Dir.Right) rAvoid.max.x else rOuter.min.x
+            val availH = (if (dir == Dir.Up) rAvoid.min.y else rOuter.max.y) - if (dir == Dir.Down) rAvoid.max.y else rOuter.min.y
+            if (availW < size.x || availH < size.y) continue
+            val pos = Vec2(
+                    if (dir == Dir.Left) rAvoid.min.x - size.x else if (dir == Dir.Right) rAvoid.max.x else basePosClamped.x,
+                    if (dir == Dir.Up) rAvoid.min.y - size.y else if (dir == Dir.Down) rAvoid.max.y else basePosClamped.y)
+            lastDir = dir
+            return pos
+        }
+        // Fallback, try to keep within display
+        lastDir = Dir.None
+        return Vec2(refPos).apply {
+            x = max(min(x + size.x, rOuter.max.x) - size.x, rOuter.min.x)
+            y = max(min(y + size.y, rOuter.max.y) - size.y, rOuter.min.y)
+        }
+    }
+
 
     // Navigation
 
@@ -558,6 +649,8 @@ interface imgui_internal {
         } else
             g.navId = window.navLastIds[0]
     }
+
+    fun navMoveRequestButNoResultYet(): Boolean = g.navMoveRequest && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
 
     fun navMoveRequestCancel() {
         g.navMoveRequest = false
@@ -675,6 +768,20 @@ interface imgui_internal {
      *  on the next frame when the item is encountered again.  */
     fun activateItem(id: ID) {
         g.navNextActivateId = id
+    }
+
+    fun setNavId(id: ID, navLayer: Int) {
+        assert(navLayer == 0 || navLayer == 1)
+        g.navId = id
+        g.navWindow!!.navLastIds[navLayer] = id
+    }
+
+    fun setNavIDWithRectRel(id: ID, navLayer: Int, rectRel: Rect) {
+        setNavId(id, navLayer)
+        g.navWindow!!.navRectRel[navLayer] put rectRel
+        g.navMousePosDirty = true
+        g.navDisableHighlight = false
+        g.navDisableMouseHover = true
     }
 
     fun beginDragDropTargetCustom(bb: Rect, id: ID): Boolean {
@@ -1141,6 +1248,8 @@ interface imgui_internal {
             textDisplayEnd++
         return textDisplayEnd
     }
+
+    fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = 0): Nothing = TODO()
 
 
     //-----------------------------------------------------------------------------
@@ -3297,6 +3406,43 @@ interface imgui_internal {
         }
 
         g.colorEditOptions = opts
+        endPopup()
+    }
+
+    fun colorPickerOptionsPopup(refCol: FloatArray, flags: ColorEditFlags) {
+        val allowOptPicker = flags hasnt Cef._PickerMask
+        val allowOptAlphaBar = flags hasnt Cef.NoAlpha && flags hasnt Cef.AlphaBar
+        if ((!allowOptPicker && !allowOptAlphaBar) || !beginPopup("context")) return
+        if (allowOptPicker) {
+            // FIXME: Picker size copied from main picker function
+            val pickerSize = Vec2(g.fontSize * 8, glm.max(g.fontSize * 8 - (frameHeight + style.itemInnerSpacing.x), 1f))
+            pushItemWidth(pickerSize.x)
+            for (pickerType in 0..1) {
+                // Draw small/thumbnail version of each picker type (over an invisible button for selection)
+                if (pickerType > 0) separator()
+                pushId(pickerType)
+                var pickerFlags: ColorEditFlags = Cef.NoInputs or Cef.NoOptions or Cef.NoLabel or
+                        Cef.NoSidePreview or (flags and Cef.NoAlpha)
+                if (pickerType == 0) pickerFlags = pickerFlags or Cef.PickerHueBar
+                if (pickerType == 1) pickerFlags = pickerFlags or Cef.PickerHueWheel
+                val backupPos = Vec2(ImGui.cursorScreenPos)
+                if (selectable("##selectable", false, 0, pickerSize)) // By default, Selectable() is closing popup
+                    g.colorEditOptions = (g.colorEditOptions wo Cef._PickerMask) or (pickerFlags and Cef._PickerMask)
+                ImGui.cursorScreenPos = backupPos
+                val dummyRefCol = Vec4()
+                for (i in 0..2) dummyRefCol[i] = refCol[i]
+                if (pickerFlags hasnt Cef.NoAlpha) dummyRefCol[3] = refCol[3]
+                ImGui.colorPicker4("##dummypicker", dummyRefCol, pickerFlags)
+                popId()
+            }
+            popItemWidth()
+        }
+        if (allowOptAlphaBar) {
+            if (allowOptPicker) separator()
+            val pI = intArrayOf(g.colorEditOptions)
+            ImGui.checkboxFlags("Alpha Bar", pI, Cef.AlphaBar.i)
+            g.colorEditOptions = pI[0]
+        }
         endPopup()
     }
 

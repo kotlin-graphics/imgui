@@ -202,26 +202,9 @@ fun navUpdateAnyRequestFlag() {
         assert(g.navWindow != null)
 }
 
-fun navMoveRequestButNoResultYet() = g.navMoveRequest && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
-
-
 fun setCurrentWindow(window: Window?) {
     g.currentWindow = window
     if (window != null)
         g.fontSize = window.calcFontSize()
     g.drawListSharedData.fontSize = g.fontSize
-}
-
-fun setNavId(id: ID, navLayer: Int) {
-    assert(navLayer == 0 || navLayer == 1)
-    g.navId = id
-    g.navWindow!!.navLastIds[navLayer] = id
-}
-
-fun setNavIDWithRectRel(id: ID, navLayer: Int, rectRel: Rect) {
-    setNavId(id, navLayer)
-    g.navWindow!!.navRectRel[navLayer] put rectRel
-    g.navMousePosDirty = true
-    g.navDisableHighlight = false
-    g.navDisableMouseHover = true
 }
