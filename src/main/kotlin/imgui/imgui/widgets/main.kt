@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import glm_.f
 import glm_.glm
@@ -17,7 +17,6 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.plotEx
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.renderBullet
@@ -38,7 +37,7 @@ import imgui.internal.ButtonFlag as Bf
 
 /** Widgets: Main
  *  Most widgets return true when the value has been changed or when pressed/selected  */
-interface imgui_widgetsMain {
+interface main {
 
     /** button  */
     fun button(label: String, sizeArg: Vec2 = Vec2()) = buttonEx(label, sizeArg, 0)
@@ -132,7 +131,7 @@ interface imgui_widgetsMain {
     fun checkbox(label: String, v: BooleanArray) = checkbox(label, v, 0)
     fun checkbox(label: String, v: BooleanArray, i: Int): Boolean {
         b = v[i]
-        val res = checkbox(label, ::b)
+        val res = checkbox(label, Companion::b)
         v[i] = b
         return res
     }

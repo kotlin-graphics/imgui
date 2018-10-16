@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import glm_.func.deg
 import glm_.func.rad
@@ -36,7 +36,9 @@ import imgui.ImGui.setFocusId
 import imgui.ImGui.sliderBehavior
 import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
-import imgui.imgui.imgui_widgetsDrag.Companion.patchFormatStringFloatToInt
+import imgui.imgui.widgets.drags.Companion.patchFormatStringFloatToInt
+import imgui.imgui.withFloat
+import imgui.imgui.withInt
 import imgui.internal.Rect
 import imgui.internal.SliderFlag
 import imgui.internal.focus
@@ -45,7 +47,7 @@ import kotlin.reflect.KMutableProperty0
 /** Widgets: Sliders (tip: ctrl+click on a slider to input with keyboard. manually input values aren't clamped, can go off-bounds)
  *  Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
  *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc. */
-interface imgui_widgetsSliders {
+interface sliders {
 
 
     /** Adjust format to decorate the value with a prefix or a suffix.
@@ -64,7 +66,7 @@ interface imgui_widgetsSliders {
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
     fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean =
-        withFloat(v, ptr) { sliderFloat(label, it, vMin, vMax, format, power) }
+            withFloat(v, ptr) { sliderFloat(label, it, vMin, vMax, format, power) }
 
     /** Adjust format to decorate the value with a prefix or a suffix.
      *  "%.3f"         1.234

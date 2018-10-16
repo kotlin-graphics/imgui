@@ -197,12 +197,6 @@ fun navRestoreLayer(layer: Int) {
         navInitWindow(g.navWindow!!, true)
 }
 
-fun navUpdateAnyRequestFlag() {
-    g.navAnyRequest = g.navMoveRequest || g.navInitRequest || (IMGUI_DEBUG_NAV_SCORING && g.navWindow != null)
-    if (g.navAnyRequest)
-        assert(g.navWindow != null)
-}
-
 fun setCurrentWindow(window: Window?) {
     g.currentWindow = window
     if (window != null)

@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import gli_.has
 import glm_.f
@@ -22,7 +22,6 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorConvertRGBtoHSV
 import imgui.ImGui.colorEditOptionsPopup
-import imgui.ImGui.colorPickerOptionsPopup
 import imgui.ImGui.colorTooltip
 import imgui.ImGui.currentWindow
 import imgui.ImGui.cursorScreenPos
@@ -65,7 +64,7 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.u32
-import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
+import imgui.imgui.widgets.text.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -77,7 +76,7 @@ import imgui.internal.DrawCornerFlag as Dcf
  *  Note that a 'float v[X]' function argument is the same as 'float* v', the array syntax is just a way to document
  *  the number of elements that are expected to be accessible. You can the pass the address of a first float element
  *  out of a contiguous structure, e.g. &myvector.x   */
-interface imgui_widgetsColorEditorPicker {
+interface colorEditorPicker {
 
     /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
      *  Hint: 'float col[3]' function argument is same as 'float* col'.

@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import glm_.f
 import glm_.func.common.max
@@ -51,7 +51,7 @@ import kotlin.reflect.KMutableProperty0
  *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
  *  Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by 1).
  *  For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision). */
-interface imgui_widgetsDrag {
+interface drags {
 
     fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                   format: String? = "%.3f", power: Float = 1f): Boolean =

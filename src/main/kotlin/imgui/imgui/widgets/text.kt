@@ -1,29 +1,19 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.beginPopup
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcWrapWidthForPos
-import imgui.ImGui.checkboxFlags
-import imgui.ImGui.colorPicker4
 import imgui.ImGui.currentWindow
-import imgui.ImGui.cursorScreenPos
-import imgui.ImGui.endPopup
-import imgui.ImGui.frameHeight
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.popId
-import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popTextWrapPos
-import imgui.ImGui.pushId
-import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.renderArrowPointingAt
@@ -31,15 +21,13 @@ import imgui.ImGui.renderBullet
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
-import imgui.ImGui.selectable
-import imgui.ImGui.separator
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeight
 import imgui.internal.Rect
 import imgui.internal.strchr
 import imgui.ColorEditFlag as Cef
 
-interface imgui_widgetsText {
+interface text {
 
     /** Raw text without formatting. Roughly equivalent to text("%s", text) but:
      *  A) doesn't require null terminated string if 'textEnd' is specified

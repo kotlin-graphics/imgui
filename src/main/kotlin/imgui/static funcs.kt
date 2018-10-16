@@ -5,7 +5,6 @@ package imgui
 import gli_.has
 import gli_.hasnt
 import glm_.*
-import kool.bufferBig
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.ImGui.begin
@@ -299,7 +298,7 @@ fun getViewportRect(): Rect {
 }
 
 /** Return false to discard a character.    */
-fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags, callback: InputTextCallback?, userData: Any?) : Boolean {
+fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags, callback: InputTextCallback?, userData: Any?): Boolean {
 
     var c by char
 
@@ -749,44 +748,8 @@ fun navUpdate() {
     g.navJustMovedToId = 0
 
     // Process navigation move request
-    if (g.navMoveRequest && (g.navMoveResultLocal.id != 0 || g.navMoveResultOther.id != 0)) {
-        // Select which result to use
-        var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else g.navMoveResultOther
-
-        // PageUp/PageDown behavior first jumps to the bottom/top mostly visible item, _otherwise_ use the result from the previous/next page.
-        if (g.navMoveRequestFlags has NavMoveFlag.AlsoScoreVisibleSet)
-            if (g.navMoveResultLocalVisibleSet.id != 0 && g.navMoveResultLocalVisibleSet.id != g.navId)
-                result = g.navMoveResultLocalVisibleSet
-
-        // Maybe entering a flattened child from the outside? In this case solve the tie using the regular scoring rules.
-        if (result != g.navMoveResultOther && g.navMoveResultOther.id != 0 && g.navMoveResultOther.window!!.parentWindow === g.navWindow)
-            if (g.navMoveResultOther.distBox < result.distBox || (g.navMoveResultOther.distBox == result.distBox && g.navMoveResultOther.distCenter < result.distCenter))
-                result = g.navMoveResultOther
-        assert(g.navWindow != null)
-
-        // Scroll to keep newly navigated item fully into view
-        if (g.navLayer == 0) {
-            val win = result.window!!
-            val rectAbs = Rect(result.rectRel.min + win.pos, result.rectRel.max + win.pos)
-            navScrollToBringItemIntoView(win, rectAbs)
-
-            // Estimate upcoming scroll so we can offset our result position so mouse position can be applied immediately after in NavUpdate()
-            val nextScroll = calcNextScrollFromScrollTargetAndClamp(win, false)
-            val deltaScroll = win.scroll - nextScroll
-            result.rectRel translate deltaScroll
-
-            // Also scroll parent window to keep us into view if necessary (we could/should technically recurse back the whole the parent hierarchy).
-            if (win.flags has Wf.ChildWindow)
-                navScrollToBringItemIntoView(win.parentWindow!!, Rect(rectAbs.min + deltaScroll, rectAbs.max + deltaScroll))
-        }
-
-        // Apply result from previous frame navigation directional move request
-        clearActiveId()
-        g.navWindow = result.window!!
-        setNavIDWithRectRel(result.id, g.navLayer, result.rectRel)
-        g.navJustMovedToId = result.id
-        g.navMoveFromClampedRefRect = false
-    }
+    if (g.navMoveRequest && (g.navMoveResultLocal.id != 0 || g.navMoveResultOther.id != 0))
+        navUpdateMoveResult()
 
     // When a forwarded move request failed, we restore the highlight that we disabled during the forward frame
     if (g.navMoveRequestForward == NavForward.ForwardActive) {
@@ -911,36 +874,10 @@ fun navUpdate() {
     }
 
     // PageUp/PageDown scroll
-    var navScoringRectOffsetY = 0f
-    if (navKeyboardActive && g.navMoveDir == Dir.None)
-        g.navWindow?.let { window ->
-            if (window.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null && g.navLayer == 0) {
-                val pageUpHeld = Key.PageUp.isDown && allowedDirFlags has (1 shl Dir.Up.i)
-                val pageDownHeld = Key.PageDown.isDown && allowedDirFlags has (1 shl Dir.Down.i)
-                if ((pageUpHeld && !pageDownHeld) || (pageDownHeld && !pageUpHeld))
-                    if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {
-                        // Fallback manual-scroll when window has no navigable item
-                        if (Key.PageUp.isPressed)
-                            window.setScrollY(window.scroll.y - window.innerClipRect.height)
-                        else if (Key.PageDown.isPressed)
-                            window.setScrollY(window.scroll.y + window.innerClipRect.height)
-                    } else {
-                        val navRectRel = window.navRectRel[g.navLayer]
-                        val pageOffsetY = max(0f, window.innerClipRect.height - window.calcFontSize() + navRectRel.height)
-                        if (Key.PageUp.isPressed) {
-                            navScoringRectOffsetY = -pageOffsetY
-                            g.navMoveDir = Dir.Down // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
-                            g.navMoveClipDir = Dir.Up
-                            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
-                        } else if (Key.PageDown.isPressed) {
-                            navScoringRectOffsetY = +pageOffsetY
-                            g.navMoveDir = Dir.Up // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
-                            g.navMoveClipDir = Dir.Down
-                            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
-                        }
-                    }
-            }
-        }
+    val navScoringRectOffsetY = when{
+        navKeyboardActive -> navUpdatePageUpPageDown(allowedDirFlags)
+        else -> 0f
+    }
 
     if (g.navMoveDir != Dir.None) {
         g.navMoveRequest = true
@@ -1185,6 +1122,89 @@ fun navUpdateWindowingList() {
     popStyleVar()
 }
 
+fun navUpdateMoveResult() {
+
+    // Select which result to use
+    var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else g.navMoveResultOther
+
+    // PageUp/PageDown behavior first jumps to the bottom/top mostly visible item, _otherwise_ use the result from the previous/next page.
+    if (g.navMoveRequestFlags has NavMoveFlag.AlsoScoreVisibleSet)
+        if (g.navMoveResultLocalVisibleSet.id != 0 && g.navMoveResultLocalVisibleSet.id != g.navId)
+            result = g.navMoveResultLocalVisibleSet
+
+    // Maybe entering a flattened child from the outside? In this case solve the tie using the regular scoring rules.
+    if (result != g.navMoveResultOther && g.navMoveResultOther.id != 0 && g.navMoveResultOther.window!!.parentWindow === g.navWindow)
+        if (g.navMoveResultOther.distBox < result.distBox || (g.navMoveResultOther.distBox == result.distBox && g.navMoveResultOther.distCenter < result.distCenter))
+            result = g.navMoveResultOther
+    val window = result.window!!
+    assert(g.navWindow != null)
+    // Scroll to keep newly navigated item fully into view.
+    if (g.navLayer == 0) {
+        val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
+        navScrollToBringItemIntoView(window, rectAbs)
+        // Estimate upcoming scroll so we can offset our result position so mouse position can be applied immediately after in NavUpdate()
+        val nextScroll = calcNextScrollFromScrollTargetAndClamp(window, false)
+        val deltaScroll = window.scroll - nextScroll
+        result.rectRel.translate(deltaScroll)
+        // Also scroll parent window to keep us into view if necessary (we could/should technically recurse back the whole the parent hierarchy).
+        if (window.flags has Wf.ChildWindow)
+            navScrollToBringItemIntoView(window.parentWindow!!, Rect(rectAbs.min + deltaScroll, rectAbs.max + deltaScroll))
+    }
+    // Apply result from previous frame navigation directional move request
+    clearActiveId()
+    g.navWindow = window
+    setNavIDWithRectRel(result.id, g.navLayer, result.rectRel)
+    g.navJustMovedToId = result.id
+    g.navMoveFromClampedRefRect = false
+}
+
+fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
+
+    if (g.navMoveDir == Dir.None)
+
+        g.navWindow?.let { window ->
+
+            if (window.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null && g.navLayer == 0) {
+
+                val pageUpHeld = Key.PageUp.isDown && allowedDirFlags has (1 shl Dir.Up.i)
+                val pageDownHeld = Key.PageDown.isDown && allowedDirFlags has (1 shl Dir.Down)
+                if ((pageUpHeld && !pageDownHeld) || (pageDownHeld && !pageUpHeld))
+                    if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {
+                        // Fallback manual-scroll when window has no navigable item
+                        if (Key.PageUp.isPressed)
+                            window.setScrollY(window.scroll.y - window.innerClipRect.height)
+                        else if (Key.PageDown.isPressed)
+                            window.setScrollY(window.scroll.y + window.innerClipRect.height)
+                    } else {
+                        val navRectRel = window.navRectRel[g.navLayer]
+                        val pageOffsetY = 0f max (window.innerClipRect.height - window.calcFontSize() + navRectRel.height)
+                        return when { // nav_scoring_rect_offset_y
+                            Key.PageUp.isPressed -> {
+                                g.navMoveDir = Dir.Down // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
+                                g.navMoveClipDir = Dir.Up
+                                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
+                                -pageOffsetY
+                            }
+                            Key.PageDown.isPressed -> {
+                                g.navMoveDir = Dir.Up // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
+                                g.navMoveClipDir = Dir.Down
+                                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
+                                +pageOffsetY
+                            }
+                            else -> 0f
+                        }
+                    }
+            }
+        }
+    return 0f
+}
+
+fun navUpdateAnyRequestFlag() {
+    g.navAnyRequest = g.navMoveRequest || g.navInitRequest || (IMGUI_DEBUG_NAV_SCORING && g.navWindow != null)
+    if (g.navAnyRequest)
+        assert(g.navWindow != null)
+}
+
 /** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)    */
 fun navProcessItem(window: Window, navBb: Rect, id: ID) {
 
@@ -1248,6 +1268,17 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
     }
 }
 
+fun navCalcPreferredRefPos(): Vec2 {
+    if (g.navDisableHighlight || !g.navDisableMouseHover || g.navWindow == null)
+        return glm.floor(io.mousePos)
+
+    // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item
+    val rectRel = g.navWindow!!.navRectRel[g.navLayer]
+    val pos = g.navWindow!!.pos + Vec2(rectRel.min.x + min(g.style.framePadding.x * 4, rectRel.width),
+            rectRel.max.y - min(g.style.framePadding.y, rectRel.height))
+    val visibleRect = getViewportRect()
+    return glm.floor(glm.clamp(Vec2(pos), visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
+}
 
 //-----------------------------------------------------------------------------
 // Platform dependent default implementations
@@ -1275,19 +1306,6 @@ var imeSetInputScreenPosFn_Win32 = { x: Int, y: Int ->
 }
 
 private var i0 = 0
-
-
-fun navCalcPreferredRefPos(): Vec2 {
-    if (g.navDisableHighlight || !g.navDisableMouseHover || g.navWindow == null)
-        return glm.floor(io.mousePos)
-
-    // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item
-    val rectRel = g.navWindow!!.navRectRel[g.navLayer]
-    val pos = g.navWindow!!.pos + Vec2(rectRel.min.x + min(g.style.framePadding.x * 4, rectRel.width),
-            rectRel.max.y - min(g.style.framePadding.y, rectRel.height))
-    val visibleRect = getViewportRect()
-    return glm.floor(glm.clamp(Vec2(pos), visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
-}
 
 fun isNavInputPressedAnyOfTwo(n1: NavInput, n2: NavInput, mode: InputReadMode) = getNavInputAmount(n1, mode) + getNavInputAmount(n2, mode) > 0f
 

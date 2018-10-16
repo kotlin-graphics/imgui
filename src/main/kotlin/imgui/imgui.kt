@@ -2,6 +2,7 @@ package imgui
 
 import glm_.i
 import imgui.imgui.*
+import imgui.imgui.widgets.*
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
@@ -58,17 +59,17 @@ object ImGui :
         imgui_cursorLayout,
         imgui_colums,
         imgui_idScopes,
-        imgui_listBoxes,
-        imgui_widgetsText,
-        imgui_widgetsMain,
-        imgui_widgetsComboBox,
-        imgui_widgetsDataPlotting,
-        imgui_widgetsDrag,
-        imgui_widgetsInputKeyboard,
-        imgui_widgetsSliders,
-        imgui_widgetsColorEditorPicker,
-        imgui_widgetsTrees,
-        imgui_widgetsSelectableLists,
+        listBoxes,
+        text,
+        main,
+        comboBox,
+        dataPlotting,
+        drags,
+        inputKeyboard,
+        sliders,
+        colorEditorPicker,
+        trees,
+        selectableLists,
         imgui_tooltips,
         imgui_menus,
         imgui_popups,

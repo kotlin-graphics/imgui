@@ -65,6 +65,7 @@ import imgui.ImGui.textUnformatted
 import imgui.TextEditState.K
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.imgui.imgui_main.Companion.dragBehaviorT
+import imgui.imgui.widgets.main
 import imgui.internal.*
 import uno.kotlin.buffers.fill
 import java.awt.Toolkit
@@ -3446,7 +3447,7 @@ interface imgui_internal {
         endPopup()
     }
 
-    fun plotEx(plotType: PlotType, label: String, data: imgui_widgetsMain.PlotArray, valuesOffset: Int, overlayText: String,
+    fun plotEx(plotType: PlotType, label: String, data: main.PlotArray, valuesOffset: Int, overlayText: String,
                scaleMin_: Float, scaleMax_: Float, graphSize: Vec2) {
 
         val window = currentWindow

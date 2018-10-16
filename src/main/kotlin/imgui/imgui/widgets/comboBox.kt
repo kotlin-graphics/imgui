@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import glm_.func.common.max
 import glm_.vec2.Vec2
@@ -42,7 +42,7 @@ import imgui.internal.ButtonFlag as Bf
 /** Widgets: Combo Box
  *  The new BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it,
  *  by creating e.g. Selectable() items. */
-interface imgui_widgetsComboBox {
+interface comboBox {
 
     fun beginCombo(label: String, previewValue: String?, flags_: ComboFlags = 0): Boolean {
 
@@ -153,7 +153,7 @@ interface imgui_widgetsComboBox {
         i = currentItem[0]
         val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
         // FIXME-OPT: Avoid computing this, or at least only when combo is open
-        val res = combo(label, ::i, items, heightInItems)
+        val res = combo(label, Companion::i, items, heightInItems)
         currentItem[0] = i
         return res
     }
@@ -167,7 +167,7 @@ interface imgui_widgetsComboBox {
     /** Combo box function. */
     fun combo(label: String, currentItem: IntArray, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
         i = currentItem[0]
-        val res = combo(label, ::i, items, popupMaxHeightInItem)
+        val res = combo(label, Companion::i, items, popupMaxHeightInItem)
         currentItem[0] = i
         return res
     }
