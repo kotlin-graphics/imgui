@@ -187,7 +187,7 @@ interface imgui_cursorLayout {
         /*  If the current ActiveId was declared within the boundary of our group, we copy it to ::lastItemId so ::isItemActive,
             ::isItemDeactivated etc. will be functional on the entire group.
             It would be be neater if we replaced window.dc.lastItemId by e.g. 'lastItemIsActive: Boolean',
-            but put a little more burden on individual widgets.
+            but would put a little more burden on individual widgets.
             (and if you grep for LastItemId you'll notice it is only used in that context.    */
         if (groupData.backupActiveIdIsAlive != g.activeId && g.activeIdIsAlive == g.activeId && g.activeId != 0) // && g.ActiveIdWindow->RootWindow == window->RootWindow)
             window.dc.lastItemId = g.activeId

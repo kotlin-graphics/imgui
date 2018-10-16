@@ -42,7 +42,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.markItemValueChanged
+import imgui.ImGui.markItemEdited
 import imgui.ImGui.openPopup
 import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popId
@@ -263,7 +263,7 @@ interface imgui_widgetsColorEditorPicker {
             window.dc.lastItemId = g.activeId
 
         if (valueChanged)
-            markItemValueChanged(window.dc.lastItemId)
+            markItemEdited(window.dc.lastItemId)
 
         return valueChanged
     }
@@ -576,7 +576,7 @@ interface imgui_widgetsColorEditorPicker {
         if (valueChanged && compare)
             valueChanged = false
         if (valueChanged)
-            markItemValueChanged(window.dc.lastItemId)
+            markItemEdited(window.dc.lastItemId)
 
         popId()
 
@@ -657,7 +657,7 @@ interface imgui_widgetsColorEditorPicker {
         }
 
         if (pressed)
-            markItemValueChanged(id)
+            markItemEdited(id)
 
         return pressed
     }

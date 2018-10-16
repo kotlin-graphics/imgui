@@ -822,6 +822,7 @@ class Window(var context: Context, var name: String) {
 
     infix fun isContentHoverable(flag: Hf) = isContentHoverable(flag.i)
 
+    /** ~IsWindowContentHoverable */
     infix fun isContentHoverable(flags: HoveredFlags): Boolean {
         // An active popup disable hovering on other windows (apart from its own children)
         // FIXME-OPT: This could be cached/stored within the window.

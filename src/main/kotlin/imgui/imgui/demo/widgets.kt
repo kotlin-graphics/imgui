@@ -10,7 +10,6 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.arrowButton
-import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropSource
@@ -66,7 +65,8 @@ import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemClicked
 import imgui.ImGui.isItemDeactivated
-import imgui.ImGui.isItemDeactivatedAfterChange
+import imgui.ImGui.isItemDeactivatedAfterEdit
+import imgui.ImGui.isItemEdited
 import imgui.ImGui.isItemFocused
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isItemVisible
@@ -75,6 +75,7 @@ import imgui.ImGui.isWindowFocused
 import imgui.ImGui.isWindowHovered
 import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectMin
+import imgui.ImGui.itemRectSize
 import imgui.ImGui.labelText
 import imgui.ImGui.listBox
 import imgui.ImGui.menuItem
@@ -1104,16 +1105,17 @@ object widgets {
                 }
             }
 
-            treeNode("Active, Focused, Hovered & Focused Tests") {
+            treeNode("Querying Status (Active/Focused/Hovered etc.)") {
                 /*  Display the value of IsItemHovered() and other common item state functions. Note that the flags can be combined.
                     (because BulletText is an item itself and that would affect the output of ::isItemHovered
                     we pass all state in a single call to simplify the code).   */
-                radioButton("Text", ::itemType, 0); sameLine()
-                radioButton("Button", ::itemType, 1); sameLine()
-                radioButton("CheckBox", ::itemType, 2); sameLine()
-                radioButton("SliderFloat", ::itemType, 3); sameLine()
-                radioButton("ColorEdit4", ::itemType, 4); sameLine()
+                radioButton("Text", ::itemType, 0)
+                radioButton("Button", ::itemType, 1)
+                radioButton("CheckBox", ::itemType, 2)
+                radioButton("SliderFloat", ::itemType, 3)
+                radioButton("ColorEdit4", ::itemType, 4)
                 radioButton("ListBox", ::itemType, 5)
+                separator()
                 val ret = when (itemType) {
                     0 -> false.also { text("ITEM: Text") }   // Testing text items with no identifier/interaction
                     1 -> button("ITEM: Button")   // Testing button
@@ -1131,9 +1133,13 @@ object widgets {
                         "isItemHovered(AllowWhenOverlapped) = ${isItemHovered(HoveredFlag.AllowWhenOverlapped)}\n" +
                         "isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly)}\n" +
                         "isItemActive = $isItemActive\n" +
+                        "isItemEdited = $isItemEdited\n" +
                         "isItemDeactivated = $isItemDeactivated\n" +
-                        "isItemDeactivatedAfterChange = $isItemDeactivatedAfterChange\n" +
-                        "isItemVisible = $isItemVisible\n")
+                        "isItemDeactivatedAfterEdit = $isItemDeactivatedAfterEdit\n" +
+                        "isItemVisible = $isItemVisible\n" +
+                        "GetItemRectMin() = (%.1f, %.1f)\n" +
+                        "GetItemRectMax() = (%.1f, %.1f)\n" +
+                        "GetItemRectSize() = (%.1f, %.1f)", itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
 
                 checkbox("Embed everything inside a child window (for additional testing)", ::embedAllInsideAChildWindow)
                 if (embedAllInsideAChildWindow)

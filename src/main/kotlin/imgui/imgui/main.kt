@@ -139,7 +139,7 @@ interface imgui_main {
         g.lastActiveIdTimer += io.deltaTime
         g.activeIdPreviousFrame = g.activeId
         g.activeIdPreviousFrameWindow = g.activeIdWindow
-        g.activeIdPreviousFrameValueChanged = g.activeIdValueChanged
+        g.activeIdPreviousFrameHasBeenEdited = g.activeIdHasBeenEdited
         g.activeIdIsAlive = 0
         g.activeIdPreviousFrameIsAlive = false
         g.activeIdIsJustActivated = false
