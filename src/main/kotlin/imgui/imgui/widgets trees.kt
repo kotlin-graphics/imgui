@@ -7,9 +7,11 @@ import imgui.*
 import imgui.ImGui.closeButton
 import imgui.ImGui.currentWindow
 import imgui.ImGui.indent
+import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
+import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent

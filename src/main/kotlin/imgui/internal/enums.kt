@@ -211,6 +211,7 @@ enum class NavForward { None, ForwardQueued, ForwardActive;
     val i = ordinal
 }
 
+enum class PopupPositionPolicy { Default, ComboBox }
 
 // TODO check enum declarance position
 enum class DrawCornerFlag(val i: Int) {

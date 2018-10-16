@@ -21,6 +21,7 @@ import imgui.ImGui.endPopup
 import imgui.ImGui.io
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.itemHoverable
+import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
@@ -35,6 +36,7 @@ import imgui.ImGui.renderArrow
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderText
 import imgui.ImGui.selectable
+import imgui.ImGui.setNavIDWithRectRel
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style

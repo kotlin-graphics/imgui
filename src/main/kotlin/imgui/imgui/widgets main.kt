@@ -15,6 +15,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.getColorU32
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.plotEx
 import imgui.ImGui.popId
@@ -279,36 +280,6 @@ interface imgui_widgetsMain {
     class PlotArrayFunc(val func: (Int) -> Float, val count: Int) : PlotArray {
         override operator fun get(idx: Int) = func(idx)
         override fun count() = count
-    }
-
-    fun plotLines(label: String, values: FloatArray, valuesOffset: Int = 0, overlayText: String = "", scaleMin: Float = Float.MAX_VALUE,
-                  scaleMax: Float = Float.MAX_VALUE, graphSize: Vec2 = Vec2(), stride: Int = 1) {
-
-        val data = PlotArrayData(values, stride)
-        plotEx(PlotType.Lines, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
-    }
-
-    fun plotLines(label: String, valuesGetter: (idx: Int) -> Float, valuesCount: Int, valuesOffset: Int = 0,
-                  overlayText: String = "", scaleMin: Float = Float.MAX_VALUE, scaleMax: Float = Float.MAX_VALUE,
-                  graphSize: Vec2 = Vec2()) {
-
-        val data = PlotArrayFunc(valuesGetter, valuesCount)
-        plotEx(PlotType.Lines, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
-    }
-
-    fun plotHistogram(label: String, values: FloatArray, valuesOffset: Int = 0, overlayText: String = "",
-                      scaleMin: Float = Float.MAX_VALUE, scaleMax: Float = Float.MAX_VALUE, graphSize: Vec2 = Vec2(), stride: Int = 1) {
-
-        val data = PlotArrayData(values, stride)
-        plotEx(PlotType.Histogram, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
-    }
-
-    fun plotHistogram(label: String, valuesGetter: (idx: Int) -> Float, valuesCount: Int, valuesOffset: Int = 0,
-                      overlayText: String = "", scaleMin: Float = Float.MAX_VALUE, scaleMax: Float = Float.MAX_VALUE,
-                      graphSize: Vec2 = Vec2()) {
-
-        val data = PlotArrayFunc(valuesGetter, valuesCount)
-        plotEx(PlotType.Histogram, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
     }
 
     fun progressBar(fraction_: Float, sizeArg: Vec2 = Vec2(-1f, 0f), overlay_: String = "") {
