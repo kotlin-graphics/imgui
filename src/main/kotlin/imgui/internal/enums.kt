@@ -114,7 +114,10 @@ infix fun Int.has(b: SeparatorFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: SeparatorFlag) = (this and b.i) == 0
 
 /** Storage for LastItem data   */
-enum class ItemStatusFlag { None, HoveredRect, HasDisplayRect,
+enum class ItemStatusFlag {
+    None,
+    HoveredRect,
+    HasDisplayRect,
     /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
     ValueChanged;
 
