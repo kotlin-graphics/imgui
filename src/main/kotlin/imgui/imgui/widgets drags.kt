@@ -7,6 +7,7 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
+import glm_.vec3.Vec3
 import glm_.vec3.Vec3i
 import glm_.vec4.Vec4i
 import imgui.*
@@ -67,20 +68,20 @@ interface imgui_widgetsDrag {
 
     fun dragVec2(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", power: Float = 1f): Boolean {
         val floats = v to FloatArray(2)
-        val res = dragFloatN(label, floats, 2, vSpeed, vMin, vMax, format, power)
-        v put floats
-        return res
+        return dragFloatN(label, floats, 2, vSpeed, vMin, vMax, format, power).also {
+            v put floats
+        }
     }
 
     fun dragFloat3(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
                    power: Float = 1f) = dragFloatN(label, v, 3, vSpeed, vMin, vMax, format, power)
 
-    fun dragVec3(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
+    fun dragVec3(label: String, v: Vec3, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
                  power: Float = 1f): Boolean {
         val floats = v to FloatArray(3)
-        val res = dragFloatN(label, floats, 3, vSpeed, vMin, vMax, format, power)
-        v put floats
-        return res
+        return dragFloatN(label, floats, 3, vSpeed, vMin, vMax, format, power).also {
+            v put floats
+        }
     }
 
     fun dragFloat4(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
@@ -89,14 +90,14 @@ interface imgui_widgetsDrag {
     fun dragVec4(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
                  power: Float = 1f): Boolean {
         val floats = v to FloatArray(4)
-        val res = dragFloatN(label, floats, 4, vSpeed, vMin, vMax, format, power)
-        v put floats
-        return res
+        return dragFloatN(label, floats, 4, vSpeed, vMin, vMax, format, power).also {
+            v put floats
+        }
     }
 
     fun dragFloatRange2(label: String, vCurrentMinPtr: KMutableProperty0<Float>, vCurrentMaxPtr: KMutableProperty0<Float>,
                         vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", formatMax: String = format,
-                        power: Float = 1f) : Boolean {
+                        power: Float = 1f): Boolean {
 
         val vCurrentMin by vCurrentMinPtr
         val vCurrentMax by vCurrentMaxPtr
@@ -137,9 +138,9 @@ interface imgui_widgetsDrag {
 
     fun dragVec2i(label: String, v: Vec2i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean {
         val ints = v to IntArray(2)
-        val res = dragIntN(label, ints, 2, vSpeed, vMin, vMax, format)
-        v put ints
-        return res
+        return dragIntN(label, ints, 2, vSpeed, vMin, vMax, format).also {
+            v put ints
+        }
     }
 
     fun dragInt3(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
@@ -147,9 +148,9 @@ interface imgui_widgetsDrag {
 
     fun dragVec3i(label: String, v: Vec3i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean {
         val ints = v to IntArray(3)
-        val res = dragIntN(label, ints, 3, vSpeed, vMin, vMax, format)
-        v put ints
-        return res
+        return dragIntN(label, ints, 3, vSpeed, vMin, vMax, format).also {
+            v put ints
+        }
     }
 
     fun dragInt4(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
@@ -157,9 +158,9 @@ interface imgui_widgetsDrag {
 
     fun dragVec4i(label: String, v: Vec4i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean {
         val ints = v to IntArray(4)
-        val res = dragIntN(label, ints, 4, vSpeed, vMin, vMax, format)
-        v put ints
-        return res
+        return dragIntN(label, ints, 4, vSpeed, vMin, vMax, format).also {
+            v put ints
+        }
     }
 
     fun dragIntRange2(label: String, vCurrentMinPtr: KMutableProperty0<Int>, vCurrentMaxPtr: KMutableProperty0<Int>, vSpeed: Float = 1f,
