@@ -9,6 +9,7 @@ import glm_.vec2.operators.div
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
+import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.arrowButton
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginCombo
@@ -316,7 +317,8 @@ object widgets {
                 radioButton("radio c", ::e, 2)
                 // Color buttons, demonstrate using PushID() to add unique identifier in the ID stack, and changing style.
                 for (i in 0..6) {
-                    if (i > 0) sameLine()
+                    if (i > 0)
+                        sameLine()
                     withId(i) {
                         withStyleColor(
                                 Col.Button, Color.hsv(i / 7f, 0.6f, 0.6f),
@@ -327,7 +329,12 @@ object widgets {
                     }
                 }
 
-                // Arrow buttons
+                // Use AlignTextToFramePadding() to align text baseline to the baseline of framed elements (otherwise a Text+SameLine+Button sequence will have the text a little too high by default)
+                alignTextToFramePadding()
+                text("Hold to repeat:")
+                sameLine()
+
+                // Arrow buttons with Repeater
                 val spacing = style.itemInnerSpacing.x
                 pushButtonRepeat(true)
                 if (arrowButton("##left", Dir.Left)) counter--
