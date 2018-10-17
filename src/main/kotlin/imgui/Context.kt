@@ -42,8 +42,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var frameCountEnded = -1
 
     var frameCountRendered = -1
-
+    /** Windows, sorted in display order, back to front */
     val windows = ArrayList<Window>()
+    /** Windows, sorted in focus order, back to front */
+    val windowsFocusOrder = ArrayList<Window>()
 
     val windowsSortBuffer = ArrayList<Window>()
 
@@ -367,6 +369,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         // Clear everything else
         g.windows.forEach { it.clear() }
         g.windows.clear()
+        g.windowsFocusOrder.clear()
         g.windowsSortBuffer.clear()
         g.currentWindow = null
         g.currentWindowStack.clear()

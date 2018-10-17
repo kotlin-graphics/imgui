@@ -73,6 +73,7 @@ object ExampleApp {
     var noCollapse = false
     var noClose = false
     var noNav = false
+    var noBringToFront = false
 
     var filter = TextFilter()
 
@@ -112,8 +113,9 @@ object ExampleApp {
         if (noMove) windowFlags = windowFlags or Wf.NoMove
         if (noResize) windowFlags = windowFlags or Wf.NoResize
         if (noCollapse) windowFlags = windowFlags or Wf.NoCollapse
-        if (noClose) open = null // Don't pass our bool* to Begin
         if (noNav) windowFlags = windowFlags or Wf.NoNav
+        if (noBringToFront) windowFlags = windowFlags or Wf.NoBringToFrontOnFocus
+        if (noClose) open = null // Don't pass our bool* to Begin
         /*  We specify a default position/size in case there's no data in the .ini file. Typically this isn't required!
             We only do it to make the Demo applications a little more welcoming.         */
         setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
@@ -236,7 +238,8 @@ object ExampleApp {
             checkbox("No resize", ::noResize); sameLine(300)
             checkbox("No collapse", ::noCollapse)
             checkbox("No close", ::noClose); sameLine(150)
-            checkbox("No nav", ::noNav)
+            checkbox("No nav", ::noNav); sameLine(300)
+            checkbox("No bring to front", ::noBringToFront)
         }
 
         widgets()

@@ -880,13 +880,13 @@ class Window(var context: Context, var name: String) {
     }
 
     /** AddWindowToSortedBuffer */
-    infix fun addToSortedBuffer(sortedWindows: ArrayList<Window>) {
+    infix fun addToSortBuffer(sortedWindows: ArrayList<Window>) {
         sortedWindows += this
         if (active) {
             val count = dc.childWindows.size
             if (count > 1)
                 dc.childWindows.sortWith(childWindowComparer)
-            dc.childWindows.filter { it.active }.forEach { it addToSortedBuffer sortedWindows }
+            dc.childWindows.filter { it.active }.forEach { it addToSortBuffer sortedWindows }
         }
     }
 
@@ -906,21 +906,32 @@ class Window(var context: Context, var name: String) {
         setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags wo flags
     }
 
-    /** ~BringWindowToFront */
-    fun bringToFront() {
+    fun bringToFocusFront() {
+        if (g.windowsFocusOrder.last() === this)
+            return
+        for (i in g.windowsFocusOrder.size - 2 downTo 0) // We can ignore the front most window
+            if (g.windowsFocusOrder[i] === this) {
+                g.windowsFocusOrder.removeAt(i)
+                g.windowsFocusOrder += this
+                break;
+            }
+    }
+
+    /** ~BringWindowToDisplayFront */
+    fun bringToDisplayFront() {
         val currentFrontWindow = g.windows.last()
         if (currentFrontWindow === this || currentFrontWindow.rootWindow === this)
             return
-        for (i in g.windows.size - 2 downTo 0)
+        for (i in g.windows.size - 2 downTo 0) // We can ignore the front most window
             if (g.windows[i] === this) {
                 g.windows.removeAt(i)
-                g.windows.add(this)
+                g.windows += this
                 break
             }
     }
 
-    /** ~ BringWindowToBack */
-    fun bringToBack() {
+    /** ~ BringWindowToDisplayBack */
+    fun bringToDisplayBack() {
         if (g.windows[0] === this) return
         for (i in 0 until g.windows.size)
             if (g.windows[i] === this) {
@@ -1058,7 +1069,7 @@ class Window(var context: Context, var name: String) {
             rootWindowForNav = rootWindowForNav!!.parentWindow
     }
 
-    fun calcExpectedSize(): Vec2    {
+    fun calcExpectedSize(): Vec2 {
         val sizeContents = calcSizeContents()
         return calcSizeAfterConstraint(calcSizeAutoFit(sizeContents))
     }
@@ -1098,8 +1109,9 @@ fun Window?.focus() {
             clearActiveId()
 
     // Bring to front
+    bringToFocusFront()
     if (window.flags hasnt Wf.NoBringToFrontOnFocus)
-        window.bringToFront()
+        window.bringToDisplayFront()
 }
 
 /** Backup and restore just enough data to be able to use isItemHovered() on item A after another B in the same window
@@ -1122,11 +1134,13 @@ fun itemHoveredDataBackup(block: () -> Unit) {
     window.dc.lastItemDisplayRect = lastItemDisplayRect
 }
 
-fun focusFrontMostActiveWindowIgnoringOne(ignoreWindow: Window?) {
-    for (i in g.windows.lastIndex downTo 0)
-        if (g.windows[i] !== ignoreWindow && g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
-            val focusWindow = navRestoreLastChildNavWindow(g.windows[i])
+fun focusPreviousWindowIgnoringOne(ignoreWindow: Window?) {
+    for (i in g.windowsFocusOrder.lastIndex downTo 0) {
+        val window = g.windowsFocusOrder[i]
+        if (window !== ignoreWindow && window.wasActive && window.flags hasnt Wf.ChildWindow) {
+            val focusWindow = navRestoreLastChildNavWindow(window)
             focusWindow.focus()
             return
         }
+    }
 }
