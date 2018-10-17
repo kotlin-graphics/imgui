@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package imgui.imgui
 
 import glm_.*
@@ -19,7 +21,6 @@ import imgui.ConfigFlag as Cf
 import imgui.WindowFlag as Wf
 import imgui.internal.DrawListFlag as Dlf
 
-@Suppress("UNCHECKED_CAST")
 
 // Template widget behaviors
 // This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
@@ -28,8 +29,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
                   power: Float): Boolean {
 
     var v by vPtr as KMutableProperty0<Int>
-    // Default tweak speed
+
+    val isDecimal = false
     val hasMinMax = vMin != vMax && (vMax - vMax < Int.MAX_VALUE)
+
+    // Default tweak speed
     var vSpeed = vSpeed_
     if (vSpeed == 0f && hasMinMax)
         vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
@@ -43,8 +47,8 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
         if (io.keyShift)
             adjustDelta *= 10f
     } else if (g.activeIdSource == InputSource.Nav) {
-        val decimalPrecision = when (dataType) {
-            DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
+        val decimalPrecision = when {
+            isDecimal -> parseFormatPrecision(format, 3)
             else -> 0
         }
         adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
@@ -71,7 +75,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0f
 
-    val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
+    val isPower = power != 1f && isDecimal && hasMinMax
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
@@ -97,11 +101,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     if (vCur == -0)
         vCur = 0
 
-    // Clamp values (handle overflow/wrap-around)
+    // Clamp values (+ handle overflow/wrap-around for integer types)
     if (v != vCur && hasMinMax) {
-        if (vCur < vMin || (vCur > v && adjustDelta < 0f))
+        if (vCur < vMin || (vCur > v && adjustDelta < 0f && !isDecimal))
             vCur = vMin
-        if (vCur > vMax || (vCur < v && adjustDelta > 0f))
+        if (vCur > vMax || (vCur < v && adjustDelta > 0f && !isDecimal))
             vCur = vMax
     }
 
@@ -116,8 +120,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
                   power: Float): Boolean {
 
     var v by vPtr as KMutableProperty0<Long>
-    // Default tweak speed
+
+    val isDecimal = false
     val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
+
+    // Default tweak speed
     var vSpeed = vSpeed_
     if (vSpeed == 0f && hasMinMax)
         vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
@@ -131,8 +138,8 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
         if (io.keyShift)
             adjustDelta *= 10f
     } else if (g.activeIdSource == InputSource.Nav) {
-        val decimalPrecision = when (dataType) {
-            DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
+        val decimalPrecision = when {
+            isDecimal -> parseFormatPrecision(format, 3)
             else -> 0
         }
         adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
@@ -159,7 +166,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0.0
 
-    val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
+    val isPower = power != 1f && isDecimal && hasMinMax
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)
@@ -185,11 +192,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     if (vCur == -0L)
         vCur = 0
 
-    // Clamp values (handle overflow/wrap-around)
+    // Clamp values (+ handle overflow/wrap-around for integer types)
     if (v != vCur && hasMinMax) {
-        if (vCur < vMin || (vCur > v && adjustDelta < 0f))
+        if (vCur < vMin || (vCur > v && adjustDelta < 0f && !isDecimal))
             vCur = vMin
-        if (vCur > vMax || (vCur < v && adjustDelta > 0f))
+        if (vCur > vMax || (vCur < v && adjustDelta > 0f && !isDecimal))
             vCur = vMax
     }
 
@@ -205,8 +212,10 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
 
     var v by vPtr as KMutableProperty0<Float>
 
-    // Default tweak speed
+    val isDecimal = true
     val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
+
+    // Default tweak speed
     var vSpeed = vSpeed_
     if (vSpeed == 0f && hasMinMax)
         vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
@@ -220,8 +229,8 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
         if (io.keyShift)
             adjustDelta *= 10f
     } else if (g.activeIdSource == InputSource.Nav) {
-        val decimalPrecision = when (dataType) {
-            DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
+        val decimalPrecision = when {
+            isDecimal -> parseFormatPrecision(format, 3)
             else -> 0
         }
         adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
@@ -248,7 +257,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0f
 
-    val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
+    val isPower = power != 1f && isDecimal && hasMinMax
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power).f
@@ -273,11 +282,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     if (vCur == -0f)
         vCur = 0f
 
-    // Clamp values (handle overflow/wrap-around)
+    // Clamp values (+ handle overflow/wrap-around for integer types)
     if (v != vCur && hasMinMax) {
-        if (vCur < vMin || (vCur > v && adjustDelta < 0f))
+        if (vCur < vMin || (vCur > v && adjustDelta < 0f && !isDecimal))
             vCur = vMin
-        if (vCur > vMax || (vCur < v && adjustDelta > 0f))
+        if (vCur > vMax || (vCur < v && adjustDelta > 0f && !isDecimal))
             vCur = vMax
     }
 
@@ -292,8 +301,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
                   power: Float): Boolean {
 
     var v by vPtr as KMutableProperty0<Double>
-    // Default tweak speed
+
+    val isDecimal = true
     val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
+
+    // Default tweak speed
     var vSpeed = vSpeed_
     if (vSpeed == 0f && hasMinMax)
         vSpeed = (vMax - vMin).f * g.dragSpeedDefaultRatio
@@ -307,8 +319,8 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
         if (io.keyShift)
             adjustDelta *= 10f
     } else if (g.activeIdSource == InputSource.Nav) {
-        val decimalPrecision = when (dataType) {
-            DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
+        val decimalPrecision = when {
+            isDecimal -> parseFormatPrecision(format, 3)
             else -> 0
         }
         adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
@@ -335,7 +347,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0.0
 
-    val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
+    val isPower = power != 1f && isDecimal && hasMinMax
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)
@@ -361,11 +373,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     if (vCur == -0.0)
         vCur = 0.0
 
-    // Clamp values (handle overflow/wrap-around)
+    // Clamp values (+ handle overflow/wrap-around for integer types)
     if (v != vCur && hasMinMax) {
-        if (vCur < vMin || (vCur > v && adjustDelta < 0f))
+        if (vCur < vMin || (vCur > v && adjustDelta < 0f && !isDecimal))
             vCur = vMin
-        if (vCur > vMax || (vCur < v && adjustDelta > 0f))
+        if (vCur > vMax || (vCur < v && adjustDelta > 0f && !isDecimal))
             vCur = vMax
     }
 
