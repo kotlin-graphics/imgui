@@ -459,7 +459,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
     companion object {
 
         fun setCursorPosYAndSetupDummyPrevLine(posY: Float, lineHeight: Float) {
-            /*  Set cursor position and a few other things so that SetScrollHere() and Columns() can work when seeking
+            /*  Set cursor position and a few other things so that SetScrollHereY() and Columns() can work when seeking
                 cursor.
                 FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would
                 stumble on the same issue.
@@ -467,7 +467,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
             cursorPosY = posY
             val window = currentWindow
             with(window.dc) {
-                // Setting those fields so that SetScrollHere() can properly function after the end of our clipper usage.
+                // Setting those fields so that SetScrollHereY() can properly function after the end of our clipper usage.
                 cursorPosPrevLine.y = cursorPos.y - lineHeight
                 /*  If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a
                     fourth step to let user process and display the last item in their list.             */

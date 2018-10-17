@@ -58,7 +58,7 @@ import imgui.ImGui.scrollX
 import imgui.ImGui.scrollY
 import imgui.ImGui.selectable
 import imgui.ImGui.setScrollFromPosY
-import imgui.ImGui.setScrollHere
+import imgui.ImGui.setScrollHereY
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderInt
@@ -148,9 +148,9 @@ object simpleLayot {
                 withChild("Child1", Vec2(windowContentRegionWidth * 0.5f, 300), false, flags or Wf.HorizontalScrollbar) {
                     for (i in 0..99) {
                         text("%04d: scrollable region", i)
-                        if (gotoLine && line == i) setScrollHere()
+                        if (gotoLine && line == i) setScrollHereY()
                     }
-                    if (gotoLine && line >= 100) setScrollHere()
+                    if (gotoLine && line >= 100) setScrollHereY()
                 }
 
                 sameLine()
@@ -396,7 +396,7 @@ object simpleLayot {
                         for (line in 0..99)
                             if (track && line == trackLine) {
                                 textColored(Vec4.fromColor(255, 255, 0), "Line %d", line)
-                                setScrollHere(i * 0.25f) // 0.0f:top, 0.5f:center, 1.0f:bottom
+                                setScrollHereY(i * 0.25f) // 0.0f:top, 0.5f:center, 1.0f:bottom
                             } else
                                 text("Line $line")
                         val scrollY = scrollY
