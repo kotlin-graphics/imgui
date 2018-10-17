@@ -94,64 +94,67 @@ interface imgui_demoDebugInformations {
      *  basic internal state, etc.    */
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
-        if (begin_("ImGui Metrics", open)) {
-            text("Dear ImGui $version")
-            text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
-            text("${io.metricsRenderVertices} vertices, ${io.metricsRenderIndices} indices (${io.metricsRenderIndices / 3} triangles)")
-            text("${io.metricsActiveWindows} active windows (${io.metricsRenderWindows} visible)")
-            text("%d allocations", io.metricsAllocs)
-            checkbox("Show clipping rectangles when hovering draw commands", Companion::showDrawCmdClipRects)
-            checkbox("Ctrl shows window begin order", Companion::showWindowBeginOrder)
-            separator()
-
-            Funcs0.nodeWindows(g.windows, "Windows")
-            if (treeNode("DrawList", "Active DrawLists (${g.drawDataBuilder.layers[0].size})")) {
-                g.drawDataBuilder.layers.forEach { layer -> layer.forEach { Funcs0.nodeDrawList(null, it, "DrawList") } }
-                treePop()
-            }
-            if (treeNode("Popups", "Popups (${g.openPopupStack.size})")) {
-                for (popup in g.openPopupStack) {
-                    val window = popup.window
-                    val childWindow = if (window != null && window.flags has Wf.ChildWindow) " ChildWindow" else ""
-                    val childMenu = if (window != null && window.flags has Wf.ChildMenu) " ChildMenu" else ""
-                    bulletText("PopupID: %08x, Window: '${window?.name}'$childWindow$childMenu", popup.popupId)
-                }
-                treePop()
-            }
-            if (treeNode("Internal state")) {
-                text("HoveredWindow: '${g.hoveredWindow?.name}'")
-                text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
-                /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
-                    information or not                 */
-                text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap}", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)
-                text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
-                text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
-                text("MovingWindow: '${g.movingWindow?.name}'")
-                text("NavWindow: '${g.navWindow?.name}'")
-                text("NavId: 0x%08X, NavLayer: ${g.navLayer}", g.navId)
-                text("NavInputSource: ${g.navInputSource}")
-                text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
-                text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
-                text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
-                text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
-                text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataTypeS}\" " +
-                        "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
-                treePop()
-            }
-            if (io.keyCtrl && showWindowBeginOrder)
-                for (window in g.windows) {
-                    if (window.flags has Wf.ChildWindow || !window.wasActive)
-                        continue
-                    val buf = CharArray(32)
-                    "${window.beginOrderWithinContext}".toCharArray(buf)
-                    val fontSize = fontSize * 2
-                    overlayDrawList.apply {
-                        addRectFilled(Vec2(window.pos), window.pos + fontSize, COL32(200, 100, 100, 255))
-                        addText(null, fontSize, Vec2(window.pos), COL32(255, 255, 255, 255), buf)
-                    }
-                }
+        if (!begin_("ImGui Metrics", open)) {
+            end()
+            return
         }
-        end()
+
+        text("Dear ImGui $version")
+        text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
+        text("${io.metricsRenderVertices} vertices, ${io.metricsRenderIndices} indices (${io.metricsRenderIndices / 3} triangles)")
+        text("${io.metricsActiveWindows} active windows (${io.metricsRenderWindows} visible)")
+        text("%d allocations", io.metricsAllocs)
+        checkbox("Show clipping rectangles when hovering draw commands", Companion::showDrawCmdClipRects)
+        checkbox("Ctrl shows window begin order", Companion::showWindowBeginOrder)
+
+        separator()
+
+        Funcs.nodeWindows(g.windows, "Windows")
+        if (treeNode("DrawList", "Active DrawLists (${g.drawDataBuilder.layers[0].size})")) {
+            g.drawDataBuilder.layers.forEach { layer -> layer.forEach { Funcs.nodeDrawList(null, it, "DrawList") } }
+            treePop()
+        }
+        if (treeNode("Popups", "Popups (${g.openPopupStack.size})")) {
+            for (popup in g.openPopupStack) {
+                val window = popup.window
+                val childWindow = if (window != null && window.flags has Wf.ChildWindow) " ChildWindow" else ""
+                val childMenu = if (window != null && window.flags has Wf.ChildMenu) " ChildMenu" else ""
+                bulletText("PopupID: %08x, Window: '${window?.name}'$childWindow$childMenu", popup.popupId)
+            }
+            treePop()
+        }
+        if (treeNode("Internal state")) {
+            text("HoveredWindow: '${g.hoveredWindow?.name}'")
+            text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
+            /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
+                information or not                 */
+            text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap}", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)
+            text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
+            text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
+            text("MovingWindow: '${g.movingWindow?.name}'")
+            text("NavWindow: '${g.navWindow?.name}'")
+            text("NavId: 0x%08X, NavLayer: ${g.navLayer}", g.navId)
+            text("NavInputSource: ${g.navInputSource}")
+            text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
+            text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
+            text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
+            text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
+            text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataTypeS}\" " +
+                    "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
+            treePop()
+        }
+        if (io.keyCtrl && showWindowBeginOrder)
+            for (window in g.windows) {
+                if (window.flags has Wf.ChildWindow || !window.wasActive)
+                    continue
+                val buf = CharArray(32)
+                "${window.beginOrderWithinContext}".toCharArray(buf)
+                val fontSize = fontSize * 2
+                overlayDrawList.apply {
+                    addRectFilled(Vec2(window.pos), window.pos + fontSize, COL32(200, 100, 100, 255))
+                    addText(null, fontSize, Vec2(window.pos), COL32(255, 255, 255, 255), buf)
+                }
+            }
     }
 
     /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
@@ -280,7 +283,7 @@ interface imgui_demoDebugInformations {
         }
 
 
-        object Funcs0 {
+        object Funcs {
 
             fun nodeDrawList(window: Window?, drawList: DrawList, label: String) {
 
