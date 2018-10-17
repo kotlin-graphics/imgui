@@ -977,7 +977,7 @@ class Window(var context: Context, var name: String) {
         outSize put sizeConstrained
     }
 
-    fun getBorderRect(borderN: Int, perpPadding: Float, thickness: Float): Rect {
+    fun getResizeBorderRect(borderN: Int, perpPadding: Float, thickness: Float): Rect {
         val rect = rect()
         if (thickness == 0f) rect.max minusAssign 1
         return when (borderN) {

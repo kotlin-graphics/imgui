@@ -489,7 +489,7 @@ interface imgui_window {
                 if (windowBorderSize > 0f)
                     window.drawList.addRect(Vec2(window.pos), window.size + window.pos, Col.Border.u32, windowRounding, Dcf.All.i, windowBorderSize)
                 if (borderHeld != -1) {
-                    val border = window.getBorderRect(borderHeld, gripDrawSize, 0f)
+                    val border = window.getResizeBorderRect(borderHeld, gripDrawSize, 0f)
                     window.drawList.addLine(border.min, border.max, Col.SeparatorActive.u32, max(1f, windowBorderSize))
                 }
                 if (style.frameBorderSize > 0 && flags hasnt Wf.NoTitleBar)
