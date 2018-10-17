@@ -47,18 +47,17 @@ import imgui.internal.DrawListFlag as Dlf
 import imgui.internal.LayoutType as Lt
 
 
-/** (Begin = push window to the stack and start appending to it. End = pop window from the stack.
- *  You may append multiple times to the same window during the same frame)
- *  Begin()/BeginChild() return false to indicate the window being collapsed or fully clipped, so you may early out and
- *  omit submitting anything to the window.
- *  You need to always call a matching End()/EndChild() for a Begin()/BeginChild() call, regardless of
- *  its return value (this is due to legacy reason and is inconsistent with BeginMenu/EndMenu, BeginPopup/EndPopup and
- *  other functions where the End call should only be called if the corresponding Begin function returned true.)
- *  Passing 'bool* p_open != NULL' shows a close widget in the upper-right corner of the window, which when clicking
- *  will set the boolean to false.
- *  Use child windows to introduce independent scrolling/clipping regions within a host window.
- *  Child windows can embed their own child. */
+/** - Begin() = push window to the stack and start appending to it. End() = pop window from the stack.
+ *  - You may append multiple times to the same window during the same frame.
+ *  - Passing 'bool* p_open != NULL' shows a window-closing widget in the upper-right corner of the window,
+ *      which clicking will set the boolean to false when clicked.
+ *  - Begin() return false to indicate the window is collapsed or fully clipped, so you may early out and omit submitting anything to the window.
+ *    Always call a matching End() for each Begin() call, regardless of its return value [this is due to legacy reason and is inconsistent with
+ *    most other functions such as BeginMenu/EndMenu, BeginPopup/EndPopup, etc. where the EndXXX call should only be called
+ *    if the corresponding BeginXXX function returned true.]    */
 interface imgui_window {
+
+    // Windows
 
     /*  Push a new ImGui window to add widgets to:
         - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use
@@ -721,6 +720,15 @@ interface imgui_window {
         }
     }
 
+    // Child Windows
+
+    /** - Use child windows to begin into a self-contained independent scrolling/clipping regions within a host window. Child windows can embed their own child.
+     *  - For each independent axis of 'size': ==0.0f: use remaining host window size / >0.0f: fixed size
+     *      / <0.0f: use remaining window size minus abs(size) / Each axis can use a different mode, e.g. ImVec2(0,400).
+     *  - BeginChild() returns false to indicate the window is collapsed or fully clipped, so you may early out and omit submitting anything to the window.
+     *    Always call a matching EndChild() for each BeginChild() call, regardless of its return value [this is due to legacy reason and
+     *    is inconsistent with most other functions such as BeginMenu/EndMenu, BeginPopup/EndPopup, etc. where the EndXXX call
+     *    should only be called if the corresponding BeginXXX function returned true.]  */
     fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = 0) =
             beginChildEx(strId, currentWindow.getId(strId), size, border, flags)
 

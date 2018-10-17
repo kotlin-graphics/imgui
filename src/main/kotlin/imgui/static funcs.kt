@@ -662,7 +662,7 @@ fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, flags_: W
         size.y = glm.max(contentAvail.y + size.y, 4f)
     setNextWindowSize(size)
 
-    // name
+    // Build up name. If you need to append to a same child from multiple location in the ID stack, use BeginChild(ImGuiID id) with a stable value.
     val title = when {
         name.isNotEmpty() -> "${parentWindow.name}/$name".format(style.locale)
         else -> "${parentWindow.name}/%08X".format(style.locale, id)
