@@ -203,6 +203,7 @@ interface imgui_main {
         g.navIdTabCounter = Int.MAX_VALUE
 
         // Mark all windows as not visible
+        assert(g.windowsFocusOrder.size == g.windows.size)
         g.windows.forEach {
             it.wasActive = it.active
             it.active = false
@@ -211,7 +212,7 @@ interface imgui_main {
 
         // Closing the focused window restore focus to the first active root window in descending z-order
         if (g.navWindow?.wasActive == false)
-            focusFrontMostActiveWindowIgnoringOne(null)
+            focusPreviousWindowIgnoringOne(null)
 
         // No window should be open at the beginning of the frame.
         // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.
@@ -304,7 +305,7 @@ interface imgui_main {
         g.windowsSortBuffer.clear()
         g.windowsSortBuffer.ensureCapacity(g.windows.size)
         g.windows.filter { !it.active || it.flags hasnt Wf.ChildWindow }  // if a child is active its parent will add it
-                .forEach { it addToSortedBuffer g.windowsSortBuffer }
+                .forEach { it addToSortBuffer g.windowsSortBuffer }
         assert(g.windows.size == g.windowsSortBuffer.size) { "we done something wrong" }
         g.windows.clear()
         g.windows += g.windowsSortBuffer

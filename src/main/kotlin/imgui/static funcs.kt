@@ -7,8 +7,6 @@ import gli_.hasnt
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
-import imgui.getValue
-import imgui.setValue
 import imgui.ImGui.begin
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.closePopupToLevel
@@ -137,6 +135,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
         autoFitOnlyGrows = autoFitFrames.x > 0 || autoFitFrames.y > 0
     }
 
+    g.windowsFocusOrder += this
     if (flags has Wf.NoBringToFrontOnFocus) g.windows.add(0, this) // Quite slow but rare and only once
     else g.windows.add(this)
 }
@@ -987,7 +986,7 @@ fun navUpdateWindowing() {
     val startWindowingWithGamepad = g.navWindowingTarget == null && NavInput.Menu.isPressed(InputReadMode.Pressed)
     val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has Cf.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
-        (g.navWindow ?: findWindowNavFocusable(g.windows.lastIndex, -Int.MAX_VALUE, -1))?.let {
+        (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
             g.navWindowingTarget = it
             g.navWindowingTargetAnim = it
             g.navWindowingHighlightAlpha = 0f
@@ -1109,8 +1108,8 @@ fun navUpdateWindowingList() {
     pushStyleVar(StyleVar.WindowPadding, style.windowPadding * 2f)
     val flags = Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoNav or Wf.NoResize or Wf.NoMove or Wf.NoInputs or Wf.AlwaysAutoResize or Wf.NoSavedSettings
     begin("###NavWindowingList", null, flags)
-    for (n in g.windows.lastIndex downTo 0) {
-        val window = g.windows[n]
+    for (n in g.windowsFocusOrder.lastIndex downTo 0) {
+        val window = g.windowsFocusOrder[n]
         if (!window.isNavFocusable)
             continue
         var label = window.name
@@ -1324,9 +1323,9 @@ fun isNavInputPressedAnyOfTwo(n1: NavInput, n2: NavInput, mode: InputReadMode) =
 // FIXME-OPT O(N)
 fun findWindowNavFocusable(iStart: Int, iStop: Int, dir: Int): Window? {
     var i = iStart
-    while (i in g.windows.indices && i != iStop) {
-        if (g.windows[i].isNavFocusable)
-            return g.windows[i]
+    while (i in g.windowsFocusOrder.indices && i != iStop) {
+        if (g.windowsFocusOrder[i].isNavFocusable)
+            return g.windowsFocusOrder[i]
         i += dir
     }
     return null
@@ -1337,9 +1336,9 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
     val target = g.navWindowingTarget!!
     if (target.flags has Wf.Modal) return
 
-    val iCurrent = findWindowIndex(target)
+    val iCurrent = findWindowFocusIndex(target)
     val windowTarget = findWindowNavFocusable(iCurrent + focusChangeDir, -Int.MAX_VALUE, focusChangeDir)
-            ?: findWindowNavFocusable(if (focusChangeDir < 0) g.windows.lastIndex else 0, iCurrent, focusChangeDir)
+            ?: findWindowNavFocusable(if (focusChangeDir < 0) g.windowsFocusOrder.lastIndex else 0, iCurrent, focusChangeDir)
     // Don't reset windowing target if there's a single window in the list
     windowTarget?.let {
         g.navWindowingTarget = it
@@ -1349,10 +1348,10 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
 }
 
 // FIXME-OPT O(N)
-fun findWindowIndex(window: Window): Int {
-    var i = g.windows.lastIndex
+fun findWindowFocusIndex(window: Window): Int {
+    var i = g.windowsFocusOrder.lastIndex
     while (i >= 0) {
-        if (g.windows[i] == window)
+        if (g.windowsFocusOrder[i] == window)
             return i
         i--
     }
