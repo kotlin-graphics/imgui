@@ -589,6 +589,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Note: Anti-aliased filling requires points to be in clockwise order. */
     fun addConvexPolyFilled(points: ArrayList<Vec2>, col: Int) {
 
+        if (points.size < 3)
+            return
+
         val uv = Vec2(_data.texUvWhitePixel)
 
         if (flags has DrawListFlag.AntiAliasedFill) {
