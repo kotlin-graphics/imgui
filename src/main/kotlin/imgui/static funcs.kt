@@ -33,8 +33,9 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
-import imgui.imgui.*
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
+import imgui.imgui.navRestoreLayer
+import imgui.imgui.navScoreItem
 import imgui.impl.windowsIme.COMPOSITIONFORM
 import imgui.impl.windowsIme.HIMC
 import imgui.impl.windowsIme.HWND
@@ -75,20 +76,31 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
 //-----------------------------------------------------------------------------
 
 /** Find window given position, search front-to-back
-    FIXME: Note that we have an inconsequential lag here: OuterRectClipped is updated in Begin(), so windows moved programatically
-    with SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time FindHoveredWindow() is
-    called, aka before the next Begin(). Moving window isn't affected..    */
+FIXME: Note that we have an inconsequential lag here: OuterRectClipped is updated in Begin(), so windows moved programatically
+with SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time FindHoveredWindow() is
+called, aka before the next Begin(). Moving window isn't affected..    */
 fun findHoveredWindow() {
 
     var hoveredWindow = g.movingWindow?.takeIf { it.flags hasnt Wf.NoInputs }
+
+    val paddingRegular = Vec2(style.touchExtraPadding)
+    val paddingForResizeFromEdges = when {
+        io.configResizeWindowsFromEdges -> glm.max(style.touchExtraPadding, Vec2(RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS))
+        else -> paddingRegular
+    }
 
     var i = g.windows.lastIndex
     while (i >= 0 && hoveredWindow == null) {
         val window = g.windows[i]
         if (window.active && !window.hidden && window.flags hasnt Wf.NoInputs) {
             // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
-            val bb = Rect(window.outerRectClipped.min - style.touchExtraPadding, window.outerRectClipped.max + style.touchExtraPadding)
+            val bb = Rect(window.outerRectClipped)
+            if (window.flags has Wf.ChildWindow || window.flags has Wf.NoResize)
+                bb expand paddingRegular
+            else
+                bb expand paddingForResizeFromEdges
             if (bb contains io.mousePos) {
+                // Those seemingly unnecessary extra tests are because the code here is a little different in viewport/docking branches.
                 hoveredWindow = window
                 break
             }
@@ -875,7 +887,7 @@ fun navUpdate() {
     }
 
     // Update PageUp/PageDown scroll
-    val navScoringRectOffsetY = when{
+    val navScoringRectOffsetY = when {
         navKeyboardActive -> navUpdatePageUpPageDown(allowedDirFlags)
         else -> 0f
     }

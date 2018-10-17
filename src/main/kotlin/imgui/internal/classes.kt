@@ -993,10 +993,10 @@ class Window(var context: Context, var name: String) {
         val rect = rect()
         if (thickness == 0f) rect.max minusAssign 1
         return when (borderN) {
-            0 -> Rect(rect.min.x + perpPadding, rect.min.y, rect.max.x - perpPadding, rect.min.y + thickness)
-            1 -> Rect(rect.max.x - thickness, rect.min.y + perpPadding, rect.max.x, rect.max.y - perpPadding)
-            2 -> Rect(rect.min.x + perpPadding, rect.max.y - thickness, rect.max.x - perpPadding, rect.max.y)
-            3 -> Rect(rect.min.x, rect.min.y + perpPadding, rect.min.x + thickness, rect.max.y - perpPadding)
+            0 -> Rect(rect.min.x + perpPadding, rect.min.y - thickness, rect.max.x - perpPadding, rect.min.y + thickness)
+            1 -> Rect(rect.max.x - thickness, rect.min.y + perpPadding, rect.max.x + thickness, rect.max.y - perpPadding)
+            2 -> Rect(rect.min.x + perpPadding, rect.max.y - thickness, rect.max.x - perpPadding, rect.max.y + thickness)
+            3 -> Rect(rect.min.x - thickness, rect.min.y + perpPadding, rect.min.x + thickness, rect.max.y - perpPadding)
             else -> throw Error()
         }
     }
