@@ -31,11 +31,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var v by vPtr as KMutableProperty0<Int>
 
     val isDecimal = false
-    val hasMinMax = vMin != vMax && (vMax - vMax < Int.MAX_VALUE)
+    val hasMinMax = vMin != vMax
 
     // Default tweak speed
     var vSpeed = vSpeed_
-    if (vSpeed == 0f && hasMinMax)
+    if (vSpeed == 0f && hasMinMax && (vMax - vMax < Int.MAX_VALUE))
         vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
 
     // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
@@ -75,7 +75,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0f
 
-    val isPower = power != 1f && isDecimal && hasMinMax
+    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMax < Int.MAX_VALUE)
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
@@ -122,11 +122,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var v by vPtr as KMutableProperty0<Long>
 
     val isDecimal = false
-    val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
+    val hasMinMax = vMin != vMax
 
     // Default tweak speed
     var vSpeed = vSpeed_
-    if (vSpeed == 0f && hasMinMax)
+    if (vSpeed == 0f && hasMinMax && (vMax - vMax < Long.MAX_VALUE))
         vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
 
     // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
@@ -166,7 +166,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0.0
 
-    val isPower = power != 1f && isDecimal && hasMinMax
+    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMax < Long.MAX_VALUE)
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)
@@ -213,11 +213,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var v by vPtr as KMutableProperty0<Float>
 
     val isDecimal = true
-    val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
+    val hasMinMax = vMin != vMax
 
     // Default tweak speed
     var vSpeed = vSpeed_
-    if (vSpeed == 0f && hasMinMax)
+    if (vSpeed == 0f && hasMinMax && (vMax - vMax < Long.MAX_VALUE))
         vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
 
     // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
@@ -257,7 +257,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0f
 
-    val isPower = power != 1f && isDecimal && hasMinMax
+    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMax < Long.MAX_VALUE)
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power).f
@@ -303,11 +303,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var v by vPtr as KMutableProperty0<Double>
 
     val isDecimal = true
-    val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
+    val hasMinMax = vMin != vMax
 
     // Default tweak speed
     var vSpeed = vSpeed_
-    if (vSpeed == 0f && hasMinMax)
+    if (vSpeed == 0f && hasMinMax && (vMax - vMax < Long.MAX_VALUE))
         vSpeed = (vMax - vMin).f * g.dragSpeedDefaultRatio
 
     // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
@@ -347,7 +347,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0.0
 
-    val isPower = power != 1f && isDecimal && hasMinMax
+    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMax < Long.MAX_VALUE)
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)
