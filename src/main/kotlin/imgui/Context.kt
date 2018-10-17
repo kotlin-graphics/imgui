@@ -198,11 +198,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var navMoveClipDir = Dir.None
     /** Best move request candidate within NavWindow    */
-    val navMoveResultLocal = NavMoveResult()
+    var navMoveResultLocal = NavMoveResult()
     /** Best move request candidate within NavWindow that are mostly visible (when using NavMoveFlags.AlsoScoreVisibleSet flag) */
     val navMoveResultLocalVisibleSet = NavMoveResult()
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
-    val navMoveResultOther = NavMoveResult()
+    var navMoveResultOther = NavMoveResult()
 
 
     // ------------------------------------------------------------------
@@ -417,14 +417,14 @@ fun Context?.destroy() {
 class IO(sharedFontAtlas: FontAtlas?) {
 
     //------------------------------------------------------------------
-    // Settings (fill once)
+    // Configuration (fill once)
     //------------------------------------------------------------------
 
     /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
     var configFlags: ConfigFlags = 0
     /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end to communicate features supported by the back-end. */
     var backendFlags: BackendFlags = 0
-    /** Display size, in pixels. For clamping windows positions.    */
+    /** Main display size, in pixels. For clamping windows positions.    */
     var displaySize = Vec2i(-1)
     /** Time elapsed since last frame, in seconds.  */
     var deltaTime = 1f / 60f
@@ -704,8 +704,8 @@ class Style {
     var grabRounding = 0f
     /** Alignment of button text when button is larger than text.   */
     var buttonTextAlign = Vec2(0.5f)
-    /** Window positions are clamped to be visible within the display area by at least this amount. Only covers regular
-     *  windows.    */
+    /** Window position are clamped to be visible within the display area by at least this amount.
+     *  Only applies to regular windows.    */
     var displayWindowPadding = Vec2(20)
     /** If you cannot see the edges of your screen (e.g. on a TV) increase the safe area padding. Apply to popups/tooltips
      *  as well regular windows.  NB: Prefer configuring your TV sets correctly!   */

@@ -483,6 +483,7 @@ enum class ConfigFlag(val i: Int) {
 infix fun Int.has(b: ConfigFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ConfigFlag) = and(b.i) == 0
 infix fun Int.or(b: ConfigFlag): ConfigFlags = or(b.i)
+infix fun Int.wo(b: ConfigFlag): ConfigFlags = and(b.i.inv())
 infix fun ConfigFlag.or(b: ConfigFlag): ConfigFlags = i or b.i
 
 typealias BackendFlags = Int

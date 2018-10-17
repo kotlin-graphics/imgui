@@ -67,11 +67,11 @@ interface imgui_main {
         for (n in 0 until Key.COUNT)
             assert(io.keyMap[n] >= -1 && io.keyMap[n] < io.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
 
-        // Perform simple check for required key mapping (we intentionally do NOT check all keys to not pressure user into setting up everything, but Space is required and was only recently added in 1.60 WIP)
+        // Perform simple check: required key mapping (we intentionally do NOT check all keys to not pressure user into setting up everything, but Space is required and was only recently added in 1.60 WIP)
         if (io.configFlags has Cf.NavEnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
-        // The beta io.configResizeWindowsFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
+        // Perform simple check: the beta io.configResizeWindowsFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
         if (io.configResizeWindowsFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
             io.configResizeWindowsFromEdges = false
 
@@ -371,7 +371,7 @@ interface imgui_main {
             g.overlayDrawList addTo g.drawDataBuilder.layers[0]
 
         // Setup ImDrawData structure for end-user
-        setupDrawData(g.drawDataBuilder.layers[0], g.drawData)
+        g.drawData setup g.drawDataBuilder.layers[0]
         io.metricsRenderVertices = g.drawData.totalVtxCount
         io.metricsRenderIndices = g.drawData.totalIdxCount
     }
@@ -382,9 +382,10 @@ interface imgui_main {
 
     companion object {
 
+        // Misc
         fun updateMouseInputs() {
             with(io) {
-                // If mouse just appeared or disappeared (usually denoted by -FLT_MAX component, but in reality we test for -256000.0f) we cancel out movement in MouseDelta
+                // If mouse just appeared or disappeared (usually denoted by -FLT_MAX component) we cancel out movement in MouseDelta
                 if (isMousePosValid(mousePos) && isMousePosValid(mousePosPrev))
                     mouseDelta = mousePos - mousePosPrev
                 else

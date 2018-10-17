@@ -5,6 +5,7 @@ import imgui.imgui.*
 import imgui.imgui.widgets.*
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty0
 
 /** -----------------------------------------------------------------------------
  *      Context

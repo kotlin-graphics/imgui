@@ -567,12 +567,12 @@ class Window(var context: Context, var name: String) {
     var hidden = false
     /** Set when the window has a close button (p_open != NULL) */
     var hasCloseButton = false
+    /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
+    var beginCount = 0
     /** Order within immediate parent window, if we are a child window. Otherwise 0. */
     var beginOrderWithinParent = -1
     /** Order within entire imgui context. This is mostly used for debugging submission order related issues. */
     var beginOrderWithinContext = -1
-    /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
-    var beginCount = 0
     /** ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)   */
     var popupId: ID = 0
 
