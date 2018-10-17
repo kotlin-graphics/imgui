@@ -60,6 +60,7 @@ import imgui.ImGui.separator
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.shadeVertsLinearColorGradientKeepAlpha
+import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
@@ -210,7 +211,7 @@ interface colorEditorPicker {
                 pickerActiveWindow = g.currentWindow
                 if (0 != labelDisplayEnd) {
                     textUnformatted(label, labelDisplayEnd)
-                    separator()
+                    spacing()
                 }
                 val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
                 val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._InputsMask or Cef.NoLabel or Cef.AlphaPreviewHalf
