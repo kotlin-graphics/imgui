@@ -1408,7 +1408,7 @@ interface imgui_internal {
         val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
         renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
-        renderArrow(bb.min + Vec2(max(0f, size.x - g.fontSize - style.framePadding.x), max(0f, size.y - g.fontSize - style.framePadding.y)), dir)
+        renderArrow(bb.min + Vec2(max(0f, (size.x - g.fontSize) * 0.5f), max(0f, (size.y - g.fontSize) * 0.5f)), dir)
 
         return pressed
     }
