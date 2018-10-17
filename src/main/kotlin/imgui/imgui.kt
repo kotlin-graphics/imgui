@@ -67,6 +67,7 @@ object ImGui :
         dataPlotting,
         drags,
         inputKeyboard,
+        lowLevelLayoutHelpers,
         sliders,
         colorEditorPicker,
         trees,
