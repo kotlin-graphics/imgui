@@ -194,7 +194,7 @@ object ExampleApp {
                 }
                 checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)
                 sameLine(); showHelpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
-                checkbox("io.ConfigCursorBlink", io::configCursorBlink)
+                checkbox("io.ConfigCursorBlink", io::configInputTextCursorBlink)
                 sameLine(); showHelpMarker("Set to false to disable blinking cursor, for users who consider it distracting")
                 checkbox("io.ConfigResizeWindowsFromEdges [beta]", io::configResizeWindowsFromEdges)
                 sameLine(); showHelpMarker("Enable resizing of windows from their edges and from the lower-left corner.\nThis requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")

@@ -470,13 +470,15 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // Miscellaneous options
     //------------------------------------------------------------------
 
+    /** Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor). */
+    var mouseDrawCursor = false
     /** = defined(__APPLE__), OS X style: Text editing cursor movement using Alt instead of Ctrl, Shortcuts using
      *  Cmd/Super instead of Ctrl, Line/Text Start and End using Cmd + Arrows instead of Home/End, Double click selects
      *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl
      *  (was called io.OptMacOSXBehaviors prior to 1.63) */
     var configMacOSXBehaviors = false  // JVM TODO
     /** Set to false to disable blinking cursor, for users who consider it distracting. (was called: io.OptCursorBlink prior to 1.63) */
-    var configCursorBlink = true
+    var configInputTextCursorBlink = true
     /** [BETA] Enable resizing of windows from their edges and from the lower-left corner.
      *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
      *  (This used to be the WindowFlag.ResizeFromAnySide flag) */
@@ -517,8 +519,6 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var mouseWheel = 0f
     /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all back-ends.   */
     var mouseWheelH = 0f
-    /** Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor). */
-    var mouseDrawCursor = false
     /** Keyboard modifier pressed: Control  */
     var keyCtrl = false
     /** Keyboard modifier pressed: Shift    */
