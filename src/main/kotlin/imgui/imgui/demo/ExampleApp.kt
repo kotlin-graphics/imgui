@@ -177,8 +177,8 @@ object ExampleApp {
 
             treeNode("Configuration##2") {
 
-                checkboxFlags("io.ConfigFlags: NavEnableKeyboard [beta]", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
-                checkboxFlags("io.ConfigFlags: NavEnableGamepad [beta]", io::configFlags, ConfigFlag.NavEnableGamepad.i)
+                checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
+                checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
                 sameLine(); showHelpMarker("Required back-end to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
                 checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
                 sameLine(); showHelpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
