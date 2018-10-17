@@ -532,7 +532,7 @@ interface imgui_main {
             for (borderN in 0 until resizeBorderCount) {
                 val BORDER_SIZE = 5f          // FIXME: Only works _inside_ window because of HoveredWindow check.
                 val BORDER_APPEAR_TIMER = 0.05f // Reduce visual noise
-                val borderRect = window.getBorderRect(borderN, gripHoverSize, BORDER_SIZE)
+                val borderRect = window.getResizeBorderRect(borderN, gripHoverSize, BORDER_SIZE)
                 val (_, hovered, held) = buttonBehavior(borderRect, window.getId((borderN + 4)), ButtonFlag.FlattenChildren)
                 if ((hovered && g.hoveredIdTimer > BORDER_APPEAR_TIMER) || held) {
                     g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
