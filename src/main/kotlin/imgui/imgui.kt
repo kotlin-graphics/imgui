@@ -45,10 +45,18 @@ val IMGUI_DEBUG_NAV_SCORING = false
 val IMGUI_DEBUG_NAV_RECTS = false
 
 // When using CTRL+TAB (or Gamepad Square+L/R) we delay the visual a little in order to reduce visual noise doing a fast switch.
+
 /** Time before the highlight and screen dimming starts fading in */
 const val NAV_WINDOWING_HIGHLIGHT_DELAY = 0.2f
 /** Time before the window list starts to appear */
 const val NAV_WINDOWING_LIST_APPEAR_DELAY = 0.15f
+
+// Window resizing from edges (when io.ConfigResizeWindowsFromEdges = true)
+
+/** Extend outside and inside windows. Affect FindHoveredWindow(). */
+const val RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS = 4f
+/** Reduce visual noise by only highlighting the border after a certain time. */
+const val RESIZE_WINDOWS_FROM_EDGES_FEEDBACK_TIMER = 0.04f
 
 object ImGui :
 
