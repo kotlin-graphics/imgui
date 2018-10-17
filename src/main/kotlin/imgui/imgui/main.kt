@@ -385,7 +385,13 @@ interface imgui_main {
 
         // Misc
         fun updateMouseInputs() {
+
             with(io) {
+
+                // Round mouse position to avoid spreading non-rounded position (e.g. UpdateManualResize doesn't support them well)
+                if (isMousePosValid(mousePos))
+                    mousePos = glm.floor(mousePos)
+
                 // If mouse just appeared or disappeared (usually denoted by -FLT_MAX component) we cancel out movement in MouseDelta
                 if (isMousePosValid(mousePos) && isMousePosValid(mousePosPrev))
                     mouseDelta = mousePos - mousePosPrev
