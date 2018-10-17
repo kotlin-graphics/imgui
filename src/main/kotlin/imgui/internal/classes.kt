@@ -3,6 +3,7 @@ package imgui.internal
 import gli_.has
 import gli_.hasnt
 import glm_.f
+import glm_.func.common.floor
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -781,14 +782,14 @@ class Window(var context: Context, var name: String) {
         // Set
         if (size.x > 0f) {
             autoFitFrames.x = 0
-            sizeFull.x = size.x
+            sizeFull.x = size.x.floor
         } else {
             autoFitFrames.x = 2
             autoFitOnlyGrows = false
         }
         if (size.y > 0f) {
             autoFitFrames.y = 0
-            sizeFull.y = size.y
+            sizeFull.y = size.y.floor
         } else {
             autoFitFrames.y = 2
             autoFitOnlyGrows = false

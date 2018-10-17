@@ -123,9 +123,9 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
                 size put glm.floor(s.size)
         }
     }
-    sizeFullAtLastBegin put size
-    sizeFull put size
-    this.size put size
+    sizeFullAtLastBegin put glm.floor(size)
+    sizeFull put sizeFullAtLastBegin
+    this.size put sizeFull
     dc.cursorMaxPos put pos // So first call to calcSizeContents() doesn't return crazy values
 
     if (flags has Wf.AlwaysAutoResize) {
