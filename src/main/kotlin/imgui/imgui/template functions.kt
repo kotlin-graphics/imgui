@@ -376,16 +376,17 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     return true
 }
 
-fun setupDrawData(drawLists: ArrayList<DrawList>, outDrawData: DrawData) = with(outDrawData) {
+/** ~SetupDrawData */
+infix fun DrawData.setup(drawLists: ArrayList<DrawList>) {
     valid = true
     cmdLists.clear()
     if (drawLists.isNotEmpty())
         cmdLists += drawLists
     cmdListsCount = drawLists.size
-    outDrawData.totalIdxCount = 0
+    totalIdxCount = 0
     totalVtxCount = 0
-    outDrawData.displayPos put 0f
-    outDrawData.displaySize put io.displaySize
+    displayPos put 0f
+    displaySize put io.displaySize
     for (n in 0 until drawLists.size) {
         totalVtxCount += drawLists[n].vtxBuffer.size
         totalIdxCount += drawLists[n].idxBuffer.size

@@ -4,10 +4,12 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
+import imgui.Dir
 import imgui.NUL
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Paths
+import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 
 // -----------------------------------------------------------------------------------------------------------------
@@ -186,17 +188,6 @@ fun triangleContainsPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Boolean {
     return ((b1 == b2) && (b2 == b3))
 }
 
-fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray {
-    val v0 = b - a
-    val v1 = c - a
-    val v2 = p - a
-    val denom = v0.x * v1.y - v1.x * v0.y
-    val outV = (v2.x * v1.y - v1.x * v2.y) / denom
-    val outW = (v0.x * v2.y - v2.x * v0.y) / denom
-    val outU = 1f - outV - outW
-    return floatArrayOf(outU, outV, outW)
-}
-
 fun triangleClosestPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Vec2 {
     val projAB = lineClosestPoint(a, b, p)
     val projBC = lineClosestPoint(b, c, p)
@@ -209,6 +200,28 @@ fun triangleClosestPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Vec2 {
         dist2AB -> projAB
         dist2BC -> projBC
         else -> projCA
+    }
+}
+
+fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray {
+    val v0 = b - a
+    val v1 = c - a
+    val v2 = p - a
+    val denom = v0.x * v1.y - v1.x * v0.y
+    val outV = (v2.x * v1.y - v1.x * v2.y) / denom
+    val outW = (v0.x * v2.y - v2.x * v0.y) / denom
+    val outU = 1f - outV - outW
+    return floatArrayOf(outU, outV, outW)
+}
+
+fun getDirQuadrantFromDelta(dx: Float, dy: Float) = when {
+    abs(dx) > abs(dy) -> when {
+        dx > 0f -> Dir.Right
+        else -> Dir.Left
+    }
+    else -> when {
+        dy > 0f -> Dir.Down
+        else -> Dir.Up
     }
 }
 

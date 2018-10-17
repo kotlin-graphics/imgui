@@ -7,6 +7,8 @@ import gli_.hasnt
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
+import imgui.getValue
+import imgui.setValue
 import imgui.ImGui.begin
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.closePopupToLevel
@@ -75,9 +77,9 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
 //-----------------------------------------------------------------------------
 
 /** Find window given position, search front-to-back
-FIXME: Note that we have a lag here because WindowRectClipped is updated in Begin() so windows moved by user via
-SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time
-FindHoveredWindow() is called, aka before the next Begin(). Moving window thankfully isn't affected.    */
+    FIXME: Note that we have an inconsequential lag here: OuterRectClipped is updated in Begin(), so windows moved programatically
+    with SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time FindHoveredWindow() is
+    called, aka before the next Begin(). Moving window isn't affected..    */
 fun findHoveredWindow() {
 
     var hoveredWindow = g.movingWindow?.takeIf { it.flags hasnt Wf.NoInputs }
@@ -260,7 +262,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
     g.settingsDirtyTimer = 0f
     if (iniFilename == null) return
 
-    // Gather data from windows that were active during this session
+    // Gather data from windows that were active during this session (if a window wasn't opened in this session we preserve its settings)
     for (window in g.windows) {
 
         if (window.flags has Wf.NoSavedSettings) continue
@@ -275,8 +277,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
         settings.collapsed = window.collapsed
     }
 
-    /*  Write .ini file
-        If a window wasn't opened in this session we preserve its settings     */
+    //  Write .ini file
     File(Paths.get(iniFilename).toUri()).printWriter().use {
         for (setting in g.settingsWindows) {
             if (setting.pos.x == Float.MAX_VALUE) continue
@@ -688,6 +689,7 @@ fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, flags_: W
     return ret
 }
 
+// Navigation
 fun navUpdate() {
 
     io.wantSetMousePos = false
@@ -1230,7 +1232,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         FIXME-NAV: Consider policy for double scoring
         (scoring from NavScoringRectScreen + scoring from a rect wrapped according to current wrapping policy)     */
     if ((g.navId != id || g.navMoveRequestFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt ItemFlag.NoNav) {
-        var result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
+        var result by if (window === g.navWindow) g::navMoveResultLocal else g::navMoveResultOther
         val newBest = when {
             IMGUI_DEBUG_NAV_SCORING -> {  // [DEBUG] Score all items in NavWindow at all times
                 if (!g.navMoveRequest) g.navMoveDir = g.navMoveDirLast

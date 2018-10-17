@@ -1,6 +1,5 @@
 package imgui.imgui
 
-import gli_.hasnt
 import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
@@ -10,23 +9,10 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.setNavIDWithRectRel
 import imgui.ImGui.style
-import imgui.internal.NavMoveResult
-import imgui.internal.Rect
-import imgui.internal.Window
-import imgui.internal.lerp
+import imgui.internal.*
 import kotlin.math.abs
 import imgui.WindowFlag as Wf
 
-inline fun navScoreItemGetQuadrant(dx: Float, dy: Float) = when {
-    abs(dx) > abs(dy) -> when {
-        dx > 0f -> Dir.Right
-        else -> Dir.Left
-    }
-    else -> when {
-        dy > 0f -> Dir.Down
-        else -> Dir.Up
-    }
-}
 
 inline fun navScoreItemDistInterval(a0: Float, a1: Float, b0: Float, b1: Float) = when {
     a1 < b0 -> a1 - b0
@@ -93,13 +79,13 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
         dax = dbX
         day = dbY
         distAxial = distBox
-        quadrant = navScoreItemGetQuadrant(dbX, dbY)
+        quadrant = getDirQuadrantFromDelta(dbX, dbY)
     } else if (dcX != 0f || dcY != 0f) {
         // For overlapping boxes with different centers, use distance between centers
         dax = dcX
         day = dcY
         distAxial = distCenter
-        quadrant = navScoreItemGetQuadrant(dcX, dcY)
+        quadrant = getDirQuadrantFromDelta(dcX, dcY)
     }
     /* Degenerate case: two overlapping buttons with same center, break ties arbitrarily (note that lastItemId here is
         really the _previous_ item order, but it doesn't matter)     */

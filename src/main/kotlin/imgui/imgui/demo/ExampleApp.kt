@@ -1,12 +1,20 @@
 package imgui.imgui.demo
 
+import glm_.f
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin_
+import imgui.ImGui.bulletText
+import imgui.ImGui.button
 import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
 import imgui.ImGui.end
 import imgui.ImGui.fontSize
+import imgui.ImGui.io
 import imgui.ImGui.logButtons
+import imgui.ImGui.logFinish
+import imgui.ImGui.logText
+import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
@@ -17,6 +25,7 @@ import imgui.ImGui.showUserGuide
 import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
+import imgui.ImGui.time
 import imgui.ImGui.version
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.menu
@@ -25,6 +34,7 @@ import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withWindow
 import imgui.imgui.demo.showExampleApp.*
 import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
+import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -151,30 +161,82 @@ object ExampleApp {
         spacing()
 
         collapsingHeader("Help") {
-            textWrapped("This window is being created by the ShowDemoWindow() function. Please refer to the code " +
-                    "for programming reference.\n\nUser Guide:")
+            text("PROGRAMMER GUIDE:")
+            bulletText("Please see the ShowDemoWindow() code in imgui_demo.cpp. <- you are here!")
+            bulletText("Please see the comments in imgui.cpp.")
+            bulletText("Please see the examples/ in application.")
+            bulletText("Enable 'io.ConfigFlags |= NavEnableKeyboard' for keyboard controls.")
+            bulletText("Enable 'io.ConfigFlags |= NavEnableGamepad' for gamepad controls.")
+            separator()
+
+            text("USER GUIDE:")
             showUserGuide()
         }
 
-        collapsingHeader("Window options") {
+        collapsingHeader("Configuration") {
 
+            treeNode("Configuration##2") {
+
+                checkboxFlags("io.ConfigFlags: NavEnableKeyboard [beta]", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
+                checkboxFlags("io.ConfigFlags: NavEnableGamepad [beta]", io::configFlags, ConfigFlag.NavEnableGamepad.i)
+                sameLine(); showHelpMarker("Required back-end to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
+                checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
+                sameLine(); showHelpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
+                checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse.i)
+                if (io.configFlags has ConfigFlag.NoMouse) { // Create a way to restore this flag otherwise we could be stuck completely!
+
+                    if ((time.f % 0.4f) < 0.2f) {
+                        sameLine()
+                        text("<<PRESS SPACE TO DISABLE>>")
+                    }
+                    if (Key.Space.isPressed)
+                        io.configFlags = io.configFlags wo ConfigFlag.NoMouse
+                }
+                checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)
+                sameLine(); showHelpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
+                checkbox("io.ConfigCursorBlink", io::configCursorBlink)
+                sameLine(); showHelpMarker("Set to false to disable blinking cursor, for users who consider it distracting")
+                checkbox("io.ConfigResizeWindowsFromEdges [beta]", io::configResizeWindowsFromEdges)
+                sameLine(); showHelpMarker("Enable resizing of windows from their edges and from the lower-left corner.\nThis requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")
+                checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
+                sameLine(); showHelpMarker("Instruct Dear ImGui to render a mouse cursor for you. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
+                separator()
+            }
+            treeNode("Backend Flags") {
+                val backendFlags = intArrayOf(io.backendFlags) // Make a local copy to avoid modifying the back-end flags.
+                checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
+                checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)
+                checkboxFlags("io.BackendFlags: HasSetMousePos", backendFlags, BackendFlag.HasSetMousePos.i)
+                separator()
+            }
+
+            treeNode("Style") {
+                StyleEditor()
+                separator()
+            }
+
+            treeNode("Capture/Logging") {
+                textWrapped("The logging API redirects all text output so you can easily capture the content of a window or a block. Tree nodes can be automatically expanded.")
+                showHelpMarker("Try opening any of the contents below in this window and then click one of the \"Log To\" button.")
+                logButtons()
+                textWrapped("You can also call ImGui::LogText() to output directly to the log without a visual output.")
+                if (button("Copy \"Hello, world!\" to clipboard"))                {
+                    logToClipboard()
+                    logText("Hello, world!")
+                    logFinish()
+                }
+            }
+        }
+
+        collapsingHeader("Window options")        {
             checkbox("No titlebar", ::noTitlebar); sameLine(150)
             checkbox("No scrollbar", ::noScrollbar); sameLine(300)
             checkbox("No menu", ::noMenu)
             checkbox("No move", ::noMove); sameLine(150)
-            checkbox("No resize", ::noResize)
+            checkbox("No resize", ::noResize); sameLine(300)
             checkbox("No collapse", ::noCollapse)
             checkbox("No close", ::noClose); sameLine(150)
             checkbox("No nav", ::noNav)
-
-            treeNode("Style") { StyleEditor() }
-
-            treeNode("Capture/Logging") {
-                textWrapped("The logging API redirects all text output so you can easily capture the content of a " +
-                        "window or a block. Tree nodes can be automatically expanded. You can also call LogText() to " +
-                        "output directly to the log without a visual output.")
-                logButtons()
-            }
         }
 
         widgets()
