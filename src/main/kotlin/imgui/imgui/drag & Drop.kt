@@ -241,4 +241,6 @@ interface imgui_dragAndDrop {
     /** We don't really use/need this now, but added it for the sake of consistency and because we might need it later.
      *  Only call EndDragDropTarget() if BeginDragDropTarget() returns true!    */
     fun endDragDropTarget() = assert(g.dragDropActive)
+
+    fun getDragDropPayload(): Payload? = g.dragDropPayload.takeIf { g.dragDropActive }
 }
