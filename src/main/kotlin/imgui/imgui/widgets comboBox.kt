@@ -32,6 +32,8 @@ import imgui.ImGui.style
 import imgui.internal.DrawCornerFlag
 import imgui.internal.Rect
 import imgui.internal.isPowerOfTwo
+import uno.kotlin.getValue
+import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
 import imgui.WindowFlag as Wf

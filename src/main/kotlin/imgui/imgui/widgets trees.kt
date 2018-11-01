@@ -14,6 +14,8 @@ import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.internal.itemHoveredDataBackup
+import uno.kotlin.getValue
+import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 

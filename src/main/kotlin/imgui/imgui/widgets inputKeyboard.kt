@@ -25,6 +25,8 @@ import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
+import uno.kotlin.getValue
+import uno.kotlin.setValue
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
