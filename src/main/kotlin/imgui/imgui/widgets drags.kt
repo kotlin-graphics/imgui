@@ -41,6 +41,7 @@ import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
 import imgui.internal.Rect
 import imgui.internal.focus
+import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
 
 /** Widgets: Drags (tip: ctrl+click on a drag box to input with keyboard. manually input values aren't clamped, can go

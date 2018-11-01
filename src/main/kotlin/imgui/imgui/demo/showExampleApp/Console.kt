@@ -8,8 +8,8 @@ import imgui.ImGui.menuItem
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.textWrapped
 import imgui.functionalProgramming.popupContextItem
-import imgui.getValue
-import imgui.setValue
+import uno.kotlin.getValue
+import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
