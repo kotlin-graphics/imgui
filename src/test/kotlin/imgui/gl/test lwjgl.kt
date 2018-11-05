@@ -20,6 +20,7 @@ import org.lwjgl.opengl.GL11.glClear
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.Platform
 import uno.glfw.GlfwWindow
+import uno.glfw.VSync
 import uno.glfw.glfw
 
 fun main(args: Array<String>) {
@@ -46,7 +47,7 @@ private class HelloWorld_lwjgl {
             init()
         }
 
-        glfw.swapInterval = 1   // Enable vsync
+        glfw.swapInterval = VSync.ON
 
         // Setup ImGui binding
 //         glslVersion = 330 // set here your desidered glsl version
