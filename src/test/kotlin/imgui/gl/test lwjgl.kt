@@ -153,7 +153,5 @@ private class HelloWorld_lwjgl {
         ImplGL3.renderDrawData(ImGui.drawData!!)
 
         checkError("mainLoop") // TODO remove in production
-
-        println(stack.pointer)
     }
 }
