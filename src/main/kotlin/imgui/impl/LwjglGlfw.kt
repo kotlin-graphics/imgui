@@ -7,6 +7,7 @@ import glm_.vec2.Vec2d
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
+import imgui.Key
 import imgui.impl.windowsIme.imeListener
 import kool.cap
 import org.lwjgl.glfw.GLFW.*
@@ -175,7 +176,7 @@ object LwjglGlfw {
         repeat(io.mouseDown.size) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
-            io.mouseDown[it] = mouseJustPressed[it] || window.mouseButton(it) != 0
+            io.mouseDown[it] = mouseJustPressed[it] || window.isPressed(MouseButton.values()[it])
             mouseJustPressed[it] = false
         }
 
