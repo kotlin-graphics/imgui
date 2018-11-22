@@ -1,4 +1,4 @@
-# dear imgui
+# dear jvm imgui
 
 [![Build Status](https://travis-ci.org/kotlin-graphics/imgui.svg?branch=master)](https://travis-ci.org/kotlin-graphics/imgui) 
 [![license](https://img.shields.io/badge/License-MIT-orange.svg)](https://github.com/kotlin-graphics/imgui/blob/master/LICENSE) 
@@ -7,7 +7,7 @@
 [![Github All Releases](https://img.shields.io/github/downloads/kotlin-graphics/imgui/total.svg)]()
 [![Slack Status](http://slack.kotlinlang.org/badge.svg)](http://slack.kotlinlang.org/)
 
-(This port is free but, on the same line of the original library, it needs your support to sustain its development. There are many desirable features and maintenance ahead. If you are an individual using dear imgui, please consider donating via Patreon or PayPal. If your company is using dear imgui, please consider financial support (e.g. sponsoring a few weeks/months of development. E-mail: elect86 at gmail).
+(This rewrite is free but, on the same line of the original library, it needs your support to sustain its development. There are many desirable features and maintenance ahead. If you are an individual using dear imgui, please consider donating via Patreon or PayPal. If your company is using dear imgui, please consider financial support (e.g. sponsoring a few weeks/months of development. E-mail: elect86 at gmail).
 
 Monthly donations via Patreon:
 <br>[![Patreon](https://cloud.githubusercontent.com/assets/8225057/5990484/70413560-a9ab-11e4-8942-1a63607c0b00.png)](http://www.patreon.com/jvmImGui)
@@ -19,13 +19,15 @@ Btc: 3DKLj6rEZNovEh6xeVp4RU3fk3WxZvFtPM
 
 ----------
 
-This is the Kotlin port of [dear imgui](https://github.com/ocornut/imgui) (AKA ImGui), a bloat-free graphical user interface library for C++. It outputs optimized vertex buffers that you can render anytime in your 3D-pipeline enabled application. It is fast, portable, renderer agnostic and self-contained (few external dependencies).
+This is the Kotlin rewrite of [dear imgui](https://github.com/ocornut/imgui) (AKA ImGui), a bloat-free graphical user interface library for C++. It outputs optimized vertex buffers that you can render anytime in your 3D-pipeline enabled application. It is fast, portable, renderer agnostic and self-contained (few external dependencies).
 
 Dear ImGui is designed to enable fast iterations and to empower programmers to create content creation tools and visualization / debug tools (as opposed to UI for the average end-user). It favors simplicity and productivity toward this goal, and lacks certain features normally found in more high-level libraries.
 
 Dear ImGui is particularly suited to integration in games engine (for tooling), real-time 3D applications, fullscreen applications, embedded applications, or any applications on consoles platforms where operating system features are non-standard.
 
 Dear ImGui is self-contained within a few files that you can easily copy and compile into your application/engine.
+
+It doesn't provide the guarantee that dear imgui provides, but it is actually a much better fit for java/kotlin users.
 
 ### Usage
 
@@ -138,9 +140,9 @@ Some of the goals of Omar for 2018 are:
 - Make Columns better. (they are currently pretty terrible!)
 - Make the examples look better, improve styles, improve font support, make the examples hi-DPI aware.
     
-### Port Roadmap
+### Rewrite Roadmap
    
-- finish to port the last few remaining methods
+- finish to rewrite the last few remaining methods
 - make text input and handling robust (copy/cut/undo/redo and text filters)
 - hunt down bugs
 
@@ -273,7 +275,7 @@ Double-chocolate native sponsors:
 
 and many other [private persons](https://github.com/ocornut/imgui#credits)
 
-I'm very grateful for the support of the persons that have directly contributed to this port via bugs reports, bug fixes, discussions and other forms of support (in alphabetical order):
+I'm very grateful for the support of the persons that have directly contributed to this rewrite via bugs reports, bug fixes, discussions and other forms of support (in alphabetical order):
 
 - Balázs Bódi, [bbodi](https://github.com/bbodi)
 - [Catvert](https://github.com/Catvert)
