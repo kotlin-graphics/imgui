@@ -79,6 +79,10 @@ task lightJar(type: Jar) {
     classifier = 'light'
     from sourceSets.main.output
     exclude 'extraFonts'
+    inputs.property("moduleName", moduleName)
+    manifest {
+        attributes('Automatic-Module-Name': moduleName)
+    }
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
@@ -99,9 +103,11 @@ artifacts {
 
 shadowJar {
     exclude 'module-info.class'
+    inputs.property("moduleName", moduleName)
+    manifest {
+        attributes('Automatic-Module-Name': moduleName)
+    }
 }
-
-
 
 jar {
     inputs.property("moduleName", moduleName)
