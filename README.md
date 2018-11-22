@@ -288,4 +288,4 @@ I'm very grateful for the support of the persons that have directly contributed 
 License
 -------
 
-Dear ImGui is licensed under the MIT License, see LICENSE for more information.
+Dear JVM ImGui is licensed under the MIT License, see LICENSE for more information.
