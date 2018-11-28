@@ -8,6 +8,8 @@ import imgui.Dir
 import imgui.NUL
 import java.io.File
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
@@ -106,10 +108,10 @@ fun trimBlanks(buf: CharArray): CharArray {
 // -----------------------------------------------------------------------------------------------------------------
 
 fun hash(data: IntArray, seed: Int = 0): Int {
-    val buffer = ByteBuffer.allocate(data.size * Int.BYTES)
+    val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])
     val bytes = ByteArray(buffer.size) { buffer[it] }
-    return hash(String(bytes), bytes.size, seed)
+    return hash(String(bytes, StandardCharsets.ISO_8859_1), bytes.size, seed)
 }
 
 /** Pass data_size==0 for zero-terminated strings
@@ -123,8 +125,10 @@ fun hash(data: String, dataSize_: Int, seed_: Int = 0): Int {
     var dataSize = dataSize_
     if (dataSize > 0)
     // Known size
-        while (dataSize-- != 0)
-            crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor data[current++].i]
+        while (dataSize-- != 0) {
+            val a = (crc and 0xFF) xor data[current++].i
+            crc = (crc ushr 8) xor crc32Lut[a]
+        }
     else
     // Zero-terminated string
         while (current < data.length) {
