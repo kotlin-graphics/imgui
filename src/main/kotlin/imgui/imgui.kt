@@ -186,12 +186,12 @@ infix fun String.cmp(charArray: CharArray): Boolean {
     return true
 }
 
-fun strcmp(charsA: CharArray, charsB: CharArray): Boolean {
-    for (i in charsA.indices) {
-        val a = charsA[i]
-        if (a == NUL) return true
-        val b = charsB.getOrElse(i) { return false }
-        if (b == NUL) return true
+infix fun CharArray.cmp(other: CharArray): Boolean {
+    for (i in indices) {
+        val a = get(i)
+        val b = other.getOrElse(i) { return false }
+        if (a == NUL)
+            return b == NUL
         if (a != b)
             return false
     }

@@ -34,6 +34,7 @@ private class HelloWorld_lwjgl {
     var showDemo = true
     var counter = 0
 
+    val name = CharArray(100)
 
     init {
         glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
