@@ -253,8 +253,9 @@ interface colorEditorPicker {
                 valueChanged = true
             }
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_4F)?.let {
-                for (j in 0..components)
-                    col[j] = it.data!!.asFloatBuffer()[j]
+                val floats = it.data!!.asFloatBuffer()
+                for (j in 0 until components)
+                    col[j] = floats[j]
                 valueChanged = true
             }
             endDragDropTarget()

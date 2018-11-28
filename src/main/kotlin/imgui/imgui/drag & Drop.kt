@@ -1,6 +1,10 @@
 package imgui.imgui
 
+import glm_.BYTES
+import glm_.set
 import glm_.size
+import glm_.vec2.Vec2
+import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginDragDropTooltip
@@ -132,6 +136,33 @@ interface imgui_dragAndDrop {
         assert(cond == Cond.Always || cond == Cond.Once)
         assert(payload.sourceId != 0) { "Not called between beginDragDropSource() and endDragDropSource()" }
 
+        fun savePayload() {
+            when (data) {
+                is Byte -> payload.data!![0] = data
+                is Int -> payload.data!!.putInt(0, data)
+                is Short -> payload.data!!.putShort(0, data)
+                is Long -> payload.data!!.putLong(0, data)
+                is Float -> payload.data!!.putFloat(0, data)
+                is Double -> payload.data!!.putDouble(0, data)
+                is Char -> payload.data!!.putChar(0, data)
+                is Vec2 -> {
+                    val floats = payload.data!!.asFloatBuffer()
+                    for (i in 0 until dataSize / Float.BYTES)
+                        floats[i] = data[i]
+                }
+                is Vec3 -> {
+                    val floats = payload.data!!.asFloatBuffer()
+                    for (i in 0 until dataSize / Float.BYTES)
+                        floats[i] = data[i]
+                }
+                is Vec4 -> {
+                    val floats = payload.data!!.asFloatBuffer()
+                    for (i in 0 until dataSize / Float.BYTES)
+                        floats[i] = data[i]
+                }
+            }
+        }
+
         if (cond == Cond.Always || payload.dataFrameCount == -1) {
             // Copy payload
             type.toCharArray(payload.dataType)
@@ -140,18 +171,12 @@ interface imgui_dragAndDrop {
                 dataSize > g.dragDropPayloadBufLocal.size -> { // Store in heap
                     g.dragDropPayloadBufHeap = ByteBuffer.allocate(dataSize)
                     payload.data = g.dragDropPayloadBufHeap
-                    when (data) {
-                        is Int -> payload.data!!.putInt(0, data)
-                        is Vec4 -> data to payload.data!!
-                    }
+                    savePayload()
                 }
                 dataSize > 0 -> { // Store locally
                     g.dragDropPayloadBufLocal.fill(0)
                     payload.data = g.dragDropPayloadBufLocal
-                    when (data) {
-                        is Int -> payload.data!!.putInt(0, data)
-                        is Vec4 -> data to payload.data!!
-                    }
+                    savePayload()
                 }
                 else -> payload.data = null
             }
