@@ -11,6 +11,7 @@ import imgui.g
 import imgui.internal.Rect
 
 
+/** Inputs Utilities */
 interface imgui_inputs {
 
     fun getKeyIndex(imguiKey: Int) = io.keyMap[imguiKey]

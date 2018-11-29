@@ -23,7 +23,8 @@ import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
 
-/** See Demo Window under "Widgets->Querying Status" for an interactive visualization of many of those functions. */
+/** Item/Widgets Utilities
+ *  See Demo Window under "Widgets->Querying Status" for an interactive visualization of many of those functions. */
 interface imgui_utilities {
 
     /** This is roughly matching the behavior of internal-facing ItemHoverable()
@@ -126,6 +127,9 @@ interface imgui_utilities {
         if (g.activeId == g.currentWindow!!.dc.lastItemId)
             g.activeIdAllowOverlap = true
     }
+
+
+    // Miscellaneous Utilities
 
     /** test if rectangle (of given size, starting from cursor position) is visible / not clipped.  */
     fun isRectVisible(size: Vec2) = with(currentWindowRead!!) { clipRect overlaps Rect(dc.cursorPos, dc.cursorPos + size) }
@@ -245,6 +249,10 @@ interface imgui_utilities {
             out = out or (F32_TO_INT8_SAT(z) shl COL32_B_SHIFT)
             return out or (F32_TO_INT8_SAT(w) shl COL32_A_SHIFT)
         }
+
+
+    // Color Utilities
+
 
     /** Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
      *  Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv  */

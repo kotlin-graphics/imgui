@@ -257,7 +257,8 @@ interface imgui_parametersStacks {
         textWrapPos = textWrapPosStack.lastOrNull() ?: -1f
     }
 
-    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.AllowKeyboardFocus.i, allowKeyboardFocus)
+    // FIXME: Look into renaming this once we have settled the new Focus/Activation/TabStop system.
+    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.NoTabStop.i, !allowKeyboardFocus)
 
     fun popAllowKeyboardFocus() = popItemFlag()
 
