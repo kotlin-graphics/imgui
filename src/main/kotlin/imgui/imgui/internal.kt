@@ -38,8 +38,6 @@ import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.logText
-import imgui.ImGui.mouseCursor
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
@@ -318,9 +316,9 @@ interface imgui_internal {
     /** Return true if focus is requested   */
     fun focusableItemRegister(window: Window, id: ID, tabStop: Boolean = true): Boolean {
 
-        val allowKeyboardFocus = (window.dc.itemFlags and (If.AllowKeyboardFocus or If.Disabled)) == If.AllowKeyboardFocus.i
+        val isTabStop = window.dc.itemFlags hasnt (If.NoTabStop or If.Disabled)
         window.focusIdxAllCounter++
-        if (allowKeyboardFocus)
+        if (isTabStop)
             window.focusIdxTabCounter++
 
         /*  Process keyboard input at this point: TAB/Shift-TAB to tab out of the currently focused item.
@@ -328,11 +326,11 @@ interface imgui_internal {
         if (tabStop && g.activeId == id && window.focusIdxAllRequestNext == Int.MAX_VALUE &&
                 window.focusIdxTabRequestNext == Int.MAX_VALUE && !io.keyCtrl && Key.Tab.isPressed)
         // Modulo on index will be applied at the end of frame once we've got the total counter of items.
-            window.focusIdxTabRequestNext = window.focusIdxTabCounter + if (io.keyShift) if (allowKeyboardFocus) -1 else 0 else 1
+            window.focusIdxTabRequestNext = window.focusIdxTabCounter + if (io.keyShift) if (isTabStop) -1 else 0 else 1
 
         if (window.focusIdxAllCounter == window.focusIdxAllRequestCurrent) return true
 
-        if (allowKeyboardFocus && window.focusIdxTabCounter == window.focusIdxTabRequestCurrent) {
+        if (isTabStop && window.focusIdxTabCounter == window.focusIdxTabRequestCurrent) {
             g.navJustTabbedId = id
             return true
         }
@@ -3077,7 +3075,7 @@ inline fun <R> withBoolean(bools: BooleanArray, ptr: Int = 0, block: (KMutablePr
     return res
 }
 
-inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
+ fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R { // TODO inline
     Ref.fPtr++
     val f = Ref::float
     f.set(floats[ptr])

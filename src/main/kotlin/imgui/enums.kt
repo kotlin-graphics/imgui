@@ -874,8 +874,8 @@ infix fun Int.wo(b: Cond) = and(b.i.inv())
 /** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
  *  This is going to be exposed in imgui.h when stabilized enough.  */
 enum class ItemFlag(val i: Int) {
-    /** true    */
-    AllowKeyboardFocus(1 shl 0),
+    /** false    */
+    NoTabStop(1 shl 0),
     /** false. Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.  */
     ButtonRepeat(1 shl 1),
     /** false. [BETA] Disable interactions but doesn't affect visuals. Should be: grey out and disable interactions with widgets that affect data + view widgets (WIP)     */
@@ -887,7 +887,7 @@ enum class ItemFlag(val i: Int) {
     /** false, MenuItem/Selectable() automatically closes current Popup window  */
     SelectableDontClosePopup(1 shl 5),
 
-    Default_(AllowKeyboardFocus.i)
+    Default_(0)
 }
 
 infix fun ItemFlag.or(other: ItemFlag) = i or other.i
