@@ -90,13 +90,15 @@ class TextFilter(defaultFilter: String? = "") {
 //    }
 }
 
+/** Helper: Growable text buffer for logging/accumulating text
+ *  (this could be called 'ImGuiTextBuilder' / 'ImGuiStringBuilder') */
 class TextBuffer {
     init {
         TODO()
     }
 }
 
-/** Helper: Key->value storage
+/** Helper: Key->Value storage
 Typically you don't have to worry about this since a storage is held within each Window.
 We use it to e.g. store collapse state for a tree (Int 0/1)
 This is optimized for efficient lookup (dichotomy into a contiguous buffer) and rare insertion (typically tied to user

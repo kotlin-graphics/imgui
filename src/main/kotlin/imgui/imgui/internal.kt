@@ -3075,7 +3075,7 @@ inline fun <R> withBoolean(bools: BooleanArray, ptr: Int = 0, block: (KMutablePr
     return res
 }
 
- fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R { // TODO inline
+inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R { // TODO inline
     Ref.fPtr++
     val f = Ref::float
     f.set(floats[ptr])
