@@ -57,7 +57,7 @@ dependencies {
         String base = "org.lwjgl:lwjgl$it:$lwjglVersion"
         implementation base
         testRuntime "$base:$lwjglNatives"
-        shadow = "$base:$lwjglNatives"
+        shadow "$base:$lwjglNatives"
     }
 
     compile files("${System.properties['java.home']}/../lib/tools.jar")
