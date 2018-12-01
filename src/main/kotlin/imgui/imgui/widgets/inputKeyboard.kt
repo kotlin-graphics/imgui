@@ -33,7 +33,7 @@ import imgui.InputTextFlag as Itf
 import imgui.internal.ButtonFlag as Bf
 
 /** Widgets: Input with Keyboard
- *  If you want to use InputText() with a dynamic string type such as std::string or your own, see misc/stl/imgui_stl.h */
+ *  If you want to use InputText() with a dynamic string type such as std::string or your own, see cpp/imgui_stdlib.h */
 interface inputKeyboard {
 
 
