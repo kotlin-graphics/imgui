@@ -99,14 +99,14 @@ enum class InputTextFlag(val i: Int) {
     AutoSelectAll(1 shl 4),
     /** Return 'true' when Enter is pressed (as opposed to when the value was modified) */
     EnterReturnsTrue(1 shl 5),
-    /** Call user function on pressing TAB (for completion handling)    */
+    /** Callback on pressing TAB (for completion handling)    */
     CallbackCompletion(1 shl 6),
-    /** Call user function on pressing Up/Down arrows (for history handling)    */
+    /** Callback on pressing Up/Down arrows (for history handling)    */
     CallbackHistory(1 shl 7),
-    /** Call user function every time. User code may query cursor position), modify text buffer.    */
+    /** Callback on each iteration. User code may query cursor position), modify text buffer.    */
     CallbackAlways(1 shl 8),
-    /** Call user function to filter character. Modify data->EventChar to replace/filter input), or return 1 in callback
-     *  to discard character.  */
+    /** Callback on character inputs to replace or discard them. Modify 'EventChar' to replace or discard,
+     *  or return 1 in callback to discard.  */
     CallbackCharFilter(1 shl 9),
     /** Pressing TAB input a '\t' character into the text field */
     AllowTabInput(1 shl 10),
@@ -126,8 +126,9 @@ enum class InputTextFlag(val i: Int) {
     NoUndoRedo(1 shl 16),
     /** Allow 0123456789.+-* /eE (Scientific notation input) */
     CharsScientific(1 shl 17),
-    /** Allow buffer capacity resize + notify when the string wants to be resized
-     *  (for string types which hold a cache of their Size) (see misc/stl/imgui_stl.h for an example of using this) */
+    /** Callback on buffer capacity changes request (beyond 'buf_size' parameter value), allowing the string to grow.
+     *  Notify when the string wants to be resized (for string types which hold a cache of their Size).
+     *  You will be provided a new BufSize in the callback and NEED to honor it. (see misc/stl/imgui_stl.h for an example of using this) */
     CallbackResize(1 shl 18),
 
     // [Internal]

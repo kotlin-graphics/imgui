@@ -145,12 +145,14 @@ class Storage {
 
 /** Shared state of InputText(), passed as an argument to your callback when a ImGuiInputTextFlags_Callback* flag is used.
  *  The callback function should return 0 by default.
- *  Special processing:
- *  - InputTextFlag.CallbackCharFilter:  return 1 if the character is not allowed. You may also set 'EventChar=0'
- *                                       as any character replacement are allowed.
- *  - InputTextFlag.CallbackResize:      notified by InputText() when the string is resized.
- *                                       BufTextLen is set to the new desired string length so you can allocate or update known size.
- *                                       No need to initialize new characters or zero-terminator as InputText will do it.
+ *  Callbacks (follow a flag name and see comments in ImGuiInputTextFlags_ declarations for more details)
+ *  - ImGuiInputTextFlags_CallbackCompletion:  Callback on pressing TAB
+ *  - ImGuiInputTextFlags_CallbackHistory:     Callback on pressing Up/Down arrows
+ *  - ImGuiInputTextFlags_CallbackAlways:      Callback on each iteration
+ *  - ImGuiInputTextFlags_CallbackCharFilter:  Callback on character inputs to replace or discard them.
+ *                                              Modify 'EventChar' to replace or discard, or return 1 in callback to discard.
+ *  - ImGuiInputTextFlags_CallbackResize:      Callback on buffer capacity changes request (beyond 'buf_size' parameter value),
+ *                                              allowing the string to grow.
  *
  *  Helper functions for text manipulation.
  *  Use those function to benefit from the CallbackResize behaviors. Calling those function reset the selection. */
@@ -167,7 +169,8 @@ class InputTextCallbackData {
      *  - To modify the text buffer in a callback, prefer using the InsertChars() / DeleteChars() function. InsertChars() will take care of calling the resize callback if necessary.
      *  - If you know your edits are not going to resize the underlying buffer allocation, you may modify the contents of 'Buf[]' directly. You need to update 'BufTextLen' accordingly (0 <= BufTextLen < BufSize) and set 'BufDirty'' to true so InputText can update its internal state. */
 
-    /** Character input                     Read-write   [CharFilter] Replace character or set to zero. return 1 is equivalent to setting EventChar=0; */
+    /** Character input                     Read-write   [CharFilter] Replace character with another one, or set to zero to drop.
+     *                                      return 1 is equivalent to setting EventChar=0; */
     var eventChar = NUL
     /** Key pressed (Up/Down/TAB)           Read-only    [Completion,History] */
     var eventKey = Key.Tab
@@ -175,11 +178,11 @@ class InputTextCallbackData {
     var buf = CharArray(0)
     /** JVM custom, current buf pointer */
     var bufPtr = 0
-    /** Text length in bytes        Read-write   [Resize,Completion,History,Always] */
+    /** Text length (in bytes)        Read-write   [Resize,Completion,History,Always] */
     var bufTextLen = 0
-    /** Buffer capacity in bytes    Read-only    [Resize,Completion,History,Always] */
+    /** Buffer size (in bytes) = capacity + 1    Read-only    [Resize,Completion,History,Always] */
     var bufSize = 0
-    /** Set if you modify Buf/BufTextLen!!  Write        [Completion,History,Always] */
+    /** Set if you modify Buf/BufTextLen!  Write        [Completion,History,Always] */
     var bufDirty = false
     /** Read-write   [Completion,History,Always] */
     var cursorPos = 0
