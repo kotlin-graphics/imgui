@@ -349,7 +349,7 @@ fun String.scanHex(ints: IntArray, count: Int = ints.size, precision: Int) {
     }
 }
 
-fun String.strchr(startIdx: Int, c: Char): Int? {
+fun String.memchr(startIdx: Int, c: Char): Int? {
     val res = indexOf(c, startIdx)
     return if (res >= 0) res else null
 }
