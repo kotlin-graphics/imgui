@@ -868,8 +868,12 @@ class Window(var context: Context, var name: String) {
         }
     }
 
-    val scrollMaxX get() = max(0f, sizeContents.x - (sizeFull.x - scrollbarSizes.x))
-    val scrollMaxY get() = max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y))
+    /** ~GetWindowScrollMaxX */
+    val scrollMaxX: Float
+        get() = max(0f, sizeContents.x - (sizeFull.x - scrollbarSizes.x))
+    /** ~GetWindowScrollMaxY */
+    val scrollMaxY: Float
+        get() = max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y))
 
     /** AddWindowToDrawData */
     infix fun addTo(outList: ArrayList<DrawList>) {

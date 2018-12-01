@@ -357,6 +357,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
         /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
             (which would happen if we never called NewFrame)         */
+        if(g.fontAtlasOwnedByContext)
+            io.fonts.locked = false
         io.fonts.clear()
 
         // Cleanup of other data are conditional on actually having initialized ImGui.
