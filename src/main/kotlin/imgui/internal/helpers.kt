@@ -317,7 +317,7 @@ infix fun CharArray.strncpy(src: CharArray) = strncpy(src, size)
 fun CharArray.strncpy(src: CharArray, count: Int) {
     if (count < 1) return
     for (i in 0 until count) {
-        if (src[i] == NUL) break
+//        if (src[i] == NUL) break
         this[i] = src[i]
     }
 }

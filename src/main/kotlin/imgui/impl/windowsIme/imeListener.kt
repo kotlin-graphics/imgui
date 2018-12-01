@@ -5,6 +5,7 @@ import glm_.i
 import glm_.toHexString
 import imgui.DEBUG
 import imgui.g
+import kool.adr
 import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
@@ -27,9 +28,9 @@ object imeListener : WindowProc() {
     fun install(window: GlfwWindow) {
         this.window = window
         if (Platform.get() == Platform.WINDOWS) {
-            hwnd = glfwGetWin32Window(window.handle)
+            hwnd = glfwGetWin32Window(window.handle.L)
             glfwProc = GetWindowLongPtr(hwnd, GWL_WNDPROC)
-            SetWindowLongPtr(hwnd, GWL_WNDPROC, address()) // TODO adr
+            SetWindowLongPtr(hwnd, GWL_WNDPROC, adr) // TODO adr
         }
     }
 

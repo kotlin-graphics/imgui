@@ -14,6 +14,12 @@ class test : StringSpec() {
 
             println(String(a).compareTo(String(b)))
             a.cmp(b) shouldBe false
+
+            val c = "Hello World!s".toCharArray(CharArray(32))
+            val d = "Hello World!".toCharArray(CharArray(32))
+
+            println(String(c).compareTo(String(d)))
+            c.cmp(d) shouldBe false
         }
     }
 }
