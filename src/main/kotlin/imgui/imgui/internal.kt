@@ -66,7 +66,7 @@ import imgui.TextEditState.K
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.imgui.widgets.main
 import imgui.internal.*
-import uno.kotlin.buffers.fill
+import kool.lib.fill
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
@@ -3065,7 +3065,7 @@ interface imgui_internal {
 }
 
 // TODO move in a more appropriate place
-inline fun <R> withBoolean(bools: BooleanArray, ptr: Int = 0, block: (KMutableProperty0<Boolean>) -> R): R {
+fun <R> withBoolean(bools: BooleanArray, ptr: Int = 0, block: (KMutableProperty0<Boolean>) -> R): R {
     Ref.bPtr++
     val bool = Ref::bool
     bool.set(bools[ptr])
@@ -3075,7 +3075,7 @@ inline fun <R> withBoolean(bools: BooleanArray, ptr: Int = 0, block: (KMutablePr
     return res
 }
 
-inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R { // TODO inline
+fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R { // TODO inline
     Ref.fPtr++
     val f = Ref::float
     f.set(floats[ptr])
@@ -3085,7 +3085,7 @@ inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0
     return res
 }
 
-inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
+fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
     Ref.iPtr++
     val i = Ref::int
     i.set(ints[ptr])

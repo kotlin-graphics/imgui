@@ -7,6 +7,7 @@ import glm_.vec2.Vec2d
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
+import imgui.Key
 import imgui.impl.windowsIme.imeListener
 import kool.cap
 import org.lwjgl.glfw.GLFW.*
@@ -66,7 +67,7 @@ object LwjglGlfw {
 //            io.ClipboardUserData = g_Window;
 
             if (Platform.get() == Platform.WINDOWS)
-                imeWindowHandle = window.hwnd
+                imeWindowHandle = window.hwnd.L // TODO inline class?
         }
 
         mouseCursors[MouseCursor.Arrow.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
@@ -175,7 +176,7 @@ object LwjglGlfw {
         repeat(io.mouseDown.size) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
-            io.mouseDown[it] = mouseJustPressed[it] || window.mouseButton(it) != 0
+            io.mouseDown[it] = mouseJustPressed[it] || window.isPressed(MouseButton.of(it))
             mouseJustPressed[it] = false
         }
 
@@ -201,7 +202,7 @@ object LwjglGlfw {
         else {
             // Show OS mouse cursor
             // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
-            window.cursor = mouseCursors[imguiCursor.i].takeIf { it != NULL } ?: mouseCursors[MouseCursor.Arrow.i]
+            window.cursor = GlfwCursor(mouseCursors[imguiCursor.i].takeIf { it != NULL } ?: mouseCursors[MouseCursor.Arrow.i])
             window.cursorStatus = CursorStatus.Normal
         }
     }

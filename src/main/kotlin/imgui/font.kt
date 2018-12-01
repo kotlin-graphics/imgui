@@ -2,7 +2,7 @@ package imgui
 
 
 import glm_.*
-import kool.bufferBig
+import kool.Buffer
 import kool.free
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
@@ -15,12 +15,12 @@ import imgui.internal.isBlankA
 import imgui.internal.isBlankW
 import imgui.internal.upperPowerOfTwo
 import imgui.stb.*
+import kool.lib.isNotEmpty
 import org.lwjgl.stb.*
 import org.lwjgl.stb.STBRectPack.stbrp_pack_rects
 import org.lwjgl.stb.STBTruetype.*
 import org.lwjgl.system.MemoryUtil
 import uno.convert.decode85
-import uno.kotlin.buffers.isNotEmpty
 import uno.stb.stb
 import unsigned.toULong
 import java.nio.ByteBuffer
@@ -183,7 +183,7 @@ class FontAtlas {
         assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
         assert(fontCfg.fontData.isEmpty())
         fontCfg.fontData = fontData
-        fontCfg.fontDataBuffer = bufferBig(fontData.size).apply { fontData.forEachIndexed { i, c -> this[i] = c.b } }
+        fontCfg.fontDataBuffer = Buffer(fontData.size).apply { fontData.forEachIndexed { i, c -> this[i] = c.b } }
         fontCfg.sizePixels = sizePixels
         if (glyphRanges.isNotEmpty())
             fontCfg.glyphRanges = glyphRanges
@@ -289,7 +289,7 @@ class FontAtlas {
         if (texPixelsRGBA32 == null) {
             val (pixels, _, _) = getTexDataAsAlpha8()
             if (pixels.isNotEmpty()) {
-                texPixelsRGBA32 = bufferBig(texSize.x * texSize.y * 4)
+                texPixelsRGBA32 = Buffer(texSize.x * texSize.y * 4)
                 val dst = texPixelsRGBA32!!
                 for (n in 0 until pixels.size) {
                     dst[n * 4] = 255.b
@@ -657,7 +657,7 @@ class FontAtlas {
         // Create texture
         texSize.y = if (flags has FontAtlasFlag.NoPowerOfTwoHeight) texSize.y + 1 else texSize.y.upperPowerOfTwo
         texUvScale = 1f / Vec2(texSize)
-        texPixelsAlpha8 = bufferBig(texSize.x * texSize.y)
+        texPixelsAlpha8 = Buffer(texSize.x * texSize.y)
         spc.pixels = texPixelsAlpha8!!
         spc.height = texSize.y
 
