@@ -128,7 +128,7 @@ enum class InputTextFlag(val i: Int) {
     CharsScientific(1 shl 17),
     /** Callback on buffer capacity changes request (beyond 'buf_size' parameter value), allowing the string to grow.
      *  Notify when the string wants to be resized (for string types which hold a cache of their Size).
-     *  You will be provided a new BufSize in the callback and NEED to honor it. (see misc/stl/imgui_stl.h for an example of using this) */
+     *  You will be provided a new BufSize in the callback and NEED to honor it. (see misc/cpp/imgui_stl.h for an example of using this) */
     CallbackResize(1 shl 18),
 
     // [Internal]

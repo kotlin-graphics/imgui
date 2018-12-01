@@ -1920,7 +1920,7 @@ interface imgui_internal {
      *    This is so we can easily call InputText() on static arrays using ARRAYSIZE() and to match
      *    Note that in std::string world, capacity() would omit 1 byte used by the zero-terminator.
      *  - When active, hold on a privately held copy of the text (and apply back to 'buf'). So changing 'buf' while the InputText is active has no effect.
-     *  - If you want to use ImGui::InputText() with std::string, see misc/stl/imgui_stl.h
+     *  - If you want to use ImGui::InputText() with std::string, see misc/cpp/imgui_stl.h
      *  (FIXME: Rather messy function partly because we are doing UTF8 > u16 > UTF8 conversions on the go to more easily handle stb_textedit calls. Ideally we should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
      */
     fun inputTextEx(label: String, buf: CharArray/*, bufSize: Int*/, sizeArg: Vec2, flags: InputTextFlags,
