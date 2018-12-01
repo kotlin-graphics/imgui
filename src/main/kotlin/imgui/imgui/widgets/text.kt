@@ -24,7 +24,7 @@ import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeight
 import imgui.internal.Rect
-import imgui.internal.strchr
+import imgui.internal.memchr
 import imgui.ColorEditFlag as Cef
 
 interface text {
@@ -43,10 +43,12 @@ interface text {
         if (textEnd > 2000 && !wrapEnabled) {
             /*  Long text!
                 Perform manual coarse clipping to optimize for long multi-line text
-                From this point we will only compute the width of lines that are visible. Optimization only available
-                when word-wrapping is disabled.
-                We also don't vertically center the text within the line full height, which is unlikely to matter
-                because we are likely the biggest and only item on the line.    */
+                - From this point we will only compute the width of lines that are visible. Optimization only available
+                    when word-wrapping is disabled.
+                - We also don't vertically center the text within the line full height, which is unlikely to matter
+                    because we are likely the biggest and only item on the line.
+                - We use memchr(), pay attention that well optimized versions of those str/mem functions are much faster
+                    than a casually written loop.   */
 
             var line = 0
             val lineHeight = textLineHeight
@@ -62,7 +64,7 @@ interface text {
                     if (linesSkippable > 0) {
                         var linesSkipped = 0
                         while (line < textEnd && linesSkipped < linesSkippable) {
-                            val lineEnd = text.strchr(line, '\n') ?: textEnd
+                            val lineEnd = text.memchr(line, '\n') ?: textEnd
                             line = lineEnd + 1
                             linesSkipped++
                         }
@@ -73,14 +75,14 @@ interface text {
                 if (line < textEnd) {
                     val lineRect = Rect(pos, pos + Vec2(Float.MAX_VALUE, lineHeight))
                     while (line < textEnd) {
-                        var lineEnd = text.strchr(line, '\n') ?: 0
                         if (isClippedEx(lineRect, 0, false)) break
+
+                        val lineEnd = text.memchr(line, '\n') ?: textEnd
 
                         val pLine = text.substring(line)
                         val lineSize = calcTextSize(pLine, lineEnd - line, false)
                         textSize.x = glm.max(textSize.x, lineSize.x)
                         renderText(pos, pLine, lineEnd - line, false)
-                        if (lineEnd == 0) lineEnd = textEnd
                         line = lineEnd + 1
                         lineRect.min.y += lineHeight
                         lineRect.max.y += lineHeight
@@ -89,7 +91,7 @@ interface text {
                     // Count remaining lines
                     var linesSkipped = 0
                     while (line < textEnd) {
-                        val lineEnd = text.strchr(line, '\n') ?: textEnd
+                        val lineEnd = text.memchr(line, '\n') ?: textEnd
                         line = lineEnd + 1
                         linesSkipped++
                     }
