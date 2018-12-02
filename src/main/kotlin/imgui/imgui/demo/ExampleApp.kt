@@ -73,6 +73,7 @@ object ExampleApp {
     var noCollapse = false
     var noClose = false
     var noNav = false
+    var noBackground = false
     var noBringToFront = false
 
     var filter = TextFilter()
@@ -114,6 +115,7 @@ object ExampleApp {
         if (noResize) windowFlags = windowFlags or Wf.NoResize
         if (noCollapse) windowFlags = windowFlags or Wf.NoCollapse
         if (noNav) windowFlags = windowFlags or Wf.NoNav
+        if (noBackground) windowFlags = windowFlags or Wf.NoNav
         if (noBringToFront) windowFlags = windowFlags or Wf.NoBringToFrontOnFocus
         if (noClose) open = null // Don't pass our bool* to Begin
         /*  We specify a default position/size in case there's no data in the .ini file. Typically this isn't required!
@@ -239,6 +241,7 @@ object ExampleApp {
             checkbox("No collapse", ::noCollapse)
             checkbox("No close", ::noClose); sameLine(150)
             checkbox("No nav", ::noNav); sameLine(300)
+            checkbox("No background", ::noBackground)
             checkbox("No bring to front", ::noBringToFront)
         }
 

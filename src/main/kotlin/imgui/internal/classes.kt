@@ -379,13 +379,13 @@ class NavMoveResult {
 
 /** Storage for SetNexWindow** functions    */
 class NextWindowData {
-    var posCond = Cond.Null
-    var sizeCond = Cond.Null
-    var contentSizeCond = Cond.Null
-    var collapsedCond = Cond.Null
-    var sizeConstraintCond = Cond.Null
-    var focusCond = Cond.Null
-    var bgAlphaCond = Cond.Null
+    var posCond = Cond.None
+    var sizeCond = Cond.None
+    var contentSizeCond = Cond.None
+    var collapsedCond = Cond.None
+    var sizeConstraintCond = Cond.None
+    var focusCond = Cond.None
+    var bgAlphaCond = Cond.None
     val posVal = Vec2()
     val posPivotVal = Vec2()
     val sizeVal = Vec2()
@@ -400,13 +400,13 @@ class NextWindowData {
     var menuBarOffsetMinVal = Vec2()
 
     fun clear() {
-        posCond = Cond.Null
-        sizeCond = Cond.Null
-        contentSizeCond = Cond.Null
-        collapsedCond = Cond.Null
-        sizeConstraintCond = Cond.Null
-        focusCond = Cond.Null
-        bgAlphaCond = Cond.Null
+        posCond = Cond.None
+        sizeCond = Cond.None
+        contentSizeCond = Cond.None
+        collapsedCond = Cond.None
+        sizeConstraintCond = Cond.None
+        focusCond = Cond.None
+        bgAlphaCond = Cond.None
     }
 }
 
@@ -753,7 +753,7 @@ class Window(var context: Context, var name: String) {
 
     fun setPos(pos: Vec2, cond: Cond) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != Cond.Null && setWindowPosAllowFlags hasnt cond)
+        if (cond != Cond.None && setWindowPosAllowFlags hasnt cond)
             return
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
@@ -773,7 +773,7 @@ class Window(var context: Context, var name: String) {
 
     fun setSize(size: Vec2, cond: Cond) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != Cond.Null && setWindowSizeAllowFlags hasnt cond)
+        if (cond != Cond.None && setWindowSizeAllowFlags hasnt cond)
             return
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
@@ -798,7 +798,7 @@ class Window(var context: Context, var name: String) {
 
     fun setCollapsed(collapsed: Boolean, cond: Cond) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != Cond.Null && setWindowCollapsedAllowFlags hasnt cond)
+        if (cond != Cond.None && setWindowCollapsedAllowFlags hasnt cond)
             return
         setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
         // Set
@@ -825,7 +825,7 @@ class Window(var context: Context, var name: String) {
 
     fun calcSizeAfterConstraint(newSize: Vec2): Vec2 {
 
-        if (g.nextWindowData.sizeConstraintCond != Cond.Null) {
+        if (g.nextWindowData.sizeConstraintCond != Cond.None) {
             // Using -1,-1 on either X/Y axis to preserve the current size.
             val cr = g.nextWindowData.sizeConstraintRect
             newSize.x = if (cr.min.x >= 0 && cr.max.x >= 0) glm.clamp(newSize.x, cr.min.x, cr.max.x) else sizeFull.x

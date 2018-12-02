@@ -14,14 +14,10 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseReleased
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowHovered
-import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
-import imgui.internal.NavForward
 import imgui.internal.NavMoveFlag
-import imgui.internal.Window
-import kotlin.math.max
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
 
@@ -89,7 +85,7 @@ interface imgui_popups {
         }
         // Center modal windows by default
         // FIXME: Should test for (PosCond & window->SetWindowPosAllowFlags) with the upcoming window.
-        if (g.nextWindowData.posCond == Cond.Null)
+        if (g.nextWindowData.posCond == Cond.None)
             setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
 
         val isOpen = begin(name, pOpen, flags or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings)

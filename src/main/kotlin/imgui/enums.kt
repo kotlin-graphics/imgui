@@ -25,10 +25,8 @@ enum class WindowFlag(val i: Int) {
     NoCollapse(1 shl 5),
     /** Resize every window to its content every frame  */
     AlwaysAutoResize(1 shl 6),
-    @Deprecated("OBSOLETE! Use e.g. style.FrameBorderSize=1.0f to enable borders")
-    /** Show borders around windows and items
-     *  Deprecated, Set style.FrameBorderSize=1.0f / style.WindowBorderSize=1.0f to enable borders around windows and items */
-    ShowBorders(1 shl 7),
+    /** Disable drawing background color (WindowBg, etc.) and outside border. Similar as using SetNextWindowBgAlpha(0.0f).(1 shl 7) */
+    NoBackground(1 shl 7),
     /** Never load/save settings in .ini file   */
     NoSavedSettings(1 shl 8),
     /** Disable catching mouse or keyboard inputs   */
@@ -58,6 +56,8 @@ enum class WindowFlag(val i: Int) {
     NoNavFocus(1 shl 19),
 
     NoNav(NoNavInputs or NoNavFocus),
+
+    NoDecoration(NoTitleBar or NoResize or NoScrollbar or NoCollapse),
 
     // [Internal]
 
@@ -850,7 +850,7 @@ enum class MouseCursor {
  *  All the functions above treat 0 as a shortcut to Cond.Always. */
 enum class Cond(val i: Int) {
 
-    Null(0),
+    None(0),
     /** Set the variable    */
     Always(1 shl 0),
     /** Set the variable once per runtime session (only the first call with succeed)    */

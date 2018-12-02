@@ -50,7 +50,7 @@ interface comboBox {
 
         // Always consume the SetNextWindowSizeConstraint() call in our early return paths
         val backupNextWindowSizeConstraint = g.nextWindowData.sizeConstraintCond
-        g.nextWindowData.sizeConstraintCond = Cond.Null
+        g.nextWindowData.sizeConstraintCond = Cond.None
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -97,7 +97,7 @@ interface comboBox {
 
         if (!popupOpen) return false
 
-        if (backupNextWindowSizeConstraint != Cond.Null) {
+        if (backupNextWindowSizeConstraint != Cond.None) {
             g.nextWindowData.sizeConstraintCond = backupNextWindowSizeConstraint
             g.nextWindowData.sizeConstraintRect.min.x = g.nextWindowData.sizeConstraintRect.min.x max w
         } else {
@@ -179,7 +179,7 @@ interface comboBox {
 
         /*  The old Combo() API exposed "popup_max_height_in_items". The new more general BeginCombo() API doesn't,
             have/need it, but we emulate it here.         */
-        if (popupMaxHeightInItem != -1 && g.nextWindowData.sizeConstraintCond == Cond.Null)
+        if (popupMaxHeightInItem != -1 && g.nextWindowData.sizeConstraintCond == Cond.None)
             setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, calcMaxPopupHeightFromItemCount(popupMaxHeightInItem)))
 
         if (!beginCombo(label, previewValue, Cf.None.i)) return false

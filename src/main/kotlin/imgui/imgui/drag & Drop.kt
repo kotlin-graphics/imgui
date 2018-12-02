@@ -126,9 +126,9 @@ interface imgui_dragAndDrop {
     /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
      *  Data is copied and held by imgui.
      *  Use 'cond' to choose to submit payload on drag start or every frame */
-    fun setDragDropPayload(type: String, data: Any, dataSize: Int, cond_: Cond = Cond.Null): Boolean {
+    fun setDragDropPayload(type: String, data: Any, dataSize: Int, cond_: Cond = Cond.None): Boolean {
         val payload = g.dragDropPayload
-        val cond = if (cond_ == Cond.Null) Cond.Always else cond_
+        val cond = if (cond_ == Cond.None) Cond.Always else cond_
 
         assert(type.isNotEmpty())
         assert(type.length < 32) { "Payload type can be at most 32 characters long" }
