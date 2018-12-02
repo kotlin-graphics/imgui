@@ -187,10 +187,12 @@ interface sliders {
         return res
     }
 
-    fun sliderAngle(label: String, vRadPtr: KMutableProperty0<Float>, vDegreesMin: Float = -360f, vDegreesMax: Float = 360f): Boolean {
+    fun sliderAngle(label: String, vRadPtr: KMutableProperty0<Float>, vDegreesMin: Float = -360f,
+                    vDegreesMax: Float = 360f, format_: String = "%.0f deg"): Boolean {
+        val format = if(format_.isEmpty()) "%.0f deg" else format_
         var vRad by vRadPtr
         vRad = vRad.deg
-        val valueChanged = sliderFloat(label, vRadPtr, vDegreesMin, vDegreesMax, "%.0f deg", 1f)
+        val valueChanged = sliderFloat(label, vRadPtr, vDegreesMin, vDegreesMax, format, 1f)
         vRad = vRad.rad
         return valueChanged
     }
