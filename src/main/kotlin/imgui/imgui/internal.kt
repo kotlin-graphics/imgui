@@ -194,8 +194,10 @@ interface imgui_internal {
         set(value) {
             g.hoveredId = value
             g.hoveredIdAllowOverlap = false
-            if (value != 0 && g.hoveredIdPreviousFrame != value)
+            if (value != 0 && g.hoveredIdPreviousFrame != value) {
                 g.hoveredIdTimer = 0f
+                g.hoveredIdNotActiveTimer = 0f
+            }
         }
 
     fun keepAliveId(id: ID) {

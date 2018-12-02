@@ -126,8 +126,12 @@ interface imgui_main {
         // Clear reference to active widget if the widget isn't alive anymore
         if (g.hoveredIdPreviousFrame == 0)
             g.hoveredIdTimer = 0f
+        if (g.hoveredIdPreviousFrame == 0 || (g.hoveredId != 0 && g.activeId == g.hoveredId))
+            g.hoveredIdNotActiveTimer = 0f
         if (g.hoveredId != 0)
             g.hoveredIdTimer += io.deltaTime
+        if (g.hoveredId != 0 && g.activeId != g.hoveredId)
+            g.hoveredIdNotActiveTimer += io.deltaTime
         g.hoveredIdPreviousFrame = g.hoveredId
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false

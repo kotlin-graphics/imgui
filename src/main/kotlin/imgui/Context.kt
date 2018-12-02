@@ -66,8 +66,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var hoveredIdAllowOverlap = false
 
     var hoveredIdPreviousFrame: ID = 0
-
+    /** Measure contiguous hovering time */
     var hoveredIdTimer = 0f
+    /** Measure contiguous hovering time where the item has not been active */
+    var hoveredIdNotActiveTimer = 0f
     /** Active widget   */
     var activeId: ID = 0
 
