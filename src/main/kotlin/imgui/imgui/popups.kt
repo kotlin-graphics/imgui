@@ -109,7 +109,8 @@ interface imgui_popups {
         end()
     }
 
-    /** Helper to open popup when clicked on last item. return true when just opened.   */
+    /** Helper to open popup when clicked on last item.  (note: actually triggers on the mouse _released_ event to be
+     *  consistent with popup behaviors). return true when just opened.   */
     fun openPopupOnItemClick(strId: String = "", mouseButton: Int = 1) = with(g.currentWindow!!) {
         if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
             // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!

@@ -54,6 +54,21 @@ object popupsAndModalWindows {
 
         collapsingHeader("Popups & Modal windows") {
 
+            /*
+                Popups are windows with a few special properties:
+                - They block normal mouse hovering detection outside them. (*)
+                - Unless modal, they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
+                - Their visibility state (~bool) is held internally by imgui instead of being held by the programmer as we are used to with regular Begin() calls.
+                (*) One can use IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) to bypass it and detect hovering even when normally blocked by a popup.
+                Those three properties are intimately connected. The library needs to hold their visibility state because it can close popups at any time.
+
+                Typical use for regular windows:
+                bool my_tool_is_active = false; if (ImGui::Button("Open")) my_tool_is_active = true; [...] if (my_tool_is_active) Begin("My Tool", &my_tool_is_active) { [...] } End();
+                Typical use for popups:
+                if (ImGui::Button("Open")) ImGui::OpenPopup("MyPopup"); if (ImGui::BeginPopup("MyPopup") { [...] EndPopup(); }
+                With popups we have to go through a library call (here OpenPopup) to manipulate the visibility state.
+                This may be a bit confusing at first but it should quickly make sense. Follow on the examples below.
+             */
             treeNode("Popups") {
 
                 textWrapped("When a popup is active, it inhibits interacting with windows that are behind the popup. Clicking outside the popup closes it.")
@@ -63,18 +78,18 @@ object popupsAndModalWindows {
                 /*  Simple selection popup
                     (If you want to show the current selection inside the Button itself, you may want to build a string
                     using the "###" operator to preserve a constant ID with a variable label)                 */
-                if (button("Select..")) openPopup("select")
+                if (button("Select..")) openPopup("my_select_popup")
                 sameLine()
-                textUnformatted(names.getOrElse(selectedFish, { "<None>" }))
-                popup("select") {
+                textUnformatted(names.getOrElse(selectedFish) { "<None>" })
+                popup("my_select_popup") {
                     text("Aquarium")
                     separator()
                     names.forEachIndexed { i, n -> if (selectable(n)) selectedFish = i }
                 }
 
                 // Showing a menu with toggles
-                if (button("Toggle..")) openPopup("toggle")
-                popup("toggle") {
+                if (button("Toggle..")) openPopup("my_toggle_popup")
+                popup("my_toggle_popup") {
                     names.forEachIndexed { i, n -> withBool(toggles, i) { b -> menuItem(n, "", b) } }
 
                     menu("Sub-menu") { menuItem("Click me") }
@@ -90,14 +105,15 @@ object popupsAndModalWindows {
                     }
                 }
 
-                if (button("Popup Menu..")) openPopup("FilePopup")
-                popup("FilePopup") { showExampleMenuFile() }
+                // Call the more complete ShowExampleMenuFile which we use in various places of this demo
+                if (button("File Menu..")) openPopup("my_file_popup")
+                popup("my_file_popup") { showExampleMenuFile() }
             }
 
             treeNode("Context menus") {
 
                 // BeginPopupContextItem() is a helper to provide common/simple popup behavior of essentially doing:
-                //    if (IsItemHovered() && IsMouseClicked(0))
+                //    if (IsItemHovered() && IsMouseReleased(0))
                 //       OpenPopup(id);
                 //    return BeginPopup(id);
                 // For more advanced uses you may want to replicate and cuztomize this code. This the comments inside BeginPopupContextItem() implementation.
@@ -110,9 +126,17 @@ object popupsAndModalWindows {
                     }
                 }
 
+                /*
+                    We can also use OpenPopupOnItemClick() which is the same as BeginPopupContextItem() but without the Begin call.
+                    So here we will make it that clicking on the text field with the right mouse button (1) will toggle the visibility of the popup above.
+                    ImGui::Text("(You can also right-click me to the same popup as above.)");
+                    ImGui::OpenPopupOnItemClick("item context menu", 1);
+                    When used after an item that has an ID (here the Button), we can skip providing an ID to BeginPopupContextItem().
+                    BeginPopupContextItem() will use the last item ID as the popup ID.
+                    In addition here, we want to include your editable label inside the button label. We use the ### operator to override the ID (read FAQ about ID for details)
+                 */
                 val text = "Button: $name###Button" // ### operator override id ignoring the preceding label
                 button(text)
-                // When used after an item that has an ID (here the Button), we can skip providing an ID to BeginPopupContextItem().
                 popupContextItem {
                     text("Edit name")
                     inputText("##edit", name.toCharArray())
