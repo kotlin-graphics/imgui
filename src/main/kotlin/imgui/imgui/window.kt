@@ -94,7 +94,7 @@ interface imgui_window {
         var windowJustCreated = false
         val window = findWindowByName(name) ?: run {
             // Any condition flag will do since we are creating a new window here.
-            val sizeOnFirstUse = if (g.nextWindowData.sizeCond != Cond.Null) Vec2(g.nextWindowData.sizeVal) else Vec2()
+            val sizeOnFirstUse = if (g.nextWindowData.sizeCond != Cond.None) Vec2(g.nextWindowData.sizeVal) else Vec2()
             windowJustCreated = true
             createNewWindow(name, sizeOnFirstUse, flags)
         }
@@ -153,7 +153,7 @@ interface imgui_window {
         var windowPosSetByApi = false
         var windowSizeXsetByApi = false
         var windowSizeYsetByApi = false
-        if (g.nextWindowData.posCond != Cond.Null) {
+        if (g.nextWindowData.posCond != Cond.None) {
             windowPosSetByApi = window.setWindowPosAllowFlags has g.nextWindowData.posCond
             if (windowPosSetByApi && g.nextWindowData.posPivotVal.lengthSqr > 0.00001f) {
                 /*  May be processed on the next frame if this is our first frame and we are measuring size
@@ -164,21 +164,21 @@ interface imgui_window {
             } else
                 window.setPos(g.nextWindowData.posVal, g.nextWindowData.posCond)
         }
-        if (g.nextWindowData.sizeCond != Cond.Null) {
+        if (g.nextWindowData.sizeCond != Cond.None) {
             windowSizeXsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.x > 0f
             windowSizeYsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.y > 0f
             window.setSize(g.nextWindowData.sizeVal, g.nextWindowData.sizeCond)
         }
-        if (g.nextWindowData.contentSizeCond != Cond.Null) {
+        if (g.nextWindowData.contentSizeCond != Cond.None) {
             // Adjust passed "client size" to become a "window size"
             window.sizeContentsExplicit put g.nextWindowData.contentSizeVal
             if (window.sizeContentsExplicit.y != 0f)
                 window.sizeContentsExplicit.y += window.titleBarHeight + window.menuBarHeight
         } else if (firstBeginOfTheFrame)
             window.sizeContentsExplicit put 0f
-        if (g.nextWindowData.collapsedCond != Cond.Null)
+        if (g.nextWindowData.collapsedCond != Cond.None)
             window.setCollapsed(g.nextWindowData.collapsedVal, g.nextWindowData.collapsedCond)
-        if (g.nextWindowData.focusCond != Cond.Null)
+        if (g.nextWindowData.focusCond != Cond.None)
             window.focus()
         if (window.appearing)
             window.setConditionAllowFlags(Cond.Appearing.i, false)
@@ -332,7 +332,7 @@ interface imgui_window {
             val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesForResize == 0
             if (windowPosWithPivot)
             // Position given a pivot (e.g. for centering)
-                window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.Null)
+                window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.None)
             else if (flags has Wf.ChildMenu)
                 window.pos = findBestWindowPosForPopup(window)
             else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize)
@@ -443,13 +443,14 @@ interface imgui_window {
             } else {
 
                 // Window background
-                var bgCol = getWindowBgColorIdxFromFlags(flags).u32
-                if (g.nextWindowData.bgAlphaCond != Cond.Null) {
-                    bgCol = (bgCol wo COL32_A_MASK) or (F32_TO_INT8_SAT(g.nextWindowData.bgAlphaVal) shl COL32_A_SHIFT)
-                    g.nextWindowData.bgAlphaCond = Cond.Null
+                if (flags hasnt Wf.NoBackground) {
+                    var bgCol = getWindowBgColorIdxFromFlags(flags).u32
+                    if (g.nextWindowData.bgAlphaCond != Cond.None)
+                        bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(g.nextWindowData.bgAlphaVal) shl COL32_A_SHIFT)
+                    window.drawList.addRectFilled(window.pos + Vec2(0f, window.titleBarHeight), window.pos + window.size, bgCol, windowRounding,
+                            if(flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
                 }
-                window.drawList.addRectFilled(Vec2(window.pos.x, window.pos.y + window.titleBarHeight), Vec2(window.pos + window.size),
-                        bgCol, windowRounding, if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
+                g.nextWindowData.bgAlphaCond = Cond.None
 
                 // Title bar
                 val titleBarCol = if (window.collapsed) Col.TitleBgCollapsed else if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
@@ -485,7 +486,7 @@ interface imgui_window {
                     }
 
                 // Borders
-                if (windowBorderSize > 0f)
+                if (windowBorderSize > 0f && flags hasnt Wf.NoBackground)
                     window.drawList.addRect(Vec2(window.pos), window.size + window.pos, Col.Border.u32, windowRounding, Dcf.All.i, windowBorderSize)
                 if (borderHeld != -1) {
                     val border = window.getResizeBorderRect(borderHeld, gripDrawSize, 0f)
@@ -923,7 +924,8 @@ interface imgui_window {
         g.nextWindowData.focusCond = Cond.Always
     }
 
-    /** Set next window background color alpha. helper to easily modify ImGuiCol_WindowBg/ChildBg/PopupBg.  */
+    /** Set next window background color alpha. helper to easily modify ImGuiCol_WindowBg/ChildBg/PopupBg.
+     *  You may also use ImGuiWindowFlags_NoBackground. */
     fun setNextWindowBgAlpha(alpha: Float) {
         g.nextWindowData.bgAlphaVal = alpha
         // Using a Cond member for consistency (may transition all of them to single flag set for fast Clear() op)
@@ -932,26 +934,26 @@ interface imgui_window {
 
     /** (not recommended) set current window position - call within Begin()/End(). prefer using SetNextWindowPos(),
      *  as this may incur tearing and side-effects. */
-    fun setWindowPos(pos: Vec2, cond: Cond = Cond.Null) = currentWindowRead!!.setPos(pos, cond)
+    fun setWindowPos(pos: Vec2, cond: Cond = Cond.None) = currentWindowRead!!.setPos(pos, cond)
 
     /** (not recommended) set current window size - call within Begin()/End(). set to ImVec2(0,0) to force an auto-fit.
      *  prefer using SetNextWindowSize(), as this may incur tearing and minor side-effects. */
-    fun setWindowSize(size: Vec2, cond: Cond = Cond.Null) = g.currentWindow!!.setSize(size, cond)
+    fun setWindowSize(size: Vec2, cond: Cond = Cond.None) = g.currentWindow!!.setSize(size, cond)
 
     /** (not recommended) set current window collapsed state. prefer using SetNextWindowCollapsed().    */
-    fun setWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Null) = g.currentWindow!!.setCollapsed(collapsed, cond)
+    fun setWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.None) = g.currentWindow!!.setCollapsed(collapsed, cond)
 
     /** (not recommended) set current window to be focused / front-most. prefer using SetNextWindowFocus(). */
     fun setWindowFocus() = g.currentWindow.focus()
 
     /** Set named window position.  */
-    fun setWindowPos(name: String, pos: Vec2, cond: Cond = Cond.Null) = findWindowByName(name)?.setPos(pos, cond)
+    fun setWindowPos(name: String, pos: Vec2, cond: Cond = Cond.None) = findWindowByName(name)?.setPos(pos, cond)
 
     /** Set named window size. set axis to 0.0f to force an auto-fit on this axis.  */
-    fun setWindowSize(name: String, size: Vec2, cond: Cond = Cond.Null) = findWindowByName(name)?.setSize(size, cond)
+    fun setWindowSize(name: String, size: Vec2, cond: Cond = Cond.None) = findWindowByName(name)?.setSize(size, cond)
 
     /** Set named window collapsed state    */
-    fun setWindowCollapsed(name: String, collapsed: Boolean, cond: Cond = Cond.Null) = findWindowByName(name)?.setCollapsed(collapsed, cond)
+    fun setWindowCollapsed(name: String, collapsed: Boolean, cond: Cond = Cond.None) = findWindowByName(name)?.setCollapsed(collapsed, cond)
 
     /** Set named window to be focused / front-most. use NULL to remove focus.  */
     fun setWindowFocus(name: String) = findWindowByName(name).focus()

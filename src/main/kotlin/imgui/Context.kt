@@ -119,7 +119,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Storage for SetNextTreeNode** functions */
     var nextTreeNodeOpenVal = false
 
-    var nextTreeNodeOpenCond = Cond.Null
+    var nextTreeNodeOpenCond = Cond.None
 
     //------------------------------------------------------------------
     // Navigation data (for gamepad/keyboard)

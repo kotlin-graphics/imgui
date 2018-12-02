@@ -1882,7 +1882,7 @@ interface imgui_internal {
         val storage = window.dc.stateStorage
 
         var isOpen: Boolean
-        if (g.nextTreeNodeOpenCond != Cond.Null) {
+        if (g.nextTreeNodeOpenCond != Cond.None) {
             if (g.nextTreeNodeOpenCond has Cond.Always) {
                 isOpen = g.nextTreeNodeOpenVal
                 storage[id] = isOpen
@@ -1896,7 +1896,7 @@ interface imgui_internal {
                 } else
                     isOpen = storedValue != 0
             }
-            g.nextTreeNodeOpenCond = Cond.Null
+            g.nextTreeNodeOpenCond = Cond.None
         } else
             isOpen = storage.int(id, if (flags has Tnf.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
