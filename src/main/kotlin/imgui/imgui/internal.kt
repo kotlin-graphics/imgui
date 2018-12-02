@@ -254,6 +254,9 @@ interface imgui_internal {
      *  drawing/interaction, which is passed to ItemAdd().  */
     fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null): Boolean {
 
+        if(IMGUI_ENABLE_TEST_ENGINE_HOOKS)
+            ImGuiTestEngineHook_ItemAdd(bb, id, navBbArg)
+
         val window = g.currentWindow!!
         if (id != 0) {
             /*  Navigation processing runs prior to clipping early-out

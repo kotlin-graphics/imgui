@@ -53,6 +53,9 @@ interface imgui_main {
 
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() or ImGui::SetCurrentContext()?" }
 
+        if (IMGUI_ENABLE_TEST_ENGINE_HOOKS)
+            ImGuiTestEngineHook_PreNewFrame()
+
         /*  Check user data
             (We pass an error message in the assert expression as a trick to get it visible to programmers who are not using a debugger,
             as most assert handlers display their argument)         */
@@ -224,6 +227,9 @@ interface imgui_main {
         // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
         begin("Debug##Default")
+
+        if (IMGUI_ENABLE_TEST_ENGINE_HOOKS)
+            ImGuiTestEngineHook_PostNewFrame()
     }
 
     /** Ends the ImGui frame. automatically called by ::render(), you likely don't need to call that yourself directly.

@@ -353,3 +353,10 @@ fun String.memchr(startIdx: Int, c: Char): Int? {
     val res = indexOf(c, startIdx)
     return if (res >= 0) res else null
 }
+
+fun CharArray.memchr(startIdx: Int, c: Char): Int? {
+    for (index in startIdx until size)
+        if (c == this[index])
+            return index
+    return null
+}

@@ -10,10 +10,7 @@ import glm_.vec2.operators.div
 import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.ImGui.style
-import imgui.internal.fileLoadToCharArray
-import imgui.internal.isBlankA
-import imgui.internal.isBlankW
-import imgui.internal.upperPowerOfTwo
+import imgui.internal.*
 import imgui.stb.*
 import kool.lib.isNotEmpty
 import org.lwjgl.stb.*
@@ -453,7 +450,7 @@ class FontAtlas {
         /** Don't build software mouse cursors into the atlas   */
         NoMouseCursors;
 
-        val i = if(ordinal == 0) 0 else 1 shl ordinal
+        val i = if (ordinal == 0) 0 else 1 shl ordinal
     }
 
     infix fun Int.has(flag: FontAtlasFlag) = and(flag.i) != 0
@@ -1207,6 +1204,8 @@ class Font {
     fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: CharArray, textEnd_: Int = text.size, // TODO return it also?
                    wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
 
+        var textEnd = textEnd_
+
         // Align to be pixel perfect
         pos.x = pos.x.i.f + displayOffset.x
         pos.y = pos.y.i.f + displayOffset.y
@@ -1221,28 +1220,24 @@ class Font {
         // Fast-forward to first visible line
         var s = 0
         if (y + lineHeight < clipRect.y && !wordWrapEnabled)
-            while (y + lineHeight < clipRect.y) {
-                while (s < textEnd_)
-                    if (text[s++] == '\n')
-                        break
+            while (y + lineHeight < clipRect.y && s < textEnd) {
+                s = text.memchr(s, '\n')?.plus(1) ?: textEnd
                 y += lineHeight
             }
 
         /*  For large text, scan for the last visible line in order to avoid over-reserving in the call to PrimReserve()
             Note that very large horizontal line will still be affected by the issue (e.g. a one megabyte string buffer without a newline will likely crash atm)         */
-        var textEnd = textEnd_
-        if (textEnd - s > 10000 && !wordWrapEnabled)        {
+        if (textEnd - s > 10000 && !wordWrapEnabled) {
             var sEnd = s
             var yEnd = y
-            while (yEnd < clipRect.w)            {
-                while (sEnd < textEnd)
-                    if (text[sEnd++] == '\n')
-                        break
+            while (yEnd < clipRect.w && s < textEnd) {
+                s = text.memchr(s, '\n')?.plus(1) ?: textEnd
                 yEnd += lineHeight
             }
             textEnd = sEnd
         }
-
+        if (s == textEnd)
+            return
 
 
         // Reserve vertices for remaining worse case (over-reserving is useful and easily amortized)

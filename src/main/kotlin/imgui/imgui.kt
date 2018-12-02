@@ -3,6 +3,7 @@ package imgui
 import glm_.i
 import imgui.imgui.*
 import imgui.imgui.widgets.*
+import imgui.internal.Rect
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
@@ -41,6 +42,7 @@ val COL32_BLACK_TRANS = COL32(0, 0, 0, 0)   // Transparent black = 0x00000000
 
 val MOUSE_INVALID = -256000f
 
+// Debug options
 val IMGUI_DEBUG_NAV_SCORING = false
 val IMGUI_DEBUG_NAV_RECTS = false
 
@@ -57,6 +59,12 @@ const val NAV_WINDOWING_LIST_APPEAR_DELAY = 0.15f
 const val RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS = 4f
 /** Reduce visual noise by only highlighting the border after a certain time. */
 const val RESIZE_WINDOWS_FROM_EDGES_FEEDBACK_TIMER = 0.04f
+
+// Test engine hooks (imgui-test)
+const val IMGUI_ENABLE_TEST_ENGINE_HOOKS = false
+var ImGuiTestEngineHook_PreNewFrame: () -> Unit = {}
+var ImGuiTestEngineHook_PostNewFrame: () -> Unit = {}
+var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID, navBbArg: Rect?) -> Unit = { _, _, _ -> }
 
 object ImGui :
 
