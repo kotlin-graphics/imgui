@@ -19,6 +19,7 @@ import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
+import imgui.ImGui.getOverlayDrawList
 import imgui.ImGui.inputFloat
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
@@ -150,7 +151,7 @@ interface imgui_demoDebugInformations {
                 val buf = CharArray(32)
                 "${window.beginOrderWithinContext}".toCharArray(buf)
                 val fontSize = fontSize * 2
-                overlayDrawList.apply {
+                getOverlayDrawList(window).apply {
                     addRectFilled(Vec2(window.pos), window.pos + fontSize, COL32(200, 100, 100, 255))
                     addText(null, fontSize, Vec2(window.pos), COL32(255, 255, 255, 255), buf)
                 }
@@ -299,7 +300,7 @@ interface imgui_demoDebugInformations {
                 if (!nodeOpen)
                     return
 
-                val overlayDrawList = g.overlayDrawList   // Render additional visuals into the top-most draw list
+                val overlayDrawList = getOverlayDrawList(window)   // Render additional visuals into the top-most draw list
                 window?.let {
                     if (isItemHovered())    // TODO check if .posF is fine instead .pos
                         overlayDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
