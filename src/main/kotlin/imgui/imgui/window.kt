@@ -785,11 +785,10 @@ interface imgui_window {
     /** is current window focused? or its root/child, depending on flags. see flags for options.    */
     fun isWindowFocused(flags: FocusedFlags = Ff.None.i): Boolean {
 
-        val curr = g.currentWindow!!     // Not inside a Begin()/End()
-
         if (flags has Ff.AnyWindow)
             return g.navWindow != null
 
+        val curr = g.currentWindow!!     // Not inside a Begin()/End()
         return when (flags and (Ff.RootWindow or Ff.ChildWindows)) {
             Ff.RootWindow or Ff.ChildWindows -> g.navWindow?.let { it.rootWindow === curr.rootWindow } ?: false
             Ff.RootWindow.i -> g.navWindow === curr.rootWindow
