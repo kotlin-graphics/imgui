@@ -81,6 +81,13 @@ enum class SliderFlag(val i: Int) { None(0), Vertical(1 shl 0) }
 infix fun Int.has(b: SliderFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: SliderFlag) = and(b.i) == 0
 
+enum class DragFlag(val i: Int) { None(0), Vertical(1 shl 0) }
+
+typealias DragFlags = Int
+
+infix fun Int.has(b: DragFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: DragFlag) = and(b.i) == 0
+
 enum class ColumnsFlag(val i: Int) {
 
     None(0),

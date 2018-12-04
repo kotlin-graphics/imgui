@@ -1674,12 +1674,12 @@ interface imgui_internal {
     }
 
     fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
-                     power: Float): Boolean = withFloat(v, ptr) {
-        dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power)
+                     power: Float, flags: DragFlags): Boolean = withFloat(v, ptr) {
+        dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power, flags)
     }
 
     fun dragBehavior(id: ID, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number?, vMax: Number?,
-                     format: String, power: Float): Boolean {
+                     format: String, power: Float, flags: DragFlags): Boolean {
 
         if (g.activeId == id)
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
@@ -1690,13 +1690,13 @@ interface imgui_internal {
         return when (g.activeId) {
             id -> when (dataType) {
                 DataType.Int, DataType.Uint -> dragBehaviorT(dataType, v, vSpeed, vMin as? Int
-                        ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power)
+                        ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power, flags)
                 DataType.Long, DataType.Ulong -> dragBehaviorT(dataType, v, vSpeed, vMin as? Long
-                        ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power)
+                        ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power, flags)
                 DataType.Float -> dragBehaviorT(dataType, v, vSpeed, vMin as? Float
-                        ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power)
+                        ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power, flags)
                 DataType.Double -> dragBehaviorT(dataType, v, vSpeed, vMin as? Double
-                        ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power)
+                        ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power, flags)
                 else -> throw Error()
             }
             else -> false
