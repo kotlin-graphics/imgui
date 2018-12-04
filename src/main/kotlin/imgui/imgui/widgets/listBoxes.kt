@@ -60,10 +60,10 @@ interface listBoxes {
         return valueChanged
     }
 
-    /** Helper to calculate the size of a listbox and display a label on the right.
-     *  Tip: To have a list filling the entire window width, PushItemWidth(-1) and pass an empty label "##empty"
-     *  use if you want to reimplement ListBox() will custom data or interactions.
-     *  If the function return true, you can output elements then call ListBoxFooter() afterwards. */
+    /** FIXME: In principle this function should be called BeginListBox(). We should rename it after re-evaluating if we
+     *  want to keep the same signature.
+     *  Helper to calculate the size of a listbox and display a label on the right.
+     *  Tip: To have a list filling the entire window width, PushItemWidth(-1) and pass an non-visible label e.g. "##empty" */
     fun listBoxHeader(label: String, sizeArg: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
@@ -87,24 +87,22 @@ interface listBoxes {
         return true
     }
 
-    /** use if you want to reimplement ListBox() will custom data or interactions. make sure to call ListBoxFooter()
-     *  afterwards. */
+    /** FIXME: In principle this function should be called EndListBox(). We should rename it after re-evaluating if we want to keep the same signature. */
     fun listBoxHeader(label: String, itemsCount: Int, heightInItems_: Int = -1): Boolean {
-        /*  Size default to hold ~7 items. Fractional number of items helps seeing that we can scroll down/up without
-            looking at scrollbar.
-            We don't add +0.40f if items_count <= height_in_items. It is slightly dodgy, because it means a
-            dynamic list of items will make the widget resize occasionally when it crosses that size.
-            I am expecting that someone will come and complain about this behavior in a remote future, then we can
-            advise on a better solution.    */
+        /*  Size default to hold ~7.25 items.
+            We add +25% worth of item height to allow the user to see at a glance if there are more items up/down, without looking at the scrollbar.
+            We don't add this extra bit if items_count <= height_in_items. It is slightly dodgy,
+            because it means a dynamic list of items will make the widget resize occasionally when it crosses that size.     */
         val heightInItems = if (heightInItems_ < 0) glm.min(itemsCount, 7) else heightInItems_
-        val heightInItemsF = heightInItems + if (heightInItems < itemsCount) 0.4f else 0f
+        val heightInItemsF = heightInItems + if (heightInItems < itemsCount) 0.25f else 0f
         /*  We include ItemSpacing.y so that a list sized for the exact number of items doesn't make a scrollbar
             appears. We could also enforce that by passing a flag to BeginChild().         */
-        val size = Vec2(0f, textLineHeightWithSpacing * heightInItemsF + style.itemSpacing.y)
+        val size = Vec2(0f, textLineHeightWithSpacing * heightInItemsF + style.itemSpacing.y * 2f)
         return listBoxHeader(label, size)
     }
 
-    /** Terminate the scrolling region. Only call ListBoxFooter() if ListBoxHeader() returned true!  */
+    /** FIXME: In principle this function should be called EndListBox(). We should rename it after re-evaluating if we want to keep the same signature.
+     *  Terminate the scrolling region. Only call ListBoxFooter() if ListBoxHeader() returned true!  */
     fun listBoxFooter() {
         val parentWindow = currentWindow.parentWindow!!
         val bb = parentWindow.dc.lastItemRect // assign is safe, itemSize() won't modify bb

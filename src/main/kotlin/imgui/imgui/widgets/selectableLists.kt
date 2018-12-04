@@ -36,7 +36,7 @@ import imgui.internal.ButtonFlag as Bf
 interface selectableLists {
 
 
-    /** Tip: pass an empty label (e.g. "##dummy") then you can use the space to draw other text or image.
+    /** Tip: pass a non-visible label (e.g. "##dummy") then you can use the space to draw other text or image.
      *  But you need to make sure the ID is unique, e.g. enclose calls in PushID/PopID or use ##unique_id.
      *
      *  "bool selected" carry the selection state (read-only). Selectable() is clicked is returns true so you can modify
