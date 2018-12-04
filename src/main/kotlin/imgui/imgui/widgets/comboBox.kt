@@ -204,6 +204,15 @@ interface comboBox {
 
     companion object {
         private var i = 0
+
+        //-------------------------------------------------------------------------
+        // [SECTION] Widgets: ComboBox
+        //-------------------------------------------------------------------------
+        // - BeginCombo()
+        // - EndCombo()
+        // - Combo()
+        //-------------------------------------------------------------------------
+
         fun calcMaxPopupHeightFromItemCount(itemsCount: Int) = when {
                 itemsCount <= 0 -> Float.MAX_VALUE
                 else -> (g.fontSize + style.itemSpacing.y) * itemsCount - style.itemSpacing.y + style.windowPadding.y * 2

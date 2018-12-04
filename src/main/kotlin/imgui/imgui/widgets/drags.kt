@@ -18,6 +18,7 @@ import imgui.ImGui.dragBehavior
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
+import imgui.ImGui.focusableItemUnregister
 import imgui.ImGui.inputScalarAsWidgetReplacement
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
@@ -258,8 +259,10 @@ interface drags {
                 g.scalarAsInputTextId = 0
             }
         }
-        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
+        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) {
+            focusableItemUnregister(window)
             return inputScalarAsWidgetReplacement(frameBb, id, label, dataType, v, format)
+        }
 
         // Actual drag behavior
         itemSize(totalBb, style.framePadding.y)

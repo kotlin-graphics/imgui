@@ -2586,8 +2586,8 @@ interface imgui_internal {
         return if (flags has Itf.EnterReturnsTrue) enterPressed else valueChanged
     }
 
-    /** Create text input in place of a slider (when CTRL+Clicking on slider)
-     *  FIXME: Logic is messy and confusing. */
+    /** Create text input in place of an active drag/slider (used when doing a CTRL+Click on drag/slider widgets)
+     *  FIXME: Logic is awkward and confusing. This should be reworked to facilitate using in other situations. */
     fun inputScalarAsWidgetReplacement(bb: Rect, id: ID, label: String, dataType: DataType, data: KMutableProperty0<*>,
                                        format_: String): Boolean {
 
@@ -2596,9 +2596,8 @@ interface imgui_internal {
         /*  Our replacement widget will override the focus ID (registered previously to allow for a TAB focus to happen)
             On the first frame, g.ScalarAsInputTextId == 0, then on subsequent frames it becomes == id  */
         setActiveId(g.scalarAsInputTextId, window)
-        g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
         hoveredId = 0
-        focusableItemUnregister(window)
+        g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
 
         val fmtBuf = CharArray(32)
         val format = parseFormatTrimDecorations(format_, fmtBuf)
