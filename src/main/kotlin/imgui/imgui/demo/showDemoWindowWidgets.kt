@@ -537,7 +537,7 @@ object showDemoWindowWidgets {
                         Please use u8"text in any language" in your application!
                     Note that characters values are preserved even by inputText() if the font cannot be displayed,
                     so you can safely copy & paste garbled characters into another application. */
-                textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.font.loadFromFileTTF() manually to load extra character ranges. Read misc/fonts/README.txt for details.")
+                textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.font.AddFontFromFileTTF() manually to load extra character ranges. Read misc/fonts/README.txt for details.")
                 // Normally we would use u8"blah blah" with the proper characters directly in the string.
                 text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)")
                 text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
