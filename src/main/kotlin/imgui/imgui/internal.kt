@@ -107,7 +107,9 @@ interface imgui_internal {
                         "   - You are calling ImGui functions after ::render() and before the next ::newFrame(), which is also illegal.\n" +
                         "   - You are calling ImGui functions after ::endFrame()/::render() and before the next ImGui::newFrame(), which is also illegal.")
 
-    fun findWindowByName(name: String) = g.windowsById[hash(name, 0)]
+    fun findWindowByID(id: ID): Window? = g.windowsById[id]
+
+    fun findWindowByName(name: String): Window? = g.windowsById[hash(name, 0)]
 
     fun setCurrentFont(font: Font) {
         assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
