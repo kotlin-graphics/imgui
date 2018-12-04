@@ -1,6 +1,10 @@
 package imgui.imgui
 
+import glm_.BYTES
+import glm_.set
 import glm_.size
+import glm_.vec2.Vec2
+import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginDragDropTooltip
@@ -12,7 +16,7 @@ import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.setActiveId
 import imgui.internal.*
-import uno.kotlin.buffers.fill
+import kool.lib.fill
 import java.nio.ByteBuffer
 import imgui.DragDropFlag as Ddf
 
@@ -122,15 +126,42 @@ interface imgui_dragAndDrop {
     /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
      *  Data is copied and held by imgui.
      *  Use 'cond' to choose to submit payload on drag start or every frame */
-    fun setDragDropPayload(type: String, data: Any, dataSize: Int, cond_: Cond = Cond.Null): Boolean {
+    fun setDragDropPayload(type: String, data: Any, dataSize: Int, cond_: Cond = Cond.None): Boolean {
         val payload = g.dragDropPayload
-        val cond = if (cond_ == Cond.Null) Cond.Always else cond_
+        val cond = if (cond_ == Cond.None) Cond.Always else cond_
 
         assert(type.isNotEmpty())
         assert(type.length < 32) { "Payload type can be at most 32 characters long" }
 //        assert((data != NULL && data_size > 0) || (data == NULL && data_size == 0))
         assert(cond == Cond.Always || cond == Cond.Once)
         assert(payload.sourceId != 0) { "Not called between beginDragDropSource() and endDragDropSource()" }
+
+        fun savePayload() {
+            when (data) {
+                is Byte -> payload.data!![0] = data
+                is Int -> payload.data!!.putInt(0, data)
+                is Short -> payload.data!!.putShort(0, data)
+                is Long -> payload.data!!.putLong(0, data)
+                is Float -> payload.data!!.putFloat(0, data)
+                is Double -> payload.data!!.putDouble(0, data)
+                is Char -> payload.data!!.putChar(0, data)
+                is Vec2 -> {
+                    val floats = payload.data!!.asFloatBuffer()
+                    for (i in 0 until dataSize / Float.BYTES)
+                        floats[i] = data[i]
+                }
+                is Vec3 -> {
+                    val floats = payload.data!!.asFloatBuffer()
+                    for (i in 0 until dataSize / Float.BYTES)
+                        floats[i] = data[i]
+                }
+                is Vec4 -> {
+                    val floats = payload.data!!.asFloatBuffer()
+                    for (i in 0 until dataSize / Float.BYTES)
+                        floats[i] = data[i]
+                }
+            }
+        }
 
         if (cond == Cond.Always || payload.dataFrameCount == -1) {
             // Copy payload
@@ -140,18 +171,12 @@ interface imgui_dragAndDrop {
                 dataSize > g.dragDropPayloadBufLocal.size -> { // Store in heap
                     g.dragDropPayloadBufHeap = ByteBuffer.allocate(dataSize)
                     payload.data = g.dragDropPayloadBufHeap
-                    when (data) {
-                        is Int -> payload.data!!.putInt(0, data)
-                        is Vec4 -> data to payload.data!!
-                    }
+                    savePayload()
                 }
                 dataSize > 0 -> { // Store locally
                     g.dragDropPayloadBufLocal.fill(0)
                     payload.data = g.dragDropPayloadBufLocal
-                    when (data) {
-                        is Int -> payload.data!!.putInt(0, data)
-                        is Vec4 -> data to payload.data!!
-                    }
+                    savePayload()
                 }
                 else -> payload.data = null
             }
@@ -241,4 +266,6 @@ interface imgui_dragAndDrop {
     /** We don't really use/need this now, but added it for the sake of consistency and because we might need it later.
      *  Only call EndDragDropTarget() if BeginDragDropTarget() returns true!    */
     fun endDragDropTarget() = assert(g.dragDropActive)
+
+    fun getDragDropPayload(): Payload? = g.dragDropPayload.takeIf { g.dragDropActive }
 }

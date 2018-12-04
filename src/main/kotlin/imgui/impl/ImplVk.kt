@@ -23,6 +23,8 @@
 //    var VK_QUEUED_FRAMES = 2
 //    val BINDING = 0 // TODO -> Omar
 //
+//    // Called by user code
+//
 //    fun init(): Boolean {
 //
 //        assert(::instance.isInitialized)
@@ -219,39 +221,6 @@
 //    var uploadBufferMemory: VkDeviceMemory = NULL
 //    var uploadBuffer: VkBuffer = NULL
 //
-//    // Called by Init/NewFrame/Shutdown
-//
-//    fun invalidateFontUploadObjects() {
-//        if (uploadBuffer != NULL) {
-//            device destroyBuffer uploadBuffer
-//            uploadBuffer = NULL
-//        }
-//        if (uploadBufferMemory != NULL) {
-//            device freeMemory uploadBufferMemory
-//            uploadBufferMemory = NULL
-//        }
-//    }
-//
-//    fun invalidateDeviceObjects() {
-//        invalidateFontUploadObjects()
-//        device.apply {
-//            framesDataBuffers.forEach { fd ->
-//                if (fd.vertexBuffer != NULL) destroyBuffer(fd.vertexBuffer).also { fd.vertexBuffer = NULL }
-//                if (fd.vertexBufferMemory != NULL) freeMemory(fd.vertexBufferMemory).also { fd.vertexBufferMemory = NULL }
-//                if (fd.indexBuffer != NULL) destroyBuffer(fd.indexBuffer).also { fd.indexBuffer = NULL }
-//                if (fd.indexBufferMemory != NULL) freeMemory(fd.indexBufferMemory).also { fd.indexBufferMemory = NULL }
-//            }
-//
-//            if (fontView != NULL) destroyImageView(fontView).also { fontView = NULL }
-//            if (fontImage != NULL) destroyImage(fontImage).also { fontImage = NULL }
-//            if (fontMemory != NULL) freeMemory(fontMemory).also { fontMemory = NULL }
-//            if (fontSampler != NULL) destroySampler(fontSampler).also { fontSampler = NULL }
-//            if (descriptorSetLayout != NULL) destroyDescriptorSetLayout(descriptorSetLayout).also { descriptorSetLayout = NULL }
-//            if (pipelineLayout != NULL) destroyPipelineLayout(pipelineLayout).also { pipelineLayout = NULL }
-//            if (pipeline != NULL) destroyPipeline(pipeline).also { pipeline = NULL }
-//        }
-//    }
-//
 //    fun createFontsTexture(commandBuffer: VkCommandBuffer): Boolean {
 //
 //        val (pixels, size) = ImGui.io.fonts.getTexDataAsRGBA32()
@@ -377,6 +346,19 @@
 //        return true
 //    }
 //
+//    fun invalidateFontUploadObjects() {
+//        if (uploadBuffer != NULL) {
+//            device destroyBuffer uploadBuffer
+//            uploadBuffer = NULL
+//        }
+//        if (uploadBufferMemory != NULL) {
+//            device freeMemory uploadBufferMemory
+//            uploadBufferMemory = NULL
+//        }
+//    }
+//
+//    // Called by ImGui_ImplVulkan_Init() might be useful elsewhere.
+//
 //    fun createDeviceObjects(): Boolean {
 //
 //        // Create The Shader Modules:
@@ -495,20 +477,44 @@
 //        return true
 //    }
 //
-//    /** -------------------------------------------------------------------------
-//     *  Miscellaneous Vulkan Helpers
-//     *  Generally we try to NOT provide any kind of superfluous high-level helpers in the examples.
-//     *  But for the upcoming multi-viewport feature, the Vulkan will need this code anyway,
-//     *  so we decided to shared it and use it in the examples' main.cpp
-//     *  If your application/engine already has code to create all that data
-//     *  (swap chain, render pass, frame buffers, etc.) you can ignore all of this.
-//     *  -------------------------------------------------------------------------
-//     *  NB: Those functions do NOT use any of the state used/affected by the regular ImplVk.XXX functions.
-//     *  ------------------------------------------------------------------------- */
+//    fun invalidateDeviceObjects() {
+//        invalidateFontUploadObjects()
+//        device.apply {
+//            framesDataBuffers.forEach { fd ->
+//                if (fd.vertexBuffer != NULL) destroyBuffer(fd.vertexBuffer).also { fd.vertexBuffer = NULL }
+//                if (fd.vertexBufferMemory != NULL) freeMemory(fd.vertexBufferMemory).also { fd.vertexBufferMemory = NULL }
+//                if (fd.indexBuffer != NULL) destroyBuffer(fd.indexBuffer).also { fd.indexBuffer = NULL }
+//                if (fd.indexBufferMemory != NULL) freeMemory(fd.indexBufferMemory).also { fd.indexBufferMemory = NULL }
+//            }
+//
+//            if (fontView != NULL) destroyImageView(fontView).also { fontView = NULL }
+//            if (fontImage != NULL) destroyImage(fontImage).also { fontImage = NULL }
+//            if (fontMemory != NULL) freeMemory(fontMemory).also { fontMemory = NULL }
+//            if (fontSampler != NULL) destroySampler(fontSampler).also { fontSampler = NULL }
+//            if (descriptorSetLayout != NULL) destroyDescriptorSetLayout(descriptorSetLayout).also { descriptorSetLayout = NULL }
+//            if (pipelineLayout != NULL) destroyPipelineLayout(pipelineLayout).also { pipelineLayout = NULL }
+//            if (pipeline != NULL) destroyPipeline(pipeline).also { pipeline = NULL }
+//        }
+//    }
+//
+//    //-------------------------------------------------------------------------
+//    // Internal / Miscellaneous Vulkan Helpers
+//    //-------------------------------------------------------------------------
+//
+//    /*  You probably do NOT need to use or care about those functions.
+//        Those functions only exist because:
+//            1) they facilitate the readability and maintenance of the multiple main.cpp examples files.
+//            2) the upcoming multi-viewport feature will need them internally.
+//        Generally we avoid exposing any kind of superfluous high-level helpers in the bindings,
+//        but it is too much code to duplicate everywhere so we exceptionally expose them.
+//        Your application/engine will likely already have code to setup all that stuff (swap chain, render pass, frame buffers, etc.).
+//        You may read this code to learn about Vulkan, but it is recommended you use you own custom tailored code to do equivalent work.
+//        (those functions do not interact with any of the state used by the regular ImGui_ImplVulkan_XXX functions)  */
 //
 //    /** Window Data */
 //    var wd = WindowData()
 //
+//    /** Helper structure to hold the data needed by one rendering context into one OS window */
 //    class WindowData {
 //        var size = Vec2i()
 //        var swapchain: VkSwapchainKHR = NULL
@@ -528,8 +534,9 @@
 //            get() = frames[frameIndex]
 //    }
 //
+//    /** Helper structure to hold the data needed by one rendering frame */
 //    class FrameData {
-//        /** keep track of recently rendered swapchain frame indices */
+//        /** Keep track of recently rendered swapchain frame indices */
 //        var backbufferIndex = 0
 //        var commandPool: VkCommandPool = NULL
 //        lateinit var commandBuffer: VkCommandBuffer
@@ -605,7 +612,7 @@
 //
 //            if (info.minImageCount < cap.minImageCount)
 //                info.minImageCount = cap.minImageCount
-//            else if (info.minImageCount > cap.maxImageCount)
+//            else if (cap.maxImageCount != 0 && info.minImageCount > cap.maxImageCount)
 //                info.minImageCount = cap.maxImageCount
 //
 //            if (cap.currentExtent.width == 0xffffffff.i) {
@@ -740,6 +747,8 @@
 //
 //        // Request a certain mode and confirm that it is available. If not use VK_PRESENT_MODE_FIFO_KHR which is mandatory
 //        val availModes = physicalDevice getSurfacePresentModesKHR wd.surface
+//      for (uint32_t avail_i = 0; avail_i < avail_count; avail_i++)
+//      printf("[vulkan] avail_modes[%d] = %d\n", avail_i, avail_modes[avail_i]);
 //        for (request in requestModes.indices)
 //            for (avail in availModes.indices)
 //                if (requestModes[request] == availModes[avail])

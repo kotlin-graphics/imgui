@@ -19,8 +19,8 @@ import kotlin.math.max
 import kotlin.math.min
 import imgui.internal.ColumnsFlag as Cf
 
-/** You can also use SameLine(pos_x) for simplified columning. The columns API is still work-in-progress and rather
- *  lacking.    */
+/** You can also use SameLine(pos_x) for simplified columning. The columns API is work-in-progress and rather
+ *  lacking (columns are arguably the worst part of dear imgui at the moment!)    */
 interface imgui_colums {
 
     /** [2017/12: This is currently the only public API, while we are working on making BeginColumns/EndColumns user-facing]    */
@@ -56,18 +56,18 @@ interface imgui_colums {
             val columns = dc.columnsSet!!
             columns.lineMaxY = max(columns.lineMaxY, dc.cursorPos.y)
             if (++columns.current < columns.count) {
-                // Columns 1+ cancel out IndentX
-                dc.columnsOffsetX = getColumnOffset(columns.current) - dc.indentX + style.itemSpacing.x
+                // Columns 1+ cancel out Indent.x
+                dc.columnsOffset = getColumnOffset(columns.current) - dc.indent + style.itemSpacing.x
                 drawList.channelsSetCurrent(columns.current)
             } else {
-                dc.columnsOffsetX = 0f
+                dc.columnsOffset = 0f
                 drawList.channelsSetCurrent(0)
                 columns.current = 0
                 columns.lineMinY = columns.lineMaxY
             }
-            dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
+            dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
             dc.cursorPos.y = columns.lineMinY
-            dc.currentLineHeight = 0f
+            dc.currentLineSize.y = 0f
             dc.currentLineTextBaseOffset = 0f
         }
         pushColumnClipRect()

@@ -79,7 +79,14 @@ object LwjglGlfw {
         mouseCursors[MouseCursor.ResizeNWSE.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR) // FIXME: GLFW doesn't have this.
         mouseCursors[MouseCursor.Hand.i] = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
 
-        if (installCallbacks) installCallbacks()
+        if (installCallbacks) {
+            // native callbacks will be added at the GlfwWindow creation via default parameter
+            window.mouseButtonCallbacks["imgui"] = mouseButtonCallback
+            window.scrollCallbacks["imgui"] = scrollCallback
+            window.keyCallbacks["imgui"] = keyCallback
+            window.charCallbacks["imgui"] = charCallback // TODO check if used (jogl doesnt have)
+            imeListener.install(window)
+        }
 
         clientApi = clientApi_
 
@@ -87,15 +94,6 @@ object LwjglGlfw {
 //            ImplVk.init()
 
         return true
-    }
-
-    fun installCallbacks() {
-        // native callbacks will be added at the GlfwWindow creation via default parameter
-        window.mouseButtonCallbacks["imgui"] = mouseButtonCallback
-        window.scrollCallbacks["imgui"] = scrollCallback
-        window.keyCallbacks["imgui"] = keyCallback
-        window.charCallbacks["imgui"] = charCallback // TODO check if used (jogl doesnt have)
-        imeListener.install(window)
     }
 
     fun newFrame() {
@@ -176,7 +174,7 @@ object LwjglGlfw {
         repeat(io.mouseDown.size) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
-            io.mouseDown[it] = mouseJustPressed[it] || window.isPressed(MouseButton.values()[it])
+            io.mouseDown[it] = mouseJustPressed[it] || window.isPressed(MouseButton.of(it))
             mouseJustPressed[it] = false
         }
 
@@ -202,8 +200,7 @@ object LwjglGlfw {
         else {
             // Show OS mouse cursor
             // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
-            window.cursor = GlfwCursor(mouseCursors[imguiCursor.i].takeIf { it != NULL }
-                    ?: mouseCursors[MouseCursor.Arrow.i])
+            window.cursor = GlfwCursor(mouseCursors[imguiCursor.i].takeIf { it != NULL } ?: mouseCursors[MouseCursor.Arrow.i])
             window.cursorStatus = CursorStatus.Normal
         }
     }

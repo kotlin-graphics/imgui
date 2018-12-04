@@ -47,7 +47,7 @@
 //        // Setup ImGui binding
 //        LwjglGlfw.init(window, true)
 //
-//        // Setup style
+//        // Setup Style
 //        ImGui.styleColorsClassic()
 //        //ImGui.styleColorsDark()
 //

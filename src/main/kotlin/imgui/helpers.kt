@@ -90,13 +90,15 @@ class TextFilter(defaultFilter: String? = "") {
 //    }
 }
 
+/** Helper: Growable text buffer for logging/accumulating text
+ *  (this could be called 'ImGuiTextBuilder' / 'ImGuiStringBuilder') */
 class TextBuffer {
     init {
         TODO()
     }
 }
 
-/** Helper: Simple Key->value storage
+/** Helper: Key->Value storage
 Typically you don't have to worry about this since a storage is held within each Window.
 We use it to e.g. store collapse state for a tree (Int 0/1)
 This is optimized for efficient lookup (dichotomy into a contiguous buffer) and rare insertion (typically tied to user
@@ -143,12 +145,14 @@ class Storage {
 
 /** Shared state of InputText(), passed as an argument to your callback when a ImGuiInputTextFlags_Callback* flag is used.
  *  The callback function should return 0 by default.
- *  Special processing:
- *  - InputTextFlag.CallbackCharFilter:  return 1 if the character is not allowed. You may also set 'EventChar=0'
- *                                       as any character replacement are allowed.
- *  - InputTextFlag.CallbackResize:      notified by InputText() when the string is resized.
- *                                       BufTextLen is set to the new desired string length so you can allocate or update known size.
- *                                       No need to initialize new characters or zero-terminator as InputText will do it.
+ *  Callbacks (follow a flag name and see comments in ImGuiInputTextFlags_ declarations for more details)
+ *  - ImGuiInputTextFlags_CallbackCompletion:  Callback on pressing TAB
+ *  - ImGuiInputTextFlags_CallbackHistory:     Callback on pressing Up/Down arrows
+ *  - ImGuiInputTextFlags_CallbackAlways:      Callback on each iteration
+ *  - ImGuiInputTextFlags_CallbackCharFilter:  Callback on character inputs to replace or discard them.
+ *                                              Modify 'EventChar' to replace or discard, or return 1 in callback to discard.
+ *  - ImGuiInputTextFlags_CallbackResize:      Callback on buffer capacity changes request (beyond 'buf_size' parameter value),
+ *                                              allowing the string to grow.
  *
  *  Helper functions for text manipulation.
  *  Use those function to benefit from the CallbackResize behaviors. Calling those function reset the selection. */
@@ -165,7 +169,8 @@ class InputTextCallbackData {
      *  - To modify the text buffer in a callback, prefer using the InsertChars() / DeleteChars() function. InsertChars() will take care of calling the resize callback if necessary.
      *  - If you know your edits are not going to resize the underlying buffer allocation, you may modify the contents of 'Buf[]' directly. You need to update 'BufTextLen' accordingly (0 <= BufTextLen < BufSize) and set 'BufDirty'' to true so InputText can update its internal state. */
 
-    /** Character input                     Read-write   [CharFilter] Replace character or set to zero. return 1 is equivalent to setting EventChar=0; */
+    /** Character input                     Read-write   [CharFilter] Replace character with another one, or set to zero to drop.
+     *                                      return 1 is equivalent to setting EventChar=0; */
     var eventChar = NUL
     /** Key pressed (Up/Down/TAB)           Read-only    [Completion,History] */
     var eventKey = Key.Tab
@@ -173,11 +178,11 @@ class InputTextCallbackData {
     var buf = CharArray(0)
     /** JVM custom, current buf pointer */
     var bufPtr = 0
-    /** Text length in bytes        Read-write   [Resize,Completion,History,Always] */
+    /** Text length (in bytes)        Read-write   [Resize,Completion,History,Always] */
     var bufTextLen = 0
-    /** Buffer capacity in bytes    Read-only    [Resize,Completion,History,Always] */
+    /** Buffer size (in bytes) = capacity + 1    Read-only    [Resize,Completion,History,Always] */
     var bufSize = 0
-    /** Set if you modify Buf/BufTextLen!!  Write        [Completion,History,Always] */
+    /** Set if you modify Buf/BufTextLen!  Write        [Completion,History,Always] */
     var bufDirty = false
     /** Read-write   [Completion,History,Always] */
     var cursorPos = 0
@@ -459,7 +464,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
     companion object {
 
         fun setCursorPosYAndSetupDummyPrevLine(posY: Float, lineHeight: Float) {
-            /*  Set cursor position and a few other things so that SetScrollHere() and Columns() can work when seeking
+            /*  Set cursor position and a few other things so that SetScrollHereY() and Columns() can work when seeking
                 cursor.
                 FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would
                 stumble on the same issue.
@@ -467,11 +472,11 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
             cursorPosY = posY
             val window = currentWindow
             with(window.dc) {
-                // Setting those fields so that SetScrollHere() can properly function after the end of our clipper usage.
+                // Setting those fields so that SetScrollHereY() can properly function after the end of our clipper usage.
                 cursorPosPrevLine.y = cursorPos.y - lineHeight
                 /*  If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a
                     fourth step to let user process and display the last item in their list.             */
-                prevLineHeight = lineHeight - style.itemSpacing.y
+                prevLineSize.y = lineHeight - style.itemSpacing.y
                 columnsSet?.lineMinY = window.dc.cursorPos.y // Setting this so that cell Y position are set properly
             }
         }

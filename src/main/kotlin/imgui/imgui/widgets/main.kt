@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import glm_.f
 import glm_.glm
@@ -15,8 +15,8 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.getColorU32
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.markItemEdit
-import imgui.ImGui.plotEx
+import imgui.ImGui.logRenderedText
+import imgui.ImGui.markItemEdited
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.renderBullet
@@ -29,9 +29,6 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.internal.*
-import uno.kotlin.getValue
-import uno.kotlin.setValue
-import java.lang.Float.max
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
 import imgui.WindowFlag as Wf
@@ -40,7 +37,7 @@ import imgui.internal.ButtonFlag as Bf
 
 /** Widgets: Main
  *  Most widgets return true when the value has been changed or when pressed/selected  */
-interface imgui_widgetsMain {
+interface main {
 
     /** button  */
     fun button(label: String, sizeArg: Vec2 = Vec2()) = buttonEx(label, sizeArg, 0)
@@ -134,7 +131,7 @@ interface imgui_widgetsMain {
     fun checkbox(label: String, v: BooleanArray) = checkbox(label, v, 0)
     fun checkbox(label: String, v: BooleanArray, i: Int): Boolean {
         b = v[i]
-        val res = checkbox(label, ::b)
+        val res = checkbox(label, Companion::b)
         v[i] = b
         return res
     }
@@ -168,7 +165,7 @@ interface imgui_widgetsMain {
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
         if (pressed) {
             v = !v
-            markItemEdit(id)
+            markItemEdited(id)
         }
 
         renderNavHighlight(totalBb, id)
@@ -240,7 +237,7 @@ interface imgui_widgetsMain {
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
         if (pressed)
-            markItemEdit(id)
+            markItemEdited(id)
 
         renderNavHighlight(totalBb, id)
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
@@ -284,36 +281,6 @@ interface imgui_widgetsMain {
         override fun count() = count
     }
 
-    fun plotLines(label: String, values: FloatArray, valuesOffset: Int = 0, overlayText: String = "", scaleMin: Float = Float.MAX_VALUE,
-                  scaleMax: Float = Float.MAX_VALUE, graphSize: Vec2 = Vec2(), stride: Int = 1) {
-
-        val data = PlotArrayData(values, stride)
-        plotEx(PlotType.Lines, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
-    }
-
-    fun plotLines(label: String, valuesGetter: (idx: Int) -> Float, valuesCount: Int, valuesOffset: Int = 0,
-                  overlayText: String = "", scaleMin: Float = Float.MAX_VALUE, scaleMax: Float = Float.MAX_VALUE,
-                  graphSize: Vec2 = Vec2()) {
-
-        val data = PlotArrayFunc(valuesGetter, valuesCount)
-        plotEx(PlotType.Lines, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
-    }
-
-    fun plotHistogram(label: String, values: FloatArray, valuesOffset: Int = 0, overlayText: String = "",
-                      scaleMin: Float = Float.MAX_VALUE, scaleMax: Float = Float.MAX_VALUE, graphSize: Vec2 = Vec2(), stride: Int = 1) {
-
-        val data = PlotArrayData(values, stride)
-        plotEx(PlotType.Histogram, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
-    }
-
-    fun plotHistogram(label: String, valuesGetter: (idx: Int) -> Float, valuesCount: Int, valuesOffset: Int = 0,
-                      overlayText: String = "", scaleMin: Float = Float.MAX_VALUE, scaleMax: Float = Float.MAX_VALUE,
-                      graphSize: Vec2 = Vec2()) {
-
-        val data = PlotArrayFunc(valuesGetter, valuesCount)
-        plotEx(PlotType.Histogram, label, data, valuesOffset, overlayText, scaleMin, scaleMax, graphSize)
-    }
-
     fun progressBar(fraction_: Float, sizeArg: Vec2 = Vec2(-1f, 0f), overlay_: String = "") {
         val window = currentWindow
         if (window.skipItems) return
@@ -345,7 +312,7 @@ interface imgui_widgetsMain {
         val window = currentWindow
         if (window.skipItems) return
 
-        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), g.fontSize)
+        val lineHeight = glm.max(glm.min(window.dc.currentLineSize.y, g.fontSize + style.framePadding.y * 2), g.fontSize)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(g.fontSize, lineHeight))
         itemSize(bb)
         if (!itemAdd(bb, 0)) {

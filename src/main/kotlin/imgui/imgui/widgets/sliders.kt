@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import glm_.func.deg
 import glm_.func.rad
@@ -16,12 +16,13 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
+import imgui.ImGui.focusableItemUnregister
 import imgui.ImGui.inputScalarAsWidgetReplacement
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
-import imgui.ImGui.markItemEdit
+import imgui.ImGui.markItemEdited
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
@@ -36,18 +37,18 @@ import imgui.ImGui.setFocusId
 import imgui.ImGui.sliderBehavior
 import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
-import imgui.imgui.imgui_widgetsDrag.Companion.patchFormatStringFloatToInt
+import imgui.imgui.widgets.drags.Companion.patchFormatStringFloatToInt
+import imgui.imgui.withFloat
+import imgui.imgui.withInt
 import imgui.internal.Rect
 import imgui.internal.SliderFlag
 import imgui.internal.focus
-import uno.kotlin.getValue
-import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
 
 /** Widgets: Sliders (tip: ctrl+click on a slider to input with keyboard. manually input values aren't clamped, can go off-bounds)
  *  Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
  *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc. */
-interface imgui_widgetsSliders {
+interface sliders {
 
 
     /** Adjust format to decorate the value with a prefix or a suffix.
@@ -66,7 +67,7 @@ interface imgui_widgetsSliders {
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
     fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean =
-        withFloat(v, ptr) { sliderFloat(label, it, vMin, vMax, format, power) }
+            withFloat(v, ptr) { sliderFloat(label, it, vMin, vMax, format, power) }
 
     /** Adjust format to decorate the value with a prefix or a suffix.
      *  "%.3f"         1.234
@@ -127,8 +128,10 @@ interface imgui_widgetsSliders {
             }
         }
 
-        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
+        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) {
+            focusableItemUnregister(window)
             return inputScalarAsWidgetReplacement(frameBb, id, label, DataType.Float, v, format)
+        }
 
         itemSize(totalBb, style.framePadding.y)
 
@@ -141,7 +144,7 @@ interface imgui_widgetsSliders {
         val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power, SliderFlag.None.i, grabBb)
 
         if (valueChanged)
-            markItemEdit(id)
+            markItemEdited(id)
 
         // Render grab
         val col = if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
@@ -187,10 +190,12 @@ interface imgui_widgetsSliders {
         return res
     }
 
-    fun sliderAngle(label: String, vRadPtr: KMutableProperty0<Float>, vDegreesMin: Float = -360f, vDegreesMax: Float = 360f): Boolean {
+    fun sliderAngle(label: String, vRadPtr: KMutableProperty0<Float>, vDegreesMin: Float = -360f,
+                    vDegreesMax: Float = 360f, format_: String = "%.0f deg"): Boolean {
+        val format = if(format_.isEmpty()) "%.0f deg" else format_
         var vRad by vRadPtr
         vRad = vRad.deg
-        val valueChanged = sliderFloat(label, vRadPtr, vDegreesMin, vDegreesMax, "%.0f deg", 1f)
+        val valueChanged = sliderFloat(label, vRadPtr, vDegreesMin, vDegreesMax, format, 1f)
         vRad = vRad.rad
         return valueChanged
     }
@@ -278,7 +283,7 @@ interface imgui_widgetsSliders {
         val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power, SliderFlag.Vertical.i, grabBb)
 
         if (valueChanged)
-            markItemEdit(id)
+            markItemEdited(id)
 
         // Render grab
         val col = if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab

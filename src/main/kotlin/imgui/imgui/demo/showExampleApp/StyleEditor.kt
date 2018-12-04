@@ -122,8 +122,8 @@ object StyleEditor {
             checkbox("Anti-aliased lines", style::antiAliasedLines)
             checkbox("Anti-aliased fill", style::antiAliasedFill)
             pushItemWidth(100)
-            dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, Float.MAX_VALUE, null, 2f)
-            if (style.curveTessellationTol < 0f) style.curveTessellationTol = 0.1f
+            dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, Float.MAX_VALUE, "%.2f", 2f)
+            if (style.curveTessellationTol < 10f) style.curveTessellationTol = 0.1f
             /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
                 But application code could have a toggle to switch between zero and non-zero.             */
             dragFloat("Global Alpha", style::alpha, 0.005f, 0.2f, 1f, "%.2f")

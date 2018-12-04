@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import glm_.f
 import glm_.func.common.max
@@ -19,6 +19,7 @@ import imgui.ImGui.dragBehavior
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
+import imgui.ImGui.focusableItemUnregister
 import imgui.ImGui.inputScalarAsWidgetReplacement
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
@@ -39,6 +40,7 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
 import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
+import imgui.internal.DragFlag
 import imgui.internal.Rect
 import imgui.internal.focus
 import uno.kotlin.getValue
@@ -53,7 +55,7 @@ import kotlin.reflect.KMutableProperty0
  *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
  *  Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by 1).
  *  For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision). */
-interface imgui_widgetsDrag {
+interface drags {
 
     fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                   format: String? = "%.3f", power: Float = 1f): Boolean =
@@ -260,12 +262,14 @@ interface imgui_widgetsDrag {
                 g.scalarAsInputTextId = 0
             }
         }
-        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
+        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) {
+            focusableItemUnregister(window)
             return inputScalarAsWidgetReplacement(frameBb, id, label, dataType, v, format)
+        }
 
         // Actual drag behavior
         itemSize(totalBb, style.framePadding.y)
-        val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power)
+        val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power, DragFlag.None.i)
 
         // Draw frame
         val frameCol = when (g.activeId) {

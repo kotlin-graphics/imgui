@@ -4,10 +4,14 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
+import imgui.Dir
 import imgui.NUL
 import java.io.File
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
+import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 
 // -----------------------------------------------------------------------------------------------------------------
@@ -104,10 +108,10 @@ fun trimBlanks(buf: CharArray): CharArray {
 // -----------------------------------------------------------------------------------------------------------------
 
 fun hash(data: IntArray, seed: Int = 0): Int {
-    val buffer = ByteBuffer.allocate(data.size * Int.BYTES)
+    val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])
     val bytes = ByteArray(buffer.size) { buffer[it] }
-    return hash(String(bytes), bytes.size, seed)
+    return hash(String(bytes, StandardCharsets.ISO_8859_1), bytes.size, seed)
 }
 
 /** Pass data_size==0 for zero-terminated strings
@@ -121,8 +125,10 @@ fun hash(data: String, dataSize_: Int, seed_: Int = 0): Int {
     var dataSize = dataSize_
     if (dataSize > 0)
     // Known size
-        while (dataSize-- != 0)
-            crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor data[current++].i]
+        while (dataSize-- != 0) {
+            val a = (crc and 0xFF) xor data[current++].i
+            crc = (crc ushr 8) xor crc32Lut[a]
+        }
     else
     // Zero-terminated string
         while (current < data.length) {
@@ -186,17 +192,6 @@ fun triangleContainsPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Boolean {
     return ((b1 == b2) && (b2 == b3))
 }
 
-fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray {
-    val v0 = b - a
-    val v1 = c - a
-    val v2 = p - a
-    val denom = v0.x * v1.y - v1.x * v0.y
-    val outV = (v2.x * v1.y - v1.x * v2.y) / denom
-    val outW = (v0.x * v2.y - v2.x * v0.y) / denom
-    val outU = 1f - outV - outW
-    return floatArrayOf(outU, outV, outW)
-}
-
 fun triangleClosestPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Vec2 {
     val projAB = lineClosestPoint(a, b, p)
     val projBC = lineClosestPoint(b, c, p)
@@ -209,6 +204,28 @@ fun triangleClosestPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Vec2 {
         dist2AB -> projAB
         dist2BC -> projBC
         else -> projCA
+    }
+}
+
+fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray {
+    val v0 = b - a
+    val v1 = c - a
+    val v2 = p - a
+    val denom = v0.x * v1.y - v1.x * v0.y
+    val outV = (v2.x * v1.y - v1.x * v2.y) / denom
+    val outW = (v0.x * v2.y - v2.x * v0.y) / denom
+    val outU = 1f - outV - outW
+    return floatArrayOf(outU, outV, outW)
+}
+
+fun getDirQuadrantFromDelta(dx: Float, dy: Float) = when {
+    abs(dx) > abs(dy) -> when {
+        dx > 0f -> Dir.Right
+        else -> Dir.Left
+    }
+    else -> when {
+        dy > 0f -> Dir.Down
+        else -> Dir.Up
     }
 }
 
@@ -300,7 +317,7 @@ infix fun CharArray.strncpy(src: CharArray) = strncpy(src, size)
 fun CharArray.strncpy(src: CharArray, count: Int) {
     if (count < 1) return
     for (i in 0 until count) {
-        if (src[i] == NUL) break
+//        if (src[i] == NUL) break
         this[i] = src[i]
     }
 }
@@ -332,7 +349,14 @@ fun String.scanHex(ints: IntArray, count: Int = ints.size, precision: Int) {
     }
 }
 
-fun String.strchr(startIdx: Int, c: Char): Int? {
+fun String.memchr(startIdx: Int, c: Char): Int? {
     val res = indexOf(c, startIdx)
     return if (res >= 0) res else null
+}
+
+fun CharArray.memchr(startIdx: Int, c: Char): Int? {
+    for (index in startIdx until size)
+        if (c == this[index])
+            return index
+    return null
 }

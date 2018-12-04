@@ -78,7 +78,15 @@ infix fun Int.hasnt(b: ButtonFlag) = (this and b.i) == 0
 
 enum class SliderFlag(val i: Int) { None(0), Vertical(1 shl 0) }
 
-infix fun Int.hasnt(b: SliderFlag) = (this and b.i) == 0
+infix fun Int.has(b: SliderFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: SliderFlag) = and(b.i) == 0
+
+enum class DragFlag(val i: Int) { None(0), Vertical(1 shl 0) }
+
+typealias DragFlags = Int
+
+infix fun Int.has(b: DragFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: DragFlag) = and(b.i) == 0
 
 enum class ColumnsFlag(val i: Int) {
 
@@ -105,7 +113,7 @@ enum class SeparatorFlag {
     Horizontal,
     Vertical;
 
-    val i = if(ordinal == 0) 0 else 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun SeparatorFlag.or(b: SeparatorFlag): SeparatorFlags = i or b.i
@@ -118,9 +126,10 @@ enum class ItemStatusFlag {
     None,
     HoveredRect,
     HasDisplayRect,
-    Edit;
+    /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
+    Edited;
 
-    val i = if(ordinal == 0) 0 else 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 }
 
 infix fun Int.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv())
@@ -167,7 +176,7 @@ enum class InputReadMode { Down, Pressed, Released, Repeat, RepeatSlow, RepeatFa
 
 enum class NavHighlightFlag { None, TypeDefault, TypeThin, AlwaysDraw, NoRounding;
 
-    val i = if(ordinal == 0) 0 else 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun Int.has(b: NavHighlightFlag) = and(b.i) != 0
@@ -176,7 +185,7 @@ infix fun NavHighlightFlag.or(b: NavHighlightFlag): NavHighlightFlags = i or b.i
 
 enum class NavDirSourceFlag { None, Keyboard, PadDPad, PadLStick;
 
-    val i = if(ordinal == 0) 0 else 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun NavDirSourceFlag.or(b: NavDirSourceFlag): NavDirSourceFlags = i or b.i
@@ -198,7 +207,7 @@ enum class NavMoveFlag {
     /** Store alternate result in NavMoveResultLocalVisibleSet that only comprise elements that are already fully visible.; */
     AlsoScoreVisibleSet;
 
-    val i = if(ordinal == 0) 0 else 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl ordinal
 
     infix fun or(b: NavMoveFlag): NavMoveFlags = i or b.i
 }
@@ -210,6 +219,7 @@ enum class NavForward { None, ForwardQueued, ForwardActive;
     val i = ordinal
 }
 
+enum class PopupPositionPolicy { Default, ComboBox }
 
 // TODO check enum declarance position
 enum class DrawCornerFlag(val i: Int) {

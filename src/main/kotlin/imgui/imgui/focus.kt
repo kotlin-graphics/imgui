@@ -2,18 +2,20 @@ package imgui.imgui
 
 import imgui.ImGui.currentWindow
 import imgui.ImGui.isItemVisible
-import imgui.ImGui.setScrollHere
+import imgui.ImGui.setScrollHereY
 import imgui.g
 import imgui.internal.Rect
+import imgui.navUpdateAnyRequestFlag
 
 
 /** Focus, Activation
- *  (Prefer using "setItemDefaultFocus()" over "if (isWindowAppearing()) setScrollHere()" when applicable,
+ *  (Prefer using "setItemDefaultFocus()" over "if (isWindowAppearing()) setScrollHereY()" when applicable,
  *  to make your code more forward compatible when navigation branch is merged) */
 interface imgui_focusActivation {
 
-    /** Make last item the default focused item of a window.
-     *  Please use instead of "if (isWindowAppearing()) setScrollHere()" to signify "default item". */
+    // (Prefer using "SetItemDefaultFocus()" over "if (IsWindowAppearing()) SetScrollHereY()" when applicable to signify "this is the default item")
+
+    /** make last item the default focused item of a window. */
     fun setItemDefaultFocus() {
         val window = g.currentWindow!!
         if (!window.appearing) return
@@ -23,7 +25,7 @@ interface imgui_focusActivation {
             g.navInitResultId = nav.dc.lastItemId
             g.navInitResultRectRel = Rect(nav.dc.lastItemRect.min - nav.pos, nav.dc.lastItemRect.max - nav.pos)
             navUpdateAnyRequestFlag()
-            if (!isItemVisible) setScrollHere()
+            if (!isItemVisible) setScrollHereY()
         }
     }
 

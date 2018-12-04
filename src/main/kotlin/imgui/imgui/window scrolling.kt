@@ -30,10 +30,10 @@ interface imgui_windowScrolling {
     /** adjust scrolling amount to make current cursor position visible.
      *  centerYRatio = 0.0: top, 0.5: center, 1.0: bottom.
      *   When using to make a "default/current item" visible, consider using setItemDefaultFocus() instead.*/
-    fun setScrollHere(centerYRatio: Float = 0.5f) = with(ImGui.currentWindow) {
+    fun setScrollHereY(centerYRatio: Float = 0.5f) = with(ImGui.currentWindow) {
         var targetY = dc.cursorPosPrevLine.y - pos.y  // Top of last item, in window space
         // Precisely aim above, in the middle or below the last line.
-        targetY += (dc.prevLineHeight * centerYRatio) + ImGui.style.itemSpacing.y * (centerYRatio - 0.5f) * 2f
+        targetY += (dc.prevLineSize.y * centerYRatio) + ImGui.style.itemSpacing.y * (centerYRatio - 0.5f) * 2f
         setScrollFromPosY(targetY, centerYRatio)
     }
 

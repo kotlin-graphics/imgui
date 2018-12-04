@@ -21,6 +21,7 @@ import imgui.ImGui.endPopup
 import imgui.ImGui.io
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.itemHoverable
+import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
@@ -35,15 +36,12 @@ import imgui.ImGui.renderArrow
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderText
 import imgui.ImGui.selectable
+import imgui.ImGui.setNavIDWithRectRel
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
-import imgui.imgui.imgui_main.Companion.focusFrontMostActiveWindow
+import imgui.internal.*
 import imgui.internal.LayoutType
-import imgui.internal.NavForward
-import imgui.internal.Rect
-import imgui.internal.focus
-import imgui.internal.triangleContainsPoint
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
@@ -84,7 +82,7 @@ interface imgui_menus {
 
         // When the user has left the menu layer (typically: closed menus through activation of an item), we restore focus to the previous window
         if (g.currentWindow == g.navWindow && g.navLayer == 0)
-            focusFrontMostActiveWindow(g.navWindow)
+            focusPreviousWindowIgnoringOne(g.navWindow)
 
         end()
     }
@@ -189,7 +187,7 @@ interface imgui_menus {
             /*  Menu inside an horizontal menu bar
                 Selectable extend their highlight by half ItemSpacing in each direction.
                 For ChildMenu, the popup position will be overwritten by the call to FindBestWindowPosForPopup() in begin() */
-            popupPos.put(pos.x - window.windowPadding.x, pos.y - style.framePadding.y + window.menuBarHeight)
+            popupPos.put(pos.x - 1.0f - (style.itemSpacing.x * 0.5f).i.f, pos.y - style.framePadding.y + window.menuBarHeight)
             window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
             pushStyleVar(StyleVar.ItemSpacing, style.itemSpacing * 2f)
             val w = labelSize.x

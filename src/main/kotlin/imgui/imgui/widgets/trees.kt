@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import gli_.has
 import glm_.glm
@@ -7,9 +7,11 @@ import imgui.*
 import imgui.ImGui.closeButton
 import imgui.ImGui.currentWindow
 import imgui.ImGui.indent
+import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
+import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
@@ -21,7 +23,7 @@ import imgui.TreeNodeFlag as Tnf
 
 /** Widgets: Trees
  *  TreeNode functions return true when the node is open, in which case you need to also call TreePop() when you are finished displaying the tree node contents. */
-interface imgui_widgetsTrees {
+interface trees {
 
     /** if returning 'true' the node is open and the tree id is pushed into the id stack. user is responsible for
      *  calling TreePop().  */

@@ -25,10 +25,8 @@ enum class WindowFlag(val i: Int) {
     NoCollapse(1 shl 5),
     /** Resize every window to its content every frame  */
     AlwaysAutoResize(1 shl 6),
-    @Deprecated("OBSOLETE! Use e.g. style.FrameBorderSize=1.0f to enable borders")
-    /** Show borders around windows and items
-     *  Deprecated, Set style.FrameBorderSize=1.0f / style.WindowBorderSize=1.0f to enable borders around windows and items */
-    ShowBorders(1 shl 7),
+    /** Disable drawing background color (WindowBg, etc.) and outside border. Similar as using SetNextWindowBgAlpha(0.0f).(1 shl 7) */
+    NoBackground(1 shl 7),
     /** Never load/save settings in .ini file   */
     NoSavedSettings(1 shl 8),
     /** Disable catching mouse or keyboard inputs   */
@@ -58,6 +56,8 @@ enum class WindowFlag(val i: Int) {
     NoNavFocus(1 shl 19),
 
     NoNav(NoNavInputs or NoNavFocus),
+
+    NoDecoration(NoTitleBar or NoResize or NoScrollbar or NoCollapse),
 
     // [Internal]
 
@@ -99,14 +99,14 @@ enum class InputTextFlag(val i: Int) {
     AutoSelectAll(1 shl 4),
     /** Return 'true' when Enter is pressed (as opposed to when the value was modified) */
     EnterReturnsTrue(1 shl 5),
-    /** Call user function on pressing TAB (for completion handling)    */
+    /** Callback on pressing TAB (for completion handling)    */
     CallbackCompletion(1 shl 6),
-    /** Call user function on pressing Up/Down arrows (for history handling)    */
+    /** Callback on pressing Up/Down arrows (for history handling)    */
     CallbackHistory(1 shl 7),
-    /** Call user function every time. User code may query cursor position), modify text buffer.    */
+    /** Callback on each iteration. User code may query cursor position), modify text buffer.    */
     CallbackAlways(1 shl 8),
-    /** Call user function to filter character. Modify data->EventChar to replace/filter input), or return 1 in callback
-     *  to discard character.  */
+    /** Callback on character inputs to replace or discard them. Modify 'EventChar' to replace or discard,
+     *  or return 1 in callback to discard.  */
     CallbackCharFilter(1 shl 9),
     /** Pressing TAB input a '\t' character into the text field */
     AllowTabInput(1 shl 10),
@@ -126,8 +126,9 @@ enum class InputTextFlag(val i: Int) {
     NoUndoRedo(1 shl 16),
     /** Allow 0123456789.+-* /eE (Scientific notation input) */
     CharsScientific(1 shl 17),
-    /** Allow buffer capacity resize + notify when the string wants to be resized
-     *  (for string types which hold a cache of their Size) (see misc/stl/imgui_stl.h for an example of using this) */
+    /** Callback on buffer capacity changes request (beyond 'buf_size' parameter value), allowing the string to grow.
+     *  Notify when the string wants to be resized (for string types which hold a cache of their Size).
+     *  You will be provided a new BufSize in the callback and NEED to honor it. (see misc/cpp/imgui_stl.h for an example of using this) */
     CallbackResize(1 shl 18),
 
     // [Internal]
@@ -245,7 +246,8 @@ enum class FocusedFlag(val i: Int) {
     ChildWindows(1 shl 0),
     /** isWindowFocused(): Test from root window (top most parent of the current hierarchy) */
     RootWindow(1 shl 1),
-    /** IsWindowFocused(): Return true if any window is focused */
+    /** IsWindowFocused(): Return true if any window is focused.
+     *  Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use ImGui::GetIO().WantCaptureMouse instead. */
     AnyWindow(1 shl 2),
     RootAndChildWindows(RootWindow or ChildWindows)
 }
@@ -359,7 +361,7 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
     val i = ordinal
 
     /** JVM implementation of IsKeyPressedMap   */
-    fun isPressed(repeat: Boolean) = isKeyPressed(io.keyMap[i], repeat)
+    fun isPressed(repeat: Boolean = true) = isKeyPressed(io.keyMap[i], repeat)
 
     val isPressed: Boolean
         get() = isPressed(true)
@@ -371,7 +373,7 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
     val index get() = i
 }
 
-/** [BETA] Gamepad/Keyboard directional navigation
+/** Gamepad/Keyboard directional navigation
  *  Keyboard: Set io.configFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[]
  *  based on your io.keysDown[] + io.keyMap[] arrays.
  *  Gamepad:  Set io.configFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling
@@ -440,6 +442,8 @@ enum class NavInput {
 
     /** Equivalent of isKeyPressed() for NavInputs[]    */
     fun isPressed(mode: InputReadMode) = getNavInputAmount(this, mode) > 0f
+
+    fun isPressedAnyOfTwo(n2: NavInput, mode: InputReadMode) = (getNavInputAmount(this, mode) + getNavInputAmount(n2, mode)) > 0f
 }
 
 typealias ConfidFlags = Int
@@ -481,6 +485,7 @@ enum class ConfigFlag(val i: Int) {
 infix fun Int.has(b: ConfigFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ConfigFlag) = and(b.i) == 0
 infix fun Int.or(b: ConfigFlag): ConfigFlags = or(b.i)
+infix fun Int.wo(b: ConfigFlag): ConfigFlags = and(b.i.inv())
 infix fun ConfigFlag.or(b: ConfigFlag): ConfigFlags = i or b.i
 
 typealias BackendFlags = Int
@@ -846,7 +851,7 @@ enum class MouseCursor {
  *  All the functions above treat 0 as a shortcut to Cond.Always. */
 enum class Cond(val i: Int) {
 
-    Null(0),
+    None(0),
     /** Set the variable    */
     Always(1 shl 0),
     /** Set the variable once per runtime session (only the first call with succeed)    */
@@ -871,8 +876,8 @@ infix fun Int.wo(b: Cond) = and(b.i.inv())
 /** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
  *  This is going to be exposed in imgui.h when stabilized enough.  */
 enum class ItemFlag(val i: Int) {
-    /** true    */
-    AllowKeyboardFocus(1 shl 0),
+    /** false    */
+    NoTabStop(1 shl 0),
     /** false. Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.  */
     ButtonRepeat(1 shl 1),
     /** false. [BETA] Disable interactions but doesn't affect visuals. Should be: grey out and disable interactions with widgets that affect data + view widgets (WIP)     */
@@ -884,7 +889,7 @@ enum class ItemFlag(val i: Int) {
     /** false, MenuItem/Selectable() automatically closes current Popup window  */
     SelectableDontClosePopup(1 shl 5),
 
-    Default_(AllowKeyboardFocus.i)
+    Default_(0)
 }
 
 infix fun ItemFlag.or(other: ItemFlag) = i or other.i

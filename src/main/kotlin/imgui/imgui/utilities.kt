@@ -25,7 +25,8 @@ import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
 
-
+/** Item/Widgets Utilities
+ *  See Demo Window under "Widgets->Querying Status" for an interactive visualization of many of those functions. */
 interface imgui_utilities {
 
     /** This is roughly matching the behavior of internal-facing ItemHoverable()
@@ -41,27 +42,27 @@ interface imgui_utilities {
 
         val window = g.currentWindow!!
         return when {
-        // Test for bounding box overlap, as updated as ItemAdd()
+            // Test for bounding box overlap, as updated as ItemAdd()
             window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect -> false
             else -> {
                 assert(flags hasnt (Hf.RootWindow or Hf.ChildWindows)) { "Flags not supported by this function" }
                 when {
-                /*  Test if we are hovering the right window (our window could be behind another window)
-                    [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to
-                    NOT test for rootWindow but this leaves us unable to use isItemHovered after endChild() itself.
-                    Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was
-                    the test that has been running for a long while. */
-                // g.hoveredWindow !== window -> false
+                    /*  Test if we are hovering the right window (our window could be behind another window)
+                        [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to
+                        NOT test for rootWindow but this leaves us unable to use isItemHovered after endChild() itself.
+                        Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was
+                        the test that has been running for a long while. */
+                    // g.hoveredWindow !== window -> false
                     g.hoveredRootWindow !== window.rootWindow && flags hasnt Hf.AllowWhenOverlapped -> false
-                // Test if another item is active (e.g. being dragged)
+                    // Test if another item is active (e.g. being dragged)
                     flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeId != window.dc.lastItemId &&
                             !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
-                // Test if interactions on this window are blocked by an active popup or modal
+                    // Test if interactions on this window are blocked by an active popup or modal
                     g.navDisableMouseHover || !window.isContentHoverable(flags) -> false
-                // Test if the item is disabled
-                    window.dc.itemFlags has ItemFlag.Disabled  && flags hasnt Hf.AllowWhenDisabled -> false
-                /*  Special handling for the 1st item after Begin() which represent the title bar. When the window is
-                    collapsed (SkipItems==true) that last item will never be overwritten so we need to detect tht case.                 */
+                    // Test if the item is disabled
+                    window.dc.itemFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled -> false
+                    /*  Special handling for the 1st item after Begin() which represent the title bar. When the window is
+                        collapsed (SkipItems==true) that last item will never be overwritten so we need to detect tht case.                 */
                     window.dc.lastItemId == window.moveId && window.writeAccessed -> false
                     else -> true
                 }
@@ -71,38 +72,41 @@ interface imgui_utilities {
 
     /** Is the last item active? (e.g. button being held, text field being edited.
      *  This will continuously return true while holding mouse button on an item. Items that don't interact will always return false) */
-    val isItemActive
+    val isItemActive: Boolean
         get() = if (g.activeId != 0) g.activeId == g.currentWindow!!.dc.lastItemId else false
 
     /** Is the last item focused for keyboard/gamepad navigation?   */
-    val isItemFocused
+    val isItemFocused: Boolean
         get() = g.navId != 0 && !g.navDisableHighlight && g.navId == g.currentWindow!!.dc.lastItemId
 
     /** Is the last item clicked? (e.g. button/node just clicked on) == IsMouseClicked(mouse_button) && IsItemHovered() */
     fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemHovered(Hf.None)
 
     /** Is the last item visible? (items may be out of sight because of clipping/scrolling)    */
-    val isItemVisible
-        get() = with(currentWindowRead!!) { clipRect overlaps dc.lastItemRect }
+    val isItemVisible: Boolean
+        get() = currentWindowRead!!.run { clipRect overlaps dc.lastItemRect }
+
+    val isItemEdited: Boolean
+        get () = currentWindowRead!!.run { dc.lastItemStatusFlags has ItemStatusFlag.Edited }
 
     /** Was the last item just made inactive (item was previously active).
      *  Useful for Undo/Redo patterns with widgets that requires continuous editing. */
-    val isItemDeactivated
+    val isItemDeactivated: Boolean
         get() = g.currentWindow!!.dc.let { g.activeIdPreviousFrame == it.lastItemId && g.activeIdPreviousFrame != 0 && g.activeId != it.lastItemId }
 
     /** Was the last item just made inactive and made a value change when it was active? (e.g. Slider/Drag moved).
      *  Useful for Undo/Redo patterns with widgets that requires continuous editing.
      *  Note that you may get false positives (some widgets such as Combo()/ListBox()/Selectable() will return true even when clicking an already selected item). */
-    val isItemDeactivatedAfterChange
-        get() = isItemDeactivated && (g.activeIdPreviousFrameValueChanged || (g.activeId == 0 && g.activeIdValueChanged))
+    val isItemDeactivatedAfterEdit: Boolean
+        get() = isItemDeactivated && (g.activeIdPreviousFrameHasBeenEdited || (g.activeId == 0 && g.activeIdHasBeenEdited))
 
-    val isAnyItemHovered
+    val isAnyItemHovered: Boolean
         get() = g.hoveredId != 0 || g.hoveredIdPreviousFrame != 0
 
-    val isAnyItemActive
+    val isAnyItemActive: Boolean
         get() = g.activeId != 0
 
-    val isAnyItemFocused
+    val isAnyItemFocused: Boolean
         get() = g.navId != 0 && !g.navDisableHighlight
 
     /** get bounding rect of last item in screen space  */
@@ -126,6 +130,9 @@ interface imgui_utilities {
             g.activeIdAllowOverlap = true
     }
 
+
+    // Miscellaneous Utilities
+
     /** test if rectangle (of given size, starting from cursor position) is visible / not clipped.  */
     fun isRectVisible(size: Vec2) = with(currentWindowRead!!) { clipRect overlaps Rect(dc.cursorPos, dc.cursorPos + size) }
 
@@ -137,6 +144,9 @@ interface imgui_utilities {
 
     val frameCount: Int
         get() = g.frameCount
+
+    /** This seemingly unnecessary wrapper simplifies compatibility between the 'master' and 'viewport' branches. */
+    fun getOverlayDrawList(window: Window?): DrawList = g.overlayDrawList
 
     /** this draw list will be the last rendered one, useful to quickly draw overlays shapes/text   */
     val overlayDrawList: DrawList
@@ -244,6 +254,10 @@ interface imgui_utilities {
             out = out or (F32_TO_INT8_SAT(z) shl COL32_B_SHIFT)
             return out or (F32_TO_INT8_SAT(w) shl COL32_A_SHIFT)
         }
+
+
+    // Color Utilities
+
 
     /** Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
      *  Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv  */
