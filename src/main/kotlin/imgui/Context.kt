@@ -102,6 +102,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var lastActiveId: ID = 0
     /** Store the last non-zero ActiveId timer since the beginning of activation, useful for animation. */
     var lastActiveIdTimer = 0f
+
+    var lastValidMousePos = Vec2()
     /** Track the window we clicked on (in order to preserve focus).
      *  The actually window that is moved is generally MovingWindow.rootWindow.  */
     var movingWindow: Window? = null

@@ -415,8 +415,10 @@ interface imgui_internal {
         val parentWindow = g.currentWindow!!
         val currentStackSize = g.currentPopupStack.size
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
+        val openPopupPos = navCalcPreferredRefPos()
         val popupRef = PopupRef(popupId = id, window = null, parentWindow = parentWindow, openFrameCount = g.frameCount,
-                openParentId = parentWindow.idStack.last(), openMousePos = Vec2(io.mousePos), openPopupPos = navCalcPreferredRefPos())
+                openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
+                openMousePos = if(isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
 //        println("" + g.openPopupStack.size +", "+currentStackSize)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack += popupRef
