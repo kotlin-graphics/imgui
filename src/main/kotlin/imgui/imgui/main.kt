@@ -18,7 +18,6 @@ import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveId
-import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.setCurrentFont
@@ -26,14 +25,11 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindow
-import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
-import imgui.imgui.imgui_internal.Companion.roundScalarWithFormat
 import imgui.internal.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.reflect.KMutableProperty0
 import imgui.ConfigFlag as Cf
 import imgui.WindowFlag as Wf
 import imgui.internal.DrawListFlag as Dlf
@@ -59,6 +55,9 @@ interface imgui_main {
 
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() or ImGui::SetCurrentContext()?" }
 
+        if (IMGUI_ENABLE_TEST_ENGINE_HOOKS)
+            ImGuiTestEngineHook_PreNewFrame()
+
         /*  Check user data
             (We pass an error message in the assert expression as a trick to get it visible to programmers who are not using a debugger,
             as most assert handlers display their argument)         */
@@ -73,11 +72,11 @@ interface imgui_main {
         for (n in 0 until Key.COUNT)
             assert(io.keyMap[n] >= -1 && io.keyMap[n] < io.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
 
-        // Perform simple check for required key mapping (we intentionally do NOT check all keys to not pressure user into setting up everything, but Space is required and was only recently added in 1.60 WIP)
+        // Perform simple check: required key mapping (we intentionally do NOT check all keys to not pressure user into setting up everything, but Space is required and was only recently added in 1.60 WIP)
         if (io.configFlags has Cf.NavEnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
-        // The beta io.configResizeWindowsFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
+        // Perform simple check: the beta io.configResizeWindowsFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
         if (io.configResizeWindowsFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
             io.configResizeWindowsFromEdges = false
 
@@ -129,8 +128,12 @@ interface imgui_main {
         // Clear reference to active widget if the widget isn't alive anymore
         if (g.hoveredIdPreviousFrame == 0)
             g.hoveredIdTimer = 0f
+        if (g.hoveredIdPreviousFrame == 0 || (g.hoveredId != 0 && g.activeId == g.hoveredId))
+            g.hoveredIdNotActiveTimer = 0f
         if (g.hoveredId != 0)
             g.hoveredIdTimer += io.deltaTime
+        if (g.hoveredId != 0 && g.activeId != g.hoveredId)
+            g.hoveredIdNotActiveTimer += io.deltaTime
         g.hoveredIdPreviousFrame = g.hoveredId
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
@@ -141,7 +144,7 @@ interface imgui_main {
         g.lastActiveIdTimer += io.deltaTime
         g.activeIdPreviousFrame = g.activeId
         g.activeIdPreviousFrameWindow = g.activeIdWindow
-        g.activeIdPreviousFrameValueChanged = g.activeIdValueChanged
+        g.activeIdPreviousFrameHasBeenEdited = g.activeIdHasBeenEdited
         g.activeIdIsAlive = 0
         g.activeIdPreviousFrameIsAlive = false
         g.activeIdIsJustActivated = false
@@ -209,6 +212,7 @@ interface imgui_main {
         g.navIdTabCounter = Int.MAX_VALUE
 
         // Mark all windows as not visible
+        assert(g.windowsFocusOrder.size == g.windows.size)
         g.windows.forEach {
             it.wasActive = it.active
             it.active = false
@@ -217,7 +221,7 @@ interface imgui_main {
 
         // Closing the focused window restore focus to the first active root window in descending z-order
         if (g.navWindow?.wasActive == false)
-            focusFrontMostActiveWindow(null)
+            focusPreviousWindowIgnoringOne(null)
 
         // No window should be open at the beginning of the frame.
         // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.
@@ -229,6 +233,9 @@ interface imgui_main {
         // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
         begin("Debug##Default")
+
+        if (IMGUI_ENABLE_TEST_ENGINE_HOOKS)
+            ImGuiTestEngineHook_PostNewFrame()
     }
 
     /** Ends the ImGui frame. automatically called by ::render(), you likely don't need to call that yourself directly.
@@ -310,7 +317,7 @@ interface imgui_main {
         g.windowsSortBuffer.clear()
         g.windowsSortBuffer.ensureCapacity(g.windows.size)
         g.windows.filter { !it.active || it.flags hasnt Wf.ChildWindow }  // if a child is active its parent will add it
-                .forEach { it addToSortedBuffer g.windowsSortBuffer }
+                .forEach { it addToSortBuffer g.windowsSortBuffer }
         assert(g.windows.size == g.windowsSortBuffer.size) { "we done something wrong" }
         g.windows.clear()
         g.windows += g.windowsSortBuffer
@@ -377,7 +384,7 @@ interface imgui_main {
             g.overlayDrawList addTo g.drawDataBuilder.layers[0]
 
         // Setup ImDrawData structure for end-user
-        setupDrawData(g.drawDataBuilder.layers[0], g.drawData)
+        g.drawData setup g.drawDataBuilder.layers[0]
         io.metricsRenderVertices = g.drawData.totalVtxCount
         io.metricsRenderIndices = g.drawData.totalIdxCount
     }
@@ -388,9 +395,18 @@ interface imgui_main {
 
     companion object {
 
+        // Misc
         fun updateMouseInputs() {
+
             with(io) {
-                // If mouse just appeared or disappeared (usually denoted by -FLT_MAX component, but in reality we test for -256000.0f) we cancel out movement in MouseDelta
+
+                // Round mouse position to avoid spreading non-rounded position (e.g. UpdateManualResize doesn't support them well)
+                if (isMousePosValid(mousePos)) {
+                    g.lastValidMousePos = glm.floor(mousePos)
+                    mousePos = Vec2(g.lastValidMousePos)
+                }
+
+                // If mouse just appeared or disappeared (usually denoted by -FLT_MAX component) we cancel out movement in MouseDelta
                 if (isMousePosValid(mousePos) && isMousePosValid(mousePosPrev))
                     mouseDelta = mousePos - mousePosPrev
                 else
@@ -490,17 +506,20 @@ interface imgui_main {
 
         /** Handle resize for: Resize Grips, Borders, Gamepad
          * @return borderHelf   */
-        fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int, resizeGripCol: IntArray): Int {
+        fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int, resizeGripCol: IntArray) {
 
             var borderHeld = borderHeld_
 
             val flags = window.flags
-            if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0)
-                return borderHeld
+            if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames anyGreaterThan 0)
+                return
+            if (window.wasActive == false) // Early out to avoid running this code for e.g. an hidden implicit Debug window.
+                return
 
             val resizeBorderCount = if (io.configResizeWindowsFromEdges) 4 else 0
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
-            val gripHoverSize = (gripDrawSize * 0.75f).i.f
+            val gripHoverInnerSize = (gripDrawSize * 0.75f).i.f
+            val gripHoverOuterSize = if (io.configResizeWindowsFromEdges) RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS else 0f
 
             val posTarget = Vec2(Float.MAX_VALUE)
             val sizeTarget = Vec2(Float.MAX_VALUE)
@@ -508,16 +527,18 @@ interface imgui_main {
             // Manual resize grips
             pushId("#RESIZE")
             for (resizeGripN in 0 until resizeGripCount) {
+
                 val grip = resizeGripDef[resizeGripN]
                 val corner = window.pos.lerp(window.pos + window.size, grip.cornerPos)
 
                 // Using the FlattenChilds button flag we make the resize button accessible even if we are hovering over a child window
-                val resizeRect = Rect(corner, corner + grip.innerDir * gripHoverSize)
+                val resizeRect = Rect(corner - grip.innerDir * gripHoverOuterSize, corner + grip.innerDir * gripHoverInnerSize)
                 if (resizeRect.min.x > resizeRect.max.x) swap(resizeRect.min::x, resizeRect.max::x)
                 if (resizeRect.min.y > resizeRect.max.y) swap(resizeRect.min::y, resizeRect.max::y)
 
                 val f = ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus
                 val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), f)
+                //GetOverlayDrawList(window)->AddRect(resize_rect.Min, resize_rect.Max, IM_COL32(255, 255, 0, 255));
                 if (hovered || held)
                     g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
 
@@ -528,18 +549,18 @@ interface imgui_main {
                 } else if (held) {
                     // Resize from any of the four corners
                     // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
-                    val cornerTarget = g.io.mousePos - g.activeIdClickOffset + resizeRect.size * grip.cornerPos // Corner of the window corresponding to our corner grip
+                    // Corner of the window corresponding to our corner grip
+                    val cornerTarget = g.io.mousePos - g.activeIdClickOffset + (grip.innerDir * gripHoverOuterSize).lerp(grip.innerDir * -gripHoverInnerSize, grip.cornerPos)
                     window.calcResizePosSizeFromAnyCorner(cornerTarget, grip.cornerPos, posTarget, sizeTarget)
                 }
                 if (resizeGripN == 0 || held || hovered)
                     resizeGripCol[resizeGripN] = (if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip).u32
             }
             for (borderN in 0 until resizeBorderCount) {
-                val BORDER_SIZE = 5f          // FIXME: Only works _inside_ window because of HoveredWindow check.
-                val BORDER_APPEAR_TIMER = 0.05f // Reduce visual noise
-                val borderRect = window.getBorderRect(borderN, gripHoverSize, BORDER_SIZE)
+                val borderRect = window.getResizeBorderRect(borderN, gripHoverInnerSize, RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS)
                 val (_, hovered, held) = buttonBehavior(borderRect, window.getId((borderN + 4)), ButtonFlag.FlattenChildren)
-                if ((hovered && g.hoveredIdTimer > BORDER_APPEAR_TIMER) || held) {
+                //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
+                if ((hovered && g.hoveredIdTimer > RESIZE_WINDOWS_FROM_EDGES_FEEDBACK_TIMER) || held) {
                     g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
                     if (held) borderHeld = borderN
                 }
@@ -547,19 +568,19 @@ interface imgui_main {
                     val borderTarget = Vec2(window.pos)
                     val borderPosN = when (borderN) {
                         0 -> {
-                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y
+                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
                             Vec2(0, 0)
                         }
                         1 -> {
-                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + BORDER_SIZE
+                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
                             Vec2(1, 0)
                         }
                         2 -> {
-                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + BORDER_SIZE
+                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
                             Vec2(0, 1)
                         }
                         3 -> {
-                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x
+                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
                             Vec2(0, 0)
                         }
                         else -> Vec2(0, 0)
@@ -598,8 +619,6 @@ interface imgui_main {
             }
 
             window.size put window.sizeFull
-
-            return borderHeld
         }
 
         class ResizeGripDef(val cornerPos: Vec2, val innerDir: Vec2, val angleMin12: Int, val angleMax12: Int)
@@ -609,385 +628,5 @@ interface imgui_main {
                 ResizeGripDef(Vec2(0, 1), Vec2(+1, -1), 3, 6),  // Lower left
                 ResizeGripDef(Vec2(0, 0), Vec2(+1, +1), 6, 9),  // Upper left
                 ResizeGripDef(Vec2(1, 0), Vec2(-1, +1), 9, 12)) // Upper right
-
-        fun focusFrontMostActiveWindow(ignoreWindow: Window?) {
-            for (i in g.windows.lastIndex downTo 0)
-                if (g.windows[i] !== ignoreWindow && g.windows[i].wasActive && g.windows[i].flags hasnt Wf.ChildWindow) {
-                    val focusWindow = navRestoreLastChildNavWindow(g.windows[i])
-                    focusWindow.focus()
-                    return
-                }
-        }
-
-        // Template widget behaviors
-        // This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
-
-        fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Int, vMax: Int, format: String,
-                          power: Float): Boolean {
-
-            var v by vPtr as KMutableProperty0<Int>
-            // Default tweak speed
-            val hasMinMax = vMin != vMax && (vMax - vMax < Int.MAX_VALUE)
-            var vSpeed = vSpeed_
-            if (vSpeed == 0f && hasMinMax)
-                vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
-
-            // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
-            var adjustDelta = 0f
-            if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
-                adjustDelta = io.mouseDelta.x
-                if (io.keyAlt)
-                    adjustDelta *= 1f / 100f
-                if (io.keyShift)
-                    adjustDelta *= 10f
-            } else if (g.activeIdSource == InputSource.Nav) {
-                val decimalPrecision = when (dataType) {
-                    DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
-                    else -> 0
-                }
-                adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
-                vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
-            }
-            adjustDelta *= vSpeed
-
-            /*  Clear current value on activation
-                Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
-                so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
-            val isJustActivated = g.activeIdIsJustActivated
-            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
-            if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
-                g.dragCurrentAccum = 0f
-                g.dragCurrentAccumDirty = false
-            } else if (adjustDelta != 0f) {
-                g.dragCurrentAccum += adjustDelta
-                g.dragCurrentAccumDirty = true
-            }
-
-            if (!g.dragCurrentAccumDirty)
-                return false
-
-            var vCur = v
-            var vOldRefForAccumRemainder = 0f
-
-            val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
-            if (isPower) {
-                // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-                val vOldNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
-                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-                vCur = vMin + glm.pow(saturate(vNewNormCurved), power).i * (vMax - vMin)
-                vOldRefForAccumRemainder = vOldNormCurved
-            } else vCur += g.dragCurrentAccum.i
-
-            // Round to user desired precision based on format string
-            vCur = roundScalarWithFormat(format, vCur)
-
-            // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
-            g.dragCurrentAccumDirty = false
-            g.dragCurrentAccum -= when {
-                isPower -> {
-                    val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
-                    vCurNormCurved - vOldRefForAccumRemainder
-                }
-                else -> (vCur - v).f
-            }
-
-            // Lose zero sign for float/double
-            if (vCur == -0)
-                vCur = 0
-
-            // Clamp values (handle overflow/wrap-around)
-            if (v != vCur && hasMinMax) {
-                if (vCur < vMin || (vCur > v && adjustDelta < 0f))
-                    vCur = vMin
-                if (vCur > vMax || (vCur < v && adjustDelta > 0f))
-                    vCur = vMax
-            }
-
-            // Apply result
-            if (v == vCur)
-                return false
-            v = vCur
-            return true
-        }
-
-        fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Long, vMax: Long, format: String,
-                          power: Float): Boolean {
-
-            var v by vPtr as KMutableProperty0<Long>
-            // Default tweak speed
-            val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
-            var vSpeed = vSpeed_
-            if (vSpeed == 0f && hasMinMax)
-                vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
-
-            // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
-            var adjustDelta = 0f
-            if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
-                adjustDelta = io.mouseDelta.x
-                if (io.keyAlt)
-                    adjustDelta *= 1f / 100f
-                if (io.keyShift)
-                    adjustDelta *= 10f
-            } else if (g.activeIdSource == InputSource.Nav) {
-                val decimalPrecision = when (dataType) {
-                    DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
-                    else -> 0
-                }
-                adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
-                vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
-            }
-            adjustDelta *= vSpeed
-
-            /*  Clear current value on activation
-                Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
-                so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
-            val isJustActivated = g.activeIdIsJustActivated
-            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
-            if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
-                g.dragCurrentAccum = 0f
-                g.dragCurrentAccumDirty = false
-            } else if (adjustDelta != 0f) {
-                g.dragCurrentAccum += adjustDelta
-                g.dragCurrentAccumDirty = true
-            }
-
-            if (!g.dragCurrentAccumDirty)
-                return false
-
-            var vCur = v
-            var vOldRefForAccumRemainder = 0.0
-
-            val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
-            if (isPower) {
-                // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-                val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)
-                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-                vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power).L * (vMax - vMin)
-                vOldRefForAccumRemainder = vOldNormCurved
-            } else vCur += g.dragCurrentAccum.L
-
-            // Round to user desired precision based on format string
-            vCur = roundScalarWithFormat(format, vCur)
-
-            // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
-            g.dragCurrentAccumDirty = false
-            g.dragCurrentAccum -= when {
-                isPower -> {
-                    val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
-                    (vCurNormCurved - vOldRefForAccumRemainder).f
-                }
-                else -> (vCur - v).f
-            }
-
-            // Lose zero sign for float/double
-            if (vCur == -0L)
-                vCur = 0
-
-            // Clamp values (handle overflow/wrap-around)
-            if (v != vCur && hasMinMax) {
-                if (vCur < vMin || (vCur > v && adjustDelta < 0f))
-                    vCur = vMin
-                if (vCur > vMax || (vCur < v && adjustDelta > 0f))
-                    vCur = vMax
-            }
-
-            // Apply result
-            if (v == vCur)
-                return false
-            v = vCur
-            return true
-        }
-
-        fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Float, vMax: Float, format: String,
-                          power: Float): Boolean {
-
-            var v by vPtr as KMutableProperty0<Float>
-
-            // Default tweak speed
-            val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
-            var vSpeed = vSpeed_
-            if (vSpeed == 0f && hasMinMax)
-                vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
-
-            // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
-            var adjustDelta = 0f
-            if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
-                adjustDelta = io.mouseDelta.x
-                if (io.keyAlt)
-                    adjustDelta *= 1f / 100f
-                if (io.keyShift)
-                    adjustDelta *= 10f
-            } else if (g.activeIdSource == InputSource.Nav) {
-                val decimalPrecision = when (dataType) {
-                    DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
-                    else -> 0
-                }
-                adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
-                vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
-            }
-            adjustDelta *= vSpeed
-
-            /*  Clear current value on activation
-                Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
-                so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
-            val isJustActivated = g.activeIdIsJustActivated
-            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
-            if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
-                g.dragCurrentAccum = 0f
-                g.dragCurrentAccumDirty = false
-            } else if (adjustDelta != 0f) {
-                g.dragCurrentAccum += adjustDelta
-                g.dragCurrentAccumDirty = true
-            }
-
-            if (!g.dragCurrentAccumDirty)
-                return false
-
-            var vCur = v
-            var vOldRefForAccumRemainder = 0f
-
-            val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
-            if (isPower) {
-                // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-                val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power).f
-                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-                vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power) * (vMax - vMin)
-                vOldRefForAccumRemainder = vOldNormCurved
-            } else vCur += g.dragCurrentAccum
-            // Round to user desired precision based on format string
-            vCur = roundScalarWithFormat(format, vCur)
-
-            // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
-            g.dragCurrentAccumDirty = false
-            g.dragCurrentAccum -= when {
-                isPower -> {
-                    val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
-                    (vCurNormCurved - vOldRefForAccumRemainder).f
-                }
-                else -> (vCur - v).f
-            }
-
-            // Lose zero sign for float/double
-            if (vCur == -0f)
-                vCur = 0f
-
-            // Clamp values (handle overflow/wrap-around)
-            if (v != vCur && hasMinMax) {
-                if (vCur < vMin || (vCur > v && adjustDelta < 0f))
-                    vCur = vMin
-                if (vCur > vMax || (vCur < v && adjustDelta > 0f))
-                    vCur = vMax
-            }
-
-            // Apply result
-            if (v == vCur)
-                return false
-            v = vCur
-            return true
-        }
-
-        fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Double, vMax: Double, format: String,
-                          power: Float): Boolean {
-
-            var v by vPtr as KMutableProperty0<Double>
-            // Default tweak speed
-            val hasMinMax = vMin != vMax && (vMax - vMax < Long.MAX_VALUE)
-            var vSpeed = vSpeed_
-            if (vSpeed == 0f && hasMinMax)
-                vSpeed = (vMax - vMin).f * g.dragSpeedDefaultRatio
-
-            // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
-            var adjustDelta = 0f
-            if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
-                adjustDelta = io.mouseDelta.x
-                if (io.keyAlt)
-                    adjustDelta *= 1f / 100f
-                if (io.keyShift)
-                    adjustDelta *= 10f
-            } else if (g.activeIdSource == InputSource.Nav) {
-                val decimalPrecision = when (dataType) {
-                    DataType.Float, DataType.Double -> parseFormatPrecision(format, 3)
-                    else -> 0
-                }
-                adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
-                vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
-            }
-            adjustDelta *= vSpeed
-
-            /*  Clear current value on activation
-                Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
-                so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
-            val isJustActivated = g.activeIdIsJustActivated
-            val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
-            if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
-                g.dragCurrentAccum = 0f
-                g.dragCurrentAccumDirty = false
-            } else if (adjustDelta != 0f) {
-                g.dragCurrentAccum += adjustDelta
-                g.dragCurrentAccumDirty = true
-            }
-
-            if (!g.dragCurrentAccumDirty)
-                return false
-
-            var vCur = v
-            var vOldRefForAccumRemainder = 0.0
-
-            val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && hasMinMax
-            if (isPower) {
-                // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-                val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)
-                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-                vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power).d * (vMax - vMin)
-                vOldRefForAccumRemainder = vOldNormCurved
-            } else vCur += g.dragCurrentAccum.d
-
-            // Round to user desired precision based on format string
-            vCur = roundScalarWithFormat(format, vCur)
-
-            // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
-            g.dragCurrentAccumDirty = false
-            g.dragCurrentAccum -= when {
-                isPower -> {
-                    val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
-                    (vCurNormCurved - vOldRefForAccumRemainder).f
-                }
-                else -> (vCur - v).f
-            }
-
-            // Lose zero sign for float/double
-            if (vCur == -0.0)
-                vCur = 0.0
-
-            // Clamp values (handle overflow/wrap-around)
-            if (v != vCur && hasMinMax) {
-                if (vCur < vMin || (vCur > v && adjustDelta < 0f))
-                    vCur = vMin
-                if (vCur > vMax || (vCur < v && adjustDelta > 0f))
-                    vCur = vMax
-            }
-
-            // Apply result
-            if (v == vCur)
-                return false
-            v = vCur
-            return true
-        }
-
-        fun setupDrawData(drawLists: ArrayList<DrawList>, outDrawData: DrawData) = with(outDrawData) {
-            valid = true
-            cmdLists.clear()
-            if (drawLists.isNotEmpty())
-                cmdLists += drawLists
-            cmdListsCount = drawLists.size
-            outDrawData.totalIdxCount = 0
-            totalVtxCount = 0
-            outDrawData.displayPos put 0f
-            outDrawData.displaySize put io.displaySize
-            for (n in 0 until drawLists.size) {
-                totalVtxCount += drawLists[n].vtxBuffer.size
-                totalIdxCount += drawLists[n].idxBuffer.size
-            }
-        }
     }
 }

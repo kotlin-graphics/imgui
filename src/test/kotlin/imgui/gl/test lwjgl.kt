@@ -1,20 +1,16 @@
 package imgui.gl
 
 
-import glm_.BYTES
-import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.Cond
 import imgui.Context
 import imgui.ImGui
 import imgui.destroy
 import imgui.impl.ImplGL3
 import imgui.impl.LwjglGlfw
 import imgui.impl.LwjglGlfw.GlfwClientApi
-import kool.stak
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
 import org.lwjgl.system.MemoryStack
@@ -39,6 +35,7 @@ private class HelloWorld_lwjgl {
     var showDemo = true
     var counter = 0
 
+    val name = CharArray(100)
 
     init {
         glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
@@ -47,7 +44,7 @@ private class HelloWorld_lwjgl {
             init()
         }
 
-        glfw.swapInterval = VSync.ON
+        glfw.swapInterval = VSync.ON   // Enable vsync
 
         // Setup ImGui binding
 //         glslVersion = 330 // set here your desidered glsl version
@@ -56,7 +53,7 @@ private class HelloWorld_lwjgl {
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
         LwjglGlfw.init(window, true, GlfwClientApi.OpenGL)
 
-        // Setup style
+        // Setup Style
         ImGui.styleColorsDark()
 //        ImGui.styleColorsClassic()
 

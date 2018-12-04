@@ -1,33 +1,44 @@
 package imgui.impl
 
-import glm_.*
-import kool.bufferBig
-import kool.free
-import kool.intBufferBig
+import glm_.BYTES
+import glm_.f
+import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import gln.*
 import gln.buffer.BufferTarget
+import gln.gl20 as gl
 import gln.buffer.Usage
 import gln.buffer.glBufferData
 import gln.buffer.glBufferSubData
 import gln.glf.semantic
-import gln.program.Program
+import gln.objects.GlProgram
+import gln.objects.GlShader
+import gln.program.glUseProgram
 import gln.program.usingProgram
 import gln.texture.initTexture2d
 import gln.uniform.glUniform
 import gln.vertexArray.glBindVertexArray
 import gln.vertexArray.glVertexAttribPointer
 import gln.vertexArray.withVertexArray
-import imgui.*
+import imgui.DEBUG
+import imgui.DrawData
+import imgui.DrawList
+import imgui.DrawVert
 import imgui.ImGui.io
+import kool.*
+import org.lwjgl.opengl.ARBClipControl.GL_CLIP_ORIGIN
+import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
 
 object ImplGL3 {
 
-    var program = -1
+    var program = GlProgram(0)
     var matUL = -1
+    var CLIP_ORIGIN = false
 
     fun createDeviceObjects(): Boolean {
 
@@ -38,21 +49,22 @@ object ImplGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
 
-        program = glCreateProgram()
-        val vertHandle = Program.createShaderFromSource(vertexShader, GL_VERTEX_SHADER)
-        val fragHandle = Program.createShaderFromSource(fragmentShader, GL_FRAGMENT_SHADER)
-        glAttachShader(program, vertHandle)
-        glAttachShader(program, fragHandle)
-        glBindAttribLocation(program, semantic.attr.POSITION, "Position")
-        glBindAttribLocation(program, semantic.attr.TEX_COORD, "UV")
-        glBindAttribLocation(program, semantic.attr.COLOR, "Color")
-        glBindFragDataLocation(program, semantic.frag.COLOR, "outColor")
-        glLinkProgram(program)
-        glDetachShader(program, vertHandle)
-        glDetachShader(program, fragHandle)
-        glDeleteShader(vertHandle)
-        glDeleteShader(fragHandle)
-        usingProgram(program) {
+        program = GlProgram.create().apply {
+            val vertHandle = GlShader.createFromSource(vertexShader, VERTEX_SHADER)
+            val fragHandle = GlShader.createFromSource(fragmentShader, FRAGMENT_SHADER)
+            this += vertHandle
+            this += fragHandle
+            glBindAttribLocation(i, semantic.attr.POSITION, "Position")
+            glBindAttribLocation(i, semantic.attr.TEX_COORD, "UV")
+            glBindAttribLocation(i, semantic.attr.COLOR, "Color")
+            glBindFragDataLocation(i, semantic.frag.COLOR, "outColor")
+            glLinkProgram(i)
+            glDetachShader(i, vertHandle.i)
+            glDetachShader(i, fragHandle.i)
+            glDeleteShader(vertHandle.i)
+            glDeleteShader(fragHandle.i)
+        }
+        usingProgram(program.i) {
             matUL = "mat".uniform
             "Texture".unit = semantic.sampler.DIFFUSE
         }
@@ -147,6 +159,10 @@ object ImplGL3 {
         val lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
+        val clipOriginLowerLeft  = when {
+            CLIP_ORIGIN && glGetInteger(GL_CLIP_ORIGIN) == GL_UPPER_LEFT -> false // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
+            else -> true
+        }
 
         // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
         glEnable(GL_BLEND)
@@ -160,7 +176,7 @@ object ImplGL3 {
         // Setup viewport, orthographic projection matrix
         glViewport(fbSize)
         val ortho = glm.ortho(mat, 0f, io.displaySize.x.f, io.displaySize.y.f, 0f)
-        glUseProgram(program)
+        glUseProgram(program.i)
         glUniform(matUL, ortho)
 
         checkSize(drawData.cmdLists)
@@ -168,6 +184,7 @@ object ImplGL3 {
         glBindVertexArray(vaoName)
         glBindSampler(semantic.sampler.DIFFUSE, 0) // Rely on combined texture/sampler state.
 
+        val pos = drawData.displayPos
         for (cmdList in drawData.cmdLists) {
 
             cmdList.vtxBuffer.forEachIndexed { i, v ->
@@ -186,10 +203,18 @@ object ImplGL3 {
             for (cmd in cmdList.cmdBuffer) {
                 val cb = cmd.userCallback
                 if (cb != null)
+                    // User callback (registered via ImDrawList::AddCallback)
                     cb(cmdList, cmd)
                 else {
+                    val clipRect = Vec4(cmd.clipRect.x - pos.x, cmd.clipRect.y - pos.y, cmd.clipRect.z - pos.x, cmd.clipRect.w - pos.y);
+                    // Apply scissor/clipping rectangle
+                    if (clipOriginLowerLeft)
+                        glScissor(clipRect.x.i, (fbSize.y - clipRect.w).i, (clipRect.z - clipRect.x).i, (clipRect.w - clipRect.y).i)
+                    else
+                        glScissor(clipRect.x.i, clipRect.y.i, clipRect.z.i, clipRect.w.i) // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
+
+                    // Bind texture, Draw
                     glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                    glScissor(cmd.clipRect.x.i, fbSize.y - cmd.clipRect.w.i, (cmd.clipRect.z - cmd.clipRect.x).i, (cmd.clipRect.w - cmd.clipRect.y).i)
                     glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
                 }
                 idxBufferOffset += cmd.elemCount * Int.BYTES
@@ -234,9 +259,9 @@ object ImplGL3 {
             idxSize = newIdxSize
 
             vtxBuffer.free()
-            vtxBuffer = bufferBig(vtxSize)
+            vtxBuffer = ByteBuffer(vtxSize)
             idxBuffer.free()
-            idxBuffer = intBufferBig(idxSize / Int.BYTES)
+            idxBuffer = IntBuffer(idxSize / Int.BYTES)
 
             withVertexArray(vaoName) {
 
@@ -265,7 +290,7 @@ object ImplGL3 {
         glDeleteVertexArrays(vaoName)
         glDeleteBuffers(bufferName)
 
-        if (program >= 0) glDeleteProgram(program)
+        if (program.i >= 0) glDeleteProgram(program.i)
 
         destroyFontsTexture()
     }

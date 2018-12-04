@@ -2,9 +2,12 @@ package imgui.imgui
 
 import gli_.has
 import gli_.hasnt
-import glm_.*
+import glm_.f
 import glm_.func.common.max
 import glm_.func.common.min
+import glm_.glm
+import glm_.i
+import glm_.parseInt
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -23,7 +26,6 @@ import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTooltip
-import imgui.ImGui.formatArgPattern
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
@@ -36,8 +38,6 @@ import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.logText
-import imgui.ImGui.mouseCursor
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
@@ -64,9 +64,9 @@ import imgui.ImGui.textLineHeight
 import imgui.ImGui.textUnformatted
 import imgui.TextEditState.K
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
-import imgui.imgui.imgui_main.Companion.dragBehaviorT
+import imgui.imgui.widgets.main
 import imgui.internal.*
-import uno.kotlin.buffers.fill
+import kool.lib.fill
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import java.awt.Toolkit
@@ -109,7 +109,9 @@ interface imgui_internal {
                         "   - You are calling ImGui functions after ::render() and before the next ::newFrame(), which is also illegal.\n" +
                         "   - You are calling ImGui functions after ::endFrame()/::render() and before the next ImGui::newFrame(), which is also illegal.")
 
-    fun findWindowByName(name: String) = g.windowsById[hash(name, 0)]
+    fun findWindowByID(id: ID): Window? = g.windowsById[id]
+
+    fun findWindowByName(name: String): Window? = g.windowsById[hash(name, 0)]
 
     fun setCurrentFont(font: Font) {
         assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
@@ -148,7 +150,7 @@ interface imgui_internal {
         g.activeIdIsJustActivated = g.activeId != id
         if (g.activeIdIsJustActivated) {
             g.activeIdTimer = 0f
-            g.activeIdValueChanged = false
+            g.activeIdHasBeenEdited = false
             if (id != 0) {
                 g.lastActiveId = id
                 g.lastActiveIdTimer = 0f
@@ -196,8 +198,10 @@ interface imgui_internal {
         set(value) {
             g.hoveredId = value
             g.hoveredIdAllowOverlap = false
-            if (value != 0 && g.hoveredIdPreviousFrame != value)
+            if (value != 0 && g.hoveredIdPreviousFrame != value) {
                 g.hoveredIdTimer = 0f
+                g.hoveredIdNotActiveTimer = 0f
+            }
         }
 
     fun keepAliveId(id: ID) {
@@ -207,14 +211,14 @@ interface imgui_internal {
             g.activeIdPreviousFrameIsAlive = true
     }
 
-    fun markItemEdit(id: ID) {
-        /*  This marking is solely to be able to provide info for ::isItemDeactivatedAfterChange().
+    fun markItemEdited(id: ID) {
+        /*  This marking is solely to be able to provide info for ::isItemDeactivatedAfterEdit().
             ActiveId might have been released by the time we call this (as in the typical press/release button behavior)
             but still need need to fill the data.         */
         assert(g.activeId == id || g.activeId == 0 || g.dragDropActive)
         //IM_ASSERT(g.CurrentWindow->DC.LastItemId == id)
-        g.activeIdValueChanged = true
-        g.currentWindow!!.dc.apply { lastItemStatusFlags = lastItemStatusFlags or ItemStatusFlag.Edit }
+        g.activeIdHasBeenEdited = true
+        g.currentWindow!!.dc.apply { lastItemStatusFlags = lastItemStatusFlags or ItemStatusFlag.Edited }
     }
 
 
@@ -228,21 +232,21 @@ interface imgui_internal {
         if (window.skipItems) return
 
         // Always align ourselves on pixel boundaries
-        val lineHeight = glm.max(window.dc.currentLineHeight, size.y)
+        val lineHeight = glm.max(window.dc.currentLineSize.y, size.y)
         val textBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, textOffsetY)
         //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
         window.dc.cursorPosPrevLine.put(window.dc.cursorPos.x + size.x, window.dc.cursorPos.y)
-        window.dc.cursorPos.x = (window.pos.x + window.dc.indentX + window.dc.columnsOffsetX).i.f
+        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
         window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + style.itemSpacing.y).i.f
         window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
         window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y - style.itemSpacing.y)
 
         //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]
 
-        window.dc.prevLineHeight = lineHeight
+        window.dc.prevLineSize.y = lineHeight
         window.dc.prevLineTextBaseOffset = textBaseOffset
         window.dc.currentLineTextBaseOffset = 0f
-        window.dc.currentLineHeight = 0f
+        window.dc.currentLineSize.y = 0f
 
         // Horizontal layout mode
         if (window.dc.layoutType == Lt.Horizontal) sameLine()
@@ -255,6 +259,9 @@ interface imgui_internal {
      *  available surface declare their minimum size requirement to ItemSize() and then use a larger region for
      *  drawing/interaction, which is passed to ItemAdd().  */
     fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null): Boolean {
+
+        if(IMGUI_ENABLE_TEST_ENGINE_HOOKS)
+            ImGuiTestEngineHook_ItemAdd(bb, id, navBbArg)
 
         val window = g.currentWindow!!
         if (id != 0) {
@@ -318,9 +325,9 @@ interface imgui_internal {
     /** Return true if focus is requested   */
     fun focusableItemRegister(window: Window, id: ID, tabStop: Boolean = true): Boolean {
 
-        val allowKeyboardFocus = (window.dc.itemFlags and (If.AllowKeyboardFocus or If.Disabled)) == If.AllowKeyboardFocus.i
+        val isTabStop = window.dc.itemFlags hasnt (If.NoTabStop or If.Disabled)
         window.focusIdxAllCounter++
-        if (allowKeyboardFocus)
+        if (isTabStop)
             window.focusIdxTabCounter++
 
         /*  Process keyboard input at this point: TAB/Shift-TAB to tab out of the currently focused item.
@@ -328,11 +335,11 @@ interface imgui_internal {
         if (tabStop && g.activeId == id && window.focusIdxAllRequestNext == Int.MAX_VALUE &&
                 window.focusIdxTabRequestNext == Int.MAX_VALUE && !io.keyCtrl && Key.Tab.isPressed)
         // Modulo on index will be applied at the end of frame once we've got the total counter of items.
-            window.focusIdxTabRequestNext = window.focusIdxTabCounter + if (io.keyShift) if (allowKeyboardFocus) -1 else 0 else 1
+            window.focusIdxTabRequestNext = window.focusIdxTabCounter + if (io.keyShift) if (isTabStop) -1 else 0 else 1
 
         if (window.focusIdxAllCounter == window.focusIdxAllRequestCurrent) return true
 
-        if (allowKeyboardFocus && window.focusIdxTabCounter == window.focusIdxTabRequestCurrent) {
+        if (isTabStop && window.focusIdxTabCounter == window.focusIdxTabRequestCurrent) {
             g.navJustTabbedId = id
             return true
         }
@@ -412,8 +419,10 @@ interface imgui_internal {
         val parentWindow = g.currentWindow!!
         val currentStackSize = g.currentPopupStack.size
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
+        val openPopupPos = navCalcPreferredRefPos()
         val popupRef = PopupRef(popupId = id, window = null, parentWindow = parentWindow, openFrameCount = g.frameCount,
-                openParentId = parentWindow.idStack.last(), openMousePos = Vec2(io.mousePos), openPopupPos = navCalcPreferredRefPos())
+                openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
+                openMousePos = if(isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
 //        println("" + g.openPopupStack.size +", "+currentStackSize)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack += popupRef
@@ -539,6 +548,97 @@ interface imgui_internal {
             return null
         }
 
+    fun findBestWindowPosForPopup(window: Window): Vec2 {
+
+        val rOuter = window.getAllowedExtentRect()
+        if (window.flags has Wf.ChildMenu) {
+            /*  Child menus typically request _any_ position within the parent menu item,
+                and then our FindBestWindowPosForPopup() function will move the new menu outside the parent bounds.
+                This is how we end up with child menus appearing (most-commonly) on the right of the parent menu. */
+            assert(g.currentWindow === window)
+            val parentWindow = g.currentWindowStack[g.currentWindowStack.size - 2]
+            // We want some overlap to convey the relative depth of each menu (currently the amount of overlap is hard-coded to style.ItemSpacing.x).
+            val horizontalOverlap = style.itemSpacing.x
+            val rAvoid = parentWindow.run {
+                when {
+                    dc.menuBarAppending -> Rect(-Float.MAX_VALUE, pos.y + titleBarHeight, Float.MAX_VALUE, pos.y + titleBarHeight + menuBarHeight)
+                    else -> Rect(pos.x + horizontalOverlap, -Float.MAX_VALUE, pos.x + size.x - horizontalOverlap - scrollbarSizes.x, Float.MAX_VALUE)
+                }
+            }
+            return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter, rAvoid)
+        }
+        if (window.flags has Wf.Popup) {
+            val rAvoid = Rect(window.pos.x - 1, window.pos.y - 1, window.pos.x + 1, window.pos.y + 1)
+            return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter, rAvoid)
+        }
+        if (window.flags has Wf.Tooltip) {
+            // Position tooltip (always follows mouse)
+            val sc = style.mouseCursorScale
+            val refPos = navCalcPreferredRefPos()
+            val rAvoid = when {
+                !g.navDisableHighlight && g.navDisableMouseHover && !(io.configFlags has ConfigFlag.NavEnableSetMousePos) ->
+                    Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
+                else -> Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc, refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
+            }
+            val pos = findBestWindowPosForPopupEx(refPos, window.size, window::autoPosLastDirection, rOuter, rAvoid)
+            if (window.autoPosLastDirection == Dir.None)
+            // If there's not enough room, for tooltip we prefer avoiding the cursor at all cost even if it means that part of the tooltip won't be visible.
+                pos(refPos + 2)
+            return pos
+        }
+        assert(false)
+        return Vec2(window.pos)
+    }
+
+    /** rAvoid = the rectangle to avoid (e.g. for tooltip it is a rectangle around the mouse cursor which we want to avoid. for popups it's a small point around the cursor.)
+     *  rOuter = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding we ignore it. */
+    fun findBestWindowPosForPopupEx(refPos: Vec2, size: Vec2, lastDirPtr: KMutableProperty0<Dir>, rOuter: Rect, rAvoid: Rect,
+                                    policy: PopupPositionPolicy = PopupPositionPolicy.Default): Vec2 {
+
+        var lastDir by lastDirPtr
+        val basePosClamped = glm.clamp(refPos, rOuter.min, rOuter.max - size)
+        //GImGui->OverlayDrawList.AddRect(r_avoid.Min, r_avoid.Max, IM_COL32(255,0,0,255));
+        //GImGui->OverlayDrawList.AddRect(rOuter.Min, rOuter.Max, IM_COL32(0,255,0,255));
+
+        // Combo Box policy (we want a connecting edge)
+        if (policy == PopupPositionPolicy.ComboBox) {
+            val dirPreferedOrder = arrayOf(Dir.Down, Dir.Right, Dir.Left, Dir.Up)
+            for (n in (if (lastDir != Dir.None) -1 else 0) until Dir.Count.i) {
+                val dir = if (n == -1) lastDir else dirPreferedOrder[n]
+                if (n != -1 && dir == lastDir) continue // Already tried this direction?
+                val pos = Vec2()
+                if (dir == Dir.Down) pos.put(rAvoid.min.x, rAvoid.max.y)          // Below, Toward Right (default)
+                if (dir == Dir.Right) pos.put(rAvoid.min.x, rAvoid.min.y - size.y) // Above, Toward Right
+                if (dir == Dir.Left) pos.put(rAvoid.max.x - size.x, rAvoid.max.y) // Below, Toward Left
+                if (dir == Dir.Up) pos.put(rAvoid.max.x - size.x, rAvoid.min.y - size.y) // Above, Toward Left
+                if (!rOuter.contains(Rect(pos, pos + size))) continue
+                lastDir = dir
+                return pos
+            }
+        }
+
+        // Default popup policy
+        val dirPreferedOrder = arrayOf(Dir.Right, Dir.Down, Dir.Up, Dir.Left)
+        for (n in (if (lastDir != Dir.None) -1 else 0) until Dir.values().size) {
+            val dir = if (n == -1) lastDir else dirPreferedOrder[n]
+            if (n != -1 && dir == lastDir) continue  // Already tried this direction?
+            val availW = (if (dir == Dir.Left) rAvoid.min.x else rOuter.max.x) - if (dir == Dir.Right) rAvoid.max.x else rOuter.min.x
+            val availH = (if (dir == Dir.Up) rAvoid.min.y else rOuter.max.y) - if (dir == Dir.Down) rAvoid.max.y else rOuter.min.y
+            if (availW < size.x || availH < size.y) continue
+            val pos = Vec2(
+                    if (dir == Dir.Left) rAvoid.min.x - size.x else if (dir == Dir.Right) rAvoid.max.x else basePosClamped.x,
+                    if (dir == Dir.Up) rAvoid.min.y - size.y else if (dir == Dir.Down) rAvoid.max.y else basePosClamped.y)
+            lastDir = dir
+            return pos
+        }
+        // Fallback, try to keep within display
+        lastDir = Dir.None
+        return Vec2(refPos).apply {
+            x = max(min(x + size.x, rOuter.max.x) - size.x, rOuter.min.x)
+            y = max(min(y + size.y, rOuter.max.y) - size.y, rOuter.min.y)
+        }
+    }
+
 
     // Navigation
 
@@ -560,6 +660,8 @@ interface imgui_internal {
         } else
             g.navId = window.navLastIds[0]
     }
+
+    fun navMoveRequestButNoResultYet(): Boolean = g.navMoveRequest && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
 
     fun navMoveRequestCancel() {
         g.navMoveRequest = false
@@ -679,6 +781,20 @@ interface imgui_internal {
         g.navNextActivateId = id
     }
 
+    fun setNavId(id: ID, navLayer: Int) {
+        assert(navLayer == 0 || navLayer == 1)
+        g.navId = id
+        g.navWindow!!.navLastIds[navLayer] = id
+    }
+
+    fun setNavIDWithRectRel(id: ID, navLayer: Int, rectRel: Rect) {
+        setNavId(id, navLayer)
+        g.navWindow!!.navRectRel[navLayer] put rectRel
+        g.navMousePosDirty = true
+        g.navDisableHighlight = false
+        g.navDisableMouseHover = true
+    }
+
     fun beginDragDropTargetCustom(bb: Rect, id: ID): Boolean {
         if (!g.dragDropActive) return false
 
@@ -757,15 +873,15 @@ interface imgui_internal {
             // Set state for first column
             val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else innerClipRect.max.x - pos.x
             with(columns) {
-                minX = dc.indentX - style.itemSpacing.x // Lock our horizontal range
+                minX = dc.indent - style.itemSpacing.x // Lock our horizontal range
                 maxX = max(contentRegionWidth - scroll.x, minX + 1f)
                 startPosY = dc.cursorPos.y
                 startMaxPosX = dc.cursorMaxPos.x
                 lineMaxY = dc.cursorPos.y
                 lineMinY = dc.cursorPos.y
             }
-            dc.columnsOffsetX = 0f
-            dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
+            dc.columnsOffset = 0f
+            dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
 
             // Clear data if columns count changed
             if (columns.columns.isNotEmpty() && columns.columns.size != columnsCount + 1)
@@ -854,8 +970,8 @@ interface imgui_internal {
         columns.isBeingResized = isBeingResized
 
         dc.columnsSet = null
-        dc.columnsOffsetX = 0f
-        dc.cursorPos.x = (pos.x + dc.indentX + dc.columnsOffsetX).i.f
+        dc.columnsOffset = 0f
+        dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
     }
 
     fun pushColumnClipRect(columnIndex_: Int = -1) {
@@ -1144,6 +1260,8 @@ interface imgui_internal {
         return textDisplayEnd
     }
 
+    fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = 0): Nothing = TODO()
+
 
     //-----------------------------------------------------------------------------
     // Internals Render Helpers
@@ -1215,7 +1333,7 @@ interface imgui_internal {
         if (window.dc.itemFlags has If.ButtonRepeat) flags = flags or Bf.Repeat
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
         if (pressed)
-            markItemEdit(id)
+            markItemEdited(id)
 
         // Render
         val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
@@ -1299,7 +1417,7 @@ interface imgui_internal {
         val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
         renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
-        renderArrow(bb.min + Vec2(max(0f, size.x - g.fontSize - style.framePadding.x), max(0f, size.y - g.fontSize - style.framePadding.y)), dir)
+        renderArrow(bb.min + Vec2(max(0f, (size.x - g.fontSize) * 0.5f), max(0f, (size.y - g.fontSize) * 0.5f)), dir)
 
         return pressed
     }
@@ -1421,22 +1539,6 @@ interface imgui_internal {
                     bb.max.x, min(lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels, windowRect.max.y))
         }
         window.drawList.addRectFilled(grabRect.min, grabRect.max, grabCol, style.scrollbarRounding)
-    }
-
-    /** Vertical separator, for menu bars (use current line height). not exposed because it is misleading
-     *  what it doesn't have an effect on regular layout.   */
-    fun verticalSeparator() {
-        val window = currentWindow
-        if (window.skipItems) return
-
-        val y1 = window.dc.cursorPos.y
-        val y2 = window.dc.cursorPos.y + window.dc.currentLineHeight
-        val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
-        itemSize(Vec2(bb.width, 0f))
-        if (!itemAdd(bb, 0)) return
-
-        window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
-        if (g.logEnabled) logText(" |")
     }
 
 
@@ -1578,12 +1680,12 @@ interface imgui_internal {
     }
 
     fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
-                     power: Float): Boolean = withFloat(v, ptr) {
-        dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power)
+                     power: Float, flags: DragFlags): Boolean = withFloat(v, ptr) {
+        dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power, flags)
     }
 
     fun dragBehavior(id: ID, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number?, vMax: Number?,
-                     format: String, power: Float): Boolean {
+                     format: String, power: Float, flags: DragFlags): Boolean {
 
         if (g.activeId == id)
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
@@ -1594,13 +1696,13 @@ interface imgui_internal {
         return when (g.activeId) {
             id -> when (dataType) {
                 DataType.Int, DataType.Uint -> dragBehaviorT(dataType, v, vSpeed, vMin as? Int
-                        ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power)
+                        ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power, flags)
                 DataType.Long, DataType.Ulong -> dragBehaviorT(dataType, v, vSpeed, vMin as? Long
-                        ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power)
+                        ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power, flags)
                 DataType.Float -> dragBehaviorT(dataType, v, vSpeed, vMin as? Float
-                        ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power)
+                        ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power, flags)
                 DataType.Double -> dragBehaviorT(dataType, v, vSpeed, vMin as? Double
-                        ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power)
+                        ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power, flags)
                 else -> throw Error()
             }
             else -> false
@@ -1651,713 +1753,6 @@ interface imgui_internal {
         }
     }
 
-    // FIXME: Move some of the code into SliderBehavior(). Current responsability is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
-
-    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutableProperty0<*>, vMin: Int, vMax: Int, format: String,
-                        power: Float, flags: SliderFlags = 0, outGrabBb: Rect): Boolean {
-
-        var v by vPtr as KMutableProperty0<Int>
-
-        val isHorizontal = flags hasnt SliderFlag.Vertical
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isPower = power != 0f && isDecimal
-
-        val grabPadding = 2f
-        val sliderSz = when {
-            isHorizontal -> bb.width - grabPadding * 2f
-            else -> bb.height - grabPadding * 2f
-        }
-        var grabSz = style.grabMinSize
-        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
-        if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
-            grabSz = max(sliderSz / (vRange + 1), style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
-        grabSz = grabSz min sliderSz
-        val sliderUsableSz = sliderSz - grabSz
-        val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
-        val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
-
-        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
-        val linearZeroPos = when {   // 0.0->1.0f
-            vMin * vMax < 0f -> {
-                // Different sign
-                val linearDistMinTo0 = glm.pow(if (vMin >= 0) vMin.f else -vMin.f, 1f / power)
-                val linearDistMaxTo0 = glm.pow(if (vMax >= 0) vMax.f else -vMax.f, 1f / power)
-                linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
-            } // Same sign
-            else -> if (vMin < 0f) 1f else 0f
-        }
-
-        // Process interacting with the slider
-        var valueChanged = false
-        if (g.activeId == id) {
-
-            var setNewValue = false
-            var clickedT = 0f
-
-            if (g.activeIdSource == InputSource.Mouse) {
-                if (!io.mouseDown[0]) clearActiveId()
-                else {
-                    val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
-                    clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
-                    if (!isHorizontal)
-                        clickedT = 1f - clickedT
-                    setNewValue = true
-                }
-            } else if (g.activeIdSource == InputSource.Nav) {
-                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-                var delta = if (isHorizontal) delta2.x else -delta2.y
-                if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                    clearActiveId()
-                else if (delta != 0f) {
-                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
-                    delta = when {
-                        decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
-                            NavInput.TweakSlow.isDown() -> delta / 1_000f
-                            else -> delta / 100f
-                        }
-                        else -> when {
-                            (vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown() ->
-                                (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
-                            else -> delta / 100f
-                        }
-                    }
-                    if (NavInput.TweakFast.isDown())
-                        delta *= 10f
-                    setNewValue = true
-                    // This is to avoid applying the saturation when already past the limits
-                    if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f))
-                        setNewValue = false
-                    else
-                        clickedT = saturate(clickedT + delta)
-                }
-            }
-
-            if (setNewValue) {
-                var vNew = when {
-                    isPower -> {
-                        // Account for power curve scale on both sides of the zero
-                        if (clickedT < linearZeroPos) {
-                            // Negative: rescale to the negative range before powering
-                            var a = 1f - (clickedT / linearZeroPos)
-                            a = glm.pow(a, power)
-                            lerp(glm.min(vMax, 0), vMin, a)
-                        } else {
-                            // Positive: rescale to the positive range before powering
-                            var a = when {
-                                glm.abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
-                                else -> clickedT
-                            }
-                            a = glm.pow(a, power)
-                            lerp(glm.max(vMin, 0), vMax, a)
-                        }
-                    }
-                    else -> when {// Linear slider
-                        isDecimal -> lerp(vMin, vMax, clickedT)
-                        else -> {
-                            /*  For integer values we want the clicking position to match the grab box so we round above
-                                This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..                             */
-                            val vNewOff_f = (vMax - vMin) * clickedT
-                            val vNewOffFloor = vNewOff_f.i
-                            val vNewOffRound = (vNewOff_f + 0.5f).i
-                            if (!isDecimal && vNewOffFloor < vNewOffRound)
-                                vMin + vNewOffRound
-                            else
-                                vMin + vNewOffFloor
-                        }
-                    }
-                }
-                // Round past decimal precision
-                vNew = roundScalarWithFormat(format, vNew)
-
-                // Apply result
-                if (v != vNew) {
-                    v = vNew
-                    valueChanged = true
-                }
-            }
-        }
-
-        // Output grab position so it can be displayed by the caller
-        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-        if (!isHorizontal)
-            grabT = 1f - grabT
-        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-        if (isHorizontal)
-            outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-        else
-            outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
-
-        return valueChanged
-    }
-
-    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutableProperty0<*>, vMin: Long, vMax: Long, format: String,
-                        power: Float, flags: SliderFlags = 0, outGrabBb: Rect): Boolean {
-
-        var v by vPtr as KMutableProperty0<Long>
-
-        val isHorizontal = flags hasnt SliderFlag.Vertical
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isPower = power != 0f && isDecimal
-
-        val grabPadding = 2f
-        val sliderSz = when {
-            isHorizontal -> bb.width - grabPadding * 2f
-            else -> bb.height - grabPadding * 2f
-        }
-        var grabSz = style.grabMinSize
-        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
-        if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
-            grabSz = max(sliderSz / (vRange + 1).f, style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
-        grabSz = grabSz min sliderSz
-        val sliderUsableSz = sliderSz - grabSz
-        val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
-        val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
-
-        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
-        val linearZeroPos = when {   // 0.0->1.0f
-            vMin * vMax < 0f -> {
-                // Different sign
-                val linearDistMinTo0 = glm.pow(if (vMin >= 0) vMin.f else -vMin.f, 1f / power)
-                val linearDistMaxTo0 = glm.pow(if (vMax >= 0) vMax.f else -vMax.f, 1f / power)
-                linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
-            } // Same sign
-            else -> if (vMin < 0f) 1f else 0f
-        }
-
-        // Process interacting with the slider
-        var valueChanged = false
-        if (g.activeId == id) {
-
-            var setNewValue = false
-            var clickedT = 0f
-
-            if (g.activeIdSource == InputSource.Mouse) {
-                if (!io.mouseDown[0]) clearActiveId()
-                else {
-                    val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
-                    clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
-                    if (!isHorizontal)
-                        clickedT = 1f - clickedT
-                    setNewValue = true
-                }
-            } else if (g.activeIdSource == InputSource.Nav) {
-                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-                var delta = if (isHorizontal) delta2.x else -delta2.y
-                if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                    clearActiveId()
-                else if (delta != 0f) {
-                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
-                    delta = when {
-                        decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
-                            NavInput.TweakSlow.isDown() -> delta / 1_000f
-                            else -> delta / 100f
-                        }
-                        else -> when {
-                            (vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown() ->
-                                (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
-                            else -> delta / 100f
-                        }
-                    }
-                    if (NavInput.TweakFast.isDown())
-                        delta *= 10f
-                    setNewValue = true
-                    // This is to avoid applying the saturation when already past the limits
-                    if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f))
-                        setNewValue = false
-                    else
-                        clickedT = saturate(clickedT + delta)
-                }
-            }
-
-            if (setNewValue) {
-                var vNew = when {
-                    isPower -> {
-                        // Account for power curve scale on both sides of the zero
-                        if (clickedT < linearZeroPos) {
-                            // Negative: rescale to the negative range before powering
-                            var a = 1f - (clickedT / linearZeroPos)
-                            a = glm.pow(a, power)
-                            lerp(glm.min(vMax, 0L), vMin, a)
-                        } else {
-                            // Positive: rescale to the positive range before powering
-                            var a = when {
-                                glm.abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
-                                else -> clickedT
-                            }
-                            a = glm.pow(a, power)
-                            lerp(glm.max(vMin, 0L), vMax, a)
-                        }
-                    }
-                    else -> when {// Linear slider
-                        isDecimal -> lerp(vMin, vMax, clickedT)
-                        else -> {
-                            /*  For integer values we want the clicking position to match the grab box so we round above
-                                This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..                             */
-                            val vNewOff_f = (vMax - vMin) * clickedT
-                            val vNewOffFloor = vNewOff_f.L
-                            val vNewOffRound = (vNewOff_f + 0.5f).L
-                            if (!isDecimal && vNewOffFloor < vNewOffRound)
-                                vMin + vNewOffRound
-                            else
-                                vMin + vNewOffFloor
-                        }
-                    }
-                }
-                // Round past decimal precision
-                vNew = roundScalarWithFormat(format, vNew)
-
-                // Apply result
-                if (v != vNew) {
-                    v = vNew
-                    valueChanged = true
-                }
-            }
-        }
-
-        // Output grab position so it can be displayed by the caller
-        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-        if (!isHorizontal)
-            grabT = 1f - grabT
-        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-        if (isHorizontal)
-            outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-        else
-            outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
-
-        return valueChanged
-    }
-
-    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String,
-                        power: Float, flags: SliderFlags = 0, outGrabBb: Rect): Boolean {
-
-        var v by vPtr as KMutableProperty0<Float>
-
-        val isHorizontal = flags hasnt SliderFlag.Vertical
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isPower = power != 0f && isDecimal
-
-        val grabPadding = 2f
-        val sliderSz = when {
-            isHorizontal -> bb.width - grabPadding * 2f
-            else -> bb.height - grabPadding * 2f
-        }
-        var grabSz = style.grabMinSize
-        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
-        if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
-            grabSz = max(sliderSz / (vRange + 1).f, style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
-        grabSz = grabSz min sliderSz
-        val sliderUsableSz = sliderSz - grabSz
-        val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
-        val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
-
-        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
-        val linearZeroPos = when {   // 0.0->1.0f
-            vMin * vMax < 0f -> {
-                // Different sign
-                val linearDistMinTo0 = glm.pow(if (vMin >= 0) vMin.f else -vMin.f, 1f / power)
-                val linearDistMaxTo0 = glm.pow(if (vMax >= 0) vMax.f else -vMax.f, 1f / power)
-                linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
-            } // Same sign
-            else -> if (vMin < 0f) 1f else 0f
-        }
-
-        // Process interacting with the slider
-        var valueChanged = false
-        if (g.activeId == id) {
-
-            var setNewValue = false
-            var clickedT = 0f
-
-            if (g.activeIdSource == InputSource.Mouse) {
-                if (!io.mouseDown[0]) clearActiveId()
-                else {
-                    val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
-                    clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
-                    if (!isHorizontal)
-                        clickedT = 1f - clickedT
-                    setNewValue = true
-                }
-            } else if (g.activeIdSource == InputSource.Nav) {
-                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-                var delta = if (isHorizontal) delta2.x else -delta2.y
-                if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                    clearActiveId()
-                else if (delta != 0f) {
-                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
-                    delta = when {
-                        decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
-                            NavInput.TweakSlow.isDown() -> delta / 1_000f
-                            else -> delta / 100f
-                        }
-                        else -> when {
-                            (vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown() ->
-                                (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
-                            else -> delta / 100f
-                        }
-                    }
-                    if (NavInput.TweakFast.isDown())
-                        delta *= 10f
-                    setNewValue = true
-                    // This is to avoid applying the saturation when already past the limits
-                    if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f))
-                        setNewValue = false
-                    else
-                        clickedT = saturate(clickedT + delta)
-                }
-            }
-
-            if (setNewValue) {
-                var vNew = when {
-                    isPower -> {
-                        // Account for power curve scale on both sides of the zero
-                        if (clickedT < linearZeroPos) {
-                            // Negative: rescale to the negative range before powering
-                            var a = 1f - (clickedT / linearZeroPos)
-                            a = glm.pow(a, power)
-                            lerp(glm.min(vMax, 0f), vMin, a)
-                        } else {
-                            // Positive: rescale to the positive range before powering
-                            var a = when {
-                                glm.abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
-                                else -> clickedT
-                            }
-                            a = glm.pow(a, power)
-                            lerp(glm.max(vMin, 0f), vMax, a)
-                        }
-                    }
-                    else -> when {// Linear slider
-                        isDecimal -> lerp(vMin, vMax, clickedT)
-                        else -> {
-                            /*  For integer values we want the clicking position to match the grab box so we round above
-                                This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..                             */
-                            val vNewOff_f = (vMax - vMin) * clickedT
-                            val vNewOffFloor = vNewOff_f.L
-                            val vNewOffRound = (vNewOff_f + 0.5f).L
-                            if (!isDecimal && vNewOffFloor < vNewOffRound)
-                                vMin + vNewOffRound
-                            else
-                                vMin + vNewOffFloor
-                        }
-                    }
-                }
-                // Round past decimal precision
-                vNew = roundScalarWithFormat(format, vNew)
-
-                // Apply result
-                if (v != vNew) {
-                    v = vNew
-                    valueChanged = true
-                }
-            }
-        }
-
-        // Output grab position so it can be displayed by the caller
-        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-        if (!isHorizontal)
-            grabT = 1f - grabT
-        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-        if (isHorizontal)
-            outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-        else
-            outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
-
-        return valueChanged
-    }
-
-    fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Double, vMax: Double, format: String,
-                        power: Float, flags: SliderFlags = 0, outGrabBb: Rect): Boolean {
-
-        v as KMutableProperty0<Double>
-
-        val isHorizontal = flags hasnt SliderFlag.Vertical
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isPower = power != 0f && isDecimal
-
-        val grabPadding = 2f
-        val sliderSz = when {
-            isHorizontal -> bb.width - grabPadding * 2f
-            else -> bb.height - grabPadding * 2f
-        }
-        var grabSz = style.grabMinSize
-        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
-        if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
-            grabSz = max(sliderSz / (vRange + 1).f, style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
-        grabSz = grabSz min sliderSz
-        val sliderUsableSz = sliderSz - grabSz
-        val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
-        val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
-
-        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
-        val linearZeroPos = when {   // 0.0->1.0f
-            vMin * vMax < 0f -> {
-                // Different sign
-                val linearDistMinTo0 = glm.pow(if (vMin >= 0) vMin.f else -vMin.f, 1f / power)
-                val linearDistMaxTo0 = glm.pow(if (vMax >= 0) vMax.f else -vMax.f, 1f / power)
-                linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
-            } // Same sign
-            else -> if (vMin < 0f) 1f else 0f
-        }
-
-        // Process interacting with the slider
-        var valueChanged = false
-        if (g.activeId == id) {
-
-            var setNewValue = false
-            var clickedT = 0f
-
-            if (g.activeIdSource == InputSource.Mouse) {
-                if (!io.mouseDown[0]) clearActiveId()
-                else {
-                    val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
-                    clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
-                    if (!isHorizontal)
-                        clickedT = 1f - clickedT
-                    setNewValue = true
-                }
-            } else if (g.activeIdSource == InputSource.Nav) {
-                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-                var delta = if (isHorizontal) delta2.x else -delta2.y
-                if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                    clearActiveId()
-                else if (delta != 0f) {
-                    clickedT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
-                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
-                    delta = when {
-                        decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
-                            NavInput.TweakSlow.isDown() -> delta / 1_000f
-                            else -> delta / 100f
-                        }
-                        else -> when {
-                            (vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown() ->
-                                (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
-                            else -> delta / 100f
-                        }
-                    }
-                    if (NavInput.TweakFast.isDown())
-                        delta *= 10f
-                    setNewValue = true
-                    // This is to avoid applying the saturation when already past the limits
-                    if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f))
-                        setNewValue = false
-                    else
-                        clickedT = saturate(clickedT + delta)
-                }
-            }
-
-            if (setNewValue) {
-                var vNew = when {
-                    isPower -> {
-                        // Account for power curve scale on both sides of the zero
-                        if (clickedT < linearZeroPos) {
-                            // Negative: rescale to the negative range before powering
-                            var a = 1f - (clickedT / linearZeroPos)
-                            a = glm.pow(a, power)
-                            lerp(glm.min(vMax, 0.0), vMin, a)
-                        } else {
-                            // Positive: rescale to the positive range before powering
-                            var a = when {
-                                glm.abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
-                                else -> clickedT
-                            }
-                            a = glm.pow(a, power)
-                            lerp(glm.max(vMin, 0.0), vMax, a)
-                        }
-                    }
-                    else -> when {// Linear slider
-                        isDecimal -> lerp(vMin, vMax, clickedT)
-                        else -> {
-                            /*  For integer values we want the clicking position to match the grab box so we round above
-                                This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..                             */
-                            val vNewOff_f = (vMax - vMin) * clickedT
-                            val vNewOffFloor = vNewOff_f.L
-                            val vNewOffRound = (vNewOff_f + 0.5f).L
-                            if (!isDecimal && vNewOffFloor < vNewOffRound)
-                                vMin + vNewOffRound
-                            else
-                                vMin + vNewOffFloor
-                        }
-                    }
-                }
-                // Round past decimal precision
-                vNew = roundScalarWithFormat(format, vNew)
-
-                // Apply result
-                if (v() != vNew) {
-                    v.set(vNew)
-                    valueChanged = true
-                }
-            }
-        }
-
-        // Output grab position so it can be displayed by the caller
-        var grabT = sliderBehaviorCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
-        if (!isHorizontal)
-            grabT = 1f - grabT
-        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-        if (isHorizontal)
-            outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-        else
-            outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
-
-        return valueChanged
-    }
-
-    fun sliderBehaviorCalcRatioFromValue(dataType: DataType, v: Int, vMin: Int, vMax: Int, power: Float, linearZeroPos: Float): Float {
-
-        if (vMin == vMax) return 0f
-
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
-        val vClamped = if (vMin < vMax) glm.clamp(v, vMin, vMax) else glm.clamp(v, vMax, vMin)
-        return when {
-            isPower -> when {
-                vClamped < 0f -> {
-                    val f = 1f - (vClamped - vMin) / (min(0, vMax) - vMin)
-                    (1f - glm.pow(f, 1f / power)) * linearZeroPos
-                }
-                else -> {
-                    val f = ((vClamped - max(0, vMin)) / (vMax - max(0, vMin))).f
-                    linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
-                }
-            }
-            // Linear slider
-            else -> (vClamped - vMin).f / (vMax - vMin).f
-        }
-    }
-
-    fun sliderBehaviorCalcRatioFromValue(dataType: DataType, v: Long, vMin: Long, vMax: Long, power: Float, linearZeroPos: Float): Float {
-
-        if (vMin == vMax) return 0f
-
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
-        val vClamped = if (vMin < vMax) glm.clamp(v, vMin, vMax) else glm.clamp(v, vMax, vMin)
-        return when {
-            isPower -> when {
-                vClamped < 0f -> {
-                    val f = 1f - (vClamped - vMin) / (min(0, vMax) - vMin)
-                    (1f - glm.pow(f, 1f / power)) * linearZeroPos
-                }
-                else -> {
-                    val f = ((vClamped - max(0, vMin)) / (vMax - max(0, vMin))).f
-                    linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
-                }
-            }
-            // Linear slider
-            else -> (vClamped - vMin).f / (vMax - vMin).f
-        }
-    }
-
-    fun sliderBehaviorCalcRatioFromValue(dataType: DataType, v: Float, vMin: Float, vMax: Float, power: Float, linearZeroPos: Float): Float {
-
-        if (vMin == vMax) return 0f
-
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
-        val vClamped = if (vMin < vMax) glm.clamp(v, vMin, vMax) else glm.clamp(v, vMax, vMin)
-        return when {
-            isPower -> when {
-                vClamped < 0f -> {
-                    val f = 1f - (vClamped - vMin) / (min(0f, vMax) - vMin)
-                    (1f - glm.pow(f, 1f / power)) * linearZeroPos
-                }
-                else -> {
-                    val f = (vClamped - max(0f, vMin)) / (vMax - max(0f, vMin))
-                    linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
-                }
-            }
-            // Linear slider
-            else -> (vClamped - vMin) / (vMax - vMin)
-        }
-    }
-
-    fun sliderBehaviorCalcRatioFromValue(dataType: DataType, v: Double, vMin: Double, vMax: Double, power: Float, linearZeroPos: Float): Float {
-
-        if (vMin == vMax) return 0f
-
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
-        val vClamped = if (vMin < vMax) glm.clamp(v, vMin, vMax) else glm.clamp(v, vMax, vMin)
-        return when {
-            isPower -> when {
-                vClamped < 0f -> {
-                    val f = 1f - ((vClamped - vMin) / (min(0.0, vMax) - vMin)).f
-                    (1f - glm.pow(f, 1f / power)) * linearZeroPos
-                }
-                else -> {
-                    val f = ((vClamped - max(0.0, vMin)) / (vMax - max(0.0, vMin))).f
-                    linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
-                }
-            }
-            // Linear slider
-            else -> ((vClamped - vMin) / (vMax - vMin)).f
-        }
-    }
-
-    /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
-    fun splitterBehavior(bb: Rect, id: ID, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
-                         minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float): Boolean {
-
-        var size1 by size1ptr
-        var size2 by size2ptr
-        val window = g.currentWindow!!
-
-        val itemFlagsBackup = window.dc.itemFlags
-
-        window.dc.itemFlags = window.dc.itemFlags or (If.NoNav or If.NoNavDefaultFocus)
-
-        val itemAdd = itemAdd(bb, id)
-        window.dc.itemFlags = itemFlagsBackup
-        if (!itemAdd) return false
-
-        val bbInteract = Rect(bb)
-        bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
-        val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
-        if (g.activeId != id) setItemAllowOverlap()
-
-        if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
-            mouseCursor = if (axis == Axis.Y) MouseCursor.ResizeNS else MouseCursor.ResizeEW
-
-        val bbRender = Rect(bb)
-        if (held) {
-            val mouseDelta2d = io.mousePos - g.activeIdClickOffset - bbInteract.min
-            var mouseDelta = if (axis == Axis.Y) mouseDelta2d.y else mouseDelta2d.x
-
-            // Minimum pane size
-            val size1MaximumDelta = max(0f, size1 - minSize1)
-            val size2MaximumDelta = max(0f, size2 - minSize2)
-            if (mouseDelta < -size1MaximumDelta)
-                mouseDelta = -size1MaximumDelta
-            if (mouseDelta > size2MaximumDelta)
-                mouseDelta = size2MaximumDelta
-
-
-            // Apply resize
-            if (mouseDelta != 0f) {
-                if (mouseDelta < 0f)
-                    assert(size1 + mouseDelta >= minSize1)
-                else if (mouseDelta > 0f)
-                    assert(size2 - mouseDelta >= minSize2)
-                size1 = size1 + mouseDelta // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
-                size2 = size2 - mouseDelta
-                bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
-                markItemEdit(id)
-            }
-            bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
-
-            markItemEdit(id)
-        }
-
-        // Render
-        val col = when {
-            held -> Col.SeparatorActive
-            hovered && g.hoveredIdTimer >= hoverVisibilityDelay -> Col.SeparatorHovered
-            else -> Col.Separator
-        }
-        window.drawList.addRectFilled(bbRender.min, bbRender.max, col.u32, style.frameRounding)
-
-        return held
-    }
-
     fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd: Int = findRenderedTextEnd(label)): Boolean {
 
         val window = currentWindow
@@ -2370,7 +1765,7 @@ interface imgui_internal {
 
         // We vertically grow up to current line height up the typical widget height.
         val textBaseOffsetY = glm.max(padding.y, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
-        val frameHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
+        val frameHeight = glm.max(glm.min(window.dc.currentLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
         val frameBb = Rect(window.dc.cursorPos, Vec2(window.pos.x + contentRegionMax.x, window.dc.cursorPos.y + frameHeight))
         if (displayFrame) {
             // Framed header expand a little outside the default padding
@@ -2495,7 +1890,7 @@ interface imgui_internal {
         val storage = window.dc.stateStorage
 
         var isOpen: Boolean
-        if (g.nextTreeNodeOpenCond != Cond.Null) {
+        if (g.nextTreeNodeOpenCond != Cond.None) {
             if (g.nextTreeNodeOpenCond has Cond.Always) {
                 isOpen = g.nextTreeNodeOpenVal
                 storage[id] = isOpen
@@ -2509,7 +1904,7 @@ interface imgui_internal {
                 } else
                     isOpen = storedValue != 0
             }
-            g.nextTreeNodeOpenCond = Cond.Null
+            g.nextTreeNodeOpenCond = Cond.None
         } else
             isOpen = storage.int(id, if (flags has Tnf.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
@@ -2529,12 +1924,14 @@ interface imgui_internal {
         window.idStack.push(id)
     }
 
+    // InputText
+
     /** InputTextEx
      *  - bufSize account for the zero-terminator, so a buf_size of 6 can hold "Hello" but not "Hello!".
      *    This is so we can easily call InputText() on static arrays using ARRAYSIZE() and to match
      *    Note that in std::string world, capacity() would omit 1 byte used by the zero-terminator.
      *  - When active, hold on a privately held copy of the text (and apply back to 'buf'). So changing 'buf' while the InputText is active has no effect.
-     *  - If you want to use ImGui::InputText() with std::string, see misc/stl/imgui_stl.h
+     *  - If you want to use ImGui::InputText() with std::string, see misc/cpp/imgui_stl.h
      *  (FIXME: Rather messy function partly because we are doing UTF8 > u16 > UTF8 conversions on the go to more easily handle stb_textedit calls. Ideally we should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
      */
     fun inputTextEx(label: String, buf: CharArray/*, bufSize: Int*/, sizeArg: Vec2, flags: InputTextFlags,
@@ -2585,19 +1982,20 @@ interface imgui_internal {
         if (hovered) g.mouseCursor = MouseCursor.TextInput
 
         // Password pushes a temporary font with only a fallback glyph
-        if (isPassword) with(g.inputTextPasswordFont) {
-            val glyph = g.font.findGlyph('*')!!
-            fontSize = g.font.fontSize
-            scale = g.font.scale
-            displayOffset = g.font.displayOffset
-            ascent = g.font.ascent
-            descent = g.font.descent
-            containerAtlas = g.font.containerAtlas
-            fallbackGlyph = glyph
-            fallbackAdvanceX = glyph.advanceX
-            assert(glyphs.isEmpty() && indexAdvanceX.isEmpty() && indexLookup.isEmpty())
-            pushFont(this)
-        }
+        if (isPassword)
+            g.inputTextPasswordFont.apply {
+                val glyph = g.font.findGlyph('*')!!
+                fontSize = g.font.fontSize
+                scale = g.font.scale
+                displayOffset = g.font.displayOffset
+                ascent = g.font.ascent
+                descent = g.font.descent
+                containerAtlas = g.font.containerAtlas
+                fallbackGlyph = glyph
+                fallbackAdvanceX = glyph.advanceX
+                assert(glyphs.isEmpty() && indexAdvanceX.isEmpty() && indexLookup.isEmpty())
+                pushFont(this)
+            }
 
         // NB: we are only allowed to access 'editState' if we are the active widget.
         val editState = g.inputTextState
@@ -2959,7 +2357,7 @@ interface imgui_internal {
 //                        }
                 }
                 // Will copy result string if modified
-                if (isEditable && !strcmp(editState.tempBuffer, buf)) {
+                if (isEditable && !editState.tempBuffer.cmp(buf)) {
                     applyNewText = editState.tempBuffer
                     applyNewTextLength = editState.curLenA
                 }
@@ -2974,16 +2372,19 @@ interface imgui_internal {
 //                        eventFlag = Itf.CallbackResize.i
 //                        this.flags = flags
 //                        this.buf = buf
-//                        bufTextLen = editState.curLenA
+//                        bufTextLen = apply_new_text_length
 ////                        bufSize = max(bufSize, applyNewTextLength)
 //                        userData = callbackUserData
 //                    }
 //                    callback!!(callbackData)
 //                    buf = callback_data.Buf
 //                    buf_size = callback_data.BufSize
+//                    apply_new_text_length = ImMin(callback_data.BufTextLen, buf_size - 1);
+//                    IM_ASSERT(apply_new_text_length <= buf_size);
                 }
-//                assert(applyNewTextLength <= bufSize)
-                buf.strncpy(editState.tempBuffer, applyNewTextLength)
+                /*  If the underlying buffer resize was denied or not carried to the next frame,
+                    apply_new_text_length+1 may be >= buf_size.                 */
+                buf.strncpy(editState.tempBuffer, (applyNewTextLength + 1) min buf.size)
                 valueChanged = true
             }
 
@@ -3147,7 +2548,7 @@ interface imgui_internal {
                 drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, Col.Text.u32, bufDisplay, bufDisplayLen, 0f, clipRect.takeIf { isMultiline })
 
             // Draw blinking cursor
-            val cursorIsVisible = !io.configCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
+            val cursorIsVisible = !io.configInputTextCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
             val cursorScreenPos = renderPos + cursorOffset - renderScroll
             val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
             if (cursorIsVisible && cursorScreenRect overlaps Rect(clipRect))
@@ -3186,13 +2587,13 @@ interface imgui_internal {
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
         if (valueChanged)
-            markItemEdit(id)
+            markItemEdited(id)
 
         return if (flags has Itf.EnterReturnsTrue) enterPressed else valueChanged
     }
 
-    /** Create text input in place of a slider (when CTRL+Clicking on slider)
-     *  FIXME: Logic is messy and confusing. */
+    /** Create text input in place of an active drag/slider (used when doing a CTRL+Click on drag/slider widgets)
+     *  FIXME: Logic is awkward and confusing. This should be reworked to facilitate using in other situations. */
     fun inputScalarAsWidgetReplacement(bb: Rect, id: ID, label: String, dataType: DataType, data: KMutableProperty0<*>,
                                        format_: String): Boolean {
 
@@ -3201,9 +2602,8 @@ interface imgui_internal {
         /*  Our replacement widget will override the focus ID (registered previously to allow for a TAB focus to happen)
             On the first frame, g.ScalarAsInputTextId == 0, then on subsequent frames it becomes == id  */
         setActiveId(g.scalarAsInputTextId, window)
-        g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
         hoveredId = 0
-        focusableItemUnregister(window)
+        g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
 
         val fmtBuf = CharArray(32)
         val format = parseFormatTrimDecorations(format_, fmtBuf)
@@ -3224,6 +2624,8 @@ interface imgui_internal {
             else -> false
         }
     }
+
+    // Color
 
     /** Note: only access 3 floats if ColorEditFlag.NoAlpha flag is set.   */
     fun colorTooltip(text: String, col: FloatArray, flags: ColorEditFlags) {
@@ -3298,7 +2700,46 @@ interface imgui_internal {
         endPopup()
     }
 
-    fun plotEx(plotType: PlotType, label: String, data: imgui_widgetsMain.PlotArray, valuesOffset: Int, overlayText: String,
+    fun colorPickerOptionsPopup(refCol: FloatArray, flags: ColorEditFlags) {
+        val allowOptPicker = flags hasnt Cef._PickerMask
+        val allowOptAlphaBar = flags hasnt Cef.NoAlpha && flags hasnt Cef.AlphaBar
+        if ((!allowOptPicker && !allowOptAlphaBar) || !beginPopup("context")) return
+        if (allowOptPicker) {
+            // FIXME: Picker size copied from main picker function
+            val pickerSize = Vec2(g.fontSize * 8, glm.max(g.fontSize * 8 - (frameHeight + style.itemInnerSpacing.x), 1f))
+            pushItemWidth(pickerSize.x)
+            for (pickerType in 0..1) {
+                // Draw small/thumbnail version of each picker type (over an invisible button for selection)
+                if (pickerType > 0) separator()
+                pushId(pickerType)
+                var pickerFlags: ColorEditFlags = Cef.NoInputs or Cef.NoOptions or Cef.NoLabel or
+                        Cef.NoSidePreview or (flags and Cef.NoAlpha)
+                if (pickerType == 0) pickerFlags = pickerFlags or Cef.PickerHueBar
+                if (pickerType == 1) pickerFlags = pickerFlags or Cef.PickerHueWheel
+                val backupPos = Vec2(ImGui.cursorScreenPos)
+                if (selectable("##selectable", false, 0, pickerSize)) // By default, Selectable() is closing popup
+                    g.colorEditOptions = (g.colorEditOptions wo Cef._PickerMask) or (pickerFlags and Cef._PickerMask)
+                ImGui.cursorScreenPos = backupPos
+                val dummyRefCol = Vec4()
+                for (i in 0..2) dummyRefCol[i] = refCol[i]
+                if (pickerFlags hasnt Cef.NoAlpha) dummyRefCol[3] = refCol[3]
+                ImGui.colorPicker4("##dummypicker", dummyRefCol, pickerFlags)
+                popId()
+            }
+            popItemWidth()
+        }
+        if (allowOptAlphaBar) {
+            if (allowOptPicker) separator()
+            val pI = intArrayOf(g.colorEditOptions)
+            ImGui.checkboxFlags("Alpha Bar", pI, Cef.AlphaBar.i)
+            g.colorEditOptions = pI[0]
+        }
+        endPopup()
+    }
+
+    // Plot
+
+    fun plotEx(plotType: PlotType, label: String, data: main.PlotArray, valuesOffset: Int, overlayText: String,
                scaleMin_: Float, scaleMax_: Float, graphSize: Vec2) {
 
         val window = currentWindow
@@ -3630,38 +3071,11 @@ interface imgui_internal {
             else -> glm.acos(x)
             //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
-
-        fun <N : Number> roundScalarWithFormat(format: String, value: N): N {
-            if (format.isEmpty()) return value
-            if (value is Int || value is Long) return value
-            val matcher = formatArgPattern.matcher(format)
-            var arg = ""
-            var i = 0
-            while (matcher.find(i)) {
-                if (format[matcher.end() - 1] != '%') {
-                    arg = matcher.group()
-                    break
-                }
-                i = matcher.end()
-            }
-            if (arg.isEmpty()) // Don't apply if the value is not visible in the format string
-                return value
-            var formattedValue = arg.format(Locale.US, value).trim().replace(",", "")
-            if (formattedValue.contains('(')) {
-                formattedValue = formattedValue.replace("(", "").replace(")", "")
-                formattedValue = "-$formattedValue"
-            }
-            return when (value) {
-                is Float -> formattedValue.parseFloat as N
-                is Double -> formattedValue.parseDouble as N
-                else -> throw Error("not supported")
-            }
-        }
     }
 }
 
 // TODO move in a more appropriate place
-inline fun <R> withBoolean(bools: BooleanArray, ptr: Int = 0, block: (KMutableProperty0<Boolean>) -> R): R {
+fun <R> withBoolean(bools: BooleanArray, ptr: Int = 0, block: (KMutableProperty0<Boolean>) -> R): R {
     Ref.bPtr++
     val bool = Ref::bool
     bool.set(bools[ptr])
@@ -3671,7 +3085,7 @@ inline fun <R> withBoolean(bools: BooleanArray, ptr: Int = 0, block: (KMutablePr
     return res
 }
 
-inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
+fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R { // TODO inline
     Ref.fPtr++
     val f = Ref::float
     f.set(floats[ptr])
@@ -3681,7 +3095,7 @@ inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0
     return res
 }
 
-inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
+fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
     Ref.iPtr++
     val i = Ref::int
     i.set(ints[ptr])

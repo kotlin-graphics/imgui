@@ -2,6 +2,11 @@ package imgui
 
 import glm_.i
 import imgui.imgui.*
+import imgui.imgui.widgets.*
+import imgui.internal.Rect
+import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty0
 
 /** -----------------------------------------------------------------------------
  *      Context
@@ -37,14 +42,29 @@ val COL32_BLACK_TRANS = COL32(0, 0, 0, 0)   // Transparent black = 0x00000000
 
 val MOUSE_INVALID = -256000f
 
+// Debug options
 val IMGUI_DEBUG_NAV_SCORING = false
 val IMGUI_DEBUG_NAV_RECTS = false
 
 // When using CTRL+TAB (or Gamepad Square+L/R) we delay the visual a little in order to reduce visual noise doing a fast switch.
+
 /** Time before the highlight and screen dimming starts fading in */
 const val NAV_WINDOWING_HIGHLIGHT_DELAY = 0.2f
 /** Time before the window list starts to appear */
 const val NAV_WINDOWING_LIST_APPEAR_DELAY = 0.15f
+
+// Window resizing from edges (when io.ConfigResizeWindowsFromEdges = true)
+
+/** Extend outside and inside windows. Affect FindHoveredWindow(). */
+const val RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS = 4f
+/** Reduce visual noise by only highlighting the border after a certain time. */
+const val RESIZE_WINDOWS_FROM_EDGES_FEEDBACK_TIMER = 0.04f
+
+// Test engine hooks (imgui-test)
+const val IMGUI_ENABLE_TEST_ENGINE_HOOKS = false
+var ImGuiTestEngineHook_PreNewFrame: () -> Unit = {}
+var ImGuiTestEngineHook_PostNewFrame: () -> Unit = {}
+var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID, navBbArg: Rect?) -> Unit = { _, _, _ -> }
 
 object ImGui :
 
@@ -56,15 +76,18 @@ object ImGui :
         imgui_cursorLayout,
         imgui_colums,
         imgui_idScopes,
-        imgui_widgetsText,
-        imgui_widgetsMain,
-        imgui_widgetsComboBox,
-        imgui_widgetsDrag,
-        imgui_widgetsInputKeyboard,
-        imgui_widgetsSliders,
-        imgui_widgetsColorEditorPicker,
-        imgui_widgetsTrees,
-        imgui_widgetsSelectableLists,
+        listBoxes,
+        text,
+        main,
+        comboBox,
+        dataPlotting,
+        drags,
+        inputKeyboard,
+        lowLevelLayoutHelpers,
+        sliders,
+        colorEditorPicker,
+        trees,
+        selectableLists,
         imgui_tooltips,
         imgui_menus,
         imgui_popups,
@@ -80,12 +103,12 @@ object ImGui :
         imgui_internal {
 
     // Version
-    val beta = 3
+    val beta = 0
     /** get the compiled version string e.g. "1.23" */
-    val version = "1.63.$beta"
+    val version = "1.66.$beta"
     /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
     Work in progress versions typically starts at XYY00 then bounced up to XYY01 when release tagging happens */
-    val versionNum = 16300 + beta
+    val versionNum = 16600 + beta
 }
 
 var ptrIndices = 0
@@ -161,6 +184,9 @@ fun main(args: Array<String>) {
 
 var stop = false
 
+inline operator fun <R> KMutableProperty0<R>.setValue(host: Any?, property: KProperty<*>, value: R) = set(value)
+inline operator fun <R> KMutableProperty0<R>.getValue(host: Any?, property: KProperty<*>): R = get()
+
 infix fun String.cmp(charArray: CharArray): Boolean {
     for (i in indices)
         if (get(i) != charArray[i])
@@ -168,12 +194,12 @@ infix fun String.cmp(charArray: CharArray): Boolean {
     return true
 }
 
-fun strcmp(charsA: CharArray, charsB: CharArray): Boolean {
-    for (i in charsA.indices) {
-        val a = charsA[i]
-        if (a == NUL) return true
-        val b = charsB.getOrElse(i) { return false }
-        if (b == NUL) return true
+infix fun CharArray.cmp(other: CharArray): Boolean {
+    for (i in indices) {
+        val a = get(i)
+        val b = other.getOrElse(i) { return false }
+        if (a == NUL)
+            return b == NUL
         if (a != b)
             return false
     }

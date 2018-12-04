@@ -2,7 +2,7 @@ package imgui
 
 
 import glm_.*
-import kool.bufferBig
+import kool.Buffer
 import kool.free
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
@@ -10,17 +10,14 @@ import glm_.vec2.operators.div
 import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.ImGui.style
-import imgui.internal.fileLoadToCharArray
-import imgui.internal.isBlankA
-import imgui.internal.isBlankW
-import imgui.internal.upperPowerOfTwo
+import imgui.internal.*
 import imgui.stb.*
+import kool.lib.isNotEmpty
 import org.lwjgl.stb.*
 import org.lwjgl.stb.STBRectPack.stbrp_pack_rects
 import org.lwjgl.stb.STBTruetype.*
 import org.lwjgl.system.MemoryUtil
 import uno.convert.decode85
-import uno.kotlin.buffers.isNotEmpty
 import uno.stb.stb
 import unsigned.toULong
 import java.nio.ByteBuffer
@@ -102,17 +99,24 @@ class FontGlyph {
     }
 }
 
-/** Load and rasterize multiple TTF/OTF fonts into a same texture.
- *  Sharing a texture for multiple fonts allows us to reduce the number of draw calls during rendering.
- *  We also add custom graphic data into the texture that serves for ImGui.
- *  1. (Optional) Call AddFont*** functions. If you don't call any, the default font will be loaded for you.
- *  2. Call GetTexDataAsAlpha8() or GetTexDataAsRGBA32() to build and retrieve pixels data.
- *  3. Upload the pixels data into a texture within your graphics system.
- *  4. Call SetTexID(my_tex_id); and pass the pointer/identifier to your texture. This value will be passed back to you
- *          during rendering to identify the texture.
- *  IMPORTANT: If you pass a 'glyph_ranges' array to AddFont*** functions, you need to make sure that your array persist
- *  up until the ImFont is build (when calling GetTexData*** or Build()). We only copy the pointer, not the data.
- *  We only copy the pointer, not the data. */
+/** Load and rasterize multiple TTF/OTF fonts into a same texture. The font atlas will build a single texture holding:
+ *      - One or more fonts.
+ *      - Custom graphics data needed to render the shapes needed by Dear ImGui.
+ *      - Mouse cursor shapes for software cursor rendering (unless setting 'Flags |= ImFontAtlasFlags_NoMouseCursors' in the font atlas).
+ *  It is the user-code responsibility to setup/build the atlas, then upload the pixel data into a texture accessible by your graphics api.
+ *      - Optionally, call any of the AddFont*** functions. If you don't call any, the default font embedded in the code will be loaded for you.
+ *      - Call GetTexDataAsAlpha8() or GetTexDataAsRGBA32() to build and retrieve pixels data.
+ *      - Upload the pixels data into a texture within your graphics system (see imgui_impl_xxxx.cpp examples)
+ *      - Call SetTexID(my_tex_id); and pass the pointer/identifier to your texture in a format natural to your graphics API.
+ *  This value will be passed back to you during rendering to identify the texture. Read FAQ entry about ImTextureID for more details.
+ *  Common pitfalls:
+ *      - If you pass a 'glyph_ranges' array to AddFont*** functions, you need to make sure that your array persist up until the
+ *          atlas is build (when calling GetTexData*** or Build()). We only copy the pointer, not the data.
+ *      - Important: By default, AddFontFromMemoryTTF() takes ownership of the data. Even though we are not writing to it,
+ *          we will free the pointer on destruction.
+ *  You can set font_cfg->FontDataOwnedByAtlas=false to keep ownership of your data and it won't be freed,
+ *      - Even though many functions are suffixed with "TTF", OTF data is supported just as well.
+ *      - This is an old API and it is currently awkward for those and and various other reasons! We will address them in the future! */
 class FontAtlas {
 
     fun addFont(fontCfg: FontConfig): Font {
@@ -168,15 +172,15 @@ class FontAtlas {
         return addFontFromMemoryTTF(chars, sizePixels, fontCfg, glyphRanges)
     }
 
-    /** Note: Transfer ownership of 'ttfData' to FontAtlas! Will be deleted after build(). Set fontCfg.fontDataOwnedByAtlas
-     *  to false to keep ownership. */
+    /** Note: Transfer ownership of 'ttfData' to FontAtlas! Will be deleted after destruction of the atlas.
+     *  Set font_cfg->FontDataOwnedByAtlas=false to keep ownership of your data and it won't be freed. */
     fun addFontFromMemoryTTF(fontData: CharArray, sizePixels: Float, fontCfg: FontConfig = FontConfig(),
                              glyphRanges: IntArray = intArrayOf()): Font {
 
         assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
         assert(fontCfg.fontData.isEmpty())
         fontCfg.fontData = fontData
-        fontCfg.fontDataBuffer = bufferBig(fontData.size).apply { fontData.forEachIndexed { i, c -> this[i] = c.b } }
+        fontCfg.fontDataBuffer = Buffer(fontData.size).apply { fontData.forEachIndexed { i, c -> this[i] = c.b } }
         fontCfg.sizePixels = sizePixels
         if (glyphRanges.isNotEmpty())
             fontCfg.glyphRanges = glyphRanges
@@ -249,9 +253,10 @@ class FontAtlas {
     /*  Build atlas, retrieve pixel data.
         User is in charge of copying the pixels into graphics memory (e.g. create a texture with your engine).
         Then store your texture handle with setTexID().ClearInputData
-        RGBA32 format is provided for convenience and compatibility, but note that unless you use CustomRect to draw
-        color data, the RGB pixels emitted from Fonts will all be white (~75% of waste).
-        Pitch = Width * BytesPerPixels  */
+        The pitch is always = Width * BytesPerPixels (1 or 4)
+        Building in RGBA32 format is provided for convenience and compatibility, but note that unless
+        you manually manipulate or copy color data into the texture (e.g. when using the AddCustomRect*** api),
+        then the RGB pixels emitted will always be white (~75% of memory/bandwidth waste.  */
 
     /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
     private fun build() {
@@ -281,7 +286,7 @@ class FontAtlas {
         if (texPixelsRGBA32 == null) {
             val (pixels, _, _) = getTexDataAsAlpha8()
             if (pixels.isNotEmpty()) {
-                texPixelsRGBA32 = bufferBig(texSize.x * texSize.y * 4)
+                texPixelsRGBA32 = Buffer(texSize.x * texSize.y * 4)
                 val dst = texPixelsRGBA32!!
                 for (n in 0 until pixels.size) {
                     dst[n * 4] = 255.b
@@ -439,12 +444,13 @@ class FontAtlas {
     // Members
     //-------------------------------------------
     enum class FontAtlasFlag {
+        None,
         /** Don't round the height to next power of two */
         NoPowerOfTwoHeight,
         /** Don't build software mouse cursors into the atlas   */
         NoMouseCursors;
 
-        val i = 1 shl ordinal
+        val i = if (ordinal == 0) 0 else 1 shl ordinal
     }
 
     infix fun Int.has(flag: FontAtlasFlag) = and(flag.i) != 0
@@ -453,7 +459,7 @@ class FontAtlas {
     /** Marked as Locked by ImGui::NewFrame() so attempt to modify the atlas will assert. */
     var locked = false
     /** Build flags (see ImFontAtlasFlags_) */
-    var flags: FontAtlasFlags = 0
+    var flags = FontAtlasFlag.None.i
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
     var texId: TextureID = 0
@@ -648,7 +654,7 @@ class FontAtlas {
         // Create texture
         texSize.y = if (flags has FontAtlasFlag.NoPowerOfTwoHeight) texSize.y + 1 else texSize.y.upperPowerOfTwo
         texUvScale = 1f / Vec2(texSize)
-        texPixelsAlpha8 = bufferBig(texSize.x * texSize.y)
+        texPixelsAlpha8 = Buffer(texSize.x * texSize.y)
         spc.pixels = texPixelsAlpha8!!
         spc.height = texSize.y
 
@@ -1198,6 +1204,8 @@ class Font {
     fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: CharArray, textEnd_: Int = text.size, // TODO return it also?
                    wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
 
+        var textEnd = textEnd_
+
         // Align to be pixel perfect
         pos.x = pos.x.i.f + displayOffset.x
         pos.y = pos.y.i.f + displayOffset.y
@@ -1212,28 +1220,24 @@ class Font {
         // Fast-forward to first visible line
         var s = 0
         if (y + lineHeight < clipRect.y && !wordWrapEnabled)
-            while (y + lineHeight < clipRect.y) {
-                while (s < textEnd_)
-                    if (text[s++] == '\n')
-                        break
+            while (y + lineHeight < clipRect.y && s < textEnd) {
+                s = text.memchr(s, '\n')?.plus(1) ?: textEnd
                 y += lineHeight
             }
 
         /*  For large text, scan for the last visible line in order to avoid over-reserving in the call to PrimReserve()
             Note that very large horizontal line will still be affected by the issue (e.g. a one megabyte string buffer without a newline will likely crash atm)         */
-        var textEnd = textEnd_
-        if (textEnd - s > 10000 && !wordWrapEnabled)        {
+        if (textEnd - s > 10000 && !wordWrapEnabled) {
             var sEnd = s
             var yEnd = y
-            while (yEnd < clipRect.w)            {
-                while (sEnd < textEnd)
-                    if (text[sEnd++] == '\n')
-                        break
+            while (yEnd < clipRect.w && s < textEnd) {
+                s = text.memchr(s, '\n')?.plus(1) ?: textEnd
                 yEnd += lineHeight
             }
             textEnd = sEnd
         }
-
+        if (s == textEnd)
+            return
 
 
         // Reserve vertices for remaining worse case (over-reserving is useful and easily amortized)

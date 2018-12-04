@@ -131,7 +131,7 @@ class TextEditState {
         curLenA -= n //TODO check textCountUtf8BytesFromStr(dst, dst + n)
         curLenW -= n
 
-        // Offset remaining text
+        // Offset remaining text (FIXME-OPT: Use memmove)
         for (c in pos + n until textW.size)
             textW[dst++] = textW[c]
         textW[dst] = NUL

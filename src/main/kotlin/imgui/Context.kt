@@ -42,8 +42,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var frameCountEnded = -1
 
     var frameCountRendered = -1
-
+    /** Windows, sorted in display order, back to front */
     val windows = ArrayList<Window>()
+    /** Windows, sorted in focus order, back to front */
+    val windowsFocusOrder = ArrayList<Window>()
 
     val windowsSortBuffer = ArrayList<Window>()
 
@@ -64,8 +66,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var hoveredIdAllowOverlap = false
 
     var hoveredIdPreviousFrame: ID = 0
-
+    /** Measure contiguous hovering time */
     var hoveredIdTimer = 0f
+    /** Measure contiguous hovering time where the item has not been active */
+    var hoveredIdNotActiveTimer = 0f
     /** Active widget   */
     var activeId: ID = 0
 
@@ -78,12 +82,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdIsJustActivated = false
     /** Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)   */
     var activeIdAllowOverlap = false
-
-    var activeIdValueChanged = false
+    /** Was the value associated to the widget edited over the course of the Active state. */
+    var activeIdHasBeenEdited = false
 
     var activeIdPreviousFrameIsAlive = false
 
-    var activeIdPreviousFrameValueChanged = false
+    var activeIdPreviousFrameHasBeenEdited = false
     /** Active widget allows using directional navigation (e.g. can activate a button and move away from it)    */
     var activeIdAllowNavDirFlags = 0
     /** Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior) */
@@ -98,11 +102,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var lastActiveId: ID = 0
     /** Store the last non-zero ActiveId timer since the beginning of activation, useful for animation. */
     var lastActiveIdTimer = 0f
+
+    var lastValidMousePos = Vec2()
     /** Track the window we clicked on (in order to preserve focus).
      *  The actually window that is moved is generally MovingWindow.rootWindow.  */
     var movingWindow: Window? = null
     /** Stack for PushStyleColor()/PopStyleColor()  */
-    var colorModifiers = Stack<ColMod>()
+    var colorModifiers = Stack<ColorMod>()
     /** Stack for PushStyleVar()/PopStyleVar()  */
     val styleModifiers = Stack<StyleMod>()
     /** Stack for PushFont()/PopFont()  */
@@ -117,7 +123,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Storage for SetNextTreeNode** functions */
     var nextTreeNodeOpenVal = false
 
-    var nextTreeNodeOpenCond = Cond.Null
+    var nextTreeNodeOpenCond = Cond.None
 
     //------------------------------------------------------------------
     // Navigation data (for gamepad/keyboard)
@@ -198,11 +204,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var navMoveClipDir = Dir.None
     /** Best move request candidate within NavWindow    */
-    val navMoveResultLocal = NavMoveResult()
+    var navMoveResultLocal = NavMoveResult()
     /** Best move request candidate within NavWindow that are mostly visible (when using NavMoveFlags.AlsoScoreVisibleSet flag) */
     val navMoveResultLocalVisibleSet = NavMoveResult()
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
-    val navMoveResultOther = NavMoveResult()
+    var navMoveResultOther = NavMoveResult()
 
 
     // ------------------------------------------------------------------
@@ -355,6 +361,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
         /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
             (which would happen if we never called NewFrame)         */
+        if(g.fontAtlasOwnedByContext)
+            io.fonts.locked = false
         io.fonts.clear()
 
         // Cleanup of other data are conditional on actually having initialized ImGui.
@@ -367,6 +375,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         // Clear everything else
         g.windows.forEach { it.clear() }
         g.windows.clear()
+        g.windowsFocusOrder.clear()
         g.windowsSortBuffer.clear()
         g.currentWindow = null
         g.currentWindowStack.clear()
@@ -412,19 +421,19 @@ fun Context?.destroy() {
         c.setCurrent()
 }
 
-/** This is where your app communicate with ImGui. Access via ImGui::GetIO().
+/** This is where your app communicate with Dear ImGui. Access via ImGui::GetIO().
  *  Read 'Programmer guide' section in .cpp file for general usage. */
 class IO(sharedFontAtlas: FontAtlas?) {
 
     //------------------------------------------------------------------
-    // Settings (fill once)
+    // Configuration (fill once)
     //------------------------------------------------------------------
 
     /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
     var configFlags: ConfigFlags = 0
     /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end to communicate features supported by the back-end. */
     var backendFlags: BackendFlags = 0
-    /** Display size, in pixels. For clamping windows positions.    */
+    /** Main display size, in pixels. For clamping windows positions.    */
     var displaySize = Vec2i(-1)
     /** Time elapsed since last frame, in seconds.  */
     var deltaTime = 1f / 60f
@@ -470,13 +479,15 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // Miscellaneous options
     //------------------------------------------------------------------
 
+    /** Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor). */
+    var mouseDrawCursor = false
     /** = defined(__APPLE__), OS X style: Text editing cursor movement using Alt instead of Ctrl, Shortcuts using
      *  Cmd/Super instead of Ctrl, Line/Text Start and End using Cmd + Arrows instead of Home/End, Double click selects
      *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl
      *  (was called io.OptMacOSXBehaviors prior to 1.63) */
     var configMacOSXBehaviors = false  // JVM TODO
     /** Set to false to disable blinking cursor, for users who consider it distracting. (was called: io.OptCursorBlink prior to 1.63) */
-    var configCursorBlink = true
+    var configInputTextCursorBlink = true
     /** [BETA] Enable resizing of windows from their edges and from the lower-left corner.
      *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
      *  (This used to be the WindowFlag.ResizeFromAnySide flag) */
@@ -517,8 +528,6 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var mouseWheel = 0f
     /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all back-ends.   */
     var mouseWheelH = 0f
-    /** Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor). */
-    var mouseDrawCursor = false
     /** Keyboard modifier pressed: Control  */
     var keyCtrl = false
     /** Keyboard modifier pressed: Shift    */
@@ -704,8 +713,8 @@ class Style {
     var grabRounding = 0f
     /** Alignment of button text when button is larger than text.   */
     var buttonTextAlign = Vec2(0.5f)
-    /** Window positions are clamped to be visible within the display area by at least this amount. Only covers regular
-     *  windows.    */
+    /** Window position are clamped to be visible within the display area by at least this amount.
+     *  Only applies to regular windows.    */
     var displayWindowPadding = Vec2(20)
     /** If you cannot see the edges of your screen (e.g. on a TV) increase the safe area padding. Apply to popups/tooltips
      *  as well regular windows.  NB: Prefer configuring your TV sets correctly!   */

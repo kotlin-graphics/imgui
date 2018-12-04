@@ -1,29 +1,19 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.beginPopup
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcWrapWidthForPos
-import imgui.ImGui.checkboxFlags
-import imgui.ImGui.colorPicker4
 import imgui.ImGui.currentWindow
-import imgui.ImGui.cursorScreenPos
-import imgui.ImGui.endPopup
-import imgui.ImGui.frameHeight
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.popId
-import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popTextWrapPos
-import imgui.ImGui.pushId
-import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.renderArrowPointingAt
@@ -31,15 +21,13 @@ import imgui.ImGui.renderBullet
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
-import imgui.ImGui.selectable
-import imgui.ImGui.separator
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeight
 import imgui.internal.Rect
-import imgui.internal.strchr
+import imgui.internal.memchr
 import imgui.ColorEditFlag as Cef
 
-interface imgui_widgetsText {
+interface text {
 
     /** Raw text without formatting. Roughly equivalent to text("%s", text) but:
      *  A) doesn't require null terminated string if 'textEnd' is specified
@@ -55,10 +43,12 @@ interface imgui_widgetsText {
         if (textEnd > 2000 && !wrapEnabled) {
             /*  Long text!
                 Perform manual coarse clipping to optimize for long multi-line text
-                From this point we will only compute the width of lines that are visible. Optimization only available
-                when word-wrapping is disabled.
-                We also don't vertically center the text within the line full height, which is unlikely to matter
-                because we are likely the biggest and only item on the line.    */
+                - From this point we will only compute the width of lines that are visible. Optimization only available
+                    when word-wrapping is disabled.
+                - We also don't vertically center the text within the line full height, which is unlikely to matter
+                    because we are likely the biggest and only item on the line.
+                - We use memchr(), pay attention that well optimized versions of those str/mem functions are much faster
+                    than a casually written loop.   */
 
             var line = 0
             val lineHeight = textLineHeight
@@ -74,7 +64,7 @@ interface imgui_widgetsText {
                     if (linesSkippable > 0) {
                         var linesSkipped = 0
                         while (line < textEnd && linesSkipped < linesSkippable) {
-                            val lineEnd = text.strchr(line, '\n') ?: textEnd
+                            val lineEnd = text.memchr(line, '\n') ?: textEnd
                             line = lineEnd + 1
                             linesSkipped++
                         }
@@ -85,14 +75,14 @@ interface imgui_widgetsText {
                 if (line < textEnd) {
                     val lineRect = Rect(pos, pos + Vec2(Float.MAX_VALUE, lineHeight))
                     while (line < textEnd) {
-                        var lineEnd = text.strchr(line, '\n') ?: 0
                         if (isClippedEx(lineRect, 0, false)) break
+
+                        val lineEnd = text.memchr(line, '\n') ?: textEnd
 
                         val pLine = text.substring(line)
                         val lineSize = calcTextSize(pLine, lineEnd - line, false)
                         textSize.x = glm.max(textSize.x, lineSize.x)
                         renderText(pos, pLine, lineEnd - line, false)
-                        if (lineEnd == 0) lineEnd = textEnd
                         line = lineEnd + 1
                         lineRect.min.y += lineHeight
                         lineRect.max.y += lineHeight
@@ -101,7 +91,7 @@ interface imgui_widgetsText {
                     // Count remaining lines
                     var linesSkipped = 0
                     while (line < textEnd) {
-                        val lineEnd = text.strchr(line, '\n') ?: textEnd
+                        val lineEnd = text.memchr(line, '\n') ?: textEnd
                         line = lineEnd + 1
                         linesSkipped++
                     }
@@ -203,7 +193,7 @@ interface imgui_widgetsText {
         val text = fmt.format(style.locale, *args)
         val labelSize = calcTextSize(text, false)
         val textBaseOffsetY = glm.max(0f, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
-        val lineHeight = glm.max(glm.min(window.dc.currentLineHeight, g.fontSize + style.framePadding.y * 2), g.fontSize)
+        val lineHeight = glm.max(glm.min(window.dc.currentLineSize.y, g.fontSize + style.framePadding.y * 2), g.fontSize)
         val x = g.fontSize + if (labelSize.x > 0f) labelSize.x + style.framePadding.x * 2 else 0f
         // Empty text doesn't add padding
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(x, glm.max(lineHeight, labelSize.y)))
@@ -229,43 +219,6 @@ interface imgui_widgetsText {
             renderArrowPointingAt(drawList, Vec2(pos.x + halfSz.x, pos.y), halfSz, Dir.Right, COL32_WHITE)
             renderArrowPointingAt(drawList, Vec2(pos.x + barW - halfSz.x - 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Left, COL32_BLACK)
             renderArrowPointingAt(drawList, Vec2(pos.x + barW - halfSz.x, pos.y), halfSz, Dir.Left, COL32_WHITE)
-        }
-
-        fun colorPickerOptionsPopup(flags: ColorEditFlags, refCol: FloatArray) {
-            val allowOptPicker = flags hasnt Cef._PickerMask
-            val allowOptAlphaBar = flags hasnt Cef.NoAlpha && flags hasnt Cef.AlphaBar
-            if ((!allowOptPicker && !allowOptAlphaBar) || !beginPopup("context")) return
-            if (allowOptPicker) {
-                // FIXME: Picker size copied from main picker function
-                val pickerSize = Vec2(g.fontSize * 8, glm.max(g.fontSize * 8 - (frameHeight + style.itemInnerSpacing.x), 1f))
-                pushItemWidth(pickerSize.x)
-                for (pickerType in 0..1) {
-                    // Draw small/thumbnail version of each picker type (over an invisible button for selection)
-                    if (pickerType > 0) separator()
-                    pushId(pickerType)
-                    var pickerFlags: ColorEditFlags = Cef.NoInputs or Cef.NoOptions or Cef.NoLabel or
-                            Cef.NoSidePreview or (flags and Cef.NoAlpha)
-                    if (pickerType == 0) pickerFlags = pickerFlags or Cef.PickerHueBar
-                    if (pickerType == 1) pickerFlags = pickerFlags or Cef.PickerHueWheel
-                    val backupPos = Vec2(cursorScreenPos)
-                    if (selectable("##selectable", false, 0, pickerSize)) // By default, Selectable() is closing popup
-                        g.colorEditOptions = (g.colorEditOptions wo Cef._PickerMask) or (pickerFlags and Cef._PickerMask)
-                    cursorScreenPos = backupPos
-                    val dummyRefCol = Vec4()
-                    for (i in 0..2) dummyRefCol[i] = refCol[i]
-                    if (pickerFlags hasnt Cef.NoAlpha) dummyRefCol[3] = refCol[3]
-                    colorPicker4("##dummypicker", dummyRefCol, pickerFlags)
-                    popId()
-                }
-                popItemWidth()
-            }
-            if (allowOptAlphaBar) {
-                if (allowOptPicker) separator()
-                val pI = intArrayOf(g.colorEditOptions)
-                checkboxFlags("Alpha Bar", pI, Cef.AlphaBar.i)
-                g.colorEditOptions = pI[0]
-            }
-            endPopup()
         }
     }
 }

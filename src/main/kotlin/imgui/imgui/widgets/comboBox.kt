@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import glm_.func.common.max
 import glm_.vec2.Vec2
@@ -9,6 +9,7 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endPopup
+import imgui.ImGui.findBestWindowPosForPopupEx
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.frameHeight
 import imgui.ImGui.isPopupOpen
@@ -30,6 +31,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.internal.DrawCornerFlag
+import imgui.internal.PopupPositionPolicy
 import imgui.internal.Rect
 import imgui.internal.isPowerOfTwo
 import uno.kotlin.getValue
@@ -42,7 +44,7 @@ import imgui.internal.ButtonFlag as Bf
 /** Widgets: Combo Box
  *  The new BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it,
  *  by creating e.g. Selectable() items. */
-interface imgui_widgetsComboBox {
+interface comboBox {
 
     fun beginCombo(label: String, previewValue: String?, flags_: ComboFlags = 0): Boolean {
 
@@ -50,7 +52,7 @@ interface imgui_widgetsComboBox {
 
         // Always consume the SetNextWindowSizeConstraint() call in our early return paths
         val backupNextWindowSizeConstraint = g.nextWindowData.sizeConstraintCond
-        g.nextWindowData.sizeConstraintCond = Cond.Null
+        g.nextWindowData.sizeConstraintCond = Cond.None
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -97,7 +99,7 @@ interface imgui_widgetsComboBox {
 
         if (!popupOpen) return false
 
-        if (backupNextWindowSizeConstraint != Cond.Null) {
+        if (backupNextWindowSizeConstraint != Cond.None) {
             g.nextWindowData.sizeConstraintCond = backupNextWindowSizeConstraint
             g.nextWindowData.sizeConstraintRect.min.x = g.nextWindowData.sizeConstraintRect.min.x max w
         } else {
@@ -118,11 +120,10 @@ interface imgui_widgetsComboBox {
         // Peak into expected window size so we can position it
         findWindowByName(name)?.let {
             if (it.wasActive) {
-                val sizeContents = it.calcSizeContents()
-                val sizeExpected = it.calcSizeAfterConstraint(it.calcSizeAutoFit(sizeContents))
+                val sizeExpected = it.calcExpectedSize()
                 if (flags has Cf.PopupAlignLeft)
                     it.autoPosLastDirection = Dir.Left
-                val rOuter = findAllowedExtentRectForWindow(it)
+                val rOuter = it.getAllowedExtentRect()
                 val pos = findBestWindowPosForPopupEx(frameBb.bl, sizeExpected, it::autoPosLastDirection, rOuter, frameBb, PopupPositionPolicy.ComboBox)
                 setNextWindowPos(pos)
             }
@@ -154,7 +155,7 @@ interface imgui_widgetsComboBox {
         i = currentItem[0]
         val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
         // FIXME-OPT: Avoid computing this, or at least only when combo is open
-        val res = combo(label, ::i, items, heightInItems)
+        val res = combo(label, Companion::i, items, heightInItems)
         currentItem[0] = i
         return res
     }
@@ -168,7 +169,7 @@ interface imgui_widgetsComboBox {
     /** Combo box function. */
     fun combo(label: String, currentItem: IntArray, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
         i = currentItem[0]
-        val res = combo(label, ::i, items, popupMaxHeightInItem)
+        val res = combo(label, Companion::i, items, popupMaxHeightInItem)
         currentItem[0] = i
         return res
     }
@@ -180,7 +181,7 @@ interface imgui_widgetsComboBox {
 
         /*  The old Combo() API exposed "popup_max_height_in_items". The new more general BeginCombo() API doesn't,
             have/need it, but we emulate it here.         */
-        if (popupMaxHeightInItem != -1 && g.nextWindowData.sizeConstraintCond == Cond.Null)
+        if (popupMaxHeightInItem != -1 && g.nextWindowData.sizeConstraintCond == Cond.None)
             setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, calcMaxPopupHeightFromItemCount(popupMaxHeightInItem)))
 
         if (!beginCombo(label, previewValue, Cf.None.i)) return false
@@ -205,6 +206,15 @@ interface imgui_widgetsComboBox {
 
     companion object {
         private var i = 0
+
+        //-------------------------------------------------------------------------
+        // [SECTION] Widgets: ComboBox
+        //-------------------------------------------------------------------------
+        // - BeginCombo()
+        // - EndCombo()
+        // - Combo()
+        //-------------------------------------------------------------------------
+
         fun calcMaxPopupHeightFromItemCount(itemsCount: Int) = when {
                 itemsCount <= 0 -> Float.MAX_VALUE
                 else -> (g.fontSize + style.itemSpacing.y) * itemsCount - style.itemSpacing.y + style.windowPadding.y * 2

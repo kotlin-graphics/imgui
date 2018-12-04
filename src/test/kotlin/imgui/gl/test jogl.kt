@@ -63,7 +63,7 @@ private class HelloWorld_jogl : GLEventListener {
         ctx = Context()
         JoglGL3.init(window, true)
 
-        // Setup style
+        // Setup Style
         ImGui.styleColorsDark()
 //        ImGui.styleColorsClassic()
 

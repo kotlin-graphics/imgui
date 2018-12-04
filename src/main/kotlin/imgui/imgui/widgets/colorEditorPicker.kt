@@ -1,4 +1,4 @@
-package imgui.imgui
+package imgui.imgui.widgets
 
 import gli_.has
 import glm_.f
@@ -42,7 +42,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.markItemEdit
+import imgui.ImGui.markItemEdited
 import imgui.ImGui.openPopup
 import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popId
@@ -60,12 +60,12 @@ import imgui.ImGui.separator
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.shadeVertsLinearColorGradientKeepAlpha
+import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.u32
-import imgui.imgui.imgui_widgetsText.Companion.colorPickerOptionsPopup
-import imgui.imgui.imgui_widgetsText.Companion.renderArrowsForVerticalBar
+import imgui.imgui.widgets.text.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -77,7 +77,7 @@ import imgui.internal.DrawCornerFlag as Dcf
  *  Note that a 'float v[X]' function argument is the same as 'float* v', the array syntax is just a way to document
  *  the number of elements that are expected to be accessible. You can the pass the address of a first float element
  *  out of a contiguous structure, e.g. &myvector.x   */
-interface imgui_widgetsColorEditorPicker {
+interface colorEditorPicker {
 
     /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
      *  Hint: 'float col[3]' function argument is same as 'float* col'.
@@ -211,7 +211,7 @@ interface imgui_widgetsColorEditorPicker {
                 pickerActiveWindow = g.currentWindow
                 if (0 != labelDisplayEnd) {
                     textUnformatted(label, labelDisplayEnd)
-                    separator()
+                    spacing()
                 }
                 val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
                 val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._InputsMask or Cef.NoLabel or Cef.AlphaPreviewHalf
@@ -248,11 +248,14 @@ interface imgui_widgetsColorEditorPicker {
         // NB: The flag test is merely an optional micro-optimization, BeginDragDropTarget() does the same test.
         if (window.dc.lastItemStatusFlags has ItemStatusFlag.HoveredRect && beginDragDropTarget()) {
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
-                for (j in 0..2) col[j] = (it.data as Vec4)[j]
+                for (j in 0..2)
+                    col[j] = it.data!!.asFloatBuffer()[j]
                 valueChanged = true
             }
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_4F)?.let {
-                for (j in 0..components) col[j] = (it.data as Vec4)[j]
+                val floats = it.data!!.asFloatBuffer()
+                for (j in 0 until components)
+                    col[j] = floats[j]
                 valueChanged = true
             }
             endDragDropTarget()
@@ -263,7 +266,7 @@ interface imgui_widgetsColorEditorPicker {
             window.dc.lastItemId = g.activeId
 
         if (valueChanged)
-            markItemEdit(window.dc.lastItemId)
+            markItemEdited(window.dc.lastItemId)
 
         return valueChanged
     }
@@ -315,7 +318,7 @@ interface imgui_widgetsColorEditorPicker {
             flags = flags or Cef.NoSmallPreview
 
         // Context menu: display and store options.
-        if (flags hasnt Cef.NoOptions) colorPickerOptionsPopup(flags, col)
+//        if (flags hasnt Cef.NoOptions)
 
         // Read stored options
         if (flags hasnt Cef._PickerMask)
@@ -455,13 +458,20 @@ interface imgui_widgetsColorEditorPicker {
             colorConvertHSVtoRGB(if (h >= 1f) h - 10 * 1e-6f else h, if (s > 0f) s else 10 * 1e-6f, if (v > 0f) v else 1e-6f, col)
 
         // R,G,B and H,S,V slider color editor
+        var valueChangedFixHueWrap = false
         if (flags hasnt Cef.NoInputs) {
             pushItemWidth((if (alphaBar) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
             val subFlagsToForward = Cef._DataTypeMask or Cef.HDR or Cef.NoAlpha or Cef.NoOptions or Cef.NoSmallPreview or
                     Cef.AlphaPreview or Cef.AlphaPreviewHalf
             val subFlags = (flags and subFlagsToForward) or Cef.NoPicker
             valueChanged = when {
-                flags has Cef.RGB || flags hasnt Cef._InputsMask -> colorEdit4("##rgb", col, subFlags or Cef.RGB)
+                flags has Cef.RGB || flags hasnt Cef._InputsMask ->
+                    if (colorEdit4("##rgb", col, subFlags or Cef.RGB)) {
+                        // FIXME: Hackily differentiating using the DragInt (ActiveId != 0 && !ActiveIdAllowOverlap) vs. using the InputText or DropTarget.
+                        // For the later we don't want to run the hue-wrap canceling code. If you are well versed in HSV picker please provide your input! (See #2050)
+                        valueChangedFixHueWrap = g.activeId != 0 && !g.activeIdAllowOverlap
+                        true
+                    } else valueChanged
                 flags has Cef.HSV || flags hasnt Cef._InputsMask -> colorEdit4("##hsv", col, subFlags or Cef.HSV)
                 flags has Cef.HEX || flags hasnt Cef._InputsMask -> colorEdit4("##hex", col, subFlags or Cef.HEX)
                 else -> false
@@ -469,8 +479,8 @@ interface imgui_widgetsColorEditorPicker {
             popItemWidth()
         }
 
-        // Try to cancel hue wrap (after ColorEdit), if any
-        if (valueChanged) {
+        // Try to cancel hue wrap (after ColorEdit4 call), if any
+        if (valueChangedFixHueWrap) {
             val (newH, newS, newV) = colorConvertRGBtoHSV(col)
             if (newH <= 0 && h > 0) {
                 if (newV <= 0 && v != newV)
@@ -576,7 +586,7 @@ interface imgui_widgetsColorEditorPicker {
         if (valueChanged && compare)
             valueChanged = false
         if (valueChanged)
-            markItemEdit(window.dc.lastItemId)
+            markItemEdited(window.dc.lastItemId)
 
         popId()
 
@@ -657,7 +667,7 @@ interface imgui_widgetsColorEditorPicker {
         }
 
         if (pressed)
-            markItemEdit(id)
+            markItemEdited(id)
 
         return pressed
     }

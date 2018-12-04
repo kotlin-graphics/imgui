@@ -17,15 +17,12 @@ import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4i
-import gln.get
 import gln.glf.semantic
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
-import kool.bufferBig
-import kool.free
-import kool.intBufferBig
-import kool.stak
+import kool.*
+import kool.set
 
 object JoglVrGL3 {
 
@@ -210,9 +207,9 @@ object JoglVrGL3 {
             idxSize = newIdxSize
 
             vtxBuffer.free()
-            vtxBuffer = bufferBig(vtxSize)
+            vtxBuffer = ByteBuffer(vtxSize)
             idxBuffer.free()
-            idxBuffer = intBufferBig(idxSize / Int.BYTES)
+            idxBuffer = IntBuffer(idxSize / Int.BYTES)
 
             glBindVertexArray(vaoName[0])
 

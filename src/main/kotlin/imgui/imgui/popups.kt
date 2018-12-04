@@ -14,14 +14,10 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseReleased
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowHovered
-import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
-import imgui.internal.NavForward
 import imgui.internal.NavMoveFlag
-import imgui.internal.Window
-import kotlin.math.max
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
 
@@ -89,7 +85,7 @@ interface imgui_popups {
         }
         // Center modal windows by default
         // FIXME: Should test for (PosCond & window->SetWindowPosAllowFlags) with the upcoming window.
-        if (g.nextWindowData.posCond == Cond.Null)
+        if (g.nextWindowData.posCond == Cond.None)
             setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
 
         val isOpen = begin(name, pOpen, flags or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings)
@@ -113,7 +109,8 @@ interface imgui_popups {
         end()
     }
 
-    /** Helper to open popup when clicked on last item. return true when just opened.   */
+    /** Helper to open popup when clicked on last item.  (note: actually triggers on the mouse _released_ event to be
+     *  consistent with popup behaviors). return true when just opened.   */
     fun openPopupOnItemClick(strId: String = "", mouseButton: Int = 1) = with(g.currentWindow!!) {
         if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
             // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!

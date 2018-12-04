@@ -1,31 +1,19 @@
 package imgui.imgui
 
-import gli_.hasnt
 import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.getOverlayDrawList
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.navInitWindow
+import imgui.ImGui.setNavIDWithRectRel
 import imgui.ImGui.style
-import imgui.internal.NavMoveResult
-import imgui.internal.Rect
-import imgui.internal.Window
-import imgui.internal.lerp
+import imgui.internal.*
 import kotlin.math.abs
 import imgui.WindowFlag as Wf
 
-inline fun navScoreItemGetQuadrant(dx: Float, dy: Float) = when {
-    abs(dx) > abs(dy) -> when {
-        dx > 0f -> Dir.Right
-        else -> Dir.Left
-    }
-    else -> when {
-        dy > 0f -> Dir.Down
-        else -> Dir.Up
-    }
-}
 
 inline fun navScoreItemDistInterval(a0: Float, a1: Float, b0: Float, b1: Float) = when {
     a1 < b0 -> a1 - b0
@@ -92,13 +80,13 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
         dax = dbX
         day = dbY
         distAxial = distBox
-        quadrant = navScoreItemGetQuadrant(dbX, dbY)
+        quadrant = getDirQuadrantFromDelta(dbX, dbY)
     } else if (dcX != 0f || dcY != 0f) {
         // For overlapping boxes with different centers, use distance between centers
         dax = dcX
         day = dcY
         distAxial = distCenter
-        quadrant = navScoreItemGetQuadrant(dcX, dcY)
+        quadrant = getDirQuadrantFromDelta(dcX, dcY)
     }
     /* Degenerate case: two overlapping buttons with same center, break ties arbitrarily (note that lastItemId here is
         really the _previous_ item order, but it doesn't matter)     */
@@ -109,7 +97,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
         if (isMouseHoveringRect(cand.min, cand.max)) {
             val buf = "dbox (%.2f,%.2f->%.4f)\ndcen (%.2f,%.2f->%.4f)\nd (%.2f,%.2f->%.4f)\nnav WENS${g.navMoveDir}, quadrant WENS$quadrant"
                     .format(style.locale, dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial)
-            with(g.overlayDrawList) {
+            getOverlayDrawList(window).apply {
                 addRect(curr.min, curr.max, COL32(255, 200, 0, 100))
                 addRect(cand.min, cand.max, COL32(255, 255, 0, 200))
                 addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf) + Vec2(4), COL32(40, 0, 0, 150))
@@ -122,8 +110,10 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
             }
             if (quadrant == g.navMoveDir) {
                 val buf = "%.0f/%.0f".format(style.locale, distBox, distCenter).toCharArray()
-                g.overlayDrawList.addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 200))
-                g.overlayDrawList.addText(io.fontDefault, 13f, cand.min, COL32(255, 255, 255, 255), buf)
+                getOverlayDrawList(window).apply {
+                    addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 200))
+                    addText(io.fontDefault, 13f, cand.min, COL32(255, 255, 255, 255), buf)
+                }
             }
         }
 
@@ -175,16 +165,6 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     return newBest
 }
 
-fun navSaveLastChildNavWindow(childWindow: Window?) {
-    var parentWindow = childWindow
-    while (parentWindow != null && parentWindow.flags has Wf.ChildWindow && parentWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
-        parentWindow = parentWindow.parentWindow
-    parentWindow?.let { if (it !== childWindow) it.navLastChildNavWindow = childWindow }
-}
-
-/** Call when we are expected to land on Layer 0 after FocusWindow()    */
-fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow ?: window
-
 fun navRestoreLayer(layer: Int) {
 
     g.navLayer = layer
@@ -196,32 +176,9 @@ fun navRestoreLayer(layer: Int) {
         navInitWindow(g.navWindow!!, true)
 }
 
-fun navUpdateAnyRequestFlag() {
-    g.navAnyRequest = g.navMoveRequest || g.navInitRequest || (IMGUI_DEBUG_NAV_SCORING && g.navWindow != null)
-    if (g.navAnyRequest)
-        assert(g.navWindow != null)
-}
-
-fun navMoveRequestButNoResultYet() = g.navMoveRequest && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
-
-
 fun setCurrentWindow(window: Window?) {
     g.currentWindow = window
     if (window != null)
         g.fontSize = window.calcFontSize()
     g.drawListSharedData.fontSize = g.fontSize
-}
-
-fun setNavId(id: ID, navLayer: Int) {
-    assert(navLayer == 0 || navLayer == 1)
-    g.navId = id
-    g.navWindow!!.navLastIds[navLayer] = id
-}
-
-fun setNavIDWithRectRel(id: ID, navLayer: Int, rectRel: Rect) {
-    setNavId(id, navLayer)
-    g.navWindow!!.navRectRel[navLayer] put rectRel
-    g.navMousePosDirty = true
-    g.navDisableHighlight = false
-    g.navDisableMouseHover = true
 }

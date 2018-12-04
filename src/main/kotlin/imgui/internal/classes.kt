@@ -3,6 +3,7 @@ package imgui.internal
 import gli_.has
 import gli_.hasnt
 import glm_.f
+import glm_.func.common.floor
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -172,7 +173,7 @@ class Rect {
 }
 
 /** Stacked color modifier, backup of modified data so we can restore it    */
-class ColMod(val col: Col, value: Vec4) {
+class ColorMod(val col: Col, value: Vec4) {
     val backupValue = Vec4(value)
 }
 
@@ -186,9 +187,9 @@ class StyleMod(val idx: StyleVar) {
 class GroupData {
     var backupCursorPos = Vec2()
     var backupCursorMaxPos = Vec2()
-    var backupIndentX = 0f
-    var backupGroupOffsetX = 0f
-    var backupCurrentLineHeight = 0f
+    var backupIndent = 0f
+    var backupGroupOffset = 0f
+    var backupCurrentLineSize = Vec2()
     var backupCurrentLineTextBaseOffset = 0f
     var backupLogLinePosY = 0f
     var backupActiveIdIsAlive = 0
@@ -378,13 +379,13 @@ class NavMoveResult {
 
 /** Storage for SetNexWindow** functions    */
 class NextWindowData {
-    var posCond = Cond.Null
-    var sizeCond = Cond.Null
-    var contentSizeCond = Cond.Null
-    var collapsedCond = Cond.Null
-    var sizeConstraintCond = Cond.Null
-    var focusCond = Cond.Null
-    var bgAlphaCond = Cond.Null
+    var posCond = Cond.None
+    var sizeCond = Cond.None
+    var contentSizeCond = Cond.None
+    var collapsedCond = Cond.None
+    var sizeConstraintCond = Cond.None
+    var focusCond = Cond.None
+    var bgAlphaCond = Cond.None
     val posVal = Vec2()
     val posPivotVal = Vec2()
     val sizeVal = Vec2()
@@ -399,17 +400,17 @@ class NextWindowData {
     var menuBarOffsetMinVal = Vec2()
 
     fun clear() {
-        posCond = Cond.Null
-        sizeCond = Cond.Null
-        contentSizeCond = Cond.Null
-        collapsedCond = Cond.Null
-        sizeConstraintCond = Cond.Null
-        focusCond = Cond.Null
-        bgAlphaCond = Cond.Null
+        posCond = Cond.None
+        sizeCond = Cond.None
+        contentSizeCond = Cond.None
+        collapsedCond = Cond.None
+        sizeConstraintCond = Cond.None
+        focusCond = Cond.None
+        bgAlphaCond = Cond.None
     }
 }
 
-/** Temporary storage for one, that's the data which in theory we could ditch at the end of the frame
+/** Temporary storage for one window(, that's the data which in theory we could ditch at the end of the frame)
  *  Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
  *  FIXME: That's theory, in practice the delimitation between Window and WindowTempData is quite tenuous and could be reconsidered.  */
 class WindowTempData {
@@ -423,11 +424,11 @@ class WindowTempData {
      *  Turned into window.sizeContents at the beginning of next frame   */
     var cursorMaxPos = Vec2()
 
-    var currentLineHeight = 0f
+    var currentLineSize = Vec2()
 
     var currentLineTextBaseOffset = 0f
 
-    var prevLineHeight = 0f
+    var prevLineSize = Vec2()
 
     var prevLineTextBaseOffset = 0f
 
@@ -497,12 +498,12 @@ class WindowTempData {
 
 
     /** Indentation / start position from left of window (increased by TreePush/TreePop, etc.)  */
-    var indentX = 0f
+    var indent = 0f
 
-    var groupOffsetX = 0f
+    var groupOffset = 0f
     /** Offset to the current column (if ColumnsCurrent > 0). FIXME: This and the above should be a stack to allow use
     cases like Tree->Column->Tree. Need revamp columns API. */
-    var columnsOffsetX = 0f
+    var columnsOffset = 0f
     /** Current columns set */
     var columnsSet: ColumnsSet? = null
 }
@@ -567,12 +568,12 @@ class Window(var context: Context, var name: String) {
     var hidden = false
     /** Set when the window has a close button (p_open != NULL) */
     var hasCloseButton = false
+    /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
+    var beginCount = 0
     /** Order within immediate parent window, if we are a child window. Otherwise 0. */
     var beginOrderWithinParent = -1
     /** Order within entire imgui context. This is mostly used for debugging submission order related issues. */
     var beginOrderWithinContext = -1
-    /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
-    var beginCount = 0
     /** ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)   */
     var popupId: ID = 0
 
@@ -750,25 +751,9 @@ class Window(var context: Context, var name: String) {
         name = ""
     }
 
-    /** SetWindowScrollX */
-    fun setScrollX(newScrollX: Float) {
-        dc.cursorMaxPos.x += scroll.x // SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need to apply our change to it.
-        scroll.x = newScrollX
-        dc.cursorMaxPos.x -= scroll.x
-    }
-
-    /** SetWindowScrollY */
-    fun setScrollY(newScrollY: Float) {
-        /*  SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need
-            to apply our change to it.         */
-        dc.cursorMaxPos.y += scroll.y
-        scroll.y = newScrollY
-        dc.cursorMaxPos.y -= scroll.y
-    }
-
     fun setPos(pos: Vec2, cond: Cond) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != Cond.Null && setWindowPosAllowFlags hasnt cond)
+        if (cond != Cond.None && setWindowPosAllowFlags hasnt cond)
             return
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
@@ -788,7 +773,7 @@ class Window(var context: Context, var name: String) {
 
     fun setSize(size: Vec2, cond: Cond) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != Cond.Null && setWindowSizeAllowFlags hasnt cond)
+        if (cond != Cond.None && setWindowSizeAllowFlags hasnt cond)
             return
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
@@ -797,14 +782,14 @@ class Window(var context: Context, var name: String) {
         // Set
         if (size.x > 0f) {
             autoFitFrames.x = 0
-            sizeFull.x = size.x
+            sizeFull.x = size.x.floor
         } else {
             autoFitFrames.x = 2
             autoFitOnlyGrows = false
         }
         if (size.y > 0f) {
             autoFitFrames.y = 0
-            sizeFull.y = size.y
+            sizeFull.y = size.y.floor
         } else {
             autoFitFrames.y = 2
             autoFitOnlyGrows = false
@@ -813,7 +798,7 @@ class Window(var context: Context, var name: String) {
 
     fun setCollapsed(collapsed: Boolean, cond: Cond) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != Cond.Null && setWindowCollapsedAllowFlags hasnt cond)
+        if (cond != Cond.None && setWindowCollapsedAllowFlags hasnt cond)
             return
         setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
         // Set
@@ -822,6 +807,7 @@ class Window(var context: Context, var name: String) {
 
     infix fun isContentHoverable(flag: Hf) = isContentHoverable(flag.i)
 
+    /** ~IsWindowContentHoverable */
     infix fun isContentHoverable(flags: HoveredFlags): Boolean {
         // An active popup disable hovering on other windows (apart from its own children)
         // FIXME-OPT: This could be cached/stored within the window.
@@ -839,7 +825,7 @@ class Window(var context: Context, var name: String) {
 
     fun calcSizeAfterConstraint(newSize: Vec2): Vec2 {
 
-        if (g.nextWindowData.sizeConstraintCond != Cond.Null) {
+        if (g.nextWindowData.sizeConstraintCond != Cond.None) {
             // Using -1,-1 on either X/Y axis to preserve the current size.
             val cr = g.nextWindowData.sizeConstraintRect
             newSize.x = if (cr.min.x >= 0 && cr.max.x >= 0) glm.clamp(newSize.x, cr.min.x, cr.max.x) else sizeFull.x
@@ -882,8 +868,12 @@ class Window(var context: Context, var name: String) {
         }
     }
 
-    val scrollMaxX get() = max(0f, sizeContents.x - (sizeFull.x - scrollbarSizes.x))
-    val scrollMaxY get() = max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y))
+    /** ~GetWindowScrollMaxX */
+    val scrollMaxX: Float
+        get() = max(0f, sizeContents.x - (sizeFull.x - scrollbarSizes.x))
+    /** ~GetWindowScrollMaxY */
+    val scrollMaxY: Float
+        get() = max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y))
 
     /** AddWindowToDrawData */
     infix fun addTo(outList: ArrayList<DrawList>) {
@@ -894,13 +884,13 @@ class Window(var context: Context, var name: String) {
     }
 
     /** AddWindowToSortedBuffer */
-    infix fun addToSortedBuffer(sortedWindows: ArrayList<Window>) {
+    infix fun addToSortBuffer(sortedWindows: ArrayList<Window>) {
         sortedWindows += this
         if (active) {
             val count = dc.childWindows.size
             if (count > 1)
                 dc.childWindows.sortWith(childWindowComparer)
-            dc.childWindows.filter { it.active }.forEach { it addToSortedBuffer sortedWindows }
+            dc.childWindows.filter { it.active }.forEach { it addToSortBuffer sortedWindows }
         }
     }
 
@@ -920,20 +910,32 @@ class Window(var context: Context, var name: String) {
         setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags wo flags
     }
 
-    fun bringToFront() {
+    fun bringToFocusFront() {
+        if (g.windowsFocusOrder.last() === this)
+            return
+        for (i in g.windowsFocusOrder.size - 2 downTo 0) // We can ignore the front most window
+            if (g.windowsFocusOrder[i] === this) {
+                g.windowsFocusOrder.removeAt(i)
+                g.windowsFocusOrder += this
+                break;
+            }
+    }
+
+    /** ~BringWindowToDisplayFront */
+    fun bringToDisplayFront() {
         val currentFrontWindow = g.windows.last()
         if (currentFrontWindow === this || currentFrontWindow.rootWindow === this)
             return
-        for (i in g.windows.size - 2 downTo 0)
+        for (i in g.windows.size - 2 downTo 0) // We can ignore the front most window
             if (g.windows[i] === this) {
                 g.windows.removeAt(i)
-                g.windows.add(this)
+                g.windows += this
                 break
             }
     }
 
-    /** ~ BringWindowToBack */
-    fun bringToBack() {
+    /** ~ BringWindowToDisplayBack */
+    fun bringToDisplayBack() {
         if (g.windows[0] === this) return
         for (i in 0 until g.windows.size)
             if (g.windows[i] === this) {
@@ -954,7 +956,31 @@ class Window(var context: Context, var name: String) {
 
     /** Can we focus this window with CTRL+TAB (or PadMenu + PadFocusPrev/PadFocusNext)
      *  ~ IsWindowNavFocusable */
-    val isNavFocusable get() = active && this === rootWindow && flags hasnt Wf.NoNavFocus
+    val isNavFocusable: Boolean
+        get() = active && this === rootWindow && flags hasnt Wf.NoNavFocus
+
+    /** SetWindowScrollX */
+    fun setScrollX(newScrollX: Float) {
+        dc.cursorMaxPos.x += scroll.x // SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need to apply our change to it.
+        scroll.x = newScrollX
+        dc.cursorMaxPos.x -= scroll.x
+    }
+
+    /** SetWindowScrollY */
+    fun setScrollY(newScrollY: Float) {
+        /*  SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need
+            to apply our change to it.         */
+        dc.cursorMaxPos.y += scroll.y
+        scroll.y = newScrollY
+        dc.cursorMaxPos.y -= scroll.y
+    }
+
+    fun getAllowedExtentRect(): Rect {
+        val padding = style.displaySafeAreaPadding
+        return getViewportRect().apply {
+            expand(Vec2(if (width > padding.x * 2) -padding.x else 0f, if (height > padding.y * 2) -padding.y else 0f))
+        }
+    }
 
     fun calcResizePosSizeFromAnyCorner(cornerTarget: Vec2, cornerNorm: Vec2, outPos: Vec2, outSize: Vec2) {
         val posMin = cornerTarget.lerp(pos, cornerNorm)             // Expected window upper-left
@@ -967,14 +993,14 @@ class Window(var context: Context, var name: String) {
         outSize put sizeConstrained
     }
 
-    fun getBorderRect(borderN: Int, perpPadding: Float, thickness: Float): Rect {
+    fun getResizeBorderRect(borderN: Int, perpPadding: Float, thickness: Float): Rect {
         val rect = rect()
         if (thickness == 0f) rect.max minusAssign 1
         return when (borderN) {
-            0 -> Rect(rect.min.x + perpPadding, rect.min.y, rect.max.x - perpPadding, rect.min.y + thickness)
-            1 -> Rect(rect.max.x - thickness, rect.min.y + perpPadding, rect.max.x, rect.max.y - perpPadding)
-            2 -> Rect(rect.min.x + perpPadding, rect.max.y - thickness, rect.max.x - perpPadding, rect.max.y)
-            3 -> Rect(rect.min.x, rect.min.y + perpPadding, rect.min.x + thickness, rect.max.y - perpPadding)
+            0 -> Rect(rect.min.x + perpPadding, rect.min.y - thickness, rect.max.x - perpPadding, rect.min.y + thickness)
+            1 -> Rect(rect.max.x - thickness, rect.min.y + perpPadding, rect.max.x + thickness, rect.max.y - perpPadding)
+            2 -> Rect(rect.min.x + perpPadding, rect.max.y - thickness, rect.max.x - perpPadding, rect.max.y + thickness)
+            3 -> Rect(rect.min.x - thickness, rect.min.y + perpPadding, rect.min.x + thickness, rect.max.y - perpPadding)
             else -> throw Error()
         }
     }
@@ -1046,6 +1072,11 @@ class Window(var context: Context, var name: String) {
         while (rootWindowForNav!!.flags has Wf.NavFlattened)
             rootWindowForNav = rootWindowForNav!!.parentWindow
     }
+
+    fun calcExpectedSize(): Vec2 {
+        val sizeContents = calcSizeContents()
+        return calcSizeAfterConstraint(calcSizeAutoFit(sizeContents))
+    }
 }
 
 fun Window?.setCurrent() {
@@ -1082,8 +1113,9 @@ fun Window?.focus() {
             clearActiveId()
 
     // Bring to front
+    bringToFocusFront()
     if (window.flags hasnt Wf.NoBringToFrontOnFocus)
-        window.bringToFront()
+        window.bringToDisplayFront()
 }
 
 /** Backup and restore just enough data to be able to use isItemHovered() on item A after another B in the same window
@@ -1104,4 +1136,15 @@ fun itemHoveredDataBackup(block: () -> Unit) {
     window.dc.lastItemRect put lastItemRect
     window.dc.lastItemStatusFlags = lastItemStatusFlags
     window.dc.lastItemDisplayRect = lastItemDisplayRect
+}
+
+fun focusPreviousWindowIgnoringOne(ignoreWindow: Window?) {
+    for (i in g.windowsFocusOrder.lastIndex downTo 0) {
+        val window = g.windowsFocusOrder[i]
+        if (window !== ignoreWindow && window.wasActive && window.flags hasnt Wf.ChildWindow) {
+            val focusWindow = navRestoreLastChildNavWindow(window)
+            focusWindow.focus()
+            return
+        }
+    }
 }
