@@ -1281,15 +1281,18 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
 }
 
 fun navCalcPreferredRefPos(): Vec2 {
-    if (g.navDisableHighlight || !g.navDisableMouseHover || g.navWindow == null)
-        return glm.floor(io.mousePos)
-
-    // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item
-    val rectRel = g.navWindow!!.navRectRel[g.navLayer]
-    val pos = g.navWindow!!.pos + Vec2(rectRel.min.x + min(g.style.framePadding.x * 4, rectRel.width),
-            rectRel.max.y - min(g.style.framePadding.y, rectRel.height))
-    val visibleRect = getViewportRect()
-    return glm.floor(glm.clamp(Vec2(pos), visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
+    if (g.navDisableHighlight || !g.navDisableMouseHover || g.navWindow == null) {
+        // Mouse (we need a fallback in case the mouse becomes invalid after being used)
+        if (isMousePosValid(io.mousePos))
+            return Vec2(io.mousePos)
+        return Vec2(g.lastValidMousePos)
+    } else {
+        // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item.
+        val rectRel = g.navWindow!!.navRectRel[g.navLayer]
+        val pos = g.navWindow!!.pos+Vec2(rectRel.min.x+min(style.framePadding.x * 4, rectRel.width), rectRel.max.y-min(style.framePadding.y, rectRel.height))
+        val visibleRect = getViewportRect()
+        return glm.floor(glm.clamp(pos, visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
+    }
 }
 
 fun navSaveLastChildNavWindow(childWindow: Window?) {
