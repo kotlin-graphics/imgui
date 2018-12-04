@@ -117,10 +117,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
 }
 
 fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Long, vMax: Long, format: String,
-                  power: Float): Boolean {
+                  power: Float, flags: DragFlags): Boolean {
 
     var v by vPtr as KMutableProperty0<Long>
 
+    val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = false
     val hasMinMax = vMin != vMax
 
@@ -132,7 +133,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
     var adjustDelta = 0f
     if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
-        adjustDelta = io.mouseDelta.x
+        adjustDelta = io.mouseDelta[axis.i]
         if (io.keyAlt)
             adjustDelta *= 1f / 100f
         if (io.keyShift)
@@ -142,10 +143,14 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
             isDecimal -> parseFormatPrecision(format, 3)
             else -> 0
         }
-        adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
+        adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis.i]
         vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
     }
     adjustDelta *= vSpeed
+
+    // For vertical drag we currently assume that Up=higher value (like we do with vertical sliders). This may become a parameter.
+    if (axis == Axis.Y)
+        adjustDelta = -adjustDelta
 
     /*  Clear current value on activation
         Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
@@ -208,10 +213,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
 }
 
 fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Float, vMax: Float, format: String,
-                  power: Float): Boolean {
+                  power: Float, flags: DragFlags): Boolean {
 
     var v by vPtr as KMutableProperty0<Float>
 
+    val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = true
     val hasMinMax = vMin != vMax
 
@@ -223,7 +229,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
     var adjustDelta = 0f
     if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
-        adjustDelta = io.mouseDelta.x
+        adjustDelta = io.mouseDelta[axis.i]
         if (io.keyAlt)
             adjustDelta *= 1f / 100f
         if (io.keyShift)
@@ -233,10 +239,14 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
             isDecimal -> parseFormatPrecision(format, 3)
             else -> 0
         }
-        adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
+        adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis.i]
         vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
     }
     adjustDelta *= vSpeed
+
+    // For vertical drag we currently assume that Up=higher value (like we do with vertical sliders). This may become a parameter.
+    if (axis == Axis.Y)
+        adjustDelta = -adjustDelta
 
     /*  Clear current value on activation
         Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
@@ -298,10 +308,11 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
 }
 
 fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Double, vMax: Double, format: String,
-                  power: Float): Boolean {
+                  power: Float, flags: DragFlags): Boolean {
 
     var v by vPtr as KMutableProperty0<Double>
 
+    val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = true
     val hasMinMax = vMin != vMax
 
@@ -313,7 +324,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
     var adjustDelta = 0f
     if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
-        adjustDelta = io.mouseDelta.x
+        adjustDelta = io.mouseDelta[axis.i]
         if (io.keyAlt)
             adjustDelta *= 1f / 100f
         if (io.keyShift)
@@ -323,10 +334,14 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
             isDecimal -> parseFormatPrecision(format, 3)
             else -> 0
         }
-        adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
+        adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis.i]
         vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
     }
     adjustDelta *= vSpeed
+
+    // For vertical drag we currently assume that Up=higher value (like we do with vertical sliders). This may become a parameter.
+    if (axis == Axis.Y)
+        adjustDelta = -adjustDelta
 
     /*  Clear current value on activation
         Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
@@ -412,7 +427,7 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
 
     var v by vPtr as KMutableProperty0<Int>
 
-    val axis = if(flags has SliderFlag.Vertical) Axis.Y else Axis.X
+    val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = dataType == DataType.Float || dataType == DataType.Double
     val isPower = power != 0f && isDecimal
 
@@ -547,7 +562,7 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
 
     var v by vPtr as KMutableProperty0<Long>
 
-    val axis = if(flags has SliderFlag.Vertical) Axis.Y else Axis.X
+    val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = dataType == DataType.Float || dataType == DataType.Double
     val isPower = power != 0f && isDecimal
 
@@ -682,7 +697,7 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
 
     var v by vPtr as KMutableProperty0<Float>
 
-    val axis = if(flags has SliderFlag.Vertical) Axis.Y else Axis.X
+    val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = dataType == DataType.Float || dataType == DataType.Double
     val isPower = power != 0f && isDecimal
 
@@ -817,7 +832,7 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<
 
     v as KMutableProperty0<Double>
 
-    val axis = if(flags has SliderFlag.Vertical) Axis.Y else Axis.X
+    val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = dataType == DataType.Float || dataType == DataType.Double
     val isPower = power != 0f && isDecimal
 
