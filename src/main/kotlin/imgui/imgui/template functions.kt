@@ -26,7 +26,7 @@ import imgui.internal.DrawListFlag as Dlf
 // This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
 
 fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Int, vMax: Int, format: String,
-                  power: Float): Boolean {
+                  power: Float, flags: DragFlags): Boolean {
 
     var v by vPtr as KMutableProperty0<Int>
 
