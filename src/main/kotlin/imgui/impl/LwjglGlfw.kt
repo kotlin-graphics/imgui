@@ -79,7 +79,14 @@ object LwjglGlfw {
         mouseCursors[MouseCursor.ResizeNWSE.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR) // FIXME: GLFW doesn't have this.
         mouseCursors[MouseCursor.Hand.i] = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
 
-        if (installCallbacks) installCallbacks()
+        if (installCallbacks) {
+            // native callbacks will be added at the GlfwWindow creation via default parameter
+            window.mouseButtonCallbacks["imgui"] = mouseButtonCallback
+            window.scrollCallbacks["imgui"] = scrollCallback
+            window.keyCallbacks["imgui"] = keyCallback
+            window.charCallbacks["imgui"] = charCallback // TODO check if used (jogl doesnt have)
+            imeListener.install(window)
+        }
 
         clientApi = clientApi_
 
@@ -87,15 +94,6 @@ object LwjglGlfw {
 //            ImplVk.init()
 
         return true
-    }
-
-    fun installCallbacks() {
-        // native callbacks will be added at the GlfwWindow creation via default parameter
-        window.mouseButtonCallbacks["imgui"] = mouseButtonCallback
-        window.scrollCallbacks["imgui"] = scrollCallback
-        window.keyCallbacks["imgui"] = keyCallback
-        window.charCallbacks["imgui"] = charCallback // TODO check if used (jogl doesnt have)
-        imeListener.install(window)
     }
 
     fun newFrame() {

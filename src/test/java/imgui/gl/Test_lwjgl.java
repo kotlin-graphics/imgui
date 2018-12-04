@@ -52,7 +52,7 @@ public class Test_lwjgl {
 
         io = imgui.getIo();
 
-        // Setup style
+        // Setup Style
         imgui.styleColorsDark(null);
 //        imgui.styleColorsClassic(null);
 

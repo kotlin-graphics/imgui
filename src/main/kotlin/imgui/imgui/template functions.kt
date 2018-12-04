@@ -412,23 +412,20 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
 
     var v by vPtr as KMutableProperty0<Int>
 
-    val isHorizontal = flags hasnt SliderFlag.Vertical
+    val axis = if(flags has SliderFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = dataType == DataType.Float || dataType == DataType.Double
     val isPower = power != 0f && isDecimal
 
     val grabPadding = 2f
-    val sliderSz = when {
-        isHorizontal -> bb.width - grabPadding * 2f
-        else -> bb.height - grabPadding * 2f
-    }
+    val sliderSz = (bb.max[axis.i] - bb.min[axis.i]) - grabPadding * 2f
     var grabSz = style.grabMinSize
     val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
     if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
         grabSz = max(sliderSz / (vRange + 1), style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
     grabSz = grabSz min sliderSz
     val sliderUsableSz = sliderSz - grabSz
-    val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
-    val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
+    val sliderUsablePosMin = bb.min[axis.i] + grabPadding + grabSz * 0.5f
+    val sliderUsablePosMax = bb.max[axis.i] - grabPadding - grabSz * 0.5f
 
     // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
     val linearZeroPos = when {   // 0.0->1.0f
@@ -451,15 +448,15 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
         if (g.activeIdSource == InputSource.Mouse) {
             if (!io.mouseDown[0]) clearActiveId()
             else {
-                val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
+                val mouseAbsPos = io.mousePos[axis.i]
                 clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
-                if (!isHorizontal)
+                if (axis == Axis.Y)
                     clickedT = 1f - clickedT
                 setNewValue = true
             }
         } else if (g.activeIdSource == InputSource.Nav) {
             val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-            var delta = if (isHorizontal) delta2.x else -delta2.y
+            var delta = if (axis == Axis.X) delta2.x else -delta2.y
             if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                 clearActiveId()
             else if (delta != 0f) {
@@ -534,10 +531,10 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
 
     // Output grab position so it can be displayed by the caller
     var grabT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-    if (!isHorizontal)
+    if (axis == Axis.Y)
         grabT = 1f - grabT
     val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-    if (isHorizontal)
+    if (axis == Axis.X)
         outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
     else
         outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
@@ -550,23 +547,20 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
 
     var v by vPtr as KMutableProperty0<Long>
 
-    val isHorizontal = flags hasnt SliderFlag.Vertical
+    val axis = if(flags has SliderFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = dataType == DataType.Float || dataType == DataType.Double
     val isPower = power != 0f && isDecimal
 
     val grabPadding = 2f
-    val sliderSz = when {
-        isHorizontal -> bb.width - grabPadding * 2f
-        else -> bb.height - grabPadding * 2f
-    }
+    val sliderSz = (bb.max[axis.i] - bb.min[axis.i]) - grabPadding * 2f
     var grabSz = style.grabMinSize
     val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
     if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
         grabSz = max(sliderSz / (vRange + 1).f, style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
     grabSz = grabSz min sliderSz
     val sliderUsableSz = sliderSz - grabSz
-    val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
-    val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
+    val sliderUsablePosMin = bb.min[axis.i] + grabPadding + grabSz * 0.5f
+    val sliderUsablePosMax = bb.max[axis.i] - grabPadding - grabSz * 0.5f
 
     // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
     val linearZeroPos = when {   // 0.0->1.0f
@@ -589,15 +583,15 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
         if (g.activeIdSource == InputSource.Mouse) {
             if (!io.mouseDown[0]) clearActiveId()
             else {
-                val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
+                val mouseAbsPos = io.mousePos[axis.i]
                 clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
-                if (!isHorizontal)
+                if (axis == Axis.Y)
                     clickedT = 1f - clickedT
                 setNewValue = true
             }
         } else if (g.activeIdSource == InputSource.Nav) {
             val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-            var delta = if (isHorizontal) delta2.x else -delta2.y
+            var delta = if (axis == Axis.X) delta2.x else -delta2.y
             if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                 clearActiveId()
             else if (delta != 0f) {
@@ -672,10 +666,10 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
 
     // Output grab position so it can be displayed by the caller
     var grabT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-    if (!isHorizontal)
+    if (axis == Axis.Y)
         grabT = 1f - grabT
     val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-    if (isHorizontal)
+    if (axis == Axis.X)
         outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
     else
         outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
@@ -688,23 +682,20 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
 
     var v by vPtr as KMutableProperty0<Float>
 
-    val isHorizontal = flags hasnt SliderFlag.Vertical
+    val axis = if(flags has SliderFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = dataType == DataType.Float || dataType == DataType.Double
     val isPower = power != 0f && isDecimal
 
     val grabPadding = 2f
-    val sliderSz = when {
-        isHorizontal -> bb.width - grabPadding * 2f
-        else -> bb.height - grabPadding * 2f
-    }
+    val sliderSz = (bb.max[axis.i] - bb.min[axis.i]) - grabPadding * 2f
     var grabSz = style.grabMinSize
     val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
     if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
         grabSz = max(sliderSz / (vRange + 1).f, style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
     grabSz = grabSz min sliderSz
     val sliderUsableSz = sliderSz - grabSz
-    val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
-    val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
+    val sliderUsablePosMin = bb.min[axis.i] + grabPadding + grabSz * 0.5f
+    val sliderUsablePosMax = bb.max[axis.i] - grabPadding - grabSz * 0.5f
 
     // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
     val linearZeroPos = when {   // 0.0->1.0f
@@ -727,15 +718,15 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
         if (g.activeIdSource == InputSource.Mouse) {
             if (!io.mouseDown[0]) clearActiveId()
             else {
-                val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
+                val mouseAbsPos = io.mousePos[axis.i]
                 clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
-                if (!isHorizontal)
+                if (axis == Axis.Y)
                     clickedT = 1f - clickedT
                 setNewValue = true
             }
         } else if (g.activeIdSource == InputSource.Nav) {
             val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-            var delta = if (isHorizontal) delta2.x else -delta2.y
+            var delta = if (axis == Axis.X) delta2.x else -delta2.y
             if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                 clearActiveId()
             else if (delta != 0f) {
@@ -810,10 +801,10 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
 
     // Output grab position so it can be displayed by the caller
     var grabT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-    if (!isHorizontal)
+    if (axis == Axis.Y)
         grabT = 1f - grabT
     val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-    if (isHorizontal)
+    if (axis == Axis.X)
         outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
     else
         outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
@@ -826,23 +817,20 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<
 
     v as KMutableProperty0<Double>
 
-    val isHorizontal = flags hasnt SliderFlag.Vertical
+    val axis = if(flags has SliderFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = dataType == DataType.Float || dataType == DataType.Double
     val isPower = power != 0f && isDecimal
 
     val grabPadding = 2f
-    val sliderSz = when {
-        isHorizontal -> bb.width - grabPadding * 2f
-        else -> bb.height - grabPadding * 2f
-    }
+    val sliderSz = (bb.max[axis.i] - bb.min[axis.i]) - grabPadding * 2f
     var grabSz = style.grabMinSize
     val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
     if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
         grabSz = max(sliderSz / (vRange + 1).f, style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
     grabSz = grabSz min sliderSz
     val sliderUsableSz = sliderSz - grabSz
-    val sliderUsablePosMin = (if (isHorizontal) bb.min.x else bb.min.y) + grabPadding + grabSz * 0.5f
-    val sliderUsablePosMax = (if (isHorizontal) bb.max.x else bb.max.y) - grabPadding - grabSz * 0.5f
+    val sliderUsablePosMin = bb.min[axis.i] + grabPadding + grabSz * 0.5f
+    val sliderUsablePosMax = bb.max[axis.i] - grabPadding - grabSz * 0.5f
 
     // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
     val linearZeroPos = when {   // 0.0->1.0f
@@ -865,15 +853,15 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<
         if (g.activeIdSource == InputSource.Mouse) {
             if (!io.mouseDown[0]) clearActiveId()
             else {
-                val mouseAbsPos = if (isHorizontal) io.mousePos.x else io.mousePos.y
+                val mouseAbsPos = io.mousePos[axis.i]
                 clickedT = if (sliderUsableSz > 0f) glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
-                if (!isHorizontal)
+                if (axis == Axis.Y)
                     clickedT = 1f - clickedT
                 setNewValue = true
             }
         } else if (g.activeIdSource == InputSource.Nav) {
             val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-            var delta = if (isHorizontal) delta2.x else -delta2.y
+            var delta = if (axis == Axis.X) delta2.x else -delta2.y
             if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                 clearActiveId()
             else if (delta != 0f) {
@@ -948,10 +936,10 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<
 
     // Output grab position so it can be displayed by the caller
     var grabT = sliderCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
-    if (!isHorizontal)
+    if (axis == Axis.Y)
         grabT = 1f - grabT
     val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-    if (isHorizontal)
+    if (axis == Axis.X)
         outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
     else
         outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)

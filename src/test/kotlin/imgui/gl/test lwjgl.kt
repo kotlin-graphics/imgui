@@ -53,7 +53,7 @@ private class HelloWorld_lwjgl {
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
         LwjglGlfw.init(window, true, GlfwClientApi.OpenGL)
 
-        // Setup style
+        // Setup Style
         ImGui.styleColorsDark()
 //        ImGui.styleColorsClassic()
 
