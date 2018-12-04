@@ -143,6 +143,9 @@ interface imgui_utilities {
     val frameCount: Int
         get() = g.frameCount
 
+    /** This seemingly unnecessary wrapper simplifies compatibility between the 'master' and 'viewport' branches. */
+    fun getOverlayDrawList(window: Window): DrawList = g.overlayDrawList
+
     /** this draw list will be the last rendered one, useful to quickly draw overlays shapes/text   */
     val overlayDrawList: DrawList
         get() = g.overlayDrawList

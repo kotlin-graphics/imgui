@@ -760,7 +760,7 @@ fun navUpdate() {
     g.navJustMovedToId = 0
 
     // Process navigation move request
-    if (g.navMoveRequest && (g.navMoveResultLocal.id != 0 || g.navMoveResultOther.id != 0))
+    if (g.navMoveRequest)
         navUpdateMoveResult()
 
     // When a forwarded move request failed, we restore the highlight that we disabled during the forward frame
@@ -1134,8 +1134,17 @@ fun navUpdateWindowingList() {
     popStyleVar()
 }
 
+/** Apply result from previous frame navigation directional move request */
 fun navUpdateMoveResult() {
 
+    if (g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0) {
+        // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
+        if (g.navId != 0) {
+            g.navDisableHighlight = false
+            g.navDisableMouseHover = true
+        }
+        return
+    }
     // Select which result to use
     var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else g.navMoveResultOther
 
@@ -1162,7 +1171,7 @@ fun navUpdateMoveResult() {
         if (window.flags has Wf.ChildWindow)
             navScrollToBringItemIntoView(window.parentWindow!!, Rect(rectAbs.min + deltaScroll, rectAbs.max + deltaScroll))
     }
-    // Apply result from previous frame navigation directional move request
+
     clearActiveId()
     g.navWindow = window
     setNavIDWithRectRel(result.id, g.navLayer, result.rectRel)
@@ -1289,7 +1298,7 @@ fun navCalcPreferredRefPos(): Vec2 {
     } else {
         // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item.
         val rectRel = g.navWindow!!.navRectRel[g.navLayer]
-        val pos = g.navWindow!!.pos+Vec2(rectRel.min.x+min(style.framePadding.x * 4, rectRel.width), rectRel.max.y-min(style.framePadding.y, rectRel.height))
+        val pos = g.navWindow!!.pos + Vec2(rectRel.min.x + min(style.framePadding.x * 4, rectRel.width), rectRel.max.y - min(style.framePadding.y, rectRel.height))
         val visibleRect = getViewportRect()
         return glm.floor(glm.clamp(pos, visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
     }

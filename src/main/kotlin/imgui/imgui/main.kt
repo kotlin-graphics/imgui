@@ -536,7 +536,7 @@ interface imgui_main {
 
                 val f = ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus
                 val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), f)
-                //GetOverlayDrawList()->AddRect(resize_rect.Min, resize_rect.Max, IM_COL32(255, 255, 0, 255));
+                //GetOverlayDrawList(window)->AddRect(resize_rect.Min, resize_rect.Max, IM_COL32(255, 255, 0, 255));
                 if (hovered || held)
                     g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
 
@@ -557,7 +557,7 @@ interface imgui_main {
             for (borderN in 0 until resizeBorderCount) {
                 val borderRect = window.getResizeBorderRect(borderN, gripHoverInnerSize, RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS)
                 val (_, hovered, held) = buttonBehavior(borderRect, window.getId((borderN + 4)), ButtonFlag.FlattenChildren)
-                //GetOverlayDrawList()->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
+                //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
                 if ((hovered && g.hoveredIdTimer > RESIZE_WINDOWS_FROM_EDGES_FEEDBACK_TIMER) || held) {
                     g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
                     if (held) borderHeld = borderN
