@@ -39,6 +39,7 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
 import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
+import imgui.internal.DragFlag
 import imgui.internal.Rect
 import imgui.internal.focus
 import kotlin.reflect.KMutableProperty0
@@ -266,7 +267,7 @@ interface drags {
 
         // Actual drag behavior
         itemSize(totalBb, style.framePadding.y)
-        val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power)
+        val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power, DragFlag.None.i)
 
         // Draw frame
         val frameCol = when (g.activeId) {
