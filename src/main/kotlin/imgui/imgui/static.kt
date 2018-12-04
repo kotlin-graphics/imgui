@@ -4,6 +4,7 @@ import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.getOverlayDrawList
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.navInitWindow
@@ -96,7 +97,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
         if (isMouseHoveringRect(cand.min, cand.max)) {
             val buf = "dbox (%.2f,%.2f->%.4f)\ndcen (%.2f,%.2f->%.4f)\nd (%.2f,%.2f->%.4f)\nnav WENS${g.navMoveDir}, quadrant WENS$quadrant"
                     .format(style.locale, dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial)
-            with(g.overlayDrawList) {
+            getOverlayDrawList(window).apply {
                 addRect(curr.min, curr.max, COL32(255, 200, 0, 100))
                 addRect(cand.min, cand.max, COL32(255, 255, 0, 200))
                 addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf) + Vec2(4), COL32(40, 0, 0, 150))
@@ -109,8 +110,10 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
             }
             if (quadrant == g.navMoveDir) {
                 val buf = "%.0f/%.0f".format(style.locale, distBox, distCenter).toCharArray()
-                g.overlayDrawList.addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 200))
-                g.overlayDrawList.addText(io.fontDefault, 13f, cand.min, COL32(255, 255, 255, 255), buf)
+                getOverlayDrawList(window).apply {
+                    addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 200))
+                    addText(io.fontDefault, 13f, cand.min, COL32(255, 255, 255, 255), buf)
+                }
             }
         }
 
