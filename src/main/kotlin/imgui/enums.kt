@@ -246,7 +246,8 @@ enum class FocusedFlag(val i: Int) {
     ChildWindows(1 shl 0),
     /** isWindowFocused(): Test from root window (top most parent of the current hierarchy) */
     RootWindow(1 shl 1),
-    /** IsWindowFocused(): Return true if any window is focused */
+    /** IsWindowFocused(): Return true if any window is focused.
+     *  Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use ImGui::GetIO().WantCaptureMouse instead. */
     AnyWindow(1 shl 2),
     RootAndChildWindows(RootWindow or ChildWindows)
 }
