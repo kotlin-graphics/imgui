@@ -19,6 +19,7 @@ import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.getNavInputAmount2d
+import imgui.ImGui.getOverlayDrawList
 import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMousePosValid
@@ -966,13 +967,14 @@ fun navUpdate() {
     //g.OverlayDrawList.AddRect(g.NavScoringRectScreen.Min, g.NavScoringRectScreen.Max, IM_COL32(255,200,0,255)); // [DEBUG]
     g.navScoringCount = 0
     if (IMGUI_DEBUG_NAV_RECTS)
-        g.navWindow?.let {
-            //            for (layer in 0..1)
-//                overlayDrawList.addRect(it.navRectRel[layer].min + it.pos, it.navRectRel[layer].max + it.pos, COL32(255, 200, 0, 255))
-//            val col = if (it.hiddenFrames == 0) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
-//            val p = navCalcPreferredRefPos()
-//            g.overlayDrawList.addCircleFilled(p, 3f, col)
-//            g.overlayDrawList.addText(null, 13f, p + Vec2(8, -4), col, "${g.navLayer}".toCharArray())
+        g.navWindow?.let {nav ->
+            for (layer in 0..1)
+                getOverlayDrawList(nav).addRect(nav.pos + nav.navRectRel[layer].min, nav.pos + nav.navRectRel[layer].max, COL32(255,200,0,255))  // [DEBUG]
+            val col = if(!nav.hidden) COL32(255,0,255,255) else COL32(255,0,0,255)
+            val p = navCalcPreferredRefPos()
+            val buf = "${g.navLayer}".toCharArray(CharArray(32))
+            getOverlayDrawList(nav).addCircleFilled(p, 3f, col)
+            getOverlayDrawList(nav).addText(null, 13f, p + Vec2(8,-4), col, buf)
         }
 }
 
