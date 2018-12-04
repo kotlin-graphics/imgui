@@ -160,7 +160,7 @@ object ImplGL3 {
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
         val clipOriginLowerLeft  = when {
-            CLIP_ORIGIN -> glGetInteger(GL_CLIP_ORIGIN) == GL_LOWER_LEFT // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
+            CLIP_ORIGIN && glGetInteger(GL_CLIP_ORIGIN) == GL_UPPER_LEFT -> false // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
             else -> true
         }
 
