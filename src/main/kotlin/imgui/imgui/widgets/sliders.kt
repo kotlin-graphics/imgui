@@ -16,6 +16,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
+import imgui.ImGui.focusableItemUnregister
 import imgui.ImGui.inputScalarAsWidgetReplacement
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
@@ -127,8 +128,10 @@ interface sliders {
             }
         }
 
-        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id))
+        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) {
+            focusableItemUnregister(window)
             return inputScalarAsWidgetReplacement(frameBb, id, label, DataType.Float, v, format)
+        }
 
         itemSize(totalBb, style.framePadding.y)
 
