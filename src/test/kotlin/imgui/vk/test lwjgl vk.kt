@@ -65,7 +65,7 @@
 //        window.framebufferSizeCallback = ::resizeCallback
 //        setupVulkanWindowData(size)
 //
-//        // Setup Dear ImGui binding
+//        // Setup Dear ImGui context
 //        ctx = Context()
 //        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 //        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
@@ -73,7 +73,7 @@
 //        // Setup GLFW and Vulkan binding
 //        LwjglGlfw.init(window, true, GlfwClientApi.Vulkan)
 //
-//        // Setup style
+//        // Setup Style
 //        ImGui.styleColorsDark()
 //        //ImGui.styleColorsClassic()
 //
