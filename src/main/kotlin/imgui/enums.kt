@@ -7,7 +7,7 @@ import imgui.ImGui.isKeyPressed
 import imgui.internal.InputReadMode
 
 /** Flags for ImGui::Begin()    */
-enum class WindowFlag(val i: Int) {
+enum class WindowFlag(@JvmField val i: Int) {
 
     None(0),
     /** Disable title-bar   */
@@ -84,7 +84,7 @@ infix fun Int.hasnt(b: WindowFlag) = (this and b.i) == 0
 infix fun Int.wo(b: WindowFlag): WindowFlags = this and b.i.inv()
 
 /** Flags for ImGui::InputText()    */
-enum class InputTextFlag(val i: Int) {
+enum class InputTextFlag(@JvmField val i: Int) {
 
     None(0),
     /** Allow 0123456789 . + - * /      */
@@ -144,7 +144,7 @@ infix fun Int.has(b: InputTextFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: InputTextFlag) = (this and b.i) == 0
 
 /** Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader*()   */
-enum class TreeNodeFlag(val i: Int) {
+enum class TreeNodeFlag(@JvmField val i: Int) {
 
     None(0),
     /** Draw as selected    */
@@ -186,7 +186,7 @@ infix fun Int.has(b: TreeNodeFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: TreeNodeFlag) = (this and b.i) == 0
 
 /** Flags for ImGui::Selectable()   */
-enum class SelectableFlag(val i: Int) {
+enum class SelectableFlag(@JvmField val i: Int) {
 
     None(0),
     /** Clicking this don't close parent popup window   */
@@ -213,7 +213,7 @@ infix fun Int.or(other: SelectableFlag): SelectableFlags = this or other.i
 infix fun Int.has(b: SelectableFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: SelectableFlag) = (this and b.i) == 0
 
-enum class ComboFlag(val i: Int) {
+enum class ComboFlag(@JvmField val i: Int) {
     None(0),
     /** Align the popup toward the left by default */
     PopupAlignLeft(1 shl 0),
@@ -240,7 +240,7 @@ infix fun Int.has(b: ComboFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ComboFlag) = and(b.i) == 0
 
 // Flags for ImGui::IsWindowFocused()
-enum class FocusedFlag(val i: Int) {
+enum class FocusedFlag(@JvmField val i: Int) {
     None(0),
     /** isWindowFocused(): Return true if any children of the window is focused */
     ChildWindows(1 shl 0),
@@ -258,7 +258,7 @@ infix fun Int.or(other: FocusedFlag): FocusedFlags = or(other.i)
 infix fun Int.has(b: FocusedFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: FocusedFlag) = and(b.i) == 0
 
-enum class HoveredFlag(val i: Int) {
+enum class HoveredFlag(@JvmField val i: Int) {
     /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active
      *  popup or modal blocking inputs under them.  */
     None(0),
@@ -287,7 +287,7 @@ infix fun Int.has(b: HoveredFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: HoveredFlag) = and(b.i) == 0
 
 /** Flags for beginDragDropSource(), acceptDragDropPayload() */
-enum class DragDropFlag(val i: Int) {
+enum class DragDropFlag(@JvmField val i: Int) {
     // BeginDragDropSource() flags
     None(0),
     /** By default), a successful call to beginDragDropSource opens a tooltip so you can display a preview or
@@ -335,13 +335,13 @@ val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 /** A primary data type */
 enum class DataType { Int, Uint, Long, Ulong, Float, Double, Vec2;
 
-    val i = ordinal
+    @JvmField val i = ordinal
 }
 
 /** A cardinal direction */
 enum class Dir { None, Left, Right, Up, Down, Count;
 
-    val i = ordinal - 1
+    @JvmField val i = ordinal - 1
 
     companion object {
         fun of(i: Int) = values()[i]
@@ -358,7 +358,7 @@ enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDow
         val COUNT = values().size
     }
 
-    val i = ordinal
+    @JvmField val i = ordinal
 
     /** JVM implementation of IsKeyPressedMap   */
     fun isPressed(repeat: Boolean = true) = isKeyPressed(io.keyMap[i], repeat)
@@ -430,7 +430,7 @@ enum class NavInput {
     /** move down = Arrow keys  */
     KeyDown;
 
-    val i = ordinal
+    @JvmField val i = ordinal
 
     companion object {
         val COUNT = values().size
@@ -449,7 +449,7 @@ enum class NavInput {
 typealias ConfidFlags = Int
 
 /** Configuration flags stored in io.configFlags  */
-enum class ConfigFlag(val i: Int) {
+enum class ConfigFlag(@JvmField val i: Int) {
     /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeysDown[]. */
     NavEnableKeyboard(1 shl 0),
     /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.NavInputs[].
@@ -491,7 +491,7 @@ infix fun ConfigFlag.or(b: ConfigFlag): ConfigFlags = i or b.i
 typealias BackendFlags = Int
 
 /** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end. */
-enum class BackendFlag(val i: Int) {
+enum class BackendFlag(@JvmField val i: Int) {
     /** Back-end supports gamepad and currently has one connected. */
     HasGamepad(1 shl 0),
     /** Back-end supports honoring ::mouseCursor value to change the OS cursor shape. */
@@ -685,7 +685,7 @@ enum class Col {
     /** Darken/colorize entire screen behind a modal window, when one is active; */
     ModalWindowDimBg;
 
-    val i = ordinal
+    @JvmField val i = ordinal
 
     val u32 get() = ImGui.getColorU32(i, alphaMul = 1f)
 
@@ -744,11 +744,11 @@ enum class StyleVar {
     /** vec2  */
     ButtonTextAlign;
 
-    val i = ordinal
+    @JvmField val i = ordinal
 }
 
 /** Enumeration for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()   */
-enum class ColorEditFlag(val i: Int) {
+enum class ColorEditFlag(@JvmField val i: Int) {
 
     None(0),
     /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (read 3 components from the input pointer). */
@@ -838,7 +838,7 @@ enum class MouseCursor {
     /** (Unused by imgui functions. Use for e.g. hyperlinks) */
     Hand;
 
-    val i = ordinal - 1
+    @JvmField val i = ordinal - 1
 
     companion object {
         fun of(i: Int) = values().first { it.i == i }
@@ -849,7 +849,7 @@ enum class MouseCursor {
 /** Condition for setWindow***(), setNextWindow***(), setNextTreeNode***() functions
  *  Important: Treat as a regular enum! Do NOT combine multiple values using binary operators!
  *  All the functions above treat 0 as a shortcut to Cond.Always. */
-enum class Cond(val i: Int) {
+enum class Cond(@JvmField val i: Int) {
 
     None(0),
     /** Set the variable    */
@@ -875,7 +875,7 @@ infix fun Int.wo(b: Cond) = and(b.i.inv())
 
 /** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
  *  This is going to be exposed in imgui.h when stabilized enough.  */
-enum class ItemFlag(val i: Int) {
+enum class ItemFlag(@JvmField val i: Int) {
     /** false    */
     NoTabStop(1 shl 0),
     /** false. Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.  */

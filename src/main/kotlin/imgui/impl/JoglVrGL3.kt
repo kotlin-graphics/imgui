@@ -338,8 +338,7 @@ object JoglVrGL3 {
                     cmd.userCallback!!(cmdList, cmd)
                 else {
                     glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                    glScissor(cmd.clipRect.x.i, fbSize.y - cmd.clipRect.w.i,
-                            (cmd.clipRect.z - cmd.clipRect.x).i, (cmd.clipRect.w - cmd.clipRect.y).i)
+                    glScissor(cmd.clipRect.x.i, fbSize.y - cmd.clipRect.w.i, (cmd.clipRect.z - cmd.clipRect.x).i, (cmd.clipRect.w - cmd.clipRect.y).i)
                     glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
                 }
                 idxBufferOffset += cmd.elemCount * Int.BYTES
