@@ -38,7 +38,7 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-    implementation 'com.github.kotlin-graphics:uno-sdk:5156f73d30a703a3f8ab4744c7e926d13efd54e1'
+    implementation 'com.github.kotlin-graphics:uno-sdk:dbc2c26611b51f0be9e3d58d56ff6c7e6b87d58b'
 
     testImplementation 'io.kotlintest:kotlintest-runner-junit5:3.1.10'
 
