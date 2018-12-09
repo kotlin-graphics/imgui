@@ -6,6 +6,7 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.Dir
 import imgui.NUL
+import kool.rem
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -110,7 +111,7 @@ fun trimBlanks(buf: CharArray): CharArray {
 fun hash(data: IntArray, seed: Int = 0): Int {
     val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])
-    val bytes = ByteArray(buffer.size) { buffer[it] }
+    val bytes = ByteArray(buffer.rem) { buffer[it] }
     return hash(String(bytes, StandardCharsets.ISO_8859_1), bytes.size, seed)
 }
 

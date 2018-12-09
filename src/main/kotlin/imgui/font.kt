@@ -13,6 +13,8 @@ import imgui.ImGui.style
 import imgui.internal.*
 import imgui.stb.*
 import kool.lib.isNotEmpty
+import kool.rem
+import kool.set
 import org.lwjgl.stb.*
 import org.lwjgl.stb.STBRectPack.stbrp_pack_rects
 import org.lwjgl.stb.STBTruetype.*
@@ -288,7 +290,7 @@ class FontAtlas {
             if (pixels.isNotEmpty()) {
                 texPixelsRGBA32 = Buffer(texSize.x * texSize.y * 4)
                 val dst = texPixelsRGBA32!!
-                for (n in 0 until pixels.size) {
+                for (n in 0 until pixels.rem) {
                     dst[n * 4] = 255.b
                     dst[n * 4 + 1] = 255.b
                     dst[n * 4 + 2] = 255.b

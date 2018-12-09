@@ -1,8 +1,6 @@
 package imgui.imgui
 
 import glm_.BYTES
-import glm_.set
-import glm_.size
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import glm_.vec4.Vec4
@@ -17,6 +15,8 @@ import imgui.ImGui.isMouseDragging
 import imgui.ImGui.setActiveId
 import imgui.internal.*
 import kool.lib.fill
+import kool.rem
+import kool.set
 import java.nio.ByteBuffer
 import imgui.DragDropFlag as Ddf
 
@@ -168,7 +168,7 @@ interface imgui_dragAndDrop {
             type.toCharArray(payload.dataType)
             g.dragDropPayloadBufHeap = ByteBuffer.allocate(0)
             when {
-                dataSize > g.dragDropPayloadBufLocal.size -> { // Store in heap
+                dataSize > g.dragDropPayloadBufLocal.rem -> { // Store in heap
                     g.dragDropPayloadBufHeap = ByteBuffer.allocate(dataSize)
                     payload.data = g.dragDropPayloadBufHeap
                     savePayload()
