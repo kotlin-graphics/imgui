@@ -311,7 +311,7 @@ object JoglVrGL3 {
         glViewport(0, 0, fbSize.x, fbSize.y)
         val ortho = glm.ortho(mat, 0f, io.displaySize.x.f, io.displaySize.y.f, 0f)
         glUseProgram(program.name)
-        glUniformMatrix4fv(program.mat, 1, false, ortho to stak { it.mallocFloat(Mat4.length) })
+        glUniformMatrix4fv(program.mat, 1, false, ortho.toFloatBufferStack())
 
         checkSize(drawData.cmdLists)
 
