@@ -16,13 +16,10 @@ import kotlin.collections.ArrayList
 import imgui.internal.DrawCornerFlag as Dcf
 
 /** Draw callbacks for advanced uses.
-NB- You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering
-(you can poke into the draw list for that)
-Draw callback may be useful, for example, to:
-- change your GPU render state
-- render a complex 3D scene inside a UI element (without an intermediate texture/render target), etc.
-The expected behavior from your rendering function is
-'if (cmd.UserCallback != NULL) cmd.UserCallback(parent_list, cmd); else RenderTriangles()'  */
+ *  NB: You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering,
+ *  you can poke into the draw list for that! Draw callback may be useful for example to: A) Change your GPU render state,
+ *  B) render a complex 3D scene inside a UI element without an intermediate texture/render target, etc.
+ *  The expected behavior from your rendering function is 'if (cmd.UserCallback != NULL) { cmd.UserCallback(parent_list, cmd); } else { RenderTriangles() }'    */
 typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
 /** Typically, 1 command = 1 gpu draw call (unless command is a callback)   */

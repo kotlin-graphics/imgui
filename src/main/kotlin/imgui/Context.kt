@@ -501,7 +501,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // User Functions
     //------------------------------------------------------------------
 
-    // Optional: access OS clipboard
+    // Optional: Access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
     var getClipboardTextFn: ((userData: Any) -> Unit)? = null
     var setClipboardTextFn: ((userData: Any, text: String) -> Unit)? = null
@@ -512,7 +512,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
 //    void*       (*MemAllocFn)(size_t sz);
 //    void        (*MemFreeFn)(void* ptr);
 //
-    // Optional: notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
+    // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
     // (default to use native imm32 api on Windows)
     val imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = imeSetInputScreenPosFn_Win32.takeIf { Platform.get() == Platform.WINDOWS }
     /** (Windows) Set this to your HWND to get automatic IME cursor positioning.    */
@@ -615,7 +615,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // [Private] ImGui will maintain those fields. Forward compatibility not guaranteed!
     //------------------------------------------------------------------
 
-    /** Previous mouse position temporary storage (nb: not for public use, set to MousePos in NewFrame())   */
+    /** Previous mouse position (note that MouseDelta is not necessary == MousePos-MousePosPrev, in case either position is invalid)   */
     var mousePosPrev = Vec2(-Float.MAX_VALUE)
     /** Position at time of clicking    */
     val mouseClickedPos = Array(5) { Vec2() }
