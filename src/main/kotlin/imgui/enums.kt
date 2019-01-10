@@ -36,7 +36,7 @@ enum class WindowFlag(@JvmField val i: Int) {
     /** Never load/save settings in .ini file   */
     NoSavedSettings(1 shl 8),
     /** Disable catching mouse or keyboard inputs   */
-    NoInputs(1 shl 9),
+    NoMouseInputs(1 shl 9),
     /** Has a menu-bar  */
     MenuBar(1 shl 10),
     /** Allow horizontal scrollbar to appear (off by default). You may use SetNextWindowContentSize(ImVec2(width),0.0f));
@@ -65,6 +65,8 @@ enum class WindowFlag(@JvmField val i: Int) {
 
     NoDecoration(NoTitleBar or NoResize or NoScrollbar or NoCollapse),
 
+    NoInputs(NoMouseInputs or NoNavInputs or NoNavFocus),
+
     // [Internal]
 
     /** [BETA] Allow gamepad/keyboard navigation to cross over parent border to this child (only use on child that have no scrolling!)   */
@@ -84,10 +86,11 @@ enum class WindowFlag(@JvmField val i: Int) {
     infix fun or(b: Int): WindowFlags = i or b
 }
 
-infix fun Int.or(b: WindowFlag): WindowFlags = this or b.i
-infix fun Int.has(b: WindowFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: WindowFlag) = (this and b.i) == 0
-infix fun Int.wo(b: WindowFlag): WindowFlags = this and b.i.inv()
+infix fun Int.and(b: WindowFlag): WindowFlags = and(b.i)
+infix fun Int.or(b: WindowFlag): WindowFlags = or(b.i)
+infix fun Int.has(b: WindowFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: WindowFlag) = and(b.i) == 0
+infix fun Int.wo(b: WindowFlag): WindowFlags = and(b.i.inv())
 
 /** Flags for ImGui::InputText()    */
 enum class InputTextFlag(@JvmField val i: Int) {

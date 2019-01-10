@@ -85,7 +85,7 @@ with SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging 
 called, aka before the next Begin(). Moving window isn't affected..    */
 fun findHoveredWindow() {
 
-    var hoveredWindow = g.movingWindow?.takeIf { it.flags hasnt Wf.NoInputs }
+    var hoveredWindow = g.movingWindow?.takeIf { it.flags hasnt Wf.NoMouseInputs }
 
     val paddingRegular = Vec2(style.touchExtraPadding)
     val paddingForResizeFromEdges = when {
@@ -96,7 +96,7 @@ fun findHoveredWindow() {
     var i = g.windows.lastIndex
     while (i >= 0 && hoveredWindow == null) {
         val window = g.windows[i]
-        if (window.active && !window.hidden && window.flags hasnt Wf.NoInputs) {
+        if (window.active && !window.hidden && window.flags hasnt Wf.NoMouseInputs) {
             // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
             val bb = Rect(window.outerRectClipped)
             if (window.flags has Wf.ChildWindow || window.flags has Wf.NoResize)
@@ -1123,7 +1123,7 @@ fun navUpdateWindowingList() {
     setNextWindowSizeConstraints(Vec2(io.displaySize.x * 0.2f, io.displaySize.y * 0.2f), Vec2(Float.MAX_VALUE))
     setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Always, Vec2(0.5f))
     pushStyleVar(StyleVar.WindowPadding, style.windowPadding * 2f)
-    val flags = Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoNav or Wf.NoResize or Wf.NoMove or Wf.NoInputs or Wf.AlwaysAutoResize or Wf.NoSavedSettings
+    val flags = Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoResize or Wf.NoMove or Wf.NoMouseInputs or Wf.AlwaysAutoResize or Wf.NoSavedSettings
     begin("###NavWindowingList", null, flags)
     for (n in g.windowsFocusOrder.lastIndex downTo 0) {
         val window = g.windowsFocusOrder[n]

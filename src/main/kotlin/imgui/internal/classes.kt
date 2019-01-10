@@ -955,6 +955,8 @@ class Window(var context: Context, var name: String) {
     }
 
     /** Can we focus this window with CTRL+TAB (or PadMenu + PadFocusPrev/PadFocusNext)
+     *  Note that NoNavFocus makes the window not reachable with CTRL+TAB but it can still be focused with mouse or programmaticaly.
+     *  If you want a window to never be focused, you may use the e.g. NoInputs flag.
      *  ~ IsWindowNavFocusable */
     val isNavFocusable: Boolean
         get() = active && this === rootWindow && flags hasnt Wf.NoNavFocus
@@ -1140,10 +1142,11 @@ fun itemHoveredDataBackup(block: () -> Unit) {
 
 fun focusPreviousWindowIgnoringOne(ignoreWindow: Window?) {
     for (i in g.windowsFocusOrder.lastIndex downTo 0) {
+        // We may later decide to test for different NoXXXInputs based on the active navigation input (mouse vs nav) but that may feel more confusing to the user.
         val window = g.windowsFocusOrder[i]
-        if (window !== ignoreWindow && window.wasActive && window.flags hasnt Wf.ChildWindow) {
-            val focusWindow = navRestoreLastChildNavWindow(window)
-            focusWindow.focus()
+        if (window !== ignoreWindow && window.wasActive && window.flags hasnt Wf.ChildWindow)
+            if ((window.flags and (Wf.NoMouseInputs or Wf.NoNavInputs)) != (Wf.NoMouseInputs or Wf.NoNavInputs)) {
+            navRestoreLastChildNavWindow(window).focus()
             return
         }
     }

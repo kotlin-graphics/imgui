@@ -102,7 +102,7 @@ interface imgui_window {
         }
 
         // Automatically disable manual moving/resizing when NoInputs is set
-        if (flags has Wf.NoInputs)
+        if ((flags and Wf.NoInputs) == Wf.NoInputs.i)
             flags = flags or Wf.NoMove or Wf.NoResize
 
         if (flags has Wf.NavFlattened)
