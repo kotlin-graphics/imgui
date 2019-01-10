@@ -110,7 +110,7 @@ interface lowLevelLayoutHelpers {
         window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
 
         if (g.logEnabled)
-            logRenderedText(null, "\n--------------------------------")
+            logRenderedText(bb.min, "--------------------------------")
 
         window.dc.columnsSet?.let {
             pushColumnClipRect()
