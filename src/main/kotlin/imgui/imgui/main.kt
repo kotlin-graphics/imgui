@@ -26,8 +26,6 @@ import imgui.ImGui.setTooltip
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindow
 import imgui.internal.*
-import uno.kotlin.getValue
-import uno.kotlin.setValue
 import kotlin.math.max
 import kotlin.math.min
 import imgui.ConfigFlag as Cf
@@ -476,9 +474,9 @@ interface imgui_main {
             // If a child window has the Wf.NoScrollWithMouse flag, we give a chance to scroll its parent (unless either Wf.NoInputs or Wf.NoScrollbar are also set).
             var scrollWindow: Window = window
             while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
-                    scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
+                    scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoMouseInputs && scrollWindow.parentWindow != null)
                 scrollWindow = scrollWindow.parentWindow!!
-            val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs
+            val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoMouseInputs
 
             if (io.mouseWheel != 0f)
                 if (io.keyCtrl && io.fontAllowUserScaling) {

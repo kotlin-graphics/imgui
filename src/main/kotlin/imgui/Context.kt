@@ -148,7 +148,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navJustMovedToId: ID = 0
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
-    /** Keyboard or Gamepad mode? */
+    /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
     var navInputSource = InputSource.None
     /** Rectangle used for scoring, in screen space. Based of window.dc.navRefRectRel[], modified for directional navigation scoring.  */
     var navScoringRectScreen = Rect()

@@ -536,8 +536,7 @@ interface imgui_internal {
                     windowName = "##Tooltip_%02d".format(++g.tooltipOverrideCount)
                 }
             }
-        val flags = Wf.Tooltip or Wf.NoInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or
-                Wf.AlwaysAutoResize or Wf.NoNav
+        val flags = Wf.Tooltip or Wf.NoMouseInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
         begin(windowName, null, flags or extraFlags)
     }
 

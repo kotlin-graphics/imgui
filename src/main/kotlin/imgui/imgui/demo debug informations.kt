@@ -24,7 +24,6 @@ import imgui.ImGui.inputFloat
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
-import imgui.ImGui.overlayDrawList
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
@@ -385,7 +384,8 @@ interface imgui_demoDebugInformations {
                 if (flags has Wf.Modal) builder += "Modal "
                 if (flags has Wf.ChildMenu) builder += "ChildMenu "
                 if (flags has Wf.NoSavedSettings) builder += "NoSavedSettings "
-                if (flags has Wf.NoInputs) builder += "NoInputs"
+                if (flags has Wf.NoMouseInputs) builder += "NoMouseInputs"
+                if (flags has Wf.NoNavInputs) builder += "NoNavInputs"
                 if (flags has Wf.AlwaysAutoResize) builder += "AlwaysAutoResize"
                 bulletText("Flags: 0x%08X ($builder..)", flags)
                 bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f)", window.scroll.x, window.scrollMaxX, window.scroll.y, window.scrollMaxY)
@@ -418,7 +418,7 @@ interface imgui_demoDebugInformations {
             }
         }
 
-        val selected = BooleanArray(4 + 3 + 16 + 16, { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 })
+        val selected = BooleanArray(4 + 3 + 16 + 16) { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 }
 
         var styleIdx = -1
     }
