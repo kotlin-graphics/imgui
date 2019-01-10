@@ -227,8 +227,10 @@ interface imgui_main {
         g.currentPopupStack.clear()
         closePopupsOverWindow(g.navWindow)
 
-        // Create implicit window - we will only render it if the user has added something to it.
-        // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
+        /*  Create implicit/fallback window - which we will only render it if the user has added something to it.
+            We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
+            This fallback is particularly important as it avoid ImGui:: calls from crashing.
+         */
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
         begin("Debug##Default")
 
@@ -511,7 +513,7 @@ interface imgui_main {
             val flags = window.flags
             if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames anyGreaterThan 0)
                 return
-            if (window.wasActive == false) // Early out to avoid running this code for e.g. an hidden implicit Debug window.
+            if (window.wasActive == false) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
                 return
 
             val resizeBorderCount = if (io.configResizeWindowsFromEdges) 4 else 0

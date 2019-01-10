@@ -107,7 +107,7 @@ interface imgui_demoDebugInformations {
     fun showAboutWindow(open: KMutableProperty0<Boolean>) {
 
         begin_("About Dear ImGui", open, Wf.AlwaysAutoResize.i)
-        text("Dear ImGui, $version")
+        text("Dear ImGui $version")
         separator()
         text("By Omar Cornut and all dear imgui contributors.")
         text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
