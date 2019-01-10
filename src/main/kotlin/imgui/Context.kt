@@ -501,6 +501,10 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // User Functions
     //------------------------------------------------------------------
 
+    // Optional: Platform/Renderer back-end name (informational only! will be displayed in About Window)
+    var backendPlatformName: String? = null
+    var backendRendererName: String? = null
+
     // Optional: Access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
     var getClipboardTextFn: ((userData: Any) -> Unit)? = null

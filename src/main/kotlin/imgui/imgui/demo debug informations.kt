@@ -139,10 +139,12 @@ interface imgui_demoDebugInformations {
             if (io.configMacOSXBehaviors)                           text(" ConfigMacOSXBehaviors")
             if (io.configInputTextCursorBlink)                      text(" ConfigInputTextCursorBlink")
             if (io.configResizeWindowsFromEdges)                    text(" ConfigResizeWindowsFromEdges")
-            text("io.BackendFlags: 0x%08X", io.backendFlags)
+            text("io.backendFlags: 0x%08X", io.backendFlags)
             if (io.backendFlags has BackendFlag.HasGamepad)         text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors)    text(" HasMouseCursors")
             if (io.backendFlags has BackendFlag.HasSetMousePos)     text(" HasSetMousePos")
+            text("io.backendPlatformName: ${io.backendPlatformName}")
+            text("io.backendRendererName: ${io.backendRendererName}")
             // @formatter:on
             separator()
             text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
