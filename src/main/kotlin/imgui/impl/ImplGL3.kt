@@ -42,6 +42,9 @@ object ImplGL3 {
 
     fun createDeviceObjects(): Boolean {
 
+        // this shall be in init, but since we dont have it because we do differently about the glsl version we do this here
+        io.backendRendererName = "imgui impl opengl3"
+
         // Backup GL state
         // we have to save also program since we do the uniform mat and texture setup once here
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)

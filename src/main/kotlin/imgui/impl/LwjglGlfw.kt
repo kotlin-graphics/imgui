@@ -62,6 +62,8 @@ object LwjglGlfw {
             keyMap[Key.Y] = GLFW_KEY_Y
             keyMap[Key.Z] = GLFW_KEY_Z
 
+            backendRendererName = null
+            backendPlatformName = null
 //            io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText; TODO
 //            io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;
 //            io.ClipboardUserData = g_Window;
@@ -200,7 +202,8 @@ object LwjglGlfw {
         else {
             // Show OS mouse cursor
             // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
-            window.cursor = GlfwCursor(mouseCursors[imguiCursor.i].takeIf { it != NULL } ?: mouseCursors[MouseCursor.Arrow.i])
+            window.cursor = GlfwCursor(mouseCursors[imguiCursor.i].takeIf { it != NULL }
+                    ?: mouseCursors[MouseCursor.Arrow.i])
             window.cursorStatus = CursorStatus.Normal
         }
     }
