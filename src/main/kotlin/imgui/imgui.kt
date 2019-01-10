@@ -108,7 +108,7 @@ object ImGui :
     val version = "1.67.$beta"
     /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
     Work in progress versions typically starts at XYY00 then bounced up to XYY01 when release tagging happens */
-    val versionNum = 16600 + beta
+    val versionNum = 16700 + beta
 }
 
 var ptrIndices = 0
