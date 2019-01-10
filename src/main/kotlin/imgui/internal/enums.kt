@@ -242,9 +242,14 @@ infix fun Int.has(b: DrawCornerFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: DrawCornerFlag) = (this and b.i) == 0
 
 // TODO check enum declarance position
-enum class DrawListFlag { AntiAliasedLines, AntiAliasedFill;
+enum class DrawListFlag {
+    None,
+    /** Lines are anti-aliased (*2 the number of triangles for 1.0f wide line, otherwise *3 the number of triangles) */
+    AntiAliasedLines,
+    /** Filled shapes have anti-aliased edges (*2 the number of vertices) */
+    AntiAliasedFill;
 
-    val i = 1 shl ordinal
+    val i = if(ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun DrawListFlag.or(b: DrawListFlag): DrawListFlags = i or b.i
