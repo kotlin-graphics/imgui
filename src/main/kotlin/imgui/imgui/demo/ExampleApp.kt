@@ -21,6 +21,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.showAboutWindow
 import imgui.ImGui.showUserGuide
 import imgui.ImGui.spacing
 import imgui.ImGui.text
@@ -100,12 +101,7 @@ object ExampleApp {
             }
 
         if (show.about)
-            withWindow("About Dear ImGui", show::about, Wf.AlwaysAutoResize.i) {
-                text("JVM Dear ImGui, $version")
-                separator()
-                text("Original by Omar Cornut, ported by Giuseppe Barbieri and all dear imgui contributors.")
-                text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
-            }
+            showAboutWindow(show::about)
 
         var windowFlags = 0
         if (noTitlebar) windowFlags = windowFlags or Wf.NoTitleBar

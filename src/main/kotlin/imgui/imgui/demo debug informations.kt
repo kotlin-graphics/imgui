@@ -6,23 +6,29 @@ import glm_.toHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.begin_
 import imgui.ImGui.bulletText
+import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.combo
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dummy
 import imgui.ImGui.end
+import imgui.ImGui.endChildFrame
 import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
+import imgui.ImGui.getId
 import imgui.ImGui.getOverlayDrawList
 import imgui.ImGui.inputFloat
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.logFinish
+import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushTextWrapPos
@@ -38,10 +44,12 @@ import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textLineHeight
+import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.version
+import imgui.ImGui.versionNum
 import imgui.ImGui.windowDrawList
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.withChild
@@ -90,8 +98,73 @@ interface imgui_demoDebugInformations {
 
     fun showDemoWindow(open: KMutableProperty0<Boolean>) = ExampleApp(open)
 
-    /** Create metrics window. display ImGui internals: draw commands (with individual draw calls and vertices), window list,
-     *  basic internal state, etc.    */
+    //-----------------------------------------------------------------------------
+    // [SECTION] About Window / ShowAboutWindow()
+    // Access from ImGui Demo -> Help -> About
+    //-----------------------------------------------------------------------------
+
+    /** create about window. display Dear ImGui version, credits and build/system information. */
+    fun showAboutWindow(open: KMutableProperty0<Boolean>) {
+
+        begin_("About Dear ImGui", open, Wf.AlwaysAutoResize.i)
+        text("Dear ImGui, $version")
+        separator()
+        text("By Omar Cornut and all dear imgui contributors.")
+        text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
+
+        checkbox("Config/Build Information", ::showConfigInfo)
+        if (showConfigInfo)        {
+
+            val copyToClipboard = button("Copy to clipboard")
+            beginChildFrame(getId("cfginfos"), Vec2(0, textLineHeightWithSpacing * 18), Wf.NoMove.i)
+            if (copyToClipboard)
+                logToClipboard()
+
+            text("Dear ImGui $version ($versionNum)")
+            separator()
+            text("sizeof(size_t): ${Int.BYTES}, sizeof(DrawIdx): ${DrawIdx.BYTES}, sizeof(DrawVert): ${DrawVert.size}")
+            text("IMGUI_USE_BGRA_PACKED_COLOR: $USE_BGRA_PACKED_COLOR")
+            separator()
+            text("io.configFlags: 0x%08X", io.configFlags)
+            // @formatter:off
+            if (io.configFlags has ConfigFlag.NavEnableKeyboard)    text(" NavEnableKeyboard")
+            if (io.configFlags has ConfigFlag.NavEnableGamepad)     text(" NavEnableGamepad")
+            if (io.configFlags has ConfigFlag.NavEnableSetMousePos) text(" NavEnableSetMousePos")
+            if (io.configFlags has ConfigFlag.NavNoCaptureKeyboard) text(" NavNoCaptureKeyboard")
+            if (io.configFlags has ConfigFlag.NoMouse)              text(" NoMouse")
+            if (io.configFlags has ConfigFlag.NoMouseCursorChange)  text(" NoMouseCursorChange")
+            if (io.configFlags has ConfigFlag.IsSRGB)               text(" IsSRGB")
+            if (io.configFlags has ConfigFlag.IsTouchScreen)        text(" IsTouchScreen")
+            if (io.mouseDrawCursor)                                 text(" MouseDrawCursor")
+            if (io.configMacOSXBehaviors)                           text(" ConfigMacOSXBehaviors")
+            if (io.configInputTextCursorBlink)                      text(" ConfigInputTextCursorBlink")
+            if (io.configResizeWindowsFromEdges)                    text(" ConfigResizeWindowsFromEdges")
+            text("io.BackendFlags: 0x%08X", io.backendFlags)
+            if (io.backendFlags has BackendFlag.HasGamepad)         text(" HasGamepad")
+            if (io.backendFlags has BackendFlag.HasMouseCursors)    text(" HasMouseCursors")
+            if (io.backendFlags has BackendFlag.HasSetMousePos)     text(" HasSetMousePos")
+            // @formatter:on
+            separator()
+            text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
+            text("io.displaySize: ${io.displaySize.x},${io.displaySize.y}")
+            separator()
+            text("style.windowPadding: %.2f,%.2f", style.windowPadding.x, style.windowPadding.y)
+            text("style.windowBorderSize: %.2f", style.windowBorderSize)
+            text("style.framePadding: %.2f,%.2f", style.framePadding.x, style.framePadding.y)
+            text("style.frameRounding: %.2f", style.frameRounding)
+            text("style.frameBorderSize: %.2f", style.frameBorderSize)
+            text("style.itemSpacing: %.2f,%.2f", style.itemSpacing.x, style.itemSpacing.y)
+            text("style.itemInnerSpacing: %.2f,%.2f", style.itemInnerSpacing.x, style.itemInnerSpacing.y)
+
+            if (copyToClipboard)
+                logFinish()
+            endChildFrame()
+        }
+        end()
+    }
+
+    /** Create metrics window. display Dear ImGui internals: draw commands (with individual draw calls and vertices),
+     *  window list, basic internal state, etc.    */
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
         if (!begin_("ImGui Metrics", open)) {
@@ -237,6 +310,8 @@ interface imgui_demoDebugInformations {
         var float = 0.5f
         var combo = 0
         var check = true
+
+        var showConfigInfo = false
 
         fun showExampleMenuFile() {
             menuItem("(dummy menu)", "", false, false)
