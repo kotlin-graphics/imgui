@@ -703,6 +703,10 @@ object showDemoWindowWidgets {
         }
 
         treeNode("Multi-line Text Input TODO") {
+            /*
+                Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
+                and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.
+             */
             showHelpMarker("You can use the InputTextFlag.CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stl.h for an example. (This is not demonstrated in imgui_demo.cpp)")
             checkbox("Read-only", ::readOnly)
 

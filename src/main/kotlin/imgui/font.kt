@@ -1239,7 +1239,7 @@ class Font {
             var sEnd = s
             var yEnd = y
             while (yEnd < clipRect.w && s < textEnd) {
-                s = text.memchr(s, '\n')?.plus(1) ?: textEnd
+                sEnd = text.memchr(sEnd, '\n')?.plus(1) ?: textEnd
                 yEnd += lineHeight
             }
             textEnd = sEnd
