@@ -272,9 +272,6 @@ class FontAtlas {
         buildWithStbTrueType()
     }
 
-    val isBuilt: Boolean
-        get() = fonts.size > 0 && (texPixelsAlpha8 != null || texPixelsRGBA32 != null)
-
     /** 1 byte per-pixel    */
     fun getTexDataAsAlpha8(): Triple<ByteBuffer, Vec2i, Int> {
 
@@ -307,6 +304,9 @@ class FontAtlas {
 
         return Triple(texPixelsRGBA32!!, texSize, 4)
     }
+
+    val isBuilt: Boolean
+        get() = fonts.size > 0 && (texPixelsAlpha8 != null || texPixelsRGBA32 != null)
 
     // Helpers to build glyph ranges from text data. Feed your application strings/characters to it then call BuildRanges().
 //    struct GlyphRangesBuilder
