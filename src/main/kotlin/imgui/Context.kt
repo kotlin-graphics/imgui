@@ -434,9 +434,9 @@ class IO(sharedFontAtlas: FontAtlas?) {
     //------------------------------------------------------------------
 
     /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
-    var configFlags: ConfigFlags = 0
+    var configFlags: ConfigFlags = ConfigFlag.None.i
     /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end to communicate features supported by the back-end. */
-    var backendFlags: BackendFlags = 0
+    var backendFlags: BackendFlags = BackendFlag.None.i
     /** Main display size, in pixels. For clamping windows positions.    */
     var displaySize = Vec2i(-1)
     /** Time elapsed since last frame, in seconds.  */

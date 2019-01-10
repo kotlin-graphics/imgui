@@ -339,15 +339,19 @@ val PAYLOAD_TYPE_COLOR_3F = "_COL3F"
 val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 
 /** A primary data type */
-enum class DataType { Int, Uint, Long, Ulong, Float, Double, Vec2;
+enum class DataType {
+    Int, Uint, Long, Ulong, Float, Double, Vec2;
 
-    @JvmField val i = ordinal
+    @JvmField
+    val i = ordinal
 }
 
 /** A cardinal direction */
-enum class Dir { None, Left, Right, Up, Down, Count;
+enum class Dir {
+    None, Left, Right, Up, Down, Count;
 
-    @JvmField val i = ordinal - 1
+    @JvmField
+    val i = ordinal - 1
 
     companion object {
         fun of(i: Int) = values()[i]
@@ -357,14 +361,16 @@ enum class Dir { None, Left, Right, Up, Down, Count;
 infix fun Int.shl(b: Dir) = shl(b.i)
 
 /** User fill ImGuiio.KeyMap[] array with indices into the ImGuiio.KeysDown[512] array  */
-enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
+enum class Key {
+    Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
     Space, Enter, Escape, A, C, V, X, Y, Z;
 
     companion object {
         val COUNT = values().size
     }
 
-    @JvmField val i = ordinal
+    @JvmField
+    val i = ordinal
 
     /** JVM implementation of IsKeyPressedMap   */
     fun isPressed(repeat: Boolean = true) = isKeyPressed(io.keyMap[i], repeat)
@@ -436,7 +442,8 @@ enum class NavInput {
     /** move down = Arrow keys  */
     KeyDown;
 
-    @JvmField val i = ordinal
+    @JvmField
+    val i = ordinal
 
     companion object {
         val COUNT = values().size
@@ -452,10 +459,9 @@ enum class NavInput {
     fun isPressedAnyOfTwo(n2: NavInput, mode: InputReadMode) = (getNavInputAmount(this, mode) + getNavInputAmount(n2, mode)) > 0f
 }
 
-typealias ConfidFlags = Int
-
 /** Configuration flags stored in io.configFlags  */
 enum class ConfigFlag(@JvmField val i: Int) {
+    None(0),
     /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeysDown[]. */
     NavEnableKeyboard(1 shl 0),
     /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.NavInputs[].
@@ -498,6 +504,7 @@ typealias BackendFlags = Int
 
 /** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end. */
 enum class BackendFlag(@JvmField val i: Int) {
+    None(0),
     /** Back-end supports gamepad and currently has one connected. */
     HasGamepad(1 shl 0),
     /** Back-end supports honoring ::mouseCursor value to change the OS cursor shape. */
@@ -691,7 +698,8 @@ enum class Col {
     /** Darken/colorize entire screen behind a modal window, when one is active; */
     ModalWindowDimBg;
 
-    @JvmField val i = ordinal
+    @JvmField
+    val i = ordinal
 
     val u32 get() = ImGui.getColorU32(i, alphaMul = 1f)
 
@@ -750,7 +758,8 @@ enum class StyleVar {
     /** vec2  */
     ButtonTextAlign;
 
-    @JvmField val i = ordinal
+    @JvmField
+    val i = ordinal
 }
 
 /** Flags for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()   */
@@ -844,7 +853,8 @@ enum class MouseCursor {
     /** (Unused by imgui functions. Use for e.g. hyperlinks) */
     Hand;
 
-    @JvmField val i = ordinal - 1
+    @JvmField
+    val i = ordinal - 1
 
     companion object {
         fun of(i: Int) = values().first { it.i == i }
