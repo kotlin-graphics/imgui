@@ -747,7 +747,7 @@ enum class StyleVar {
     @JvmField val i = ordinal
 }
 
-/** Enumeration for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()   */
+/** Flags for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()   */
 enum class ColorEditFlag(@JvmField val i: Int) {
 
     None(0),
@@ -846,7 +846,7 @@ enum class MouseCursor {
     }
 }
 
-/** Condition for setWindow***(), setNextWindow***(), setNextTreeNode***() functions
+/** Enumateration representation a Condition for setWindow***(), setNextWindow***(), setNextTreeNode***() functions
  *  Important: Treat as a regular enum! Do NOT combine multiple values using binary operators!
  *  All the functions above treat 0 as a shortcut to Cond.Always. */
 enum class Cond(@JvmField val i: Int) {
