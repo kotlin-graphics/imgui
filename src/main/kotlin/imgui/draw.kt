@@ -1110,8 +1110,10 @@ class DrawList(sharedData: DrawListSharedData?) {
 }
 
 
-/** All draw data to render an ImGui frame
- *  (NB: the style and the naming convention here is a little inconsistent but we preserve them for backward compatibility purpose) */
+/** -----------------------------------------------------------------------------
+ *  Draw List API (ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListFlags, ImDrawList, ImDrawData)
+ *  Hold a series of drawing commands. The user provides a renderer for ImDrawData which essentially contains an array of ImDrawList.
+ *  ----------------------------------------------------------------------------- */
 class DrawData {
 
     /** Only valid after Render() is called and before the next NewFrame() is called.   */

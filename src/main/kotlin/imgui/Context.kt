@@ -13,6 +13,7 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.max
 
 /** Main imgui context */
 class Context(sharedFontAtlas: FontAtlas? = null) {
@@ -421,8 +422,11 @@ fun Context?.destroy() {
         c.setCurrent()
 }
 
-/** This is where your app communicate with Dear ImGui. Access via ImGui::GetIO().
- *  Read 'Programmer guide' section in .cpp file for general usage. */
+/** -----------------------------------------------------------------------------
+ *  IO
+ *  Communicate most settings and inputs/outputs to Dear ImGui using this structure.
+ *  Access via ::io. Read 'Programmer guide' section in .cpp file for general usage.
+ *  ----------------------------------------------------------------------------- */
 class IO(sharedFontAtlas: FontAtlas?) {
 
     //------------------------------------------------------------------
@@ -644,6 +648,171 @@ class IO(sharedFontAtlas: FontAtlas?) {
     val navInputsDownDurationPrev = FloatArray(NavInput.COUNT)
 }
 
+
+//-----------------------------------------------------------------------------
+// Misc data structures
+//-----------------------------------------------------------------------------
+
+
+/** Shared state of InputText(), passed as an argument to your callback when a ImGuiInputTextFlags_Callback* flag is used.
+ *  The callback function should return 0 by default.
+ *  Callbacks (follow a flag name and see comments in ImGuiInputTextFlags_ declarations for more details)
+ *  - ImGuiInputTextFlags_CallbackCompletion:  Callback on pressing TAB
+ *  - ImGuiInputTextFlags_CallbackHistory:     Callback on pressing Up/Down arrows
+ *  - ImGuiInputTextFlags_CallbackAlways:      Callback on each iteration
+ *  - ImGuiInputTextFlags_CallbackCharFilter:  Callback on character inputs to replace or discard them.
+ *                                              Modify 'EventChar' to replace or discard, or return 1 in callback to discard.
+ *  - ImGuiInputTextFlags_CallbackResize:      Callback on buffer capacity changes request (beyond 'buf_size' parameter value),
+ *                                              allowing the string to grow.
+ *
+ *  Helper functions for text manipulation.
+ *  Use those function to benefit from the CallbackResize behaviors. Calling those function reset the selection. */
+class InputTextCallbackData {
+
+    /** One ImGuiInputTextFlags_Callback*    // Read-only */
+    var eventFlag: InputTextFlags = 0
+    /** What user passed to InputText()      // Read-only */
+    var flags: InputTextFlags = 0
+    /** What user passed to InputText()      // Read-only */
+    var userData: Any? = null
+
+    /*  Arguments for the different callback events
+     *  - To modify the text buffer in a callback, prefer using the InsertChars() / DeleteChars() function. InsertChars() will take care of calling the resize callback if necessary.
+     *  - If you know your edits are not going to resize the underlying buffer allocation, you may modify the contents of 'Buf[]' directly. You need to update 'BufTextLen' accordingly (0 <= BufTextLen < BufSize) and set 'BufDirty'' to true so InputText can update its internal state. */
+
+    /** Character input                     Read-write   [CharFilter] Replace character with another one, or set to zero to drop.
+     *                                      return 1 is equivalent to setting EventChar=0; */
+    var eventChar = NUL
+    /** Key pressed (Up/Down/TAB)           Read-only    [Completion,History] */
+    var eventKey = Key.Tab
+    /** Text buffer                 Read-write   [Resize] Can replace pointer / [Completion,History,Always] Only write to pointed data, don't replace the actual pointer! */
+    var buf = CharArray(0)
+    /** JVM custom, current buf pointer */
+    var bufPtr = 0
+    /** Text length (in bytes)        Read-write   [Resize,Completion,History,Always] */
+    var bufTextLen = 0
+    /** Buffer size (in bytes) = capacity + 1    Read-only    [Resize,Completion,History,Always] */
+    var bufSize = 0
+    /** Set if you modify Buf/BufTextLen!  Write        [Completion,History,Always] */
+    var bufDirty = false
+    /** Read-write   [Completion,History,Always] */
+    var cursorPos = 0
+    /** Read-write   [Completion,History,Always] == to SelectionEnd when no selection) */
+    var selectionStart = 0
+    /** Read-write   [Completion,History,Always] */
+    var selectionEnd = 0
+
+
+    /** Public API to manipulate UTF-8 text
+     *  We expose UTF-8 to the user (unlike the STB_TEXTEDIT_* functions which are manipulating wchar)
+     *  FIXME: The existence of this rarely exercised code path is a bit of a nuisance. */
+    fun deleteChars(pos: Int, bytesCount: Int) {
+        assert(pos + bytesCount <= bufTextLen)
+        var dst = pos
+        var src = pos + bytesCount
+        var c = buf[src++]
+        while (c != NUL) {
+            buf[dst++] = c
+            c = buf.getOrElse(src++) { NUL }
+        }
+        if (cursorPos + bytesCount >= pos)
+            cursorPos -= bytesCount
+        else if (cursorPos >= pos)
+            cursorPos = pos
+        selectionEnd = cursorPos
+        selectionStart = cursorPos
+        bufDirty = true
+        bufTextLen -= bytesCount
+    }
+
+    fun insertChars(pos: Int, newText: CharArray, ptr: Int, newTextEnd: Int? = null) {
+
+        val isResizable = flags has InputTextFlag.CallbackResize
+        val newTextLen = newTextEnd ?: newText.strlen
+        if (newTextLen + bufTextLen >= bufSize) {
+
+            if (!isResizable) return
+
+            // Contrary to STB_TEXTEDIT_INSERTCHARS() this is working in the UTF8 buffer, hence the midly similar code (until we remove the U16 buffer alltogether!)
+            val editState = g.inputTextState
+            assert(editState.id != 0 && g.activeId == editState.id)
+            assert(buf === editState.tempBuffer)
+            val newBufSize = bufTextLen + glm.clamp(newTextLen * 4, 32, max(256, newTextLen))
+            val t = CharArray(newBufSize)
+            System.arraycopy(editState.tempBuffer, 0, t, 0, editState.tempBuffer.size)
+            editState.tempBuffer = t
+            buf = editState.tempBuffer
+            editState.bufCapacityA = newBufSize
+            bufSize = newBufSize
+        }
+
+        if (bufTextLen != pos)
+            for (i in 0 until bufTextLen - pos)
+                buf[pos + newTextLen + i] = buf[pos + i]
+        for (i in 0 until newTextLen)
+            buf[pos + i] = newText[i]
+
+        if (cursorPos >= pos)
+            cursorPos += newTextLen
+        selectionEnd = cursorPos
+        selectionStart = cursorPos
+        bufDirty = true
+        bufTextLen += newTextLen
+    }
+
+    val hasSelection: Boolean
+        get() = selectionStart != selectionEnd
+}
+
+class SizeCallbackData(
+        /** Read-only.   What user passed to SetNextWindowSizeConstraints() */
+        var userData: Any? = null,
+        /** Read-only.   Window position, for reference.    */
+        val pos: Vec2 = Vec2(),
+        /** Read-only.   Current window size.   */
+        val currentSize: Vec2 = Vec2(),
+        /** Read-write.  Desired size, based on user's mouse position. Write to this field to restrain resizing.    */
+        val desiredSize: Vec2 = Vec2())
+
+/** Data payload for Drag and Drop operations: AcceptDragDropPayload(), GetDragDropPayload() */
+class Payload {
+    // Members
+
+    /** Data (copied and owned by dear imgui) */
+    var data: ByteBuffer? = null
+    /** Data size */
+    var dataSize = 0
+
+    // [Internal]
+
+    /** Source item id */
+    var sourceId: ID = 0
+    /** Source parent id (if available) */
+    var sourceParentId: ID = 0
+    /** Data timestamp */
+    var dataFrameCount = -1
+    /** Data type tag (short user-supplied string, 32 characters max) */
+    val dataType = CharArray(32)
+    val dataTypeS get() = String(dataType)
+    /** Set when AcceptDragDropPayload() was called and mouse has been hovering the target item (nb: handle overlapping drag targets) */
+    var preview = false
+    /** Set when AcceptDragDropPayload() was called and mouse button is released over the target item. */
+    var delivery = false
+
+    fun clear() {
+        sourceParentId = 0
+        sourceId = 0
+        data = null
+        dataSize = 0
+        dataType.fill(NUL)
+        dataFrameCount = -1
+        delivery = false
+        preview = false
+    }
+
+    fun isDataType(type: String) = dataFrameCount != -1 && type cmp dataType
+}
+
 // for IO.keyMap
 
 operator fun IntArray.set(index: Key, value: Int) {
@@ -660,9 +829,12 @@ operator fun FloatArray.set(index: NavInput, value: Float) {
 
 operator fun FloatArray.get(index: NavInput) = get(index.i)
 
-/** You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
- *  During the frame, use ImGui::PushStyleVar(StyleVar.XXXX)/PopStyleVar() to alter the main style values,
- *  and ImGui::PushStyleColor(Col.XXX)/PopStyleColor() for colors. */
+/** -----------------------------------------------------------------------------
+ *  Style
+ *  You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
+ *  During the frame, use ImGui::PushStyleVar(ImGuiStyleVar_XXXX)/PopStyleVar() to alter the main style values,
+ *  and ImGui::PushStyleColor(ImGuiCol_XXX)/PopStyleColor() for colors.
+ *  ----------------------------------------------------------------------------- */
 class Style {
 
     /**  Global alpha applies to everything in ImGui.    */

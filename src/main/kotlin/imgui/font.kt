@@ -26,6 +26,12 @@ import java.nio.ByteBuffer
 import kotlin.math.floor
 
 
+
+//-----------------------------------------------------------------------------
+// Font API (FontConfig, FontGlyph, FontAtlasFlags, FontAtlas, Font)
+//-----------------------------------------------------------------------------
+
+
 class FontConfig {
 
     /** TTF/OTF data    */
