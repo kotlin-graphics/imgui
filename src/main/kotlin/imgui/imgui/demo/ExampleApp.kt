@@ -196,7 +196,7 @@ object ExampleApp {
                 sameLine(); showHelpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
                 checkbox("io.ConfigCursorBlink", io::configInputTextCursorBlink)
                 sameLine(); showHelpMarker("Set to false to disable blinking cursor, for users who consider it distracting")
-                checkbox("io.ConfigResizeWindowsFromEdges [beta]", io::configResizeWindowsFromEdges)
+                checkbox("io.ConfigWindowsResizeFromEdges", io::configWindowsResizeFromEdges)
                 sameLine(); showHelpMarker("Enable resizing of windows from their edges and from the lower-left corner.\nThis requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")
                 checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
                 sameLine(); showHelpMarker("Instruct Dear ImGui to render a mouse cursor for you. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")

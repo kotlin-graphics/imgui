@@ -74,9 +74,9 @@ interface imgui_main {
         if (io.configFlags has Cf.NavEnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
-        // Perform simple check: the beta io.configResizeWindowsFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
-        if (io.configResizeWindowsFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
-            io.configResizeWindowsFromEdges = false
+        // Perform simple check: the beta io.configWindowsResizeFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
+        if (io.configWindowsResizeFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
+            io.configWindowsResizeFromEdges = false
 
         // Load settings on first frame (if not explicitly loaded manually before)
         if (!g.settingsLoaded) {
@@ -516,10 +516,10 @@ interface imgui_main {
             if (window.wasActive == false) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
                 return
 
-            val resizeBorderCount = if (io.configResizeWindowsFromEdges) 4 else 0
+            val resizeBorderCount = if (io.configWindowsResizeFromEdges) 4 else 0
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             val gripHoverInnerSize = (gripDrawSize * 0.75f).i.f
-            val gripHoverOuterSize = if (io.configResizeWindowsFromEdges) RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS else 0f
+            val gripHoverOuterSize = if (io.configWindowsResizeFromEdges) WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS else 0f
 
             val posTarget = Vec2(Float.MAX_VALUE)
             val sizeTarget = Vec2(Float.MAX_VALUE)
@@ -557,10 +557,10 @@ interface imgui_main {
                     resizeGripCol[resizeGripN] = (if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip).u32
             }
             for (borderN in 0 until resizeBorderCount) {
-                val borderRect = window.getResizeBorderRect(borderN, gripHoverInnerSize, RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS)
+                val borderRect = window.getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS)
                 val (_, hovered, held) = buttonBehavior(borderRect, window.getId((borderN + 4)), ButtonFlag.FlattenChildren)
                 //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
-                if ((hovered && g.hoveredIdTimer > RESIZE_WINDOWS_FROM_EDGES_FEEDBACK_TIMER) || held) {
+                if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {
                     g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
                     if (held) borderHeld = borderN
                 }
@@ -568,19 +568,19 @@ interface imgui_main {
                     val borderTarget = Vec2(window.pos)
                     val borderPosN = when (borderN) {
                         0 -> {
-                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
+                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
                             Vec2(0, 0)
                         }
                         1 -> {
-                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
+                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
                             Vec2(1, 0)
                         }
                         2 -> {
-                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
+                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
                             Vec2(0, 1)
                         }
                         3 -> {
-                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
+                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
                             Vec2(0, 0)
                         }
                         else -> Vec2(0, 0)
