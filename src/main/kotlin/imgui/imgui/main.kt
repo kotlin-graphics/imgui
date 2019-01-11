@@ -53,7 +53,7 @@ interface imgui_main {
 
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() or ImGui::SetCurrentContext()?" }
 
-        if (IMGUI_ENABLE_TEST_ENGINE_HOOKS)
+        if (IMGUI_ENABLE_TEST_ENGINE)
             ImGuiTestEngineHook_PreNewFrame()
 
         /*  Check user data
@@ -234,7 +234,7 @@ interface imgui_main {
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
         begin("Debug##Default")
 
-        if (IMGUI_ENABLE_TEST_ENGINE_HOOKS)
+        if (IMGUI_ENABLE_TEST_ENGINE)
             ImGuiTestEngineHook_PostNewFrame()
     }
 

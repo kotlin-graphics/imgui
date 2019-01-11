@@ -180,6 +180,8 @@ interface main {
         if (g.logEnabled) logRenderedText(textBb.min, if (v) "[x]" else "[ ]")
         if (labelSize.x > 0f) renderText(textBb.min, label)
 
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None)
+
         return pressed
     }
 

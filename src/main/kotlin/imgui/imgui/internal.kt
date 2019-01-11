@@ -260,9 +260,6 @@ interface imgui_internal {
      *  drawing/interaction, which is passed to ItemAdd().  */
     fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null): Boolean {
 
-        if(IMGUI_ENABLE_TEST_ENGINE_HOOKS)
-            ImGuiTestEngineHook_ItemAdd(bb, id, navBbArg)
-
         val window = g.currentWindow!!
         if (id != 0) {
             /*  Navigation processing runs prior to clipping early-out
@@ -284,6 +281,9 @@ interface imgui_internal {
             lastItemRect = bb
             lastItemStatusFlags = 0
         }
+
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            ImGuiTestEngineHook_ItemAdd(id, bb)
 
         // Clipping test
         if (isClippedEx(bb, id, false)) return false
@@ -422,7 +422,7 @@ interface imgui_internal {
         val openPopupPos = navCalcPreferredRefPos()
         val popupRef = PopupRef(popupId = id, window = null, parentWindow = parentWindow, openFrameCount = g.frameCount,
                 openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
-                openMousePos = if(isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
+                openMousePos = if (isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
 //        println("" + g.openPopupStack.size +", "+currentStackSize)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack += popupRef
@@ -1781,6 +1781,7 @@ interface imgui_internal {
             right side of the content or not)         */
         val interactBb = if (displayFrame) Rect(frameBb) else Rect(frameBb.min.x, frameBb.min.y, frameBb.min.x + textWidth + style.itemSpacing.x * 2, frameBb.max.y)
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
+        val isLeaf = flags has Tnf.Leaf
 
         /*  Store a flag for the current depth to tell if we will allow closing this node when navigating one of its child.
             For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
@@ -1795,6 +1796,7 @@ interface imgui_internal {
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushRawId(id)
+            ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, label, window.dc.itemFlags or (if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
             return isOpen
         }
 
@@ -1804,13 +1806,13 @@ interface imgui_internal {
                 - OpenOnArrow .................... single-click on arrow to open
                 - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
         var buttonFlags = Bf.NoKeyModifiers or if (flags has Tnf.AllowItemOverlap) Bf.AllowItemOverlap else Bf.None
-        if (flags hasnt Tnf.Leaf)
+        if (!isLeaf)
             buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
         if (flags has Tnf.OpenOnDoubleClick)
             buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.None)
 
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
-        if (flags hasnt Tnf.Leaf) {
+        if (!isLeaf) {
             var toggled = false
             if (pressed) {
                 toggled = !(flags has (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick)) || g.navActivateId == id
@@ -1865,8 +1867,8 @@ interface imgui_internal {
                 renderNavHighlight(frameBb, id, NavHighlightFlag.TypeThin.i)
             }
             if (flags has Tnf.Bullet)
-                TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
-            else if (flags hasnt Tnf.Leaf)
+                renderBullet(frameBb.min + Vec2(textOffsetX * 0.5f, g.fontSize * 0.5f + textBaseOffsetY))
+            else if (!isLeaf)
                 renderArrow(frameBb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
                         if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
@@ -1876,6 +1878,7 @@ interface imgui_internal {
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushRawId(id)
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or (if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
         return isOpen
     }
 

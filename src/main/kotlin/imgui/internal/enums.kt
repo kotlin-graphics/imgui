@@ -122,14 +122,19 @@ infix fun Int.has(b: SeparatorFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: SeparatorFlag) = (this and b.i) == 0
 
 /** Storage for LastItem data   */
-enum class ItemStatusFlag {
-    None,
-    HoveredRect,
-    HasDisplayRect,
+enum class ItemStatusFlag(@JvmField val i: Int) {
+    None(0),
+    HoveredRect(1 shl 0),
+    HasDisplayRect(1 shl 1),
     /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
-    Edited;
+    Edited(1 shl 2),
 
-    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    //  #ifdef IMGUI_ENABLE_TEST_ENGINE
+//  [imgui-test only]
+    Openable(1 shl 10),
+    Opened(1 shl 11),
+    Checkable(1 shl 12),
+    Checked(1 shl 13);
 }
 
 infix fun Int.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv())
