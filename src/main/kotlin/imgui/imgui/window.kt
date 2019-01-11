@@ -609,8 +609,11 @@ interface imgui_window {
                 window.dc.navLayerCurrentMask = 1 shl NavLayer.Main.i
                 window.dc.itemFlags = itemFlagsBackup
 
-                // Title text (FIXME: refactor text alignment facilities along with RenderText helpers, this is too much code for what it does.)
-                val textSize = calcTextSize(name, 0, true)
+                // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
+                // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
+                val UNSAVED_DOCUMENT_MARKER = "*"
+                val markerSizeX = if(flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, 0, false).x else 0f
+                val textSize = calcTextSize(name, 0, true) + Vec2(markerSizeX, 0f)
                 val textR = Rect(titleBarRect)
                 val padLeft = when {
                     flags has Wf.NoCollapse -> style.framePadding.x
@@ -628,6 +631,11 @@ interface imgui_window {
                 // Match the size of CloseButton()
                 clipRect.max.x = window.pos.x + window.size.x - (if (pOpen?.get(0) == true) titleBarRect.height - 3 else style.framePadding.x)
                 renderTextClipped(textR.min, textR.max, name, 0, textSize, style.windowTitleAlign, clipRect)
+                if (flags has Wf.UnsavedDocument)                {
+                    val markerPos = Vec2(max(textR.min.x, textR.min.x + (textR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, textR.min.y) + Vec2(2 - markerSizeX, 0f)
+                    val off = Vec2(0f, (-g.fontSize * 0.25f).i.f)
+                    renderTextClipped(markerPos + off, textR.max + off, UNSAVED_DOCUMENT_MARKER, 0, null, Vec2(0, style.windowTitleAlign.y), clipRect)
+                }
             }
 
             // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
