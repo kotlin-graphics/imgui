@@ -60,6 +60,10 @@ enum class WindowFlag(@JvmField val i: Int) {
     NoNavInputs(1 shl 18),
     /** No focusing toward this window with gamepad/keyboard navigation (e.g. skipped by CTRL+TAB)  */
     NoNavFocus(1 shl 19),
+    /** Append '*' to title without affecting the ID, as a convenience to avoid using the ### operator.
+     *  When used in a tab/docking context, tab is selected on closure and closure is deferred by one frame
+     *  to allow code to cancel the closure (with a confirmation popup, etc.) without flicker. */
+    UnsavedDocument(1 shl 20),
 
     NoNav(NoNavInputs or NoNavFocus),
 
