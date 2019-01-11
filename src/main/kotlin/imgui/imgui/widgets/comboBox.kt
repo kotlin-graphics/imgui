@@ -30,10 +30,7 @@ import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
-import imgui.internal.DrawCornerFlag
-import imgui.internal.PopupPositionPolicy
-import imgui.internal.Rect
-import imgui.internal.isPowerOfTwo
+import imgui.internal.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
@@ -91,7 +88,7 @@ interface comboBox {
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
         if ((pressed || g.navActivateId == id) && !popupOpen) {
-            if (window.dc.navLayerCurrent == 0)
+            if (window.dc.navLayerCurrent == NavLayer.Main)
                 window.navLastIds[0] = id
             openPopupEx(id)
             popupOpen = true

@@ -81,7 +81,7 @@ interface imgui_menus {
         endMenuBar()
 
         // When the user has left the menu layer (typically: closed menus through activation of an item), we restore focus to the previous window
-        if (g.currentWindow == g.navWindow && g.navLayer == 0)
+        if (g.currentWindow == g.navWindow && g.navLayer == NavLayer.Main)
             focusPreviousWindowIgnoringOne(g.navWindow)
 
         end()
@@ -112,8 +112,8 @@ interface imgui_menus {
         with(window.dc) {
             cursorPos.put(barRect.min.x + window.dc.menuBarOffset.x, barRect.min.y + window.dc.menuBarOffset.y)
             layoutType = LayoutType.Horizontal
-            navLayerCurrent++
-            navLayerCurrentMask = navLayerCurrentMask shl 1
+            navLayerCurrent = NavLayer.Menu
+            navLayerCurrentMask = 1 shl NavLayer.Menu.i
             menuBarAppending = true
         }
         alignTextToFramePadding()
@@ -137,8 +137,8 @@ interface imgui_menus {
                     We could remove it by scoring in advance for multiple window (probably not worth the hassle/cost)   */
                 assert(window.dc.navLayerActiveMaskNext has 0x02) { "Sanity check" }
                 window.focus()
-                setNavIDWithRectRel(window.navLastIds[1], 1, window.navRectRel[1])
-                g.navLayer = 1
+                setNavIDWithRectRel(window.navLastIds[1], NavLayer.Menu, window.navRectRel[1])
+                g.navLayer = NavLayer.Menu
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
                 g.navMoveRequestForward = NavForward.ForwardQueued
                 navMoveRequestCancel()
@@ -154,8 +154,8 @@ interface imgui_menus {
             groupStack.last().advanceCursor = false
             endGroup() // Restore position on layer 0
             layoutType = LayoutType.Vertical
-            navLayerCurrent--
-            navLayerCurrentMask = navLayerCurrentMask ushr 1    // TODO needs uns?
+            navLayerCurrent = NavLayer.Main
+            navLayerCurrentMask = 1 shl NavLayer.Main.i
             menuBarAppending = false
         }
     }

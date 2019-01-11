@@ -181,9 +181,9 @@ interface imgui_internal {
         g.navId = id
         g.navWindow = window
         g.navLayer = navLayer
-        window.navLastIds[navLayer] = id
+        window.navLastIds[navLayer.i] = id
         if (window.dc.lastItemId == id)
-            window.navRectRel[navLayer].put(window.dc.lastItemRect.min - window.pos, window.dc.lastItemRect.max - window.pos)
+            window.navRectRel[navLayer.i].put(window.dc.lastItemRect.min - window.pos, window.dc.lastItemRect.max - window.pos)
 
         if (g.activeIdSource == InputSource.Nav)
             g.navDisableMouseHover = true
@@ -458,7 +458,7 @@ interface imgui_internal {
         assert(remaining >= 0)
         var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
         else g.openPopupStack[0].parentWindow
-        if (g.navLayer == 0)
+        if (g.navLayer == NavLayer.Main)
             focusWindow = navRestoreLastChildNavWindow(focusWindow)
         focusWindow.focus()
         focusWindow.dc.navHideHighlightOneFrame = true
@@ -675,12 +675,12 @@ interface imgui_internal {
         g.navMoveDir = clipDir
         g.navMoveRequestForward = NavForward.ForwardQueued
         g.navMoveRequestFlags = moveFlags
-        g.navWindow!!.navRectRel[g.navLayer] = bbRel
+        g.navWindow!!.navRectRel[g.navLayer.i] = bbRel
     }
 
     fun navMoveRequestTryWrapping(window: Window, moveFlags: NavMoveFlags) {
 
-        if (g.navWindow !== window || !navMoveRequestButNoResultYet() || g.navMoveRequestForward != NavForward.None || g.navLayer != 0)
+        if (g.navWindow !== window || !navMoveRequestButNoResultYet() || g.navMoveRequestForward != NavForward.None || g.navLayer != NavLayer.Main)
             return
         assert(moveFlags != 0) // No points calling this with no wrapping
         val bbRel = window.navRectRel[0]
@@ -780,15 +780,15 @@ interface imgui_internal {
         g.navNextActivateId = id
     }
 
-    fun setNavId(id: ID, navLayer: Int) {
-        assert(navLayer == 0 || navLayer == 1)
+    fun setNavId(id: ID, navLayer: NavLayer) {
+        // assert(navLayer == 0 || navLayer == 1) useless on jvm
         g.navId = id
-        g.navWindow!!.navLastIds[navLayer] = id
+        g.navWindow!!.navLastIds[navLayer.i] = id
     }
 
-    fun setNavIDWithRectRel(id: ID, navLayer: Int, rectRel: Rect) {
+    fun setNavIDWithRectRel(id: ID, navLayer: NavLayer, rectRel: Rect) {
         setNavId(id, navLayer)
-        g.navWindow!!.navRectRel[navLayer] put rectRel
+        g.navWindow!!.navRectRel[navLayer.i] put rectRel
         g.navMousePosDirty = true
         g.navDisableHighlight = false
         g.navDisableMouseHover = true
