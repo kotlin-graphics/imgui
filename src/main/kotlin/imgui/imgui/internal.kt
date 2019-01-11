@@ -610,7 +610,7 @@ interface imgui_internal {
                 if (dir == Dir.Right) pos.put(rAvoid.min.x, rAvoid.min.y - size.y) // Above, Toward Right
                 if (dir == Dir.Left) pos.put(rAvoid.max.x - size.x, rAvoid.max.y) // Below, Toward Left
                 if (dir == Dir.Up) pos.put(rAvoid.max.x - size.x, rAvoid.min.y - size.y) // Above, Toward Left
-                if (!rOuter.contains(Rect(pos, pos + size))) continue
+                if (Rect(pos, pos + size) !in rOuter) continue
                 lastDir = dir
                 return pos
             }
@@ -1189,7 +1189,7 @@ interface imgui_internal {
             val THICKNESS = 2f
             val DISTANCE = 3f + THICKNESS * 0.5f
             displayRect expand Vec2(DISTANCE)
-            val fullyVisible = window.clipRect contains displayRect
+            val fullyVisible = displayRect in window.clipRect
             if (!fullyVisible)
                 window.drawList.pushClipRect(displayRect) // check order here down
             window.drawList.addRect(displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),

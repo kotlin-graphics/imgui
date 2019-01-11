@@ -496,6 +496,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
      *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
      *  (This used to be the WindowFlag.ResizeFromAnySide flag) */
     var configWindowsResizeFromEdges = true
+    /** [BETA] Set to true to only allow moving windows when clicked+dragged from the title bar. Windows without a title bar are not affected. */
+    var configWindowsMoveFromTitleBarOnly = false
 
     //------------------------------------------------------------------
     // User Functions
@@ -891,7 +893,7 @@ class Style {
     var buttonTextAlign = Vec2(0.5f)
     /** Window position are clamped to be visible within the display area by at least this amount.
      *  Only applies to regular windows.    */
-    var displayWindowPadding = Vec2(20)
+    var displayWindowPadding = Vec2(19)
     /** If you cannot see the edges of your screen (e.g. on a TV) increase the safe area padding. Apply to popups/tooltips
      *  as well regular windows.  NB: Prefer configuring your TV sets correctly!   */
     var displaySafeAreaPadding = Vec2(3)

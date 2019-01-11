@@ -424,7 +424,7 @@ interface imgui_window {
             if (dimBgForWindowList && window == g.navWindowingTargetAnim!!.rootWindow) {
                 val bb = window.rect()
                 bb expand g.fontSize
-                if (!bb.contains(viewportRect)) // Avoid drawing if the window covers all the viewport anyway
+                if (viewportRect !in bb) // Avoid drawing if the window covers all the viewport anyway
                     window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f), g.style.windowRounding)
             }
 
@@ -504,7 +504,7 @@ interface imgui_window {
                 var rounding = max(window.windowRounding, style.windowRounding)
                 val bb = window.rect()
                 bb expand g.fontSize
-                if (bb contains viewportRect) { // If a window fits the entire viewport, adjust its highlight inward
+                if (viewportRect in bb) { // If a window fits the entire viewport, adjust its highlight inward
                     bb expand (-g.fontSize - 1f)
                     rounding = window.windowRounding
                 }
