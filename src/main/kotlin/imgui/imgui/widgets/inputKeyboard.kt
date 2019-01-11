@@ -135,15 +135,11 @@ interface inputKeyboard {
         return res
     }
 
-    /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
-     *  functions "format" argument)    */
     fun inputScalar(label: String, dataType: DataType, data: IntArray, step: Int?, stepFast: Int?, format: String? = null,
                     extraFlags: InputTextFlags = 0): Boolean = withInt(data, 0) {
         inputScalar(label, dataType, it, step, stepFast, format, extraFlags)
     }
 
-    /** NB: format here must be a simple "%xx" format string with no prefix/suffix (unlike the Drag/Slider
-     *  functions "format" argument)    */
     @Suppress("UNCHECKED_CAST")
     fun inputScalar(label: String, dataType: DataType, dataPtr: KMutableProperty0<*>, step: Number?, stepFast: Number?,
                     format_: String? = null, extraFlags_: InputTextFlags = 0): Boolean {

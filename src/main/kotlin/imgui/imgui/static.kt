@@ -15,6 +15,16 @@ import kotlin.math.abs
 import imgui.WindowFlag as Wf
 
 
+//-----------------------------------------------------------------------------
+// [SECTION] VIEWPORTS, PLATFORM WINDOWS
+//-----------------------------------------------------------------------------
+
+// (this section is filled in the 'viewport' and 'docking' branches)
+
+//-----------------------------------------------------------------------------
+// [SECTION] KEYBOARD/GAMEPAD NAVIGATION
+//-----------------------------------------------------------------------------
+
 inline fun navScoreItemDistInterval(a0: Float, a1: Float, b0: Float, b1: Float) = when {
     a1 < b0 -> a1 - b0
     b1 < a0 -> a0 - b1

@@ -643,7 +643,7 @@ fun dataTypeApplyOpFromText(buf_: CharArray, initialValueBuf_: CharArray, dataTy
  *  NB: We modify rect_rel by the amount we scrolled for, so it is immediately updated. */
 fun navScrollToBringItemIntoView(window: Window, itemRect: Rect) {
     val windowRectRel = Rect(window.innerMainRect.min - 1, window.innerMainRect.max + 1)
-    //g.OverlayDrawList.AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
+    //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
     if (itemRect in windowRectRel) return
 
     if (window.scrollbar.x && itemRect.min.x < windowRectRel.min.x) {
@@ -867,7 +867,7 @@ fun navUpdate() {
     val allowedDirFlags = if (g.activeId == 0) 0.inv() else g.activeIdAllowNavDirFlags
     if (g.navMoveRequestForward == NavForward.None) {
         g.navMoveDir = Dir.None
-        g.navMoveRequestFlags = 0
+        g.navMoveRequestFlags = NavMoveFlag.None.i
         g.navWindow?.let {
             if (g.navWindowingTarget == null && allowedDirFlags != 0 && it.flags hasnt Wf.NoNavInputs) {
                 if (allowedDirFlags has (1 shl Dir.Left) && isNavInputPressedAnyOfTwo(NavInput.DpadLeft, NavInput.KeyLeft, InputReadMode.Repeat))
@@ -970,14 +970,14 @@ fun navUpdate() {
     //g.OverlayDrawList.AddRect(g.NavScoringRectScreen.Min, g.NavScoringRectScreen.Max, IM_COL32(255,200,0,255)); // [DEBUG]
     g.navScoringCount = 0
     if (IMGUI_DEBUG_NAV_RECTS)
-        g.navWindow?.let {nav ->
+        g.navWindow?.let { nav ->
             for (layer in 0..1)
-                getOverlayDrawList(nav).addRect(nav.pos + nav.navRectRel[layer].min, nav.pos + nav.navRectRel[layer].max, COL32(255,200,0,255))  // [DEBUG]
-            val col = if(!nav.hidden) COL32(255,0,255,255) else COL32(255,0,0,255)
+                getOverlayDrawList(nav).addRect(nav.pos + nav.navRectRel[layer].min, nav.pos + nav.navRectRel[layer].max, COL32(255, 200, 0, 255))  // [DEBUG]
+            val col = if (!nav.hidden) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
             val p = navCalcPreferredRefPos()
             val buf = "${g.navLayer}".toCharArray(CharArray(32))
             getOverlayDrawList(nav).addCircleFilled(p, 3f, col)
-            getOverlayDrawList(nav).addText(null, 13f, p + Vec2(8,-4), col, buf)
+            getOverlayDrawList(nav).addText(null, 13f, p + Vec2(8, -4), col, buf)
         }
 }
 
@@ -1097,7 +1097,9 @@ fun navUpdateWindowing() {
         g.navWindow?.let {
             // Move to parent menu if necessary
             var newNavWindow = it
-            while (newNavWindow.dc.navLayerActiveMask hasnt (1 shl 1) && newNavWindow.flags has Wf.ChildWindow && newNavWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
+            while (newNavWindow.dc.navLayerActiveMask hasnt (1 shl 1)
+                    && newNavWindow.flags has Wf.ChildWindow
+                    && newNavWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
                 newNavWindow = newNavWindow.parentWindow!!
 
             if (newNavWindow !== it) {

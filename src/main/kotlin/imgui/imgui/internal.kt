@@ -279,7 +279,7 @@ interface imgui_internal {
         val dc = g.currentWindow!!.dc.apply {
             lastItemId = id
             lastItemRect = bb
-            lastItemStatusFlags = 0
+            lastItemStatusFlags = ItemStatusFlag.None.i
         }
 
         if (IMGUI_ENABLE_TEST_ENGINE)
@@ -812,7 +812,7 @@ interface imgui_internal {
     fun clearDragDrop() = with(g) {
         dragDropActive = false
         dragDropPayload.clear()
-        dragDropAcceptFlags = 0
+        dragDropAcceptFlags = Ddf.None.i
         dragDropAcceptIdPrev = 0
         dragDropAcceptIdCurr = 0
         dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE

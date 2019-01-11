@@ -290,6 +290,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var tooltipOverrideCount = 0
     /** If no custom clipboard handler is defined   */
     var privateClipboard = ""
+
+    // Platform support
+
     /** Cursor position request to the OS Input Method Editor   */
     var platformImePos = Vec2(Float.MAX_VALUE)
     /** Last cursor position passed to the OS Input Method Editor   */
