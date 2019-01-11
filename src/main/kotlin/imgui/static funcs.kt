@@ -756,7 +756,7 @@ fun navUpdate() {
             setNavIDWithRectRel(g.navInitResultId, g.navLayer, g.navInitResultRectRel)
         else
             setNavId(g.navInitResultId, g.navLayer)
-        g.navWindow!!.navRectRel[g.navLayer] = g.navInitResultRectRel
+        g.navWindow!!.navRectRel[g.navLayer.i] = g.navInitResultRectRel
     }
     g.navInitRequest = false
     g.navInitRequestFromMove = false
@@ -788,12 +788,12 @@ fun navUpdate() {
     }
     g.navIdIsAlive = false
     g.navJustTabbedId = 0
-    assert(g.navLayer == 0 || g.navLayer == 1)
+//    assert(g.navLayer == 0 || g.navLayer == 1) useless on jvm
 
     // Store our return window (for returning from Layer 1 to Layer 0) and clear it as soon as we step back in our own Layer 0
     g.navWindow?.let {
         navSaveLastChildNavWindow(it)
-        if (it.navLastChildNavWindow != null && g.navLayer == 0)
+        if (it.navLastChildNavWindow != null && g.navLayer == NavLayer.Main)
             it.navLastChildNavWindow = null
     }
 
@@ -814,7 +814,7 @@ fun navUpdate() {
             val parentWindow = childWindow.parentWindow!!
             assert(childWindow.childId != 0)
             parentWindow.focus()
-            setNavId(childWindow.childId, 0)
+            setNavId(childWindow.childId, NavLayer.Main)
             g.navIdIsAlive = false
             if (g.navDisableMouseHover)
                 g.navMousePosDirty = true
@@ -822,8 +822,8 @@ fun navUpdate() {
             // Close open popup/menu
             if (g.openPopupStack.last().window!!.flags hasnt Wf.Modal)
                 closePopupToLevel(g.openPopupStack.lastIndex)
-        } else if (g.navLayer != 0)
-            navRestoreLayer(0)  // Leave the "menu" layer
+        } else if (g.navLayer != NavLayer.Main)
+            navRestoreLayer(NavLayer.Main)  // Leave the "menu" layer
         else {
             // Clear NavLastId for popups but keep it for regular child window so we can leave one and come back where we were
             if (g.navWindow != null && (g.navWindow!!.flags has Wf.Popup || g.navWindow!!.flags hasnt Wf.ChildWindow))
@@ -943,13 +943,13 @@ fun navUpdate() {
     g.navMoveResultOther.clear()
 
     // When we have manually scrolled (without using navigation) and NavId becomes out of bounds, we project its bounding box to the visible area to restart navigation within visible items
-    if (g.navMoveRequest && g.navMoveFromClampedRefRect && g.navLayer == 0) {
+    if (g.navMoveRequest && g.navMoveFromClampedRefRect && g.navLayer == NavLayer.Main) {
         val window = g.navWindow!!
         val windowRectRel = Rect(window.innerMainRect.min - window.pos - 1, window.innerMainRect.max - window.pos + 1)
-        if (!windowRectRel.contains(window.navRectRel[g.navLayer])) {
+        if (!windowRectRel.contains(window.navRectRel[g.navLayer.i])) {
             val pad = window.calcFontSize() * 0.5f
             windowRectRel expand Vec2(-min(windowRectRel.width, pad), -min(windowRectRel.height, pad)) // Terrible approximation for the intent of starting navigation from first fully visible item
-            window.navRectRel[g.navLayer] clipWith windowRectRel
+            window.navRectRel[g.navLayer.i] clipWith windowRectRel
             g.navId = 0
         }
         g.navMoveFromClampedRefRect = false
@@ -958,7 +958,7 @@ fun navUpdate() {
     // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
     g.navWindow.let {
         if (it != null) {
-            val navRectRel = if (!it.navRectRel[g.navLayer].isInverted) Rect(it.navRectRel[g.navLayer]) else Rect(0f, 0f, 0f, 0f)
+            val navRectRel = if (!it.navRectRel[g.navLayer.i].isInverted) Rect(it.navRectRel[g.navLayer.i]) else Rect(0f, 0f, 0f, 0f)
             g.navScoringRectScreen.put(navRectRel.min + it.pos, navRectRel.max + it.pos)
         } else g.navScoringRectScreen put getViewportRect()
     }
@@ -1087,8 +1087,8 @@ fun navUpdateWindowing() {
             navInitWindow(applyFocusWindow!!, false)
 
         // If the window only has a menu layer, select it directly
-        if (applyFocusWindow!!.dc.navLayerActiveMask == 1 shl 1)
-            g.navLayer = 1
+        if (applyFocusWindow!!.dc.navLayerActiveMask == 1 shl NavLayer.Menu.i)
+            g.navLayer = NavLayer.Menu
     }
     applyFocusWindow?.let { g.navWindowingTarget = null }
 
@@ -1107,7 +1107,7 @@ fun navUpdateWindowing() {
             }
             g.navDisableHighlight = false
             g.navDisableMouseHover = true
-            navRestoreLayer(if (it.dc.navLayerActiveMask has (1 shl 1)) g.navLayer xor 1 else 0)
+            navRestoreLayer(if (it.dc.navLayerActiveMask has (1 shl NavLayer.Menu.i)) NavLayer of (g.navLayer.i xor 1) else NavLayer.Main)
         }
 }
 
@@ -1165,7 +1165,7 @@ fun navUpdateMoveResult() {
     val window = result.window!!
     assert(g.navWindow != null)
     // Scroll to keep newly navigated item fully into view.
-    if (g.navLayer == 0) {
+    if (g.navLayer == NavLayer.Main) {
         val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
         navScrollToBringItemIntoView(window, rectAbs)
         // Estimate upcoming scroll so we can offset our result position so mouse position can be applied immediately after in NavUpdate()
@@ -1190,7 +1190,7 @@ fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
 
         g.navWindow?.let { window ->
 
-            if (window.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null && g.navLayer == 0) {
+            if (window.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null && g.navLayer == NavLayer.Main) {
 
                 val pageUpHeld = Key.PageUp.isDown && allowedDirFlags has (1 shl Dir.Up.i)
                 val pageDownHeld = Key.PageDown.isDown && allowedDirFlags has (1 shl Dir.Down)
@@ -1202,7 +1202,7 @@ fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
                         else if (Key.PageDown.isPressed)
                             window.setScrollY(window.scroll.y + window.innerClipRect.height)
                     } else {
-                        val navRectRel = window.navRectRel[g.navLayer]
+                        val navRectRel = window.navRectRel[g.navLayer.i]
                         val pageOffsetY = 0f max (window.innerClipRect.height - window.calcFontSize() + navRectRel.height)
                         return when { // nav_scoring_rect_offset_y
                             Key.PageUp.isPressed -> {
@@ -1290,7 +1290,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         g.navLayer = window.dc.navLayerCurrent
         g.navIdIsAlive = true
         g.navIdTabCounter = window.focusIdxTabCounter
-        window.navRectRel[window.dc.navLayerCurrent] = navBbRel    // Store item bounding box (relative to window position)
+        window.navRectRel[window.dc.navLayerCurrent.i] = navBbRel    // Store item bounding box (relative to window position)
     }
 }
 
@@ -1302,7 +1302,7 @@ fun navCalcPreferredRefPos(): Vec2 {
         return Vec2(g.lastValidMousePos)
     } else {
         // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item.
-        val rectRel = g.navWindow!!.navRectRel[g.navLayer]
+        val rectRel = g.navWindow!!.navRectRel[g.navLayer.i]
         val pos = g.navWindow!!.pos + Vec2(rectRel.min.x + min(style.framePadding.x * 4, rectRel.width), rectRel.max.y - min(style.framePadding.y, rectRel.height))
         val visibleRect = getViewportRect()
         return glm.floor(glm.clamp(pos, visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.

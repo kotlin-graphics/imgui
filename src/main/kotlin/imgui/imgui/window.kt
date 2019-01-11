@@ -545,7 +545,7 @@ interface imgui_window {
                 dc.prevLineTextBaseOffset = 0f
                 dc.currentLineTextBaseOffset = 0f
                 dc.navHideHighlightOneFrame = false
-                dc.navHasScroll = scrollMaxY > 0f
+                dc.navHasScroll = window.scrollMaxY > 0f
                 dc.navLayerActiveMask = window.dc.navLayerActiveMaskNext
                 dc.navLayerActiveMaskNext = 0
                 dc.menuBarAppending = false
@@ -586,8 +586,8 @@ interface imgui_window {
                 // Close & collapse button are on layer 1 (same as menus) and don't default focus
                 val itemFlagsBackup = window.dc.itemFlags
                 window.dc.itemFlags = window.dc.itemFlags or If.NoNavDefaultFocus
-                window.dc.navLayerCurrent++
-                window.dc.navLayerCurrentMask = window.dc.navLayerCurrentMask shl 1
+                window.dc.navLayerCurrent = NavLayer.Menu
+                window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu.i
 
                 // Collapse button
                 if (flags hasnt Wf.NoCollapse)
@@ -602,8 +602,8 @@ interface imgui_window {
                         pOpen[0] = false
                 }
 
-                window.dc.navLayerCurrent--
-                window.dc.navLayerCurrentMask = window.dc.navLayerCurrentMask ushr 1    // TODO unsigned necessary?
+                window.dc.navLayerCurrent = NavLayer.Main
+                window.dc.navLayerCurrentMask = 1 shl NavLayer.Main.i
                 window.dc.itemFlags = itemFlagsBackup
 
                 // Title text (FIXME: refactor text alignment facilities along with RenderText helpers, this is too much code for what it does.)

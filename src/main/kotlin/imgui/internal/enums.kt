@@ -138,24 +138,28 @@ infix fun Int.has(b: ItemStatusFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ItemStatusFlag) = and(b.i) == 0
 
 /** FIXME: this is in development, not exposed/functional as a generic feature yet. */
-enum class LayoutType { Vertical, Horizontal;
+enum class LayoutType {
+    Vertical, Horizontal;
 
     val i = ordinal
 }
 
-enum class Axis { None, X, Y;
+enum class Axis {
+    None, X, Y;
 
     val i = ordinal - 1
 }
 
 infix fun Int.shl(b: Axis) = shl(b.i)
 
-enum class PlotType { Lines, Histogram;
+enum class PlotType {
+    Lines, Histogram;
 
     val i = ordinal
 }
 
-enum class InputSource { None, Mouse, Nav,
+enum class InputSource {
+    None, Mouse, Nav,
     /** Only used occasionally for storage, not tested/handled by most code */
     NavKeyboard,
     /** Only used occasionally for storage, not tested/handled by most code */
@@ -169,12 +173,14 @@ enum class InputSource { None, Mouse, Nav,
 }
 
 // FIXME-NAV: Clarify/expose various repeat delay/rate
-enum class InputReadMode { Down, Pressed, Released, Repeat, RepeatSlow, RepeatFast;
+enum class InputReadMode {
+    Down, Pressed, Released, Repeat, RepeatSlow, RepeatFast;
 
     val i = ordinal
 }
 
-enum class NavHighlightFlag { None, TypeDefault, TypeThin, AlwaysDraw, NoRounding;
+enum class NavHighlightFlag {
+    None, TypeDefault, TypeThin, AlwaysDraw, NoRounding;
 
     val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
@@ -183,7 +189,8 @@ infix fun Int.has(b: NavHighlightFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: NavHighlightFlag) = and(b.i) == 0
 infix fun NavHighlightFlag.or(b: NavHighlightFlag): NavHighlightFlags = i or b.i
 
-enum class NavDirSourceFlag { None, Keyboard, PadDPad, PadLStick;
+enum class NavDirSourceFlag {
+    None, Keyboard, PadDPad, PadLStick;
 
     val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
@@ -214,9 +221,24 @@ enum class NavMoveFlag {
 
 infix fun Int.has(b: NavMoveFlag) = and(b.i) != 0
 
-enum class NavForward { None, ForwardQueued, ForwardActive;
+enum class NavForward {
+    None, ForwardQueued, ForwardActive;
 
     val i = ordinal
+}
+
+enum class NavLayer {
+    /** Main scrolling layer */
+    Main,
+    /** Menu layer (access with Alt/ImGuiNavInput_Menu) */
+    Menu;
+
+    val i = ordinal
+
+    companion object {
+        val COUNT = values().size
+        infix fun of(i: Int) = values().first { it.i == i }
+    }
 }
 
 enum class PopupPositionPolicy { Default, ComboBox }
@@ -249,7 +271,7 @@ enum class DrawListFlag {
     /** Filled shapes have anti-aliased edges (*2 the number of vertices) */
     AntiAliasedFill;
 
-    val i = if(ordinal == 0) 0 else 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun DrawListFlag.or(b: DrawListFlag): DrawListFlags = i or b.i

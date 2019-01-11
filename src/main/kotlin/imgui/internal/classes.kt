@@ -445,18 +445,18 @@ class WindowTempData {
     var lastItemRect = Rect()
     /** End-user display rect (only valid if LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) */
     var lastItemDisplayRect = Rect()
-
-    var navHideHighlightOneFrame = false
-    /** Set when scrolling can be used (ScrollMax > 0.0f)   */
-    var navHasScroll = false
     /** Current layer, 0..31 (we currently only use 0..1)   */
-    var navLayerCurrent = 0
+    var navLayerCurrent = NavLayer.Main
     /** = (1 << navLayerCurrent) used by ::itemAdd prior to clipping. */
-    var navLayerCurrentMask = 1 shl 0
+    var navLayerCurrentMask = 1 shl NavLayer.Main.i
     /** Which layer have been written to (result from previous frame)   */
     var navLayerActiveMask = 0
     /** Which layer have been written to (buffer for current frame) */
     var navLayerActiveMaskNext = 0
+
+    var navHideHighlightOneFrame = false
+    /** Set when scrolling can be used (ScrollMax > 0.0f)   */
+    var navHasScroll = false
 
     var menuBarAppending = false
     /** MenuBarOffset.x is sort of equivalent of a per-layer CursorPos.x, saved/restored as we switch to the menu bar.
@@ -655,9 +655,9 @@ class Window(var context: Context, var name: String) {
      *  we kept g.Windows sorted by last focused including child window.)   */
     var navLastChildNavWindow: Window? = null
     /** Last known NavId for this window, per layer (0/1). ID-Array   */
-    val navLastIds = IntArray(2)
+    val navLastIds = IntArray(NavLayer.COUNT)
     /** Reference rectangle, in window relative space   */
-    val navRectRel = Array(2) { Rect() }
+    val navRectRel = Array(NavLayer.COUNT) { Rect() }
 
     // -----------------------------------------------------------------------------------------------------------------
     // Navigation / Focus
@@ -1099,7 +1099,7 @@ fun Window?.focus() {
         g.navInitRequest = false
         g.navId = this?.navLastIds?.get(0) ?: 0 // Restore NavId
         g.navIdIsAlive = false
-        g.navLayer = 0
+        g.navLayer = NavLayer.Main
     }
 
     // Passing NULL allow to disable keyboard focus

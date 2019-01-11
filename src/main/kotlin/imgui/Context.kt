@@ -168,7 +168,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navWindowingToggleLayer = false
     /** Layer we are navigating on. For now the system is hard-coded for 0 = main contents and 1 = menu/title bar,
      *  may expose layers later. */
-    var navLayer = 0
+    var navLayer = NavLayer.Main
     /** == NavWindow->DC.FocusIdxTabCounter at time of NavId processing */
     var navIdTabCounter = Int.MAX_VALUE
     /** Nav widget has been seen this frame ~~ NavRefRectRel is valid   */
