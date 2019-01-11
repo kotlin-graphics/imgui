@@ -513,7 +513,7 @@ class Window(var context: Context, var name: String) {
     /** == ImHash(Name) */
     val id: ID = hash(name, 0)
     /** See enum WindowFlags */
-    var flags: WindowFlags = 0
+    var flags = Wf.None.i
 
     /** Position (always rounded-up to nearest pixel)    */
     var pos = Vec2()

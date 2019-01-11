@@ -180,7 +180,6 @@ interface imgui_demoDebugInformations {
         text("%d allocations", io.metricsAllocs)
         checkbox("Show clipping rectangles when hovering draw commands", Companion::showDrawCmdClipRects)
         checkbox("Ctrl shows window begin order", Companion::showWindowBeginOrder)
-
         separator()
 
         Funcs.nodeWindows(g.windows, "Windows")

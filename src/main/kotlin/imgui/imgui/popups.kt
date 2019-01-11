@@ -31,14 +31,14 @@ interface imgui_popups {
      *  needs to be at the same level).   */
     fun openPopup(strId: String) = openPopupEx(g.currentWindow!!.getId(strId))
 
-    /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returns true!
-     *  @param flags = WindowFlag   */
-    fun beginPopup(strId: String, flags: WindowFlags = 0): Boolean {
+    /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returns true!    */
+    fun beginPopup(strId: String, flags_: WindowFlags = 0): Boolean {
         if (g.openPopupStack.size <= g.currentPopupStack.size) {    // Early out for performance
             g.nextWindowData.clear()    // We behave like Begin() and need to consume those values
             return false
         }
-        return beginPopupEx(g.currentWindow!!.getId(strId), flags or Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
+        val flags = flags_ or Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings
+        return beginPopupEx(g.currentWindow!!.getId(strId), flags)
     }
 
     /** This is a helper to handle the simplest case of associating one named popup to one given widget.
@@ -75,7 +75,7 @@ interface imgui_popups {
     }
 
     /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside) */
-    fun beginPopupModal(name: String, pOpen: BooleanArray? = null, flags: WindowFlags = 0): Boolean {
+    fun beginPopupModal(name: String, pOpen: BooleanArray? = null, flags_: WindowFlags = 0): Boolean {
 
         val window = g.currentWindow!!
         val id = window.getId(name)
@@ -88,7 +88,8 @@ interface imgui_popups {
         if (g.nextWindowData.posCond == Cond.None)
             setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
 
-        val isOpen = begin(name, pOpen, flags or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings)
+        val flags = flags_ or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings
+        val isOpen = begin(name, pOpen, flags)
         // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
         if (!isOpen || (pOpen != null && !pOpen.get(0))) {
             endPopup()

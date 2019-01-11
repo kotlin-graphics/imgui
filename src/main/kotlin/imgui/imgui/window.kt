@@ -110,6 +110,8 @@ interface imgui_window {
 
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
+
+        // Update Flags, LastFrameActive, BeginOrderXXX fields
         if (firstBeginOfTheFrame)
             window.flags = flags
         else
@@ -455,9 +457,10 @@ interface imgui_window {
                 g.nextWindowData.bgAlphaCond = Cond.None
 
                 // Title bar
-                val titleBarCol = if (window.collapsed) Col.TitleBgCollapsed else if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
-                if (flags hasnt Wf.NoTitleBar)
+                if (flags hasnt Wf.NoTitleBar) {
+                    val titleBarCol = if (window.collapsed) Col.TitleBgCollapsed else if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
                     window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, Dcf.Top.i)
+                }
 
                 // Menu bar
                 if (flags has Wf.MenuBar) {
@@ -691,7 +694,7 @@ interface imgui_window {
             window.hiddenFramesRegular = 1
 
         // Update the Hidden flag
-        window.hidden = window.hiddenFramesRegular > 0 || window.hiddenFramesForResize != 0
+        window.hidden = window.hiddenFramesRegular > 0 || window.hiddenFramesForResize > 0
 
         // Return false if we don't intend to display anything to allow user to perform an early out optimization
         window.apply {
