@@ -79,8 +79,8 @@ class Rect {
     /** Bottom-right    */
     val br get() = max
 
-    infix fun contains(p: Vec2) = p.x >= min.x && p.y >= min.y && p.x < max.x && p.y < max.y
-    infix fun contains(r: Rect) = r.min.x >= min.x && r.min.y >= min.y && r.max.x <= max.x && r.max.y <= max.y
+    infix operator fun contains(p: Vec2) = p.x >= min.x && p.y >= min.y && p.x < max.x && p.y < max.y
+    infix operator fun contains(r: Rect) = r.min.x >= min.x && r.min.y >= min.y && r.max.x <= max.x && r.max.y <= max.y
     infix fun overlaps(r: Rect) = r.min.y < max.y && r.max.y > min.y && r.min.x < max.x && r.max.x > min.x
     infix fun add(p: Vec2) {
         if (min.x > p.x) min.x = p.x
@@ -1050,7 +1050,11 @@ class Window(var context: Context, var name: String) {
 
     /** ~ StartMouseMovingWindow */
     fun startMouseMoving() {
-        // Set ActiveId even if the _NoMove flag is set. Without it, dragging away from a window with _NoMove would activate hover on other windows.
+        /*  Set ActiveId even if the _NoMove flag is set. Without it, dragging away from a window with _NoMove would
+            activate hover on other windows.
+            We _also_ call this when clicking in a window empty space when io.ConfigWindowsMoveFromTitleBarOnly is set,
+            but clear g.MovingWindow afterward.
+            This is because we want ActiveId to be set even when the window is stuck from moving.         */
         focus()
         setActiveId(moveId, this)
         g.navDisableHighlight = true

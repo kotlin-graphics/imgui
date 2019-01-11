@@ -45,7 +45,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     // When entering through a NavFlattened border, we consider child window items as fully clipped for scoring
     if (window.parentWindow === g.navWindow) {
         assert((window.flags or g.navWindow!!.flags) has Wf.NavFlattened)
-        if (!window.clipRect.contains(cand))
+        if (cand !in window.clipRect)
             return false
         cand clipWithFull window.clipRect // This allows the scored item to not overlap other candidates in the parent window
     }

@@ -644,7 +644,7 @@ fun dataTypeApplyOpFromText(buf_: CharArray, initialValueBuf_: CharArray, dataTy
 fun navScrollToBringItemIntoView(window: Window, itemRect: Rect) {
     val windowRectRel = Rect(window.innerMainRect.min - 1, window.innerMainRect.max + 1)
     //g.OverlayDrawList.AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
-    if (windowRectRel contains itemRect) return
+    if (itemRect in windowRectRel) return
 
     if (window.scrollbar.x && itemRect.min.x < windowRectRel.min.x) {
         window.scrollTarget.x = itemRect.min.x - window.pos.x + window.scroll.x - style.itemSpacing.x
@@ -946,7 +946,7 @@ fun navUpdate() {
     if (g.navMoveRequest && g.navMoveFromClampedRefRect && g.navLayer == NavLayer.Main) {
         val window = g.navWindow!!
         val windowRectRel = Rect(window.innerMainRect.min - window.pos - 1, window.innerMainRect.max - window.pos + 1)
-        if (!windowRectRel.contains(window.navRectRel[g.navLayer.i])) {
+        if (window.navRectRel[g.navLayer.i] !in windowRectRel) {
             val pad = window.calcFontSize() * 0.5f
             windowRectRel expand Vec2(-min(windowRectRel.width, pad), -min(windowRectRel.height, pad)) // Terrible approximation for the intent of starting navigation from first fully visible item
             window.navRectRel[g.navLayer.i] clipWith windowRectRel

@@ -287,9 +287,12 @@ interface imgui_main {
             if (g.navWindow == null || !g.navWindow!!.appearing) { // Unless we just made a window/popup appear
                 // Click to focus window and start moving (after we're done with all our widgets)
                 if (io.mouseClicked[0])
-                    if (g.hoveredRootWindow != null)
+                    g.hoveredRootWindow?.let { hoveredRoot ->
                         g.hoveredWindow!!.startMouseMoving()
-                    else if (g.navWindow != null && frontMostPopupModal == null)
+                        if (io.configWindowsMoveFromTitleBarOnly && hoveredRoot.flags hasnt Wf.NoTitleBar)
+                        if (io.mouseClickedPos[0] !in hoveredRoot.titleBarRect())
+                                g.movingWindow = null
+                    } ?: if (g.navWindow != null && frontMostPopupModal == null)
                         null.focus()   // Clicking on void disable focus
 
                 /*  With right mouse button we close popups without changing focus

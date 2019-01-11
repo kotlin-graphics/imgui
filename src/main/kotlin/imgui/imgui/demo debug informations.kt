@@ -139,6 +139,7 @@ interface imgui_demoDebugInformations {
             if (io.configMacOSXBehaviors)                               text("io.configMacOSXBehaviors")
             if (io.configInputTextCursorBlink)                          text("io.configInputTextCursorBlink")
             if (io.configWindowsResizeFromEdges)                        text("io.configWindowsResizeFromEdges")
+            if (io.configWindowsMoveFromTitleBarOnly)                   text("io.configWindowsMoveFromTitleBarOnly")
             text("io.backendFlags: 0x%08X", io.backendFlags)
             if (io.backendFlags has BackendFlag.HasGamepad)             text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors)        text(" HasMouseCursors")
