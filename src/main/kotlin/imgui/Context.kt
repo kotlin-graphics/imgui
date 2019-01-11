@@ -492,10 +492,10 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var configMacOSXBehaviors = false  // JVM TODO
     /** Set to false to disable blinking cursor, for users who consider it distracting. (was called: io.OptCursorBlink prior to 1.63) */
     var configInputTextCursorBlink = true
-    /** [BETA] Enable resizing of windows from their edges and from the lower-left corner.
+    /** Enable resizing of windows from their edges and from the lower-left corner.
      *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
      *  (This used to be the WindowFlag.ResizeFromAnySide flag) */
-    var configResizeWindowsFromEdges = false
+    var configWindowsResizeFromEdges = true
 
     //------------------------------------------------------------------
     // User Functions

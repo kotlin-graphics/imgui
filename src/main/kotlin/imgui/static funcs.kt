@@ -89,7 +89,7 @@ fun findHoveredWindow() {
 
     val paddingRegular = Vec2(style.touchExtraPadding)
     val paddingForResizeFromEdges = when {
-        io.configResizeWindowsFromEdges -> glm.max(style.touchExtraPadding, Vec2(RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS))
+        io.configWindowsResizeFromEdges -> glm.max(style.touchExtraPadding, Vec2(WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS))
         else -> paddingRegular
     }
 
