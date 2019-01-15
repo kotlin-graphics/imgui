@@ -496,7 +496,7 @@ interface imgui_internal {
                 n++
             }
 
-        if (n < g.openPopupStack.size)   // This test is not required but it allows to set a convenient breakpoint on the block below
+        if (n < g.openPopupStack.size)   // This test is not required but it allows to set a convenient breakpoint on the statement below
             closePopupToLevel(n)
     }
 

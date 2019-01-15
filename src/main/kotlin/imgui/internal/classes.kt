@@ -1343,7 +1343,9 @@ class TabBar {
         }
 
         // Click to Select a tab
-        val buttonFlags = ButtonFlag.PressedOnClick or ButtonFlag.AllowItemOverlap
+        var buttonFlags = ButtonFlag.PressedOnClick or ButtonFlag.AllowItemOverlap
+        if (g.dragDropActive)
+            buttonFlags = buttonFlags or ButtonFlag.PressedOnDragDropHold
         val (pressed, hovered_, held) = buttonBehavior(bb, id, buttonFlags)
         val hovered = hovered_ || g.hoveredId == id
         if (pressed || (flags_ has TabItemFlag.SetSelected && !tabContentsVisible)) // SetSelected can only be passed on explicit tab bar
