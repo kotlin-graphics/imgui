@@ -471,7 +471,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
 
 //    void*         UserData;                 // = NULL               // Store your own data for retrieval by callbacks.
 
-    /** Load and assemble one or more fonts into a single tightly packed texture. Output to Fonts array.    */
+    /** Load, rasterize and pack one or more fonts into a single texture.    */
     val fonts = sharedFontAtlas ?: FontAtlas()
     /** Global scale all fonts  */
     var fontGlobalScale = 1f
@@ -482,10 +482,9 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** For retina display or other situations where window coordinates are different from framebuffer coordinates.
      *  User storage only, presently not used by ImGui. */
     var displayFramebufferScale = Vec2(1f)
-    /** If you use DisplaySize as a virtual space larger than your screen, set DisplayVisibleMin/Max to the visible
-     *  area.   */
+    /** [OBSOLETE] If you use DisplaySize as a virtual space larger than your screen, set DisplayVisibleMin/Max to the visible area. */
     var displayVisibleMin = Vec2()
-    /** If the values are the same, we defaults to Min=(0.0f) and Max=DisplaySize   */
+    /** [OBSOLETE] Just use io.DisplaySize! If the values are the same, we defaults to Min=(0.0f) and Max=DisplaySize   */
     var displayVisibleMax = Vec2()
 
     //------------------------------------------------------------------
