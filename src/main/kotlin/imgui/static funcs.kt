@@ -179,7 +179,7 @@ fun checkStacksSize(window: Window, write: Boolean) {
     }
     run {
         // Too few or too many EndMenu()/EndPopup()
-        val current = g.currentPopupStack.size
+        val current = g.beginPopupStack.size
         if (write) backup[ptr] = current
         else assert(backup[ptr] == current) { "BeginMenu/EndMenu or BeginPopup/EndPopup Mismatch" }
         ptr++

@@ -2,7 +2,6 @@ package imgui.imgui
 
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.begin
 import imgui.ImGui.beginPopupEx
 import imgui.ImGui.begin_
 import imgui.ImGui.closePopupToLevel
@@ -41,7 +40,7 @@ interface imgui_popupsModals {
 
     /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returns true!    */
     fun beginPopup(strId: String, flags_: WindowFlags = 0): Boolean {
-        if (g.openPopupStack.size <= g.currentPopupStack.size) {    // Early out for performance
+        if (g.openPopupStack.size <= g.beginPopupStack.size) {    // Early out for performance
             g.nextWindowData.clear()    // We behave like Begin() and need to consume those values
             return false
         }
@@ -113,7 +112,7 @@ interface imgui_popupsModals {
         if (!isOpen || pOpen?.get() == false) {
             endPopup()
             if (isOpen)
-                closePopupToLevel(g.currentPopupStack.size)
+                closePopupToLevel(g.beginPopupStack.size)
             return false
         }
         return isOpen
@@ -122,7 +121,7 @@ interface imgui_popupsModals {
     /** Only call EndPopup() if BeginPopupXXX() returns true!   */
     fun endPopup() {
         assert(currentWindow.flags has Wf.Popup) { "Mismatched BeginPopup()/EndPopup() calls" }
-        assert(g.currentPopupStack.isNotEmpty())
+        assert(g.beginPopupStack.isNotEmpty())
 
         // Make all menus and popups wrap around for now, may need to expose that policy.
         navMoveRequestTryWrapping(g.currentWindow!!, NavMoveFlag.LoopY.i)
@@ -142,15 +141,15 @@ interface imgui_popupsModals {
         } else false
     }
 
-    fun isPopupOpen(strId: String) = g.openPopupStack.size > g.currentPopupStack.size &&
-            g.openPopupStack[g.currentPopupStack.size].popupId == g.currentWindow!!.getId(strId)
+    fun isPopupOpen(strId: String) = g.openPopupStack.size > g.beginPopupStack.size &&
+            g.openPopupStack[g.beginPopupStack.size].popupId == g.currentWindow!!.getId(strId)
 
     /** close the popup we have begin-ed into. clicking on a MenuItem or Selectable automatically close
      *  the current popup.  */
     fun closeCurrentPopup() {
 
-        var popupIdx = g.currentPopupStack.lastIndex
-        if (popupIdx < 0 || popupIdx >= g.openPopupStack.size || g.currentPopupStack[popupIdx].popupId != g.openPopupStack[popupIdx].popupId)
+        var popupIdx = g.beginPopupStack.lastIndex
+        if (popupIdx < 0 || popupIdx >= g.openPopupStack.size || g.beginPopupStack[popupIdx].popupId != g.openPopupStack[popupIdx].popupId)
             return
         while (popupIdx > 0 && g.openPopupStack[popupIdx].window != null && (g.openPopupStack[popupIdx].window!!.flags has Wf.ChildMenu))
             popupIdx--

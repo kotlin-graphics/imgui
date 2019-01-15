@@ -224,7 +224,7 @@ interface imgui_main {
         // No window should be open at the beginning of the frame.
         // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.
         g.currentWindowStack.clear()
-        g.currentPopupStack.clear()
+        g.beginPopupStack.clear()
         closePopupsOverWindow(g.navWindow)
 
         /*  Create implicit/fallback window - which we will only render it if the user has added something to it.

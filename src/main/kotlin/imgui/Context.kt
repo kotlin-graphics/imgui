@@ -117,7 +117,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Which popups are open (persistent)  */
     val openPopupStack = Stack<PopupRef>()
     /** Which level of BeginPopup() we are in (reset every frame)   */
-    val currentPopupStack = Stack<PopupRef>()
+    val beginPopupStack = Stack<PopupRef>()
 
     /** Storage for SetNextWindow** functions   */
     val nextWindowData = NextWindowData()
@@ -401,7 +401,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.styleModifiers.clear()
         g.fontStack.clear()
         g.openPopupStack.clear()
-        g.currentPopupStack.clear()
+        g.beginPopupStack.clear()
         g.drawDataBuilder.clear()
         g.overlayDrawList.clearFreeMemory()
         g.privateClipboard = ""

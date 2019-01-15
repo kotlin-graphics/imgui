@@ -25,7 +25,6 @@ import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
-import imgui.ImGui.renderTextClippedEx
 import imgui.ImGui.selectable
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextWindowPos
@@ -113,7 +112,7 @@ interface comboBox {
             setNextWindowSizeConstraints(Vec2(w, 0f), Vec2(Float.MAX_VALUE, calcMaxPopupHeightFromItemCount(popupMaxHeightInItems)))
         }
 
-        val name = "##Combo_%02d".format(g.currentPopupStack.size) // Recycle windows based on depth
+        val name = "##Combo_%02d".format(g.beginPopupStack.size) // Recycle windows based on depth
 
         // Peak into expected window size so we can position it
         findWindowByName(name)?.let {
