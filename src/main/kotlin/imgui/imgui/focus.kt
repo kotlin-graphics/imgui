@@ -9,8 +9,7 @@ import imgui.navUpdateAnyRequestFlag
 
 
 /** Focus, Activation
- *  (Prefer using "setItemDefaultFocus()" over "if (isWindowAppearing()) setScrollHereY()" when applicable,
- *  to make your code more forward compatible when navigation branch is merged) */
+ *  - Prefer using "SetItemDefaultFocus()" over "if (IsWindowAppearing()) SetScrollHereY()" when applicable to signify "this is the default item" */
 interface imgui_focusActivation {
 
     // (Prefer using "SetItemDefaultFocus()" over "if (IsWindowAppearing()) SetScrollHereY()" when applicable to signify "this is the default item")

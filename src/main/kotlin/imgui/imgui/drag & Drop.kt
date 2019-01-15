@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 import imgui.DragDropFlag as Ddf
 
 /** Drag and Drop
- *  [BETA API] Missing Demo code. API may evolve! */
+ *  [BETA API] API may evolve! */
 interface imgui_dragAndDrop {
 
     /** Call when the current item is active. If this return true, you can call SetDragDropPayload() + EndDragDropSource()

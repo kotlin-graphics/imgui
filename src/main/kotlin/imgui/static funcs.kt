@@ -237,8 +237,8 @@ fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 fun createNewWindowSettings(name: String) = WindowSettings(name).also { g.settingsWindows += it }
 
 /*  Settings/.Ini Utilities
-    The disk functions are automatically called if io.IniFilename != NULL (default is "imgui.ini").
-    Set io.IniFilename to NULL to load/save manually. Read io.WantSaveIniSettings description about handling .ini saving manually. */
+    - The disk functions are automatically called if io.IniFilename != NULL (default is "imgui.ini").
+    - Set io.IniFilename to NULL to load/save manually. Read io.WantSaveIniSettings description about handling .ini saving manually. */
 
 /** call after CreateContext() and before the first call to NewFrame(). NewFrame() automatically calls LoadIniSettingsFromDisk(io.IniFilename). */
 fun loadIniSettingsFromDisk(iniFilename: String?) {

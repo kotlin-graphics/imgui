@@ -46,9 +46,10 @@ import imgui.internal.SliderFlag
 import imgui.internal.focus
 import kotlin.reflect.KMutableProperty0
 
-/** Widgets: Sliders (tip: ctrl+click on a slider to input with keyboard. manually input values aren't clamped, can go off-bounds)
- *  Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
- *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc. */
+/** Widgets: Sliders
+ *  - CTRL+Click on any slider to turn them into an input box. Manually input values aren't clamped and can go off-bounds.
+ *  - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
+ *      e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.   */
 interface sliders {
 
 

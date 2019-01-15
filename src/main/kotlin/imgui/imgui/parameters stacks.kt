@@ -250,10 +250,10 @@ interface imgui_parametersStacks {
     }
 
     /** word-wrapping for Text*() commands. < 0.0f: no wrapping; 0.0f: wrap to end of window (or column);
-     *  > 0.0f: wrap at 'wrapPosX' position in window local space */
-    fun pushTextWrapPos(wrapPosX: Float = 0f) = with(currentWindow.dc) {
-        textWrapPos = wrapPosX
-        textWrapPosStack.push(wrapPosX)
+     *  > 0.0f: wrap at 'wrapLocalPosX' position in window local space */
+    fun pushTextWrapPos(wrapLocalPosX: Float = 0f) = with(currentWindow.dc) {
+        textWrapPos = wrapLocalPosX
+        textWrapPosStack.push(wrapLocalPosX)
     }
 
     fun popTextWrapPos() = with(currentWindow.dc) {
