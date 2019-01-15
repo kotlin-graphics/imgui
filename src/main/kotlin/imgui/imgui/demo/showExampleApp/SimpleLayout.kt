@@ -4,10 +4,14 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
+import imgui.ImGui.beginTabBar
+import imgui.ImGui.beginTabItem
 import imgui.ImGui.begin_
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
+import imgui.ImGui.endTabBar
+import imgui.ImGui.endTabItem
 import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.menuItem
 import imgui.ImGui.sameLine
@@ -55,8 +59,17 @@ object SimpleLayout {
             beginChild("item view", Vec2(0, -frameHeightWithSpacing)) // Leave room for 1 line below us
             text("MyObject: ${selectedChild}")
             separator()
-            textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +
-                    "incididunt ut labore et dolore magna aliqua. ")
+            if (beginTabBar("##Tabs", TabBarFlag.None.i))            {
+                if (beginTabItem("Description"))                {
+                    textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ")
+                    endTabItem()
+                }
+                if (beginTabItem("Details"))                {
+                    text("ID: 0123456789")
+                    endTabItem()
+                }
+                endTabBar()
+            }
             endChild()
             button("Revert") {}
             sameLine()
