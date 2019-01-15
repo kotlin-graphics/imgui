@@ -1177,7 +1177,7 @@ object showDemoWindowWidgets {
                             "isWindowHovered(AnyWindow) = ${isWindowHovered(HoveredFlag.AnyWindow)}\n")
 
             beginChild("child", Vec2(0, 50), true)
-            text("This is another child window for testing with the _ChildWindows flag.")
+            text("This is another child window for testing the _ChildWindows flag.")
             endChild()
             if (embedAllInsideAChildWindow)
                 endChild()

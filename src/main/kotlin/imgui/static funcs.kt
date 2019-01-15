@@ -693,6 +693,11 @@ fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, flags_: W
         childId = id
         autoFitChildAxes = autoFitAxes
     }
+
+    // Set the cursor to handle case where the user called SetNextWindowPos()+BeginChild() manually.
+    // While this is not really documented/defined, it seems that the expected thing to do.
+    parentWindow.dc.cursorPos = childWindow.pos
+
     // Process navigation-in immediately so NavInit can run on first frame
     if (g.navActivateId == id && flags hasnt Wf.NavFlattened && (childWindow.dc.navLayerActiveMask != 0 || childWindow.dc.navHasScroll)) {
         childWindow.focus()
