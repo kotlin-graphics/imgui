@@ -373,7 +373,7 @@ object showDemoWindowWidgets {
                 inputInt("input int", ::i0)
                 sameLine(); showHelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n")
 
-                inputFloat("input float", ::f0, 0.01f, 1f)
+                inputFloat("input float", ::f0, 0.01f, 1f, "%.3f")
 
                 inputDouble("input double", ::d0, 0.01, 1.0, "%.8f")
 
