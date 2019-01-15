@@ -6,7 +6,6 @@ import imgui.imgui.widgets.*
 import imgui.internal.Rect
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty0
 
 /** -----------------------------------------------------------------------------
  *      Context
@@ -64,7 +63,7 @@ const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f
 const val IMGUI_ENABLE_TEST_ENGINE = false
 var ImGuiTestEngineHook_PreNewFrame: () -> Unit = {}
 var ImGuiTestEngineHook_PostNewFrame: () -> Unit = {}
-var ImGuiTestEngineHook_ItemAdd: (id: ID, bb: Rect) -> Unit = { _, _ -> }
+var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID) -> Unit = { _, _ -> }
 var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: Int) -> Unit = { _, _, _ -> }
 
 object ImGui :

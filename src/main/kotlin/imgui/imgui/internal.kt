@@ -283,7 +283,7 @@ interface imgui_internal {
         }
 
         if (IMGUI_ENABLE_TEST_ENGINE)
-            ImGuiTestEngineHook_ItemAdd(id, bb)
+            ImGuiTestEngineHook_ItemAdd(bb, id)
 
         // Clipping test
         if (isClippedEx(bb, id, false)) return false
@@ -1064,7 +1064,7 @@ interface imgui_internal {
             val ellipsisDotCount = 3
             val ellipsisWidth = (1f + 1f) * ellipsisDotCount - 1f
             val remaining = IntArray(1)
-            var labelSizeClippedX = g.font.calcTextSizeA(g.fontSize, textEllipsisClipBb.width-ellipsisWidth+1f, 0f, label, labelDisplayEnd, remaining).x
+            var labelSizeClippedX = g.font.calcTextSizeA(g.fontSize, textEllipsisClipBb.width - ellipsisWidth + 1f, 0f, label, labelDisplayEnd, remaining).x
             var labelEnd = remaining[0]
             if (labelEnd == 0 && labelEnd < labelDisplayEnd) {    // Always display at least 1 character if there's no room for character + ellipsis
                 labelEnd = labelDisplayEnd // TODO CHECK textCountUtf8BytesFromChar(label, labelDisplayEnd)
@@ -1072,7 +1072,7 @@ interface imgui_internal {
             }
             while (labelEnd > 0 && label[labelEnd - 1].isBlankA) { // Trim trailing space
                 labelEnd--
-                labelSizeClippedX -= g.font.calcTextSizeA(g.fontSize, Float.MAX_VALUE, 0f, label, labelEnd+1).x // Ascii blanks are always 1 byte
+                labelSizeClippedX -= g.font.calcTextSizeA(g.fontSize, Float.MAX_VALUE, 0f, label, labelEnd + 1).x // Ascii blanks are always 1 byte
             }
             renderTextClippedEx(drawList, textPixelClipBb.min, textPixelClipBb.max, label, labelEnd, labelSize, Vec2())
 
@@ -1681,6 +1681,9 @@ interface imgui_internal {
         val backupHoveredWindow = g.hoveredWindow
         if (flags has Bf.FlattenChildren && g.hoveredRootWindow === window)
             g.hoveredWindow = window
+
+        if (IMGUI_ENABLE_TEST_ENGINE && window.dc.lastItemId != id)
+            ImGuiTestEngineHook_ItemAdd(bb, id)
 
         var pressed = false
         var hovered = itemHoverable(bb, id)
