@@ -154,5 +154,10 @@ interface imgui_popupsModals {
         while (popupIdx > 0 && g.openPopupStack[popupIdx].window != null && (g.openPopupStack[popupIdx].window!!.flags has Wf.ChildMenu))
             popupIdx--
         closePopupToLevel(popupIdx)
+
+        /*  A common pattern is to close a popup when selecting a menu item/selectable that will open another window.
+            To improve this usage pattern, we avoid nav highlight for a single frame in the parent window.
+            Similarly, we could avoid mouse hover highlight in this window but it is less visually problematic. */
+        g.navWindow?.dc!!.navHideHighlightOneFrame = true
     }
 }
