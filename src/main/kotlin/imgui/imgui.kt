@@ -170,6 +170,12 @@ typealias InputTextFlags = Int
 /** flags: for Selectable()                  // enum SelectableFlag */
 typealias SelectableFlags = Int
 
+/** Flags: for BeginTabBar() */
+typealias TabBarFlags = Int                 // enum ImGuiTabBarFlags_
+
+/** Flags: for BeginTabItem() */
+typealias TabItemFlags = Int                // enum ImGuiTabItemFlags_
+
 /** flags: for TreeNode*(),CollapsingHeader()// enum TreeNodeFlag */
 typealias TreeNodeFlags = Int
 

@@ -252,6 +252,59 @@ infix fun Int.or(other: ComboFlag): ComboFlags = or(other.i)
 infix fun Int.has(b: ComboFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ComboFlag) = and(b.i) == 0
 
+
+/** Flags for ImGui::BeginTabBar() */
+enum class TabBarFlag(@JvmField val i: Int) {
+    None(0),
+    Reorderable(1 shl 0),   // Allow manually dragging tabs to re-order them + New tabs are appended at the end of list
+    AutoSelectNewTabs(1 shl 1),   // Automatically select new tabs when they appear
+    NoCloseWithMiddleMouseButton(1 shl 2),   // Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button. You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false.
+    NoTabListPopupButton(1 shl 3),
+    NoTabListScrollingButtons(1 shl 4),
+    FittingPolicyResizeDown(1 shl 5),   // Resize tabs when they don't fit
+    FittingPolicyScroll(1 shl 6),   // Add scroll buttons when tabs don't fit
+    FittingPolicyMask_(FittingPolicyResizeDown or FittingPolicyScroll),
+    FittingPolicyDefault_(FittingPolicyResizeDown.i),
+
+    // Private
+
+    /** [Docking: Unused in Master Branch] Part of a dock node */
+    DockNode(1 shl 20),
+    /** [Docking: Unused in Master Branch] Part of an explicit dockspace node node */
+    DockNodeIsDockSpace(1 shl 21),
+
+    IsFocused(1 shl 22),
+    /** FIXME: Settings are handled by the docking system, this only request the tab bar to mark settings dirty when reordering tabs */
+    SaveSettings(1 shl 23);
+
+    infix fun or(tabBarFlag: TabBarFlag) = i or tabBarFlag.i
+    infix fun xor(tabBarFlag: TabBarFlag) = i xor tabBarFlag.i
+}
+
+infix fun Int.and(other: TabBarFlag): ComboFlags = and(other.i)
+infix fun Int.wo(other: TabBarFlag): ComboFlags = and(other.i.inv())
+infix fun Int.or(other: TabBarFlag): ComboFlags = or(other.i)
+infix fun Int.has(b: TabBarFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: TabBarFlag) = and(b.i) == 0
+
+/** Flags for ImGui::BeginTabItem() */
+enum class TabItemFlag(@JvmField val i: Int) {
+    None(0),
+    /** Append '*' to title without affecting the ID, as a convenience to avoid using the ### operator. Also: tab is selected on closure and closure is deferred by one frame to allow code to undo it without flicker. */
+    UnsavedDocument(1 shl 0),
+    /** Trigger flag to programatically make the tab selected when calling BeginTabItem() */
+    SetSelected(1 shl 1),
+    /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button. You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
+    NoCloseWithMiddleMouseButton(1 shl 2),
+    /** Don't call PushID(tab->ID)/PopID() on BeginTabItem()/EndTabItem() */
+    NoPushId(1 shl 3),
+}
+
+infix fun Int.or(other: TabItemFlag): TabItemFlags = or(other.i)
+infix fun Int.has(b: TabItemFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: TabItemFlag) = and(b.i) == 0
+
+
 // Flags for ImGui::IsWindowFocused()
 enum class FocusedFlag(@JvmField val i: Int) {
     None(0),
@@ -690,6 +743,11 @@ enum class Col {
     ResizeGrip,
     ResizeGripHovered,
     ResizeGripActive,
+    Tab,
+    TabHovered,
+    TabActive,
+    TabUnfocused,
+    TabUnfocusedActive,
     PlotLines,
     PlotLinesHovered,
     PlotHistogram,
@@ -760,8 +818,10 @@ enum class StyleVar {
     ScrollbarRounding,
     /** float   */
     GrabMinSize,
-    /** Float   */
+    /** float   */
     GrabRounding,
+    /** float */
+    TabRounding,
     /** vec2  */
     ButtonTextAlign;
 

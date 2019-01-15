@@ -264,6 +264,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Local buffer for small payloads */
     var dragDropPayloadBufLocal = ByteBuffer.allocate(8)
 
+
+    // Tab bars
+    val tabBars = mutableMapOf<Int, TabBar>()
+    val currentTabBar = Stack<TabBar>()
+    val tabSortByWidthBuffer = ArrayList<TabBarSortItem>()
+
     //------------------------------------------------------------------
     // Widget state
     //------------------------------------------------------------------
@@ -365,7 +371,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
         /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
             (which would happen if we never called NewFrame)         */
-        if(g.fontAtlasOwnedByContext)
+        if (g.fontAtlasOwnedByContext)
             io.fonts.locked = false
         io.fonts.clear()
 
@@ -892,6 +898,10 @@ class Style {
     var grabMinSize = 10f
     /** Radius of grabs corners rounding. Set to 0.0f to have rectangular slider grabs. */
     var grabRounding = 0f
+    /** Radius of upper corners of a tab. Set to 0.0f to have rectangular tabs. */
+    var tabRounding = 4f
+    /** Thickness of border around tabs. */
+    var tabBorderSize = 0f
     /** Alignment of button text when button is larger than text.   */
     var buttonTextAlign = Vec2(0.5f)
     /** Window position are clamped to be visible within the display area by at least this amount.
@@ -968,6 +978,7 @@ class Style {
         popupRounding = glm.floor(popupRounding * scaleFactor)
         framePadding = glm.floor(framePadding * scaleFactor)
         frameRounding = glm.floor(frameRounding * scaleFactor)
+        tabRounding = glm.floor(tabRounding * scaleFactor)
         itemSpacing = glm.floor(itemSpacing * scaleFactor)
         itemInnerSpacing = glm.floor(itemInnerSpacing * scaleFactor)
         touchExtraPadding = glm.floor(touchExtraPadding * scaleFactor)

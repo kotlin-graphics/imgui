@@ -4,6 +4,7 @@ import glm_.vec4.Vec4
 import imgui.Col
 import imgui.Style
 import imgui.g
+import imgui.internal.lerp
 
 /** Styles  */
 interface imgui_styles {
@@ -56,6 +57,11 @@ interface imgui_styles {
         colors[Col.ResizeGrip]             .put(0.26f, 0.59f, 0.98f, 0.25f)
         colors[Col.ResizeGripHovered]      .put(0.26f, 0.59f, 0.98f, 0.67f)
         colors[Col.ResizeGripActive]       .put(0.26f, 0.59f, 0.98f, 0.95f)
+        colors[Col.Tab]                    .put(colors[Col.Header].lerp(colors[Col.TitleBgActive], 0.80f))
+        colors[Col.TabHovered]             .put(colors[Col.HeaderHovered])
+        colors[Col.TabActive]              .put(colors[Col.HeaderActive].lerp(colors[Col.TitleBgActive], 0.60f))
+        colors[Col.TabUnfocused]           .put(colors[Col.Tab].lerp(colors[Col.TitleBg], 0.80f))
+        colors[Col.TabUnfocusedActive]     .put(colors[Col.TabActive].lerp(colors[Col.TitleBg], 0.40f))
         colors[Col.PlotLines]              .put(0.61f, 0.61f, 0.61f, 1.00f)
         colors[Col.PlotLinesHovered]       .put(1.00f, 0.43f, 0.35f, 1.00f)
         colors[Col.PlotHistogram]          .put(0.90f, 0.70f, 0.00f, 1.00f)
@@ -63,8 +69,8 @@ interface imgui_styles {
         colors[Col.TextSelectedBg]         .put(0.26f, 0.59f, 0.98f, 0.35f)
         colors[Col.DragDropTarget]         .put(1.00f, 1.00f, 0.00f, 0.90f)
         colors[Col.NavHighlight]           .put(0.26f, 0.59f, 0.98f, 1.00f)
-        colors[Col.NavWindowingHighlight] .put(1.00f, 1.00f, 1.00f, 0.70f)
-        colors[Col.NavWindowingDimBg]     .put(0.80f, 0.80f, 0.80f, 0.20f)
+        colors[Col.NavWindowingHighlight]  .put(1.00f, 1.00f, 1.00f, 0.70f)
+        colors[Col.NavWindowingDimBg]      .put(0.80f, 0.80f, 0.80f, 0.20f)
         colors[Col.ModalWindowDimBg]       .put(0.80f, 0.80f, 0.80f, 0.35f)
         // @formatter:on
         Unit    // neutralize lambda return show
@@ -109,6 +115,11 @@ interface imgui_styles {
         colors[Col.ResizeGrip]             .put(1.00f, 1.00f, 1.00f, 0.16f)
         colors[Col.ResizeGripHovered]      .put(0.78f, 0.82f, 1.00f, 0.60f)
         colors[Col.ResizeGripActive]       .put(0.78f, 0.82f, 1.00f, 0.90f)
+        colors[Col.Tab]                    .put(colors[Col.Header].lerp(colors[Col.TitleBgActive], 0.80f))
+        colors[Col.TabHovered]             .put(colors[Col.HeaderHovered])
+        colors[Col.TabActive]              .put(colors[Col.HeaderActive].lerp(colors[Col.TitleBgActive], 0.60f))
+        colors[Col.TabUnfocused]           .put(colors[Col.Tab].lerp(colors[Col.TitleBg], 0.80f))
+        colors[Col.TabUnfocusedActive]     .put(colors[Col.TabActive].lerp(colors[Col.TitleBg], 0.40f))
         colors[Col.PlotLines]              .put(1.00f, 1.00f, 1.00f, 1.00f)
         colors[Col.PlotLinesHovered]       .put(0.90f, 0.70f, 0.00f, 1.00f)
         colors[Col.PlotHistogram]          .put(0.90f, 0.70f, 0.00f, 1.00f)
@@ -162,6 +173,11 @@ interface imgui_styles {
         colors[Col.ResizeGrip]             .put(0.80f, 0.80f, 0.80f, 0.56f)
         colors[Col.ResizeGripHovered]      .put(0.26f, 0.59f, 0.98f, 0.67f)
         colors[Col.ResizeGripActive]       .put(0.26f, 0.59f, 0.98f, 0.95f)
+        colors[Col.Tab]                    .put(colors[Col.Header].lerp(colors[Col.TitleBgActive], 0.90f))
+        colors[Col.TabHovered]             .put(colors[Col.HeaderHovered])
+        colors[Col.TabActive]              .put(colors[Col.HeaderActive].lerp(colors[Col.TitleBgActive], 0.60f))
+        colors[Col.TabUnfocused]           .put(colors[Col.Tab].lerp(colors[Col.TitleBg], 0.80f))
+        colors[Col.TabUnfocusedActive]     .put(colors[Col.TabActive].lerp(colors[Col.TitleBg], 0.40f))
         colors[Col.PlotLines]              .put(0.39f, 0.39f, 0.39f, 1.00f)
         colors[Col.PlotLinesHovered]       .put(1.00f, 0.43f, 0.35f, 1.00f)
         colors[Col.PlotHistogram]          .put(0.90f, 0.70f, 0.00f, 1.00f)

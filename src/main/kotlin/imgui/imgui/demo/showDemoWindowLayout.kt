@@ -9,10 +9,13 @@ import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
+import imgui.ImGui.beginTabBar
+import imgui.ImGui.beginTabItem
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columns
 import imgui.ImGui.combo
@@ -27,6 +30,8 @@ import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
+import imgui.ImGui.endTabBar
+import imgui.ImGui.endTabItem
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameHeightWithSpacing
@@ -58,6 +63,7 @@ import imgui.ImGui.scrollMaxY
 import imgui.ImGui.scrollX
 import imgui.ImGui.scrollY
 import imgui.ImGui.selectable
+import imgui.ImGui.separator
 import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.setTooltip
@@ -115,6 +121,11 @@ object showDemoWindowLayout {
     var item = -1
     val selection = intArrayOf(0, 1, 2, 3)
 
+
+    /* Tabs */
+    var tabBarFlags: TabBarFlags = TabBarFlag.Reorderable.i
+    val names = arrayOf("Artichoke", "Beetroot", "Celery", "Daikon")
+    val opened = BooleanArray(4) { true } // Persistent user state
 
     /* Scrolling */
     var track = true
@@ -278,6 +289,61 @@ object showDemoWindowLayout {
                 if (n + 1 < buttonsCount && nextButtonX2 < windowVisibleX2)
                     sameLine()
                 popId()
+            }
+        }
+
+        treeNode("Tabs") {
+
+            treeNode("Basic") {
+                val tabBarFlags: TabBarFlags = TabBarFlag.None.i
+                if (beginTabBar("MyTabBar", tabBarFlags)) {
+                    if (beginTabItem("Avocado")) {
+                        text("This is the Avocado tab!\nblah blah blah blah blah")
+                        endTabItem()
+                    }
+                    if (beginTabItem("Broccoli")) {
+                        text("This is the Broccoli tab!\nblah blah blah blah blah")
+                        endTabItem()
+                    }
+                    if (beginTabItem("Cucumber")) {
+                        text("This is the Cucumber tab!\nblah blah blah blah blah")
+                        endTabItem()
+                    }
+                    endTabBar()
+                }
+                separator()
+            }
+
+            treeNode("Advanced & Close Button") {
+                // Expose a couple of the available flags. In most cases you may just call BeginTabBar() with no flags (0).
+                checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags, TabBarFlag.Reorderable.i)
+                checkboxFlags("ImGuiTabBarFlags_AutoSelectNewTabs", ::tabBarFlags, TabBarFlag.AutoSelectNewTabs.i)
+                checkboxFlags("ImGuiTabBarFlags_NoCloseWithMiddleMouseButton", ::tabBarFlags, TabBarFlag.NoCloseWithMiddleMouseButton.i)
+                if (tabBarFlags hasnt TabBarFlag.FittingPolicyMask_)
+                    tabBarFlags = tabBarFlags or TabBarFlag.FittingPolicyDefault_
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags, TabBarFlag.FittingPolicyResizeDown.i))
+                    tabBarFlags = tabBarFlags wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags, TabBarFlag.FittingPolicyScroll.i))
+                    tabBarFlags = tabBarFlags wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll)
+
+                // Tab Bar
+                for (n in opened.indices) {
+                    if (n > 0) sameLine()
+                    checkbox(names[n], opened, n)
+                }
+
+                // Passing a bool* to BeginTabItem() is similar to passing one to Begin(): the underlying bool will be set to false when the tab is closed.
+                if (beginTabBar("MyTabBar", tabBarFlags)) {
+                    for (n in opened.indices)
+                        if (opened[n] && beginTabItem(names[n], opened, n))                    {
+                        text("This is the ${names[n]} tab!")
+                        if (n has 1)
+                        text("I am an odd tab.")
+                        endTabItem()
+                    }
+                    endTabBar()
+                }
+                separator()
             }
         }
 

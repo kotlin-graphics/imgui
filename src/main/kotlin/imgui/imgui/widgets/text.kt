@@ -20,6 +20,7 @@ import imgui.ImGui.renderArrowPointingAt
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.renderTextClippedEx
 import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeight

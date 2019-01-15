@@ -35,6 +35,7 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.renderTextClippedEx
 import imgui.ImGui.sameLine
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
