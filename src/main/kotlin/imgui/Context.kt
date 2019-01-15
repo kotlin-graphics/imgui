@@ -15,7 +15,9 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.max
 
-/** Main imgui context */
+/** Main imgui context
+ *
+ *  Dear ImGui context (opaque structure, unless including imgui_internal.h) */
 class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var initialized = false
