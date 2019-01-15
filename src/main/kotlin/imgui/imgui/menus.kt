@@ -294,14 +294,14 @@ interface imgui_menus {
 
     /** Only call EndMenu() if BeginMenu() returns true! */
     fun endMenu() {
-        /*  Nav: When a left move request _within our child menu_ failed, close the menu.
+        /*  Nav: When a left move request _within our child menu_ failed, close ourselves (the _parent_ menu).
             A menu doesn't close itself because EndMenuBar() wants the catch the last Left<>Right inputs.
             However, it means that with the current code, a beginMenu() from outside another menu or a menu-bar won't be
             closable with the Left direction.   */
         val window = g.currentWindow!!
         g.navWindow?.let {
             if (it.parentWindow === window && g.navMoveDir == Dir.Left && navMoveRequestButNoResultYet() && window.dc.layoutType == Lt.Vertical) {
-                closePopupToLevel(g.openPopupStack.lastIndex)
+                closePopupToLevel(g.currentPopupStack.size)
                 navMoveRequestCancel()
             }
         }
