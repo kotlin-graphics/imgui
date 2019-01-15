@@ -245,7 +245,7 @@ interface imgui_main {
 
         assert(g.initialized)
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
-        assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()" }
+        assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()?" }
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f) {
@@ -255,8 +255,15 @@ interface imgui_main {
             g.platformImeLastPos put g.platformImePos
         }
 
-        // Hide implicit "Debug" window if it hasn't been used
-        assert(g.currentWindowStack.size == 1) { "Mismatched Begin()/End() calls, did you forget to call end on g.currentWindow.name?" }
+        // Report when there is a mismatch of Begin/BeginChild vs End/EndChild calls. Important: Remember that the Begin/BeginChild API requires you
+        // to always call End/EndChild even if Begin/BeginChild returns false! (this is unfortunately inconsistent with most other Begin* API).
+        if (g.currentWindowStack.size != 1)
+            if (g.currentWindowStack.size > 1)
+                assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you forget to call End/EndChild?" }
+            else
+                assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you call End/EndChild too much?" }
+
+        // Hide implicit/fallback "Debug" window if it hasn't been used
         g.currentWindow?.let {
             if (!it.writeAccessed) it.active = false
         }
@@ -290,7 +297,7 @@ interface imgui_main {
                     g.hoveredRootWindow?.let { hoveredRoot ->
                         g.hoveredWindow!!.startMouseMoving()
                         if (io.configWindowsMoveFromTitleBarOnly && hoveredRoot.flags hasnt Wf.NoTitleBar)
-                        if (io.mouseClickedPos[0] !in hoveredRoot.titleBarRect())
+                            if (io.mouseClickedPos[0] !in hoveredRoot.titleBarRect())
                                 g.movingWindow = null
                     } ?: if (g.navWindow != null && frontMostPopupModal == null)
                         null.focus()   // Clicking on void disable focus
