@@ -142,6 +142,10 @@ interface imgui_parametersStacks {
                     it.floats[0] = style.grabRounding
                     style.grabRounding = value as Float
                 }
+                StyleVar.TabRounding -> {
+                    it.floats[0] = style.tabRounding
+                    style.tabRounding = value as Float
+                }
                 StyleVar.ButtonTextAlign -> {
                     style.buttonTextAlign to it.floats
                     style.buttonTextAlign put (value as Vec2)

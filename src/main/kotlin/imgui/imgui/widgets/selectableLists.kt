@@ -20,6 +20,7 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.renderTextClippedEx
 import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.windowContentRegionMax

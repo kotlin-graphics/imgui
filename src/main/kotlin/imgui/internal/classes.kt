@@ -2,25 +2,46 @@ package imgui.internal
 
 import gli_.has
 import gli_.hasnt
-import glm_.f
+import glm_.*
 import glm_.func.common.floor
-import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2bool
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.arrowButtonEx
+import imgui.ImGui.buttonBehavior
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.io
+import imgui.ImGui.isItemHovered
+import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isMouseDragging
+import imgui.ImGui.isMouseReleased
+import imgui.ImGui.itemAdd
+import imgui.ImGui.itemSize
 import imgui.ImGui.keepAliveId
+import imgui.ImGui.markIniSettingsDirty
+import imgui.ImGui.popClipRect
+import imgui.ImGui.popItemFlag
+import imgui.ImGui.popStyleColor
+import imgui.ImGui.pushClipRect
+import imgui.ImGui.pushItemFlag
+import imgui.ImGui.pushStyleColor
+import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.setActiveId
+import imgui.ImGui.setItemAllowOverlap
+import imgui.ImGui.setTooltip
 import imgui.ImGui.style
+import imgui.ImGui.tabItemBackground
+import imgui.ImGui.tabItemCalcSize
+import imgui.ImGui.tabItemLabelAndCloseButton
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sin
+import kotlin.reflect.KMutableProperty0
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
 
@@ -409,6 +430,8 @@ class NextWindowData {
         bgAlphaCond = Cond.None
     }
 }
+
+class TabBarSortItem(var index: Int, var width: Float)
 
 /** Temporary storage for one window(, that's the data which in theory we could ditch at the end of the frame)
  *  Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
@@ -917,7 +940,7 @@ class Window(var context: Context, var name: String) {
             if (g.windowsFocusOrder[i] === this) {
                 g.windowsFocusOrder.removeAt(i)
                 g.windowsFocusOrder += this
-                break;
+                break
             }
     }
 
@@ -1124,6 +1147,547 @@ fun Window?.focus() {
         window.bringToDisplayFront()
 }
 
+//-----------------------------------------------------------------------------
+// Tab Bar, Tab Item
+//-----------------------------------------------------------------------------
+
+/** Storage for one active tab item (sizeof() 26~32 bytes) */
+class TabItem {
+    var id: ID = 0
+    var flags: TabItemFlags = 0
+    var lastFrameVisible = -1
+    /** This allows us to infer an ordered list of the last activated tabs with little maintenance */
+    var lastFrameSelected = -1
+    /** Position relative to beginning of tab */
+    var offset = 0f
+    /** Width currently displayed */
+    var width = 0f
+    /** Width of actual contents, stored during BeginTabItem() call */
+    var widthContents = 0f
+}
+
+/** Storage for a tab bar (sizeof() 92~96 bytes) */
+class TabBar {
+    val tabs = ArrayList<TabItem>()
+    /** Zero for tab-bars used by docking */
+    var id: ID = 0
+    /** Selected tab */
+    var selectedTabId: ID = 0
+    var nextSelectedTabId: ID = 0
+    /** Can occasionally be != SelectedTabId (e.g. when previewing contents for CTRL+TAB preview) */
+    var visibleTabId: ID = 0
+    var currFrameVisible = -1
+    var prevFrameVisible = -1
+    var barRect = Rect()
+    var contentsHeight = 0f
+    /** Distance from BarRect.Min.x, locked during layout */
+    var offsetMax = 0f
+    /** Distance from BarRect.Min.x, incremented with each BeginTabItem() call, not used if ImGuiTabBarFlags_Reorderable if set. */
+    var offsetNextTab = 0f
+    var scrollingAnim = 0f
+    var scrollingTarget = 0f
+    var flags: TabBarFlags = TabBarFlag.None.i
+    var reorderRequestTabId: ID = 0
+    var reorderRequestDir = 0
+    var wantLayout = false
+    var visibleTabWasSubmitted = false
+    /** For BeginTabItem()/EndTabItem() */
+    var lastTabItemIdx = -1
+
+    val TabItem.order get() = tabs.indexOf(this)
+
+    // Tab Bars
+
+    /** ~ beginTabBarEx */
+    fun beginEx(bb: Rect, flags__: TabBarFlags): Boolean {
+
+        val window = g.currentWindow!!
+        if (window.skipItems) return false
+
+        var flags_ = flags__
+        if (flags_ hasnt TabBarFlag.DockNode)
+            window.idStack += id
+
+        g.currentTabBar += this
+        if (currFrameVisible == g.frameCount) {
+            //printf("[%05d] BeginTabBarEx already called this frame\n", g.FrameCount);
+            assert(false)
+            return true
+        }
+
+        // When toggling back from ordered to manually-reorderable, shuffle tabs to enforce the last visible order.
+        // Otherwise, the most recently inserted tabs would move at the end of visible list which can be a little too confusing or magic for the user.
+        if (flags_ has TabBarFlag.Reorderable && flags_ hasnt TabBarFlag.Reorderable && tabs.isNotEmpty() && prevFrameVisible != -1)
+            tabs.sortBy(TabItem::offset)
+
+        // Flags
+        if (flags_ hasnt TabBarFlag.FittingPolicyMask_)
+            flags_ = flags_ or TabBarFlag.FittingPolicyDefault_
+
+        flags = flags_
+        barRect = bb
+        wantLayout = true // Layout will be done on the first call to ItemTab()
+        prevFrameVisible = currFrameVisible
+        currFrameVisible = g.frameCount
+
+        // Layout
+        itemSize(Vec2(offsetMax, barRect.height))
+        window.dc.cursorPos.x = barRect.min.x
+
+        // Draw separator
+        val col = if (flags has TabBarFlag.IsFocused) Col.TabActive else Col.Tab
+        val y = barRect.max.y - 1f
+        run {
+            val separatorMinX = barRect.min.x - if (flags has TabBarFlag.DockNodeIsDockSpace) 0f else window.windowPadding.x
+            val separatorMaxX = barRect.max.x + if (flags has TabBarFlag.DockNodeIsDockSpace) 0f else window.windowPadding.x
+            window.drawList.addLine(Vec2(separatorMinX, y), Vec2(separatorMaxX, y), col.u32, 1f)
+        }
+        return true
+    }
+
+    fun tabItemEx(label: String, pOpen: KMutableProperty0<Boolean>?, flags_: TabItemFlags): Boolean {
+
+        // Layout whole tab bar if not already done
+        if (wantLayout)
+            layout()
+
+        val window = g.currentWindow!!
+        if (window.skipItems) return false
+
+        val id = calcTabID(label)
+
+        // If the user called us with *p_open == false, we early out and don't render. We make a dummy call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
+        if (pOpen?.get() == false) {
+            pushItemFlag(ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus, true)
+            itemAdd(Rect(), id)
+            popItemFlag()
+            return false
+        }
+
+        // Calculate tab contents size
+        val size = tabItemCalcSize(label, pOpen != null)
+
+        // Acquire tab data
+        var tabIsNew = false
+        val tab = findTabByID(id) ?: TabItem().also {
+            it.id = id
+            it.width = size.x
+            tabs += it
+            tabIsNew = true
+        }
+        lastTabItemIdx = tabs.indexOf(tab)
+        tab.widthContents = size.x
+
+        val tabBarAppearing = prevFrameVisible + 1 < g.frameCount
+        val tabBarFocused = flags_ has TabBarFlag.IsFocused
+        val tabAppearing = tab.lastFrameVisible + 1 < g.frameCount
+        tab.lastFrameVisible = g.frameCount
+        tab.flags = flags_
+
+        // If we are not reorderable, always reset offset based on submission order.
+        // (We already handled layout and sizing using the previous known order, but sizing is not affected by order!)
+        if (!tabAppearing && flags_ hasnt TabBarFlag.Reorderable) {
+            tab.offset = offsetNextTab
+            offsetNextTab += tab.width + style.itemInnerSpacing.x
+        }
+
+        // Update selected tab
+        if (tabAppearing && flags_ has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0)
+            if (!tabBarAppearing || selectedTabId == 0)
+                nextSelectedTabId = id  // New tabs gets activated
+
+        // Lock visibility
+        var tabContentsVisible = visibleTabId == id
+        if (tabContentsVisible)
+            visibleTabWasSubmitted = true
+
+        // On the very first frame of a tab bar we let first tab contents be visible to minimize appearing glitches
+        if (!tabContentsVisible && selectedTabId == 0 && tabBarAppearing)
+            if (tabs.size == 1 && flags_ hasnt TabBarFlag.AutoSelectNewTabs)
+                tabContentsVisible = true
+
+        if (tabAppearing && !tabBarAppearing || tabIsNew) {
+            pushItemFlag(ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus, true)
+            itemAdd(Rect(), id)
+            popItemFlag()
+            return tabContentsVisible
+        }
+
+        if (selectedTabId == id)
+            tab.lastFrameSelected = g.frameCount
+
+        // Backup current layout position
+        val backupMainCursorPos = Vec2(window.dc.cursorPos)
+
+        // Layout
+        size.x = tab.width
+        window.dc.cursorPos = barRect.min + Vec2(tab.offset.i.f - scrollingAnim, 0f)
+        val pos = Vec2(window.dc.cursorPos)
+        val bb = Rect(pos, pos + size)
+
+        // We don't have CPU clipping primitives to clip the CloseButton (until it becomes a texture), so need to add an extra draw call (temporary in the case of vertical animation)
+        val wantClipRect = bb.min.x < barRect.min.x || bb.max.x >= barRect.max.x
+        if (wantClipRect)
+            pushClipRect(Vec2(bb.min.x max barRect.min.x, bb.min.y - 1), Vec2(barRect.max.x, bb.max.y), true)
+
+        itemSize(bb, style.framePadding.y)
+        if (!itemAdd(bb, id)) {
+            if (wantClipRect)
+                popClipRect()
+            window.dc.cursorPos = backupMainCursorPos
+            return tabContentsVisible
+        }
+
+        // Click to Select a tab
+        val buttonFlags = ButtonFlag.PressedOnClick or ButtonFlag.AllowItemOverlap
+        val (pressed, hovered_, held) = buttonBehavior(bb, id, buttonFlags)
+        val hovered = hovered_ || g.hoveredId == id
+        if (pressed || (flags_ has TabItemFlag.SetSelected && !tabContentsVisible)) // SetSelected can only be passed on explicit tab bar
+            nextSelectedTabId = id
+
+        // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
+        if (!held)
+            setItemAllowOverlap()
+
+        // Drag and drop: re-order tabs
+        if (held && !tabAppearing && isMouseDragging(0))
+            if (!g.dragDropActive && flags_ has TabBarFlag.Reorderable)
+            // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
+                if (io.mouseDelta.x < 0f && io.mousePos.x < bb.min.x) {
+                    if (flags_ has TabBarFlag.Reorderable)
+                        queueChangeTabOrder(tab, -1)
+                } else if (io.mouseDelta.x > 0f && io.mousePos.x > bb.max.x)
+                    if (flags_ has TabBarFlag.Reorderable)
+                        queueChangeTabOrder(tab, +1)
+
+//        if (false)
+//            if (hovered && g.hoveredIdNotActiveTimer > 0.5f && bb.width < tab.widthContents)        {
+//                // Enlarge tab display when hovering
+//                bb.max.x = bb.min.x + lerp (bb.width, tab.widthContents, saturate((g.hoveredIdNotActiveTimer-0.4f) * 6f)).i.f
+//                displayDrawList = GetOverlayDrawList(window)
+//                TabItemRenderBackground(display_draw_list, bb, flags_, GetColorU32(ImGuiCol_TitleBgActive))
+//            }
+
+        // Render tab shape
+        val displayDrawList = window.drawList
+        val tabCol = when {
+            held || hovered -> Col.TabHovered
+            else -> when {
+                tabContentsVisible -> when {
+                    tabBarFocused -> Col.TabActive
+                    else -> Col.TabUnfocusedActive
+                }
+                else -> when {
+                    tabBarFocused -> Col.Tab
+                    else -> Col.TabUnfocused
+                }
+            }
+        }
+        tabItemBackground(displayDrawList, bb, flags_, tabCol.u32)
+        renderNavHighlight(bb, id)
+
+        // Select with right mouse button. This is so the common idiom for context menu automatically highlight the current widget.
+        val hoveredUnblocked = isItemHovered(Hf.AllowWhenBlockedByPopup)
+        if (hoveredUnblocked && (isMouseClicked(1) || isMouseReleased(1)))
+            nextSelectedTabId = id
+
+        val flags = when {
+            flags_ has TabBarFlag.NoCloseWithMiddleMouseButton -> flags_ or TabItemFlag.NoCloseWithMiddleMouseButton
+            else -> flags_
+        }
+
+        // Render tab label, process close button
+        val closeButtonId = if (pOpen?.get() == true) window.getId(id + 1) else 0
+        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, label, id, closeButtonId)
+        if (justClosed) {
+            pOpen!!.set(false)
+            closeTab(tab)
+        }
+
+        // Restore main window position so user can draw there
+        if (wantClipRect)
+            popClipRect()
+        window.dc.cursorPos = backupMainCursorPos
+
+        // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
+        if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.50f)
+//            setTooltip("%.*s", (findRenderedTextEnd(label) - label), label)
+            setTooltip("%.*s", label.substring(0, findRenderedTextEnd(label))) // TODO check
+
+        return tabContentsVisible
+    }
+
+    /** This is called only once a frame before by the first call to ItemTab()
+     *  The reason we're not calling it in BeginTabBar() is to leave a chance to the user to call the SetTabItemClosed() functions.
+     *  ~ TabBarLayout */
+    fun layout() {
+
+        wantLayout = false
+
+        // Garbage collect
+        var tabDstN = 0
+        for (tabSrcN in tabs.indices) {
+            val tab = tabs[tabSrcN]
+            if (tab.lastFrameVisible < prevFrameVisible) {
+                if (tab.id == selectedTabId)
+                    selectedTabId = 0
+                continue
+            }
+            if (tabDstN != tabSrcN)
+                tabs[tabDstN] = tabs[tabSrcN]
+            tabDstN++
+        }
+        if (tabs.size != tabDstN)
+            for (i in tabDstN until tabs.size)
+                tabs.remove(tabs.last())
+
+        // Setup next selected tab
+        var scrollTrackSelectedTabID: ID = 0
+        if (nextSelectedTabId != 0) {
+            selectedTabId = nextSelectedTabId
+            nextSelectedTabId = 0
+            scrollTrackSelectedTabID = selectedTabId
+        }
+
+        // Process order change request (we could probably process it when requested but it's just saner to do it in a single spot).
+        if (reorderRequestTabId != 0) {
+            findTabByID(reorderRequestTabId)?.let { tab1 ->
+                //IM_ASSERT(tab_bar->Flags & ImGuiTabBarFlags_Reorderable); // <- this may happen when using debug tools
+                val tab2_order = tab1.order + reorderRequestDir
+                if (tab2_order in tabs.indices) {
+                    val tab2 = tabs[tab2_order]
+                    val itemTmp = tab1
+                    tabs[reorderRequestTabId] = tab2 // *tab1 = *tab2
+                    tabs[tab2_order] = itemTmp // *tab2 = itemTmp
+                    if (tab2.id == selectedTabId)
+                        scrollTrackSelectedTabID = tab2.id
+                }
+                if (flags has TabBarFlag.SaveSettings)
+                    markIniSettingsDirty()
+            }
+            reorderRequestTabId = 0
+        }
+
+        val widthSortBuffer = g.tabSortByWidthBuffer
+
+        // Compute ideal widths
+        var widthTotalContents = 0f
+        var mostRecentlySelectedTab: TabItem? = null
+        var foundSelectedTabID = false
+        for (tabN in tabs.indices) {
+            val tab = tabs[tabN]
+            assert(tab.lastFrameVisible >= prevFrameVisible)
+
+            if (mostRecentlySelectedTab == null || mostRecentlySelectedTab.lastFrameSelected < tab.lastFrameSelected)
+                mostRecentlySelectedTab = tab
+            if (tab.id == selectedTabId)
+                foundSelectedTabID = true
+
+            // Refresh tab width immediately if we can (for manual tab bar, WidthContent will lag by one frame which is mostly noticeable when changing style.FramePadding.x)
+            // Additionally, when using TabBarAddTab() to manipulate tab bar order we occasionally insert new tabs that don't have a width yet,
+            // and we cannot wait for the next BeginTabItem() call. We cannot compute this width within TabBarAddTab() because font size depends on the active window.
+            widthTotalContents += (if (tabN > 0) style.itemInnerSpacing.x else 0f) + tab.widthContents
+
+            // Store data so we can build an array sorted by width if we need to shrink tabs down
+            widthSortBuffer += TabBarSortItem(tabN, tab.widthContents)
+        }
+
+        // Compute width
+        val widthAvail = barRect.width
+        var widthExcess = if (widthAvail < widthTotalContents) widthTotalContents - widthAvail else 0f
+        if (widthExcess > 0f && flags has TabBarFlag.FittingPolicyResizeDown) {
+            // If we don't have enough room, resize down the largest tabs first
+            if (tabs.size > 1)
+                widthSortBuffer.sortWith(compareBy(TabBarSortItem::width, TabBarSortItem::index))
+            var tabCountSameWidth = 1
+            while (widthExcess > 0f && tabCountSameWidth < tabs.size) {
+                while (tabCountSameWidth < tabs.size && widthSortBuffer[0].width == widthSortBuffer[tabCountSameWidth].width)
+                    tabCountSameWidth++
+                val widthToRemovePerTabMax = when {
+                    tabCountSameWidth < tabs.size -> widthSortBuffer[0].width - widthSortBuffer[tabCountSameWidth].width
+                    else -> widthSortBuffer[0].width - 1f
+                }
+                val widthToRemovePerTab = (widthExcess / tabCountSameWidth) min widthToRemovePerTabMax
+                for (tabN in 0 until tabCountSameWidth)
+                    widthSortBuffer[tabN].width -= widthToRemovePerTab
+                widthExcess -= widthToRemovePerTab * tabCountSameWidth
+            }
+            for (tabN in tabs.indices)
+                tabs[widthSortBuffer[tabN].index].width = widthSortBuffer[tabN].width.i.f
+        } else {
+            val tabMaxWidth = calcMaxTabWidth()
+            for (tab in tabs)
+                tab.width = tab.widthContents min tabMaxWidth
+        }
+
+        // Layout all active tabs
+        var offsetX = 0f
+        for (tab in tabs) {
+            tab.offset = offsetX
+            if (scrollTrackSelectedTabID == 0 && g.navJustMovedToId == tab.id)
+                scrollTrackSelectedTabID = tab.id
+            offsetX += tab.width + style.itemInnerSpacing.x
+        }
+        offsetMax = (offsetX - style.itemInnerSpacing.x) max 0f
+        offsetNextTab = 0f
+
+        // Horizontal scrolling buttons
+        val scrollingButtons = offsetMax > barRect.width && tabs.size > 1 && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll
+        if (scrollingButtons)
+            scrollingButtons()?.let { tabToSelect ->
+                // NB: Will alter BarRect.Max.x!
+                selectedTabId = tabToSelect.id
+                scrollTrackSelectedTabID = selectedTabId
+            }
+
+        // If we have lost the selected tab, select the next most recently active one
+        if (!foundSelectedTabID)
+            selectedTabId = 0
+        if (selectedTabId == 0 && nextSelectedTabId == 0)
+            mostRecentlySelectedTab?.let {
+                selectedTabId = it.id
+                scrollTrackSelectedTabID = selectedTabId
+            }
+
+        // Lock in visible tab
+        visibleTabId = selectedTabId
+        visibleTabWasSubmitted = false
+
+        // Update scrolling
+        if (scrollTrackSelectedTabID != 0)
+            findTabByID(scrollTrackSelectedTabID)?.let(::scrollToTab)
+        scrollingAnim = scrollClamp(scrollingAnim)
+        scrollingTarget = scrollClamp(scrollingTarget)
+        val scrollingSpeed = if (prevFrameVisible + 1 < g.frameCount) Float.MAX_VALUE else io.deltaTime * g.fontSize * 70f
+        if (scrollingAnim != scrollingTarget)
+            scrollingAnim = linearSweep(scrollingAnim, scrollingTarget, scrollingSpeed)
+    }
+
+    /** Dockables uses Name/ID in the global namespace. Non-dockable items use the ID stack.
+     *  ~ TabBarCalcTabID   */
+    infix fun calcTabID(label: String): Int {
+        return when {
+            flags has TabBarFlag.DockNode -> {
+                val id = hash(label, 0)
+                keepAliveId(id)
+                id
+            }
+            else -> g.currentWindow!!.getId(label)
+        }
+    }
+
+    fun scrollClamp(scrolling_: Float): Float {
+        val scrolling = scrolling_ min (offsetMax - barRect.width)
+        return scrolling max 0f
+    }
+
+    fun scrollToTab(tab: TabItem) {
+
+        val margin = g.fontSize * 1f // When to scroll to make Tab N+1 visible always make a bit of N visible to suggest more scrolling area (since we don't have a scrollbar)
+        val order = tab.order
+        val tabX1 = tab.offset + if (order > 0) -margin else 0f
+        val tabX2 = tab.offset + tab.width + if (order + 1 < tabs.size) margin else 1f
+        if (scrollingTarget > tabX1)
+            scrollingTarget = tabX1
+        if (scrollingTarget + barRect.width < tabX2)
+            scrollingTarget = tabX2 - barRect.width
+    }
+
+    /** ~ TabBarScrollingButtons */
+    fun scrollingButtons(): TabItem? {
+
+        val window = g.currentWindow!!
+
+        val arrowButtonSize = Vec2(g.fontSize - 2f, g.fontSize + style.framePadding.y * 2f)
+        val scrollingButtonsWidth = arrowButtonSize.x * 2f
+
+        val backupCursorPos = Vec2(window.dc.cursorPos)
+        //window->DrawList->AddRect(ImVec2(tab_bar->BarRect.Max.x - scrolling_buttons_width, tab_bar->BarRect.Min.y), ImVec2(tab_bar->BarRect.Max.x, tab_bar->BarRect.Max.y), IM_COL32(255,0,0,255));
+
+        val availBarRect = Rect(barRect)
+        val wantClipRect = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(scrollingButtonsWidth, 0f)) !in availBarRect
+        if (wantClipRect)
+            pushClipRect(barRect.min, barRect.max + Vec2(style.itemInnerSpacing.x, 0f), true)
+
+        var tabToSelect: TabItem? = null
+
+        var selectDir = 0
+        val arrowCol = Vec4(style.colors[Col.Text])
+        arrowCol.w *= 0.5f
+
+        pushStyleColor(Col.Text, arrowCol)
+        pushStyleColor(Col.Button, Vec4(0f))
+        val backupRepeatDelay = io.keyRepeatDelay
+        val backupRepeatRate = io.keyRepeatRate
+        io.keyRepeatDelay = 0.25f
+        io.keyRepeatRate = 0.20f
+        window.dc.cursorPos.put(barRect.max.x - scrollingButtonsWidth, barRect.min.y)
+        if (arrowButtonEx("##<", Dir.Left, arrowButtonSize, ButtonFlag.PressedOnClick or ButtonFlag.Repeat))
+            selectDir = -1
+        window.dc.cursorPos.put(barRect.max.x - scrollingButtonsWidth + arrowButtonSize.x, barRect.min.y)
+        if (arrowButtonEx("##>", Dir.Right, arrowButtonSize, ButtonFlag.PressedOnClick or ButtonFlag.Repeat))
+            selectDir = +1
+        popStyleColor(2)
+        io.keyRepeatRate = backupRepeatRate
+        io.keyRepeatDelay = backupRepeatDelay
+
+        if (wantClipRect)
+            popClipRect()
+
+        if (selectDir != 0)
+            findTabByID(selectedTabId)?.let { tabItem ->
+                val selectedOrder = tabItem.order
+                val targetOrder = selectedOrder + selectDir
+                tabToSelect = tabs[if (targetOrder in tabs.indices) targetOrder else selectedOrder] // If we are at the end of the list, still scroll to make our tab visible
+            }
+        window.dc.cursorPos put backupCursorPos
+        barRect.max.x -= scrollingButtonsWidth + 1f
+
+        return tabToSelect
+    }
+
+
+    fun findTabByID(tabId: ID): TabItem? = when (tabId) {
+        0 -> null
+        else -> tabs.find { it.id == tabId }
+    }
+
+    /** The *TabId fields be already set by the docking system _before_ the actual TabItem was created, so we clear them regardless.
+     *  ~ tabBarRemoveTab     */
+    infix fun removeTab(tabId: ID) {
+        findTabByID(tabId)?.let(tabs::remove)
+        if (visibleTabId == tabId) visibleTabId = 0
+        if (selectedTabId == tabId) selectedTabId = 0
+        if (nextSelectedTabId == tabId) nextSelectedTabId = 0
+    }
+
+    /** Called on manual closure attempt
+     *  ~ tabBarCloseTab     */
+    fun closeTab(tab: TabItem) {
+        if (visibleTabId == tab.id && tab.flags hasnt TabItemFlag.UnsavedDocument) {
+            // This will remove a frame of lag for selecting another tab on closure.
+            // However we don't run it in the case where the 'Unsaved' flag is set, so user gets a chance to fully undo the closure
+            tab.lastFrameVisible = -1
+            nextSelectedTabId = 0
+            selectedTabId = 0
+        } else if (visibleTabId != tab.id && tab.flags has TabItemFlag.UnsavedDocument)
+        // Actually select before expecting closure
+            nextSelectedTabId = tab.id
+    }
+
+    /** ~ tabBarQueueChangeTabOrder */
+    fun queueChangeTabOrder(tab: TabItem, dir: Int) {
+        assert(dir == -1 || dir == +1)
+        assert(reorderRequestTabId == 0)
+        reorderRequestTabId = tab.id
+        reorderRequestDir = dir
+    }
+
+    companion object {
+        fun calcMaxTabWidth() = g.fontSize * 20f
+    }
+}
+
 /** Backup and restore just enough data to be able to use isItemHovered() on item A after another B in the same window
  *  has overwritten the data.   */
 fun itemHoveredDataBackup(block: () -> Unit) {
@@ -1150,8 +1714,8 @@ fun focusPreviousWindowIgnoringOne(ignoreWindow: Window?) {
         val window = g.windowsFocusOrder[i]
         if (window !== ignoreWindow && window.wasActive && window.flags hasnt Wf.ChildWindow)
             if ((window.flags and (Wf.NoMouseInputs or Wf.NoNavInputs)) != (Wf.NoMouseInputs or Wf.NoNavInputs)) {
-            navRestoreLastChildNavWindow(window).focus()
-            return
-        }
+                navRestoreLastChildNavWindow(window).focus()
+                return
+            }
     }
 }

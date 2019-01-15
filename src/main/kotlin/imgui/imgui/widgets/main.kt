@@ -26,6 +26,7 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderRectFilledRangeH
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.renderTextClippedEx
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.internal.*

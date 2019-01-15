@@ -22,6 +22,7 @@ import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
+import imgui.ImGui.frameCount
 import imgui.ImGui.getId
 import imgui.ImGui.getOverlayDrawList
 import imgui.ImGui.inputFloat
@@ -30,12 +31,15 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
+import imgui.ImGui.popId
 import imgui.ImGui.popTextWrapPos
+import imgui.ImGui.pushId
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.sliderFloat
+import imgui.ImGui.smallButton
 import imgui.ImGui.style
 import imgui.ImGui.styleColorsClassic
 import imgui.ImGui.styleColorsDark
@@ -58,6 +62,7 @@ import imgui.imgui.demo.ExampleApp
 import imgui.imgui.imgui_colums.Companion.offsetNormToPixels
 import imgui.internal.DrawListFlag
 import imgui.internal.Rect
+import imgui.internal.TabBar
 import imgui.internal.Window
 import java.util.*
 import kotlin.reflect.KMutableProperty0
@@ -113,7 +118,7 @@ interface imgui_demoDebugInformations {
         text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
 
         checkbox("Config/Build Information", ::showConfigInfo)
-        if (showConfigInfo)        {
+        if (showConfigInfo) {
 
             val copyToClipboard = button("Copy to clipboard")
             beginChildFrame(getId("cfginfos"), Vec2(0, textLineHeightWithSpacing * 18), Wf.NoMove.i)
@@ -129,21 +134,21 @@ interface imgui_demoDebugInformations {
             text("io.backendPlatformName: ${io.backendPlatformName}")
             text("io.backendRendererName: ${io.backendRendererName}")
             text("io.configFlags: 0x%08X", io.configFlags)
-            if (io.configFlags has ConfigFlag.NavEnableKeyboard)        text(" NavEnableKeyboard")
-            if (io.configFlags has ConfigFlag.NavEnableGamepad)         text(" NavEnableGamepad")
-            if (io.configFlags has ConfigFlag.NavEnableSetMousePos)     text(" NavEnableSetMousePos")
-            if (io.configFlags has ConfigFlag.NavNoCaptureKeyboard)     text(" NavNoCaptureKeyboard")
-            if (io.configFlags has ConfigFlag.NoMouse)                  text(" NoMouse")
-            if (io.configFlags has ConfigFlag.NoMouseCursorChange)      text(" NoMouseCursorChange")
-            if (io.mouseDrawCursor)                                     text("io.mouseDrawCursor")
-            if (io.configMacOSXBehaviors)                               text("io.configMacOSXBehaviors")
-            if (io.configInputTextCursorBlink)                          text("io.configInputTextCursorBlink")
-            if (io.configWindowsResizeFromEdges)                        text("io.configWindowsResizeFromEdges")
-            if (io.configWindowsMoveFromTitleBarOnly)                   text("io.configWindowsMoveFromTitleBarOnly")
+            if (io.configFlags has ConfigFlag.NavEnableKeyboard) text(" NavEnableKeyboard")
+            if (io.configFlags has ConfigFlag.NavEnableGamepad) text(" NavEnableGamepad")
+            if (io.configFlags has ConfigFlag.NavEnableSetMousePos) text(" NavEnableSetMousePos")
+            if (io.configFlags has ConfigFlag.NavNoCaptureKeyboard) text(" NavNoCaptureKeyboard")
+            if (io.configFlags has ConfigFlag.NoMouse) text(" NoMouse")
+            if (io.configFlags has ConfigFlag.NoMouseCursorChange) text(" NoMouseCursorChange")
+            if (io.mouseDrawCursor) text("io.mouseDrawCursor")
+            if (io.configMacOSXBehaviors) text("io.configMacOSXBehaviors")
+            if (io.configInputTextCursorBlink) text("io.configInputTextCursorBlink")
+            if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
+            if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
             text("io.backendFlags: 0x%08X", io.backendFlags)
-            if (io.backendFlags has BackendFlag.HasGamepad)             text(" HasGamepad")
-            if (io.backendFlags has BackendFlag.HasMouseCursors)        text(" HasMouseCursors")
-            if (io.backendFlags has BackendFlag.HasSetMousePos)         text(" HasSetMousePos")
+            if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
+            if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
+            if (io.backendFlags has BackendFlag.HasSetMousePos) text(" HasSetMousePos")
             // @formatter:on
             separator()
             text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
@@ -194,6 +199,10 @@ interface imgui_demoDebugInformations {
                 val childMenu = if (window != null && window.flags has Wf.ChildMenu) " ChildMenu" else ""
                 bulletText("PopupID: %08x, Window: '${window?.name}'$childWindow$childMenu", popup.popupId)
             }
+            treePop()
+        }
+        if (treeNode("TabBars", "Tab Bars (${g.tabBars.size})")) {
+            g.tabBars.values.forEach(Funcs::nodeTabBar)
             treePop()
         }
         if (treeNode("Internal state")) {
@@ -490,6 +499,27 @@ interface imgui_demoDebugInformations {
                 }
                 bulletText("Storage: %d bytes", window.stateStorage.data.size * Int.BYTES * 2)
                 treePop()
+            }
+
+            fun nodeTabBar(tabBar: TabBar) {
+                // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernable strings.
+                val string = "TabBar (${tabBar.tabs.size} tabs)${if (tabBar.prevFrameVisible < frameCount - 2) " *Inactive*" else ""}"
+                if (treeNode(tabBar, string)) {
+                    for (tabN in tabBar.tabs.indices) {
+                        val tab = tabBar.tabs[tabN]
+                        pushId(tab)
+                        if (smallButton("<"))
+                            tabBar.queueChangeTabOrder(tab, -1)
+                        sameLine(0, 2)
+                        if (smallButton(">")) {
+                            tabBar.queueChangeTabOrder(tab, +1)
+                            sameLine()
+                            text("%02d${if (tab.id == tabBar.selectedTabId) '*' else ' '} Tab 0x%08X", tabN, tab.id)
+                            popId()
+                        }
+                        treePop()
+                    }
+                }
             }
         }
 

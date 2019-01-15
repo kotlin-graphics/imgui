@@ -47,6 +47,7 @@ object ExampleApp {
 
     object show {
         // Examples Apps (accessible from the "Examples" menu)
+        var documents = false
         var mainMenuBar = false
         var console = false
         var log = false
@@ -83,6 +84,7 @@ object ExampleApp {
 
         var open = open_
 
+        if (show.documents) Documents(show::documents);     // Process the Document app next, as it may also use a DockSpace()
         if (show.mainMenuBar) MainMenuBar()
         if (show.console) Console(show::console)
         if (show.log) Log(show::log)
@@ -150,6 +152,7 @@ object ExampleApp {
                 menuItem("Simple overlay", "", ExampleApp.show::simpleOverlay)
                 menuItem("Manipulating window titles", "", ExampleApp.show::windowTitles)
                 menuItem("Custom rendering", "", ExampleApp.show::customRendering)
+                menuItem("Documents", "", show::documents)
             }
             menu("Help") {
                 menuItem("Metrics", "", ExampleApp.show::metrics)
@@ -221,7 +224,7 @@ object ExampleApp {
                 showHelpMarker("Try opening any of the contents below in this window and then click one of the \"Log To\" button.")
                 logButtons()
                 textWrapped("You can also call ImGui::LogText() to output directly to the log without a visual output.")
-                if (button("Copy \"Hello, world!\" to clipboard"))                {
+                if (button("Copy \"Hello, world!\" to clipboard")) {
                     logToClipboard()
                     logText("Hello, world!")
                     logFinish()
@@ -229,7 +232,7 @@ object ExampleApp {
             }
         }
 
-        collapsingHeader("Window options")        {
+        collapsingHeader("Window options") {
             checkbox("No titlebar", ::noTitlebar); sameLine(150)
             checkbox("No scrollbar", ::noScrollbar); sameLine(300)
             checkbox("No menu", ::noMenu)

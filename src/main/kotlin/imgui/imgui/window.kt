@@ -29,6 +29,7 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.renderTextClippedEx
 import imgui.ImGui.scrollbar
 import imgui.ImGui.style
 import imgui.imgui.imgui_main.Companion.resizeGripDef

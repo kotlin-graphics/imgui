@@ -983,6 +983,108 @@ interface imgui_internal {
     }
 
 
+    // Tab Bars
+
+    fun tabItemCalcSize(label: String, hasCloseButton: Boolean): Vec2 {
+
+        val labelSize = calcTextSize(label, 0, true)
+        val size = Vec2(labelSize.x + style.framePadding.x, labelSize.y + style.framePadding.y * 2f)
+        size.x += style.framePadding.x + when {
+            hasCloseButton -> style.itemInnerSpacing.x + g.fontSize // We use Y intentionally to fit the close button circle.
+            else -> 1f
+        }
+        return Vec2(size.x min TabBar.calcMaxTabWidth(), size.y)
+    }
+
+    fun tabItemBackground(drawList: DrawList, bb: Rect, flags: TabItemFlags, col: Int) {
+
+        // While rendering tabs, we trim 1 pixel off the top of our bounding box so they can fit within a regular frame height while looking "detached" from it.
+        val width = bb.width
+        assert(width > 0f)
+        val rounding = max(0f, min(style.tabRounding, width * 0.5f - 1f))
+        val y1 = bb.min.y + 1f
+        val y2 = bb.max.y - 1f
+        drawList.apply {
+            pathLineTo(Vec2(bb.min.x, y2))
+            pathArcToFast(Vec2(bb.min.x + rounding, y1 + rounding), rounding, 6, 9)
+            pathArcToFast(Vec2(bb.max.x - rounding, y1 + rounding), rounding, 9, 12)
+            pathLineTo(Vec2(bb.max.x, y2))
+            addConvexPolyFilled(_path, col)
+            if (style.tabBorderSize > 0f)
+                addPolyline(_path, Col.Border.u32, false, style.tabBorderSize)
+            pathClear()
+        }
+    }
+
+    /** Render text label (with custom clipping) + Unsaved Document marker + Close Button logic */
+    fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, label: String, tabId: ID, closeButtonId: ID): Boolean {
+
+        val labelSize = calcTextSize(label, 0, true)
+        if (bb.width <= 1f) return false
+
+        // Render text label (with clipping + alpha gradient) + unsaved marker
+        val TAB_UNSAVED_MARKER = "*"
+        val textPixelClipBb = Rect(bb.min.x + style.framePadding.x, bb.min.y + style.framePadding.y, bb.max.x - style.framePadding.x, bb.max.y)
+        if (flags has TabItemFlag.UnsavedDocument) {
+            textPixelClipBb.max.x -= calcTextSize(TAB_UNSAVED_MARKER, 0, false).x
+            val unsavedMarkerPos = Vec2(min(bb.min.x + style.framePadding.x + labelSize.x + 2, textPixelClipBb.max.x), bb.min.y + style.framePadding.y + (-g.fontSize * 0.25f).i.f)
+            renderTextClippedEx(drawList, unsavedMarkerPos, bb.max - style.framePadding, TAB_UNSAVED_MARKER, 0, null)
+        }
+        val textEllipsisClipBb = Rect(textPixelClipBb)
+
+        /*  Close Button
+            We are relying on a subtle and confusing distinction between 'hovered' and 'g.HoveredId' which happens
+            because we are using ImGuiButtonFlags_AllowOverlapMode + SetItemAllowOverlap()
+            'hovered' will be true when hovering the Tab but NOT when hovering the close button
+            'g.HoveredId==id' will be true when hovering the Tab including when hovering the close button
+            'g.ActiveId==close_button_id' will be true when we are holding on the close button, in which case both hovered booleans are false */
+        var closeButtonPressed = false
+        var closeButtonVisible = false
+        if (closeButtonId != 0)
+            if (g.hoveredId == tabId || g.hoveredId == closeButtonId || g.activeId == closeButtonId)
+                closeButtonVisible = true
+        if (closeButtonVisible) {
+            val closeButtonSz = g.fontSize * 0.5f
+            itemHoveredDataBackup {
+                if (closeButton(closeButtonId, Vec2(bb.max.x - style.framePadding.x - closeButtonSz, bb.min.y + style.framePadding.y + closeButtonSz), closeButtonSz))
+                    closeButtonPressed = true
+            }
+
+            // Close with middle mouse button
+            if (flags hasnt TabItemFlag.NoCloseWithMiddleMouseButton && isMouseClicked(2))
+                closeButtonPressed = true
+
+            textPixelClipBb.max.x -= closeButtonSz * 2f
+        }
+
+        // Label with ellipsis
+        // FIXME: This should be extracted into a helper but the use of text_pixel_clip_bb and !close_button_visible makes it tricky to abstract at the moment
+        val labelDisplayEnd = findRenderedTextEnd(label)
+        if (labelSize.x > textEllipsisClipBb.width) {
+            val ellipsisDotCount = 3
+            val ellipsisWidth = (1f + 1f) * ellipsisDotCount - 1f
+            val remaining = IntArray(1)
+            var labelSizeClippedX = g.font.calcTextSizeA(g.fontSize, textEllipsisClipBb.width-ellipsisWidth+1f, 0f, label, labelDisplayEnd, remaining).x
+            var labelEnd = remaining[0]
+            if (labelEnd == 0 && labelEnd < labelDisplayEnd) {    // Always display at least 1 character if there's no room for character + ellipsis
+                labelEnd = labelDisplayEnd // TODO CHECK textCountUtf8BytesFromChar(label, labelDisplayEnd)
+                labelSizeClippedX = g.font.calcTextSizeA(g.fontSize, Float.MAX_VALUE, 0f, label, labelEnd).x
+            }
+            while (labelEnd > 0 && label[labelEnd - 1].isBlankA) { // Trim trailing space
+                labelEnd--
+                labelSizeClippedX -= g.font.calcTextSizeA(g.fontSize, Float.MAX_VALUE, 0f, label, labelEnd+1).x // Ascii blanks are always 1 byte
+            }
+            renderTextClippedEx(drawList, textPixelClipBb.min, textPixelClipBb.max, label, labelEnd, labelSize, Vec2())
+
+            val ellipsisX = textPixelClipBb.min.x + labelSizeClippedX + 1f
+            if (!closeButtonVisible && ellipsisX + ellipsisWidth <= bb.max.x)
+                renderPixelEllipsis(drawList, g.font, Vec2(ellipsisX, textPixelClipBb.min.y), ellipsisDotCount, Col.Text.u32)
+        } else
+            renderTextClippedEx(drawList, textPixelClipBb.min, textPixelClipBb.max, label, labelDisplayEnd, labelSize, Vec2())
+
+        return closeButtonPressed
+    }
+
     /*  Render helpers
         AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND
         BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT.
@@ -1023,13 +1125,8 @@ interface imgui_internal {
     /** Default clipRect uses (pos_min,pos_max)
      *  Handle clipping on CPU immediately (vs typically let the GPU clip the triangles that are overlapping the clipping
      *  rectangle edges)    */
-    fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: String, textEnd: Int = 0, textSizeIfKnown: Vec2? = null,
-                          align: Vec2 = Vec2(), clipRect: Rect? = null) {
-        // Hide anything after a '##' string
-        val textDisplayEnd = findRenderedTextEnd(text, textEnd)
-        if (textDisplayEnd == 0) return
-
-        val window = g.currentWindow!!
+    fun renderTextClippedEx(drawList: DrawList, posMin: Vec2, posMax: Vec2, text: String, textDisplayEnd: Int = 0,
+                            textSizeIfKnown: Vec2? = null, align: Vec2 = Vec2(), clipRect: Rect? = null) {
 
         // Perform CPU side clipping for single clipped element to avoid using scissor state
         val pos = Vec2(posMin)
@@ -1050,11 +1147,21 @@ interface imgui_internal {
         // Render
         if (needClipping) {
             val fineClipRect = Vec4(clipMin.x, clipMin.y, clipMax.x, clipMax.y)
-            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, fineClipRect)
+            drawList.addText(null, 0f, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, fineClipRect)
         } else
-            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, null)
-//    if (g.logEnabled) TODO
-//        LogRenderedText(pos, text, textDisplayEnd)
+            drawList.addText(null, 0f, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, null)
+    }
+
+    fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: String, textEnd: Int = 0, textSizeIfKnown: Vec2? = null,
+                          align: Vec2 = Vec2(), clipRect: Rect? = null) {
+        // Hide anything after a '##' string
+        val textDisplayEnd = findRenderedTextEnd(text, textEnd)
+        if (textDisplayEnd == 0) return
+
+        val window = g.currentWindow!!
+        renderTextClippedEx(window.drawList, posMin, posMax, text, textDisplayEnd, textSizeIfKnown, align, clipRect)
+        if (g.logEnabled)
+            logRenderedText(posMax, text, textDisplayEnd)
     }
 
     /** Render a rectangle shaped with optional rounding and borders    */
@@ -1250,8 +1357,17 @@ interface imgui_internal {
         drawList.pathFillConvex(col)
     }
 
+    /** FIXME: Rendering an ellipsis "..." is a surprisingly tricky problem for us... we cannot rely on font glyph having it,
+     *  and regular dot are typically too wide. If we render a dot/shape ourselves it comes with the risk that it wouldn't match
+     *  the boldness or positioning of what the font uses... */
+    fun renderPixelEllipsis(drawList: DrawList, font: Font, pos: Vec2, count: Int, col: Int) {
+        pos.y += (font.displayOffset.y + font.ascent + 0.5f - 1f).i.f
+        for (dotN in 0 until count)
+            drawList.addRectFilled(Vec2(pos.x + dotN * 2f, pos.y), Vec2(pos.x + dotN * 2f + 1f, pos.y + 1f), col)
+    }
+
     /** Find the optional ## from which we stop displaying text.    */
-    fun findRenderedTextEnd(text: String, textEnd_: Int = text.length): Int {
+    fun findRenderedTextEnd(text: String, textEnd_: Int = text.length): Int { // TODO function extension?
         val textEnd = if (textEnd_ == 0) text.length else textEnd_
         var textDisplayEnd = 0
         while (textDisplayEnd < textEnd && (text[textDisplayEnd + 0] != '#' || text[textDisplayEnd + 1] != '#'))
@@ -1796,7 +1912,7 @@ interface imgui_internal {
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushRawId(id)
-            ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, label, window.dc.itemFlags or (if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+            ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, label, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
             return isOpen
         }
 
@@ -1878,7 +1994,7 @@ interface imgui_internal {
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushRawId(id)
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or (if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
         return isOpen
     }
 
