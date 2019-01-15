@@ -29,6 +29,10 @@ import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
+/**
+ * Widgets: List Boxes
+ * - FIXME: To be consistent with all the newer API, ListBoxHeader/ListBoxFooter should in reality be called BeginListBox/EndListBox. Will rename them.
+ */
 interface listBoxes {
 
     fun listBox(label: String, currentItemPtr: KMutableProperty0<Int>, items: Array<String>, heightInItems: Int = -1): Boolean {

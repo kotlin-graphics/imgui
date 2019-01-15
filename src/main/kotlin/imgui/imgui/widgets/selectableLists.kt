@@ -33,7 +33,9 @@ import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
-/** Widgets: Selectables */
+/** Widgets: Selectables
+ *  - A selectable highlights when hovered, and can display another color when selected.
+ *  - Neighbors selectable extend their highlight bounds in order to leave no gap between them. */
 interface selectableLists {
 
 

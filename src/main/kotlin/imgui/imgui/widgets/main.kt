@@ -37,7 +37,7 @@ import imgui.internal.ButtonFlag as Bf
 
 
 /** Widgets: Main
- *  Most widgets return true when the value has been changed or when pressed/selected  */
+ *  - Most widgets return true when the value has been changed or when pressed/selected  */
 interface main {
 
     /** button  */

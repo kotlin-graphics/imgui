@@ -788,6 +788,10 @@ interface imgui_window {
         }
     }
 
+    // Windows Utilities
+    // - "current window" = the window we are appending into while inside a Begin()/End() block. "next window" = next window we will Begin() into.
+
+
     val isWindowAppearing get() = currentWindowRead!!.appearing
 
     val isWindowCollapsed get() = currentWindowRead!!.collapsed

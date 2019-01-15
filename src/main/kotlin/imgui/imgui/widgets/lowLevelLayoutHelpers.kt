@@ -37,13 +37,13 @@ import imgui.internal.SeparatorFlag as Sf
 
 interface lowLevelLayoutHelpers {
 
-    /** add vertical spacing    */
+    /** add vertical spacing.    */
     fun spacing() {
         if (currentWindow.skipItems) return
         itemSize(Vec2())
     }
 
-    /** add a dummy item of given size  */
+    /** add a dummy item of given size. unlike InvisibleButton(), Dummy() won't take the mouse click or be navigable into.  */
     fun dummy(size: Vec2) {
 
         val window = currentWindow
@@ -54,7 +54,7 @@ interface lowLevelLayoutHelpers {
         itemAdd(bb, 0)
     }
 
-    /** undo a sameLine()   */
+    /** undo a sameLine() or force a new line when in an horizontal-layout context.   */
     fun newLine() {
         val window = currentWindow
         if (window.skipItems) return
