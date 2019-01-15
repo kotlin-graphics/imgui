@@ -27,6 +27,7 @@ import imgui.ImGui.style
 import imgui.ImGui.textUnformatted
 import imgui.imgui.withFloat
 import imgui.imgui.withInt
+import imgui.internal.or
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
@@ -175,13 +176,16 @@ interface inputKeyboard {
             popItemWidth()
 
             // Step buttons
+            var buttonFlags = Bf.Repeat or Bf.DontClosePopups
+            if (extraFlags has Itf.ReadOnly)
+                buttonFlags = buttonFlags or Bf.Disabled
             sameLine(0f, style.itemInnerSpacing.x)
-            if (buttonEx("-", Vec2(buttonSize), Bf.Repeat or Bf.DontClosePopups)) {
+            if (buttonEx("-", Vec2(buttonSize), buttonFlags)) {
                 data = dataTypeApplyOp(dataType, '-', data, stepFast?.takeIf { io.keyCtrl } ?: step)
                 valueChanged = true
             }
             sameLine(0f, style.itemInnerSpacing.x)
-            if (buttonEx("+", Vec2(buttonSize), Bf.Repeat or Bf.DontClosePopups)) {
+            if (buttonEx("+", Vec2(buttonSize), buttonFlags)) {
                 data = dataTypeApplyOp(dataType, '+', data, stepFast?.takeIf { io.keyCtrl } ?: step)
                 valueChanged = true
             }
