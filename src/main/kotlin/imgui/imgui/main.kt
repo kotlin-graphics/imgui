@@ -24,7 +24,8 @@ import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
-import imgui.ImGui.updateMouseMovingWindow
+import imgui.ImGui.updateMouseMovingWindowEndFrame
+import imgui.ImGui.updateMouseMovingWindowNewFrame
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
@@ -181,7 +182,7 @@ interface imgui_main {
         }
 
         // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering)
-        updateMouseMovingWindow()
+        updateMouseMovingWindowNewFrame()
         updateHoveredWindowAndCaptureFlags()
 
         // Background darkening/whitening
@@ -263,8 +264,7 @@ interface imgui_main {
                 assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you forget to call End/EndChild?" }
                 while (g.currentWindowStack.size > 1) // FIXME-ERRORHANDLING
                     end()
-            }
-            else
+            } else
                 assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you call End/EndChild too much?" }
 
         // Hide implicit/fallback "Debug" window if it hasn't been used
@@ -280,7 +280,7 @@ interface imgui_main {
             navUpdateWindowingList()
 
         // Drag and Drop: Elapse payload (if delivered, or if source stops being submitted)
-        if (g.dragDropActive)        {
+        if (g.dragDropActive) {
             val isDelivered = g.dragDropPayload.delivery
             val isElapsed = g.dragDropPayload.dataFrameCount + 1 < g.frameCount &&
                     (g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload || !isMouseDown(g.dragDropMouseButton))
@@ -289,7 +289,7 @@ interface imgui_main {
         }
 
         // Drag and Drop: Fallback for source tooltip. This is not ideal but better than nothing.
-        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount)        {
+        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount) {
             g.dragDropWithinSourceOrTarget = true
             setTooltip("...")
             g.dragDropWithinSourceOrTarget = false
@@ -299,38 +299,8 @@ interface imgui_main {
         g.frameScopeActive = false
         g.frameCountEnded = g.frameCount
 
-        // Initiate moving window
-        if (g.activeId == 0 && g.hoveredId == 0)
-            if (g.navWindow == null || !g.navWindow!!.appearing) { // Unless we just made a window/popup appear
-                // Click to focus window and start moving (after we're done with all our widgets)
-                if (io.mouseClicked[0])
-                    g.hoveredRootWindow?.let { hoveredRoot ->
-                        g.hoveredWindow!!.startMouseMoving()
-                        if (io.configWindowsMoveFromTitleBarOnly && hoveredRoot.flags hasnt Wf.NoTitleBar)
-                            if (io.mouseClickedPos[0] !in hoveredRoot.titleBarRect())
-                                g.movingWindow = null
-                    } ?: if (g.navWindow != null && frontMostPopupModal == null)
-                        null.focus()   // Clicking on void disable focus
-
-                /*  With right mouse button we close popups without changing focus
-                (The left mouse button path calls FocusWindow which will lead NewFrame::closePopupsOverWindow to trigger) */
-                if (io.mouseClicked[1]) {
-                    /*  Find the top-most window between HoveredWindow and the front most Modal Window.
-                        This is where we can trim the popup stack.  */
-                    val modal = frontMostPopupModal
-                    var hoveredWindowAboveModal = false
-                    if (modal == null)
-                        hoveredWindowAboveModal = true
-                    var i = g.windows.lastIndex
-                    while (i >= 0 && !hoveredWindowAboveModal) {
-                        val window = g.windows[i]
-                        if (window === modal) break
-                        if (window === g.hoveredWindow) hoveredWindowAboveModal = true
-                        i--
-                    }
-                    closePopupsOverWindow(if (hoveredWindowAboveModal) g.hoveredWindow else modal)
-                }
-            }
+        // Initiate moving window + handle left-click and right-click focus
+        updateMouseMovingWindowEndFrame()
 
         /*  Sort the window list so that all child windows are after their parent
             We cannot do that on FocusWindow() because childs may not exist yet         */
