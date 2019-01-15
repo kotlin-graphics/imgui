@@ -126,7 +126,7 @@ object functionalProgramming {
         }
     }
 
-    inline fun popupModal(name: String, pOpen: BooleanArray? = null, extraFlags: Int = 0, block: () -> Unit) {
+    inline fun popupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, extraFlags: WindowFlags = 0, block: () -> Unit) {
         if (beginPopupModal(name, pOpen, extraFlags)) {
             block()
             endPopup()

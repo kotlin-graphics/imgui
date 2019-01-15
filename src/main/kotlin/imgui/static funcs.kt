@@ -821,7 +821,7 @@ fun navUpdate() {
         } else if (g.openPopupStack.isNotEmpty()) {
             // Close open popup/menu
             if (g.openPopupStack.last().window!!.flags hasnt Wf.Modal)
-                closePopupToLevel(g.openPopupStack.lastIndex)
+                closePopupToLevel(g.openPopupStack.lastIndex, true)
         } else if (g.navLayer != NavLayer.Main)
             navRestoreLayer(NavLayer.Main)  // Leave the "menu" layer
         else {
