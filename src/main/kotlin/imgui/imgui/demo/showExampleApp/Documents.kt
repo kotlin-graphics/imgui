@@ -14,6 +14,7 @@ import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.colorEdit3
+import imgui.ImGui.end
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
@@ -137,7 +138,10 @@ object Documents {
 
     operator fun invoke(pOpen: KMutableProperty0<Boolean>) {
 
-        begin_("Examples: Documents", pOpen, WindowFlag.MenuBar.i)
+        if(!begin_("Examples: Documents", pOpen, WindowFlag.MenuBar.i)) {
+            end()
+            return
+        }
 
         // Menu
         if (beginMenuBar()) {

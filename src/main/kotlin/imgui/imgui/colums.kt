@@ -149,6 +149,7 @@ interface imgui_colums {
         return tabBar.beginEx(tabBarBb, flags or TabBarFlag.IsFocused)
     }
 
+    /**  only call EndTabBar() if BeginTabBar() returns true! */
     fun endTabBar() {
 
         val window = g.currentWindow!!
