@@ -1030,9 +1030,12 @@ class Window(var context: Context, var name: String) {
         }
     }
 
-    fun calcSizeContents() = Vec2(
+    fun calcSizeContents() = when{
+        collapsed -> Vec2(sizeContents)
+        else -> Vec2(
             (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f + windowPadding.x,
             (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f + windowPadding.y)
+    }
 
     fun findOrAddColumnsSet(id: ID): ColumnsSet {
         for (c in columnsStorage)
