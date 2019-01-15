@@ -715,6 +715,11 @@ interface imgui_window {
      *  pop it off the window stack.    */
     fun end() {
 
+        if (g.currentWindowStack.size <= 1 && g.frameScopeActive)        {
+            assert(g.currentWindowStack.size > 1) { "Calling End() too many times!" }
+            return // FIXME-ERRORHANDLING
+        }
+
         with(g.currentWindow!!) {
 
             if (dc.columnsSet != null) // close columns set if any is open

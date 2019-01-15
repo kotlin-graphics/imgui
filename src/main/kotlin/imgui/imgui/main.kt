@@ -247,6 +247,9 @@ interface imgui_main {
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
         assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()?" }
 
+        g.frameScopeActive = false
+        g.frameCountEnded = g.frameCount
+
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f) {
             println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
@@ -258,8 +261,11 @@ interface imgui_main {
         // Report when there is a mismatch of Begin/BeginChild vs End/EndChild calls. Important: Remember that the Begin/BeginChild API requires you
         // to always call End/EndChild even if Begin/BeginChild returns false! (this is unfortunately inconsistent with most other Begin* API).
         if (g.currentWindowStack.size != 1)
-            if (g.currentWindowStack.size > 1)
+            if (g.currentWindowStack.size > 1) {
                 assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you forget to call End/EndChild?" }
+                while (g.currentWindowStack.size > 1) // FIXME-ERRORHANDLING
+                    end()
+            }
             else
                 assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you call End/EndChild too much?" }
 
@@ -341,9 +347,6 @@ interface imgui_main {
         io.mouseWheelH = 0f
         io.inputCharacters.fill(NUL)
         io.navInputs.fill(0f)
-
-        g.frameScopeActive = false
-        g.frameCountEnded = g.frameCount
     }
 
 
