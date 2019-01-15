@@ -183,6 +183,12 @@ object functionalProgramming {
         endGroup()
     }
 
+    inline fun withStyleColor(idx: Col, col: Int, block: () -> Unit) {
+        pushStyleColor(idx, col)
+        block()
+        popStyleColor()
+    }
+
     inline fun withStyleColor(idx: Col, col: Vec4, block: () -> Unit) {
         pushStyleColor(idx, col)
         block()
