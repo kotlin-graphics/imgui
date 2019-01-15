@@ -172,8 +172,8 @@ interface imgui_menus {
 
         val pressed: Boolean
         var menuIsOpen = isPopupOpen(id)
-        val menusetIsOpen = window.flags hasnt Wf.Popup && g.openPopupStack.size > g.currentPopupStack.size &&
-                g.openPopupStack[g.currentPopupStack.size].openParentId == window.idStack.last()
+        val menusetIsOpen = window.flags hasnt Wf.Popup && g.openPopupStack.size > g.beginPopupStack.size &&
+                g.openPopupStack[g.beginPopupStack.size].openParentId == window.idStack.last()
         val backedNavWindow = g.navWindow
         if (menusetIsOpen)
         // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent)
@@ -219,10 +219,10 @@ interface imgui_menus {
             /*  Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers,
                 so menus feels more reactive.             */
             var movingWithinOpenedTriangle = false
-            if (g.hoveredWindow === window && g.openPopupStack.size > g.currentPopupStack.size &&
-                    g.openPopupStack[g.currentPopupStack.size].parentWindow === window && window.flags hasnt Wf.MenuBar)
+            if (g.hoveredWindow === window && g.openPopupStack.size > g.beginPopupStack.size &&
+                    g.openPopupStack[g.beginPopupStack.size].parentWindow === window && window.flags hasnt Wf.MenuBar)
 
-                g.openPopupStack[g.currentPopupStack.size].window?.let {
+                g.openPopupStack[g.beginPopupStack.size].window?.let {
                     val nextWindowRect = it.rect()
                     val ta = io.mousePos - io.mouseDelta
                     val tb = if (window.pos.x < it.pos.x) nextWindowRect.tl else nextWindowRect.tr
@@ -265,11 +265,11 @@ interface imgui_menus {
         if (!enabled)
             wantClose = true
         if (wantClose && isPopupOpen(id))
-            closePopupToLevel(g.currentPopupStack.size)
+            closePopupToLevel(g.beginPopupStack.size)
 
         ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Openable or if(menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
 
-        if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.currentPopupStack.size) {
+        if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.beginPopupStack.size) {
             // Don't recycle same menu level in the same frame, first close the other menu and yield for a frame.
             openPopup(label)
             return false
@@ -301,7 +301,7 @@ interface imgui_menus {
         val window = g.currentWindow!!
         g.navWindow?.let {
             if (it.parentWindow === window && g.navMoveDir == Dir.Left && navMoveRequestButNoResultYet() && window.dc.layoutType == Lt.Vertical) {
-                closePopupToLevel(g.currentPopupStack.size)
+                closePopupToLevel(g.beginPopupStack.size)
                 navMoveRequestCancel()
             }
         }

@@ -417,7 +417,7 @@ interface imgui_internal {
     fun openPopupEx(id: ID) {
 
         val parentWindow = g.currentWindow!!
-        val currentStackSize = g.currentPopupStack.size
+        val currentStackSize = g.beginPopupStack.size
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
         val openPopupPos = navCalcPreferredRefPos()
         val popupRef = PopupRef(popupId = id, window = null, parentWindow = parentWindow, openFrameCount = g.frameCount,
@@ -503,7 +503,7 @@ interface imgui_internal {
 
     /** return true if the popup is open at the current begin-ed level of the popup stack.
      *  Test for id within current popup stack level (currently begin-ed into); this doesn't scan the whole popup stack! */
-    fun isPopupOpen(id: ID) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
+    fun isPopupOpen(id: ID) = g.openPopupStack.size > g.beginPopupStack.size && g.openPopupStack[g.beginPopupStack.size].popupId == id
 
     fun beginPopupEx(id: ID, extraFlags: WindowFlags): Boolean {
 
@@ -513,7 +513,7 @@ interface imgui_internal {
         }
 
         val name = when {
-            extraFlags has Wf.ChildMenu -> "##Menu_%02d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
+            extraFlags has Wf.ChildMenu -> "##Menu_%02d".format(style.locale, g.beginPopupStack.size)    // Recycle windows based on depth
             else -> "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
         }
         val isOpen = begin(name, null, extraFlags or Wf.Popup)

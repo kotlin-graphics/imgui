@@ -29,7 +29,6 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
-import imgui.ImGui.renderTextClippedEx
 import imgui.ImGui.scrollbar
 import imgui.ImGui.style
 import imgui.imgui.imgui_main.Companion.resizeGripDef
@@ -132,7 +131,7 @@ interface imgui_window {
         var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1
         val windowJustAppearingAfterHiddenForResize = window.hiddenFramesForResize > 0
         if (flags has Wf.Popup) {
-            val popupRef = g.openPopupStack[g.currentPopupStack.size]
+            val popupRef = g.openPopupStack[g.beginPopupStack.size]
             // We recycle popups so treat window as activated if popup id changed
             windowJustActivatedByUser = windowJustActivatedByUser || window.popupId != popupRef.popupId
             windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
@@ -145,9 +144,9 @@ interface imgui_window {
         window.setCurrent()
         checkStacksSize(window, true)
         if (flags has Wf.Popup) {
-            val popupRef = g.openPopupStack[g.currentPopupStack.size]
+            val popupRef = g.openPopupStack[g.beginPopupStack.size]
             popupRef.window = window
-            g.currentPopupStack.push(popupRef)
+            g.beginPopupStack.push(popupRef)
             window.popupId = popupRef.popupId
         }
 
@@ -322,7 +321,7 @@ interface imgui_window {
                 // Popup first latch mouse position, will position itself when it appears next frame
                 window.autoPosLastDirection = Dir.None
                 if (flags has Wf.Popup && !windowPosSetByApi)
-                    window.pos put g.currentPopupStack.last().openPopupPos
+                    window.pos put g.beginPopupStack.last().openPopupPos
             }
 
             // Position child window
@@ -729,7 +728,7 @@ interface imgui_window {
             // Pop from window stack
             g.currentWindowStack.pop()
             if (flags has Wf.Popup)
-                g.currentPopupStack.pop()
+                g.beginPopupStack.pop()
             checkStacksSize(this, false)
             setCurrentWindow(g.currentWindowStack.lastOrNull())
         }
