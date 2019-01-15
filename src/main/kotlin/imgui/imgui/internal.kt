@@ -449,14 +449,26 @@ interface imgui_internal {
         }
     }
 
-    fun closePopupToLevel(remaining: Int) {
+    fun closePopupToLevel(remaining: Int, applyFocusToWindowUnder: Boolean) {
         assert(remaining >= 0)
         var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
         else g.openPopupStack[0].parentWindow
-        if (g.navLayer == NavLayer.Main)
-            focusWindow = navRestoreLastChildNavWindow(focusWindow)
-        focusWindow.focus()
-        for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
+        for (i in remaining until g.openPopupStack.size) // resize(remaining)
+            g.openPopupStack.pop()
+
+        /*  FIXME: This code is faulty and we may want to eventually to replace or remove the 'apply_focus_to_window_under=true' path completely.
+            Instead of using g.OpenPopupStack[remaining-1].Window etc. we should find the highest root window that is behind the popups we are closing.
+            The current code will set focus to the parent of the popup window which is incorrect.
+            It rarely manifested until now because UpdateMouseMovingWindow() would call FocusWindow() again on the clicked window,
+            leading to a chain of focusing A (clicked window) then B (parent window of the popup) then A again.
+            However if the clicked window has the _NoMove flag set we would be left with B focused.
+            For now, we have disabled this path when called from ClosePopupsOverWindow() because the users of ClosePopupsOverWindow() don't need to alter focus anyway,
+            but we should inspect and fix this properly. */
+        if (applyFocusToWindowUnder)        {
+            if (g.navLayer == NavLayer.Main)
+                focusWindow = navRestoreLastChildNavWindow(focusWindow)
+            focusWindow.focus()
+        }
     }
 
     fun closePopupsOverWindow(refWindow: Window?) {
@@ -496,7 +508,7 @@ interface imgui_internal {
 
         if (popupCountToKeep < g.openPopupStack.size) { // This test is not required but it allows to set a convenient breakpoint on the statement below
             //IMGUI_DEBUG_LOG("ClosePopupsOverWindow(%s) -> ClosePopupToLevel(%d)\n", ref_window->Name, popup_count_to_keep);
-            closePopupToLevel(popupCountToKeep)
+            closePopupToLevel(popupCountToKeep, false)
         }
     }
 

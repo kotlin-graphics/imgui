@@ -265,7 +265,7 @@ interface imgui_menus {
         if (!enabled)
             wantClose = true
         if (wantClose && isPopupOpen(id))
-            closePopupToLevel(g.beginPopupStack.size)
+            closePopupToLevel(g.beginPopupStack.size, true)
 
         ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Openable or if(menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
 
@@ -301,7 +301,7 @@ interface imgui_menus {
         val window = g.currentWindow!!
         g.navWindow?.let {
             if (it.parentWindow === window && g.navMoveDir == Dir.Left && navMoveRequestButNoResultYet() && window.dc.layoutType == Lt.Vertical) {
-                closePopupToLevel(g.beginPopupStack.size)
+                closePopupToLevel(g.beginPopupStack.size, true)
                 navMoveRequestCancel()
             }
         }
