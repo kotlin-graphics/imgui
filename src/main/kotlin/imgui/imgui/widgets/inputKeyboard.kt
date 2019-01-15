@@ -34,7 +34,8 @@ import imgui.InputTextFlag as Itf
 import imgui.internal.ButtonFlag as Bf
 
 /** Widgets: Input with Keyboard
- *  - If you want to use InputText() with a dynamic string type such as std::string or your own, see cpp/imgui_stdlib.h */
+ *  - If you want to use InputText() with a dynamic string type such as std::string or your own, see cpp/imgui_stdlib.h
+ *  - Most of the ImGuiInputTextFlags flags are only useful for InputText() and not for InputFloatX, InputIntX, InputDouble etc. */
 interface inputKeyboard {
 
 
@@ -50,100 +51,100 @@ interface inputKeyboard {
             inputTextEx(label, buf, size, flags or Itf.Multiline/*, callback, user_data*/)
 
     fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, format: String? = null,
-                   extraFlags: InputTextFlags = 0) = inputFloat(label, v, 0, step, stepFast, format, extraFlags)
+                   flags: InputTextFlags = 0) = inputFloat(label, v, 0, step, stepFast, format, flags)
 
     fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f, format: String? = null,
-                   extraFlags: InputTextFlags = 0) = withFloat(v, ptr) { inputFloat(label, it, step, stepFast, format, extraFlags) }
+                   flags: InputTextFlags = 0) = withFloat(v, ptr) { inputFloat(label, it, step, stepFast, format, flags) }
 
     fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f, format: String? = null,
-                   extraFlags: InputTextFlags = 0): Boolean {
-        val flags = extraFlags or Itf.CharsScientific
+                   flags_: InputTextFlags = 0): Boolean {
+        val flags = flags_ or Itf.CharsScientific
         return inputScalar(label, DataType.Float, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, flags)
     }
 
     fun inputDouble(label: String, v: KMutableProperty0<Double>, step: Double = 0.0, stepFast: Double = 0.0, format: String? = null,
-                    extraFlags: InputTextFlags = 0): Boolean {
-        val flags = extraFlags or Itf.CharsScientific
+                    flags_: InputTextFlags = 0): Boolean {
+        val flags = flags_ or Itf.CharsScientific
         /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float,
             while hiding non-significant digits? %f doesn't have a minimum of 1         */
         return inputScalar(label, DataType.Double, v, step.takeIf { it > 0.0 }, stepFast.takeIf { it > 0.0 }, format, flags)
     }
 
-    fun inputFloat2(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
-            : Boolean = inputFloatN(label, v, 2, null, null, format, extraFlags)
+    fun inputFloat2(label: String, v: FloatArray, format: String? = null, flags: InputTextFlags = 0): Boolean =
+            inputFloatN(label, v, 2, null, null, format, flags)
 
-    fun inputVec2(label: String, v: Vec2, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec2(label: String, v: Vec2, format: String? = null, flags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(2)
-        val res = inputFloatN(label, floats, 2, null, null, format, extraFlags)
+        val res = inputFloatN(label, floats, 2, null, null, format, flags)
         v put floats
         return res
     }
 
-    fun inputFloat3(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
-            : Boolean = inputFloatN(label, v, 3, null, null, format, extraFlags)
+    fun inputFloat3(label: String, v: FloatArray, format: String? = null, flags: InputTextFlags = 0)
+            : Boolean = inputFloatN(label, v, 3, null, null, format, flags)
 
-    fun inputVec3(label: String, v: Vec3, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec3(label: String, v: Vec3, format: String? = null, flags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(3)
-        val res = inputFloatN(label, floats, 3, null, null, format, extraFlags)
+        val res = inputFloatN(label, floats, 3, null, null, format, flags)
         v put floats
         return res
     }
 
-    fun inputFloat4(label: String, v: FloatArray, format: String? = null, extraFlags: InputTextFlags = 0)
-            : Boolean = inputFloatN(label, v, 4, null, null, format, extraFlags)
+    fun inputFloat4(label: String, v: FloatArray, format: String? = null, flags: InputTextFlags = 0)
+            : Boolean = inputFloatN(label, v, 4, null, null, format, flags)
 
-    fun inputVec4(label: String, v: Vec4, format: String? = null, extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec4(label: String, v: Vec4, format: String? = null, flags: InputTextFlags = 0): Boolean {
         val floats = v to FloatArray(4)
-        val res = inputFloatN(label, floats, 4, null, null, format, extraFlags)
+        val res = inputFloatN(label, floats, 4, null, null, format, flags)
         v put floats
         return res
     }
 
-    fun inputInt(label: String, v: KMutableProperty0<Int>, step: Int = 1, stepFast: Int = 100, extraFlags: InputTextFlags = 0): Boolean {
+    fun inputInt(label: String, v: KMutableProperty0<Int>, step: Int = 1, stepFast: Int = 100, flags: InputTextFlags = 0): Boolean {
         /*  Hexadecimal input provided as a convenience but the flag name is awkward. Typically you'd use inputText()
             to parse your own data, if you want to handle prefixes.             */
-        val format = if (extraFlags has Itf.CharsHexadecimal) "%08X" else "%d"
-        return inputScalar(label, DataType.Int, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, extraFlags)
+        val format = if (flags has Itf.CharsHexadecimal) "%08X" else "%d"
+        return inputScalar(label, DataType.Int, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, flags)
     }
 
-    fun inputInt2(label: String, v: IntArray, extraFlags: InputTextFlags = 0) =
-            inputIntN(label, v, 2, null, null, "%d", extraFlags)
+    fun inputInt2(label: String, v: IntArray, flags: InputTextFlags = 0): Boolean =
+            inputIntN(label, v, 2, null, null, "%d", flags)
 
-    fun inputVec2i(label: String, v: Vec2i, extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec2i(label: String, v: Vec2i, flags: InputTextFlags = 0): Boolean {
         val ints = v to IntArray(2)
-        val res = inputIntN(label, ints, 2, null, null, "%d", extraFlags)
+        val res = inputIntN(label, ints, 2, null, null, "%d", flags)
         v put ints
         return res
     }
 
-    fun inputInt3(label: String, v: IntArray, extraFlags: InputTextFlags = 0) =
-            inputIntN(label, v, 3, null, null, "%d", extraFlags)
+    fun inputInt3(label: String, v: IntArray, flags: InputTextFlags = 0): Boolean =
+            inputIntN(label, v, 3, null, null, "%d", flags)
 
-    fun inputVec3i(label: String, v: Vec3i, extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec3i(label: String, v: Vec3i, flags: InputTextFlags = 0): Boolean {
         val ints = v to IntArray(3)
-        val res = inputIntN(label, ints, 3, null, null, "%d", extraFlags)
+        val res = inputIntN(label, ints, 3, null, null, "%d", flags)
         v put ints
         return res
     }
 
-    fun inputInt4(label: String, v: IntArray, extraFlags: InputTextFlags = 0) =
-            inputIntN(label, v, 4, null, null, "%d", extraFlags)
+    fun inputInt4(label: String, v: IntArray, flags: InputTextFlags = 0): Boolean =
+            inputIntN(label, v, 4, null, null, "%d", flags)
 
-    fun inputVec4i(label: String, v: Vec4i, extraFlags: InputTextFlags = 0): Boolean {
+    fun inputVec4i(label: String, v: Vec4i, flags: InputTextFlags = 0): Boolean {
         val ints = v to IntArray(4)
-        val res = inputIntN(label, ints, 4, null, null, "%d", extraFlags)
+        val res = inputIntN(label, ints, 4, null, null, "%d", flags)
         v put ints
         return res
     }
 
     fun inputScalar(label: String, dataType: DataType, data: IntArray, step: Int?, stepFast: Int?, format: String? = null,
-                    extraFlags: InputTextFlags = 0): Boolean = withInt(data, 0) {
-        inputScalar(label, dataType, it, step, stepFast, format, extraFlags)
+                    flags: InputTextFlags = 0): Boolean = withInt(data, 0) {
+        inputScalar(label, dataType, it, step, stepFast, format, flags)
     }
 
     @Suppress("UNCHECKED_CAST")
     fun inputScalar(label: String, dataType: DataType, dataPtr: KMutableProperty0<*>, step: Number?, stepFast: Number?,
-                    format_: String? = null, extraFlags_: InputTextFlags = 0): Boolean {
+                    format_: String? = null, flags: InputTextFlags = 0): Boolean {
 
         var data by dataPtr as KMutableProperty0<Number>
         val window = currentWindow
@@ -160,7 +161,7 @@ interface inputKeyboard {
         val buf = dataPtr.format(dataType, format, 64)
 
         var valueChanged = false
-        var extraFlags = extraFlags_
+        var extraFlags = flags
         if (extraFlags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
             extraFlags = extraFlags or Itf.CharsDecimal
         extraFlags = extraFlags or Itf.AutoSelectAll
@@ -202,7 +203,7 @@ interface inputKeyboard {
     }
 
     fun inputFloatN(label: String, v: FloatArray, components: Int, step: Number? = null, stepFast: Number? = null,
-                    format: String? = null, extraFlags: Int): Boolean {
+                    format: String? = null, flags: Int): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -213,7 +214,7 @@ interface inputKeyboard {
         for (i in 0 until components) {
             pushId(i)
             withFloat(v, i) {
-                valueChanged = inputScalar("##v", DataType.Float, it, step, stepFast, format, extraFlags) || valueChanged
+                valueChanged = inputScalar("##v", DataType.Float, it, step, stepFast, format, flags) || valueChanged
             }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
@@ -227,7 +228,7 @@ interface inputKeyboard {
     }
 
     fun inputIntN(label: String, v: IntArray, components: Int, step: Int? = null, stepFast: Int? = null, format: String? = null,
-                  extraFlags: Int): Boolean {
+                  flags: Int): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -237,7 +238,7 @@ interface inputKeyboard {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withInt(v, i) { valueChanged = inputScalar("##v", DataType.Int, it, step, stepFast, format, extraFlags) || valueChanged }
+            withInt(v, i) { valueChanged = inputScalar("##v", DataType.Int, it, step, stepFast, format, flags) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
