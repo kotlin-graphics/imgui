@@ -247,9 +247,6 @@ interface imgui_main {
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
         assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()?" }
 
-        g.frameScopeActive = false
-        g.frameCountEnded = g.frameCount
-
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f) {
             println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
@@ -257,6 +254,30 @@ interface imgui_main {
             io.imeSetInputScreenPosFn!!(1000, 1000)
             g.platformImeLastPos put g.platformImePos
         }
+
+        // Show CTRL+TAB list window
+        if (g.navWindowingTarget != null)
+            navUpdateWindowingList()
+
+        // Drag and Drop: Elapse payload (if delivered, or if source stops being submitted)
+        if (g.dragDropActive)        {
+            val isDelivered = g.dragDropPayload.delivery
+            val isElapsed = g.dragDropPayload.dataFrameCount + 1 < g.frameCount &&
+                    (g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload || !isMouseDown(g.dragDropMouseButton))
+            if (isDelivered || isElapsed)
+                clearDragDrop()
+        }
+
+        // Drag and Drop: Fallback for source tooltip. This is not ideal but better than nothing.
+        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount)        {
+            g.dragDropWithinSourceOrTarget = true
+            setTooltip("...")
+            g.dragDropWithinSourceOrTarget = false
+        }
+
+        // End the frame scope. From this point we are not allowed to call Begin() any more.
+        g.frameScopeActive = false
+        g.frameCountEnded = g.frameCount
 
         // Report when there is a mismatch of Begin/BeginChild vs End/EndChild calls. Important: Remember that the Begin/BeginChild API requires you
         // to always call End/EndChild even if Begin/BeginChild returns false! (this is unfortunately inconsistent with most other Begin* API).
@@ -275,25 +296,6 @@ interface imgui_main {
         }
 
         end()
-
-        // Show CTRL+TAB list
-        if (g.navWindowingTarget != null)
-            navUpdateWindowingList()
-
-        // Drag and Drop: Elapse payload (if delivered, or if source stops being submitted)
-        if (g.dragDropActive) {
-            val isDelivered = g.dragDropPayload.delivery
-            val isElapsed = g.dragDropPayload.dataFrameCount + 1 < g.frameCount && (g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload || !isMouseDown(g.dragDropMouseButton))
-            if (isDelivered || isElapsed)
-                clearDragDrop()
-        }
-
-        // Drag and Drop: Fallback for source tooltip. This is not ideal but better than nothing.
-        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount) {
-            g.dragDropWithinSourceOrTarget = true
-            setTooltip("...")
-            g.dragDropWithinSourceOrTarget = false
-        }
 
         // Initiate moving window
         if (g.activeId == 0 && g.hoveredId == 0)
