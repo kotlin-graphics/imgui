@@ -64,7 +64,10 @@ object LwjglGlfw {
 
             backendRendererName = null
             backendPlatformName = null
-//            io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText; TODO
+            backendLanguageUserData = null
+            backendRendererUserData = null
+            backendPlatformUserData = null
+//            io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText; // Platform dependent default implementations TODO
 //            io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;
 //            io.ClipboardUserData = g_Window;
 
