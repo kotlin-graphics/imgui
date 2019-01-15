@@ -449,11 +449,6 @@ interface imgui_internal {
         }
     }
 
-    fun closePopup(id: ID) {
-        if (!isPopupOpen(id)) return
-        closePopupToLevel(g.openPopupStack.lastIndex)
-    }
-
     fun closePopupToLevel(remaining: Int) {
         assert(remaining >= 0)
         var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
@@ -472,36 +467,42 @@ interface imgui_internal {
 
         /*  When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it.
             Don't close our own child popup windows */
-        var n = 0
+        var popupCountToKeep = 0
         if (refWindow != null)
-            while (n < g.openPopupStack.size) {
-                val popup = g.openPopupStack[n]
+        // Find the highest popup which is a descendant of the reference window (generally reference window = NavWindow)
+            while (popupCountToKeep < g.openPopupStack.size) {
+                val popup = g.openPopupStack[popupCountToKeep]
                 if (popup.window == null) {
-                    n++
+                    popupCountToKeep++
                     continue
                 }
                 assert(popup.window!!.flags has Wf.Popup)
                 if (popup.window!!.flags has Wf.ChildWindow) {
-                    n++
+                    popupCountToKeep++
                     continue
                 }
                 // Trim the stack if popups are not direct descendant of the reference window (which is often the NavWindow)
-                var hasFocus = false
-                var m = n
-                while (m < g.openPopupStack.size && !hasFocus) {
-                    hasFocus = g.openPopupStack[m].window != null && g.openPopupStack[m].window!!.rootWindow === refWindow.rootWindow
+                var popupOrDescendentHasFocus = false
+                var m = popupCountToKeep
+                while (m < g.openPopupStack.size && !popupOrDescendentHasFocus) {
+                    g.openPopupStack[m].window?.let {
+                        if (it.rootWindow === refWindow.rootWindow)
+                            popupOrDescendentHasFocus = true
+                    }
                     m++
                 }
-                if (!hasFocus) break
-                n++
+                if (!popupOrDescendentHasFocus) break
+                popupCountToKeep++
             }
 
-        if (n < g.openPopupStack.size)   // This test is not required but it allows to set a convenient breakpoint on the statement below
-            closePopupToLevel(n)
+        if (popupCountToKeep < g.openPopupStack.size) { // This test is not required but it allows to set a convenient breakpoint on the statement below
+            //IMGUI_DEBUG_LOG("ClosePopupsOverWindow(%s) -> ClosePopupToLevel(%d)\n", ref_window->Name, popup_count_to_keep);
+            closePopupToLevel(popupCountToKeep)
+        }
     }
 
-    // FIXME
-    /** return true if the popup is open    */
+    /** return true if the popup is open at the current begin-ed level of the popup stack.
+     *  Test for id within current popup stack level (currently begin-ed into); this doesn't scan the whole popup stack! */
     fun isPopupOpen(id: ID) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
 
     fun beginPopupEx(id: ID, extraFlags: WindowFlags): Boolean {

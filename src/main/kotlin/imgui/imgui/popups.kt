@@ -4,7 +4,7 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.beginPopupEx
-import imgui.ImGui.closePopup
+import imgui.ImGui.begin_
 import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
@@ -18,11 +18,19 @@ import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
 import imgui.internal.NavMoveFlag
+import kotlin.reflect.KMutableProperty0
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
 
-/** Popups  */
-interface imgui_popups {
+/** Popups, Modals
+ *  The properties of popups windows are:
+ *  - They block normal mouse hovering detection outside them. (*)
+ *  - Unless modal, they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
+ *  - Their visibility state (~bool) is held internally by imgui instead of being held by the programmer as we are used to with regular Begin() calls.
+ *      User can manipulate the visibility state by calling OpenPopup().
+ *  (*) One can use IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) to bypass it and detect hovering even when normally blocked by a popup.
+ *  Those three properties are connected. The library needs to hold their visibility state because it can close popups at any time. */
+interface imgui_popupsModals {
 
 
     /** call to mark popup as open (don't call every frame!). popups are closed when user click outside, or if
@@ -74,8 +82,19 @@ interface imgui_popups {
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
     }
 
-    /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside) */
-    fun beginPopupModal(name: String, pOpen: BooleanArray? = null, flags_: WindowFlags = 0): Boolean {
+    /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside)
+     *
+     *  If 'p_open' is specified for a modal popup window, the popup will have a regular close button which will close the popup.
+     *  Note that popup visibility status is owned by imgui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
+    fun beginPopupModal(name: String, pOpen: BooleanArray, flags_: WindowFlags = 0): Boolean = withBoolean(pOpen) {
+        beginPopupModal(name, it, flags_)
+    }
+
+    /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside)
+     *
+     *  If 'p_open' is specified for a modal popup window, the popup will have a regular close button which will close the popup.
+     *  Note that popup visibility status is owned by imgui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
+    fun beginPopupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = 0): Boolean {
 
         val window = g.currentWindow!!
         val id = window.getId(name)
@@ -89,11 +108,12 @@ interface imgui_popups {
             setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
 
         val flags = flags_ or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings
-        val isOpen = begin(name, pOpen, flags)
+        val isOpen = begin_(name, pOpen, flags)
         // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
-        if (!isOpen || (pOpen != null && !pOpen.get(0))) {
+        if (!isOpen || pOpen?.get() == false) {
             endPopup()
-            if (isOpen) closePopup(id)
+            if (isOpen)
+                closePopupToLevel(g.currentPopupStack.size)
             return false
         }
         return isOpen

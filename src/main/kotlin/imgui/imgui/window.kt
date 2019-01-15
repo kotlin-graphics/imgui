@@ -55,9 +55,9 @@ import imgui.internal.LayoutType as Lt
  *  - Passing 'bool* p_open != NULL' shows a window-closing widget in the upper-right corner of the window,
  *      which clicking will set the boolean to false when clicked.
  *  - Begin() return false to indicate the window is collapsed or fully clipped, so you may early out and omit submitting anything to the window.
- *    Always call a matching End() for each Begin() call, regardless of its return value [this is due to legacy reason and is inconsistent with
- *    most other functions such as BeginMenu/EndMenu, BeginPopup/EndPopup, etc. where the EndXXX call should only be called
- *    if the corresponding BeginXXX function returned true.]    */
+ *    Always call a matching End() for each Begin() call, regardless of its return value
+ *    [this is due to legacy reason and is inconsistent with most other functions such as BeginMenu/EndMenu, BeginPopup/EndPopup, etc.
+ *    where the EndXXX call should only be called if the corresponding BeginXXX function returned true.]    */
 interface imgui_window {
 
     // Windows
