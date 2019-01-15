@@ -183,8 +183,10 @@ interface imgui_colums {
         assert(g.currentTabBar.isNotEmpty()) { "Needs to be called between BeginTabBar() and EndTabBar()!" }
         val tabBar = g.currentTabBar.last()
         return tabBar.tabItemEx(label, pOpen, flags).also {
-            if (it && flags hasnt TabItemFlag.NoPushId)
-                pushId(tabBar.tabs[tabBar.lastTabItemIdx].id)
+            if (it && flags hasnt TabItemFlag.NoPushId)            {
+                val tab = tabBar.tabs[tabBar.lastTabItemIdx]
+                g.currentWindow!!.idStack += tab.id // We already hashed 'label' so push into the ID stack directly instead of doing another hash through PushID(label)
+            }
         }
     }
 
@@ -197,7 +199,7 @@ interface imgui_colums {
         val tabBar = g.currentTabBar.last()
         val tab = tabBar.tabs[tabBar.lastTabItemIdx]
         if (tab.flags hasnt TabItemFlag.NoPushId)
-            popId()
+            g.currentWindow!!.idStack.pop()
     }
 
     /** notify TabBar or Docking system of a closed tab/window ahead (useful to reduce visual flicker on reorderable tab bars).
