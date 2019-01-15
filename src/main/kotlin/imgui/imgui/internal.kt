@@ -3038,7 +3038,7 @@ interface imgui_internal {
 
     /** Handle mouse moving window
      *  Note: moving window with the navigation keys (Square + d-pad / CTRL+TAB + Arrows) are processed in NavUpdateWindowing() */
-    fun updateMouseMovingWindow() {
+    fun updateMouseMovingWindowNewFrame() {
 
         val mov = g.movingWindow
         if (mov != null) {
@@ -3068,6 +3068,49 @@ interface imgui_internal {
                 if (!io.mouseDown[0])
                     clearActiveId()
             }
+    }
+
+    /** Initiate moving window, handle left-click and right-click focus */
+    fun updateMouseMovingWindowEndFrame()    {
+        // Initiate moving window
+        if (g.activeId != 0 || g.hoveredId != 0)            return
+
+        // Unless we just made a window/popup appear
+        if (g.navWindow?.appearing == true) return
+
+        // Click to focus window and start moving (after we're done with all our widgets)
+        if (io.mouseClicked[0])        {
+            val hovered = g.hoveredRootWindow
+            if (hovered != null)            {
+                hovered.startMouseMoving()
+                if (io.configWindowsMoveFromTitleBarOnly && hovered.flags hasnt Wf.NoTitleBar)
+                    if (io.mouseClickedPos[0] !in hovered.titleBarRect())
+                        g.movingWindow = null
+            }
+            else if (g.navWindow != null && frontMostPopupModal == null)
+                null.focus()  // Clicking on void disable focus
+        }
+
+        // With right mouse button we close popups without changing focus
+        // (The left mouse button path calls FocusWindow which will lead NewFrame->ClosePopupsOverWindow to trigger)
+        if (io.mouseClicked[1])        {
+            // Find the top-most window between HoveredWindow and the front most Modal Window.
+            // This is where we can trim the popup stack.
+            val modal = frontMostPopupModal
+            var hoveredWindowAboveModal = false
+            if (modal == null)
+                hoveredWindowAboveModal = true
+            var i = g.windows.lastIndex
+            while(i >= 0 && !hoveredWindowAboveModal)            {
+                val window = g.windows[i]
+                if (window === modal)
+                    break
+                if (window === g.hoveredWindow)
+                    hoveredWindowAboveModal = true
+                i--
+            }
+            closePopupsOverWindow(if(hoveredWindowAboveModal) g.hoveredWindow else modal)
+        }
     }
 
     val formatArgPattern: Pattern
