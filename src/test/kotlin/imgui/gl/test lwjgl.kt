@@ -51,11 +51,13 @@ private class HelloWorld_lwjgl {
         ctx = Context()
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
-        LwjglGlfw.init(window, true, GlfwClientApi.OpenGL)
 
-        // Setup Style
+        // Setup Dear ImGui style
         ImGui.styleColorsDark()
 //        ImGui.styleColorsClassic()
+
+        // Setup Platform/Renderer bindings
+        LwjglGlfw.init(window, true, GlfwClientApi.OpenGL)
 
         // Load Fonts
         /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use

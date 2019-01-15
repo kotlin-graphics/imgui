@@ -70,12 +70,12 @@
 //        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 //        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 //
-//        // Setup GLFW and Vulkan binding
-//        LwjglGlfw.init(window, true, GlfwClientApi.Vulkan)
-//
-//        // Setup Style
+//        // Setup Dear ImGui style
 //        ImGui.styleColorsDark()
 //        //ImGui.styleColorsClassic()
+//
+//        // Setup GLFW and Vulkan binding
+//        LwjglGlfw.init(window, true, GlfwClientApi.Vulkan)
 //
 //        // Load Fonts
 //        // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.

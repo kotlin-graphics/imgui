@@ -48,13 +48,15 @@ public class Test_lwjgl {
         ctx = new Context(null);
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
-        lwjglGlfw.init(window, true, GlfwClientApi.OpenGL);
-
-        io = imgui.getIo();
 
         // Setup Style
         imgui.styleColorsDark(null);
 //        imgui.styleColorsClassic(null);
+
+        // Setup Platform/Renderer bindings
+        lwjglGlfw.init(window, true, GlfwClientApi.OpenGL);
+
+        io = imgui.getIo();
 
         // Load Fonts
         /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use
