@@ -27,7 +27,7 @@ interface imgui_styles {
         colors[Col.Text]                   .put(1.00f, 1.00f, 1.00f, 1.00f)
         colors[Col.TextDisabled]           .put(0.50f, 0.50f, 0.50f, 1.00f)
         colors[Col.WindowBg]               .put(0.06f, 0.06f, 0.06f, 0.94f)
-        colors[Col.ChildBg]                .put(1.00f, 1.00f, 1.00f, 0.00f)
+        colors[Col.ChildBg]                .put(0.00f, 0.00f, 0.00f, 0.00f)
         colors[Col.PopupBg]                .put(0.08f, 0.08f, 0.08f, 0.94f)
         colors[Col.Border]                 .put(0.43f, 0.43f, 0.50f, 0.50f)
         colors[Col.BorderShadow]           .put(0.00f, 0.00f, 0.00f, 0.00f)
