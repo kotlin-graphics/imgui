@@ -456,7 +456,6 @@ interface imgui_internal {
         if (g.navLayer == NavLayer.Main)
             focusWindow = navRestoreLastChildNavWindow(focusWindow)
         focusWindow.focus()
-        focusWindow.dc.navHideHighlightOneFrame = true
         for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
     }
 
