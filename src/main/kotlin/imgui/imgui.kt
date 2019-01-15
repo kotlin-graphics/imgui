@@ -90,7 +90,7 @@ object ImGui :
         selectableLists,
         imgui_tooltips,
         imgui_menus,
-        imgui_popups,
+        imgui_popupsModals,
         imgui_logging,
         imgui_dragAndDrop,
         imgui_clipping,

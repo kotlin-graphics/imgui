@@ -17,7 +17,7 @@ import java.io.FileWriter
  *  By default, tree nodes are automatically opened during logging.    */
 interface imgui_logging {
 
-//    IMGUI_API void          LogToTTY(int max_depth = -1);                                       // start logging to tty
+//    IMGUI_API void          LogToTTY(int max_depth = -1);                                       // start logging to tty (stdout)
 //    IMGUI_API void          LogToFile(int max_depth = -1, const char* filename = NULL);         // start logging to file
 
     /** start logging ImGui output to OS clipboard   */
