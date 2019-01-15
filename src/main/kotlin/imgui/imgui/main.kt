@@ -233,6 +233,7 @@ interface imgui_main {
          */
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
         begin("Debug##Default")
+        g.frameScopePushedImplicitWindow = true
 
         if (IMGUI_ENABLE_TEST_ENGINE)
             ImGuiTestEngineHook_PostNewFrame()
@@ -246,9 +247,6 @@ interface imgui_main {
         assert(g.initialized)
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
         assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()?" }
-
-        g.frameScopeActive = false
-        g.frameCountEnded = g.frameCount
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f) {
@@ -270,6 +268,7 @@ interface imgui_main {
                 assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you call End/EndChild too much?" }
 
         // Hide implicit/fallback "Debug" window if it hasn't been used
+        g.frameScopePushedImplicitWindow = false
         g.currentWindow?.let {
             if (!it.writeAccessed) it.active = false
         }
@@ -295,6 +294,10 @@ interface imgui_main {
             setTooltip("...")
             g.dragDropWithinSourceOrTarget = false
         }
+
+        // End frame
+        g.frameScopeActive = false
+        g.frameCountEnded = g.frameCount
 
         // Initiate moving window
         if (g.activeId == 0 && g.hoveredId == 0)

@@ -715,10 +715,11 @@ interface imgui_window {
      *  pop it off the window stack.    */
     fun end() {
 
-        if (g.currentWindowStack.size <= 1 && g.frameScopeActive)        {
+        if (g.currentWindowStack.size <= 1 && g.frameScopePushedImplicitWindow)        {
             assert(g.currentWindowStack.size > 1) { "Calling End() too many times!" }
             return // FIXME-ERRORHANDLING
         }
+        assert(g.currentWindowStack.isNotEmpty())
 
         with(g.currentWindow!!) {
 

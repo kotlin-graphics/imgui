@@ -21,8 +21,10 @@ import kotlin.math.max
 class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var initialized = false
-    /** Set by NewFrame(), cleared by EndFrame()/Render() */
+    /** Set by NewFrame(), cleared by EndFrame() */
     var frameScopeActive = false
+    /** Set by NewFrame(), cleared by EndFrame() */
+    var frameScopePushedImplicitWindow = false
     /** Io.Fonts-> is owned by the ImGuiContext and will be destructed along with it.   */
     var fontAtlasOwnedByContext = sharedFontAtlas != null
 
