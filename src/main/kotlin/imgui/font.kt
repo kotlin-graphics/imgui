@@ -311,12 +311,14 @@ class FontAtlas {
 
 
 // Helper to build glyph ranges from text/string data. Feed your application strings/characters to it then call BuildRanges().
+    // This is essentially a tightly packed of vector of 64k booleans = 8KB storage.
 //    struct ImFontGlyphRangesBuilder
 //    {
-//        ImVector<unsigned char> UsedChars;  // Store 1-bit per Unicode code point (0=unused, 1=used)
-//        ImFontGlyphRangesBuilder()          { UsedChars.resize(0x10000 / 8); memset(UsedChars.Data, 0, 0x10000 / 8); }
-//        bool           GetBit(int n) const  { return (UsedChars[n >> 3] & (1 << (n & 7))) != 0; }
-//        void           SetBit(int n)        { UsedChars[n >> 3] |= 1 << (n & 7); }  // Set bit 'c' in the array
+//        ImVector<int> UsedChars;            // Store 1-bit per Unicode code point (0=unused, 1=used)
+//
+//    ImFontGlyphRangesBuilder()          { UsedChars.resize(0x10000 / 32); memset(UsedChars.Data, 0, 0x10000 / 32); }
+//    bool           GetBit(int n) const  { int off = (n >> 5); int mask = 1 << (n & 31); return (UsedChars[off] & mask) != 0; } // Get bit n in the array
+//    void           SetBit(int n)        { int off = (n >> 5); int mask = 1 << (n & 31); UsedChars[off] |= mask; }              // Set bit n in the array
 //        void           AddChar(ImWchar c)   { SetBit(c); }                          // Add character
 //        IMGUI_API void AddText(const char* text, const char* text_end = NULL);      // Add string (each character of the UTF-8 string are added)
 //        IMGUI_API void AddRanges(const ImWchar* ranges);                            // Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault()) to force add all of ASCII/Latin+Ext
