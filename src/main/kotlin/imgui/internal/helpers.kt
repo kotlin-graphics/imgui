@@ -299,7 +299,7 @@ fun Vec2.lerp(b: Vec2i, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y
 fun Vec2i.lerp(b: Vec2i, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
 fun Vec4.lerp(b: Vec4, t: Float) = Vec4(x + (b.x - x) * t, y + (b.y - y) * t, z + (b.z - z) * t, w + (b.w - w) * t)
 
-fun Vec2.invLength(failValue: Float): Float {
+infix fun Vec2.invLength(failValue: Float): Float {
     val d = x * x + y * y
     if (d > 0f)
         return 1f / glm.sqrt(d)
