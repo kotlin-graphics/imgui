@@ -169,6 +169,7 @@ interface imgui_internal {
         }
     }
 
+    /** FIXME-NAV: The existence of SetNavID/SetNavIDWithRectRel/SetFocusID is incredibly messy and confusing and needs some explanation or refactoring. */
     fun setFocusId(id: ID, window: Window) {
 
         assert(id != 0)
@@ -1781,7 +1782,7 @@ interface imgui_internal {
                 // Set active id so it can be queried by user via IsItemActive(), equivalent of holding the mouse button.
                 g.navActivateId = id // This is so SetActiveId assign a Nav source
                 setActiveId(id, window)
-                if (flags hasnt Bf.NoNavFocus)
+                if ((navActivatedByCode || navActivatedByInputs) && flags hasnt Bf.NoNavFocus)
                     setFocusId(id, window)
                 g.activeIdAllowNavDirFlags = (1 shl Dir.Left) or (1 shl Dir.Right) or (1 shl Dir.Up) or (1 shl Dir.Down)
             }
