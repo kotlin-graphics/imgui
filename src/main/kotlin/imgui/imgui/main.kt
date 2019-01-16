@@ -319,7 +319,7 @@ interface imgui_main {
         // Clear Input data for next frame
         io.mouseWheel = 0f
         io.mouseWheelH = 0f
-        io.inputCharacters.fill(NUL)
+        io.inputQueueCharacters.clear()
         io.navInputs.fill(0f)
     }
 

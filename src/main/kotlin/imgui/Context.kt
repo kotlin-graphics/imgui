@@ -565,25 +565,18 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** Keyboard keys that are pressed (ideally left in the "native" order your engine has access to keyboard keys,
      *  so you can use your own defines/enums for keys).   */
     val keysDown = BooleanArray(512)
-    /** List of characters input (translated by user from keypress + keyboard state). Fill using addInputCharacter()
-     *  helper. */
-    val inputCharacters = CharArray(16)
     /** Gamepad inputs. Cleared back to zero by EndFrame(). Keyboard keys will be auto-mapped and be written here by NewFrame().   */
     val navInputs = FloatArray(NavInput.COUNT)
 
     // Functions
 
-    /** Add new character into InputCharacters[]
-     *  Pass in translated ASCII characters for text input.
-     *  - with glfw you can get those from the callback set in glfwSetCharCallback()
-     *  - on Windows you can get those using ToAscii+keyboard state, or via the WM_CHAR message */
-    fun addInputCharacter(c: Char) {
-        val n = inputCharacters.strlenW
-        if (n + 1 < inputCharacters.size)
-            inputCharacters[n] = c
-    }
-//    IMGUI_API void AddInputCharactersUTF8(const char* utf8_chars);      // Add new characters into InputCharacters[] from an UTF-8 string
-//    inline void    ClearInputCharacters() { InputCharacters[0] = 0; }   // Clear the text input buffer manually
+    /** Queue new character input */
+    fun addInputCharacter(c: Char) = inputQueueCharacters.add(c)
+
+//    IMGUI_API void  AddInputCharactersUTF8(const char* str);    // Queue new characters input from an UTF-8 string
+
+    /** Clear the text input buffer manually */
+    fun clearInputCharacters() = inputQueueCharacters.clear()
 
 
     //------------------------------------------------------------------
@@ -667,6 +660,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
     val navInputsDownDuration = FloatArray(NavInput.COUNT) { -1f }
 
     val navInputsDownDurationPrev = FloatArray(NavInput.COUNT)
+    /** Queue of _characters_ input (obtained by platform back-end). Fill using AddInputCharacter() helper. */
+    val inputQueueCharacters = ArrayList<Char>()
 }
 
 
