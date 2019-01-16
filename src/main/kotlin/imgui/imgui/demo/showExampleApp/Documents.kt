@@ -138,7 +138,7 @@ object Documents {
 
     operator fun invoke(pOpen: KMutableProperty0<Boolean>) {
 
-        if(!begin_("Examples: Documents", pOpen, WindowFlag.MenuBar.i)) {
+        if(!begin_("Example: Documents", pOpen, WindowFlag.MenuBar.i)) {
             end()
             return
         }
