@@ -1030,12 +1030,12 @@ class Window(var context: Context, var name: String) {
         }
     }
 
-    fun calcSizeContents() = when{
+    fun calcSizeContents() = when {
         collapsed -> Vec2(sizeContents)
         hidden && hiddenFramesForResize == 0 && hiddenFramesRegular > 0 -> Vec2(sizeContents)
         else -> Vec2(
-            (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f + windowPadding.x,
-            (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f + windowPadding.y)
+                (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f + windowPadding.x,
+                (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f + windowPadding.y)
     }
 
     fun findOrAddColumnsSet(id: ID): ColumnsSet {
@@ -1417,8 +1417,9 @@ class TabBar {
 
         // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
         if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.50f)
+            if (flags hasnt TabBarFlag.NoTooltip)
 //            setTooltip("%.*s", (findRenderedTextEnd(label) - label), label)
-            setTooltip("%.*s", label.substring(0, findRenderedTextEnd(label))) // TODO check
+                setTooltip("%.*s", label.substring(0, findRenderedTextEnd(label))) // TODO check
 
         return tabContentsVisible
     }
