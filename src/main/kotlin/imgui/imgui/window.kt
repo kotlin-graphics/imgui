@@ -201,6 +201,19 @@ interface imgui_window {
             window.lastFrameActive = currentFrame
             for (i in 1 until window.idStack.size) window.idStack.pop()  // resize 1
 
+            // Update stored window name when it changes (which can _only_ happen with the "###" operator, so the ID would stay unchanged).
+            // The title bar always display the 'name' parameter, so we only update the string storage if it needs to be visible to the end-user elsewhere.
+            var windowTitleVisibleElsewhere = false
+            if (g.navWindowingList.isNotEmpty() && window.flags hasnt Wf.NoNavFocus)   // Window titles visible when using CTRL+TAB
+                windowTitleVisibleElsewhere = true
+            if (windowTitleVisibleElsewhere && !windowJustCreated && name != window.name)            {
+//                val buf_len = (size_t)window->NameBufLen
+//                window->Name = ImStrdupcpy(window->Name, &buf_len, name)
+//                window->NameBufLen = (int)buf_len
+                window.name = name
+                window.nameBufLen = name.length
+            }
+
             // UPDATE CONTENTS SIZE, UPDATE HIDDEN STATUS
 
             // Update contents size from last frame for auto-fitting (or use explicit size)
@@ -232,7 +245,7 @@ interface imgui_window {
                 }
             }
 
-            setCurrentWindow(window);
+            setCurrentWindow(window)
 
             // Lock border size and padding for the frame (so that altering them doesn't cause inconsistencies)
             window.windowBorderSize = when {
@@ -327,7 +340,7 @@ interface imgui_window {
             // Position child window
             if (flags has Wf.ChildWindow) {
                 assert(parentWindow!!.active)
-                window.beginOrderWithinParent = parentWindow!!.dc.childWindows.size
+                window.beginOrderWithinParent = parentWindow.dc.childWindows.size
                 parentWindow.dc.childWindows += window
 
                 if (flags hasnt Wf.Popup && !windowPosSetByApi && !windowIsChildTooltip)
