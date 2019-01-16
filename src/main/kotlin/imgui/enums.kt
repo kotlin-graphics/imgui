@@ -256,13 +256,21 @@ infix fun Int.hasnt(b: ComboFlag) = and(b.i) == 0
 /** Flags for ImGui::BeginTabBar() */
 enum class TabBarFlag(@JvmField val i: Int) {
     None(0),
-    Reorderable(1 shl 0),   // Allow manually dragging tabs to re-order them + New tabs are appended at the end of list
-    AutoSelectNewTabs(1 shl 1),   // Automatically select new tabs when they appear
-    NoCloseWithMiddleMouseButton(1 shl 2),   // Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button. You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false.
+    /** Allow manually dragging tabs to re-order them + New tabs are appended at the end of list */
+    Reorderable(1 shl 0),
+    /** Automatically select new tabs when they appear */
+    AutoSelectNewTabs(1 shl 1),
+    /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button.
+     *  You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
+    NoCloseWithMiddleMouseButton(1 shl 2),
     NoTabListPopupButton(1 shl 3),
     NoTabListScrollingButtons(1 shl 4),
-    FittingPolicyResizeDown(1 shl 5),   // Resize tabs when they don't fit
-    FittingPolicyScroll(1 shl 6),   // Add scroll buttons when tabs don't fit
+    /** Disable tooltips when hovering a tab */
+    NoTooltip                      (1 shl 5),
+    /** Resize tabs when they don't fit */
+    FittingPolicyResizeDown(1 shl 6),
+    /** Add scroll buttons when tabs don't fit */
+    FittingPolicyScroll(1 shl 7),
     FittingPolicyMask_(FittingPolicyResizeDown or FittingPolicyScroll),
     FittingPolicyDefault_(FittingPolicyResizeDown.i),
 

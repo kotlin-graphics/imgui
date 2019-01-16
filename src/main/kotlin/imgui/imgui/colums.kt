@@ -185,7 +185,7 @@ interface imgui_colums {
         assert(g.currentTabBar.isNotEmpty()) { "Needs to be called between BeginTabBar() and EndTabBar()!" }
         val tabBar = g.currentTabBar.last()
         return tabBar.tabItemEx(label, pOpen, flags).also {
-            if (it && flags hasnt TabItemFlag.NoPushId)            {
+            if (it && flags hasnt TabItemFlag.NoPushId) {
                 val tab = tabBar.tabs[tabBar.lastTabItemIdx]
                 g.currentWindow!!.idStack += tab.id // We already hashed 'label' so push into the ID stack directly instead of doing another hash through PushID(label)
             }
@@ -199,6 +199,7 @@ interface imgui_colums {
 
         assert(g.currentTabBar.isNotEmpty()) { "Needs to be called between BeginTabBar() and EndTabBar()!" }
         val tabBar = g.currentTabBar.last()
+        assert(tabBar.lastTabItemIdx >= 0) { "Needs to be called between BeginTabItem() and EndTabItem()" }
         val tab = tabBar.tabs[tabBar.lastTabItemIdx]
         if (tab.flags hasnt TabItemFlag.NoPushId)
             g.currentWindow!!.idStack.pop()
