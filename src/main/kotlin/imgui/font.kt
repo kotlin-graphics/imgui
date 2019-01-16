@@ -77,6 +77,7 @@ class FontConfig {
     var dstFont: Font? = null
 }
 
+/** A single font glyph (code point + coordinates within in ImFontAtlas + offset) */
 class FontGlyph {
     /** 0x0000..0xFFFF  */
     var codepoint = NUL
@@ -308,18 +309,21 @@ class FontAtlas {
     val isBuilt: Boolean
         get() = fonts.size > 0 && (texPixelsAlpha8 != null || texPixelsRGBA32 != null)
 
-    // Helpers to build glyph ranges from text data. Feed your application strings/characters to it then call BuildRanges().
-//    struct GlyphRangesBuilder
+
+// Helper to build glyph ranges from text/string data. Feed your application strings/characters to it then call BuildRanges().
+//    struct ImFontGlyphRangesBuilder
 //    {
-//            ImVector<unsigned char> UsedChars;  // Store 1-bit per Unicode code point (0=unused, 1=used)
-//            GlyphRangesBuilder()                { UsedChars.resize(0x10000 / 8); memset(UsedChars.Data, 0, 0x10000 / 8); }
-//            bool           GetBit(int n)        { return (UsedChars[n >> 3] & (1 << (n & 7))) != 0; }
-//            void           SetBit(int n)        { UsedChars[n >> 3] |= 1 << (n & 7); }  // Set bit 'c' in the array
-//            void           AddChar(ImWchar c)   { SetBit(c); }                          // Add character
-//            IMGUI_API void AddText(const char* text, const char* text_end = NULL);      // Add string (each character of the UTF-8 string are added)
-//            IMGUI_API void AddRanges(const ImWchar* ranges);                            // Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault()) to force add all of ASCII/Latin+Ext
-//            IMGUI_API void BuildRanges(ImVector<ImWchar>* out_ranges);                  // Output new ranges
-//        };
+//        ImVector<unsigned char> UsedChars;  // Store 1-bit per Unicode code point (0=unused, 1=used)
+//        ImFontGlyphRangesBuilder()          { UsedChars.resize(0x10000 / 8); memset(UsedChars.Data, 0, 0x10000 / 8); }
+//        bool           GetBit(int n) const  { return (UsedChars[n >> 3] & (1 << (n & 7))) != 0; }
+//        void           SetBit(int n)        { UsedChars[n >> 3] |= 1 << (n & 7); }  // Set bit 'c' in the array
+//        void           AddChar(ImWchar c)   { SetBit(c); }                          // Add character
+//        IMGUI_API void AddText(const char* text, const char* text_end = NULL);      // Add string (each character of the UTF-8 string are added)
+//        IMGUI_API void AddRanges(const ImWchar* ranges);                            // Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault()) to force add all of ASCII/Latin+Ext
+//        IMGUI_API void BuildRanges(ImVector<ImWchar>* out_ranges);                  // Output new ranges
+//    };
+
+
 //    //-----------------------------------------------------------------------------
 //    +// ImFontAtlas::GlyphRangesBuilder
 //    +//-----------------------------------------------------------------------------

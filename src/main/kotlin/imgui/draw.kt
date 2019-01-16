@@ -22,7 +22,9 @@ import imgui.internal.DrawCornerFlag as Dcf
  *  The expected behavior from your rendering function is 'if (cmd.UserCallback != NULL) { cmd.UserCallback(parent_list, cmd); } else { RenderTriangles() }'    */
 typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
-/** Typically, 1 command = 1 gpu draw call (unless command is a callback)   */
+/** A single draw command within a parent ImDrawList (generally maps to 1 GPU draw call, unless it is a callback)
+ *
+ *  Typically, 1 command = 1 gpu draw call (unless command is a callback)   */
 class DrawCmd {
 
     constructor()
@@ -56,7 +58,9 @@ class DrawCmd {
 
 typealias DrawIdx = Int // TODO check
 
-/** Vertex layout   */
+/** Vertex layout
+ *
+ *  A single vertex (pos + uv + col = 20 bytes by default. Override layout with IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT) */
 class DrawVert {
 
     var pos = Vec2()
@@ -73,7 +77,9 @@ class DrawVert {
     override fun toString() = "pos: $pos, uv: $uv, col: $col"
 }
 
-/** Draw channels are used by the Columns API to "split" the render list into different channels while building, so
+/** Temporary storage for ImDrawList ot output draw commands out of order, used by ImDrawList::ChannelsSplit()
+ *
+ *  Draw channels are used by the Columns API to "split" the render list into different channels while building, so
  *  items of each column can be batched together.
  *  You can also use them to simulate drawing layers and submit primitives in a different order than how they will be
  *  rendered.   */
@@ -1108,6 +1114,8 @@ class DrawList(sharedData: DrawListSharedData?) {
 
 
 /** -----------------------------------------------------------------------------
+ *  All draw command lists required to render the frame + pos/size coordinates to use for the projection matrix.
+ *
  *  Draw List API (ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListFlags, ImDrawList, ImDrawData)
  *  Hold a series of drawing commands. The user provides a renderer for ImDrawData which essentially contains an array of ImDrawList.
  *  ----------------------------------------------------------------------------- */

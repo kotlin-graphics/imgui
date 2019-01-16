@@ -4,7 +4,8 @@ package imgui
 /** Helpers to retrieve list of common Unicode ranges (2 value per range, values are inclusive)
  *  NB: Make sure that your string are UTF-8 and NOT in your local code page. In C++11, you can create a UTF-8 string
  *  literally using the u8"Hello world" syntax. See FAQ for details.
- *  NB: Consider using GlyphRangesBuilder to build glyph ranges from textual data.
+ *  NB: Consider using ImFontGlyphRangesBuilder to build glyph ranges from textual data.
+ *
  *  JVM
  *  Retrieve list of range (2 int per range, values are inclusive) */
 object glyphRanges {
