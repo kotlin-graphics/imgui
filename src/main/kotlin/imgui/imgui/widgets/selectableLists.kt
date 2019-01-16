@@ -84,7 +84,7 @@ interface selectableLists {
         bb.min.y -= spacingU
         bb.max.x += spacingR
         bb.max.y += spacingD
-        if (!itemAdd(bb, if (flags has Sf.Disabled) 0 else id)) {
+        if (!itemAdd(bb, id)) {
             if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null)
                 pushColumnClipRect()
             return false

@@ -20,7 +20,6 @@ import imgui.ImGui.renderArrowPointingAt
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
-import imgui.ImGui.renderTextClippedEx
 import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeight
@@ -154,10 +153,12 @@ interface text {
      *  SetNextWindowSize().    */
     fun textWrapped(fmt: String, vararg args: Any) {
 
-        val needWrap = g.currentWindow!!.dc.textWrapPos < 0f  // Keep existing wrap position is one ia already set
-        if (needWrap) pushTextWrapPos(0f)
+        val needBackup = g.currentWindow!!.dc.textWrapPos < 0f  // Keep existing wrap position is one ia already set
+        if (needBackup)
+            pushTextWrapPos(0f)
         text(fmt, *args)
-        if (needWrap) popTextWrapPos()
+        if (needBackup)
+            popTextWrapPos()
     }
 
     /** Display text+label aligned the same way as value+label widgets  */
