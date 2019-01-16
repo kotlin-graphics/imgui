@@ -326,6 +326,7 @@ interface imgui_window {
 
             // Position child window
             if (flags has Wf.ChildWindow) {
+                assert(parentWindow!!.active)
                 window.beginOrderWithinParent = parentWindow!!.dc.childWindows.size
                 parentWindow.dc.childWindows += window
 
