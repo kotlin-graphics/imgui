@@ -568,8 +568,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** List of characters input (translated by user from keypress + keyboard state). Fill using addInputCharacter()
      *  helper. */
     val inputCharacters = CharArray(16)
-    /** Gamepad inputs (keyboard keys will be auto-mapped and be written here by ::newFrame,
-     *  all values will be cleared back to zero in ImGui::EndFrame)   */
+    /** Gamepad inputs. Cleared back to zero by EndFrame(). Keyboard keys will be auto-mapped and be written here by NewFrame().   */
     val navInputs = FloatArray(NavInput.COUNT)
 
     // Functions
