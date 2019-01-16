@@ -235,22 +235,24 @@ interface imgui_internal {
         // Always align ourselves on pixel boundaries
         val lineHeight = glm.max(window.dc.currentLineSize.y, size.y)
         val textBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, textOffsetY)
-        //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
-        window.dc.cursorPosPrevLine.put(window.dc.cursorPos.x + size.x, window.dc.cursorPos.y)
-        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
-        window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + style.itemSpacing.y).i.f
-        window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
-        window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y - style.itemSpacing.y)
+        window.dc.apply {
+            //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
+            cursorPosPrevLine.put(cursorPos.x + size.x, cursorPos.y)
+            cursorPos.x = (window.pos.x + indent + columnsOffset).i.f
+            cursorPos.y = (cursorPos.y + lineHeight + style.itemSpacing.y).i.f
+            cursorMaxPos.x = cursorMaxPos.x max cursorPosPrevLine.x
+            cursorMaxPos.y = cursorMaxPos.y max (cursorPos.y - style.itemSpacing.y)
 
-        //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]
+            //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]
 
-        window.dc.prevLineSize.y = lineHeight
-        window.dc.prevLineTextBaseOffset = textBaseOffset
-        window.dc.currentLineTextBaseOffset = 0f
-        window.dc.currentLineSize.y = 0f
+            prevLineSize.y = lineHeight
+            prevLineTextBaseOffset = textBaseOffset
+            currentLineTextBaseOffset = 0f
+            currentLineSize.y = 0f
 
-        // Horizontal layout mode
-        if (window.dc.layoutType == Lt.Horizontal) sameLine()
+            // Horizontal layout mode
+            if (layoutType == Lt.Horizontal) sameLine()
+        }
     }
 
     fun itemSize(bb: Rect, textOffsetY: Float = 0f) = itemSize(bb.size, textOffsetY)
@@ -465,7 +467,7 @@ interface imgui_internal {
             However if the clicked window has the _NoMove flag set we would be left with B focused.
             For now, we have disabled this path when called from ClosePopupsOverWindow() because the users of ClosePopupsOverWindow() don't need to alter focus anyway,
             but we should inspect and fix this properly. */
-        if (applyFocusToWindowUnder)        {
+        if (applyFocusToWindowUnder) {
             if (g.navLayer == NavLayer.Main)
                 focusWindow = navRestoreLastChildNavWindow(focusWindow)
             focusWindow.focus()
@@ -1455,7 +1457,7 @@ interface imgui_internal {
         val size = calcItemSize(sizeArg, labelSize.x + style.framePadding.x * 2f, labelSize.y + style.framePadding.y * 2f)
 
         val bb = Rect(pos, pos + size)
-        itemSize(bb, style.framePadding.y)
+        itemSize(size, style.framePadding.y)
         if (!itemAdd(bb, id)) return false
 
         var flags = flags_
@@ -2272,7 +2274,8 @@ interface imgui_internal {
                     (which _is_ Alt+Ctrl) to input certain characters. */
                 val ignoreInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
                 if (!ignoreInputs && isEditable && !userNavInputStart)
-                    io.inputQueueCharacters.filter { it != NUL }.map {// TODO check
+                    io.inputQueueCharacters.filter { it != NUL }.map {
+                        // TODO check
                         withChar { c ->
                             // Insert character if they pass filtering
                             if (inputTextFilterCharacter(c.apply { set(it) }, flags, callback, callbackUserData))
@@ -3073,29 +3076,28 @@ interface imgui_internal {
     }
 
     /** Initiate moving window, handle left-click and right-click focus */
-    fun updateMouseMovingWindowEndFrame()    {
+    fun updateMouseMovingWindowEndFrame() {
         // Initiate moving window
-        if (g.activeId != 0 || g.hoveredId != 0)            return
+        if (g.activeId != 0 || g.hoveredId != 0) return
 
         // Unless we just made a window/popup appear
         if (g.navWindow?.appearing == true) return
 
         // Click to focus window and start moving (after we're done with all our widgets)
-        if (io.mouseClicked[0])        {
+        if (io.mouseClicked[0]) {
             val hovered = g.hoveredRootWindow
-            if (hovered != null)            {
+            if (hovered != null) {
                 hovered.startMouseMoving()
                 if (io.configWindowsMoveFromTitleBarOnly && hovered.flags hasnt Wf.NoTitleBar)
                     if (io.mouseClickedPos[0] !in hovered.titleBarRect())
                         g.movingWindow = null
-            }
-            else if (g.navWindow != null && frontMostPopupModal == null)
+            } else if (g.navWindow != null && frontMostPopupModal == null)
                 null.focus()  // Clicking on void disable focus
         }
 
         // With right mouse button we close popups without changing focus
         // (The left mouse button path calls FocusWindow which will lead NewFrame->ClosePopupsOverWindow to trigger)
-        if (io.mouseClicked[1])        {
+        if (io.mouseClicked[1]) {
             // Find the top-most window between HoveredWindow and the front most Modal Window.
             // This is where we can trim the popup stack.
             val modal = frontMostPopupModal
@@ -3103,7 +3105,7 @@ interface imgui_internal {
             if (modal == null)
                 hoveredWindowAboveModal = true
             var i = g.windows.lastIndex
-            while(i >= 0 && !hoveredWindowAboveModal)            {
+            while (i >= 0 && !hoveredWindowAboveModal) {
                 val window = g.windows[i]
                 if (window === modal)
                     break
@@ -3111,7 +3113,7 @@ interface imgui_internal {
                     hoveredWindowAboveModal = true
                 i--
             }
-            closePopupsOverWindow(if(hoveredWindowAboveModal) g.hoveredWindow else modal)
+            closePopupsOverWindow(if (hoveredWindowAboveModal) g.hoveredWindow else modal)
         }
     }
 

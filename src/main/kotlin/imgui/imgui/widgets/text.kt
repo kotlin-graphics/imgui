@@ -100,7 +100,7 @@ interface text {
                 textSize.y += (pos - textPos).y
             }
             val bb = Rect(textPos, textPos + textSize)
-            itemSize(bb)
+            itemSize(textSize)
             itemAdd(bb, 0)
         } else {
             val wrapWidth = if (wrapEnabled) calcWrapWidthForPos(window.dc.cursorPos, wrapPosX) else 0f

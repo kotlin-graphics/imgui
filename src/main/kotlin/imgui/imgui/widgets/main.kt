@@ -67,7 +67,7 @@ interface main {
         val id = window.getId(strId)
         val size = calcItemSize(sizeArg, 0f, 0f)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        itemSize(bb)
+        itemSize(size)
         if (!itemAdd(bb, id)) return false
 
         val (pressed, _, _) = buttonBehavior(bb, id)
