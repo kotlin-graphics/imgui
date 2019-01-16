@@ -115,8 +115,10 @@ fun hash(data: IntArray, seed: Int = 0): Int {
     return hash(String(bytes, StandardCharsets.ISO_8859_1), bytes.size, seed)
 }
 
-/** Pass data_size==0 for zero-terminated strings
-FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
+/** Pass data_size == 0 for zero-terminated strings, data_size > 0 for non-string data.
+ *  Pay attention that data_size==0 will yield different results than passing strlen(data) because the zero-terminated codepath handles ###.
+ *  This should technically be split into two distinct functions (ImHashData/ImHashStr), perhaps once we remove the silly static variable.
+ *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
 fun hash(data: String, dataSize_: Int, seed_: Int = 0): Int {
 
     val seed = seed_.inv()
