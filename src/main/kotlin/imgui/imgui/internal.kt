@@ -1091,7 +1091,7 @@ interface imgui_internal {
 
             val ellipsisX = textPixelClipBb.min.x + labelSizeClippedX + 1f
             if (!closeButtonVisible && ellipsisX + ellipsisWidth <= bb.max.x)
-                renderPixelEllipsis(drawList, g.font, Vec2(ellipsisX, textPixelClipBb.min.y), ellipsisDotCount, Col.Text.u32)
+                renderPixelEllipsis(drawList, Vec2(ellipsisX, textPixelClipBb.min.y), ellipsisDotCount, Col.Text.u32)
         } else
             renderTextClippedEx(drawList, textPixelClipBb.min, textPixelClipBb.max, label, labelDisplayEnd, labelSize, Vec2())
 
@@ -1373,7 +1373,8 @@ interface imgui_internal {
     /** FIXME: Rendering an ellipsis "..." is a surprisingly tricky problem for us... we cannot rely on font glyph having it,
      *  and regular dot are typically too wide. If we render a dot/shape ourselves it comes with the risk that it wouldn't match
      *  the boldness or positioning of what the font uses... */
-    fun renderPixelEllipsis(drawList: DrawList, font: Font, pos: Vec2, count: Int, col: Int) {
+    fun renderPixelEllipsis(drawList: DrawList, pos: Vec2, count: Int, col: Int) {
+        val font = drawList._data.font!!
         pos.y += (font.displayOffset.y + font.ascent + 0.5f - 1f).i.f
         for (dotN in 0 until count)
             drawList.addRectFilled(Vec2(pos.x + dotN * 2f, pos.y), Vec2(pos.x + dotN * 2f + 1f, pos.y + 1f), col)
