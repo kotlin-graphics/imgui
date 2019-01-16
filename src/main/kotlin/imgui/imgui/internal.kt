@@ -283,7 +283,7 @@ interface imgui_internal {
             lastItemStatusFlags = ItemStatusFlag.None.i
         }
 
-        if (IMGUI_ENABLE_TEST_ENGINE)
+        if (IMGUI_ENABLE_TEST_ENGINE && id != 0)
             ImGuiTestEngineHook_ItemAdd(bb, id)
 
         // Clipping test
@@ -1696,7 +1696,7 @@ interface imgui_internal {
         if (flags has Bf.FlattenChildren && g.hoveredRootWindow === window)
             g.hoveredWindow = window
 
-        if (IMGUI_ENABLE_TEST_ENGINE && window.dc.lastItemId != id)
+        if (IMGUI_ENABLE_TEST_ENGINE && id != 0 && window.dc.lastItemId != id)
             ImGuiTestEngineHook_ItemAdd(bb, id)
 
         var pressed = false
