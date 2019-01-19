@@ -651,9 +651,9 @@ class FontAtlas {
             val srcTmp = srcTmpArray[srcIdx]
             val dstTmp = dstTmpArray[srcTmp.dstIndex]
             val cfg = configData[srcIdx]
-            srcTmp.glyphsSet resize srcTmp.glyphsHighest
+            srcTmp.glyphsSet.resize(srcTmp.glyphsHighest + 1)
             if (dstTmp.srcCount > 1 && dstTmp.glyphsSet.storage.isEmpty())
-                dstTmp.glyphsSet resize dstTmp.glyphsHighest
+                dstTmp.glyphsSet.resize(dstTmp.glyphsHighest + 1)
 
             for (srcRange in srcTmp.srcRanges)
                 for (codepoint in srcRange) {
