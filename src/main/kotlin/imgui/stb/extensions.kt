@@ -180,9 +180,8 @@ fun stbtt_GetFontVMetrics(info: STBTTFontinfo): IntArray = stak {
     IntArray(3) { memGetInt(tmp + Int.BYTES * it) }
 }
 
-
 fun stbtt_GetPackedQuad(chardata: STBTTPackedchar.Buffer, p: Vec2i, charIndex: Int, q: STBTTAlignedQuad, alignToInteger: Boolean = false) = stak {
-    val dummy = it.mallocFloat(2).adr
+    val dummy = it.callocFloat(2).adr
     STBTruetype.nstbtt_GetPackedQuad(chardata.adr, p.x, p.y, charIndex, dummy, dummy + Float.BYTES, q.adr, alignToInteger.i)
 }
 
