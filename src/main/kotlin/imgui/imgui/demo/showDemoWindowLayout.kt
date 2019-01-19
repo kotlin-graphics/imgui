@@ -552,7 +552,7 @@ object showDemoWindowLayout {
 
         treeNode("Clipping") {
             textWrapped("On a per-widget basis we are occasionally clipping text CPU-side if it won't fit in its frame. Otherwise we are doing coarser clipping + passing a scissor rectangle to the renderer. The system is designed to try minimizing both execution and CPU/GPU rendering cost.")
-            dragVec2("size", size, 0.5f, 0f, 200f, "%.0f")
+            dragVec2("size", size, 0.5f, 1f, 200f, "%.0f")
             textWrapped("(Click and drag)")
             val pos = Vec2(cursorScreenPos)
             val clipRect = Vec4(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
