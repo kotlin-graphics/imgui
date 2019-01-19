@@ -488,7 +488,7 @@ class FontAtlas {
      *  texture size restrictions you may want to increase texture width to decrease height.    */
     var texDesiredWidth = 0
     /** Padding between glyphs within texture in pixels. Defaults to 1.
-     *   If your rendering method doesn't rely on bilinear filtering you may set this to 0. */
+     *  If your rendering method doesn't rely on bilinear filtering you may set this to 0. */
     var texGlyphPadding = 1
     /** = (1.0f/TexWidth, 1.0f/TexHeight)   */
     var texUvScale = Vec2()
