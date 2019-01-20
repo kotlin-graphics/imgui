@@ -142,13 +142,15 @@ infix fun Int.or(b: ItemStatusFlag): ItemStatusFlags = or(b.i)
 infix fun Int.has(b: ItemStatusFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ItemStatusFlag) = and(b.i) == 0
 
-/** FIXME: this is in development, not exposed/functional as a generic feature yet. */
+/** FIXME: this is in development, not exposed/functional as a generic feature yet.
+ *  Horizontal/Vertical enums are fixed to 0/1 so they may be used to index ImVec2 */
 enum class LayoutType {
-    Vertical, Horizontal;
+    Horizontal, Vertical;
 
     val i = ordinal
 }
 
+/** X/Y enums are fixed to 0/1 so they may be used to index ImVec2 */
 enum class Axis {
     None, X, Y;
 

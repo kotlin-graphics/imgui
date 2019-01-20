@@ -105,10 +105,10 @@ object ImGui :
     // Version
     val beta = 0
     /** get the compiled version string e.g. "1.23" */
-    val version = "1.67.$beta"
+    val version = "1.68.$beta"
     /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
     Work in progress versions typically starts at XYY00 then bounced up to XYY01 when release tagging happens */
-    val versionNum = 16700 + beta
+    val versionNum = 16800 + beta
 }
 
 var ptrIndices = 0
