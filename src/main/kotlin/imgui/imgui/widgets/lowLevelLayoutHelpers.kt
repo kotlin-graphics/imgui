@@ -83,7 +83,7 @@ interface lowLevelLayoutHelpers {
         if (window.skipItems) return
 
         // Those flags should eventually be overridable by the user
-        val flag: Sf = if(window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
+        val flag: Sf = if (window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
         // useless on JVM with enums
         // assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo)
 

@@ -267,7 +267,7 @@ interface imgui_menus {
         if (wantClose && isPopupOpen(id))
             closePopupToLevel(g.beginPopupStack.size, true)
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Openable or if(menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
 
         if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.beginPopupStack.size) {
             // Don't recycle same menu level in the same frame, first close the other menu and yield for a frame.
@@ -345,7 +345,7 @@ interface imgui_menus {
                         (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
         }
 
-        ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if(selected) ItemStatusFlag.Checked else ItemStatusFlag.None)
+        ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (selected) ItemStatusFlag.Checked else ItemStatusFlag.None)
         return pressed
     }
 

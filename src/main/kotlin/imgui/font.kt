@@ -4,9 +4,9 @@ package imgui
 import gli_.has
 import glm_.*
 import glm_.vec2.Vec2
-import glm_.vec2.operators.times
-import glm_.vec2.operators.div
 import glm_.vec2.Vec2i
+import glm_.vec2.operators.div
+import glm_.vec2.operators.times
 import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.ImGui.style
@@ -21,8 +21,6 @@ import uno.convert.decode85
 import uno.stb.stb
 import unsigned.toULong
 import java.nio.ByteBuffer
-import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.floor
 import kotlin.math.sqrt
 

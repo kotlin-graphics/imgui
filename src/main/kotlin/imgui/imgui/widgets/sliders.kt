@@ -31,7 +31,6 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
-import imgui.ImGui.renderTextClippedEx
 import imgui.ImGui.sameLine
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
@@ -138,7 +137,7 @@ interface sliders {
         itemSize(totalBb, style.framePadding.y)
 
         // Draw frame
-        val frameCol = if(g.activeId == id) Col.FrameBgActive else if(g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
         renderNavHighlight(frameBb, id)
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
         // Slider behavior
@@ -149,7 +148,7 @@ interface sliders {
             markItemEdited(id)
 
         // Render grab
-        val col = if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
+        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
         window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
@@ -194,7 +193,7 @@ interface sliders {
 
     fun sliderAngle(label: String, vRadPtr: KMutableProperty0<Float>, vDegreesMin: Float = -360f,
                     vDegreesMax: Float = 360f, format_: String = "%.0f deg"): Boolean {
-        val format = if(format_.isEmpty()) "%.0f deg" else format_
+        val format = if (format_.isEmpty()) "%.0f deg" else format_
         var vRad by vRadPtr
         vRad = vRad.deg
         val valueChanged = sliderFloat(label, vRadPtr, vDegreesMin, vDegreesMax, format, 1f)
@@ -277,7 +276,7 @@ interface sliders {
         }
 
         // Draw frame
-        val frameCol = if(g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
         renderNavHighlight(frameBb, id)
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
         // Slider behavior
@@ -288,7 +287,7 @@ interface sliders {
             markItemEdited(id)
 
         // Render grab
-        val col = if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
+        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
         window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
 
         /*  Display value using user-provided display format so user can add prefix/suffix/decorations to the value.

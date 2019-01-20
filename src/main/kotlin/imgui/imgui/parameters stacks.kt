@@ -7,13 +7,13 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.style
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.defaultFont
 import imgui.ImGui.popItemFlag
 import imgui.ImGui.pushItemFlag
+import imgui.ImGui.style
 import imgui.ImGui.u32
 import imgui.ImGui.vec4
 import imgui.internal.ColorMod
@@ -112,7 +112,7 @@ interface imgui_parametersStacks {
                 }
                 StyleVar.FrameBorderSize -> {
                     it.floats[0] = style.frameBorderSize
-                    style.frameBorderSize= value as Float
+                    style.frameBorderSize = value as Float
                 }
                 StyleVar.ItemSpacing -> {
                     style.itemSpacing to it.floats
@@ -224,6 +224,7 @@ interface imgui_parametersStacks {
     /** width of items for the common item+label case, pixels. 0.0f = default to ~2/3 of windows width, >0.0f: width in
      *  pixels, <0.0f align xx pixels to the right of window (so -1.0f always align width to the right side)    */
     fun pushItemWidth(itemWidth: Int) = pushItemWidth(itemWidth.f)
+
     fun pushItemWidth(itemWidth: Float) = with(currentWindow) {
         dc.itemWidth = if (itemWidth == 0f) itemWidthDefault else itemWidth
         dc.itemWidthStack.push(dc.itemWidth)

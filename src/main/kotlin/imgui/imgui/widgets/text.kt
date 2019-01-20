@@ -165,7 +165,7 @@ interface text {
     fun labelText(label: String, fmt: String, vararg args: Any) = labelTextV(label, fmt, args)
 
     /** Add a label+text combo aligned to other label+value widgets */
-    fun labelTextV(label: String, fmt: String,  args: Array<out Any>) {
+    fun labelTextV(label: String, fmt: String, args: Array<out Any>) {
 
         val window = currentWindow
         if (window.skipItems) return

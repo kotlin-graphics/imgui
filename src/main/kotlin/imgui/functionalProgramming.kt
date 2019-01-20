@@ -3,7 +3,6 @@ package imgui
 import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import imgui.ImGui.begin_
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginMainMenuBar
@@ -14,6 +13,7 @@ import imgui.ImGui.beginPopupContextItem
 import imgui.ImGui.beginPopupContextWindow
 import imgui.ImGui.beginPopupModal
 import imgui.ImGui.beginTooltip
+import imgui.ImGui.begin_
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.combo
 import imgui.ImGui.end

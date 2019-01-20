@@ -8,22 +8,16 @@ import imgui.impl.ImplGL3;
 import imgui.impl.LwjglGlfw;
 import imgui.impl.LwjglGlfw.GlfwClientApi;
 import kotlin.Unit;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
 import uno.glfw.GlfwWindow;
+import uno.glfw.VSync;
+import uno.glfw.windowHint.Profile;
 
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-import uno.glfw.VSync;
-import uno.glfw.windowHint.Profile;
-
 public class Test_lwjgl {
-
-    public static void main(String[] args) {
-        new Test_lwjgl();
-    }
 
     // The window handle
     private GlfwWindow window;
@@ -33,7 +27,11 @@ public class Test_lwjgl {
     private ImGui imgui = ImGui.INSTANCE;
     private IO io;
     private Context ctx;
-
+    private float[] f = {0f};
+    private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
+    private boolean[] showAnotherWindow = {false};
+    private boolean[] showDemo = {true};
+    private int[] counter = {0};
     public Test_lwjgl() {
 
         glfw.init("3.3", Profile.core, true);
@@ -98,13 +96,9 @@ public class Test_lwjgl {
         glfw.terminate();
     }
 
-
-    private float[] f = {0f};
-    private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
-    private boolean[] showAnotherWindow = {false};
-    private boolean[] showDemo = {true};
-    private int[] counter = {0};
-
+    public static void main(String[] args) {
+        new Test_lwjgl();
+    }
 
     private void mainLoop() {
 

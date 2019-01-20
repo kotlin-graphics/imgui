@@ -3,9 +3,9 @@ package imgui.imgui
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
-import imgui.ImGui.style
 import imgui.ImGui.calcTypematicPressedRepeatAmount
 import imgui.ImGui.io
+import imgui.ImGui.style
 import imgui.MOUSE_INVALID
 import imgui.g
 import imgui.internal.Rect

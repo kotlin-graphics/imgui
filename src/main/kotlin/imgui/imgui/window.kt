@@ -206,7 +206,7 @@ interface imgui_window {
             var windowTitleVisibleElsewhere = false
             if (g.navWindowingList.isNotEmpty() && window.flags hasnt Wf.NoNavFocus)   // Window titles visible when using CTRL+TAB
                 windowTitleVisibleElsewhere = true
-            if (windowTitleVisibleElsewhere && !windowJustCreated && name != window.name)            {
+            if (windowTitleVisibleElsewhere && !windowJustCreated && name != window.name) {
 //                val buf_len = (size_t)window->NameBufLen
 //                window->Name = ImStrdupcpy(window->Name, &buf_len, name)
 //                window->NameBufLen = (int)buf_len
@@ -466,7 +466,7 @@ interface imgui_window {
                     if (g.nextWindowData.bgAlphaCond != Cond.None)
                         bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(g.nextWindowData.bgAlphaVal) shl COL32_A_SHIFT)
                     window.drawList.addRectFilled(window.pos + Vec2(0f, window.titleBarHeight), window.pos + window.size, bgCol, windowRounding,
-                            if(flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
+                            if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
                 }
                 g.nextWindowData.bgAlphaCond = Cond.None
 
@@ -626,7 +626,7 @@ interface imgui_window {
                 // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
                 // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
                 val UNSAVED_DOCUMENT_MARKER = "*"
-                val markerSizeX = if(flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, 0, false).x else 0f
+                val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, 0, false).x else 0f
                 val textSize = calcTextSize(name, 0, true) + Vec2(markerSizeX, 0f)
                 val textR = Rect(titleBarRect)
                 val padLeft = when {
@@ -645,7 +645,7 @@ interface imgui_window {
                 // Match the size of CloseButton()
                 clipRect.max.x = window.pos.x + window.size.x - (if (pOpen?.get(0) == true) titleBarRect.height - 3 else style.framePadding.x)
                 renderTextClipped(textR.min, textR.max, name, 0, textSize, style.windowTitleAlign, clipRect)
-                if (flags has Wf.UnsavedDocument)                {
+                if (flags has Wf.UnsavedDocument) {
                     val markerPos = Vec2(max(textR.min.x, textR.min.x + (textR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, textR.min.y) + Vec2(2 - markerSizeX, 0f)
                     val off = Vec2(0f, (-g.fontSize * 0.25f).i.f)
                     renderTextClipped(markerPos + off, textR.max + off, UNSAVED_DOCUMENT_MARKER, 0, null, Vec2(0, style.windowTitleAlign.y), clipRect)
@@ -729,7 +729,7 @@ interface imgui_window {
      *  pop it off the window stack.    */
     fun end() {
 
-        if (g.currentWindowStack.size <= 1 && g.frameScopePushedImplicitWindow)        {
+        if (g.currentWindowStack.size <= 1 && g.frameScopePushedImplicitWindow) {
             assert(g.currentWindowStack.size > 1) { "Calling End() too many times!" }
             return // FIXME-ERRORHANDLING
         }

@@ -111,7 +111,7 @@ interface imgui_demoDebugInformations {
     /** create about window. display Dear ImGui version, credits and build/system information. */
     fun showAboutWindow(open: KMutableProperty0<Boolean>) {
 
-        if(!begin_("About Dear ImGui", open, Wf.AlwaysAutoResize.i)) {
+        if (!begin_("About Dear ImGui", open, Wf.AlwaysAutoResize.i)) {
             end()
             return
         }

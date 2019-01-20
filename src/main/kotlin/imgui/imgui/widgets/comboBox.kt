@@ -213,8 +213,8 @@ interface comboBox {
         //-------------------------------------------------------------------------
 
         fun calcMaxPopupHeightFromItemCount(itemsCount: Int) = when {
-                itemsCount <= 0 -> Float.MAX_VALUE
-                else -> (g.fontSize + style.itemSpacing.y) * itemsCount - style.itemSpacing.y + style.windowPadding.y * 2
+            itemsCount <= 0 -> Float.MAX_VALUE
+            else -> (g.fontSize + style.itemSpacing.y) * itemsCount - style.itemSpacing.y + style.windowPadding.y * 2
         }
     }
 }

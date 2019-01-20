@@ -1,7 +1,5 @@
 package imgui
 
-import kotlin.reflect.KMutableProperty0
-
 object Ref {
 
 //    var i0 = 0

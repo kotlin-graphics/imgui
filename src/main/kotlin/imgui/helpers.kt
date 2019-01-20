@@ -3,7 +3,6 @@ package imgui
 import glm_.bool
 import glm_.glm
 import glm_.i
-import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.calcListClipping
 import imgui.ImGui.colorConvertHSVtoRGB
@@ -14,9 +13,6 @@ import imgui.ImGui.inputText
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
-import imgui.internal.strlen
-import java.nio.ByteBuffer
-import kotlin.math.max
 
 /** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within
  *  deep-nested code that runs multiple times every frame.
