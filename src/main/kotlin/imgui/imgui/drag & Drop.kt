@@ -104,10 +104,9 @@ interface imgui_dragAndDrop {
 
             if (flags hasnt Ddf.SourceNoPreviewTooltip) {
                 /*  Target can request the Source to not display its tooltip (we use a dedicated flag to make this request explicit)
-                    We unfortunately can't just modify the source flags and skip the call to BeginTooltip, as caller may be emitting contents.
-                 */
+                    We unfortunately can't just modify the source flags and skip the call to BeginTooltip, as caller may be emitting contents.                 */
                 beginDragDropTooltip()
-                if (g.dragDropActive && g.dragDropAcceptIdPrev != 0 && g.dragDropAcceptFlags has Ddf.AcceptNoPreviewTooltip)
+                if (g.dragDropAcceptIdPrev != 0 && g.dragDropAcceptFlags has Ddf.AcceptNoPreviewTooltip)
                     g.currentWindow!!.apply {
                         // tooltipWindow
                         skipItems = true
