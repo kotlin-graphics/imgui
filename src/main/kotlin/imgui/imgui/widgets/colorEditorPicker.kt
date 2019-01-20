@@ -247,7 +247,7 @@ interface colorEditorPicker {
         // NB: The flag test is merely an optional micro-optimization, BeginDragDropTarget() does the same test.
         if (window.dc.lastItemStatusFlags has ItemStatusFlag.HoveredRect && beginDragDropTarget()) {
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
-                for (j in 0..2)
+                for (j in 0..2)  // Preserve alpha if any
                     col[j] = it.data!!.asFloatBuffer()[j]
                 valueChanged = true
             }

@@ -121,7 +121,7 @@ object LwjglGlfw {
         updateMousePosAndButtons()
         updateMouseCursor()
 
-        // Gamepad navigation mapping [BETA]
+        // Gamepad navigation mapping
         io.navInputs.fill(0f)
         if (io.configFlags has ConfigFlag.NavEnableGamepad) {
             // Update gamepad inputs

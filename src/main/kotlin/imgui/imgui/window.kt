@@ -472,7 +472,7 @@ interface imgui_window {
 
                 // Title bar
                 if (flags hasnt Wf.NoTitleBar) {
-                    val titleBarCol = if (window.collapsed) Col.TitleBgCollapsed else if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
+                    val titleBarCol = if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
                     window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, Dcf.Top.i)
                 }
 

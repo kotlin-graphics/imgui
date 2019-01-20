@@ -1202,7 +1202,7 @@ fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
 
                 val pageUpHeld = Key.PageUp.isDown && allowedDirFlags has (1 shl Dir.Up.i)
                 val pageDownHeld = Key.PageDown.isDown && allowedDirFlags has (1 shl Dir.Down)
-                if ((pageUpHeld && !pageDownHeld) || (pageDownHeld && !pageUpHeld))
+                if (pageUpHeld != pageDownHeld) // If either (not both) are pressed
                     if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {
                         // Fallback manual-scroll when window has no navigable item
                         if (Key.PageUp.isPressed)

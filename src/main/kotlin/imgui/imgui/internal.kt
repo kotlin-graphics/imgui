@@ -7,6 +7,7 @@ import glm_.func.common.max
 import glm_.func.common.min
 import glm_.glm
 import glm_.i
+import glm_.pow
 import glm_.parseInt
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -1343,11 +1344,12 @@ interface imgui_internal {
         val invRounding = 1f / rounding
         val arc0B = acos01(1f - (p0.x - rect.min.x) * invRounding)
         val arc0E = acos01(1f - (p1.x - rect.min.x) * invRounding)
+        val halfPI = glm.HPIf // We will == compare to this because we know this is the exact value ImAcos01 can return.
         val x0 = glm.max(p0.x, rect.min.x + rounding)
         if (arc0B == arc0E) {
             drawList.pathLineTo(Vec2(x0, p1.y))
             drawList.pathLineTo(Vec2(x0, p0.y))
-        } else if (arc0B == 0f && arc0E == glm.PIf * 0.5f) {
+        } else if (arc0B == 0f && arc0E == halfPI) {
             drawList.pathArcToFast(Vec2(x0, p1.y - rounding), rounding, 3, 6) // BL
             drawList.pathArcToFast(Vec2(x0, p0.y + rounding), rounding, 6, 9) // TR
         } else {
@@ -1361,7 +1363,7 @@ interface imgui_internal {
             if (arc1B == arc1E) {
                 drawList.pathLineTo(Vec2(x1, p0.y))
                 drawList.pathLineTo(Vec2(x1, p1.y))
-            } else if (arc1B == 0f && arc1E == glm.PIf * 0.5f) {
+            } else if (arc1B == 0f && arc1E == halfPI) {
                 drawList.pathArcToFast(Vec2(x1, p0.y + rounding), rounding, 9, 12) // TR
                 drawList.pathArcToFast(Vec2(x1, p1.y - rounding), rounding, 0, 3)  // BR
             } else {
@@ -1497,7 +1499,7 @@ interface imgui_internal {
         // Render
         val center = Vec2(bb.center)
         if (hovered) {
-            val col = if (held && hovered) Col.ButtonActive else Col.ButtonHovered
+            val col = if (held) Col.ButtonActive else Col.ButtonHovered
             window.drawList.addCircleFilled(center, 2f max radius, col.u32, 9)
         }
 
@@ -3240,8 +3242,9 @@ interface imgui_internal {
             val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
             return when {
                 decimalPrecision < 0 -> Float.MIN_VALUE
-                decimalPrecision in 0..9 -> minSteps[decimalPrecision]
-                else -> glm.pow(10f, -decimalPrecision.f)
+                else -> minSteps.getOrElse(decimalPrecision) {
+                    10f.pow(-decimalPrecision.f)
+                }
             }
         }
 

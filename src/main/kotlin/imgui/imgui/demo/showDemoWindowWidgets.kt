@@ -207,7 +207,11 @@ object showDemoWindowWidgets {
     var selected0 = -1
     val selected1 = BooleanArray(3)
     val selected2 = BooleanArray(16)
-    val selected3 = booleanArrayOf(true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true)
+    val selected3 = booleanArrayOf(
+            true, false, false, false,
+            false, true, false, false,
+            false, false, true, false,
+            false, false, false, true)
 
 
     /* Multi-line Text Input */
@@ -671,7 +675,7 @@ object showDemoWindowWidgets {
                 columns(1)
             }
             treeNode("Grid") {
-                for (i in 0..15)
+                for (i in 0..16)
                     withId(i) {
                         if (selectable("Sailor", selected3, i, 0, Vec2(50))) {
                             val x = i % 4
