@@ -282,19 +282,21 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun addCircle(centre: Vec2, radius: Float, col: Int, numSegments: Int = 12, thickness: Float = 1f) {
 
-        if (col hasnt COL32_A_MASK) return
+        if (col hasnt COL32_A_MASK || numSegments <= 2) return
 
-        val aMax = glm.PIf * 2.0f * (numSegments - 1.0f) / numSegments
-        pathArcTo(centre, radius - 0.5f, 0.0f, aMax, numSegments)
+        // Because we are filling a closed shape we remove 1 from the count of segments/points
+        val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
+        pathArcTo(centre, radius - 0.5f, 0f, aMax, numSegments - 1)
         pathStroke(col, true, thickness)
     }
 
     fun addCircleFilled(centre: Vec2, radius: Float, col: Int, numSegments: Int = 12) {
 
-        if (col hasnt COL32_A_MASK) return
+        if (col hasnt COL32_A_MASK || numSegments <= 2) return
 
-        val aMax = glm.PIf * 2.0f * (numSegments - 1.0f) / numSegments
-        pathArcTo(centre, radius, 0.0f, aMax, numSegments)
+        // Because we are filling a closed shape we remove 1 from the count of segments/points
+        val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
+        pathArcTo(centre, radius, 0f, aMax, numSegments - 1)
         pathFillConvex(col)
     }
 
@@ -752,7 +754,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pathLineTo(pos: Vec2) = _path.add(pos)
 
     fun pathLineToMergeDuplicate(pos: Vec2) {
-        if (_path.isEmpty() || _path.last() != pos) _path.add(pos)
+        if (_path.isEmpty() || _path.last() != pos) _path += pos
     }
 
     /** Note: Anti-aliased filling requires points to be in clockwise order. */
@@ -763,12 +765,14 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun pathArcTo(centre: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 10) {
         if (radius == 0f) {
-            _path.add(centre)
+            _path += centre
             return
         }
+        // Note that we are adding a point at both a_min and a_max.
+        // If you are trying to draw a full closed circle you don't want the overlapping points!
         for (i in 0..numSegments) {
             val a = aMin + (i.f / numSegments) * (aMax - aMin)
-            _path.add(Vec2(centre.x + glm.cos(a) * radius, centre.y + glm.sin(a) * radius))
+            _path += Vec2(centre.x + glm.cos(a) * radius, centre.y + glm.sin(a) * radius)
         }
     }
 
@@ -776,12 +780,12 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pathArcToFast(centre: Vec2, radius: Float, aMinOf12: Int, aMaxOf12: Int) {
 
         if (radius == 0f || aMinOf12 > aMaxOf12) {
-            _path.add(centre)
+            _path += centre
             return
         }
         for (a in aMinOf12..aMaxOf12) {
             val c = _data.circleVtx12[a % _data.circleVtx12.size]
-            _path.add(Vec2(centre.x + c.x * radius, centre.y + c.y * radius))
+            _path += Vec2(centre.x + c.x * radius, centre.y + c.y * radius)
         }
     }
 
