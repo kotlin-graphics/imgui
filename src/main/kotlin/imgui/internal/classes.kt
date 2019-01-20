@@ -1285,20 +1285,20 @@ class TabBar {
         tab.widthContents = size.x
 
         val tabBarAppearing = prevFrameVisible + 1 < g.frameCount
-        val tabBarFocused = flags_ has TabBarFlag.IsFocused
+        val tabBarFocused = flags has TabBarFlag.IsFocused
         val tabAppearing = tab.lastFrameVisible + 1 < g.frameCount
         tab.lastFrameVisible = g.frameCount
         tab.flags = flags_
 
         // If we are not reorderable, always reset offset based on submission order.
         // (We already handled layout and sizing using the previous known order, but sizing is not affected by order!)
-        if (!tabAppearing && flags_ hasnt TabBarFlag.Reorderable) {
+        if (!tabAppearing && flags hasnt TabBarFlag.Reorderable) {
             tab.offset = offsetNextTab
             offsetNextTab += tab.width + style.itemInnerSpacing.x
         }
 
         // Update selected tab
-        if (tabAppearing && flags_ has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0)
+        if (tabAppearing && flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0)
             if (!tabBarAppearing || selectedTabId == 0)
                 nextSelectedTabId = id  // New tabs gets activated
 
@@ -1309,7 +1309,7 @@ class TabBar {
 
         // On the very first frame of a tab bar we let first tab contents be visible to minimize appearing glitches
         if (!tabContentsVisible && selectedTabId == 0 && tabBarAppearing)
-            if (tabs.size == 1 && flags_ hasnt TabBarFlag.AutoSelectNewTabs)
+            if (tabs.size == 1 && flags hasnt TabBarFlag.AutoSelectNewTabs)
                 tabContentsVisible = true
 
         if (tabAppearing && !tabBarAppearing || tabIsNew) {
@@ -1359,14 +1359,14 @@ class TabBar {
 
         // Drag and drop: re-order tabs
         if (held && !tabAppearing && isMouseDragging(0))
-            if (!g.dragDropActive && flags_ has TabBarFlag.Reorderable)
+            if (!g.dragDropActive && flags has TabBarFlag.Reorderable)
             // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
                 if (io.mouseDelta.x < 0f && io.mousePos.x < bb.min.x) {
-                    if (flags_ has TabBarFlag.Reorderable)
-                        queueChangeTabOrder(tab, -1)
+//                    if (flags_ has TabBarFlag.Reorderable)
+                    queueChangeTabOrder(tab, -1)
                 } else if (io.mouseDelta.x > 0f && io.mousePos.x > bb.max.x)
-                    if (flags_ has TabBarFlag.Reorderable)
-                        queueChangeTabOrder(tab, +1)
+//                    if (flags_ has TabBarFlag.Reorderable)
+                    queueChangeTabOrder(tab, +1)
 
 //        if (false)
 //            if (hovered && g.hoveredIdNotActiveTimer > 0.5f && bb.width < tab.widthContents)        {
@@ -1399,14 +1399,14 @@ class TabBar {
         if (hoveredUnblocked && (isMouseClicked(1) || isMouseReleased(1)))
             nextSelectedTabId = id
 
-        val flags = when {
+        val flags__ = when {
             flags_ has TabBarFlag.NoCloseWithMiddleMouseButton -> flags_ or TabItemFlag.NoCloseWithMiddleMouseButton
             else -> flags_
         }
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) window.getId(id + 1) else 0
-        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, label, id, closeButtonId)
+        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags__, label, id, closeButtonId)
         if (justClosed) {
             pOpen!!.set(false)
             closeTab(tab)
@@ -1421,7 +1421,7 @@ class TabBar {
         if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.50f)
             if (flags hasnt TabBarFlag.NoTooltip)
 //            setTooltip("%.*s", (findRenderedTextEnd(label) - label), label)
-                setTooltip("%.*s", label.substring(0, findRenderedTextEnd(label))) // TODO check
+                setTooltip(label.substring(0, findRenderedTextEnd(label))) // TODO check
 
         return tabContentsVisible
     }
@@ -1466,7 +1466,7 @@ class TabBar {
                 if (tab2_order in tabs.indices) {
                     val tab2 = tabs[tab2_order]
                     val itemTmp = tab1
-                    tabs[reorderRequestTabId] = tab2 // *tab1 = *tab2
+                    tabs[tab1.order] = tab2 // *tab1 = *tab2
                     tabs[tab2_order] = itemTmp // *tab2 = itemTmp
                     if (tab2.id == selectedTabId)
                         scrollTrackSelectedTabID = tab2.id
