@@ -8,12 +8,12 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.style
 import imgui.g
-import imgui.internal.*
+import imgui.internal.GroupData
+import imgui.internal.Rect
 import imgui.internal.LayoutType as Lt
 import imgui.internal.SeparatorFlag as Sf
 
 interface imgui_cursorLayout {
-
 
 
     /** Call between widgets or groups to layout them horizontally. X position given in window coordinates.
@@ -23,6 +23,7 @@ interface imgui_cursorLayout {
      *      spacingW < 0   : use default spacing if localPosX == 0, no spacing if localPosX != 0
      *      spacingW >= 0  : enforce spacing amount    */
     fun sameLine(localPosX: Int, spacingW: Int = 1) = sameLine(localPosX.f, spacingW.f)
+
     fun sameLine(localPosX: Float = 0f, spacingW: Float = -1f) {
 
         val window = currentWindow

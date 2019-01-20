@@ -1,11 +1,9 @@
 package imgui.stb
 
-import gli_.gl
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import kool.adr
-import kool.rem
 import kool.stak
 import org.lwjgl.stb.*
 import org.lwjgl.system.CustomBuffer

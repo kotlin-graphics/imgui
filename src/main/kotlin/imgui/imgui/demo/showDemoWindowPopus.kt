@@ -9,7 +9,6 @@ import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.dragFloat
-import imgui.ImGui.dragScalar
 import imgui.ImGui.endPopup
 import imgui.ImGui.inputText
 import imgui.ImGui.isItemHovered
@@ -24,7 +23,6 @@ import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.functionalProgramming.button
-import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.popup
 import imgui.functionalProgramming.popupContextItem

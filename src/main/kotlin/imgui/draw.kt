@@ -510,7 +510,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                     var dmX = (temp[i1].x + temp[i2].x) * 0.5f
                     var dmY = (temp[i1].y + temp[i2].y) * 0.5f
 //                    IM_NORMALIZE2F_OVER_EPSILON_CLAMP(dmX, dmY, 0.000001f, 100.0f)
-                    val d2 = dmX*dmX + dmY*dmY
+                    val d2 = dmX * dmX + dmY * dmY
                     if (d2 > 0.000001f) {
                         var invLen = 1f / sqrt(d2)
                         if (invLen > 100f) invLen = 100f
@@ -523,15 +523,15 @@ class DrawList(sharedData: DrawListSharedData?) {
                     val dmInY = dmY * halfInnerThickness
 
                     // Add temporary vertexes
-                    val outVtxIdx = tempPointsIdx + i2*4
-                    temp[outVtxIdx+0].x = points[i2].x + dmOutX
-                    temp[outVtxIdx+0].y = points[i2].y + dmOutY
-                    temp[outVtxIdx+1].x = points[i2].x + dmInX
-                    temp[outVtxIdx+1].y = points[i2].y + dmInY
-                    temp[outVtxIdx+2].x = points[i2].x - dmInX
-                    temp[outVtxIdx+2].y = points[i2].y - dmInY
-                    temp[outVtxIdx+3].x = points[i2].x - dmOutX
-                    temp[outVtxIdx+3].y = points[i2].y - dmOutY
+                    val outVtxIdx = tempPointsIdx + i2 * 4
+                    temp[outVtxIdx + 0].x = points[i2].x + dmOutX
+                    temp[outVtxIdx + 0].y = points[i2].y + dmOutY
+                    temp[outVtxIdx + 1].x = points[i2].x + dmInX
+                    temp[outVtxIdx + 1].y = points[i2].y + dmInY
+                    temp[outVtxIdx + 2].x = points[i2].x - dmInX
+                    temp[outVtxIdx + 2].y = points[i2].y - dmInY
+                    temp[outVtxIdx + 3].x = points[i2].x - dmOutX
+                    temp[outVtxIdx + 3].y = points[i2].y - dmOutY
 
                     // Add indexes
                     idxBuffer[_idxWritePtr + 0] = idx2 + 1
@@ -589,7 +589,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 var dX = p2.x - p1.x
                 var dY = p2.y - p1.y
 //                IM_NORMALIZE2F_OVER_ZERO(dX, dY)
-                val d2 = dX*dX + dY*dY
+                val d2 = dX * dX + dY * dY
                 if (d2 > 0f) {
                     val invLen = 1f / sqrt(d2)
                     dX *= invLen
@@ -666,7 +666,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 var dX = p1.x - p0.x
                 var dY = p1.y - p0.y
 //                IM_NORMALIZE2F_OVER_ZERO(dx, dy)
-                val d2 = dX*dX + dY*dY
+                val d2 = dX * dX + dY * dY
                 if (d2 > 0f) {
                     val invLen = 1f / sqrt(d2)
                     dX *= invLen
@@ -686,8 +686,8 @@ class DrawList(sharedData: DrawListSharedData?) {
                 var dmX = (n0.x + n1.x) * 0.5f
                 var dmY = (n0.y + n1.y) * 0.5f
 //                IM_NORMALIZE2F_OVER_EPSILON_CLAMP(dmX, dmY, 0.000001f, 100.0f)
-                val d2 = dmX*dmX + dmY*dmY
-                if (d2 > 0.000001f)  {
+                val d2 = dmX * dmX + dmY * dmY
+                if (d2 > 0.000001f) {
                     var invLen = 1f / sqrt(d2)
                     if (invLen > 100f)
                         invLen = 100f

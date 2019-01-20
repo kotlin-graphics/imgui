@@ -266,7 +266,7 @@ enum class TabBarFlag(@JvmField val i: Int) {
     NoTabListPopupButton(1 shl 3),
     NoTabListScrollingButtons(1 shl 4),
     /** Disable tooltips when hovering a tab */
-    NoTooltip                      (1 shl 5),
+    NoTooltip(1 shl 5),
     /** Resize tabs when they don't fit */
     FittingPolicyResizeDown(1 shl 6),
     /** Add scroll buttons when tabs don't fit */

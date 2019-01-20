@@ -26,7 +26,6 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderRectFilledRangeH
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
-import imgui.ImGui.renderTextClippedEx
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.internal.*
@@ -181,7 +180,7 @@ interface main {
         if (g.logEnabled) logRenderedText(textBb.min, if (v) "[x]" else "[ ]")
         if (labelSize.x > 0f) renderText(textBb.min, label)
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None)
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else ItemStatusFlag.None)
 
         return pressed
     }
@@ -266,6 +265,7 @@ interface main {
 
     /** shortcut to handle the above pattern when value is an integer */
     fun radioButton(label: String, v: IntArray, vButton: Int) = radioButton(label, v[0] == vButton).also { if (it) v[0] = vButton }
+
     /** shortcut to handle the above pattern when value is an integer */
     fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int) = radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
 

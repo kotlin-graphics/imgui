@@ -2,21 +2,17 @@ package imgui.imgui.demo.showExampleApp
 
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.begin_
 import imgui.ImGui.beginChild
+import imgui.ImGui.begin_
 import imgui.ImGui.button
 import imgui.ImGui.end
 import imgui.ImGui.endChild
-import imgui.ImGui.frameCount
-import imgui.ImGui.io
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.smallButton
-import imgui.ImGui.style
-import imgui.ImGui.textUnformatted
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs
@@ -43,7 +39,7 @@ object Log {
         setNextWindowSize(Vec2(500, 400), Cond.FirstUseEver)
         begin_("Example: Log", pOpen)
         if (smallButton("Add 5 entries"))
-            for (n in 0..4)            {
+            for (n in 0..4) {
                 val categories = arrayOf("info", "warn", "error")
                 val words = arrayOf("Bumfuzzled", "Cattywampus", "Snickersnee", "Abibliophobia", "Absquatulate", "Nincompoop", "Pauciloquent")
 //                log.addLog("[%05d] [%s] Hello, current time is %.1f, here's a word: '%s'\n",
@@ -78,7 +74,7 @@ object Log {
 
         fun draw(title: String, open: KMutableProperty0<Boolean>? = null) {
 
-            if(!begin_(title, open)) {
+            if (!begin_(title, open)) {
                 end()
                 return
             }

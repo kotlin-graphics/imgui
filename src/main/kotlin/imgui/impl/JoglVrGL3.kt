@@ -13,7 +13,6 @@ import com.jogamp.opengl.GL2GL3.GL_POLYGON_MODE
 import com.jogamp.opengl.GL3
 import com.jogamp.opengl.GL3ES3.GL_SAMPLER_BINDING
 import glm_.*
-import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4i

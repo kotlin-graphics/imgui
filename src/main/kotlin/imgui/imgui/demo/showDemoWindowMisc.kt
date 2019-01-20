@@ -1,17 +1,10 @@
 package imgui.imgui.demo
 
 import glm_.i
-import glm_.vec2.Vec2
-import imgui.*
-import imgui.ImGui.beginChild
+import imgui.Col
 import imgui.ImGui.bullet
-import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.captureKeyboardFromApp
-import imgui.ImGui.checkbox
-import imgui.ImGui.checkboxFlags
-import imgui.ImGui.endChild
-import imgui.ImGui.fontSize
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.inputText
 import imgui.ImGui.io
@@ -25,8 +18,6 @@ import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.isMouseReleased
-import imgui.ImGui.isWindowFocused
-import imgui.ImGui.isWindowHovered
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.pushAllowKeyboardFocus
@@ -37,6 +28,7 @@ import imgui.ImGui.sliderFloat3
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.windowDrawList
+import imgui.MouseCursor
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.treeNode
 import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
@@ -60,7 +52,7 @@ object showDemoWindowMisc {
     operator fun invoke() {
 
         collapsingHeader("Filtering TODO") {
-//            static ImGuiTextFilter filter;
+            //            static ImGuiTextFilter filter;
 //            ImGui::Text("Filter usage:\n"
 //                    "  \"\"         display all lines\n"
 //            "  \"xxx\"      display lines containing \"xxx\"\n"

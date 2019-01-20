@@ -56,7 +56,6 @@ import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.rgbToHSV
 import imgui.ImGui.sameLine
-import imgui.ImGui.separator
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.shadeVertsLinearColorGradientKeepAlpha

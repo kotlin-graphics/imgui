@@ -2,7 +2,6 @@ package imgui.imgui
 
 import glm_.vec2.Vec2
 import imgui.ImGui.currentWindow
-import org.w3c.dom.css.Rect
 
 interface imgui_clipping {
 

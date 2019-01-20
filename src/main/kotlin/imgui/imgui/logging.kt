@@ -41,12 +41,12 @@ interface imgui_logging {
 
         if (!g.logEnabled) return
 
-        logText("%s","\n")
+        logText("%s", "\n")
 
-        if(g.logFile != null){
+        if (g.logFile != null) {
             g.logFile = null
         }
-        if(g.logClipboard.length > 1){
+        if (g.logClipboard.length > 1) {
             setClipboardText(g.logClipboard.toString())
             g.logClipboard = StringBuilder()
         }
@@ -74,13 +74,13 @@ interface imgui_logging {
 
     /** pass text data straight to log (without being displayed)    */
     fun logText(fmt: String, vararg args: Any) {
-        if(!g.logEnabled)
+        if (!g.logEnabled)
             return
 
-        if(g.logFile != null) {
+        if (g.logFile != null) {
             val writer = FileWriter(g.logFile, true)
             writer.write(String.format(fmt, args))
-        }else{
+        } else {
             g.logClipboard.append(String.format(fmt, args))
         }
     }

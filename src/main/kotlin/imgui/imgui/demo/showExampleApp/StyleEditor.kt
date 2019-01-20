@@ -15,7 +15,6 @@ import imgui.ImGui.colorEditVec4
 import imgui.ImGui.combo
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
-import imgui.ImGui.dragScalar
 import imgui.ImGui.dummy
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem

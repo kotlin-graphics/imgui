@@ -59,12 +59,12 @@ object SimpleLayout {
             beginChild("item view", Vec2(0, -frameHeightWithSpacing)) // Leave room for 1 line below us
             text("MyObject: ${selectedChild}")
             separator()
-            if (beginTabBar("##Tabs", TabBarFlag.None.i))            {
-                if (beginTabItem("Description"))                {
+            if (beginTabBar("##Tabs", TabBarFlag.None.i)) {
+                if (beginTabItem("Description")) {
                     textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ")
                     endTabItem()
                 }
-                if (beginTabItem("Details"))                {
+                if (beginTabItem("Details")) {
                     text("ID: 0123456789")
                     endTabItem()
                 }
