@@ -66,7 +66,7 @@ object glyphRanges {
         // not zero-terminated
         val baseRanges = arrayOf(
                 IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
-                IntRange(0x3000, 0x30FF), // Punctuations, Hiragana, Katakana
+                IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
                 IntRange(0xFF00, 0xFFEF)) // Half-width characters
 
@@ -81,7 +81,8 @@ object glyphRanges {
     val chineseFull: Array<IntRange>
         get() = arrayOf(
                 IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
-                IntRange(0x3000, 0x30FF), // Punctuations, Hiragana, Katakana
+                IntRange(0x2000, 0x206F), // General Punctuation
+                IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
                 IntRange(0xFF00, 0xFFEF), // Half-width characters
                 IntRange(0x4e00, 0x9FAF)) // CJK Ideograms
@@ -139,7 +140,8 @@ object glyphRanges {
         // not zero-terminated
         val baseRanges = arrayOf(
                 IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
-                IntRange(0x3000, 0x30FF), // Punctuations, Hiragana, Katakana
+                IntRange(0x2000, 0x206F), // General Punctuation
+                IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
                 IntRange(0xFF00, 0xFFEF)) // Half-width characters
 
