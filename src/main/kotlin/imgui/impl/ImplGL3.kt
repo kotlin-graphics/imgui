@@ -30,6 +30,7 @@ import imgui.DrawVert
 import imgui.ImGui.io
 import kool.*
 import org.lwjgl.opengl.ARBClipControl.GL_CLIP_ORIGIN
+import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
@@ -187,6 +188,9 @@ object ImplGL3 {
 
         glBindVertexArray(vaoName)
         glBindSampler(semantic.sampler.DIFFUSE, 0) // Rely on combined texture/sampler state.
+
+        GL11.glClearColor(1f, 0.5f, 0f, 1f)
+        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT)
 
         val pos = drawData.displayPos
         for (cmdList in drawData.cmdLists) {
