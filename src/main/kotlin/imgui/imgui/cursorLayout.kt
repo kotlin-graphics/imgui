@@ -22,7 +22,11 @@ interface imgui_cursorLayout {
      *      localPosX != 0      : align to specified x position (relative to window/group left)
      *      spacingW < 0   : use default spacing if localPosX == 0, no spacing if localPosX != 0
      *      spacingW >= 0  : enforce spacing amount    */
-    fun sameLine(localPosX: Int, spacingW: Int = 1) = sameLine(localPosX.f, spacingW.f)
+    fun sameLine(localPosX: Int) = sameLine(localPosX, 1)
+
+    fun sameLine(localPosX: Int, spacingW: Int) = sameLine(localPosX.f, spacingW.f)
+
+    fun sameLine() = sameLine(0f, -1f)
 
     fun sameLine(localPosX: Float = 0f, spacingW: Float = -1f) {
 

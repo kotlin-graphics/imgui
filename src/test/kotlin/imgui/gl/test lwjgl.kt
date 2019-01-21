@@ -48,6 +48,8 @@ private class HelloWorld_lwjgl {
 
         // Setup ImGui binding
 //         glslVersion = 330 // set here your desidered glsl version
+
+        // Setup Dear ImGui context
         ctx = Context()
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
