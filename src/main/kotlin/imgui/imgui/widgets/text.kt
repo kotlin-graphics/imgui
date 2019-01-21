@@ -100,7 +100,7 @@ interface text {
                 textSize.y += (pos - textPos).y
             }
             val bb = Rect(textPos, textPos + textSize)
-            itemSize(bb)
+            itemSize(textSize)
             itemAdd(bb, 0)
         } else {
             val wrapWidth = if (wrapEnabled) calcWrapWidthForPos(window.dc.cursorPos, wrapPosX) else 0f
@@ -153,17 +153,19 @@ interface text {
      *  SetNextWindowSize().    */
     fun textWrapped(fmt: String, vararg args: Any) {
 
-        val needWrap = g.currentWindow!!.dc.textWrapPos < 0f  // Keep existing wrap position is one ia already set
-        if (needWrap) pushTextWrapPos(0f)
+        val needBackup = g.currentWindow!!.dc.textWrapPos < 0f  // Keep existing wrap position is one ia already set
+        if (needBackup)
+            pushTextWrapPos(0f)
         text(fmt, *args)
-        if (needWrap) popTextWrapPos()
+        if (needBackup)
+            popTextWrapPos()
     }
 
     /** Display text+label aligned the same way as value+label widgets  */
     fun labelText(label: String, fmt: String, vararg args: Any) = labelTextV(label, fmt, args)
 
     /** Add a label+text combo aligned to other label+value widgets */
-    fun labelTextV(label: String, fmt: String,  args: Array<out Any>) {
+    fun labelTextV(label: String, fmt: String, args: Array<out Any>) {
 
         val window = currentWindow
         if (window.skipItems) return

@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 import imgui.DragDropFlag as Ddf
 
 /** Drag and Drop
- *  [BETA API] Missing Demo code. API may evolve. */
+ *  [BETA API] API may evolve! */
 interface imgui_dragAndDrop {
 
     /** Call when the current item is active. If this return true, you can call SetDragDropPayload() + EndDragDropSource()
@@ -104,10 +104,9 @@ interface imgui_dragAndDrop {
 
             if (flags hasnt Ddf.SourceNoPreviewTooltip) {
                 /*  Target can request the Source to not display its tooltip (we use a dedicated flag to make this request explicit)
-                    We unfortunately can't just modify the source flags and skip the call to BeginTooltip, as caller may be emitting contents.
-                 */
+                    We unfortunately can't just modify the source flags and skip the call to BeginTooltip, as caller may be emitting contents.                 */
                 beginDragDropTooltip()
-                if (g.dragDropActive && g.dragDropAcceptIdPrev != 0 && g.dragDropAcceptFlags has Ddf.AcceptNoPreviewTooltip)
+                if (g.dragDropAcceptIdPrev != 0 && g.dragDropAcceptFlags has Ddf.AcceptNoPreviewTooltip)
                     g.currentWindow!!.apply {
                         // tooltipWindow
                         skipItems = true
@@ -249,7 +248,7 @@ interface imgui_dragAndDrop {
         if (flags hasnt Ddf.AcceptNoDrawDefaultRect && payload.preview) {
             // FIXME-DRAG: Settle on a proper default visuals for drop target.
             r expand 3.5f
-            val pushClipRect = !window.clipRect.contains(r)
+            val pushClipRect = r !in window.clipRect
             if (pushClipRect) window.drawList.pushClipRect(r.min - 1, r.max + 1)
             window.drawList.addRect(r.min, r.max, Col.DragDropTarget.u32, 0f, 0.inv(), 2f)
             if (pushClipRect) window.drawList.popClipRect()
@@ -268,4 +267,12 @@ interface imgui_dragAndDrop {
     fun endDragDropTarget() = assert(g.dragDropActive)
 
     fun getDragDropPayload(): Payload? = g.dragDropPayload.takeIf { g.dragDropActive }
+
+    //-----------------------------------------------------------------------------
+    // [SECTION] DOCKING
+    //-----------------------------------------------------------------------------
+
+    // (this section is filled in the 'docking' branch)
+
+
 }

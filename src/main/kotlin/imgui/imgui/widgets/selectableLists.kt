@@ -32,7 +32,9 @@ import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
-/** Widgets: Selectables */
+/** Widgets: Selectables
+ *  - A selectable highlights when hovered, and can display another color when selected.
+ *  - Neighbors selectable extend their highlight bounds in order to leave no gap between them. */
 interface selectableLists {
 
 
@@ -81,7 +83,7 @@ interface selectableLists {
         bb.min.y -= spacingU
         bb.max.x += spacingR
         bb.max.y += spacingD
-        if (!itemAdd(bb, if (flags has Sf.Disabled) 0 else id)) {
+        if (!itemAdd(bb, id)) {
             if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null)
                 pushColumnClipRect()
             return false

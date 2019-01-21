@@ -207,7 +207,11 @@ object showDemoWindowWidgets {
     var selected0 = -1
     val selected1 = BooleanArray(3)
     val selected2 = BooleanArray(16)
-    val selected3 = booleanArrayOf(true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true)
+    val selected3 = booleanArrayOf(
+            true, false, false, false,
+            false, true, false, false,
+            false, false, true, false,
+            false, false, false, true)
 
 
     /* Multi-line Text Input */
@@ -373,7 +377,7 @@ object showDemoWindowWidgets {
                 inputInt("input int", ::i0)
                 sameLine(); showHelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n")
 
-                inputFloat("input float", ::f0, 0.01f, 1f)
+                inputFloat("input float", ::f0, 0.01f, 1f, "%.3f")
 
                 inputDouble("input double", ::d0, 0.01, 1.0, "%.8f")
 
@@ -671,7 +675,7 @@ object showDemoWindowWidgets {
                 columns(1)
             }
             treeNode("Grid") {
-                for (i in 0..15)
+                for (i in 0..16)
                     withId(i) {
                         if (selectable("Sailor", selected3, i, 0, Vec2(50))) {
                             val x = i % 4
@@ -703,6 +707,10 @@ object showDemoWindowWidgets {
         }
 
         treeNode("Multi-line Text Input TODO") {
+            /*
+                Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
+                and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.
+             */
             showHelpMarker("You can use the InputTextFlag.CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stl.h for an example. (This is not demonstrated in imgui_demo.cpp)")
             checkbox("Read-only", ::readOnly)
 
@@ -1173,7 +1181,7 @@ object showDemoWindowWidgets {
                             "isWindowHovered(AnyWindow) = ${isWindowHovered(HoveredFlag.AnyWindow)}\n")
 
             beginChild("child", Vec2(0, 50), true)
-            text("This is another child window for testing with the _ChildWindows flag.")
+            text("This is another child window for testing the _ChildWindows flag.")
             endChild()
             if (embedAllInsideAChildWindow)
                 endChild()

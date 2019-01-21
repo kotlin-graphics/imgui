@@ -81,7 +81,7 @@ interface imgui_menus {
         endMenuBar()
 
         // When the user has left the menu layer (typically: closed menus through activation of an item), we restore focus to the previous window
-        if (g.currentWindow == g.navWindow && g.navLayer == 0)
+        if (g.currentWindow == g.navWindow && g.navLayer == NavLayer.Main)
             focusPreviousWindowIgnoringOne(g.navWindow)
 
         end()
@@ -112,8 +112,8 @@ interface imgui_menus {
         with(window.dc) {
             cursorPos.put(barRect.min.x + window.dc.menuBarOffset.x, barRect.min.y + window.dc.menuBarOffset.y)
             layoutType = LayoutType.Horizontal
-            navLayerCurrent++
-            navLayerCurrentMask = navLayerCurrentMask shl 1
+            navLayerCurrent = NavLayer.Menu
+            navLayerCurrentMask = 1 shl NavLayer.Menu.i
             menuBarAppending = true
         }
         alignTextToFramePadding()
@@ -137,8 +137,8 @@ interface imgui_menus {
                     We could remove it by scoring in advance for multiple window (probably not worth the hassle/cost)   */
                 assert(window.dc.navLayerActiveMaskNext has 0x02) { "Sanity check" }
                 window.focus()
-                setNavIDWithRectRel(window.navLastIds[1], 1, window.navRectRel[1])
-                g.navLayer = 1
+                setNavIDWithRectRel(window.navLastIds[1], NavLayer.Menu, window.navRectRel[1])
+                g.navLayer = NavLayer.Menu
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
                 g.navMoveRequestForward = NavForward.ForwardQueued
                 navMoveRequestCancel()
@@ -154,8 +154,8 @@ interface imgui_menus {
             groupStack.last().advanceCursor = false
             endGroup() // Restore position on layer 0
             layoutType = LayoutType.Vertical
-            navLayerCurrent--
-            navLayerCurrentMask = navLayerCurrentMask ushr 1    // TODO needs uns?
+            navLayerCurrent = NavLayer.Main
+            navLayerCurrentMask = 1 shl NavLayer.Main.i
             menuBarAppending = false
         }
     }
@@ -172,8 +172,8 @@ interface imgui_menus {
 
         val pressed: Boolean
         var menuIsOpen = isPopupOpen(id)
-        val menusetIsOpen = window.flags hasnt Wf.Popup && g.openPopupStack.size > g.currentPopupStack.size &&
-                g.openPopupStack[g.currentPopupStack.size].openParentId == window.idStack.last()
+        val menusetIsOpen = window.flags hasnt Wf.Popup && g.openPopupStack.size > g.beginPopupStack.size &&
+                g.openPopupStack[g.beginPopupStack.size].openParentId == window.idStack.last()
         val backedNavWindow = g.navWindow
         if (menusetIsOpen)
         // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent)
@@ -219,10 +219,10 @@ interface imgui_menus {
             /*  Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers,
                 so menus feels more reactive.             */
             var movingWithinOpenedTriangle = false
-            if (g.hoveredWindow === window && g.openPopupStack.size > g.currentPopupStack.size &&
-                    g.openPopupStack[g.currentPopupStack.size].parentWindow === window && window.flags hasnt Wf.MenuBar)
+            if (g.hoveredWindow === window && g.openPopupStack.size > g.beginPopupStack.size &&
+                    g.openPopupStack[g.beginPopupStack.size].parentWindow === window && window.flags hasnt Wf.MenuBar)
 
-                g.openPopupStack[g.currentPopupStack.size].window?.let {
+                g.openPopupStack[g.beginPopupStack.size].window?.let {
                     val nextWindowRect = it.rect()
                     val ta = io.mousePos - io.mouseDelta
                     val tb = if (window.pos.x < it.pos.x) nextWindowRect.tl else nextWindowRect.tr
@@ -265,9 +265,11 @@ interface imgui_menus {
         if (!enabled)
             wantClose = true
         if (wantClose && isPopupOpen(id))
-            closePopupToLevel(g.currentPopupStack.size)
+            closePopupToLevel(g.beginPopupStack.size, true)
 
-        if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.currentPopupStack.size) {
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+
+        if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.beginPopupStack.size) {
             // Don't recycle same menu level in the same frame, first close the other menu and yield for a frame.
             openPopup(label)
             return false
@@ -292,14 +294,14 @@ interface imgui_menus {
 
     /** Only call EndMenu() if BeginMenu() returns true! */
     fun endMenu() {
-        /*  Nav: When a left move request _within our child menu_ failed, close the menu.
+        /*  Nav: When a left move request _within our child menu_ failed, close ourselves (the _parent_ menu).
             A menu doesn't close itself because EndMenuBar() wants the catch the last Left<>Right inputs.
             However, it means that with the current code, a beginMenu() from outside another menu or a menu-bar won't be
             closable with the Left direction.   */
         val window = g.currentWindow!!
         g.navWindow?.let {
             if (it.parentWindow === window && g.navMoveDir == Dir.Left && navMoveRequestButNoResultYet() && window.dc.layoutType == Lt.Vertical) {
-                closePopupToLevel(g.openPopupStack.lastIndex)
+                closePopupToLevel(g.beginPopupStack.size, true)
                 navMoveRequestCancel()
             }
         }
@@ -342,6 +344,8 @@ interface imgui_menus {
                 renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
                         (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
         }
+
+        ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (selected) ItemStatusFlag.Checked else ItemStatusFlag.None)
         return pressed
     }
 

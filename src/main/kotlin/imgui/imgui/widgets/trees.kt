@@ -22,7 +22,7 @@ import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 
 /** Widgets: Trees
- *  TreeNode functions return true when the node is open, in which case you need to also call TreePop() when you are finished displaying the tree node contents. */
+ *  - TreeNode functions return true when the node is open, in which case you need to also call TreePop() when you are finished displaying the tree node contents. */
 interface trees {
 
     /** if returning 'true' the node is open and the tree id is pushed into the id stack. user is responsible for

@@ -9,14 +9,17 @@ import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
-import imgui.ImGui.bullet
+import imgui.ImGui.beginTabBar
+import imgui.ImGui.beginTabItem
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columns
 import imgui.ImGui.combo
 import imgui.ImGui.contentRegionAvailWidth
+import imgui.ImGui.cursorPosX
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.cursorStartPos
 import imgui.ImGui.dragFloat
@@ -27,6 +30,8 @@ import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
+import imgui.ImGui.endTabBar
+import imgui.ImGui.endTabItem
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameHeightWithSpacing
@@ -38,6 +43,7 @@ import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemRectMax
+import imgui.ImGui.itemRectMin
 import imgui.ImGui.itemRectSize
 import imgui.ImGui.listBox
 import imgui.ImGui.listBoxFooter
@@ -58,6 +64,7 @@ import imgui.ImGui.scrollMaxY
 import imgui.ImGui.scrollX
 import imgui.ImGui.scrollY
 import imgui.ImGui.selectable
+import imgui.ImGui.separator
 import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.setTooltip
@@ -75,12 +82,12 @@ import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowWidth
-import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withGroup
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
+import imgui.functionalProgramming.withStyleColor
 import imgui.functionalProgramming.withStyleVar
 import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
 import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
@@ -116,6 +123,11 @@ object showDemoWindowLayout {
     val selection = intArrayOf(0, 1, 2, 3)
 
 
+    /* Tabs */
+    var tabBarFlags: TabBarFlags = TabBarFlag.Reorderable.i
+    val names = arrayOf("Artichoke", "Beetroot", "Celery", "Daikon")
+    val opened = BooleanArray(4) { true } // Persistent user state
+
     /* Scrolling */
     var track = true
     var trackLine = 50
@@ -135,8 +147,9 @@ object showDemoWindowLayout {
         if (!collapsingHeader("SimpleLayout"))
             return
 
-        treeNode("Child regions") {
+        treeNode("Child Windows") {
 
+            showHelpMarker("Use child windows to begin into a self-contained independent scrolling/clipping regions within a host window.")
             checkbox("Disable Mouse Wheel", ::disableMouseWheel)
             checkbox("Disable Menu", ::disableMenu)
 
@@ -146,34 +159,60 @@ object showDemoWindowLayout {
                 gotoLine = gotoLine or inputInt("##Line", ::line, 0, 0, Itf.EnterReturnsTrue.i)
             }
 
-            val flags = if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.None
-            withChild("Child1", Vec2(windowContentRegionWidth * 0.5f, 300), false, flags or Wf.HorizontalScrollbar) {
-                for (i in 0..99) {
-                    text("%04d: scrollable region", i)
-                    if (gotoLine && line == i) setScrollHereY()
+            // Child 1: no border, enable horizontal scrollbar
+            run {
+                val windowFlags = Wf.HorizontalScrollbar or if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.None
+                withChild("Child1", Vec2(windowContentRegionWidth * 0.5f, 260), false, windowFlags) {
+                    for (i in 0..99) {
+                        text("%04d: scrollable region", i)
+                        if (gotoLine && line == i) setScrollHereY()
+                    }
+                    if (gotoLine && line >= 100) setScrollHereY()
                 }
-                if (gotoLine && line >= 100) setScrollHereY()
             }
-
             sameLine()
 
             // Child 2: rounded border
-            withStyleVar(StyleVar.ChildRounding, 5f) {
-                withChild("Child2", Vec2(0, 300), true, flags or if (disableMenu) Wf.None else Wf.MenuBar) {
-                    if (!disableMenu && beginMenuBar()) {
-                        if (beginMenu("Menu")) {
-                            showExampleMenuFile()
-                            endMenu()
+            run {
+                val windowFlags = (if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.None) or if (disableMenu) Wf.None else Wf.MenuBar
+                withStyleVar(StyleVar.ChildRounding, 5f) {
+                    withChild("Child2", Vec2(0, 260), true, windowFlags) {
+                        if (!disableMenu && beginMenuBar()) {
+                            if (beginMenu("Menu")) {
+                                showExampleMenuFile()
+                                endMenu()
+                            }
+                            endMenuBar()
                         }
-                        endMenuBar()
-                    }
-                    columns(2)
-                    for (i in 0..99) {
-                        val text = "%03d".format(style.locale, i)
-                        button(text, Vec2(-1f, 0f))
-                        nextColumn()
+                        columns(2)
+                        for (i in 0..99) {
+                            val text = "%03d".format(style.locale, i)
+                            button(text, Vec2(-1f, 0f))
+                            nextColumn()
+                        }
                     }
                 }
+            }
+
+            separator()
+
+            /*  Demonstrate a few extra things
+                - Changing ImGuiCol_ChildBg (which is transparent black in default styles)
+                - Using SetCursorPos() to position the child window (because the child window is an item from the POV of the parent window)
+                    You can also call SetNextWindowPos() to position the child window. The parent window will effectively layout from this position.
+                - Using ImGui::GetItemRectMin/Max() to query the "item" state (because the child window is an item from the POV of the parent window)
+                    See "Widgets" -> "Querying Status (Active/Focused/Hovered etc.)" section for more details about this. */
+            run {
+                cursorPosX = 50f
+                withStyleColor(Col.ChildBg, COL32(255, 0, 0, 100)) {
+                    beginChild("blah", Vec2(200, 100), true, Wf.None.i)
+                    for (n in 0..49)
+                        text("Some test $n")
+                    endChild()
+                }
+                val childRectMin = itemRectMin
+                val childRectMax = itemRectMax
+                text("Rect of child window is: (%.0f,%.0f) (%.0f,%.0f)", childRectMin.x, childRectMin.y, childRectMax.x, childRectMax.y)
             }
         }
 
@@ -281,9 +320,64 @@ object showDemoWindowLayout {
             }
         }
 
+        treeNode("Tabs") {
+
+            treeNode("Basic") {
+                val tabBarFlags: TabBarFlags = TabBarFlag.None.i
+                if (beginTabBar("MyTabBar", tabBarFlags)) {
+                    if (beginTabItem("Avocado")) {
+                        text("This is the Avocado tab!\nblah blah blah blah blah")
+                        endTabItem()
+                    }
+                    if (beginTabItem("Broccoli")) {
+                        text("This is the Broccoli tab!\nblah blah blah blah blah")
+                        endTabItem()
+                    }
+                    if (beginTabItem("Cucumber")) {
+                        text("This is the Cucumber tab!\nblah blah blah blah blah")
+                        endTabItem()
+                    }
+                    endTabBar()
+                }
+                separator()
+            }
+
+            treeNode("Advanced & Close Button") {
+                // Expose a couple of the available flags. In most cases you may just call BeginTabBar() with no flags (0).
+                checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags, TabBarFlag.Reorderable.i)
+                checkboxFlags("ImGuiTabBarFlags_AutoSelectNewTabs", ::tabBarFlags, TabBarFlag.AutoSelectNewTabs.i)
+                checkboxFlags("ImGuiTabBarFlags_NoCloseWithMiddleMouseButton", ::tabBarFlags, TabBarFlag.NoCloseWithMiddleMouseButton.i)
+                if (tabBarFlags hasnt TabBarFlag.FittingPolicyMask_)
+                    tabBarFlags = tabBarFlags or TabBarFlag.FittingPolicyDefault_
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags, TabBarFlag.FittingPolicyResizeDown.i))
+                    tabBarFlags = tabBarFlags wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags, TabBarFlag.FittingPolicyScroll.i))
+                    tabBarFlags = tabBarFlags wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll)
+
+                // Tab Bar
+                for (n in opened.indices) {
+                    if (n > 0) sameLine()
+                    checkbox(names[n], opened, n)
+                }
+
+                // Passing a bool* to BeginTabItem() is similar to passing one to Begin(): the underlying bool will be set to false when the tab is closed.
+                if (beginTabBar("MyTabBar", tabBarFlags)) {
+                    for (n in opened.indices)
+                        if (opened[n] && beginTabItem(names[n], opened, n)) {
+                            text("This is the ${names[n]} tab!")
+                            if (n has 1)
+                                text("I am an odd tab.")
+                            endTabItem()
+                        }
+                    endTabBar()
+                }
+                separator()
+            }
+        }
+
         treeNode("Groups") {
 
-            textWrapped("(Using BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundles the whole group so that you can use functions such as IsItemHovered() on it.)")
+            showHelpMarker("Using BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundles the whole group so that you can use functions such as IsItemHovered() on it.")
             withGroup {
                 withGroup {
                     button("AAA")
@@ -322,7 +416,7 @@ object showDemoWindowLayout {
 
         treeNode("Text Baseline Alignment") {
 
-            textWrapped("(This is testing the vertical alignment that occurs on text to keep it at the same baseline as widgets. Lines only composed of text or \"small\" widgets fit in less vertical spaces than lines with normal widgets)")
+            showHelpMarker("This is testing the vertical alignment that gets applied on text to keep it aligned with widgets. Lines only composed of text or \"small\" widgets fit in less vertical spaces than lines with normal widgets.")
 
             text("One\nTwo\nThree"); sameLine()
             text("Hello\nWorld"); sameLine()
@@ -379,7 +473,8 @@ object showDemoWindowLayout {
 
         treeNode("Scrolling") {
 
-            textWrapped("(Use SetScrollHere() or SetScrollFromPosY() to scroll to a given position.)")
+            showHelpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given position.")
+
             checkbox("Track", ::track)
             pushItemWidth(100)
             sameLine(130); track = track or dragInt("##line", ::trackLine, 0.25f, 0, 99, "Line = %d")
@@ -411,8 +506,7 @@ object showDemoWindowLayout {
 
         treeNode("Horizontal Scrolling") {
 
-            bullet(); textWrapped("Horizontal scrolling for a window has to be enabled explicitly via the ImGuiWindowFlags_HorizontalScrollbar flag.")
-            bullet(); textWrapped("You may want to explicitly specify content width by calling SetNextWindowContentWidth() before Begin().")
+            showHelpMarker("Horizontal scrolling for a window has to be enabled explicitly via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\nYou may want to explicitly specify content width by calling SetNextWindowContentWidth() before Begin().")
             sliderInt("Lines", ::lines, 1, 15)
             pushStyleVar(StyleVar.FrameRounding, 3f)
             pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
@@ -449,14 +543,14 @@ object showDemoWindowLayout {
                 /*  Demonstrate a trick: you can use begin() to set yourself in the context of another window (here
                     we are already out of your child window) */
                 beginChild("scrolling")
-                scrollX = scrollX + scrollXDelta    // TODO bug https://youtrack.jetbrains.com/issue/KT-21343 wait for 1.2.20 EAP
-                end()
+                scrollX += scrollXDelta
+                endChild()
             }
         }
 
         treeNode("Clipping") {
             textWrapped("On a per-widget basis we are occasionally clipping text CPU-side if it won't fit in its frame. Otherwise we are doing coarser clipping + passing a scissor rectangle to the renderer. The system is designed to try minimizing both execution and CPU/GPU rendering cost.")
-            dragVec2("size", size, 0.5f, 0f, 200f, "%.0f")
+            dragVec2("size", size, 0.5f, 1f, 200f, "%.0f")
             textWrapped("(Click and drag)")
             val pos = Vec2(cursorScreenPos)
             val clipRect = Vec4(pos.x, pos.y, pos.x + size.x, pos.y + size.y)

@@ -24,10 +24,9 @@ import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
-import imgui.ImGui.updateMouseMovingWindow
+import imgui.ImGui.updateMouseMovingWindowEndFrame
+import imgui.ImGui.updateMouseMovingWindowNewFrame
 import imgui.internal.*
-import uno.kotlin.getValue
-import uno.kotlin.setValue
 import kotlin.math.max
 import kotlin.math.min
 import imgui.ConfigFlag as Cf
@@ -55,7 +54,7 @@ interface imgui_main {
 
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() or ImGui::SetCurrentContext()?" }
 
-        if (IMGUI_ENABLE_TEST_ENGINE_HOOKS)
+        if (IMGUI_ENABLE_TEST_ENGINE)
             ImGuiTestEngineHook_PreNewFrame()
 
         /*  Check user data
@@ -76,9 +75,9 @@ interface imgui_main {
         if (io.configFlags has Cf.NavEnableKeyboard)
             assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
 
-        // Perform simple check: the beta io.configResizeWindowsFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
-        if (io.configResizeWindowsFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
-            io.configResizeWindowsFromEdges = false
+        // Perform simple check: the beta io.configWindowsResizeFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
+        if (io.configWindowsResizeFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
+            io.configWindowsResizeFromEdges = false
 
         // Load settings on first frame (if not explicitly loaded manually before)
         if (!g.settingsLoaded) {
@@ -183,7 +182,7 @@ interface imgui_main {
         }
 
         // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering)
-        updateMouseMovingWindow()
+        updateMouseMovingWindowNewFrame()
         updateHoveredWindowAndCaptureFlags()
 
         // Background darkening/whitening
@@ -226,15 +225,18 @@ interface imgui_main {
         // No window should be open at the beginning of the frame.
         // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.
         g.currentWindowStack.clear()
-        g.currentPopupStack.clear()
+        g.beginPopupStack.clear()
         closePopupsOverWindow(g.navWindow)
 
-        // Create implicit window - we will only render it if the user has added something to it.
-        // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
+        /*  Create implicit/fallback window - which we will only render it if the user has added something to it.
+            We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
+            This fallback is particularly important as it avoid ImGui:: calls from crashing.
+         */
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
         begin("Debug##Default")
+        g.frameScopePushedImplicitWindow = true
 
-        if (IMGUI_ENABLE_TEST_ENGINE_HOOKS)
+        if (IMGUI_ENABLE_TEST_ENGINE)
             ImGuiTestEngineHook_PostNewFrame()
     }
 
@@ -245,7 +247,7 @@ interface imgui_main {
 
         assert(g.initialized)
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
-        assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()" }
+        assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()?" }
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f) {
@@ -255,22 +257,33 @@ interface imgui_main {
             g.platformImeLastPos put g.platformImePos
         }
 
-        // Hide implicit "Debug" window if it hasn't been used
-        assert(g.currentWindowStack.size == 1) { "Mismatched Begin()/End() calls, did you forget to call end on g.currentWindow.name?" }
+        // Report when there is a mismatch of Begin/BeginChild vs End/EndChild calls. Important: Remember that the Begin/BeginChild API requires you
+        // to always call End/EndChild even if Begin/BeginChild returns false! (this is unfortunately inconsistent with most other Begin* API).
+        if (g.currentWindowStack.size != 1)
+            if (g.currentWindowStack.size > 1) {
+                assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you forget to call End/EndChild?" }
+                while (g.currentWindowStack.size > 1) // FIXME-ERRORHANDLING
+                    end()
+            } else
+                assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you call End/EndChild too much?" }
+
+        // Hide implicit/fallback "Debug" window if it hasn't been used
+        g.frameScopePushedImplicitWindow = false
         g.currentWindow?.let {
             if (!it.writeAccessed) it.active = false
         }
 
         end()
 
-        // Show CTRL+TAB list
+        // Show CTRL+TAB list window
         if (g.navWindowingTarget != null)
             navUpdateWindowingList()
 
         // Drag and Drop: Elapse payload (if delivered, or if source stops being submitted)
         if (g.dragDropActive) {
             val isDelivered = g.dragDropPayload.delivery
-            val isElapsed = g.dragDropPayload.dataFrameCount + 1 < g.frameCount && (g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload || !isMouseDown(g.dragDropMouseButton))
+            val isElapsed = g.dragDropPayload.dataFrameCount + 1 < g.frameCount &&
+                    (g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload || !isMouseDown(g.dragDropMouseButton))
             if (isDelivered || isElapsed)
                 clearDragDrop()
         }
@@ -282,35 +295,12 @@ interface imgui_main {
             g.dragDropWithinSourceOrTarget = false
         }
 
-        // Initiate moving window
-        if (g.activeId == 0 && g.hoveredId == 0)
-            if (g.navWindow == null || !g.navWindow!!.appearing) { // Unless we just made a window/popup appear
-                // Click to focus window and start moving (after we're done with all our widgets)
-                if (io.mouseClicked[0])
-                    if (g.hoveredRootWindow != null)
-                        g.hoveredWindow!!.startMouseMoving()
-                    else if (g.navWindow != null && frontMostPopupModal == null)
-                        null.focus()   // Clicking on void disable focus
+        // End frame
+        g.frameScopeActive = false
+        g.frameCountEnded = g.frameCount
 
-                /*  With right mouse button we close popups without changing focus
-                (The left mouse button path calls FocusWindow which will lead NewFrame::closePopupsOverWindow to trigger) */
-                if (io.mouseClicked[1]) {
-                    /*  Find the top-most window between HoveredWindow and the front most Modal Window.
-                        This is where we can trim the popup stack.  */
-                    val modal = frontMostPopupModal
-                    var hoveredWindowAboveModal = false
-                    if (modal == null)
-                        hoveredWindowAboveModal = true
-                    var i = g.windows.lastIndex
-                    while (i >= 0 && !hoveredWindowAboveModal) {
-                        val window = g.windows[i]
-                        if (window === modal) break
-                        if (window === g.hoveredWindow) hoveredWindowAboveModal = true
-                        i--
-                    }
-                    closePopupsOverWindow(if (hoveredWindowAboveModal) g.hoveredWindow else modal)
-                }
-            }
+        // Initiate moving window + handle left-click and right-click focus
+        updateMouseMovingWindowEndFrame()
 
         /*  Sort the window list so that all child windows are after their parent
             We cannot do that on FocusWindow() because childs may not exist yet         */
@@ -329,11 +319,8 @@ interface imgui_main {
         // Clear Input data for next frame
         io.mouseWheel = 0f
         io.mouseWheelH = 0f
-        io.inputCharacters.fill(NUL)
+        io.inputQueueCharacters.clear()
         io.navInputs.fill(0f)
-
-        g.frameScopeActive = false
-        g.frameCountEnded = g.frameCount
     }
 
 
@@ -476,9 +463,9 @@ interface imgui_main {
             // If a child window has the Wf.NoScrollWithMouse flag, we give a chance to scroll its parent (unless either Wf.NoInputs or Wf.NoScrollbar are also set).
             var scrollWindow: Window = window
             while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
-                    scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoInputs && scrollWindow.parentWindow != null)
+                    scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoMouseInputs && scrollWindow.parentWindow != null)
                 scrollWindow = scrollWindow.parentWindow!!
-            val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoInputs
+            val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoMouseInputs
 
             if (io.mouseWheel != 0f)
                 if (io.keyCtrl && io.fontAllowUserScaling) {
@@ -513,13 +500,13 @@ interface imgui_main {
             val flags = window.flags
             if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames anyGreaterThan 0)
                 return
-            if (window.wasActive == false) // Early out to avoid running this code for e.g. an hidden implicit Debug window.
+            if (window.wasActive == false) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
                 return
 
-            val resizeBorderCount = if (io.configResizeWindowsFromEdges) 4 else 0
+            val resizeBorderCount = if (io.configWindowsResizeFromEdges) 4 else 0
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             val gripHoverInnerSize = (gripDrawSize * 0.75f).i.f
-            val gripHoverOuterSize = if (io.configResizeWindowsFromEdges) RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS else 0f
+            val gripHoverOuterSize = if (io.configWindowsResizeFromEdges) WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS else 0f
 
             val posTarget = Vec2(Float.MAX_VALUE)
             val sizeTarget = Vec2(Float.MAX_VALUE)
@@ -557,10 +544,10 @@ interface imgui_main {
                     resizeGripCol[resizeGripN] = (if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip).u32
             }
             for (borderN in 0 until resizeBorderCount) {
-                val borderRect = window.getResizeBorderRect(borderN, gripHoverInnerSize, RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS)
+                val borderRect = window.getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS)
                 val (_, hovered, held) = buttonBehavior(borderRect, window.getId((borderN + 4)), ButtonFlag.FlattenChildren)
                 //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
-                if ((hovered && g.hoveredIdTimer > RESIZE_WINDOWS_FROM_EDGES_FEEDBACK_TIMER) || held) {
+                if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {
                     g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
                     if (held) borderHeld = borderN
                 }
@@ -568,19 +555,19 @@ interface imgui_main {
                     val borderTarget = Vec2(window.pos)
                     val borderPosN = when (borderN) {
                         0 -> {
-                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
+                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
                             Vec2(0, 0)
                         }
                         1 -> {
-                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
+                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
                             Vec2(1, 0)
                         }
                         2 -> {
-                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
+                            borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
                             Vec2(0, 1)
                         }
                         3 -> {
-                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS
+                            borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
                             Vec2(0, 0)
                         }
                         else -> Vec2(0, 0)

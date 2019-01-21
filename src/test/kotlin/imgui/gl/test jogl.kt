@@ -15,7 +15,6 @@ import glm_.vec4.Vec4
 import imgui.Cond
 import imgui.Context
 import imgui.ImGui
-import imgui.destroy
 import imgui.impl.JoglGL3
 
 

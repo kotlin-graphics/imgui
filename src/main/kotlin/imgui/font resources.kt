@@ -4,24 +4,25 @@ package imgui
 /** Helpers to retrieve list of common Unicode ranges (2 value per range, values are inclusive)
  *  NB: Make sure that your string are UTF-8 and NOT in your local code page. In C++11, you can create a UTF-8 string
  *  literally using the u8"Hello world" syntax. See FAQ for details.
- *  NB: Consider using GlyphRangesBuilder to build glyph ranges from textual data.
+ *  NB: Consider using ImFontGlyphRangesBuilder to build glyph ranges from textual data.
+ *
  *  JVM
  *  Retrieve list of range (2 int per range, values are inclusive) */
 object glyphRanges {
 
     /** Basic Latin, Extended Latin */
-    val default: IntArray
-        get() = intArrayOf(0x0020, 0x00FF)
+    val default: Array<IntRange>
+        get() = arrayOf(IntRange(0x0020, 0x00FF))
 
     /** Default + Korean characters */
-    val korean: IntArray
-        get() = intArrayOf(
-                0x0020, 0x00FF, // Basic Latin + Latin Supplement
-                0x3131, 0x3163, // Korean alphabets
-                0xAC00, 0xD79D) // Korean characters
+    val korean: Array<IntRange>
+        get() = arrayOf(
+                IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+                IntRange(0x3131, 0x3163), // Korean alphabets
+                IntRange(0xAC00, 0xD79D)) // Korean characters
 
     /** Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs  */
-    val japanese: IntArray by lazy {
+    val japanese: Array<IntRange> by lazy {
 
         /*  1946 common ideograms code points for Japanese
             Sourced from http://theinstructionlimit.com/common-kanji-character-ranges-for-xna-spritefont-rendering
@@ -63,31 +64,31 @@ object glyphRanges {
                 51, 4, 3, 13, 3, 10, 1, 1, 12, 9, 21, 110, 3, 19, 24, 1, 1, 10, 62, 4, 1, 29, 42, 78, 28, 20, 18, 82, 6, 3, 15, 6, 84, 58, 253, 15, 155, 264, 15, 21, 9, 14, 7, 58, 40, 39)
 
         // not zero-terminated
-        val baseRanges = intArrayOf(
-                0x0020, 0x00FF, // Basic Latin + Latin Supplement
-                0x3000, 0x30FF, // Punctuations, Hiragana, Katakana
-                0x31F0, 0x31FF, // Katakana Phonetic Extensions
-                0xFF00, 0xFFEF) // Half-width characters
+        val baseRanges = arrayOf(
+                IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+                IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
+                IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
+                IntRange(0xFF00, 0xFFEF)) // Half-width characters
 
-        val fullRanges = IntArray(baseRanges.size + accumulativeOffsetsFrom0x4E00.size * 2 + 1)
-        if (fullRanges[0] == 0) {
-            System.arraycopy(baseRanges, 0, fullRanges, 0, baseRanges.size)
-            unpackAccumulativeOffsetsIntoRanges(0x4E00, accumulativeOffsetsFrom0x4E00, fullRanges, baseRanges.size)
+        Array(baseRanges.size + accumulativeOffsetsFrom0x4E00.size * 2 + 1) {
+            baseRanges.getOrElse(it) { IntRange.EMPTY }
+        }.also { fullRanges ->
+            accumulativeOffsetsFrom0x4E00.unpackIntoRanges(0x4E00, fullRanges, baseRanges.size)
         }
-        fullRanges
     }
 
     /** Default + Half-Width + Japanese Hiragana/Katakana + full set of about 21000 CJK Unified Ideographs */
-    val chineseFull: IntArray
-        get() = intArrayOf(
-                0x0020, 0x00FF, // Basic Latin + Latin Supplement
-                0x3000, 0x30FF, // Punctuations, Hiragana, Katakana
-                0x31F0, 0x31FF, // Katakana Phonetic Extensions
-                0xFF00, 0xFFEF, // Half-width characters
-                0x4e00, 0x9FAF) // CJK Ideograms
+    val chineseFull: Array<IntRange>
+        get() = arrayOf(
+                IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+                IntRange(0x2000, 0x206F), // General Punctuation
+                IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
+                IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
+                IntRange(0xFF00, 0xFFEF), // Half-width characters
+                IntRange(0x4e00, 0x9FAF)) // CJK Ideograms
 
     /** Default + Half-Width + Japanese Hiragana/Katakana + set of 2500 CJK Unified Ideographs for common simplified Chinese */
-    val chinesSimplifiedCommon: IntArray by lazy {
+    val chinesSimplifiedCommon: Array<IntRange> by lazy {
 
         /*  Store 2500 regularly used characters for Simplified Chinese.
             Sourced from https://zh.wiktionary.org/wiki/%E9%99%84%E5%BD%95:%E7%8E%B0%E4%BB%A3%E6%B1%89%E8%AF%AD%E5%B8%B8%E7%94%A8%E5%AD%97%E8%A1%A8
@@ -137,47 +138,45 @@ object glyphRanges {
                 10, 3, 4, 48, 100, 6, 2, 16, 296, 5, 27, 387, 2, 2, 3, 7, 16, 8, 5, 38, 15, 39, 21, 9, 10, 3, 7, 59, 13, 27, 21, 47, 5, 21, 6)
 
         // not zero-terminated
-        val baseRanges = intArrayOf(
-                0x0020, 0x00FF, // Basic Latin + Latin Supplement
-                0x3000, 0x30FF, // Punctuations, Hiragana, Katakana
-                0x31F0, 0x31FF, // Katakana Phonetic Extensions
-                0xFF00, 0xFFEF) // Half-width characters
+        val baseRanges = arrayOf(
+                IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+                IntRange(0x2000, 0x206F), // General Punctuation
+                IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
+                IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
+                IntRange(0xFF00, 0xFFEF)) // Half-width characters
 
-        val fullRanges = IntArray(baseRanges.size + accumulativeOffsetsFrom0x4E00.size * 2 + 1)
-
-        if (fullRanges[0] == 0) {
-            System.arraycopy(baseRanges, 0, fullRanges, 0, baseRanges.size)
-            unpackAccumulativeOffsetsIntoRanges(0x4E00, accumulativeOffsetsFrom0x4E00, fullRanges, baseRanges.size)
+        Array(baseRanges.size + accumulativeOffsetsFrom0x4E00.size * 2 + 1) {
+            baseRanges.getOrElse(it) { IntRange.EMPTY }
+        }.also { fullRanges ->
+            accumulativeOffsetsFrom0x4E00.unpackIntoRanges(0x4E00, fullRanges, baseRanges.size)
         }
-        fullRanges
     }
 
     /** Default + about 400 Cyrillic characters */
-    val cyrillic: IntArray
-        get() = intArrayOf(
-                0x0020, 0x00FF, // Basic Latin + Latin Supplement
-                0x0400, 0x052F, // Cyrillic + Cyrillic Supplement
-                0x2DE0, 0x2DFF, // Cyrillic Extended-A
-                0xA640, 0xA69F) // Cyrillic Extended-B
+    val cyrillic: Array<IntRange>
+        get() = arrayOf(
+                IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+                IntRange(0x0400, 0x052F), // Cyrillic + Cyrillic Supplement
+                IntRange(0x2DE0, 0x2DFF), // Cyrillic Extended-A
+                IntRange(0xA640, 0xA69F)) // Cyrillic Extended-B
     /** Default + Thai characters   */
-    val thai: IntArray
-        get() = intArrayOf(
-                0x0020, 0x00FF, // Basic Latin
-                0x2010, 0x205E, // Punctuations
-                0x0E00, 0x0E7F) // Thai
+    val thai: Array<IntRange>
+        get() = arrayOf(
+                IntRange(0x0020, 0x00FF), // Basic Latin
+                IntRange(0x2010, 0x205E), // Punctuations
+                IntRange(0x0E00, 0x0E7F)) // Thai
 
 
-    fun unpackAccumulativeOffsetsIntoRanges(baseCodepoint_: Int, accumulativeOffsets: ShortArray, outRanges: IntArray, ptr_: Int) {
+    /** ~ unpackAccumulativeOffsetsIntoRanges */
+    fun ShortArray.unpackIntoRanges(baseCodepoint_: Int, outRanges: Array<IntRange>, ptr_: Int) {
         var baseCodepoint = baseCodepoint_
         var ptr = ptr_
-        for (n in 0 until accumulativeOffsets.size) {
-            outRanges[ptr] = baseCodepoint + accumulativeOffsets[n]
-            outRanges[ptr + 1] = outRanges[ptr]
-            baseCodepoint += accumulativeOffsets[n]
-
-            ptr += 2
+        for (n in indices) {
+            val v = baseCodepoint + this[n]
+            outRanges[ptr++] = IntRange(v, v)
+            baseCodepoint += this[n]
         }
-        outRanges[ptr] = 0
+        outRanges[ptr] = IntRange.EMPTY // useless, it's already empty
     }
 }
 

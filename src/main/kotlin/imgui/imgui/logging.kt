@@ -13,11 +13,11 @@ import imgui.ImGui.sliderInt
 import imgui.g
 import java.io.FileWriter
 
-/** Logging/Capture: all text output from interface is captured to tty/file/clipboard.
- *  By default, tree nodes are automatically opened during logging.    */
+/** Logging/Capture
+ *  - All text output from the interface can be captured into tty/file/clipboard. By default, tree nodes are automatically opened during logging. */
 interface imgui_logging {
 
-//    IMGUI_API void          LogToTTY(int max_depth = -1);                                       // start logging to tty
+//    IMGUI_API void          LogToTTY(int max_depth = -1);                                       // start logging to tty (stdout)
 //    IMGUI_API void          LogToFile(int max_depth = -1, const char* filename = NULL);         // start logging to file
 
     /** start logging ImGui output to OS clipboard   */
@@ -41,12 +41,12 @@ interface imgui_logging {
 
         if (!g.logEnabled) return
 
-        logText("%s","\n")
+        logText("%s", "\n")
 
-        if(g.logFile != null){
+        if (g.logFile != null) {
             g.logFile = null
         }
-        if(g.logClipboard.length > 1){
+        if (g.logClipboard.length > 1) {
             setClipboardText(g.logClipboard.toString())
             g.logClipboard = StringBuilder()
         }
@@ -74,13 +74,13 @@ interface imgui_logging {
 
     /** pass text data straight to log (without being displayed)    */
     fun logText(fmt: String, vararg args: Any) {
-        if(!g.logEnabled)
+        if (!g.logEnabled)
             return
 
-        if(g.logFile != null) {
+        if (g.logFile != null) {
             val writer = FileWriter(g.logFile, true)
             writer.write(String.format(fmt, args))
-        }else{
+        } else {
             g.logClipboard.append(String.format(fmt, args))
         }
     }

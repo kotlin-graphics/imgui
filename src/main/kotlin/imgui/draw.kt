@@ -13,19 +13,19 @@ import imgui.ImGui.shadeVertsLinearUV
 import imgui.internal.*
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.sqrt
 import imgui.internal.DrawCornerFlag as Dcf
 
 /** Draw callbacks for advanced uses.
-NB- You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering
-(you can poke into the draw list for that)
-Draw callback may be useful, for example, to:
-- change your GPU render state
-- render a complex 3D scene inside a UI element (without an intermediate texture/render target), etc.
-The expected behavior from your rendering function is
-'if (cmd.UserCallback != NULL) cmd.UserCallback(parent_list, cmd); else RenderTriangles()'  */
+ *  NB: You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering,
+ *  you can poke into the draw list for that! Draw callback may be useful for example to: A) Change your GPU render state,
+ *  B) render a complex 3D scene inside a UI element without an intermediate texture/render target, etc.
+ *  The expected behavior from your rendering function is 'if (cmd.UserCallback != NULL) { cmd.UserCallback(parent_list, cmd); } else { RenderTriangles() }'    */
 typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
-/** Typically, 1 command = 1 gpu draw call (unless command is a callback)   */
+/** A single draw command within a parent ImDrawList (generally maps to 1 GPU draw call, unless it is a callback)
+ *
+ *  Typically, 1 command = 1 gpu draw call (unless command is a callback)   */
 class DrawCmd {
 
     constructor()
@@ -59,7 +59,9 @@ class DrawCmd {
 
 typealias DrawIdx = Int // TODO check
 
-/** Vertex layout   */
+/** Vertex layout
+ *
+ *  A single vertex (pos + uv + col = 20 bytes by default. Override layout with IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT) */
 class DrawVert {
 
     var pos = Vec2()
@@ -76,7 +78,9 @@ class DrawVert {
     override fun toString() = "pos: $pos, uv: $uv, col: $col"
 }
 
-/** Draw channels are used by the Columns API to "split" the render list into different channels while building, so
+/** Temporary storage for ImDrawList ot output draw commands out of order, used by ImDrawList::ChannelsSplit()
+ *
+ *  Draw channels are used by the Columns API to "split" the render list into different channels while building, so
  *  items of each column can be batched together.
  *  You can also use them to simulate drawing layers and submit primitives in a different order than how they will be
  *  rendered.   */
@@ -278,19 +282,21 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun addCircle(centre: Vec2, radius: Float, col: Int, numSegments: Int = 12, thickness: Float = 1f) {
 
-        if (col hasnt COL32_A_MASK) return
+        if (col hasnt COL32_A_MASK || numSegments <= 2) return
 
-        val aMax = glm.PIf * 2.0f * (numSegments - 1.0f) / numSegments
-        pathArcTo(centre, radius - 0.5f, 0.0f, aMax, numSegments)
+        // Because we are filling a closed shape we remove 1 from the count of segments/points
+        val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
+        pathArcTo(centre, radius - 0.5f, 0f, aMax, numSegments - 1)
         pathStroke(col, true, thickness)
     }
 
     fun addCircleFilled(centre: Vec2, radius: Float, col: Int, numSegments: Int = 12) {
 
-        if (col hasnt COL32_A_MASK) return
+        if (col hasnt COL32_A_MASK || numSegments <= 2) return
 
-        val aMax = glm.PIf * 2.0f * (numSegments - 1.0f) / numSegments
-        pathArcTo(centre, radius, 0.0f, aMax, numSegments)
+        // Because we are filling a closed shape we remove 1 from the count of segments/points
+        val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
+        pathArcTo(centre, radius, 0f, aMax, numSegments - 1)
         pathFillConvex(col)
     }
 
@@ -375,7 +381,8 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (pushTextureId) popTextureId()
     }
 
-    // TODO: Thickness anti-aliased lines cap are missing their AA fringe.
+    /** TODO: Thickness anti-aliased lines cap are missing their AA fringe.
+     *  We avoid using the ImVec2 math operators here to reduce cost to a minimum for debug/non-inlined builds. */
     fun addPolyline(points: ArrayList<Vec2>, col: Int, closed: Boolean, thickness: Float) {
 
         if (points.size < 2) return
@@ -397,24 +404,31 @@ class DrawList(sharedData: DrawListSharedData?) {
             primReserve(idxCount, vtxCount)
 
             // Temporary buffer
-            val tempNormals = Array(points.size * if (thickLine) 5 else 3, { Vec2() })
-            val tempPoints = points.size
+            val temp = Array(points.size * if (thickLine) 5 else 3) { Vec2() }
+            val tempPointsIdx = points.size
 
             for (i1 in 0 until count) {
-                val i2 = if ((i1 + 1) == points.size) 0 else i1 + 1
-                val diff = points[i2] - points[i1]
-                diff *= diff.invLength(1f)
-                tempNormals[i1].x = diff.y
-                tempNormals[i1].y = -diff.x
+                val i2 = if (i1 + 1 == points.size) 0 else i1 + 1
+                var dx = points[i2].x - points[i1].x
+                var dy = points[i2].y - points[i1].y
+                //IM_NORMALIZE2F_OVER_ZERO(dx, dy);
+                val d2 = dx * dx + dy * dy
+                if (d2 > 0f) {
+                    val invLen = 1f / sqrt(d2)
+                    dx *= invLen
+                    dy *= invLen
+                }
+                temp[i1].x = dy
+                temp[i1].y = -dx
             }
-            if (!closed) tempNormals[points.size - 1] = tempNormals[points.size - 2]
+            if (!closed) temp[points.size - 1] = temp[points.size - 2]
 
             if (!thickLine) {
                 if (!closed) {
-                    tempNormals[tempPoints + 0] = points[0] + tempNormals[0] * AA_SIZE
-                    tempNormals[tempPoints + 1] = points[0] - tempNormals[0] * AA_SIZE
-                    tempNormals[tempPoints + (points.size - 1) * 2 + 0] = points[points.size - 1] + tempNormals[points.size - 1] * AA_SIZE
-                    tempNormals[tempPoints + (points.size - 1) * 2 + 1] = points[points.size - 1] - tempNormals[points.size - 1] * AA_SIZE
+                    temp[tempPointsIdx + 0] = points[0] + temp[0] * AA_SIZE
+                    temp[tempPointsIdx + 1] = points[0] - temp[0] * AA_SIZE
+                    temp[tempPointsIdx + (points.size - 1) * 2 + 0] = points[points.size - 1] + temp[points.size - 1] * AA_SIZE
+                    temp[tempPointsIdx + (points.size - 1) * 2 + 1] = points[points.size - 1] - temp[points.size - 1] * AA_SIZE
                 }
 
                 // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
@@ -424,16 +438,25 @@ class DrawList(sharedData: DrawListSharedData?) {
                     val idx2 = if ((i1 + 1) == points.size) _vtxCurrentIdx else idx1 + 3
 
                     // Average normals
-                    val dm = (tempNormals[i1] + tempNormals[i2]) * 0.5f
-                    val dmr2 = dm.x * dm.x + dm.y * dm.y
-                    if (dmr2 > 0.000001f) {
-                        var scale = 1f / dmr2
-                        if (scale > 100f) scale = 100.0f
-                        dm *= scale
+                    var dmX = (temp[i1].x + temp[i2].x) * 0.5f
+                    var dmY = (temp[i1].y + temp[i2].y) * 0.5f
+//                    IM_NORMALIZE2F_OVER_EPSILON_CLAMP(dmX, dmY, 0.000001f, 100.0f)
+                    val d2 = dmX * dmX + dmY * dmY
+                    if (d2 > 0.000001f) {
+                        var invLen = 1f / sqrt(d2)
+                        if (invLen > 100f) invLen = 100f
+                        dmX *= invLen
+                        dmY *= invLen
                     }
-                    dm *= AA_SIZE
-                    tempNormals[tempPoints + i2 * 2 + 0] = points[i2] + dm
-                    tempNormals[tempPoints + i2 * 2 + 1] = points[i2] - dm
+                    dmX *= AA_SIZE
+                    dmY *= AA_SIZE
+
+                    // Add temporary vertexes
+                    val outVtxIdx = tempPointsIdx + i2 * 2
+                    temp[outVtxIdx + 0].x = points[i2].x + dmX
+                    temp[outVtxIdx + 0].y = points[i2].y + dmY
+                    temp[outVtxIdx + 1].x = points[i2].x - dmX
+                    temp[outVtxIdx + 1].y = points[i2].y - dmY
 
                     // Add indexes
                     idxBuffer[_idxWritePtr + 0] = idx2 + 0
@@ -458,10 +481,10 @@ class DrawList(sharedData: DrawListSharedData?) {
                     vtxBuffer[_vtxWritePtr + 0].pos put points[i]
                     vtxBuffer[_vtxWritePtr + 0].uv put uv
                     vtxBuffer[_vtxWritePtr + 0].col = col
-                    vtxBuffer[_vtxWritePtr + 1].pos put tempNormals[tempPoints + i * 2 + 0]
+                    vtxBuffer[_vtxWritePtr + 1].pos put temp[tempPointsIdx + i * 2 + 0]
                     vtxBuffer[_vtxWritePtr + 1].uv put uv
                     vtxBuffer[_vtxWritePtr + 1].col = colTrans
-                    vtxBuffer[_vtxWritePtr + 2].pos put tempNormals[tempPoints + i * 2 + 1]
+                    vtxBuffer[_vtxWritePtr + 2].pos put temp[tempPointsIdx + i * 2 + 1]
                     vtxBuffer[_vtxWritePtr + 2].uv put uv
                     vtxBuffer[_vtxWritePtr + 2].col = colTrans
                     _vtxWritePtr += 3
@@ -469,14 +492,14 @@ class DrawList(sharedData: DrawListSharedData?) {
             } else {
                 val halfInnerThickness = (thickness - AA_SIZE) * 0.5f
                 if (!closed) {
-                    tempNormals[tempPoints + 0] = points[0] + tempNormals[0] * (halfInnerThickness + AA_SIZE)
-                    tempNormals[tempPoints + 1] = points[0] + tempNormals[0] * (halfInnerThickness)
-                    tempNormals[tempPoints + 2] = points[0] - tempNormals[0] * (halfInnerThickness)
-                    tempNormals[tempPoints + 3] = points[0] - tempNormals[0] * (halfInnerThickness + AA_SIZE)
-                    tempNormals[tempPoints + (points.size - 1) * 4 + 0] = points[points.size - 1] + tempNormals[points.size - 1] * (halfInnerThickness + AA_SIZE)
-                    tempNormals[tempPoints + (points.size - 1) * 4 + 1] = points[points.size - 1] + tempNormals[points.size - 1] * halfInnerThickness
-                    tempNormals[tempPoints + (points.size - 1) * 4 + 2] = points[points.size - 1] - tempNormals[points.size - 1] * halfInnerThickness
-                    tempNormals[tempPoints + (points.size - 1) * 4 + 3] = points[points.size - 1] - tempNormals[points.size - 1] * (halfInnerThickness + AA_SIZE)
+                    temp[tempPointsIdx + 0] = points[0] + temp[0] * (halfInnerThickness + AA_SIZE)
+                    temp[tempPointsIdx + 1] = points[0] + temp[0] * (halfInnerThickness)
+                    temp[tempPointsIdx + 2] = points[0] - temp[0] * (halfInnerThickness)
+                    temp[tempPointsIdx + 3] = points[0] - temp[0] * (halfInnerThickness + AA_SIZE)
+                    temp[tempPointsIdx + (points.size - 1) * 4 + 0] = points[points.size - 1] + temp[points.size - 1] * (halfInnerThickness + AA_SIZE)
+                    temp[tempPointsIdx + (points.size - 1) * 4 + 1] = points[points.size - 1] + temp[points.size - 1] * halfInnerThickness
+                    temp[tempPointsIdx + (points.size - 1) * 4 + 2] = points[points.size - 1] - temp[points.size - 1] * halfInnerThickness
+                    temp[tempPointsIdx + (points.size - 1) * 4 + 3] = points[points.size - 1] - temp[points.size - 1] * (halfInnerThickness + AA_SIZE)
                 }
 
                 // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
@@ -486,19 +509,31 @@ class DrawList(sharedData: DrawListSharedData?) {
                     val idx2 = if ((i1 + 1) == points.size) _vtxCurrentIdx else idx1 + 4
 
                     // Average normals
-                    val dm = (tempNormals[i1] + tempNormals[i2]) * 0.5f
-                    val dmr2 = dm.x * dm.x + dm.y * dm.y
-                    if (dmr2 > 0.000001f) {
-                        var scale = 1f / dmr2
-                        if (scale > 100f) scale = 100f
-                        dm *= scale
+                    var dmX = (temp[i1].x + temp[i2].x) * 0.5f
+                    var dmY = (temp[i1].y + temp[i2].y) * 0.5f
+//                    IM_NORMALIZE2F_OVER_EPSILON_CLAMP(dmX, dmY, 0.000001f, 100.0f)
+                    val d2 = dmX * dmX + dmY * dmY
+                    if (d2 > 0.000001f) {
+                        var invLen = 1f / sqrt(d2)
+                        if (invLen > 100f) invLen = 100f
+                        dmX *= invLen
+                        dmY *= invLen
                     }
-                    val dmOut = dm * (halfInnerThickness + AA_SIZE)
-                    val dmIn = dm * halfInnerThickness
-                    tempNormals[tempPoints + i2 * 4 + 0] = points[i2] + dmOut
-                    tempNormals[tempPoints + i2 * 4 + 1] = points[i2] + dmIn
-                    tempNormals[tempPoints + i2 * 4 + 2] = points[i2] - dmIn
-                    tempNormals[tempPoints + i2 * 4 + 3] = points[i2] - dmOut
+                    val dmOutX = dmX * (halfInnerThickness + AA_SIZE)
+                    val dmOutY = dmY * (halfInnerThickness + AA_SIZE)
+                    val dmInX = dmX * halfInnerThickness
+                    val dmInY = dmY * halfInnerThickness
+
+                    // Add temporary vertexes
+                    val outVtxIdx = tempPointsIdx + i2 * 4
+                    temp[outVtxIdx + 0].x = points[i2].x + dmOutX
+                    temp[outVtxIdx + 0].y = points[i2].y + dmOutY
+                    temp[outVtxIdx + 1].x = points[i2].x + dmInX
+                    temp[outVtxIdx + 1].y = points[i2].y + dmInY
+                    temp[outVtxIdx + 2].x = points[i2].x - dmInX
+                    temp[outVtxIdx + 2].y = points[i2].y - dmInY
+                    temp[outVtxIdx + 3].x = points[i2].x - dmOutX
+                    temp[outVtxIdx + 3].y = points[i2].y - dmOutY
 
                     // Add indexes
                     idxBuffer[_idxWritePtr + 0] = idx2 + 1
@@ -526,16 +561,16 @@ class DrawList(sharedData: DrawListSharedData?) {
 
                 // Add vertexes
                 for (i in 0 until points.size) {
-                    vtxBuffer[_vtxWritePtr + 0].pos put tempNormals[tempPoints + i * 4 + 0]
+                    vtxBuffer[_vtxWritePtr + 0].pos put temp[tempPointsIdx + i * 4 + 0]
                     vtxBuffer[_vtxWritePtr + 0].uv put uv
                     vtxBuffer[_vtxWritePtr + 0].col = colTrans
-                    vtxBuffer[_vtxWritePtr + 1].pos put tempNormals[tempPoints + i * 4 + 1]
+                    vtxBuffer[_vtxWritePtr + 1].pos put temp[tempPointsIdx + i * 4 + 1]
                     vtxBuffer[_vtxWritePtr + 1].uv put uv
                     vtxBuffer[_vtxWritePtr + 1].col = col
-                    vtxBuffer[_vtxWritePtr + 2].pos put tempNormals[tempPoints + i * 4 + 2]
+                    vtxBuffer[_vtxWritePtr + 2].pos put temp[tempPointsIdx + i * 4 + 2]
                     vtxBuffer[_vtxWritePtr + 2].uv put uv
                     vtxBuffer[_vtxWritePtr + 2].col = col
-                    vtxBuffer[_vtxWritePtr + 3].pos put tempNormals[tempPoints + i * 4 + 3]
+                    vtxBuffer[_vtxWritePtr + 3].pos put temp[tempPointsIdx + i * 4 + 3]
                     vtxBuffer[_vtxWritePtr + 3].uv put uv
                     vtxBuffer[_vtxWritePtr + 3].col = colTrans
                     _vtxWritePtr += 4
@@ -552,24 +587,33 @@ class DrawList(sharedData: DrawListSharedData?) {
                 val i2 = if ((i1 + 1) == points.size) 0 else i1 + 1
                 val p1 = points[i1]
                 val p2 = points[i2]
-                val diff = p2 - p1
-                diff *= diff.invLength(1f)
 
-                val d = diff * (thickness * 0.5f)
-                vtxBuffer[_vtxWritePtr + 0].pos.x = p1.x + d.y
-                vtxBuffer[_vtxWritePtr + 0].pos.y = p1.y - d.x
+                var dX = p2.x - p1.x
+                var dY = p2.y - p1.y
+//                IM_NORMALIZE2F_OVER_ZERO(dX, dY)
+                val d2 = dX * dX + dY * dY
+                if (d2 > 0f) {
+                    val invLen = 1f / sqrt(d2)
+                    dX *= invLen
+                    dY *= invLen
+                }
+                dX *= thickness * 0.5f
+                dY *= thickness * 0.5f
+
+                vtxBuffer[_vtxWritePtr + 0].pos.x = p1.x + dY
+                vtxBuffer[_vtxWritePtr + 0].pos.y = p1.y - dX
                 vtxBuffer[_vtxWritePtr + 0].uv put uv
                 vtxBuffer[_vtxWritePtr + 0].col = col
-                vtxBuffer[_vtxWritePtr + 1].pos.x = p2.x + d.y
-                vtxBuffer[_vtxWritePtr + 1].pos.y = p2.y - d.x
+                vtxBuffer[_vtxWritePtr + 1].pos.x = p2.x + dY
+                vtxBuffer[_vtxWritePtr + 1].pos.y = p2.y - dX
                 vtxBuffer[_vtxWritePtr + 1].uv put uv
                 vtxBuffer[_vtxWritePtr + 1].col = col
-                vtxBuffer[_vtxWritePtr + 2].pos.x = p2.x - d.y
-                vtxBuffer[_vtxWritePtr + 2].pos.y = p2.y + d.x
+                vtxBuffer[_vtxWritePtr + 2].pos.x = p2.x - dY
+                vtxBuffer[_vtxWritePtr + 2].pos.y = p2.y + dX
                 vtxBuffer[_vtxWritePtr + 2].uv put uv
                 vtxBuffer[_vtxWritePtr + 2].col = col
-                vtxBuffer[_vtxWritePtr + 3].pos.x = p1.x - d.y
-                vtxBuffer[_vtxWritePtr + 3].pos.y = p1.y + d.x
+                vtxBuffer[_vtxWritePtr + 3].pos.x = p1.x - dY
+                vtxBuffer[_vtxWritePtr + 3].pos.y = p1.y + dX
                 vtxBuffer[_vtxWritePtr + 3].uv put uv
                 vtxBuffer[_vtxWritePtr + 3].col = col
                 _vtxWritePtr += 4
@@ -586,7 +630,9 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-    /** Note: Anti-aliased filling requires points to be in clockwise order. */
+    /** We intentionally avoid using ImVec2 and its math operators here to reduce cost to a minimum for debug/non-inlined builds.
+     *
+     *  Note: Anti-aliased filling requires points to be in clockwise order. */
     fun addConvexPolyFilled(points: ArrayList<Vec2>, col: Int) {
 
         if (points.size < 3)
@@ -613,16 +659,23 @@ class DrawList(sharedData: DrawListSharedData?) {
             }
 
             // Compute normals
-            val tempNormals = Array(points.size, { Vec2() })
+            val tempNormals = Array(points.size) { Vec2() }
             var i0 = points.lastIndex
             var i1 = 0
             while (i1 < points.size) {
                 val p0 = points[i0]
                 val p1 = points[i1]
-                val diff = p1 - p0
-                diff *= diff.invLength(1f)
-                tempNormals[i0].x = diff.y
-                tempNormals[i0].y = -diff.x
+                var dX = p1.x - p0.x
+                var dY = p1.y - p0.y
+//                IM_NORMALIZE2F_OVER_ZERO(dx, dy)
+                val d2 = dX * dX + dY * dY
+                if (d2 > 0f) {
+                    val invLen = 1f / sqrt(d2)
+                    dX *= invLen
+                    dY *= invLen
+                }
+                tempNormals[i0].x = dY
+                tempNormals[i0].y = -dX
                 i0 = i1++
             }
 
@@ -632,20 +685,27 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // Average normals
                 val n0 = tempNormals[i0]
                 val n1 = tempNormals[i1]
-                val dm = (n0 + n1) * 0.5f
-                val dmr2 = dm.x * dm.x + dm.y * dm.y
-                if (dmr2 > 0.000001f) {
-                    var scale = 1f / dmr2
-                    if (scale > 100f) scale = 100f
-                    dm *= scale
+                var dmX = (n0.x + n1.x) * 0.5f
+                var dmY = (n0.y + n1.y) * 0.5f
+//                IM_NORMALIZE2F_OVER_EPSILON_CLAMP(dmX, dmY, 0.000001f, 100.0f)
+                val d2 = dmX * dmX + dmY * dmY
+                if (d2 > 0.000001f) {
+                    var invLen = 1f / sqrt(d2)
+                    if (invLen > 100f)
+                        invLen = 100f
+                    dmX *= invLen
+                    dmY *= invLen
                 }
-                dm *= AA_SIZE * 0.5f
+                dmX *= AA_SIZE * 0.5f
+                dmY *= AA_SIZE * 0.5f
 
                 // Add vertices
-                vtxBuffer[_vtxWritePtr + 0].pos = points[i1] - dm
+                vtxBuffer[_vtxWritePtr + 0].pos.x = points[i1].x - dmX
+                vtxBuffer[_vtxWritePtr + 0].pos.y = points[i1].y - dmY
                 vtxBuffer[_vtxWritePtr + 0].uv put uv
                 vtxBuffer[_vtxWritePtr + 0].col = col        // Inner
-                vtxBuffer[_vtxWritePtr + 1].pos = points[i1] + dm
+                vtxBuffer[_vtxWritePtr + 1].pos.x = points[i1].x + dmX
+                vtxBuffer[_vtxWritePtr + 1].pos.y = points[i1].y + dmY
                 vtxBuffer[_vtxWritePtr + 1].uv put uv
                 vtxBuffer[_vtxWritePtr + 1].col = colTrans  // Outer
                 _vtxWritePtr += 2
@@ -694,7 +754,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pathLineTo(pos: Vec2) = _path.add(pos)
 
     fun pathLineToMergeDuplicate(pos: Vec2) {
-        if (_path.isEmpty() || _path.last() != pos) _path.add(pos)
+        if (_path.isEmpty() || _path.last() != pos) _path += pos
     }
 
     /** Note: Anti-aliased filling requires points to be in clockwise order. */
@@ -705,12 +765,14 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun pathArcTo(centre: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 10) {
         if (radius == 0f) {
-            _path.add(centre)
+            _path += centre
             return
         }
+        // Note that we are adding a point at both a_min and a_max.
+        // If you are trying to draw a full closed circle you don't want the overlapping points!
         for (i in 0..numSegments) {
             val a = aMin + (i.f / numSegments) * (aMax - aMin)
-            _path.add(Vec2(centre.x + glm.cos(a) * radius, centre.y + glm.sin(a) * radius))
+            _path += Vec2(centre.x + glm.cos(a) * radius, centre.y + glm.sin(a) * radius)
         }
     }
 
@@ -718,12 +780,12 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pathArcToFast(centre: Vec2, radius: Float, aMinOf12: Int, aMaxOf12: Int) {
 
         if (radius == 0f || aMinOf12 > aMaxOf12) {
-            _path.add(centre)
+            _path += centre
             return
         }
         for (a in aMinOf12..aMaxOf12) {
             val c = _data.circleVtx12[a % _data.circleVtx12.size]
-            _path.add(Vec2(centre.x + c.x * radius, centre.y + c.y * radius))
+            _path += Vec2(centre.x + c.x * radius, centre.y + c.y * radius)
         }
     }
 
@@ -995,6 +1057,28 @@ class DrawList(sharedData: DrawListSharedData?) {
         _idxWritePtr += 6
     }
 
+    // On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superflous function calls to optimize debug/non-inlined builds.
+    // Those macros expects l-values.
+//    fun NORMALIZE2F_OVER_ZERO(vX: Float, vY: Float) {
+//        val d2 = vX * vX + vY * vY
+//        if (d2 > 0.0f) {
+//            val invLen = 1f / sqrt(d2)
+//            vX *= invLen
+//            vY *= invLen
+//        }
+//    }
+//
+//    fun NORMALIZE2F_OVER_EPSILON_CLAMP(vX: Float, vY: Float, eps: Float, invLenMax: Float) {
+//        val d2 = vX * vX + vY * vY
+//        if (d2 > eps) {
+//            var invLen = 1f / sqrt(d2)
+//            if (invLen > invLenMax)
+//                invLen = invLenMax
+//            vX *= invLen
+//            vY *= invLen
+//        }
+//    }
+
     fun primQuadUV(a: Vec2, b: Vec2, c: Vec2, d: Vec2, uvA: Vec2, uvB: Vec2, uvC: Vec2, uvD: Vec2, col: Int) {
         val idx = _vtxCurrentIdx
         idxBuffer[_idxWritePtr + 0] = idx; idxBuffer[_idxWritePtr + 1] = idx + 1; idxBuffer[_idxWritePtr + 2] = idx + 2
@@ -1110,8 +1194,12 @@ class DrawList(sharedData: DrawListSharedData?) {
 }
 
 
-/** All draw data to render an ImGui frame
- *  (NB: the style and the naming convention here is a little inconsistent but we preserve them for backward compatibility purpose) */
+/** -----------------------------------------------------------------------------
+ *  All draw command lists required to render the frame + pos/size coordinates to use for the projection matrix.
+ *
+ *  Draw List API (ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListFlags, ImDrawList, ImDrawData)
+ *  Hold a series of drawing commands. The user provides a renderer for ImDrawData which essentially contains an array of ImDrawList.
+ *  ----------------------------------------------------------------------------- */
 class DrawData {
 
     /** Only valid after Render() is called and before the next NewFrame() is called.   */

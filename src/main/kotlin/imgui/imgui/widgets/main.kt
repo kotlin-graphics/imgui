@@ -36,7 +36,7 @@ import imgui.internal.ButtonFlag as Bf
 
 
 /** Widgets: Main
- *  Most widgets return true when the value has been changed or when pressed/selected  */
+ *  - Most widgets return true when the value has been changed or when pressed/selected  */
 interface main {
 
     /** button  */
@@ -66,7 +66,7 @@ interface main {
         val id = window.getId(strId)
         val size = calcItemSize(sizeArg, 0f, 0f)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        itemSize(bb)
+        itemSize(size)
         if (!itemAdd(bb, id)) return false
 
         val (pressed, _, _) = buttonBehavior(bb, id)
@@ -180,6 +180,8 @@ interface main {
         if (g.logEnabled) logRenderedText(textBb.min, if (v) "[x]" else "[ ]")
         if (labelSize.x > 0f) renderText(textBb.min, label)
 
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else ItemStatusFlag.None)
+
         return pressed
     }
 
@@ -263,6 +265,7 @@ interface main {
 
     /** shortcut to handle the above pattern when value is an integer */
     fun radioButton(label: String, v: IntArray, vButton: Int) = radioButton(label, v[0] == vButton).also { if (it) v[0] = vButton }
+
     /** shortcut to handle the above pattern when value is an integer */
     fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int) = radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
 

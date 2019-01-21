@@ -7,6 +7,7 @@ import glm_.func.common.max
 import glm_.func.common.min
 import glm_.glm
 import glm_.i
+import glm_.pow
 import glm_.parseInt
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -169,6 +170,7 @@ interface imgui_internal {
         }
     }
 
+    /** FIXME-NAV: The existence of SetNavID/SetNavIDWithRectRel/SetFocusID is incredibly messy and confusing and needs some explanation or refactoring. */
     fun setFocusId(id: ID, window: Window) {
 
         assert(id != 0)
@@ -181,9 +183,9 @@ interface imgui_internal {
         g.navId = id
         g.navWindow = window
         g.navLayer = navLayer
-        window.navLastIds[navLayer] = id
+        window.navLastIds[navLayer.i] = id
         if (window.dc.lastItemId == id)
-            window.navRectRel[navLayer].put(window.dc.lastItemRect.min - window.pos, window.dc.lastItemRect.max - window.pos)
+            window.navRectRel[navLayer.i].put(window.dc.lastItemRect.min - window.pos, window.dc.lastItemRect.max - window.pos)
 
         if (g.activeIdSource == InputSource.Nav)
             g.navDisableMouseHover = true
@@ -234,22 +236,24 @@ interface imgui_internal {
         // Always align ourselves on pixel boundaries
         val lineHeight = glm.max(window.dc.currentLineSize.y, size.y)
         val textBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, textOffsetY)
-        //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
-        window.dc.cursorPosPrevLine.put(window.dc.cursorPos.x + size.x, window.dc.cursorPos.y)
-        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
-        window.dc.cursorPos.y = (window.dc.cursorPos.y + lineHeight + style.itemSpacing.y).i.f
-        window.dc.cursorMaxPos.x = glm.max(window.dc.cursorMaxPos.x, window.dc.cursorPosPrevLine.x)
-        window.dc.cursorMaxPos.y = glm.max(window.dc.cursorMaxPos.y, window.dc.cursorPos.y - style.itemSpacing.y)
+        window.dc.apply {
+            //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
+            cursorPosPrevLine.put(cursorPos.x + size.x, cursorPos.y)
+            cursorPos.x = (window.pos.x + indent + columnsOffset).i.f
+            cursorPos.y = (cursorPos.y + lineHeight + style.itemSpacing.y).i.f
+            cursorMaxPos.x = cursorMaxPos.x max cursorPosPrevLine.x
+            cursorMaxPos.y = cursorMaxPos.y max (cursorPos.y - style.itemSpacing.y)
 
-        //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]
+            //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]
 
-        window.dc.prevLineSize.y = lineHeight
-        window.dc.prevLineTextBaseOffset = textBaseOffset
-        window.dc.currentLineTextBaseOffset = 0f
-        window.dc.currentLineSize.y = 0f
+            prevLineSize.y = lineHeight
+            prevLineTextBaseOffset = textBaseOffset
+            currentLineTextBaseOffset = 0f
+            currentLineSize.y = 0f
 
-        // Horizontal layout mode
-        if (window.dc.layoutType == Lt.Horizontal) sameLine()
+            // Horizontal layout mode
+            if (layoutType == Lt.Horizontal) sameLine()
+        }
     }
 
     fun itemSize(bb: Rect, textOffsetY: Float = 0f) = itemSize(bb.size, textOffsetY)
@@ -259,9 +263,6 @@ interface imgui_internal {
      *  available surface declare their minimum size requirement to ItemSize() and then use a larger region for
      *  drawing/interaction, which is passed to ItemAdd().  */
     fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null): Boolean {
-
-        if(IMGUI_ENABLE_TEST_ENGINE_HOOKS)
-            ImGuiTestEngineHook_ItemAdd(bb, id, navBbArg)
 
         val window = g.currentWindow!!
         if (id != 0) {
@@ -282,8 +283,11 @@ interface imgui_internal {
         val dc = g.currentWindow!!.dc.apply {
             lastItemId = id
             lastItemRect = bb
-            lastItemStatusFlags = 0
+            lastItemStatusFlags = ItemStatusFlag.None.i
         }
+
+        if (IMGUI_ENABLE_TEST_ENGINE && id != 0)
+            ImGuiTestEngineHook_ItemAdd(bb, id)
 
         // Clipping test
         if (isClippedEx(bb, id, false)) return false
@@ -417,12 +421,12 @@ interface imgui_internal {
     fun openPopupEx(id: ID) {
 
         val parentWindow = g.currentWindow!!
-        val currentStackSize = g.currentPopupStack.size
+        val currentStackSize = g.beginPopupStack.size
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
         val openPopupPos = navCalcPreferredRefPos()
         val popupRef = PopupRef(popupId = id, window = null, parentWindow = parentWindow, openFrameCount = g.frameCount,
                 openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
-                openMousePos = if(isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
+                openMousePos = if (isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
 //        println("" + g.openPopupStack.size +", "+currentStackSize)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack += popupRef
@@ -449,20 +453,26 @@ interface imgui_internal {
         }
     }
 
-    fun closePopup(id: ID) {
-        if (!isPopupOpen(id)) return
-        closePopupToLevel(g.openPopupStack.lastIndex)
-    }
-
-    fun closePopupToLevel(remaining: Int) {
+    fun closePopupToLevel(remaining: Int, applyFocusToWindowUnder: Boolean) {
         assert(remaining >= 0)
         var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
         else g.openPopupStack[0].parentWindow
-        if (g.navLayer == 0)
-            focusWindow = navRestoreLastChildNavWindow(focusWindow)
-        focusWindow.focus()
-        focusWindow.dc.navHideHighlightOneFrame = true
-        for (i in remaining until g.openPopupStack.size) g.openPopupStack.pop()  // resize(remaining)
+        for (i in remaining until g.openPopupStack.size) // resize(remaining)
+            g.openPopupStack.pop()
+
+        /*  FIXME: This code is faulty and we may want to eventually to replace or remove the 'apply_focus_to_window_under=true' path completely.
+            Instead of using g.OpenPopupStack[remaining-1].Window etc. we should find the highest root window that is behind the popups we are closing.
+            The current code will set focus to the parent of the popup window which is incorrect.
+            It rarely manifested until now because UpdateMouseMovingWindow() would call FocusWindow() again on the clicked window,
+            leading to a chain of focusing A (clicked window) then B (parent window of the popup) then A again.
+            However if the clicked window has the _NoMove flag set we would be left with B focused.
+            For now, we have disabled this path when called from ClosePopupsOverWindow() because the users of ClosePopupsOverWindow() don't need to alter focus anyway,
+            but we should inspect and fix this properly. */
+        if (applyFocusToWindowUnder) {
+            if (g.navLayer == NavLayer.Main)
+                focusWindow = navRestoreLastChildNavWindow(focusWindow)
+            focusWindow.focus()
+        }
     }
 
     fun closePopupsOverWindow(refWindow: Window?) {
@@ -472,37 +482,43 @@ interface imgui_internal {
 
         /*  When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it.
             Don't close our own child popup windows */
-        var n = 0
+        var popupCountToKeep = 0
         if (refWindow != null)
-            while (n < g.openPopupStack.size) {
-                val popup = g.openPopupStack[n]
+        // Find the highest popup which is a descendant of the reference window (generally reference window = NavWindow)
+            while (popupCountToKeep < g.openPopupStack.size) {
+                val popup = g.openPopupStack[popupCountToKeep]
                 if (popup.window == null) {
-                    n++
+                    popupCountToKeep++
                     continue
                 }
                 assert(popup.window!!.flags has Wf.Popup)
                 if (popup.window!!.flags has Wf.ChildWindow) {
-                    n++
+                    popupCountToKeep++
                     continue
                 }
                 // Trim the stack if popups are not direct descendant of the reference window (which is often the NavWindow)
-                var hasFocus = false
-                var m = n
-                while (m < g.openPopupStack.size && !hasFocus) {
-                    hasFocus = g.openPopupStack[m].window != null && g.openPopupStack[m].window!!.rootWindow === refWindow.rootWindow
+                var popupOrDescendentHasFocus = false
+                var m = popupCountToKeep
+                while (m < g.openPopupStack.size && !popupOrDescendentHasFocus) {
+                    g.openPopupStack[m].window?.let {
+                        if (it.rootWindow === refWindow.rootWindow)
+                            popupOrDescendentHasFocus = true
+                    }
                     m++
                 }
-                if (!hasFocus) break
-                n++
+                if (!popupOrDescendentHasFocus) break
+                popupCountToKeep++
             }
 
-        if (n < g.openPopupStack.size)   // This test is not required but it allows to set a convenient breakpoint on the block below
-            closePopupToLevel(n)
+        if (popupCountToKeep < g.openPopupStack.size) { // This test is not required but it allows to set a convenient breakpoint on the statement below
+            //IMGUI_DEBUG_LOG("ClosePopupsOverWindow(%s) -> ClosePopupToLevel(%d)\n", ref_window->Name, popup_count_to_keep);
+            closePopupToLevel(popupCountToKeep, false)
+        }
     }
 
-    // FIXME
-    /** return true if the popup is open    */
-    fun isPopupOpen(id: ID) = g.openPopupStack.size > g.currentPopupStack.size && g.openPopupStack[g.currentPopupStack.size].popupId == id
+    /** return true if the popup is open at the current begin-ed level of the popup stack.
+     *  Test for id within current popup stack level (currently begin-ed into); this doesn't scan the whole popup stack! */
+    fun isPopupOpen(id: ID) = g.openPopupStack.size > g.beginPopupStack.size && g.openPopupStack[g.beginPopupStack.size].popupId == id
 
     fun beginPopupEx(id: ID, extraFlags: WindowFlags): Boolean {
 
@@ -512,7 +528,7 @@ interface imgui_internal {
         }
 
         val name = when {
-            extraFlags has Wf.ChildMenu -> "##Menu_%02d".format(style.locale, g.currentPopupStack.size)    // Recycle windows based on depth
+            extraFlags has Wf.ChildMenu -> "##Menu_%02d".format(style.locale, g.beginPopupStack.size)    // Recycle windows based on depth
             else -> "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
         }
         val isOpen = begin(name, null, extraFlags or Wf.Popup)
@@ -536,8 +552,7 @@ interface imgui_internal {
                     windowName = "##Tooltip_%02d".format(++g.tooltipOverrideCount)
                 }
             }
-        val flags = Wf.Tooltip or Wf.NoInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or
-                Wf.AlwaysAutoResize or Wf.NoNav
+        val flags = Wf.Tooltip or Wf.NoMouseInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
         begin(windowName, null, flags or extraFlags)
     }
 
@@ -611,7 +626,7 @@ interface imgui_internal {
                 if (dir == Dir.Right) pos.put(rAvoid.min.x, rAvoid.min.y - size.y) // Above, Toward Right
                 if (dir == Dir.Left) pos.put(rAvoid.max.x - size.x, rAvoid.max.y) // Below, Toward Left
                 if (dir == Dir.Up) pos.put(rAvoid.max.x - size.x, rAvoid.min.y - size.y) // Above, Toward Left
-                if (!rOuter.contains(Rect(pos, pos + size))) continue
+                if (Rect(pos, pos + size) !in rOuter) continue
                 lastDir = dir
                 return pos
             }
@@ -676,12 +691,12 @@ interface imgui_internal {
         g.navMoveDir = clipDir
         g.navMoveRequestForward = NavForward.ForwardQueued
         g.navMoveRequestFlags = moveFlags
-        g.navWindow!!.navRectRel[g.navLayer] = bbRel
+        g.navWindow!!.navRectRel[g.navLayer.i] = bbRel
     }
 
     fun navMoveRequestTryWrapping(window: Window, moveFlags: NavMoveFlags) {
 
-        if (g.navWindow !== window || !navMoveRequestButNoResultYet() || g.navMoveRequestForward != NavForward.None || g.navLayer != 0)
+        if (g.navWindow !== window || !navMoveRequestButNoResultYet() || g.navMoveRequestForward != NavForward.None || g.navLayer != NavLayer.Main)
             return
         assert(moveFlags != 0) // No points calling this with no wrapping
         val bbRel = window.navRectRel[0]
@@ -781,15 +796,15 @@ interface imgui_internal {
         g.navNextActivateId = id
     }
 
-    fun setNavId(id: ID, navLayer: Int) {
-        assert(navLayer == 0 || navLayer == 1)
+    fun setNavId(id: ID, navLayer: NavLayer) {
+        // assert(navLayer == 0 || navLayer == 1) useless on jvm
         g.navId = id
-        g.navWindow!!.navLastIds[navLayer] = id
+        g.navWindow!!.navLastIds[navLayer.i] = id
     }
 
-    fun setNavIDWithRectRel(id: ID, navLayer: Int, rectRel: Rect) {
+    fun setNavIDWithRectRel(id: ID, navLayer: NavLayer, rectRel: Rect) {
         setNavId(id, navLayer)
-        g.navWindow!!.navRectRel[navLayer] put rectRel
+        g.navWindow!!.navRectRel[navLayer.i] put rectRel
         g.navMousePosDirty = true
         g.navDisableHighlight = false
         g.navDisableMouseHover = true
@@ -813,7 +828,7 @@ interface imgui_internal {
     fun clearDragDrop() = with(g) {
         dragDropActive = false
         dragDropPayload.clear()
-        dragDropAcceptFlags = 0
+        dragDropAcceptFlags = Ddf.None.i
         dragDropAcceptIdPrev = 0
         dragDropAcceptIdCurr = 0
         dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
@@ -984,6 +999,108 @@ interface imgui_internal {
     }
 
 
+    // Tab Bars
+
+    fun tabItemCalcSize(label: String, hasCloseButton: Boolean): Vec2 {
+
+        val labelSize = calcTextSize(label, 0, true)
+        val size = Vec2(labelSize.x + style.framePadding.x, labelSize.y + style.framePadding.y * 2f)
+        size.x += style.framePadding.x + when {
+            hasCloseButton -> style.itemInnerSpacing.x + g.fontSize // We use Y intentionally to fit the close button circle.
+            else -> 1f
+        }
+        return Vec2(size.x min TabBar.calcMaxTabWidth(), size.y)
+    }
+
+    fun tabItemBackground(drawList: DrawList, bb: Rect, flags: TabItemFlags, col: Int) {
+
+        // While rendering tabs, we trim 1 pixel off the top of our bounding box so they can fit within a regular frame height while looking "detached" from it.
+        val width = bb.width
+        assert(width > 0f)
+        val rounding = max(0f, min(style.tabRounding, width * 0.5f - 1f))
+        val y1 = bb.min.y + 1f
+        val y2 = bb.max.y - 1f
+        drawList.apply {
+            pathLineTo(Vec2(bb.min.x, y2))
+            pathArcToFast(Vec2(bb.min.x + rounding, y1 + rounding), rounding, 6, 9)
+            pathArcToFast(Vec2(bb.max.x - rounding, y1 + rounding), rounding, 9, 12)
+            pathLineTo(Vec2(bb.max.x, y2))
+            addConvexPolyFilled(_path, col)
+            if (style.tabBorderSize > 0f)
+                addPolyline(_path, Col.Border.u32, false, style.tabBorderSize)
+            pathClear()
+        }
+    }
+
+    /** Render text label (with custom clipping) + Unsaved Document marker + Close Button logic */
+    fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, label: String, tabId: ID, closeButtonId: ID): Boolean {
+
+        val labelSize = calcTextSize(label, 0, true)
+        if (bb.width <= 1f) return false
+
+        // Render text label (with clipping + alpha gradient) + unsaved marker
+        val TAB_UNSAVED_MARKER = "*"
+        val textPixelClipBb = Rect(bb.min.x + style.framePadding.x, bb.min.y + style.framePadding.y, bb.max.x - style.framePadding.x, bb.max.y)
+        if (flags has TabItemFlag.UnsavedDocument) {
+            textPixelClipBb.max.x -= calcTextSize(TAB_UNSAVED_MARKER, 0, false).x
+            val unsavedMarkerPos = Vec2(min(bb.min.x + style.framePadding.x + labelSize.x + 2, textPixelClipBb.max.x), bb.min.y + style.framePadding.y + (-g.fontSize * 0.25f).i.f)
+            renderTextClippedEx(drawList, unsavedMarkerPos, bb.max - style.framePadding, TAB_UNSAVED_MARKER, 0, null)
+        }
+        val textEllipsisClipBb = Rect(textPixelClipBb)
+
+        /*  Close Button
+            We are relying on a subtle and confusing distinction between 'hovered' and 'g.HoveredId' which happens
+            because we are using ImGuiButtonFlags_AllowOverlapMode + SetItemAllowOverlap()
+            'hovered' will be true when hovering the Tab but NOT when hovering the close button
+            'g.HoveredId==id' will be true when hovering the Tab including when hovering the close button
+            'g.ActiveId==close_button_id' will be true when we are holding on the close button, in which case both hovered booleans are false */
+        var closeButtonPressed = false
+        var closeButtonVisible = false
+        if (closeButtonId != 0)
+            if (g.hoveredId == tabId || g.hoveredId == closeButtonId || g.activeId == closeButtonId)
+                closeButtonVisible = true
+        if (closeButtonVisible) {
+            val closeButtonSz = g.fontSize * 0.5f
+            itemHoveredDataBackup {
+                if (closeButton(closeButtonId, Vec2(bb.max.x - style.framePadding.x - closeButtonSz, bb.min.y + style.framePadding.y + closeButtonSz), closeButtonSz))
+                    closeButtonPressed = true
+            }
+
+            // Close with middle mouse button
+            if (flags hasnt TabItemFlag.NoCloseWithMiddleMouseButton && isMouseClicked(2))
+                closeButtonPressed = true
+
+            textPixelClipBb.max.x -= closeButtonSz * 2f
+        }
+
+        // Label with ellipsis
+        // FIXME: This should be extracted into a helper but the use of text_pixel_clip_bb and !close_button_visible makes it tricky to abstract at the moment
+        val labelDisplayEnd = findRenderedTextEnd(label)
+        if (labelSize.x > textEllipsisClipBb.width) {
+            val ellipsisDotCount = 3
+            val ellipsisWidth = (1f + 1f) * ellipsisDotCount - 1f
+            val remaining = IntArray(1)
+            var labelSizeClippedX = g.font.calcTextSizeA(g.fontSize, textEllipsisClipBb.width - ellipsisWidth + 1f, 0f, label, labelDisplayEnd, remaining).x
+            var labelEnd = remaining[0]
+            if (labelEnd == 0 && labelEnd < labelDisplayEnd) {    // Always display at least 1 character if there's no room for character + ellipsis
+                labelEnd = labelDisplayEnd // TODO CHECK textCountUtf8BytesFromChar(label, labelDisplayEnd)
+                labelSizeClippedX = g.font.calcTextSizeA(g.fontSize, Float.MAX_VALUE, 0f, label, labelEnd).x
+            }
+            while (labelEnd > 0 && label[labelEnd - 1].isBlankA) { // Trim trailing space
+                labelEnd--
+                labelSizeClippedX -= g.font.calcTextSizeA(g.fontSize, Float.MAX_VALUE, 0f, label, labelEnd + 1).x // Ascii blanks are always 1 byte
+            }
+            renderTextClippedEx(drawList, textPixelClipBb.min, textPixelClipBb.max, label, labelEnd, labelSize, Vec2())
+
+            val ellipsisX = textPixelClipBb.min.x + labelSizeClippedX + 1f
+            if (!closeButtonVisible && ellipsisX + ellipsisWidth <= bb.max.x)
+                renderPixelEllipsis(drawList, Vec2(ellipsisX, textPixelClipBb.min.y), ellipsisDotCount, Col.Text.u32)
+        } else
+            renderTextClippedEx(drawList, textPixelClipBb.min, textPixelClipBb.max, label, labelDisplayEnd, labelSize, Vec2())
+
+        return closeButtonPressed
+    }
+
     /*  Render helpers
         AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND
         BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT.
@@ -1024,13 +1141,8 @@ interface imgui_internal {
     /** Default clipRect uses (pos_min,pos_max)
      *  Handle clipping on CPU immediately (vs typically let the GPU clip the triangles that are overlapping the clipping
      *  rectangle edges)    */
-    fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: String, textEnd: Int = 0, textSizeIfKnown: Vec2? = null,
-                          align: Vec2 = Vec2(), clipRect: Rect? = null) {
-        // Hide anything after a '##' string
-        val textDisplayEnd = findRenderedTextEnd(text, textEnd)
-        if (textDisplayEnd == 0) return
-
-        val window = g.currentWindow!!
+    fun renderTextClippedEx(drawList: DrawList, posMin: Vec2, posMax: Vec2, text: String, textDisplayEnd: Int = 0,
+                            textSizeIfKnown: Vec2? = null, align: Vec2 = Vec2(), clipRect: Rect? = null) {
 
         // Perform CPU side clipping for single clipped element to avoid using scissor state
         val pos = Vec2(posMin)
@@ -1051,11 +1163,21 @@ interface imgui_internal {
         // Render
         if (needClipping) {
             val fineClipRect = Vec4(clipMin.x, clipMin.y, clipMax.x, clipMax.y)
-            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, fineClipRect)
+            drawList.addText(null, 0f, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, fineClipRect)
         } else
-            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, null)
-//    if (g.logEnabled) TODO
-//        LogRenderedText(pos, text, textDisplayEnd)
+            drawList.addText(null, 0f, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, null)
+    }
+
+    fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: String, textEnd: Int = 0, textSizeIfKnown: Vec2? = null,
+                          align: Vec2 = Vec2(), clipRect: Rect? = null) {
+        // Hide anything after a '##' string
+        val textDisplayEnd = findRenderedTextEnd(text, textEnd)
+        if (textDisplayEnd == 0) return
+
+        val window = g.currentWindow!!
+        renderTextClippedEx(window.drawList, posMin, posMax, text, textDisplayEnd, textSizeIfKnown, align, clipRect)
+        if (g.logEnabled)
+            logRenderedText(posMax, text, textDisplayEnd)
     }
 
     /** Render a rectangle shaped with optional rounding and borders    */
@@ -1190,7 +1312,7 @@ interface imgui_internal {
             val THICKNESS = 2f
             val DISTANCE = 3f + THICKNESS * 0.5f
             displayRect expand Vec2(DISTANCE)
-            val fullyVisible = window.clipRect contains displayRect
+            val fullyVisible = displayRect in window.clipRect
             if (!fullyVisible)
                 window.drawList.pushClipRect(displayRect) // check order here down
             window.drawList.addRect(displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),
@@ -1222,11 +1344,12 @@ interface imgui_internal {
         val invRounding = 1f / rounding
         val arc0B = acos01(1f - (p0.x - rect.min.x) * invRounding)
         val arc0E = acos01(1f - (p1.x - rect.min.x) * invRounding)
+        val halfPI = glm.HPIf // We will == compare to this because we know this is the exact value ImAcos01 can return.
         val x0 = glm.max(p0.x, rect.min.x + rounding)
         if (arc0B == arc0E) {
             drawList.pathLineTo(Vec2(x0, p1.y))
             drawList.pathLineTo(Vec2(x0, p0.y))
-        } else if (arc0B == 0f && arc0E == glm.PIf * 0.5f) {
+        } else if (arc0B == 0f && arc0E == halfPI) {
             drawList.pathArcToFast(Vec2(x0, p1.y - rounding), rounding, 3, 6) // BL
             drawList.pathArcToFast(Vec2(x0, p0.y + rounding), rounding, 6, 9) // TR
         } else {
@@ -1240,7 +1363,7 @@ interface imgui_internal {
             if (arc1B == arc1E) {
                 drawList.pathLineTo(Vec2(x1, p0.y))
                 drawList.pathLineTo(Vec2(x1, p1.y))
-            } else if (arc1B == 0f && arc1E == glm.PIf * 0.5f) {
+            } else if (arc1B == 0f && arc1E == halfPI) {
                 drawList.pathArcToFast(Vec2(x1, p0.y + rounding), rounding, 9, 12) // TR
                 drawList.pathArcToFast(Vec2(x1, p1.y - rounding), rounding, 0, 3)  // BR
             } else {
@@ -1251,8 +1374,18 @@ interface imgui_internal {
         drawList.pathFillConvex(col)
     }
 
+    /** FIXME: Rendering an ellipsis "..." is a surprisingly tricky problem for us... we cannot rely on font glyph having it,
+     *  and regular dot are typically too wide. If we render a dot/shape ourselves it comes with the risk that it wouldn't match
+     *  the boldness or positioning of what the font uses... */
+    fun renderPixelEllipsis(drawList: DrawList, pos: Vec2, count: Int, col: Int) {
+        val font = drawList._data.font!!
+        pos.y += (font.displayOffset.y + font.ascent + 0.5f - 1f).i.f
+        for (dotN in 0 until count)
+            drawList.addRectFilled(Vec2(pos.x + dotN * 2f, pos.y), Vec2(pos.x + dotN * 2f + 1f, pos.y + 1f), col)
+    }
+
     /** Find the optional ## from which we stop displaying text.    */
-    fun findRenderedTextEnd(text: String, textEnd_: Int = text.length): Int {
+    fun findRenderedTextEnd(text: String, textEnd_: Int = text.length): Int { // TODO function extension?
         val textEnd = if (textEnd_ == 0) text.length else textEnd_
         var textDisplayEnd = 0
         while (textDisplayEnd < textEnd && (text[textDisplayEnd + 0] != '#' || text[textDisplayEnd + 1] != '#'))
@@ -1326,7 +1459,7 @@ interface imgui_internal {
         val size = calcItemSize(sizeArg, labelSize.x + style.framePadding.x * 2f, labelSize.y + style.framePadding.y * 2f)
 
         val bb = Rect(pos, pos + size)
-        itemSize(bb, style.framePadding.y)
+        itemSize(size, style.framePadding.y)
         if (!itemAdd(bb, id)) return false
 
         var flags = flags_
@@ -1366,7 +1499,7 @@ interface imgui_internal {
         // Render
         val center = Vec2(bb.center)
         if (hovered) {
-            val col = if (held && hovered) Col.ButtonActive else Col.ButtonHovered
+            val col = if (held) Col.ButtonActive else Col.ButtonHovered
             window.drawList.addCircleFilled(center, 2f max radius, col.u32, 9)
         }
 
@@ -1567,6 +1700,9 @@ interface imgui_internal {
         if (flags has Bf.FlattenChildren && g.hoveredRootWindow === window)
             g.hoveredWindow = window
 
+        if (IMGUI_ENABLE_TEST_ENGINE && id != 0 && window.dc.lastItemId != id)
+            ImGuiTestEngineHook_ItemAdd(bb, id)
+
         var pressed = false
         var hovered = itemHoverable(bb, id)
 
@@ -1651,7 +1787,7 @@ interface imgui_internal {
                 // Set active id so it can be queried by user via IsItemActive(), equivalent of holding the mouse button.
                 g.navActivateId = id // This is so SetActiveId assign a Nav source
                 setActiveId(id, window)
-                if (flags hasnt Bf.NoNavFocus)
+                if ((navActivatedByCode || navActivatedByInputs) && flags hasnt Bf.NoNavFocus)
                     setFocusId(id, window)
                 g.activeIdAllowNavDirFlags = (1 shl Dir.Left) or (1 shl Dir.Right) or (1 shl Dir.Up) or (1 shl Dir.Down)
             }
@@ -1782,6 +1918,7 @@ interface imgui_internal {
             right side of the content or not)         */
         val interactBb = if (displayFrame) Rect(frameBb) else Rect(frameBb.min.x, frameBb.min.y, frameBb.min.x + textWidth + style.itemSpacing.x * 2, frameBb.max.y)
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
+        val isLeaf = flags has Tnf.Leaf
 
         /*  Store a flag for the current depth to tell if we will allow closing this node when navigating one of its child.
             For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
@@ -1796,6 +1933,7 @@ interface imgui_internal {
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushRawId(id)
+            ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, label, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
             return isOpen
         }
 
@@ -1805,13 +1943,13 @@ interface imgui_internal {
                 - OpenOnArrow .................... single-click on arrow to open
                 - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
         var buttonFlags = Bf.NoKeyModifiers or if (flags has Tnf.AllowItemOverlap) Bf.AllowItemOverlap else Bf.None
-        if (flags hasnt Tnf.Leaf)
+        if (!isLeaf)
             buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
         if (flags has Tnf.OpenOnDoubleClick)
             buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.None)
 
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
-        if (flags hasnt Tnf.Leaf) {
+        if (!isLeaf) {
             var toggled = false
             if (pressed) {
                 toggled = !(flags has (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick)) || g.navActivateId == id
@@ -1866,8 +2004,8 @@ interface imgui_internal {
                 renderNavHighlight(frameBb, id, NavHighlightFlag.TypeThin.i)
             }
             if (flags has Tnf.Bullet)
-                TODO()//renderBullet(bb.Min + ImVec2(textOffsetX * 0.5f, g.FontSize * 0.50f + textBaseOffsetY))
-            else if (flags hasnt Tnf.Leaf)
+                renderBullet(frameBb.min + Vec2(textOffsetX * 0.5f, g.fontSize * 0.5f + textBaseOffsetY))
+            else if (!isLeaf)
                 renderArrow(frameBb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
                         if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
@@ -1877,6 +2015,7 @@ interface imgui_internal {
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushRawId(id)
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
         return isOpen
     }
 
@@ -2130,14 +2269,15 @@ interface imgui_internal {
             if (editState.selectedAllMouseLock && !io.mouseDown[0])
                 editState.selectedAllMouseLock = false
 
-            if (io.inputCharacters[0] != NUL) {
+            if (io.inputQueueCharacters[0] != NUL) {
                 /*  Process text input (before we check for Return because using some IME will effectively send a
                     Return?)
                     We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR
                     (which _is_ Alt+Ctrl) to input certain characters. */
                 val ignoreInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
                 if (!ignoreInputs && isEditable && !userNavInputStart)
-                    io.inputCharacters.filter { it != NUL }.map {
+                    io.inputQueueCharacters.filter { it != NUL }.map {
+                        // TODO check
                         withChar { c ->
                             // Insert character if they pass filtering
                             if (inputTextFilterCharacter(c.apply { set(it) }, flags, callback, callbackUserData))
@@ -2145,7 +2285,7 @@ interface imgui_internal {
                         }
                     }
                 // Consume characters
-                io.inputCharacters.fill(NUL)
+                io.inputQueueCharacters.clear()
             }
         }
 
@@ -2905,7 +3045,7 @@ interface imgui_internal {
 
     /** Handle mouse moving window
      *  Note: moving window with the navigation keys (Square + d-pad / CTRL+TAB + Arrows) are processed in NavUpdateWindowing() */
-    fun updateMouseMovingWindow() {
+    fun updateMouseMovingWindowNewFrame() {
 
         val mov = g.movingWindow
         if (mov != null) {
@@ -2935,6 +3075,48 @@ interface imgui_internal {
                 if (!io.mouseDown[0])
                     clearActiveId()
             }
+    }
+
+    /** Initiate moving window, handle left-click and right-click focus */
+    fun updateMouseMovingWindowEndFrame() {
+        // Initiate moving window
+        if (g.activeId != 0 || g.hoveredId != 0) return
+
+        // Unless we just made a window/popup appear
+        if (g.navWindow?.appearing == true) return
+
+        // Click to focus window and start moving (after we're done with all our widgets)
+        if (io.mouseClicked[0]) {
+            val hovered = g.hoveredRootWindow
+            if (hovered != null) {
+                hovered.startMouseMoving()
+                if (io.configWindowsMoveFromTitleBarOnly && hovered.flags hasnt Wf.NoTitleBar)
+                    if (io.mouseClickedPos[0] !in hovered.titleBarRect())
+                        g.movingWindow = null
+            } else if (g.navWindow != null && frontMostPopupModal == null)
+                null.focus()  // Clicking on void disable focus
+        }
+
+        // With right mouse button we close popups without changing focus
+        // (The left mouse button path calls FocusWindow which will lead NewFrame->ClosePopupsOverWindow to trigger)
+        if (io.mouseClicked[1]) {
+            // Find the top-most window between HoveredWindow and the front most Modal Window.
+            // This is where we can trim the popup stack.
+            val modal = frontMostPopupModal
+            var hoveredWindowAboveModal = false
+            if (modal == null)
+                hoveredWindowAboveModal = true
+            var i = g.windows.lastIndex
+            while (i >= 0 && !hoveredWindowAboveModal) {
+                val window = g.windows[i]
+                if (window === modal)
+                    break
+                if (window === g.hoveredWindow)
+                    hoveredWindowAboveModal = true
+                i--
+            }
+            closePopupsOverWindow(if (hoveredWindowAboveModal) g.hoveredWindow else modal)
+        }
     }
 
     val formatArgPattern: Pattern
@@ -3060,8 +3242,9 @@ interface imgui_internal {
             val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
             return when {
                 decimalPrecision < 0 -> Float.MIN_VALUE
-                decimalPrecision in 0..9 -> minSteps[decimalPrecision]
-                else -> glm.pow(10f, -decimalPrecision.f)
+                else -> minSteps.getOrElse(decimalPrecision) {
+                    10f.pow(-decimalPrecision.f)
+                }
             }
         }
 

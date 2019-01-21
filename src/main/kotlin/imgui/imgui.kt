@@ -6,23 +6,25 @@ import imgui.imgui.widgets.*
 import imgui.internal.Rect
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty0
 
 /** -----------------------------------------------------------------------------
  *      Context
  *  -----------------------------------------------------------------------------
  *
  *  Current context pointer. Implicitly used by all ImGui functions. Always assumed to be != null.
- *  ::createContext() will automatically set this pointer if it is null. Change to a different context by calling
- *  ::setCurrentContext().
- *  If you use DLL hotreloading you might need to call ::setCurrentContext() after reloading code from this file.
- *  ImGui functions are not thread-safe because of this pointer. If you want thread-safety to allow N threads to access
- *  N different contexts, you can:
- *      - Change this variable to use thread local storage. You may #define GImGui in imconfig.h for that purpose.
- *          Future development aim to make this context pointer explicit to all calls.
- *          Also read https://github.com/ocornut/imgui/issues/586
- *      - Having multiple instances of the ImGui code compiled inside different namespace (easiest/safest, if you have
- *          a finite number of contexts)    */
+ *  ImGui::CreateContext() will automatically set this pointer if it is NULL. Change to a different context by calling ImGui::SetCurrentContext().
+ *  1) Important: globals are not shared across DLL boundaries! If you use DLLs or any form of hot-reloading: you will need to call
+ *      SetCurrentContext() (with the pointer you got from CreateContext) from each unique static/DLL boundary, and after each hot-reloading.
+ *      In your debugger, add GImGui to your watch window and notice how its value changes depending on which location you are currently stepping into.
+ *  2) Important: Dear ImGui functions are not thread-safe because of this pointer.
+ *      If you want thread-safety to allow N threads to access N different contexts, you can:
+ *      - Change this variable to use thread local storage so each thread can refer to a different context, in imconfig.h:
+ *          struct ImGuiContext;
+ *          extern thread_local ImGuiContext* MyImGuiTLS;
+ *          #define GImGui MyImGuiTLS
+ *      And then define MyImGuiTLS in one of your cpp file. Note that thread_local is a C++11 keyword, earlier C++ uses compiler-specific keyword.
+ *     - Future development aim to make this context pointer explicit to all calls. Also read https://github.com/ocornut/imgui/issues/586
+ *     - If you need a finite number of contexts, you may compile and use multiple instances of the ImGui code from different namespace.    */
 val g get() = gImGui!!
 var gImGui: Context? = null
 
@@ -53,18 +55,19 @@ const val NAV_WINDOWING_HIGHLIGHT_DELAY = 0.2f
 /** Time before the window list starts to appear */
 const val NAV_WINDOWING_LIST_APPEAR_DELAY = 0.15f
 
-// Window resizing from edges (when io.ConfigResizeWindowsFromEdges = true)
+// Window resizing from edges (when io.configWindowsResizeFromEdges = true and BackendFlag.HasMouseCursors is set in io.backendFlags by back-end)
 
 /** Extend outside and inside windows. Affect FindHoveredWindow(). */
-const val RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS = 4f
+const val WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS = 4f
 /** Reduce visual noise by only highlighting the border after a certain time. */
-const val RESIZE_WINDOWS_FROM_EDGES_FEEDBACK_TIMER = 0.04f
+const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f
 
 // Test engine hooks (imgui-test)
-const val IMGUI_ENABLE_TEST_ENGINE_HOOKS = false
+const val IMGUI_ENABLE_TEST_ENGINE = false
 var ImGuiTestEngineHook_PreNewFrame: () -> Unit = {}
 var ImGuiTestEngineHook_PostNewFrame: () -> Unit = {}
-var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID, navBbArg: Rect?) -> Unit = { _, _, _ -> }
+var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID) -> Unit = { _, _ -> }
+var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: Int) -> Unit = { _, _, _ -> }
 
 object ImGui :
 
@@ -90,7 +93,7 @@ object ImGui :
         selectableLists,
         imgui_tooltips,
         imgui_menus,
-        imgui_popups,
+        imgui_popupsModals,
         imgui_logging,
         imgui_dragAndDrop,
         imgui_clipping,
@@ -105,10 +108,10 @@ object ImGui :
     // Version
     val beta = 0
     /** get the compiled version string e.g. "1.23" */
-    val version = "1.66.$beta"
+    val version = "1.68.$beta"
     /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
     Work in progress versions typically starts at XYY00 then bounced up to XYY01 when release tagging happens */
-    val versionNum = 16600 + beta
+    val versionNum = 16800 + beta
 }
 
 var ptrIndices = 0
@@ -168,6 +171,12 @@ typealias InputTextFlags = Int
 
 /** flags: for Selectable()                  // enum SelectableFlag */
 typealias SelectableFlags = Int
+
+/** Flags: for BeginTabBar() */
+typealias TabBarFlags = Int                 // enum ImGuiTabBarFlags_
+
+/** Flags: for BeginTabItem() */
+typealias TabItemFlags = Int                // enum ImGuiTabItemFlags_
 
 /** flags: for TreeNode*(),CollapsingHeader()// enum TreeNodeFlag */
 typealias TreeNodeFlags = Int

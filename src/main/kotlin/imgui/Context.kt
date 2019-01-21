@@ -13,13 +13,18 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.max
 
-/** Main imgui context */
+/** Main imgui context
+ *
+ *  Dear ImGui context (opaque structure, unless including imgui_internal.h) */
 class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var initialized = false
-    /** Set by NewFrame(), cleared by EndFrame()/Render() */
+    /** Set by NewFrame(), cleared by EndFrame() */
     var frameScopeActive = false
+    /** Set by NewFrame(), cleared by EndFrame() */
+    var frameScopePushedImplicitWindow = false
     /** Io.Fonts-> is owned by the ImGuiContext and will be destructed along with it.   */
     var fontAtlasOwnedByContext = sharedFontAtlas != null
 
@@ -116,7 +121,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Which popups are open (persistent)  */
     val openPopupStack = Stack<PopupRef>()
     /** Which level of BeginPopup() we are in (reset every frame)   */
-    val currentPopupStack = Stack<PopupRef>()
+    val beginPopupStack = Stack<PopupRef>()
 
     /** Storage for SetNextWindow** functions   */
     val nextWindowData = NextWindowData()
@@ -147,7 +152,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navJustMovedToId: ID = 0
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
-    /** Keyboard or Gamepad mode? */
+    /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
     var navInputSource = InputSource.None
     /** Rectangle used for scoring, in screen space. Based of window.dc.navRefRectRel[], modified for directional navigation scoring.  */
     var navScoringRectScreen = Rect()
@@ -167,7 +172,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navWindowingToggleLayer = false
     /** Layer we are navigating on. For now the system is hard-coded for 0 = main contents and 1 = menu/title bar,
      *  may expose layers later. */
-    var navLayer = 0
+    var navLayer = NavLayer.Main
     /** == NavWindow->DC.FocusIdxTabCounter at time of NavId processing */
     var navIdTabCounter = Int.MAX_VALUE
     /** Nav widget has been seen this frame ~~ NavRefRectRel is valid   */
@@ -263,6 +268,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Local buffer for small payloads */
     var dragDropPayloadBufLocal = ByteBuffer.allocate(8)
 
+
+    // Tab bars
+    val tabBars = mutableMapOf<Int, TabBar>()
+    val currentTabBar = Stack<TabBar>()
+    val tabSortByWidthBuffer = ArrayList<TabBarSortItem>()
+
     //------------------------------------------------------------------
     // Widget state
     //------------------------------------------------------------------
@@ -289,6 +300,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var tooltipOverrideCount = 0
     /** If no custom clipboard handler is defined   */
     var privateClipboard = ""
+
+    // Platform support
+
     /** Cursor position request to the OS Input Method Editor   */
     var platformImePos = Vec2(Float.MAX_VALUE)
     /** Last cursor position passed to the OS Input Method Editor   */
@@ -356,12 +370,23 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.initialized = true
     }
 
+    fun setCurrent() {
+        gImGui = this
+    }
+
+    /** Destroy current context */
+    fun destroy() {
+        shutdown()
+        if (gImGui === this)
+            setCurrent()
+    }
+
     /** This function is merely here to free heap allocations.     */
     fun shutdown() {
 
         /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
             (which would happen if we never called NewFrame)         */
-        if(g.fontAtlasOwnedByContext)
+        if (g.fontAtlasOwnedByContext)
             io.fonts.locked = false
         io.fonts.clear()
 
@@ -391,7 +416,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.styleModifiers.clear()
         g.fontStack.clear()
         g.openPopupStack.clear()
-        g.currentPopupStack.clear()
+        g.beginPopupStack.clear()
         g.drawDataBuilder.clear()
         g.overlayDrawList.clearFreeMemory()
         g.privateClipboard = ""
@@ -409,20 +434,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     }
 }
 
-fun Context?.setCurrent() {
-    gImGui = this
-}
-
-/** Destroy current context */
-fun Context?.destroy() {
-    val c = this ?: g
-    c.shutdown()
-    if (gImGui === c)
-        c.setCurrent()
-}
-
-/** This is where your app communicate with Dear ImGui. Access via ImGui::GetIO().
- *  Read 'Programmer guide' section in .cpp file for general usage. */
+/** -----------------------------------------------------------------------------
+ *  IO
+ *  Communicate most settings and inputs/outputs to Dear ImGui using this structure.
+ *  Access via ::io. Read 'Programmer guide' section in .cpp file for general usage.
+ *  ----------------------------------------------------------------------------- */
 class IO(sharedFontAtlas: FontAtlas?) {
 
     //------------------------------------------------------------------
@@ -430,9 +446,9 @@ class IO(sharedFontAtlas: FontAtlas?) {
     //------------------------------------------------------------------
 
     /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
-    var configFlags: ConfigFlags = 0
+    var configFlags: ConfigFlags = ConfigFlag.None.i
     /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end to communicate features supported by the back-end. */
-    var backendFlags: BackendFlags = 0
+    var backendFlags: BackendFlags = BackendFlag.None.i
     /** Main display size, in pixels. For clamping windows positions.    */
     var displaySize = Vec2i(-1)
     /** Time elapsed since last frame, in seconds.  */
@@ -458,7 +474,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
 
 //    void*         UserData;                 // = NULL               // Store your own data for retrieval by callbacks.
 
-    /** Load and assemble one or more fonts into a single tightly packed texture. Output to Fonts array.    */
+    /** Load, rasterize and pack one or more fonts into a single texture.    */
     val fonts = sharedFontAtlas ?: FontAtlas()
     /** Global scale all fonts  */
     var fontGlobalScale = 1f
@@ -469,10 +485,9 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** For retina display or other situations where window coordinates are different from framebuffer coordinates.
      *  User storage only, presently not used by ImGui. */
     var displayFramebufferScale = Vec2(1f)
-    /** If you use DisplaySize as a virtual space larger than your screen, set DisplayVisibleMin/Max to the visible
-     *  area.   */
+    /** [OBSOLETE] If you use DisplaySize as a virtual space larger than your screen, set DisplayVisibleMin/Max to the visible area. */
     var displayVisibleMin = Vec2()
-    /** If the values are the same, we defaults to Min=(0.0f) and Max=DisplaySize   */
+    /** [OBSOLETE] Just use io.DisplaySize! If the values are the same, we defaults to Min=(0.0f) and Max=DisplaySize   */
     var displayVisibleMax = Vec2()
 
     //------------------------------------------------------------------
@@ -488,16 +503,26 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var configMacOSXBehaviors = false  // JVM TODO
     /** Set to false to disable blinking cursor, for users who consider it distracting. (was called: io.OptCursorBlink prior to 1.63) */
     var configInputTextCursorBlink = true
-    /** [BETA] Enable resizing of windows from their edges and from the lower-left corner.
+    /** Enable resizing of windows from their edges and from the lower-left corner.
      *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
      *  (This used to be the WindowFlag.ResizeFromAnySide flag) */
-    var configResizeWindowsFromEdges = false
+    var configWindowsResizeFromEdges = true
+    /** [BETA] Set to true to only allow moving windows when clicked+dragged from the title bar. Windows without a title bar are not affected. */
+    var configWindowsMoveFromTitleBarOnly = false
 
     //------------------------------------------------------------------
     // User Functions
     //------------------------------------------------------------------
 
-    // Optional: access OS clipboard
+    // Optional: Platform/Renderer back-end name (informational only! will be displayed in About Window)
+    // Optional: Platform/Renderer back-end name (informational only! will be displayed in About Window) + User data for back-end/wrappers to store their own stuff.
+    var backendPlatformName: String? = null
+    var backendRendererName: String? = null
+    var backendPlatformUserData: Any? = null
+    var backendRendererUserData: Any? = null
+    var backendLanguageUserData: Any? = null
+
+    // Optional: Access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
     var getClipboardTextFn: ((userData: Any) -> Unit)? = null
     var setClipboardTextFn: ((userData: Any, text: String) -> Unit)? = null
@@ -508,7 +533,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
 //    void*       (*MemAllocFn)(size_t sz);
 //    void        (*MemFreeFn)(void* ptr);
 //
-    // Optional: notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
+    // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
     // (default to use native imm32 api on Windows)
     val imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = imeSetInputScreenPosFn_Win32.takeIf { Platform.get() == Platform.WINDOWS }
     /** (Windows) Set this to your HWND to get automatic IME cursor positioning.    */
@@ -539,26 +564,18 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** Keyboard keys that are pressed (ideally left in the "native" order your engine has access to keyboard keys,
      *  so you can use your own defines/enums for keys).   */
     val keysDown = BooleanArray(512)
-    /** List of characters input (translated by user from keypress + keyboard state). Fill using addInputCharacter()
-     *  helper. */
-    val inputCharacters = CharArray(16)
-    /** Gamepad inputs (keyboard keys will be auto-mapped and be written here by ::newFrame,
-     *  all values will be cleared back to zero in ImGui::EndFrame)   */
+    /** Gamepad inputs. Cleared back to zero by EndFrame(). Keyboard keys will be auto-mapped and be written here by NewFrame().   */
     val navInputs = FloatArray(NavInput.COUNT)
 
     // Functions
 
-    /** Add new character into InputCharacters[]
-     *  Pass in translated ASCII characters for text input.
-     *  - with glfw you can get those from the callback set in glfwSetCharCallback()
-     *  - on Windows you can get those using ToAscii+keyboard state, or via the WM_CHAR message */
-    fun addInputCharacter(c: Char) {
-        val n = inputCharacters.strlenW
-        if (n + 1 < inputCharacters.size)
-            inputCharacters[n] = c
-    }
-//    IMGUI_API void AddInputCharactersUTF8(const char* utf8_chars);      // Add new characters into InputCharacters[] from an UTF-8 string
-//    inline void    ClearInputCharacters() { InputCharacters[0] = 0; }   // Clear the text input buffer manually
+    /** Queue new character input */
+    fun addInputCharacter(c: Char) = inputQueueCharacters.add(c)
+
+//    IMGUI_API void  AddInputCharactersUTF8(const char* str);    // Queue new characters input from an UTF-8 string
+
+    /** Clear the text input buffer manually */
+    fun clearInputCharacters() = inputQueueCharacters.clear()
 
 
     //------------------------------------------------------------------
@@ -611,7 +628,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // [Private] ImGui will maintain those fields. Forward compatibility not guaranteed!
     //------------------------------------------------------------------
 
-    /** Previous mouse position temporary storage (nb: not for public use, set to MousePos in NewFrame())   */
+    /** Previous mouse position (note that MouseDelta is not necessary == MousePos-MousePosPrev, in case either position is invalid)   */
     var mousePosPrev = Vec2(-Float.MAX_VALUE)
     /** Position at time of clicking    */
     val mouseClickedPos = Array(5) { Vec2() }
@@ -642,6 +659,173 @@ class IO(sharedFontAtlas: FontAtlas?) {
     val navInputsDownDuration = FloatArray(NavInput.COUNT) { -1f }
 
     val navInputsDownDurationPrev = FloatArray(NavInput.COUNT)
+    /** Queue of _characters_ input (obtained by platform back-end). Fill using AddInputCharacter() helper. */
+    val inputQueueCharacters = ArrayList<Char>()
+}
+
+
+//-----------------------------------------------------------------------------
+// Misc data structures
+//-----------------------------------------------------------------------------
+
+
+/** Shared state of InputText(), passed as an argument to your callback when a ImGuiInputTextFlags_Callback* flag is used.
+ *  The callback function should return 0 by default.
+ *  Callbacks (follow a flag name and see comments in ImGuiInputTextFlags_ declarations for more details)
+ *  - ImGuiInputTextFlags_CallbackCompletion:  Callback on pressing TAB
+ *  - ImGuiInputTextFlags_CallbackHistory:     Callback on pressing Up/Down arrows
+ *  - ImGuiInputTextFlags_CallbackAlways:      Callback on each iteration
+ *  - ImGuiInputTextFlags_CallbackCharFilter:  Callback on character inputs to replace or discard them.
+ *                                              Modify 'EventChar' to replace or discard, or return 1 in callback to discard.
+ *  - ImGuiInputTextFlags_CallbackResize:      Callback on buffer capacity changes request (beyond 'buf_size' parameter value),
+ *                                              allowing the string to grow.
+ *
+ *  Helper functions for text manipulation.
+ *  Use those function to benefit from the CallbackResize behaviors. Calling those function reset the selection. */
+class InputTextCallbackData {
+
+    /** One ImGuiInputTextFlags_Callback*    // Read-only */
+    var eventFlag: InputTextFlags = 0
+    /** What user passed to InputText()      // Read-only */
+    var flags: InputTextFlags = 0
+    /** What user passed to InputText()      // Read-only */
+    var userData: Any? = null
+
+    /*  Arguments for the different callback events
+     *  - To modify the text buffer in a callback, prefer using the InsertChars() / DeleteChars() function. InsertChars() will take care of calling the resize callback if necessary.
+     *  - If you know your edits are not going to resize the underlying buffer allocation, you may modify the contents of 'Buf[]' directly. You need to update 'BufTextLen' accordingly (0 <= BufTextLen < BufSize) and set 'BufDirty'' to true so InputText can update its internal state. */
+
+    /** Character input                     Read-write   [CharFilter] Replace character with another one, or set to zero to drop.
+     *                                      return 1 is equivalent to setting EventChar=0; */
+    var eventChar = NUL
+    /** Key pressed (Up/Down/TAB)           Read-only    [Completion,History] */
+    var eventKey = Key.Tab
+    /** Text buffer                 Read-write   [Resize] Can replace pointer / [Completion,History,Always] Only write to pointed data, don't replace the actual pointer! */
+    var buf = CharArray(0)
+    /** JVM custom, current buf pointer */
+    var bufPtr = 0
+    /** Text length (in bytes)        Read-write   [Resize,Completion,History,Always] */
+    var bufTextLen = 0
+    /** Buffer size (in bytes) = capacity + 1    Read-only    [Resize,Completion,History,Always] */
+    var bufSize = 0
+    /** Set if you modify Buf/BufTextLen!  Write        [Completion,History,Always] */
+    var bufDirty = false
+    /** Read-write   [Completion,History,Always] */
+    var cursorPos = 0
+    /** Read-write   [Completion,History,Always] == to SelectionEnd when no selection) */
+    var selectionStart = 0
+    /** Read-write   [Completion,History,Always] */
+    var selectionEnd = 0
+
+
+    /** Public API to manipulate UTF-8 text
+     *  We expose UTF-8 to the user (unlike the STB_TEXTEDIT_* functions which are manipulating wchar)
+     *  FIXME: The existence of this rarely exercised code path is a bit of a nuisance. */
+    fun deleteChars(pos: Int, bytesCount: Int) {
+        assert(pos + bytesCount <= bufTextLen)
+        var dst = pos
+        var src = pos + bytesCount
+        var c = buf[src++]
+        while (c != NUL) {
+            buf[dst++] = c
+            c = buf.getOrElse(src++) { NUL }
+        }
+        if (cursorPos + bytesCount >= pos)
+            cursorPos -= bytesCount
+        else if (cursorPos >= pos)
+            cursorPos = pos
+        selectionEnd = cursorPos
+        selectionStart = cursorPos
+        bufDirty = true
+        bufTextLen -= bytesCount
+    }
+
+    fun insertChars(pos: Int, newText: CharArray, ptr: Int, newTextEnd: Int? = null) {
+
+        val isResizable = flags has InputTextFlag.CallbackResize
+        val newTextLen = newTextEnd ?: newText.strlen
+        if (newTextLen + bufTextLen >= bufSize) {
+
+            if (!isResizable) return
+
+            // Contrary to STB_TEXTEDIT_INSERTCHARS() this is working in the UTF8 buffer, hence the midly similar code (until we remove the U16 buffer alltogether!)
+            val editState = g.inputTextState
+            assert(editState.id != 0 && g.activeId == editState.id)
+            assert(buf === editState.tempBuffer)
+            val newBufSize = bufTextLen + glm.clamp(newTextLen * 4, 32, max(256, newTextLen))
+            val t = CharArray(newBufSize)
+            System.arraycopy(editState.tempBuffer, 0, t, 0, editState.tempBuffer.size)
+            editState.tempBuffer = t
+            buf = editState.tempBuffer
+            editState.bufCapacityA = newBufSize
+            bufSize = newBufSize
+        }
+
+        if (bufTextLen != pos)
+            for (i in 0 until bufTextLen - pos)
+                buf[pos + newTextLen + i] = buf[pos + i]
+        for (i in 0 until newTextLen)
+            buf[pos + i] = newText[i]
+
+        if (cursorPos >= pos)
+            cursorPos += newTextLen
+        selectionEnd = cursorPos
+        selectionStart = cursorPos
+        bufDirty = true
+        bufTextLen += newTextLen
+    }
+
+    val hasSelection: Boolean
+        get() = selectionStart != selectionEnd
+}
+
+class SizeCallbackData(
+        /** Read-only.   What user passed to SetNextWindowSizeConstraints() */
+        var userData: Any? = null,
+        /** Read-only.   Window position, for reference.    */
+        val pos: Vec2 = Vec2(),
+        /** Read-only.   Current window size.   */
+        val currentSize: Vec2 = Vec2(),
+        /** Read-write.  Desired size, based on user's mouse position. Write to this field to restrain resizing.    */
+        val desiredSize: Vec2 = Vec2())
+
+/** Data payload for Drag and Drop operations: AcceptDragDropPayload(), GetDragDropPayload() */
+class Payload {
+    // Members
+
+    /** Data (copied and owned by dear imgui) */
+    var data: ByteBuffer? = null
+    /** Data size */
+    var dataSize = 0
+
+    // [Internal]
+
+    /** Source item id */
+    var sourceId: ID = 0
+    /** Source parent id (if available) */
+    var sourceParentId: ID = 0
+    /** Data timestamp */
+    var dataFrameCount = -1
+    /** Data type tag (short user-supplied string, 32 characters max) */
+    val dataType = CharArray(32)
+    val dataTypeS get() = String(dataType)
+    /** Set when AcceptDragDropPayload() was called and mouse has been hovering the target item (nb: handle overlapping drag targets) */
+    var preview = false
+    /** Set when AcceptDragDropPayload() was called and mouse button is released over the target item. */
+    var delivery = false
+
+    fun clear() {
+        sourceParentId = 0
+        sourceId = 0
+        data = null
+        dataSize = 0
+        dataType.fill(NUL)
+        dataFrameCount = -1
+        delivery = false
+        preview = false
+    }
+
+    fun isDataType(type: String) = dataFrameCount != -1 && type cmp dataType
 }
 
 // for IO.keyMap
@@ -660,9 +844,12 @@ operator fun FloatArray.set(index: NavInput, value: Float) {
 
 operator fun FloatArray.get(index: NavInput) = get(index.i)
 
-/** You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
- *  During the frame, use ImGui::PushStyleVar(StyleVar.XXXX)/PopStyleVar() to alter the main style values,
- *  and ImGui::PushStyleColor(Col.XXX)/PopStyleColor() for colors. */
+/** -----------------------------------------------------------------------------
+ *  Style
+ *  You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
+ *  During the frame, use ImGui::PushStyleVar(ImGuiStyleVar_XXXX)/PopStyleVar() to alter the main style values,
+ *  and ImGui::PushStyleColor(ImGuiCol_XXX)/PopStyleColor() for colors.
+ *  ----------------------------------------------------------------------------- */
 class Style {
 
     /**  Global alpha applies to everything in ImGui.    */
@@ -711,11 +898,15 @@ class Style {
     var grabMinSize = 10f
     /** Radius of grabs corners rounding. Set to 0.0f to have rectangular slider grabs. */
     var grabRounding = 0f
+    /** Radius of upper corners of a tab. Set to 0.0f to have rectangular tabs. */
+    var tabRounding = 4f
+    /** Thickness of border around tabs. */
+    var tabBorderSize = 0f
     /** Alignment of button text when button is larger than text.   */
     var buttonTextAlign = Vec2(0.5f)
     /** Window position are clamped to be visible within the display area by at least this amount.
      *  Only applies to regular windows.    */
-    var displayWindowPadding = Vec2(20)
+    var displayWindowPadding = Vec2(19)
     /** If you cannot see the edges of your screen (e.g. on a TV) increase the safe area padding. Apply to popups/tooltips
      *  as well regular windows.  NB: Prefer configuring your TV sets correctly!   */
     var displaySafeAreaPadding = Vec2(3)
@@ -787,6 +978,7 @@ class Style {
         popupRounding = glm.floor(popupRounding * scaleFactor)
         framePadding = glm.floor(framePadding * scaleFactor)
         frameRounding = glm.floor(frameRounding * scaleFactor)
+        tabRounding = glm.floor(tabRounding * scaleFactor)
         itemSpacing = glm.floor(itemSpacing * scaleFactor)
         itemInnerSpacing = glm.floor(itemInnerSpacing * scaleFactor)
         touchExtraPadding = glm.floor(touchExtraPadding * scaleFactor)

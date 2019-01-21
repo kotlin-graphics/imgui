@@ -3,12 +3,13 @@ package imgui.imgui.demo
 import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.beginPopupModal
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.dragFloat
-import imgui.ImGui.dragScalar
+import imgui.ImGui.endPopup
 import imgui.ImGui.inputText
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
@@ -22,7 +23,6 @@ import imgui.ImGui.text
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.functionalProgramming.button
-import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.popup
 import imgui.functionalProgramming.popupContextItem
@@ -51,18 +51,21 @@ object showDemoWindowPopups {
 
     var dontAskMeNextTime = false
 
+    /* Modals */
+    var dummyOpen = true
+
     operator fun invoke() {
 
         if (!collapsingHeader("Popups & Modal windows"))
             return
 
-        /*
-            Popups are windows with a few special properties:
+        /*  The properties of popups windows are:
             - They block normal mouse hovering detection outside them. (*)
             - Unless modal, they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
             - Their visibility state (~bool) is held internally by imgui instead of being held by the programmer as we are used to with regular Begin() calls.
+                User can manipulate the visibility state by calling OpenPopup().
             (*) One can use IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) to bypass it and detect hovering even when normally blocked by a popup.
-            Those three properties are intimately connected. The library needs to hold their visibility state because it can close popups at any time.
+            Those three properties are connected. The library needs to hold their visibility state because it can close popups at any time.
 
             Typical use for regular windows:
             bool my_tool_is_active = false; if (ImGui::Button("Open")) my_tool_is_active = true; [...] if (my_tool_is_active) Begin("My Tool", &my_tool_is_active) { [...] } End();
@@ -151,9 +154,9 @@ object showDemoWindowPopups {
 
             textWrapped("Modal windows are like popups but the user cannot close them by clicking outside the window.")
 
-            if (button("Delete..")) {
+            if (button("Delete.."))
                 openPopup("Delete?")
-            }
+
             popupModal("Delete?", null, Wf.AlwaysAutoResize.i) {
 
                 text("All those beautiful files will be deleted.\nThis operation cannot be undone!\n\n")
@@ -180,9 +183,12 @@ object showDemoWindowPopups {
 //                    ImGui::ColorEdit4("color", color);  // This is to test behavior of stacked regular popups over a modal
 
                 button("Add another modal..") { openPopup("Stacked 2") }
-                popupModal("Stacked 2") {
+                // Also demonstrate passing a bool* to BeginPopupModal(), this will create a regular close button which will close the popup.
+                // Note that the visibility state of popups is owned by imgui, so the input value of the bool actually doesn't matter here.
+                if (beginPopupModal("Stacked 2", ::dummyOpen)) {
                     text("Hello from Stacked The Second!")
                     button("Close") { closeCurrentPopup() }
+                    endPopup()
                 }
                 button("Close") { closeCurrentPopup() }
             }

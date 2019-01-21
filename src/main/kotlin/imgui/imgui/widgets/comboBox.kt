@@ -30,10 +30,7 @@ import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
-import imgui.internal.DrawCornerFlag
-import imgui.internal.PopupPositionPolicy
-import imgui.internal.Rect
-import imgui.internal.isPowerOfTwo
+import imgui.internal.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
@@ -42,8 +39,8 @@ import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
 /** Widgets: Combo Box
- *  The new BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it,
- *  by creating e.g. Selectable() items. */
+ *  - The new BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it, by creating e.g. Selectable() items.
+ *  - The old Combo() api are helpers over BeginCombo()/EndCombo() which are kept available for convenience purpose.    */
 interface comboBox {
 
     fun beginCombo(label: String, previewValue: String?, flags_: ComboFlags = 0): Boolean {
@@ -91,7 +88,7 @@ interface comboBox {
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
         if ((pressed || g.navActivateId == id) && !popupOpen) {
-            if (window.dc.navLayerCurrent == 0)
+            if (window.dc.navLayerCurrent == NavLayer.Main)
                 window.navLastIds[0] = id
             openPopupEx(id)
             popupOpen = true
@@ -115,7 +112,7 @@ interface comboBox {
             setNextWindowSizeConstraints(Vec2(w, 0f), Vec2(Float.MAX_VALUE, calcMaxPopupHeightFromItemCount(popupMaxHeightInItems)))
         }
 
-        val name = "##Combo_%02d".format(g.currentPopupStack.size) // Recycle windows based on depth
+        val name = "##Combo_%02d".format(g.beginPopupStack.size) // Recycle windows based on depth
 
         // Peak into expected window size so we can position it
         findWindowByName(name)?.let {
@@ -216,8 +213,8 @@ interface comboBox {
         //-------------------------------------------------------------------------
 
         fun calcMaxPopupHeightFromItemCount(itemsCount: Int) = when {
-                itemsCount <= 0 -> Float.MAX_VALUE
-                else -> (g.fontSize + style.itemSpacing.y) * itemsCount - style.itemSpacing.y + style.windowPadding.y * 2
+            itemsCount <= 0 -> Float.MAX_VALUE
+            else -> (g.fontSize + style.itemSpacing.y) * itemsCount - style.itemSpacing.y + style.windowPadding.y * 2
         }
     }
 }

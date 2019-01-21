@@ -6,6 +6,12 @@ import imgui.ImGui.isKeyDown
 import imgui.ImGui.isKeyPressed
 import imgui.internal.InputReadMode
 
+
+//-----------------------------------------------------------------------------
+// Flags & Enumerations
+//-----------------------------------------------------------------------------
+
+
 /** Flags for ImGui::Begin()    */
 enum class WindowFlag(@JvmField val i: Int) {
 
@@ -30,7 +36,7 @@ enum class WindowFlag(@JvmField val i: Int) {
     /** Never load/save settings in .ini file   */
     NoSavedSettings(1 shl 8),
     /** Disable catching mouse or keyboard inputs   */
-    NoInputs(1 shl 9),
+    NoMouseInputs(1 shl 9),
     /** Has a menu-bar  */
     MenuBar(1 shl 10),
     /** Allow horizontal scrollbar to appear (off by default). You may use SetNextWindowContentSize(ImVec2(width),0.0f));
@@ -54,10 +60,16 @@ enum class WindowFlag(@JvmField val i: Int) {
     NoNavInputs(1 shl 18),
     /** No focusing toward this window with gamepad/keyboard navigation (e.g. skipped by CTRL+TAB)  */
     NoNavFocus(1 shl 19),
+    /** Append '*' to title without affecting the ID, as a convenience to avoid using the ### operator.
+     *  When used in a tab/docking context, tab is selected on closure and closure is deferred by one frame
+     *  to allow code to cancel the closure (with a confirmation popup, etc.) without flicker. */
+    UnsavedDocument(1 shl 20),
 
     NoNav(NoNavInputs or NoNavFocus),
 
     NoDecoration(NoTitleBar or NoResize or NoScrollbar or NoCollapse),
+
+    NoInputs(NoMouseInputs or NoNavInputs or NoNavFocus),
 
     // [Internal]
 
@@ -78,10 +90,11 @@ enum class WindowFlag(@JvmField val i: Int) {
     infix fun or(b: Int): WindowFlags = i or b
 }
 
-infix fun Int.or(b: WindowFlag): WindowFlags = this or b.i
-infix fun Int.has(b: WindowFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: WindowFlag) = (this and b.i) == 0
-infix fun Int.wo(b: WindowFlag): WindowFlags = this and b.i.inv()
+infix fun Int.and(b: WindowFlag): WindowFlags = and(b.i)
+infix fun Int.or(b: WindowFlag): WindowFlags = or(b.i)
+infix fun Int.has(b: WindowFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: WindowFlag) = and(b.i) == 0
+infix fun Int.wo(b: WindowFlag): WindowFlags = and(b.i.inv())
 
 /** Flags for ImGui::InputText()    */
 enum class InputTextFlag(@JvmField val i: Int) {
@@ -239,6 +252,67 @@ infix fun Int.or(other: ComboFlag): ComboFlags = or(other.i)
 infix fun Int.has(b: ComboFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ComboFlag) = and(b.i) == 0
 
+
+/** Flags for ImGui::BeginTabBar() */
+enum class TabBarFlag(@JvmField val i: Int) {
+    None(0),
+    /** Allow manually dragging tabs to re-order them + New tabs are appended at the end of list */
+    Reorderable(1 shl 0),
+    /** Automatically select new tabs when they appear */
+    AutoSelectNewTabs(1 shl 1),
+    /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button.
+     *  You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
+    NoCloseWithMiddleMouseButton(1 shl 2),
+    NoTabListPopupButton(1 shl 3),
+    NoTabListScrollingButtons(1 shl 4),
+    /** Disable tooltips when hovering a tab */
+    NoTooltip(1 shl 5),
+    /** Resize tabs when they don't fit */
+    FittingPolicyResizeDown(1 shl 6),
+    /** Add scroll buttons when tabs don't fit */
+    FittingPolicyScroll(1 shl 7),
+    FittingPolicyMask_(FittingPolicyResizeDown or FittingPolicyScroll),
+    FittingPolicyDefault_(FittingPolicyResizeDown.i),
+
+    // Private
+
+    /** [Docking: Unused in Master Branch] Part of a dock node */
+    DockNode(1 shl 20),
+    /** [Docking: Unused in Master Branch] Part of an explicit dockspace node node */
+    DockNodeIsDockSpace(1 shl 21),
+
+    IsFocused(1 shl 22),
+    /** FIXME: Settings are handled by the docking system, this only request the tab bar to mark settings dirty when reordering tabs */
+    SaveSettings(1 shl 23);
+
+    infix fun or(tabBarFlag: TabBarFlag) = i or tabBarFlag.i
+    infix fun xor(tabBarFlag: TabBarFlag) = i xor tabBarFlag.i
+}
+
+infix fun Int.and(other: TabBarFlag): ComboFlags = and(other.i)
+infix fun Int.wo(other: TabBarFlag): ComboFlags = and(other.i.inv())
+infix fun Int.or(other: TabBarFlag): ComboFlags = or(other.i)
+infix fun Int.has(b: TabBarFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: TabBarFlag) = and(b.i) == 0
+
+/** Flags for ImGui::BeginTabItem() */
+enum class TabItemFlag(@JvmField val i: Int) {
+    None(0),
+    /** Append '*' to title without affecting the ID, as a convenience to avoid using the ### operator. Also: tab is selected on closure and closure is deferred by one frame to allow code to undo it without flicker. */
+    UnsavedDocument(1 shl 0),
+    /** Trigger flag to programatically make the tab selected when calling BeginTabItem() */
+    SetSelected(1 shl 1),
+    /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button. You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
+    NoCloseWithMiddleMouseButton(1 shl 2),
+    /** Don't call PushID(tab->ID)/PopID() on BeginTabItem()/EndTabItem() */
+    NoPushId(1 shl 3),
+}
+
+infix fun Int.or(other: TabItemFlag): TabItemFlags = or(other.i)
+infix fun Int.has(b: TabItemFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: TabItemFlag) = and(b.i) == 0
+
+
 // Flags for ImGui::IsWindowFocused()
 enum class FocusedFlag(@JvmField val i: Int) {
     None(0),
@@ -333,15 +407,19 @@ val PAYLOAD_TYPE_COLOR_3F = "_COL3F"
 val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 
 /** A primary data type */
-enum class DataType { Int, Uint, Long, Ulong, Float, Double, Vec2;
+enum class DataType {
+    Int, Uint, Long, Ulong, Float, Double, Vec2;
 
-    @JvmField val i = ordinal
+    @JvmField
+    val i = ordinal
 }
 
 /** A cardinal direction */
-enum class Dir { None, Left, Right, Up, Down, Count;
+enum class Dir {
+    None, Left, Right, Up, Down, Count;
 
-    @JvmField val i = ordinal - 1
+    @JvmField
+    val i = ordinal - 1
 
     companion object {
         fun of(i: Int) = values()[i]
@@ -351,14 +429,16 @@ enum class Dir { None, Left, Right, Up, Down, Count;
 infix fun Int.shl(b: Dir) = shl(b.i)
 
 /** User fill ImGuiio.KeyMap[] array with indices into the ImGuiio.KeysDown[512] array  */
-enum class Key { Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
+enum class Key {
+    Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
     Space, Enter, Escape, A, C, V, X, Y, Z;
 
     companion object {
         val COUNT = values().size
     }
 
-    @JvmField val i = ordinal
+    @JvmField
+    val i = ordinal
 
     /** JVM implementation of IsKeyPressedMap   */
     fun isPressed(repeat: Boolean = true) = isKeyPressed(io.keyMap[i], repeat)
@@ -430,7 +510,8 @@ enum class NavInput {
     /** move down = Arrow keys  */
     KeyDown;
 
-    @JvmField val i = ordinal
+    @JvmField
+    val i = ordinal
 
     companion object {
         val COUNT = values().size
@@ -446,10 +527,9 @@ enum class NavInput {
     fun isPressedAnyOfTwo(n2: NavInput, mode: InputReadMode) = (getNavInputAmount(this, mode) + getNavInputAmount(n2, mode)) > 0f
 }
 
-typealias ConfidFlags = Int
-
 /** Configuration flags stored in io.configFlags  */
 enum class ConfigFlag(@JvmField val i: Int) {
+    None(0),
     /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeysDown[]. */
     NavEnableKeyboard(1 shl 0),
     /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.NavInputs[].
@@ -492,6 +572,7 @@ typealias BackendFlags = Int
 
 /** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end. */
 enum class BackendFlag(@JvmField val i: Int) {
+    None(0),
     /** Back-end supports gamepad and currently has one connected. */
     HasGamepad(1 shl 0),
     /** Back-end supports honoring ::mouseCursor value to change the OS cursor shape. */
@@ -670,6 +751,11 @@ enum class Col {
     ResizeGrip,
     ResizeGripHovered,
     ResizeGripActive,
+    Tab,
+    TabHovered,
+    TabActive,
+    TabUnfocused,
+    TabUnfocusedActive,
     PlotLines,
     PlotLinesHovered,
     PlotHistogram,
@@ -685,7 +771,8 @@ enum class Col {
     /** Darken/colorize entire screen behind a modal window, when one is active; */
     ModalWindowDimBg;
 
-    @JvmField val i = ordinal
+    @JvmField
+    val i = ordinal
 
     val u32 get() = ImGui.getColorU32(i, alphaMul = 1f)
 
@@ -739,15 +826,18 @@ enum class StyleVar {
     ScrollbarRounding,
     /** float   */
     GrabMinSize,
-    /** Float   */
+    /** float   */
     GrabRounding,
+    /** float */
+    TabRounding,
     /** vec2  */
     ButtonTextAlign;
 
-    @JvmField val i = ordinal
+    @JvmField
+    val i = ordinal
 }
 
-/** Enumeration for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()   */
+/** Flags for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()   */
 enum class ColorEditFlag(@JvmField val i: Int) {
 
     None(0),
@@ -838,7 +928,8 @@ enum class MouseCursor {
     /** (Unused by imgui functions. Use for e.g. hyperlinks) */
     Hand;
 
-    @JvmField val i = ordinal - 1
+    @JvmField
+    val i = ordinal - 1
 
     companion object {
         fun of(i: Int) = values().first { it.i == i }
@@ -846,7 +937,8 @@ enum class MouseCursor {
     }
 }
 
-/** Condition for setWindow***(), setNextWindow***(), setNextTreeNode***() functions
+/** Enumateration for ImGui::SetWindow***(), SetNextWindow***(), SetNextTreeNode***() functions
+ *  Represent a condition.
  *  Important: Treat as a regular enum! Do NOT combine multiple values using binary operators!
  *  All the functions above treat 0 as a shortcut to Cond.Always. */
 enum class Cond(@JvmField val i: Int) {
