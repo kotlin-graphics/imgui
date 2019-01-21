@@ -20,7 +20,10 @@ interface imgui_styles {
      */
 
     /** New, recommended style  */
-    fun styleColorsDark(dst: Style = g.style) = dst.apply {
+    fun styleColorsDark() = styleColorsDark(g.style) // no overload on interface
+
+    /** New, recommended style  */
+    fun styleColorsDark(dst: Style) = dst.apply {
         colors.clear()
         for (c in Col.values()) colors += Vec4()
         // @formatter:off
@@ -76,7 +79,10 @@ interface imgui_styles {
     }
 
     /** Classic imgui style (default)   */
-    fun styleColorsClassic(dst: Style = g.style) = dst.apply {
+    fun styleColorsClassic() = styleColorsClassic(g.style)
+
+    /** Classic imgui style (default)   */
+    fun styleColorsClassic(dst: Style) = dst.apply {
         colors.clear()
         for (c in Col.values())
             colors += Vec4()
@@ -134,7 +140,11 @@ interface imgui_styles {
 
     /** Those light colors are better suited with a thicker font than the default one + FrameBorder
      *  Best used with borders and a custom, thicker font    */
-    fun styleColorsLight(dst: Style = g.style) = dst.apply {
+    fun styleColorsLight() = styleColorsLight(g.style)
+
+    /** Those light colors are better suited with a thicker font than the default one + FrameBorder
+     *  Best used with borders and a custom, thicker font    */
+    fun styleColorsLight(dst: Style) = dst.apply {
         colors.clear()
         for (c in Col.values()) colors += Vec4()
         // @formatter:off
