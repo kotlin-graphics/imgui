@@ -48,11 +48,11 @@ public class Test_lwjgl {
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
 
         // Setup Style
-        imgui.styleColorsDark(null);
-//        imgui.styleColorsClassic(null);
+        imgui.styleColorsDark();
+//        imgui.styleColorsClassic();
 
         // Setup Platform/Renderer bindings
-        lwjglGlfw.init(window, true, GlfwClientApi.OpenGL);
+        lwjglGlfw.init(window, true, GlfwClientApi.OpenGL, null);
 
         io = imgui.getIo();
 
@@ -90,7 +90,7 @@ public class Test_lwjgl {
         });
 
         lwjglGlfw.shutdown();
-        ContextKt.destroy(ctx);
+        ctx.destroy();
 
         window.destroy();
         glfw.terminate();

@@ -7,7 +7,6 @@ import gln.glClearColor
 import gln.glViewport
 import imgui.Context
 import imgui.ImGui
-import imgui.destroy
 import imgui.impl.ImplGL3
 import imgui.impl.LwjglGlfw
 import imgui.impl.LwjglGlfw.GlfwClientApi
@@ -19,7 +18,7 @@ import uno.glfw.GlfwWindow
 import uno.glfw.VSync
 import uno.glfw.glfw
 
-fun main(args: Array<String>) {
+fun main() {
     HelloWorld_lwjgl()
 }
 

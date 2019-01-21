@@ -370,6 +370,17 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.initialized = true
     }
 
+    fun setCurrent() {
+        gImGui = this
+    }
+
+    /** Destroy current context */
+    fun destroy() {
+        shutdown()
+        if (gImGui === this)
+            setCurrent()
+    }
+
     /** This function is merely here to free heap allocations.     */
     fun shutdown() {
 
@@ -421,18 +432,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
         g.initialized = false
     }
-}
-
-fun Context?.setCurrent() {
-    gImGui = this
-}
-
-/** Destroy current context */
-fun Context?.destroy() {
-    val c = this ?: g
-    c.shutdown()
-    if (gImGui === c)
-        c.setCurrent()
 }
 
 /** -----------------------------------------------------------------------------
