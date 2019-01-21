@@ -30,8 +30,10 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
 
     var v by vPtr as KMutableProperty0<Int>
 
+    val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = false
     val hasMinMax = vMin != vMax
+    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMin < Int.MAX_VALUE)
 
     // Default tweak speed
     var vSpeed = vSpeed_
@@ -41,7 +43,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
     var adjustDelta = 0f
     if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
-        adjustDelta = io.mouseDelta.x
+        adjustDelta = io.mouseDelta[axis.i]
         if (io.keyAlt)
             adjustDelta *= 1f / 100f
         if (io.keyShift)
@@ -51,17 +53,22 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
             isDecimal -> parseFormatPrecision(format, 3)
             else -> 0
         }
-        adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f).x
+        adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis.i]
         vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
     }
     adjustDelta *= vSpeed
+
+    // For vertical drag we currently assume that Up=higher value (like we do with vertical sliders). This may become a parameter.
+    if (axis == Axis.Y)
+        adjustDelta = -adjustDelta
 
     /*  Clear current value on activation
         Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
         so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
     val isJustActivated = g.activeIdIsJustActivated
     val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
-    if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
+    val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
+    if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
         g.dragCurrentAccum = 0f
         g.dragCurrentAccumDirty = false
     } else if (adjustDelta != 0f) {
@@ -75,7 +82,6 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0f
 
-    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMax < Int.MAX_VALUE)
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
@@ -124,6 +130,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = false
     val hasMinMax = vMin != vMax
+    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMin < Long.MAX_VALUE)
 
     // Default tweak speed
     var vSpeed = vSpeed_
@@ -157,7 +164,8 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
         so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
     val isJustActivated = g.activeIdIsJustActivated
     val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
-    if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
+    val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
+    if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
         g.dragCurrentAccum = 0f
         g.dragCurrentAccumDirty = false
     } else if (adjustDelta != 0f) {
@@ -171,7 +179,6 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0.0
 
-    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMax < Long.MAX_VALUE)
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)
@@ -220,6 +227,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = true
     val hasMinMax = vMin != vMax
+    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMin < Float.MAX_VALUE)
 
     // Default tweak speed
     var vSpeed = vSpeed_
@@ -253,7 +261,8 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
         so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
     val isJustActivated = g.activeIdIsJustActivated
     val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
-    if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
+    val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
+    if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
         g.dragCurrentAccum = 0f
         g.dragCurrentAccumDirty = false
     } else if (adjustDelta != 0f) {
@@ -267,7 +276,6 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0f
 
-    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMax < Long.MAX_VALUE)
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power).f
@@ -315,6 +323,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = true
     val hasMinMax = vMin != vMax
+    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMin < Double.MAX_VALUE)
 
     // Default tweak speed
     var vSpeed = vSpeed_
@@ -348,7 +357,8 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
         so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
     val isJustActivated = g.activeIdIsJustActivated
     val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
-    if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
+    val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
+    if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
         g.dragCurrentAccum = 0f
         g.dragCurrentAccumDirty = false
     } else if (adjustDelta != 0f) {
@@ -362,7 +372,6 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     var vCur = v
     var vOldRefForAccumRemainder = 0.0
 
-    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMax < Long.MAX_VALUE)
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
         val vOldNormCurved = glm.pow((vCur - vMin).d / (vMax - vMin).d, 1.0 / power)

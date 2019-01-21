@@ -15,6 +15,16 @@ import kotlin.math.abs
 import imgui.WindowFlag as Wf
 
 
+//-----------------------------------------------------------------------------
+// [SECTION] VIEWPORTS, PLATFORM WINDOWS
+//-----------------------------------------------------------------------------
+
+// (this section is filled in the 'viewport' and 'docking' branches)
+
+//-----------------------------------------------------------------------------
+// [SECTION] KEYBOARD/GAMEPAD NAVIGATION
+//-----------------------------------------------------------------------------
+
 inline fun navScoreItemDistInterval(a0: Float, a1: Float, b0: Float, b1: Float) = when {
     a1 < b0 -> a1 - b0
     b1 < a0 -> a0 - b1
@@ -45,7 +55,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     // When entering through a NavFlattened border, we consider child window items as fully clipped for scoring
     if (window.parentWindow === g.navWindow) {
         assert((window.flags or g.navWindow!!.flags) has Wf.NavFlattened)
-        if (!window.clipRect.contains(cand))
+        if (cand !in window.clipRect)
             return false
         cand clipWithFull window.clipRect // This allows the scored item to not overlap other candidates in the parent window
     }
@@ -155,7 +165,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
         Disabling it may lead to disconnected graphs when nodes are very spaced out on different axis.
         Perhaps consider offering this as an option?    */
     if (result.distBox == Float.MAX_VALUE && distAxial < result.distAxial)  // Check axial match
-        if (g.navLayer == 1 && g.navWindow!!.flags hasnt Wf.ChildMenu)
+        if (g.navLayer == NavLayer.Menu && g.navWindow!!.flags hasnt Wf.ChildMenu)
             if ((g.navMoveDir == Dir.Left && dax < 0f) || (g.navMoveDir == Dir.Right && dax > 0f) ||
                     (g.navMoveDir == Dir.Up && day < 0f) || (g.navMoveDir == Dir.Down && day > 0f)) {
                 result.distAxial = distAxial
@@ -165,12 +175,12 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     return newBest
 }
 
-fun navRestoreLayer(layer: Int) {
+fun navRestoreLayer(layer: NavLayer) {
 
     g.navLayer = layer
-    if (layer == 0)
+    if (layer == NavLayer.Main)
         g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!)
-    if (layer == 0 && g.navWindow!!.navLastIds[0] != 0)
+    if (layer == NavLayer.Main && g.navWindow!!.navLastIds[0] != 0)
         setNavIDWithRectRel(g.navWindow!!.navLastIds[0], layer, g.navWindow!!.navRectRel[0])
     else
         navInitWindow(g.navWindow!!, true)

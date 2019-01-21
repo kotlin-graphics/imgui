@@ -7,7 +7,6 @@ import gln.glClearColor
 import gln.glViewport
 import imgui.Context
 import imgui.ImGui
-import imgui.destroy
 import imgui.impl.ImplGL3
 import imgui.impl.LwjglGlfw
 import imgui.impl.LwjglGlfw.GlfwClientApi
@@ -19,7 +18,7 @@ import uno.glfw.GlfwWindow
 import uno.glfw.VSync
 import uno.glfw.glfw
 
-fun main(args: Array<String>) {
+fun main() {
     HelloWorld_lwjgl()
 }
 
@@ -48,14 +47,18 @@ private class HelloWorld_lwjgl {
 
         // Setup ImGui binding
 //         glslVersion = 330 // set here your desidered glsl version
+
+        // Setup Dear ImGui context
         ctx = Context()
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
-        LwjglGlfw.init(window, true, GlfwClientApi.OpenGL)
 
-        // Setup Style
+        // Setup Dear ImGui style
         ImGui.styleColorsDark()
 //        ImGui.styleColorsClassic()
+
+        // Setup Platform/Renderer bindings
+        LwjglGlfw.init(window, true, GlfwClientApi.OpenGL)
 
         // Load Fonts
         /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use

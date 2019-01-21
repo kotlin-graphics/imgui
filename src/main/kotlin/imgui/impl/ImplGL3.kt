@@ -6,16 +6,17 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import gln.*
 import gln.buffer.BufferTarget
-import gln.gl20 as gl
 import gln.buffer.Usage
 import gln.buffer.glBufferData
 import gln.buffer.glBufferSubData
+import gln.checkError
+import gln.glGetVec4i
+import gln.glScissor
+import gln.glViewport
 import gln.glf.semantic
 import gln.objects.GlProgram
 import gln.objects.GlShader
-import gln.program.glUseProgram
 import gln.program.usingProgram
 import gln.texture.initTexture2d
 import gln.uniform.glUniform
@@ -29,10 +30,11 @@ import imgui.DrawVert
 import imgui.ImGui.io
 import kool.*
 import org.lwjgl.opengl.ARBClipControl.GL_CLIP_ORIGIN
-import org.lwjgl.opengl.GL20
+import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL30.*
 import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
+import gln.gl20 as gl
 
 object ImplGL3 {
 
@@ -41,6 +43,9 @@ object ImplGL3 {
     var CLIP_ORIGIN = false
 
     fun createDeviceObjects(): Boolean {
+
+        // this shall be in init, but since we dont have it because we do differently about the glsl version we do this here
+        io.backendRendererName = "imgui impl opengl3"
 
         // Backup GL state
         // we have to save also program since we do the uniform mat and texture setup once here
@@ -159,7 +164,7 @@ object ImplGL3 {
         val lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
-        val clipOriginLowerLeft  = when {
+        val clipOriginLowerLeft = when {
             CLIP_ORIGIN && glGetInteger(GL_CLIP_ORIGIN) == GL_UPPER_LEFT -> false // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
             else -> true
         }
@@ -203,7 +208,7 @@ object ImplGL3 {
             for (cmd in cmdList.cmdBuffer) {
                 val cb = cmd.userCallback
                 if (cb != null)
-                    // User callback (registered via ImDrawList::AddCallback)
+                // User callback (registered via ImDrawList::AddCallback)
                     cb(cmdList, cmd)
                 else {
                     val clipRect = Vec4(cmd.clipRect.x - pos.x, cmd.clipRect.y - pos.y, cmd.clipRect.z - pos.x, cmd.clipRect.w - pos.y);

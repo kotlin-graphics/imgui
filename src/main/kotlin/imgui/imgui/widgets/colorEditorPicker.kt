@@ -56,7 +56,6 @@ import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.rgbToHSV
 import imgui.ImGui.sameLine
-import imgui.ImGui.separator
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.shadeVertsLinearColorGradientKeepAlpha
@@ -74,9 +73,9 @@ import imgui.internal.DrawCornerFlag as Dcf
 
 /** Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little colored preview square that can be
  *  left-clicked to open a picker, and right-clicked to open an option menu.)
- *  Note that a 'float v[X]' function argument is the same as 'float* v', the array syntax is just a way to document
- *  the number of elements that are expected to be accessible. You can the pass the address of a first float element
- *  out of a contiguous structure, e.g. &myvector.x   */
+ *  - Note that in C++ a 'float v[X]' function argument is the _same_ as 'float* v', the array syntax is just a way
+ *      to document the number of elements that are expected to be accessible. You can the pass the address of
+ *      a first float element out of a contiguous structure, e.g. &myvector.x  */
 interface colorEditorPicker {
 
     /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
@@ -248,7 +247,7 @@ interface colorEditorPicker {
         // NB: The flag test is merely an optional micro-optimization, BeginDragDropTarget() does the same test.
         if (window.dc.lastItemStatusFlags has ItemStatusFlag.HoveredRect && beginDragDropTarget()) {
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
-                for (j in 0..2)
+                for (j in 0..2)  // Preserve alpha if any
                     col[j] = it.data!!.asFloatBuffer()[j]
                 valueChanged = true
             }

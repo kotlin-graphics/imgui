@@ -21,6 +21,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.showAboutWindow
 import imgui.ImGui.showUserGuide
 import imgui.ImGui.spacing
 import imgui.ImGui.text
@@ -46,6 +47,7 @@ object ExampleApp {
 
     object show {
         // Examples Apps (accessible from the "Examples" menu)
+        var documents = false
         var mainMenuBar = false
         var console = false
         var log = false
@@ -82,6 +84,7 @@ object ExampleApp {
 
         var open = open_
 
+        if (show.documents) Documents(show::documents);     // Process the Document app next, as it may also use a DockSpace()
         if (show.mainMenuBar) MainMenuBar()
         if (show.console) Console(show::console)
         if (show.log) Log(show::log)
@@ -100,12 +103,7 @@ object ExampleApp {
             }
 
         if (show.about)
-            withWindow("About Dear ImGui", show::about, Wf.AlwaysAutoResize.i) {
-                text("JVM Dear ImGui, $version")
-                separator()
-                text("Original by Omar Cornut, ported by Giuseppe Barbieri and all dear imgui contributors.")
-                text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
-            }
+            showAboutWindow(show::about)
 
         var windowFlags = 0
         if (noTitlebar) windowFlags = windowFlags or Wf.NoTitleBar
@@ -154,6 +152,7 @@ object ExampleApp {
                 menuItem("Simple overlay", "", ExampleApp.show::simpleOverlay)
                 menuItem("Manipulating window titles", "", ExampleApp.show::windowTitles)
                 menuItem("Custom rendering", "", ExampleApp.show::customRendering)
+                menuItem("Documents", "", show::documents)
             }
             menu("Help") {
                 menuItem("Metrics", "", ExampleApp.show::metrics)
@@ -200,8 +199,9 @@ object ExampleApp {
                 sameLine(); showHelpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
                 checkbox("io.ConfigCursorBlink", io::configInputTextCursorBlink)
                 sameLine(); showHelpMarker("Set to false to disable blinking cursor, for users who consider it distracting")
-                checkbox("io.ConfigResizeWindowsFromEdges [beta]", io::configResizeWindowsFromEdges)
+                checkbox("io.ConfigWindowsResizeFromEdges", io::configWindowsResizeFromEdges)
                 sameLine(); showHelpMarker("Enable resizing of windows from their edges and from the lower-left corner.\nThis requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")
+                checkbox("io.configWindowsMoveFromTitleBarOnly", io::configWindowsMoveFromTitleBarOnly)
                 checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
                 sameLine(); showHelpMarker("Instruct Dear ImGui to render a mouse cursor for you. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
                 separator()
@@ -224,7 +224,7 @@ object ExampleApp {
                 showHelpMarker("Try opening any of the contents below in this window and then click one of the \"Log To\" button.")
                 logButtons()
                 textWrapped("You can also call ImGui::LogText() to output directly to the log without a visual output.")
-                if (button("Copy \"Hello, world!\" to clipboard"))                {
+                if (button("Copy \"Hello, world!\" to clipboard")) {
                     logToClipboard()
                     logText("Hello, world!")
                     logFinish()
@@ -232,7 +232,7 @@ object ExampleApp {
             }
         }
 
-        collapsingHeader("Window options")        {
+        collapsingHeader("Window options") {
             checkbox("No titlebar", ::noTitlebar); sameLine(150)
             checkbox("No scrollbar", ::noScrollbar); sameLine(300)
             checkbox("No menu", ::noMenu)

@@ -1,46 +1,42 @@
 package imgui.imgui
 
-import gli_.hasnt
 import glm_.f
 import glm_.glm
-import glm_.i
-import glm_.vec2.Vec2
-import imgui.Col
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.logRenderedText
-import imgui.ImGui.popClipRect
-import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.style
-import imgui.ImGui.verticalSeparator
 import imgui.g
-import imgui.internal.*
+import imgui.internal.GroupData
+import imgui.internal.Rect
 import imgui.internal.LayoutType as Lt
 import imgui.internal.SeparatorFlag as Sf
 
 interface imgui_cursorLayout {
 
 
-
-    /** Call between widgets or groups to layout them horizontally
+    /** Call between widgets or groups to layout them horizontally. X position given in window coordinates.
      *  Gets back to previous line and continue with horizontal layout
-     *      posX == 0      : follow right after previous item
-     *      posX != 0      : align to specified x position (relative to window/group left)
-     *      spacingW < 0   : use default spacing if posX == 0, no spacing if posX != 0
+     *      localPosX == 0      : follow right after previous item
+     *      localPosX != 0      : align to specified x position (relative to window/group left)
+     *      spacingW < 0   : use default spacing if localPosX == 0, no spacing if localPosX != 0
      *      spacingW >= 0  : enforce spacing amount    */
-    fun sameLine(posX: Int) = sameLine(posX.f)
-    fun sameLine(posX: Int, spacingW: Int) = sameLine(posX.f, spacingW.f)
-    fun sameLine(posX: Float = 0f, spacingW: Float = -1f) {
+    fun sameLine(localPosX: Int) = sameLine(localPosX, 1)
+
+    fun sameLine(localPosX: Int, spacingW: Int) = sameLine(localPosX.f, spacingW.f)
+
+    fun sameLine() = sameLine(0f, -1f)
+
+    fun sameLine(localPosX: Float = 0f, spacingW: Float = -1f) {
 
         val window = currentWindow
         if (window.skipItems) return
 
         with(window) {
             dc.cursorPos.put(
-                    if (posX != 0f)
-                        pos.x - scroll.x + posX + glm.max(0f, spacingW) + dc.groupOffset + dc.columnsOffset
+                    if (localPosX != 0f)
+                        pos.x - scroll.x + localPosX + glm.max(0f, spacingW) + dc.groupOffset + dc.columnsOffset
                     else
                         dc.cursorPosPrevLine.x + if (spacingW < 0f) style.itemSpacing.x else spacingW
                     , dc.cursorPosPrevLine.y)
@@ -88,6 +84,8 @@ interface imgui_cursorLayout {
         }
     }
 
+    /** unlock horizontal starting position + capture the whole group bounding box into one "item"
+     *  (so you can use IsItemHovered() or layout primitives such as SameLine() on whole group, etc.) */
     fun endGroup() {
 
         val window = currentWindow
@@ -129,35 +127,41 @@ interface imgui_cursorLayout {
         //window->DrawList->AddRect(groupBb.Min, groupBb.Max, IM_COL32(255,0,255,255));   // [Debug]
     }
 
-    /** Cursor position is relative to window position
-     *  User generally sees positions in window coordinates. Internally we store CursorPos in absolute screen coordinates
-     *  because it is more convenient.
-     *  Conversion happens as we pass the value to user, but it makes our naming convention confusing because
-     *  cursorPos == dc.cursorPos - window.pos. May want to rename 'dc.cursorPos'.  */
     var cursorPos
+        /** cursor position in window coordinates (relative to window position)
+         *
+         *  Cursor position is relative to window position
+         *  User generally sees positions in window coordinates. Internally we store CursorPos in absolute screen coordinates
+         *  because it is more convenient.
+         *  Conversion happens as we pass the value to user, but it makes our naming convention confusing because
+         *  cursorPos == dc.cursorPos - window.pos. May want to rename 'dc.cursorPos'.*/
         get() = with(currentWindowRead!!) { dc.cursorPos - pos + scroll }
+        /** are using the main, absolute coordinate system.         */
         set(value) = with(currentWindowRead!!) {
             dc.cursorPos put (pos - scroll + value)
             dc.cursorMaxPos = glm.max(dc.cursorMaxPos, dc.cursorPos)
         }
 
-    /** cursor position is relative to window position  */
     var cursorPosX
+        /** cursor position is relative to window position
+         *  (some functions are using window-relative coordinates, such as: GetCursorPos, GetCursorStartPos, GetContentRegionMax, GetWindowContentRegion* etc. */
         get() = with(currentWindowRead!!) { dc.cursorPos.x - pos.x + scroll.x }
+        /** GetWindowPos() + GetCursorPos() == GetCursorScreenPos() etc.) */
         set(value) = with(currentWindowRead!!) {
             dc.cursorPos.x = pos.x - scroll.x + value
             dc.cursorMaxPos.x = glm.max(dc.cursorMaxPos.x, dc.cursorPos.x)
         }
 
-    /** cursor position is relative to window position  */
     var cursorPosY
+        /** cursor position is relative to window position
+         *  other functions such as GetCursorScreenPos or everything in ImDrawList:: */
         get() = with(currentWindowRead!!) { dc.cursorPos.y - pos.y + scroll.y }
         set(value) = with(currentWindowRead!!) {
             dc.cursorPos.y = pos.y - scroll.y + value
             dc.cursorMaxPos.y = glm.max(dc.cursorMaxPos.y, dc.cursorPos.y)
         }
 
-    /** initial cursor position */
+    /** initial cursor position in window coordinates */
     val cursorStartPos get() = with(currentWindowRead!!) { dc.cursorStartPos - pos }
 
     /** cursor position in absolute screen coordinates [0..io.DisplaySize] (useful to work with ImDrawList API) */

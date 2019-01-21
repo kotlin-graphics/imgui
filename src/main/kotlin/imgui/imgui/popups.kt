@@ -2,9 +2,8 @@ package imgui.imgui
 
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.begin
 import imgui.ImGui.beginPopupEx
-import imgui.ImGui.closePopup
+import imgui.ImGui.begin_
 import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
@@ -18,11 +17,19 @@ import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
 import imgui.internal.NavMoveFlag
+import kotlin.reflect.KMutableProperty0
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
 
-/** Popups  */
-interface imgui_popups {
+/** Popups, Modals
+ *  The properties of popups windows are:
+ *  - They block normal mouse hovering detection outside them. (*)
+ *  - Unless modal, they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
+ *  - Their visibility state (~bool) is held internally by imgui instead of being held by the programmer as we are used to with regular Begin() calls.
+ *      User can manipulate the visibility state by calling OpenPopup().
+ *  (*) One can use IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) to bypass it and detect hovering even when normally blocked by a popup.
+ *  Those three properties are connected. The library needs to hold their visibility state because it can close popups at any time. */
+interface imgui_popupsModals {
 
 
     /** call to mark popup as open (don't call every frame!). popups are closed when user click outside, or if
@@ -31,14 +38,14 @@ interface imgui_popups {
      *  needs to be at the same level).   */
     fun openPopup(strId: String) = openPopupEx(g.currentWindow!!.getId(strId))
 
-    /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returns true!
-     *  @param flags = WindowFlag   */
-    fun beginPopup(strId: String, flags: WindowFlags = 0): Boolean {
-        if (g.openPopupStack.size <= g.currentPopupStack.size) {    // Early out for performance
+    /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returns true!    */
+    fun beginPopup(strId: String, flags_: WindowFlags = 0): Boolean {
+        if (g.openPopupStack.size <= g.beginPopupStack.size) {    // Early out for performance
             g.nextWindowData.clear()    // We behave like Begin() and need to consume those values
             return false
         }
-        return beginPopupEx(g.currentWindow!!.getId(strId), flags or Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
+        val flags = flags_ or Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings
+        return beginPopupEx(g.currentWindow!!.getId(strId), flags)
     }
 
     /** This is a helper to handle the simplest case of associating one named popup to one given widget.
@@ -74,8 +81,19 @@ interface imgui_popups {
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
     }
 
-    /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside) */
-    fun beginPopupModal(name: String, pOpen: BooleanArray? = null, flags: WindowFlags = 0): Boolean {
+    /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside)
+     *
+     *  If 'p_open' is specified for a modal popup window, the popup will have a regular close button which will close the popup.
+     *  Note that popup visibility status is owned by imgui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
+    fun beginPopupModal(name: String, pOpen: BooleanArray, flags_: WindowFlags = 0): Boolean = withBoolean(pOpen) {
+        beginPopupModal(name, it, flags_)
+    }
+
+    /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside)
+     *
+     *  If 'p_open' is specified for a modal popup window, the popup will have a regular close button which will close the popup.
+     *  Note that popup visibility status is owned by imgui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
+    fun beginPopupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = 0): Boolean {
 
         val window = g.currentWindow!!
         val id = window.getId(name)
@@ -88,11 +106,13 @@ interface imgui_popups {
         if (g.nextWindowData.posCond == Cond.None)
             setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
 
-        val isOpen = begin(name, pOpen, flags or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings)
+        val flags = flags_ or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings
+        val isOpen = begin_(name, pOpen, flags)
         // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
-        if (!isOpen || (pOpen != null && !pOpen.get(0))) {
+        if (!isOpen || pOpen?.get() == false) {
             endPopup()
-            if (isOpen) closePopup(id)
+            if (isOpen)
+                closePopupToLevel(g.beginPopupStack.size, true)
             return false
         }
         return isOpen
@@ -101,7 +121,7 @@ interface imgui_popups {
     /** Only call EndPopup() if BeginPopupXXX() returns true!   */
     fun endPopup() {
         assert(currentWindow.flags has Wf.Popup) { "Mismatched BeginPopup()/EndPopup() calls" }
-        assert(g.currentPopupStack.isNotEmpty())
+        assert(g.beginPopupStack.isNotEmpty())
 
         // Make all menus and popups wrap around for now, may need to expose that policy.
         navMoveRequestTryWrapping(g.currentWindow!!, NavMoveFlag.LoopY.i)
@@ -121,18 +141,23 @@ interface imgui_popups {
         } else false
     }
 
-    fun isPopupOpen(strId: String) = g.openPopupStack.size > g.currentPopupStack.size &&
-            g.openPopupStack[g.currentPopupStack.size].popupId == g.currentWindow!!.getId(strId)
+    fun isPopupOpen(strId: String) = g.openPopupStack.size > g.beginPopupStack.size &&
+            g.openPopupStack[g.beginPopupStack.size].popupId == g.currentWindow!!.getId(strId)
 
     /** close the popup we have begin-ed into. clicking on a MenuItem or Selectable automatically close
      *  the current popup.  */
     fun closeCurrentPopup() {
 
-        var popupIdx = g.currentPopupStack.lastIndex
-        if (popupIdx < 0 || popupIdx >= g.openPopupStack.size || g.currentPopupStack[popupIdx].popupId != g.openPopupStack[popupIdx].popupId)
+        var popupIdx = g.beginPopupStack.lastIndex
+        if (popupIdx < 0 || popupIdx >= g.openPopupStack.size || g.beginPopupStack[popupIdx].popupId != g.openPopupStack[popupIdx].popupId)
             return
         while (popupIdx > 0 && g.openPopupStack[popupIdx].window != null && (g.openPopupStack[popupIdx].window!!.flags has Wf.ChildMenu))
             popupIdx--
-        closePopupToLevel(popupIdx)
+        closePopupToLevel(popupIdx, true)
+
+        /*  A common pattern is to close a popup when selecting a menu item/selectable that will open another window.
+            To improve this usage pattern, we avoid nav highlight for a single frame in the parent window.
+            Similarly, we could avoid mouse hover highlight in this window but it is less visually problematic. */
+        g.navWindow?.dc!!.navHideHighlightOneFrame = true
     }
 }

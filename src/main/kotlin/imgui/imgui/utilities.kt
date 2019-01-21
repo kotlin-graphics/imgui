@@ -26,7 +26,8 @@ import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
 
 /** Item/Widgets Utilities
- *  See Demo Window under "Widgets->Querying Status" for an interactive visualization of many of those functions. */
+ *  - Most of the functions are referring to the last/previous item we submitted.
+ *  - See Demo Window under "Widgets->Querying Status" for an interactive visualization of most of those functions. */
 interface imgui_utilities {
 
     /** This is roughly matching the behavior of internal-facing ItemHoverable()
@@ -109,15 +110,15 @@ interface imgui_utilities {
     val isAnyItemFocused: Boolean
         get() = g.navId != 0 && !g.navDisableHighlight
 
-    /** get bounding rect of last item in screen space  */
+    /** get upper-left bounding rectangle of the last item (screen space)  */
     val itemRectMin
         get() = currentWindowRead!!.dc.lastItemRect.min
 
-    /** get bounding rect of last item in screen space  */
+    /** get lower-right bounding rectangle of the last item (screen space)  */
     val itemRectMax
         get() = currentWindowRead!!.dc.lastItemRect.max
 
-    /** get bounding rect of last item in screen space  */
+    /** get size of last item  */
     val itemRectSize
         get() = currentWindowRead!!.dc.lastItemRect.size
 

@@ -37,13 +37,13 @@ import imgui.internal.SeparatorFlag as Sf
 
 interface lowLevelLayoutHelpers {
 
-    /** add vertical spacing    */
+    /** add vertical spacing.    */
     fun spacing() {
         if (currentWindow.skipItems) return
         itemSize(Vec2())
     }
 
-    /** add a dummy item of given size  */
+    /** add a dummy item of given size. unlike InvisibleButton(), Dummy() won't take the mouse click or be navigable into.  */
     fun dummy(size: Vec2) {
 
         val window = currentWindow
@@ -54,7 +54,7 @@ interface lowLevelLayoutHelpers {
         itemAdd(bb, 0)
     }
 
-    /** undo a sameLine()   */
+    /** undo a sameLine() or force a new line when in an horizontal-layout context.   */
     fun newLine() {
         val window = currentWindow
         if (window.skipItems) return
@@ -83,7 +83,7 @@ interface lowLevelLayoutHelpers {
         if (window.skipItems) return
 
         // Those flags should eventually be overridable by the user
-        val flag: Sf = if(window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
+        val flag: Sf = if (window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
         // useless on JVM with enums
         // assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo)
 
@@ -110,7 +110,7 @@ interface lowLevelLayoutHelpers {
         window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
 
         if (g.logEnabled)
-            logRenderedText(null, "\n--------------------------------")
+            logRenderedText(bb.min, "--------------------------------")
 
         window.dc.columnsSet?.let {
             pushColumnClipRect()

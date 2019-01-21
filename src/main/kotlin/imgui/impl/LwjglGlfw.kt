@@ -4,6 +4,7 @@ import glm_.b
 import glm_.c
 import glm_.f
 import glm_.vec2.Vec2d
+import glm_.vec2.Vec2i
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
@@ -22,6 +23,7 @@ object LwjglGlfw {
 
     lateinit var window: GlfwWindow
     var time = 0.0
+    var vrTexSize: Vec2i? = null
     val mouseCursors = LongArray(MouseCursor.COUNT)
 
     enum class GlfwClientApi { OpenGL, Vulkan }
@@ -29,9 +31,10 @@ object LwjglGlfw {
     var clientApi = GlfwClientApi.OpenGL
 
 
-    fun init(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL): Boolean {
+    fun init(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL, vrTexSize: Vec2i? = null): Boolean {
 
         this.window = window
+        this.vrTexSize = vrTexSize
 
         with(io) {
 
@@ -62,7 +65,12 @@ object LwjglGlfw {
             keyMap[Key.Y] = GLFW_KEY_Y
             keyMap[Key.Z] = GLFW_KEY_Z
 
-//            io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText; TODO
+            backendRendererName = null
+            backendPlatformName = null
+            backendLanguageUserData = null
+            backendRendererUserData = null
+            backendPlatformUserData = null
+//            io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText; // Platform dependent default implementations TODO
 //            io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;
 //            io.ClipboardUserData = g_Window;
 
@@ -101,10 +109,10 @@ object LwjglGlfw {
         if (fontTexture[0] == 0 && clientApi == GlfwClientApi.OpenGL)
             ImplGL3.createDeviceObjects()
 
-        assert(io.fonts.isBuilt) { "Font atlas needs to be built" }
+        assert(io.fonts.isBuilt) { "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame()." }
 
         // Setup display size (every frame to accommodate for window resizing)
-        io.displaySize put window.size
+        io.displaySize put (vrTexSize ?: window.size)
         io.displayFramebufferScale.x = if (window.size.x > 0) window.framebufferSize.x / window.size.x.f else 0f
         io.displayFramebufferScale.y = if (window.size.y > 0) window.framebufferSize.y / window.size.y.f else 0f
 
@@ -116,7 +124,7 @@ object LwjglGlfw {
         updateMousePosAndButtons()
         updateMouseCursor()
 
-        // Gamepad navigation mapping [BETA]
+        // Gamepad navigation mapping
         io.navInputs.fill(0f)
         if (io.configFlags has ConfigFlag.NavEnableGamepad) {
             // Update gamepad inputs
@@ -200,7 +208,8 @@ object LwjglGlfw {
         else {
             // Show OS mouse cursor
             // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
-            window.cursor = GlfwCursor(mouseCursors[imguiCursor.i].takeIf { it != NULL } ?: mouseCursors[MouseCursor.Arrow.i])
+            window.cursor = GlfwCursor(mouseCursors[imguiCursor.i].takeIf { it != NULL }
+                    ?: mouseCursors[MouseCursor.Arrow.i])
             window.cursorStatus = CursorStatus.Normal
         }
     }

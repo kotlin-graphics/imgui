@@ -85,18 +85,18 @@ with SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging 
 called, aka before the next Begin(). Moving window isn't affected..    */
 fun findHoveredWindow() {
 
-    var hoveredWindow = g.movingWindow?.takeIf { it.flags hasnt Wf.NoInputs }
+    var hoveredWindow = g.movingWindow?.takeIf { it.flags hasnt Wf.NoMouseInputs }
 
     val paddingRegular = Vec2(style.touchExtraPadding)
     val paddingForResizeFromEdges = when {
-        io.configResizeWindowsFromEdges -> glm.max(style.touchExtraPadding, Vec2(RESIZE_WINDOWS_FROM_EDGES_HALF_THICKNESS))
+        io.configWindowsResizeFromEdges -> glm.max(style.touchExtraPadding, Vec2(WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS))
         else -> paddingRegular
     }
 
     var i = g.windows.lastIndex
     while (i >= 0 && hoveredWindow == null) {
         val window = g.windows[i]
-        if (window.active && !window.hidden && window.flags hasnt Wf.NoInputs) {
+        if (window.active && !window.hidden && window.flags hasnt Wf.NoMouseInputs) {
             // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
             val bb = Rect(window.outerRectClipped)
             if (window.flags has Wf.ChildWindow || window.flags has Wf.NoResize)
@@ -179,7 +179,7 @@ fun checkStacksSize(window: Window, write: Boolean) {
     }
     run {
         // Too few or too many EndMenu()/EndPopup()
-        val current = g.currentPopupStack.size
+        val current = g.beginPopupStack.size
         if (write) backup[ptr] = current
         else assert(backup[ptr] == current) { "BeginMenu/EndMenu or BeginPopup/EndPopup Mismatch" }
         ptr++
@@ -237,8 +237,8 @@ fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 fun createNewWindowSettings(name: String) = WindowSettings(name).also { g.settingsWindows += it }
 
 /*  Settings/.Ini Utilities
-    The disk functions are automatically called if io.IniFilename != NULL (default is "imgui.ini").
-    Set io.IniFilename to NULL to load/save manually. Read io.WantSaveIniSettings description about handling .ini saving manually. */
+    - The disk functions are automatically called if io.IniFilename != NULL (default is "imgui.ini").
+    - Set io.IniFilename to NULL to load/save manually. Read io.WantSaveIniSettings description about handling .ini saving manually. */
 
 /** call after CreateContext() and before the first call to NewFrame(). NewFrame() automatically calls LoadIniSettingsFromDisk(io.IniFilename). */
 fun loadIniSettingsFromDisk(iniFilename: String?) {
@@ -643,8 +643,8 @@ fun dataTypeApplyOpFromText(buf_: CharArray, initialValueBuf_: CharArray, dataTy
  *  NB: We modify rect_rel by the amount we scrolled for, so it is immediately updated. */
 fun navScrollToBringItemIntoView(window: Window, itemRect: Rect) {
     val windowRectRel = Rect(window.innerMainRect.min - 1, window.innerMainRect.max + 1)
-    //g.OverlayDrawList.AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
-    if (windowRectRel contains itemRect) return
+    //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
+    if (itemRect in windowRectRel) return
 
     if (window.scrollbar.x && itemRect.min.x < windowRectRel.min.x) {
         window.scrollTarget.x = itemRect.min.x - window.pos.x + window.scroll.x - style.itemSpacing.x
@@ -693,6 +693,12 @@ fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, flags_: W
         childId = id
         autoFitChildAxes = autoFitAxes
     }
+
+    // Set the cursor to handle case where the user called SetNextWindowPos()+BeginChild() manually.
+    // While this is not really documented/defined, it seems that the expected thing to do.
+    if (childWindow.beginCount == 1)
+        parentWindow.dc.cursorPos put childWindow.pos
+
     // Process navigation-in immediately so NavInit can run on first frame
     if (g.navActivateId == id && flags hasnt Wf.NavFlattened && (childWindow.dc.navLayerActiveMask != 0 || childWindow.dc.navHasScroll)) {
         childWindow.focus()
@@ -756,7 +762,7 @@ fun navUpdate() {
             setNavIDWithRectRel(g.navInitResultId, g.navLayer, g.navInitResultRectRel)
         else
             setNavId(g.navInitResultId, g.navLayer)
-        g.navWindow!!.navRectRel[g.navLayer] = g.navInitResultRectRel
+        g.navWindow!!.navRectRel[g.navLayer.i] = g.navInitResultRectRel
     }
     g.navInitRequest = false
     g.navInitRequestFromMove = false
@@ -788,12 +794,12 @@ fun navUpdate() {
     }
     g.navIdIsAlive = false
     g.navJustTabbedId = 0
-    assert(g.navLayer == 0 || g.navLayer == 1)
+//    assert(g.navLayer == 0 || g.navLayer == 1) useless on jvm
 
     // Store our return window (for returning from Layer 1 to Layer 0) and clear it as soon as we step back in our own Layer 0
     g.navWindow?.let {
         navSaveLastChildNavWindow(it)
-        if (it.navLastChildNavWindow != null && g.navLayer == 0)
+        if (it.navLastChildNavWindow != null && g.navLayer == NavLayer.Main)
             it.navLastChildNavWindow = null
     }
 
@@ -814,16 +820,16 @@ fun navUpdate() {
             val parentWindow = childWindow.parentWindow!!
             assert(childWindow.childId != 0)
             parentWindow.focus()
-            setNavId(childWindow.childId, 0)
+            setNavId(childWindow.childId, NavLayer.Main)
             g.navIdIsAlive = false
             if (g.navDisableMouseHover)
                 g.navMousePosDirty = true
         } else if (g.openPopupStack.isNotEmpty()) {
             // Close open popup/menu
             if (g.openPopupStack.last().window!!.flags hasnt Wf.Modal)
-                closePopupToLevel(g.openPopupStack.lastIndex)
-        } else if (g.navLayer != 0)
-            navRestoreLayer(0)  // Leave the "menu" layer
+                closePopupToLevel(g.openPopupStack.lastIndex, true)
+        } else if (g.navLayer != NavLayer.Main)
+            navRestoreLayer(NavLayer.Main)  // Leave the "menu" layer
         else {
             // Clear NavLastId for popups but keep it for regular child window so we can leave one and come back where we were
             if (g.navWindow != null && (g.navWindow!!.flags has Wf.Popup || g.navWindow!!.flags hasnt Wf.ChildWindow))
@@ -867,7 +873,7 @@ fun navUpdate() {
     val allowedDirFlags = if (g.activeId == 0) 0.inv() else g.activeIdAllowNavDirFlags
     if (g.navMoveRequestForward == NavForward.None) {
         g.navMoveDir = Dir.None
-        g.navMoveRequestFlags = 0
+        g.navMoveRequestFlags = NavMoveFlag.None.i
         g.navWindow?.let {
             if (g.navWindowingTarget == null && allowedDirFlags != 0 && it.flags hasnt Wf.NoNavInputs) {
                 if (allowedDirFlags has (1 shl Dir.Left) && isNavInputPressedAnyOfTwo(NavInput.DpadLeft, NavInput.KeyLeft, InputReadMode.Repeat))
@@ -943,13 +949,13 @@ fun navUpdate() {
     g.navMoveResultOther.clear()
 
     // When we have manually scrolled (without using navigation) and NavId becomes out of bounds, we project its bounding box to the visible area to restart navigation within visible items
-    if (g.navMoveRequest && g.navMoveFromClampedRefRect && g.navLayer == 0) {
+    if (g.navMoveRequest && g.navMoveFromClampedRefRect && g.navLayer == NavLayer.Main) {
         val window = g.navWindow!!
         val windowRectRel = Rect(window.innerMainRect.min - window.pos - 1, window.innerMainRect.max - window.pos + 1)
-        if (!windowRectRel.contains(window.navRectRel[g.navLayer])) {
+        if (window.navRectRel[g.navLayer.i] !in windowRectRel) {
             val pad = window.calcFontSize() * 0.5f
             windowRectRel expand Vec2(-min(windowRectRel.width, pad), -min(windowRectRel.height, pad)) // Terrible approximation for the intent of starting navigation from first fully visible item
-            window.navRectRel[g.navLayer] clipWith windowRectRel
+            window.navRectRel[g.navLayer.i] clipWith windowRectRel
             g.navId = 0
         }
         g.navMoveFromClampedRefRect = false
@@ -958,7 +964,7 @@ fun navUpdate() {
     // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
     g.navWindow.let {
         if (it != null) {
-            val navRectRel = if (!it.navRectRel[g.navLayer].isInverted) Rect(it.navRectRel[g.navLayer]) else Rect(0f, 0f, 0f, 0f)
+            val navRectRel = if (!it.navRectRel[g.navLayer.i].isInverted) Rect(it.navRectRel[g.navLayer.i]) else Rect(0f, 0f, 0f, 0f)
             g.navScoringRectScreen.put(navRectRel.min + it.pos, navRectRel.max + it.pos)
         } else g.navScoringRectScreen put getViewportRect()
     }
@@ -970,14 +976,14 @@ fun navUpdate() {
     //g.OverlayDrawList.AddRect(g.NavScoringRectScreen.Min, g.NavScoringRectScreen.Max, IM_COL32(255,200,0,255)); // [DEBUG]
     g.navScoringCount = 0
     if (IMGUI_DEBUG_NAV_RECTS)
-        g.navWindow?.let {nav ->
+        g.navWindow?.let { nav ->
             for (layer in 0..1)
-                getOverlayDrawList(nav).addRect(nav.pos + nav.navRectRel[layer].min, nav.pos + nav.navRectRel[layer].max, COL32(255,200,0,255))  // [DEBUG]
-            val col = if(!nav.hidden) COL32(255,0,255,255) else COL32(255,0,0,255)
+                getOverlayDrawList(nav).addRect(nav.pos + nav.navRectRel[layer].min, nav.pos + nav.navRectRel[layer].max, COL32(255, 200, 0, 255))  // [DEBUG]
+            val col = if (!nav.hidden) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
             val p = navCalcPreferredRefPos()
             val buf = "${g.navLayer}".toCharArray(CharArray(32))
             getOverlayDrawList(nav).addCircleFilled(p, 3f, col)
-            getOverlayDrawList(nav).addText(null, 13f, p + Vec2(8,-4), col, buf)
+            getOverlayDrawList(nav).addText(null, 13f, p + Vec2(8, -4), col, buf)
         }
 }
 
@@ -1087,8 +1093,8 @@ fun navUpdateWindowing() {
             navInitWindow(applyFocusWindow!!, false)
 
         // If the window only has a menu layer, select it directly
-        if (applyFocusWindow!!.dc.navLayerActiveMask == 1 shl 1)
-            g.navLayer = 1
+        if (applyFocusWindow!!.dc.navLayerActiveMask == 1 shl NavLayer.Menu.i)
+            g.navLayer = NavLayer.Menu
     }
     applyFocusWindow?.let { g.navWindowingTarget = null }
 
@@ -1097,7 +1103,9 @@ fun navUpdateWindowing() {
         g.navWindow?.let {
             // Move to parent menu if necessary
             var newNavWindow = it
-            while (newNavWindow.dc.navLayerActiveMask hasnt (1 shl 1) && newNavWindow.flags has Wf.ChildWindow && newNavWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
+            while (newNavWindow.dc.navLayerActiveMask hasnt (1 shl 1)
+                    && newNavWindow.flags has Wf.ChildWindow
+                    && newNavWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
                 newNavWindow = newNavWindow.parentWindow!!
 
             if (newNavWindow !== it) {
@@ -1107,7 +1115,7 @@ fun navUpdateWindowing() {
             }
             g.navDisableHighlight = false
             g.navDisableMouseHover = true
-            navRestoreLayer(if (it.dc.navLayerActiveMask has (1 shl 1)) g.navLayer xor 1 else 0)
+            navRestoreLayer(if (it.dc.navLayerActiveMask has (1 shl NavLayer.Menu.i)) NavLayer of (g.navLayer.i xor 1) else NavLayer.Main)
         }
 }
 
@@ -1123,7 +1131,7 @@ fun navUpdateWindowingList() {
     setNextWindowSizeConstraints(Vec2(io.displaySize.x * 0.2f, io.displaySize.y * 0.2f), Vec2(Float.MAX_VALUE))
     setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Always, Vec2(0.5f))
     pushStyleVar(StyleVar.WindowPadding, style.windowPadding * 2f)
-    val flags = Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoNav or Wf.NoResize or Wf.NoMove or Wf.NoInputs or Wf.AlwaysAutoResize or Wf.NoSavedSettings
+    val flags = Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoResize or Wf.NoMove or Wf.NoMouseInputs or Wf.AlwaysAutoResize or Wf.NoSavedSettings
     begin("###NavWindowingList", null, flags)
     for (n in g.windowsFocusOrder.lastIndex downTo 0) {
         val window = g.windowsFocusOrder[n]
@@ -1165,7 +1173,7 @@ fun navUpdateMoveResult() {
     val window = result.window!!
     assert(g.navWindow != null)
     // Scroll to keep newly navigated item fully into view.
-    if (g.navLayer == 0) {
+    if (g.navLayer == NavLayer.Main) {
         val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
         navScrollToBringItemIntoView(window, rectAbs)
         // Estimate upcoming scroll so we can offset our result position so mouse position can be applied immediately after in NavUpdate()
@@ -1190,11 +1198,11 @@ fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
 
         g.navWindow?.let { window ->
 
-            if (window.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null && g.navLayer == 0) {
+            if (window.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null && g.navLayer == NavLayer.Main) {
 
                 val pageUpHeld = Key.PageUp.isDown && allowedDirFlags has (1 shl Dir.Up.i)
                 val pageDownHeld = Key.PageDown.isDown && allowedDirFlags has (1 shl Dir.Down)
-                if ((pageUpHeld && !pageDownHeld) || (pageDownHeld && !pageUpHeld))
+                if (pageUpHeld != pageDownHeld) // If either (not both) are pressed
                     if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {
                         // Fallback manual-scroll when window has no navigable item
                         if (Key.PageUp.isPressed)
@@ -1202,7 +1210,7 @@ fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
                         else if (Key.PageDown.isPressed)
                             window.setScrollY(window.scroll.y + window.innerClipRect.height)
                     } else {
-                        val navRectRel = window.navRectRel[g.navLayer]
+                        val navRectRel = window.navRectRel[g.navLayer.i]
                         val pageOffsetY = 0f max (window.innerClipRect.height - window.calcFontSize() + navRectRel.height)
                         return when { // nav_scoring_rect_offset_y
                             Key.PageUp.isPressed -> {
@@ -1290,7 +1298,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         g.navLayer = window.dc.navLayerCurrent
         g.navIdIsAlive = true
         g.navIdTabCounter = window.focusIdxTabCounter
-        window.navRectRel[window.dc.navLayerCurrent] = navBbRel    // Store item bounding box (relative to window position)
+        window.navRectRel[window.dc.navLayerCurrent.i] = navBbRel    // Store item bounding box (relative to window position)
     }
 }
 
@@ -1302,7 +1310,7 @@ fun navCalcPreferredRefPos(): Vec2 {
         return Vec2(g.lastValidMousePos)
     } else {
         // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item.
-        val rectRel = g.navWindow!!.navRectRel[g.navLayer]
+        val rectRel = g.navWindow!!.navRectRel[g.navLayer.i]
         val pos = g.navWindow!!.pos + Vec2(rectRel.min.x + min(style.framePadding.x * 4, rectRel.width), rectRel.max.y - min(style.framePadding.y, rectRel.height))
         val visibleRect = getViewportRect()
         return glm.floor(glm.clamp(pos, visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.

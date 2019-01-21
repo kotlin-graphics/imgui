@@ -122,14 +122,19 @@ infix fun Int.has(b: SeparatorFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: SeparatorFlag) = (this and b.i) == 0
 
 /** Storage for LastItem data   */
-enum class ItemStatusFlag {
-    None,
-    HoveredRect,
-    HasDisplayRect,
+enum class ItemStatusFlag(@JvmField val i: Int) {
+    None(0),
+    HoveredRect(1 shl 0),
+    HasDisplayRect(1 shl 1),
     /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
-    Edited;
+    Edited(1 shl 2),
 
-    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    //  #ifdef IMGUI_ENABLE_TEST_ENGINE
+//  [imgui-test only]
+    Openable(1 shl 10),
+    Opened(1 shl 11),
+    Checkable(1 shl 12),
+    Checked(1 shl 13);
 }
 
 infix fun Int.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv())
@@ -137,25 +142,31 @@ infix fun Int.or(b: ItemStatusFlag): ItemStatusFlags = or(b.i)
 infix fun Int.has(b: ItemStatusFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ItemStatusFlag) = and(b.i) == 0
 
-/** FIXME: this is in development, not exposed/functional as a generic feature yet. */
-enum class LayoutType { Vertical, Horizontal;
+/** FIXME: this is in development, not exposed/functional as a generic feature yet.
+ *  Horizontal/Vertical enums are fixed to 0/1 so they may be used to index ImVec2 */
+enum class LayoutType {
+    Horizontal, Vertical;
 
     val i = ordinal
 }
 
-enum class Axis { None, X, Y;
+/** X/Y enums are fixed to 0/1 so they may be used to index ImVec2 */
+enum class Axis {
+    None, X, Y;
 
     val i = ordinal - 1
 }
 
 infix fun Int.shl(b: Axis) = shl(b.i)
 
-enum class PlotType { Lines, Histogram;
+enum class PlotType {
+    Lines, Histogram;
 
     val i = ordinal
 }
 
-enum class InputSource { None, Mouse, Nav,
+enum class InputSource {
+    None, Mouse, Nav,
     /** Only used occasionally for storage, not tested/handled by most code */
     NavKeyboard,
     /** Only used occasionally for storage, not tested/handled by most code */
@@ -169,12 +180,14 @@ enum class InputSource { None, Mouse, Nav,
 }
 
 // FIXME-NAV: Clarify/expose various repeat delay/rate
-enum class InputReadMode { Down, Pressed, Released, Repeat, RepeatSlow, RepeatFast;
+enum class InputReadMode {
+    Down, Pressed, Released, Repeat, RepeatSlow, RepeatFast;
 
     val i = ordinal
 }
 
-enum class NavHighlightFlag { None, TypeDefault, TypeThin, AlwaysDraw, NoRounding;
+enum class NavHighlightFlag {
+    None, TypeDefault, TypeThin, AlwaysDraw, NoRounding;
 
     val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
@@ -183,7 +196,8 @@ infix fun Int.has(b: NavHighlightFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: NavHighlightFlag) = and(b.i) == 0
 infix fun NavHighlightFlag.or(b: NavHighlightFlag): NavHighlightFlags = i or b.i
 
-enum class NavDirSourceFlag { None, Keyboard, PadDPad, PadLStick;
+enum class NavDirSourceFlag {
+    None, Keyboard, PadDPad, PadLStick;
 
     val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
@@ -214,9 +228,24 @@ enum class NavMoveFlag {
 
 infix fun Int.has(b: NavMoveFlag) = and(b.i) != 0
 
-enum class NavForward { None, ForwardQueued, ForwardActive;
+enum class NavForward {
+    None, ForwardQueued, ForwardActive;
 
     val i = ordinal
+}
+
+enum class NavLayer {
+    /** Main scrolling layer */
+    Main,
+    /** Menu layer (access with Alt/ImGuiNavInput_Menu) */
+    Menu;
+
+    val i = ordinal
+
+    companion object {
+        val COUNT = values().size
+        infix fun of(i: Int) = values().first { it.i == i }
+    }
 }
 
 enum class PopupPositionPolicy { Default, ComboBox }
@@ -242,9 +271,14 @@ infix fun Int.has(b: DrawCornerFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: DrawCornerFlag) = (this and b.i) == 0
 
 // TODO check enum declarance position
-enum class DrawListFlag { AntiAliasedLines, AntiAliasedFill;
+enum class DrawListFlag {
+    None,
+    /** Lines are anti-aliased (*2 the number of triangles for 1.0f wide line, otherwise *3 the number of triangles) */
+    AntiAliasedLines,
+    /** Filled shapes have anti-aliased edges (*2 the number of vertices) */
+    AntiAliasedFill;
 
-    val i = 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
 
 infix fun DrawListFlag.or(b: DrawListFlag): DrawListFlags = i or b.i

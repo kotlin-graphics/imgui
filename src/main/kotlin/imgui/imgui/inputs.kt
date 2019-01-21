@@ -3,9 +3,9 @@ package imgui.imgui
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
-import imgui.ImGui.style
 import imgui.ImGui.calcTypematicPressedRepeatAmount
 import imgui.ImGui.io
+import imgui.ImGui.style
 import imgui.MOUSE_INVALID
 import imgui.g
 import imgui.internal.Rect
@@ -109,11 +109,13 @@ interface imgui_inputs {
     val mousePos get() = io.mousePos
 
     /** retrieve backup of mouse position at the time of opening popup we have BeginPopup() into */
-    val mousePosOnOpeningCurrentPopup get() = Vec2(g.currentPopupStack.lastOrNull()?.openMousePos ?: io.mousePos)
+    val mousePosOnOpeningCurrentPopup get() = Vec2(g.beginPopupStack.lastOrNull()?.openMousePos ?: io.mousePos)
 
-    /** dragging amount since clicking. if lockThreshold < -1.0f uses io.MouseDraggingThreshold
-     *  NB: This is only valid if isMousePosValid(). Back-ends in theory should always keep mouse position valid
-     *  when dragging even outside the client window. */
+    /** return the delta from the initial clicking position.
+     *  This is locked and return 0.0f until the mouse moves past a distance threshold at least once.
+     *  If lock_threshold < -1.0f uses io.MouseDraggingThreshold
+     *
+     *  Back-ends in theory should always keep mouse position valid when dragging even outside the client window. */
     fun getMouseDragDelta(button: Int = 0, lockThreshold_: Float = -1f): Vec2 {
 
         assert(button >= 0 && button < io.mouseDown.size)

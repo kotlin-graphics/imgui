@@ -54,9 +54,9 @@ import imgui.internal.LayoutType as Lt
  *  - Passing 'bool* p_open != NULL' shows a window-closing widget in the upper-right corner of the window,
  *      which clicking will set the boolean to false when clicked.
  *  - Begin() return false to indicate the window is collapsed or fully clipped, so you may early out and omit submitting anything to the window.
- *    Always call a matching End() for each Begin() call, regardless of its return value [this is due to legacy reason and is inconsistent with
- *    most other functions such as BeginMenu/EndMenu, BeginPopup/EndPopup, etc. where the EndXXX call should only be called
- *    if the corresponding BeginXXX function returned true.]    */
+ *    Always call a matching End() for each Begin() call, regardless of its return value
+ *    [this is due to legacy reason and is inconsistent with most other functions such as BeginMenu/EndMenu, BeginPopup/EndPopup, etc.
+ *    where the EndXXX call should only be called if the corresponding BeginXXX function returned true.]    */
 interface imgui_window {
 
     // Windows
@@ -102,7 +102,7 @@ interface imgui_window {
         }
 
         // Automatically disable manual moving/resizing when NoInputs is set
-        if (flags has Wf.NoInputs)
+        if ((flags and Wf.NoInputs) == Wf.NoInputs.i)
             flags = flags or Wf.NoMove or Wf.NoResize
 
         if (flags has Wf.NavFlattened)
@@ -110,6 +110,8 @@ interface imgui_window {
 
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
+
+        // Update Flags, LastFrameActive, BeginOrderXXX fields
         if (firstBeginOfTheFrame)
             window.flags = flags
         else
@@ -129,7 +131,7 @@ interface imgui_window {
         var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1
         val windowJustAppearingAfterHiddenForResize = window.hiddenFramesForResize > 0
         if (flags has Wf.Popup) {
-            val popupRef = g.openPopupStack[g.currentPopupStack.size]
+            val popupRef = g.openPopupStack[g.beginPopupStack.size]
             // We recycle popups so treat window as activated if popup id changed
             windowJustActivatedByUser = windowJustActivatedByUser || window.popupId != popupRef.popupId
             windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
@@ -142,9 +144,9 @@ interface imgui_window {
         window.setCurrent()
         checkStacksSize(window, true)
         if (flags has Wf.Popup) {
-            val popupRef = g.openPopupStack[g.currentPopupStack.size]
+            val popupRef = g.openPopupStack[g.beginPopupStack.size]
             popupRef.window = window
-            g.currentPopupStack.push(popupRef)
+            g.beginPopupStack.push(popupRef)
             window.popupId = popupRef.popupId
         }
 
@@ -199,6 +201,19 @@ interface imgui_window {
             window.lastFrameActive = currentFrame
             for (i in 1 until window.idStack.size) window.idStack.pop()  // resize 1
 
+            // Update stored window name when it changes (which can _only_ happen with the "###" operator, so the ID would stay unchanged).
+            // The title bar always display the 'name' parameter, so we only update the string storage if it needs to be visible to the end-user elsewhere.
+            var windowTitleVisibleElsewhere = false
+            if (g.navWindowingList.isNotEmpty() && window.flags hasnt Wf.NoNavFocus)   // Window titles visible when using CTRL+TAB
+                windowTitleVisibleElsewhere = true
+            if (windowTitleVisibleElsewhere && !windowJustCreated && name != window.name) {
+//                val buf_len = (size_t)window->NameBufLen
+//                window->Name = ImStrdupcpy(window->Name, &buf_len, name)
+//                window->NameBufLen = (int)buf_len
+                window.name = name
+                window.nameBufLen = name.length
+            }
+
             // UPDATE CONTENTS SIZE, UPDATE HIDDEN STATUS
 
             // Update contents size from last frame for auto-fitting (or use explicit size)
@@ -230,7 +245,7 @@ interface imgui_window {
                 }
             }
 
-            setCurrentWindow(window);
+            setCurrentWindow(window)
 
             // Lock border size and padding for the frame (so that altering them doesn't cause inconsistencies)
             window.windowBorderSize = when {
@@ -319,12 +334,13 @@ interface imgui_window {
                 // Popup first latch mouse position, will position itself when it appears next frame
                 window.autoPosLastDirection = Dir.None
                 if (flags has Wf.Popup && !windowPosSetByApi)
-                    window.pos put g.currentPopupStack.last().openPopupPos
+                    window.pos put g.beginPopupStack.last().openPopupPos
             }
 
             // Position child window
             if (flags has Wf.ChildWindow) {
-                window.beginOrderWithinParent = parentWindow!!.dc.childWindows.size
+                assert(parentWindow!!.active)
+                window.beginOrderWithinParent = parentWindow.dc.childWindows.size
                 parentWindow.dc.childWindows += window
 
                 if (flags hasnt Wf.Popup && !windowPosSetByApi && !windowIsChildTooltip)
@@ -388,7 +404,7 @@ interface imgui_window {
             // Handle manual resize: Resize Grips, Borders, Gamepad
             val borderHeld = -1
             val resizeGripCol = IntArray(4)
-            val resizeGripCount = if (io.configResizeWindowsFromEdges) 2 else 1 // 4
+            val resizeGripCount = if (io.configWindowsResizeFromEdges) 2 else 1 // 4
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             if (!window.collapsed)
                 updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
@@ -424,7 +440,7 @@ interface imgui_window {
             if (dimBgForWindowList && window == g.navWindowingTargetAnim!!.rootWindow) {
                 val bb = window.rect()
                 bb expand g.fontSize
-                if (!bb.contains(viewportRect)) // Avoid drawing if the window covers all the viewport anyway
+                if (viewportRect !in bb) // Avoid drawing if the window covers all the viewport anyway
                     window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f), g.style.windowRounding)
             }
 
@@ -450,14 +466,15 @@ interface imgui_window {
                     if (g.nextWindowData.bgAlphaCond != Cond.None)
                         bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(g.nextWindowData.bgAlphaVal) shl COL32_A_SHIFT)
                     window.drawList.addRectFilled(window.pos + Vec2(0f, window.titleBarHeight), window.pos + window.size, bgCol, windowRounding,
-                            if(flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
+                            if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
                 }
                 g.nextWindowData.bgAlphaCond = Cond.None
 
                 // Title bar
-                val titleBarCol = if (window.collapsed) Col.TitleBgCollapsed else if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
-                if (flags hasnt Wf.NoTitleBar)
+                if (flags hasnt Wf.NoTitleBar) {
+                    val titleBarCol = if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
                     window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, Dcf.Top.i)
+                }
 
                 // Menu bar
                 if (flags has Wf.MenuBar) {
@@ -504,7 +521,7 @@ interface imgui_window {
                 var rounding = max(window.windowRounding, style.windowRounding)
                 val bb = window.rect()
                 bb expand g.fontSize
-                if (bb contains viewportRect) { // If a window fits the entire viewport, adjust its highlight inward
+                if (viewportRect in bb) { // If a window fits the entire viewport, adjust its highlight inward
                     bb expand (-g.fontSize - 1f)
                     rounding = window.windowRounding
                 }
@@ -545,7 +562,7 @@ interface imgui_window {
                 dc.prevLineTextBaseOffset = 0f
                 dc.currentLineTextBaseOffset = 0f
                 dc.navHideHighlightOneFrame = false
-                dc.navHasScroll = scrollMaxY > 0f
+                dc.navHasScroll = window.scrollMaxY > 0f
                 dc.navLayerActiveMask = window.dc.navLayerActiveMaskNext
                 dc.navLayerActiveMaskNext = 0
                 dc.menuBarAppending = false
@@ -586,8 +603,8 @@ interface imgui_window {
                 // Close & collapse button are on layer 1 (same as menus) and don't default focus
                 val itemFlagsBackup = window.dc.itemFlags
                 window.dc.itemFlags = window.dc.itemFlags or If.NoNavDefaultFocus
-                window.dc.navLayerCurrent++
-                window.dc.navLayerCurrentMask = window.dc.navLayerCurrentMask shl 1
+                window.dc.navLayerCurrent = NavLayer.Menu
+                window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu.i
 
                 // Collapse button
                 if (flags hasnt Wf.NoCollapse)
@@ -602,12 +619,15 @@ interface imgui_window {
                         pOpen[0] = false
                 }
 
-                window.dc.navLayerCurrent--
-                window.dc.navLayerCurrentMask = window.dc.navLayerCurrentMask ushr 1    // TODO unsigned necessary?
+                window.dc.navLayerCurrent = NavLayer.Main
+                window.dc.navLayerCurrentMask = 1 shl NavLayer.Main.i
                 window.dc.itemFlags = itemFlagsBackup
 
-                // Title text (FIXME: refactor text alignment facilities along with RenderText helpers, this is too much code for what it does.)
-                val textSize = calcTextSize(name, 0, true)
+                // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
+                // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
+                val UNSAVED_DOCUMENT_MARKER = "*"
+                val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, 0, false).x else 0f
+                val textSize = calcTextSize(name, 0, true) + Vec2(markerSizeX, 0f)
                 val textR = Rect(titleBarRect)
                 val padLeft = when {
                     flags has Wf.NoCollapse -> style.framePadding.x
@@ -625,6 +645,11 @@ interface imgui_window {
                 // Match the size of CloseButton()
                 clipRect.max.x = window.pos.x + window.size.x - (if (pOpen?.get(0) == true) titleBarRect.height - 3 else style.framePadding.x)
                 renderTextClipped(textR.min, textR.max, name, 0, textSize, style.windowTitleAlign, clipRect)
+                if (flags has Wf.UnsavedDocument) {
+                    val markerPos = Vec2(max(textR.min.x, textR.min.x + (textR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, textR.min.y) + Vec2(2 - markerSizeX, 0f)
+                    val off = Vec2(0f, (-g.fontSize * 0.25f).i.f)
+                    renderTextClipped(markerPos + off, textR.max + off, UNSAVED_DOCUMENT_MARKER, 0, null, Vec2(0, style.windowTitleAlign.y), clipRect)
+                }
             }
 
             // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
@@ -691,7 +716,7 @@ interface imgui_window {
             window.hiddenFramesRegular = 1
 
         // Update the Hidden flag
-        window.hidden = window.hiddenFramesRegular > 0 || window.hiddenFramesForResize != 0
+        window.hidden = window.hiddenFramesRegular > 0 || window.hiddenFramesForResize > 0
 
         // Return false if we don't intend to display anything to allow user to perform an early out optimization
         window.apply {
@@ -703,6 +728,12 @@ interface imgui_window {
     /** Always call even if Begin() return false (which indicates a collapsed window)! finish appending to current window,
      *  pop it off the window stack.    */
     fun end() {
+
+        if (g.currentWindowStack.size <= 1 && g.frameScopePushedImplicitWindow) {
+            assert(g.currentWindowStack.size > 1) { "Calling End() too many times!" }
+            return // FIXME-ERRORHANDLING
+        }
+        assert(g.currentWindowStack.isNotEmpty())
 
         with(g.currentWindow!!) {
 
@@ -717,7 +748,7 @@ interface imgui_window {
             // Pop from window stack
             g.currentWindowStack.pop()
             if (flags has Wf.Popup)
-                g.currentPopupStack.pop()
+                g.beginPopupStack.pop()
             checkStacksSize(this, false)
             setCurrentWindow(g.currentWindowStack.lastOrNull())
         }
@@ -776,6 +807,10 @@ interface imgui_window {
                 itemAdd(bb, 0)
         }
     }
+
+    // Windows Utilities
+    // - "current window" = the window we are appending into while inside a Begin()/End() block. "next window" = next window we will Begin() into.
+
 
     val isWindowAppearing get() = currentWindowRead!!.appearing
 
