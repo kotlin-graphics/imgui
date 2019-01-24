@@ -3,6 +3,7 @@ package imgui.impl
 import glm_.b
 import glm_.c
 import glm_.f
+import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import glm_.vec2.Vec2i
 import imgui.*
@@ -23,8 +24,10 @@ object LwjglGlfw {
 
     lateinit var window: GlfwWindow
     var time = 0.0
-    var vrTexSize: Vec2i? = null
     val mouseCursors = LongArray(MouseCursor.COUNT)
+
+    var vrTexSize: Vec2i? = null
+    var vrCursorPos: Vec2? = null
 
     enum class GlfwClientApi { OpenGL, Vulkan }
 
@@ -193,7 +196,9 @@ object LwjglGlfw {
             if (io.wantSetMousePos)
                 window.cursorPos = mousePosBackup
             else
-                io.mousePos put window.cursorPos
+                io.mousePos put (vrCursorPos ?: window.cursorPos)
+        else
+            vrCursorPos?.let(io.mousePos::put) // window is usually unfocused in vr
     }
 
     private fun updateMouseCursor() {
