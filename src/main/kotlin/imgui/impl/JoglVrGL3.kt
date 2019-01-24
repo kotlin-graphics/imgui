@@ -22,6 +22,7 @@ import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
 import kool.*
 import kool.set
+import org.lwjgl.system.MemoryStack
 
 object JoglVrGL3 {
 
@@ -81,7 +82,7 @@ object JoglVrGL3 {
 
         this.gl = gl
 
-        if (fontTexture[0] < 0) gl.createDeviceObjects()
+        if (fontTexture[0] <= 0) gl.createDeviceObjects()
 
         assert(io.fonts.isBuilt) { "Font atlas needs to be built" }
 
@@ -268,11 +269,12 @@ object JoglVrGL3 {
      *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL
      *  state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.   */
     fun renderDrawData(drawData: DrawData) = with(gl) {
+        val stack = MemoryStack.stackPush()
 
         /** Avoid rendering when minimized, scale coordinates for retina displays
          *  (screen coordinates != framebuffer coordinates) */
         val fbSize = io.displaySize * io.displayFramebufferScale
-        if (fbSize anyLessThanEqual 0) return
+        if (fbSize anyLessThanEqual 0) return@with
         drawData scaleClipRects io.displayFramebufferScale
 
         // Backup GL state
@@ -310,7 +312,9 @@ object JoglVrGL3 {
         glViewport(0, 0, fbSize.x, fbSize.y)
         val ortho = glm.ortho(mat, 0f, io.displaySize.x.f, io.displaySize.y.f, 0f)
         glUseProgram(program.name)
-        glUniformMatrix4fv(program.mat, 1, false, ortho.toFloatBufferStack())
+
+        glUniformMatrix4fv(program.mat, 1, false, ortho.toFloatBuffer(stack))
+
 
         checkSize(drawData.cmdLists)
 
@@ -362,6 +366,8 @@ object JoglVrGL3 {
         glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode)
         glViewport(lastViewport.x, lastViewport.y, lastViewport.z, lastViewport.w)
         glScissor(lastScissorBox.x, lastScissorBox.y, lastScissorBox.z, lastScissorBox.w)
+
+        stack.pop()
     }
 
     private object mouseCallback : MouseListener {

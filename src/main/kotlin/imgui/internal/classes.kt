@@ -704,6 +704,7 @@ class Window(var context: Context, var name: String) {
 
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
     fun getId(str: String, end: Int = 0): ID {
+        // FIXME: ImHash with str_end doesn't behave same as with identical zero-terminated string, because of ### handling.
         val seed: ID = idStack.last()
         val id: ID = hash(str, end, seed)
         keepAliveId(id)
