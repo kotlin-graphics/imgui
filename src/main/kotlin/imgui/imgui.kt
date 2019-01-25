@@ -63,7 +63,7 @@ const val WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS = 4f
 const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f
 
 // Test engine hooks (imgui-test)
-const val IMGUI_ENABLE_TEST_ENGINE = false
+var IMGUI_ENABLE_TEST_ENGINE = false
 var ImGuiTestEngineHook_PreNewFrame: () -> Unit = {}
 var ImGuiTestEngineHook_PostNewFrame: () -> Unit = {}
 var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID) -> Unit = { _, _ -> }
