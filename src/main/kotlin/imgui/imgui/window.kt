@@ -31,6 +31,7 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
 import imgui.ImGui.style
+import imgui.imgui.imgui_main.Companion.renderOuterBorders
 import imgui.imgui.imgui_main.Companion.resizeGripDef
 import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
@@ -401,12 +402,12 @@ interface imgui_window {
                     (flags hasnt (Wf.ChildWindow or Wf.Tooltip) || flags has Wf.Popup)
 
             // Handle manual resize: Resize Grips, Borders, Gamepad
-            val borderHeld = -1
+            var borderHeld = -1
             val resizeGripCol = IntArray(4)
             val resizeGripCount = if (io.configWindowsResizeFromEdges) 2 else 1 // 4
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             if (!window.collapsed)
-                updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
+                borderHeld = updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
 
             // Default item width. Make it proportional to window size if window manually resizes
             window.itemWidthDefault = when {
@@ -494,7 +495,7 @@ interface imgui_window {
                 if (flags hasnt Wf.NoResize)
                     for (resizeGripN in 0 until resizeGripCount) {
                         val grip = resizeGripDef[resizeGripN]
-                        val corner = window.pos.lerp(window.pos + window.size, grip.cornerPos)
+                        val corner = window.pos.lerp(window.pos + window.size, grip.cornerPosN)
                         with(window.drawList) {
                             pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(windowBorderSize, gripDrawSize) else Vec2(gripDrawSize, windowBorderSize)))
                             pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(gripDrawSize, windowBorderSize) else Vec2(windowBorderSize, gripDrawSize)))
@@ -504,15 +505,7 @@ interface imgui_window {
                     }
 
                 // Borders
-                if (windowBorderSize > 0f && flags hasnt Wf.NoBackground)
-                    window.drawList.addRect(Vec2(window.pos), window.size + window.pos, Col.Border.u32, windowRounding, Dcf.All.i, windowBorderSize)
-                if (borderHeld != -1) {
-                    val border = window.getResizeBorderRect(borderHeld, gripDrawSize, 0f)
-                    window.drawList.addLine(border.min, border.max, Col.SeparatorActive.u32, max(1f, windowBorderSize))
-                }
-                if (style.frameBorderSize > 0 && flags hasnt Wf.NoTitleBar)
-                    window.drawList.addLine(titleBarRect.bl + Vec2(style.windowBorderSize, -1),
-                            titleBarRect.br + Vec2(style.windowBorderSize, -1), Col.Border.u32, style.frameBorderSize)
+                renderOuterBorders(window, borderHeld)
             }
 
             // Draw navigation selection/windowing rectangle border

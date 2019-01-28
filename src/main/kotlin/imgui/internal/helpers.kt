@@ -117,7 +117,7 @@ fun hash(data: IntArray, seed: Int = 0): Int {
 
 /** CRC32 needs a 1KB lookup table (not cache friendly)
  *  Although the code to generate the table is simple and shorter than the table itself, using a const table allows us to easily:
- *  - avoid an unnecessary branch/memory tap, - keep the ImHash() function usable by static constructors, - make it thread-safe. */
+ *  - avoid an unnecessary branch/memory tap, - keep the ImHashXXX functions usable by static constructors, - make it thread-safe. */
 val GCrc32LookupTable = longArrayOf(
         0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA, 0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3, 0x0EDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988, 0x09B64C2B, 0x7EB17CBD, 0xE7B82D07, 0x90BF1D91,
         0x1DB71064, 0x6AB020F2, 0xF3B97148, 0x84BE41DE, 0x1ADAD47D, 0x6DDDE4EB, 0xF4D4B551, 0x83D385C7, 0x136C9856, 0x646BA8C0, 0xFD62F97A, 0x8A65C9EC, 0x14015C4F, 0x63066CD9, 0xFA0F3D63, 0x8D080DF5,
@@ -138,34 +138,37 @@ val GCrc32LookupTable = longArrayOf(
         .map { it.i }.toIntArray()
 
 
-/** Pass data_size == 0 for zero-terminated strings, data_size > 0 for non-string data.
- *  Pay attention that data_size==0 will yield different results than passing strlen(data) because the zero-terminated codepath handles ###.
- *  This should technically be split into two distinct functions (ImHashData/ImHashStr), perhaps once we remove the silly static variable.
+/** Known size hash
+ *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
  *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
+fun hash(data: ByteBuffer, dataSize_: Int = data.rem, seed: Int = 0): Int {
+    var crc = seed.inv()
+    val crc32Lut = GCrc32LookupTable
+    var dataSize = dataSize_
+    while (dataSize-- != 0)
+        crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor data.get().i]
+    return crc.inv()
+}
+
 fun hash(data: String, dataSize_: Int, seed_: Int = 0): Int {
 
     val seed = seed_.inv()
     var crc = seed
-    var current = 0
+    var src = 0
     val crc32Lut = GCrc32LookupTable
 
     var dataSize = dataSize_
-    if (dataSize > 0)
-    // Known size
+    if (dataSize != 0)
         while (dataSize-- != 0) {
-            val a = (crc and 0xFF) xor data[current++].i
-            crc = (crc ushr 8) xor crc32Lut[a]
+            val c = data[src++]
+            if (c == '#' && data[src] == '#' && data[src + 1] == '#')
+                crc = seed
+            crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c.i]
         }
     else
-    // Zero-terminated string
-        while (current < data.length) {
-            val c = data[current++]
-            /*  We support a syntax of "label###id" where only "###id" is included in the hash, and only "label" gets
-                displayed.
-                Because this syntax is rarely used we are optimizing for the common case.
-                    - If we reach ### in the string we discard the hash so far and reset to the seed.
-                    - We don't do 'current += 2; continue;' after handling ### to keep the code smaller.    */
-            if (c == '#' && data[current] == '#' && data[current + 1] == '#')
+        while (src < data.length) {
+            val c = data[src++]
+            if (c == '#' && data[src] == '#' && data[src + 1] == '#')
                 crc = seed
             crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c]
         }

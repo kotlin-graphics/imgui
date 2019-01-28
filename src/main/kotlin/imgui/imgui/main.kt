@@ -23,6 +23,7 @@ import imgui.ImGui.pushId
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
+import imgui.ImGui.style
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
@@ -493,15 +494,15 @@ interface imgui_main {
 
         /** Handle resize for: Resize Grips, Borders, Gamepad
          * @return borderHelf   */
-        fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int, resizeGripCol: IntArray) {
+        fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int, resizeGripCol: IntArray): Int {
 
             var borderHeld = borderHeld_
 
             val flags = window.flags
             if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames anyGreaterThan 0)
-                return
-            if (window.wasActive == false) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
-                return
+                return borderHeld
+            if (!window.wasActive) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
+                return borderHeld
 
             val resizeBorderCount = if (io.configWindowsResizeFromEdges) 4 else 0
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
@@ -516,7 +517,7 @@ interface imgui_main {
             for (resizeGripN in 0 until resizeGripCount) {
 
                 val grip = resizeGripDef[resizeGripN]
-                val corner = window.pos.lerp(window.pos + window.size, grip.cornerPos)
+                val corner = window.pos.lerp(window.pos + window.size, grip.cornerPosN)
 
                 // Using the FlattenChilds button flag we make the resize button accessible even if we are hovering over a child window
                 val resizeRect = Rect(corner - grip.innerDir * gripHoverOuterSize, corner + grip.innerDir * gripHoverInnerSize)
@@ -537,8 +538,8 @@ interface imgui_main {
                     // Resize from any of the four corners
                     // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
                     // Corner of the window corresponding to our corner grip
-                    val cornerTarget = g.io.mousePos - g.activeIdClickOffset + (grip.innerDir * gripHoverOuterSize).lerp(grip.innerDir * -gripHoverInnerSize, grip.cornerPos)
-                    window.calcResizePosSizeFromAnyCorner(cornerTarget, grip.cornerPos, posTarget, sizeTarget)
+                    val cornerTarget = g.io.mousePos - g.activeIdClickOffset + (grip.innerDir * gripHoverOuterSize).lerp(grip.innerDir * -gripHoverInnerSize, grip.cornerPosN)
+                    window.calcResizePosSizeFromAnyCorner(cornerTarget, grip.cornerPosN, posTarget, sizeTarget)
                 }
                 if (resizeGripN == 0 || held || hovered)
                     resizeGripCol[resizeGripN] = (if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip).u32
@@ -549,7 +550,8 @@ interface imgui_main {
                 //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
                 if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {
                     g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
-                    if (held) borderHeld = borderN
+                    if (held)
+                        borderHeld = borderN
                 }
                 if (held) {
                     val borderTarget = Vec2(window.pos)
@@ -606,14 +608,45 @@ interface imgui_main {
             }
 
             window.size put window.sizeFull
+
+            return borderHeld
         }
 
-        class ResizeGripDef(val cornerPos: Vec2, val innerDir: Vec2, val angleMin12: Int, val angleMax12: Int)
+        fun renderOuterBorders(window: Window, borderHeld: Int) {
+
+            val rounding = window.windowRounding
+            val borderSize = window.windowBorderSize
+            if (borderSize > 0f && window.flags hasnt Wf.NoBackground)
+                window.drawList.addRect(window.pos, window.pos + window.size, Col.Border.u32, rounding, DrawCornerFlag.All.i, borderSize)
+            if (borderHeld != -1) {
+                val def = resizeBorderDef[borderHeld]
+                val borderR = window.getResizeBorderRect(borderHeld, rounding, 0f)
+                window.drawList.apply {
+                    pathArcTo(borderR.min.lerp(borderR.max, def.cornerPosN1) + Vec2(0.5f) + def.innerDir * rounding, rounding, def.outerAngle - glm.PIf * 0.25f, def.outerAngle)
+                    pathArcTo(borderR.min.lerp(borderR.max, def.cornerPosN2) + Vec2(0.5f) + def.innerDir * rounding, rounding, def.outerAngle, def.outerAngle + glm.PIf * 0.25f)
+                    pathStroke(Col.SeparatorActive.u32, false, 2f max borderSize) // Thicker than usual
+                }
+            }
+            if (style.frameBorderSize > 0f && window.flags hasnt Wf.NoTitleBar) {
+                val y = window.pos.y + window.titleBarHeight - 1
+                window.drawList.addLine(Vec2(window.pos.x + borderSize, y), Vec2(window.pos.x + window.size.x - borderSize, y), Col.Border.u32, style.frameBorderSize)
+            }
+        }
+
+        class ResizeGripDef(val cornerPosN: Vec2, val innerDir: Vec2, val angleMin12: Int, val angleMax12: Int)
 
         val resizeGripDef = arrayOf(
                 ResizeGripDef(Vec2(1, 1), Vec2(-1, -1), 0, 3),  // Lower right
                 ResizeGripDef(Vec2(0, 1), Vec2(+1, -1), 3, 6),  // Lower left
                 ResizeGripDef(Vec2(0, 0), Vec2(+1, +1), 6, 9),  // Upper left
                 ResizeGripDef(Vec2(1, 0), Vec2(-1, +1), 9, 12)) // Upper right
+
+        class ResizeBorderDef(val innerDir: Vec2, val cornerPosN1: Vec2, val cornerPosN2: Vec2, val outerAngle: Float)
+
+        val resizeBorderDef = arrayOf(
+                ResizeBorderDef(Vec2(0, +1), Vec2(0, 0), Vec2(1, 0), glm.PIf * 1.5f), // Top
+                ResizeBorderDef(Vec2(-1, 0), Vec2(1, 0), Vec2(1, 1), glm.PIf * 0.0f), // Right
+                ResizeBorderDef(Vec2(0, -1), Vec2(1, 1), Vec2(0, 1), glm.PIf * 0.5f), // Bottom
+                ResizeBorderDef(Vec2(+1, 0), Vec2(0, 1), Vec2(0, 0), glm.PIf * 1.0f))  // Left
     }
 }
