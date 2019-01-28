@@ -6,6 +6,7 @@ import gln.checkError
 import gln.glClearColor
 import gln.glViewport
 import imgui.Context
+import imgui.DEBUG
 import imgui.ImGui
 import imgui.impl.ImplGL3
 import imgui.impl.LwjglGlfw
@@ -33,8 +34,6 @@ private class HelloWorld_lwjgl {
     var showAnotherWindow = false
     var showDemo = true
     var counter = 0
-
-    val name = CharArray(100)
 
     init {
         glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
@@ -102,7 +101,9 @@ private class HelloWorld_lwjgl {
         // Start the Dear ImGui frame
         LwjglGlfw.newFrame()
 
-        with(ImGui) {
+        ImGui.run {
+
+            newFrame()
 
             // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
             if (showDemo)
@@ -145,13 +146,14 @@ private class HelloWorld_lwjgl {
         }
 
         // Rendering
+        ImGui.render()
         glViewport(window.framebufferSize)
         glClearColor(clearColor)
         glClear(GL_COLOR_BUFFER_BIT)
 
-        ImGui.render()
         ImplGL3.renderDrawData(ImGui.drawData!!)
 
-        checkError("mainLoop") // TODO remove in production
+        if(DEBUG)
+            checkError("mainLoop")
     }
 }

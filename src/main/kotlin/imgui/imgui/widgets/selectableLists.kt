@@ -23,6 +23,7 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.windowContentRegionMax
+import imgui.imgui.withBoolean
 import imgui.internal.NavHighlightFlag
 import imgui.internal.Rect
 import imgui.internal.or
@@ -132,12 +133,10 @@ interface selectableLists {
     }
 
     /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
-    fun selectable(label: String, selected: BooleanArray, ptr: Int, flags: SelectableFlags = 0, size: Vec2 = Vec2()) = withBool { b ->
-        b.set(selected[ptr])
-        val res = selectable(label, b, flags, size)
-        selected[ptr] = b()
-        res
-    }
+    fun selectable(label: String, selected: BooleanArray, ptr: Int, flags: SelectableFlags = 0, size: Vec2 = Vec2()) =
+            withBoolean(selected, ptr) {
+                selectable(label, it, flags, size)
+            }
 
     /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
     fun selectable(label: String, selectedPtr: KMutableProperty0<Boolean>, flags: SelectableFlags = 0, size: Vec2 = Vec2()): Boolean {
@@ -147,18 +146,5 @@ interface selectableLists {
             return true
         }
         return false
-    }
-
-    companion object {
-        // TODO move/delete
-        private inline fun <R> withBool(block: (KMutableProperty0<Boolean>) -> R): R {
-            Ref.bPtr++
-            return block(Ref::bool).also { Ref.bPtr-- }
-        }
-
-        private inline fun <R> withInt(block: (KMutableProperty0<Int>) -> R): R {
-            Ref.iPtr++
-            return block(Ref::int).also { Ref.iPtr-- }
-        }
     }
 }

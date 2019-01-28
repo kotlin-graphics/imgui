@@ -95,11 +95,11 @@ interface imgui_inputs {
         // Clip
         val rectClipped = Rect(rMin, rMax)
         if (clip)
-            rectClipped.clipWith(g.currentWindow!!.clipRect)
+            rectClipped clipWith g.currentWindow!!.clipRect
 
         // Expand for touch input
         val rectForTouch = Rect(rectClipped.min - style.touchExtraPadding, rectClipped.max + style.touchExtraPadding)
-        return rectForTouch contains io.mousePos
+        return io.mousePos in rectForTouch
     }
 
     /** We typically use ImVec2(-FLT_MAX,-FLT_MAX) to denote an invalid mouse position  */

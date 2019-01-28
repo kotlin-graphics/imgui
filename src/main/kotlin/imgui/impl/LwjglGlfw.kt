@@ -171,10 +171,6 @@ object LwjglGlfw {
                 else -> io.backendFlags wo BackendFlag.HasGamepad
             }
         }
-
-        /*  Start the frame. This call will update the io.wantCaptureMouse, io.wantCaptureKeyboard flag that you can use
-            to dispatch inputs (or not) to your application.         */
-        ImGui.newFrame()
     }
 
     private fun updateMousePosAndButtons() {
