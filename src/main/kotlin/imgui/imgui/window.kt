@@ -73,16 +73,15 @@ interface imgui_window {
             regardless. You always need to call ImGui::End() even if false is returned.
         - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
             be set to false when the button is pressed. */
-    // TODO mage begin pOpen default
-    fun begin_(name: String, pOpen: KMutableProperty0<Boolean>?, flags: Int = 0) =
-            if (pOpen != null) {
-                var open by pOpen
-                val bool = booleanArrayOf(open)
-                val res = begin(name, bool, flags)
-                open = bool[0]
-                res
-            } else
-                begin(name, null, flags)
+    // TODO make begin pOpen default
+    fun begin_(name: String, pOpen: KMutableProperty0<Boolean>?, flags: WindowFlags = 0) = when (pOpen) {
+        null -> begin(name, null, flags)
+        else -> {
+            var open by pOpen
+            val bool = booleanArrayOf(open)
+            begin(name, bool, flags).also { open = bool[0] }
+        }
+    }
 
     fun begin(name: String, pOpen: BooleanArray? = null, flags_: WindowFlags = 0): Boolean {
 
@@ -735,23 +734,22 @@ interface imgui_window {
         }
         assert(g.currentWindowStack.isNotEmpty())
 
-        with(g.currentWindow!!) {
+        val window = g.currentWindow!!
 
-            if (dc.columnsSet != null) // close columns set if any is open
-                endColumns()
-            popClipRect()   // Inner window clip rectangle
+        if (window.dc.columnsSet != null) // close columns set if any is open
+            endColumns()
+        popClipRect()   // Inner window clip rectangle
 
-            // Stop logging
+        // Stop logging
 //TODO            if (flags hasnt WindowFlag.ChildWindow)    // FIXME: add more options for scope of logging
 //                logFinish()
 
-            // Pop from window stack
-            g.currentWindowStack.pop()
-            if (flags has Wf.Popup)
-                g.beginPopupStack.pop()
-            checkStacksSize(this, false)
-            setCurrentWindow(g.currentWindowStack.lastOrNull())
-        }
+        // Pop from window stack
+        g.currentWindowStack.pop()
+        if (window.flags has Wf.Popup)
+            g.beginPopupStack.pop()
+        checkStacksSize(window, false)
+        setCurrentWindow(g.currentWindowStack.lastOrNull())
     }
 
     // Child Windows

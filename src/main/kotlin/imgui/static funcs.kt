@@ -103,7 +103,7 @@ fun findHoveredWindow() {
                 bb expand paddingRegular
             else
                 bb expand paddingForResizeFromEdges
-            if (bb contains io.mousePos) {
+            if (io.mousePos in bb) {
                 // Those seemingly unnecessary extra tests are because the code here is a little different in viewport/docking branches.
                 hoveredWindow = window
                 break

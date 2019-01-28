@@ -13,6 +13,7 @@ import uno.glfw.GlfwWindow;
 import uno.glfw.VSync;
 import uno.glfw.windowHint.Profile;
 
+import static gln.GlnKt.*;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -26,13 +27,17 @@ public class Test_lwjgl {
     private ImplGL3 implGL3 = ImplGL3.INSTANCE;
     private ImGui imgui = ImGui.INSTANCE;
     private IO io;
-    private Context ctx;
     private float[] f = {0f};
     private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
     private boolean[] showAnotherWindow = {false};
     private boolean[] showDemo = {true};
     private int[] counter = {0};
-    public Test_lwjgl() {
+
+    public static void main(String[] args) {
+        new Test_lwjgl();
+    }
+
+    private Test_lwjgl() {
 
         glfw.init("3.3", Profile.core, true);
 
@@ -43,7 +48,7 @@ public class Test_lwjgl {
 
         // Setup ImGui binding
         //setGlslVersion(330); // set here your desidered glsl version
-        ctx = new Context(null);
+        Context ctx = new Context(null);
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
 
@@ -96,15 +101,11 @@ public class Test_lwjgl {
         glfw.terminate();
     }
 
-    public static void main(String[] args) {
-        new Test_lwjgl();
-    }
-
     private void mainLoop() {
 
         // Start the Dear ImGui frame
         lwjglGlfw.newFrame();
-
+        imgui.newFrame();
 
         imgui.text("Hello, world!");                                // Display some text (you can use a format string too)
         imgui.sliderFloat("float", f, 0f, 1f, "%.3f", 1f);       // Edit 1 float using a slider from 0.0f to 1.0f
@@ -117,7 +118,7 @@ public class Test_lwjgl {
             counter[0]++;
 
         imgui.sameLine(0f, -1f);
-        imgui.text("counter = $counter");
+        imgui.text("counter = " + counter[0]);
 
         imgui.text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.getFramerate(), io.getFramerate());
 
@@ -140,13 +141,14 @@ public class Test_lwjgl {
         }
 
         // Rendering
-        gln.GlnKt.glViewport(window.getFramebufferSize());
-        gln.GlnKt.glClearColor(clearColor);
+        imgui.render();
+        glViewport(window.getFramebufferSize());
+        glClearColor(clearColor);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        imgui.render();
         implGL3.renderDrawData(imgui.getDrawData());
 
-        gln.GlnKt.checkError("loop", true); // TODO remove
+        if(ImguiKt.getDEBUG())
+            checkError("loop", true); // TODO remove
     }
 }

@@ -23,7 +23,7 @@ dependencies {
 
     implementation "$kotlin-stdlib"
 
-    implementation 'com.github.kotlin-graphics:uno-sdk:dbc2c26611b51f0be9e3d58d56ff6c7e6b87d58b'
+    implementation 'com.github.kotlin-graphics:uno-sdk:9172395e2d33107df96fcbc889b6332b0bc4925c'
 
     testImplementation "io.kotlintest:kotlintest-runner-junit5:$kotlintest_version".toString()
 
