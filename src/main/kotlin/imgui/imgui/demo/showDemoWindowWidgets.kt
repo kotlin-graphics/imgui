@@ -681,10 +681,12 @@ object showDemoWindowWidgets {
                             // Note: We _unnecessarily_ test for both x/y and i here only to silence some static analyzer. The second part of each test is unnecessary.
                             val x = i % 4
                             val y = i / 4
-                            if (x > 0 && i > 0) selected3[i - 1] = selected3[i - 1] xor true
-                            if (x < 3 && i < 15) selected3[i + 1] = selected3[i + 1] xor true
-                            if (y > 0 && i > 3) selected3[i - 4] = selected3[i - 4] xor true
-                            if (y < 3 && i < 12) selected3[i + 4] = selected3[i + 4] xor true
+                            // @formatter:off
+                            if (x > 0)              selected3[i - 1] = selected3[i - 1] xor true
+                            if (x < 3 && i < 15)    selected3[i + 1] = selected3[i + 1] xor true
+                            if (y > 0 && i > 3)     selected3[i - 4] = selected3[i - 4] xor true
+                            if (y < 3 && i < 12)    selected3[i + 4] = selected3[i + 4] xor true
+                            // @formatter:on
                         }
                         if ((i % 4) < 3) sameLine()
                     }
