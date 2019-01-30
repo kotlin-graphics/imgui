@@ -871,6 +871,7 @@ class FontAtlas {
         font.configDataCount++
     }
 
+    /** ~ ImFontAtlasBuildPackCustomRects */
     fun buildPackCustomRects(stbrpContext: STBRPContext) {
 
         val userRects = customRects

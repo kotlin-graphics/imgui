@@ -505,7 +505,7 @@ interface imgui_demoDebugInformations {
             }
 
             fun nodeTabBar(tabBar: TabBar) {
-                // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernable strings.
+                // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
                 val string = "TabBar (${tabBar.tabs.size} tabs)${if (tabBar.prevFrameVisible < frameCount - 2) " *Inactive*" else ""}"
                 if (treeNode(tabBar, string)) {
                     for (tabN in tabBar.tabs.indices) {
