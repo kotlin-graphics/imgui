@@ -63,6 +63,10 @@ object Log {
         val lineOffsets = ArrayList<Int>()
         var scrollToBottom = false
 
+        init {
+            clear()
+        }
+
         fun addLog(fmt: String) {
             buf.append(fmt)
 //            for (int new_size = Buf.size(); old_size < new_size; old_size++)
