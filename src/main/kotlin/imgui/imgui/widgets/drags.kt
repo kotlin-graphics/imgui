@@ -289,6 +289,7 @@ interface drags {
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, innerBb.min.y), label)
 
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
         return valueChanged
     }
 

@@ -238,9 +238,9 @@ object showDemoWindowWidgets {
     var dragAndDrop = true
     var optionsMenu = true
     var hdr = false
-    // Generate a dummy palette
-    var savedPaletteInited = false
-    var savedPalette = Array(32, { Vec4() })
+    // Generate a dummy default palette. The palette will persist and can be edited.
+    var savedPaletteInit = true
+    var savedPalette = Array(32) { Vec4() }
     var backupColor = Vec4()
     var alpha = true
     var alphaBar = true
@@ -803,12 +803,12 @@ object showDemoWindowWidgets {
             colorEdit4("MyColor##3", color, Cef.NoInputs or Cef.NoLabel or miscFlags)
 
             text("Color button with Custom Picker Popup:")
-            if (!savedPaletteInited)
+            if (savedPaletteInit)
                 savedPalette.forEachIndexed { n, c ->
                     colorConvertHSVtoRGB(n / 31f, 0.8f, 0.8f, c::x, c::y, c::z)
                     savedPalette[n].w = 1f // Alpha
                 }
-            savedPaletteInited = true
+            savedPaletteInit = false
             var openPopup = colorButton("MyColor##3b", color, miscFlags)
             sameLine()
             openPopup = openPopup or button("Palette")
@@ -817,12 +817,12 @@ object showDemoWindowWidgets {
                 backupColor put color
             }
             popup("mypicker") {
-                // FIXME: Adding a drag and drop example here would be perfect!
                 text("MY CUSTOM COLOR PICKER WITH AN AMAZING PALETTE!")
                 separator()
                 colorPicker4("##picker", color, miscFlags or Cef.NoSidePreview or Cef.NoSmallPreview)
                 sameLine()
-                withGroup {
+
+                withGroup { // Lock X position
                     text("Current")
                     colorButton("##current", color, Cef.NoPicker or Cef.AlphaPreviewHalf, Vec2(60, 40))
                     text("Previous")
@@ -837,6 +837,8 @@ object showDemoWindowWidgets {
                             if (colorButton("##palette", c, Cef.NoAlpha or Cef.NoPicker or Cef.NoTooltip, Vec2(20, 20)))
                                 color.put(c.x, c.y, c.z, color.w) // Preserve alpha!
 
+                            // Allow user to drop colors into each palette entry
+                            // (Note that ColorButton is already a drag source by default, unless using ImGuiColorEditFlags_NoDragDrop)
                             if (beginDragDropTarget()) {
                                 acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
                                     for (i in 0..2) savedPalette[n][i] = it.data!!.getFloat(i)

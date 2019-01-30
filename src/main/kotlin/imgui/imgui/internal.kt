@@ -287,7 +287,7 @@ interface imgui_internal {
         }
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0)
-            ImGuiTestEngineHook_ItemAdd(bb, id)
+            ImGuiTestEngineHook_ItemAdd(navBbArg ?: bb, id)
 
         // Clipping test
         if (isClippedEx(bb, id, false)) return false
@@ -1479,6 +1479,7 @@ interface imgui_internal {
         //if (pressed && !(flags & ImGuiButtonFlags_DontClosePopups) && (window->Flags & ImGuiWindowFlags_Popup))
         //    CloseCurrentPopup();
 
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.lastItemStatusFlags)
         return pressed
     }
 
@@ -2729,6 +2730,7 @@ interface imgui_internal {
         if (valueChanged)
             markItemEdited(id)
 
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
         return if (flags has Itf.EnterReturnsTrue) enterPressed else valueChanged
     }
 
