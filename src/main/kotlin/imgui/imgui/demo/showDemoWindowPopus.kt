@@ -2,13 +2,20 @@ package imgui.imgui.demo
 
 import glm_.glm
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.beginMenu
+import imgui.ImGui.beginMenuBar
 import imgui.ImGui.beginPopupModal
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.collapsingHeader
+import imgui.ImGui.colorEdit4
+import imgui.ImGui.combo
 import imgui.ImGui.dragFloat
+import imgui.ImGui.endMenu
+import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
 import imgui.ImGui.inputText
 import imgui.ImGui.isItemHovered
@@ -53,6 +60,8 @@ object showDemoWindowPopups {
 
     /* Modals */
     var dummyOpen = true
+    var item = 1
+    var color = Vec4(0.4f, 0.7f, 0f, 0.5f)
 
     operator fun invoke() {
 
@@ -174,13 +183,22 @@ object showDemoWindowPopups {
             }
 
             button("Stacked modals..") { openPopup("Stacked 1") }
-            popupModal("Stacked 1") {
+            popupModal("Stacked 1", null, Wf.MenuBar.i) {
+
+                if (beginMenuBar()) {
+                    if (beginMenu("File")) {
+                        if (menuItem("Dummy menu item")) {
+                        }
+                        endMenu()
+                    }
+                    endMenuBar()
+                }
 
                 text("Hello from Stacked The First\nUsing style.Colors[Col.ModalWindowDimBg] behind it.")
-//                    static int item = 1; TODO
-//                    ImGui::Combo("Combo", &item, "aaaa\0bbbb\0cccc\0dddd\0eeee\0\0");
-//                    static float color[4] = { 0.4f,0.7f,0.0f,0.5f };
-//                    ImGui::ColorEdit4("color", color);  // This is to test behavior of stacked regular popups over a modal
+
+                // Testing behavior of widgets stacking their own regular popups over the modal.
+                combo("Combo", ::item, listOf("aaaa", "bbbb", "cccc", "dddd", "eeee"))
+                colorEdit4("color", color)
 
                 button("Add another modal..") { openPopup("Stacked 2") }
                 // Also demonstrate passing a bool* to BeginPopupModal(), this will create a regular close button which will close the popup.

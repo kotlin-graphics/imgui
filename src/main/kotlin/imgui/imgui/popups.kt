@@ -151,8 +151,19 @@ interface imgui_popupsModals {
         var popupIdx = g.beginPopupStack.lastIndex
         if (popupIdx < 0 || popupIdx >= g.openPopupStack.size || g.beginPopupStack[popupIdx].popupId != g.openPopupStack[popupIdx].popupId)
             return
-        while (popupIdx > 0 && g.openPopupStack[popupIdx].window != null && (g.openPopupStack[popupIdx].window!!.flags has Wf.ChildMenu))
+        // Closing a menu closes its top-most parent popup (unless a modal)
+        while (popupIdx > 0) {
+            val popupWindow = g.openPopupStack[popupIdx].window
+            val parentPopupWindow = g.openPopupStack[popupIdx - 1].window
+            var closeParent = false
+            if (popupWindow?.flags?.has(Wf.ChildMenu) == true)
+                if (parentPopupWindow == null || parentPopupWindow.flags hasnt Wf.Modal)
+                    closeParent = true
+            if (!closeParent)
+                break
             popupIdx--
+        }
+        //IMGUI_DEBUG_LOG("CloseCurrentPopup %d -> %d\n", g.BeginPopupStack.Size - 1, popup_idx);
         closePopupToLevel(popupIdx, true)
 
         /*  A common pattern is to close a popup when selecting a menu item/selectable that will open another window.
