@@ -3,6 +3,7 @@ package imgui
 import glm_.i
 import imgui.imgui.*
 import imgui.imgui.widgets.*
+import imgui.internal.ItemStatusFlags
 import imgui.internal.Rect
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
@@ -67,7 +68,7 @@ var IMGUI_ENABLE_TEST_ENGINE = false
 var ImGuiTestEngineHook_PreNewFrame: () -> Unit = {}
 var ImGuiTestEngineHook_PostNewFrame: () -> Unit = {}
 var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID) -> Unit = { _, _ -> }
-var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: Int) -> Unit = { _, _, _ -> }
+var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: ItemStatusFlags) -> Unit = { _, _, _ -> }
 
 object ImGui :
 
