@@ -3156,7 +3156,7 @@ interface imgui_internal {
         val fmtEnd = parseFormatFindEnd(fmt.substring(fmtStart))
         if (fmtStart + fmtEnd >= fmt.length) // If we only have leading decoration, we don't need to copy the data.
             return fmt.substring(fmtStart)
-        return String(buf, fmtStart, min((fmtEnd + 1 - fmtStart), buf.size))
+        return String(buf, fmtStart, min(fmtEnd - fmtStart + 1, buf.size))
     }
 
     /** Parse display precision back from the display format string

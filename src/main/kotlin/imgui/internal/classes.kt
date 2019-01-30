@@ -1106,7 +1106,7 @@ class Window(var context: Context, var name: String) {
                 rootWindowForTitleBarHighlight = it.rootWindowForTitleBarHighlight
         }
         while (rootWindowForNav!!.flags has Wf.NavFlattened)
-            rootWindowForNav = rootWindowForNav!!.parentWindow
+            rootWindowForNav = rootWindowForNav!!.parentWindow!! // ~assert
     }
 
     fun calcExpectedSize(): Vec2 {
@@ -1408,8 +1408,8 @@ class TabBar {
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) window.getId(id + 1) else 0
         val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags__, label, id, closeButtonId)
-        if (justClosed) {
-            pOpen!!.set(false)
+        if (justClosed && pOpen != null) {
+            pOpen.set(false)
             closeTab(tab)
         }
 
