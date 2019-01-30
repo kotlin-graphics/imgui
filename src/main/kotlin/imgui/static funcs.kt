@@ -808,7 +808,7 @@ fun navUpdate() {
 
     // Set output flags for user application
     io.navActive = (navKeyboardActive || navGamepadActive) && g.navWindow?.flags?.hasnt(Wf.NoNavInputs) ?: false
-    io.navVisible = (io.navActive && g.navId != 0 && !g.navDisableHighlight) || g.navWindowingTarget != null || g.navInitRequest
+    io.navVisible = (io.navActive && g.navId != 0 && !g.navDisableHighlight) || g.navWindowingTarget != null
 
     // Process NavCancel input (to close a popup, get back to parent, clear focus)
     if (NavInput.Cancel.isPressed(InputReadMode.Pressed)) {
