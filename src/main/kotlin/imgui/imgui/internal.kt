@@ -2737,18 +2737,14 @@ interface imgui_internal {
     }
 
     /** Create text input in place of an active drag/slider (used when doing a CTRL+Click on drag/slider widgets)
-     *  FIXME: Logic is awkward and confusing. This should be reworked to facilitate using in other situations. */
+     *  FIXME: Facilitate using this in variety of other situations. */
     fun inputScalarAsWidgetReplacement(bb: Rect, id: ID, label: String, dataType: DataType, data: KMutableProperty0<*>,
                                        format_: String): Boolean {
 
-        val window = currentWindow
-
-        /*  Our replacement widget will override the focus ID (registered previously to allow for a TAB focus to happen)
-            On the first frame, g.ScalarAsInputTextId == 0, then on subsequent frames it becomes == id  */
-        setActiveId(g.scalarAsInputTextId, window)
-        hoveredId = 0
-        g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-        g.activeIdBlockNavInputFlags = 1 shl NavInput.Cancel
+        // On the first frame, g.ScalarAsInputTextId == 0, then on subsequent frames it becomes == id.
+        // We clear ActiveID on the first frame to allow the InputText() taking it back.
+        if (g.scalarAsInputTextId == 0)
+            clearActiveId()
 
         val fmtBuf = CharArray(32)
         val format = parseFormatTrimDecorations(format_, fmtBuf)
@@ -2759,10 +2755,9 @@ interface imgui_internal {
             else -> Itf.CharsDecimal
         }
         val valueChanged = inputTextEx(label, dataBuf, bb.size, flags)
-        if (g.scalarAsInputTextId == 0) {   // First frame we started displaying the InputText widget
-            assert(g.activeId == id) // InputText ID expected to match the Slider ID
+        if (g.scalarAsInputTextId == 0) {
+            assert(g.activeId == id) { "First frame we started displaying the InputText widget, we expect it to take the active id." }
             g.scalarAsInputTextId = g.activeId
-            hoveredId = id
         }
         return when {
             valueChanged -> dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialText, dataType, data)
