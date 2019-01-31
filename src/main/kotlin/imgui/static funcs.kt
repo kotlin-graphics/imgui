@@ -813,7 +813,8 @@ fun navUpdate() {
     // Process NavCancel input (to close a popup, get back to parent, clear focus)
     if (NavInput.Cancel.isPressed(InputReadMode.Pressed)) {
         if (g.activeId != 0) {
-            clearActiveId()
+            if (g.activeIdBlockNavInputFlags hasnt (1 shl NavInput.Cancel))
+                clearActiveId()
         } else if (g.navWindow != null && g.navWindow!!.flags has Wf.ChildWindow && g.navWindow!!.flags hasnt Wf.Popup && g.navWindow!!.parentWindow != null) {
             // Exit child window
             val childWindow = g.navWindow!!

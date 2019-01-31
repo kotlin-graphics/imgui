@@ -95,6 +95,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdPreviousFrameHasBeenEdited = false
     /** Active widget allows using directional navigation (e.g. can activate a button and move away from it)    */
     var activeIdAllowNavDirFlags = 0
+
+    var activeIdBlockNavInputFlags = 0
     /** Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior) */
     var activeIdClickOffset = Vec2(-1)
 

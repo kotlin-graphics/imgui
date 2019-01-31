@@ -159,6 +159,7 @@ interface imgui_internal {
         }
         g.activeId = id
         g.activeIdAllowNavDirFlags = 0
+        g.activeIdBlockNavInputFlags = 0
         g.activeIdAllowOverlap = false
         g.activeIdWindow = window
         if (id != 0) {
@@ -2205,8 +2206,9 @@ interface imgui_internal {
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()
+            g.activeIdBlockNavInputFlags = 1 shl NavInput.Cancel
             if (!isMultiline && flags hasnt Itf.CallbackHistory)
-                g.activeIdAllowNavDirFlags = g.activeIdAllowNavDirFlags or ((1 shl Dir.Up) or (1 shl Dir.Down))
+                g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
         } else if (io.mouseClicked[0])
         // Release focus when we click outside
             clearActiveId = true
@@ -2746,6 +2748,7 @@ interface imgui_internal {
         setActiveId(g.scalarAsInputTextId, window)
         hoveredId = 0
         g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
+        g.activeIdBlockNavInputFlags = 1 shl NavInput.Cancel
 
         val fmtBuf = CharArray(32)
         val format = parseFormatTrimDecorations(format_, fmtBuf)

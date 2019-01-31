@@ -527,6 +527,8 @@ enum class NavInput {
     fun isPressedAnyOfTwo(n2: NavInput, mode: InputReadMode) = (getNavInputAmount(this, mode) + getNavInputAmount(n2, mode)) > 0f
 }
 
+infix fun Int.shl(f: NavInput) = shl(f.i)
+
 /** Configuration flags stored in io.configFlags  */
 enum class ConfigFlag(@JvmField val i: Int) {
     None(0),
