@@ -1020,7 +1020,7 @@ class Font {
     // Members: Hot ~62/78 bytes
     /** <user set>, Height of characters, set during loading (don't change after loading)   */
     var fontSize = 0f
-    /** Base font scale, multiplied by the per-window font scale which you can adjust with SetFontScale()   */
+    /** Base font scale, multiplied by the per-window font scale which you can adjust with SetWindowFontScale()   */
     var scale = 1f
     /** Offset font rendering by xx pixels  */
     var displayOffset = Vec2(0f, 0f)
