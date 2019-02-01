@@ -121,6 +121,29 @@ infix fun Int.or(b: SeparatorFlag): SeparatorFlags = this or b.i
 infix fun Int.has(b: SeparatorFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: SeparatorFlag) = (this and b.i) == 0
 
+/** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
+ *  This is going to be exposed in imgui.h when stabilized enough. */
+enum class ItemFlag(@JvmField val i: Int) {
+    // @formatter:off
+    NoTabStop                    (1 shl 0),  // false
+    /** Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings. */
+    ButtonRepeat                 (1 shl 1),  // false
+    /** [BETA] Disable interactions but doesn't affect visuals yet. See github.com/ocornut/imgui/issues/211 */
+    Disabled                     (1 shl 2),  // false
+    NoNav                        (1 shl 3),  // false
+    NoNavDefaultFocus            (1 shl 4),  // false
+    /** MenuItem/Selectable() automatically closes current Popup window */
+    SelectableDontClosePopup     (1 shl 5),  // false
+    Default_                     (0)
+    // @formatter:on
+}
+
+infix fun ItemFlag.or(other: ItemFlag) = i or other.i
+infix fun Int.or(other: ItemFlag) = or(other.i)
+infix fun Int.has(b: ItemFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: ItemFlag) = (this and b.i) == 0
+infix fun Int.wo(b: ItemFlag) = and(b.i.inv())
+
 /** Storage for LastItem data   */
 enum class ItemStatusFlag(@JvmField val i: Int) {
     None(0),

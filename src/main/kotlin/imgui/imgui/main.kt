@@ -106,7 +106,7 @@ interface imgui_main {
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
 
-        // Setup current font and draw list
+        // Setup current font and draw list shared data
         io.fonts.locked = true
         setCurrentFont(defaultFont)
         assert(g.font.isLoaded)
@@ -118,7 +118,7 @@ interface imgui_main {
         g.overlayDrawList.pushClipRectFullScreen()
         g.overlayDrawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
 
-        // Mark rendering data as invalid to prevent user who may have a handle on it to use it
+        // Mark rendering data as invalid to prevent user who may have a handle on it to use it.
         g.drawData.clear()
 
         // Drag and drop keep the source ID alive so even if the source disappear our state is consistent
@@ -309,7 +309,7 @@ interface imgui_main {
         g.windowsSortBuffer.ensureCapacity(g.windows.size)
         g.windows.filter { !it.active || it.flags hasnt Wf.ChildWindow }  // if a child is active its parent will add it
                 .forEach { it addToSortBuffer g.windowsSortBuffer }
-        assert(g.windows.size == g.windowsSortBuffer.size) { "we done something wrong" }
+        assert(g.windows.size == g.windowsSortBuffer.size) { "This usually assert if there is a mismatch between the ImGuiWindowFlags_ChildWindow / ParentWindow values and DC.ChildWindows[] in parents, aka we've done something wrong." }
         g.windows.clear()
         g.windows += g.windowsSortBuffer
         io.metricsActiveWindows = g.windowsActiveCount
@@ -344,11 +344,11 @@ interface imgui_main {
                 g.navWindowingList.getOrNull(0).takeIf { g.navWindowingTarget != null })
         g.windows
                 .filter { it.isActiveAndVisible && it.flags hasnt Wf.ChildWindow && it !== windowsToRenderFrontMost[0] && it !== windowsToRenderFrontMost[1] }
-                .forEach { it.addToDrawDataSelectLayer() }
+                .forEach { it.addRootWindowToDrawData() }
         windowsToRenderFrontMost
                 .filterNotNull()
                 .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the front-most window
-                .forEach { it.addToDrawDataSelectLayer() }
+                .forEach { it.addRootWindowToDrawData() }
         g.drawDataBuilder.flattenIntoSingleLayer()
 
         // Draw software mouse cursor if requested
@@ -612,12 +612,14 @@ interface imgui_main {
             return borderHeld
         }
 
-        fun renderOuterBorders(window: Window, borderHeld: Int) {
+        fun renderOuterBorders(window: Window) {
 
             val rounding = window.windowRounding
             val borderSize = window.windowBorderSize
             if (borderSize > 0f && window.flags hasnt Wf.NoBackground)
                 window.drawList.addRect(window.pos, window.pos + window.size, Col.Border.u32, rounding, DrawCornerFlag.All.i, borderSize)
+
+            val borderHeld = window.resizeBorderHeld
             if (borderHeld != -1) {
                 val def = resizeBorderDef[borderHeld]
                 val borderR = window.getResizeBorderRect(borderHeld, rounding, 0f)

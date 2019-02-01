@@ -24,7 +24,7 @@ import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.internal.Rect
 import kotlin.reflect.KMutableProperty0
-import imgui.ItemFlag as If
+import imgui.internal.ItemFlag as If
 import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf

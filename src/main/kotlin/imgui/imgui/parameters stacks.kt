@@ -18,7 +18,7 @@ import imgui.ImGui.u32
 import imgui.ImGui.vec4
 import imgui.internal.ColorMod
 import imgui.internal.StyleMod
-import imgui.ItemFlag as If
+import imgui.internal.ItemFlag as If
 
 
 interface imgui_parametersStacks {

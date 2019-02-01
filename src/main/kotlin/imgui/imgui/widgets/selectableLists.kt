@@ -26,9 +26,10 @@ import imgui.ImGui.windowContentRegionMax
 import imgui.imgui.withBoolean
 import imgui.internal.NavHighlightFlag
 import imgui.internal.Rect
+import imgui.internal.hasnt
 import imgui.internal.or
 import kotlin.reflect.KMutableProperty0
-import imgui.ItemFlag as If
+import imgui.internal.ItemFlag as If
 import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf

@@ -965,29 +965,3 @@ infix fun Int.has(b: Cond) = and(b.i) != 0
 infix fun Cond.has(b: Cond) = i.and(b.i) != 0
 infix fun Int.hasnt(b: Cond) = and(b.i) == 0
 infix fun Int.wo(b: Cond) = and(b.i.inv())
-
-
-/** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
- *  This is going to be exposed in imgui.h when stabilized enough.  */
-enum class ItemFlag(@JvmField val i: Int) {
-    /** false    */
-    NoTabStop(1 shl 0),
-    /** false. Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.  */
-    ButtonRepeat(1 shl 1),
-    /** false. [BETA] Disable interactions but doesn't affect visuals. Should be: grey out and disable interactions with widgets that affect data + view widgets (WIP)     */
-    Disabled(1 shl 2),
-    /** false   */
-    NoNav(1 shl 3),
-    /** false   */
-    NoNavDefaultFocus(1 shl 4),
-    /** false, MenuItem/Selectable() automatically closes current Popup window  */
-    SelectableDontClosePopup(1 shl 5),
-
-    Default_(0)
-}
-
-infix fun ItemFlag.or(other: ItemFlag) = i or other.i
-infix fun Int.or(other: ItemFlag) = or(other.i)
-infix fun Int.has(b: ItemFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: ItemFlag) = (this and b.i) == 0
-infix fun Int.wo(b: ItemFlag) = and(b.i.inv())

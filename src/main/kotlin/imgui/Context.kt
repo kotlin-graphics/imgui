@@ -451,7 +451,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var configFlags: ConfigFlags = ConfigFlag.None.i
     /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end to communicate features supported by the back-end. */
     var backendFlags: BackendFlags = BackendFlag.None.i
-    /** Main display size, in pixels. For clamping windows positions.    */
+    /** Main display size, in pixels.   */
     var displaySize = Vec2i(-1)
     /** Time elapsed since last frame, in seconds.  */
     var deltaTime = 1f / 60f
@@ -484,7 +484,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var fontAllowUserScaling = false
     /** Font to use on NewFrame(). Use NULL to useMouseDragThreshold s Fonts->Fonts[0].    */
     var fontDefault: Font? = null
-    /** For retina display or other situations where window coordinates are different from framebuffer coordinates.
+    /** For hi-dpi/ display or other situations where window coordinates are different from framebuffer coordinates.
      *  User storage only, presently not used by ImGui. */
     var displayFramebufferScale = Vec2(1f)
     /** [OBSOLETE] If you use DisplaySize as a virtual space larger than your screen, set DisplayVisibleMin/Max to the visible area. */
