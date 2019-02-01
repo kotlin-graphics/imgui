@@ -46,7 +46,10 @@ val COL32_BLACK_TRANS = COL32(0, 0, 0, 0)   // Transparent black = 0x00000000
 val MOUSE_INVALID = -256000f
 
 // Debug options
+
+/** Display navigation scoring preview when hovering items. Display last moving direction matches when holding CTRL */
 val IMGUI_DEBUG_NAV_SCORING = false
+/** Display the reference navigation rectangle for each window */
 val IMGUI_DEBUG_NAV_RECTS = false
 
 // When using CTRL+TAB (or Gamepad Square+L/R) we delay the visual a little in order to reduce visual noise doing a fast switch.

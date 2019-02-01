@@ -14,7 +14,8 @@ import imgui.g
 import java.io.FileWriter
 
 /** Logging/Capture
- *  - All text output from the interface can be captured into tty/file/clipboard. By default, tree nodes are automatically opened during logging. */
+ *  - All text output from the interface can be captured into tty/file/clipboard.
+ *  By default, tree nodes are automatically opened during logging.     */
 interface imgui_logging {
 
 //    IMGUI_API void          LogToTTY(int max_depth = -1);                                       // start logging to tty (stdout)

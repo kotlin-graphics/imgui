@@ -26,7 +26,7 @@ import imgui.ColorEditFlag as Cef
 import imgui.DragDropFlag as Ddf
 import imgui.HoveredFlag as Hf
 import imgui.InputTextFlag as Itf
-import imgui.ItemFlag as If
+import imgui.internal.ItemFlag as If
 import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf

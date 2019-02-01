@@ -207,6 +207,7 @@ object ExampleApp {
                 separator()
             }
             treeNode("Backend Flags") {
+                showHelpMarker("Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.")
                 val backendFlags = intArrayOf(io.backendFlags) // Make a local copy to avoid modifying the back-end flags.
                 checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
                 checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)

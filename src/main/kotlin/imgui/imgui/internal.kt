@@ -85,7 +85,7 @@ import imgui.ColorEditFlag as Cef
 import imgui.DragDropFlag as Ddf
 import imgui.HoveredFlag as Hf
 import imgui.InputTextFlag as Itf
-import imgui.ItemFlag as If
+import imgui.internal.ItemFlag as If
 import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
@@ -464,7 +464,7 @@ interface imgui_internal {
         /*  FIXME: This code is faulty and we may want to eventually to replace or remove the 'apply_focus_to_window_under=true' path completely.
             Instead of using g.OpenPopupStack[remaining-1].Window etc. we should find the highest root window that is behind the popups we are closing.
             The current code will set focus to the parent of the popup window which is incorrect.
-            It rarely manifested until now because UpdateMouseMovingWindow() would call FocusWindow() again on the clicked window,
+            It rarely manifested until now because UpdateMouseMovingWindowNewFrame() would call FocusWindow() again on the clicked window,
             leading to a chain of focusing A (clicked window) then B (parent window of the popup) then A again.
             However if the clicked window has the _NoMove flag set we would be left with B focused.
             For now, we have disabled this path when called from ClosePopupsOverWindow() because the users of ClosePopupsOverWindow() don't need to alter focus anyway,

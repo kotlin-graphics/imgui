@@ -42,7 +42,7 @@ import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
-import imgui.ItemFlag as If
+import imgui.internal.ItemFlag as If
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 import imgui.internal.DrawCornerFlag as Dcf
@@ -359,10 +359,10 @@ interface imgui_window {
                 window.pos = findBestWindowPosForPopup(window)
 
             // Clamp position so it stays visible
-            if (flags hasnt Wf.ChildWindow)
-            /*  Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized
-        window when initializing or minimizing. */
-                if (!windowPosSetByApi && window.autoFitFrames.x <= 0 && window.autoFitFrames.y <= 0 && io.displaySize allGreaterThan 0) {
+            // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
+            if (!windowPosSetByApi && flags hasnt Wf.ChildWindow && window.autoFitFrames allLessThanEqual 0)
+            // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
+                if (io.displaySize allGreaterThan 0) {
                     val padding = glm.max(style.displayWindowPadding, style.displaySafeAreaPadding)
                     window.pos = glm.max(window.pos + window.size, padding) - window.size
                     window.pos.x = glm.min(window.pos.x, (io.displaySize.x - padding.x).f)
@@ -398,8 +398,14 @@ interface imgui_window {
             window.scrollTarget put Float.MAX_VALUE
 
             // Apply window focus (new and reactivated windows are moved to front)
-            val wantFocus = windowJustActivatedByUser && flags hasnt Wf.NoFocusOnAppearing &&
-                    (flags hasnt (Wf.ChildWindow or Wf.Tooltip) || flags has Wf.Popup)
+            val wantFocus = when {
+                !windowJustActivatedByUser || flags has Wf.NoFocusOnAppearing -> false
+                else -> when {
+                    flags has Wf.Popup -> true
+                    flags hasnt (Wf.ChildWindow or Wf.Tooltip) -> true
+                    else -> false
+                }
+            }
 
             // Handle manual resize: Resize Grips, Borders, Gamepad
             var borderHeld = -1
@@ -408,6 +414,7 @@ interface imgui_window {
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             if (!window.collapsed)
                 borderHeld = updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
+            window.resizeBorderHeld = borderHeld
 
             // Default item width. Make it proportional to window size if window manually resizes
             window.itemWidthDefault = when {
@@ -445,6 +452,7 @@ interface imgui_window {
             }
 
             // Draw window + handle manual resize
+            // As we highlight the title bar when want_focus is set, multiple reappearing windows will have have their title bar highlighted on their reappearing frame.
             val windowRounding = window.windowRounding
             val windowBorderSize = window.windowBorderSize
             val windowToHighlight = g.navWindowingTarget ?: g.navWindow
@@ -463,8 +471,12 @@ interface imgui_window {
                 // Window background
                 if (flags hasnt Wf.NoBackground) {
                     var bgCol = getWindowBgColorIdxFromFlags(flags).u32
-                    if (g.nextWindowData.bgAlphaCond != Cond.None)
-                        bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(g.nextWindowData.bgAlphaVal) shl COL32_A_SHIFT)
+                    val alpha = when (g.nextWindowData.bgAlphaCond) {
+                        Cond.None -> 1f
+                        else -> g.nextWindowData.bgAlphaVal
+                    }
+                    if (alpha != 1f)
+                        bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
                     window.drawList.addRectFilled(window.pos + Vec2(0f, window.titleBarHeight), window.pos + window.size, bgCol, windowRounding,
                             if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
                 }
@@ -505,7 +517,7 @@ interface imgui_window {
                     }
 
                 // Borders
-                renderOuterBorders(window, borderHeld)
+                renderOuterBorders(window)
             }
 
             // Draw navigation selection/windowing rectangle border
@@ -672,7 +684,8 @@ interface imgui_window {
             window.innerClipRect.max.x = floor(0.5f + window.innerMainRect.max.x - max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
             window.innerClipRect.max.y = floor(0.5f + window.innerMainRect.max.y)
 
-            // After Begin() we fill the last item / hovered data based on title bar data. It is a standard behavior (to allow creation of context menus on title bar only, etc.).
+            // We fill last item data based on Title Bar, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
+            // This is useful to allow creating context menus on title bar only, etc.
             window.dc.lastItemId = window.moveId
             window.dc.lastItemStatusFlags = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max)) ItemStatusFlag.HoveredRect.i else 0
             window.dc.lastItemRect = titleBarRect
@@ -691,7 +704,6 @@ interface imgui_window {
             // Child window can be out of sight and have "negative" clip windows.
             // Mark them as collapsed so commands are skipped earlier (we can't manually collapse them because they have no title bar).
             assert(flags has Wf.NoTitleBar)
-
             if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames allLessThanEqual 0)
                 if (window.outerRectClipped.min anyGreaterThanEqual window.outerRectClipped.max)
                     window.hiddenFramesRegular = 1
@@ -850,7 +862,7 @@ interface imgui_window {
         }
     }
 
-    /** get rendering command-list if you want to append your own draw primitives   */
+    /** get draw list associated to the current window, to append your own drawing primitives   */
     val windowDrawList get() = currentWindow.drawList
 
     /** get current window position in screen space (useful if you want to do your own drawing via the DrawList api)    */

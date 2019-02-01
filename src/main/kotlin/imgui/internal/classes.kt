@@ -593,6 +593,8 @@ class Window(var context: Context, var name: String) {
     var hidden = false
     /** Set when the window has a close button (p_open != NULL) */
     var hasCloseButton = false
+    /** Current border being held for resize (-1: none, otherwise 0-3) */
+    var resizeBorderHeld = -1
     /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
     var beginCount = 0
     /** Order within immediate parent window, if we are a child window. Otherwise 0. */
@@ -875,9 +877,7 @@ class Window(var context: Context, var name: String) {
     fun calcSizeAutoFit(sizeContents: Vec2) = when {
         flags has Wf.Tooltip -> Vec2(sizeContents) // Tooltip always resize
         else -> {
-            /*  When the window cannot fit all contents (either because of constraints, either because screen is too small):
-                    we are growing the size on the other axis to compensate for expected scrollbar.
-                    FIXME: Might turn bigger than DisplaySize-WindowPadding.                 */
+            // Maximum window size is determined by the display size
             val isPopup = flags has Wf.Popup
             val isMenu = flags has Wf.ChildMenu
             val sizeMin = Vec2(style.windowMinSize)
@@ -885,6 +885,10 @@ class Window(var context: Context, var name: String) {
             if (isPopup || isMenu)
                 sizeMin minAssign 4f
             val sizeAutoFit = glm.clamp(sizeContents, sizeMin, glm.max(sizeMin, Vec2(io.displaySize) - style.displaySafeAreaPadding * 2f))
+
+            // When the window cannot fit all contents (either because of constraints, either because screen is too small),
+            // we are growing the size on the other axis to compensate for expected scrollbar.
+            // FIXME: Might turn bigger than ViewportSize-WindowPadding.
             val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
             if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
                 sizeAutoFit.y += style.scrollbarSize
@@ -902,11 +906,11 @@ class Window(var context: Context, var name: String) {
         get() = max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y))
 
     /** AddWindowToDrawData */
-    infix fun addTo(outList: ArrayList<DrawList>) {
+    infix fun addToDrawData(outList: ArrayList<DrawList>) {
         io.metricsRenderWindows++
         drawList addTo outList
         dc.childWindows.filter { it.isActiveAndVisible }  // clipped children may have been marked not active
-                .forEach { it addTo outList }
+                .forEach { it addToDrawData outList }
     }
 
     /** AddWindowToSortedBuffer */
@@ -920,8 +924,7 @@ class Window(var context: Context, var name: String) {
         }
     }
 
-    /** ~ AddWindowToDrawDataSelectLayer */
-    fun addToDrawDataSelectLayer() = addTo(if (flags has Wf.Tooltip) g.drawDataBuilder.layers[1] else g.drawDataBuilder.layers[0])
+    fun addRootWindowToDrawData() = addToDrawData(if (flags has Wf.Tooltip) g.drawDataBuilder.layers[1] else g.drawDataBuilder.layers[0])
 
     // FIXME: Add a more explicit sort order in the window structure.
     private val childWindowComparer = compareBy<Window>({ it.flags has Wf.Popup }, { it.flags has Wf.Tooltip }, { it.beginOrderWithinParent })
@@ -1084,12 +1087,14 @@ class Window(var context: Context, var name: String) {
             activate hover on other windows.
             We _also_ call this when clicking in a window empty space when io.ConfigWindowsMoveFromTitleBarOnly is set,
             but clear g.MovingWindow afterward.
-            This is because we want ActiveId to be set even when the window is stuck from moving.         */
+            This is because we want ActiveId to be set even when the window is not permitted to move.   */
         focus()
         setActiveId(moveId, this)
         g.navDisableHighlight = true
         g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
-        if (flags hasnt Wf.NoMove && rootWindow!!.flags hasnt Wf.NoMove)
+
+        val canMoveWindow = flags hasnt Wf.NoMove && rootWindow!!.flags hasnt Wf.NoMove
+        if(canMoveWindow)
             g.movingWindow = this
     }
 
@@ -1134,6 +1139,7 @@ fun Window?.focus() {
         g.navId = this?.navLastIds?.get(0) ?: 0 // Restore NavId
         g.navIdIsAlive = false
         g.navLayer = NavLayer.Main
+        //IMGUI_DEBUG_LOG("FocusWindow(\"%s\")\n", window ? window->Name : NULL);
     }
 
     // Passing NULL allow to disable keyboard focus
