@@ -36,11 +36,19 @@ import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 import org.lwjgl.opengl.GL33.glBindSampler
 import gln.gl20 as gl
 
-object ImplGL3 {
+class ImplGL3 {
+    companion object {
+        fun renderDrawData(drawData: DrawData) = LwjglGlfw.instance.renderDrawData(drawData)
+    }
 
     var program = GlProgram(0)
     var matUL = -1
     var CLIP_ORIGIN = false
+
+    val mouseJustPressed = BooleanArray(5)
+    val bufferName = IntBuffer<Buffer>()
+    val vaoName = IntBuffer(1)
+    val fontTexture = IntBuffer(1)
 
     fun createDeviceObjects(): Boolean {
 
