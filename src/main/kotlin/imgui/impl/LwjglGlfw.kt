@@ -32,8 +32,8 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
         fun shutdown() = instance.shutdown()
     }
     
-    var window: GlfwWindow
-    var implGl3: ImplGL3? = null
+    val window: GlfwWindow
+    val implGl3: ImplGL3
     var time = 0.0
     val mouseCursors = LongArray(MouseCursor.COUNT)
 
@@ -141,7 +141,7 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
 
         when(clientApi) {
             GlfwClientApi.OpenGL -> implGl3 = ImplGL3()
-//					GlfwClientApi.Vulkan -> ImplVk.init()
+            GlfwClientApi.Vulkan -> TODO() //ImplVk.init()
         }
     }
 
@@ -213,8 +213,8 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
 
     fun renderDrawData(drawData: DrawData) {
         when(clientApi) {
-            GlfwClientApi.OpenGL -> implGl3!!.renderDrawData(drawData)
-//					GlfwClientApi.Vulkan -> ?
+            GlfwClientApi.OpenGL -> implGl3.renderDrawData(drawData)
+            GlfwClientApi.Vulkan -> TODO()
         }
     }
 
@@ -267,8 +267,8 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
         mouseCursors.fill(NULL)
 
         when (clientApi) {
-            GlfwClientApi.OpenGL -> implGl3?.destroyDeviceObjects()
-            else -> TODO()//ImplVk.invalidateDeviceObjects()
+            GlfwClientApi.OpenGL -> implGl3.destroyDeviceObjects()
+            GlfwClientApi.Vulkan -> TODO() //ImplVk.invalidateDeviceObjects()
         }
 
     }
