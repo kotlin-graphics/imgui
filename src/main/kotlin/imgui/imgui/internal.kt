@@ -151,6 +151,7 @@ interface imgui_internal {
         g.activeIdIsJustActivated = g.activeId != id
         if (g.activeIdIsJustActivated) {
             g.activeIdTimer = 0f
+            g.activeIdHasBeenPressed = false
             g.activeIdHasBeenEdited = false
             if (id != 0) {
                 g.lastActiveId = id
@@ -1796,6 +1797,8 @@ interface imgui_internal {
         }
         var held = false
         if (g.activeId == id) {
+            if (pressed)
+                g.activeIdHasBeenPressed = true
             if (g.activeIdSource == InputSource.Mouse) {
                 if (g.activeIdIsJustActivated)
                     g.activeIdClickOffset = io.mousePos - bb.min

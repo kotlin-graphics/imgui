@@ -125,16 +125,16 @@ infix fun Int.hasnt(b: SeparatorFlag) = (this and b.i) == 0
  *  This is going to be exposed in imgui.h when stabilized enough. */
 enum class ItemFlag(@JvmField val i: Int) {
     // @formatter:off
-    NoTabStop                    (1 shl 0),  // false
+    NoTabStop(1 shl 0),  // false
     /** Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings. */
-    ButtonRepeat                 (1 shl 1),  // false
+    ButtonRepeat(1 shl 1),  // false
     /** [BETA] Disable interactions but doesn't affect visuals yet. See github.com/ocornut/imgui/issues/211 */
-    Disabled                     (1 shl 2),  // false
-    NoNav                        (1 shl 3),  // false
-    NoNavDefaultFocus            (1 shl 4),  // false
+    Disabled(1 shl 2),  // false
+    NoNav(1 shl 3),  // false
+    NoNavDefaultFocus(1 shl 4),  // false
     /** MenuItem/Selectable() automatically closes current Popup window */
-    SelectableDontClosePopup     (1 shl 5),  // false
-    Default_                     (0)
+    SelectableDontClosePopup(1 shl 5),  // false
+    Default_(0)
     // @formatter:on
 }
 
@@ -210,7 +210,10 @@ enum class InputReadMode {
 }
 
 enum class NavHighlightFlag {
-    None, TypeDefault, TypeThin, AlwaysDraw, NoRounding;
+    None, TypeDefault, TypeThin,
+    /** Draw rectangular highlight if (g.NavId == id) _even_ when using the mouse. */
+    AlwaysDraw,
+    NoRounding;
 
     val i = if (ordinal == 0) 0 else 1 shl ordinal
 }
