@@ -156,6 +156,7 @@ interface imgui_demoDebugInformations {
             separator()
             text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
             text("io.displaySize: ${io.displaySize.x},${io.displaySize.y}")
+            text("io.displayFramebufferScale: %.2f,%.2f".format(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
             separator()
             text("style.windowPadding: %.2f,%.2f", style.windowPadding.x, style.windowPadding.y)
             text("style.windowBorderSize: %.2f", style.windowBorderSize)

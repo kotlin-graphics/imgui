@@ -1010,7 +1010,7 @@ class Window(var context: Context, var name: String) {
 
     fun getAllowedExtentRect(): Rect {
         val padding = style.displaySafeAreaPadding
-        return getViewportRect().apply {
+        return viewportRect.apply {
             expand(Vec2(if (width > padding.x * 2) -padding.x else 0f, if (height > padding.y * 2) -padding.y else 0f))
         }
     }
