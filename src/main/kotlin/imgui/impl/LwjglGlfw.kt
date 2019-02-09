@@ -17,6 +17,8 @@ import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
 import uno.glfw.*
 import uno.glfw.GlfwWindow.CursorStatus
+import java.nio.ByteBuffer
+import java.nio.FloatBuffer
 import kotlin.collections.set
 
 
@@ -169,9 +171,9 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
         io.navInputs.fill(0f)
         if (io.configFlags has ConfigFlag.NavEnableGamepad) {
             // Update gamepad inputs
-            val buttons = window.joystick1Buttons!!
+            val buttons = window.joystick1Buttons ?: ByteBuffer.wrap(byteArrayOf())
             val buttonsCount = buttons.cap
-            val axes = window.joystick1Axes!!
+            val axes = window.joystick1Axes ?: FloatBuffer.wrap(floatArrayOf())
             val axesCount = axes.cap
 
             fun mapButton(nav: NavInput, button: Int) {
