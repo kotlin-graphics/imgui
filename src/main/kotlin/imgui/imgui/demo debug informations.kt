@@ -392,7 +392,7 @@ interface imgui_demoDebugInformations {
 
                 val overlayDrawList = getOverlayDrawList(window)   // Render additional visuals into the top-most draw list
                 window?.let {
-                    if (isItemHovered())    // TODO check if .posF is fine instead .pos
+                    if (isItemHovered())
                         overlayDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
                 }
 
