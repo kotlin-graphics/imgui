@@ -154,6 +154,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navJustTabbedId: ID = 0
     /** Just navigated to this id (result of a successfully MoveRequest)    */
     var navJustMovedToId: ID = 0
+    /** Just navigated to this select scope id (result of a successfully MoveRequest). */
+    var navJustMovedToSelectScopeId: ID = 0
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
     /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
@@ -304,6 +306,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var tooltipOverrideCount = 0
     /** If no custom clipboard handler is defined   */
     var privateClipboard = ""
+
+    // Range-Select/Multi-Select
+    // [This is unused in this branch, but left here to facilitate merging/syncing multiple branches]
+    var multiSelectScopeId: ID = 0
 
     // Platform support
 
