@@ -4,7 +4,6 @@ import glm_.vec2.Vec2;
 import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
 import imgui.*;
-import imgui.impl.ImplGL3;
 import imgui.impl.LwjglGlfw;
 import imgui.impl.LwjglGlfw.GlfwClientApi;
 import kotlin.Unit;
@@ -23,8 +22,7 @@ public class Test_lwjgl {
     // The window handle
     private GlfwWindow window;
     private uno.glfw.glfw glfw = uno.glfw.glfw.INSTANCE;
-    private LwjglGlfw lwjglGlfw = LwjglGlfw.INSTANCE;
-    private ImplGL3 implGL3 = ImplGL3.INSTANCE;
+    private LwjglGlfw lwjglGlfw;
     private ImGui imgui = ImGui.INSTANCE;
     private IO io;
     private float[] f = {0f};
@@ -57,7 +55,7 @@ public class Test_lwjgl {
 //        imgui.styleColorsClassic();
 
         // Setup Platform/Renderer bindings
-        lwjglGlfw.init(window, true, GlfwClientApi.OpenGL, null);
+        lwjglGlfw = new LwjglGlfw(window, true, GlfwClientApi.OpenGL, null);
 
         io = imgui.getIo();
 
@@ -146,7 +144,7 @@ public class Test_lwjgl {
         glClearColor(clearColor);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        implGL3.renderDrawData(imgui.getDrawData());
+        lwjglGlfw.renderDrawData(imgui.getDrawData());
 
         if(ImguiKt.getDEBUG())
             checkError("loop", true); // TODO remove
