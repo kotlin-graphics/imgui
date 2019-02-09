@@ -20,9 +20,20 @@ import uno.glfw.GlfwWindow.CursorStatus
 import kotlin.collections.set
 
 
-object LwjglGlfw {
-
-    lateinit var window: GlfwWindow
+class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL, vrTexSize: Vec2i? = null) {
+    companion object {
+        lateinit var instance: LwjglGlfw
+        
+        fun init(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL, vrTexSize: Vec2i? = null) {
+            instance = LwjglGlfw(window, installCallbacks, clientApi_, vrTexSize)
+        }
+        
+        fun newFrame() = instance.newFrame()
+        fun shutdown() = instance.shutdown()
+    }
+    
+    val window: GlfwWindow
+    val implGl3: ImplGL3
     var time = 0.0
     val mouseCursors = LongArray(MouseCursor.COUNT)
 
@@ -33,8 +44,35 @@ object LwjglGlfw {
 
     var clientApi = GlfwClientApi.OpenGL
 
+    val mouseButtonCallback: MouseButtonCallbackT = { button: Int, action: Int, _: Int ->
+        if (action == GLFW_PRESS && button in 0..2)
+            mouseJustPressed[button] = true
+    }
 
-    fun init(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL, vrTexSize: Vec2i? = null): Boolean {
+    val scrollCallback: ScrollCallbackT = { offset: Vec2d ->
+        io.mouseWheelH += offset.x.f
+        io.mouseWheel += offset.y.f
+    }
+
+    val keyCallback: KeyCallbackT = { key: Int, _: Int, action: Int, _: Int ->
+        with(io) {
+            if (key in keysDown.indices)
+                if (action == GLFW_PRESS)
+                    keysDown[key] = true
+                else if (action == GLFW_RELEASE)
+                    keysDown[key] = false
+
+            // Modifiers are not reliable across systems
+            keyCtrl = keysDown[GLFW_KEY_LEFT_CONTROL] || keysDown[GLFW_KEY_RIGHT_CONTROL]
+            keyShift = keysDown[GLFW_KEY_LEFT_SHIFT] || keysDown[GLFW_KEY_RIGHT_SHIFT]
+            keyAlt = keysDown[GLFW_KEY_LEFT_ALT] || keysDown[GLFW_KEY_RIGHT_ALT]
+            keySuper = keysDown[GLFW_KEY_LEFT_SUPER] || keysDown[GLFW_KEY_RIGHT_SUPER]
+        }
+    }
+
+    val charCallback: CharCallbackT = { c: Int -> if (!g.imeInProgress && c in 1..65535) io.addInputCharacter(c.c) }
+
+    init {
 
         this.window = window
         this.vrTexSize = vrTexSize
@@ -101,16 +139,16 @@ object LwjglGlfw {
 
         clientApi = clientApi_
 
-//        if (clientApi == GlfwClientApi.Vulkan)
-//            ImplVk.init()
-
-        return true
+        when(clientApi) {
+            GlfwClientApi.OpenGL -> implGl3 = ImplGL3()
+            GlfwClientApi.Vulkan -> TODO() //ImplVk.init()
+        }
     }
 
     fun newFrame() {
 
         if (fontTexture[0] == 0 && clientApi == GlfwClientApi.OpenGL)
-            ImplGL3.createDeviceObjects()
+            implGl3!!.createDeviceObjects()
 
         assert(io.fonts.isBuilt) { "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame()." }
 
@@ -173,6 +211,13 @@ object LwjglGlfw {
         }
     }
 
+    fun renderDrawData(drawData: DrawData) {
+        when(clientApi) {
+            GlfwClientApi.OpenGL -> implGl3.renderDrawData(drawData)
+            GlfwClientApi.Vulkan -> TODO()
+        }
+    }
+
     private fun updateMousePosAndButtons() {
 
         if (io.configFlags has ConfigFlag.NoMouseUpdate)
@@ -215,34 +260,6 @@ object LwjglGlfw {
         }
     }
 
-    val mouseButtonCallback: MouseButtonCallbackT = { button: Int, action: Int, _: Int ->
-        if (action == GLFW_PRESS && button in 0..2)
-            mouseJustPressed[button] = true
-    }
-
-    val scrollCallback: ScrollCallbackT = { offset: Vec2d ->
-        io.mouseWheelH += offset.x.f
-        io.mouseWheel += offset.y.f
-    }
-
-    val keyCallback: KeyCallbackT = { key: Int, _: Int, action: Int, _: Int ->
-        with(io) {
-            if (key in keysDown.indices)
-                if (action == GLFW_PRESS)
-                    keysDown[key] = true
-                else if (action == GLFW_RELEASE)
-                    keysDown[key] = false
-
-            // Modifiers are not reliable across systems
-            keyCtrl = keysDown[GLFW_KEY_LEFT_CONTROL] || keysDown[GLFW_KEY_RIGHT_CONTROL]
-            keyShift = keysDown[GLFW_KEY_LEFT_SHIFT] || keysDown[GLFW_KEY_RIGHT_SHIFT]
-            keyAlt = keysDown[GLFW_KEY_LEFT_ALT] || keysDown[GLFW_KEY_RIGHT_ALT]
-            keySuper = keysDown[GLFW_KEY_LEFT_SUPER] || keysDown[GLFW_KEY_RIGHT_SUPER]
-        }
-    }
-
-    val charCallback: CharCallbackT = { c: Int -> if (!g.imeInProgress && c in 1..65535) io.addInputCharacter(c.c) }
-
     fun shutdown() {
 
         // Destroy GLFW mouse cursors
@@ -250,8 +267,8 @@ object LwjglGlfw {
         mouseCursors.fill(NULL)
 
         when (clientApi) {
-            GlfwClientApi.OpenGL -> ImplGL3.destroyDeviceObjects()
-            else -> TODO()//ImplVk.invalidateDeviceObjects()
+            GlfwClientApi.OpenGL -> implGl3.destroyDeviceObjects()
+            GlfwClientApi.Vulkan -> TODO() //ImplVk.invalidateDeviceObjects()
         }
 
     }

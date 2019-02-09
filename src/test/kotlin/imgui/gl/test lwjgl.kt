@@ -35,6 +35,8 @@ private class HelloWorld_lwjgl {
     var showDemo = true
     var counter = 0
 
+    val lwjglGlfw: LwjglGlfw
+
     init {
         glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
 
@@ -57,7 +59,7 @@ private class HelloWorld_lwjgl {
 //        ImGui.styleColorsClassic()
 
         // Setup Platform/Renderer bindings
-        LwjglGlfw.init(window, true, GlfwClientApi.OpenGL)
+        lwjglGlfw = LwjglGlfw(window, true, GlfwClientApi.OpenGL)
 
         // Load Fonts
         /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use
@@ -89,7 +91,7 @@ private class HelloWorld_lwjgl {
             Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
         window.loop(::mainLoop)
 
-        LwjglGlfw.shutdown()
+        lwjglGlfw.shutdown()
         ctx.destroy()
 
         window.destroy()
@@ -99,7 +101,7 @@ private class HelloWorld_lwjgl {
     fun mainLoop(stack: MemoryStack) {
 
         // Start the Dear ImGui frame
-        LwjglGlfw.newFrame()
+        lwjglGlfw.newFrame()
 
         ImGui.run {
 
@@ -151,7 +153,7 @@ private class HelloWorld_lwjgl {
         glClearColor(clearColor)
         glClear(GL_COLOR_BUFFER_BIT)
 
-        ImplGL3.renderDrawData(ImGui.drawData!!)
+        lwjglGlfw.renderDrawData(ImGui.drawData!!)
 
         if(DEBUG)
             checkError("mainLoop")
