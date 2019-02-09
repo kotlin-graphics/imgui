@@ -108,7 +108,7 @@ interface imgui_cursorLayout {
 
         if (groupData.advanceCursor) {
             window.dc.currentLineTextBaseOffset = glm.max(window.dc.prevLineTextBaseOffset, groupData.backupCurrentLineTextBaseOffset)      // FIXME: Incorrect, we should grab the base offset from the *first line* of the group but it is hard to obtain now.
-            itemSize(groupBb.size, groupData.backupCurrentLineTextBaseOffset)
+            itemSize(groupBb.size, 0f)
             itemAdd(groupBb, 0)
         }
 
