@@ -1943,19 +1943,22 @@ interface imgui_internal {
         }
 
         /*  Flags that affects opening behavior:
-                - 0(default) ..................... single-click anywhere to open
+                - 0 (default) .................... single-click anywhere to open
                 - OpenOnDoubleClick .............. double-click anywhere to open
                 - OpenOnArrow .................... single-click on arrow to open
                 - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
-        var buttonFlags = Bf.NoKeyModifiers or if (flags has Tnf.AllowItemOverlap) Bf.AllowItemOverlap else Bf.None
-        if (!isLeaf)
-            buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
+        var buttonFlags: ButtonFlags = Bf.NoKeyModifiers.i
+        if (flags has Tnf.AllowItemOverlap)
+            buttonFlags = buttonFlags or Bf.AllowItemOverlap
         if (flags has Tnf.OpenOnDoubleClick)
             buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.None)
+        if (!isLeaf)
+            buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
 
+        val selected = flags has Tnf.Selected
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
+        var toggled = false
         if (!isLeaf) {
-            var toggled = false
             if (pressed) {
                 toggled = !(flags has (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick)) || g.navActivateId == id
                 if (flags has Tnf.OpenOnArrow) {
@@ -1989,10 +1992,11 @@ interface imgui_internal {
         // Render
         val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
         val textPos = frameBb.min + Vec2(textOffsetX, textBaseOffsetY)
+        val navHighlightFlags: NavHighlightFlags = NavHighlightFlag.TypeThin.i
         if (displayFrame) {
             // Framed type
             renderFrame(frameBb.min, frameBb.max, col.u32, true, style.frameRounding)
-            renderNavHighlight(frameBb, id, NavHighlightFlag.TypeThin.i)
+            renderNavHighlight(frameBb, id, navHighlightFlags)
             renderArrow(frameBb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
@@ -2004,9 +2008,9 @@ interface imgui_internal {
                 renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
         } else {
             // Unframed typed for tree nodes
-            if (hovered || flags has Tnf.Selected) {
+            if (hovered || selected) {
                 renderFrame(frameBb.min, frameBb.max, col.u32, false)
-                renderNavHighlight(frameBb, id, NavHighlightFlag.TypeThin.i)
+                renderNavHighlight(frameBb, id, navHighlightFlags)
             }
             if (flags has Tnf.Bullet)
                 renderBullet(frameBb.min + Vec2(textOffsetX * 0.5f, g.fontSize * 0.5f + textBaseOffsetY))
