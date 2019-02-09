@@ -230,11 +230,9 @@ interface drags {
         val innerBb = Rect(frameBb.min + style.framePadding, frameBb.max - style.framePadding)
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
-        // NB- we don't call ItemSize() yet because we may turn into a text edit box below
-        if (!itemAdd(totalBb, id, frameBb)) {
-            itemSize(totalBb, style.framePadding.y)
+        itemSize(totalBb, style.framePadding.y)
+        if (!itemAdd(totalBb, id, frameBb))
             return false
-        }
 
         val hovered = itemHoverable(frameBb, id)
 
@@ -263,12 +261,12 @@ interface drags {
             }
         }
         if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) {
+            window.dc.cursorPos put frameBb.min
             focusableItemUnregister(window)
             return inputScalarAsWidgetReplacement(frameBb, id, label, dataType, v, format)
         }
 
         // Actual drag behavior
-        itemSize(totalBb, style.framePadding.y)
         val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power, DragFlag.None.i)
 
         // Draw frame
