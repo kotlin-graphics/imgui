@@ -1073,7 +1073,10 @@ class Font {
         fallbackAdvanceX = 0f
         configDataCount = 0
         configData.clear()
-//        containerAtlas = NULL TODO check
+        containerAtlas.clear()
+        containerAtlas.clearFonts()
+        containerAtlas.clearInputData()
+        containerAtlas.clearTexData()
         ascent = 0f
         descent = 0f
         dirtyLookupTables = true
