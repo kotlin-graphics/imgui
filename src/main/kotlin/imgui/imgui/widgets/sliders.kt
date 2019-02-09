@@ -98,11 +98,9 @@ interface sliders {
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
-        // NB- we don't call ItemSize() yet because we may turn into a text edit box below
-        if (!itemAdd(totalBb, id, frameBb)) {
-            itemSize(totalBb, style.framePadding.y)
+        itemSize(totalBb, style.framePadding.y)
+        if (!itemAdd(totalBb, id, frameBb))
             return false
-        }
 
         // Default format string when passing NULL
         // Patch old "%.0f" format string to use "%d", read function comments for more details.
@@ -130,11 +128,10 @@ interface sliders {
         }
 
         if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) {
+            window.dc.cursorPos put frameBb.min
             focusableItemUnregister(window)
             return inputScalarAsWidgetReplacement(frameBb, id, label, DataType.Float, v, format)
         }
-
-        itemSize(totalBb, style.framePadding.y)
 
         // Draw frame
         val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
