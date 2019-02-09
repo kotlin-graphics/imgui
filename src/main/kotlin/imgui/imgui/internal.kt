@@ -1033,19 +1033,20 @@ interface imgui_internal {
         }
     }
 
-    /** Render text label (with custom clipping) + Unsaved Document marker + Close Button logic */
-    fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, label: String, tabId: ID, closeButtonId: ID): Boolean {
+    /** Render text label (with custom clipping) + Unsaved Document marker + Close Button logic
+     *  We tend to lock style.FramePadding for a given tab-bar, hence the 'frame_padding' parameter.    */
+    fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, framePadding: Vec2, label: String, tabId: ID, closeButtonId: ID): Boolean {
 
         val labelSize = calcTextSize(label, 0, true)
         if (bb.width <= 1f) return false
 
         // Render text label (with clipping + alpha gradient) + unsaved marker
         val TAB_UNSAVED_MARKER = "*"
-        val textPixelClipBb = Rect(bb.min.x + style.framePadding.x, bb.min.y + style.framePadding.y, bb.max.x - style.framePadding.x, bb.max.y)
+        val textPixelClipBb = Rect(bb.min.x + framePadding.x, bb.min.y + framePadding.y, bb.max.x - framePadding.x, bb.max.y)
         if (flags has TabItemFlag.UnsavedDocument) {
             textPixelClipBb.max.x -= calcTextSize(TAB_UNSAVED_MARKER, 0, false).x
-            val unsavedMarkerPos = Vec2(min(bb.min.x + style.framePadding.x + labelSize.x + 2, textPixelClipBb.max.x), bb.min.y + style.framePadding.y + (-g.fontSize * 0.25f).i.f)
-            renderTextClippedEx(drawList, unsavedMarkerPos, bb.max - style.framePadding, TAB_UNSAVED_MARKER, 0, null)
+            val unsavedMarkerPos = Vec2(min(bb.min.x + framePadding.x + labelSize.x + 2, textPixelClipBb.max.x), bb.min.y + framePadding.y + (-g.fontSize * 0.25f).i.f)
+            renderTextClippedEx(drawList, unsavedMarkerPos, bb.max - framePadding, TAB_UNSAVED_MARKER, 0, null)
         }
         val textEllipsisClipBb = Rect(textPixelClipBb)
 
@@ -1063,7 +1064,7 @@ interface imgui_internal {
         if (closeButtonVisible) {
             val closeButtonSz = g.fontSize * 0.5f
             itemHoveredDataBackup {
-                if (closeButton(closeButtonId, Vec2(bb.max.x - style.framePadding.x - closeButtonSz, bb.min.y + style.framePadding.y + closeButtonSz), closeButtonSz))
+                if (closeButton(closeButtonId, Vec2(bb.max.x - framePadding.x - closeButtonSz, bb.min.y + framePadding.y + closeButtonSz), closeButtonSz))
                     closeButtonPressed = true
             }
 
@@ -1380,7 +1381,8 @@ interface imgui_internal {
      *  the boldness or positioning of what the font uses... */
     fun renderPixelEllipsis(drawList: DrawList, pos: Vec2, count: Int, col: Int) {
         val font = drawList._data.font!!
-        pos.y += (font.displayOffset.y + font.ascent + 0.5f - 1f).i.f
+        val fontScale = drawList._data.fontSize / font.fontSize
+        pos.y += (font.displayOffset.y + font.ascent * fontScale + 0.5f - 1f).i.f
         for (dotN in 0 until count)
             drawList.addRectFilled(Vec2(pos.x + dotN * 2f, pos.y), Vec2(pos.x + dotN * 2f + 1f, pos.y + 1f), col)
     }

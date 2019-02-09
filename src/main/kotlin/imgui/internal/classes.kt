@@ -9,8 +9,10 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.arrowButtonEx
+import imgui.ImGui.beginCombo
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.endCombo
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
@@ -21,6 +23,7 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.keepAliveId
 import imgui.ImGui.markIniSettingsDirty
+import imgui.ImGui.menuItem
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popItemFlag
 import imgui.ImGui.popStyleColor
@@ -1095,7 +1098,7 @@ class Window(var context: Context, var name: String) {
         g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
 
         val canMoveWindow = flags hasnt Wf.NoMove && rootWindow!!.flags hasnt Wf.NoMove
-        if(canMoveWindow)
+        if (canMoveWindow)
             g.movingWindow = this
     }
 
@@ -1172,6 +1175,8 @@ class TabItem {
     var lastFrameVisible = -1
     /** This allows us to infer an ordered list of the last activated tabs with little maintenance */
     var lastFrameSelected = -1
+    /** When Window==NULL, offset to name within parent ImGuiTabBar::TabsNames */
+    var nameOffset = -1
     /** Position relative to beginning of tab */
     var offset = 0f
     /** Width currently displayed */
@@ -1207,8 +1212,18 @@ class TabBar {
     var visibleTabWasSubmitted = false
     /** For BeginTabItem()/EndTabItem() */
     var lastTabItemIdx = -1
+    /** style.FramePadding locked at the time of BeginTabBar() */
+    var framePadding = Vec2()
+    /** For non-docking tab bar we re-append names in a contiguous buffer. */
+    val tabsNames = ArrayList<String>()
 
     val TabItem.order get() = tabs.indexOf(this)
+
+    val TabItem.name: String
+        get() {
+            assert(nameOffset in tabsNames.indices)
+            return tabsNames[nameOffset]
+        }
 
     // Tab Bars
 
@@ -1252,8 +1267,8 @@ class TabBar {
         val col = if (flags has TabBarFlag.IsFocused) Col.TabActive else Col.Tab
         val y = barRect.max.y - 1f
         run {
-            val separatorMinX = barRect.min.x - if (flags has TabBarFlag.DockNodeIsDockSpace) 0f else window.windowPadding.x
-            val separatorMaxX = barRect.max.x + if (flags has TabBarFlag.DockNodeIsDockSpace) 0f else window.windowPadding.x
+            val separatorMinX = barRect.min.x - window.windowPadding.x
+            val separatorMaxX = barRect.max.x + window.windowPadding.x
             window.drawList.addLine(Vec2(separatorMinX, y), Vec2(separatorMaxX, y), col.u32, 1f)
         }
         return true
@@ -1292,11 +1307,18 @@ class TabBar {
         lastTabItemIdx = tabs.indexOf(tab)
         tab.widthContents = size.x
 
+        if (pOpen == null)
+            flags = flags or TabItemFlag.NoCloseButton
+
         val tabBarAppearing = prevFrameVisible + 1 < g.frameCount
         val tabBarFocused = flags has TabBarFlag.IsFocused
         val tabAppearing = tab.lastFrameVisible + 1 < g.frameCount
         tab.lastFrameVisible = g.frameCount
         tab.flags = flags_
+
+        // Append name with zero-terminator
+        tab.nameOffset = tabsNames.size
+        tabsNames += label
 
         // If we are not reorderable, always reset offset based on submission order.
         // (We already handled layout and sizing using the previous known order, but sizing is not affected by order!)
@@ -1414,7 +1436,7 @@ class TabBar {
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) window.getId(id + 1) else 0
-        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags__, label, id, closeButtonId)
+        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags__, framePadding, label, id, closeButtonId)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
             closeTab(tab)
@@ -1500,9 +1522,11 @@ class TabBar {
             if (tab.id == selectedTabId)
                 foundSelectedTabID = true
 
-            // Refresh tab width immediately if we can (for manual tab bar, WidthContent will lag by one frame which is mostly noticeable when changing style.FramePadding.x)
+            // Refresh tab width immediately, otherwise changes of style e.g. style.FramePadding.x would noticeably lag in the tab bar.
             // Additionally, when using TabBarAddTab() to manipulate tab bar order we occasionally insert new tabs that don't have a width yet,
             // and we cannot wait for the next BeginTabItem() call. We cannot compute this width within TabBarAddTab() because font size depends on the active window.
+            tab.widthContents = tabItemCalcSize(tab.name, tab.flags hasnt TabItemFlag.NoCloseButton).x
+
             widthTotalContents += (if (tabN > 0) style.itemInnerSpacing.x else 0f) + tab.widthContents
 
             // Store data so we can build an array sorted by width if we need to shrink tabs down
@@ -1548,6 +1572,15 @@ class TabBar {
         offsetMax = (offsetX - style.itemInnerSpacing.x) max 0f
         offsetNextTab = 0f
 
+        // Tab List Popup
+        val tabListPopupButton = flags has TabBarFlag.TabListPopupButton
+        if (tabListPopupButton)
+            tabListPopupButton()?.let { tabToSelect ->
+                // NB: Will alter BarRect.Max.x!
+                selectedTabId = tabToSelect.id
+                scrollTrackSelectedTabID = tabToSelect.id
+            }
+
         // Horizontal scrolling buttons
         val scrollingButtons = offsetMax > barRect.width && tabs.size > 1 && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll
         if (scrollingButtons)
@@ -1578,6 +1611,10 @@ class TabBar {
         val scrollingSpeed = if (prevFrameVisible + 1 < g.frameCount) Float.MAX_VALUE else io.deltaTime * g.fontSize * 70f
         if (scrollingAnim != scrollingTarget)
             scrollingAnim = linearSweep(scrollingAnim, scrollingTarget, scrollingSpeed)
+
+        // Clear name buffers
+        if (flags hasnt TabBarFlag.DockNode)
+            tabsNames.clear()
     }
 
     /** Dockables uses Name/ID in the global namespace. Non-dockable items use the ID stack.
@@ -1660,6 +1697,38 @@ class TabBar {
         window.dc.cursorPos put backupCursorPos
         barRect.max.x -= scrollingButtonsWidth + 1f
 
+        return tabToSelect
+    }
+
+    /** ~TabBarTabListPopupButton */
+    fun tabListPopupButton(): TabItem? {
+
+        val window = g.currentWindow!!
+
+        val tabListPopupButtonWidth = g.fontSize + style.framePadding.y * 2f
+        val backupCursorPos = Vec2(window.dc.cursorPos)
+        barRect.max.x -= tabListPopupButtonWidth
+        if (window.hasCloseButton)
+            barRect.max.x += style.itemInnerSpacing.x
+        window.dc.cursorPos.put(barRect.max.x, barRect.min.y)
+
+        val arrowCol = style.colors[Col.Text]
+        arrowCol.w *= 0.5f
+        pushStyleColor(Col.Text, arrowCol)
+        pushStyleColor(Col.Button, Vec4())
+        val open = beginCombo("##v", null, ComboFlag.NoPreview or ComboFlag.PopupAlignLeft)
+        popStyleColor(2)
+
+        var tabToSelect: TabItem? = null
+        if (open) {
+            tabs.forEach { tab ->
+                if (menuItem(tab.name))
+                    tabToSelect = tab
+            }
+            endCombo()
+        }
+
+        window.dc.cursorPos = backupCursorPos
         return tabToSelect
     }
 
