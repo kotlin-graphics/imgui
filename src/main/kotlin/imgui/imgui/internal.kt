@@ -117,7 +117,7 @@ interface imgui_internal {
         assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
         assert(font.scale > 0f)
         g.font = font
-        g.fontBaseSize = io.fontGlobalScale * g.font.fontSize * g.font.scale
+        g.fontBaseSize = 1f max (io.fontGlobalScale * g.font.fontSize * g.font.scale)
         g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
 
         val atlas = g.font.containerAtlas

@@ -160,8 +160,8 @@ class FontAtlas {
 
     fun addFontDefault(fontCfg: FontConfig): Font {
 
-        if (fontCfg.name.isEmpty()) fontCfg.name = "ProggyClean.ttf, 13px"
         if (fontCfg.sizePixels <= 0f) fontCfg.sizePixels = 13f
+        if (fontCfg.name.isEmpty()) fontCfg.name = "ProggyClean.ttf, ${fontCfg.sizePixels.i}px"
 
         val ttfCompressedBase85 = proggyCleanTtfCompressedDataBase85
         val glyphRanges = fontCfg.glyphRanges.takeIf { it.isNotEmpty() } ?: glyphRanges.default
