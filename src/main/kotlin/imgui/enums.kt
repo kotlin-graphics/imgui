@@ -260,10 +260,10 @@ enum class TabBarFlag(@JvmField val i: Int) {
     Reorderable(1 shl 0),
     /** Automatically select new tabs when they appear */
     AutoSelectNewTabs(1 shl 1),
+    TabListPopupButton(1 shl 2),
     /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button.
      *  You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
-    NoCloseWithMiddleMouseButton(1 shl 2),
-    NoTabListPopupButton(1 shl 3),
+    NoCloseWithMiddleMouseButton(1 shl 3),
     NoTabListScrollingButtons(1 shl 4),
     /** Disable tooltips when hovering a tab */
     NoTooltip(1 shl 5),
@@ -276,14 +276,11 @@ enum class TabBarFlag(@JvmField val i: Int) {
 
     // Private
 
-    /** [Docking: Unused in Master Branch] Part of a dock node */
+    /** Part of a dock node */
     DockNode(1 shl 20),
-    /** [Docking: Unused in Master Branch] Part of an explicit dockspace node node */
-    DockNodeIsDockSpace(1 shl 21),
-
-    IsFocused(1 shl 22),
-    /** FIXME: Settings are handled by the docking system, this only request the tab bar to mark settings dirty when reordering tabs */
-    SaveSettings(1 shl 23);
+    IsFocused(1 shl 21),
+    /** FIXME: Settings are handled by the docking system, this only request the tab bar to mark settings dirty when reordering tabs, */
+    SaveSettings(1 shl 22);
 
     infix fun or(tabBarFlag: TabBarFlag) = i or tabBarFlag.i
     infix fun xor(tabBarFlag: TabBarFlag) = i xor tabBarFlag.i
@@ -306,6 +303,8 @@ enum class TabItemFlag(@JvmField val i: Int) {
     NoCloseWithMiddleMouseButton(1 shl 2),
     /** Don't call PushID(tab->ID)/PopID() on BeginTabItem()/EndTabItem() */
     NoPushId(1 shl 3),
+    /** Store whether p_open is set or not, which we need to recompute WidthContents during layout. */
+    NoCloseButton(1 shl 20)
 }
 
 infix fun Int.or(other: TabItemFlag): TabItemFlags = or(other.i)

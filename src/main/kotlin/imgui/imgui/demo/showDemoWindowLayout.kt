@@ -346,6 +346,7 @@ object showDemoWindowLayout {
                 // Expose a couple of the available flags. In most cases you may just call BeginTabBar() with no flags (0).
                 checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags, TabBarFlag.Reorderable.i)
                 checkboxFlags("ImGuiTabBarFlags_AutoSelectNewTabs", ::tabBarFlags, TabBarFlag.AutoSelectNewTabs.i)
+                checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags, TabBarFlag.TabListPopupButton.i)
                 checkboxFlags("ImGuiTabBarFlags_NoCloseWithMiddleMouseButton", ::tabBarFlags, TabBarFlag.NoCloseWithMiddleMouseButton.i)
                 if (tabBarFlags hasnt TabBarFlag.FittingPolicyMask_)
                     tabBarFlags = tabBarFlags or TabBarFlag.FittingPolicyDefault_
