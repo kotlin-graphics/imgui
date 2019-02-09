@@ -131,13 +131,13 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
             //  Retrieve settings from .ini file
             settingsIdx = g.settingsWindows.indexOf(s)
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
-            pos = glm.floor(s.pos)
+            pos = floor(s.pos)
             collapsed = s.collapsed
             if (s.size.lengthSqr > 0.00001f)
-                size put glm.floor(s.size)
+                size put floor(s.size)
         }
     }
-    sizeFullAtLastBegin put glm.floor(size)
+    sizeFullAtLastBegin put floor(size)
     sizeFull put sizeFullAtLastBegin
     this.size put sizeFull
     dc.cursorMaxPos put pos // So first call to calcSizeContents() doesn't return crazy values
@@ -666,7 +666,7 @@ fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, flags_: W
 
     // Size
     val contentAvail = contentRegionAvail
-    val size = glm.floor(sizeArg)
+    val size = floor(sizeArg)
     val autoFitAxes = (if (size.x == 0f) 1 shl Axis.X else 0x00) or (if (size.y == 0f) 1 shl Axis.Y else 0x00)
     if (size.x <= 0f)   // Arbitrary minimum child size (0.0f causing too much issues)
         size.x = glm.max(contentAvail.x + size.x, 4f)
@@ -918,23 +918,23 @@ fun navUpdate() {
 
         if (it.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null) {
             // *Fallback* manual-scroll with Nav directional keys when window has no navigable item
-            val scrollSpeed = glm.floor(it.calcFontSize() * 100 * io.deltaTime + 0.5f) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
+            val scrollSpeed = floor(it.calcFontSize() * 100 * io.deltaTime + 0.5f) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
             if (it.dc.navLayerActiveMask == 0 && it.dc.navHasScroll && g.navMoveRequest) {
                 if (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right)
-                    it.setScrollX(glm.floor(it.scroll.x + (if (g.navMoveDir == Dir.Left) -1f else 1f) * scrollSpeed))
+                    it.setScrollX(floor(it.scroll.x + (if (g.navMoveDir == Dir.Left) -1f else 1f) * scrollSpeed))
                 if (g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down)
-                    it.setScrollY(glm.floor(it.scroll.y + (if (g.navMoveDir == Dir.Up) -1f else 1f) * scrollSpeed))
+                    it.setScrollY(floor(it.scroll.y + (if (g.navMoveDir == Dir.Up) -1f else 1f) * scrollSpeed))
             }
 
             // *Normal* Manual scroll with NavScrollXXX keys
             // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
             val scrollDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down, 1f / 10f, 10f)
             if (scrollDir.x != 0f && it.scrollbar.x) {
-                it.setScrollX(glm.floor(it.scroll.x + scrollDir.x * scrollSpeed))
+                it.setScrollX(floor(it.scroll.x + scrollDir.x * scrollSpeed))
                 g.navMoveFromClampedRefRect = true
             }
             if (scrollDir.y != 0f) {
-                it.setScrollY(glm.floor(it.scroll.y + scrollDir.y * scrollSpeed))
+                it.setScrollY(floor(it.scroll.y + scrollDir.y * scrollSpeed))
                 g.navMoveFromClampedRefRect = true
             }
         }
@@ -1071,7 +1071,7 @@ fun navUpdateWindowing() {
             if (moveDelta.x != 0f || moveDelta.y != 0f) {
                 val NAV_MOVE_SPEED = 800f
                 // FIXME: Doesn't code variable framerate very well
-                val moveSpeed = glm.floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
+                val moveSpeed = floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
                 it.rootWindow!!.pos plusAssign moveDelta * moveSpeed
                 g.navDisableMouseHover = true
                 it.markIniSettingsDirty()

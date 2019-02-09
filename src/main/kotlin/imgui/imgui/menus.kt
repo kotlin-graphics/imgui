@@ -42,7 +42,6 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
 import imgui.internal.*
 import imgui.internal.LayoutType
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.SelectableFlag as Sf
