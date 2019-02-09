@@ -31,6 +31,7 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderNavHighlight
+import imgui.ImGui.selectable
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setTooltip
@@ -1507,6 +1508,15 @@ class TabBar {
             reorderRequestTabId = 0
         }
 
+        // Tab List Popup
+        val tabListPopupButton = flags has TabBarFlag.TabListPopupButton
+        if (tabListPopupButton)
+            tabListPopupButton()?.let { tabToSelect ->
+                // NB: Will alter BarRect.Max.x!
+                selectedTabId = tabToSelect.id
+                scrollTrackSelectedTabID = tabToSelect.id
+            }
+
         val widthSortBuffer = g.tabSortByWidthBuffer
 
         // Compute ideal widths
@@ -1571,15 +1581,6 @@ class TabBar {
         }
         offsetMax = (offsetX - style.itemInnerSpacing.x) max 0f
         offsetNextTab = 0f
-
-        // Tab List Popup
-        val tabListPopupButton = flags has TabBarFlag.TabListPopupButton
-        if (tabListPopupButton)
-            tabListPopupButton()?.let { tabToSelect ->
-                // NB: Will alter BarRect.Max.x!
-                selectedTabId = tabToSelect.id
-                scrollTrackSelectedTabID = tabToSelect.id
-            }
 
         // Horizontal scrolling buttons
         val scrollingButtons = offsetMax > barRect.width && tabs.size > 1 && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll
@@ -1705,24 +1706,23 @@ class TabBar {
 
         val window = g.currentWindow!!
 
+        // We use g.Style.FramePadding.y to match the square ArrowButton size
         val tabListPopupButtonWidth = g.fontSize + style.framePadding.y * 2f
         val backupCursorPos = Vec2(window.dc.cursorPos)
-        barRect.max.x -= tabListPopupButtonWidth
-        if (window.hasCloseButton)
-            barRect.max.x += style.itemInnerSpacing.x
-        window.dc.cursorPos.put(barRect.max.x, barRect.min.y)
+        window.dc.cursorPos.put(barRect.min.x - style.framePadding.y, barRect.min.y)
+        barRect.min.x += tabListPopupButtonWidth
 
         val arrowCol = style.colors[Col.Text]
         arrowCol.w *= 0.5f
         pushStyleColor(Col.Text, arrowCol)
         pushStyleColor(Col.Button, Vec4())
-        val open = beginCombo("##v", null, ComboFlag.NoPreview or ComboFlag.PopupAlignLeft)
+        val open = beginCombo("##v", null, ComboFlag.NoPreview.i)
         popStyleColor(2)
 
         var tabToSelect: TabItem? = null
         if (open) {
             tabs.forEach { tab ->
-                if (menuItem(tab.name))
+                if (selectable(tab.name, selectedTabId == id))
                     tabToSelect = tab
             }
             endCombo()
