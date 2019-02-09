@@ -3,6 +3,7 @@ package imgui.imgui.widgets
 import glm_.f
 import glm_.glm
 import glm_.i
+import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -12,6 +13,7 @@ import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
+import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
@@ -145,22 +147,13 @@ interface main {
         val id = window.getId(label)
         val labelSize = calcTextSize(label, true)
 
-        // We want a square shape to we use Y twice
-        val checkBb = Rect(window.dc.cursorPos, window.dc.cursorPos +
-                Vec2(labelSize.y + style.framePadding.y * 2, labelSize.y + style.framePadding.y * 2))
-        itemSize(checkBb, style.framePadding.y)
-
-        val totalBb = Rect(checkBb)
-        if (labelSize.x > 0)
-            sameLine(0f, style.itemInnerSpacing.x)
-        val textBb = Rect(window.dc.cursorPos + Vec2(0, style.framePadding.y), window.dc.cursorPos + Vec2(0, style.framePadding.y) + labelSize)
-        if (labelSize.x > 0) {
-            itemSize(Vec2(textBb.width, checkBb.height), style.framePadding.y)
-            glm.min(checkBb.min, textBb.min, totalBb.min)
-            glm.max(checkBb.max, textBb.max, totalBb.max)
-        }
-
-        if (!itemAdd(totalBb, id)) return false
+        val squareSz = frameHeight
+        val pos = window.dc.cursorPos
+        val checkBb = Rect(pos, pos + squareSz)
+        val totalBb = Rect(pos, pos + Vec2(squareSz + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
+        itemSize(totalBb, style.framePadding.y)
+        if (!itemAdd(totalBb, id))
+            return false
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
         if (pressed) {
@@ -172,13 +165,13 @@ interface main {
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         renderFrame(checkBb.min, checkBb.max, col.u32, true, style.frameRounding)
         if (v) {
-            val checkSz = glm.min(checkBb.width, checkBb.height)
-            val pad = glm.max(1f, (checkSz / 6f).i.f)
-            renderCheckMark(checkBb.min + Vec2(pad), Col.CheckMark.u32, checkBb.width - pad * 2f)
+            val pad = 1f max (squareSz / 6f).i.f
+            renderCheckMark(checkBb.min + pad, Col.CheckMark.u32, squareSz - pad * 2f)
         }
 
-        if (g.logEnabled) logRenderedText(textBb.min, if (v) "[x]" else "[ ]")
-        if (labelSize.x > 0f) renderText(textBb.min, label)
+        if (g.logEnabled) logRenderedText(totalBb.min, if (v) "[x]" else "[ ]")
+        if (labelSize.x > 0f)
+            renderText(Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y), label)
 
         ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else ItemStatusFlag.None)
 
@@ -218,24 +211,18 @@ interface main {
         val id = window.getId(label)
         val labelSize = calcTextSize(label, true)
 
-        val checkBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(labelSize.y + style.framePadding.y * 2 - 1, labelSize.y + style.framePadding.y * 2 - 1))
-        itemSize(checkBb, style.framePadding.y)
-
-        val totalBb = Rect(checkBb)
-        if (labelSize.x > 0)
-            sameLine(0f, style.itemInnerSpacing.x)
-        val textBb = Rect(window.dc.cursorPos + Vec2(0, style.framePadding.y), window.dc.cursorPos + Vec2(0, style.framePadding.y) + labelSize)
-        if (labelSize.x > 0) {
-            itemSize(Vec2(textBb.width, checkBb.height), style.framePadding.y)
-            totalBb.add(textBb)
-        }
-
-        if (!itemAdd(totalBb, id)) return false
+        val squareSz = frameHeight
+        val pos = window.dc.cursorPos
+        val checkBb = Rect(pos, pos + squareSz)
+        val totalBb = Rect(pos, pos + Vec2(squareSz + if(labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
+        itemSize(totalBb, style.framePadding.y)
+        if (!itemAdd(totalBb, id))
+            return false
 
         val center = Vec2(checkBb.center)
         center.x = (center.x + 0.5f).i.f
         center.y = (center.y + 0.5f).i.f
-        val radius = checkBb.height * 0.5f
+        val radius = (squareSz - 1f) * 0.5f
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
         if (pressed)
@@ -245,8 +232,7 @@ interface main {
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         window.drawList.addCircleFilled(center, radius, col.u32, 16)
         if (active) {
-            val checkSz = glm.min(checkBb.width, checkBb.height)
-            val pad = glm.max(1f, (checkSz / 6f).i.f)
+            val pad = 1f max (squareSz / 6f).i.f
             window.drawList.addCircleFilled(center, radius - pad, Col.CheckMark.u32, 16)
         }
 
@@ -256,9 +242,9 @@ interface main {
         }
 
         if (g.logEnabled)
-            logRenderedText(textBb.min, if (active) "(x)" else "( )")
+            logRenderedText(totalBb.min, if (active) "(x)" else "( )")
         if (labelSize.x > 0.0f)
-            renderText(textBb.min, label)
+            renderText(Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y), label)
 
         return pressed
     }
