@@ -307,11 +307,7 @@ fun saveIniSettingsToDisk(iniFilename: String?) {
     }
 }
 
-fun getViewportRect(): Rect {
-    if (io.displayVisibleMin != io.displayVisibleMax)
-        return Rect(io.displayVisibleMin, io.displayVisibleMax)
-    return Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
-}
+val viewportRect get() = Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
 
 /** Return false to discard a character.    */
 fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags, callback: InputTextCallback?, userData: Any?): Boolean {
@@ -967,7 +963,7 @@ fun navUpdate() {
         if (it != null) {
             val navRectRel = if (!it.navRectRel[g.navLayer.i].isInverted) Rect(it.navRectRel[g.navLayer.i]) else Rect(0f, 0f, 0f, 0f)
             g.navScoringRectScreen.put(navRectRel.min + it.pos, navRectRel.max + it.pos)
-        } else g.navScoringRectScreen put getViewportRect()
+        } else g.navScoringRectScreen put viewportRect
     }
     g.navScoringRectScreen translateY navScoringRectOffsetY
     g.navScoringRectScreen.min.x = min(g.navScoringRectScreen.min.x + 1f, g.navScoringRectScreen.max.x)
@@ -1313,7 +1309,7 @@ fun navCalcPreferredRefPos(): Vec2 {
         // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item.
         val rectRel = g.navWindow!!.navRectRel[g.navLayer.i]
         val pos = g.navWindow!!.pos + Vec2(rectRel.min.x + min(style.framePadding.x * 4, rectRel.width), rectRel.max.y - min(style.framePadding.y, rectRel.height))
-        val visibleRect = getViewportRect()
+        val visibleRect = viewportRect
         return glm.floor(glm.clamp(pos, visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
     }
 }

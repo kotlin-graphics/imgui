@@ -495,10 +495,6 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** For hi-dpi/ display or other situations where window coordinates are different from framebuffer coordinates.
      *  User storage only, presently not used by ImGui. */
     var displayFramebufferScale = Vec2(1f)
-    /** [OBSOLETE] If you use DisplaySize as a virtual space larger than your screen, set DisplayVisibleMin/Max to the visible area. */
-    var displayVisibleMin = Vec2()
-    /** [OBSOLETE] Just use io.DisplaySize! If the values are the same, we defaults to Min=(0.0f) and Max=DisplaySize   */
-    var displayVisibleMax = Vec2()
 
     //------------------------------------------------------------------
     // Miscellaneous options

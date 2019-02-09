@@ -429,7 +429,7 @@ interface imgui_window {
             window.drawList.clear()
             window.drawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
             window.drawList.pushTextureId(g.font.containerAtlas.texId)
-            val viewportRect = Rect(getViewportRect())
+            val viewportRect = viewportRect
             if (flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip)
                 pushClipRect(parentWindow!!.clipRect.min, parentWindow.clipRect.max, true)
             else
