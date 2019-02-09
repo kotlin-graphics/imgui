@@ -11,6 +11,7 @@ import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.ImGui.shadeVertsLinearUV
 import imgui.internal.*
+import java.nio.ByteBuffer
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.sqrt
@@ -47,6 +48,8 @@ class DrawCmd {
     var textureId: TextureID? = null
     /** If != NULL, call the function instead of rendering the vertices. clip_rect and texture_id will be set normally. */
     var userCallback: DrawCallback? = null
+
+    var userCallbackData: ByteBuffer? = null
 //    void*           UserCallbackData;       // The draw callback code can access this.
 
     infix fun put(drawCmd: DrawCmd) {
