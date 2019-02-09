@@ -538,10 +538,10 @@ package imgui.stb
 //            if (i.w != 0) i.w = 0
 //        } else {
 //            // move to integral bboxes (treating pixels as little squares, what pixels get touched)?
-//            if (i.x != 0) i.x = glm.floor(box.x * scale.x + shift.x).i
-//            if (i.y != 0) i.y = glm.floor(-box.w * scale.y + shift.y).i
-//            if (i.z != 0) i.z = glm.ceil(-box.z * scale.x + shift.x).i
-//            if (i.w != 0) i.w = glm.ceil(-box.y * scale.y + shift.y).i
+//            if (i.x != 0) i.x = floor(box.x * scale.x + shift.x).i
+//            if (i.y != 0) i.y = floor(-box.w * scale.y + shift.y).i
+//            if (i.z != 0) i.z = ceil(-box.z * scale.x + shift.x).i
+//            if (i.w != 0) i.w = ceil(-box.y * scale.y + shift.y).i
 //        }
 //    }
 //

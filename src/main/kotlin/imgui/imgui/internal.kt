@@ -76,7 +76,6 @@ import java.awt.datatransfer.StringSelection
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.regex.Pattern
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0

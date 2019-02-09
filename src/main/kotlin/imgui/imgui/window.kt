@@ -37,7 +37,6 @@ import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.FocusedFlag as Ff
@@ -368,7 +367,7 @@ interface imgui_window {
                     window.pos.x = glm.min(window.pos.x, (io.displaySize.x - padding.x).f)
                     window.pos.y = glm.min(window.pos.y, (io.displaySize.y - padding.y).f)
                 }
-            window.pos put glm.floor(window.pos)
+            window.pos put floor(window.pos)
 
             // Lock window rounding for the frame (so that altering them doesn't cause inconsistencies)
             window.windowRounding = when {

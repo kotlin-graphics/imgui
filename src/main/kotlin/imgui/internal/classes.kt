@@ -3,7 +3,6 @@ package imgui.internal
 import gli_.has
 import gli_.hasnt
 import glm_.*
-import glm_.func.common.floor
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2bool
 import glm_.vec2.Vec2i
@@ -793,7 +792,7 @@ class Window(var context: Context, var name: String) {
 
         // Set
         val oldPos = Vec2(this.pos)
-        this.pos put glm.floor(pos)
+        this.pos put floor(pos)
         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least
         // offset the cursor
         val offset = pos - oldPos
@@ -812,14 +811,14 @@ class Window(var context: Context, var name: String) {
         // Set
         if (size.x > 0f) {
             autoFitFrames.x = 0
-            sizeFull.x = size.x.floor
+            sizeFull.x = floor(size.x)
         } else {
             autoFitFrames.x = 2
             autoFitOnlyGrows = false
         }
         if (size.y > 0f) {
             autoFitFrames.y = 0
-            sizeFull.y = size.y.floor
+            sizeFull.y = floor(size.y)
         } else {
             autoFitFrames.y = 2
             autoFitOnlyGrows = false

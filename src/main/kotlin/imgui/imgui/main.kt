@@ -390,7 +390,7 @@ interface imgui_main {
 
                 // Round mouse position to avoid spreading non-rounded position (e.g. UpdateManualResize doesn't support them well)
                 if (isMousePosValid(mousePos)) {
-                    g.lastValidMousePos = glm.floor(mousePos)
+                    g.lastValidMousePos = floor(mousePos)
                     mousePos = Vec2(g.lastValidMousePos)
                 }
 
@@ -588,7 +588,7 @@ interface imgui_main {
                     navResizeDelta put getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, InputReadMode.Down)
                 if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
                     val NAV_RESIZE_SPEED = 600f
-                    navResizeDelta *= glm.floor(NAV_RESIZE_SPEED * g.io.deltaTime * min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
+                    navResizeDelta *= floor(NAV_RESIZE_SPEED * g.io.deltaTime * min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
                     g.navWindowingToggleLayer = false
                     g.navDisableMouseHover = true
                     resizeGripCol[0] = Col.ResizeGripActive.u32
@@ -603,7 +603,7 @@ interface imgui_main {
                 window.markIniSettingsDirty()
             }
             if (posTarget.x != Float.MAX_VALUE) {
-                window.pos = glm.floor(posTarget)
+                window.pos = floor(posTarget)
                 window.markIniSettingsDirty()
             }
 
