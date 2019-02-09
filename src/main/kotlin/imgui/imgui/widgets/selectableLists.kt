@@ -3,6 +3,7 @@ package imgui.imgui.widgets
 import glm_.f
 import glm_.glm
 import glm_.i
+import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.buttonBehavior
@@ -68,7 +69,7 @@ interface selectableLists {
         // Fill horizontal space.
         val windowPadding = Vec2(window.windowPadding)
         val maxX = if (flags has Sf.SpanAllColumns) windowContentRegionMax.x else contentRegionMax.x
-        val wDraw = glm.max(labelSize.x, window.pos.x + maxX - windowPadding.x - window.dc.cursorPos.x)
+        val wDraw = labelSize.x max (window.pos.x + maxX - windowPadding.x - pos.x)
         val sizeDraw = Vec2(
                 if (sizeArg.x != 0f && flags hasnt Sf.DrawFillAvailWidth) sizeArg.x else wDraw,
                 if (sizeArg.y != 0f) sizeArg.y else size.y)
