@@ -98,9 +98,9 @@ interface selectableLists {
         if (flags has Sf.PressedOnRelease) buttonFlags = buttonFlags or Bf.PressedOnRelease
         if (flags has Sf.Disabled) buttonFlags = buttonFlags or Bf.Disabled
         if (flags has Sf.AllowDoubleClick) buttonFlags = buttonFlags or Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
-        val (pressed, hovered, held) = buttonBehavior(bb, id, buttonFlags)
         val selected = if (flags has Sf.Disabled) false else selected_
 
+        val (pressed, hovered, held) = buttonBehavior(bb, id, buttonFlags)
         /*  Hovering selectable with mouse updates navId accordingly so navigation can be resumed with gamepad/keyboard
             (this doesn't happen on most widgets)         */
         if (pressed || hovered)
