@@ -149,7 +149,6 @@ interface main {
 
         val squareSz = frameHeight
         val pos = window.dc.cursorPos
-        val checkBb = Rect(pos, pos + squareSz)
         val totalBb = Rect(pos, pos + Vec2(squareSz + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id))
@@ -161,6 +160,7 @@ interface main {
             markItemEdited(id)
         }
 
+        val checkBb = Rect(pos, pos + squareSz)
         renderNavHighlight(totalBb, id)
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         renderFrame(checkBb.min, checkBb.max, col.u32, true, style.frameRounding)

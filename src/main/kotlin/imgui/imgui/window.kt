@@ -876,7 +876,7 @@ interface imgui_window {
 
     /** current content boundaries (typically window boundaries including scrolling, or current column boundaries), in
      *  windows coordinates
-     *  In window space (not screen space!) */
+     *  FOXME: This is in window space (not screen space!) */
     val contentRegionMax: Vec2
         get() = currentWindowRead!!.run {
             val mx = contentsRegionRect.max - pos
