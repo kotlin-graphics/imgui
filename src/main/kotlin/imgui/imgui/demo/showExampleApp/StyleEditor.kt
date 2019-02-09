@@ -129,7 +129,6 @@ object StyleEditor {
             if (beginTabItem("Sizes")) {
                 text("Main")
                 sliderVec2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
-                sliderFloat("PopupRounding", style::popupRounding, 0f, 16f, "%.0f")
                 sliderVec2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
                 sliderVec2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
                 sliderVec2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
@@ -147,6 +146,7 @@ object StyleEditor {
                 sliderFloat("WindowRounding", style::windowRounding, 0f, 12f, "%.0f")
                 sliderFloat("ChildRounding", style::childRounding, 0f, 12f, "%.0f")
                 sliderFloat("FrameRounding", style::frameRounding, 0f, 12f, "%.0f")
+                sliderFloat("PopupRounding", style::popupRounding, 0f, 16f, "%.0f")
                 sliderFloat("ScrollbarRounding", style::scrollbarRounding, 0f, 12f, "%.0f")
                 sliderFloat("GrabRounding", style::grabRounding, 0f, 12f, "%.0f")
                 sliderFloat("TabRounding", style::tabRounding, 0f, 12f, "%.0f")
@@ -290,9 +290,9 @@ object StyleEditor {
                     image(atlas.texId, Vec2(atlas.texSize), Vec2(), Vec2(1), Vec4.fromColor(255), Vec4.fromColor(255, 255, 255, 128))
                 }
 
-                if (dragFloat("this window scale", ::windowScale, 0.005f, 0.3f, 2f, "%.1f"))    // scale only this window
+                if (dragFloat("this window scale", ::windowScale, 0.005f, 0.3f, 2f, "%.2f"))    // scale only this window
                     setWindowFontScale(windowScale)
-                dragFloat("global scale", io::fontGlobalScale, 0.005f, 0.3f, 2f, "%.1f") // scale everything
+                dragFloat("global scale", io::fontGlobalScale, 0.005f, 0.3f, 2f, "%.2f") // scale everything
                 popItemWidth()
 
                 endTabItem()

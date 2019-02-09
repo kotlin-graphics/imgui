@@ -418,20 +418,21 @@ interface imgui_demoDebugInformations {
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
                     val clipper = ListClipper(cmd.elemCount / 3)
                     while (clipper.step()) {
-                        var vtxI = elemOffset + clipper.display.start * 3
+                        var idxI = elemOffset + clipper.display.start * 3
                         for (prim in clipper.display.start until clipper.display.last) {
                             val buf = CharArray(300)
                             var bufP = 0
                             val trianglesPos = arrayListOf(Vec2(), Vec2(), Vec2())
                             for (n in 0 until 3) {
-                                val v = drawList.vtxBuffer[idxBuffer?.get(vtxI) ?: vtxI]
+                                val vtxI = idxBuffer?.get(idxI) ?: idxI
+                                val v = drawList.vtxBuffer[vtxI]
                                 trianglesPos[n] = v.pos
-                                val name = if (n == 0) "vtx" else "   "
+                                val name = if (n == 0) "idx" else "   "
                                 val string = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n".format(style.locale,
-                                        vtxI, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
+                                        idxI, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
                                 string.toCharArray(buf, bufP)
                                 bufP += string.length
-                                vtxI++
+                                idxI++
                             }
                             selectable(buf.joinToString("", limit = bufP, truncated = ""), false)
                             if (isItemHovered()) {
