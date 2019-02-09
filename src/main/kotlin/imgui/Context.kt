@@ -87,6 +87,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdIsJustActivated = false
     /** Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)   */
     var activeIdAllowOverlap = false
+    /** Track whether the active id led to a press (this is to allow changing between PressOnClick and PressOnRelease without pressing twice). Used by range_select branch. */
+    var activeIdHasBeenPressed = false
     /** Was the value associated to the widget edited over the course of the Active state. */
     var activeIdHasBeenEdited = false
 
