@@ -377,6 +377,8 @@ class DrawDataBuilder {
 class NavMoveResult {
     /** Best candidate  */
     var id: ID = 0
+    /** Best candidate window current selectable group ID */
+    var selectScopeId: ID = 0
     /** Best candidate window   */
     var window: Window? = null
     /** Best candidate box distance to current NavId    */
