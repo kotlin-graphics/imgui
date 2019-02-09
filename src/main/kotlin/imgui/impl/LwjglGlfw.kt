@@ -22,7 +22,7 @@ import java.nio.FloatBuffer
 import kotlin.collections.set
 
 
-class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL, vrTexSize: Vec2i? = null) {
+class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val clientApi: GlfwClientApi = GlfwClientApi.OpenGL, val vrTexSize: Vec2i? = null) {
     companion object {
         lateinit var instance: LwjglGlfw
         
@@ -34,17 +34,13 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
         fun shutdown() = instance.shutdown()
     }
     
-    val window: GlfwWindow
     val implGl3: ImplGL3
     var time = 0.0
     val mouseCursors = LongArray(MouseCursor.COUNT)
 
-    var vrTexSize: Vec2i? = null
     var vrCursorPos: Vec2? = null
 
     enum class GlfwClientApi { OpenGL, Vulkan }
-
-    var clientApi = GlfwClientApi.OpenGL
 
     val mouseButtonCallback: MouseButtonCallbackT = { button: Int, action: Int, _: Int ->
         if (action == GLFW_PRESS && button in 0..2)
@@ -75,9 +71,6 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
     val charCallback: CharCallbackT = { c: Int -> if (!g.imeInProgress && c in 1..65535) io.addInputCharacter(c.c) }
 
     init {
-
-        this.window = window
-        this.vrTexSize = vrTexSize
 
         with(io) {
 
@@ -138,8 +131,6 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
             window.charCallbacks["imgui"] = charCallback // TODO check if used (jogl doesnt have)
             imeListener.install(window)
         }
-
-        clientApi = clientApi_
 
         when(clientApi) {
             GlfwClientApi.OpenGL -> implGl3 = ImplGL3()
