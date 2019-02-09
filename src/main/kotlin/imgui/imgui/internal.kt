@@ -2888,7 +2888,7 @@ interface imgui_internal {
     // Plot
 
     fun plotEx(plotType: PlotType, label: String, data: main.PlotArray, valuesOffset: Int, overlayText: String,
-               scaleMin_: Float, scaleMax_: Float, graphSize: Vec2) {
+               scaleMin_: Float, scaleMax_: Float, frameSize: Vec2) {
 
         val window = currentWindow
         if (window.skipItems) return
@@ -2898,10 +2898,10 @@ interface imgui_internal {
         val valuesCount = data.count()
 
         val labelSize = calcTextSize(label, 0, true)
-        if (graphSize.x == 0f) graphSize.x = calcItemWidth()
-        if (graphSize.y == 0f) graphSize.y = labelSize.y + style.framePadding.y * 2
+        if (frameSize.x == 0f) frameSize.x = calcItemWidth()
+        if (frameSize.y == 0f) frameSize.y = labelSize.y + style.framePadding.y * 2
 
-        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(graphSize))
+        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
         val innerBb = Rect(frameBb.min + style.framePadding, frameBb.max - style.framePadding)
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0))
         itemSize(totalBb, style.framePadding.y)
@@ -2924,12 +2924,12 @@ interface imgui_internal {
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
 
         if (valuesCount > 0) {
-            val resW = min(graphSize.x.i, valuesCount) + if (plotType == PlotType.Lines) -1 else 0
+            val resW = min(frameSize.x.i, valuesCount) + if (plotType == PlotType.Lines) -1 else 0
             val itemCount = valuesCount + if (plotType == PlotType.Lines) -1 else 0
 
             // Tooltip on hover
             var vHovered = -1
-            if (hovered) {
+            if (hovered && io.mousePos in innerBb) {
                 val t = glm.clamp((io.mousePos.x - innerBb.min.x) / (innerBb.max.x - innerBb.min.x), 0f, 0.9999f)
                 val vIdx = (t * itemCount).i
                 assert(vIdx in 0 until valuesCount)
