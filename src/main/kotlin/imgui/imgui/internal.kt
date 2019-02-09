@@ -2101,6 +2101,8 @@ interface imgui_internal {
         val isResizable = flags has Itf.CallbackResize
         if (isResizable)
             assert(callback != null) { "Must provide a callback if you set the ImGuiInputTextFlags_CallbackResize flag!" }
+        if(flags has Itf.CallbackCharFilter)
+            assert(callback != null) { "Must provide a callback if you want a char filter!" }
 
         if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope
             beginGroup()
