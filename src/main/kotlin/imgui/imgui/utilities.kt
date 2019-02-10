@@ -91,6 +91,13 @@ interface imgui_utilities {
     val isItemEdited: Boolean
         get () = currentWindowRead!!.run { dc.lastItemStatusFlags has ItemStatusFlag.Edited }
 
+    /** was the last item just made active (item was previously inactive). */
+    val isItemActivated: Boolean
+        get() = when(g.activeId) {
+            0 -> false
+            else -> g.currentWindow!!.run { g.activeId == dc.lastItemId && g.activeIdPreviousFrame != dc.lastItemId }
+        }
+
     /** Was the last item just made inactive (item was previously active).
      *  Useful for Undo/Redo patterns with widgets that requires continuous editing. */
     val isItemDeactivated: Boolean
