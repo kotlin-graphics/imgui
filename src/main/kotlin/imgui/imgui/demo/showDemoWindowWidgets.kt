@@ -64,6 +64,7 @@ import imgui.ImGui.inputInt4
 import imgui.ImGui.inputText
 import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.io
+import imgui.ImGui.isItemActivated
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemClicked
 import imgui.ImGui.isItemDeactivated
@@ -1133,7 +1134,7 @@ object showDemoWindowWidgets {
                 we pass all state in a single call to simplify the code).   */
             radioButton("Text", ::itemType, 0)
             radioButton("Button", ::itemType, 1)
-            radioButton("CheckBox", ::itemType, 2)
+            radioButton("Checkbox", ::itemType, 2)
             radioButton("SliderFloat", ::itemType, 3)
             radioButton("ColorEdit4", ::itemType, 4)
             radioButton("ListBox", ::itemType, 5)
@@ -1141,7 +1142,7 @@ object showDemoWindowWidgets {
             val ret = when (itemType) {
                 0 -> false.also { text("ITEM: Text") }   // Testing text items with no identifier/interaction
                 1 -> button("ITEM: Button")   // Testing button
-                2 -> checkbox("ITEM: CheckBox", ::b0)  // Testing checkbox
+                2 -> checkbox("ITEM: Checkbox", ::b0)  // Testing checkbox
                 3 -> sliderVec4("ITEM: SliderFloat", col, 0f, 1f)   // Testing basic item
                 4 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
                 5 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
@@ -1156,6 +1157,7 @@ object showDemoWindowWidgets {
                     "isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly)}\n" +
                     "isItemActive = $isItemActive\n" +
                     "isItemEdited = $isItemEdited\n" +
+                    "isItemActivated = $isItemActivated\n" +
                     "isItemDeactivated = $isItemDeactivated\n" +
                     "isItemDeactivatedAfterEdit = $isItemDeactivatedAfterEdit\n" +
                     "isItemVisible = $isItemVisible\n" +
