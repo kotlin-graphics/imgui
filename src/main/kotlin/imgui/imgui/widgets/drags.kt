@@ -303,7 +303,7 @@ interface drags {
         for (i in 0 until components) {
             pushId(i)
             withFloat(v, i) {
-                valueChanged = dragScalar("##v", DataType.Float, it, vSpeed, vMin, vMax, format, power) || valueChanged
+                valueChanged = dragScalar("", DataType.Float, it, vSpeed, vMin, vMax, format, power) || valueChanged
             }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
@@ -326,7 +326,7 @@ interface drags {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withInt(v, i) { valueChanged = dragInt("##v", it, vSpeed, vMin, vMax, format) || valueChanged }
+            withInt(v, i) { valueChanged = dragInt("", it, vSpeed, vMin, vMax, format) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()

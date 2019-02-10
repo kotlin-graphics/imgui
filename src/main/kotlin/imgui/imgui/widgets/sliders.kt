@@ -314,7 +314,7 @@ interface sliders {
         pushMultiItemsWidths(component)
         for (i in 0 until component) {
             pushId(i)
-            withFloat(v, i) { valueChanged = sliderFloat("##v", it, vMin, vMax, format, power) || valueChanged }
+            withFloat(v, i) { valueChanged = sliderFloat("", it, vMin, vMax, format, power) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -336,7 +336,7 @@ interface sliders {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withInt(v, i) { valueChanged = sliderInt("##v", it, vMin, vMax, format) || valueChanged }
+            withInt(v, i) { valueChanged = sliderInt("", it, vMin, vMax, format) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
