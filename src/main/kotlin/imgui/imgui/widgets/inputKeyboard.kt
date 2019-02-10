@@ -214,7 +214,7 @@ interface inputKeyboard {
         for (i in 0 until components) {
             pushId(i)
             withFloat(v, i) {
-                valueChanged = inputScalar("##v", DataType.Float, it, step, stepFast, format, flags) || valueChanged
+                valueChanged = inputScalar("", DataType.Float, it, step, stepFast, format, flags) || valueChanged
             }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
@@ -238,7 +238,7 @@ interface inputKeyboard {
         pushMultiItemsWidths(components)
         for (i in 0 until components) {
             pushId(i)
-            withInt(v, i) { valueChanged = inputScalar("##v", DataType.Int, it, step, stepFast, format, flags) || valueChanged }
+            withInt(v, i) { valueChanged = inputScalar("", DataType.Int, it, step, stepFast, format, flags) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
