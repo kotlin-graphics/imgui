@@ -265,9 +265,12 @@ interface imgui_demoDebugInformations {
     fun showFontSelector(label: String) {
         val fontCurrent = font
         if (beginCombo(label, fontCurrent.debugName)) {
-            for (f in io.fonts.fonts)
-                if (selectable(f.debugName, f == fontCurrent))
-                    io.fontDefault = f
+            for (font in io.fonts.fonts) {
+                pushId(font)
+                if (selectable(font.debugName, font === fontCurrent))
+                    io.fontDefault = font
+                popId()
+            }
             endCombo()
         }
         sameLine()
