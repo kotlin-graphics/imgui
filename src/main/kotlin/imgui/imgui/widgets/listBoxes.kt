@@ -12,6 +12,8 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.getId
+import imgui.ImGui.isRectVisible
+import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.popId
@@ -24,10 +26,10 @@ import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.internal.Rect
 import kotlin.reflect.KMutableProperty0
-import imgui.internal.ItemFlag as If
 import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
+import imgui.internal.ItemFlag as If
 
 /**
  * Widgets: List Boxes
@@ -82,6 +84,12 @@ interface listBoxes {
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
         val bb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
         window.dc.lastItemRect put bb   // Forward storage for ListBoxFooter.. dodgy.
+
+        if (!isRectVisible(bb.min, bb.max)) {
+            itemSize(bb.size, style.framePadding.y)
+            itemAdd(bb, 0, frameBb)
+            return false
+        }
 
         beginGroup()
         if (labelSize.x > 0)

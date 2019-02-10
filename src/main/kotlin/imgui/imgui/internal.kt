@@ -2,13 +2,9 @@ package imgui.imgui
 
 import gli_.has
 import gli_.hasnt
-import glm_.f
+import glm_.*
 import glm_.func.common.max
 import glm_.func.common.min
-import glm_.glm
-import glm_.i
-import glm_.pow
-import glm_.parseInt
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -78,18 +74,19 @@ import java.util.*
 import java.util.regex.Pattern
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 import kotlin.reflect.KMutableProperty0
 import glm_.pow as _
 import imgui.ColorEditFlag as Cef
 import imgui.DragDropFlag as Ddf
 import imgui.HoveredFlag as Hf
 import imgui.InputTextFlag as Itf
-import imgui.internal.ItemFlag as If
 import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 import imgui.internal.ColumnsFlag as Cf
 import imgui.internal.DrawCornerFlag as Dcf
+import imgui.internal.ItemFlag as If
 import imgui.internal.LayoutType as Lt
 
 
@@ -2114,6 +2111,11 @@ interface imgui_internal {
 
         var drawWindow = window
         if (isMultiline) {
+            if (!itemAdd(totalBb, id, frameBb)) {
+                itemSize(totalBb, style.framePadding.y)
+                endGroup()
+                return false
+            }
             if (!beginChildFrame(id, frameBb.size)) {
                 endChildFrame()
                 endGroup()
