@@ -1042,7 +1042,7 @@ class Window(var context: Context, var name: String) {
     }
 
     fun calcSizeContents() = when {
-        collapsed -> Vec2(sizeContents)
+        collapsed && autoFitFrames allLessThanEqual 0 -> Vec2(sizeContents)
         hidden && hiddenFramesForResize == 0 && hiddenFramesRegular > 0 -> Vec2(sizeContents)
         else -> Vec2(
                 (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f + windowPadding.x,
