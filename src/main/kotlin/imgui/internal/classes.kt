@@ -1404,7 +1404,7 @@ class TabBar {
 //                // Enlarge tab display when hovering
 //                bb.max.x = bb.min.x + lerp (bb.width, tab.widthContents, saturate((g.hoveredIdNotActiveTimer-0.4f) * 6f)).i.f
 //                displayDrawList = GetOverlayDrawList(window)
-//                TabItemRenderBackground(display_draw_list, bb, flags_, GetColorU32(ImGuiCol_TitleBgActive))
+//                TabItemBackground(display_draw_list, bb, flags_, GetColorU32(ImGuiCol_TitleBgActive))
 //            }
 
         // Render tab shape
