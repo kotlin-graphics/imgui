@@ -1017,66 +1017,62 @@ class FontAtlas {
  *  GetTexDataAsRGBA32().   */
 class Font {
 
-    // Members: Hot ~62/78 bytes
-    /** <user set>, Height of characters, set during loading (don't change after loading)   */
-    var fontSize = 0f
-    /** Base font scale, multiplied by the per-window font scale which you can adjust with SetWindowFontScale()   */
-    var scale = 1f
-    /** Offset font rendering by xx pixels  */
-    var displayOffset = Vec2(0f, 0f)
-    /** All glyphs. */
-    val glyphs = ArrayList<FontGlyph>()
-    /** Sparse. Glyphs.xAdvance in a directly indexable way (more cache-friendly, for CalcTextSize functions which are
-    often bottleneck in large UI).  */
-    val indexAdvanceX = ArrayList<Float>()
-    /** Sparse. Index glyphs by Unicode code-point. */
-    val indexLookup = ArrayList<Int>()
-    /** == FindGlyph(FontFallbackChar)  */
-    var fallbackGlyph: FontGlyph? = null
-    /** == FallbackGlyph.xAdvance  */
-    var fallbackAdvanceX = 0f
+    // Members: Hot ~24/32 bytes (for CalcTextSize)
+
+    // @formatter:off
+
+    /** Sparse. Glyphs->AdvanceX in a directly indexable way (more cache-friendly, for CalcTextSize functions which are often bottleneck in large UI). */
+    val indexAdvanceX = ArrayList<Float>()      // 12/16 // out //
+    /** Height of characters, set during loading (don't change after loading)   */
+    var fontSize = 0f                           // 4     // in  // <user set>
+
+    var fallbackAdvanceX = 0f                   // 4     // out // = FallbackGlyph->AdvanceX
     /** Replacement glyph if one isn't found. Only set via SetFallbackChar()    */
-    var fallbackChar = '?'
+    var fallbackChar = '?'                      // 2     // in  // = '?'
 
-    // Members: Cold ~18/26 bytes
-    /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
-    var configDataCount = 0
+    // Members: Hot ~36/48 bytes (for CalcTextSize + render loop)
 
-    /** Pointer within ContainerAtlas->ConfigData   */
-    val configData = ArrayList<FontConfig>()
+    /** Sparse. Index glyphs by Unicode code-point. */
+    val indexLookup = ArrayList<Int>()          // 12-16 // out //
+    /** All glyphs. */
+    val glyphs = ArrayList<FontGlyph>()         // 12-16 // out //
+    /** Offset font rendering by xx pixels  */
+    var displayOffset = Vec2()                  // 8     // in  // = (0,0)
 
-    var configDataIdx = 0
+    var fallbackGlyph: FontGlyph? = null        // 4-8   // out // = FindGlyph(FontFallbackChar)
+
+    // Members: Cold ~28/40 bytes
+
     /** What we has been loaded into    */
-    lateinit var containerAtlas: FontAtlas
+    lateinit var containerAtlas: FontAtlas      // 4-8   // out //
+    /** Pointer within ContainerAtlas->ConfigData   */
+    val configData = ArrayList<FontConfig>()    // 4-8   // in  //
+    /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
+    var configDataCount = 0                     // 2     // in  // ~ 1
+
+    var dirtyLookupTables = true                // 1     // out //
+    /** Base font scale, multiplied by the per-window font scale which you can adjust with SetWindowFontScale()   */
+    var scale = 1f                              // 4     // in  // = 1.f
     /** Ascent: distance from top to bottom of e.g. 'A' [0..FontSize]   */
-    var ascent = 0f
+    var ascent = 0f                             // 8     // out
 
-    var descent = 0f
+    var descent = 0f                            // 8     // out
+    /** Total surface in pixels to get an idea of the font rasterization/texture cost (not exact, we approximate the cost of padding between glyphs)    */
+    var metricsTotalSurface = 0                 // 4     // out
 
-    var dirtyLookupTables = true
-    /** Total surface in pixels to get an idea of the font rasterization/texture cost (not exact, we approximate the cost of padding
-    between glyphs)    */
-    var metricsTotalSurface = 0
-
-    //
-//    // Methods
-//    IMGUI_API ImFont();
-//    IMGUI_API ~ImFont();
+    // @formatter:on
 
     fun clearOutputData() {
         fontSize = 0f
-        displayOffset = Vec2(0.0f, 1.0f)
+        fallbackAdvanceX = 0.0f
         glyphs.clear()
         indexAdvanceX.clear()
         indexLookup.clear()
         fallbackGlyph = null
-        fallbackAdvanceX = 0f
-        configDataCount = 0
-        configData.clear()
 //        containerAtlas = NULL TODO check
+        dirtyLookupTables = true
         ascent = 0f
         descent = 0f
-        dirtyLookupTables = true
         metricsTotalSurface = 0
     }
 
