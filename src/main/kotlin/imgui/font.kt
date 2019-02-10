@@ -224,7 +224,9 @@ class FontAtlas {
         }
 
         // When clearing this we lose access to  the font name and other information used to build the font.
-        fonts.filter { configData.contains(it.configData[0]) }.forEach {
+        fonts.filter {
+            if(it.configData.isNotEmpty()) configData.contains(it.configData[0]) else false
+        }.forEach {
             it.configData.clear()
             it.configDataCount = 0
         }
@@ -1076,8 +1078,6 @@ class Font {
         fallbackAdvanceX = 0f
         configDataCount = 0
         configData.clear()
-        containerAtlas.clear()
-        containerAtlas.clearFonts()
         containerAtlas.clearInputData()
         containerAtlas.clearTexData()
 >>>>>>> Clear container atlas since it is non-nullable
