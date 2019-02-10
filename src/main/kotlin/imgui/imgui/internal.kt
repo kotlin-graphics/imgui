@@ -1023,10 +1023,14 @@ interface imgui_internal {
             pathArcToFast(Vec2(bb.min.x + rounding, y1 + rounding), rounding, 6, 9)
             pathArcToFast(Vec2(bb.max.x - rounding, y1 + rounding), rounding, 9, 12)
             pathLineTo(Vec2(bb.max.x, y2))
-            addConvexPolyFilled(_path, col)
-            if (style.tabBorderSize > 0f)
-                addPolyline(_path, Col.Border.u32, false, style.tabBorderSize)
-            pathClear()
+            pathFillConvex(col)
+            if (style.tabBorderSize > 0f) {
+                pathLineTo(Vec2(bb.min.x + 0.5f, y2))
+                pathArcToFast(Vec2(bb.min.x + rounding + 0.5f, y1 + rounding + 0.5f), rounding, 6, 9)
+                pathArcToFast(Vec2(bb.max.x - rounding - 0.5f, y1 + rounding + 0.5f), rounding, 9, 12)
+                pathLineTo(Vec2(bb.max.x - 0.5f, y2))
+                pathStroke(Col.Border.u32, false, style.tabBorderSize)
+            }
         }
     }
 
