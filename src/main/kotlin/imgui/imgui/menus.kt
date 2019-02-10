@@ -178,8 +178,9 @@ interface imgui_menus {
         // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent)
             g.navWindow = window
 
-        /*  The reference position stored in popupPos will be used by Begin() to find a suitable position for the child
-            menu (using FindBestWindowPosForPopup).         */
+        /*  The reference position stored in popup_pos will be used by Begin() to find a suitable position for the child menu,
+            However the final position is going to be different! It is choosen by FindBestWindowPosForPopup().
+            e.g. Menus tend to overlap each other horizontally to amplify relative Z-ordering.         */
         val popupPos = Vec2()
         val pos = Vec2(window.dc.cursorPos)
         if (window.dc.layoutType == LayoutType.Horizontal) {
@@ -222,6 +223,7 @@ interface imgui_menus {
                     g.openPopupStack[g.beginPopupStack.size].parentWindow === window && window.flags hasnt Wf.MenuBar)
 
                 g.openPopupStack[g.beginPopupStack.size].window?.let {
+                    // FIXME-DPI: Values should be derived from a master "scale" factor.
                     val nextWindowRect = it.rect()
                     val ta = io.mousePos - io.mouseDelta
                     val tb = if (window.pos.x < it.pos.x) nextWindowRect.tl else nextWindowRect.tr

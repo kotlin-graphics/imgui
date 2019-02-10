@@ -569,12 +569,12 @@ interface imgui_internal {
         val rOuter = window.getAllowedExtentRect()
         if (window.flags has Wf.ChildMenu) {
             /*  Child menus typically request _any_ position within the parent menu item,
-                and then our FindBestWindowPosForPopup() function will move the new menu outside the parent bounds.
+                and then we move the new menu outside the parent bounds.
                 This is how we end up with child menus appearing (most-commonly) on the right of the parent menu. */
             assert(g.currentWindow === window)
             val parentWindow = g.currentWindowStack[g.currentWindowStack.size - 2]
             // We want some overlap to convey the relative depth of each menu (currently the amount of overlap is hard-coded to style.ItemSpacing.x).
-            val horizontalOverlap = style.itemSpacing.x
+            val horizontalOverlap = style.itemInnerSpacing.x
             val rAvoid = parentWindow.run {
                 when {
                     dc.menuBarAppending -> Rect(-Float.MAX_VALUE, pos.y + titleBarHeight, Float.MAX_VALUE, pos.y + titleBarHeight + menuBarHeight)
