@@ -60,7 +60,6 @@ import imgui.internal.LayoutType as Lt
 interface imgui_window {
 
     // Windows
-
     /*  Push a new ImGui window to add widgets to:
         - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use
             widgets without explicitly calling a Begin/End pair.
@@ -73,8 +72,7 @@ interface imgui_window {
             regardless. You always need to call ImGui::End() even if false is returned.
         - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
             be set to false when the button is pressed. */
-    // TODO make begin pOpen default
-    fun begin_(name: String, pOpen: KMutableProperty0<Boolean>?, flags: WindowFlags = 0) = when (pOpen) {
+    fun begin_(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags: WindowFlags = 0) = when (pOpen) {
         null -> begin(name, null, flags)
         else -> {
             var open by pOpen
