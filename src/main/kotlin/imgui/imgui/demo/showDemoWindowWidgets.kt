@@ -676,7 +676,7 @@ object showDemoWindowWidgets {
                 columns(1)
             }
             treeNode("Grid") {
-                for (i in 0..16)
+                for (i in 0 until 16)
                     withId(i) {
                         if (selectable("Sailor", selected3, i, 0, Vec2(50))) {
                             // Note: We _unnecessarily_ test for both x/y and i here only to silence some static analyzer. The second part of each test is unnecessary.
