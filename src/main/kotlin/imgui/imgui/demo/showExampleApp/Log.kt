@@ -102,7 +102,7 @@ object Log {
             separator()
             beginChild("scrolling", Vec2(0, 0), false, Wf.HorizontalScrollbar.i)
             if (copy)
-                TODO() //logToClipboard()
+                logToClipboard()
 
             pushStyleVar(StyleVar.ItemSpacing, Vec2(0))
 
