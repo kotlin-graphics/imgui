@@ -1408,13 +1408,15 @@ class Font {
                 }
             }
             // Decode and advance source
+            if(s >= text.size)
+                return
             val c = text[s]
             /*  JVM imgui specific, not 0x80 because on jvm we have Unicode with surrogates characters (instead of utf8)
                     https://www.ibm.com/developerworks/library/j-unicode/index.html             */
             if (c < Char.MIN_HIGH_SURROGATE)
                 s += 1
             else {
-                TODO("Probabily surrogate character")
+                TODO("Probably surrogate character")
 //                s += textCharFromUtf8(& c, s, text_end)
 //                if (c == 0) // Malformed UTF-8?
 //                    break
