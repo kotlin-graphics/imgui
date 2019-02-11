@@ -227,7 +227,7 @@ object ExampleApp {
                 textWrapped("You can also call ImGui::LogText() to output directly to the log without a visual output.")
                 if (button("Copy \"Hello, world!\" to clipboard")) {
                     logToClipboard()
-                    logText("Hello, world!")
+                    logText("%s", "Hello, world!")
                     logFinish()
                 }
             }
