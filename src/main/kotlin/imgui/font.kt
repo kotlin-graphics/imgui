@@ -224,7 +224,9 @@ class FontAtlas {
         }
 
         // When clearing this we lose access to  the font name and other information used to build the font.
-        fonts.filter { configData.contains(it.configData[0]) }.forEach {
+        fonts.filter {
+            if(it.configData.isNotEmpty()) configData.contains(it.configData[0]) else false
+        }.forEach {
             it.configData.clear()
             it.configDataCount = 0
         }
@@ -1402,13 +1404,15 @@ class Font {
                 }
             }
             // Decode and advance source
+            if(s >= text.size)
+                return
             val c = text[s]
             /*  JVM imgui specific, not 0x80 because on jvm we have Unicode with surrogates characters (instead of utf8)
                     https://www.ibm.com/developerworks/library/j-unicode/index.html             */
             if (c < Char.MIN_HIGH_SURROGATE)
                 s += 1
             else {
-                TODO("Probabily surrogate character")
+                TODO("Probably surrogate character")
 //                s += textCharFromUtf8(& c, s, text_end)
 //                if (c == 0) // Malformed UTF-8?
 //                    break

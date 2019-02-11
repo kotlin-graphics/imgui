@@ -1397,7 +1397,37 @@ interface imgui_internal {
         return textDisplayEnd
     }
 
-    fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = 0): Nothing = TODO()
+    fun logRenderedText(refPos: Vec2?, text: String, textEnd_: Int = text.length) {
+        val window = g.currentWindow!!
+
+        val textEnd = if(textEnd_ == 0) findRenderedTextEnd(text) else textEnd_
+
+        val logNewLine = if(refPos == null) false else refPos.y > window.dc.logLinePosY + 1
+
+        var textRemaining = text
+        if(g.logStartDepth > window.dc.treeDepth)
+            g.logStartDepth = window.dc.treeDepth
+
+        val treeDepth = window.dc.treeDepth - g.logStartDepth
+
+        //TODO: make textEnd aware
+        while(true) {
+            val lineStart = textRemaining
+            val lineEnd = if(lineStart.indexOf('\n') == -1) lineStart.length else lineStart.indexOf('\n')
+            val isFirstLine = text.startsWith(lineStart)
+            val isLastLine = text.endsWith(lineStart.substring(0, lineEnd))
+            if(!isLastLine or lineStart.isNotEmpty()) {
+                val charCount = lineStart.length
+                if(logNewLine or !isFirstLine)
+                    ImGui.logText("%s%s", treeDepth*4, "", charCount, lineStart)
+                else
+                    ImGui.logText("%s", charCount, lineStart)
+            }
+            if(isLastLine)
+                break
+            textRemaining = textRemaining.substring(lineEnd + 1)
+        }
+    }
 
 
     //-----------------------------------------------------------------------------
@@ -2288,23 +2318,25 @@ interface imgui_internal {
             if (editState.selectedAllMouseLock && !io.mouseDown[0])
                 editState.selectedAllMouseLock = false
 
-            if (io.inputQueueCharacters[0] != NUL) {
-                /*  Process text input (before we check for Return because using some IME will effectively send a
+            if (io.inputQueueCharacters.size > 0) {
+                if(io.inputQueueCharacters[0] != NUL) {
+                    /*  Process text input (before we check for Return because using some IME will effectively send a
                     Return?)
                     We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR
                     (which _is_ Alt+Ctrl) to input certain characters. */
-                val ignoreInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
-                if (!ignoreInputs && isEditable && !userNavInputStart)
-                    io.inputQueueCharacters.filter { it != NUL }.map {
-                        // TODO check
-                        withChar { c ->
-                            // Insert character if they pass filtering
-                            if (inputTextFilterCharacter(c.apply { set(it) }, flags, callback, callbackUserData))
-                                editState.onKeyPressed(c().i)
+                    val ignoreInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
+                    if (!ignoreInputs && isEditable && !userNavInputStart)
+                        io.inputQueueCharacters.filter { it != NUL }.map {
+                            // TODO check
+                            withChar { c ->
+                                // Insert character if they pass filtering
+                                if (inputTextFilterCharacter(c.apply { set(it) }, flags, callback, callbackUserData))
+                                    editState.onKeyPressed(c().i)
+                            }
                         }
-                    }
-                // Consume characters
-                io.inputQueueCharacters.clear()
+                    // Consume characters
+                    io.inputQueueCharacters.clear()
+                }
             }
         }
 
