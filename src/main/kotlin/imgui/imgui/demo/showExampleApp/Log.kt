@@ -47,12 +47,12 @@ object Log {
                 val categories = arrayOf("info", "warn", "error")
                 val words = arrayOf("Bumfuzzled", "Cattywampus", "Snickersnee", "Abibliophobia", "Absquatulate", "Nincompoop", "Pauciloquent")
                 log.addLog("[%05d] [%s] Hello, current time is %.1f, here's a word: '%s'\n",
-                        g.io.framerate.toInt(), categories[counter % categories.size], 0.0, words[counter % words.size])
+                        g.frameCount, categories[counter % categories.size], g.time, words[counter % words.size])
                 counter++
             }
         end()
 
-        log.draw("Example: Log (Filter not yet implemented)", pOpen)
+        log.draw("Example: Log", pOpen)
     }
 
     /** Usage:
@@ -114,7 +114,7 @@ object Log {
                 }
             } else {
                 textUnformatted(buf.toString())
-                //TODO: Fix
+                //TODO: Fix and remove above line
                 /*val clipper = ListClipper()
                 clipper.begin(lineOffsets.size)
                 while(clipper.step()) {
