@@ -11,6 +11,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.setClipboardText
 import imgui.ImGui.sliderInt
 import imgui.g
+import java.io.File
 import java.io.FileWriter
 
 /** Logging/Capture
@@ -69,8 +70,21 @@ interface imgui_logging {
 
         // Start logging at the end of the function so that the buttons don't appear in the log
         if (logToTty) TODO()//LogToTTY(g.LogAutoExpandMaxDepth)
-        if (logToFile) TODO()//LogToFile(g.LogAutoExpandMaxDepth, g.IO.LogFilename)
-        if (logToClipboard) TODO()//LogToClipboard(g.LogAutoExpandMaxDepth)
+        if (logToFile) logToFile(g.logAutoExpandMaxDepth, g.logFile)
+        if (logToClipboard) logToClipboard(g.logAutoExpandMaxDepth)
+    }
+
+    fun logToFile(maxDepth: Int, file_: File?) {
+        if(g.logEnabled)
+            return
+        val window = g.currentWindow!!
+
+        file_ ?: g.logFile ?: return
+
+        g.logEnabled = true
+        g.logStartDepth = window.dc.treeDepth
+        if (maxDepth >= 0)
+            g.logAutoExpandMaxDepth = maxDepth
     }
 
     /** pass text data straight to log (without being displayed)    */
@@ -78,11 +92,18 @@ interface imgui_logging {
         if (!g.logEnabled)
             return
 
+        val intArgs = args.filterTo(ArrayList()) { it is Int }.count()
+
+        val strArgs = if(intArgs != 0)
+            Array(args.size / 2) { args[(2 * it) + 1].toString() }
+        else
+            Array(args.size) { args[it].toString() }
+
         if (g.logFile != null) {
             val writer = FileWriter(g.logFile, true)
-            writer.write(String.format(fmt, args))
+            writer.write(String.format(fmt, *strArgs))
         } else {
-            g.logClipboard.append(String.format(fmt, args))
+            g.logClipboard.append(fmt.format(*strArgs))
         }
     }
 }

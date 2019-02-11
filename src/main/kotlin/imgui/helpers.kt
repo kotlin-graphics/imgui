@@ -35,6 +35,8 @@ class TextFilter(defaultFilter: String? = "") {
 
     class TextRange
 
+    fun isActive() = filters.isNotEmpty()
+
     /** Helper calling InputText+Build   */
     fun draw(label: String = "Filter (inc,-exc)", width: Float): Boolean {
         if (width != 0f)
@@ -50,18 +52,19 @@ class TextFilter(defaultFilter: String? = "") {
     fun passFilter(text: String, textEnd: Int = 0): Boolean {
 
         if (filters.isEmpty()) return true
+        if (filters.stream().filter(String::isNotEmpty).count() == 0L) return true
 
         for (f in filters) {
             if (f.isEmpty()) continue
             if (f[0] == '-') {
                 // Subtract
-                if (text.contains(f))
+                if (text.contains(f.substring(1)))
                     return false
-            } else if (text.contains(f))   // Grep
+            } else if(text.contains(f))  // Grep
                 return true
         }
         // Implicit * grep
-        return countGrep == 0
+        return false //countGrep == 0
     }
 
 //    void ImGuiTextFilter::Build()

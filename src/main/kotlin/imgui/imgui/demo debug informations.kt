@@ -64,6 +64,7 @@ import imgui.internal.DrawListFlag
 import imgui.internal.Rect
 import imgui.internal.TabBar
 import imgui.internal.Window
+import java.nio.ByteBuffer
 import java.util.*
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
@@ -392,7 +393,7 @@ interface imgui_demoDebugInformations {
 
                 val overlayDrawList = getOverlayDrawList(window)   // Render additional visuals into the top-most draw list
                 window?.let {
-                    if (isItemHovered())    // TODO check if .posF is fine instead .pos
+                    if (isItemHovered())
                         overlayDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
                 }
 
@@ -401,9 +402,8 @@ interface imgui_demoDebugInformations {
                     val cmd = drawList.cmdBuffer[i]
                     if (cmd.userCallback == null && cmd.elemCount == 0) continue
                     if (cmd.userCallback != null) {
-                        TODO()
-//                        ImGui::BulletText("Callback %p, user_data %p", pcmd->UserCallback, pcmd->UserCallbackData)
-//                        continue
+                        bulletText("Callback %s, UserData %s", cmd.userCallback!!.toString(), String((cmd.userCallbackData ?: ByteBuffer.wrap(byteArrayOf())).array()))
+                        continue
                     }
                     val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
                     val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"

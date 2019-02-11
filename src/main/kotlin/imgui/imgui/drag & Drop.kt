@@ -40,14 +40,14 @@ interface imgui_dragAndDrop {
      *      c) call endDragDropSource()     */
     fun beginDragDropSource(flags: DragDropFlags = 0): Boolean {
 
-        val window = g.currentWindow!!
+        var window: Window? = g.currentWindow!!
 
         val sourceDragActive: Boolean
         var sourceId: ID
         var sourceParentId: ID = 0
         val mouseButton = 0
         if (flags hasnt Ddf.SourceExtern) {
-            sourceId = window.dc.lastItemId
+            sourceId = window!!.dc.lastItemId
             if (sourceId != 0 && g.activeId != sourceId) // Early out for most common case
                 return false
 
@@ -85,7 +85,7 @@ interface imgui_dragAndDrop {
             sourceParentId = window.idStack.last()
             sourceDragActive = isMouseDragging(mouseButton)
         } else {
-//            window = NULL; // TODO check
+            window = null
             sourceId = hash("#SourceExtern", 0)
             sourceDragActive = true
         }
@@ -115,7 +115,7 @@ interface imgui_dragAndDrop {
             }
 
             if (flags hasnt Ddf.SourceNoDisableHover && flags hasnt Ddf.SourceExtern)
-                window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags wo ItemStatusFlag.HoveredRect
+                window!!.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags wo ItemStatusFlag.HoveredRect
 
             return true
         }
