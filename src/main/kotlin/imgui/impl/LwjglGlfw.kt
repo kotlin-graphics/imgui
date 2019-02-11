@@ -17,10 +17,12 @@ import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
 import uno.glfw.*
 import uno.glfw.GlfwWindow.CursorStatus
+import java.nio.ByteBuffer
+import java.nio.FloatBuffer
 import kotlin.collections.set
 
 
-class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL, vrTexSize: Vec2i? = null) {
+class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val clientApi: GlfwClientApi = GlfwClientApi.OpenGL, val vrTexSize: Vec2i? = null) {
     companion object {
         lateinit var instance: LwjglGlfw
         
@@ -32,17 +34,13 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
         fun shutdown() = instance.shutdown()
     }
     
-    val window: GlfwWindow
     val implGl3: ImplGL3
     var time = 0.0
     val mouseCursors = LongArray(MouseCursor.COUNT)
 
-    var vrTexSize: Vec2i? = null
     var vrCursorPos: Vec2? = null
 
     enum class GlfwClientApi { OpenGL, Vulkan }
-
-    var clientApi = GlfwClientApi.OpenGL
 
     val mouseButtonCallback: MouseButtonCallbackT = { button: Int, action: Int, _: Int ->
         if (action == GLFW_PRESS && button in 0..2)
@@ -73,9 +71,6 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
     val charCallback: CharCallbackT = { c: Int -> if (!g.imeInProgress && c in 1..65535) io.addInputCharacter(c.c) }
 
     init {
-
-        this.window = window
-        this.vrTexSize = vrTexSize
 
         with(io) {
 
@@ -137,8 +132,6 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
             imeListener.install(window)
         }
 
-        clientApi = clientApi_
-
         when(clientApi) {
             GlfwClientApi.OpenGL -> implGl3 = ImplGL3()
             GlfwClientApi.Vulkan -> TODO() //ImplVk.init()
@@ -148,7 +141,7 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
     fun newFrame() {
 
         if (fontTexture[0] == 0 && clientApi == GlfwClientApi.OpenGL)
-            implGl3!!.createDeviceObjects()
+            implGl3.createDeviceObjects()
 
         assert(io.fonts.isBuilt) { "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame()." }
 
@@ -169,9 +162,9 @@ class LwjglGlfw(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_
         io.navInputs.fill(0f)
         if (io.configFlags has ConfigFlag.NavEnableGamepad) {
             // Update gamepad inputs
-            val buttons = window.joystick1Buttons!!
+            val buttons = window.joystick1Buttons ?: ByteBuffer.wrap(byteArrayOf())
             val buttonsCount = buttons.cap
-            val axes = window.joystick1Axes!!
+            val axes = window.joystick1Axes ?: FloatBuffer.wrap(floatArrayOf())
             val axesCount = axes.cap
 
             fun mapButton(nav: NavInput, button: Int) {

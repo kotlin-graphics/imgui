@@ -1069,8 +1069,12 @@ class Font {
         indexAdvanceX.clear()
         indexLookup.clear()
         fallbackGlyph = null
-//        containerAtlas = NULL TODO check
         dirtyLookupTables = true
+        fallbackAdvanceX = 0f
+        configDataCount = 0
+        configData.clear()
+        containerAtlas.clearInputData()
+        containerAtlas.clearTexData()
         ascent = 0f
         descent = 0f
         metricsTotalSurface = 0
