@@ -107,7 +107,6 @@ object Log {
             pushStyleVar(StyleVar.ItemSpacing, Vec2(0))
 
             if(filter.isActive()) {
-                println("filter active")
                 for(line_no in 0 until lineOffsets.size) {
                     val line = buf.subSequence(lineOffsets[line_no], if(line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString()
                     if(filter.passFilter(line))
