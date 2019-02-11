@@ -148,7 +148,7 @@ interface main {
         val labelSize = calcTextSize(label, true)
 
         val squareSz = frameHeight
-        val pos = window.dc.cursorPos
+        val pos = Vec2(window.dc.cursorPos) //cursorPos gets updated somewhere else, which means we need to make a copy else checkboxes act incorrectly
         val totalBb = Rect(pos, pos + Vec2(squareSz + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id))
