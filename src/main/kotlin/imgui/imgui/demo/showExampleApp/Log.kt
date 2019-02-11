@@ -8,11 +8,15 @@ import imgui.ImGui.button
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.logToClipboard
+import imgui.ImGui.popStyleVar
+import imgui.ImGui.pushStyleColor
+import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.smallButton
+import imgui.ImGui.textUnformatted
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs
@@ -42,8 +46,8 @@ object Log {
             for (n in 0..4) {
                 val categories = arrayOf("info", "warn", "error")
                 val words = arrayOf("Bumfuzzled", "Cattywampus", "Snickersnee", "Abibliophobia", "Absquatulate", "Nincompoop", "Pauciloquent")
-//                log.addLog("[%05d] [%s] Hello, current time is %.1f, here's a word: '%s'\n",
-//                        frameCount, categories[counter % IM_ARRAYSIZE(categories)], ImGui::GetTime(), words[counter % IM_ARRAYSIZE(words)]);
+                log.addLog("[%05d] [%s] Hello, current time is %.1f, here's a word: '%s'\n",
+                        g.io.framerate.toInt(), categories[counter % categories.size], 0.0, words[counter % words.size])
                 counter++
             }
         end()
@@ -58,7 +62,7 @@ object Log {
     class ExampleAppLog {
 
         val buf = StringBuilder()
-        val filter = TextFilter()// TODO
+        val filter = TextFilter()
         /** Index to lines offset. We maintain this with AddLog() calls, allowing us to have a random access on lines */
         val lineOffsets = ArrayList<Int>()
         var scrollToBottom = false
@@ -67,12 +71,14 @@ object Log {
             clear()
         }
 
-        fun addLog(fmt: String) {
-            buf.append(fmt)
-//            for (int new_size = Buf.size(); old_size < new_size; old_size++)
-//            if (Buf[old_size] == '\n')
-//                LineOffsets.push_back(old_size);
-//            LineOffsets.push_back(old_size + 1);
+        fun addLog(fmt: String, vararg extra: Any) {
+            val oldSize = buf.length
+            buf.append(fmt.format(*extra))
+
+            for(i in oldSize until buf.length) {
+                if(buf[i] == '\n')
+                    lineOffsets.add(i + 1)
+            }
             scrollToBottom = true
         }
 
@@ -86,50 +92,41 @@ object Log {
             sameLine()
             val copy = button("Copy")
             sameLine()
-            filter.draw("Filter", -100f)
+            if(filter.draw("Filter", -100f)) {
+                println("Filter change")
+                filter.filters.clear()
+                val firstNull = filter.inputBuf.indexOf('\u0000')
+                if(firstNull != 0)
+                    filter.filters.add(String(filter.inputBuf.copyOfRange(0, firstNull)))
+            }
             separator()
             beginChild("scrolling", Vec2(0, 0), false, Wf.HorizontalScrollbar.i)
             if (copy)
-                logToClipboard()
+                TODO() //logToClipboard()
 
-//            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-//            const char* buf = Buf.begin();
-//            const char* buf_end = Buf.end();
-//            if (Filter.IsActive())
-//            {
-//                for (int line_no = 0; line_no < LineOffsets.Size; line_no++)
-//                {
-//                    const char* line_start = buf + LineOffsets[line_no];
-//                    const char* line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
-//                    if (Filter.PassFilter(line_start, line_end))
-//                        ImGui::TextUnformatted(line_start, line_end);
-//                }
-//            }
-//            else
-//            {
-//                // The simplest and easy way to display the entire buffer:
-//                //   ImGui::TextUnformatted(buf_begin, buf_end);
-//                // And it'll just work. TextUnformatted() has specialization for large blob of text and will fast-forward to skip non-visible lines.
-//                // Here we instead demonstrate using the clipper to only process lines that are within the visible area.
-//                // If you have tens of thousands of items and their processing cost is non-negligible, coarse clipping them on your side is recommended.
-//                // Using ImGuiListClipper requires A) random access into your data, and B) items all being the  same height,
-//                // both of which we can handle since we an array pointing to the beginning of each line of text.
-//                // When using the filter (in the block of code above) we don't have random access into the data to display anymore, which is why we don't use the clipper.
-//                // Storing or skimming through the search result would make it possible (and would be recommended if you want to search through tens of thousands of entries)
-//                ImGuiListClipper clipper;
-//                clipper.Begin(LineOffsets.Size);
-//                while (clipper.Step())
-//                {
-//                    for (int line_no = clipper.DisplayStart; line_no < clipper.DisplayEnd; line_no++)
-//                    {
-//                        const char* line_start = buf + LineOffsets[line_no];
-//                        const char* line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
-//                        ImGui::TextUnformatted(line_start, line_end);
-//                    }
-//                }
-//                clipper.End();
-//            }
-//            ImGui::PopStyleVar();
+            pushStyleVar(StyleVar.ItemSpacing, Vec2(0))
+
+            if(filter.isActive()) {
+                println("filter active")
+                for(line_no in 0 until lineOffsets.size) {
+                    val line = buf.subSequence(lineOffsets[line_no], if(line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString()
+                    if(filter.passFilter(line))
+                        textUnformatted(line)
+                }
+            } else {
+                textUnformatted(buf.toString())
+                //TODO: Fix
+                /*val clipper = ListClipper()
+                clipper.begin(lineOffsets.size)
+                while(clipper.step()) {
+                    for(line_no in clipper.display.start until clipper.display.endInclusive - 1) {
+                        textUnformatted(buf.subSequence(lineOffsets[line_no], if(line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString())
+                    }
+                }
+                clipper.end()*/
+            }
+
+            popStyleVar()
 
             if (scrollToBottom) setScrollHereY(1f)
             scrollToBottom = false
