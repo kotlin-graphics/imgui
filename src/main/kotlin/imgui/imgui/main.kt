@@ -416,7 +416,7 @@ interface imgui_main {
                     }
                     mouseDoubleClicked[i] = false
                     if (mouseClicked[i]) {
-                        if (g.time - mouseClickedTime[i] < mouseDoubleClickTime) { // TODO check if ok or (g.time - mouseClickedTime[i]).f
+                        if (g.time - mouseClickedTime[i] < mouseDoubleClickTime) {
                             val deltaFromClickPos = when {
                                 isMousePosValid(io.mousePos) -> io.mousePos - io.mouseClickedPos[i]
                                 else -> Vec2()
