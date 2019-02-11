@@ -1071,16 +1071,12 @@ class Font {
         indexAdvanceX.clear()
         indexLookup.clear()
         fallbackGlyph = null
-<<<<<<< HEAD
-//        containerAtlas = NULL TODO check
         dirtyLookupTables = true
-=======
         fallbackAdvanceX = 0f
         configDataCount = 0
         configData.clear()
         containerAtlas.clearInputData()
         containerAtlas.clearTexData()
->>>>>>> Clear container atlas since it is non-nullable
         ascent = 0f
         descent = 0f
         metricsTotalSurface = 0
