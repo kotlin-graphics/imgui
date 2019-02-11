@@ -176,10 +176,11 @@ interface imgui_utilities {
     fun calcTextSize(text: String, textEnd: Int = text.length, hideTextAfterDoubleHash: Boolean = false, wrapWidth: Float = -1f): Vec2 {
 
         val textDisplayEnd =
-                if (hideTextAfterDoubleHash)
-                    findRenderedTextEnd(text, textEnd)  // Hide anything after a '##' string
-                else
-                    if (textEnd == 0) text.length else textEnd // TODO check if right
+                when {
+                    hideTextAfterDoubleHash -> findRenderedTextEnd(text, textEnd)  // Hide anything after a '##' string
+                    textEnd == 0 -> text.length
+                    else -> textEnd
+                }
 
         val font = g.font
         val fontSize = g.fontSize
