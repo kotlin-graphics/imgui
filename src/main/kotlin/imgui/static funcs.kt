@@ -346,18 +346,17 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
     }
 
     if (flags has Itf.CallbackCharFilter) {
-        TODO()
-//        ImGuiTextEditCallbackData callback_data
-//                memset(& callback_data, 0, sizeof(ImGuiTextEditCallbackData))
-//        callback_data.EventFlag = ImGuiInputTextFlags_CallbackCharFilter
-//        callback_data.EventChar = (ImWchar) c
-//                callback_data.Flags = flags
-//        callback_data.UserData = user_data
-//        if (callback(& callback_data) != 0)
-//        return false
-//        *p_char = callback_data.EventChar
-//        if (!callback_data.EventChar)
-//            return false
+        callback!! //callback is non-null from all calling functions
+        val itcd = InputTextCallbackData()
+        itcd.eventFlag = imgui.InputTextFlag.CallbackCharFilter.i
+        itcd.eventChar = c
+        itcd.flags = flags
+        itcd.userData = userData
+
+        if(callback(itcd) != 0)
+            return false
+        if(itcd.eventChar == NUL)
+            return false
     }
     return true
 }
