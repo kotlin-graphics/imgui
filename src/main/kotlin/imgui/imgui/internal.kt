@@ -2288,23 +2288,25 @@ interface imgui_internal {
             if (editState.selectedAllMouseLock && !io.mouseDown[0])
                 editState.selectedAllMouseLock = false
 
-            if (io.inputQueueCharacters[0] != NUL) {
-                /*  Process text input (before we check for Return because using some IME will effectively send a
+            if (io.inputQueueCharacters.size > 0) {
+                if(io.inputQueueCharacters[0] != NUL) {
+                    /*  Process text input (before we check for Return because using some IME will effectively send a
                     Return?)
                     We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR
                     (which _is_ Alt+Ctrl) to input certain characters. */
-                val ignoreInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
-                if (!ignoreInputs && isEditable && !userNavInputStart)
-                    io.inputQueueCharacters.filter { it != NUL }.map {
-                        // TODO check
-                        withChar { c ->
-                            // Insert character if they pass filtering
-                            if (inputTextFilterCharacter(c.apply { set(it) }, flags, callback, callbackUserData))
-                                editState.onKeyPressed(c().i)
+                    val ignoreInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
+                    if (!ignoreInputs && isEditable && !userNavInputStart)
+                        io.inputQueueCharacters.filter { it != NUL }.map {
+                            // TODO check
+                            withChar { c ->
+                                // Insert character if they pass filtering
+                                if (inputTextFilterCharacter(c.apply { set(it) }, flags, callback, callbackUserData))
+                                    editState.onKeyPressed(c().i)
+                            }
                         }
-                    }
-                // Consume characters
-                io.inputQueueCharacters.clear()
+                    // Consume characters
+                    io.inputQueueCharacters.clear()
+                }
             }
         }
 
