@@ -2736,7 +2736,7 @@ interface imgui_internal {
 
             val bufDisplayLen = editState.curLenA
             if (isMultiline || bufDisplayLen < bufDisplayMaxLength)
-                drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, Col.Text.u32, bufDisplay, bufDisplayLen, 0f, clipRect.takeIf { isMultiline })
+                drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, Col.Text.u32, bufDisplay, bufDisplayLen, 0f, clipRect)
 
             // Draw blinking cursor
             val cursorIsVisible = !io.configInputTextCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
@@ -2758,7 +2758,7 @@ interface imgui_internal {
             else
                 bufEnd[0] = bufDisplay.strlen
             if (isMultiline || bufEnd[0] < bufDisplayMaxLength)
-                drawWindow.drawList.addText(g.font, g.fontSize, renderPos, Col.Text.u32, bufDisplay, bufEnd[0], 0f, clipRect.takeIf { isMultiline })
+                drawWindow.drawList.addText(g.font, g.fontSize, renderPos, Col.Text.u32, bufDisplay, bufEnd[0], 0f, clipRect)
         }
 
         if (isMultiline) {
