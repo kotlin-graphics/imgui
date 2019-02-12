@@ -35,7 +35,7 @@ import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL33C
 import gln.gl20 as gl
 
-class ImplGL3 {
+class ImplGL3: LwjglRendererI {
     companion object {
         fun renderDrawData(drawData: DrawData) = LwjglGlfw.instance.renderDrawData(drawData)
     }
@@ -51,7 +51,7 @@ class ImplGL3 {
     val vaoName = IntBuffer(1)
     val fontTexture = IntBuffer(1)
 
-    fun createDeviceObjects(): Boolean {
+    override fun createDeviceObjects(): Boolean {
 
         // this shall be in init, but since we dont have it because we do differently about the glsl version we do this here
         io.backendRendererName = "imgui impl opengl3"
@@ -144,7 +144,7 @@ class ImplGL3 {
      *  from your main loop)
      *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL
      *  state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.   */
-    fun renderDrawData(drawData: DrawData) {
+    override fun renderDrawData(drawData: DrawData) {
 
         /** Avoid rendering when minimized, scale coordinates for retina displays
          *  (screen coordinates != framebuffer coordinates) */
@@ -301,7 +301,7 @@ class ImplGL3 {
         }
     }
 
-    fun destroyDeviceObjects() {
+    override fun destroyDeviceObjects() {
 
         glDeleteVertexArrays(vaoName)
         glDeleteBuffers(bufferName)
