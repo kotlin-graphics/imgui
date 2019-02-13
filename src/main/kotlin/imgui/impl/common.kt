@@ -55,7 +55,7 @@ val fragmentShader
 
         void main()
         {
-            outColor = color * texture(Texture, uv);
+            outColor = color * texture${if(glslVersion == 120) "2D" else ""}(Texture, uv);
         }
         """
 
