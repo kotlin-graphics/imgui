@@ -12,6 +12,8 @@ import gln.buffer.glBufferData
 import gln.buffer.glBufferSubData
 import gln.checkError
 import gln.glGetVec4i
+import gln.glScissor
+import gln.glViewport
 import gln.glf.semantic
 import gln.objects.GlProgram
 import gln.objects.GlShader
@@ -20,8 +22,7 @@ import gln.texture.initTexture2d
 import gln.uniform.glUniform
 import imgui.*
 import kool.*
-import org.lwjgl.opengl.GL13C
-import org.lwjgl.opengl.GL20C
+import org.lwjgl.opengl.*
 import org.lwjgl.opengl.GL21C.*
 
 class ImplGL2 : LwjglRendererI {
@@ -136,22 +137,36 @@ class ImplGL2 : LwjglRendererI {
         glActiveTexture(GL_TEXTURE0 + semantic.sampler.DIFFUSE)
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
+        val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastPolygonMode = glGetInteger(GL_POLYGON_MODE)
         val lastViewport = glGetVec4i(GL_VIEWPORT)
         val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
+        val lastBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
+        val lastBlendDstRgb = glGetInteger(GL_BLEND_DST_RGB)
+        val lastBlendSrcAlpha = glGetInteger(GL_BLEND_SRC_ALPHA)
+        val lastBlendDstAlpha = glGetInteger(GL_BLEND_DST_ALPHA)
+        val lastBlendEquationRgb = glGetInteger(GL_BLEND_EQUATION_RGB)
+        val lastBlendEquationAlpha = glGetInteger(GL_BLEND_EQUATION_ALPHA)
+        val lastEnableBlend = glIsEnabled(GL_BLEND)
+        val lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
+        val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
+        val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
+        val clipOriginLowerLeft = when {
+            CLIP_ORIGIN && glGetInteger(GL45.GL_CLIP_ORIGIN) == GL_UPPER_LEFT -> false // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
+            else -> true
+        }
 
         // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
         glEnable(GL_BLEND)
+        glBlendEquation(GL_FUNC_ADD)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
         glEnable(GL_SCISSOR_TEST)
-        glEnable(GL_TEXTURE_2D)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
-
         // Setup viewport, orthographic projection matrix
-        gln.glViewport(fbSize)
+        glViewport(fbSize)
         val ortho = glm.ortho(mat, 0f, ImGui.io.displaySize.x.f, ImGui.io.displaySize.y.f, 0f)
         glUseProgram(program.i)
         glUniform(matUL, ortho)
@@ -181,14 +196,15 @@ class ImplGL2 : LwjglRendererI {
                     cb(cmdList, cmd)
                 else {
                     val clipRect = Vec4(cmd.clipRect.x - pos.x, cmd.clipRect.y - pos.y, cmd.clipRect.z - pos.x, cmd.clipRect.w - pos.y);
-                    if ((clipRect.x <= fbSize.x) and (clipRect.y <= fbSize.y) and (clipRect.z >= clipRect.x) and (clipRect.w >= clipRect.y)) {
-                        // Apply scissor/clipping rectangle
+                    // Apply scissor/clipping rectangle
+                    if (clipOriginLowerLeft)
                         glScissor(clipRect.x.i, (fbSize.y - clipRect.w).i, (clipRect.z - clipRect.x).i, (clipRect.w - clipRect.y).i)
+                    else
+                        glScissor(clipRect.x.i, clipRect.y.i, clipRect.z.i, clipRect.w.i) // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
 
-                        // Bind texture, Draw
-                        glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                        glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
-                    }
+                    // Bind texture, Draw
+                    glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
+                    glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
                 }
                 idxBufferOffset += cmd.elemCount * Int.BYTES
             }
@@ -200,9 +216,16 @@ class ImplGL2 : LwjglRendererI {
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
         glActiveTexture(lastActiveTexture)
+        glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
+        glBlendEquationSeparate(lastBlendEquationRgb, lastBlendEquationAlpha)
+        glBlendFuncSeparate(lastBlendSrcRgb, lastBlendDstRgb, lastBlendSrcAlpha, lastBlendDstAlpha)
+        if (lastEnableBlend) glEnable(GL_BLEND) else glDisable(GL_BLEND)
+        if (lastEnableCullFace) glEnable(GL_CULL_FACE) else glDisable(GL_CULL_FACE)
+        if (lastEnableDepthTest) glEnable(GL_DEPTH_TEST) else glDisable(GL_DEPTH_TEST)
+        if (lastEnableScissorTest) glEnable(GL_SCISSOR_TEST) else glDisable(GL_SCISSOR_TEST)
         glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode)
-        gln.glViewport(lastViewport)
-        gln.glScissor(lastScissorBox)
+        glViewport(lastViewport)
+        glScissor(lastScissorBox)
     }
 
     private fun checkSize(draws: ArrayList<DrawList>) {
