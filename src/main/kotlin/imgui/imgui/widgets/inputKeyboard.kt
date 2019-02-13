@@ -42,6 +42,7 @@ interface inputKeyboard {
     fun inputText(label: String, buf: CharArray, flags: InputTextFlags = 0
             /*, callback: InputTextCallback  = NULL, void* user_data = NULL*/): Boolean {
 
+        // TODO, enable callback and userData, related: https://github.com/kotlin-graphics/imgui/commit/082d94e359b2c262cd67c429bfff7fe3900d74cc
         assert(flags hasnt Itf.Multiline) { "call InputTextMultiline()" }
         return inputTextEx(label, buf, Vec2(), flags/*, callback, user_data*/)
     }

@@ -2437,6 +2437,7 @@ interface imgui_internal {
                     if (isCut) {
                         if (!editState.hasSelection)
                             editState.selectAll()
+                        println("${editState.textW}, $max, ${editState.textW}, $min, ${max - min}")
                         System.arraycopy(editState.textW, max, editState.textW, min, max - min)
                         editState.deleteChars(editState.state.cursor, max - min)
                         editState.state.cursor = min
@@ -2626,8 +2627,8 @@ interface imgui_internal {
             val selectStartOffset = Vec2()
 
             run {
-                // Count lines + find lines numbers straddling 'cursor' and 'select_start' position.
-                val searchesInputPtr = intArrayOf(0 + editState.state.cursor, -1)
+                // Count lines + find lines numbers straddling 'cursor' and 'selectStart' position.
+                val searchesInputPtr = intArrayOf(editState.state.cursor, 0)
                 var searchesRemaining = 1
                 val searchesResultLineNumber = intArrayOf(-1, -999)
                 if (editState.state.selectStart != editState.state.selectEnd) {
