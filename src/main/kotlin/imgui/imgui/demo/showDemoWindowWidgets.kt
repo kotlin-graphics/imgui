@@ -512,7 +512,6 @@ object showDemoWindowWidgets {
 
                 text("Test paragraph 1:")
                 val pos = cursorScreenPos
-                println("pos (${pos.x}, ${pos.y}), wrapWidth $wrapWidth")
                 val a = Vec2(pos.x + wrapWidth, pos.y)
                 val b = Vec2(pos.x + wrapWidth + 10, pos.y + textLineHeight)
                 windowDrawList.addRectFilled(a, b, COL32(255, 0, 255, 255))
