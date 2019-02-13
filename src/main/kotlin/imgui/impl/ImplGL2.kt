@@ -18,11 +18,11 @@ import gln.objects.GlShader
 import gln.program.usingProgram
 import gln.texture.initTexture2d
 import gln.uniform.glUniform
-import gln.vertexArray.withVertexArray
 import imgui.*
 import kool.*
-import org.lwjgl.opengl.GL13
-import org.lwjgl.opengl.GL21.*
+import org.lwjgl.opengl.GL13C
+import org.lwjgl.opengl.GL20C
+import org.lwjgl.opengl.GL21C.*
 
 class ImplGL2 : LwjglRendererI {
 
@@ -141,17 +141,11 @@ class ImplGL2 : LwjglRendererI {
         val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
 
         // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
-        glPushAttrib(GL_ENABLE_BIT or GL_COLOR_BUFFER_BIT or GL_TRANSFORM_BIT)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
-        glDisable(GL_LIGHTING)
-        glDisable(GL_COLOR_MATERIAL)
         glEnable(GL_SCISSOR_TEST)
-        glEnableClientState(GL_VERTEX_ARRAY)
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY)
-        glEnableClientState(GL_COLOR_ARRAY)
         glEnable(GL_TEXTURE_2D)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
@@ -203,13 +197,9 @@ class ImplGL2 : LwjglRendererI {
         checkError("render")
 
         // Restore modified GL state
-        glDisableClientState(GL_COLOR_ARRAY)
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY)
-        glDisableClientState(GL_VERTEX_ARRAY)
+        glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
-        glMatrixMode(GL_MODELVIEW)
-        glMatrixMode(GL_PROJECTION)
-        glPopAttrib()
+        glActiveTexture(lastActiveTexture)
         glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode)
         gln.glViewport(lastViewport)
         gln.glScissor(lastScissorBox)
