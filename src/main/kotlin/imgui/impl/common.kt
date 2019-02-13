@@ -18,6 +18,14 @@ var USE_GL_ES3 = false
  * Note: GLSL version is NOT the same as GL version. Leave this to default if unsure. */
 var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
 
+val vertexShaderInWord: String
+    get() = if(glslVersion > 120) "in" else "attribute"
+
+val vertexShaderOutWord: String
+    get() = if(glslVersion > 120) "out" else "varying"
+
+val fragmentShaderInWord: String
+    get() = if(glslVersion > 120) "in" else "varying"
 
 val vertexShader
     get() = """
@@ -26,12 +34,12 @@ val vertexShader
 
         uniform mat4 mat;
 
-        in vec2 Position;
-        in vec2 UV;
-        in vec4 Color;
+        $vertexShaderInWord vec2 Position;
+        $vertexShaderInWord vec2 UV;
+        $vertexShaderInWord vec4 Color;
 
-        out vec2 uv;
-        out vec4 color;
+        $vertexShaderOutWord vec2 uv;
+        $vertexShaderOutWord vec4 color;
 
         void main()
         {
@@ -48,14 +56,14 @@ val fragmentShader
 
         uniform sampler2D Texture;
 
-        in vec2 uv;
-        in vec4 color;
+        $fragmentShaderInWord vec2 uv;
+        $fragmentShaderInWord vec4 color;
 
-        out vec4 outColor;
+        ${if(glslVersion > 120) "out vec4 outColor;" else ""}
 
         void main()
         {
-            outColor = color * texture${if(glslVersion == 120) "2D" else ""}(Texture, uv);
+            ${if(glslVersion > 120) "outColor" else "gl_FragColor"} = color * texture${if(glslVersion <= 120) "2D" else ""}(Texture, uv);
         }
         """
 
