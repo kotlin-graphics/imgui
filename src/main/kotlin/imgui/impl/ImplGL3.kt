@@ -30,16 +30,17 @@ import imgui.DrawVert
 import imgui.ImGui.io
 import kool.*
 import org.lwjgl.opengl.ARBClipControl.GL_CLIP_ORIGIN
-import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL30.*
-import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
-import org.lwjgl.opengl.GL33.glBindSampler
+import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GL30C.*
+import org.lwjgl.opengl.GL33C
 import gln.gl20 as gl
 
 class ImplGL3 {
     companion object {
         fun renderDrawData(drawData: DrawData) = LwjglGlfw.instance.renderDrawData(drawData)
     }
+
+    val hasGL33 = GL.getCapabilities().OpenGL33
 
     var program = GlProgram(0)
     var matUL = -1
@@ -156,7 +157,7 @@ class ImplGL3 {
         glActiveTexture(GL_TEXTURE0 + semantic.sampler.DIFFUSE)
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
-        val lastSampler = glGetInteger(GL_SAMPLER_BINDING)
+        val lastSampler = if(hasGL33) glGetInteger(GL33C.GL_SAMPLER_BINDING) else 0
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
         val lastPolygonMode = glGetInteger(GL_POLYGON_MODE)
@@ -195,7 +196,8 @@ class ImplGL3 {
         checkSize(drawData.cmdLists)
 
         glBindVertexArray(vaoName)
-        glBindSampler(semantic.sampler.DIFFUSE, 0) // Rely on combined texture/sampler state.
+        if(hasGL33)
+            GL33C.glBindSampler(semantic.sampler.DIFFUSE, 0) // Rely on combined texture/sampler state.
 
         val pos = drawData.displayPos
         for (cmdList in drawData.cmdLists) {
@@ -239,7 +241,8 @@ class ImplGL3 {
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
-        glBindSampler(0, lastSampler)
+        if(hasGL33)
+            GL33C.glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
