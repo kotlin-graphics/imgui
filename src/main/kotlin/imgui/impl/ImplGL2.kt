@@ -252,6 +252,9 @@ class ImplGL2 : LwjglRendererI {
             idxBuffer.free()
             idxBuffer = IntBuffer(idxSize / Int.BYTES)
 
+            val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
+            val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
+
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
             glBufferData(BufferTarget.Array, vtxSize, Usage.StreamDraw)
             glEnableVertexAttribArray(semantic.attr.POSITION)
@@ -264,6 +267,9 @@ class ImplGL2 : LwjglRendererI {
 
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
             glBufferData(BufferTarget.ElementArray, idxSize, Usage.StreamDraw)
+            
+            glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementBuffer)
 
             checkError("checkSize")
 
