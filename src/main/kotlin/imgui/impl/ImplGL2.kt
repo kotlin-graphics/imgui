@@ -45,6 +45,7 @@ class ImplGL2 : LwjglRendererI {
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
+        val lastElementArrayBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
 
         program = GlProgram.create().apply {
             val vertHandle = GlShader.createFromSource(vertexShader, VERTEX_SHADER)
@@ -85,6 +86,7 @@ class ImplGL2 : LwjglRendererI {
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastArrayBuffer)
 
         return checkError("createDeviceObject")
     }
@@ -267,7 +269,7 @@ class ImplGL2 : LwjglRendererI {
 
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
             glBufferData(BufferTarget.ElementArray, idxSize, Usage.StreamDraw)
-            
+
             glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementBuffer)
 

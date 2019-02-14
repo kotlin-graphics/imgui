@@ -31,6 +31,7 @@ import imgui.ImGui.io
 import kool.*
 import org.lwjgl.opengl.ARBClipControl.GL_CLIP_ORIGIN
 import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GL15C
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL33C
 import gln.gl20 as gl
@@ -62,6 +63,7 @@ class ImplGL3: LwjglRendererI {
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
+        val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
 
         program = GlProgram.create().apply {
             val vertHandle = GlShader.createFromSource(vertexShader, VERTEX_SHADER)
@@ -107,6 +109,7 @@ class ImplGL3: LwjglRendererI {
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementBuffer)
         glBindVertexArray(lastVertexArray)
 
         return checkError("createDeviceObject")
@@ -160,6 +163,7 @@ class ImplGL3: LwjglRendererI {
         val lastSampler = if(hasGL33) glGetInteger(GL33C.GL_SAMPLER_BINDING) else 0
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
+        val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
         val lastPolygonMode = glGetInteger(GL_POLYGON_MODE)
         val lastViewport = glGetVec4i(GL_VIEWPORT)
         val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
@@ -246,6 +250,7 @@ class ImplGL3: LwjglRendererI {
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementBuffer)
         glBlendEquationSeparate(lastBlendEquationRgb, lastBlendEquationAlpha)
         glBlendFuncSeparate(lastBlendSrcRgb, lastBlendDstRgb, lastBlendSrcAlpha, lastBlendDstAlpha)
         if (lastEnableBlend) glEnable(GL_BLEND) else glDisable(GL_BLEND)
@@ -279,6 +284,10 @@ class ImplGL3: LwjglRendererI {
             idxBuffer.free()
             idxBuffer = IntBuffer(idxSize / Int.BYTES)
 
+            val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
+            val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
+            val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
+
             withVertexArray(vaoName) {
 
                 glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
@@ -294,6 +303,10 @@ class ImplGL3: LwjglRendererI {
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
                 glBufferData(BufferTarget.ElementArray, idxSize, Usage.StreamDraw)
             }
+
+            glBindVertexArray(lastVertexArray)
+            glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementBuffer)
 
             checkError("checkSize")
 
