@@ -22,7 +22,7 @@ import gln.texture.initTexture2d
 import gln.uniform.glUniform
 import imgui.*
 import kool.*
-import org.lwjgl.opengl.*
+import org.lwjgl.opengl.GL45C
 import org.lwjgl.opengl.GL21C.*
 
 class ImplGL2 : LwjglRendererI {
@@ -155,7 +155,7 @@ class ImplGL2 : LwjglRendererI {
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
         val clipOriginLowerLeft = when {
-            CLIP_ORIGIN && glGetInteger(GL45.GL_CLIP_ORIGIN) == GL_UPPER_LEFT -> false // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
+            CLIP_ORIGIN && glGetInteger(GL45C.GL_CLIP_ORIGIN) == GL_UPPER_LEFT -> false // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
             else -> true
         }
 

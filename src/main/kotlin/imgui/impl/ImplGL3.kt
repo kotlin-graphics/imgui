@@ -29,11 +29,10 @@ import imgui.DrawList
 import imgui.DrawVert
 import imgui.ImGui.io
 import kool.*
-import org.lwjgl.opengl.ARBClipControl.GL_CLIP_ORIGIN
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL15C
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL33C
+import org.lwjgl.opengl.GL45C
 import gln.gl20 as gl
 
 class ImplGL3: LwjglRendererI {
@@ -178,7 +177,7 @@ class ImplGL3: LwjglRendererI {
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
         val clipOriginLowerLeft = when {
-            CLIP_ORIGIN && glGetInteger(GL_CLIP_ORIGIN) == GL_UPPER_LEFT -> false // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
+            CLIP_ORIGIN && glGetInteger(GL45C.GL_CLIP_ORIGIN) == GL_UPPER_LEFT -> false // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
             else -> true
         }
 
