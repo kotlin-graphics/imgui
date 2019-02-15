@@ -193,7 +193,7 @@ object StyleEditor {
                     withItemWidth(-160) {
                         for (i in 0 until Col.COUNT) {
                             val name = Col.values()[i].name
-                            if (!filter.passFilter(name)) // TODO fix bug
+                            if (!filter.passFilter(name))
                                 continue
                             withId(i) {
                                 colorEditVec4("##color", style.colors[i], Cef.AlphaBar or alphaFlags)
