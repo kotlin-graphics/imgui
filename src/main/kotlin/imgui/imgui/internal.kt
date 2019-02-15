@@ -1419,9 +1419,9 @@ interface imgui_internal {
             if(!isLastLine or lineStart.isNotEmpty()) {
                 val charCount = lineStart.length
                 if(logNewLine or !isFirstLine)
-                    ImGui.logText("%s%s", treeDepth*4, "", charCount, lineStart)
+                    ImGui.logText("%s%s", "", lineStart)
                 else
-                    ImGui.logText("%s", charCount, lineStart)
+                    ImGui.logText("%s", lineStart)
             }
             if(isLastLine)
                 break
