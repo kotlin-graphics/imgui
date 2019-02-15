@@ -106,9 +106,13 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
             backendLanguageUserData = null
             backendRendererUserData = null
             backendPlatformUserData = null
-//            io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText; // Platform dependent default implementations TODO
-//            io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;
-//            io.ClipboardUserData = g_Window;
+            io.setClipboardTextFn = { userData, text ->
+                glfwSetClipboardString(userData as Long, text)
+            }
+            io.getClipboardTextFn = { userData ->
+                glfwGetClipboardString(userData as Long).toString()
+            }
+            io.clipboardUserData = window.handle.L
 
             if (Platform.get() == Platform.WINDOWS)
                 imeWindowHandle = window.hwnd
