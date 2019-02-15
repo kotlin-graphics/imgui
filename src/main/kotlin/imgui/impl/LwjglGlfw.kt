@@ -144,7 +144,7 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
 
     fun newFrame() {
 
-        if (fontTexture[0] == 0 && clientApi == GlfwClientApi.OpenGL)
+        if (io.fonts.texId == 0 && clientApi == GlfwClientApi.OpenGL)
             implGl3.createDeviceObjects()
 
         assert(io.fonts.isBuilt) { "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame()." }
