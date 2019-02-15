@@ -276,7 +276,6 @@ enum class NavLayer {
 
 enum class PopupPositionPolicy { Default, ComboBox }
 
-// TODO check enum declarance position
 enum class DrawCornerFlag(val i: Int) {
     TopLeft(1 shl 0), // 0x1
     TopRight(1 shl 1), // 0x2
@@ -296,15 +295,12 @@ infix fun Int.and(b: DrawCornerFlag): DrawCornerFlags = and(b.i)
 infix fun Int.has(b: DrawCornerFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: DrawCornerFlag) = (this and b.i) == 0
 
-// TODO check enum declarance position
-enum class DrawListFlag {
-    None,
+enum class DrawListFlag(val i: Int) {
+    None(0),
     /** Lines are anti-aliased (*2 the number of triangles for 1.0f wide line, otherwise *3 the number of triangles) */
-    AntiAliasedLines,
+    AntiAliasedLines(1 shl 0),
     /** Filled shapes have anti-aliased edges (*2 the number of vertices) */
-    AntiAliasedFill;
-
-    val i = if (ordinal == 0) 0 else 1 shl ordinal
+    AntiAliasedFill(1 shl 1);
 }
 
 infix fun DrawListFlag.or(b: DrawListFlag): DrawListFlags = i or b.i

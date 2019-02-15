@@ -1451,8 +1451,7 @@ class TabBar {
         // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
         if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.50f)
             if (flags hasnt TabBarFlag.NoTooltip)
-//            setTooltip("%.*s", (findRenderedTextEnd(label) - label), label)
-                setTooltip(label.substring(0, findRenderedTextEnd(label))) // TODO check
+                setTooltip(label.substring(0, findRenderedTextEnd(label)))
 
         return tabContentsVisible
     }
