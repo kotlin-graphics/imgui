@@ -2485,68 +2485,52 @@ interface imgui_internal {
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
                     callback!!
-                    TODO()
-//                        // The reason we specify the usage semantic (Completion/History) is that Completion needs to disable keyboard TABBING at the moment.
-//                        val eventFlag: InputTextFlags = 0
-//                        ImGuiKey event_key = ImGuiKey_COUNT;
-//                        if ((flags & ImGuiInputTextFlags_CallbackCompletion) != 0 && IsKeyPressedMap(ImGuiKey_Tab))
-//                        {
-//                            event_flag = ImGuiInputTextFlags_CallbackCompletion;
-//                            event_key = ImGuiKey_Tab;
-//                        }
-//                        else if ((flags & ImGuiInputTextFlags_CallbackHistory) != 0 && IsKeyPressedMap(ImGuiKey_UpArrow))
-//                        {
-//                            event_flag = ImGuiInputTextFlags_CallbackHistory;
-//                            event_key = ImGuiKey_UpArrow;
-//                        }
-//                        else if ((flags & ImGuiInputTextFlags_CallbackHistory) != 0 && IsKeyPressedMap(ImGuiKey_DownArrow))
-//                        {
-//                            event_flag = ImGuiInputTextFlags_CallbackHistory;
-//                            event_key = ImGuiKey_DownArrow;
-//                        }
-//                        else if (flags & ImGuiInputTextFlags_CallbackAlways)
-//                        event_flag = ImGuiInputTextFlags_CallbackAlways;
-//
-//                        if (event_flag)
-//                        {
-//                            ImGuiTextEditCallbackData callback_data;
-//                            memset(&callback_data, 0, sizeof(ImGuiTextEditCallbackData));
-//                            callback_data.EventFlag = event_flag;
-//                            callback_data.Flags = flags;
-//                            callback_data.UserData = callback_user_data;
-//
-//                            callback_data.EventKey = event_key;
-//                            callback_data.Buf = edit_state.TempTextBuffer.Data;
-//                            callback_data.BufTextLen = edit_state.CurLenA;
-//                            callback_data.BufSize = edit_state.BufCapacityA;
-//                            callback_data.BufDirty = false;
-//
-//                            // We have to convert from wchar-positions to UTF-8-positions, which can be pretty slow (an incentive to ditch the ImWchar buffer, see https://github.com/nothings/stb/issues/188)
-//                            ImWchar* text = edit_state.Text.Data;
-//                            const int utf8_cursor_pos = callback_data.CursorPos = ImTextCountUtf8BytesFromStr(text, text + edit_state.StbState.cursor);
-//                            const int utf8_selection_start = callback_data.SelectionStart = ImTextCountUtf8BytesFromStr(text, text + edit_state.StbState.select_start);
-//                            const int utf8_selection_end = callback_data.SelectionEnd = ImTextCountUtf8BytesFromStr(text, text + edit_state.StbState.select_end);
-//
-//                            // Call user code
-//                            callback(&callback_data);
-//
-//                            // Read back what user may have modified
-//                            IM_ASSERT(callback_data.Buf == edit_state.TempBuffer.Data);  // Invalid to modify those fields
-//                            IM_ASSERT(callback_data.BufSize == edit_state.BufCapacityA);
-//                            IM_ASSERT(callback_data.Flags == flags);
-//                            if (callback_data.CursorPos != utf8_cursor_pos)            { edit_state.StbState.cursor = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.CursorPos); edit_state.CursorFollow = true; }
-//                            if (callback_data.SelectionStart != utf8_selection_start)  { edit_state.StbState.select_start = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionStart); }
-//                            if (callback_data.SelectionEnd != utf8_selection_end)      { edit_state.StbState.select_end = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionEnd); }
-//                            if (callback_data.BufDirty)
-//                            {
-//                                IM_ASSERT(callback_data.BufTextLen == (int)strlen(callback_data.Buf)); // You need to maintain BufTextLen if you change the text!
-//                                if (callback_data.BufTextLen > backup_current_text_length && is_resizable)
-//                                    edit_state.TextW.resize(edit_state.TextW.Size + (callback_data.BufTextLen - backup_current_text_length));
-//                                edit_state.CurLenW = ImTextStrFromUtf8(edit_state.TextW.Data, edit_state.TextW.Size, callback_data.Buf, NULL);
-//                                edit_state.CurLenA = callback_data.BufTextLen;  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
-//                                edit_state.CursorAnimReset();
-//                            }
-//                        }
+                    val (eventFlag, eventKey) = when {
+                        (flags has imgui.InputTextFlag.CallbackCompletion) and Key.Tab.isPressed -> Pair(imgui.InputTextFlag.CallbackCompletion.i, Key.Tab)
+                        (flags has imgui.InputTextFlag.CallbackHistory) and Key.UpArrow.isPressed -> Pair(imgui.InputTextFlag.CallbackHistory.i, Key.UpArrow)
+                        (flags has imgui.InputTextFlag.CallbackHistory) and Key.DownArrow.isPressed -> Pair(imgui.InputTextFlag.CallbackHistory.i, Key.DownArrow)
+                        flags has imgui.InputTextFlag.CallbackAlways -> Pair(imgui.InputTextFlag.CallbackAlways.i, Key.Count)
+                        else -> Pair(0, Key.Count)
+                    }
+
+                    if(eventFlag != 0) {
+                        val cbData = TextEditCallbackData()
+                        cbData.eventFlag = eventFlag
+                        cbData.flags = flags
+                        cbData.userData = callbackUserData
+
+                        cbData.eventKey = eventKey
+                        cbData.buf = editState.tempBuffer
+                        cbData.bufTextLen = editState.curLenA
+                        cbData.bufSize = editState.bufCapacityA
+                        cbData.bufDirty = false
+
+                        val cursorPos = editState.state.cursor
+                        val selectionStart = editState.state.selectStart
+                        val selectionEnd = editState.state.selectEnd
+
+                        cbData.cursorPos = cursorPos
+                        cbData.selectionStart = selectionStart
+                        cbData.selectionEnd = selectionEnd
+
+                        callback.invoke(cbData)
+
+                        assert(cbData.bufSize == editState.bufCapacityA)
+                        assert(cbData.flags == flags)
+
+                        if(cbData.cursorPos != cursorPos) { editState.state.cursor = cbData.cursorPos }
+                        if(cbData.selectionStart != selectionStart) { editState.state.selectStart = cbData.selectionStart }
+                        if(cbData.selectionEnd != selectionEnd) { editState.state.selectEnd = cbData.selectionEnd }
+                        if(cbData.bufDirty) {
+                            assert(cbData.bufTextLen == cbData.buf.strlen)
+                            if((cbData.bufTextLen > backupCurrentTextLength) and isResizable)
+                                TODO("pass a reference to buf and bufSize")
+                            //TODO: Hacky
+                            editState.deleteChars(0, cursorPos)
+                            editState.insertChars(0, cbData.buf, 0, cbData.bufTextLen)
+                            editState.cursorAnimReset()
+                        }
+                    }
                 }
                 // Will copy result string if modified
                 if (isEditable && !editState.tempBuffer.cmp(buf)) {
