@@ -12,6 +12,7 @@ import com.jogamp.opengl.GLProfile
 import com.jogamp.opengl.util.Animator
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
+import gln.glClearColor
 import imgui.Cond
 import imgui.Context
 import imgui.ImGui
@@ -143,7 +144,7 @@ private class HelloWorld_jogl : GLEventListener {
 
         // Rendering
         glViewport(0, 0, window.x, window.y)
-        glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3])  // TODO gln
+        glClearColor(clearColor)
         glClear(GL_COLOR_BUFFER_BIT)
 
         ImGui.render()
