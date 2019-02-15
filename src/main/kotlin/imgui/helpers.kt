@@ -13,6 +13,7 @@ import imgui.ImGui.inputText
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
+import imgui.internal.strlen
 
 /** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within
  *  deep-nested code that runs multiple times every frame.
@@ -44,8 +45,8 @@ class TextFilter(defaultFilter: String? = "") {
         val valueChanged = inputText(label, inputBuf)
         if (width != 0f)
             popItemWidth()
-//        if (valueChanged)
-//            Build()
+        if (valueChanged)
+            build()
         return valueChanged
     }
 
@@ -67,26 +68,11 @@ class TextFilter(defaultFilter: String? = "") {
         return false //countGrep == 0
     }
 
-//    void ImGuiTextFilter::Build()
-//    {
-//        Filters.resize(0);
-//        TextRange input_range(InputBuf, InputBuf+strlen(InputBuf));
-//        input_range.split(',', &Filters);
-//
-//        CountGrep = 0;
-//        for (int i = 0; i != Filters.Size; i++)
-//        {
-//            TextRange& f = Filters[i];
-//            while (f.b < f.e && ImCharIsBlankA(f.b[0]))
-//                f.b++;
-//            while (f.e > f.b && ImCharIsBlankA(f.e[-1]))
-//                f.e--;
-//            if (f.empty())
-//                continue;
-//            if (Filters[i].b[0] != '-')
-//                CountGrep += 1;
-//        }
-//    }
+    fun build() {
+        filters.clear()
+        @Suppress("UNCHECKED_CAST") val s = String(inputBuf.copyOf(inputBuf.strlen)).split(",").stream().filter(String::isNotEmpty).toArray() as Array<String>
+        filters.addAll(s)
+    }
 }
 
 /** Helper: Growable text buffer for logging/accumulating text
