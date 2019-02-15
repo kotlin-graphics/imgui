@@ -418,7 +418,6 @@ infix fun DrawData.setup(drawLists: ArrayList<DrawList>) {
     cmdLists.clear()
     if (drawLists.isNotEmpty())
         cmdLists += drawLists
-    cmdListsCount = drawLists.size
     totalIdxCount = 0
     totalVtxCount = 0
     displayPos put 0f
