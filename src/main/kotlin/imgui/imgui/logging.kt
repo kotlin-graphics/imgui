@@ -79,7 +79,7 @@ interface imgui_logging {
             return
         val window = g.currentWindow!!
 
-        file_ ?: g.logFile ?: return
+        g.logFile = file_ ?: g.logFile ?: return
 
         g.logEnabled = true
         g.logStartDepth = window.dc.treeDepth
