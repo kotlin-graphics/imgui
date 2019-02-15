@@ -430,7 +430,7 @@ infix fun Int.shl(b: Dir) = shl(b.i)
 /** User fill ImGuiio.KeyMap[] array with indices into the ImGuiio.KeysDown[512] array  */
 enum class Key {
     Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
-    Space, Enter, Escape, A, C, V, X, Y, Z;
+    Space, Enter, Escape, A, C, V, X, Y, Z, Count;
 
     companion object {
         val COUNT = values().size

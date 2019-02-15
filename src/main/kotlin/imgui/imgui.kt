@@ -191,6 +191,8 @@ typealias WindowFlags = Int
 typealias InputTextCallback = (InputTextCallbackData) -> Int
 typealias SizeCallback = (SizeCallbackData) -> Unit
 
+typealias TextEditCallbackData = InputTextCallbackData
+
 // dummy main
 fun main(args: Array<String>) {
 }
