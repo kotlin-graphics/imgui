@@ -529,7 +529,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
 
     // Optional: Access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
-    var getClipboardTextFn: ((userData: Any) -> Unit)? = null
+    var getClipboardTextFn: ((userData: Any) -> String)? = null
     var setClipboardTextFn: ((userData: Any, text: String) -> Unit)? = null
     lateinit var clipboardUserData: Any
 
