@@ -24,6 +24,7 @@ import imgui.ImGui.inputFloat
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
+import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
@@ -165,12 +166,12 @@ object StyleEditor {
                         logToClipboard()
                     else
                         TODO() //logToTTY()
-                    //ImGui::LogText("ImVec4* colors = ImGui::GetStyle().Colors;" IM_NEWLINE); TODO
+                    logText("val colors = ImGui.style.colors\n")
                     for (i in Col.values()) {
                         val col = style.colors[i]
                         val name = i.name
                         if (!outputOnlyModified || col != ref!!.colors[i])
-                            TODO()//logText("colors[ImGuiCol_%s]%*s= ImVec4(%.2ff, %.2ff, %.2ff, %.2ff);" IM_NEWLINE, name, 23 - (int)strlen(name), "", col.x, col.y, col.z, col.w);
+                            logText("colors[Col.%s.i] = Vec4(%.2f, %.2f, %.2f, %.2f)\n", name, col.x, col.y, col.z, col.w)
                     }
                     logFinish()
                 }
