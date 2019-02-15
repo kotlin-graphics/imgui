@@ -51,27 +51,35 @@ class TextFilter(defaultFilter: String? = "") {
     }
 
     fun passFilter(text: String, textEnd: Int = 0): Boolean {
+        val check = if(textEnd > 0) text.substring(0, textEnd) else text
 
         if (filters.isEmpty()) return true
         if (filters.stream().filter(String::isNotEmpty).count() == 0L) return true
+
+        var passSub = false
 
         for (f in filters) {
             if (f.isEmpty()) continue
             if (f[0] == '-') {
                 // Subtract
-                if (text.contains(f.substring(1)))
+                if (check.contains(f.substring(1)))
                     return false
-            } else if(text.contains(f))  // Grep
+                else
+                    passSub = true
+            } else if(check.contains(f))  // Grep
                 return true
         }
         // Implicit * grep
-        return false //countGrep == 0
+        return passSub //countGrep == 0
     }
 
     fun build() {
         filters.clear()
-        @Suppress("UNCHECKED_CAST") val s = String(inputBuf.copyOf(inputBuf.strlen)).split(",").stream().filter(String::isNotEmpty).toArray() as Array<String>
-        filters.addAll(s)
+        val s = String(inputBuf.copyOf(inputBuf.strlen)).split(",").stream().filter(String::isNotEmpty).toArray()
+        for(a in s) {
+            if(a is String)
+                filters.add(a)
+        }
     }
 }
 
