@@ -1017,7 +1017,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         cmdBuffer.last().elemCount += idxCount
 
         val vtxBufferOldSize = vtxBuffer.size
-        for (v in 0 until vtxCount) // TODO check negative
+        for (v in 0 until vtxCount)
             if (vtxCount > 0) vtxBuffer.add(DrawVert())
             else vtxBuffer.removeAt(vtxBuffer.lastIndex)
         _vtxWritePtr = vtxBufferOldSize
