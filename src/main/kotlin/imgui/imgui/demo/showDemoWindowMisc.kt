@@ -3,6 +3,7 @@ package imgui.imgui.demo
 import glm_.i
 import imgui.Col
 import imgui.ImGui.bullet
+import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.captureKeyboardFromApp
 import imgui.ImGui.getMouseDragDelta
@@ -29,6 +30,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.windowDrawList
 import imgui.MouseCursor
+import imgui.TextFilter
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.treeNode
 import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
@@ -51,18 +53,16 @@ object showDemoWindowMisc {
 
     operator fun invoke() {
 
-        collapsingHeader("Filtering TODO") {
-            //            static ImGuiTextFilter filter;
-//            ImGui::Text("Filter usage:\n"
-//                    "  \"\"         display all lines\n"
-//            "  \"xxx\"      display lines containing \"xxx\"\n"
-//            "  \"xxx,yyy\"  display lines containing \"xxx\" or \"yyy\"\n"
-//            "  \"-xxx\"     hide lines containing \"xxx\"");
-//            filter.Draw();
-//            const char * lines [] = { "aaa1.c", "bbb1.c", "ccc1.c", "aaa2.cpp", "bbb2.cpp", "ccc2.cpp", "abc.h", "hello, world" };
-//            for (int i = 0; i < IM_ARRAYSIZE(lines); i++)
-//            if (filter.PassFilter(lines[i]))
-//                ImGui::BulletText("%s", lines[i]);
+        collapsingHeader("Filtering") {
+            val filter = TextFilter()
+            text("Filter usage:\n" +
+                    "  \"\"         display all lines\n" +
+            "  \"xxx\"      display lines containing \"xxx\"\n" +
+            "  \"xxx,yyy\"  display lines containing \"xxx\" or \"yyy\"\n" +
+            "  \"-xxx\"     hide lines containing \"xxx\"")
+            filter.draw(width = 100.0f)
+            val lines = arrayListOf("aaa1.c", "bbb1.c", "ccc1.c", "aaa2.cpp", "bbb2.cpp", "ccc2.cpp", "abc.h", "hello, world")
+            lines.stream().filter{ filter.passFilter(it) }.forEach { bulletText(it) }
         }
 
         collapsingHeader("Inputs, Navigation & Focus") {
