@@ -968,14 +968,18 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     /** Create a clone of the CmdBuffer/IdxBuffer/VtxBuffer. */
-    fun cloneOutput() {
-        TODO()
-//        val dst = DrawList(null)
-//        dst.cmdBuffer = cmdBuffer.clone()
-//        dst.idxBuffer = idxBuffer
-//        dst.vtxBuffer = vtxBuffer
-//        dst.flags = flags
-//        return dst
+    fun cloneOutput(): DrawData? {
+        val drawData = ImGui.drawData ?: return null
+        val ret = DrawData()
+
+        ret.cmdLists.addAll(drawData.cmdLists)
+        ret.displayPos = drawData.displayPos
+        ret.displaySize = drawData.displaySize
+        ret.totalIdxCount = drawData.totalIdxCount
+        ret.totalVtxCount = drawData.totalVtxCount
+        ret.valid = drawData.valid
+
+        return ret
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -1209,8 +1213,6 @@ class DrawData {
     var valid = false
     /** Array of ImDrawList* to render. The ImDrawList are owned by ImGuiContext and only pointed to from here. */
     val cmdLists = ArrayList<DrawList>()
-    /** Number of ImDrawList* to render */
-    var cmdListsCount = 0   // TODO remove?
     /** For convenience, sum of all DrawList's IdxBuffer.Size   */
     var totalIdxCount = 0
     /** For convenience, sum of all DrawList's VtxBuffer.Size   */
@@ -1228,7 +1230,6 @@ class DrawData {
         cmdLists.clear()
         totalIdxCount = 0
         totalVtxCount = 0
-        cmdListsCount = 0
         displayPos put 0f
         displaySize put 0f
     }
