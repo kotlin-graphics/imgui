@@ -434,10 +434,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.inputTextState.initialText = charArrayOf()
         g.inputTextState.tempBuffer = charArrayOf()
 
-//        if (g.logFile != null && g.logFile != stdout) { TODO
-//            fclose(g.LogFile)
-//            g.LogFile = NULL
-//        }
+        if (g.logFile != null) {
+            g.logFile = null
+        }
         g.logClipboard.setLength(0)
 
         g.initialized = false
