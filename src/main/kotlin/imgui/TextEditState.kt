@@ -125,6 +125,9 @@ class TextEditState {
 
     fun deleteChars(pos: Int, n: Int) {
 
+        if(n == 0)
+            return
+
         var dst = pos
 
         // We maintain our buffer length in both UTF-8 and wchar formats
