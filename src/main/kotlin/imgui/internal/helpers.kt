@@ -363,7 +363,6 @@ val CharArray.strlen: Int
         return i
     }
 
-// TODO precision? i.e: 02X
 fun String.scanHex(ints: IntArray, count: Int = ints.size, precision: Int) {
     var c = 0
     for (i in 0 until count) {
