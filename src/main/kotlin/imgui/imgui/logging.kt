@@ -92,13 +92,11 @@ interface imgui_logging {
         if (!g.logEnabled)
             return
 
-        val strArgs = Array(args.size) { args[it].toString() }
-
         if (g.logFile != null) {
             val writer = FileWriter(g.logFile, true)
-            writer.write(String.format(fmt, *strArgs))
+            writer.write(String.format(fmt, *args))
         } else {
-            g.logClipboard.append(fmt.format(*strArgs))
+            g.logClipboard.append(fmt.format(*args))
         }
     }
 }
