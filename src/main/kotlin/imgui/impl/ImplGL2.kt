@@ -86,7 +86,7 @@ class ImplGL2 : LwjglRendererI {
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastArrayBuffer)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementArrayBuffer)
 
         return checkError("createDeviceObject")
     }
