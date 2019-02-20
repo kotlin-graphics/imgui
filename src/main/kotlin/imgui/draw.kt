@@ -970,16 +970,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Create a clone of the CmdBuffer/IdxBuffer/VtxBuffer. */
     fun cloneOutput(): DrawData? {
         val drawData = ImGui.drawData ?: return null
-        val ret = DrawData()
-
-        ret.cmdLists.addAll(drawData.cmdLists)
-        ret.displayPos = drawData.displayPos
-        ret.displaySize = drawData.displaySize
-        ret.totalIdxCount = drawData.totalIdxCount
-        ret.totalVtxCount = drawData.totalVtxCount
-        ret.valid = drawData.valid
-
-        return ret
+        return drawData.clone()
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -1258,5 +1249,18 @@ class DrawData {
                 cmd.clipRect.timesAssign(scale.x, scale.y, scale.x, scale.y)
             }
         }
+    }
+
+    fun clone(): DrawData {
+        val ret = DrawData()
+
+        ret.cmdLists.addAll(cmdLists)
+        ret.displayPos = displayPos
+        ret.displaySize = displaySize
+        ret.totalIdxCount = totalIdxCount
+        ret.totalVtxCount = totalVtxCount
+        ret.valid = valid
+
+        return ret
     }
 }

@@ -13,6 +13,7 @@ import imgui.Key
 import imgui.impl.windowsIme.imeListener
 import kool.cap
 import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.opengl.GL
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
 import uno.glfw.*
@@ -34,13 +35,13 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
         fun shutdown() = instance.shutdown()
     }
     
-    val implGl3: ImplGL3
+    val implGl: LwjglRendererI
     var time = 0.0
     val mouseCursors = LongArray(MouseCursor.COUNT)
 
     var vrCursorPos: Vec2? = null
 
-    enum class GlfwClientApi { OpenGL, Vulkan }
+    enum class GlfwClientApi { OpenGL, OpenGL3, OpenGL2, Vulkan }
 
     val mouseButtonCallback: MouseButtonCallbackT = { button: Int, action: Int, _: Int ->
         if (action == GLFW_PRESS && button in 0..2)
@@ -137,15 +138,24 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
         }
 
         when(clientApi) {
-            GlfwClientApi.OpenGL -> implGl3 = ImplGL3()
+            GlfwClientApi.OpenGL3 -> implGl = ImplGL3()
+            GlfwClientApi.OpenGL2 -> implGl = ImplGL2()
+            GlfwClientApi.OpenGL -> {
+                val glcaps = GL.getCapabilities()
+                when {
+                    glcaps.OpenGL32 -> implGl = ImplGL3()
+                    (Platform.get() == Platform.WINDOWS) and glcaps.OpenGL30 -> implGl = ImplGL3()
+                    else -> implGl = ImplGL2()
+                }
+            }
             GlfwClientApi.Vulkan -> TODO() //ImplVk.init()
         }
     }
 
     fun newFrame() {
 
-        if (io.fonts.texId == 0 && clientApi == GlfwClientApi.OpenGL)
-            implGl3.createDeviceObjects()
+        if (fontTexture[0] == 0 && clientApi != GlfwClientApi.Vulkan)
+            implGl.createDeviceObjects()
 
         assert(io.fonts.isBuilt) { "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame()." }
 
@@ -210,7 +220,7 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
 
     fun renderDrawData(drawData: DrawData) {
         when(clientApi) {
-            GlfwClientApi.OpenGL -> implGl3.renderDrawData(drawData)
+            GlfwClientApi.OpenGL, GlfwClientApi.OpenGL3, GlfwClientApi.OpenGL2 -> implGl.renderDrawData(drawData)
             GlfwClientApi.Vulkan -> TODO()
         }
     }
@@ -264,7 +274,7 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
         mouseCursors.fill(NULL)
 
         when (clientApi) {
-            GlfwClientApi.OpenGL -> implGl3.destroyDeviceObjects()
+            GlfwClientApi.OpenGL, GlfwClientApi.OpenGL3, GlfwClientApi.OpenGL2 -> implGl.destroyDeviceObjects()
             GlfwClientApi.Vulkan -> TODO() //ImplVk.invalidateDeviceObjects()
         }
 

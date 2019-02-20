@@ -40,7 +40,7 @@ private class HelloWorld_lwjgl {
     init {
         glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
 
-        window = GlfwWindow(1280, 720, "Dear ImGui Lwjgl OpenGL3 example").apply {
+        window = GlfwWindow(1280, 720, "Dear ImGui Lwjgl OpenGL example").apply {
             init()
         }
 
