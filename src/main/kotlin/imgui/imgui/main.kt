@@ -28,6 +28,7 @@ import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
 import imgui.internal.*
+import org.lwjgl.system.Platform
 import kotlin.math.max
 import kotlin.math.min
 import imgui.ConfigFlag as Cf
@@ -379,7 +380,7 @@ interface imgui_main {
 
     /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
      *  ::newFrame()   */
-    val drawData get() = g.drawData.takeIf { it.valid }
+    val drawData get() = if(Platform.get() == Platform.MACOSX) g.drawData.clone().takeIf { it.valid } else g.drawData.takeIf { it.valid }
 
     companion object {
 
