@@ -7,7 +7,10 @@ import com.jogamp.newt.event.MouseListener
 import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.GL
 import com.jogamp.opengl.GL2ES3.*
+import com.jogamp.opengl.GL2GL3.GL_FILL
+import com.jogamp.opengl.GL2GL3.GL_POLYGON_MODE
 import com.jogamp.opengl.GL3
+import com.jogamp.opengl.GL3ES3.GL_SAMPLER_BINDING
 import glm_.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
@@ -19,9 +22,6 @@ import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
 import kool.*
 import kool.set
-import org.lwjgl.opengl.GL11.GL_FILL
-import org.lwjgl.opengl.GL11.GL_POLYGON_MODE
-import org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING
 
 object JoglGL3 {
 
