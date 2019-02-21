@@ -1711,7 +1711,7 @@ class TabBar {
         window.dc.cursorPos.put(barRect.min.x - style.framePadding.y, barRect.min.y)
         barRect.min.x += tabListPopupButtonWidth
 
-        val arrowCol = style.colors[Col.Text]
+        val arrowCol = Vec4(style.colors[Col.Text])
         arrowCol.w *= 0.5f
         pushStyleColor(Col.Text, arrowCol)
         pushStyleColor(Col.Button, Vec4())
