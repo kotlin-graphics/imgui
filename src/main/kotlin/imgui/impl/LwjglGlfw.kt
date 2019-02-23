@@ -142,10 +142,11 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
             GlfwClientApi.OpenGL2 -> implGl = ImplGL2()
             GlfwClientApi.OpenGL -> {
                 val glcaps = GL.getCapabilities()
-                when {
-                    glcaps.OpenGL32 -> implGl = ImplGL3()
-                    (Platform.get() == Platform.WINDOWS) and glcaps.OpenGL30 -> implGl = ImplGL3()
-                    else -> implGl = ImplGL2()
+                implGl = when {
+                    glcaps.OpenGL32 -> ImplGL3()
+                    (Platform.get() == Platform.WINDOWS) and glcaps.OpenGL30 -> ImplGL3()
+                    glcaps.OpenGL20 -> ImplGL2()
+                    else -> throw RuntimeException("JVM ImGui Requires OpenGL 2.0, you do not support that!")
                 }
             }
             GlfwClientApi.Vulkan -> TODO() //ImplVk.init()
