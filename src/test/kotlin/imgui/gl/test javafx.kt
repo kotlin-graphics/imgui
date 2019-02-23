@@ -48,42 +48,12 @@ class HelloWorld_jfx {
         while(!::stage.isInitialized)
             Thread.sleep(1)
 
-        val s = ImplJFX(stage, canvas, true).also { it.createDeviceObjects() }
-
-        /*val imguiC = ImGui.style.colors[Col.FrameBg]
-
-        val vtc = intArrayOf(256, 0, 0, 0, imguiC.toRGBA(), 512, 512, 0, 0, imguiC.toRGBA(), 256, 512, 0, 0, imguiC.toRGBA())
-        val idxBArr = intArrayOf(1, 2, 3)
-
-        for(tri in 0 until idxBArr.size / 3) {
-            val offset = tri * 15
-            gc.fillRule = FillRule.NON_ZERO
-            val col1 = vtc[offset + 4]
-            gc.beginPath()
-            System.out.printf("%d %d %d %f", (col1 shr 24), (col1 shr 16) and 0xFF, (col1 shr 8) and 0xFF, (col1 and 0xFF).toDouble() / 255.0)
-            gc.fill = /*JFXColor(1.0, 1.0, 0.0, 1.0)*/javafx.scene.paint.Color.rgb((col1 shr 24), (col1 shr 16) and 0xFF, (col1 shr 8) and 0xFF, (col1 and 0xFF).toDouble() / 255.0)
-            gc.moveTo(vtc[offset].toDouble(), vtc[offset + 1].toDouble())
-            gc.lineTo(vtc[offset + 5].toDouble(), vtc[offset + 6].toDouble())
-            gc.lineTo(vtc[offset + 10].toDouble(), vtc[offset + 11].toDouble())
-            gc.lineTo(vtc[offset].toDouble(), vtc[offset + 1].toDouble())
-            gc.closePath()
-            gc.fill()
-        }*/
-
-        var first = true
-
-        var frame = 0
+        val s = ImplJFX(stage, canvas, true)
 
         while(stage.isShowing) {
 
             s.newFrame(clearColor)
             ImGui.newFrame()
-            if (first)
-                s.createDeviceObjects()
-
-            first = false
-
-            if(!io.fonts.isBuilt) { throw RuntimeException("Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame().") }
 
             ImGui.run {
 
