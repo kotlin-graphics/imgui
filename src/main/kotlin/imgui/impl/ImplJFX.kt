@@ -143,8 +143,6 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
         gc.lineCap = StrokeLineCap.BUTT
         gc.lineJoin = StrokeLineJoin.MITER
         gc.lineWidth = 0.0
-        var pt = 0
-        val pos = drawData.displayPos
         val texPr = texture.pixelReader
         val pw = gc.pixelWriter
         for (cmdList in drawData.cmdLists) {
