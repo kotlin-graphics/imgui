@@ -154,9 +154,12 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
                     cb(cmdList, cmd)
                 else {
                     for (tri in 0 until cmd.elemCount / 3) {
-                        val vtx1 = cmdList.vtxBuffer[cmdList.idxBuffer[(tri * 3) + idxBufferOffset]]
-                        val vtx2 = cmdList.vtxBuffer[cmdList.idxBuffer[(tri * 3) + idxBufferOffset + 1]]
-                        val vtx3 = cmdList.vtxBuffer[cmdList.idxBuffer[(tri * 3) + idxBufferOffset + 2]]
+                        val baseIdx = (tri * 3) + idxBufferOffset
+                        val idx1 = cmdList.idxBuffer[baseIdx]
+                        val vtx1 = cmdList.vtxBuffer[idx1]
+                        val vtx2 = cmdList.vtxBuffer[cmdList.idxBuffer[baseIdx + 1]]
+                        val idx3 = cmdList.idxBuffer[baseIdx + 2]
+                        val vtx3 = cmdList.vtxBuffer[idx3]
 
                         val col1 = vtx1.col
 
@@ -171,17 +174,20 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
                                     (col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK,
                                     (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt()).opacity)
                             gc.fill = x
-                            gc.stroke = x.let { JFXColor(it.red, it.green, it.blue, it.opacity / (OPACITY_MULTIPLIER * (it.red + it.green + it.blue + OPACITY_RECIPROCAL))) }
-                            //if you are using this backend and see many unsightly lines, play around with OPACITY_MULTIPLIER. this configuration was chosen as it appears to work best.
                             gc.fillPolygon(doubleArrayOf(vtx1.pos.x.toDouble(), vtx2.pos.x.toDouble(), vtx3.pos.x.toDouble()),
                                     doubleArrayOf(vtx1.pos.y.toDouble(), vtx2.pos.y.toDouble(), vtx3.pos.y.toDouble()), 3)
 
+                            //check if it borders the next triangle
                             if (tri + 1 < cmd.elemCount / 3) {
-                                val vtx4 = cmdList.vtxBuffer[cmdList.idxBuffer[(tri * 3) + idxBufferOffset + 3]]
-                                val vtx5 = cmdList.vtxBuffer[cmdList.idxBuffer[(tri * 3) + idxBufferOffset + 4]]
-                                if (vtx4.pos == vtx1.pos) {
-                                    if (vtx5.pos == vtx3.pos) {
-                                        gc.strokeLine(vtx4.pos.x.d, vtx4.pos.y.d, vtx5.pos.x.d, vtx5.pos.y.d)
+                                val idx4 = cmdList.idxBuffer[baseIdx + 3]
+                                if (idx4 == idx1) {
+                                    val idx5 = cmdList.idxBuffer[baseIdx + 4]
+                                    if (idx5 == idx3) {
+                                        //if it borders, we need to draw a line between the two
+                                        //this is done this way rather than drawing both outlines of each triangle because that will draw this line twice. this produces higher visual quality
+                                        gc.stroke = x.let { JFXColor(it.red, it.green, it.blue, it.opacity / (OPACITY_MULTIPLIER * (it.red + it.green + it.blue + OPACITY_RECIPROCAL))) }
+                                        //if you are using this backend and see many unsightly lines, play around with OPACITY_MULTIPLIER. this configuration was chosen as it appears to work best.
+                                        gc.strokeLine(vtx1.pos.x.d, vtx1.pos.y.d, vtx3.pos.x.d, vtx3.pos.y.d)
                                     }
                                 }
                             }
