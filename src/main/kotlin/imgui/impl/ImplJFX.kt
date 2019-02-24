@@ -111,9 +111,9 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
         texture = createTex
     }
 
-    private lateinit var clearColor: Vec4
+    private var clearColor: Vec4? = null
 
-    fun newFrame(clearColor: Vec4) {
+    fun newFrame(clearColor: Vec4?) {
         this.clearColor = clearColor
 
         if(!::texture.isInitialized)
@@ -301,8 +301,10 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
     }
 
     private fun clearScreen(gc: GraphicsContext) {
+        if(clearColor == null)
+            return
         gc.clearRect(0.0, 0.0, gc.canvas.width, gc.canvas.height)
-        gc.fill = JFXColor(clearColor.r.d, clearColor.g.d, clearColor.b.d, clearColor.a.d)
+        gc.fill = JFXColor(clearColor!!.r.d, clearColor!!.g.d, clearColor!!.b.d, clearColor!!.a.d)
         gc.fillRect(0.0, 0.0, gc.canvas.width, gc.canvas.height)
     }
 
