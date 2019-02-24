@@ -15,6 +15,7 @@ import javafx.scene.canvas.GraphicsContext
 import javafx.scene.effect.BlendMode
 import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
+import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.shape.FillRule
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 typealias JFXColor = javafx.scene.paint.Color
 
 const val COLOR_SIZE_MASK = 0xFF
-const val OPACITY_MULTIPLIER = 2.2 //System gamma correction?
+const val OPACITY_MULTIPLIER = 2.0
 const val OPACITY_RECIPROCAL = 1.0 / OPACITY_MULTIPLIER
 
 class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
@@ -73,9 +74,27 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
             mousePos = Vec2d(it.sceneX, it.sceneY)
         }
 
+        val keyListener = EventHandler<KeyEvent> {
+            val key = it.code.code
+            with(io) {
+                if (key in keysDown.indices)
+                    if (it.eventType == KeyEvent.KEY_PRESSED)
+                        keysDown[key] = true
+                    else if (it.eventType == KeyEvent.KEY_RELEASED)
+                        keysDown[key] = false
+
+                // Modifiers are not reliable across systems
+                keyCtrl = it.isControlDown
+                keyShift = it.isShiftDown
+                keyAlt = it.isAltDown
+                keySuper = it.isMetaDown
+            }
+        }
+
         stage.addEventHandler(MouseEvent.MOUSE_PRESSED, mousePressListener)
         stage.addEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleaseListener)
         stage.addEventHandler(MouseEvent.MOUSE_MOVED, mouseMoveListener)
+        stage.addEventHandler(KeyEvent.KEY_PRESSED, keyListener)
 
         val (pixels, size) = io.fonts.getTexDataAsAlpha8()
 
