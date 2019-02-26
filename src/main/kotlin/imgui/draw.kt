@@ -60,7 +60,7 @@ class DrawCmd {
     }
 }
 
-typealias DrawIdx = Int // TODO check
+typealias DrawIdx = Int
 
 /** Vertex layout
  *
