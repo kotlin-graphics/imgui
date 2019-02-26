@@ -129,6 +129,10 @@ class ImplGL2 : LwjglRendererI {
     }
 
     override fun destroyDeviceObjects() {
+        glDeleteBuffers(bufferName)
+
+        if (program.i >= 0) glDeleteProgram(program.i)
+
         destroyFontsTexture()
     }
 
