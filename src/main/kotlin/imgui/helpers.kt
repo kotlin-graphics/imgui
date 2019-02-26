@@ -17,10 +17,19 @@ import imgui.internal.strlen
 
 /** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within
  *  deep-nested code that runs multiple times every frame.
- *  Usage: static ImGuiOnceUponAFrame oaf; if (oaf) ImGui::Text("This will be called only once per frame"); */
+ *  Usage: val oaf = OnceUponAFrame()
+ *  if(oaf()) {
+ *      ImGui.text("This will be called only once per frame")
+ *  }
+ */
 class OnceUponAFrame {
-    init {
-        TODO()
+    private var refFrame = -1
+    operator fun invoke(): Boolean {
+        val currentFrame = ImGui.frameCount
+        if(refFrame == currentFrame)
+            return false
+        refFrame = currentFrame
+        return true
     }
 }
 
