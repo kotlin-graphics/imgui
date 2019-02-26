@@ -779,6 +779,7 @@ class FontAtlas {
         texPixelsAlpha8 = Buffer(texSize.x * texSize.y)
         spc.pixels = texPixelsAlpha8!!
         spc.height = texSize.y
+        spc.width = texSize.x
 
         // 8. Render/rasterize font characters into the texture
         for (srcIdx in srcTmpArray.indices) {
