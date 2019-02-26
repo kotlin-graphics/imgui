@@ -119,7 +119,7 @@ var STBTTPackedchar.yOff2: Float
 var STBTTPackContext.packInfo: STBRPContext
     get() {
         if (Private.rpCtx == null)
-            Private.rpCtx = STBRPContext.create(memGetAddress(address() + org.lwjgl.system.Pointer.POINTER_SIZE))
+            Private.rpCtx = STBRPContext.create(memGetAddress(adr + STBTTPackContext.PACK_INFO))
         return Private.rpCtx!!
     }
     set(value) {
@@ -128,9 +128,13 @@ var STBTTPackContext.packInfo: STBRPContext
 var STBTTPackContext.pixels: ByteBuffer
     get() = Private.pixels!!
     set(value) {
-        memPutAddress(address() + 2 * POINTER_SIZE + 6 * Int.BYTES, memAddress(value))
+        memPutAddress(adr + STBTTPackContext.PIXELS, memAddress(value))
         Private.pixels = value
     }
+var STBTTPackContext.width: Int
+    get() = STBTTPackContext.nwidth(adr)
+    set(value) = memPutInt(adr + STBTTPackContext.WIDTH, value)
+
 var STBTTPackContext.height: Int
     get() = STBTTPackContext.nheight(adr)
     set(value) = memPutInt(adr + STBTTPackContext.HEIGHT, value)
