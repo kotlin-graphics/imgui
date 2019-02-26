@@ -14,6 +14,7 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
 import imgui.internal.strlen
+import java.util.stream.Collectors
 
 /** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within
  *  deep-nested code that runs multiple times every frame.
@@ -84,11 +85,7 @@ class TextFilter(defaultFilter: String? = "") {
 
     fun build() {
         filters.clear()
-        val s = String(inputBuf.copyOf(inputBuf.strlen)).split(",").stream().filter(String::isNotEmpty).toArray()
-        for(a in s) {
-            if(a is String)
-                filters.add(a)
-        }
+        filters.addAll(String(inputBuf.copyOf(inputBuf.strlen)).split(",").stream().filter(String::isNotEmpty).collect(Collectors.toList()))
     }
 }
 
