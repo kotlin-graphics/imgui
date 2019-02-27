@@ -14,13 +14,23 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
 import imgui.internal.strlen
+import java.util.stream.Collectors
 
 /** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within
  *  deep-nested code that runs multiple times every frame.
- *  Usage: static ImGuiOnceUponAFrame oaf; if (oaf) ImGui::Text("This will be called only once per frame"); */
+ *  Usage: val oaf = OnceUponAFrame()
+ *  if(oaf()) {
+ *      ImGui.text("This will be called only once per frame")
+ *  }
+ */
 class OnceUponAFrame {
-    init {
-        TODO()
+    private var refFrame = -1
+    operator fun invoke(): Boolean {
+        val currentFrame = ImGui.frameCount
+        if(refFrame == currentFrame)
+            return false
+        refFrame = currentFrame
+        return true
     }
 }
 
@@ -75,11 +85,7 @@ class TextFilter(defaultFilter: String? = "") {
 
     fun build() {
         filters.clear()
-        val s = String(inputBuf.copyOf(inputBuf.strlen)).split(",").stream().filter(String::isNotEmpty).toArray()
-        for(a in s) {
-            if(a is String)
-                filters.add(a)
-        }
+        filters.addAll(String(inputBuf.copyOf(inputBuf.strlen)).split(",").stream().filter(String::isNotEmpty).collect(Collectors.toList()))
     }
 }
 
