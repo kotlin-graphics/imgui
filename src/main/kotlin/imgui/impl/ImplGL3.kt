@@ -1,25 +1,23 @@
 package imgui.impl
 
-import glm_.BYTES
-import glm_.f
-import glm_.glm
-import glm_.i
+import gli_.gl
+import glm_.*
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4
-import gln.buffer.BufferTarget
-import gln.buffer.Usage
+import gln.*
+import gln.BufferTarget.Companion.ARRAY
+import gln.BufferTarget.Companion.ELEMENT_ARRAY
+import gln.ShaderType.Companion.FRAGMENT_SHADER
+import gln.ShaderType.Companion.VERTEX_SHADER
+import gln.TextureTarget.Companion._2D
+import gln.Usage.Companion.STREAM_DRAW
+import gln.buffer.GlBufferDsl
 import gln.buffer.glBufferData
 import gln.buffer.glBufferSubData
-import gln.checkError
-import gln.glGetVec4i
-import gln.glScissor
-import gln.glViewport
 import gln.glf.semantic
-import gln.objects.GlProgram
-import gln.objects.GlShader
-import gln.program.usingProgram
-import gln.texture.initTexture2d
+import gln.objects.*
+import gln.texture.TexFilter
 import gln.uniform.glUniform
+import gln.vertexArray.GlVertexArray
 import gln.vertexArray.glBindVertexArray
 import gln.vertexArray.glVertexAttribPointer
 import gln.vertexArray.withVertexArray
@@ -30,12 +28,16 @@ import imgui.DrawVert
 import imgui.ImGui.io
 import kool.*
 import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GL15C
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL33C
 import org.lwjgl.opengl.GL45C
-import gln.gl20 as gl
+import java.nio.ByteBuffer
+import java.nio.IntBuffer
+import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KProperty0
 
-class ImplGL3: LwjglRendererI {
+class ImplGL3 : LwjglRendererI {
     companion object {
         fun renderDrawData(drawData: DrawData) = LwjglGlfw.instance.renderDrawData(drawData)
     }
@@ -47,9 +49,9 @@ class ImplGL3: LwjglRendererI {
     var CLIP_ORIGIN = false
 
     val mouseJustPressed = BooleanArray(5)
-    val bufferName = IntBuffer<Buffer>()
-    val vaoName = IntBuffer(1)
-    val fontTexture = IntBuffer(1)
+    val buffers = GlBuffers<Buffer>()
+    var vao = GlVertexArray()
+    var fontTexture = GlTexture()
 
     override fun createDeviceObjects(): Boolean {
 
@@ -65,41 +67,45 @@ class ImplGL3: LwjglRendererI {
         val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
 
         program = GlProgram.create().apply {
-            val vertHandle = GlShader.createFromSource(vertexShader, VERTEX_SHADER)
-            val fragHandle = GlShader.createFromSource(fragmentShader, FRAGMENT_SHADER)
-            this += vertHandle
-            this += fragHandle
-            glBindAttribLocation(i, semantic.attr.POSITION, "Position")
-            glBindAttribLocation(i, semantic.attr.TEX_COORD, "UV")
-            glBindAttribLocation(i, semantic.attr.COLOR, "Color")
-            glBindFragDataLocation(i, semantic.frag.COLOR, "outColor")
-            glLinkProgram(i)
-            glDetachShader(i, vertHandle.i)
-            glDetachShader(i, fragHandle.i)
-            glDeleteShader(vertHandle.i)
-            glDeleteShader(fragHandle.i)
+            val vertHandle = GlShader.createFromSource(VERTEX_SHADER, vertexShader)
+            val fragHandle = GlShader.createFromSource(FRAGMENT_SHADER, fragmentShader)
+            attach(vertHandle)
+            attach(fragHandle)
+            bindAttribLocation(semantic.attr.POSITION, "Position")
+            bindAttribLocation(semantic.attr.TEX_COORD, "UV")
+            bindAttribLocation(semantic.attr.COLOR, "Color")
+            bindFragDataLocation(semantic.frag.COLOR, "outColor")
+            link()
+            detach(vertHandle)
+            detach(fragHandle)
+            vertHandle.delete()
+            fragHandle.delete()
         }
-        usingProgram(program.i) {
+        program.use {
             matUL = "mat".uniform
             "Texture".unit = semantic.sampler.DIFFUSE
         }
 
-        glGenBuffers(bufferName)
+        GlVertexArray.gen(::vao).bound {
 
-        glGenVertexArrays(vaoName)
-        withVertexArray(vaoName) {
-            glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-            glBufferData(BufferTarget.Array, vtxSize, Usage.StreamDraw)
-            glEnableVertexAttribArray(semantic.attr.POSITION)
-            glEnableVertexAttribArray(semantic.attr.TEX_COORD)
-            glEnableVertexAttribArray(semantic.attr.COLOR)
+            buffers.gen {
 
-            glVertexAttribPointer(semantic.attr.POSITION, 2, GL_FLOAT, false, DrawVert.size, 0)
-            glVertexAttribPointer(semantic.attr.TEX_COORD, 2, GL_FLOAT, false, DrawVert.size, Vec2.size)
-            glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
+                Buffer.Vertex.bound(ARRAY) {
 
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-            glBufferData(BufferTarget.ElementArray, idxSize, Usage.StreamDraw)
+                    data(vtxSize, STREAM_DRAW)
+
+                    glVertexAttribPointer(semantic.attr.POSITION, 2, GL_FLOAT, false, DrawVert.size, 0)
+                    glVertexAttribPointer(semantic.attr.TEX_COORD, 2, GL_FLOAT, false, DrawVert.size, Vec2.size)
+                    glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
+                }
+                glEnableVertexAttribArray(semantic.attr.POSITION)
+                glEnableVertexAttribArray(semantic.attr.TEX_COORD)
+                glEnableVertexAttribArray(semantic.attr.COLOR)
+
+                Buffer.Element.bind(ELEMENT_ARRAY) {
+                    data(idxSize, STREAM_DRAW)
+                }
+            }
         }
 
         createFontsTexture()
@@ -117,7 +123,7 @@ class ImplGL3: LwjglRendererI {
     /** Build texture atlas */
     private fun createFontsTexture(): Boolean {
 
-        if(io.fonts.isBuilt)
+        if (io.fonts.isBuilt)
             return true
 
         /*  Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely
@@ -128,15 +134,14 @@ class ImplGL3: LwjglRendererI {
         // Upload texture to graphics system
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
 
-        initTexture2d(fontTexture) {
-            minFilter = linear
-            magFilter = linear
+        GlTexture.gen(::fontTexture).bound(_2D) {
+            minMagFilter = TexFilter.LINEAR
             glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
-            image(GL_RGBA, size, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
+            image(gl.InternalFormat.RGBA8_UNORM, size, gl.ExternalFormat.RGBA, gl.TypeFormat.U8, pixels)
         }
 
         // Store our identifier
-        io.fonts.texId = fontTexture[0]
+        io.fonts.texId = fontTexture.name
 
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)
@@ -161,7 +166,7 @@ class ImplGL3: LwjglRendererI {
         glActiveTexture(GL_TEXTURE0 + semantic.sampler.DIFFUSE)
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
-        val lastSampler = if(hasGL33) glGetInteger(GL33C.GL_SAMPLER_BINDING) else 0
+        val lastSampler = if (hasGL33) glGetInteger(GL33C.GL_SAMPLER_BINDING) else 0
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
         val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
@@ -200,8 +205,8 @@ class ImplGL3: LwjglRendererI {
 
         checkSize(drawData.cmdLists)
 
-        glBindVertexArray(vaoName)
-        if(hasGL33)
+        vao.bind()
+        if (hasGL33)
             GL33C.glBindSampler(semantic.sampler.DIFFUSE, 0) // Rely on combined texture/sampler state.
 
         // Will project scissor/clipping rectangles into framebuffer space
@@ -217,12 +222,15 @@ class ImplGL3: LwjglRendererI {
                 v.uv.to(vtxBuffer, offset + Vec2.size)
                 vtxBuffer.putInt(offset + Vec2.size * 2, v.col)
             }
-            glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-            glBufferSubData(BufferTarget.Array, 0, cmdList._vtxWritePtr * DrawVert.size, vtxBuffer)
-            cmdList.idxBuffer.forEachIndexed { i, idx -> idxBuffer[i] = idx }
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-            glBufferSubData(BufferTarget.ElementArray, 0, cmdList._idxWritePtr * Int.BYTES, idxBuffer)
-
+            buffers {
+                Buffer.Vertex.bind(ARRAY) {
+                    subData(0, cmdList._vtxWritePtr * DrawVert.size, vtxBuffer)
+                }
+                cmdList.idxBuffer.forEachIndexed { i, idx -> idxBuffer[i] = idx }
+                Buffer.Element.bind(ELEMENT_ARRAY) {
+                    subData(0, cmdList._idxWritePtr * Int.BYTES, idxBuffer)
+                }
+            }
             var idxBufferOffset = 0L
             for (cmd in cmdList.cmdBuffer) {
                 val cb = cmd.userCallback
@@ -257,7 +265,7 @@ class ImplGL3: LwjglRendererI {
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
-        if(hasGL33)
+        if (hasGL33)
             GL33C.glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
@@ -300,20 +308,26 @@ class ImplGL3: LwjglRendererI {
             val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
             val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
 
-            withVertexArray(vaoName) {
+            vao.bound {
 
-                glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-                glBufferData(BufferTarget.Array, vtxSize, Usage.StreamDraw)
-                glEnableVertexAttribArray(semantic.attr.POSITION)
-                glEnableVertexAttribArray(semantic.attr.TEX_COORD)
-                glEnableVertexAttribArray(semantic.attr.COLOR)
+                buffers {
 
-                glVertexAttribPointer(semantic.attr.POSITION, 2, GL_FLOAT, false, DrawVert.size, 0)
-                glVertexAttribPointer(semantic.attr.TEX_COORD, 2, GL_FLOAT, false, DrawVert.size, Vec2.size)
-                glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
+                    Buffer.Vertex.bound(ARRAY) {
 
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-                glBufferData(BufferTarget.ElementArray, idxSize, Usage.StreamDraw)
+                        data(vtxSize, STREAM_DRAW)
+
+                        glVertexAttribPointer(semantic.attr.POSITION, 2, GL_FLOAT, false, DrawVert.size, 0)
+                        glVertexAttribPointer(semantic.attr.TEX_COORD, 2, GL_FLOAT, false, DrawVert.size, Vec2.size)
+                        glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
+                    }
+                    glEnableVertexAttribArray(semantic.attr.POSITION)
+                    glEnableVertexAttribArray(semantic.attr.TEX_COORD)
+                    glEnableVertexAttribArray(semantic.attr.COLOR)
+
+                    Buffer.Element.bind(ELEMENT_ARRAY) {
+                        data(idxSize, STREAM_DRAW)
+                    }
+                }
             }
 
             glBindVertexArray(lastVertexArray)
@@ -328,19 +342,19 @@ class ImplGL3: LwjglRendererI {
 
     override fun destroyDeviceObjects() {
 
-        glDeleteVertexArrays(vaoName)
-        glDeleteBuffers(bufferName)
+        vao.delete()
+        buffers.delete()
 
-        if (program.i >= 0) glDeleteProgram(program.i)
+        if (program.isValid) program.delete()
 
         destroyFontsTexture()
     }
 
     private fun destroyFontsTexture() {
-        if (fontTexture[0] != 0) {
-            glDeleteTextures(fontTexture)
+        if (fontTexture.isValid) {
+            fontTexture.delete()
             io.fonts.texId = 0
-            fontTexture[0] = 0
+            fontTexture = GlTexture()
         }
     }
 }

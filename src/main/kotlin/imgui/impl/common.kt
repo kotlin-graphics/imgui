@@ -3,13 +3,25 @@ package imgui.impl
 import com.jogamp.opengl.GL2ES3
 import com.jogamp.opengl.GL3
 import glm_.BYTES
+import glm_.L
 import glm_.mat4x4.Mat4
+import gln.GlBufferEnum
+import gln.buffer.GlBufferDsl
 import gln.glf.semantic
+import gln.objects.GlBuffers
+import gln.objects.GlTexture
+import gln.vertexArray.GlVertexArray
 import kool.ByteBuffer
 import kool.IntBuffer
+import kool.adr
 import kool.lib.toByteArray
 import kool.use
+import org.lwjgl.opengl.GL15C
+import org.lwjgl.opengl.GL30C
 import org.lwjgl.system.Platform
+import java.nio.ByteBuffer
+import java.nio.IntBuffer
+import kotlin.reflect.KMutableProperty0
 
 
 var USE_GL_ES3 = false
@@ -70,7 +82,7 @@ val fragmentShader
 
 val mouseJustPressed = BooleanArray(5)
 
-enum class Buffer { Vertex, Element;
+enum class Buffer : GlBufferEnum { Vertex, Element;
 
     companion object {
         val MAX = values().size
@@ -151,3 +163,18 @@ class JoglProgram(gl: GL3, vert: String, frag: String) {
         shader
     }
 }
+
+
+fun GlTexture.Companion.gen(texture: KMutableProperty0<GlTexture>): GlTexture {
+    texture.set(gen())
+    return texture()
+}
+
+fun GlVertexArray.Companion.gen(vao: KMutableProperty0<GlVertexArray>): GlVertexArray {
+    vao.set(gen())
+    return vao()
+}
+
+fun GlBuffers.delete() = GL30C.glDeleteBuffers(names)
+fun GlBufferDsl.subData(offset: Int, size: Int, data: ByteBuffer) = GL15C.nglBufferSubData(target.i, offset.L, size.L, data.adr)
+fun GlBufferDsl.subData(offset: Int, size: Int, data: IntBuffer) = GL15C.nglBufferSubData(target.i, offset.L, size.L, data.adr)
