@@ -119,7 +119,7 @@ var STBTTPackedchar.yOff2: Float
 var STBTTPackContext.packInfo: STBRPContext
     get() {
         if (Private.rpCtx == null)
-            Private.rpCtx = STBRPContext.create(memGetAddress(address() + org.lwjgl.system.Pointer.POINTER_SIZE))
+            Private.rpCtx = STBRPContext.create(memGetAddress(adr + STBTTPackContext.PACK_INFO))
         return Private.rpCtx!!
     }
     set(value) {
@@ -128,19 +128,18 @@ var STBTTPackContext.packInfo: STBRPContext
 var STBTTPackContext.pixels: ByteBuffer
     get() = Private.pixels!!
     set(value) {
-        memPutAddress(address() + 2 * POINTER_SIZE + 6 * Int.BYTES, memAddress(value))
+        memPutAddress(adr + STBTTPackContext.PIXELS, memAddress(value))
         Private.pixels = value
     }
-var STBTTPackContext.height
-    get() = memGetInt(address() + 2 * POINTER_SIZE + Int.BYTES)
-    set(value) = memPutInt(address() + 2 * POINTER_SIZE + Int.BYTES, value)
-var STBTTPackContext.strideInBytes
-    get() = memGetInt(address() + 2 * POINTER_SIZE + Int.BYTES * 2)
-    set(value) = memPutInt(address() + 2 * POINTER_SIZE + Int.BYTES * 2, value)
+var STBTTPackContext.height: Int
+    get() = STBTTPackContext.nheight(adr)
+    set(value) = memPutInt(adr + STBTTPackContext.HEIGHT, value)
+var STBTTPackContext.strideInBytes: Int
+    get() = STBTTPackContext.nstride_in_bytes(adr)
+    set(value) = memPutInt(adr + STBTTPackContext.STRIDE_IN_BYTES, value)
 
 val STBTTAlignedQuad.x0: Float
     get() = STBTTAlignedQuad.nx0(adr)
-
 val STBTTAlignedQuad.y0: Float
     get() = STBTTAlignedQuad.ny0(adr)
 val STBTTAlignedQuad.x1: Float

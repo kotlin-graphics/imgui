@@ -15,7 +15,7 @@ ext{
     kotlin = 'org.jetbrains.kotlin:kotlin'
     kotlin_version = '1.3.11'
     kotlintest_version = '3.2.0'
-    lwjgl_version = "3.2.1"
+    lwjgl_version = "3.2.2-SNAPSHOT"
     lwjgl_natives = current() == WINDOWS ? "windows" : current() == LINUX ? "linux" : "macos"
 }
 
@@ -23,21 +23,15 @@ dependencies {
 
     implementation "$kotlin-stdlib"
 
-    implementation 'com.github.kotlin-graphics:uno-sdk:9172395e2d33107df96fcbc889b6332b0bc4925c'
+    implementation 'com.github.kotlin-graphics:uno-sdk:b71af68b140fcc10ee73f8833cf604bdb15ec64e'
 
     testImplementation "io.kotlintest:kotlintest-runner-junit5:$kotlintest_version".toString()
-
-    constraints {
-        testImplementation("$kotlin-stdlib:$kotlin_version")
-        testImplementation("$kotlin-stdlib-jdk7:$kotlin_version")
-        testImplementation("$kotlin-reflect:$kotlin_version")
-    }
 
     def joglVersion = '2.3.2'
     implementation "org.jogamp.gluegen:gluegen-rt-main:$joglVersion"
     implementation "org.jogamp.jogl:jogl-all-main:$joglVersion"
 
-    ["", "-glfw", "-jemalloc", "-openal", "-opengl", "-stb"].each {
+    ["", "-glfw", "-jemalloc", "-opengl", "-stb", "-remotery"].each {
         String base = "org.lwjgl:lwjgl$it:$lwjgl_version"
         implementation base
         testRuntime "$base:natives-$lwjgl_natives"

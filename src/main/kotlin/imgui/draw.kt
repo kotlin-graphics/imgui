@@ -1212,6 +1212,8 @@ class DrawData {
     var displayPos = Vec2()
     /** Size of the viewport to render (== io.displaySize for the main viewport) (displayPos + displaySize == lower-right of the orthogonal projection matrix to use) */
     var displaySize = Vec2()
+    /** Amount of pixels for each unit of DisplaySize. Based on io.DisplayFramebufferScale. Generally (1,1) on normal display, (2,2) on OSX with Retina display. */
+    var framebufferScale = Vec2()
 
     // Functions
 
@@ -1223,6 +1225,7 @@ class DrawData {
         totalVtxCount = 0
         displayPos put 0f
         displaySize put 0f
+        framebufferScale put 0f
     }
 
     /** Helper to convert all buffers from indexed to non-indexed, in case you cannot render indexed.
@@ -1241,12 +1244,13 @@ class DrawData {
         }
     }
 
-    /** Helper to scale the ClipRect field of each ImDrawCmd. Use if your final output buffer is at a different scale
-     *  than ImGui expects, or if there is a difference between your window resolution and framebuffer resolution.  */
-    infix fun scaleClipRects(scale: Vec2) {
+    /** Helper to scale the ClipRect field of each ImDrawCmd.
+     *  Use if your final output buffer is at a different scale than draw_data->DisplaySize,
+     *  or if there is a difference between your window resolution and framebuffer resolution.  */
+    infix fun scaleClipRects(fbScale: Vec2) {
         cmdLists.forEach {
             it.cmdBuffer.forEach { cmd ->
-                cmd.clipRect.timesAssign(scale.x, scale.y, scale.x, scale.y)
+                cmd.clipRect.timesAssign(fbScale.x, fbScale.y, fbScale.x, fbScale.y)
             }
         }
     }

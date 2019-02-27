@@ -20,9 +20,9 @@ object imm {
     val ImmSetCompositionWindow = lib.getFunctionAddress("ImmSetCompositionWindow")
     val ImmReleaseContext = lib.getFunctionAddress("ImmReleaseContext")
 
-    fun getContext(hwnd: HWND) = JNI.callPP(ImmGetContext, hwnd.L)
-    fun setCompositionWindow(himc: HIMC, compForm: COMPOSITIONFORM) = JNI.callPPI(ImmSetCompositionWindow, himc.L, compForm.adr)
-    fun releaseContext(hwnd: HWND, himc: HIMC) = JNI.callPPI(ImmReleaseContext, hwnd.L, himc.L)
+    fun getContext(hwnd: HWND) = JNI.callPP(hwnd.L, ImmGetContext)
+    fun setCompositionWindow(himc: HIMC, compForm: COMPOSITIONFORM) = JNI.callPPI(himc.L, compForm.adr, ImmSetCompositionWindow)
+    fun releaseContext(hwnd: HWND, himc: HIMC) = JNI.callPPI(hwnd.L, himc.L, ImmReleaseContext)
 
     // bit field for IMC_SETCOMPOSITIONWINDOW, IMC_SETCANDIDATEWINDOW
     val CFS_DEFAULT = 0x0000
