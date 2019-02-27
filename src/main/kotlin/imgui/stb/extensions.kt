@@ -131,9 +131,14 @@ var STBTTPackContext.pixels: ByteBuffer
         memPutAddress(adr + STBTTPackContext.PIXELS, memAddress(value))
         Private.pixels = value
     }
+var STBTTPackContext.width: Int
+    get() = STBTTPackContext.nwidth(adr)
+    set(value) = memPutInt(adr + STBTTPackContext.WIDTH, value)
+
 var STBTTPackContext.height: Int
     get() = STBTTPackContext.nheight(adr)
     set(value) = memPutInt(adr + STBTTPackContext.HEIGHT, value)
+
 var STBTTPackContext.strideInBytes: Int
     get() = STBTTPackContext.nstride_in_bytes(adr)
     set(value) = memPutInt(adr + STBTTPackContext.STRIDE_IN_BYTES, value)

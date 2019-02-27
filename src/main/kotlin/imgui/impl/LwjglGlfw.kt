@@ -35,7 +35,7 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
         fun shutdown() = instance.shutdown()
     }
     
-    val implGl: LwjglRendererI
+    val impl: LwjglRendererI
     var time = 0.0
     val mouseCursors = LongArray(MouseCursor.COUNT)
 
@@ -137,25 +137,26 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
             imeListener.install(window)
         }
 
-        when(clientApi) {
-            GlfwClientApi.OpenGL3 -> implGl = ImplGL3()
-            GlfwClientApi.OpenGL2 -> implGl = ImplGL2()
+        impl = when(clientApi) {
+            GlfwClientApi.OpenGL3 -> ImplGL3()
+            GlfwClientApi.OpenGL2 -> ImplGL2()
             GlfwClientApi.OpenGL -> {
                 val glcaps = GL.getCapabilities()
                 when {
-                    glcaps.OpenGL32 -> implGl = ImplGL3()
-                    (Platform.get() == Platform.WINDOWS) and glcaps.OpenGL30 -> implGl = ImplGL3()
-                    else -> implGl = ImplGL2()
+                    glcaps.OpenGL32 -> ImplGL3()
+                    (Platform.get() == Platform.WINDOWS) and glcaps.OpenGL30 -> ImplGL3()
+                    glcaps.OpenGL20 -> ImplGL2()
+                    else -> throw RuntimeException("JVM ImGui Requires OpenGL 2.0, you do not support that!")
                 }
             }
-            GlfwClientApi.Vulkan -> TODO() //ImplVk.init()
+            GlfwClientApi.Vulkan -> TODO("Vulkan support is not yet implemented!") //ImplVk.init()
         }
     }
 
     fun newFrame() {
 
-        if (fontTexture[0] == 0 && clientApi != GlfwClientApi.Vulkan)
-            implGl.createDeviceObjects()
+        if (fontTexture[0] == 0)
+            impl.createDeviceObjects()
 
         assert(io.fonts.isBuilt) { "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame()." }
 
@@ -219,10 +220,7 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
     }
 
     fun renderDrawData(drawData: DrawData) {
-        when(clientApi) {
-            GlfwClientApi.OpenGL, GlfwClientApi.OpenGL3, GlfwClientApi.OpenGL2 -> implGl.renderDrawData(drawData)
-            GlfwClientApi.Vulkan -> TODO()
-        }
+        impl.renderDrawData(drawData)
     }
 
     private fun updateMousePosAndButtons() {
@@ -273,10 +271,6 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
         mouseCursors.forEach(::glfwDestroyCursor)
         mouseCursors.fill(NULL)
 
-        when (clientApi) {
-            GlfwClientApi.OpenGL, GlfwClientApi.OpenGL3, GlfwClientApi.OpenGL2 -> implGl.destroyDeviceObjects()
-            GlfwClientApi.Vulkan -> TODO() //ImplVk.invalidateDeviceObjects()
-        }
-
+        impl.destroyDeviceObjects()
     }
 }
