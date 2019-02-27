@@ -817,7 +817,7 @@ class FontAtlas {
             val dstFont = cfg.dstFont!! // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
 
             val fontScale = stbtt_ScaleForPixelHeight(srcTmp.fontInfo, cfg.sizePixels)
-            val (unscaledAscent, unscaledDescent, unscaledLineGap) = stbtt_GetFontVMetrics(srcTmp.fontInfo)
+            val (unscaledAscent, unscaledDescent, _) = stbtt_GetFontVMetrics(srcTmp.fontInfo)
 
             val ascent = floor(unscaledAscent * fontScale + if (unscaledAscent > 0f) +1 else -1)
             val descent = floor(unscaledDescent * fontScale + if (unscaledDescent > 0f) +1 else -1)
