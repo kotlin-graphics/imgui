@@ -491,8 +491,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var fontAllowUserScaling = false
     /** Font to use on NewFrame(). Use NULL to useMouseDragThreshold s Fonts->Fonts[0].    */
     var fontDefault: Font? = null
-    /** For hi-dpi/ display or other situations where window coordinates are different from framebuffer coordinates.
-     *  User storage only, presently not used by ImGui. */
+    /** For retina display or other situations where window coordinates are different from framebuffer coordinates.
+     *  This generally ends up in ImDrawData::FramebufferScale. */
     var displayFramebufferScale = Vec2(1f)
 
     //------------------------------------------------------------------

@@ -422,6 +422,7 @@ infix fun DrawData.setup(drawLists: ArrayList<DrawList>) {
     totalVtxCount = 0
     displayPos put 0f
     displaySize put io.displaySize
+    framebufferScale put io.displayFramebufferScale
     for (n in 0 until drawLists.size) {
         totalVtxCount += drawLists[n].vtxBuffer.size
         totalIdxCount += drawLists[n].idxBuffer.size

@@ -14,7 +14,12 @@ import imgui.impl.LwjglGlfw.GlfwClientApi
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
 import org.lwjgl.system.MemoryStack
+import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
+import org.lwjgl.util.remotery.Remotery
+import org.lwjgl.util.remotery.RemoteryGL
+//import org.lwjgl.util.remotery.Remotery
+//import org.lwjgl.util.remotery.RemoteryGL
 import uno.glfw.GlfwWindow
 import uno.glfw.VSync
 import uno.glfw.glfw
@@ -37,7 +42,10 @@ private class HelloWorld_lwjgl {
 
     val lwjglGlfw: LwjglGlfw
 
+//    val rmt = MemoryUtil.memAllocPointer(1).also { Remotery.rmt_CreateGlobalInstance(it) }
+
     init {
+
         glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
 
         window = GlfwWindow(1280, 720, "Dear ImGui Lwjgl OpenGL example").apply {
@@ -60,6 +68,8 @@ private class HelloWorld_lwjgl {
 
         // Setup Platform/Renderer bindings
         lwjglGlfw = LwjglGlfw(window, true, GlfwClientApi.OpenGL)
+
+//        RemoteryGL.rmt_BindOpenGL()
 
         // Load Fonts
         /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use
@@ -94,11 +104,15 @@ private class HelloWorld_lwjgl {
         lwjglGlfw.shutdown()
         ctx.destroy()
 
+//        Remotery.rmt_DestroyGlobalInstance(rmt.get(0))
+
         window.destroy()
         glfw.terminate()
     }
 
     fun mainLoop(stack: MemoryStack) {
+
+        RemoteryGL.rmt_BeginOpenGLSample("imgui", null)
 
         // Start the Dear ImGui frame
         lwjglGlfw.newFrame()
@@ -155,7 +169,9 @@ private class HelloWorld_lwjgl {
 
         lwjglGlfw.renderDrawData(ImGui.drawData!!)
 
-        if(DEBUG)
+        if (DEBUG)
             checkError("mainLoop")
+
+        RemoteryGL.rmt_EndOpenGLSample()
     }
 }

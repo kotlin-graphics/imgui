@@ -133,9 +133,10 @@ class ImplGL2 : LwjglRendererI {
     }
 
     override fun renderDrawData(drawData: DrawData) {
-        val fbSize = ImGui.io.displaySize * ImGui.io.displayFramebufferScale
-        if (fbSize anyLessThanEqual 0) return
-        drawData scaleClipRects ImGui.io.displayFramebufferScale
+        // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
+        val fbWidth = (drawData.displaySize.x * drawData.framebufferScale.x).i
+        val fbHeight = (drawData.displaySize.y * drawData.framebufferScale.y).i
+        if (fbWidth == 0 || fbHeight == 0) return
 
         // Backup GL state
         val lastActiveTexture = glGetInteger(GL_ACTIVE_TEXTURE)
@@ -172,14 +173,18 @@ class ImplGL2 : LwjglRendererI {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
         // Setup viewport, orthographic projection matrix
-        glViewport(fbSize)
+        glViewport(0, 0, fbWidth, fbHeight)
         val ortho = glm.ortho(mat, 0f, ImGui.io.displaySize.x.f, ImGui.io.displaySize.y.f, 0f)
         glUseProgram(program.i)
         glUniform(matUL, ortho)
 
         checkSize(drawData.cmdLists)
 
-        val pos = drawData.displayPos
+        // Will project scissor/clipping rectangles into framebuffer space
+        val clipOff = drawData.displayPos     // (0,0) unless using multi-viewports
+        val clipScale = drawData.framebufferScale   // (1,1) unless using retina display which are often (2,2)
+
+        // Render command lists
         for (cmdList in drawData.cmdLists) {
 
             cmdList.vtxBuffer.forEachIndexed { i, v ->
@@ -201,16 +206,19 @@ class ImplGL2 : LwjglRendererI {
                 // User callback (registered via ImDrawList::AddCallback)
                     cb(cmdList, cmd)
                 else {
-                    val clipRect = Vec4(cmd.clipRect.x - pos.x, cmd.clipRect.y - pos.y, cmd.clipRect.z - pos.x, cmd.clipRect.w - pos.y);
-                    // Apply scissor/clipping rectangle
-                    if (clipOriginLowerLeft)
-                        glScissor(clipRect.x.i, (fbSize.y - clipRect.w).i, (clipRect.z - clipRect.x).i, (clipRect.w - clipRect.y).i)
-                    else
-                        glScissor(clipRect.x.i, clipRect.y.i, clipRect.z.i, clipRect.w.i) // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
+                    // Project scissor/clipping rectangles into framebuffer space
+                    val clipRectX = (cmd.clipRect.x - clipOff.x) * clipScale.x
+                    val clipRectY = (cmd.clipRect.y - clipOff.y) * clipScale.y
+                    val clipRectZ = (cmd.clipRect.z - clipOff.x) * clipScale.x
+                    val clipRectW = (cmd.clipRect.w - clipOff.y) * clipScale.y
+                    if (clipRectX < fbWidth && clipRectY < fbHeight && clipRectZ >= 0f && clipRectW >= 0f) {
+                        // Apply scissor/clipping rectangle
+                        glScissor( clipRectX.i, (fbHeight - clipRectW).i, (clipRectZ - clipRectX).i, (clipRectW - clipRectY).i)
 
-                    // Bind texture, Draw
-                    glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                    glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
+                        // Bind texture, Draw
+                        glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
+                        glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
+                    }
                 }
                 idxBufferOffset += cmd.elemCount * Int.BYTES
             }
