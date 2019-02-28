@@ -43,7 +43,8 @@ class FontConfig {
     var fontNo = 0
     /** Size in pixels for rasterizer (more or less maps to the resulting font height).  */
     var sizePixels = 0f
-    /** Rasterize at higher quality for sub-pixel positioning. We don't use sub-pixel positions on the Y axis.  */
+    /** Rasterize at higher quality for sub-pixel positioning.
+     *  Read https://github.com/nothings/stb/blob/master/tests/oversample/README.md for details. */
     var oversample = Vec2i(3, 1)
     /** Align every glyph to pixel boundary. Useful e.g. if you are merging a non-pixel aligned font with the default
      *  font. If enabled, you can set OversampleH/V to 1.   */
@@ -225,7 +226,7 @@ class FontAtlas {
 
         // When clearing this we lose access to  the font name and other information used to build the font.
         fonts.filter {
-            if(it.configData.isNotEmpty()) configData.contains(it.configData[0]) else false
+            if (it.configData.isNotEmpty()) configData.contains(it.configData[0]) else false
         }.forEach {
             it.configData.clear()
             it.configDataCount = 0
@@ -1024,7 +1025,8 @@ class Font {
 
     // @formatter:off
 
-    /** Sparse. Glyphs->AdvanceX in a directly indexable way (more cache-friendly, for CalcTextSize functions which are often bottleneck in large UI). */
+    /** Sparse. Glyphs->AdvanceX in a directly indexable way (cache-friendly for CalcTextSize functions which only this info,
+     *  and are often bottleneck in large UI). */
     val indexAdvanceX = ArrayList<Float>()      // 12/16 // out //
     /** Height of characters, set during loading (don't change after loading)   */
     var fontSize = 0f                           // 4     // in  // <user set>
@@ -1032,6 +1034,11 @@ class Font {
     var fallbackAdvanceX = 0f                   // 4     // out // = FallbackGlyph->AdvanceX
     /** Replacement glyph if one isn't found. Only set via SetFallbackChar()    */
     var fallbackChar = '?'                      // 2     // in  // = '?'
+        /** ~SetFallbackChar */
+        set(value) {
+            field = value
+            buildLookupTable()
+        }
 
     // Members: Hot ~36/48 bytes (for CalcTextSize + render loop)
 
@@ -1065,64 +1072,11 @@ class Font {
 
     // @formatter:on
 
-    fun clearOutputData() {
-        fontSize = 0f
-        fallbackAdvanceX = 0.0f
-        glyphs.clear()
-        indexAdvanceX.clear()
-        indexLookup.clear()
-        fallbackGlyph = null
-        dirtyLookupTables = true
-        fallbackAdvanceX = 0f
-        configDataCount = 0
-        configData.clear()
-        containerAtlas.clearInputData()
-        containerAtlas.clearTexData()
-        ascent = 0f
-        descent = 0f
-        metricsTotalSurface = 0
-    }
-
-    fun buildLookupTable() {
-
-        val maxCodepoint = glyphs.map { it.codepoint.i }.max()!!
-
-        assert(glyphs.size < 0xFFFF) { "-1 is reserved" }
-        indexAdvanceX.clear()
-        indexLookup.clear()
-        dirtyLookupTables = false
-        growIndex(maxCodepoint + 1)
-        glyphs.forEachIndexed { i, g ->
-            indexAdvanceX[g.codepoint.i] = g.advanceX
-            indexLookup[g.codepoint.i] = i
-        }
-
-        // Create a glyph to handle TAB
-        // FIXME: Needs proper TAB handling but it needs to be contextualized (or we could arbitrary say that each string starts at "column 0" ?)
-        if (findGlyph(' ') != null) {
-            if (glyphs.last().codepoint != '\t')   // So we can call this function multiple times
-                glyphs += FontGlyph()
-            val tabGlyph = glyphs.last()
-            tabGlyph put findGlyph(' ')!!
-            tabGlyph.codepoint = '\t'
-            tabGlyph.advanceX *= 4
-            indexAdvanceX[tabGlyph.codepoint.i] = tabGlyph.advanceX
-            indexLookup[tabGlyph.codepoint.i] = glyphs.size - 1
-        }
-
-        fallbackGlyph = findGlyphNoFallback(fallbackChar)
-        fallbackAdvanceX = fallbackGlyph?.advanceX ?: 0f
-        for (i in 0 until maxCodepoint + 1)
-            if (indexAdvanceX[i] < 0f)
-                indexAdvanceX[i] = fallbackAdvanceX
-    }
-
     fun findGlyph(c: Char) = findGlyph(c.i)
     fun findGlyph(c: Int) = indexLookup.getOrNull(c)?.let { glyphs.getOrNull(it) } ?: fallbackGlyph
     fun findGlyphNoFallback(c: Char) = findGlyphNoFallback(c.i)
     fun findGlyphNoFallback(c: Int) = indexLookup.getOrNull(c)?.let { glyphs.getOrNull(it) }
 
-    //    IMGUI_API void              SetFallbackChar(ImWchar c);
     fun getCharAdvance(c: Char): Float = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
 
     val isLoaded get() = ::containerAtlas.isInitialized
@@ -1405,7 +1359,7 @@ class Font {
                 }
             }
             // Decode and advance source
-            if(s >= text.size)
+            if (s >= text.size)
                 return
             val c = text[s]
             /*  JVM imgui specific, not 0x80 because on jvm we have Unicode with surrogates characters (instead of utf8)
@@ -1526,7 +1480,59 @@ class Font {
         drawList._vtxCurrentIdx = drawList.vtxBuffer.size
     }
 
-    // [Internal]
+    // [Internal] Don't use!
+
+    fun buildLookupTable() {
+
+        val maxCodepoint = glyphs.map { it.codepoint.i }.max()!!
+
+        assert(glyphs.size < 0xFFFF) { "-1 is reserved" }
+        indexAdvanceX.clear()
+        indexLookup.clear()
+        dirtyLookupTables = false
+        growIndex(maxCodepoint + 1)
+        glyphs.forEachIndexed { i, g ->
+            indexAdvanceX[g.codepoint.i] = g.advanceX
+            indexLookup[g.codepoint.i] = i
+        }
+
+        // Create a glyph to handle TAB
+        // FIXME: Needs proper TAB handling but it needs to be contextualized (or we could arbitrary say that each string starts at "column 0" ?)
+        if (findGlyph(' ') != null) {
+            if (glyphs.last().codepoint != '\t')   // So we can call this function multiple times
+                glyphs += FontGlyph()
+            val tabGlyph = glyphs.last()
+            tabGlyph put findGlyph(' ')!!
+            tabGlyph.codepoint = '\t'
+            tabGlyph.advanceX *= 4
+            indexAdvanceX[tabGlyph.codepoint.i] = tabGlyph.advanceX
+            indexLookup[tabGlyph.codepoint.i] = glyphs.size - 1
+        }
+
+        fallbackGlyph = findGlyphNoFallback(fallbackChar)
+        fallbackAdvanceX = fallbackGlyph?.advanceX ?: 0f
+        for (i in 0 until maxCodepoint + 1)
+            if (indexAdvanceX[i] < 0f)
+                indexAdvanceX[i] = fallbackAdvanceX
+    }
+
+    fun clearOutputData() {
+        fontSize = 0f
+        fallbackAdvanceX = 0.0f
+        glyphs.clear()
+        indexAdvanceX.clear()
+        indexLookup.clear()
+        fallbackGlyph = null
+        dirtyLookupTables = true
+        fallbackAdvanceX = 0f
+        configDataCount = 0
+        configData.clear()
+        containerAtlas.clearInputData()
+        containerAtlas.clearTexData()
+        ascent = 0f
+        descent = 0f
+        metricsTotalSurface = 0
+    }
 
     private fun growIndex(newSize: Int) {
         assert(indexAdvanceX.size == indexLookup.size)
