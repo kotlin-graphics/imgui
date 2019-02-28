@@ -63,12 +63,12 @@ interface imgui_main {
             (We pass an error message in the assert expression as a trick to get it visible to programmers who are not using a debugger,
             as most assert handlers display their argument)         */
         assert(g.initialized)
-        assert(io.deltaTime >= 0f) { "Need a positive DeltaTime (zero is tolerated but will cause some timing issues)" }
-        assert(io.displaySize.x >= 0f && io.displaySize.y >= 0f) { "Invalid DisplaySize value" }
+        assert(io.deltaTime > 0f || g.frameCount == 0) { "Need a positive DeltaTime!" }
+        assert(io.displaySize.x >= 0f && io.displaySize.y >= 0f) { "Invalid DisplaySize value!" }
         assert(io.fonts.fonts.isNotEmpty()) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
         assert(io.fonts.fonts[0].isLoaded) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
-        assert(style.curveTessellationTol > 0f) { "Invalid style setting" }
-        assert(style.alpha in 0f..1f) { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)" }
+        assert(style.curveTessellationTol > 0f) { "Invalid style setting!" }
+        assert(style.alpha in 0f..1f) { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)!" }
         assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount) { "Forgot to call Render() or EndFrame() at the end of the previous frame?" }
         for (n in 0 until Key.COUNT)
             assert(io.keyMap[n] >= -1 && io.keyMap[n] < io.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
@@ -380,7 +380,7 @@ interface imgui_main {
 
     /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
      *  ::newFrame()   */
-    val drawData get() = if(Platform.get() == Platform.MACOSX) g.drawData.clone().takeIf { it.valid } else g.drawData.takeIf { it.valid }
+    val drawData get() = if (Platform.get() == Platform.MACOSX) g.drawData.clone().takeIf { it.valid } else g.drawData.takeIf { it.valid }
 
     companion object {
 
