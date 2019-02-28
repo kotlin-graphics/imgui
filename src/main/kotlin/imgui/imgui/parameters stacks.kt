@@ -219,6 +219,12 @@ interface imgui_parametersStacks {
         return (col and COL32_A_MASK.inv()) or (a shl COL32_A_SHIFT)
     }
 
+    fun getColorU32(r: Int, g: Int, b: Int, a: Int): Int {
+        val c = Vec4(r.f / 255.0, g.f / 255.0, b.f/255.0, a.f / 255.0)
+        c.w *= style.alpha
+        return c.u32
+    }
+
 // Parameters stacks (current window)
 
     /** width of items for the common item+label case, pixels. 0.0f = default to ~2/3 of windows width, >0.0f: width in
