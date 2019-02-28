@@ -384,7 +384,7 @@ interface imgui_demoDebugInformations {
                 if (drawList === windowDrawList) {
                     sameLine()
                     // Can't display stats for active draw list! (we don't have the data double-buffered)
-                    textColored(Vec4.fromColor(255, 100, 100), "CURRENTLY APPENDING")
+                    textColored(Vec4(1f, 0.4f, 0.4f, 1f), "CURRENTLY APPENDING")
                     if (nodeOpen) treePop()
                     return
                 }
