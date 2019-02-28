@@ -35,6 +35,7 @@ import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.logText
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
@@ -1400,30 +1401,30 @@ interface imgui_internal {
     fun logRenderedText(refPos: Vec2?, text: String, textEnd_: Int = text.length) {
         val window = g.currentWindow!!
 
-        val textEnd = if(textEnd_ == 0) findRenderedTextEnd(text) else textEnd_
+        val textEnd = if (textEnd_ == 0) findRenderedTextEnd(text) else textEnd_
 
-        val logNewLine = if(refPos == null) false else refPos.y > window.dc.logLinePosY + 1
+        val logNewLine = if (refPos == null) false else refPos.y > window.dc.logLinePosY + 1
 
         var textRemaining = text
-        if(g.logStartDepth > window.dc.treeDepth)
+        if (g.logStartDepth > window.dc.treeDepth)
             g.logStartDepth = window.dc.treeDepth
 
         val treeDepth = window.dc.treeDepth - g.logStartDepth
 
         //TODO: make textEnd aware
-        while(true) {
+        while (true) {
             val lineStart = textRemaining
-            val lineEnd = if(lineStart.indexOf('\n') == -1) lineStart.length else lineStart.indexOf('\n')
+            val lineEnd = if (lineStart.indexOf('\n') == -1) lineStart.length else lineStart.indexOf('\n')
             val isFirstLine = text.startsWith(lineStart)
             val isLastLine = text.endsWith(lineStart.substring(0, lineEnd))
-            if(!isLastLine or lineStart.isNotEmpty()) {
+            if (!isLastLine or lineStart.isNotEmpty()) {
                 val charCount = lineStart.length
-                if(logNewLine or !isFirstLine)
+                if (logNewLine or !isFirstLine)
                     ImGui.logText("%s%s", "", lineStart)
                 else
                     ImGui.logText("%s", lineStart)
             }
-            if(isLastLine)
+            if (isLastLine)
                 break
             textRemaining = textRemaining.substring(lineEnd + 1)
         }
@@ -1602,7 +1603,7 @@ interface imgui_internal {
         val window = g.currentWindow!!
         val horizontal = direction == Lt.Horizontal
 
-        val id = window.getId(if (horizontal) "#SCROLLX" else "#SCROLLY")
+        val id = getScrollbarID(direction)
 
         // Render background
         val otherScrollbar = if (horizontal) window.scrollbar.y else window.scrollbar.x
@@ -1617,14 +1618,25 @@ interface imgui_internal {
         }
         if (!horizontal)
             bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f
-        if (bb.width <= 0f || bb.height <= 0f) return
 
-        val windowRoundingCorners =
-                if (horizontal)
-                    Dcf.BotLeft.i or if (otherScrollbar) 0 else Dcf.BotRight.i
-                else
-                    (if (window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar) Dcf.TopRight.i else 0) or
-                            if (otherScrollbar) 0 else Dcf.BotRight.i
+        val bbHeight = bb.height
+        if (bb.width <= 0f || bbHeight <= 0f)
+            return
+
+        // When we are too small, start hiding and disabling the grab (this reduce visual noise on very small window and facilitate using the resize grab)
+        var alpha = 1.f
+        if (direction == Lt.Vertical && bbHeight < g.fontSize + style.framePadding.y * 2f) {
+            alpha = saturate((bbHeight - g.fontSize) / (style.framePadding.y * 2f))
+            if (alpha <= 0f)
+                return
+        }
+        val allowInteraction = alpha >= 1f
+
+        val windowRoundingCorners = when {
+            horizontal -> Dcf.BotLeft.i or if (otherScrollbar) 0 else Dcf.BotRight.i
+            else -> (if (window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar) Dcf.TopRight.i else 0) or
+                    if (otherScrollbar) 0 else Dcf.BotRight.i
+        }
         window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, window.windowRounding, windowRoundingCorners)
         bb.expand(Vec2(
                 -glm.clamp(((bb.max.x - bb.min.x - 2f) * 0.5f).i.f, 0f, 3f),
@@ -1651,7 +1663,7 @@ interface imgui_internal {
         val scrollMax = glm.max(1f, winSizeContentsV - winSizeAvailV)
         var scrollRatio = saturate(scrollV / scrollMax)
         var grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV
-        if (held && grabHNorm < 1f) {
+        if (held && allowInteraction && grabHNorm < 1f) {
             val scrollbarPosV = if (horizontal) bb.min.x else bb.min.y
             val mousePosV = if (horizontal) io.mousePos.x else io.mousePos.y
             var clickDeltaToGrabCenterV = if (horizontal) g.scrollbarClickDeltaToGrabCenter.x else g.scrollbarClickDeltaToGrabCenter.y
@@ -1694,12 +1706,12 @@ interface imgui_internal {
                 g.scrollbarClickDeltaToGrabCenter.y = clickDeltaToGrabCenterV
         }
 
-        // Render
-        val grabCol = when {
+        // Render grab
+        val grabCol = getColorU32(when {
             held -> Col.ScrollbarGrabActive
             hovered -> Col.ScrollbarGrabHovered
             else -> Col.ScrollbarGrab
-        }.u32
+        }, alpha)
         val grabRect = when {
             horizontal -> Rect(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y,
                     min(lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, windowRect.max.x), bb.max.y)
@@ -1707,6 +1719,25 @@ interface imgui_internal {
                     bb.max.x, min(lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels, windowRect.max.y))
         }
         window.drawList.addRectFilled(grabRect.min, grabRect.max, grabCol, style.scrollbarRounding)
+    }
+
+    fun getScrollbarID(direction: Lt): ID =
+            g.currentWindow!!.getId(if (direction == Lt.Horizontal) "#SCROLLX" else "#SCROLLY")
+
+    /** Vertical separator, for menu bars (use current line height). not exposed because it is misleading
+     *  what it doesn't have an effect on regular layout.   */
+    fun verticalSeparator() {
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val y1 = window.dc.cursorPos.y
+        val y2 = window.dc.cursorPos.y + window.dc.currentLineSize.y
+        val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
+        itemSize(Vec2(bb.width, 0f))
+        if (!itemAdd(bb, 0)) return
+
+        window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
+        if (g.logEnabled) logText(" |")
     }
 
 
@@ -2132,7 +2163,7 @@ interface imgui_internal {
         val isResizable = flags has Itf.CallbackResize
         if (isResizable)
             assert(callback != null) { "Must provide a callback if you set the ImGuiInputTextFlags_CallbackResize flag!" }
-        if(flags has Itf.CallbackCharFilter)
+        if (flags has Itf.CallbackCharFilter)
             assert(callback != null) { "Must provide a callback if you want a char filter!" }
 
         if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope
@@ -2319,7 +2350,7 @@ interface imgui_internal {
                 editState.selectedAllMouseLock = false
 
             if (io.inputQueueCharacters.size > 0) {
-                if(io.inputQueueCharacters[0] != NUL) {
+                if (io.inputQueueCharacters[0] != NUL) {
                     /*  Process text input (before we check for Return because using some IME will effectively send a
                     Return?)
                     We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR
@@ -2493,7 +2524,7 @@ interface imgui_internal {
                         else -> Pair(0, Key.Count)
                     }
 
-                    if(eventFlag != 0) {
+                    if (eventFlag != 0) {
                         val cbData = TextEditCallbackData()
                         cbData.eventFlag = eventFlag
                         cbData.flags = flags
@@ -2518,12 +2549,18 @@ interface imgui_internal {
                         assert(cbData.bufSize == editState.bufCapacityA)
                         assert(cbData.flags == flags)
 
-                        if(cbData.cursorPos != cursorPos) { editState.state.cursor = cbData.cursorPos }
-                        if(cbData.selectionStart != selectionStart) { editState.state.selectStart = cbData.selectionStart }
-                        if(cbData.selectionEnd != selectionEnd) { editState.state.selectEnd = cbData.selectionEnd }
-                        if(cbData.bufDirty) {
+                        if (cbData.cursorPos != cursorPos) {
+                            editState.state.cursor = cbData.cursorPos
+                        }
+                        if (cbData.selectionStart != selectionStart) {
+                            editState.state.selectStart = cbData.selectionStart
+                        }
+                        if (cbData.selectionEnd != selectionEnd) {
+                            editState.state.selectEnd = cbData.selectionEnd
+                        }
+                        if (cbData.bufDirty) {
                             assert(cbData.bufTextLen == cbData.buf.strlen)
-                            if((cbData.bufTextLen > backupCurrentTextLength) and isResizable)
+                            if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable)
                                 TODO("pass a reference to buf and bufSize")
                             //TODO: Hacky
                             editState.deleteChars(0, cursorPos)

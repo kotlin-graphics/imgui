@@ -18,6 +18,7 @@ import imgui.ImGui.popClipRect
 import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.style
+import imgui.ImGui.verticalSeparator
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
@@ -116,22 +117,6 @@ interface lowLevelLayoutHelpers {
             pushColumnClipRect()
             it.lineMinY = window.dc.cursorPos.y
         }
-    }
-
-    /** Vertical separator, for menu bars (use current line height). not exposed because it is misleading
-     *  what it doesn't have an effect on regular layout.   */
-    fun verticalSeparator() {
-        val window = currentWindow
-        if (window.skipItems) return
-
-        val y1 = window.dc.cursorPos.y
-        val y2 = window.dc.cursorPos.y + window.dc.currentLineSize.y
-        val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
-        itemSize(Vec2(bb.width, 0f))
-        if (!itemAdd(bb, 0)) return
-
-        window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
-        if (g.logEnabled) logText(" |")
     }
 
     /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
