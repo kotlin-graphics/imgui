@@ -174,6 +174,11 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
         updateMouseCursor()
 
         // Gamepad navigation mapping
+        updateGamepads()
+    }
+
+    fun updateGamepads() {
+
         io.navInputs.fill(0f)
         if (io.configFlags has ConfigFlag.NavEnableGamepad) {
             // Update gamepad inputs
