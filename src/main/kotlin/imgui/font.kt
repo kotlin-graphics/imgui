@@ -45,7 +45,7 @@ class FontConfig {
     var sizePixels = 0f
     /** Rasterize at higher quality for sub-pixel positioning.
      *  Read https://github.com/nothings/stb/blob/master/tests/oversample/README.md for details. */
-    var oversample = Vec2i(3, 1)
+    var oversample = Vec2i(3, 1) // FIXME: 2 may be a better x default?
     /** Align every glyph to pixel boundary. Useful e.g. if you are merging a non-pixel aligned font with the default
      *  font. If enabled, you can set OversampleH/V to 1.   */
     var pixelSnapH = false
