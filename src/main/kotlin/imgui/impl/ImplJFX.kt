@@ -204,7 +204,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
                                     if (idx5 == idx3) {
                                         //if it borders, we need to draw a line between the two
                                         //this is done this way rather than drawing both outlines of each triangle because that will draw this line twice. this produces higher visual quality
-                                        gc.stroke = x.let { JFXColor(it.red, it.green, it.blue, it.opacity / (OPACITY_MULTIPLIER * (it.red + it.green + it.blue + OPACITY_RECIPROCAL))) }
+                                        gc.stroke = JFXColor(x.red, x.green, x.blue, x.opacity / (OPACITY_MULTIPLIER * (x.red + x.green + x.blue + OPACITY_RECIPROCAL)))
                                         //if you are using this backend and see many unsightly lines, play around with OPACITY_MULTIPLIER. this configuration was chosen as it appears to work best.
                                         gc.strokeLine(vtx1.pos.x.d, vtx1.pos.y.d, vtx3.pos.x.d, vtx3.pos.y.d)
                                     }
