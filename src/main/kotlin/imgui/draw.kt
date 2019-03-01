@@ -745,7 +745,14 @@ class DrawList(sharedData: DrawListSharedData?) {
             _vtxCurrentIdx += vtxCount
         }
     }
-//    IMGUI_API void  AddBezierCurve(const ImVec2& pos0, const ImVec2& cp0, const ImVec2& cp1, const ImVec2& pos1, ImU32 col, float thickness, int num_segments = 0);
+
+    fun addBezierCurve(pos0: Vec2, cp0: Vec2, cp1: Vec2, pos1: Vec2, col: Int, thickness: Float, numSegments: Int = 0) {
+        if (col hasnt COL32_A_MASK) return
+
+        pathLineTo(pos0)
+        pathBezierCurveTo(cp0, cp1, pos1, numSegments)
+        pathStroke(col, false, thickness)
+    }
 
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -792,53 +799,53 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-//    fun pathBezierCurveTo(p1: Vec2, p2: Vec2, p3: Vec2, numSegments: Int = 0) {
-//
-//        val p1 = _path.last()
-//        if (numSegments == 0)
-//            // Auto-tessellated
-//            pathBezierToCasteljau(&_Path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, _Data->style.CurveTessellationTol, 0)
-//        else
-//        {
-//            float t_step = 1.0f / (float)num_segments;
-//            for (int i_step = 1; i_step <= num_segments; i_step++)
-//            {
-//                float t = t_step * i_step;
-//                float u = 1.0f - t;
-//                float w1 = u*u*u;
-//                float w2 = 3*u*u*t;
-//                float w3 = 3*u*t*t;
-//                float w4 = t*t*t;
-//                _Path.push_back(ImVec2(w1*p1.x + w2*p2.x + w3*p3.x + w4*p4.x, w1*p1.y + w2*p2.y + w3*p3.y + w4*p4.y));
-//            }
-//        }
-//    }
-//
-//    private fun pathBezierToCasteljau(ImVector<ImVec2>* path, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float tess_tol, int level)
-//    {
-//        float dx = x4 - x1;
-//        float dy = y4 - y1;
-//        float d2 = ((x2 - x4) * dy - (y2 - y4) * dx);
-//        float d3 = ((x3 - x4) * dy - (y3 - y4) * dx);
-//        d2 = (d2 >= 0) ? d2 : -d2;
-//        d3 = (d3 >= 0) ? d3 : -d3;
-//        if ((d2+d3) * (d2+d3) < tess_tol * (dx*dx + dy*dy))
-//            {
-//                path->push_back(ImVec2(x4, y4));
-//            }
-//        else if (level < 10)
-//        {
-//            float x12 = (x1+x2)*0.5f,       y12 = (y1+y2)*0.5f;
-//            float x23 = (x2+x3)*0.5f,       y23 = (y2+y3)*0.5f;
-//            float x34 = (x3+x4)*0.5f,       y34 = (y3+y4)*0.5f;
-//            float x123 = (x12+x23)*0.5f,    y123 = (y12+y23)*0.5f;
-//            float x234 = (x23+x34)*0.5f,    y234 = (y23+y34)*0.5f;
-//            float x1234 = (x123+x234)*0.5f, y1234 = (y123+y234)*0.5f;
-//
-//            PathBezierToCasteljau(path, x1,y1,        x12,y12,    x123,y123,  x1234,y1234, tess_tol, level+1);
-//            PathBezierToCasteljau(path, x1234,y1234,  x234,y234,  x34,y34,    x4,y4,       tess_tol, level+1);
-//        }
-//    }
+    fun pathBezierCurveTo(p2: Vec2, p3: Vec2, p4: Vec2, numSegments: Int = 0) {
+
+        val p1 = _path.last()
+        if (numSegments == 0)
+        // Auto-tessellated
+            pathBezierToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, ImGui.style.curveTessellationTol, 0)
+        else {
+            val t_step = 1.0f / numSegments.f
+            for (i_step in 1 until numSegments + 1) {
+                val t = t_step * i_step
+                val u = 1.0f - t
+                val w1 = u * u * u
+                val w2 = 3 * u * u * t
+                val w3 = 3 * u * t * t
+                val w4 = t * t * t
+                _path.add(Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x, w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y))
+            }
+        }
+    }
+
+    private fun pathBezierToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, x4: Float, y4: Float, tess_tol: Float, level: Int) {
+        val dx = x4 - x1
+        val dy = y4 - y1
+        var d2 = ((x2 - x4) * dy - (y2 - y4) * dx)
+        var d3 = ((x3 - x4) * dy - (y3 - y4) * dx)
+        d2 = if (d2 >= 0) d2 else -d2
+        d3 = if (d3 >= 0) d3 else -d3
+        if ((d2 + d3) * (d2 + d3) < tess_tol * (dx * dx + dy * dy)) {
+            path.add(Vec2(x4, y4))
+        } else if (level < 10) {
+            val x12 = (x1 + x2) * 0.5f
+            val y12 = (y1 + y2) * 0.5f
+            val x23 = (x2 + x3) * 0.5f
+            val y23 = (y2 + y3) * 0.5f
+            val x34 = (x3 + x4) * 0.5f
+            val y34 = (y3 + y4) * 0.5f
+            val x123 = (x12 + x23) * 0.5f
+            val y123 = (y12 + y23) * 0.5f
+            val x234 = (x23 + x34) * 0.5f
+            val y234 = (y23 + y34) * 0.5f
+            val x1234 = (x123 + x234) * 0.5f
+            val y1234 = (y123 + y234) * 0.5f
+
+            pathBezierToCasteljau(path, x1, y1, x12, y12, x123, y123, x1234, y1234, tess_tol, level + 1)
+            pathBezierToCasteljau(path, x1234, y1234, x234, y234, x34, y34, x4, y4, tess_tol, level + 1)
+        }
+    }
 
     fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, roundingCorners: Int = Dcf.All.i) {
 
