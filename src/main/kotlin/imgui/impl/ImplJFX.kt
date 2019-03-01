@@ -3,6 +3,7 @@ package imgui.impl
 import glm_.d
 import glm_.f
 import glm_.i
+import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import glm_.vec4.Vec4
 import imgui.ImGui.io
@@ -30,9 +31,7 @@ const val COLOR_SIZE_MASK = 0xFF
 const val OPACITY_MULTIPLIER = 2.0
 const val OPACITY_RECIPROCAL = 1.0 / OPACITY_MULTIPLIER
 
-class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
-    val internalCanvas = if(vsync) Canvas(canvas.width, canvas.height) else null
-
+class ImplJFX(val stage: Stage, val canvas: Canvas) {
     lateinit var texture: Image
     val startTime = System.currentTimeMillis()
     var time = 0.0
@@ -41,7 +40,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
     lateinit var mouseMoveListener: EventHandler<MouseEvent>
     lateinit var mouseReleaseListener: EventHandler<MouseEvent>
 
-    var mousePos = Vec2d()
+    var mousePos = Vec2()
     val mouseJustReleased = BooleanArray(io.mouseDown.size) { false }
 
     fun createDeviceObjects() {
@@ -71,7 +70,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
         }
 
         mouseMoveListener = EventHandler {
-            mousePos = Vec2d(it.sceneX, it.sceneY)
+            mousePos = Vec2(it.sceneX.f, it.sceneY.f)
         }
 
         val keyListener = EventHandler<KeyEvent> {
@@ -111,12 +110,8 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
         texture = createTex
     }
 
-    private var clearColor: Vec4? = null
-
-    fun newFrame(clearColor: Vec4?) {
-        this.clearColor = clearColor
-
-        if(!::texture.isInitialized)
+    fun newFrame() {
+        if (!::texture.isInitialized)
             createDeviceObjects()
 
         io.displaySize.put(canvas.width, canvas.height)
@@ -131,7 +126,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
 
         io.navInputs.fill(0f)
 
-        io.backendFlags = io.backendFlags or BackendFlag.HasSetMousePos
+        //TODO: io.backendFlags = io.backendFlags or BackendFlag.HasSetMousePos
     }
 
     private fun updateMousePos() {
@@ -152,9 +147,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
     }
 
     fun renderDrawData(drawData: DrawData) {
-        vsyncCap(vsync)
-
-        val gc = if (vsync) internalCanvas!!.graphicsContext2D else canvas.graphicsContext2D
+        val gc = canvas.graphicsContext2D
         gc.save()
         gc.globalBlendMode = BlendMode.SRC_OVER
         clearScreen(gc)
@@ -172,8 +165,8 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
                 // User callback (registered via ImDrawList::AddCallback)
                     cb(cmdList, cmd)
                 else {
-                    for (tri in 0 until cmd.elemCount / 3) {
-                        val baseIdx = (tri * 3) + idxBufferOffset
+                    for (tri in 0 until cmd.elemCount step 3) {
+                        val baseIdx = tri + idxBufferOffset
                         val idx1 = cmdList.idxBuffer[baseIdx]
                         val vtx1 = cmdList.vtxBuffer[idx1]
                         val vtx2 = cmdList.vtxBuffer[cmdList.idxBuffer[baseIdx + 1]]
@@ -197,7 +190,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
                                     doubleArrayOf(vtx1.pos.y.toDouble(), vtx2.pos.y.toDouble(), vtx3.pos.y.toDouble()), 3)
 
                             //check if it borders the next triangle
-                            if (tri + 1 < cmd.elemCount / 3) {
+                            if (tri + 1 < cmd.elemCount) {
                                 val idx4 = cmdList.idxBuffer[baseIdx + 3]
                                 if (idx4 == idx1) {
                                     val idx5 = cmdList.idxBuffer[baseIdx + 4]
@@ -278,46 +271,11 @@ class ImplJFX(val stage: Stage, val canvas: Canvas, val vsync: Boolean) {
                 idxBufferOffset += cmd.elemCount
             }
         }
-        if (vsync) {
-            fun doCopy() {
-                clearScreen(canvas.graphicsContext2D)
-                val wi = WritableImage(canvas.width.i, canvas.height.i)
-                internalCanvas!!.snapshot(SnapshotParameters(), wi)
-                canvas.graphicsContext2D.drawImage(wi, 0.0, 0.0)
-            }
-            if (!Platform.isFxApplicationThread()) {
-                val s = AtomicBoolean(false)
-                Platform.runLater {
-                    doCopy()
-                    s.set(true)
-                }
-                while (!s.get()) {
-                }
-            } else {
-                doCopy()
-            }
-        }
         gc.restore()
     }
 
     private fun clearScreen(gc: GraphicsContext) {
-        if(clearColor == null)
-            return
         gc.clearRect(0.0, 0.0, gc.canvas.width, gc.canvas.height)
-        gc.fill = JFXColor(clearColor!!.r.d, clearColor!!.g.d, clearColor!!.b.d, clearColor!!.a.d)
-        gc.fillRect(0.0, 0.0, gc.canvas.width, gc.canvas.height)
-    }
-
-    private fun vsyncCap(b: Boolean) {
-        if (!b)
-            return
-        var currentTime = (System.currentTimeMillis() - startTime).toDouble() / 1000.0
-        var deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
-        while (deltaTime < 1.0 / 60.0) {
-            Thread.sleep(1)
-            currentTime = (System.currentTimeMillis() - startTime).toDouble() / 1000.0
-            deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
-        }
     }
 }
 

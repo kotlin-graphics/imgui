@@ -1,17 +1,22 @@
 package imgui.gl
 
+import glm_.d
+import glm_.f
+import glm_.i
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.io
 import imgui.impl.ImplJFX
+import imgui.impl.JFXColor
 import javafx.application.Platform
 import javafx.scene.Scene
+import javafx.scene.SnapshotParameters
 import javafx.scene.canvas.Canvas
+import javafx.scene.image.WritableImage
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.Pane
 import javafx.stage.Stage
-
-typealias JFXColor = javafx.scene.paint.Color
+import java.util.concurrent.atomic.AtomicBoolean
 
 fun main() {
     HelloWorld_jfx()
@@ -23,15 +28,19 @@ class HelloWorld_jfx {
     lateinit var canvas: Canvas
     private var ctx: Context
 
+    var vsync = true
+
     var f = 0f
     val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
     var showAnotherWindow = false
     var showDemo = true
     var counter = 0
 
+    val startTime = System.nanoTime()
+    var time = 0.0
+
     init {
 
-        val t = Thread.currentThread()
         Platform.startup {
             canvas = Canvas(1280.0, 720.0)
             val vb = Pane(canvas)
@@ -48,11 +57,15 @@ class HelloWorld_jfx {
         while(!::stage.isInitialized)
             Thread.sleep(1)
 
-        val s = ImplJFX(stage, canvas, true)
+        val internalCanvas = Canvas(canvas.width, canvas.height)
+
+        val s = ImplJFX(stage, internalCanvas)
 
         while(stage.isShowing) {
 
-            s.newFrame(clearColor)
+            vsyncCap()
+
+            s.newFrame()
             ImGui.newFrame()
 
             ImGui.run {
@@ -102,7 +115,33 @@ class HelloWorld_jfx {
             // Rendering
             ImGui.render()
 
+            f = (1.0f + Math.sin(time.d).f) / 2.0f
+
+            //clear screen
+            val gc = internalCanvas.graphicsContext2D
+            gc.clearRect(0.0, 0.0, canvas.width, canvas.height)
+            gc.fill = clearColor.toJFXColor()
+            gc.fillRect(0.0, 0.0, canvas.width, canvas.height)
+
             s.renderDrawData(ImGui.drawData!!)
+
+            //copy to screen
+            fun doCopy() {
+                val wi = WritableImage(canvas.width.i, canvas.height.i)
+                internalCanvas.snapshot(SnapshotParameters(), wi)
+                canvas.graphicsContext2D.drawImage(wi, 0.0, 0.0)
+            }
+            if (!Platform.isFxApplicationThread()) {
+                val ss = AtomicBoolean(false)
+                Platform.runLater {
+                    doCopy()
+                    ss.set(true)
+                }
+                while (!ss.get()) {
+                }
+            } else {
+                doCopy()
+            }
         }
     }
 
@@ -131,9 +170,20 @@ class HelloWorld_jfx {
             keyMap[Key.Z] = KeyCode.Z.code
         }
     }
+
+    private fun vsyncCap() {
+        if (!vsync)
+            return
+        var currentTime = (System.nanoTime() - startTime).toDouble() / 1e9
+        var deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
+        while (deltaTime < 1.0 / 60.0) {
+            currentTime = (System.nanoTime() - startTime).toDouble() / 1e9
+            deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
+        }
+        time = currentTime
+    }
 }
 
-private fun Vec4.toRGBA(): Int {
-    return ((this.r * 255.0).toInt() shl 24) or ((this.g * 255.0).toInt() shl 16) or
-            ((this.b * 255.0).toInt() shl 8) or (this.a * 255.0).toInt()
+private fun Vec4.toJFXColor(): JFXColor {
+    return JFXColor(r.d, g.d, b.d, a.d)
 }
