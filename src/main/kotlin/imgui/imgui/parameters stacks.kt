@@ -150,6 +150,10 @@ interface imgui_parametersStacks {
                     style.buttonTextAlign to it.floats
                     style.buttonTextAlign put (value as Vec2)
                 }
+                StyleVar.SelectableTextAlign -> {
+                    style.selectableTextAlign to it.floats
+                    style.selectableTextAlign put (value as Vec2)
+                }
             }
         })
     }
@@ -177,7 +181,9 @@ interface imgui_parametersStacks {
             StyleVar.ScrollbarRounding -> style.scrollbarRounding = backup.floats[0]
             StyleVar.GrabMinSize -> style.grabMinSize = backup.floats[0]
             StyleVar.GrabRounding -> style.grabRounding = backup.floats[0]
+            StyleVar.TabRounding -> style.tabRounding = backup.floats[0]
             StyleVar.ButtonTextAlign -> style.buttonTextAlign put backup.floats
+            StyleVar.SelectableTextAlign -> style.selectableTextAlign put backup.floats
         }
     }
 

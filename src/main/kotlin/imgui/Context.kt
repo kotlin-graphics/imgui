@@ -926,6 +926,8 @@ class Style {
     /** Tessellation tolerance when using pathBezierCurveTo() without a specific number of segments.
      *  Decrease for highly tessellated curves (higher quality, more polygons), increase to reduce quality. */
     var curveTessellationTol = 1.25f
+    /** Alignment of selectable text when selectable is larger than text. Defaults to (0,0) for top-left alignment. */
+    var selectableTextAlign = Vec2()
 
     val colors = ArrayList<Vec4>()
 

@@ -125,7 +125,7 @@ interface selectableLists {
         }
 
         if (flags has Sf.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-        renderTextClipped(bbInner.min, bb.max, label, 0, labelSize, Vec2())
+        renderTextClipped(bbInner.min, bbInner.max, label, 0, labelSize, style.selectableTextAlign, bb)
         if (flags has Sf.Disabled) popStyleColor()
 
         // Automatically close popups
