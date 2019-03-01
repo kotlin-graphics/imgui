@@ -1021,24 +1021,17 @@ class FontAtlas {
  *  GetTexDataAsRGBA32().   */
 class Font {
 
-    // Members: Hot ~24/32 bytes (for CalcTextSize)
-
     // @formatter:off
+
+    // Members: Hot ~20/24 bytes (for CalcTextSize)
 
     /** Sparse. Glyphs->AdvanceX in a directly indexable way (cache-friendly for CalcTextSize functions which only this info,
      *  and are often bottleneck in large UI). */
     val indexAdvanceX = ArrayList<Float>()      // 12/16 // out //
-    /** Height of characters, set during loading (don't change after loading)   */
-    var fontSize = 0f                           // 4     // in  // <user set>
 
     var fallbackAdvanceX = 0f                   // 4     // out // = FallbackGlyph->AdvanceX
-    /** Replacement glyph if one isn't found. Only set via SetFallbackChar()    */
-    var fallbackChar = '?'                      // 2     // in  // = '?'
-        /** ~SetFallbackChar */
-        set(value) {
-            field = value
-            buildLookupTable()
-        }
+    /** Height of characters, set during loading (don't change after loading)   */
+    var fontSize = 0f                           // 4     // in  // <user set>
 
     // Members: Hot ~36/48 bytes (for CalcTextSize + render loop)
 
@@ -1046,12 +1039,12 @@ class Font {
     val indexLookup = ArrayList<Int>()          // 12-16 // out //
     /** All glyphs. */
     val glyphs = ArrayList<FontGlyph>()         // 12-16 // out //
+
+    var fallbackGlyph: FontGlyph? = null        // 4-8   // out // = FindGlyph(FontFallbackChar)
     /** Offset font rendering by xx pixels  */
     var displayOffset = Vec2()                  // 8     // in  // = (0,0)
 
-    var fallbackGlyph: FontGlyph? = null        // 4-8   // out // = FindGlyph(FontFallbackChar)
-
-    // Members: Cold ~28/40 bytes
+    // Members: Cold ~32/40 bytes
 
     /** What we has been loaded into    */
     lateinit var containerAtlas: FontAtlas      // 4-8   // out //
@@ -1059,16 +1052,23 @@ class Font {
     val configData = ArrayList<FontConfig>()    // 4-8   // in  //
     /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
     var configDataCount = 0                     // 2     // in  // ~ 1
-
-    var dirtyLookupTables = true                // 1     // out //
+    /** Replacement glyph if one isn't found. Only set via SetFallbackChar()    */
+    var fallbackChar = '?'                      // 2     // in  // = '?'
+        /** ~SetFallbackChar */
+        set(value) {
+            field = value
+            buildLookupTable()
+        }
     /** Base font scale, multiplied by the per-window font scale which you can adjust with SetWindowFontScale()   */
     var scale = 1f                              // 4     // in  // = 1.f
     /** Ascent: distance from top to bottom of e.g. 'A' [0..FontSize]   */
-    var ascent = 0f                             // 8     // out
+    var ascent = 0f                             // 4     // out
 
-    var descent = 0f                            // 8     // out
+    var descent = 0f                            // 4     // out
     /** Total surface in pixels to get an idea of the font rasterization/texture cost (not exact, we approximate the cost of padding between glyphs)    */
     var metricsTotalSurface = 0                 // 4     // out
+
+    var dirtyLookupTables = true                // 1     // out //
 
     // @formatter:on
 
