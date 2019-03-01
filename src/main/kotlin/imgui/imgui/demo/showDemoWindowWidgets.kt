@@ -695,15 +695,15 @@ object showDemoWindowWidgets {
                     }
             }
             treeNode("Alignment") {
-                for (i in 0..2)
-                    for (j in 0..2) {
-                        val x = i / 2f
-                        val  y = j / 2f
-                        val name = "(%.1f,%.1f)".format(x, y)
-                        pushStyleVar(StyleVar.SelectableTextAlign, Vec2(x, y))
-                        selectable(name, selected4, 3 * i + j, 0, Vec2(70))
+                showHelpMarker("Alignment applies when a selectable is larger than its text content.\nBy default, Selectables uses style.SelectableTextAlign but it can be overriden on a per-item basis using PushStyleVar().")
+                for (y in 0..2)
+                    for (x in 0..2) {
+                        val alignment = Vec2(x / 2f, y / 2f)
+                        val name = "(%.1f,%.1f)".format(alignment.x, alignment.y)
+                        if (x > 0) sameLine()
+                        pushStyleVar(StyleVar.SelectableTextAlign, alignment)
+                        selectable(name, selected4, 3*y+x, Sf.None.i, Vec2(80))
                         popStyleVar()
-                        if (j != 2) sameLine()
                     }
             }
         }

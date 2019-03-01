@@ -909,8 +909,10 @@ class Style {
     var tabRounding = 4f
     /** Thickness of border around tabs. */
     var tabBorderSize = 0f
-    /** Alignment of button text when button is larger than text.   */
+    /** Alignment of button text when button is larger than text. Defaults to (0.5f, 0.5f) (centered).   */
     var buttonTextAlign = Vec2(0.5f)
+    /** Alignment of selectable text when selectable is larger than text. Defaults to (0,0) for top-left alignment. */
+    var selectableTextAlign = Vec2()
     /** Window position are clamped to be visible within the display area by at least this amount.
      *  Only applies to regular windows.    */
     var displayWindowPadding = Vec2(19)
@@ -926,8 +928,6 @@ class Style {
     /** Tessellation tolerance when using pathBezierCurveTo() without a specific number of segments.
      *  Decrease for highly tessellated curves (higher quality, more polygons), increase to reduce quality. */
     var curveTessellationTol = 1.25f
-    /** Alignment of selectable text when selectable is larger than text. Defaults to (0,0) for top-left alignment. */
-    var selectableTextAlign = Vec2()
 
     val colors = ArrayList<Vec4>()
 
