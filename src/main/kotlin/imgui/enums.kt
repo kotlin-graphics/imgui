@@ -832,7 +832,9 @@ enum class StyleVar {
     /** float */
     TabRounding,
     /** vec2  */
-    ButtonTextAlign;
+    ButtonTextAlign,
+    /** vec2  */
+    SelectableTextAlign;
 
     @JvmField
     val i = ordinal

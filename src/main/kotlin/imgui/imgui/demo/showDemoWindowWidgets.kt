@@ -89,9 +89,11 @@ import imgui.ImGui.plotHistogram
 import imgui.ImGui.plotLines
 import imgui.ImGui.popButtonRepeat
 import imgui.ImGui.popId
+import imgui.ImGui.popStyleVar
 import imgui.ImGui.progressBar
 import imgui.ImGui.pushButtonRepeat
 import imgui.ImGui.pushId
+import imgui.ImGui.pushStyleVar
 import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -213,6 +215,7 @@ object showDemoWindowWidgets {
             false, true, false, false,
             false, false, true, false,
             false, false, false, true)
+    val selected4 = booleanArrayOf(true, false, true, false, true, false, true, false, true)
 
 
     /* Multi-line Text Input */
@@ -691,6 +694,18 @@ object showDemoWindowWidgets {
                         if ((i % 4) < 3) sameLine()
                     }
             }
+            treeNode("Alignment") {
+                for (i in 0..2)
+                    for (j in 0..2) {
+                        val x = i / 2f
+                        val  y = j / 2f
+                        val name = "(%.1f,%.1f)".format(x, y)
+                        pushStyleVar(StyleVar.SelectableTextAlign, Vec2(x, y))
+                        selectable(name, selected4, 3 * i + j, 0, Vec2(70))
+                        popStyleVar()
+                        if (j != 2) sameLine()
+                    }
+            }
         }
 
         treeNode("Filtered Text Input TODO") {
@@ -822,7 +837,8 @@ object showDemoWindowWidgets {
                 colorPicker4("##picker", color, miscFlags or Cef.NoSidePreview or Cef.NoSmallPreview)
                 sameLine()
 
-                withGroup { // Lock X position
+                withGroup {
+                    // Lock X position
                     text("Current")
                     colorButton("##current", color, Cef.NoPicker or Cef.AlphaPreviewHalf, Vec2(60, 40))
                     text("Previous")

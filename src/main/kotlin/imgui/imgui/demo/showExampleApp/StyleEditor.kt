@@ -154,6 +154,7 @@ object StyleEditor {
                 text("Alignment")
                 sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
                 sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f"); sameLine(); showHelpMarker("Alignment applies when a button is larger than its text content.")
+                sliderVec2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f"); sameLine(); showHelpMarker("Alignment applies when a selectable is larger than its text content.")
                 text("Safe Area Padding"); sameLine(); showHelpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
                 sliderVec2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f")
                 endTabItem()
