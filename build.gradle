@@ -3,8 +3,8 @@ import static org.gradle.internal.os.OperatingSystem.*
 plugins {
     id 'maven'
     id 'java'
-    id "org.jetbrains.kotlin.jvm" version "1.3.11"
-    id "com.github.johnrengelman.shadow" version '4.0.3'
+    id "org.jetbrains.kotlin.jvm" version "1.3.21"
+    id "com.github.johnrengelman.shadow" version '4.0.4'
 }
 
 // jitpack
@@ -13,8 +13,8 @@ group = 'com.github.kotlin-graphics'
 ext{
     moduleName = 'com.github.kotlin_graphics.imgui'
     kotlin = 'org.jetbrains.kotlin:kotlin'
-    kotlin_version = '1.3.11'
-    kotlintest_version = '3.2.0'
+    kotlin_version = '1.3.21'
+    kotlintest_version = '3.2.1'
     lwjgl_version = "3.2.2-SNAPSHOT"
     lwjgl_natives = current() == WINDOWS ? "windows" : current() == LINUX ? "linux" : "macos"
 }
@@ -58,12 +58,12 @@ task lightJar(type: Jar) {
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 
@@ -83,3 +83,5 @@ jar {
     inputs.property("moduleName", moduleName)
     manifest.attributes('Automatic-Module-Name': moduleName)
 }
+
+shadowJar.archiveClassifier = 'all'
