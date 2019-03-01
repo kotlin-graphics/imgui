@@ -112,7 +112,7 @@ private class HelloWorld_lwjgl {
 
     fun mainLoop(stack: MemoryStack) {
 
-        RemoteryGL.rmt_BeginOpenGLSample("imgui", null)
+//        RemoteryGL.rmt_BeginOpenGLSample("imgui", null)
 
         // Start the Dear ImGui frame
         lwjglGlfw.newFrame()
@@ -172,6 +172,6 @@ private class HelloWorld_lwjgl {
         if (DEBUG)
             checkError("mainLoop")
 
-        RemoteryGL.rmt_EndOpenGLSample()
+//        RemoteryGL.rmt_EndOpenGLSample()
     }
 }
