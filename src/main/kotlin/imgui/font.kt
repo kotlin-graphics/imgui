@@ -651,14 +651,13 @@ class FontAtlas {
         for (srcIdx in srcTmpArray.indices) {
             val srcTmp = srcTmpArray[srcIdx]
             val dstTmp = dstTmpArray[srcTmp.dstIndex]
-            val cfg = configData[srcIdx]
             srcTmp.glyphsSet.resize(srcTmp.glyphsHighest + 1)
-            if (dstTmp.srcCount > 1 && dstTmp.glyphsSet.storage.isEmpty())
+            if (dstTmp.glyphsSet.storage.isEmpty())
                 dstTmp.glyphsSet.resize(dstTmp.glyphsHighest + 1)
 
             for (srcRange in srcTmp.srcRanges)
                 for (codepoint in srcRange) {
-                    if (cfg.mergeMode && dstTmp.glyphsSet[codepoint])   // Don't overwrite existing glyphs. We could make this an option (e.g. MergeOverwrite)
+                    if (dstTmp.glyphsSet[codepoint])   // Don't overwrite existing glyphs. We could make this an option for MergeMode (e.g. MergeOverwrite==true)
                         continue
                     if (!stbtt_FindGlyphIndex(srcTmp.fontInfo, codepoint).bool)    // It is actually in the font?
                         continue
@@ -667,8 +666,7 @@ class FontAtlas {
                     srcTmp.glyphsCount++
                     dstTmp.glyphsCount++
                     srcTmp.glyphsSet[codepoint] = true
-                    if (dstTmp.srcCount > 1)
-                        dstTmp.glyphsSet[codepoint] = true
+                    dstTmp.glyphsSet[codepoint] = true
                     totalGlyphsCount++
                 }
         }
