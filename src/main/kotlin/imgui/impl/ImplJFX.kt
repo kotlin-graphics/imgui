@@ -174,7 +174,12 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                         xs[pos] = x.d
                         ys[pos++] = y.d
                     }
+                    var skip = false
                     for (tri in 0 until cmd.elemCount step 3) {
+                        if(skip) {
+                            skip = false
+                            continue
+                        }
                         val baseIdx = tri + idxBufferOffset
                         val idx1 = cmdList.idxBuffer[baseIdx]
                         val vtx1 = cmdList.vtxBuffer[idx1]
@@ -206,8 +211,6 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                         }
 
                         if (vtx1.uv == vtx2.uv) {
-                            //TODO: Use above method and drawImage
-
                             //in OpenGL this is done in shaders as `color * texture(texCoord)
                             //the way this is implemented here has 2 current limitations: no new images
                             //and the colors are not currently multiplied
@@ -236,67 +239,82 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                             } else {
                                 draw()
                             }
-
                         } else {
-                            if (vtx1.uv.y == vtx2.uv.y) {
-                                //Top flat triangle
-                                if (vtx3.uv.y > vtx1.uv.y) {
-                                    val minY = Math.round(vtx1.pos.y).i
-                                    val maxY = Math.round(vtx3.pos.y).i
-                                    val minYUV = vtx1.uv.y
-                                    val maxYUV = vtx3.uv.y
-                                    val yuvDiff = maxYUV - minYUV
-                                    val yDiff = maxY - minY
-                                    val minX = vtx1.pos.x.i
-                                    val maxX = vtx3.pos.x.i
-                                    val minXUV = vtx1.uv.x
-                                    val maxXUV = vtx3.uv.x
-                                    val xDiff = maxX - minX
-                                    val xuvDiff = maxXUV - minXUV
-                                    for (y in minY until maxY + 1) {
-                                        for (x in xDiff downTo (xDiff * (y.f - minY) / yDiff).i) {
-                                            val xPct = x.d / xDiff
-                                            val yPct = 1 - ((maxY.d - y.d) / yDiff)
-                                            val c = texPr.getArgb((texture.width * (minXUV + (xPct * xuvDiff))).i, (texture.height * (minYUV + (yPct * yuvDiff))).i)
-                                            if ((c and COL32_A_MASK) == 0)
-                                                continue
-                                            pw.setArgb(minX + x, y, c)
+                            fun drawSlow() {
+                                if (vtx1.uv.y == vtx2.uv.y) {
+                                    //Top flat triangle
+                                    if (vtx3.uv.y > vtx1.uv.y) {
+                                        val minY = Math.round(vtx1.pos.y).i
+                                        val maxY = Math.round(vtx3.pos.y).i
+                                        val minYUV = vtx1.uv.y
+                                        val maxYUV = vtx3.uv.y
+                                        val yuvDiff = maxYUV - minYUV
+                                        val yDiff = maxY - minY
+                                        val minX = vtx1.pos.x.i
+                                        val maxX = vtx3.pos.x.i
+                                        val minXUV = vtx1.uv.x
+                                        val maxXUV = vtx3.uv.x
+                                        val xDiff = maxX - minX
+                                        val xuvDiff = maxXUV - minXUV
+                                        for (y in minY until maxY + 1) {
+                                            for (x in xDiff downTo (xDiff * (y.f - minY) / yDiff).i) {
+                                                val xPct = x.d / xDiff
+                                                val yPct = 1 - ((maxY.d - y.d) / yDiff)
+                                                val c = texPr.getArgb((texture.width * (minXUV + (xPct * xuvDiff))).i, (texture.height * (minYUV + (yPct * yuvDiff))).i)
+                                                if ((c and COL32_A_MASK) == 0)
+                                                    continue
+                                                pw.setArgb(minX + x, y, c)
+                                            }
                                         }
+                                    } else {
+                                        TODO("vtx1y == vtx2y vtx3 low")
                                     }
-                                } else {
-                                    TODO("vtx1y == vtx2y vtx3 low")
-                                }
-                            } else if (vtx2.uv.y == vtx3.uv.y) {
-                                if (vtx3.uv.y > vtx1.uv.y) {
-                                    val minY = Math.round(vtx1.pos.y).i
-                                    val maxY = Math.round(vtx3.pos.y).i
-                                    val minYUV = vtx1.uv.y
-                                    val maxYUV = vtx3.uv.y
-                                    val yuvDiff = maxYUV - minYUV
-                                    val yDiff = maxY - minY
-                                    val minX = vtx1.pos.x.i
-                                    val maxX = vtx2.pos.x.i
-                                    val minXUV = vtx1.uv.x
-                                    val maxXUV = vtx2.uv.x
-                                    val xDiff = maxX - minX
-                                    val xuvDiff = maxXUV - minXUV
-                                    for (y in minY until maxY + 1) {
-                                        for (x in 0 until (xDiff * (y.f - minY) / yDiff).i) {
-                                            val xPct = x.d / xDiff
-                                            val yPct = 1.0 - ((maxY.d - y.d) / yDiff)
-                                            val c = texPr.getArgb((texture.width * (minXUV + (xPct * xuvDiff))).i, (texture.height * (minYUV + (yPct * yuvDiff))).i)
-                                            if ((c and COL32_A_MASK) == 0)
-                                                continue
-                                            pw.setArgb(minX + x, y, c)
+                                } else if (vtx2.uv.y == vtx3.uv.y) {
+                                    if (vtx3.uv.y > vtx1.uv.y) {
+                                        val minY = Math.round(vtx1.pos.y).i
+                                        val maxY = Math.round(vtx3.pos.y).i
+                                        val minYUV = vtx1.uv.y
+                                        val maxYUV = vtx3.uv.y
+                                        val yuvDiff = maxYUV - minYUV
+                                        val yDiff = maxY - minY
+                                        val minX = vtx1.pos.x.i
+                                        val maxX = vtx2.pos.x.i
+                                        val minXUV = vtx1.uv.x
+                                        val maxXUV = vtx2.uv.x
+                                        val xDiff = maxX - minX
+                                        val xuvDiff = maxXUV - minXUV
+                                        for (y in minY until maxY + 1) {
+                                            for (x in 0 until (xDiff * (y.f - minY) / yDiff).i) {
+                                                val xPct = x.d / xDiff
+                                                val yPct = 1.0 - ((maxY.d - y.d) / yDiff)
+                                                val c = texPr.getArgb((texture.width * (minXUV + (xPct * xuvDiff))).i, (texture.height * (minYUV + (yPct * yuvDiff))).i)
+                                                if ((c and COL32_A_MASK) == 0)
+                                                    continue
+                                                pw.setArgb(minX + x, y, c)
+                                            }
                                         }
+                                    } else {
+                                        TODO("vtx2y == vtxy3 vtx3 low")
                                     }
+                                } else if (vtx1.uv.y == vtx3.uv.y) {
+                                    TODO("vtx1y == vtxy3 ")
                                 } else {
-                                    TODO("vtx2y == vtxy3 vtx3 low")
+                                    TODO("none")
                                 }
-                            } else if (vtx1.uv.y == vtx3.uv.y) {
-                                TODO("vtx1y == vtxy3 ")
+                            }
+                            if (tri + 3 < cmd.elemCount) {
+                                val idx4 = cmdList.idxBuffer[baseIdx + 3]
+                                val idx5 = cmdList.idxBuffer[baseIdx + 4]
+                                if (idx4 == idx1 && idx5 == idx3) {
+                                    gc.drawImage(texture, (texture.width * vtx1.uv.x).d, (texture.height * vtx1.uv.y).d,
+                                            (texture.width * (vtx3.uv.x - vtx1.uv.x)).d, (texture.height * (vtx3.uv.y - vtx1.uv.y)).d,
+                                            vtx1.pos.x.d, vtx1.pos.y.d, vtx3.pos.x.d - vtx1.pos.x.d, vtx3.pos.y.d - vtx1.pos.y.d)
+                                    skip = true
+                                } else {
+                                    drawSlow()
+                                }
                             } else {
-                                TODO("none")
+                                drawSlow()
                             }
                         }
                     }
