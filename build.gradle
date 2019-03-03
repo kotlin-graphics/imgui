@@ -49,9 +49,11 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
-javafx {
-    version = "11.0.1"
-    modules = ['javafx.graphics']
+if (JavaVersion.current() >= JavaVersion.VERSION_11) {
+    javafx {
+        version = "11.0.1"
+        modules = ['javafx.graphics']
+    }
 }
 
 task lightJar(type: Jar) {
