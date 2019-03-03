@@ -31,7 +31,6 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
 
     lateinit var mousePressListener: EventHandler<MouseEvent>
     lateinit var mouseMoveListener: EventHandler<MouseEvent>
-    lateinit var mouseReleaseListener: EventHandler<MouseEvent>
 
     var mousePos = Vec2()
     val mouseJustReleased = BooleanArray(io.mouseDown.size) { false }
@@ -41,25 +40,12 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
             return
 
         mousePressListener = EventHandler {
-            val button = when (it.button) {
+            (if(it.eventType == MouseEvent.MOUSE_PRESSED) mouseJustPressed else mouseJustReleased)[when (it.button) {
                 MouseButton.PRIMARY -> 0
                 MouseButton.MIDDLE -> 2
                 MouseButton.SECONDARY -> 1
-                else -> -1
-            }
-            if (button in 0..2)
-                mouseJustPressed[button] = true
-        }
-
-        mouseReleaseListener = EventHandler {
-            val button = when (it.button) {
-                MouseButton.PRIMARY -> 0
-                MouseButton.MIDDLE -> 2
-                MouseButton.SECONDARY -> 1
-                else -> -1
-            }
-            if (button in 0..2)
-                mouseJustReleased[button] = true
+                else -> return@EventHandler
+            }] = true
         }
 
         mouseMoveListener = EventHandler {
@@ -84,7 +70,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
         }
 
         stage.addEventHandler(MouseEvent.MOUSE_PRESSED, mousePressListener)
-        stage.addEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleaseListener)
+        stage.addEventHandler(MouseEvent.MOUSE_RELEASED, mousePressListener)
         stage.addEventHandler(MouseEvent.MOUSE_MOVED, mouseMoveListener)
         stage.addEventHandler(KeyEvent.KEY_PRESSED, keyListener)
 
@@ -139,6 +125,9 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
         io.mousePos put (mousePos)
     }
 
+    var xs = DoubleArray(16)
+    var ys = DoubleArray(16)
+
     fun renderDrawData(drawData: DrawData) {
         val gc = canvas.graphicsContext2D
         gc.save()
@@ -158,12 +147,12 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                 // User callback (registered via ImDrawList::AddCallback)
                     cb(cmdList, cmd)
                 else {
-                    var xs = DoubleArray(64)
-                    var ys = DoubleArray(64)
                     var col = JFXColor(0.0, 0.0, 0.0, 0.0)
                     var pos = 0
                     fun addPoint(x: Float, y: Float) {
                         if(pos == xs.size) {
+                            if(DEBUG)
+                                println("increase points buffer size (old ${xs.size}, new ${xs.size * 2})")
                             val nx = DoubleArray(xs.size * 2)
                             val ny = DoubleArray(ys.size * 2)
                             xs.copyInto(nx)
