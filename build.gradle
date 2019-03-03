@@ -33,11 +33,10 @@ dependencies {
     implementation "org.jogamp.gluegen:gluegen-rt-main:$joglVersion"
     implementation "org.jogamp.jogl:jogl-all-main:$joglVersion"
 
-    ["", "-glfw", "-jemalloc", "-opengl", "-stb", "-remotery", "-vulkan"].each {
+    ["", "-glfw", "-jemalloc", "-opengl", "-stb", "-remotery"].each {
         String base = "org.lwjgl:lwjgl$it:$lwjgl_version"
         implementation base
-        if (it != "-vulkan")
-            testRuntime "$base:natives-$lwjgl_natives"
+        testRuntime "$base:natives-$lwjgl_natives"
         shadow "$base:natives-$lwjgl_natives"
     }
 
