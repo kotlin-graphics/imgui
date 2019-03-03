@@ -172,9 +172,10 @@ class HelloWorld_jfx {
     }
 
     private fun vsyncCap() {
+        time = (System.nanoTime() - startTime).toDouble() / 1e9
         if (!vsync)
             return
-        var currentTime = (System.nanoTime() - startTime).toDouble() / 1e9
+        var currentTime = time
         var deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         while (deltaTime < 1.0 / 60.0) {
             currentTime = (System.nanoTime() - startTime).toDouble() / 1e9
