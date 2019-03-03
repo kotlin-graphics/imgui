@@ -47,6 +47,7 @@ class HelloWorld_jfx {
             scene = Scene(vb)
             stage = Stage()
             stage.scene = scene
+            stage.title = "OpenJFX Example"
             stage.show()
         }
         ctx = Context()
@@ -117,18 +118,14 @@ class HelloWorld_jfx {
 
             f = (1.0f + Math.sin(time.d).f) / 2.0f
 
-            //clear screen
-            val gc = internalCanvas.graphicsContext2D
-            gc.clearRect(0.0, 0.0, canvas.width, canvas.height)
-            gc.fill = clearColor.toJFXColor()
-            gc.fillRect(0.0, 0.0, canvas.width, canvas.height)
-
             s.renderDrawData(ImGui.drawData!!)
 
             //copy to screen
             fun doCopy() {
                 val wi = WritableImage(canvas.width.i, canvas.height.i)
-                internalCanvas.snapshot(SnapshotParameters(), wi)
+                val r = SnapshotParameters()
+                r.fill = clearColor.toJFXColor()
+                internalCanvas.snapshot(r, wi)
                 canvas.graphicsContext2D.drawImage(wi, 0.0, 0.0)
             }
             if (!Platform.isFxApplicationThread()) {
