@@ -5,8 +5,8 @@ plugins {
     id 'java'
     id "org.jetbrains.kotlin.jvm" version "1.3.21"
     id "com.github.johnrengelman.shadow" version '4.0.4'
-    id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.7'
+    //id 'application'
+    //id 'org.openjfx.javafxplugin' version '0.0.7'
 }
 
 // jitpack
@@ -49,12 +49,12 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
-if (JavaVersion.current() >= JavaVersion.VERSION_11) {
+/*if (JavaVersion.current() >= JavaVersion.VERSION_11) {
     javafx {
         version = "11.0.1"
         modules = ['javafx.graphics']
     }
-}
+}*/
 
 task lightJar(type: Jar) {
     classifier = 'light'
