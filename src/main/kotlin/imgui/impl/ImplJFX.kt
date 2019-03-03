@@ -214,7 +214,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                             //this could be fixed
 
                             //check if it borders the next triangle
-                            if (tri + 1 < cmd.elemCount) {
+                            if (tri + 3 < cmd.elemCount) {
                                 val idx4 = cmdList.idxBuffer[baseIdx + 3]
                                 val idx5 = cmdList.idxBuffer[baseIdx + 4]
                                 if (idx4 == idx1 && idx5 == idx3) {
