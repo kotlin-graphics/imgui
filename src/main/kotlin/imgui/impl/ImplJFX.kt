@@ -4,13 +4,9 @@ import glm_.d
 import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
-import glm_.vec2.Vec2d
-import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.*
-import javafx.application.Platform
 import javafx.event.EventHandler
-import javafx.scene.SnapshotParameters
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.effect.BlendMode
@@ -23,13 +19,10 @@ import javafx.scene.shape.FillRule
 import javafx.scene.shape.StrokeLineCap
 import javafx.scene.shape.StrokeLineJoin
 import javafx.stage.Stage
-import java.util.concurrent.atomic.AtomicBoolean
 
 typealias JFXColor = javafx.scene.paint.Color
 
 const val COLOR_SIZE_MASK = 0xFF
-const val OPACITY_MULTIPLIER = 2.0
-const val OPACITY_RECIPROCAL = 1.0 / OPACITY_MULTIPLIER
 
 class ImplJFX(val stage: Stage, val canvas: Canvas) {
     lateinit var texture: Image
@@ -165,6 +158,22 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                 // User callback (registered via ImDrawList::AddCallback)
                     cb(cmdList, cmd)
                 else {
+                    var xs = DoubleArray(64)
+                    var ys = DoubleArray(64)
+                    var col = JFXColor(0.0, 0.0, 0.0, 0.0)
+                    var pos = 0
+                    fun addPoint(x: Float, y: Float) {
+                        if(pos == xs.size) {
+                            val nx = DoubleArray(xs.size * 2)
+                            val ny = DoubleArray(ys.size * 2)
+                            xs.copyInto(nx)
+                            ys.copyInto(ny)
+                            xs = nx
+                            ys = ny
+                        }
+                        xs[pos] = x.d
+                        ys[pos++] = y.d
+                    }
                     for (tri in 0 until cmd.elemCount step 3) {
                         val baseIdx = tri + idxBufferOffset
                         val idx1 = cmdList.idxBuffer[baseIdx]
@@ -175,33 +184,57 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
 
                         val col1 = vtx1.col
 
+                        fun draw() {
+                            if(pos != 0) {
+                                gc.fill = col
+                                gc.fillPolygon(xs, ys, pos)
+                                for(idx in 0 until pos) {
+                                    xs[idx] = 0.0
+                                    ys[idx] = 0.0
+                                }
+                                pos = 0
+                            } else {
+                                val x = JFXColor.rgb(
+                                        (col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK,
+                                        (col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK,
+                                        (col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK,
+                                        (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt()).opacity)
+                                gc.fill = x
+                                gc.fillPolygon(doubleArrayOf(vtx1.pos.x.toDouble(), vtx2.pos.x.toDouble(), vtx3.pos.x.toDouble()),
+                                        doubleArrayOf(vtx1.pos.y.toDouble(), vtx2.pos.y.toDouble(), vtx3.pos.y.toDouble()), 3)
+                            }
+                        }
+
                         if (vtx1.uv == vtx2.uv) {
+                            //TODO: Use above method and drawImage
+
                             //in OpenGL this is done in shaders as `color * texture(texCoord)
                             //the way this is implemented here has 2 current limitations: no new images
                             //and the colors are not currently multiplied
                             //this could be fixed
-                            val x = JFXColor.rgb(
-                                    (col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK,
-                                    (col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK,
-                                    (col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK,
-                                    (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt()).opacity)
-                            gc.fill = x
-                            gc.fillPolygon(doubleArrayOf(vtx1.pos.x.toDouble(), vtx2.pos.x.toDouble(), vtx3.pos.x.toDouble()),
-                                    doubleArrayOf(vtx1.pos.y.toDouble(), vtx2.pos.y.toDouble(), vtx3.pos.y.toDouble()), 3)
 
                             //check if it borders the next triangle
                             if (tri + 1 < cmd.elemCount) {
                                 val idx4 = cmdList.idxBuffer[baseIdx + 3]
-                                if (idx4 == idx1) {
-                                    val idx5 = cmdList.idxBuffer[baseIdx + 4]
-                                    if (idx5 == idx3) {
-                                        //if it borders, we need to draw a line between the two
-                                        //this is done this way rather than drawing both outlines of each triangle because that will draw this line twice. this produces higher visual quality
-                                        gc.stroke = JFXColor(x.red, x.green, x.blue, x.opacity / (OPACITY_MULTIPLIER * (x.red + x.green + x.blue + OPACITY_RECIPROCAL)))
-                                        //if you are using this backend and see many unsightly lines, play around with OPACITY_MULTIPLIER. this configuration was chosen as it appears to work best.
-                                        gc.strokeLine(vtx1.pos.x.d, vtx1.pos.y.d, vtx3.pos.x.d, vtx3.pos.y.d)
+                                val idx5 = cmdList.idxBuffer[baseIdx + 4]
+                                if (idx4 == idx1 && idx5 == idx3) {
+                                    val vtx6 = cmdList.vtxBuffer[cmdList.idxBuffer[baseIdx + 5]]
+                                    if (pos == 0) {
+                                        col = JFXColor.rgb(
+                                                (col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK,
+                                                (col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK,
+                                                (col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK,
+                                                (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt()).opacity)
+                                        addPoint(vtx1.pos.x, vtx1.pos.y)
+                                        addPoint(vtx2.pos.x, vtx2.pos.y)
+                                        addPoint(vtx3.pos.x, vtx3.pos.y)
                                     }
+                                    addPoint(vtx6.pos.x, vtx6.pos.y)
+                                } else {
+                                    draw()
                                 }
+                            } else {
+                                draw()
                             }
 
                         } else {
