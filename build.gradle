@@ -49,12 +49,12 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
-if (JavaVersion.current() >= JavaVersion.VERSION_11) {
-    javafx {
-        version = "11.0.1"
-        modules = ['javafx.graphics']
-    }
+javafx {
+    version = "11.0.1"
+    modules = ['javafx.graphics']
 }
+
+mainClassName = 'OpenJFXDummyMain'
 
 task lightJar(type: Jar) {
     classifier = 'light'
