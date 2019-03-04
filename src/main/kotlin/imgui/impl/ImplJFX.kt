@@ -19,6 +19,9 @@ import javafx.scene.shape.FillRule
 import javafx.scene.shape.StrokeLineCap
 import javafx.scene.shape.StrokeLineJoin
 import javafx.stage.Stage
+import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.StringSelection
 
 typealias JFXColor = javafx.scene.paint.Color
 
@@ -73,6 +76,19 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
         stage.addEventHandler(MouseEvent.MOUSE_RELEASED, mousePressListener)
         stage.addEventHandler(MouseEvent.MOUSE_MOVED, mouseMoveListener)
         stage.addEventHandler(KeyEvent.KEY_PRESSED, keyListener)
+
+        io.backendRendererName = "imgui impl jfx"
+        io.backendPlatformName = null
+        io.backendLanguageUserData = null
+        io.backendRendererUserData = null
+        io.backendPlatformUserData = null
+        io.setClipboardTextFn = { _, text ->
+            Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
+        }
+        io.getClipboardTextFn = { _ ->
+            Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as String
+        }
+        io.clipboardUserData = NUL
 
         val (pixels, size) = io.fonts.getTexDataAsAlpha8()
 
