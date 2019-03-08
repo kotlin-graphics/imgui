@@ -43,6 +43,8 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
 
     lateinit var r: Robot
 
+    private var warnSlowTex = true
+
     fun createDeviceObjects() {
         if (ImGui.io.fonts.isBuilt)
             return
@@ -260,6 +262,10 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                             }
                         } else {
                             fun drawSlow() {
+                                if(DEBUG && !warnSlowTex) {
+                                    warnSlowTex = false
+                                    println("OpenJFX slow texture rendering has been invoked!")
+                                }
                                 if (vtx1.uv.y == vtx2.uv.y) {
                                     //Top flat triangle
                                     if (vtx3.uv.y > vtx1.uv.y) {
