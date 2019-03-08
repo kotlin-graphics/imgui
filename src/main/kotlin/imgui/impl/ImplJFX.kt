@@ -216,10 +216,6 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                             if (pos != 0) {
                                 gc.fill = col
                                 gc.fillPolygon(xs, ys, pos)
-                                for (idx in 0 until pos) {
-                                    xs[idx] = 0.0
-                                    ys[idx] = 0.0
-                                }
                                 pos = 0
                             } else {
                                 val x = JFXColor.rgb(
