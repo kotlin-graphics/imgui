@@ -263,7 +263,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                             }
                         } else {
                             fun drawSlow() {
-                                if(DEBUG && !warnSlowTex) {
+                                if(DEBUG && warnSlowTex) {
                                     warnSlowTex = false
                                     println("OpenJFX slow texture rendering has been invoked!")
                                 }
