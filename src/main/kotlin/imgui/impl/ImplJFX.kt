@@ -31,17 +31,17 @@ typealias JFXColor = javafx.scene.paint.Color
 const val COLOR_SIZE_MASK = 0xFF
 
 class ImplJFX(val stage: Stage, val canvas: Canvas) {
-    lateinit var texture: Image
-    val startTime = System.currentTimeMillis()
-    var time = 0.0
+    private lateinit var texture: Image
+    private val startTime = System.currentTimeMillis()
+    private var time = 0.0
 
-    lateinit var mousePressListener: EventHandler<MouseEvent>
-    lateinit var mouseMoveListener: EventHandler<MouseEvent>
+    private lateinit var mousePressListener: EventHandler<MouseEvent>
+    private lateinit var mouseMoveListener: EventHandler<MouseEvent>
 
-    var mousePos = Vec2()
-    val mouseJustReleased = BooleanArray(io.mouseDown.size) { false }
+    private var mousePos = Vec2()
+    private val mouseJustReleased = BooleanArray(io.mouseDown.size) { false }
 
-    lateinit var r: Robot
+    private lateinit var r: Robot
 
     private var warnSlowTex = true
 
