@@ -220,11 +220,12 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                                 gc.fillPolygon(xs, ys, pos)
                                 pos = 0
                             } else {
+                                val color = texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt())
                                 val x = JFXColor.rgb(
-                                        (col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK,
-                                        (col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK,
-                                        (col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK,
-                                        (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt()).opacity)
+                                        (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
+                                        (((col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) * color.green).i,
+                                        (((col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK) * color.blue).i,
+                                        (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * color.opacity)
                                 gc.fill = x
                                 gc.fillPolygon(doubleArrayOf(vtx1.pos.x.toDouble(), vtx2.pos.x.toDouble(), vtx3.pos.x.toDouble()),
                                         doubleArrayOf(vtx1.pos.y.toDouble(), vtx2.pos.y.toDouble(), vtx3.pos.y.toDouble()), 3)
