@@ -6,7 +6,9 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.ImGui.io
 import imgui.*
+import javafx.application.Platform
 import javafx.event.EventHandler
+import javafx.geometry.Point2D
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.effect.BlendMode
@@ -15,6 +17,7 @@ import javafx.scene.image.WritableImage
 import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
+import javafx.scene.robot.Robot
 import javafx.scene.shape.FillRule
 import javafx.scene.shape.StrokeLineCap
 import javafx.scene.shape.StrokeLineJoin
@@ -38,12 +41,23 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
     var mousePos = Vec2()
     val mouseJustReleased = BooleanArray(io.mouseDown.size) { false }
 
+    lateinit var r: Robot
+
     fun createDeviceObjects() {
         if (ImGui.io.fonts.isBuilt)
             return
 
+        if(!Platform.isFxApplicationThread()) {
+            Platform.runLater {
+                r = Robot()
+            }
+            Platform.requestNextPulse()
+        } else {
+            r = Robot()
+        }
+
         mousePressListener = EventHandler {
-            (if(it.eventType == MouseEvent.MOUSE_PRESSED) mouseJustPressed else mouseJustReleased)[when (it.button) {
+            (if (it.eventType == MouseEvent.MOUSE_PRESSED) mouseJustPressed else mouseJustReleased)[when (it.button) {
                 MouseButton.PRIMARY -> 0
                 MouseButton.MIDDLE -> 2
                 MouseButton.SECONDARY -> 1
@@ -121,7 +135,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
 
         io.navInputs.fill(0f)
 
-        //TODO: io.backendFlags = io.backendFlags or BackendFlag.HasSetMousePos
+        io.backendFlags = io.backendFlags or BackendFlag.HasSetMousePos
     }
 
     private fun updateMousePos() {
@@ -138,7 +152,10 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
 
 
         // Update mouse position
-        io.mousePos put (mousePos)
+        if (io.wantSetMousePos)
+            TODO("Need to find window position") //r.mouseMove(Point2D(io.mousePos.x.d, io.mousePos.y.d))
+        else
+            io.mousePos put (mousePos)
     }
 
     var xs = DoubleArray(16)
@@ -166,8 +183,8 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                     var col = JFXColor(0.0, 0.0, 0.0, 0.0)
                     var pos = 0
                     fun addPoint(x: Float, y: Float) {
-                        if(pos == xs.size) {
-                            if(DEBUG)
+                        if (pos == xs.size) {
+                            if (DEBUG)
                                 println("increase points buffer size (old ${xs.size}, new ${xs.size * 2})")
                             val nx = DoubleArray(xs.size * 2)
                             val ny = DoubleArray(ys.size * 2)
@@ -179,9 +196,10 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                         xs[pos] = x.d
                         ys[pos++] = y.d
                     }
+
                     var skip = false
                     for (tri in 0 until cmd.elemCount step 3) {
-                        if(skip) {
+                        if (skip) {
                             skip = false
                             continue
                         }
@@ -195,10 +213,10 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                         val col1 = vtx1.col
 
                         fun draw() {
-                            if(pos != 0) {
+                            if (pos != 0) {
                                 gc.fill = col
                                 gc.fillPolygon(xs, ys, pos)
-                                for(idx in 0 until pos) {
+                                for (idx in 0 until pos) {
                                     xs[idx] = 0.0
                                     ys[idx] = 0.0
                                 }
@@ -311,6 +329,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                                 val idx4 = cmdList.idxBuffer[baseIdx + 3]
                                 val idx5 = cmdList.idxBuffer[baseIdx + 4]
                                 if (idx4 == idx1 && idx5 == idx3) {
+                                    //TODO: this only works when the x and y components of vtx3 are greater than those of vtx1
                                     gc.drawImage(texture, (texture.width * vtx1.uv.x).d, (texture.height * vtx1.uv.y).d,
                                             (texture.width * (vtx3.uv.x - vtx1.uv.x)).d, (texture.height * (vtx3.uv.y - vtx1.uv.y)).d,
                                             vtx1.pos.x.d, vtx1.pos.y.d, vtx3.pos.x.d - vtx1.pos.x.d, vtx3.pos.y.d - vtx1.pos.y.d)
