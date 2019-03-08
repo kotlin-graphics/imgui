@@ -234,8 +234,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
 
                         if (vtx1.uv == vtx2.uv) {
                             //in OpenGL this is done in shaders as `color * texture(texCoord)
-                            //the way this is implemented here has 2 current limitations: no new images
-                            //and the colors are not currently multiplied
+                            //the way this is implemented here has the limitation of no new images
                             //this could be fixed
 
                             //check if it borders the next triangle
@@ -245,11 +244,12 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                                 if (idx4 == idx1 && idx5 == idx3) {
                                     val vtx6 = cmdList.vtxBuffer[cmdList.idxBuffer[baseIdx + 5]]
                                     if (pos == 0) {
+                                        val color = texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt())
                                         col = JFXColor.rgb(
-                                                (col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK,
-                                                (col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK,
-                                                (col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK,
-                                                (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt()).opacity)
+                                                (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
+                                                (((col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) * color.green).i,
+                                                (((col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK) * color.blue).i,
+                                                (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * color.opacity)
                                         addPoint(vtx1.pos.x, vtx1.pos.y)
                                         addPoint(vtx2.pos.x, vtx2.pos.y)
                                         addPoint(vtx3.pos.x, vtx3.pos.y)
