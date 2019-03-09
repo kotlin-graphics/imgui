@@ -168,7 +168,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
         // Update mouse position
         if(stage.isFocused) {
             if (io.wantSetMousePos)
-                r.mouseMove(Point2D(stage.x + io.mousePos.x.d, stage.y + io.mousePos.y.d))
+                r.mouseMove(Point2D(stage.x + io.mousePos.x.d, stage.y + io.mousePos.y.d)) //TODO: Check if stage root is upper left or actually on canvas
             else
                 io.mousePos put (mousePos)
         }
