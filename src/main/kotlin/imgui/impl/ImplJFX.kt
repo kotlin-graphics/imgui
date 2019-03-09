@@ -92,6 +92,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
         stage.addEventHandler(MouseEvent.MOUSE_RELEASED, mousePressListener)
         stage.addEventHandler(MouseEvent.MOUSE_MOVED, mouseMoveListener)
         stage.addEventHandler(KeyEvent.KEY_PRESSED, keyListener)
+        stage.addEventHandler(KeyEvent.KEY_RELEASED, keyListener)
 
         io.backendRendererName = "imgui impl jfx"
         io.backendPlatformName = null
