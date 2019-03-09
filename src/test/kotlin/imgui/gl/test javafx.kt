@@ -50,6 +50,7 @@ class HelloWorld_jfx {
             stage.title = "OpenJFX Example"
             stage.show()
         }
+        Platform.requestNextPulse()
         ctx = Context()
         ImGui.styleColorsDark()
 
