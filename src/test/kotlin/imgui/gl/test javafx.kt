@@ -40,7 +40,7 @@ class HelloWorld_jfx {
     var time = 0.0
 
     init {
-
+        val ready = AtomicBoolean(false)
         Platform.startup {
             canvas = Canvas(1280.0, 720.0)
             val vb = Pane(canvas)
@@ -49,6 +49,7 @@ class HelloWorld_jfx {
             stage.scene = scene
             stage.title = "OpenJFX Example"
             stage.show()
+            ready.set(true)
         }
         Platform.requestNextPulse()
         ctx = Context()
@@ -56,7 +57,7 @@ class HelloWorld_jfx {
 
         setupMappings()
 
-        while(!::stage.isInitialized)
+        while(!ready.get())
             Thread.sleep(1)
 
         val internalCanvas = Canvas(canvas.width, canvas.height)
@@ -116,8 +117,6 @@ class HelloWorld_jfx {
 
             // Rendering
             ImGui.render()
-
-            f = (1.0f + Math.sin(time.d).f) / 2.0f
 
             s.renderDrawData(ImGui.drawData!!)
 
