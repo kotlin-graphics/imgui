@@ -152,12 +152,13 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
             mouseJustReleased[it] = false
         }
 
-
         // Update mouse position
-        if (io.wantSetMousePos)
-            TODO("Need to find window position") //r.mouseMove(Point2D(io.mousePos.x.d, io.mousePos.y.d))
-        else
-            io.mousePos put (mousePos)
+        if(stage.isFocused) {
+            if (io.wantSetMousePos)
+                r.mouseMove(Point2D(stage.x + io.mousePos.x.d, stage.y + io.mousePos.y.d))
+            else
+                io.mousePos put (mousePos)
+        }
     }
 
     var xs = DoubleArray(16)
