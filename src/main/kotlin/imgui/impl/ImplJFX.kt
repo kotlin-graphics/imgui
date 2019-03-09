@@ -17,6 +17,7 @@ import javafx.scene.image.WritableImage
 import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
+import javafx.scene.input.ScrollEvent
 import javafx.scene.robot.Robot
 import javafx.scene.shape.FillRule
 import javafx.scene.shape.StrokeLineCap
@@ -88,11 +89,22 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
             }
         }
 
+        val charListener = EventHandler<KeyEvent> {
+            it.character.forEach { char -> io.addInputCharacter(char) }
+        }
+
+        val scrollListener = EventHandler<ScrollEvent> {
+            io.mouseWheelH += it.x.f
+            io.mouseWheel += it.y.f
+        }
+
         stage.addEventHandler(MouseEvent.MOUSE_PRESSED, mousePressListener)
         stage.addEventHandler(MouseEvent.MOUSE_RELEASED, mousePressListener)
         stage.addEventHandler(MouseEvent.MOUSE_MOVED, mouseMoveListener)
         stage.addEventHandler(KeyEvent.KEY_PRESSED, keyListener)
         stage.addEventHandler(KeyEvent.KEY_RELEASED, keyListener)
+        stage.addEventHandler(KeyEvent.KEY_TYPED, charListener)
+        stage.addEventHandler(ScrollEvent.ANY, scrollListener)
 
         io.backendRendererName = "imgui impl jfx"
         io.backendPlatformName = null
@@ -131,7 +143,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
         io.displayFramebufferScale.y = 1f
 
         val currentTime = (System.currentTimeMillis() - startTime).toDouble() / 1000.0
-        ImGui.io.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
+        io.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
         time = currentTime
 
         updateMousePos()
