@@ -101,6 +101,77 @@ class HelloWorld_jfx {
 
                     text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.framerate, io.framerate)
 
+
+                    text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
+
+                    //functionalProgramming.treeNode("Keyboard, Mouse & Navigation State") {
+                    if (isMousePosValid()) text("Mouse pos: (%g, %g)", io.mousePos.x, io.mousePos.y)
+                    else text("Mouse pos: <INVALID>")
+                    text("Mouse delta: (%g, %g)", io.mouseDelta.x, io.mouseDelta.y)
+                    text("Mouse down:")
+                    for (i in 0 until io.mouseDown.size)
+                        if (io.mouseDownDuration[i] >= 0f) {
+                            sameLine()
+                            text("b$i (%.02f secs)", io.mouseDownDuration[i])
+                        }
+                    text("Mouse clicked:")
+                    for (i in 0 until io.mouseDown.size)
+                        if (isMouseClicked(i)) {
+                            sameLine()
+                            text("b$i")
+                        }
+                    text("Mouse dbl-clicked:")
+                    for (i in 0 until io.mouseDown.size)
+                        if (isMouseDoubleClicked(i)) {
+                            sameLine()
+                            text("b$i")
+                        }
+                    text("Mouse released:")
+                    for (i in 0 until io.mouseDown.size)
+                        if (isMouseReleased(i)) {
+                            sameLine()
+                            text("b$i")
+                        }
+                    text("Mouse wheel: %.1f", io.mouseWheel)
+
+                    text("Keys down:")
+                    for (i in io.keysDown.indices)
+                        if (io.keysDownDuration[i] >= 0f) {
+                            sameLine()
+                            text("$i (%.02f secs)", io.keysDownDuration[i])
+                        }
+                    text("Keys pressed:")
+                    for (i in io.keysDown.indices)
+                        if (isKeyPressed(i)) {
+                            sameLine()
+                            text("$i")
+                        }
+                    text("Keys release:")
+                    for (i in io.keysDown.indices)
+                        if (isKeyReleased(i)) {
+                            sameLine()
+                            text("$i")
+                        }
+                    val ctrl = if (io.keyCtrl) "CTRL " else ""
+                    val shift = if (io.keyShift) "SHIFT " else ""
+                    val alt = if (io.keyAlt) "ALT " else ""
+                    val super_ = if (io.keySuper) "SUPER " else ""
+                    text("Keys mods: $ctrl$shift$alt$super_")
+
+                    text("NavInputs down:")
+                    io.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
+                    text("NavInputs pressed:")
+                    io.navInputsDownDuration.filter { it == 0f }.forEachIndexed { i, _ -> sameLine(); text("[$i]") }
+                    text("NavInputs duration:")
+                    io.navInputsDownDuration.filter { it >= 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
+
+                    button("Hovering me sets the\nkeyboard capture flag")
+                    if (isItemHovered()) captureKeyboardFromApp(true)
+                    sameLine()
+                    button("Holding me clears the\nthe keyboard capture flag")
+                    if (isItemActive) captureKeyboardFromApp(false)
+                    //}
+
                     end()
 
                     // 3. Show another simple window.
