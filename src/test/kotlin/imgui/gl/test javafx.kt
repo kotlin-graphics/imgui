@@ -1,20 +1,16 @@
 package imgui.gl
 
-import glm_.d
 import glm_.f
 import glm_.i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.io
 import imgui.impl.ImplJFX
-import imgui.impl.JFXColor
 import imgui.impl.toJFXColor
 import javafx.application.Platform
 import javafx.scene.Scene
 import javafx.scene.SnapshotParameters
 import javafx.scene.canvas.Canvas
 import javafx.scene.image.WritableImage
-import javafx.scene.input.KeyCode
 import javafx.scene.layout.Pane
 import javafx.stage.Stage
 import java.util.concurrent.atomic.AtomicBoolean
@@ -56,20 +52,26 @@ class HelloWorld_jfx {
         ctx = Context()
         ImGui.styleColorsDark()
 
-        while(!ready.get())
+        while (!ready.get())
             Thread.sleep(1)
 
         var internalCanvas = Canvas(canvas.width, canvas.height)
 
         val s = ImplJFX(stage, internalCanvas)
 
-        while(stage.isShowing) {
+        while (stage.isShowing) {
 
-            if(canvas.width != scene.width || canvas.height != scene.height) {
+            if (canvas.width != scene.width || canvas.height != scene.height) {
                 canvas = Canvas(scene.width, scene.height)
                 internalCanvas = Canvas(scene.width, scene.height)
                 s.canvas = internalCanvas
-                Platform.runLater {
+                if (!Platform.isFxApplicationThread()) {
+                    Platform.runLater {
+                        val vb = Pane(canvas)
+                        scene = Scene(vb)
+                        stage.scene = scene
+                    }
+                } else {
                     val vb = Pane(canvas)
                     scene = Scene(vb)
                     stage.scene = scene
