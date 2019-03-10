@@ -244,7 +244,6 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         val gc = canvas.graphicsContext2D
         gc.save()
         gc.globalBlendMode = BlendMode.SRC_OVER
-        clearScreen(gc)
         gc.fillRule = FillRule.NON_ZERO
         gc.lineCap = StrokeLineCap.BUTT
         gc.lineJoin = StrokeLineJoin.MITER
