@@ -490,10 +490,6 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         }
         gc.restore()
     }
-
-    private fun clearScreen(gc: GraphicsContext) {
-        gc.clearRect(0.0, 0.0, gc.canvas.width, gc.canvas.height)
-    }
 }
 
 fun Vec4.toJFXColor(): JFXColor {
