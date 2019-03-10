@@ -182,5 +182,5 @@ class HelloWorld_jfx {
 }
 
 private fun Vec4.toJFXColor(): JFXColor {
-    return JFXColor(r.d, g.d, b.d, a.d)
+    return JFXColor(r.d.coerceIn(0.0, 1.0), g.d.coerceIn(0.0, 1.0), b.d.coerceIn(0.0, 1.0), a.d.coerceIn(0.0, 1.0))
 }
