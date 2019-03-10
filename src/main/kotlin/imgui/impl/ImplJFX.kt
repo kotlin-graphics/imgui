@@ -190,6 +190,15 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
         gc.lineWidth = 0.0
         val texPr = texture.pixelReader
         val pw = gc.pixelWriter
+
+        // Will project scissor/clipping rectangles into framebuffer space
+        val clipOff = drawData.displayPos     // (0,0) unless using multi-viewports
+        val clipScale = drawData.framebufferScale   // (1,1) unless using retina display which are often (2,2)
+
+        val fbWidth = (drawData.displaySize.x * drawData.framebufferScale.x).i
+        val fbHeight = (drawData.displaySize.y * drawData.framebufferScale.y).i
+        if (fbWidth == 0 || fbHeight == 0) return
+
         for (cmdList in drawData.cmdLists) {
             var idxBufferOffset = 0
             for (cmd in cmdList.cmdBuffer) {
@@ -198,179 +207,198 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                 // User callback (registered via ImDrawList::AddCallback)
                     cb(cmdList, cmd)
                 else {
-                    var col = JFXColor(0.0, 0.0, 0.0, 0.0)
-                    var pos = 0
-                    fun addPoint(x: Float, y: Float) {
-                        if (pos == xs.size) {
-                            if (DEBUG)
-                                println("increase points buffer size (old ${xs.size}, new ${xs.size * 2})")
-                            val nx = DoubleArray(xs.size * 2)
-                            val ny = DoubleArray(ys.size * 2)
-                            xs.copyInto(nx)
-                            ys.copyInto(ny)
-                            xs = nx
-                            ys = ny
-                        }
-                        xs[pos] = x.d
-                        ys[pos++] = y.d
-                    }
+                    val clipRectX = (cmd.clipRect.x - clipOff.x) * clipScale.x
+                    val clipRectY = (cmd.clipRect.y - clipOff.y) * clipScale.y
+                    val clipRectZ = (cmd.clipRect.z - clipOff.x) * clipScale.x
+                    val clipRectW = (cmd.clipRect.w - clipOff.y) * clipScale.y
 
-                    var skip = false
-                    for (tri in 0 until cmd.elemCount step 3) {
-                        if (skip) {
-                            skip = false
-                            continue
-                        }
-                        val baseIdx = tri + idxBufferOffset
-                        val idx1 = cmdList.idxBuffer[baseIdx]
-                        val vtx1 = cmdList.vtxBuffer[idx1]
-                        val vtx2 = cmdList.vtxBuffer[cmdList.idxBuffer[baseIdx + 1]]
-                        val idx3 = cmdList.idxBuffer[baseIdx + 2]
-                        val vtx3 = cmdList.vtxBuffer[idx3]
+                    if (clipRectX < fbWidth && clipRectY < fbHeight && clipRectZ >= 0f && clipRectW >= 0f) {
 
-                        val col1 = if(vtx1.col.toVec4().length() > vtx2.col.toVec4().length())
-                            if(vtx1.col.toVec4().length() > vtx3.col.toVec4().length())
-                                vtx1.col
-                            else
-                                vtx3.col
-                        else
-                            if(vtx2.col.toVec4().length() > vtx3.col.toVec4().length())
-                                vtx2.col
-                            else
-                                vtx3.col
+                        gc.save()
+                        gc.beginPath()
+                        gc.moveTo(clipRectX.d, (clipRectY).d)
+                        gc.lineTo(clipRectX.d, (clipRectW).d)
+                        gc.lineTo((clipRectZ).d, (clipRectW).d)
+                        gc.lineTo((clipRectZ).d, (clipRectY.d))
+                        gc.lineTo(clipRectX.d, (clipRectY).d)
+                        gc.closePath()
+                        gc.clip()
 
-                        fun draw(onlyLast: Boolean = false) {
-                            if (pos != 0) {
-                                gc.fill = col
-                                gc.fillPolygon(xs, ys, pos)
-                                pos = 0
-                            } else if (!onlyLast) {
-                                val color = texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt())
-                                val x = JFXColor.rgb(
-                                        (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
-                                        (((col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) * color.green).i,
-                                        (((col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK) * color.blue).i,
-                                        (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * color.opacity)
-                                gc.fill = x
-                                gc.fillPolygon(doubleArrayOf(vtx1.pos.x.toDouble(), vtx2.pos.x.toDouble(), vtx3.pos.x.toDouble()),
-                                        doubleArrayOf(vtx1.pos.y.toDouble(), vtx2.pos.y.toDouble(), vtx3.pos.y.toDouble()), 3)
+                        var col = JFXColor(0.0, 0.0, 0.0, 0.0)
+                        var pos = 0
+                        fun addPoint(x: Float, y: Float) {
+                            if (pos == xs.size) {
+                                if (DEBUG)
+                                    println("increase points buffer size (old ${xs.size}, new ${xs.size * 2})")
+                                val nx = DoubleArray(xs.size * 2)
+                                val ny = DoubleArray(ys.size * 2)
+                                xs.copyInto(nx)
+                                ys.copyInto(ny)
+                                xs = nx
+                                ys = ny
                             }
+                            xs[pos] = x.d
+                            ys[pos++] = y.d
                         }
 
-                        if (vtx1.uv == vtx2.uv) {
-                            //in OpenGL this is done in shaders as `color * texture(texCoord)
-                            //the way this is implemented here has the limitation of no new images
-                            //this could be fixed
+                        var skip = false
+                        for (tri in 0 until cmd.elemCount step 3) {
+                            if (skip) {
+                                skip = false
+                                continue
+                            }
+                            val baseIdx = tri + idxBufferOffset
+                            val idx1 = cmdList.idxBuffer[baseIdx]
+                            val vtx1 = cmdList.vtxBuffer[idx1]
+                            val vtx2 = cmdList.vtxBuffer[cmdList.idxBuffer[baseIdx + 1]]
+                            val idx3 = cmdList.idxBuffer[baseIdx + 2]
+                            val vtx3 = cmdList.vtxBuffer[idx3]
 
-                            //check if it borders the next triangle
-                            if (tri + 3 < cmd.elemCount) {
-                                val idx4 = cmdList.idxBuffer[baseIdx + 3]
-                                val idx5 = cmdList.idxBuffer[baseIdx + 4]
-                                if (idx4 == idx1 && idx5 == idx3) {
-                                    val vtx6 = cmdList.vtxBuffer[cmdList.idxBuffer[baseIdx + 5]]
-                                    if (pos == 0) {
-                                        val color = texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt())
-                                        col = JFXColor.rgb(
-                                                (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
-                                                (((col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) * color.green).i,
-                                                (((col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK) * color.blue).i,
-                                                (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * color.opacity)
-                                        addPoint(vtx1.pos.x, vtx1.pos.y)
-                                        addPoint(vtx2.pos.x, vtx2.pos.y)
-                                        addPoint(vtx3.pos.x, vtx3.pos.y)
+                            val col1 = if (vtx1.col.toVec4().length() > vtx2.col.toVec4().length())
+                                if (vtx1.col.toVec4().length() > vtx3.col.toVec4().length())
+                                    vtx1.col
+                                else
+                                    vtx3.col
+                            else
+                                if (vtx2.col.toVec4().length() > vtx3.col.toVec4().length())
+                                    vtx2.col
+                                else
+                                    vtx3.col
+
+                            fun draw(onlyLast: Boolean = false) {
+                                if (pos != 0) {
+                                    gc.fill = col
+                                    gc.fillPolygon(xs, ys, pos)
+                                    pos = 0
+                                } else if (!onlyLast) {
+                                    val color = texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt())
+                                    val x = JFXColor.rgb(
+                                            (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
+                                            (((col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) * color.green).i,
+                                            (((col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK) * color.blue).i,
+                                            (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * color.opacity)
+                                    gc.fill = x
+                                    gc.fillPolygon(doubleArrayOf(vtx1.pos.x.toDouble(), vtx2.pos.x.toDouble(), vtx3.pos.x.toDouble()),
+                                            doubleArrayOf(vtx1.pos.y.toDouble(), vtx2.pos.y.toDouble(), vtx3.pos.y.toDouble()), 3)
+                                }
+                            }
+
+                            if (vtx1.uv == vtx2.uv) {
+                                //in OpenGL this is done in shaders as `color * texture(texCoord)
+                                //the way this is implemented here has the limitation of no new images
+                                //this could be fixed
+
+                                //check if it borders the next triangle
+                                if (tri + 3 < cmd.elemCount) {
+                                    val idx4 = cmdList.idxBuffer[baseIdx + 3]
+                                    val idx5 = cmdList.idxBuffer[baseIdx + 4]
+                                    if (idx4 == idx1 && idx5 == idx3) {
+                                        val vtx6 = cmdList.vtxBuffer[cmdList.idxBuffer[baseIdx + 5]]
+                                        if (pos == 0) {
+                                            val color = texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt())
+                                            col = JFXColor.rgb(
+                                                    (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
+                                                    (((col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) * color.green).i,
+                                                    (((col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK) * color.blue).i,
+                                                    (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * color.opacity)
+                                            addPoint(vtx1.pos.x, vtx1.pos.y)
+                                            addPoint(vtx2.pos.x, vtx2.pos.y)
+                                            addPoint(vtx3.pos.x, vtx3.pos.y)
+                                        }
+                                        addPoint(vtx6.pos.x, vtx6.pos.y)
+                                    } else {
+                                        draw()
                                     }
-                                    addPoint(vtx6.pos.x, vtx6.pos.y)
                                 } else {
                                     draw()
                                 }
                             } else {
-                                draw()
-                            }
-                        } else {
-                            fun drawSlow() {
-                                if(DEBUG && warnSlowTex) {
-                                    warnSlowTex = false
-                                    println("OpenJFX slow texture rendering has been invoked!")
-                                }
-                                if (vtx1.uv.y == vtx2.uv.y) {
-                                    //Top flat triangle
-                                    if (vtx3.uv.y > vtx1.uv.y) {
-                                        val minY = Math.round(vtx1.pos.y).i
-                                        val maxY = Math.round(vtx3.pos.y).i
-                                        val minYUV = vtx1.uv.y
-                                        val maxYUV = vtx3.uv.y
-                                        val yuvDiff = maxYUV - minYUV
-                                        val yDiff = maxY - minY
-                                        val minX = vtx1.pos.x.i
-                                        val maxX = vtx3.pos.x.i
-                                        val minXUV = vtx1.uv.x
-                                        val maxXUV = vtx3.uv.x
-                                        val xDiff = maxX - minX
-                                        val xuvDiff = maxXUV - minXUV
-                                        for (y in minY until maxY + 1) {
-                                            for (x in xDiff downTo (xDiff * (y.f - minY) / yDiff).i) {
-                                                val xPct = x.d / xDiff
-                                                val yPct = 1 - ((maxY.d - y.d) / yDiff)
-                                                val c = texPr.getArgb((texture.width * (minXUV + (xPct * xuvDiff))).i, (texture.height * (minYUV + (yPct * yuvDiff))).i)
-                                                if ((c and COL32_A_MASK) == 0)
-                                                    continue
-                                                pw.setArgb(minX + x, y, c)
-                                            }
-                                        }
-                                    } else {
-                                        TODO("vtx1y == vtx2y vtx3 low")
+                                fun drawSlow() {
+                                    if (DEBUG && warnSlowTex) {
+                                        warnSlowTex = false
+                                        println("OpenJFX slow texture rendering has been invoked!")
                                     }
-                                } else if (vtx2.uv.y == vtx3.uv.y) {
-                                    if (vtx3.uv.y > vtx1.uv.y) {
-                                        val minY = Math.round(vtx1.pos.y).i
-                                        val maxY = Math.round(vtx3.pos.y).i
-                                        val minYUV = vtx1.uv.y
-                                        val maxYUV = vtx3.uv.y
-                                        val yuvDiff = maxYUV - minYUV
-                                        val yDiff = maxY - minY
-                                        val minX = vtx1.pos.x.i
-                                        val maxX = vtx2.pos.x.i
-                                        val minXUV = vtx1.uv.x
-                                        val maxXUV = vtx2.uv.x
-                                        val xDiff = maxX - minX
-                                        val xuvDiff = maxXUV - minXUV
-                                        for (y in minY until maxY + 1) {
-                                            for (x in 0 until (xDiff * (y.f - minY) / yDiff).i) {
-                                                val xPct = x.d / xDiff
-                                                val yPct = 1.0 - ((maxY.d - y.d) / yDiff)
-                                                val c = texPr.getArgb((texture.width * (minXUV + (xPct * xuvDiff))).i, (texture.height * (minYUV + (yPct * yuvDiff))).i)
-                                                if ((c and COL32_A_MASK) == 0)
-                                                    continue
-                                                pw.setArgb(minX + x, y, c)
+                                    if (vtx1.uv.y == vtx2.uv.y) {
+                                        //Top flat triangle
+                                        if (vtx3.uv.y > vtx1.uv.y) {
+                                            val minY = Math.round(vtx1.pos.y).i
+                                            val maxY = Math.round(vtx3.pos.y).i
+                                            val minYUV = vtx1.uv.y
+                                            val maxYUV = vtx3.uv.y
+                                            val yuvDiff = maxYUV - minYUV
+                                            val yDiff = maxY - minY
+                                            val minX = vtx1.pos.x.i
+                                            val maxX = vtx3.pos.x.i
+                                            val minXUV = vtx1.uv.x
+                                            val maxXUV = vtx3.uv.x
+                                            val xDiff = maxX - minX
+                                            val xuvDiff = maxXUV - minXUV
+                                            for (y in minY until maxY + 1) {
+                                                for (x in xDiff downTo (xDiff * (y.f - minY) / yDiff).i) {
+                                                    val xPct = x.d / xDiff
+                                                    val yPct = 1 - ((maxY.d - y.d) / yDiff)
+                                                    val c = texPr.getArgb((texture.width * (minXUV + (xPct * xuvDiff))).i, (texture.height * (minYUV + (yPct * yuvDiff))).i)
+                                                    if ((c and COL32_A_MASK) == 0)
+                                                        continue
+                                                    pw.setArgb(minX + x, y, c)
+                                                }
                                             }
+                                        } else {
+                                            TODO("vtx1y == vtx2y vtx3 low")
                                         }
+                                    } else if (vtx2.uv.y == vtx3.uv.y) {
+                                        if (vtx3.uv.y > vtx1.uv.y) {
+                                            val minY = Math.round(vtx1.pos.y).i
+                                            val maxY = Math.round(vtx3.pos.y).i
+                                            val minYUV = vtx1.uv.y
+                                            val maxYUV = vtx3.uv.y
+                                            val yuvDiff = maxYUV - minYUV
+                                            val yDiff = maxY - minY
+                                            val minX = vtx1.pos.x.i
+                                            val maxX = vtx2.pos.x.i
+                                            val minXUV = vtx1.uv.x
+                                            val maxXUV = vtx2.uv.x
+                                            val xDiff = maxX - minX
+                                            val xuvDiff = maxXUV - minXUV
+                                            for (y in minY until maxY + 1) {
+                                                for (x in 0 until (xDiff * (y.f - minY) / yDiff).i) {
+                                                    val xPct = x.d / xDiff
+                                                    val yPct = 1.0 - ((maxY.d - y.d) / yDiff)
+                                                    val c = texPr.getArgb((texture.width * (minXUV + (xPct * xuvDiff))).i, (texture.height * (minYUV + (yPct * yuvDiff))).i)
+                                                    if ((c and COL32_A_MASK) == 0)
+                                                        continue
+                                                    pw.setArgb(minX + x, y, c)
+                                                }
+                                            }
+                                        } else {
+                                            TODO("vtx2y == vtxy3 vtx3 low")
+                                        }
+                                    } else if (vtx1.uv.y == vtx3.uv.y) {
+                                        TODO("vtx1y == vtxy3 ")
                                     } else {
-                                        TODO("vtx2y == vtxy3 vtx3 low")
+                                        TODO("none")
                                     }
-                                } else if (vtx1.uv.y == vtx3.uv.y) {
-                                    TODO("vtx1y == vtxy3 ")
-                                } else {
-                                    TODO("none")
                                 }
-                            }
-                            draw(true)
-                            if (tri + 3 < cmd.elemCount) {
-                                val idx4 = cmdList.idxBuffer[baseIdx + 3]
-                                val idx5 = cmdList.idxBuffer[baseIdx + 4]
-                                if (idx4 == idx1 && idx5 == idx3) {
-                                    //TODO: this only works when the x and y components of vtx3 are greater than those of vtx1
-                                    gc.drawImage(texture, (texture.width * vtx1.uv.x).d, (texture.height * vtx1.uv.y).d,
-                                            (texture.width * (vtx3.uv.x - vtx1.uv.x)).d, (texture.height * (vtx3.uv.y - vtx1.uv.y)).d,
-                                            vtx1.pos.x.d, vtx1.pos.y.d, vtx3.pos.x.d - vtx1.pos.x.d, vtx3.pos.y.d - vtx1.pos.y.d)
-                                    skip = true
+                                draw(true)
+                                if (tri + 3 < cmd.elemCount) {
+                                    val idx4 = cmdList.idxBuffer[baseIdx + 3]
+                                    val idx5 = cmdList.idxBuffer[baseIdx + 4]
+                                    if (idx4 == idx1 && idx5 == idx3) {
+                                        //TODO: this only works when the x and y components of vtx3 are greater than those of vtx1
+                                        gc.drawImage(texture, (texture.width * vtx1.uv.x).d, (texture.height * vtx1.uv.y).d,
+                                                (texture.width * (vtx3.uv.x - vtx1.uv.x)).d, (texture.height * (vtx3.uv.y - vtx1.uv.y)).d,
+                                                vtx1.pos.x.d, vtx1.pos.y.d, vtx3.pos.x.d - vtx1.pos.x.d, vtx3.pos.y.d - vtx1.pos.y.d)
+                                        skip = true
+                                    } else {
+                                        drawSlow()
+                                    }
                                 } else {
                                     drawSlow()
                                 }
-                            } else {
-                                drawSlow()
                             }
                         }
                     }
+                    gc.restore()
                 }
                 idxBufferOffset += cmd.elemCount
             }
