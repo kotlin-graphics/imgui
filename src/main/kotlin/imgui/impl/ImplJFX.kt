@@ -189,7 +189,6 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
             stage.scene.cursor = Cursor.NONE
         else {
             // Show OS mouse cursor
-            // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
             stage.scene.cursor = when(imguiCursor) {
                 MouseCursor.None -> Cursor.NONE
                 MouseCursor.Arrow -> Cursor.DEFAULT
