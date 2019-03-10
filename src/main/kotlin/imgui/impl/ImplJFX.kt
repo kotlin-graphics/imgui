@@ -28,7 +28,6 @@ typealias JFXColor = javafx.scene.paint.Color
 const val COLOR_SIZE_MASK = 0xFF
 
 class ImplJFX(val stage: Stage, var canvas: Canvas) {
-    private lateinit var texture: Image
     private val startTime = System.currentTimeMillis()
     private var time = 0.0
 
@@ -41,6 +40,8 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
     private lateinit var r: Robot
 
     private var warnSlowTex = true
+
+    private var isInit = false
 
     fun createDeviceObjects() {
         if (ImGui.io.fonts.isBuilt)
@@ -133,9 +134,14 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
             }
         }
 
-        texture = createTex
+        io.fonts.texId = addTex(createTex)
+        isInit = true
+    }
 
-        texColorMapping[-1] = texture
+    private fun addTex(tex: Image): Int {
+        val ret = tex.hashCode()
+        texColorMapping[Pair(ret, -1)] = tex
+        return ret
     }
 
     private fun setupMappings() {
@@ -165,7 +171,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
     }
 
     fun newFrame() {
-        if (!::texture.isInitialized)
+        if (!isInit)
             createDeviceObjects()
 
         io.displaySize.put(canvas.width, canvas.height)
@@ -203,7 +209,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         }
     }
 
-    private val texColorMapping = HashMap<TextureID, Image>()
+    private val texColorMapping = HashMap<Pair<TextureID, Int>, Image>()
 
     private fun updateMouseCursor() {
 
@@ -241,7 +247,6 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         gc.lineCap = StrokeLineCap.BUTT
         gc.lineJoin = StrokeLineJoin.MITER
         gc.lineWidth = 0.0
-        val texPr = texture.pixelReader
         val pw = gc.pixelWriter
 
         // Will project scissor/clipping rectangles into framebuffer space
@@ -276,6 +281,11 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                         gc.lineTo(clipRectX.d, (clipRectY).d)
                         gc.closePath()
                         gc.clip()
+
+                        if(!texColorMapping.containsKey(Pair(cmd.textureId!!, -1)))
+                            throw Error("Attempted to use a texture that was not added!")
+                        val currentTex = texColorMapping[Pair(cmd.textureId!!, -1)]!!
+                        val texPr = currentTex.pixelReader
 
                         var col = JFXColor(0.0, 0.0, 0.0, 0.0)
                         var pos = 0
@@ -325,7 +335,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                     gc.fillPolygon(xs, ys, pos)
                                     pos = 0
                                 } else if (!onlyLast) {
-                                    val color = texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt())
+                                    val color = texPr.getColor((vtx1.uv.x * currentTex.width).toInt(), (vtx1.uv.y * currentTex.height).toInt())
                                     val x = JFXColor.rgb(
                                             (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
                                             (((col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) * color.green).i,
@@ -349,7 +359,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                     if (idx4 == idx1 && idx5 == idx3) {
                                         val vtx6 = cmdList.vtxBuffer[cmdList.idxBuffer[baseIdx + 5]]
                                         if (pos == 0) {
-                                            val color = texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt())
+                                            val color = texPr.getColor((vtx1.uv.x * currentTex.width).toInt(), (vtx1.uv.y * currentTex.height).toInt())
                                             col = JFXColor.rgb(
                                                     (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
                                                     (((col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) * color.green).i,
@@ -391,7 +401,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                                 for (x in xDiff downTo (xDiff * (y.f - minY) / yDiff).i) {
                                                     val xPct = x.d / xDiff
                                                     val yPct = 1 - ((maxY.d - y.d) / yDiff)
-                                                    val c = texPr.getArgb((texture.width * (minXUV + (xPct * xuvDiff))).i, (texture.height * (minYUV + (yPct * yuvDiff))).i)
+                                                    val c = texPr.getArgb((currentTex.width * (minXUV + (xPct * xuvDiff))).i, (currentTex.height * (minYUV + (yPct * yuvDiff))).i)
                                                     if ((c and COL32_A_MASK) == 0)
                                                         continue
                                                     pw.setArgb(minX + x, y, c)
@@ -418,7 +428,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                                 for (x in 0 until (xDiff * (y.f - minY) / yDiff).i) {
                                                     val xPct = x.d / xDiff
                                                     val yPct = 1.0 - ((maxY.d - y.d) / yDiff)
-                                                    val c = texPr.getArgb((texture.width * (minXUV + (xPct * xuvDiff))).i, (texture.height * (minYUV + (yPct * yuvDiff))).i)
+                                                    val c = texPr.getArgb((currentTex.width * (minXUV + (xPct * xuvDiff))).i, (currentTex.height * (minYUV + (yPct * yuvDiff))).i)
                                                     if ((c and COL32_A_MASK) == 0)
                                                         continue
                                                     pw.setArgb(minX + x, y, c)
@@ -438,14 +448,14 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                     val idx4 = cmdList.idxBuffer[baseIdx + 3]
                                     val idx5 = cmdList.idxBuffer[baseIdx + 4]
                                     if (idx4 == idx1 && idx5 == idx3) {
-                                        val cTex = texColorMapping.computeIfAbsent(col1) {
+                                        val cTex = texColorMapping.computeIfAbsent(Pair(cmd.textureId!!, col1)) {
                                             if (DEBUG)
-                                                println("generating color multiplied texture")
-                                            val retImg = WritableImage(texture.width.i, texture.height.i)
+                                                println("generating color multiplied texture (texture ${cmd.textureId!!} ${if(cmd.textureId!! == io.fonts.texId) "[font texture]" else ""}, color ${col1.toVec4() * Vec4(255)})")
+                                            val retImg = WritableImage(currentTex.width.i, currentTex.height.i)
                                             val nipw = retImg.pixelWriter
                                             val textCol = vtx1.col.toJFXColor()
-                                            for (x in 0 until texture.width.i) {
-                                                for (y in 0 until texture.height.i) {
+                                            for (x in 0 until currentTex.width.i) {
+                                                for (y in 0 until currentTex.height.i) {
                                                     val cColor = texPr.getColor(x, y)
                                                     nipw.setColor(x, y,
                                                             JFXColor(
@@ -460,8 +470,8 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                             retImg
                                         }
                                         //TODO: this only works when the x and y components of vtx3 are greater than those of vtx1
-                                        gc.drawImage(cTex, (texture.width * vtx1.uv.x).d, (texture.height * vtx1.uv.y).d,
-                                                (texture.width * (vtx3.uv.x - vtx1.uv.x)).d, (texture.height * (vtx3.uv.y - vtx1.uv.y)).d,
+                                        gc.drawImage(cTex, (cTex.width * vtx1.uv.x).d, (cTex.height * vtx1.uv.y).d,
+                                                (cTex.width * (vtx3.uv.x - vtx1.uv.x)).d, (cTex.height * (vtx3.uv.y - vtx1.uv.y)).d,
                                                 vtx1.pos.x.d, vtx1.pos.y.d, vtx3.pos.x.d - vtx1.pos.x.d, vtx3.pos.y.d - vtx1.pos.y.d)
                                         skip = true
                                     } else {
