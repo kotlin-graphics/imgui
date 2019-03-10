@@ -48,7 +48,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
 
         setupMappings()
 
-        if(!Platform.isFxApplicationThread()) {
+        if (!Platform.isFxApplicationThread()) {
             Platform.runLater {
                 r = Robot()
             }
@@ -134,6 +134,8 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         }
 
         texture = createTex
+
+        texColorMapping[-1] = texture
     }
 
     private fun setupMappings() {
@@ -193,13 +195,15 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         }
 
         // Update mouse position
-        if(stage.isFocused) {
+        if (stage.isFocused) {
             if (io.wantSetMousePos)
                 r.mouseMove(Point2D(stage.x + io.mousePos.x.d, stage.y + io.mousePos.y.d)) //TODO: Check if stage root is upper left or actually on canvas
             else
                 io.mousePos put (mousePos)
         }
     }
+
+    private val texColorMapping = HashMap<TextureID, Image>()
 
     private fun updateMouseCursor() {
 
@@ -211,7 +215,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
             stage.scene.cursor = Cursor.NONE
         else {
             // Show OS mouse cursor
-            stage.scene.cursor = when(imguiCursor) {
+            stage.scene.cursor = when (imguiCursor) {
                 MouseCursor.None -> Cursor.NONE
                 MouseCursor.Arrow -> Cursor.DEFAULT
                 MouseCursor.TextInput -> Cursor.TEXT
@@ -433,8 +437,29 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                     val idx4 = cmdList.idxBuffer[baseIdx + 3]
                                     val idx5 = cmdList.idxBuffer[baseIdx + 4]
                                     if (idx4 == idx1 && idx5 == idx3) {
+                                        val cTex = texColorMapping.computeIfAbsent(col1) {
+                                            if (DEBUG)
+                                                println("generating color multiplied texture")
+                                            val retImg = WritableImage(texture.width.i, texture.height.i)
+                                            val nipw = retImg.pixelWriter
+                                            val textCol = vtx1.col.toJFXColor()
+                                            for (x in 0 until texture.width.i) {
+                                                for (y in 0 until texture.height.i) {
+                                                    val cColor = texPr.getColor(x, y)
+                                                    nipw.setColor(x, y,
+                                                            JFXColor(
+                                                                    textCol.red * cColor.red,
+                                                                    textCol.green * cColor.green,
+                                                                    textCol.blue * cColor.blue,
+                                                                    textCol.opacity * cColor.opacity
+                                                            )
+                                                    )
+                                                }
+                                            }
+                                            retImg
+                                        }
                                         //TODO: this only works when the x and y components of vtx3 are greater than those of vtx1
-                                        gc.drawImage(texture, (texture.width * vtx1.uv.x).d, (texture.height * vtx1.uv.y).d,
+                                        gc.drawImage(cTex, (texture.width * vtx1.uv.x).d, (texture.height * vtx1.uv.y).d,
                                                 (texture.width * (vtx3.uv.x - vtx1.uv.x)).d, (texture.height * (vtx3.uv.y - vtx1.uv.y)).d,
                                                 vtx1.pos.x.d, vtx1.pos.y.d, vtx3.pos.x.d - vtx1.pos.x.d, vtx3.pos.y.d - vtx1.pos.y.d)
                                         skip = true
@@ -464,7 +489,7 @@ fun Vec4.toJFXColor(): JFXColor {
     return JFXColor(r.d.coerceIn(0.0, 1.0), g.d.coerceIn(0.0, 1.0), b.d.coerceIn(0.0, 1.0), a.d.coerceIn(0.0, 1.0))
 }
 
-fun Int.toJFXColor(): JFXColor{
+fun Int.toJFXColor(): JFXColor {
     return JFXColor.rgb(
             ((this ushr COL32_R_SHIFT) and COLOR_SIZE_MASK),
             ((this ushr COL32_G_SHIFT) and COLOR_SIZE_MASK),
@@ -472,7 +497,7 @@ fun Int.toJFXColor(): JFXColor{
             ((this ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble())
 }
 
-fun Int.toVec4(): Vec4{
+fun Int.toVec4(): Vec4 {
     return Vec4(
             ((this ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble(),
             ((this ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble(),
