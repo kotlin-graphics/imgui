@@ -349,8 +349,6 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
 
                             if (vtx1.uv == vtx2.uv) {
                                 //in OpenGL this is done in shaders as `color * texture(texCoord)
-                                //the way this is implemented here has the limitation of no new images
-                                //this could be fixed
 
                                 //check if it borders the next triangle
                                 if (tri + 3 < cmd.elemCount) {
