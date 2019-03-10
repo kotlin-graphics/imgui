@@ -307,6 +307,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                             val idx3 = cmdList.idxBuffer[baseIdx + 2]
                             val vtx3 = cmdList.vtxBuffer[idx3]
 
+                            //TODO: Only one color is used no matter the vertex colors
                             val col1 = if (vtx1.col.toVec4().length() > vtx2.col.toVec4().length())
                                 if (vtx1.col.toVec4().length() > vtx3.col.toVec4().length())
                                     vtx1.col
