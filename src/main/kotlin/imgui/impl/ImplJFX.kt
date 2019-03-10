@@ -95,13 +95,14 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
         }
 
         val scrollListener = EventHandler<ScrollEvent> {
-            io.mouseWheelH += it.x.f
-            io.mouseWheel += it.y.f
+            io.mouseWheelH += it.deltaX.f / 10.0f
+            io.mouseWheel += it.deltaY.f / 10.0f
         }
 
         stage.addEventHandler(MouseEvent.MOUSE_PRESSED, mousePressListener)
         stage.addEventHandler(MouseEvent.MOUSE_RELEASED, mousePressListener)
         stage.addEventHandler(MouseEvent.MOUSE_MOVED, mouseMoveListener)
+        stage.addEventHandler(MouseEvent.MOUSE_DRAGGED, mouseMoveListener)
         stage.addEventHandler(KeyEvent.KEY_PRESSED, keyListener)
         stage.addEventHandler(KeyEvent.KEY_RELEASED, keyListener)
         stage.addEventHandler(KeyEvent.KEY_TYPED, charListener)
