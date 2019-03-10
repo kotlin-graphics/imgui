@@ -16,10 +16,7 @@ import javafx.scene.canvas.GraphicsContext
 import javafx.scene.effect.BlendMode
 import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
-import javafx.scene.input.KeyEvent
-import javafx.scene.input.MouseButton
-import javafx.scene.input.MouseEvent
-import javafx.scene.input.ScrollEvent
+import javafx.scene.input.*
 import javafx.scene.robot.Robot
 import javafx.scene.shape.FillRule
 import javafx.scene.shape.StrokeLineCap
@@ -51,6 +48,8 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
     fun createDeviceObjects() {
         if (ImGui.io.fonts.isBuilt)
             return
+
+        setupMappings()
 
         if(!Platform.isFxApplicationThread()) {
             Platform.runLater {
@@ -138,6 +137,32 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         }
 
         texture = createTex
+    }
+
+    private fun setupMappings() {
+        with(io) {
+            keyMap[Key.Tab] = KeyCode.TAB.code
+            keyMap[Key.LeftArrow] = KeyCode.LEFT.code
+            keyMap[Key.RightArrow] = KeyCode.RIGHT.code
+            keyMap[Key.UpArrow] = KeyCode.UP.code
+            keyMap[Key.DownArrow] = KeyCode.DOWN.code
+            keyMap[Key.PageUp] = KeyCode.PAGE_UP.code
+            keyMap[Key.PageDown] = KeyCode.PAGE_DOWN.code
+            keyMap[Key.Home] = KeyCode.HOME.code
+            keyMap[Key.End] = KeyCode.END.code
+            keyMap[Key.Insert] = KeyCode.INSERT.code
+            keyMap[Key.Delete] = KeyCode.DELETE.code
+            keyMap[Key.Backspace] = KeyCode.BACK_SPACE.code
+            keyMap[Key.Space] = KeyCode.SPACE.code
+            keyMap[Key.Enter] = KeyCode.ENTER.code
+            keyMap[Key.Escape] = KeyCode.ESCAPE.code
+            keyMap[Key.A] = KeyCode.A.code
+            keyMap[Key.C] = KeyCode.C.code
+            keyMap[Key.V] = KeyCode.V.code
+            keyMap[Key.X] = KeyCode.X.code
+            keyMap[Key.Y] = KeyCode.Y.code
+            keyMap[Key.Z] = KeyCode.Z.code
+        }
     }
 
     fun newFrame() {
