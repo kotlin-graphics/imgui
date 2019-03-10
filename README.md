@@ -123,6 +123,10 @@ Vulkan Kotlin:
 
 - [lwjgl](src/test/kotlin/imgui/vk/test%20lwjgl%20vk.kt) (broken, to fix)
 
+JavaFX Kotlin:
+
+- [JavaFX](src/test/kotlin/imgui/gl/test%20javafx.kt)
+
 
 You should refer to those also to learn how to use the imgui library.
 
