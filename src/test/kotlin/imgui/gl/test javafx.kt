@@ -69,7 +69,6 @@ class HelloWorld_jfx {
             vsyncCap()
 
             s.newFrame()
-            ImGui.newFrame()
 
             ImGui.run {
 
