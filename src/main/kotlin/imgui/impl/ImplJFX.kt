@@ -10,6 +10,7 @@ import imgui.*
 import javafx.application.Platform
 import javafx.event.EventHandler
 import javafx.geometry.Point2D
+import javafx.scene.Cursor
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.effect.BlendMode
@@ -59,6 +60,9 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         } else {
             r = Robot()
         }
+
+        io.backendFlags = io.backendFlags or BackendFlag.HasSetMousePos
+        io.backendFlags = io.backendFlags or BackendFlag.HasMouseCursors
 
         mousePressListener = EventHandler {
             (if (it.eventType == MouseEvent.MOUSE_PRESSED) mouseJustPressed else mouseJustReleased)[when (it.button) {
@@ -149,10 +153,9 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         time = currentTime
 
         updateMousePos()
+        updateMouseCursor()
 
         io.navInputs.fill(0f)
-
-        io.backendFlags = io.backendFlags or BackendFlag.HasSetMousePos
     }
 
     private fun updateMousePos() {
@@ -173,6 +176,31 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                 r.mouseMove(Point2D(stage.x + io.mousePos.x.d, stage.y + io.mousePos.y.d)) //TODO: Check if stage root is upper left or actually on canvas
             else
                 io.mousePos put (mousePos)
+        }
+    }
+
+    private fun updateMouseCursor() {
+
+        if (io.configFlags has ConfigFlag.NoMouseCursorChange)
+            return
+
+        val imguiCursor = ImGui.mouseCursor
+        if (imguiCursor == MouseCursor.None || io.mouseDrawCursor)
+            stage.scene.cursor = Cursor.NONE
+        else {
+            // Show OS mouse cursor
+            // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
+            stage.scene.cursor = when(imguiCursor) {
+                MouseCursor.None -> Cursor.NONE
+                MouseCursor.Arrow -> Cursor.DEFAULT
+                MouseCursor.TextInput -> Cursor.TEXT
+                MouseCursor.ResizeAll -> Cursor.MOVE
+                MouseCursor.ResizeNS -> Cursor.V_RESIZE
+                MouseCursor.ResizeEW -> Cursor.H_RESIZE
+                MouseCursor.ResizeNESW -> Cursor.SW_RESIZE
+                MouseCursor.ResizeNWSE -> Cursor.SE_RESIZE
+                MouseCursor.Hand -> Cursor.HAND
+            }
         }
     }
 
