@@ -4,6 +4,7 @@ import glm_.d
 import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.*
 import javafx.application.Platform
@@ -371,3 +372,14 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
     }
 }
 
+fun Vec4.toJFXColor(): JFXColor {
+    return JFXColor(r.d.coerceIn(0.0, 1.0), g.d.coerceIn(0.0, 1.0), b.d.coerceIn(0.0, 1.0), a.d.coerceIn(0.0, 1.0))
+}
+
+fun JFXColor.from(col: Int): JFXColor{
+    return JFXColor.rgb(
+            ((col ushr COL32_R_SHIFT) and COLOR_SIZE_MASK),
+            ((col ushr COL32_G_SHIFT) and COLOR_SIZE_MASK),
+            ((col ushr COL32_B_SHIFT) and COLOR_SIZE_MASK),
+            ((col ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble())
+}

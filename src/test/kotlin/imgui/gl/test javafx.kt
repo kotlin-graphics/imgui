@@ -8,6 +8,7 @@ import imgui.*
 import imgui.ImGui.io
 import imgui.impl.ImplJFX
 import imgui.impl.JFXColor
+import imgui.impl.toJFXColor
 import javafx.application.Platform
 import javafx.scene.Scene
 import javafx.scene.SnapshotParameters
@@ -179,8 +180,4 @@ class HelloWorld_jfx {
         }
         time = currentTime
     }
-}
-
-private fun Vec4.toJFXColor(): JFXColor {
-    return JFXColor(r.d.coerceIn(0.0, 1.0), g.d.coerceIn(0.0, 1.0), b.d.coerceIn(0.0, 1.0), a.d.coerceIn(0.0, 1.0))
 }
