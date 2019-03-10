@@ -39,6 +39,7 @@ import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleVar
 import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
+import imgui.internal.strlen
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -54,7 +55,7 @@ object showDemoWindowPopups {
 
     /* Context Menu */
     var value = 0.5f
-    var name = "Label1"
+    var name = CharArray(128) { NUL }.also { "Label1".toCharArray().copyInto(it) }
 
     var dontAskMeNextTime = false
 
@@ -149,11 +150,11 @@ object showDemoWindowPopups {
                 BeginPopupContextItem() will use the last item ID as the popup ID.
                 In addition here, we want to include your editable label inside the button label. We use the ### operator to override the ID (read FAQ about ID for details)
              */
-            val text = "Button: $name###Button" // ### operator override id ignoring the preceding label
+            val text = "Button: ${String(name.copyOfRange(0, name.strlen))}###Button" // ### operator override id ignoring the preceding label
             button(text)
             popupContextItem {
                 text("Edit name")
-                inputText("##edit", name.toCharArray())
+                inputText("##edit", name)
                 if (button("Close")) closeCurrentPopup()
             }
             sameLine(); text("(<-- right-click here)")
