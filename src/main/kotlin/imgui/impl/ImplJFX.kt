@@ -26,6 +26,8 @@ import javafx.stage.Stage
 typealias JFXColor = javafx.scene.paint.Color
 
 const val COLOR_SIZE_MASK = 0xFF
+//-1 is no multiplication (each pixel * 1.0 for each component, so the original)
+const val TEXTURE_COLOR_UNMULTIPLIED = -1
 
 class ImplJFX(val stage: Stage, var canvas: Canvas) {
     private val startTime = System.currentTimeMillis()
@@ -140,7 +142,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
 
     private fun addTex(tex: Image): Int {
         val ret = tex.hashCode()
-        texColorMapping[Pair(ret, -1)] = tex
+        texColorMapping[Pair(ret, TEXTURE_COLOR_UNMULTIPLIED)] = tex
         return ret
     }
 
@@ -282,9 +284,8 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                         gc.closePath()
                         gc.clip()
 
-                        if(!texColorMapping.containsKey(Pair(cmd.textureId!!, -1)))
-                            throw Error("Attempted to use a texture that was not added!")
-                        val currentTex = texColorMapping[Pair(cmd.textureId!!, -1)]!!
+                        assert(texColorMapping.containsKey(Pair(cmd.textureId!!, TEXTURE_COLOR_UNMULTIPLIED))) { "Attempted to use a texture that was not added!" }
+                        val currentTex = texColorMapping[Pair(cmd.textureId!!, TEXTURE_COLOR_UNMULTIPLIED)]!!
                         val texPr = currentTex.pixelReader
 
                         var col = JFXColor(0.0, 0.0, 0.0, 0.0)
@@ -443,7 +444,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                         TODO("none")
                                     }
                                 }
-                                draw(true)
+                                draw(true) //flush any undrawn triangles
                                 if (tri + 3 < cmd.elemCount) {
                                     val idx4 = cmdList.idxBuffer[baseIdx + 3]
                                     val idx5 = cmdList.idxBuffer[baseIdx + 4]
