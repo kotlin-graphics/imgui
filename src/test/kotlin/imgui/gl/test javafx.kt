@@ -61,11 +61,22 @@ class HelloWorld_jfx {
         while(!ready.get())
             Thread.sleep(1)
 
-        val internalCanvas = Canvas(canvas.width, canvas.height)
+        var internalCanvas = Canvas(canvas.width, canvas.height)
 
         val s = ImplJFX(stage, internalCanvas)
 
         while(stage.isShowing) {
+
+            if(canvas.width != scene.width || canvas.height != scene.height) {
+                canvas = Canvas(scene.width, scene.height)
+                internalCanvas = Canvas(scene.width, scene.height)
+                s.canvas = internalCanvas
+                Platform.runLater {
+                    val vb = Pane(canvas)
+                    scene = Scene(vb)
+                    stage.scene = scene
+                }
+            }
 
             vsyncCap()
 

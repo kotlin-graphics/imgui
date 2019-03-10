@@ -32,7 +32,7 @@ typealias JFXColor = javafx.scene.paint.Color
 
 const val COLOR_SIZE_MASK = 0xFF
 
-class ImplJFX(val stage: Stage, val canvas: Canvas) {
+class ImplJFX(val stage: Stage, var canvas: Canvas) {
     private lateinit var texture: Image
     private val startTime = System.currentTimeMillis()
     private var time = 0.0
