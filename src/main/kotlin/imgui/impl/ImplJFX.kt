@@ -230,12 +230,12 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
 
                         val col1 = vtx1.col
 
-                        fun draw() {
+                        fun draw(onlyLast: Boolean = false) {
                             if (pos != 0) {
                                 gc.fill = col
                                 gc.fillPolygon(xs, ys, pos)
                                 pos = 0
-                            } else {
+                            } else if (!onlyLast) {
                                 val color = texPr.getColor((vtx1.uv.x * texture.width).toInt(), (vtx1.uv.y * texture.height).toInt())
                                 val x = JFXColor.rgb(
                                         (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
@@ -344,6 +344,7 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                                     TODO("none")
                                 }
                             }
+                            draw(true)
                             if (tri + 3 < cmd.elemCount) {
                                 val idx4 = cmdList.idxBuffer[baseIdx + 3]
                                 val idx5 = cmdList.idxBuffer[baseIdx + 4]
