@@ -22,9 +22,6 @@ import javafx.scene.shape.FillRule
 import javafx.scene.shape.StrokeLineCap
 import javafx.scene.shape.StrokeLineJoin
 import javafx.stage.Stage
-import java.awt.Toolkit
-import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.StringSelection
 
 typealias JFXColor = javafx.scene.paint.Color
 
@@ -117,10 +114,10 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         io.backendRendererUserData = null
         io.backendPlatformUserData = null
         io.setClipboardTextFn = { _, text ->
-            Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
+            Clipboard.getSystemClipboard().setContent(mapOf(DataFormat.PLAIN_TEXT to text))
         }
         io.getClipboardTextFn = { _ ->
-            Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as String
+            Clipboard.getSystemClipboard().getContent(DataFormat.PLAIN_TEXT) as String
         }
         io.clipboardUserData = NUL
 
