@@ -228,7 +228,16 @@ class ImplJFX(val stage: Stage, val canvas: Canvas) {
                         val idx3 = cmdList.idxBuffer[baseIdx + 2]
                         val vtx3 = cmdList.vtxBuffer[idx3]
 
-                        val col1 = vtx1.col
+                        val col1 = if(vtx1.col.toVec4().length() > vtx2.col.toVec4().length())
+                            if(vtx1.col.toVec4().length() > vtx3.col.toVec4().length())
+                                vtx1.col
+                            else
+                                vtx3.col
+                        else
+                            if(vtx2.col.toVec4().length() > vtx3.col.toVec4().length())
+                                vtx2.col
+                            else
+                                vtx3.col
 
                         fun draw(onlyLast: Boolean = false) {
                             if (pos != 0) {
@@ -378,10 +387,18 @@ fun Vec4.toJFXColor(): JFXColor {
     return JFXColor(r.d.coerceIn(0.0, 1.0), g.d.coerceIn(0.0, 1.0), b.d.coerceIn(0.0, 1.0), a.d.coerceIn(0.0, 1.0))
 }
 
-fun JFXColor.from(col: Int): JFXColor{
+fun Int.toJFXColor(): JFXColor{
     return JFXColor.rgb(
-            ((col ushr COL32_R_SHIFT) and COLOR_SIZE_MASK),
-            ((col ushr COL32_G_SHIFT) and COLOR_SIZE_MASK),
-            ((col ushr COL32_B_SHIFT) and COLOR_SIZE_MASK),
-            ((col ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble())
+            ((this ushr COL32_R_SHIFT) and COLOR_SIZE_MASK),
+            ((this ushr COL32_G_SHIFT) and COLOR_SIZE_MASK),
+            ((this ushr COL32_B_SHIFT) and COLOR_SIZE_MASK),
+            ((this ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble())
+}
+
+fun Int.toVec4(): Vec4{
+    return Vec4(
+            ((this ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble(),
+            ((this ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble(),
+            ((this ushr COL32_B_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble(),
+            ((this ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble())
 }
