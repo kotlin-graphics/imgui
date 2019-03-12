@@ -78,6 +78,8 @@ class HelloWorld_jfx {
                 }
             }
 
+            internalCanvas.graphicsContext2D.clearRect(0.0, 0.0, internalCanvas.width, internalCanvas.height)
+
             vsyncCap()
 
             s.newFrame()
