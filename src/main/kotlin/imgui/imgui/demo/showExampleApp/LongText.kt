@@ -2,9 +2,17 @@ package imgui.imgui.demo.showExampleApp
 
 import glm_.vec2.Vec2
 import imgui.Cond
+import imgui.ImGui
+import imgui.ImGui.beginChild
 import imgui.ImGui.begin_
 import imgui.ImGui.end
+import imgui.ImGui.endChild
+import imgui.ImGui.popStyleVar
+import imgui.ImGui.pushStyleVar
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.textUnformatted
+import imgui.ListClipper
+import imgui.StyleVar
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -13,6 +21,10 @@ import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 
 object LongText {
+
+    var testType = 0
+    val log = StringBuilder()
+    var lines = 0
 
     /** Demonstrate/test rendering huge amount of text, and the incidence of clipping.  */
     operator fun invoke(open: KMutableProperty0<Boolean>) {
@@ -23,47 +35,41 @@ object LongText {
             return
         }
 
-//            static int test_type = 0;
-//            static ImGuiTextBuffer log;
-//            static int lines = 0;
-//            ImGui::Text("Printing unusually long amount of text.");
-//            ImGui::Combo("Test type", &test_type, "Single call to TextUnformatted()\0Multiple calls to Text(), clipped manually\0Multiple calls to Text(), not clipped (slow)\0");
-//            ImGui::Text("Buffer contents: %d lines, %d bytes", lines, log.size());
-//            if (ImGui::Button("Clear")) { log.clear(); lines = 0; }
-//            ImGui::SameLine();
-//            if (ImGui::Button("Add 1000 lines"))
-//            {
-//                for (int i = 0; i < 1000; i++)
-//                log.append("%i The quick brown fox jumps over the lazy dog\n", lines+i);
-//                lines += 1000;
-//            }
-//            ImGui::BeginChild("Log");
-//            switch (test_type)
-//            {
-//                case 0:
-//                // Single call to TextUnformatted() with a big buffer
-//                ImGui::TextUnformatted(log.begin(), log.end());
-//                break;
-//                case 1:
-//                {
-//                    // Multiple calls to Text(), manually coarsely clipped - demonstrate how to use the ImGuiListClipper helper.
-//                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,0));
-//                    ImGuiListClipper clipper(lines);
-//                    while (clipper.Step())
-//                        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
-//                    ImGui::Text("%i The quick brown fox jumps over the lazy dog", i);
-//                    ImGui::PopStyleVar();
-//                    break;
-//                }
-//                case 2:
-//                // Multiple calls to Text(), not clipped (slow)
-//                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,0));
-//                for (int i = 0; i < lines; i++)
-//                ImGui::Text("%i The quick brown fox jumps over the lazy dog", i);
-//                ImGui::PopStyleVar();
-//                break;
-//            }
-//            ImGui::EndChild();
+        ImGui.text("Printing unusually long amount of text.")
+        ImGui.combo("Test type", ::testType, "Single call to TextUnformatted()\u0000Multiple calls to Text(), clipped manually\u0000Multiple calls to Text(), not clipped (slow)\u0000")
+        ImGui.text("Buffer contents: %d lines, %d bytes", lines, log.length)
+        if (ImGui.button("Clear")) { log.clear(); lines = 0; }
+        ImGui.sameLine()
+        if (ImGui.button("Add 1000 lines")) {
+            repeat(1000) {
+                log.append("%d The quick brown fox jumps over the lazy dog\n".format(lines + it))
+            }
+            lines += 1000
+        }
+        beginChild("Log")
+
+        when(testType) {
+            0 -> textUnformatted(log.toString())
+            1 -> {
+                pushStyleVar(StyleVar.ItemSpacing, Vec2(0))
+                val clipper = ListClipper(lines)
+                while(clipper.step()) {
+                    for(i in clipper.display) {
+                        ImGui.text("%d The quick brown fox jumps over the lazy dog".format(i))
+                    }
+                }
+                popStyleVar()
+            }
+            2 -> {
+                pushStyleVar(StyleVar.ItemSpacing, Vec2(0, 1))
+                for(i in 0 until lines) {
+                    ImGui.text("%d The quick brown fox jumps over the lazy dog".format(i))
+                }
+                popStyleVar()
+            }
+        }
+
+        endChild()
         end()
     }
 }
