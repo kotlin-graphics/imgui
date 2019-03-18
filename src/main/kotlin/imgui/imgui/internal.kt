@@ -2225,14 +2225,15 @@ interface imgui_internal {
         val focusRequestedByTab = focusRequested && !focusRequestedByCode
 
         val userClicked = hovered && io.mouseClicked[0]
-        val userScrolled = isMultiline && g.activeId == 0 && editState.id == id && g.activeIdPreviousFrame == drawWindow.getIdNoKeepAlive("#SCROLLY")
         val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.NavKeyboard))
+        val userScrollFinish = isMultiline && editState.id == id && g.activeId == 0 && g.activeIdPreviousFrame == getScrollbarID(drawWindow, Axis.Y)
+        val userScrollActive = isMultiline && editState.id == id && g.activeId == getScrollbarID(drawWindow, Axis.Y)
 
         var clearActiveId = false
 
         var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || userNavInputStart) && !isMultiline
 //        println(g.imeLastKey)
-        if (focusRequested || userClicked || userScrolled || userNavInputStart) {
+        if (focusRequested || userClicked || userScrollFinish || userNavInputStart) {
             if (g.activeId != id /*|| g.imeLastKey != 0*/) { // TODO clean outdated ime
                 // JVM, put char if no more in ime mode and last key is valid
 //                println("${g.imeInProgress}, ${g.imeLastKey}")
@@ -2629,9 +2630,8 @@ interface imgui_internal {
         val clipRect = Vec4(frameBb.min, frameBb.min + size) // Not using frameBb.Max because we have adjusted size
         val renderPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + style.framePadding
         val textSize = Vec2()
-        val isCurrentlyScrolling = editState.id == id && isMultiline && g.activeId == drawWindow.getIdNoKeepAlive("#SCROLLY")
-        if (g.activeId == id || isCurrentlyScrolling) {
-
+        if (g.activeId == id || userScrollActive) {
+            // Animate cursor
             editState.cursorAnim += io.deltaTime
 
             /*  This is going to be messy. We need to:
@@ -2713,7 +2713,7 @@ interface imgui_internal {
                         scrollY = glm.max(0f, cursorOffset.y - g.fontSize)
                     else if (cursorOffset.y - size.y >= scrollY)
                         scrollY = cursorOffset.y - size.y
-                    drawWindow.dc.cursorPos.y += drawWindow.scroll.y - scrollY   // To avoid a frame of lag
+                    drawWindow.dc.cursorPos.y += drawWindow.scroll.y - scrollY   // Manipulate cursor pos immediately avoid a frame of lag
                     drawWindow.scroll.y = scrollY
                     renderPos.y = drawWindow.dc.cursorPos.y
                 }
@@ -2756,6 +2756,7 @@ interface imgui_internal {
                 }
             }
 
+            // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
             val bufDisplayLen = editState.curLenA
             if (isMultiline || bufDisplayLen < bufDisplayMaxLength)
                 drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, Col.Text.u32, bufDisplay, bufDisplayLen, 0f, clipRect)
