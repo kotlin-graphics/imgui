@@ -178,6 +178,8 @@ interface inputKeyboard {
             popItemWidth()
 
             // Step buttons
+            val backupFramePadding = Vec2(style.framePadding)
+            style.framePadding.x = style.framePadding.y
             var buttonFlags = Bf.Repeat or Bf.DontClosePopups
             if (extraFlags has Itf.ReadOnly)
                 buttonFlags = buttonFlags or Bf.Disabled
@@ -193,6 +195,7 @@ interface inputKeyboard {
             }
             sameLine(0f, style.itemInnerSpacing.x)
             textUnformatted(label, findRenderedTextEnd(label))
+            style.framePadding put backupFramePadding
 
             popId()
             endGroup()
