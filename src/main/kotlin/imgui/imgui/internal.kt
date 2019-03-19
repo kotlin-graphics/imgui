@@ -1598,12 +1598,13 @@ interface imgui_internal {
      *  - We store values as normalized ratio and in a form that allows the window content to change while we are holding on
      *          a scrollbar
      *  - We handle both horizontal and vertical scrollbars, which makes the terminology not ideal. */
-    fun scrollbar(direction: Lt) {
+    fun scrollbar(axis: Axis) {
 
         val window = g.currentWindow!!
-        val horizontal = direction == Lt.Horizontal
 
-        val id = getScrollbarID(direction)
+        val horizontal = axis == Axis.X
+        val id = getScrollbarID(window, axis)
+        keepAliveId(id)
 
         // Render background
         val otherScrollbar = if (horizontal) window.scrollbar.y else window.scrollbar.x
@@ -1625,7 +1626,7 @@ interface imgui_internal {
 
         // When we are too small, start hiding and disabling the grab (this reduce visual noise on very small window and facilitate using the resize grab)
         var alpha = 1.f
-        if (direction == Lt.Vertical && bbHeight < g.fontSize + style.framePadding.y * 2f) {
+        if (axis == Axis.Y && bbHeight < g.fontSize + style.framePadding.y * 2f) {
             alpha = saturate((bbHeight - g.fontSize) / (style.framePadding.y * 2f))
             if (alpha <= 0f)
                 return
@@ -1721,8 +1722,8 @@ interface imgui_internal {
         window.drawList.addRectFilled(grabRect.min, grabRect.max, grabCol, style.scrollbarRounding)
     }
 
-    fun getScrollbarID(direction: Lt): ID =
-            g.currentWindow!!.getId(if (direction == Lt.Horizontal) "#SCROLLX" else "#SCROLLY")
+    fun getScrollbarID(window: Window, axis: Axis): ID =
+            window.getIdNoKeepAlive(if (axis == Axis.X) "#SCROLLX" else "#SCROLLY")
 
     /** Vertical separator, for menu bars (use current line height). not exposed because it is misleading
      *  what it doesn't have an effect on regular layout.   */

@@ -32,6 +32,7 @@ import org.lwjgl.opengl.GL15C
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL33C
 import org.lwjgl.opengl.GL45C
+import org.lwjgl.system.Platform
 import java.nio.ByteBuffer
 import java.nio.IntBuffer
 import kotlin.reflect.KMutableProperty0
@@ -46,7 +47,7 @@ class ImplGL3 : LwjglRendererI {
 
     var program = GlProgram(0)
     var matUL = -1
-    var CLIP_ORIGIN = false
+    var CLIP_ORIGIN = false && Platform.get() != Platform.MACOSX
 
     val mouseJustPressed = BooleanArray(5)
     val buffers = GlBuffers<Buffer>()
