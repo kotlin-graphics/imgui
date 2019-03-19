@@ -497,8 +497,8 @@ interface imgui_window {
                 }
 
                 // Scrollbars
-                if (window.scrollbar.x) scrollbar(Lt.Horizontal)
-                if (window.scrollbar.y) scrollbar(Lt.Vertical)
+                if (window.scrollbar.x) scrollbar(Axis.X)
+                if (window.scrollbar.y) scrollbar(Axis.Y)
 
                 // Render resize grips (after their input handling so we don't have a frame of latency)
                 if (flags hasnt Wf.NoResize)
