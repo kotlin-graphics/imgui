@@ -2297,6 +2297,10 @@ interface imgui_internal {
         // Release focus when we click outside
             clearActiveId = true
 
+        // We have an edge case if ActiveId was set through another widget (e.g. widget being swapped)
+        if (g.activeId == id && state == null)
+            clearActiveId()
+
         var valueChanged = false
         var enterPressed = false
         var backupCurrentTextLength = 0
