@@ -2613,16 +2613,15 @@ interface imgui_internal {
         // Release active ID at the end of the function (so e.g. pressing Return still does a final application of the value)
         if (clearActiveId && g.activeId == id) clearActiveId()
 
-        // ------------------------- Render -------------------------
-        /*  Select which buffer we are going to display. When ImGuiInputTextFlags_NoLiveEdit is set 'buf' might still
-            be the old value. We set buf to NULL to prevent accidental usage from now on.         */
-        val bufDisplay = if (g.activeId == id && isEditable) editState.tempBuffer else buf
-
         /*  Set upper limit of single-line InputTextEx() at 2 million characters strings. The current pathological worst case is a long line
             without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
             Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
         val bufDisplayMaxLength = 2 * 1024 * 1024
 
+        // Select which buffer we are going to display. We set buf to NULL to prevent accidental usage from now on.
+        val bufDisplay = if (g.activeId == id && isEditable) editState.tempBuffer else buf
+
+        // ------------------------- Render -------------------------
         if (!isMultiline) {
             renderNavHighlight(frameBb, id)
             renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
