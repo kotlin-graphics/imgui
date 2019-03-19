@@ -26,13 +26,13 @@ class TextEditState {
     var bufCapacityA = 0
 
     var scrollX = 0f
-
+    /** state for stb_textedit.h */
     val state = State()
-
+    /** timer for cursor blink, reset on every user action so the cursor reappears immediately */
     var cursorAnim = 0f
-
+    /** set when we want scrolling to follow the current cursor position (not always!) */
     var cursorFollow = false
-
+    /** after a double-click to select all, we ignore further mouse drags to update selection */
     var selectedAllMouseLock = false
 
     // Temporarily set when active
