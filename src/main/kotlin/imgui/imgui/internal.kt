@@ -2217,7 +2217,7 @@ interface imgui_internal {
             }
 
         // NB: we are only allowed to access 'editState' if we are the active widget.
-        val editState = g.inputTextState
+        var state: TextEditState? = g.inputTextState.takeIf { it.id == id }
 
         // Using completion callback disable keyboard tabbing
         val tabStop = flags hasnt (Itf.CallbackCompletion or Itf.AllowTabInput)
@@ -2227,8 +2227,8 @@ interface imgui_internal {
 
         val userClicked = hovered && io.mouseClicked[0]
         val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.NavKeyboard))
-        val userScrollFinish = isMultiline && editState.id == id && g.activeId == 0 && g.activeIdPreviousFrame == getScrollbarID(drawWindow, Axis.Y)
-        val userScrollActive = isMultiline && editState.id == id && g.activeId == getScrollbarID(drawWindow, Axis.Y)
+        val userScrollFinish = isMultiline && state != null && g.activeId == 0 && g.activeIdPreviousFrame == getScrollbarID(drawWindow, Axis.Y)
+        val userScrollActive = isMultiline && state != null && g.activeId == getScrollbarID(drawWindow, Axis.Y)
 
         var clearActiveId = false
 
@@ -2236,6 +2236,9 @@ interface imgui_internal {
 //        println(g.imeLastKey)
         if (focusRequested || userClicked || userScrollFinish || userNavInputStart) {
             if (g.activeId != id /*|| g.imeLastKey != 0*/) { // TODO clean outdated ime
+
+                // Access state even if we don't own it yet.
+                state = g.inputTextState
                 // JVM, put char if no more in ime mode and last key is valid
 //                println("${g.imeInProgress}, ${g.imeLastKey}")
 //                if (!g.imeInProgress && g.imeLastKey != 0) {
@@ -2249,39 +2252,41 @@ interface imgui_internal {
                 /*  Start edition
                     Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
-                val prevLenW = editState.curLenW
+                val prevLenW = state.curLenW
                 val initBufLen = buf.strlen
-                editState.textW = CharArray(buf.size)            // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
-                editState.initialText = CharArray(initBufLen)   // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
-                System.arraycopy(buf, 0, editState.initialText, 0, initBufLen)
+                state.textW = CharArray(buf.size)            // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
+                state.initialText = CharArray(initBufLen)   // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
+                System.arraycopy(buf, 0, state.initialText, 0, initBufLen)
                 // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
 //                editState.initialText.add(NUL)
-                editState.initialText strncpy buf
-                editState.curLenW = editState.textW.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
+                state.initialText strncpy buf
+                state.curLenW = state.textW.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
                 /*  We can't get the result from ImStrncpy() above because it is not UTF-8 aware.
                     Here we'll cut off malformed UTF-8.                 */
-                editState.curLenA = editState.curLenW //TODO check (int)(bufEnd - buf)
-                editState.cursorAnimReset()
+                state.curLenA = state.curLenW //TODO check (int)(bufEnd - buf)
+                state.cursorAnimReset()
 
                 /*  Preserve cursor position and undo/redo stack if we come back to same widget
                     FIXME: We should probably compare the whole buffer to be on the safety side. Comparing buf (utf8)
                     and editState.Text (wchar). */
-                if (editState.id == id && prevLenW == editState.curLenW)
+                if (state.id == id && prevLenW == state.curLenW)
                 /*  Recycle existing cursor/selection/undo stack but clamp position
                     Note a single mouse click will override the cursor/position immediately by calling
                     stb_textedit_click handler.                     */
-                    editState.cursorClamp()
+                    state.cursorClamp()
                 else {
-                    editState.id = id
-                    editState.scrollX = 0f
-                    editState.state.clear(!isMultiline)
+                    state.id = id
+                    state.scrollX = 0f
+                    state.state.clear(!isMultiline)
                     if (!isMultiline && focusRequestedByCode) selectAll = true
                 }
                 if (flags has Itf.AlwaysInsertMode)
-                    editState.state.insertMode = true
+                    state.state.insertMode = true
                 if (!isMultiline && (focusRequestedByTab || (userClicked && io.keyCtrl)))
                     selectAll = true
             }
+
+            assert(state!!.id == id)
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()
@@ -2297,19 +2302,19 @@ interface imgui_internal {
         var backupCurrentTextLength = 0
 
         if (g.activeId == id) {
-
+            val state = state!!
             if (!isEditable && !g.activeIdIsJustActivated) {
                 // When read-only we always use the live data passed to the function
                 val tmp = CharArray(buf.size)
-                System.arraycopy(editState.textW, 0, tmp, 0, editState.textW.size)
+                System.arraycopy(state.textW, 0, tmp, 0, state.textW.size)
                 val bufEnd = -1
-                editState.curLenW = editState.textW.textStr(buf) // TODO check
-                editState.curLenA = editState.curLenW // TODO check
-                editState.cursorClamp()
+                state.curLenW = state.textW.textStr(buf) // TODO check
+                state.curLenA = state.curLenW // TODO check
+                state.cursorClamp()
             }
 
-            backupCurrentTextLength = editState.curLenA
-            editState.apply {
+            backupCurrentTextLength = state.curLenA
+            state.apply {
                 bufCapacityA = buf.size
                 userFlags = flags
                 userCallback = callback
@@ -2322,7 +2327,7 @@ interface imgui_internal {
             g.wantTextInputNextFrame = 1
 
             // Edit in progress
-            val mouseX = io.mousePos.x - frameBb.min.x - style.framePadding.x + editState.scrollX
+            val mouseX = io.mousePos.x - frameBb.min.x - style.framePadding.x + state.scrollX
             val mouseY =
                     if (isMultiline)
                         io.mousePos.y - drawWindow.dc.cursorPos.y - style.framePadding.y
@@ -2331,25 +2336,25 @@ interface imgui_internal {
             // OS X style: Double click selects by word instead of selecting whole text
             val isOsx = io.configMacOSXBehaviors
             if (selectAll || (hovered && !isOsx && io.mouseDoubleClicked[0])) {
-                editState.selectAll()
-                editState.selectedAllMouseLock = true
+                state.selectAll()
+                state.selectedAllMouseLock = true
             } else if (hovered && isOsx && io.mouseDoubleClicked[0]) {
                 // Double-click select a word only, OS X style (by simulating keystrokes)
-                editState.onKeyPressed(K.WORDLEFT)
-                editState.onKeyPressed(K.WORDRIGHT or K.SHIFT)
-            } else if (io.mouseClicked[0] && !editState.selectedAllMouseLock) {
+                state.onKeyPressed(K.WORDLEFT)
+                state.onKeyPressed(K.WORDRIGHT or K.SHIFT)
+            } else if (io.mouseClicked[0] && !state.selectedAllMouseLock) {
                 if (hovered) {
-                    editState.click(mouseX, mouseY)
-                    editState.cursorAnimReset()
+                    state.click(mouseX, mouseY)
+                    state.cursorAnimReset()
                 }
-            } else if (io.mouseDown[0] && !editState.selectedAllMouseLock && io.mouseDelta anyNotEqual 0f) {
-                editState.state.selectStart = editState.state.cursor
-                editState.state.selectEnd = editState.locateCoord(mouseX, mouseY)
-                editState.cursorFollow = true
-                editState.cursorAnimReset()
+            } else if (io.mouseDown[0] && !state.selectedAllMouseLock && io.mouseDelta anyNotEqual 0f) {
+                state.state.selectStart = state.state.cursor
+                state.state.selectEnd = state.locateCoord(mouseX, mouseY)
+                state.cursorFollow = true
+                state.cursorAnimReset()
             }
-            if (editState.selectedAllMouseLock && !io.mouseDown[0])
-                editState.selectedAllMouseLock = false
+            if (state.selectedAllMouseLock && !io.mouseDown[0])
+                state.selectedAllMouseLock = false
 
             if (io.inputQueueCharacters.size > 0) {
                 if (io.inputQueueCharacters[0] != NUL) {
@@ -2364,7 +2369,7 @@ interface imgui_internal {
                             withChar { c ->
                                 // Insert character if they pass filtering
                                 if (inputTextFilterCharacter(c.apply { set(it) }, flags, callback, callbackUserData))
-                                    editState.onKeyPressed(c().i)
+                                    state.onKeyPressed(c().i)
                             }
                         }
                     // Consume characters
@@ -2376,6 +2381,7 @@ interface imgui_internal {
         var cancelEdit = false
         if (g.activeId == id && !g.activeIdIsJustActivated && !clearActiveId) {
             // Handle key-presses
+            val state = state!!
             val kMask = if (io.keyShift) K.SHIFT else 0
             val isOsx = io.configMacOSXBehaviors
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
@@ -2387,19 +2393,19 @@ interface imgui_internal {
             val isCtrlKeyOnly = io.keyCtrl && !io.keyShift && !io.keyAlt && !io.keySuper
             val isShiftKeyOnly = io.keyShift && !io.keyCtrl && !io.keyAlt && !io.keySuper
 
-            val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && isEditable && !isPassword && (!isMultiline || editState.hasSelection)
-            val isCopy = ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || editState.hasSelection)
+            val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && isEditable && !isPassword && (!isMultiline || state.hasSelection)
+            val isCopy = ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || state.hasSelection)
             val isPaste = ((isShortcutKey && Key.V.isPressed) || (isShiftKeyOnly && Key.Insert.isPressed)) && isEditable
             val isUndo = ((isShortcutKey && Key.Z.isPressed) && isEditable && isUndoable)
             val isRedo = ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && isEditable && isUndoable
 
             when {
-                Key.LeftArrow.isPressed -> editState.onKeyPressed(when {
+                Key.LeftArrow.isPressed -> state.onKeyPressed(when {
                     isStartendKeyDown -> K.LINESTART
                     isWordmoveKeyDown -> K.WORDLEFT
                     else -> K.LEFT
                 } or kMask)
-                Key.RightArrow.isPressed -> editState.onKeyPressed(when {
+                Key.RightArrow.isPressed -> state.onKeyPressed(when {
                     isStartendKeyDown -> K.LINEEND
                     isWordmoveKeyDown -> K.WORDRIGHT
                     else -> K.RIGHT
@@ -2408,22 +2414,22 @@ interface imgui_internal {
                     if (io.keyCtrl)
                         drawWindow.setScrollY(glm.max(drawWindow.scroll.y - g.fontSize, 0f))
                     else
-                        editState.onKeyPressed((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
+                        state.onKeyPressed((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
                 Key.DownArrow.isPressed && isMultiline ->
                     if (io.keyCtrl)
                         drawWindow.setScrollY(glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY))
                     else
-                        editState.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
-                Key.Home.isPressed -> editState.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
-                Key.End.isPressed -> editState.onKeyPressed((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
-                Key.Delete.isPressed && isEditable -> editState.onKeyPressed(K.DELETE or kMask)
+                        state.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
+                Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
+                Key.End.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
+                Key.Delete.isPressed && isEditable -> state.onKeyPressed(K.DELETE or kMask)
                 Key.Backspace.isPressed && isEditable -> {
-                    if (!editState.hasSelection)
+                    if (!state.hasSelection)
                         if (isWordmoveKeyDown)
-                            editState.onKeyPressed(K.WORDLEFT or K.SHIFT)
+                            state.onKeyPressed(K.WORDLEFT or K.SHIFT)
                         else if (isOsx && io.keySuper && !io.keyAlt && !io.keyCtrl)
-                            editState.onKeyPressed(K.LINESTART or K.SHIFT)
-                    editState.onKeyPressed(K.BACKSPACE or kMask)
+                            state.onKeyPressed(K.LINESTART or K.SHIFT)
+                    state.onKeyPressed(K.BACKSPACE or kMask)
                 }
                 Key.Enter.isPressed -> {
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
@@ -2434,33 +2440,33 @@ interface imgui_internal {
                         withChar('\n') { c ->
                             // Insert new line
                             if (inputTextFilterCharacter(c, flags, callback, callbackUserData))
-                                editState.onKeyPressed(c().i)
+                                state.onKeyPressed(c().i)
                         }
                 }
                 flags has Itf.AllowTabInput && Key.Tab.isPressed && !io.keyCtrl && !io.keyShift && !io.keyAlt && isEditable ->
                     withChar('\t') { c ->
                         // Insert TAB
                         if (inputTextFilterCharacter(c, flags, callback, callbackUserData))
-                            editState.onKeyPressed(c().i)
+                            state.onKeyPressed(c().i)
                     }
                 Key.Escape.isPressed -> {
                     cancelEdit = true
                     clearActiveId = true
                 }
                 isUndo || isRedo -> {
-                    editState.onKeyPressed(if (isUndo) K.UNDO else K.REDO)
-                    editState.clearSelection()
+                    state.onKeyPressed(if (isUndo) K.UNDO else K.REDO)
+                    state.clearSelection()
                 }
                 isShortcutKey && Key.A.isPressed -> {
-                    editState.selectAll()
-                    editState.cursorFollow = true
+                    state.selectAll()
+                    state.cursorFollow = true
                 }
                 isCut || isCopy -> {
                     // Cut, Copy
-                    val min = min(editState.state.selectStart, editState.state.selectEnd)
-                    val max = max(editState.state.selectStart, editState.state.selectEnd)
+                    val min = min(state.state.selectStart, state.state.selectEnd)
+                    val max = max(state.state.selectStart, state.state.selectEnd)
 
-                    val copy = String(editState.textW, min, max - editState.state.cursor)//for some reason this is needed.
+                    val copy = String(state.textW, min, max - state.state.cursor)//for some reason this is needed.
 
                     if (copy.isNotEmpty()) {
                         val stringSelection = StringSelection(copy)
@@ -2468,37 +2474,37 @@ interface imgui_internal {
                         clpbrd.setContents(stringSelection, null)
                     }
                     if (isCut) {
-                        if (!editState.hasSelection)
-                            editState.selectAll()
-                        println("${editState.textW}, $max, ${editState.textW}, $min, ${max - min}")
-                        System.arraycopy(editState.textW, max, editState.textW, min, max - min)
-                        editState.deleteChars(editState.state.cursor, max - min)
-                        editState.state.cursor = min
-                        editState.clearSelection()
+                        if (!state.hasSelection)
+                            state.selectAll()
+                        println("${state.textW}, $max, ${state.textW}, $min, ${max - min}")
+                        System.arraycopy(state.textW, max, state.textW, min, max - min)
+                        state.deleteChars(state.state.cursor, max - min)
+                        state.state.cursor = min
+                        state.clearSelection()
                     }
                 }
                 isPaste -> {
-                    if (editState.hasSelection)
-                        editState.deleteSelection()
+                    if (state.hasSelection)
+                        state.deleteSelection()
                     val data = Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as? String
                     data?.let {
-                        editState.insertChars(editState.state.cursor, data.toCharArray(), 0, data.toCharArray().size)
-                        editState.state.cursor += data.length
+                        state.insertChars(state.state.cursor, data.toCharArray(), 0, data.toCharArray().size)
+                        state.state.cursor += data.length
                     }
                 }
             }
         }
         if (g.activeId == id) {
-
+            val state = state!!
             var applyNewText = CharArray(0)
 //            var applyNewTextPtr = 0
             var applyNewTextLength = 0
 
             if (cancelEdit)
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
-                if (isEditable && !Arrays.equals(buf, editState.initialText)) {
-                    applyNewText = editState.initialText
-                    applyNewTextLength = editState.initialText.size
+                if (isEditable && !Arrays.equals(buf, state.initialText)) {
+                    applyNewText = state.initialText
+                    applyNewTextLength = state.initialText.size
                 }
 
             /*  When using `InputTextFlag.EnterReturnsTrue` as a special case we reapply the live buffer back to the
@@ -2513,7 +2519,7 @@ interface imgui_internal {
                 // FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above incorrect.
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
                 if (isEditable)
-                    editState.tempBuffer = CharArray(editState.textW.size * 4) { editState.textW.getOrElse(it) { NUL } }
+                    state.tempBuffer = CharArray(state.textW.size * 4) { state.textW.getOrElse(it) { NUL } }
 
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
@@ -2533,14 +2539,14 @@ interface imgui_internal {
                         cbData.userData = callbackUserData
 
                         cbData.eventKey = eventKey
-                        cbData.buf = editState.tempBuffer
-                        cbData.bufTextLen = editState.curLenA
-                        cbData.bufSize = editState.bufCapacityA
+                        cbData.buf = state.tempBuffer
+                        cbData.bufTextLen = state.curLenA
+                        cbData.bufSize = state.bufCapacityA
                         cbData.bufDirty = false
 
-                        val cursorPos = editState.state.cursor
-                        val selectionStart = editState.state.selectStart
-                        val selectionEnd = editState.state.selectEnd
+                        val cursorPos = state.state.cursor
+                        val selectionStart = state.state.selectStart
+                        val selectionEnd = state.state.selectEnd
 
                         cbData.cursorPos = cursorPos
                         cbData.selectionStart = selectionStart
@@ -2548,33 +2554,33 @@ interface imgui_internal {
 
                         callback.invoke(cbData)
 
-                        assert(cbData.bufSize == editState.bufCapacityA)
+                        assert(cbData.bufSize == state.bufCapacityA)
                         assert(cbData.flags == flags)
 
                         if (cbData.cursorPos != cursorPos) {
-                            editState.state.cursor = cbData.cursorPos
+                            state.state.cursor = cbData.cursorPos
                         }
                         if (cbData.selectionStart != selectionStart) {
-                            editState.state.selectStart = cbData.selectionStart
+                            state.state.selectStart = cbData.selectionStart
                         }
                         if (cbData.selectionEnd != selectionEnd) {
-                            editState.state.selectEnd = cbData.selectionEnd
+                            state.state.selectEnd = cbData.selectionEnd
                         }
                         if (cbData.bufDirty) {
                             assert(cbData.bufTextLen == cbData.buf.strlen)
                             if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable)
                                 TODO("pass a reference to buf and bufSize")
                             //TODO: Hacky
-                            editState.deleteChars(0, cursorPos)
-                            editState.insertChars(0, cbData.buf, 0, cbData.bufTextLen)
-                            editState.cursorAnimReset()
+                            state.deleteChars(0, cursorPos)
+                            state.insertChars(0, cbData.buf, 0, cbData.bufTextLen)
+                            state.cursorAnimReset()
                         }
                     }
                 }
                 // Will copy result string if modified
-                if (isEditable && !editState.tempBuffer.cmp(buf)) {
-                    applyNewText = editState.tempBuffer
-                    applyNewTextLength = editState.curLenA
+                if (isEditable && !state.tempBuffer.cmp(buf)) {
+                    applyNewText = state.tempBuffer
+                    applyNewTextLength = state.curLenA
                 }
             }
 
@@ -2604,7 +2610,7 @@ interface imgui_internal {
             }
 
             // Clear temporary user storage
-            editState.apply {
+            state.apply {
                 userFlags = 0
                 userCallback = null
                 userCallbackData = null
@@ -2619,7 +2625,7 @@ interface imgui_internal {
         val bufDisplayMaxLength = 2 * 1024 * 1024
 
         // Select which buffer we are going to display. We set buf to NULL to prevent accidental usage from now on.
-        val bufDisplay = if (g.activeId == id && isEditable) editState.tempBuffer else buf
+        val bufDisplay = if (state != null && isEditable) state.tempBuffer else buf
 
         // ------------------------- Render -------------------------
         if (!isMultiline) {
@@ -2632,7 +2638,8 @@ interface imgui_internal {
         val textSize = Vec2()
         if (g.activeId == id || userScrollActive) {
             // Animate cursor
-            editState.cursorAnim += io.deltaTime
+            val state = state!!
+            state.cursorAnim += io.deltaTime
 
             /*  This is going to be messy. We need to:
                     - Display the text (this alone can be more easily clipped)
@@ -2643,17 +2650,17 @@ interface imgui_internal {
                 (non-negligible for large amount of text) + 2nd pass for selection rendering (we could merge them by an
                 extra refactoring effort)   */
             // FIXME: This should occur on bufDisplay but we'd need to maintain cursor/select_start/select_end for UTF-8.
-            val text = editState.textW
+            val text = state.textW
             val cursorOffset = Vec2()
             val selectStartOffset = Vec2()
 
             run {
                 // Count lines + find lines numbers straddling 'cursor' and 'selectStart' position.
-                val searchesInputPtr = intArrayOf(editState.state.cursor, 0)
+                val searchesInputPtr = intArrayOf(state.state.cursor, 0)
                 var searchesRemaining = 1
                 val searchesResultLineNumber = intArrayOf(-1, -999)
-                if (editState.state.selectStart != editState.state.selectEnd) {
-                    searchesInputPtr[1] = glm.min(editState.state.selectStart, editState.state.selectEnd)
+                if (state.state.selectStart != state.state.selectEnd) {
+                    searchesInputPtr[1] = glm.min(state.state.selectStart, state.state.selectEnd)
                     searchesResultLineNumber[1] = -1
                     searchesRemaining++
                 }
@@ -2695,16 +2702,16 @@ interface imgui_internal {
             }
 
             // Scroll
-            if (editState.cursorFollow) {
+            if (state.cursorFollow) {
                 // Horizontal scroll in chunks of quarter width
                 if (flags hasnt Itf.NoHorizontalScroll) {
                     val scrollIncrementX = size.x * 0.25f
-                    if (cursorOffset.x < editState.scrollX)
-                        editState.scrollX = (glm.max(0f, cursorOffset.x - scrollIncrementX)).i.f
-                    else if (cursorOffset.x - size.x >= editState.scrollX)
-                        editState.scrollX = (cursorOffset.x - size.x + scrollIncrementX).i.f
+                    if (cursorOffset.x < state.scrollX)
+                        state.scrollX = (glm.max(0f, cursorOffset.x - scrollIncrementX)).i.f
+                    else if (cursorOffset.x - size.x >= state.scrollX)
+                        state.scrollX = (cursorOffset.x - size.x + scrollIncrementX).i.f
                 } else
-                    editState.scrollX = 0f
+                    state.scrollX = 0f
 
                 // Vertical scroll
                 if (isMultiline) {
@@ -2718,14 +2725,14 @@ interface imgui_internal {
                     renderPos.y = drawWindow.dc.cursorPos.y
                 }
             }
-            editState.cursorFollow = false
-            val renderScroll = Vec2(editState.scrollX, 0f)
+            state.cursorFollow = false
+            val renderScroll = Vec2(state.scrollX, 0f)
 
             // Draw selection
-            if (editState.state.selectStart != editState.state.selectEnd) {
+            if (state.state.selectStart != state.state.selectEnd) {
 
-                val textSelectedBegin = glm.min(editState.state.selectStart, editState.state.selectEnd)
-                val textSelectedEnd = glm.max(editState.state.selectStart, editState.state.selectEnd)
+                val textSelectedBegin = glm.min(state.state.selectStart, state.state.selectEnd)
+                val textSelectedEnd = glm.max(state.state.selectStart, state.state.selectEnd)
 
                 // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.
                 val bgOffYUp = if (isMultiline) 0f else -1f
@@ -2757,7 +2764,7 @@ interface imgui_internal {
             }
 
             // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
-            val bufDisplayLen = editState.curLenA
+            val bufDisplayLen = state.curLenA
             if (isMultiline || bufDisplayLen < bufDisplayMaxLength)
                 drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, Col.Text.u32, bufDisplay, bufDisplayLen, 0f, clipRect)
 
