@@ -15,16 +15,16 @@ class TextEditState {
      *  So we copy into own buffer.    */
     var textW = CharArray(0)
     /** backup of end-user buffer at the time of focus (in UTF-8, unaltered)    */
-    var initialText = CharArray(0)
-    /** temporary buffer for callback and other other operations. size=capacity. */
-    var tempBuffer = CharArray(0)
+    var initialTextA = CharArray(0)
+    /** temporary buffer for callbacks and other operations. size=capacity. */
+    var tempBufferA = CharArray(0)
     /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
     var curLenA = 0
     /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
     var curLenW = 0
     /** end-user buffer size    */
     var bufCapacityA = 0
-
+    /** horizontal scrolling/offset */
     var scrollX = 0f
     /** state for stb_textedit.h */
     val state = State()
@@ -39,6 +39,12 @@ class TextEditState {
     var userFlags: InputTextFlags = 0
     var userCallback: InputTextCallback? = null
     var userCallbackData: Any? = null
+
+    fun clearFreeMemory() {
+        textW = charArrayOf()
+        initialTextA = charArrayOf()
+        tempBufferA = charArrayOf()
+    }
 
     /** After a user-input the cursor stays on for a while without blinking */
     fun cursorAnimReset() {
