@@ -35,6 +35,9 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
 
     private lateinit var mousePressListener: EventHandler<MouseEvent>
     private lateinit var mouseMoveListener: EventHandler<MouseEvent>
+    private lateinit var scrollListener: EventHandler<ScrollEvent>
+    private lateinit var keyListener: EventHandler<KeyEvent>
+    private lateinit var charListener: EventHandler<KeyEvent>
 
     private var mousePos = Vec2()
     private val mouseJustReleased = BooleanArray(io.mouseDown.size) { false }
@@ -76,7 +79,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
             mousePos = Vec2(it.sceneX.f, it.sceneY.f)
         }
 
-        val keyListener = EventHandler<KeyEvent> {
+        keyListener = EventHandler {
             val key = it.code.code
             with(io) {
                 if (key in keysDown.indices)
@@ -93,11 +96,11 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
             }
         }
 
-        val charListener = EventHandler<KeyEvent> {
+        charListener = EventHandler {
             it.character.forEach { char -> io.addInputCharacter(char) }
         }
 
-        val scrollListener = EventHandler<ScrollEvent> {
+        scrollListener = EventHandler {
             io.mouseWheelH += it.deltaX.f / 10.0f
             io.mouseWheel += it.deltaY.f / 10.0f
         }
