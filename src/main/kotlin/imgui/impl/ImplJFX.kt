@@ -248,12 +248,14 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
 
     fun renderDrawData(drawData: DrawData) {
         val gc = canvas.graphicsContext2D
-        gc.save()
+        gc.save() //save user settings
+        //set our settings
         gc.globalBlendMode = BlendMode.SRC_OVER
         gc.fillRule = FillRule.NON_ZERO
         gc.lineCap = StrokeLineCap.BUTT
         gc.lineJoin = StrokeLineJoin.MITER
         gc.lineWidth = 0.0
+        //TODO: Remove
         val pw = gc.pixelWriter
 
         // Will project scissor/clipping rectangles into framebuffer space
@@ -272,29 +274,36 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                 // User callback (registered via ImDrawList::AddCallback)
                     cb(cmdList, cmd)
                 else {
+                    //set up the clipping rectangle
                     val clipRectX = (cmd.clipRect.x - clipOff.x) * clipScale.x
                     val clipRectY = (cmd.clipRect.y - clipOff.y) * clipScale.y
                     val clipRectZ = (cmd.clipRect.z - clipOff.x) * clipScale.x
                     val clipRectW = (cmd.clipRect.w - clipOff.y) * clipScale.y
 
+                    //if we are inside the window
                     if (clipRectX < fbWidth && clipRectY < fbHeight && clipRectZ >= 0f && clipRectW >= 0f) {
 
+                        //set up javafx scissor
                         gc.save()
                         gc.beginPath()
-                        gc.moveTo(clipRectX.d, (clipRectY).d)
-                        gc.lineTo(clipRectX.d, (clipRectW).d)
-                        gc.lineTo((clipRectZ).d, (clipRectW).d)
-                        gc.lineTo((clipRectZ).d, (clipRectY.d))
-                        gc.lineTo(clipRectX.d, (clipRectY).d)
+                        gc.moveTo(clipRectX.d, clipRectY.d)
+                        gc.lineTo(clipRectX.d, clipRectW.d)
+                        gc.lineTo(clipRectZ.d, clipRectW.d)
+                        gc.lineTo(clipRectZ.d, clipRectY.d)
+                        gc.lineTo(clipRectX.d, clipRectY.d)
                         gc.closePath()
                         gc.clip()
+                        //scissor done
 
                         assert(texColorMapping.containsKey(Pair(cmd.textureId!!, TEXTURE_COLOR_UNMULTIPLIED))) { "Attempted to use a texture that was not added!" }
                         val currentTex = texColorMapping[Pair(cmd.textureId!!, TEXTURE_COLOR_UNMULTIPLIED)]!!
                         val texPr = currentTex.pixelReader
 
+                        //for single color draws. this will be overwritten
                         var col = JFXColor(0.0, 0.0, 0.0, 0.0)
+                        //for multi-triangle draws, when they border, how many verts there are
                         var pos = 0
+                        //add a point to the polygon that will be drawn
                         fun addPoint(x: Float, y: Float) {
                             if (pos == xs.size) {
                                 if (DEBUG)
@@ -310,6 +319,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                             ys[pos++] = y.d
                         }
 
+                        //in case of texture drawing, we grab a triangle in ahead and need to skip
                         var skip = false
                         for (tri in 0 until cmd.elemCount step 3) {
                             if (skip) {
@@ -323,7 +333,8 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                             val idx3 = cmdList.idxBuffer[baseIdx + 2]
                             val vtx3 = cmdList.vtxBuffer[idx3]
 
-                            //TODO: Only one color is used no matter the vertex colors
+                            //In a single colored triangle, this won't matter.
+                            //For barycentric coords, the most saturated color is used
                             val col1 = if (vtx1.col.toVec4().length() > vtx2.col.toVec4().length())
                                 if (vtx1.col.toVec4().length() > vtx3.col.toVec4().length())
                                     vtx1.col
@@ -335,12 +346,16 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                 else
                                     vtx3.col
 
+                            /**
+                             * The actual drawing function
+                             * @param onlyLast Default false. Used for when switching to different rendering modes to clear any indexed triangles
+                             */
                             fun draw(onlyLast: Boolean = false) {
-                                if (pos != 0) {
+                                if (pos != 0) { //There are vertices in the buffer to draw
                                     gc.fill = col
                                     gc.fillPolygon(xs, ys, pos)
                                     pos = 0
-                                } else if (!onlyLast) {
+                                } else if (!onlyLast) { //if we are not switching modes, draw the current triangles
                                     val color = texPr.getColor((vtx1.uv.x * currentTex.width).toInt(), (vtx1.uv.y * currentTex.height).toInt())
                                     val x = JFXColor.rgb(
                                             (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
@@ -364,7 +379,10 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                 If the size is too small, the most significant color is picked and the entire triangle is sent through the regular render line.
                                  */
                                 val doBary = if (vtx1.col != vtx2.col || vtx2.col != vtx3.col) {
-                                    triangleArea(vtx1.pos, vtx2.pos, vtx3.pos) >= BARYCENTRIC_SIZE_THRESHOLD
+                                    triangleArea(vtx1.pos, vtx2.pos, vtx3.pos) >= BARYCENTRIC_SIZE_THRESHOLD &&
+                                            atLeastTwo(Math.abs(vtx1.pos.x - vtx2.pos.x) >= 2.0,
+                                            Math.abs(vtx1.pos.x - vtx3.pos.x) >= 2.0,
+                                            Math.abs(vtx3.pos.x - vtx2.pos.x) >= 2.0)
                                 } else {
                                     false
                                 }
@@ -374,9 +392,11 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
 
                                     draw(true) //flush old verts
 
+                                    //set up so that vt1.y >= vt2.y >= vt3.y
                                     val vt3 = if (vtx1.pos.y > vtx2.pos.y) if (vtx1.pos.y > vtx3.pos.y) vtx1 else vtx3 else if (vtx2.pos.y > vtx3.pos.y) vtx2 else vtx3
                                     val vt1 = if (vtx1.pos.y < vtx2.pos.y) if (vtx1.pos.y < vtx3.pos.y) vtx1 else vtx3 else if (vtx2.pos.y < vtx3.pos.y) vtx2 else vtx3
 
+                                    //process of elimination
                                     val vt2 = if (vt1 == vtx1)
                                         if (vt3 == vtx2)
                                             vtx3
@@ -394,7 +414,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                             else
                                                 vtx2
 
-                                    //set up barycentric coords for this triangle
+                                    //set up all the constant barycentric coords for this triangle
                                     val v0 = vt2.pos - vt1.pos
                                     val v1 = vt3.pos - vt1.pos
 
@@ -405,25 +425,36 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                     val denom = d00 * d11 - d01 * d01
                                     //end setup
 
+                                    /**
+                                     * Draw the color at point [p] based on the currently set up barycentric triangle
+                                     */
                                     fun baryColor(p: Vec2) {
+                                        //get the rest of barycentric information
                                         val v2 = p - vt1.pos
                                         val d20 = dotProd(v2, v0)
                                         val d21 = dotProd(v2, v1)
                                         val v = (d11 * d20 - d01 * d21) / denom
                                         val w = (d00 * d21 - d01 * d20) / denom
                                         val u = 1.0 - v - w
+                                        //turn the colors into usable colors
                                         val c1 = vt1.col.toJFXColor()
                                         val c2 = vt2.col.toJFXColor()
                                         val c3 = vt3.col.toJFXColor()
+                                        //mix colors based on their involvement, and clamp to [0.0,1.0]
+                                        //u,v,w can be negative
                                         gc.fill = JFXColor(
                                                 ((c1.red * u) + (c2.red * v) + (c3.red * w)).coerceIn(0.0, 1.0),
                                                 ((c1.green * u) + (c2.green * v) + (c3.green * w)).coerceIn(0.0, 1.0),
                                                 ((c1.blue * u) + (c2.blue * v) + (c3.blue * w)).coerceIn(0.0, 1.0),
                                                 ((c1.opacity * u) + (c2.opacity * v) + (c3.opacity * w)).coerceIn(0.0, 1.0)
                                         )
+                                        //draw a 1x1 rectangle at `p`
                                         gc.fillRect(p.x.d, p.y.d, 1.0, 1.0)
                                     }
 
+                                    /**
+                                     * Draws a bottom flat triangle with barycentric color coord mixing
+                                     */
                                     fun fillBottomFlatTriangle(vs1: Vec2, vs2: Vec2, vs3: Vec2) {
                                         val invslope1p = (vs2.x - vs1.x) / (vs2.y - vs1.y)
                                         val invslope2p = (vs3.x - vs1.x) / (vs3.y - vs1.y)
@@ -439,25 +470,32 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                         val minX = vs3.x min vs2.x min vs1.x
                                         val maxX = vs3.x max vs2.x max vs1.y
 
+                                        //if it's a line, needs to be drawn specially so that only 1 pixel isn't drawn
                                         if (maxY - minY > 1.0f) {
                                             for (scanlineY in Math.round(minY).i..Math.round(maxY).i) {
                                                 for (x in Math.round(curx1).i..Math.round(curx2).i) {
                                                     baryColor(Vec2(x, scanlineY))
                                                 }
-                                                val diff = Math.abs(scanlineY.f - minY)
-                                                curx1 += invslope1 * if (diff in 0.0f..1.0f) diff else 1.0f
-                                                curx2 += invslope2 * if (diff in 0.0f..1.0f) diff else 1.0f
-                                                curx1 = curx1.coerceAtLeast(minX)
-                                                curx2 = curx2.coerceAtMost(maxX)
+                                                curx1 += invslope1
+                                                curx2 += invslope2
+                                                curx1 = curx1.coerceAtLeast(minX) //if the difference in y's is less than 1, this will properly clamp the x
+                                                curx2 = curx2.coerceAtMost(maxX)  //if the difference in y's is less than 1, this will properly clamp the x
                                             }
                                         } else {
+                                            //average where the line goes
                                             val scanlineY = (maxY + minY) / 2.0f
                                             for (x in Math.round(minX).i..Math.round(maxX).i) {
+                                                //draw the color at each point on the line
                                                 baryColor(Vec2(x, scanlineY))
                                             }
                                         }
                                     }
 
+                                    /**
+                                     * Draws a top flat triangle with barycentric color coord mixing
+                                     *
+                                     * For more information on the steps, similar to fillBottomFlatTriangle
+                                     */
                                     fun fillTopFlatTriangle(vs1: Vec2, vs2: Vec2, vs3: Vec2) {
                                         val invslope1p = (vs3.x - vs1.x) / (vs3.y - vs1.y)
                                         val invslope2p = (vs3.x - vs2.x) / (vs3.y - vs2.y)
@@ -478,9 +516,8 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                                 for (x in Math.round(curx1).i..Math.round(curx2).i) {
                                                     baryColor(Vec2(x, scanlineY))
                                                 }
-                                                val diff = Math.abs(maxY - scanlineY.f)
-                                                curx1 -= invslope1 * if (diff in 0.0f..1.0f) diff else 1.0f
-                                                curx2 -= invslope2 * if (diff in 0.0f..1.0f) diff else 1.0f
+                                                curx1 -= invslope1
+                                                curx2 -= invslope2
                                                 curx1 = curx1.coerceAtLeast(minX)
                                                 curx2 = curx2.coerceAtMost(maxX)
                                             }
@@ -492,6 +529,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                         }
                                     }
 
+                                    //check if this is a top flat, bottom flat, or general triangle
                                     when {
                                         vt2.pos.y == vt3.pos.y -> {
                                             fillBottomFlatTriangle(vt1.pos, vt2.pos, vt3.pos)
@@ -507,29 +545,41 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                         }
                                     }
                                 } else if (tri + 3 < cmd.elemCount) { //next triangle exists
+                                    //check if it borders the next triangle
                                     val idx4 = cmdList.idxBuffer[baseIdx + 3]
                                     val idx5 = cmdList.idxBuffer[baseIdx + 4]
                                     if (idx4 == idx1 && idx5 == idx3) {
+                                        //borders the next triangle
                                         val vtx6 = cmdList.vtxBuffer[cmdList.idxBuffer[baseIdx + 5]]
+                                        //if the list is empty
                                         if (pos == 0) {
+                                            //set color to the first color
                                             val color = texPr.getColor((vtx1.uv.x * currentTex.width).toInt(), (vtx1.uv.y * currentTex.height).toInt())
                                             col = JFXColor.rgb(
                                                     (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
                                                     (((col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) * color.green).i,
                                                     (((col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK) * color.blue).i,
                                                     (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * color.opacity)
+                                            //add initial points
                                             addPoint(vtx1.pos.x, vtx1.pos.y)
                                             addPoint(vtx2.pos.x, vtx2.pos.y)
                                             addPoint(vtx3.pos.x, vtx3.pos.y)
                                         }
+                                        //add bordering point
                                         addPoint(vtx6.pos.x, vtx6.pos.y)
                                     } else {
+                                        //does not border the next triangle , do either draw this triangle or draw the last one
+                                        //if the last triangle bordered this one, the vertex is already in the shape, so just draw
                                         draw()
                                     }
                                 } else {
+                                    //no more triangles to border, just plain draw
                                     draw()
                                 }
                             } else {
+                                /**
+                                 * Draws textures with CPU rendering. Useful if only a part of a triangle is showing
+                                 */
                                 fun drawSlow() {
                                     if (DEBUG && warnSlowTex) {
                                         warnSlowTex = false
@@ -593,23 +643,28 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                     } else if (vtx1.uv.y == vtx3.uv.y) {
                                         TODO("vtx1y == vtxy3 ")
                                     } else {
-                                        TODO("none")
+                                        TODO("no y similarities")
                                     }
                                 }
+
+
                                 draw(true) //flush any undrawn triangles
-                                if (tri + 3 < cmd.elemCount) {
+                                if (tri + 3 < cmd.elemCount) { //see if there's another triangle
                                     val idx4 = cmdList.idxBuffer[baseIdx + 3]
                                     val idx5 = cmdList.idxBuffer[baseIdx + 4]
-                                    if (idx4 == idx1 && idx5 == idx3) {
+                                    if (idx4 == idx1 && idx5 == idx3) { //if the indices match, we assume that it's square
+                                        //get the image that is correctly colored, or compute
                                         val cTex = texColorMapping.computeIfAbsent(Pair(cmd.textureId!!, col1)) {
                                             if (DEBUG)
-                                                println("generating color multiplied texture (texture ${cmd.textureId!!} ${if(cmd.textureId!! == io.fonts.texId) "[font texture]" else ""}, color ${col1.toVec4() * Vec4(255)})")
+                                                println("generating color multiplied texture (texture ${cmd.textureId!!} ${if (cmd.textureId!! == io.fonts.texId) "[font texture]" else ""}, color ${col1.toVec4() * Vec4(255)})")
                                             val retImg = WritableImage(currentTex.width.i, currentTex.height.i)
                                             val nipw = retImg.pixelWriter
                                             val textCol = vtx1.col.toJFXColor()
                                             for (x in 0 until currentTex.width.i) {
                                                 for (y in 0 until currentTex.height.i) {
+                                                    //get plain texture color
                                                     val cColor = texPr.getColor(x, y)
+                                                    //multiply by the given color
                                                     nipw.setColor(x, y,
                                                             JFXColor(
                                                                     textCol.red * cColor.red,
@@ -627,21 +682,21 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                                 (cTex.width * (vtx3.uv.x - vtx1.uv.x)).d, (cTex.height * (vtx3.uv.y - vtx1.uv.y)).d,
                                                 vtx1.pos.x.d, vtx1.pos.y.d, vtx3.pos.x.d - vtx1.pos.x.d, vtx3.pos.y.d - vtx1.pos.y.d)
                                         skip = true
-                                    } else {
+                                    } else { //not matching indices, draw the triangle
                                         drawSlow()
                                     }
-                                } else {
+                                } else { //not another triangle to be square with, draw a triangle
                                     drawSlow()
                                 }
                             }
                         }
                     }
-                    gc.restore()
+                    gc.restore() //restore scissor state
                 }
                 idxBufferOffset += cmd.elemCount
             }
         }
-        gc.restore()
+        gc.restore() //restore user graphicscontext state
     }
 }
 
@@ -668,3 +723,7 @@ fun Int.toVec4(): Vec4 {
 inline fun dotProd(a: Vec2, b: Vec2) = ((a.x * b.x) + (a.y * b.y)).d
 
 inline fun triangleArea(a: Vec2, b: Vec2, c: Vec2) = Math.abs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y)))
+
+inline fun atLeastTwo(a: Boolean, b: Boolean, c: Boolean): Boolean {
+    return if (a) b || c else b && c
+}
