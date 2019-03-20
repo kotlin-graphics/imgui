@@ -333,18 +333,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                             val idx3 = cmdList.idxBuffer[baseIdx + 2]
                             val vtx3 = cmdList.vtxBuffer[idx3]
 
-                            //In a single colored triangle, this won't matter.
-                            //For barycentric coords, the most saturated color is used
-                            val col1 = if (vtx1.col.toVec4().length() > vtx2.col.toVec4().length())
-                                if (vtx1.col.toVec4().length() > vtx3.col.toVec4().length())
-                                    vtx1.col
-                                else
-                                    vtx3.col
-                            else
-                                if (vtx2.col.toVec4().length() > vtx3.col.toVec4().length())
-                                    vtx2.col
-                                else
-                                    vtx3.col
+                            var col1 = vtx1.col
 
                             /**
                              * The actual drawing function
@@ -376,9 +365,9 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                 Barycentric coordinate rendering is VERY slow
                                 If the colors are all the same, it does not need to and will not be invoked.
                                 Otherwise, we check if the barycentric area is large enough to be meaningful.
-                                If the size is too small, the most significant color is picked and the entire triangle is sent through the regular render line.
                                  */
-                                val doBary = if (vtx1.col != vtx2.col || vtx2.col != vtx3.col) {
+                                val isBary = vtx1.col != vtx2.col || vtx2.col != vtx3.col
+                                val doBary = if (isBary) {
                                     triangleArea(vtx1.pos, vtx2.pos, vtx3.pos) >= BARYCENTRIC_SIZE_THRESHOLD &&
                                             atLeastTwo(Math.abs(vtx1.pos.x - vtx2.pos.x) >= 2.0,
                                             Math.abs(vtx1.pos.x - vtx3.pos.x) >= 2.0,
@@ -555,6 +544,19 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                         if (pos == 0) {
                                             //set color to the first color
                                             val color = texPr.getColor((vtx1.uv.x * currentTex.width).toInt(), (vtx1.uv.y * currentTex.height).toInt())
+                                            //if it is barycentric but missed the size check, get the most saturated color
+                                            if(isBary) {
+                                                col1 = if (vtx1.col.toVec4().length() > vtx2.col.toVec4().length())
+                                                    if (vtx1.col.toVec4().length() > vtx3.col.toVec4().length())
+                                                        vtx1.col
+                                                    else
+                                                        vtx3.col
+                                                else
+                                                    if (vtx2.col.toVec4().length() > vtx3.col.toVec4().length())
+                                                        vtx2.col
+                                                    else
+                                                        vtx3.col
+                                            }
                                             col = JFXColor.rgb(
                                                     (((col1 ushr COL32_R_SHIFT) and COLOR_SIZE_MASK) * color.red).i,
                                                     (((col1 ushr COL32_G_SHIFT) and COLOR_SIZE_MASK) * color.green).i,
