@@ -1,8 +1,6 @@
 package imgui.impl
 
-import glm_.d
-import glm_.f
-import glm_.i
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.io
@@ -12,7 +10,6 @@ import javafx.event.EventHandler
 import javafx.geometry.Point2D
 import javafx.scene.Cursor
 import javafx.scene.canvas.Canvas
-import javafx.scene.canvas.GraphicsContext
 import javafx.scene.effect.BlendMode
 import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
@@ -28,6 +25,12 @@ typealias JFXColor = javafx.scene.paint.Color
 const val COLOR_SIZE_MASK = 0xFF
 //-1 is no multiplication (each pixel * 1.0 for each component, so the original)
 const val TEXTURE_COLOR_UNMULTIPLIED = -1
+
+/**
+ * Make this too small, and some barycentric items will be drawn that are inefficient to draw.
+ * Make it to big, and no barycentric items will be drawn. (e.g. color pickers)
+ */
+var BARYCENTRIC_SIZE_THRESHOLD = 500.0
 
 class ImplJFX(val stage: Stage, var canvas: Canvas) {
     private val startTime = System.currentTimeMillis()
@@ -353,8 +356,157 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                             if (vtx1.uv == vtx2.uv) {
                                 //in OpenGL this is done in shaders as `color * texture(texCoord)
 
-                                //check if it borders the next triangle
-                                if (tri + 3 < cmd.elemCount) {
+                                /*
+                                Barycentric coordinate determination
+                                Barycentric coordinate rendering is VERY slow
+                                If the colors are all the same, it does not need to and will not be invoked.
+                                Otherwise, we check if the barycentric area is large enough to be meaningful.
+                                If the size is too small, the most significant color is picked and the entire triangle is sent through the regular render line.
+                                 */
+                                val doBary = if (vtx1.col != vtx2.col || vtx2.col != vtx3.col) {
+                                    triangleArea(vtx1.pos, vtx2.pos, vtx3.pos) >= BARYCENTRIC_SIZE_THRESHOLD
+                                } else {
+                                    false
+                                }
+
+                                if (doBary) {
+                                    //barycentric
+
+                                    draw(true) //flush old verts
+
+                                    val vt3 = if (vtx1.pos.y > vtx2.pos.y) if (vtx1.pos.y > vtx3.pos.y) vtx1 else vtx3 else if (vtx2.pos.y > vtx3.pos.y) vtx2 else vtx3
+                                    val vt1 = if (vtx1.pos.y < vtx2.pos.y) if (vtx1.pos.y < vtx3.pos.y) vtx1 else vtx3 else if (vtx2.pos.y < vtx3.pos.y) vtx2 else vtx3
+
+                                    val vt2 = if (vt1 == vtx1)
+                                        if (vt3 == vtx2)
+                                            vtx3
+                                        else
+                                            vtx2
+                                    else
+                                        if (vt1 == vtx2)
+                                            if (vt3 == vtx3)
+                                                vtx1
+                                            else
+                                                vtx3
+                                        else
+                                            if (vt3 == vtx2)
+                                                vtx1
+                                            else
+                                                vtx2
+
+                                    //set up barycentric coords for this triangle
+                                    val v0 = vt2.pos - vt1.pos
+                                    val v1 = vt3.pos - vt1.pos
+
+                                    val d00 = dotProd(v0, v0)
+                                    val d01 = dotProd(v0, v1)
+                                    val d11 = dotProd(v1, v1)
+
+                                    val denom = d00 * d11 - d01 * d01
+                                    //end setup
+
+                                    fun baryColor(p: Vec2) {
+                                        val v2 = p - vt1.pos
+                                        val d20 = dotProd(v2, v0)
+                                        val d21 = dotProd(v2, v1)
+                                        val v = (d11 * d20 - d01 * d21) / denom
+                                        val w = (d00 * d21 - d01 * d20) / denom
+                                        val u = 1.0 - v - w
+                                        val c1 = vt1.col.toJFXColor()
+                                        val c2 = vt2.col.toJFXColor()
+                                        val c3 = vt3.col.toJFXColor()
+                                        gc.fill = JFXColor(
+                                                ((c1.red * u) + (c2.red * v) + (c3.red * w)).coerceIn(0.0, 1.0),
+                                                ((c1.green * u) + (c2.green * v) + (c3.green * w)).coerceIn(0.0, 1.0),
+                                                ((c1.blue * u) + (c2.blue * v) + (c3.blue * w)).coerceIn(0.0, 1.0),
+                                                ((c1.opacity * u) + (c2.opacity * v) + (c3.opacity * w)).coerceIn(0.0, 1.0)
+                                        )
+                                        gc.fillRect(p.x.d, p.y.d, 1.0, 1.0)
+                                    }
+
+                                    fun fillBottomFlatTriangle(vs1: Vec2, vs2: Vec2, vs3: Vec2) {
+                                        val invslope1p = (vs2.x - vs1.x) / (vs2.y - vs1.y)
+                                        val invslope2p = (vs3.x - vs1.x) / (vs3.y - vs1.y)
+
+                                        val (invslope1, invslope2) = if (invslope1p > invslope2p) Pair(invslope2p, invslope1p) else Pair(invslope1p, invslope2p)
+
+                                        var curx1 = vs1.x
+                                        var curx2 = vs1.x
+
+                                        val minY = vs1.y
+                                        val maxY = vs2.y
+
+                                        val minX = vs3.x min vs2.x min vs1.x
+                                        val maxX = vs3.x max vs2.x max vs1.y
+
+                                        if (maxY - minY > 1.0f) {
+                                            for (scanlineY in Math.round(minY).i..Math.round(maxY).i) {
+                                                for (x in Math.round(curx1).i..Math.round(curx2).i) {
+                                                    baryColor(Vec2(x, scanlineY))
+                                                }
+                                                val diff = Math.abs(scanlineY.f - minY)
+                                                curx1 += invslope1 * if (diff in 0.0f..1.0f) diff else 1.0f
+                                                curx2 += invslope2 * if (diff in 0.0f..1.0f) diff else 1.0f
+                                                curx1 = curx1.coerceAtLeast(minX)
+                                                curx2 = curx2.coerceAtMost(maxX)
+                                            }
+                                        } else {
+                                            val scanlineY = (maxY + minY) / 2.0f
+                                            for (x in Math.round(minX).i..Math.round(maxX).i) {
+                                                baryColor(Vec2(x, scanlineY))
+                                            }
+                                        }
+                                    }
+
+                                    fun fillTopFlatTriangle(vs1: Vec2, vs2: Vec2, vs3: Vec2) {
+                                        val invslope1p = (vs3.x - vs1.x) / (vs3.y - vs1.y)
+                                        val invslope2p = (vs3.x - vs2.x) / (vs3.y - vs2.y)
+
+                                        val (invslope1, invslope2) = if (invslope1p > invslope2p) Pair(invslope1p, invslope2p) else Pair(invslope2p, invslope1p)
+
+                                        var curx1 = vs3.x
+                                        var curx2 = vs3.x
+
+                                        val maxY = vs3.y
+                                        val minY = vs1.y
+
+                                        val minX = vs3.x min vs2.x min vs1.x
+                                        val maxX = vs3.x max vs2.x max vs1.y
+
+                                        if (maxY - minY > 1.0f) {
+                                            for (scanlineY in Math.round(maxY).i downTo Math.round(minY).i) {
+                                                for (x in Math.round(curx1).i..Math.round(curx2).i) {
+                                                    baryColor(Vec2(x, scanlineY))
+                                                }
+                                                val diff = Math.abs(maxY - scanlineY.f)
+                                                curx1 -= invslope1 * if (diff in 0.0f..1.0f) diff else 1.0f
+                                                curx2 -= invslope2 * if (diff in 0.0f..1.0f) diff else 1.0f
+                                                curx1 = curx1.coerceAtLeast(minX)
+                                                curx2 = curx2.coerceAtMost(maxX)
+                                            }
+                                        } else {
+                                            val scanlineY = (maxY + minY) / 2.0f
+                                            for (x in Math.round(minX).i..Math.round(maxX).i) {
+                                                baryColor(Vec2(x, scanlineY))
+                                            }
+                                        }
+                                    }
+
+                                    when {
+                                        vt2.pos.y == vt3.pos.y -> {
+                                            fillBottomFlatTriangle(vt1.pos, vt2.pos, vt3.pos)
+                                        }
+                                        vt1.pos.y == vt2.pos.y -> {
+                                            fillTopFlatTriangle(vt1.pos, vt2.pos, vt3.pos)
+                                        }
+                                        else -> {
+                                            /* general case - split the triangle in a topflat and bottom-flat one */
+                                            val v4 = Vec2((vt1.pos.x + (vt2.pos.y - vt1.pos.y) / (vt3.pos.y - vt1.pos.y) * (vt3.pos.x - vt1.pos.x)), vt2.pos.y)
+                                            fillBottomFlatTriangle(vt1.pos, vt2.pos, v4)
+                                            fillTopFlatTriangle(vt2.pos, v4, vt3.pos)
+                                        }
+                                    }
+                                } else if (tri + 3 < cmd.elemCount) { //next triangle exists
                                     val idx4 = cmdList.idxBuffer[baseIdx + 3]
                                     val idx5 = cmdList.idxBuffer[baseIdx + 4]
                                     if (idx4 == idx1 && idx5 == idx3) {
@@ -512,3 +664,7 @@ fun Int.toVec4(): Vec4 {
             ((this ushr COL32_B_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble(),
             ((this ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble())
 }
+
+inline fun dotProd(a: Vec2, b: Vec2) = ((a.x * b.x) + (a.y * b.y)).d
+
+inline fun triangleArea(a: Vec2, b: Vec2, c: Vec2) = Math.abs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y)))
