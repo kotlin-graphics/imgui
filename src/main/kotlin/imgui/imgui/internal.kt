@@ -2146,8 +2146,12 @@ interface imgui_internal {
      *  - If you want to use ImGui::InputText() with std::string, see misc/cpp/imgui_stl.h
      *  (FIXME: Rather messy function partly because we are doing UTF8 > u16 > UTF8 conversions on the go to more easily handle stb_textedit calls. Ideally we should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
      */
-    fun inputTextEx(label: String, buf: CharArray/*, bufSize: Int*/, sizeArg: Vec2, flags: InputTextFlags,
-                    callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean {
+    fun inputTextEx(label: String, buf: CharArray, sizeArg: Vec2, flags: InputTextFlags, callback: InputTextCallback? = null, callbackUserData: Any? = null) = internalInputTextEx(label, buf, null, sizeArg, flags, callback, callbackUserData)
+
+    fun inputTextEx(label: String, bufProp: KMutableProperty0<CharArray>, sizeArg: Vec2, flags: InputTextFlags, callback: InputTextCallback? = null, callbackUserData: Any? = null) = internalInputTextEx(label, bufProp.get(), bufProp, sizeArg, flags, callback, callbackUserData)
+
+    private fun internalInputTextEx(label: String, buf: CharArray, bufProp: KMutableProperty0<CharArray>?, sizeArg: Vec2, flags: InputTextFlags,
+                                    callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -2528,7 +2532,7 @@ interface imgui_internal {
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
                     callback!!
-                    val (eventFlag, eventKey) = when {
+                    var (eventFlag, eventKey) = when {
                         (flags has imgui.InputTextFlag.CallbackCompletion) and Key.Tab.isPressed -> Pair(imgui.InputTextFlag.CallbackCompletion.i, Key.Tab)
                         (flags has imgui.InputTextFlag.CallbackHistory) and Key.UpArrow.isPressed -> Pair(imgui.InputTextFlag.CallbackHistory.i, Key.UpArrow)
                         (flags has imgui.InputTextFlag.CallbackHistory) and Key.DownArrow.isPressed -> Pair(imgui.InputTextFlag.CallbackHistory.i, Key.DownArrow)
@@ -2572,8 +2576,21 @@ interface imgui_internal {
                         }
                         if (cbData.bufDirty) {
                             assert(cbData.bufTextLen == cbData.buf.strlen)
-                            if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable)
-                                TODO("pass a reference to buf and bufSize")
+                            if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable) {
+                                val callbackData = InputTextCallbackData().apply {
+                                    eventFlag = Itf.CallbackResize.i
+                                    this.flags = flags
+                                    this.buf = buf
+                                    this.bufProp = bufProp
+                                    bufTextLen = applyNewTextLength
+                                    bufSize = max(bufSize, applyNewTextLength)
+                                    userData = callbackUserData
+                                }
+                                callback(callbackData)
+                                bufProp!!.set(callbackData.buf)
+                                applyNewTextLength = callbackData.bufTextLen min buf.size - 1
+                                assert(applyNewTextLength <= buf.size)
+                            }
                             //TODO: Hacky
                             state.deleteChars(0, cursorPos)
                             state.insertChars(0, cbData.buf, 0, cbData.bufTextLen)
@@ -2592,20 +2609,19 @@ interface imgui_internal {
             if (applyNewText.isNotEmpty()) {
                 assert(applyNewTextLength >= 0)
                 if (backupCurrentTextLength != applyNewTextLength && isResizable) {
-                    TODO("pass a reference to buf and bufSize")
-//                    val callbackData = InputTextCallbackData().apply {
-//                        eventFlag = Itf.CallbackResize.i
-//                        this.flags = flags
-//                        this.buf = buf
-//                        bufTextLen = apply_new_text_length
-////                        bufSize = max(bufSize, applyNewTextLength)
-//                        userData = callbackUserData
-//                    }
-//                    callback!!(callbackData)
-//                    buf = callback_data.Buf
-//                    buf_size = callback_data.BufSize
-//                    apply_new_text_length = ImMin(callback_data.BufTextLen, buf_size - 1);
-//                    IM_ASSERT(apply_new_text_length <= buf_size);
+                    val callbackData = InputTextCallbackData().apply {
+                        eventFlag = Itf.CallbackResize.i
+                        this.flags = flags
+                        this.buf = buf
+                        this.bufProp = bufProp
+                        bufTextLen = applyNewTextLength
+                        bufSize = max(bufSize, applyNewTextLength)
+                        userData = callbackUserData
+                    }
+                    callback!!(callbackData)
+                    bufProp!!.set(callbackData.buf)
+                    applyNewTextLength = callbackData.bufTextLen min buf.size - 1
+                    assert(applyNewTextLength <= buf.size)
                 }
                 /*  If the underlying buffer resize was denied or not carried to the next frame,
                     apply_new_text_length+1 may be >= buf_size.                 */
@@ -2836,7 +2852,7 @@ interface imgui_internal {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
-        val valueChanged = inputTextEx(label, dataBuf, bb.size, flags)
+        val valueChanged = internalInputTextEx(label, dataBuf, null, bb.size, flags)
         if (g.scalarAsInputTextId == 0) {
             assert(g.activeId == id) { "First frame we started displaying the InputText widget, we expect it to take the active id." }
             g.scalarAsInputTextId = g.activeId

@@ -14,6 +14,7 @@ import java.nio.ByteBuffer
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.max
+import kotlin.reflect.KMutableProperty0
 
 /** Main imgui context
  *
@@ -707,6 +708,8 @@ class InputTextCallbackData {
     var eventKey = Key.Tab
     /** Text buffer                 Read-write   [Resize] Can replace pointer / [Completion,History,Always] Only write to pointed data, don't replace the actual pointer! */
     var buf = CharArray(0)
+    /** Text buffer pointer for resize */
+    var bufProp: KMutableProperty0<CharArray>? = null
     /** JVM custom, current buf pointer */
     var bufPtr = 0
     /** Text length (in bytes)        Read-write   [Resize,Completion,History,Always] */
