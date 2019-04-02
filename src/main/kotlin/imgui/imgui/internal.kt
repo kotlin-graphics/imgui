@@ -2144,7 +2144,8 @@ interface imgui_internal {
      *    Note that in std::string world, capacity() would omit 1 byte used by the zero-terminator.
      *  - When active, hold on a privately held copy of the text (and apply back to 'buf'). So changing 'buf' while the InputText is active has no effect.
      *  - If you want to use ImGui::InputText() with std::string, see misc/cpp/imgui_stl.h
-     *  (FIXME: Rather messy function partly because we are doing UTF8 > u16 > UTF8 conversions on the go to more easily handle stb_textedit calls. Ideally we should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
+     *  (FIXME: Rather confusing and messy function, among the worse part of our codebase, expecting to rewrite a V2 at some point.. Partly because we are
+     *  doing UTF8 > U16 > UTF8 conversions on the go to easily interface with stb_textedit. Ideally should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
      */
     fun inputTextEx(label: String, buf: CharArray/*, bufSize: Int*/, sizeArg: Vec2, flags: InputTextFlags,
                     callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean {
@@ -2158,7 +2159,7 @@ interface imgui_internal {
         assert(!((flags has Itf.CallbackCompletion) && (flags has Itf.AllowTabInput)))
 
         val isMultiline = flags has Itf.Multiline
-        val isEditable = flags hasnt Itf.ReadOnly
+        val isReadOnly = flags has Itf.ReadOnly
         val isPassword = flags has Itf.Password
         val isUndoable = flags has Itf.NoUndoRedo
         val isResizable = flags has Itf.CallbackResize
@@ -2249,17 +2250,16 @@ interface imgui_internal {
 //                        }
 //                    g.imeLastKey = 0
 //                }
-                /*  Start edition
-                    Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
+                /*  Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
+                val bufLen = buf.strlen
+                state.initialTextA = CharArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
+                System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
+
+                // Start edition
                 val prevLenW = state.curLenW
-                val initBufLen = buf.strlen
-                state.textW = CharArray(buf.size)            // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
-                state.initialText = CharArray(initBufLen)   // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
-                System.arraycopy(buf, 0, state.initialText, 0, initBufLen)
-                // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
-//                editState.initialText.add(NUL)
-                state.initialText strncpy buf
+                state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
+
                 state.curLenW = state.textW.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
                 /*  We can't get the result from ImStrncpy() above because it is not UTF-8 aware.
                     Here we'll cut off malformed UTF-8.                 */
@@ -2307,7 +2307,7 @@ interface imgui_internal {
 
         if (g.activeId == id) {
             val state = state!!
-            if (!isEditable && !g.activeIdIsJustActivated) {
+            if (isReadOnly && !g.activeIdIsJustActivated) {
                 // When read-only we always use the live data passed to the function
                 val tmp = CharArray(buf.size)
                 System.arraycopy(state.textW, 0, tmp, 0, state.textW.size)
@@ -2367,7 +2367,7 @@ interface imgui_internal {
                     We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR
                     (which _is_ Alt+Ctrl) to input certain characters. */
                     val ignoreInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
-                    if (!ignoreInputs && isEditable && !userNavInputStart)
+                    if (!ignoreInputs && !isReadOnly && !userNavInputStart)
                         io.inputQueueCharacters.filter { it != NUL }.map {
                             // TODO check
                             withChar { c ->
@@ -2397,11 +2397,11 @@ interface imgui_internal {
             val isCtrlKeyOnly = io.keyCtrl && !io.keyShift && !io.keyAlt && !io.keySuper
             val isShiftKeyOnly = io.keyShift && !io.keyCtrl && !io.keyAlt && !io.keySuper
 
-            val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && isEditable && !isPassword && (!isMultiline || state.hasSelection)
+            val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
             val isCopy = ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || state.hasSelection)
-            val isPaste = ((isShortcutKey && Key.V.isPressed) || (isShiftKeyOnly && Key.Insert.isPressed)) && isEditable
-            val isUndo = ((isShortcutKey && Key.Z.isPressed) && isEditable && isUndoable)
-            val isRedo = ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && isEditable && isUndoable
+            val isPaste = ((isShortcutKey && Key.V.isPressed) || (isShiftKeyOnly && Key.Insert.isPressed)) && !isReadOnly
+            val isUndo = ((isShortcutKey && Key.Z.isPressed) && !isReadOnly && isUndoable)
+            val isRedo = ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && !isReadOnly && isUndoable
 
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(when {
@@ -2426,8 +2426,8 @@ interface imgui_internal {
                         state.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
                 Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
                 Key.End.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
-                Key.Delete.isPressed && isEditable -> state.onKeyPressed(K.DELETE or kMask)
-                Key.Backspace.isPressed && isEditable -> {
+                Key.Delete.isPressed && !isReadOnly -> state.onKeyPressed(K.DELETE or kMask)
+                Key.Backspace.isPressed && !isReadOnly -> {
                     if (!state.hasSelection)
                         if (isWordmoveKeyDown)
                             state.onKeyPressed(K.WORDLEFT or K.SHIFT)
@@ -2440,14 +2440,14 @@ interface imgui_internal {
                     if (!isMultiline || (ctrlEnterForNewLine && !io.keyCtrl) || (!ctrlEnterForNewLine && io.keyCtrl)) {
                         clearActiveId = true
                         enterPressed = true
-                    } else if (isEditable)
+                    } else if (!isReadOnly)
                         withChar('\n') { c ->
                             // Insert new line
                             if (inputTextFilterCharacter(c, flags, callback, callbackUserData))
                                 state.onKeyPressed(c().i)
                         }
                 }
-                flags has Itf.AllowTabInput && Key.Tab.isPressed && !io.keyCtrl && !io.keyShift && !io.keyAlt && isEditable ->
+                flags has Itf.AllowTabInput && Key.Tab.isPressed && !io.keyCtrl && !io.keyShift && !io.keyAlt && !isReadOnly ->
                     withChar('\t') { c ->
                         // Insert TAB
                         if (inputTextFilterCharacter(c, flags, callback, callbackUserData))
@@ -2498,6 +2498,8 @@ interface imgui_internal {
                 }
             }
         }
+
+        // Process callbacks and apply result back to user's buffer.
         if (g.activeId == id) {
             val state = state!!
             var applyNewText = CharArray(0)
@@ -2506,9 +2508,9 @@ interface imgui_internal {
 
             if (cancelEdit)
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
-                if (isEditable && !Arrays.equals(buf, state.initialText)) {
-                    applyNewText = state.initialText
-                    applyNewTextLength = state.initialText.size
+                if (!isReadOnly && !Arrays.equals(buf, state.initialTextA)) {
+                    applyNewText = state.initialTextA
+                    applyNewTextLength = state.initialTextA.size
                 }
 
             /*  When using `InputTextFlag.EnterReturnsTrue` as a special case we reapply the live buffer back to the
@@ -2522,8 +2524,8 @@ interface imgui_internal {
                 // Note that as soon as the input box is active, the in-widget value gets priority over any underlying modification of the input buffer
                 // FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above incorrect.
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
-                if (isEditable)
-                    state.tempBuffer = CharArray(state.textW.size * 4) { state.textW.getOrElse(it) { NUL } }
+                if (!isReadOnly)
+                    state.tempBufferA = CharArray(state.textW.size * 4) { state.textW.getOrElse(it) { NUL } }
 
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
@@ -2543,7 +2545,7 @@ interface imgui_internal {
                         cbData.userData = callbackUserData
 
                         cbData.eventKey = eventKey
-                        cbData.buf = state.tempBuffer
+                        cbData.buf = state.tempBufferA
                         cbData.bufTextLen = state.curLenA
                         cbData.bufSize = state.bufCapacityA
                         cbData.bufDirty = false
@@ -2582,8 +2584,8 @@ interface imgui_internal {
                     }
                 }
                 // Will copy result string if modified
-                if (isEditable && !state.tempBuffer.cmp(buf)) {
-                    applyNewText = state.tempBuffer
+                if (!isReadOnly && !state.tempBufferA.cmp(buf)) {
+                    applyNewText = state.tempBufferA
                     applyNewTextLength = state.curLenA
                 }
             }
@@ -2629,23 +2631,21 @@ interface imgui_internal {
         val bufDisplayMaxLength = 2 * 1024 * 1024
 
         // Select which buffer we are going to display. We set buf to NULL to prevent accidental usage from now on.
-        val bufDisplay = if (state != null && isEditable) state.tempBuffer else buf
+        val bufDisplay = if (state != null && !isReadOnly) state.tempBufferA else buf
 
-        // ------------------------- Render -------------------------
+        // Render
         if (!isMultiline) {
             renderNavHighlight(frameBb, id)
             renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
         }
 
         val clipRect = Vec4(frameBb.min, frameBb.min + size) // Not using frameBb.Max because we have adjusted size
-        val renderPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + style.framePadding
+        val drawPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + style.framePadding
         val textSize = Vec2()
         if (g.activeId == id || userScrollActive) {
-            // Animate cursor
-            val state = state!!
-            state.cursorAnim += io.deltaTime
 
-            /*  This is going to be messy. We need to:
+            /*  Render text (with cursor and selection)
+                This is going to be messy. We need to:
                     - Display the text (this alone can be more easily clipped)
                     - Handle scrolling, highlight selection, display cursor (those all requires some form of 1d->2d
                         cursor position calculation)
@@ -2654,6 +2654,7 @@ interface imgui_internal {
                 (non-negligible for large amount of text) + 2nd pass for selection rendering (we could merge them by an
                 extra refactoring effort)   */
             // FIXME: This should occur on bufDisplay but we'd need to maintain cursor/select_start/select_end for UTF-8.
+            val state = state!!
             val text = state.textW
             val cursorOffset = Vec2()
             val selectStartOffset = Vec2()
@@ -2726,14 +2727,14 @@ interface imgui_internal {
                         scrollY = cursorOffset.y - size.y
                     drawWindow.dc.cursorPos.y += drawWindow.scroll.y - scrollY   // Manipulate cursor pos immediately avoid a frame of lag
                     drawWindow.scroll.y = scrollY
-                    renderPos.y = drawWindow.dc.cursorPos.y
+                    drawPos.y = drawWindow.dc.cursorPos.y
                 }
             }
+            val drawScroll = Vec2(state.scrollX, 0f)
             state.cursorFollow = false
-            val renderScroll = Vec2(state.scrollX, 0f)
 
             // Draw selection
-            if (state.state.selectStart != state.state.selectEnd) {
+            if (state.hasSelection) {
 
                 val textSelectedBegin = glm.min(state.state.selectStart, state.state.selectEnd)
                 val textSelectedEnd = glm.max(state.state.selectStart, state.state.selectEnd)
@@ -2742,7 +2743,7 @@ interface imgui_internal {
                 val bgOffYUp = if (isMultiline) 0f else -1f
                 val bgOffYDn = if (isMultiline) 0f else 2f
                 val bgColor = Col.TextSelectedBg.u32
-                val rectPos = renderPos + selectStartOffset - renderScroll
+                val rectPos = drawPos + selectStartOffset - drawScroll
                 var p = textSelectedBegin
                 while (p < textSelectedEnd) {
                     if (rectPos.y > clipRect.w + g.fontSize) break
@@ -2762,7 +2763,7 @@ interface imgui_internal {
                         if (rect overlaps clipRect_)
                             drawWindow.drawList.addRectFilled(rect.min, rect.max, bgColor)
                     }
-                    rectPos.x = renderPos.x - renderScroll.x
+                    rectPos.x = drawPos.x - drawScroll.x
                     rectPos.y += g.fontSize
                 }
             }
@@ -2770,21 +2771,22 @@ interface imgui_internal {
             // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
             val bufDisplayLen = state.curLenA
             if (isMultiline || bufDisplayLen < bufDisplayMaxLength)
-                drawWindow.drawList.addText(g.font, g.fontSize, renderPos - renderScroll, Col.Text.u32, bufDisplay, bufDisplayLen, 0f, clipRect)
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, Col.Text.u32, bufDisplay, bufDisplayLen, 0f, clipRect)
 
             // Draw blinking cursor
+            state.cursorAnim += io.deltaTime
             val cursorIsVisible = !io.configInputTextCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
-            val cursorScreenPos = renderPos + cursorOffset - renderScroll
+            val cursorScreenPos = drawPos + cursorOffset - drawScroll
             val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
             if (cursorIsVisible && cursorScreenRect overlaps Rect(clipRect))
                 drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
             /*  Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor.
                 Bit of an extra nicety.)             */
-            if (isEditable)
+            if (!isReadOnly)
                 g.platformImePos = Vec2(cursorScreenPos.x - 1, cursorScreenPos.y - g.fontSize)
         } else {
-            // Render text only
+            // Render text only (no selection, no cursor)
             val bufEnd = IntArray(1)
             if (isMultiline)
             // We don't need width
@@ -2792,7 +2794,7 @@ interface imgui_internal {
             else
                 bufEnd[0] = bufDisplay.strlen
             if (isMultiline || bufEnd[0] < bufDisplayMaxLength)
-                drawWindow.drawList.addText(g.font, g.fontSize, renderPos, Col.Text.u32, bufDisplay, bufEnd[0], 0f, clipRect)
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos, Col.Text.u32, bufDisplay, bufEnd[0], 0f, clipRect)
         }
 
         if (isMultiline) {
@@ -2806,7 +2808,7 @@ interface imgui_internal {
 
         // Log as text
         if (g.logEnabled && !isPassword)
-            logRenderedText(renderPos, String(bufDisplay))
+            logRenderedText(drawPos, String(bufDisplay))
 
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
@@ -2842,7 +2844,7 @@ interface imgui_internal {
             g.scalarAsInputTextId = g.activeId
         }
         return when {
-            valueChanged -> dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialText, dataType, data)
+            valueChanged -> dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, data)
             else -> false
         }
     }

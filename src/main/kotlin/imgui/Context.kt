@@ -431,8 +431,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.overlayDrawList.clearFreeMemory()
         g.privateClipboard = ""
         g.inputTextState.textW = charArrayOf()
-        g.inputTextState.initialText = charArrayOf()
-        g.inputTextState.tempBuffer = charArrayOf()
+        g.inputTextState.initialTextA = charArrayOf()
+        g.inputTextState.tempBufferA = charArrayOf()
 
         if (g.logFile != null) {
             g.logFile = null
@@ -758,12 +758,12 @@ class InputTextCallbackData {
             // Contrary to STB_TEXTEDIT_INSERTCHARS() this is working in the UTF8 buffer, hence the midly similar code (until we remove the U16 buffer alltogether!)
             val editState = g.inputTextState
             assert(editState.id != 0 && g.activeId == editState.id)
-            assert(buf === editState.tempBuffer)
+            assert(buf === editState.tempBufferA)
             val newBufSize = bufTextLen + glm.clamp(newTextLen * 4, 32, max(256, newTextLen))
             val t = CharArray(newBufSize)
-            System.arraycopy(editState.tempBuffer, 0, t, 0, editState.tempBuffer.size)
-            editState.tempBuffer = t
-            buf = editState.tempBuffer
+            System.arraycopy(editState.tempBufferA, 0, t, 0, editState.tempBufferA.size)
+            editState.tempBufferA = t
+            buf = editState.tempBufferA
             editState.bufCapacityA = newBufSize
             bufSize = newBufSize
         }

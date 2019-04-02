@@ -174,7 +174,7 @@ interface inputKeyboard {
             pushId(label)
             pushItemWidth(max(1f, calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
             if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
-                valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, dataPtr, format)
+                valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialTextA, dataType, dataPtr, format)
             popItemWidth()
 
             // Step buttons
@@ -200,7 +200,7 @@ interface inputKeyboard {
             popId()
             endGroup()
         } else if (inputText(label, buf, extraFlags))
-            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialText, dataType, dataPtr, format)
+            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialTextA, dataType, dataPtr, format)
 
 
         return valueChanged
