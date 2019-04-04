@@ -50,10 +50,9 @@ interface trees {
         return treeNodeBehavior(window.getId(label), flags, label)
     }
 
-    fun treeNodeEx(strId: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
-        val isOpen = treeNodeExV(strId, flags, fmt, args)
-        return isOpen
-    }
+    /** @return isOpen */
+    fun treeNodeEx(strId: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean =
+            treeNodeExV(strId, flags, fmt, args)
 
 //    IMGUI_API bool          TreeNodeEx(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) IM_PRINTFARGS(3);
 
