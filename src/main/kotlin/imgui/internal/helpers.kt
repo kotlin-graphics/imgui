@@ -7,11 +7,16 @@ import glm_.vec4.Vec4
 import imgui.Dir
 import imgui.NUL
 import kool.rem
+import org.lwjgl.system.Platform
+import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.InputStreamReader
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
+import java.util.*
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 
@@ -152,6 +157,13 @@ fun hash(data: ByteBuffer, dataSize_: Int = data.rem, seed: Int = 0): Int {
 
 fun hash(data: String, dataSize_: Int, seed_: Int = 0): Int {
 
+    /*
+    convert to "Extended ASCII" Windows-1252 (CP1252) https://en.wikipedia.org/wiki/Windows-1252
+    this caused crashes with `-` which in CP1252 is 150, while on UTF16 is 8211
+     */
+//    val data = data_.toByteArray(Charset.forName("Cp1252"))
+
+    val ast = '#'//.b
     val seed = seed_.inv()
     var crc = seed
     var src = 0
@@ -161,24 +173,43 @@ fun hash(data: String, dataSize_: Int, seed_: Int = 0): Int {
     if (dataSize != 0)
         while (dataSize-- != 0) {
             val c = data[src++]
-            if (c == '#' && data[src] == '#' && data[src + 1] == '#')
+            if (c == ast && data[src] == ast && data[src + 1] == ast)
                 crc = seed
             crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c.i]
         }
     else
         while (src < data.length) {
             val c = data[src++]
-            if (c == '#' && data[src] == '#' && data[src + 1] == '#')
+            if (c == ast && data[src] == ast && data[src + 1] == ast)
                 crc = seed
-            crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c]
+//            val b = crc ushr 8
+//            val d = crc and 0xFF
+//            val e = d xor c.b.toUnsignedInt
+//            crc = b xor crc32Lut[e]
+            crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c.s.toUnsignedInt] // unsigned -> avoid negative values being passed as indices
         }
     return crc.inv()
 }
 
-fun fileLoadToCharArray(filename: String, paddingBytes: Int = 0) = ClassLoader.getSystemResourceAsStream(filename)?.use {
-    val bytes = it.readBytes()
-    CharArray(bytes.size) { bytes[it].c }
+fun main() {
+    fun getEncoding(): String {
+        val bytes = byteArrayOf('D'.b)
+        val inputStream = ByteArrayInputStream(bytes)
+        val reader = InputStreamReader(inputStream)
+        return reader.encoding
+    }
+    println("Default Locale:   ${Locale.getDefault()}")
+    println("Default Charset:  ${Charset.defaultCharset()}")
+    println("file.encoding;    ${System.getProperty("file.encoding")}")
+    println("sun.jnu.encoding: ${System.getProperty("sun.jnu.encoding")}")
+    println("Default Encoding: " + getEncoding())
 }
+
+fun fileLoadToCharArray(filename: String, paddingBytes: Int = 0) =
+        ClassLoader.getSystemResourceAsStream(filename)?.use { s ->
+            val bytes = s.readBytes()
+            CharArray(bytes.size) { bytes[it].c }
+        }
 
 fun fileLoadToLines(filename: String): List<String>? {
     val file = File(Paths.get("imgui.ini").toUri())
@@ -382,4 +413,45 @@ fun CharArray.memchr(startIdx: Int, c: Char): Int? {
         if (c == this[index])
             return index
     return null
+}
+
+internal fun Char.remapCodepointIfProblematic(): Int {
+    val i = toInt()
+    return when (Platform.get()) {
+        /*  https://en.wikipedia.org/wiki/Windows-1252#Character_set
+         *  manually remap the difference from  ISO-8859-1 */
+        Platform.WINDOWS -> when (i) {
+            // 8_128
+            0x20AC -> 128
+            0x201A -> 130
+            0x0192 -> 131
+            0x201E -> 132
+            0x2026 -> 133
+            0x2020 -> 134
+            0x2021 -> 135
+            0x02C6 -> 136
+            0x2030 -> 137
+            0x0160 -> 138
+            0x2039 -> 139
+            0x0152 -> 140
+            0x017D -> 142
+            // 9_144
+            0x2018 -> 145
+            0x2019 -> 146
+            0x201C -> 147
+            0x201D -> 148
+            0x2022 -> 149
+            0x2013 -> 150
+            0x2014 -> 151
+            0x02DC -> 152
+            0x2122 -> 153
+            0x0161 -> 154
+            0x203A -> 155
+            0x0153 -> 156
+            0x017E -> 158
+            0x0178 -> 159
+            else -> i
+        }
+        else -> i // TODO
+    }
 }
