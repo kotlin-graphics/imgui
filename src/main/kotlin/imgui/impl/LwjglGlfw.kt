@@ -23,6 +23,7 @@ import java.nio.FloatBuffer
 import kotlin.collections.set
 
 
+// TODO remove val from clientApi?
 class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val clientApi: GlfwClientApi = GlfwClientApi.OpenGL, val vrTexSize: Vec2i? = null) {
     companion object {
         lateinit var instance: LwjglGlfw
@@ -107,13 +108,13 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
             backendLanguageUserData = null
             backendRendererUserData = null
             backendPlatformUserData = null
-            io.setClipboardTextFn = { userData, text ->
+            setClipboardTextFn = { userData, text ->
                 glfwSetClipboardString(userData as Long, text)
             }
-            io.getClipboardTextFn = { userData ->
+            getClipboardTextFn = { userData ->
                 glfwGetClipboardString(userData as Long).toString()
             }
-            io.clipboardUserData = window.handle.L
+            clipboardUserData = window.handle.L
 
             if (Platform.get() == Platform.WINDOWS)
                 imeWindowHandle = window.hwnd

@@ -13,7 +13,6 @@ import gln.glf.semantic
 import gln.objects.GlProgram
 import gln.objects.GlShader
 import gln.texture.glBindTexture
-import gln.texture.textureName
 import gln.uniform.glUniform
 import imgui.*
 import kool.*
@@ -100,8 +99,8 @@ class ImplGL2 : LwjglRendererI {
         // Upload texture to graphics system
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
 
-        glGenTextures(textureName)
-        glBindTexture(GL_TEXTURE_2D, textureName)
+        glGenTextures(fontTexture)
+        glBindTexture(GL_TEXTURE_2D, fontTexture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
@@ -189,10 +188,10 @@ class ImplGL2 : LwjglRendererI {
                 vtxBuffer.putInt(offset + Vec2.size * 2, v.col)
             }
             glBindBuffer(GL_ARRAY_BUFFER, bufferName[Buffer.Vertex])
-            glBufferSubData(GL_ARRAY_BUFFER, cmdList._vtxWritePtr * DrawVert.size.L, vtxBuffer)
+            glBufferData(GL_ARRAY_BUFFER, vtxBuffer, GL_STREAM_DRAW)
             cmdList.idxBuffer.forEachIndexed { i, idx -> idxBuffer[i] = idx }
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferName[Buffer.Element])
-            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, cmdList._idxWritePtr * Int.BYTES.L, idxBuffer)
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxBuffer, GL_STREAM_DRAW)
 
             var idxBufferOffset = 0L
             for (cmd in cmdList.cmdBuffer) {

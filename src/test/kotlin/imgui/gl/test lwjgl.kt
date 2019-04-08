@@ -47,6 +47,7 @@ private class HelloWorld_lwjgl {
     init {
 
         glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
+        glfw.windowHint { debug = true }
 
         window = GlfwWindow(1280, 720, "Dear ImGui Lwjgl OpenGL example").apply {
             init()
@@ -67,7 +68,7 @@ private class HelloWorld_lwjgl {
 //        ImGui.styleColorsClassic()
 
         // Setup Platform/Renderer bindings
-        lwjglGlfw = LwjglGlfw(window, true, GlfwClientApi.OpenGL)
+        lwjglGlfw = LwjglGlfw(window, true, GlfwClientApi.OpenGL2)
 
 //        RemoteryGL.rmt_BindOpenGL()
 
