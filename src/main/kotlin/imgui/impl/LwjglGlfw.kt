@@ -224,9 +224,7 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
         }
     }
 
-    fun renderDrawData(drawData: DrawData) {
-        impl.renderDrawData(drawData)
-    }
+    fun renderDrawData(drawData: DrawData) = impl.renderDrawData(drawData)
 
     private fun updateMousePosAndButtons() {
 
