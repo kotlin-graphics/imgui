@@ -1099,8 +1099,8 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun primWriteVtx(pos: Vec2, uv: Vec2, col: Int) {
         val vtx = vtxBuffer[_vtxWritePtr]
-        vtx.pos = pos
-        vtx.uv = uv
+        vtx.pos put pos
+        vtx.uv put uv
         vtx.col = col
         _vtxWritePtr++
         _vtxCurrentIdx++

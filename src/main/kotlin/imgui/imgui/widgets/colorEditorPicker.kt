@@ -22,6 +22,7 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorConvertRGBtoHSV
 import imgui.ImGui.colorEditOptionsPopup
+import imgui.ImGui.colorPickerOptionsPopup
 import imgui.ImGui.colorTooltip
 import imgui.ImGui.currentWindow
 import imgui.ImGui.cursorScreenPos
@@ -293,15 +294,28 @@ interface colorEditorPicker {
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)   */
     fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = 0, refCol: Vec4? = null): Boolean {
         val floats = col to FloatArray(4)
-        val res = if (refCol == null) colorPicker4(label, floats, flags, refCol)
-        else {
-            val floats2 = refCol to FloatArray(4)
-            val res = colorPicker4(label, floats, flags, floats2)
-            refCol put floats2
-            res
+        val res = when (refCol) {
+            null -> colorPicker4(label, floats, flags, null)
+            else -> {
+                val floats2 = refCol to FloatArray(4)
+                val res = colorPicker4(label, floats, flags, floats2)
+                refCol put floats2
+                res
+            }
         }
         col put floats
         return res
+    }
+
+    fun colorPicker4debug(): Boolean {
+        val window = currentWindow
+        val drawList = window.drawList
+        val pickerPos = Vec2(window.dc.cursorPos)
+        val svPickerSize = 237f
+        val hueColor32 = -22016
+        //drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_WHITE, hueColor32, hueColor32, COL32_WHITE)
+        drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_BLACK_TRANS, COL32_BLACK_TRANS, COL32_BLACK, COL32_BLACK)
+        return false
     }
 
     fun colorPicker4(label: String, col: FloatArray, flags_: ColorEditFlags = 0, refCol: FloatArray? = null): Boolean {
@@ -317,7 +331,8 @@ interface colorEditorPicker {
             flags = flags or Cef.NoSmallPreview
 
         // Context menu: display and store options.
-//        if (flags hasnt Cef.NoOptions)
+        if (flags hasnt Cef.NoOptions)
+            colorPickerOptionsPopup(col, flags)
 
         // Read stored options
         if (flags hasnt Cef._PickerMask)
