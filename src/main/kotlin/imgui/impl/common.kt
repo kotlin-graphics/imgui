@@ -39,7 +39,7 @@ val vertexShaderOutWord: String
 val fragmentShaderInWord: String
     get() = if(glslVersion > 120) "in" else "varying"
 
-val vertexShader
+val vertexShader: String
     get() = """
 
         #version ${if (USE_GL_ES3) "300 es" else "$glslVersion"}
@@ -61,7 +61,7 @@ val vertexShader
         }
         """
 
-val fragmentShader
+val fragmentShader: String
     get() = """
 
         #version ${if (USE_GL_ES3) "300 es" else "$glslVersion"}

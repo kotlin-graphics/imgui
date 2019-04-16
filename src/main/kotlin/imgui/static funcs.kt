@@ -167,7 +167,8 @@ fun checkStacksSize(window: Window, write: Boolean) {
         // Too few or too many PopID()/TreePop()
         val current = window.idStack.size
         if (write) backup[ptr] = current
-        else assert(backup[ptr] == current) { "PushID/PopID or TreeNode/TreePop Mismatch!" }
+        else assert(backup[ptr] == current) {
+            "PushID/PopID or TreeNode/TreePop Mismatch!" }
         ptr++
     }
     run {
