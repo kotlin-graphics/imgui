@@ -23,7 +23,6 @@ import gln.uniform.glUniform
 import imgui.*
 import kool.*
 import org.lwjgl.opengl.GL21C.*
-import org.lwjgl.opengl.GL45C
 
 class ImplGL2 : LwjglRendererI {
 
