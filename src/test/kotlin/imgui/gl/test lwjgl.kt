@@ -87,7 +87,7 @@ private class HelloWorld_lwjgl {
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-//        ImGui.io.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 18f, glyphRanges = imgui.glyphRanges.japanese)!!
+//        ImGui.io.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 16f, glyphRanges = imgui.glyphRanges.japanese)!!
 //        val a = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f)!!
 //        val b = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 30f)!!
 
@@ -120,13 +120,14 @@ private class HelloWorld_lwjgl {
         ImGui.run {
 
             newFrame()
-
+//            colorPicker4debug()
             // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
             if (showDemo)
                 showDemoWindow(::showDemo)
 
             // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
             run {
+
                 begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
 
                 text("This is some useful text.")                // Display some text (you can use a format strings too)

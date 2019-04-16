@@ -2253,15 +2253,13 @@ interface imgui_internal {
                 /*  Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
                     From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
                 val bufLen = buf.strlen
-                state.initialTextA = CharArray(bufLen)   // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
+                state.initialTextA = CharArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
                 System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
 
                 // Start edition
                 val prevLenW = state.curLenW
-                state.textW = CharArray(buf.size)            // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
-                // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash. TODO check if needed
-//                editState.initialText.add(NUL)
-                state.initialTextA strncpy buf
+                state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
+
                 state.curLenW = state.textW.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
                 /*  We can't get the result from ImStrncpy() above because it is not UTF-8 aware.
                     Here we'll cut off malformed UTF-8.                 */
@@ -2635,9 +2633,8 @@ interface imgui_internal {
 
         // Select which buffer we are going to display. We set buf to NULL to prevent accidental usage from now on.
         val bufDisplay = if (state != null && !isReadOnly) state.tempBufferA else buf
-        assert(bufDisplay.isNotEmpty())
 
-        // ------------------------- Render -------------------------
+        // Render
         if (!isMultiline) {
             renderNavHighlight(frameBb, id)
             renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
@@ -2658,7 +2655,7 @@ interface imgui_internal {
                 (non-negligible for large amount of text) + 2nd pass for selection rendering (we could merge them by an
                 extra refactoring effort)   */
             // FIXME: This should occur on bufDisplay but we'd need to maintain cursor/select_start/select_end for UTF-8.
-            val state = state!! // ~assert
+            val state = state!!
             val text = state.textW
             val cursorOffset = Vec2()
             val selectStartOffset = Vec2()
@@ -2779,7 +2776,7 @@ interface imgui_internal {
 
             // Draw blinking cursor
             state.cursorAnim += io.deltaTime
-            val cursorIsVisible = !io.configInputTextCursorBlink || state.cursorAnim <= 0f || glm.mod(state.cursorAnim, 1.2f) <= 0.8f
+            val cursorIsVisible = !io.configInputTextCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
             val cursorScreenPos = drawPos + cursorOffset - drawScroll
             val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
             if (cursorIsVisible && cursorScreenRect overlaps Rect(clipRect))

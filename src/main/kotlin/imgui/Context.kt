@@ -430,7 +430,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.drawDataBuilder.clear()
         g.overlayDrawList.clearFreeMemory()
         g.privateClipboard = ""
-        g.inputTextState.clearFreeMemory()
+        g.inputTextState.textW = charArrayOf()
+        g.inputTextState.initialTextA = charArrayOf()
+        g.inputTextState.tempBufferA = charArrayOf()
 
         if (g.logFile != null) {
             g.logFile = null

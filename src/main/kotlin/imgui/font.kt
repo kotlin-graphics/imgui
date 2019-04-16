@@ -1070,16 +1070,19 @@ class Font {
 
     // @formatter:on
 
-    fun findGlyph(c: Char) = findGlyph(c.i)
-    fun findGlyph(c: Int) = indexLookup.getOrNull(c)?.let { glyphs.getOrNull(it) } ?: fallbackGlyph
-    fun findGlyphNoFallback(c: Char) = findGlyphNoFallback(c.i)
-    fun findGlyphNoFallback(c: Int) = indexLookup.getOrNull(c)?.let { glyphs.getOrNull(it) }
+    fun findGlyph(c: Char): FontGlyph? = findGlyph(c.remapCodepointIfProblematic())
+    fun findGlyph(c: Int): FontGlyph? = indexLookup.getOrNull(c)?.let { glyphs.getOrNull(it) } ?: fallbackGlyph
+
+    fun findGlyphNoFallback(c: Char): FontGlyph? = findGlyphNoFallback(c.i)
+    fun findGlyphNoFallback(c: Int): FontGlyph? = indexLookup.getOrNull(c)?.let { glyphs.getOrNull(it) }
 
     fun getCharAdvance(c: Char): Float = if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX
 
-    val isLoaded get() = ::containerAtlas.isInitialized
+    val isLoaded: Boolean
+        get() = ::containerAtlas.isInitialized
 
-    val debugName get() = configData.getOrNull(0)?.name ?: "<unknown>"
+    val debugName: String
+        get() = configData.getOrNull(0)?.name ?: "<unknown>"
 
     /*  'maxWidth' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.
         'wrapWidth' enable automatic word-wrapping across multiple lines to fit into given width. 0.0f to disable. */
@@ -1504,7 +1507,7 @@ class Font {
             tabGlyph.codepoint = '\t'
             tabGlyph.advanceX *= 4
             indexAdvanceX[tabGlyph.codepoint.i] = tabGlyph.advanceX
-            indexLookup[tabGlyph.codepoint.i] = glyphs.size - 1
+            indexLookup[tabGlyph.codepoint.i] = glyphs.lastIndex
         }
 
         fallbackGlyph = findGlyphNoFallback(fallbackChar)

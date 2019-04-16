@@ -579,7 +579,6 @@ class Window(var context: Context, var name: String) {
 
     var scrollbar = Vec2bool()
 
-    var borderSize = 0f
     /** Set to true on Begin(), unless Collapsed  */
     var active = false
 

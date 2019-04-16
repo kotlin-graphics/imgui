@@ -21,20 +21,19 @@ import gln.vertexArray.GlVertexArray
 import gln.vertexArray.glBindVertexArray
 import gln.vertexArray.glVertexAttribPointer
 import gln.vertexArray.withVertexArray
-import imgui.DEBUG
-import imgui.DrawData
-import imgui.DrawList
-import imgui.DrawVert
+import imgui.*
 import imgui.ImGui.io
+import imgui.ImGui.windowSize
 import kool.*
-import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL15C
+import org.lwjgl.opengl.*
 import org.lwjgl.opengl.GL30C.*
-import org.lwjgl.opengl.GL33C
-import org.lwjgl.opengl.GL45C
 import org.lwjgl.system.Platform
+import java.awt.Color
+import java.awt.image.BufferedImage
+import java.io.File
 import java.nio.ByteBuffer
 import java.nio.IntBuffer
+import javax.imageio.ImageIO
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty0
 
@@ -222,6 +221,11 @@ class ImplGL3 : LwjglRendererI {
                 v.pos.to(vtxBuffer, offset)
                 v.uv.to(vtxBuffer, offset + Vec2.size)
                 vtxBuffer.putInt(offset + Vec2.size * 2, v.col)
+//                val r = v.col ushr 24
+//                val g = (v.col ushr 16) and 0xff
+//                val b = (v.col ushr 8) and 0xff
+//                val a = v.col and 0xff
+//                println("vertex[$i] = pos(${v.pos.x}, ${v.pos.y}), uv(${v.uv.x}, ${v.uv.y}), col($r, $g, $b, $a)")
             }
             buffers {
                 Buffer.Vertex.bind(ARRAY) {
@@ -234,11 +238,7 @@ class ImplGL3 : LwjglRendererI {
             }
             var idxBufferOffset = 0L
             for (cmd in cmdList.cmdBuffer) {
-                val cb = cmd.userCallback
-                if (cb != null)
-                // User callback (registered via ImDrawList::AddCallback)
-                    cb(cmdList, cmd)
-                else {
+                cmd.userCallback?.invoke(cmdList, cmd) ?: run {
                     // Project scissor/clipping rectangles into framebuffer space
                     val clipRectX = (cmd.clipRect.x - clipOff.x) * clipScale.x
                     val clipRectY = (cmd.clipRect.y - clipOff.y) * clipScale.y
@@ -281,6 +281,42 @@ class ImplGL3 : LwjglRendererI {
         glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode)
         glViewport(lastViewport)
         glScissor(lastScissorBox)
+    }
+
+    private fun debugSave(fbWidth: Int, fbHeight: Int) {
+        if (g.frameCount % 60 == 0) {
+
+            glReadBuffer(GL11C.GL_BACK)
+            // no more alignment problems by texture updating
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1)  // upload
+            glPixelStorei(GL_PACK_ALIGNMENT, 1)  // download
+
+            val colorBufferImg = BufferedImage(fbWidth, fbHeight, BufferedImage.TYPE_INT_ARGB)
+            val graphicsColor = colorBufferImg.graphics
+
+            val buffer = ByteBuffer(fbWidth * fbHeight * 4)
+            glReadPixels(0, 0, fbWidth, fbHeight, GL_RGBA, GL_UNSIGNED_BYTE, buffer)
+
+            var i = 0
+            for (h in 0 until fbHeight) {
+                for (w in 0 until fbWidth) {
+
+                    val iR = buffer[i + 0].toUnsignedInt
+                    val iG = buffer[i + 1].toUnsignedInt
+                    val iB = buffer[i + 2].toUnsignedInt
+                    val iA = buffer[i + 3].toInt() and 0xff
+
+                    graphicsColor.color = Color(iR, iG, iB, iA)
+                    graphicsColor.fillRect(w, fbHeight - h - 1, 1, 1) // height - h is for flipping the image
+                    i += 4
+                }
+            }
+
+            val imgNameColor = "whate_(${System.currentTimeMillis()}).png"
+            ImageIO.write(colorBufferImg, "png", File("""C:\Users\gbarbieri\Pictures\$imgNameColor"""))
+            graphicsColor.dispose()
+            buffer.free()
+        }
     }
 
     private fun checkSize(draws: ArrayList<DrawList>) {
