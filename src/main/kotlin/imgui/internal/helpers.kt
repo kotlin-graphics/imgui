@@ -212,7 +212,7 @@ fun fileLoadToCharArray(filename: String, paddingBytes: Int = 0) =
         }
 
 fun fileLoadToLines(filename: String): List<String>? {
-    val file = File(Paths.get("imgui.ini").toUri())
+    val file = File(Paths.get(filename).toUri())
     return file.takeIf { it.exists() && it.canRead() }?.readLines()
 }
 
