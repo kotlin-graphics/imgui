@@ -6,6 +6,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.internal.*
+import kool.Ptr
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
 import uno.glfw.HWND
@@ -529,9 +530,9 @@ class IO(sharedFontAtlas: FontAtlas?) {
 
     // Optional: Access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
-    var getClipboardTextFn: ((userData: Any) -> String)? = null
-    var setClipboardTextFn: ((String) -> Unit)? = null
-    lateinit var clipboardUserData: Any
+    var getClipboardTextFn: (() -> String)? = getClipboardTextFn_DefaultImpl
+    var setClipboardTextFn: ((String) -> Unit)? = setClipboardTextFn_DefaultImpl
+    var clipboardUserData: Ptr = NULL
 
     //    // Optional: override memory allocations. MemFreeFn() may be called with a NULL pointer.
 //    // (default to posix malloc/free)

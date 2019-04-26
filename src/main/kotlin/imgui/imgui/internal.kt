@@ -16,6 +16,7 @@ import imgui.ImGui.beginPopup
 import imgui.ImGui.button
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.clipboardText
 import imgui.ImGui.colorButton
 import imgui.ImGui.contentRegionMax
 import imgui.ImGui.dummy
@@ -50,7 +51,6 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
-import imgui.ImGui.setClipboardText
 import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setNextWindowBgAlpha
@@ -2468,24 +2468,16 @@ interface imgui_internal {
                 }
                 isCut || isCopy -> {
                     // Cut, Copy
-                    val ib = if(state.hasSelection) min(state.state.selectStart, state.state.selectEnd) else 0
-                    val ie = if(state.hasSelection) max(state.state.selectStart, state.state.selectEnd) else state.curLenW
-
-                    val copy = String(state.textW, ib, ie)
-
-                    if (copy.isNotEmpty()) {
-                        val stringSelection = StringSelection(copy)
-                        val clpbrd = Toolkit.getDefaultToolkit().systemClipboard
-                        clpbrd.setContents(stringSelection, null)
+                    io.setClipboardTextFn?.let {
+                        val ib = if (state.hasSelection) min(state.state.selectStart, state.state.selectEnd) else 0
+                        val ie = if (state.hasSelection) max(state.state.selectStart, state.state.selectEnd) else state.curLenW
+                        clipboardText = String(state.textW, ib, ie)
                     }
                     if (isCut) {
                         if (!state.hasSelection)
                             state.selectAll()
-//                        println("${state.textW}, $max, ${state.textW}, $min, ${max - min}")
-                        System.arraycopy(state.textW, ie, state.textW, ib, ie - ib)
-                        state.deleteChars(state.state.cursor, ie - ib)
-                        state.state.cursor = ib
-                        state.clearSelection()
+                        state.cursorFollow = true
+                        state.cut()
                     }
                 }
                 isPaste -> {
@@ -2908,16 +2900,16 @@ interface imgui_internal {
             val ca = if (flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
             var buf = "(%.3ff, %.3ff, %.3ff, %.3ff)".format(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
             if (selectable(buf))
-                setClipboardText(buf)
+                clipboardText = buf
             buf = "(%d,%d,%d,%d)".format(cr, cg, cb, ca)
             if (selectable(buf))
-                setClipboardText(buf)
+                clipboardText = buf
             buf = when {
                 flags has Cef.NoAlpha -> "0x%02X%02X%02X".format(cr, cg, cb)
                 else -> "0x%02X%02X%02X%02X".format(cr, cg, cb, ca)
             }
             if (selectable(buf))
-                setClipboardText(buf)
+                clipboardText = buf
             endPopup()
         }
 

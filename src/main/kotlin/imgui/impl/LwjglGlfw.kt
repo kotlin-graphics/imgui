@@ -26,15 +26,15 @@ import kotlin.collections.set
 class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val clientApi: GlfwClientApi = GlfwClientApi.OpenGL, val vrTexSize: Vec2i? = null) {
     companion object {
         lateinit var instance: LwjglGlfw
-        
+
         fun init(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL, vrTexSize: Vec2i? = null) {
             instance = LwjglGlfw(window, installCallbacks, clientApi_, vrTexSize)
         }
-        
+
         fun newFrame() = instance.newFrame()
         fun shutdown() = instance.shutdown()
     }
-    
+
     val impl: LwjglRendererI
     var time = 0.0
     val mouseCursors = LongArray(MouseCursor.COUNT)
@@ -107,13 +107,9 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
             backendLanguageUserData = null
             backendRendererUserData = null
             backendPlatformUserData = null
-            io.setClipboardTextFn = { userData, text ->
-                glfwSetClipboardString(userData as Long, text)
-            }
-            io.getClipboardTextFn = { userData ->
-                glfwGetClipboardString(userData as Long).toString()
-            }
-            io.clipboardUserData = window.handle.L
+            setClipboardTextFn = { glfwSetClipboardString(clipboardUserData, it) }
+            getClipboardTextFn = { glfwGetClipboardString(clipboardUserData) ?: "" }
+            clipboardUserData = window.handle.L
 
             if (Platform.get() == Platform.WINDOWS)
                 imeWindowHandle = window.hwnd
@@ -137,7 +133,7 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
             imeListener.install(window)
         }
 
-        impl = when(clientApi) {
+        impl = when (clientApi) {
             GlfwClientApi.OpenGL3 -> ImplGL3()
             GlfwClientApi.OpenGL2 -> ImplGL2()
             GlfwClientApi.OpenGL -> {
