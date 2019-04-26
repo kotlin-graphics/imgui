@@ -47,6 +47,7 @@ import uno.glfw.HWND
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
 import uno.kotlin.setValue
+import java.awt.Toolkit
 import java.io.File
 import java.nio.file.Paths
 import kotlin.collections.set
@@ -56,6 +57,8 @@ import kotlin.reflect.KMutableProperty0
 import imgui.ConfigFlag as Cf
 import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.StringSelection
 
 
 fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
@@ -1329,8 +1332,18 @@ fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow 
 // Platform dependent default implementations
 //-----------------------------------------------------------------------------
 
-//static const char*      GetClipboardTextFn_DefaultImpl(void* user_data);
-//static void             SetClipboardTextFn_DefaultImpl(void* user_data, const char* text);
+val getClipboardTextFn_DefaultImpl: () -> String = {
+    // Create a Clipboard object using getSystemClipboard() method
+    val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+    // Get data stored in the clipboard that is in the form of a string (text)
+    clipboard.getData(DataFlavor.stringFlavor) as String
+}
+
+val setClipboardTextFn_DefaultImpl: (String) -> Unit = {
+    val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+    clipboard.setContents(StringSelection(it), null)
+}
+
 var imeSetInputScreenPosFn_Win32 = { x: Int, y: Int ->
     // Notify OS Input Method Editor of text input position
     val hwnd: HWND = io.imeWindowHandle

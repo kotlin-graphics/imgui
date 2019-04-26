@@ -2468,10 +2468,10 @@ interface imgui_internal {
                 }
                 isCut || isCopy -> {
                     // Cut, Copy
-                    val min = min(state.state.selectStart, state.state.selectEnd)
-                    val max = max(state.state.selectStart, state.state.selectEnd)
+                    val ib = if(state.hasSelection) min(state.state.selectStart, state.state.selectEnd) else 0
+                    val ie = if(state.hasSelection) max(state.state.selectStart, state.state.selectEnd) else state.curLenW
 
-                    val copy = String(state.textW, min, max - state.state.cursor)//for some reason this is needed.
+                    val copy = String(state.textW, ib, ie)
 
                     if (copy.isNotEmpty()) {
                         val stringSelection = StringSelection(copy)
@@ -2481,10 +2481,10 @@ interface imgui_internal {
                     if (isCut) {
                         if (!state.hasSelection)
                             state.selectAll()
-                        println("${state.textW}, $max, ${state.textW}, $min, ${max - min}")
-                        System.arraycopy(state.textW, max, state.textW, min, max - min)
-                        state.deleteChars(state.state.cursor, max - min)
-                        state.state.cursor = min
+//                        println("${state.textW}, $max, ${state.textW}, $min, ${max - min}")
+                        System.arraycopy(state.textW, ie, state.textW, ib, ie - ib)
+                        state.deleteChars(state.state.cursor, ie - ib)
+                        state.state.cursor = ib
                         state.clearSelection()
                     }
                 }
@@ -2526,7 +2526,7 @@ interface imgui_internal {
                 // FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above incorrect.
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
                 if (!isReadOnly)
-                    state.tempBufferA = CharArray(state.textW.size * 4) { state.textW.getOrElse(it) { NUL } }
+                    state.textA = CharArray(state.textW.size * 4) { state.textW.getOrElse(it) { NUL } }
 
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
@@ -2546,7 +2546,7 @@ interface imgui_internal {
                         cbData.userData = callbackUserData
 
                         cbData.eventKey = eventKey
-                        cbData.buf = state.tempBufferA
+                        cbData.buf = state.textA
                         cbData.bufTextLen = state.curLenA
                         cbData.bufSize = state.bufCapacityA
                         cbData.bufDirty = false
@@ -2585,8 +2585,8 @@ interface imgui_internal {
                     }
                 }
                 // Will copy result string if modified
-                if (!isReadOnly && !state.tempBufferA.cmp(buf)) {
-                    applyNewText = state.tempBufferA
+                if (!isReadOnly && !state.textA.cmp(buf)) {
+                    applyNewText = state.textA
                     applyNewTextLength = state.curLenA
                 }
             }
@@ -2632,7 +2632,7 @@ interface imgui_internal {
         val bufDisplayMaxLength = 2 * 1024 * 1024
 
         // Select which buffer we are going to display. We set buf to NULL to prevent accidental usage from now on.
-        val bufDisplay = if (state != null && !isReadOnly) state.tempBufferA else buf
+        val bufDisplay = if (state != null && !isReadOnly) state.textA else buf
 
         // Render
         if (!isMultiline) {
