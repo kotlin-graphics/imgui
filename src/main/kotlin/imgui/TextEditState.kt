@@ -27,7 +27,7 @@ class TextEditState {
     /** horizontal scrolling/offset */
     var scrollX = 0f
     /** state for stb_textedit.h */
-    val state = State()
+    val stb = State()
     /** timer for cursor blink, reset on every user action so the cursor reappears immediately */
     var cursorAnim = 0f
     /** set when we want scrolling to follow the current cursor position (not always!) */
@@ -51,22 +51,22 @@ class TextEditState {
         cursorAnim = -0.3f
     }
 
-    fun cursorClamp() = with(state) {
+    fun cursorClamp() = with(stb) {
         cursor = glm.min(cursor, curLenW)
         selectStart = glm.min(selectStart, curLenW)
         selectEnd = glm.min(selectEnd, curLenW)
     }
 
     fun clearSelection() {
-        state.selectStart = state.cursor
-        state.selectEnd = state.cursor
+        stb.selectStart = stb.cursor
+        stb.selectEnd = stb.cursor
     }
 
     fun selectAll() {
-        state.selectStart = 0
-        state.selectEnd = curLenW
-        state.cursor = curLenW
-        state.hasPreferredX = false
+        stb.selectStart = 0
+        stb.selectEnd = curLenW
+        stb.cursor = curLenW
+        stb.hasPreferredX = false
     }
 
     /** Cannot be inline because we call in code in stb_textedit.h implementation */
@@ -492,7 +492,7 @@ class TextEditState {
     }
 
     /** API click: on mouse down, move the cursor to the clicked location, and reset the selection  */
-    fun click(x: Float, y: Float) = with(state) {
+    fun click(x: Float, y: Float) = with(stb) {
         cursor = locateCoord(x, y)
         selectStart = cursor
         selectEnd = cursor
@@ -502,10 +502,10 @@ class TextEditState {
     /** API drag: on mouse drag, move the cursor and selection endpoint to the clicked location */
     fun drag(x: Float, y: Float) {
         val p = locateCoord(x, y)
-        if (state.selectStart == state.selectEnd)
-            state.selectStart = state.cursor
-        state.cursor = p
-        state.selectEnd = p
+        if (stb.selectStart == stb.selectEnd)
+            stb.selectStart = stb.cursor
+        stb.cursor = p
+        stb.selectEnd = p
     }
 
     /////////////////////////////////////////////////////////////////////////////
@@ -516,7 +516,7 @@ class TextEditState {
 
     fun undo() {
 
-        val s = state.undostate
+        val s = stb.undostate
         if (s.undoPoint == 0) return
 
         // we need to do two things: apply the undo record, and create a redo record
@@ -567,7 +567,7 @@ class TextEditState {
             s.undoCharPoint -= u.insertLength
         }
 
-        state.cursor = u.where + u.insertLength
+        stb.cursor = u.where + u.insertLength
 
         s.undoPoint--
         s.redoPoint--
@@ -575,7 +575,7 @@ class TextEditState {
 
     fun redo() {
 
-        val s = state.undostate
+        val s = stb.undostate
         if (s.redoPoint == UNDOSTATECOUNT) return
 
         // we need to do two things: apply the redo record, and create an undo record
@@ -611,22 +611,22 @@ class TextEditState {
             s.redoCharPoint += r.insertLength
         }
 
-        state.cursor = r.where + r.insertLength
+        stb.cursor = r.where + r.insertLength
 
         s.undoPoint++
         s.redoPoint++
     }
 
-    fun makeundoInsert(where: Int, length: Int) = state.undostate.createundo(where, 0, length)
+    fun makeundoInsert(where: Int, length: Int) = stb.undostate.createundo(where, 0, length)
 
-    fun makeundoDelete(where: Int, length: Int) = state.undostate.createundo(where, length, 0)?.let {
+    fun makeundoDelete(where: Int, length: Int) = stb.undostate.createundo(where, length, 0)?.let {
         for (i in 0 until length)
-            state.undostate.undoChar[it + i] = getChar(where + i)
+            stb.undostate.undoChar[it + i] = getChar(where + i)
     }
 
-    fun makeundoReplace(where: Int, oldLength: Int, newLength: Int) = state.undostate.createundo(where, oldLength, newLength)?.let {
+    fun makeundoReplace(where: Int, oldLength: Int, newLength: Int) = stb.undostate.createundo(where, oldLength, newLength)?.let {
         for (i in 0 until oldLength)
-            state.undostate.undoChar[i] = getChar(where + i)
+            stb.undostate.undoChar[i] = getChar(where + i)
     }
 
 
@@ -644,7 +644,7 @@ class TextEditState {
         var prevFirst = 0
     }
 
-    val hasSelection get() = state.selectStart != state.selectEnd
+    val hasSelection get() = stb.selectStart != stb.selectEnd
 
     /** find the x/y location of a character, and remember info about the previous row in case we get a move-up event
      *  (for page up, we'll have to rescan) */
@@ -715,7 +715,7 @@ class TextEditState {
     /** make the selection/cursor state valid if client altered the string  */
     fun clamp() {
         val n = stringLen
-        with(state) {
+        with(stb) {
             if (hasSelection) {
                 if (selectStart > n) selectStart = n
                 if (selectEnd > n) selectEnd = n
@@ -731,15 +731,15 @@ class TextEditState {
     fun delete(where: Int, len: Int) {
         makeundoDelete(where, len)
         deleteChars(where, len)
-        state.hasPreferredX = false
+        stb.hasPreferredX = false
     }
 
     /** delete the section  */
     fun deleteSelection() {
         clamp()
-        with(state) {
+        with(stb) {
             if (hasSelection) {
-                if (state.selectStart < state.selectEnd) {
+                if (stb.selectStart < stb.selectEnd) {
                     delete(selectStart, selectEnd - selectStart)
                     cursor = selectStart
                     selectEnd = selectStart
@@ -754,7 +754,7 @@ class TextEditState {
     }
 
     /** canoncialize the selection so start <= end  */
-    fun sortSelection() = with(state) {
+    fun sortSelection() = with(stb) {
         if (selectEnd < selectStart) {
             val temp = selectEnd
             selectEnd = selectStart
@@ -763,7 +763,7 @@ class TextEditState {
     }
 
     /** move cursor to first character of selection */
-    fun moveToFirst() = with(state) {
+    fun moveToFirst() = with(stb) {
         if (hasSelection) {
             sortSelection()
             cursor = selectStart
@@ -773,7 +773,7 @@ class TextEditState {
     }
 
     /* move cursor to last character of selection   */
-    fun moveToLast() = with(state) {
+    fun moveToLast() = with(stb) {
         if (hasSelection) {
             sortSelection()
             clamp()
@@ -784,7 +784,7 @@ class TextEditState {
     }
 
     /** update selection and cursor to match each other */
-    fun prepSelectionAtCursor() = with(state) {
+    fun prepSelectionAtCursor() = with(stb) {
         if (!hasSelection) {
             selectStart = cursor
             selectEnd = cursor
@@ -796,7 +796,7 @@ class TextEditState {
     fun cut(): Boolean = when {
         hasSelection -> {
             deleteSelection() // implicity clamps
-            state.hasPreferredX = false
+            stb.hasPreferredX = false
             true
         }
         else -> false
@@ -809,20 +809,20 @@ class TextEditState {
         clamp()
         deleteSelection()
         // try to insert the characters
-        if (insertChars(state.cursor, textW, 0, len)) {
-            makeundoInsert(state.cursor, len)
-            state.cursor += len
-            state.hasPreferredX = true
+        if (insertChars(stb.cursor, textW, 0, len)) {
+            makeundoInsert(stb.cursor, len)
+            stb.cursor += len
+            stb.hasPreferredX = true
             return true
         }
         // remove the undo since we didn't actually insert the characters
-        if (state.undostate.undoPoint != 0)
-            --state.undostate.undoPoint
+        if (stb.undostate.undoPoint != 0)
+            --stb.undostate.undoPoint
         return false
     }
 
     /** API key: process a keyboard input   */
-    fun key(key: Int): Unit = with(state) {
+    fun key(key: Int): Unit = with(stb) {
         when (key) {
             K.UNDO -> {
                 undo()
@@ -1037,7 +1037,7 @@ class TextEditState {
                 else while (cursor > 0 && getChar(cursor - 1) != '\n')
                     --cursor
                 selectEnd = cursor
-                state.hasPreferredX = false
+                stb.hasPreferredX = false
             }
             K.LINEEND or K.SHIFT -> {
                 val n = stringLen

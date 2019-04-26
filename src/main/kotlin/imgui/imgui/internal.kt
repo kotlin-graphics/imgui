@@ -69,7 +69,6 @@ import uno.kotlin.getValue
 import uno.kotlin.setValue
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.StringSelection
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.regex.Pattern
@@ -2158,6 +2157,7 @@ interface imgui_internal {
         // Can't use both together (they both use tab key)
         assert(!((flags has Itf.CallbackCompletion) && (flags has Itf.AllowTabInput)))
 
+        val RENDER_SELECTION_WHEN_INACTIVE = true
         val isMultiline = flags has Itf.Multiline
         val isReadOnly = flags has Itf.ReadOnly
         val isPassword = flags has Itf.Password
@@ -2232,8 +2232,8 @@ interface imgui_internal {
         val userScrollActive = isMultiline && state != null && g.activeId == getScrollbarID(drawWindow, Axis.Y)
 
         var clearActiveId = false
-
         var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || userNavInputStart) && !isMultiline
+
 //        println(g.imeLastKey)
         if (focusRequested || userClicked || userScrollFinish || userNavInputStart) {
             if (g.activeId != id /*|| g.imeLastKey != 0*/) { // TODO clean outdated ime
@@ -2277,11 +2277,11 @@ interface imgui_internal {
                 else {
                     state.id = id
                     state.scrollX = 0f
-                    state.state.clear(!isMultiline)
+                    state.stb.clear(!isMultiline)
                     if (!isMultiline && focusRequestedByCode) selectAll = true
                 }
                 if (flags has Itf.AlwaysInsertMode)
-                    state.state.insertMode = true
+                    state.stb.insertMode = true
                 if (!isMultiline && (focusRequestedByTab || (userClicked && io.keyCtrl)))
                     selectAll = true
             }
@@ -2353,8 +2353,8 @@ interface imgui_internal {
                     state.cursorAnimReset()
                 }
             } else if (io.mouseDown[0] && !state.selectedAllMouseLock && io.mouseDelta anyNotEqual 0f) {
-                state.state.selectStart = state.state.cursor
-                state.state.selectEnd = state.locateCoord(mouseX, mouseY)
+                state.stb.selectStart = state.stb.cursor
+                state.stb.selectEnd = state.locateCoord(mouseX, mouseY)
                 state.cursorFollow = true
                 state.cursorAnimReset()
             }
@@ -2469,8 +2469,8 @@ interface imgui_internal {
                 isCut || isCopy -> {
                     // Cut, Copy
                     io.setClipboardTextFn?.let {
-                        val ib = if (state.hasSelection) min(state.state.selectStart, state.state.selectEnd) else 0
-                        val ie = if (state.hasSelection) max(state.state.selectStart, state.state.selectEnd) else state.curLenW
+                        val ib = if (state.hasSelection) min(state.stb.selectStart, state.stb.selectEnd) else 0
+                        val ie = if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
                         clipboardText = String(state.textW, ib, ie)
                     }
                     if (isCut) {
@@ -2485,8 +2485,8 @@ interface imgui_internal {
                         state.deleteSelection()
                     val data = Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as? String
                     data?.let {
-                        state.insertChars(state.state.cursor, data.toCharArray(), 0, data.toCharArray().size)
-                        state.state.cursor += data.length
+                        state.insertChars(state.stb.cursor, data.toCharArray(), 0, data.toCharArray().size)
+                        state.stb.cursor += data.length
                     }
                 }
             }
@@ -2543,9 +2543,9 @@ interface imgui_internal {
                         cbData.bufSize = state.bufCapacityA
                         cbData.bufDirty = false
 
-                        val cursorPos = state.state.cursor
-                        val selectionStart = state.state.selectStart
-                        val selectionEnd = state.state.selectEnd
+                        val cursorPos = state.stb.cursor
+                        val selectionStart = state.stb.selectStart
+                        val selectionEnd = state.stb.selectEnd
 
                         cbData.cursorPos = cursorPos
                         cbData.selectionStart = selectionStart
@@ -2557,13 +2557,13 @@ interface imgui_internal {
                         assert(cbData.flags == flags)
 
                         if (cbData.cursorPos != cursorPos) {
-                            state.state.cursor = cbData.cursorPos
+                            state.stb.cursor = cbData.cursorPos
                         }
                         if (cbData.selectionStart != selectionStart) {
-                            state.state.selectStart = cbData.selectionStart
+                            state.stb.selectStart = cbData.selectionStart
                         }
                         if (cbData.selectionEnd != selectionEnd) {
-                            state.state.selectEnd = cbData.selectionEnd
+                            state.stb.selectEnd = cbData.selectionEnd
                         }
                         if (cbData.bufDirty) {
                             assert(cbData.bufTextLen == cbData.buf.strlen)
@@ -2635,7 +2635,11 @@ interface imgui_internal {
         val clipRect = Vec4(frameBb.min, frameBb.min + size) // Not using frameBb.Max because we have adjusted size
         val drawPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + style.framePadding
         val textSize = Vec2()
-        if (g.activeId == id || userScrollActive) {
+        // We currently only render selection when the widget is active or while scrolling.
+        // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
+        val renderCursor = g.activeId == id || userScrollActive
+        val renderSelection = state?.hasSelection == true && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
+        if (renderCursor || renderSelection) {
 
             /*  Render text (with cursor and selection)
                 This is going to be messy. We need to:
@@ -2653,13 +2657,18 @@ interface imgui_internal {
             val selectStartOffset = Vec2()
 
             run {
-                // Count lines + find lines numbers straddling 'cursor' and 'selectStart' position.
-                val searchesInputPtr = intArrayOf(state.state.cursor, 0)
-                var searchesRemaining = 1
-                val searchesResultLineNumber = intArrayOf(-1, -999)
-                if (state.state.selectStart != state.state.selectEnd) {
-                    searchesInputPtr[1] = glm.min(state.state.selectStart, state.state.selectEnd)
-                    searchesResultLineNumber[1] = -1
+                // Find lines numbers straddling 'cursor' (slot 0) and 'select_start' (slot 1) positions.
+                val searchesInputPtr = IntArray(2)
+                val searchesResultLineNo = intArrayOf(-1000, -1000)
+                var searchesRemaining = 0
+                if (renderCursor) {
+                    searchesInputPtr[0] = state.stb.cursor
+                    searchesResultLineNo[0] = -1
+                    searchesRemaining++
+                }
+                if (renderSelection) {
+                    searchesInputPtr[1] = state.stb.selectStart min state.stb.selectEnd
+                    searchesResultLineNo[1] = -1
                     searchesRemaining++
                 }
 
@@ -2671,27 +2680,29 @@ interface imgui_internal {
                 while (s < text.size && text[s] != NUL)
                     if (text[s++] == '\n') {
                         lineCount++
-                        if (searchesResultLineNumber[0] == -1 && s >= searchesInputPtr[0]) {
-                            searchesResultLineNumber[0] = lineCount
+                        if (searchesResultLineNo[0] == -1 && s >= searchesInputPtr[0]) {
+                            searchesResultLineNo[0] = lineCount
                             if (--searchesRemaining <= 0) break
                         }
-                        if (searchesResultLineNumber[1] == -1 && s >= searchesInputPtr[1]) {
-                            searchesResultLineNumber[1] = lineCount
+                        if (searchesResultLineNo[1] == -1 && s >= searchesInputPtr[1]) {
+                            searchesResultLineNo[1] = lineCount
                             if (--searchesRemaining <= 0) break
                         }
                     }
                 lineCount++
-                if (searchesResultLineNumber[0] == -1) searchesResultLineNumber[0] = lineCount
-                if (searchesResultLineNumber[1] == -1) searchesResultLineNumber[1] = lineCount
+                if (searchesResultLineNo[0] == -1)
+                    searchesResultLineNo[0] = lineCount
+                if (searchesResultLineNo[1] == -1)
+                    searchesResultLineNo[1] = lineCount
 
                 // Calculate 2d position by finding the beginning of the line and measuring distance
                 var start = text.beginOfLine(searchesInputPtr[0])
                 cursorOffset.x = inputTextCalcTextSizeW(text, start, searchesInputPtr[0]).x
-                cursorOffset.y = searchesResultLineNumber[0] * g.fontSize
-                if (searchesResultLineNumber[1] >= 0) {
+                cursorOffset.y = searchesResultLineNo[0] * g.fontSize
+                if (searchesResultLineNo[1] >= 0) {
                     start = text.beginOfLine(searchesInputPtr[1])
                     selectStartOffset.x = inputTextCalcTextSizeW(text, start, searchesInputPtr[1]).x
-                    selectStartOffset.y = searchesResultLineNumber[1] * g.fontSize
+                    selectStartOffset.y = searchesResultLineNo[1] * g.fontSize
                 }
 
                 // Store text height (note that we haven't calculated text width at all, see GitHub issues #383, #1224)
@@ -2700,7 +2711,7 @@ interface imgui_internal {
             }
 
             // Scroll
-            if (state.cursorFollow) {
+            if (renderCursor && state.cursorFollow) {
                 // Horizontal scroll in chunks of quarter width
                 if (flags hasnt Itf.NoHorizontalScroll) {
                     val scrollIncrementX = size.x * 0.25f
@@ -2722,20 +2733,20 @@ interface imgui_internal {
                     drawWindow.scroll.y = scrollY
                     drawPos.y = drawWindow.dc.cursorPos.y
                 }
+
+                state.cursorFollow = false
             }
-            val drawScroll = Vec2(state.scrollX, 0f)
-            state.cursorFollow = false
 
             // Draw selection
-            if (state.hasSelection) {
+            val drawScroll = Vec2(state.scrollX, 0f)
+            if (renderSelection) {
 
-                val textSelectedBegin = glm.min(state.state.selectStart, state.state.selectEnd)
-                val textSelectedEnd = glm.max(state.state.selectStart, state.state.selectEnd)
+                val textSelectedBegin = glm.min(state.stb.selectStart, state.stb.selectEnd)
+                val textSelectedEnd = glm.max(state.stb.selectStart, state.stb.selectEnd)
 
-                // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.
-                val bgOffYUp = if (isMultiline) 0f else -1f
+                val bgColor = getColorU32(Col.TextSelectedBg, if (renderCursor) 1f else 0.6f) // FIXME: current code flow mandate that render_cursor is always true here, we are leaving the transparent one for tests.
+                val bgOffYUp = if (isMultiline) 0f else -1f // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.
                 val bgOffYDn = if (isMultiline) 0f else 2f
-                val bgColor = Col.TextSelectedBg.u32
                 val rectPos = drawPos + selectStartOffset - drawScroll
                 var p = textSelectedBegin
                 while (p < textSelectedEnd) {
@@ -2767,17 +2778,18 @@ interface imgui_internal {
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, Col.Text.u32, bufDisplay, bufDisplayLen, 0f, clipRect)
 
             // Draw blinking cursor
-            state.cursorAnim += io.deltaTime
-            val cursorIsVisible = !io.configInputTextCursorBlink || g.inputTextState.cursorAnim <= 0f || glm.mod(g.inputTextState.cursorAnim, 1.2f) <= 0.8f
-            val cursorScreenPos = drawPos + cursorOffset - drawScroll
-            val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
-            if (cursorIsVisible && cursorScreenRect overlaps Rect(clipRect))
-                drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
+            if (renderCursor) {
+                state.cursorAnim += io.deltaTime
+                val cursorIsVisible = !io.configInputTextCursorBlink || state.cursorAnim <= 0f || glm.mod(state.cursorAnim, 1.2f) <= 0.8f
+                val cursorScreenPos = drawPos + cursorOffset - drawScroll
+                val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
+                if (cursorIsVisible && cursorScreenRect overlaps clipRect)
+                    drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
-            /*  Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor.
-                Bit of an extra nicety.)             */
-            if (!isReadOnly)
-                g.platformImePos = Vec2(cursorScreenPos.x - 1, cursorScreenPos.y - g.fontSize)
+                // Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor. Bit of an extra nicety.)
+                if (!isReadOnly)
+                    g.platformImePos.put(cursorScreenPos.x - 1f, cursorScreenPos.y - g.fontSize)
+            }
         } else {
             // Render text only (no selection, no cursor)
             val bufEnd = IntArray(1)
