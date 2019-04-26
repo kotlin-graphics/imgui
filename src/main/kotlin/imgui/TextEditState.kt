@@ -11,17 +11,17 @@ class TextEditState {
 
     /** widget id owning the text state */
     var id: ID = 0
-    /** edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer.
-     *  So we copy into own buffer.    */
-    var textW = CharArray(0)
-    /** backup of end-user buffer at the time of focus (in UTF-8, unaltered)    */
-    var initialTextA = CharArray(0)
-    /** temporary buffer for callbacks and other operations. size=capacity. */
-    var tempBufferA = CharArray(0)
     /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
     var curLenA = 0
     /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
     var curLenW = 0
+    /** edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer.
+     *  So we copy into own buffer.    */
+    var textW = CharArray(0)
+    /** temporary buffer for callbacks and other operations. size=capacity. */
+    var textA = CharArray(0)
+    /** backup of end-user buffer at the time of focus (in UTF-8, unaltered)    */
+    var initialTextA = CharArray(0)
     /** end-user buffer size    */
     var bufCapacityA = 0
     /** horizontal scrolling/offset */
@@ -42,8 +42,8 @@ class TextEditState {
 
     fun clearFreeMemory() {
         textW = charArrayOf()
+        textA = charArrayOf()
         initialTextA = charArrayOf()
-        tempBufferA = charArrayOf()
     }
 
     /** After a user-input the cursor stays on for a while without blinking */

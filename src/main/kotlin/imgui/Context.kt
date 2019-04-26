@@ -432,7 +432,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.privateClipboard = ""
         g.inputTextState.textW = charArrayOf()
         g.inputTextState.initialTextA = charArrayOf()
-        g.inputTextState.tempBufferA = charArrayOf()
+        g.inputTextState.textA = charArrayOf()
 
         if (g.logFile != null) {
             g.logFile = null
@@ -530,7 +530,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // Optional: Access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
     var getClipboardTextFn: ((userData: Any) -> String)? = null
-    var setClipboardTextFn: ((userData: Any, text: String) -> Unit)? = null
+    var setClipboardTextFn: ((String) -> Unit)? = null
     lateinit var clipboardUserData: Any
 
     //    // Optional: override memory allocations. MemFreeFn() may be called with a NULL pointer.
@@ -758,12 +758,12 @@ class InputTextCallbackData {
             // Contrary to STB_TEXTEDIT_INSERTCHARS() this is working in the UTF8 buffer, hence the midly similar code (until we remove the U16 buffer alltogether!)
             val editState = g.inputTextState
             assert(editState.id != 0 && g.activeId == editState.id)
-            assert(buf === editState.tempBufferA)
+            assert(buf === editState.textA)
             val newBufSize = bufTextLen + glm.clamp(newTextLen * 4, 32, max(256, newTextLen))
             val t = CharArray(newBufSize)
-            System.arraycopy(editState.tempBufferA, 0, t, 0, editState.tempBufferA.size)
-            editState.tempBufferA = t
-            buf = editState.tempBufferA
+            System.arraycopy(editState.textA, 0, t, 0, editState.textA.size)
+            editState.textA = t
+            buf = editState.textA
             editState.bufCapacityA = newBufSize
             bufSize = newBufSize
         }
