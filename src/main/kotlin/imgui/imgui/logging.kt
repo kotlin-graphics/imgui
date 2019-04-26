@@ -1,6 +1,7 @@
 package imgui.imgui
 
 import imgui.ImGui.button
+import imgui.ImGui.clipboardText
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
@@ -8,7 +9,6 @@ import imgui.ImGui.pushAllowKeyboardFocus
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
-import imgui.ImGui.setClipboardText
 import imgui.ImGui.sliderInt
 import imgui.g
 import java.io.File
@@ -49,7 +49,7 @@ interface imgui_logging {
             g.logFile = null
         }
         if (g.logClipboard.length > 1) {
-            setClipboardText(g.logClipboard.toString())
+            clipboardText = g.logClipboard.toString()
             g.logClipboard = StringBuilder()
         }
         g.logEnabled = false

@@ -131,7 +131,7 @@ class TextEditState {
 
     fun deleteChars(pos: Int, n: Int) {
 
-        if(n == 0)
+        if (n == 0)
             return
 
         var dst = pos
@@ -793,12 +793,14 @@ class TextEditState {
     }
 
     /** API cut: delete selection   */
-    fun cut() =
-            if (hasSelection) {
-                deleteSelection() // implicity clamps
-                state.hasPreferredX = false
-                true
-            } else false
+    fun cut(): Boolean = when {
+        hasSelection -> {
+            deleteSelection() // implicity clamps
+            state.hasPreferredX = false
+            true
+        }
+        else -> false
+    }
 
     /** API paste: replace existing selection with passed-in text   */
     fun paste(len: Int): Boolean {
