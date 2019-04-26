@@ -106,6 +106,7 @@ class Rect {
     infix operator fun contains(p: Vec2) = p.x >= min.x && p.y >= min.y && p.x < max.x && p.y < max.y
     infix operator fun contains(r: Rect) = r.min.x >= min.x && r.min.y >= min.y && r.max.x <= max.x && r.max.y <= max.y
     infix fun overlaps(r: Rect) = r.min.y < max.y && r.max.y > min.y && r.min.x < max.x && r.max.x > min.x
+    infix fun overlaps(v: Vec4) = v.y < max.y && v.w > min.y && v.x < max.x && v.z > min.x
     infix fun add(p: Vec2) {
         if (min.x > p.x) min.x = p.x
         if (min.y > p.y) min.y = p.y
