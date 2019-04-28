@@ -2922,17 +2922,17 @@ interface imgui_internal {
 
     /** @param flags ColorEditFlags */
     fun colorEditOptionsPopup(col: FloatArray, flags: ColorEditFlags) {
-        val allowOptInputs = flags hasnt Cef._InputsMask
+        val allowOptInputs = flags hasnt Cef._ShowMask
         val allowOptDatatype = flags hasnt Cef._DataTypeMask
         if ((!allowOptInputs && !allowOptDatatype) || !beginPopup("context")) return
         var opts = g.colorEditOptions
         if (allowOptInputs) {
-            if (radioButton("RGB", opts has Cef.RGB))
-                opts = (opts wo Cef._InputsMask) or Cef.RGB
-            if (radioButton("HSV", opts has Cef.HSV))
-                opts = (opts wo Cef._InputsMask) or Cef.HSV
-            if (radioButton("HEX", opts has Cef.HEX))
-                opts = (opts wo Cef._InputsMask) or Cef.HEX
+            if (radioButton("RGB", opts has Cef.ShowRGB))
+                opts = (opts wo Cef._ShowMask) or Cef.ShowRGB
+            if (radioButton("HSV", opts has Cef.ShowHSV))
+                opts = (opts wo Cef._ShowMask) or Cef.ShowHSV
+            if (radioButton("HEX", opts has Cef.ShowHEX))
+                opts = (opts wo Cef._ShowMask) or Cef.ShowHEX
         }
         if (allowOptDatatype) {
             if (allowOptInputs) separator()
