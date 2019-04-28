@@ -347,9 +347,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Accumulation buffer when log to clipboard. This is pointer so our GImGui static constructor doesn't call heap allocators.   */
     var logBuffer = StringBuilder()
 
-    var logStartDepth = 0
+    var logDepthRef = 0
 
-    var logAutoExpandMaxDepth = 2
+    var logDepthToExpand = 2
+
+    var logDepthToExpandDefault = 2
 
 
     //------------------------------------------------------------------

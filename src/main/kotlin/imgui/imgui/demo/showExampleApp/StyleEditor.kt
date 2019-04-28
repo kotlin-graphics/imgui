@@ -26,6 +26,7 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
+import imgui.ImGui.logToTTY
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
@@ -166,7 +167,7 @@ object StyleEditor {
                     if (outputDest == 0)
                         logToClipboard()
                     else
-                        TODO() //logToTTY()
+                        logToTTY()
                     logText("val colors = ImGui.style.colors\n")
                     for (i in Col.values()) {
                         val col = style.colors[i]

@@ -20,11 +20,14 @@ import java.io.FileWriter
  *  By default, tree nodes are automatically opened during logging.     */
 interface imgui_logging {
 
-//    IMGUI_API void          LogToTTY(int max_depth = -1);                                       // Start logging/capturing text output to TTY
-//    IMGUI_API void          LogToFile(int max_depth = -1, const char* filename = NULL);         // Start logging/capturing text output to given file
+    /** Start logging/capturing text output to TTY */
+    fun logToTTY(autoOpenDepth: Int  = -1): Nothing = TODO()
+
+    /** Start logging/capturing text output to given file */
+    fun logToFile(autoOpenDepth: Int  = -1, filename: String? = null): Nothing = TODO()
 
     /** start logging ImGui output to OS clipboard   */
-    fun logToClipboard(maxDepth: Int = -1) {
+    fun logToClipboard(autoOpenDepth: Int = -1) {
 
         if (g.logEnabled) return
 
@@ -35,12 +38,11 @@ interface imgui_logging {
         g.logType = LogType.Clipboard
         g.logFile = null
         g.logEnabled = true
-        g.logStartDepth = window.dc.treeDepth
-        if (maxDepth >= 0)
-            g.logAutoExpandMaxDepth = maxDepth
+        g.logDepthRef = window.dc.treeDepth
+        g.logDepthToExpand = autoOpenDepth.takeIf { it >= 0 } ?: g.logDepthToExpandDefault
     }
 
-//    void ImGui::LogToBuffer(int max_depth)
+    fun logToBuffer(autoOpenDepth: Int = -1): Nothing = TODO()
 
     /** stop logging (close file, etc.) */
     fun logFinish() {
@@ -76,15 +78,15 @@ interface imgui_logging {
         val logToClipboard = button("Log To Clipboard"); sameLine()
         pushItemWidth(80f)
         pushAllowKeyboardFocus(false)
-        sliderInt("Depth", g::logAutoExpandMaxDepth, 0, 9)
+        sliderInt("Default Depth", g::logDepthToExpandDefault, 0, 9)
         popAllowKeyboardFocus()
         popItemWidth()
         popId()
 
         // Start logging at the end of the function so that the buttons don't appear in the log
-        if (logToTty) TODO()//LogToTTY(g.LogAutoExpandMaxDepth)
-        if (logToFile) logToFile(g.logAutoExpandMaxDepth, g.logFile)
-        if (logToClipboard) logToClipboard(g.logAutoExpandMaxDepth)
+        if (logToTty) logToTTY()
+        if (logToFile) logToFile()
+        if (logToClipboard) logToClipboard()
     }
 
     fun logToFile(maxDepth: Int, file_: File?) {
@@ -95,9 +97,9 @@ interface imgui_logging {
         g.logFile = file_ ?: g.logFile ?: return
 
         g.logEnabled = true
-        g.logStartDepth = window.dc.treeDepth
+        g.logDepthRef = window.dc.treeDepth
         if (maxDepth >= 0)
-            g.logAutoExpandMaxDepth = maxDepth
+            g.logDepthToExpandDefault = maxDepth
     }
 
     /** pass text data straight to log (without being displayed)    */
