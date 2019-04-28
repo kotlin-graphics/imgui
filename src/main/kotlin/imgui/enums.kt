@@ -407,7 +407,7 @@ val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 
 /** A primary data type */
 enum class DataType {
-    Int, Uint, Long, Ulong, Float, Double, Vec2;
+    Byte, Ubyte, Short, Ushort, Int, Uint, Long, Ulong, Float, Double;
 
     @JvmField
     val i = ordinal
