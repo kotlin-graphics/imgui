@@ -844,7 +844,7 @@ enum class StyleVar {
 enum class ColorEditFlag(@JvmField val i: Int) {
 
     None(0),
-    /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (read 3 components from the input pointer). */
+    /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (will only read 3 components from the input pointer). */
     NoAlpha(1 shl 1),
     /** ColorEdit: disable picker when clicking on colored square.  */
     NoPicker(1 shl 2),
@@ -863,9 +863,9 @@ enum class ColorEditFlag(@JvmField val i: Int) {
     /** ColorEdit: disable drag and drop target. ColorButton: disable drag and drop source. */
     NoDragDrop(1 shl 9),
 
-    /*  User Options (right-click on widget to change some of them). You can set application defaults using
-        SetColorEditOptions(). The idea is that you probably don't want to override them in most of your calls,
-        let the user choose and/or call SetColorEditOptions() during startup.     */
+    /*  User Options (right-click on widget to change some of them). You can set application defaults using SetColorEditOptions().
+        The intent is that you probably don't want to override them in most of your calls, let the user choose via the option menu
+        and/or call SetColorEditOptions() during startup.   */
     /** ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker. */
     AlphaBar(1 shl 16),
     /** ColorEdit, ColorPicker, ColorButton: display preview as a transparent color over a checkerboard, instead of opaque. */
@@ -875,12 +875,12 @@ enum class ColorEditFlag(@JvmField val i: Int) {
     /** (WIP) ColorEdit: Currently only disable 0.0f..1.0f limits in RGBA edition (note: you probably want to use
      *  ColorEditFlags.Float flag as well). */
     HDR(1 shl 19),
-    /** [Show] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
-    ShowRGB(1 shl 20),
-    /** [Show] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
-    ShowHSV(1 shl 21),
-    /** [Show] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
-    ShowHEX(1 shl 22),
+    /** [Display] ColorEdit: override _display_ type among RGB/HSV/Hex. ColorPicker: select any combination using one or more of RGB/HSV/Hex.    */
+    DisplayRGB(1 shl 20),
+    /** [Display] ColorEdit: override _display_ type among RGB/HSV/Hex. ColorPicker: select any combination using one or more of RGB/HSV/Hex.    */
+    DisplayHSV(1 shl 21),
+    /** [Display] ColorEdit: override _display_ type among RGB/HSV/Hex. ColorPicker: select any combination using one or more of RGB/HSV/Hex.    */
+    DisplayHEX(1 shl 22),
     /** [DataType] ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0..255.   */
     Uint8(1 shl 23),
     /** [DataType] ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0.0f..1.0f floats instead of 0..255 integers.
@@ -892,11 +892,11 @@ enum class ColorEditFlag(@JvmField val i: Int) {
     PickerHueWheel(1 shl 26),
 
     // [Internal] Masks
-    _ShowMask(ShowRGB or ShowHSV or ShowHEX),
+    _DisplayMask(DisplayRGB or DisplayHSV or DisplayHEX),
     _DataTypeMask(Uint8 or Float),
     _PickerMask(PickerHueWheel or PickerHueBar),
     /** Change application default using SetColorEditOptions()  */
-    _OptionsDefault(Uint8 or ShowRGB or PickerHueBar)
+    _OptionsDefault(Uint8 or DisplayRGB or PickerHueBar)
 }
 
 infix fun ColorEditFlag.and(other: ColorEditFlag): ColorEditFlags = i and other.i
