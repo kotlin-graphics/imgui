@@ -69,6 +69,12 @@ class TextEditState {
         stb.hasPreferredX = false
     }
 
+    val undoAvailCount: Int
+        get() = stb.undostate.undoPoint
+
+    val redoAvailCount: Int
+        get() = UNDOSTATECOUNT - stb.undostate.redoPoint
+
     /** Cannot be inline because we call in code in stb_textedit.h implementation */
     fun onKeyPressed(key: Int) {
         key(key)

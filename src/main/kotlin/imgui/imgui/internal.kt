@@ -2321,30 +2321,33 @@ interface imgui_internal {
             if (!isMultiline && flags hasnt Itf.CallbackHistory)
                 g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
         }
+
+        // We have an edge case if ActiveId was set through another widget (e.g. widget being swapped), clear id immediately (don't wait until the end of the function)
+        if (g.activeId == id && state == null)
+            clearActiveId()
+
         // Release focus when we click outside
         if (!initMakeActive && io.mouseClicked[0])
             clearActiveId = true
-
-        // We have an edge case if ActiveId was set through another widget (e.g. widget being swapped)
-        if (g.activeId == id && state == null)
-            clearActiveId()
 
         var valueChanged = false
         var enterPressed = false
         var backupCurrentTextLength = 0
 
+        // When read-only we always use the live data passed to the function
+        if (g.activeId == id && isReadOnly && !g.activeIdIsJustActivated) {
+            state!!
+            val tmp = CharArray(buf.size)
+            System.arraycopy(state.textW, 0, tmp, 0, state.textW.size)
+            val bufEnd = -1
+            state.curLenW = state.textW.textStr(buf) // TODO check
+            state.curLenA = state.curLenW // TODO check
+            state.cursorClamp()
+        }
+
         // Process mouse inputs and character inputs
         if (g.activeId == id) {
             val state = state!!
-            if (isReadOnly && !g.activeIdIsJustActivated) {
-                // When read-only we always use the live data passed to the function
-                val tmp = CharArray(buf.size)
-                System.arraycopy(state.textW, 0, tmp, 0, state.textW.size)
-                val bufEnd = -1
-                state.curLenW = state.textW.textStr(buf) // TODO check
-                state.curLenA = state.curLenW // TODO check
-                state.cursorClamp()
-            }
 
             backupCurrentTextLength = state.curLenA
             state.apply {
@@ -2666,7 +2669,7 @@ interface imgui_internal {
 
         // Render text. We currently only render selection when the widget is active or while scrolling.
         // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
-        val renderCursor = g.activeId == id || userScrollActive
+        val renderCursor = g.activeId == id || (state != null && userScrollActive)
         val renderSelection = state?.hasSelection == true && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
         if (renderCursor || renderSelection) {
 
@@ -2821,14 +2824,14 @@ interface imgui_internal {
             }
         } else {
             // Render text only (no selection, no cursor)
-            val bufEnd = IntArray(1)
+            val bufDisplayEnd = IntArray(1)
             if (isMultiline)
             // We don't need width
-                textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufEnd) * g.fontSize)
+                textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufDisplayEnd) * g.fontSize)
             else
-                bufEnd[0] = bufDisplay.strlen
-            if (isMultiline || bufEnd[0] < bufDisplayMaxLength)
-                drawWindow.drawList.addText(g.font, g.fontSize, drawPos, Col.Text.u32, bufDisplay, bufEnd[0], 0f, clipRect)
+                bufDisplayEnd[0] = bufDisplay.strlen
+            if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength)
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos, Col.Text.u32, bufDisplay, bufDisplayEnd[0], 0f, clipRect)
         }
 
         if (isMultiline) {
