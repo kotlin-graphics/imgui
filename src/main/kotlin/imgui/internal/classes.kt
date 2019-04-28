@@ -216,7 +216,6 @@ class GroupData {
     var backupGroupOffset = 0f
     var backupCurrentLineSize = Vec2()
     var backupCurrentLineTextBaseOffset = 0f
-    var backupLogLinePosY = 0f
     var backupActiveIdIsAlive = 0
     var backupActiveIdPreviousFrameIsAlive = false
     var advanceCursor = false
@@ -476,8 +475,6 @@ class WindowTempData {
     var prevLineSize = Vec2()
 
     var prevLineTextBaseOffset = 0f
-
-    var logLinePosY = -1f
 
     var treeDepth = 0
     /** Store a copy of !g.NavIdIsAlive for TreeDepth 0..31 */

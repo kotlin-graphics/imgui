@@ -71,7 +71,6 @@ interface imgui_cursorLayout {
                         backupGroupOffset = dc.groupOffset
                         backupCurrentLineSize put dc.currentLineSize
                         backupCurrentLineTextBaseOffset = dc.currentLineTextBaseOffset
-                        backupLogLinePosY = dc.logLinePosY
                         backupActiveIdIsAlive = g.activeIdIsAlive
                         backupActiveIdPreviousFrameIsAlive = g.activeIdPreviousFrameIsAlive
                         advanceCursor = true
@@ -80,7 +79,8 @@ interface imgui_cursorLayout {
             dc.indent = dc.groupOffset
             dc.cursorMaxPos put dc.cursorPos
             dc.currentLineSize.y = 0f
-            dc.logLinePosY = dc.cursorPos.y - 9999f // To enforce Log carriage return
+            if (g.logEnabled)
+                g.logLinePosY = -Float.MAX_VALUE;// To enforce Log carriage return
         }
     }
 
@@ -103,7 +103,8 @@ interface imgui_cursorLayout {
             groupOffset = groupData.backupGroupOffset
             currentLineSize put groupData.backupCurrentLineSize
             currentLineTextBaseOffset = groupData.backupCurrentLineTextBaseOffset
-            logLinePosY = cursorPos.y - 9999f // To enforce Log carriage return
+            if (g.logEnabled)
+                g.logLinePosY = -Float.MAX_VALUE // To enforce Log carriage return
         }
 
         if (groupData.advanceCursor) {
