@@ -251,7 +251,7 @@ object showDemoWindowWidgets {
     var sidePreview = true
     var refColor = false
     var refColorV = Vec4(1f, 0f, 1f, 0.5f)
-    var showMode = 2
+    var displayMode = 0
     var pickerMode = 0
 
 
@@ -685,10 +685,10 @@ object showDemoWindowWidgets {
                             val x = i % 4
                             val y = i / 4
                             // @formatter:off
-                            if (x > 0)              selected3[i - 1] = selected3[i - 1] xor true
-                            if (x < 3 && i < 15)    selected3[i + 1] = selected3[i + 1] xor true
-                            if (y > 0 && i > 3)     selected3[i - 4] = selected3[i - 4] xor true
-                            if (y < 3 && i < 12)    selected3[i + 4] = selected3[i + 4] xor true
+                            if (x > 0) selected3[i - 1] = selected3[i - 1] xor true
+                            if (x < 3 && i < 15) selected3[i + 1] = selected3[i + 1] xor true
+                            if (y > 0 && i > 3) selected3[i - 4] = selected3[i - 4] xor true
+                            if (y < 3 && i < 12) selected3[i + 4] = selected3[i + 4] xor true
                             // @formatter:on
                         }
                         if ((i % 4) < 3) sameLine()
@@ -702,7 +702,7 @@ object showDemoWindowWidgets {
                         val name = "(%.1f,%.1f)".format(alignment.x, alignment.y)
                         if (x > 0) sameLine()
                         pushStyleVar(StyleVar.SelectableTextAlign, alignment)
-                        selectable(name, selected4, 3*y+x, Sf.None.i, Vec2(80))
+                        selectable(name, selected4, 3 * y + x, Sf.None.i, Vec2(80))
                         popStyleVar()
                     }
             }
@@ -808,7 +808,7 @@ object showDemoWindowWidgets {
             colorEdit3("MyColor##1", color, miscFlags)
 
             text("Color widget HSV with Alpha:")
-            colorEdit4("MyColor##2", color, Cef.ShowHSV or miscFlags)
+            colorEdit4("MyColor##2", color, Cef.DisplayHSV or miscFlags)
 
             text("Color widget with Float Display:")
             colorEdit4("MyColor##2f", color, Cef.Float or miscFlags)
@@ -883,31 +883,28 @@ object showDemoWindowWidgets {
                     colorEdit4("##RefColor", refColorV, Cef.NoInputs or miscFlags)
                 }
             }
-            combo("Show Mode", ::showMode, "All\u0000None\u0000Show RGB\u0000Show HSV\u0000Show HEX\u0000")
+            combo("Display Mode", ::displayMode, "Auto/Current\u0000None\u0000RGB Only\u0000HSV Only\u0000Hex Only\u0000")
+            sameLine(); showHelpMarker("ColorEdit defaults to displaying RGB inputs if you don't specify a display mode, but the user can change it with a right-click.\n\nColorPicker defaults to displaying RGB+HSV+Hex if you don't specify a display mode.\n\nYou can change the defaults using SetColorEditOptions().")
             combo("Picker Mode", ::pickerMode, "Auto/Current\u0000Hue bar + SV rect\u0000Hue wheel + SV triangle\u0000")
             sameLine(); showHelpMarker("User can right-click the picker to change mode.")
             var flags = miscFlags
+            // @formatter:off
             if (!alpha) flags = flags or Cef.NoAlpha // This is by default if you call ColorPicker3() instead of ColorPicker4()
             if (alphaBar) flags = flags or Cef.AlphaBar
             if (!sidePreview) flags = flags or Cef.NoSidePreview
-            flags = flags or when (pickerMode) {
-                1 -> Cef.PickerHueBar
-                2 -> Cef.PickerHueWheel
-                else -> Cef.None
-            }
-            flags = flags or when (showMode) {
-                1 -> Cef.NoInputs
-                2 -> Cef.ShowRGB
-                3 -> Cef.ShowHSV
-                4 -> Cef.ShowHEX
-                else -> Cef.None
-            }
+            if (pickerMode == 1) flags = flags or Cef.PickerHueBar
+            if (pickerMode == 2) flags = flags or Cef.PickerHueWheel
+            if (displayMode == 1) flags = flags or Cef.NoInputs     // Disable all RGB/HSV/Hex displays
+            if (displayMode == 2) flags = flags or Cef.DisplayRGB   // Override display mode
+            if (displayMode == 3) flags = flags or Cef.DisplayHSV
+            if (displayMode == 4) flags = flags or Cef.DisplayHEX
+            // @formatter:on
             colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
 
             text("Programmatically set defaults:")
             sameLine(); showHelpMarker("SetColorEditOptions() is designed to allow you to set boot-time default.\nWe don't have Push/Pop functions because you can force options on a per-widget basis if needed, and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid encouraging you to persistently save values that aren't forward-compatible.")
             if (button("Default: Uint8 + HSV + Hue Bar"))
-                setColorEditOptions(Cef.Uint8 or Cef.ShowHSV or Cef.PickerHueBar)
+                setColorEditOptions(Cef.Uint8 or Cef.DisplayHSV or Cef.PickerHueBar)
             if (button("Default: Float + HDR + Hue Wheel"))
                 setColorEditOptions(Cef.Float or Cef.HDR or Cef.PickerHueWheel)
         }
