@@ -119,16 +119,16 @@ interface colorEditorPicker {
 
         // If we're not showing any slider there's no point in doing any HSV conversions
         val flagsUntouched = flags
-        if (flags has Cef.NoInputs) flags = (flags wo Cef._InputsMask) or Cef.RGB or Cef.NoOptions
+        if (flags has Cef.NoInputs) flags = (flags wo Cef._ShowMask) or Cef.ShowRGB or Cef.NoOptions
 
         // Context menu: display and modify options (before defaults are applied)
         if (flags hasnt Cef.NoOptions) colorEditOptionsPopup(col, flags)
 
         // Read stored options
-        if (flags hasnt Cef._InputsMask) flags = flags or (g.colorEditOptions and Cef._InputsMask)
+        if (flags hasnt Cef._ShowMask) flags = flags or (g.colorEditOptions and Cef._ShowMask)
         if (flags hasnt Cef._DataTypeMask) flags = flags or (g.colorEditOptions and Cef._DataTypeMask)
         if (flags hasnt Cef._PickerMask) flags = flags or (g.colorEditOptions and Cef._PickerMask)
-        flags = flags or (g.colorEditOptions wo (Cef._InputsMask or Cef._DataTypeMask or Cef._PickerMask))
+        flags = flags or (g.colorEditOptions wo (Cef._ShowMask or Cef._DataTypeMask or Cef._PickerMask))
 
         val alpha = flags hasnt Cef.NoAlpha
         val hdr = flags has Cef.HDR
@@ -136,14 +136,14 @@ interface colorEditorPicker {
 
         // Convert to the formats we need
         val f = floatArrayOf(col[0], col[1], col[2], if (alpha) col[3] else 1f)
-        if (flags has Cef.HSV) f.rgbToHSV()
+        if (flags has Cef.ShowHSV) f.rgbToHSV()
 
         val i = IntArray(4) { F32_TO_INT8_UNBOUND(f[it]) }
 
         var valueChanged = false
         var valueChangedAsFloat = false
 
-        if (flags has (Cef.RGB or Cef.HSV) && flags hasnt Cef.NoInputs) {
+        if (flags has (Cef.ShowRGB or Cef.ShowHSV) && flags hasnt Cef.NoInputs) {
 
             // RGB/HSV 0..255 Sliders
             val wItemOne = glm.max(1f, ((wItemsAll - style.itemInnerSpacing.x * (components - 1)) / components).i.f)
@@ -159,7 +159,7 @@ interface colorEditorPicker {
                     arrayOf("%.3f", "%.3f", "%.3f", "%.3f"),            // Short display
                     arrayOf("R:%.3f", "G:%.3f", "B:%.3f", "A:%.3f"),    // Long display for RGBA
                     arrayOf("H:%.3f", "S:%.3f", "V:%.3f", "A:%.3f"))    // Long display for HSVA
-            val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.HSV) 2 else 1
+            val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.ShowHSV) 2 else 1
 
             pushItemWidth(wItemOne)
             for (n in 0 until components) {
@@ -178,7 +178,7 @@ interface colorEditorPicker {
             popItemWidth()
             popItemWidth()
 
-        } else if (flags has Cef.HEX && flags hasnt Cef.NoInputs) {
+        } else if (flags has Cef.ShowHEX && flags hasnt Cef.NoInputs) {
             // RGB Hexadecimal Input
             val text = if (alpha) "#%02X%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255), glm.clamp(i[3], 0, 255))
             else "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))
@@ -214,7 +214,7 @@ interface colorEditorPicker {
                     spacing()
                 }
                 val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
-                val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._InputsMask or Cef.NoLabel or Cef.AlphaPreviewHalf
+                val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._ShowMask or Cef.NoLabel or Cef.AlphaPreviewHalf
                 pushItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
                 val p = g.colorPickerRef to FloatArray(4)
                 valueChanged = colorPicker4("##picker", col, pickerFlags, p) or valueChanged
@@ -232,7 +232,7 @@ interface colorEditorPicker {
         // Convert back
         if (pickerActiveWindow == null) {
             if (!valueChangedAsFloat) for (n in 0..3) f[n] = i[n] / 255f
-            if (flags has Cef.HSV) f.hsvToRGB()
+            if (flags has Cef.ShowHSV) f.hsvToRGB()
             if (valueChanged) {
                 col[0] = f[0]
                 col[1] = f[1]
@@ -479,15 +479,15 @@ interface colorEditorPicker {
                     Cef.AlphaPreview or Cef.AlphaPreviewHalf
             val subFlags = (flags and subFlagsToForward) or Cef.NoPicker
             valueChanged = when {
-                flags has Cef.RGB || flags hasnt Cef._InputsMask ->
-                    if (colorEdit4("##rgb", col, subFlags or Cef.RGB)) {
+                flags has Cef.ShowRGB || flags hasnt Cef._ShowMask ->
+                    if (colorEdit4("##rgb", col, subFlags or Cef.ShowRGB)) {
                         // FIXME: Hackily differentiating using the DragInt (ActiveId != 0 && !ActiveIdAllowOverlap) vs. using the InputText or DropTarget.
                         // For the later we don't want to run the hue-wrap canceling code. If you are well versed in HSV picker please provide your input! (See #2050)
                         valueChangedFixHueWrap = g.activeId != 0 && !g.activeIdAllowOverlap
                         true
                     } else valueChanged
-                flags has Cef.HSV || flags hasnt Cef._InputsMask -> colorEdit4("##hsv", col, subFlags or Cef.HSV)
-                flags has Cef.HEX || flags hasnt Cef._InputsMask -> colorEdit4("##hex", col, subFlags or Cef.HEX)
+                flags has Cef.ShowHSV || flags hasnt Cef._ShowMask -> colorEdit4("##hsv", col, subFlags or Cef.ShowHSV)
+                flags has Cef.ShowHEX || flags hasnt Cef._ShowMask -> colorEdit4("##hex", col, subFlags or Cef.ShowHEX)
                 else -> false
             } or valueChanged
             popItemWidth()
@@ -690,13 +690,13 @@ interface colorEditorPicker {
      *  type, etc. User will be able to change many settings, unless you pass the _NoOptions flag to your calls.    */
     fun setColorEditOptions(flags_: ColorEditFlags) {
         var flags = flags_
-        if (flags hasnt Cef._InputsMask)
-            flags = flags or (Cef._OptionsDefault and Cef._InputsMask)
+        if (flags hasnt Cef._ShowMask)
+            flags = flags or (Cef._OptionsDefault and Cef._ShowMask)
         if (flags hasnt Cef._DataTypeMask)
             flags = flags or (Cef._OptionsDefault and Cef._DataTypeMask)
         if (flags hasnt Cef._PickerMask)
             flags = flags or (Cef._OptionsDefault and Cef._PickerMask)
-        assert((flags and Cef._InputsMask).isPowerOfTwo) { "Check only 1 option is selected" }
+        assert((flags and Cef._ShowMask).isPowerOfTwo) { "Check only 1 option is selected" }
         assert((flags and Cef._DataTypeMask).isPowerOfTwo) { "Check only 1 option is selected" }
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check only 1 option is selected" }
         g.colorEditOptions = flags

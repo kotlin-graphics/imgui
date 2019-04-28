@@ -875,12 +875,12 @@ enum class ColorEditFlag(@JvmField val i: Int) {
     /** (WIP) ColorEdit: Currently only disable 0.0f..1.0f limits in RGBA edition (note: you probably want to use
      *  ColorEditFlags.Float flag as well). */
     HDR(1 shl 19),
-    /** [Inputs] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
-    RGB(1 shl 20),
-    /** [Inputs] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
-    HSV(1 shl 21),
-    /** [Inputs] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
-    HEX(1 shl 22),
+    /** [Show] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
+    ShowRGB(1 shl 20),
+    /** [Show] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
+    ShowHSV(1 shl 21),
+    /** [Show] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.    */
+    ShowHEX(1 shl 22),
     /** [DataType] ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0..255.   */
     Uint8(1 shl 23),
     /** [DataType] ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0.0f..1.0f floats instead of 0..255 integers.
@@ -892,11 +892,11 @@ enum class ColorEditFlag(@JvmField val i: Int) {
     PickerHueWheel(1 shl 26),
 
     // [Internal] Masks
-    _InputsMask(RGB or HSV or HEX),
+    _ShowMask(ShowRGB or ShowHSV or ShowHEX),
     _DataTypeMask(Uint8 or Float),
     _PickerMask(PickerHueWheel or PickerHueBar),
     /** Change application default using SetColorEditOptions()  */
-    _OptionsDefault(Uint8 or RGB or PickerHueBar)
+    _OptionsDefault(Uint8 or ShowRGB or PickerHueBar)
 }
 
 infix fun ColorEditFlag.and(other: ColorEditFlag): ColorEditFlags = i and other.i

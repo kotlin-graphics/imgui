@@ -251,7 +251,7 @@ object showDemoWindowWidgets {
     var sidePreview = true
     var refColor = false
     var refColorV = Vec4(1f, 0f, 1f, 0.5f)
-    var inputsMode = 2
+    var showMode = 2
     var pickerMode = 0
 
 
@@ -808,7 +808,7 @@ object showDemoWindowWidgets {
             colorEdit3("MyColor##1", color, miscFlags)
 
             text("Color widget HSV with Alpha:")
-            colorEdit4("MyColor##2", color, Cef.HSV or miscFlags)
+            colorEdit4("MyColor##2", color, Cef.ShowHSV or miscFlags)
 
             text("Color widget with Float Display:")
             colorEdit4("MyColor##2f", color, Cef.Float or miscFlags)
@@ -883,7 +883,7 @@ object showDemoWindowWidgets {
                     colorEdit4("##RefColor", refColorV, Cef.NoInputs or miscFlags)
                 }
             }
-            combo("Inputs Mode", ::inputsMode, "All Inputs\u0000No Inputs\u0000RGB Input\u0000HSV Input\u0000HEX Input\u0000")
+            combo("Show Mode", ::showMode, "All\u0000None\u0000Show RGB\u0000Show HSV\u0000Show HEX\u0000")
             combo("Picker Mode", ::pickerMode, "Auto/Current\u0000Hue bar + SV rect\u0000Hue wheel + SV triangle\u0000")
             sameLine(); showHelpMarker("User can right-click the picker to change mode.")
             var flags = miscFlags
@@ -895,11 +895,11 @@ object showDemoWindowWidgets {
                 2 -> Cef.PickerHueWheel
                 else -> Cef.None
             }
-            flags = flags or when (inputsMode) {
+            flags = flags or when (showMode) {
                 1 -> Cef.NoInputs
-                2 -> Cef.RGB
-                3 -> Cef.HSV
-                4 -> Cef.HEX
+                2 -> Cef.ShowRGB
+                3 -> Cef.ShowHSV
+                4 -> Cef.ShowHEX
                 else -> Cef.None
             }
             colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
@@ -907,7 +907,7 @@ object showDemoWindowWidgets {
             text("Programmatically set defaults:")
             sameLine(); showHelpMarker("SetColorEditOptions() is designed to allow you to set boot-time default.\nWe don't have Push/Pop functions because you can force options on a per-widget basis if needed, and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid encouraging you to persistently save values that aren't forward-compatible.")
             if (button("Default: Uint8 + HSV + Hue Bar"))
-                setColorEditOptions(Cef.Uint8 or Cef.HSV or Cef.PickerHueBar)
+                setColorEditOptions(Cef.Uint8 or Cef.ShowHSV or Cef.PickerHueBar)
             if (button("Default: Float + HDR + Hue Wheel"))
                 setColorEditOptions(Cef.Float or Cef.HDR or Cef.PickerHueWheel)
         }
