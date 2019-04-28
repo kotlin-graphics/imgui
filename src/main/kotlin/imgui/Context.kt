@@ -278,7 +278,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Tab bars
     val tabBars = TabBarPool()
-    val currentTabBarStack = Stack<TabBar>()
+    val currentTabBarStack = Stack<TabBarRef>()
     var currentTabBar: TabBar? = null
     val tabSortByWidthBuffer = ArrayList<TabBarSortItem>()
 
