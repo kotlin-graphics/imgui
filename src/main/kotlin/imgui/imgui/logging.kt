@@ -2,6 +2,7 @@ package imgui.imgui
 
 import imgui.ImGui.button
 import imgui.ImGui.clipboardText
+import imgui.ImGui.logBegin
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
@@ -31,18 +32,8 @@ interface imgui_logging {
 
         if (g.logEnabled) return
 
-        val window = g.currentWindow!!
-
-        assert(g.logFile != null && g.logBuffer.isEmpty())
-        g.logEnabled = true
-        g.logType = LogType.Clipboard
-        g.logFile = null
-        g.logEnabled = true
-        g.logDepthRef = window.dc.treeDepth
-        g.logDepthToExpand = autoOpenDepth.takeIf { it >= 0 } ?: g.logDepthToExpandDefault
+        logBegin(LogType.Clipboard, autoOpenDepth)
     }
-
-    fun logToBuffer(autoOpenDepth: Int = -1): Nothing = TODO()
 
     /** stop logging (close file, etc.) */
     fun logFinish() {

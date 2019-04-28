@@ -567,7 +567,6 @@ interface imgui_window {
                 dc.navLayerActiveMask = window.dc.navLayerActiveMaskNext
                 dc.navLayerActiveMaskNext = 0
                 dc.menuBarAppending = false
-                dc.logLinePosY = dc.cursorPos.y - 9999f
                 dc.childWindows.clear()
                 dc.layoutType = Lt.Vertical
                 dc.parentLayoutType = parentWindow?.dc?.layoutType ?: Lt.Vertical

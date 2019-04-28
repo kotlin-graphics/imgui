@@ -406,7 +406,24 @@ interface imgui_internal {
     }
 
     // Logging/Capture
-//    IMGUI_API void          LogToBuffer(int auto_open_depth  = -1); // Start logging to internal buffer
+
+    /** -> BeginCapture() when we design v2 api, for now stay under the radar by using the old name. */
+    /** Start logging/capturing text output */
+    fun logBegin(type: LogType, autoOpenDepth: Int)    {
+
+        val window = g.currentWindow!!
+
+        assert(!g.logEnabled && g.logFile == null && g.logBuffer.isEmpty())
+        g.logEnabled = true
+        g.logType = type
+        g.logDepthRef = window.dc.treeDepth
+        g.logDepthToExpand = autoOpenDepth.takeIf { it >= 0 } ?: g.logDepthToExpandDefault
+        g.logLinePosY = Float.MAX_VALUE
+        g.logLineFirstItem = true
+    }
+
+    /** Start logging/capturing to internal buffer */
+    fun logToBuffer(autoOpenDepth: Int = -1): Nothing = TODO()
 
     // Popups, Modals, Tooltips
 
@@ -1404,7 +1421,11 @@ interface imgui_internal {
 
         val textEnd = if (textEnd_ == 0) findRenderedTextEnd(text) else textEnd_
 
-        val logNewLine = if (refPos == null) false else refPos.y > window.dc.logLinePosY + 1
+        val logNewLine = refPos?.let { it.y > g.logLinePosY + 1 } ?: false
+
+        refPos?.let { g.logLinePosY = it.y }
+        if (logNewLine)
+            g.logLineFirstItem = true
 
         var textRemaining = text
         if (g.logDepthRef > window.dc.treeDepth)
@@ -1414,17 +1435,28 @@ interface imgui_internal {
 
         //TODO: make textEnd aware
         while (true) {
+            /*  Split the string. Each new line (after a '\n') is followed by spacing corresponding to the current depth of our log entry.
+                We don't add a trailing \n to allow a subsequent item on the same line to be captured.
+            */
             val lineStart = textRemaining
             val lineEnd = if (lineStart.indexOf('\n') == -1) lineStart.length else lineStart.indexOf('\n')
             val isFirstLine = text.startsWith(lineStart)
             val isLastLine = text.endsWith(lineStart.substring(0, lineEnd))
             if (!isLastLine or lineStart.isNotEmpty()) {
                 val charCount = lineStart.length
-                if (logNewLine or !isFirstLine)
-                    ImGui.logText("%s%s", "", lineStart)
-                else
-                    ImGui.logText("%s", lineStart)
+                when {
+                    logNewLine or !isFirstLine -> logText("%s%s", "", lineStart)
+                    g.logLineFirstItem -> logText("%s%s", "", lineStart)
+                    else -> logText("%s", lineStart)
+                }
             }
+            else if (logNewLine) {
+                // An empty "" string at a different Y position should output a carriage return.
+                logText("\n")
+                break;
+            }
+
+
             if (isLastLine)
                 break
             textRemaining = textRemaining.substring(lineEnd + 1)
