@@ -406,7 +406,7 @@ interface imgui_internal {
     }
 
     // Logging/Capture
-//    IMGUI_API void          LogToBuffer(int max_depth = -1); // Start logging to internal buffer
+//    IMGUI_API void          LogToBuffer(int auto_open_depth  = -1); // Start logging to internal buffer
 
     // Popups, Modals, Tooltips
 
@@ -1407,10 +1407,10 @@ interface imgui_internal {
         val logNewLine = if (refPos == null) false else refPos.y > window.dc.logLinePosY + 1
 
         var textRemaining = text
-        if (g.logStartDepth > window.dc.treeDepth)
-            g.logStartDepth = window.dc.treeDepth
+        if (g.logDepthRef > window.dc.treeDepth)
+            g.logDepthRef = window.dc.treeDepth
 
-        val treeDepth = window.dc.treeDepth - g.logStartDepth
+        val treeDepth = window.dc.treeDepth - g.logDepthRef
 
         //TODO: make textEnd aware
         while (true) {
@@ -2068,7 +2068,7 @@ interface imgui_internal {
                     range to make sure the ## aren't stripped out here.                 */
                 logRenderedText(textPos, "\n##", 3)
                 renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
-                logRenderedText(textPos, "#", 3)
+                logRenderedText(textPos, "#", 2) // TODO check me
             } else
                 renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
         } else {
@@ -2124,7 +2124,7 @@ interface imgui_internal {
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).
             NB- If we are above max depth we still allow manually opened nodes to be logged.    */
-        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && window.dc.treeDepth < g.logAutoExpandMaxDepth)
+        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && (window.dc.treeDepth - g.logDepthRef) < g.logDepthToExpand)
             isOpen = true
 
         return isOpen
