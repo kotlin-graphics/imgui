@@ -277,8 +277,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
 
     // Tab bars
-    val tabBars = mutableMapOf<Int, TabBar>()
-    val currentTabBar = Stack<TabBar>()
+    val tabBars = TabBarPool()
+    val currentTabBarStack = Stack<TabBar>()
+    var currentTabBar: TabBar? = null
     val tabSortByWidthBuffer = ArrayList<TabBarSortItem>()
 
     //------------------------------------------------------------------

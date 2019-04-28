@@ -13,8 +13,10 @@ import imgui.ImGui.inputText
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
+import imgui.internal.TabBar
 import imgui.internal.strlen
 import java.util.stream.Collectors
+import kotlin.collections.set
 
 /** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within
  *  deep-nested code that runs multiple times every frame.
@@ -27,7 +29,7 @@ class OnceUponAFrame {
     private var refFrame = -1
     operator fun invoke(): Boolean {
         val currentFrame = ImGui.frameCount
-        if(refFrame == currentFrame)
+        if (refFrame == currentFrame)
             return false
         refFrame = currentFrame
         return true
@@ -61,7 +63,7 @@ class TextFilter(defaultFilter: String? = "") {
     }
 
     fun passFilter(text: String, textEnd: Int = 0): Boolean {
-        val check = if(textEnd > 0) text.substring(0, textEnd) else text
+        val check = if (textEnd > 0) text.substring(0, textEnd) else text
 
         if (filters.isEmpty()) return true
         if (filters.stream().filter(String::isNotEmpty).count() == 0L) return true
@@ -76,7 +78,7 @@ class TextFilter(defaultFilter: String? = "") {
                     return false
                 else
                     passSub = true
-            } else if(check.contains(f))  // Grep
+            } else if (check.contains(f))  // Grep
                 return true
         }
         // Implicit * grep
@@ -321,4 +323,36 @@ class Color {
             return Color(r, g, b, a).value
         }
     }
+}
+
+/** Helper: ImPool<>. Basic keyed storage for contiguous instances, slow/amortized insertion, O(1) indexable, O(Log N) queries by ID over a dense/hot buffer,
+ *  Honor constructor/destructor. Add/remove invalidate all pointers. Indexes have the same lifetime as the associated object. */
+inline class PoolIdx(val i: Int)
+
+class TabBarPool {
+    /** Contiguous data */
+    val data = ArrayList<TabBar?>()
+    /** ID->Index */
+    val map = mutableMapOf<ID, PoolIdx>()
+
+    operator fun get(key: ID) = map[key]?.let { data[it.i] }
+    operator fun get(n: PoolIdx) = data.getOrNull(n.i)
+    fun getIndex(p: TabBar) = PoolIdx(data.indexOf(p))
+    fun getOrAddByKey(key: ID): TabBar = map[key]?.let { data[it.i] }
+            ?: add().also { map[key] = PoolIdx(data.lastIndex) }
+
+    operator fun contains(p: TabBar) = p in data
+    fun clear() {
+        data.clear()
+        map.clear()
+    }
+
+    fun add(): TabBar = TabBar().also { data += it }
+    fun remove(key: ID, p: TabBar) = remove(key, getIndex(p))
+    fun remove(key: ID, idx: PoolIdx) {
+        data[idx.i] = null
+        map -= key
+    }
+
+    val size get() = data.size
 }

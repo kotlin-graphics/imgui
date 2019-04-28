@@ -207,7 +207,8 @@ interface imgui_demoDebugInformations {
             treePop()
         }
         if (treeNode("TabBars", "Tab Bars (${g.tabBars.size})")) {
-            g.tabBars.values.forEach(Funcs::nodeTabBar)
+            for(n in 0 until g.tabBars.size)
+                Funcs.nodeTabBar(g.tabBars[n]!!)
             treePop()
         }
         if (treeNode("Internal state")) {

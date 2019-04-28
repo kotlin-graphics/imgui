@@ -276,7 +276,7 @@ enum class TabBarFlag(@JvmField val i: Int) {
 
     // Private
 
-    /** Part of a dock node */
+    /** Part of a dock node [we don't use this in the master branch but it facilitate branch syncing to keep this around] */
     DockNode(1 shl 20),
     IsFocused(1 shl 21),
     /** FIXME: Settings are handled by the docking system, this only request the tab bar to mark settings dirty when reordering tabs, */

@@ -19,6 +19,7 @@ import kool.*
 import org.lwjgl.opengl.GL13C.GL_TEXTURE_2D
 import org.lwjgl.opengl.GL15C
 import org.lwjgl.opengl.GL21C.*
+import org.lwjgl.opengl.GL45C
 
 class ImplGL2 : LwjglRendererI {
 

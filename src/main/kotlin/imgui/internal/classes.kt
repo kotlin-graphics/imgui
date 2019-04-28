@@ -23,7 +23,6 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.keepAliveId
 import imgui.ImGui.markIniSettingsDirty
-import imgui.ImGui.menuItem
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popItemFlag
 import imgui.ImGui.popStyleColor
@@ -438,6 +437,22 @@ class NextWindowData {
 }
 
 class TabBarSortItem(var index: Int, var width: Float)
+
+class TabBarRef {
+    // Either field can be set, not both. Dock node tab bars are loose while BeginTabBar() ones are in a pool.
+    val ptr: TabBar?
+    val indexInMainPool: PoolIdx
+
+    constructor(ptr: TabBar) {
+        this.ptr = ptr
+        indexInMainPool = PoolIdx(-1)
+    }
+
+    constructor(indexInMainPool: PoolIdx) {
+        ptr = null
+        this.indexInMainPool = indexInMainPool
+    }
+}
 
 /** Temporary storage for one window(, that's the data which in theory we could ditch at the end of the frame)
  *  Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
@@ -1238,7 +1253,7 @@ class TabBar {
         if (flags_ hasnt TabBarFlag.DockNode)
             window.idStack += id
 
-        g.currentTabBar += this
+        g.currentTabBarStack += this
         if (currFrameVisible == g.frameCount) {
             //printf("[%05d] BeginTabBarEx already called this frame\n", g.FrameCount);
             assert(false)
