@@ -2662,7 +2662,7 @@ interface imgui_internal {
         val bufDisplayMaxLength = 2 * 1024 * 1024
 
         // Select which buffer we are going to display. We set buf to NULL to prevent accidental usage from now on.
-        val bufDisplay = if (state != null && !isReadOnly) state.textA else buf
+        val bufDisplay = if (g.activeId == id && state != null && !isReadOnly) state.textA else buf
 
         // Render text. We currently only render selection when the widget is active or while scrolling.
         // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
