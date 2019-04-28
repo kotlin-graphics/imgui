@@ -125,7 +125,7 @@ interface imgui_dragAndDrop {
     /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
      *  Data is copied and held by imgui.
      *  Use 'cond' to choose to submit payload on drag start or every frame */
-    fun setDragDropPayload(type: String, data: Any, dataSize: Int, cond_: Cond = Cond.None): Boolean {
+    fun setDragDropPayload(type: String, data: Any, size: Int, cond_: Cond = Cond.None): Boolean {
         val payload = g.dragDropPayload
         val cond = if (cond_ == Cond.None) Cond.Always else cond_
 
@@ -146,17 +146,17 @@ interface imgui_dragAndDrop {
                 is Char -> payload.data!!.putChar(0, data)
                 is Vec2 -> {
                     val floats = payload.data!!.asFloatBuffer()
-                    for (i in 0 until dataSize / Float.BYTES)
+                    for (i in 0 until size / Float.BYTES)
                         floats[i] = data[i]
                 }
                 is Vec3 -> {
                     val floats = payload.data!!.asFloatBuffer()
-                    for (i in 0 until dataSize / Float.BYTES)
+                    for (i in 0 until size / Float.BYTES)
                         floats[i] = data[i]
                 }
                 is Vec4 -> {
                     val floats = payload.data!!.asFloatBuffer()
-                    for (i in 0 until dataSize / Float.BYTES)
+                    for (i in 0 until size / Float.BYTES)
                         floats[i] = data[i]
                 }
             }
@@ -167,19 +167,19 @@ interface imgui_dragAndDrop {
             type.toCharArray(payload.dataType)
             g.dragDropPayloadBufHeap = ByteBuffer.allocate(0)
             when {
-                dataSize > g.dragDropPayloadBufLocal.rem -> { // Store in heap
-                    g.dragDropPayloadBufHeap = ByteBuffer.allocate(dataSize)
+                size > g.dragDropPayloadBufLocal.rem -> { // Store in heap
+                    g.dragDropPayloadBufHeap = ByteBuffer.allocate(size)
                     payload.data = g.dragDropPayloadBufHeap
                     savePayload()
                 }
-                dataSize > 0 -> { // Store locally
+                size > 0 -> { // Store locally
                     g.dragDropPayloadBufLocal.fill(0)
                     payload.data = g.dragDropPayloadBufLocal
                     savePayload()
                 }
                 else -> payload.data = null
             }
-            payload.dataSize = dataSize
+            payload.dataSize = size
         }
         payload.dataFrameCount = g.frameCount
 

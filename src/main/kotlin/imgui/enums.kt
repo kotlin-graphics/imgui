@@ -110,7 +110,7 @@ enum class InputTextFlag(@JvmField val i: Int) {
     CharsNoBlank(1 shl 3),
     /** Select entire text when first taking mouse focus    */
     AutoSelectAll(1 shl 4),
-    /** Return 'true' when Enter is pressed (as opposed to when the value was modified) */
+    /** Return 'true' when Enter is pressed (as opposed to every time the value was modified). Consider looking at the IsItemDeactivatedAfterEdit() function. */
     EnterReturnsTrue(1 shl 5),
     /** Callback on pressing TAB (for completion handling)    */
     CallbackCompletion(1 shl 6),

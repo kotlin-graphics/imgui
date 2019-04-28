@@ -54,8 +54,8 @@ interface main {
         return pressed
     }
 
-    /** button behavior without the visuals, useful to build custom behaviors using the public api (along with
-     *  isItemActive, isItemHovered, etc.)
+    /** button behavior without the visuals, frequently useful to build custom behaviors using the public api
+     *  (along with isItemActive, isItemHovered, etc.)
      *  Tip: use pushId()/popId() to push indices or pointers in the ID stack.
      *  Then you can keep 'strid' empty or the same for all your buttons (instead of creating a string based on a
      *  non-string id)  */

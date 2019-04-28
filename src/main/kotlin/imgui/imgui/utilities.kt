@@ -109,12 +109,15 @@ interface imgui_utilities {
     val isItemDeactivatedAfterEdit: Boolean
         get() = isItemDeactivated && (g.activeIdPreviousFrameHasBeenEdited || (g.activeId == 0 && g.activeIdHasBeenEdited))
 
+    /** is any item hovered? */
     val isAnyItemHovered: Boolean
         get() = g.hoveredId != 0 || g.hoveredIdPreviousFrame != 0
 
+    /** is any item active? */
     val isAnyItemActive: Boolean
         get() = g.activeId != 0
 
+    /** is any item focused? */
     val isAnyItemFocused: Boolean
         get() = g.navId != 0 && !g.navDisableHighlight
 
@@ -161,13 +164,16 @@ interface imgui_utilities {
     val overlayDrawList: DrawList
         get() = g.overlayDrawList
 
-    /** you may use this when creating your own ImDrawList instances */
+    /** you may use this when creating your own ImDrawList instances. */
     val drawListSharedData: DrawListSharedData
         get() = g.drawListSharedData
 
-//IMGUI_API const char*   GetStyleColorName(ImGuiCol idx);
+    /** Useless on JVM with Enums */
+    //IMGUI_API const char*   GetStyleColorName(ImGuiCol idx);
+
     //IMGUI_API void          SetStateStorage(ImGuiStorage* tree);                                // replace tree state storage with our own (if you want to manipulate it yourself, typically clear subsection of it)
-//IMGUI_API ImGuiStorage* GetStateStorage();
+
+    //IMGUI_API ImGuiStorage* GetStateStorage();
 
     /** Calculate text size. Text can be multi-line. Optionally ignore text after a ## marker.
      *  CalcTextSize("") should return ImVec2(0.0f, GImGui->FontSize)   */
