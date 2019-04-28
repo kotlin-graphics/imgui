@@ -38,6 +38,7 @@ import imgui.ImGui.style
 import imgui.ImGui.tabItemBackground
 import imgui.ImGui.tabItemCalcSize
 import imgui.ImGui.tabItemLabelAndCloseButton
+import imgui.imgui.imgui_colums.Companion.tabBarRef
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.cos
@@ -1253,7 +1254,9 @@ class TabBar {
         if (flags_ hasnt TabBarFlag.DockNode)
             window.idStack += id
 
-        g.currentTabBarStack += this
+        // Add to stack
+        g.currentTabBarStack += tabBarRef
+        g.currentTabBar = this
         if (currFrameVisible == g.frameCount) {
             //printf("[%05d] BeginTabBarEx already called this frame\n", g.FrameCount);
             assert(false)
