@@ -26,15 +26,15 @@ import kotlin.collections.set
 class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val clientApi: GlfwClientApi = GlfwClientApi.OpenGL, val vrTexSize: Vec2i? = null) {
     companion object {
         lateinit var instance: LwjglGlfw
-
+        
         fun init(window: GlfwWindow, installCallbacks: Boolean = true, clientApi_: GlfwClientApi = GlfwClientApi.OpenGL, vrTexSize: Vec2i? = null) {
             instance = LwjglGlfw(window, installCallbacks, clientApi_, vrTexSize)
         }
-
+        
         fun newFrame() = instance.newFrame()
         fun shutdown() = instance.shutdown()
     }
-
+    
     val impl: LwjglRendererI
     var time = 0.0
     val mouseCursors = LongArray(MouseCursor.COUNT)
