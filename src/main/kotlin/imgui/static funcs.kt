@@ -740,9 +740,12 @@ fun navUpdate() {
         navMapKey(Key.RightArrow, NavInput.KeyRight)
         navMapKey(Key.UpArrow, NavInput.KeyUp)
         navMapKey(Key.DownArrow, NavInput.KeyDown)
-        if (io.keyCtrl) io.navInputs[NavInput.TweakSlow] = 1f
-        if (io.keyShift) io.navInputs[NavInput.TweakFast] = 1f
-        if (io.keyAlt) io.navInputs[NavInput.KeyMenu] = 1f
+        if (io.keyCtrl)
+            io.navInputs[NavInput.TweakSlow] = 1f
+        if (io.keyShift)
+            io.navInputs[NavInput.TweakFast] = 1f
+        if (io.keyAlt && !io.keyCtrl) // AltGR is Alt+Ctrl, also even on keyboards without AltGR we don't want Alt+Ctrl to open menu.
+            io.navInputs[NavInput.KeyMenu] = 1f
     }
     for (i in io.navInputsDownDuration.indices)
         io.navInputsDownDurationPrev[i] = io.navInputsDownDuration[i]
