@@ -52,6 +52,7 @@ interface imgui_logging {
                     g.logBuffer = StringBuilder()
                 }
             }
+            else -> error("Invalid log type")
         }
 
         g.logEnabled = false
