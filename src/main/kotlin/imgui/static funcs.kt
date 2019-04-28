@@ -48,6 +48,8 @@ import uno.kotlin.getValue
 import uno.kotlin.isPrintable
 import uno.kotlin.setValue
 import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.StringSelection
 import java.io.File
 import java.nio.file.Paths
 import kotlin.collections.set
@@ -57,8 +59,6 @@ import kotlin.reflect.KMutableProperty0
 import imgui.ConfigFlag as Cf
 import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
-import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.StringSelection
 
 
 fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
@@ -171,7 +171,8 @@ fun checkStacksSize(window: Window, write: Boolean) {
         val current = window.idStack.size
         if (write) backup[ptr] = current
         else assert(backup[ptr] == current) {
-            "PushID/PopID or TreeNode/TreePop Mismatch!" }
+            "PushID/PopID or TreeNode/TreePop Mismatch!"
+        }
         ptr++
     }
     run {
@@ -358,9 +359,9 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
         itcd.flags = flags
         itcd.userData = userData
 
-        if(callback(itcd) != 0)
+        if (callback(itcd) != 0)
             return false
-        if(itcd.eventChar == NUL)
+        if (itcd.eventChar == NUL)
             return false
     }
     return true
@@ -444,6 +445,7 @@ fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 
 //        DataType.Double -> this() as Double
 //        else -> throw Error()
 //    }
+    // TODO check u8, s8, u16, s16 support
     val string = format.format(style.locale, this())
     return when (size) {
         0 -> string.toCharArray()
@@ -486,9 +488,19 @@ fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 
 fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number): Number {
     assert(op == '+' || op == '-')
     return when (dataType) {
+        DataType.Byte, DataType.Ubyte -> when (op) {  // Signedness doesn't matter when adding or subtracting
+            '+' -> value1 as Byte + (value2 as Byte)
+            '-' -> value1 as Byte - (value2 as Byte)
+            else -> throw Error()
+        }
         DataType.Int, DataType.Uint -> when (op) {  // Signedness doesn't matter when adding or subtracting
             '+' -> value1 as Int + (value2 as Int)
             '-' -> value1 as Int - (value2 as Int)
+            else -> throw Error()
+        }
+        DataType.Short, DataType.Ushort -> when (op) {  // Signedness doesn't matter when adding or subtracting
+            '+' -> value1 as Short + (value2 as Short)
+            '-' -> value1 as Short - (value2 as Short)
             else -> throw Error()
         }
         DataType.Long, DataType.Ulong -> when (op) {  // Signedness doesn't matter when adding or subtracting
@@ -574,14 +586,6 @@ fun dataTypeApplyOpFromText(buf_: CharArray, initialValueBuf_: CharArray, dataTy
                 }
                 dataBackup != v
             }
-
-            DataType.Uint, DataType.Long, DataType.Ulong ->
-                /*  Assign constant
-                    FIXME: We don't bother handling support for legacy operators since they are a little too crappy.
-                    Instead we may implement a proper expression evaluator in the future.                 */
-                //sscanf(buf, format, data_ptr)
-                false
-
             DataType.Float -> {
                 // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
                 val fmt = format ?: "%f"
@@ -633,7 +637,29 @@ fun dataTypeApplyOpFromText(buf_: CharArray, initialValueBuf_: CharArray, dataTy
                 }
                 dataBackup != v
             }
+            DataType.Uint, DataType.Long, DataType.Ulong ->
+                /*  Assign constant
+                    FIXME: We don't bother handling support for legacy operators since they are a little too crappy.
+                    Instead we may implement a proper expression evaluator in the future.                 */
+                //sscanf(buf, format, data_ptr)
+                false
             else -> false
+//            else TODO
+//            {
+//                // Small types need a 32-bit buffer to receive the result from scanf()
+//                int v32;
+//                sscanf(buf, format, &v32);
+//                if (data_type == ImGuiDataType_S8)
+//                *(ImS8*)data_ptr = (ImS8)ImClamp(v32, (int)IM_S8_MIN, (int)IM_S8_MAX);
+//                else if (data_type == ImGuiDataType_U8)
+//                *(ImU8*)data_ptr = (ImU8)ImClamp(v32, (int)IM_U8_MIN, (int)IM_U8_MAX);
+//                else if (data_type == ImGuiDataType_S16)
+//                *(ImS16*)data_ptr = (ImS16)ImClamp(v32, (int)IM_S16_MIN, (int)IM_S16_MAX);
+//                else if (data_type == ImGuiDataType_U16)
+//                *(ImU16*)data_ptr = (ImU16)ImClamp(v32, (int)IM_U16_MIN, (int)IM_U16_MAX);
+//                else
+//                IM_ASSERT(0);
+//            }
         }
     }
 }
