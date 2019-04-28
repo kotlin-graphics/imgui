@@ -174,7 +174,7 @@ interface imgui_demoDebugInformations {
         end()
     }
 
-    /** Create metrics window. display Dear ImGui internals: draw commands (with individual draw calls and vertices),
+    /** Create metrics/debug window. display Dear ImGui internals: draw commands (with individual draw calls and vertices),
      *  window list, basic internal state, etc.    */
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 

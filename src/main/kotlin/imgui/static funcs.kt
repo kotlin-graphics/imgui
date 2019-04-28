@@ -276,6 +276,7 @@ fun loadIniSettingsFromDisk(iniFilename: String?) {
     g.settingsLoaded = true
 }
 
+/** this is automatically called (if io.IniFilename is not empty) a few seconds after any modification that should be reflected in the .ini file (and also by DestroyContext). */
 fun saveIniSettingsToDisk(iniFilename: String?) {
 
     g.settingsDirtyTimer = 0f
