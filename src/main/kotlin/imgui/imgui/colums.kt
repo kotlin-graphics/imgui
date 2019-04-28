@@ -143,7 +143,7 @@ interface imgui_colums {
         if (window.skipItems) return false
 
         val id = window.getId(strId)
-        val tabBar = g.tabBars.getOrPut(id) { TabBar() }
+        val tabBar = g.tabBars.getOrAddByKey(id)
         val tabBarBb = Rect(window.dc.cursorPos.x, window.dc.cursorPos.y, window.innerClipRect.max.x, window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
         tabBar.id = id
         return tabBar.beginEx(tabBarBb, flags or TabBarFlag.IsFocused)
@@ -155,8 +155,8 @@ interface imgui_colums {
         val window = g.currentWindow!!
         if (window.skipItems) return
 
-        assert(g.currentTabBar.isNotEmpty()) { "Mismatched BeginTabBar/EndTabBar" }
-        val tabBar = g.currentTabBar.last()
+        assert(g.currentTabBarStack.isNotEmpty()) { "Mismatched BeginTabBar/EndTabBar" }
+        val tabBar = g.currentTabBarStack.last()
         if (tabBar.wantLayout)
             tabBar.layout()
 
@@ -169,7 +169,7 @@ interface imgui_colums {
 
         if (tabBar.flags hasnt TabBarFlag.DockNode)
             popId()
-        g.currentTabBar.pop()
+        g.currentTabBarStack.pop()
     }
 
     /** create a Tab. Returns true if the Tab is selected. */
@@ -181,8 +181,8 @@ interface imgui_colums {
 
         if (g.currentWindow!!.skipItems) return false
 
-        assert(g.currentTabBar.isNotEmpty()) { "Needs to be called between BeginTabBar() and EndTabBar()!" }
-        val tabBar = g.currentTabBar.last()
+        assert(g.currentTabBarStack.isNotEmpty()) { "Needs to be called between BeginTabBar() and EndTabBar()!" }
+        val tabBar = g.currentTabBarStack.last()
         return tabBar.tabItemEx(label, pOpen, flags).also {
             if (it && flags hasnt TabItemFlag.NoPushId) {
                 val tab = tabBar.tabs[tabBar.lastTabItemIdx]
@@ -196,8 +196,8 @@ interface imgui_colums {
 
         if (g.currentWindow!!.skipItems) return
 
-        assert(g.currentTabBar.isNotEmpty()) { "Needs to be called between BeginTabBar() and EndTabBar()!" }
-        val tabBar = g.currentTabBar.last()
+        assert(g.currentTabBarStack.isNotEmpty()) { "Needs to be called between BeginTabBar() and EndTabBar()!" }
+        val tabBar = g.currentTabBarStack.last()
         assert(tabBar.lastTabItemIdx >= 0) { "Needs to be called between BeginTabItem() and EndTabItem()" }
         val tab = tabBar.tabs[tabBar.lastTabItemIdx]
         if (tab.flags hasnt TabItemFlag.NoPushId)
@@ -210,9 +210,9 @@ interface imgui_colums {
      *  To use it to need to call the function SetTabItemClosed() after BeginTabBar() and before any call to BeginTabItem() */
     fun setTabItemClosed(tabOrDockedWindowLabel: String) {
 
-        val isWithinManualTabBar = g.currentTabBar.isNotEmpty() && g.currentTabBar.last().flags has TabBarFlag.DockNode
+        val isWithinManualTabBar = g.currentTabBarStack.isNotEmpty() && g.currentTabBarStack.last().flags has TabBarFlag.DockNode
         if (isWithinManualTabBar) {
-            val tabBar = g.currentTabBar.last()
+            val tabBar = g.currentTabBarStack.last()
             assert(tabBar.wantLayout) { "Needs to be called AFTER BeginTabBar() and BEFORE the first call to BeginTabItem()" }
             val tabId = tabBar calcTabID tabOrDockedWindowLabel
             tabBar removeTab tabId
@@ -236,6 +236,16 @@ interface imgui_colums {
                     else
                         columns.columns[columnIndex + 1].offsetNorm - columns.columns[columnIndex].offsetNorm
             return offsetNormToPixels(columns, offsetNorm)
+        }
+
+        val TabBarRef.tabBar: TabBar?
+            get() = ptr ?: g.tabBars[indexInMainPool]
+
+        val TabBar.tabBarRef: TabBarRef?
+            get() {
+            if (this in g.tabBars)
+                return TabBarRef(g.tabBars.getIndex(this))
+            return TabBarRef(this)
         }
     }
 }

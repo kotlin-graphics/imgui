@@ -2235,57 +2235,50 @@ interface imgui_internal {
         var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || userNavInputStart) && !isMultiline
 
 //        println(g.imeLastKey)
-        if (focusRequested || userClicked || userScrollFinish || userNavInputStart) {
-            if (g.activeId != id /*|| g.imeLastKey != 0*/) { // TODO clean outdated ime
+        val initMakeActive = focusRequested || userClicked || userScrollFinish || userNavInputStart
+        if (initMakeActive && g.activeId != id) {
+            // Access state even if we don't own it yet.
+            state = g.inputTextState
+            state.cursorAnimReset()
 
-                // Access state even if we don't own it yet.
-                state = g.inputTextState
-                // JVM, put char if no more in ime mode and last key is valid
-//                println("${g.imeInProgress}, ${g.imeLastKey}")
-//                if (!g.imeInProgress && g.imeLastKey != 0) {
-//                    for (i in 0 until buf.size)
-//                        if (buf[i] == NUL) {
-//                            buf[i] = g.imeLastKey.c
-//                            break
-//                        }
-//                    g.imeLastKey = 0
-//                }
-                /*  Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
-                    From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)   */
-                val bufLen = buf.strlen
-                state.initialTextA = CharArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
-                System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
+            // Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
+            // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
+            val bufLen = buf.strlen
+            state.initialTextA = CharArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
 
-                // Start edition
-                val prevLenW = state.curLenW
-                state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            // Start edition
+            val prevLenW = state.curLenW
+            state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
 
-                state.curLenW = state.textW.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
-                /*  We can't get the result from ImStrncpy() above because it is not UTF-8 aware.
-                    Here we'll cut off malformed UTF-8.                 */
-                state.curLenA = state.curLenW //TODO check (int)(bufEnd - buf)
-                state.cursorAnimReset()
+            state.curLenW = state.textW.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
+            /*  We can't get the result from ImStrncpy() above because it is not UTF-8 aware.
+                Here we'll cut off malformed UTF-8.                 */
+            state.curLenA = state.curLenW //TODO check (int)(bufEnd - buf)
+            state.cursorAnimReset()
 
-                /*  Preserve cursor position and undo/redo stack if we come back to same widget
-                    FIXME: We should probably compare the whole buffer to be on the safety side. Comparing buf (utf8)
-                    and editState.Text (wchar). */
-                if (state.id == id && prevLenW == state.curLenW)
-                /*  Recycle existing cursor/selection/undo stack but clamp position
-                    Note a single mouse click will override the cursor/position immediately by calling
-                    stb_textedit_click handler.                     */
-                    state.cursorClamp()
-                else {
-                    state.id = id
-                    state.scrollX = 0f
-                    state.stb.clear(!isMultiline)
-                    if (!isMultiline && focusRequestedByCode) selectAll = true
-                }
-                if (flags has Itf.AlwaysInsertMode)
-                    state.stb.insertMode = true
-                if (!isMultiline && (focusRequestedByTab || (userClicked && io.keyCtrl)))
+            /*  Preserve cursor position and undo/redo stack if we come back to same widget
+    FIXME: We should probably compare the whole buffer to be on the safety side. Comparing buf (utf8)
+    and editState.Text (wchar). */
+            if (state.id == id && prevLenW == state.curLenW)
+            /*  Recycle existing cursor/selection/undo stack but clamp position
+                Note a single mouse click will override the cursor/position immediately by calling
+                stb_textedit_click handler.                     */
+                state.cursorClamp()
+            else {
+                state.id = id
+                state.scrollX = 0f
+                state.stb.clear(!isMultiline)
+                if (!isMultiline && focusRequestedByCode)
                     selectAll = true
             }
+            if (flags has Itf.AlwaysInsertMode)
+                state.stb.insertMode = true
+            if (!isMultiline && (focusRequestedByTab || (userClicked && io.keyCtrl)))
+                selectAll = true
+        }
 
+        if (initMakeActive) {
             assert(state!!.id == id)
             setActiveId(id, window)
             setFocusId(id, window)
@@ -2293,8 +2286,9 @@ interface imgui_internal {
             g.activeIdBlockNavInputFlags = 1 shl NavInput.Cancel
             if (!isMultiline && flags hasnt Itf.CallbackHistory)
                 g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-        } else if (io.mouseClicked[0])
+        }
         // Release focus when we click outside
+        if (!initMakeActive && io.mouseClicked[0])
             clearActiveId = true
 
         // We have an edge case if ActiveId was set through another widget (e.g. widget being swapped)
@@ -2618,15 +2612,7 @@ interface imgui_internal {
         // Release active ID at the end of the function (so e.g. pressing Return still does a final application of the value)
         if (clearActiveId && g.activeId == id) clearActiveId()
 
-        /*  Set upper limit of single-line InputTextEx() at 2 million characters strings. The current pathological worst case is a long line
-            without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
-            Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
-        val bufDisplayMaxLength = 2 * 1024 * 1024
-
-        // Select which buffer we are going to display. We set buf to NULL to prevent accidental usage from now on.
-        val bufDisplay = if (state != null && !isReadOnly) state.textA else buf
-
-        // Render
+        // Render frame
         if (!isMultiline) {
             renderNavHighlight(frameBb, id)
             renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
@@ -2635,7 +2621,16 @@ interface imgui_internal {
         val clipRect = Vec4(frameBb.min, frameBb.min + size) // Not using frameBb.Max because we have adjusted size
         val drawPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + style.framePadding
         val textSize = Vec2()
-        // We currently only render selection when the widget is active or while scrolling.
+
+        /*  Set upper limit of single-line InputTextEx() at 2 million characters strings. The current pathological worst case is a long line
+            without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
+            Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
+        val bufDisplayMaxLength = 2 * 1024 * 1024
+
+        // Select which buffer we are going to display. We set buf to NULL to prevent accidental usage from now on.
+        val bufDisplay = if (state != null && !isReadOnly) state.textA else buf
+
+        // Render text. We currently only render selection when the widget is active or while scrolling.
         // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
         val renderCursor = g.activeId == id || userScrollActive
         val renderSelection = state?.hasSelection == true && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
