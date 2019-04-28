@@ -2191,7 +2191,7 @@ interface imgui_internal {
         // Can't use both together (they both use tab key)
         assert(!((flags has Itf.CallbackCompletion) && (flags has Itf.AllowTabInput)))
 
-        val RENDER_SELECTION_WHEN_INACTIVE = true
+        val RENDER_SELECTION_WHEN_INACTIVE = false
         val isMultiline = flags has Itf.Multiline
         val isReadOnly = flags has Itf.ReadOnly
         val isPassword = flags has Itf.Password
