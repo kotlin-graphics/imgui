@@ -340,10 +340,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     //------------------------------------------------------------------
 
     var logEnabled = false
+
+    var logType = LogType.None
     /** If != NULL log to stdout/ file  */
     var logFile: File? = null
     /** Accumulation buffer when log to clipboard. This is pointer so our GImGui static constructor doesn't call heap allocators.   */
-    var logClipboard = StringBuilder()
+    var logBuffer = StringBuilder()
 
     var logStartDepth = 0
 
@@ -439,7 +441,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         if (g.logFile != null) {
             g.logFile = null
         }
-        g.logClipboard.setLength(0)
+        g.logBuffer.setLength(0)
 
         g.initialized = false
     }

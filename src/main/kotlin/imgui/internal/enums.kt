@@ -173,6 +173,11 @@ enum class LayoutType {
     val i = ordinal
 }
 
+enum class LogType{ None, TTY, File, Buffer, Clipboard;
+
+    val i = ordinal
+}
+
 /** X/Y enums are fixed to 0/1 so they may be used to index ImVec2 */
 enum class Axis {
     None, X, Y;
