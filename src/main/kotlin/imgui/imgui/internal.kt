@@ -409,7 +409,7 @@ interface imgui_internal {
 
     /** -> BeginCapture() when we design v2 api, for now stay under the radar by using the old name. */
     /** Start logging/capturing text output */
-    fun logBegin(type: LogType, autoOpenDepth: Int)    {
+    fun logBegin(type: LogType, autoOpenDepth: Int) {
 
         val window = g.currentWindow!!
 
@@ -1449,8 +1449,7 @@ interface imgui_internal {
                     g.logLineFirstItem -> logText("%s%s", "", lineStart)
                     else -> logText("%s", lineStart)
                 }
-            }
-            else if (logNewLine) {
+            } else if (logNewLine) {
                 // An empty "" string at a different Y position should output a carriage return.
                 logText("\n")
                 break;
@@ -2270,7 +2269,8 @@ interface imgui_internal {
 
 //        println(g.imeLastKey)
         val initMakeActive = focusRequested || userClicked || userScrollFinish || userNavInputStart
-        if (initMakeActive && g.activeId != id) {
+        val initState = initMakeActive || userScrollActive
+        if (initState && g.activeId != id) {
             // Access state even if we don't own it yet.
             state = g.inputTextState
             state.cursorAnimReset()
@@ -2282,8 +2282,9 @@ interface imgui_internal {
             System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
 
             // Start edition
-            val prevLenW = state.curLenW
             state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            state.textA = CharArray(0)
+            state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
 
             state.curLenW = state.textW.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
             /*  We can't get the result from ImStrncpy() above because it is not UTF-8 aware.
@@ -2292,9 +2293,9 @@ interface imgui_internal {
             state.cursorAnimReset()
 
             /*  Preserve cursor position and undo/redo stack if we come back to same widget
-    FIXME: We should probably compare the whole buffer to be on the safety side. Comparing buf (utf8)
-    and editState.Text (wchar). */
-            if (state.id == id && prevLenW == state.curLenW)
+                For non-readonly widgets we might be able to require that TextAIsValid && TextA == buf ? (untested) and discard undo stack if user buffer has changed. */
+            val recycleState = state.id == id
+            if (recycleState)
             /*  Recycle existing cursor/selection/undo stack but clamp position
                 Note a single mouse click will override the cursor/position immediately by calling
                 stb_textedit_click handler.                     */
@@ -2312,7 +2313,7 @@ interface imgui_internal {
                 selectAll = true
         }
 
-        if (initMakeActive) {
+        if (g.activeId != id && initMakeActive) {
             assert(state!!.id == id)
             setActiveId(id, window)
             setFocusId(id, window)
@@ -2327,7 +2328,7 @@ interface imgui_internal {
             clearActiveId()
 
         // Release focus when we click outside
-        if (!initMakeActive && io.mouseClicked[0])
+        if (g.activeId == id && io.mouseClicked[0] && !initState && !initMakeActive)
             clearActiveId = true
 
         var valueChanged = false
@@ -2335,14 +2336,18 @@ interface imgui_internal {
         var backupCurrentTextLength = 0
 
         // When read-only we always use the live data passed to the function
-        if (g.activeId == id && isReadOnly && !g.activeIdIsJustActivated) {
-            state!!
-            val tmp = CharArray(buf.size)
-            System.arraycopy(state.textW, 0, tmp, 0, state.textW.size)
-            val bufEnd = -1
-            state.curLenW = state.textW.textStr(buf) // TODO check
-            state.curLenA = state.curLenW // TODO check
-            state.cursorClamp()
+        // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
+        if (isReadOnly && state != null) {
+            val willRenderCursor = g.activeId == id || userScrollActive
+            val willRenderSelection = state.hasSelection && (RENDER_SELECTION_WHEN_INACTIVE || willRenderCursor)
+            if (willRenderCursor || willRenderSelection) {
+                val tmp = CharArray(buf.size) // TODO resize()?
+                System.arraycopy(state.textW, 0, tmp, 0, state.textW.size)
+                val bufEnd = -1
+                state.curLenW = state.textW.textStr(buf) // TODO check
+                state.curLenA = state.curLenW // TODO check
+                state.cursorClamp()
+            }
         }
 
         // Process mouse inputs and character inputs
@@ -2548,8 +2553,10 @@ interface imgui_internal {
                 // Note that as soon as the input box is active, the in-widget value gets priority over any underlying modification of the input buffer
                 // FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above incorrect.
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
-                if (!isReadOnly)
+                if (!isReadOnly) {
+                    state.textAIsValid = true
                     state.textA = CharArray(state.textW.size * 4) { state.textW.getOrElse(it) { NUL } }
+                }
 
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
@@ -2663,9 +2670,8 @@ interface imgui_internal {
             without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
             Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
         val bufDisplayMaxLength = 2 * 1024 * 1024
-
-        // Select which buffer we are going to display. We set buf to NULL to prevent accidental usage from now on.
-        val bufDisplay = if (g.activeId == id && state != null && !isReadOnly) state.textA else buf
+        lateinit var bufDisplay: CharArray
+        var bufDisplayEnd = IntArray(1)
 
         // Render text. We currently only render selection when the widget is active or while scrolling.
         // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
@@ -2805,9 +2811,10 @@ interface imgui_internal {
             }
 
             // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
-            val bufDisplayLen = state.curLenA
-            if (isMultiline || bufDisplayLen < bufDisplayMaxLength)
-                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, Col.Text.u32, bufDisplay, bufDisplayLen, 0f, clipRect)
+            bufDisplay = if(!isReadOnly && state.textAIsValid) state.textA else buf
+            bufDisplayEnd[0] = state.curLenA
+            if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength)
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, Col.Text.u32, bufDisplay, bufDisplayEnd[0], 0f, clipRect.takeIf { !isMultiline })
 
             // Draw blinking cursor
             if (renderCursor) {
@@ -2824,12 +2831,13 @@ interface imgui_internal {
             }
         } else {
             // Render text only (no selection, no cursor)
-            val bufDisplayEnd = IntArray(1)
-            if (isMultiline)
-            // We don't need width
-                textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufDisplayEnd) * g.fontSize)
-            else
-                bufDisplayEnd[0] = bufDisplay.strlen
+            bufDisplay = if(g.activeId == id && !isReadOnly && state!!.textAIsValid) state.textA else buf
+            when {
+                // We don't need width
+                isMultiline -> textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufDisplayEnd) * g.fontSize)
+                g.activeId == id -> bufDisplayEnd[0] = state!!.curLenA
+                else -> bufDisplayEnd[0] = bufDisplay.strlen
+            }
             if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength)
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos, Col.Text.u32, bufDisplay, bufDisplayEnd[0], 0f, clipRect)
         }
@@ -2845,7 +2853,7 @@ interface imgui_internal {
 
         // Log as text
         if (g.logEnabled && !isPassword)
-            logRenderedText(drawPos, String(bufDisplay))
+            logRenderedText(drawPos, String(bufDisplay), bufDisplayEnd[0])
 
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)

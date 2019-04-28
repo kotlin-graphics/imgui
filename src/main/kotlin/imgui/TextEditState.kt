@@ -11,9 +11,8 @@ class TextEditState {
 
     /** widget id owning the text state */
     var id: ID = 0
-    /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
+    // we need to maintain our buffer length in both UTF-8 and wchar format. UTF-8 len is valid even if TextA is not.
     var curLenA = 0
-    /** we need to maintain our buffer length in both UTF-8 and wchar format.   */
     var curLenW = 0
     /** edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer.
      *  So we copy into own buffer.    */
@@ -22,6 +21,8 @@ class TextEditState {
     var textA = CharArray(0)
     /** backup of end-user buffer at the time of focus (in UTF-8, unaltered)    */
     var initialTextA = CharArray(0)
+    /** temporary UTF8 buffer is not initially valid before we make the widget active (until then we pull the data from user argument) */
+    var textAIsValid = false
     /** end-user buffer size    */
     var bufCapacityA = 0
     /** horizontal scrolling/offset */
