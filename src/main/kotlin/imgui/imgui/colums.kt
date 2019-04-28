@@ -155,7 +155,7 @@ interface imgui_colums {
         val window = g.currentWindow!!
         if (window.skipItems) return
 
-        val tabBar = g.currentTabBar ?: error("Mismatched BeginTabBar()/EndTabBar()!")
+        val tabBar = g.currentTabBar ?: error("Mismatched BeginTabBar()/EndTabBar()!") // FIXME-ERRORHANDLING
         if (tabBar.wantLayout)
             tabBar.layout()
 
@@ -182,7 +182,7 @@ interface imgui_colums {
 
         if (g.currentWindow!!.skipItems) return false
 
-        val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
+        val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!") // FIXME-ERRORHANDLING
         return tabBar.tabItemEx(label, pOpen, flags).also {
             if (it && flags hasnt TabItemFlag.NoPushId) {
                 val tab = tabBar.tabs[tabBar.lastTabItemIdx]
@@ -196,7 +196,7 @@ interface imgui_colums {
 
         if (g.currentWindow!!.skipItems) return
 
-        val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
+        val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!") // FIXME-ERRORHANDLING
         assert(tabBar.lastTabItemIdx >= 0)
         val tab = tabBar.tabs[tabBar.lastTabItemIdx]
         if (tab.flags hasnt TabItemFlag.NoPushId)
