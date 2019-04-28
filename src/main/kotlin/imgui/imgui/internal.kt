@@ -3045,7 +3045,7 @@ interface imgui_internal {
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
 
         val valuesCountMin = if(plotType == PlotType.Lines) 2 else 1
-        if (valuesCount >= 1) //valuesCountMin) {
+        if (valuesCount >= valuesCountMin) {
             val resW = min(frameSize.x.i, valuesCount) + if (plotType == PlotType.Lines) -1 else 0
             val itemCount = valuesCount + if (plotType == PlotType.Lines) -1 else 0
 
