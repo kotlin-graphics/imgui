@@ -11,6 +11,7 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.sliderInt
 import imgui.g
+import imgui.internal.LogType
 import java.io.File
 import java.io.FileWriter
 
@@ -19,8 +20,8 @@ import java.io.FileWriter
  *  By default, tree nodes are automatically opened during logging.     */
 interface imgui_logging {
 
-//    IMGUI_API void          LogToTTY(int max_depth = -1);                                       // start logging to tty (stdout)
-//    IMGUI_API void          LogToFile(int max_depth = -1, const char* filename = NULL);         // start logging to file
+//    IMGUI_API void          LogToTTY(int max_depth = -1);                                       // Start logging/capturing text output to TTY
+//    IMGUI_API void          LogToFile(int max_depth = -1, const char* filename = NULL);         // Start logging/capturing text output to given file
 
     /** start logging ImGui output to OS clipboard   */
     fun logToClipboard(maxDepth: Int = -1) {
@@ -29,7 +30,9 @@ interface imgui_logging {
 
         val window = g.currentWindow!!
 
-        assert(g.logFile != null)
+        assert(g.logFile != null && g.logBuffer.isEmpty())
+        g.logEnabled = true
+        g.logType = LogType.Clipboard
         g.logFile = null
         g.logEnabled = true
         g.logStartDepth = window.dc.treeDepth
@@ -37,6 +40,7 @@ interface imgui_logging {
             g.logAutoExpandMaxDepth = maxDepth
     }
 
+//    void ImGui::LogToBuffer(int max_depth)
 
     /** stop logging (close file, etc.) */
     fun logFinish() {
@@ -45,17 +49,26 @@ interface imgui_logging {
 
         logText("%s", "\n")
 
-        if (g.logFile != null) {
-            g.logFile = null
+        when (g.logType) {
+            LogType.TTY -> TODO()//fflush(g.LogFile)
+            LogType.File -> TODO()//fclose(g.LogFile)
+            LogType.Buffer -> Unit
+            LogType.Clipboard -> {
+                if (g.logBuffer.length > 1) { // TODO 1? maybe 0?
+                    clipboardText = g.logBuffer.toString()
+                    g.logBuffer = StringBuilder()
+                }
+            }
         }
-        if (g.logClipboard.length > 1) {
-            clipboardText = g.logClipboard.toString()
-            g.logClipboard = StringBuilder()
-        }
+
         g.logEnabled = false
+        g.logType = LogType.None
+        g.logFile = null
+        g.logBuffer.clear()
     }
 
-    /** Helper to display buttons for logging to tty/file/clipboard */
+    /** Helper to display buttons for logging to tty/file/clipboard
+     *  FIXME-OBSOLETE: We should probably obsolete this and let the user have their own helper (this is one of the oldest function alive!) */
     fun logButtons() {
         pushId("LogButtons")
         val logToTty = button("Log To TTY"); sameLine()
@@ -75,7 +88,7 @@ interface imgui_logging {
     }
 
     fun logToFile(maxDepth: Int, file_: File?) {
-        if(g.logEnabled)
+        if (g.logEnabled)
             return
         val window = g.currentWindow!!
 
@@ -96,7 +109,7 @@ interface imgui_logging {
             val writer = FileWriter(g.logFile, true)
             writer.write(String.format(fmt, *args))
         } else {
-            g.logClipboard.append(fmt.format(*args))
+            g.logBuffer.append(fmt.format(*args))
         }
     }
 }

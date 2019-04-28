@@ -405,6 +405,8 @@ interface imgui_internal {
         itemFlags = itemFlagsStack.lastOrNull() ?: If.Default_.i
     }
 
+    // Logging/Capture
+//    IMGUI_API void          LogToBuffer(int max_depth = -1); // Start logging to internal buffer
 
     // Popups, Modals, Tooltips
 
