@@ -37,6 +37,18 @@ import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
 
+// @formatter:off
+val S8_MIN: Int  = -128
+val S8_MAX: Int  = 127
+val U8_MIN: Int  = 0
+val U8_MAX: Int  = 0xFF
+val S16_MIN: Int = -32768
+val S16_MAX: Int = 32767
+val U16_MIN: Int = 0
+val U16_MAX: Int = 0xFFFF
+// @formatter:on
+
+
 /** Widgets: Main
  *  - Most widgets return true when the value has been changed or when pressed/selected  */
 interface main {
@@ -214,7 +226,7 @@ interface main {
         val squareSz = frameHeight
         val pos = window.dc.cursorPos
         val checkBb = Rect(pos, pos + squareSz)
-        val totalBb = Rect(pos, pos + Vec2(squareSz + if(labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
+        val totalBb = Rect(pos, pos + Vec2(squareSz + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id))
             return false
