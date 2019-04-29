@@ -37,6 +37,8 @@ import imgui.ImGui.style
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.imgui.navRestoreLayer
 import imgui.imgui.navScoreItem
+import imgui.imgui.widgets.S8_MAX
+import imgui.imgui.widgets.S8_MIN
 import imgui.impl.windowsIme.COMPOSITIONFORM
 import imgui.impl.windowsIme.DWORD
 import imgui.impl.windowsIme.HIMC
@@ -47,6 +49,7 @@ import uno.glfw.HWND
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
 import uno.kotlin.setValue
+import unsigned.Ubyte
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
@@ -484,13 +487,17 @@ fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 
 //    return string.toCharArray(buf).size
 //}
 
-// FIXME: Adding support for clamping on boundaries of the data type would be nice.
 fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number): Number {
     assert(op == '+' || op == '-')
     return when (dataType) {
-        DataType.Byte, DataType.Ubyte -> when (op) {  // Signedness doesn't matter when adding or subtracting
-            '+' -> value1 as Byte + (value2 as Byte)
-            '-' -> value1 as Byte - (value2 as Byte)
+        DataType.Byte -> when (op) {  // Signedness doesn't matter when adding or subtracting
+            '+' -> addClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX)
+            '-' -> subClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX)
+            else -> throw Error()
+        }
+        DataType.Ubyte -> when (op) {  // Signedness doesn't matter when adding or subtracting
+            '+' -> addClampOverflow((value1 as Ubyte).ui, (value2 as Byte).i, S8_MIN, S8_MAX)
+            '-' -> subClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX)
             else -> throw Error()
         }
         DataType.Int, DataType.Uint -> when (op) {  // Signedness doesn't matter when adding or subtracting
