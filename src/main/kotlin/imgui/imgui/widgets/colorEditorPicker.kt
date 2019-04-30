@@ -321,6 +321,8 @@ interface colorEditorPicker {
     fun colorPicker4(label: String, col: FloatArray, flags_: ColorEditFlags = 0, refCol: FloatArray? = null): Boolean {
 
         val window = currentWindow
+        if (window.skipItems) return false
+
         val drawList = window.drawList
 
         pushId(label)
