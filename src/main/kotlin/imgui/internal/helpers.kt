@@ -180,7 +180,7 @@ fun hash(data: String, dataSize_: Int, seed_: Int = 0): Int {
     else
         while (src < data.length) {
             val c = data[src++]
-            if (c == ast && data[src] == ast && data[src + 1] == ast)
+            if (c == ast && data.getOrNull(src) == ast && data.getOrNull(src + 1) == ast)
                 crc = seed
 //            val b = crc ushr 8
 //            val d = crc and 0xFF

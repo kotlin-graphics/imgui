@@ -305,6 +305,7 @@ object showDemoWindowWidgets {
     var itemType = 1
     var b0 = false
     val col = Vec4(1f, 0.5, 0f, 1f)
+    val str = CharArray(16)
     var currentItem1 = 1
     var embedAllInsideAChildWindow = false
     var testWindow = false
@@ -1160,16 +1161,18 @@ object showDemoWindowWidgets {
             radioButton("Button", ::itemType, 1)
             radioButton("Checkbox", ::itemType, 2)
             radioButton("SliderFloat", ::itemType, 3)
-            radioButton("ColorEdit4", ::itemType, 4)
-            radioButton("ListBox", ::itemType, 5)
+            radioButton("InputText", ::itemType, 4)
+            radioButton("ColorEdit4", ::itemType, 5)
+            radioButton("ListBox", ::itemType, 6)
             separator()
             val ret = when (itemType) {
                 0 -> false.also { text("ITEM: Text") }   // Testing text items with no identifier/interaction
                 1 -> button("ITEM: Button")   // Testing button
                 2 -> checkbox("ITEM: Checkbox", ::b0)  // Testing checkbox
                 3 -> sliderVec4("ITEM: SliderFloat", col, 0f, 1f)   // Testing basic item
-                4 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
-                5 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                4 -> inputText("ITEM: InputText", str)  // Testing input text (which handles tabbing)
+                5 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
+                6 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
                 else -> false
             }
             bulletText("Return value = $ret\n" +
