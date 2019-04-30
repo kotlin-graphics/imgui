@@ -115,6 +115,11 @@ interface imgui_main {
         g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
 
+        g.backgroundDrawList.clear()
+        g.backgroundDrawList.pushTextureId(io.fonts.texId)
+        g.backgroundDrawList.pushClipRectFullScreen()
+        g.backgroundDrawList.flags = (if(style.antiAliasedLines) Dlf.AntiAliasedLines else Dlf.None) or if(style.antiAliasedFill) Dlf.AntiAliasedFill else Dlf.None
+
         g.overlayDrawList.clear()
         g.overlayDrawList.pushTextureId(io.fonts.texId)
         g.overlayDrawList.pushClipRectFullScreen()
@@ -341,6 +346,9 @@ interface imgui_main {
         io.metricsRenderIndices = 0
         io.metricsRenderVertices = 0
         g.drawDataBuilder.clear()
+        if (g.backgroundDrawList.vtxBuffer.isNotEmpty())
+            g.backgroundDrawList addTo g.drawDataBuilder.layers[0]
+
         val windowsToRenderFrontMost = arrayOf(
                 g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
                 g.navWindowingList.getOrNull(0).takeIf { g.navWindowingTarget != null })

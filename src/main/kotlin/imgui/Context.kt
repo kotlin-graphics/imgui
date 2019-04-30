@@ -233,8 +233,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val drawDataBuilder = DrawDataBuilder()
     /** 0.0..1.0 animation when fading in a dimming background (for modal window and CTRL+TAB list) */
     var dimBgRatio = 0f
+
+    var backgroundDrawList: DrawList = DrawList(null).apply {
+        _data = drawListSharedData
+        _ownerName = "##Background" // Give it a name for debugging
+    }
     /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
-    var overlayDrawList = DrawList(null).apply {
+    var overlayDrawList: DrawList = DrawList(null).apply {
         _data = drawListSharedData
         _ownerName = "##Overlay" // Give it a name for debugging
     }
@@ -438,6 +443,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.openPopupStack.clear()
         g.beginPopupStack.clear()
         g.drawDataBuilder.clear()
+        g.backgroundDrawList.clearFreeMemory()
         g.overlayDrawList.clearFreeMemory()
         g.privateClipboard = ""
         g.inputTextState.textW = charArrayOf()
