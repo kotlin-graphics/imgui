@@ -33,7 +33,7 @@ import imgui.internal.ItemFlag as If
 
 /**
  * Widgets: List Boxes
- * - FIXME: To be consistent with all the newer API, ListBoxHeader/ListBoxFooter should in reality be called BeginListBox/EndListBox. Will rename them.
+ * FIXME: To be consistent with all the newer API, ListBoxHeader/ListBoxFooter should in reality be called BeginListBox/EndListBox. Will rename them.
  */
 interface listBoxes {
 

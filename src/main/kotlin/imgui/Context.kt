@@ -239,7 +239,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         _ownerName = "##Background" // Give it a name for debugging
     }
     /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
-    var overlayDrawList: DrawList = DrawList(null).apply {
+    var foregroundDrawList: DrawList = DrawList(null).apply {
         _data = drawListSharedData
         _ownerName = "##Overlay" // Give it a name for debugging
     }
@@ -444,7 +444,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.beginPopupStack.clear()
         g.drawDataBuilder.clear()
         g.backgroundDrawList.clearFreeMemory()
-        g.overlayDrawList.clearFreeMemory()
+        g.foregroundDrawList.clearFreeMemory()
         g.privateClipboard = ""
         g.inputTextState.textW = charArrayOf()
         g.inputTextState.initialTextA = charArrayOf()
