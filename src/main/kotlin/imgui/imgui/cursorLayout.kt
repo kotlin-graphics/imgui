@@ -2,6 +2,7 @@ package imgui.imgui
 
 import glm_.f
 import glm_.glm
+import glm_.vec2.Vec2
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.itemAdd
@@ -163,10 +164,11 @@ interface imgui_cursorLayout {
         }
 
     /** initial cursor position in window coordinates */
-    val cursorStartPos get() = with(currentWindowRead!!) { dc.cursorStartPos - pos }
+    val cursorStartPos: Vec2
+        get() = with(currentWindowRead!!) { dc.cursorStartPos - pos }
 
     /** cursor position in absolute screen coordinates [0..io.DisplaySize] (useful to work with ImDrawList API) */
-    var cursorScreenPos // TODO check no put(), otherwise it doesnt trigger the setter
+    var cursorScreenPos: Vec2
         get() = currentWindowRead!!.dc.cursorPos
         set(value) = with(currentWindow.dc) {
             cursorPos put value

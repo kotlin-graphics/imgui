@@ -120,10 +120,10 @@ interface imgui_main {
         g.backgroundDrawList.pushClipRectFullScreen()
         g.backgroundDrawList.flags = (if(style.antiAliasedLines) Dlf.AntiAliasedLines else Dlf.None) or if(style.antiAliasedFill) Dlf.AntiAliasedFill else Dlf.None
 
-        g.overlayDrawList.clear()
-        g.overlayDrawList.pushTextureId(io.fonts.texId)
-        g.overlayDrawList.pushClipRectFullScreen()
-        g.overlayDrawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
+        g.foregroundDrawList.clear()
+        g.foregroundDrawList.pushTextureId(io.fonts.texId)
+        g.foregroundDrawList.pushClipRectFullScreen()
+        g.foregroundDrawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
 
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it.
         g.drawData.clear()
@@ -369,7 +369,7 @@ interface imgui_main {
             val pos = io.mousePos - offset
             val texId = io.fonts.texId
             val sc = style.mouseCursorScale
-            g.overlayDrawList.apply {
+            g.foregroundDrawList.apply {
                 pushTextureId(texId)
                 addImage(texId, pos + Vec2(1, 0) * sc, pos + Vec2(1, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
                 addImage(texId, pos + Vec2(2, 0) * sc, pos + Vec2(2, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
@@ -378,8 +378,8 @@ interface imgui_main {
                 popTextureId()
             }
         }
-        if (g.overlayDrawList.vtxBuffer.isNotEmpty())
-            g.overlayDrawList addTo g.drawDataBuilder.layers[0]
+        if (g.foregroundDrawList.vtxBuffer.isNotEmpty())
+            g.foregroundDrawList addTo g.drawDataBuilder.layers[0]
 
         // Setup ImDrawData structure for end-user
         g.drawData setup g.drawDataBuilder.layers[0]
