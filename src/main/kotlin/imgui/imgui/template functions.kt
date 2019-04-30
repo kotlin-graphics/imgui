@@ -25,20 +25,40 @@ import imgui.internal.DrawListFlag as Dlf
 // Template widget behaviors
 // This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
 
-fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Int, vMax: Int, format: String,
-                  power: Float, flags: DragFlags): Boolean {
+fun <N : Number> dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<N>, vSpeed_: Float, vMin: N, vMax: N,
+                               format: String, power: Float, flags: DragFlags): Boolean {
 
-    var v by vPtr as KMutableProperty0<Int>
+    var v by vPtr
 
     val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = false
     val hasMinMax = vMin != vMax
-    val isPower = power != 1f && isDecimal && hasMinMax && (vMax - vMin < Int.MAX_VALUE)
+    val delta =  when (v) {
+        is Int -> ((vMax as Int) - (vMin as Int)) as N
+        is Long -> ((vMax as Long) - (vMin as Long)) as N
+        is Float -> ((vMax as Float) - (vMin as Float)) as N
+        is Double -> ((vMax as Double) - (vMin as Double)) as N
+        else -> error("")
+    }
+    val isDelta = when (v) {
+        is Int -> (delta as Int) < Float.MAX_VALUE
+        is Long -> (delta as Long) < Double.MAX_VALUE
+        is Float -> (delta as Float) < Float.MAX_VALUE
+        is Double -> (delta as Double) < Double.MAX_VALUE
+        else -> error("")
+    }
+    val isPower = power != 1f && isDecimal && hasMinMax && isDelta
 
     // Default tweak speed
     var vSpeed = vSpeed_
-    if (vSpeed == 0f && hasMinMax && (vMax - vMax < Int.MAX_VALUE))
-        vSpeed = (vMax - vMin) * g.dragSpeedDefaultRatio
+    if (vSpeed == 0f && hasMinMax && isDelta)
+        vSpeed = when (v) {
+            is Int -> (delta as Int) * g.dragSpeedDefaultRatio
+            is Long -> (delta as Long) * g.dragSpeedDefaultRatio
+            is Float -> (delta as Float) * g.dragSpeedDefaultRatio
+            is Double -> ((delta as Double) * g.dragSpeedDefaultRatio).f
+            else -> error("")
+        }
 
     // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
     var adjustDelta = 0f
@@ -66,7 +86,21 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
         Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
         so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
     val isJustActivated = g.activeIdIsJustActivated
-    val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
+    val a = when (v) {
+        is Int -> v as Int >= vMax as Int
+        is Long -> v as Long >= vMax as Long
+        is Float -> v as Float >= vMax as Float
+        is Double -> v as Double >= vMax as Double
+        else -> error("")
+    } && adjustDelta > 0f
+    val b = when (v) {
+        is Int -> v as Int <= vMin as Int
+        is Long -> v as Long <= vMin as Long
+        is Float -> v as Float <= vMin as Float
+        is Double -> v as Double <= vMin as Double
+        else -> error("")
+    } && adjustDelta < 0f
+    val isAlreadyPastLimitsAndPushingOutward = hasMinMax && (a || b)
     val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
     if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
         g.dragCurrentAccum = 0f
@@ -80,15 +114,52 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
         return false
 
     var vCur = v
-    var vOldRefForAccumRemainder = 0f
+    var vOldRefForAccumRemainder: Number = when (v) {
+        is Int, is Float -> 0f
+        is Long, is Double -> 0.0
+        else -> error("")
+    }
 
     if (isPower) {
         // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-        val vOldNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
-        val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-        vCur = vMin + glm.pow(saturate(vNewNormCurved), power).i * (vMax - vMin)
-        vOldRefForAccumRemainder = vOldNormCurved
-    } else vCur += g.dragCurrentAccum.i
+        when (v) {
+            is Int -> {
+                val d = delta as Int
+                val vOldNormCurved = glm.pow(((vCur as Int) - (vMin as Int)).f / d, 1f / power)
+                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / d
+                vCur = ((vMin as Int) + glm.pow(saturate(vNewNormCurved), power).i * d) as N
+                vOldRefForAccumRemainder = vOldNormCurved
+            }
+            is Long -> {
+                val d = delta as Long
+                val vOldNormCurved = glm.pow(((vCur as Long) - (vMin as Long)).d / d, 1.0 / power)
+                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / d
+                vCur = ((vMin as Long) + glm.pow(saturate(vNewNormCurved.f), power).L * d) as N
+                vOldRefForAccumRemainder = vOldNormCurved
+            }
+            is Float -> {
+                val d = delta as Float
+                val vOldNormCurved = glm.pow(((vCur as Float) - (vMin as Float)).f / d, 1f / power)
+                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / d
+                vCur = ((vMin as Float) + glm.pow(saturate(vNewNormCurved), power).f * d) as N
+                vOldRefForAccumRemainder = vOldNormCurved
+            }
+            is Double -> {
+                val d = delta as Double
+                val vOldNormCurved = glm.pow(((vCur as Double) - (vMin as Double)).d / d, 1.0 / power)
+                val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / d
+                vCur = ((vMin as Double) + glm.pow(saturate(vNewNormCurved.f), power).d * d) as N
+                vOldRefForAccumRemainder = vOldNormCurved
+            }
+        }
+    } else
+        vCur = when (v) {
+            is Int -> ((vCur as Int) + g.dragCurrentAccum.i) as N
+            is Long -> ((vCur as Long) + g.dragCurrentAccum.L) as N
+            is Float -> ((vCur as Float) + g.dragCurrentAccum.f) as N
+            is Double -> ((vCur as Double) + g.dragCurrentAccum.d) as N
+            else -> error("")
+        }
 
     // Round to user desired precision based on format string
     vCur = roundScalarWithFormat(format, vCur)
@@ -96,24 +167,66 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
     g.dragCurrentAccumDirty = false
     g.dragCurrentAccum -= when {
-        isPower -> {
-            val vCurNormCurved = glm.pow((vCur - vMin).f / (vMax - vMin).f, 1f / power)
-            vCurNormCurved - vOldRefForAccumRemainder
+        isPower -> when (v) {
+            is Int -> {
+                val vCurNormCurved = glm.pow(((vCur as Int) - (vMin as Int)).f / (delta as Int).f, 1f / power)
+                (vCurNormCurved - (vOldRefForAccumRemainder as Float)).f
+            }
+            is Long -> {
+                val vCurNormCurved = glm.pow(((vCur as Long) - (vMin as Long)).d / (delta as Long).d, 1.0 / power)
+                (vCurNormCurved - (vOldRefForAccumRemainder as Float)).f
+            }
+            is Float -> {
+                val vCurNormCurved = glm.pow(((vCur as Float) - (vMin as Float)) / (delta as Float), 1f / power)
+                (vCurNormCurved - (vOldRefForAccumRemainder as Float)).f
+            }
+            is Double -> {
+                val vCurNormCurved = glm.pow(((vCur as Double) - (vMin as Double)) / (delta as Double), 1.0 / power)
+                (vCurNormCurved - (vOldRefForAccumRemainder as Float)).f
+            }
+            else -> error("")
         }
-        else -> (vCur - v).f
+        else -> when (v) {
+            is Int -> ((vCur as Int) - (v as Int)).f
+            is Long -> ((vCur as Long) - (v as Long)).f
+            is Float -> (vCur as Float) - (v as Float)
+            is Double -> ((vCur as Double) - (v as Double)).f
+            else -> error("")
+        }
     }
 
     // Lose zero sign for float/double
-    if (vCur == -0)
-        vCur = 0
+//    if (vCur == -0)
+//        vCur = 0
 
     // Clamp values (+ handle overflow/wrap-around for integer types)
-    if (v != vCur && hasMinMax) {
-        if (vCur < vMin || (vCur > v && adjustDelta < 0f && !isDecimal))
-            vCur = vMin
-        if (vCur > vMax || (vCur < v && adjustDelta > 0f && !isDecimal))
-            vCur = vMax
-    }
+    if (v != vCur && hasMinMax)
+        when (v) {
+            is Int -> {
+                if ((vCur as Int) < (vMin as Int) || ((vCur as Int) > (v as Int) && adjustDelta < 0f && !isDecimal))
+                    vCur = vMin
+                if ((vCur as Int) > (vMax as Int) || ((vCur as Int) < (v as Int) && adjustDelta > 0f && !isDecimal))
+                    vCur = vMax
+            }
+            is Long -> {
+                if ((vCur as Long) < (vMin as Long) || ((vCur as Long) > (v as Long) && adjustDelta < 0f && !isDecimal))
+                    vCur = vMin
+                if ((vCur as Long) > (vMax as Long) || ((vCur as Long) < (v as Long) && adjustDelta > 0f && !isDecimal))
+                    vCur = vMax
+            }
+            is Float -> {
+                if ((vCur as Float) < (vMin as Float) || ((vCur as Float) > (v as Float) && adjustDelta < 0f && !isDecimal))
+                    vCur = vMin
+                if ((vCur as Float) > (vMax as Float) || ((vCur as Float) < (v as Float) && adjustDelta > 0f && !isDecimal))
+                    vCur = vMax
+            }
+            is Double -> {
+                if ((vCur as Double) < (vMin as Double) || ((vCur as Double) > (v as Double) && adjustDelta < 0f && !isDecimal))
+                    vCur = vMin
+                if ((vCur as Double) > (vMax as Double) || ((vCur as Double) < (v as Double) && adjustDelta > 0f && !isDecimal))
+                    vCur = vMax
+            }
+        }
 
     // Apply result
     if (v == vCur)
@@ -121,7 +234,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     v = vCur
     return true
 }
-
+/*
 fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float, vMin: Long, vMax: Long, format: String,
                   power: Float, flags: DragFlags): Boolean {
 
@@ -411,7 +524,7 @@ fun dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<*>, vSpeed_: Float
     v = vCur
     return true
 }
-
+*/
 /** ~SetupDrawData */
 infix fun DrawData.setup(drawLists: ArrayList<DrawList>) {
     valid = true
