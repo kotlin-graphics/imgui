@@ -46,6 +46,8 @@ val S16_MIN: Int = -32768
 val S16_MAX: Int = 32767
 val U16_MIN: Int = 0
 val U16_MAX: Int = 0xFFFF
+val S32_MIN: Int = Integer.MIN_VALUE
+val S32_MAX: Int = Integer.MAX_VALUE
 // @formatter:on
 
 

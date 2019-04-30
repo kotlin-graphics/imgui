@@ -8,9 +8,12 @@ import imgui.Dir
 import imgui.NUL
 import kool.rem
 import org.lwjgl.system.Platform
+import unsigned.Ulong
+import unsigned.toBigInt
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStreamReader
+import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.charset.Charset
@@ -335,16 +338,43 @@ fun saturate(f: Float) = if (f < 0f) 0f else if (f > 1f) 1f else f
 
 // - ImMin/ImMax/ImClamp/ImLerp/ImSwap are used by widgets which support for variety of types: signed/unsigned int/long long float/double
 // (Exceptionally using templates here but we could also redefine them for variety of types)
-/** Byte, Short and Int */
+
+/** Byte, Short versions */
 fun addClampOverflow(a: Int, b: Int, mn: Int, mx: Int): Int = when {
     b < 0 && (a < mn - b) -> mn
     b > 0 && (a > mx - b) -> mx
     else -> a + b
 }
 
-fun subClampOverflow(a: Int, b: Int, mn: Int, mx: Int) = when {
+fun subClampOverflow(a: Int, b: Int, mn: Int, mx: Int): Int = when {
     b > 0 && (a < mn + b) -> mn
     b < 0 && (a > mx + b) -> mx
+    else -> a - b
+}
+
+/** Int versions */
+fun addClampOverflow(a: Long, b: Long, mn: Long, mx: Long): Long = when {
+    b < 0 && (a < mn - b) -> mn
+    b > 0 && (a > mx - b) -> mx
+    else -> a + b
+}
+
+fun subClampOverflow(a: Long, b: Long, mn: Long, mx: Long): Long = when {
+    b > 0 && (a < mn + b) -> mn
+    b < 0 && (a > mx + b) -> mx
+    else -> a - b
+}
+
+/** Ulong versions */
+fun addClampOverflow(a: BigInteger, b: BigInteger, mn: BigInteger, mx: BigInteger): BigInteger = when {
+    b < 0.toBigInt() && (a < mn - b) -> mn
+    b > 0.toBigInt() && (a > mx - b) -> mx
+    else -> a + b
+}
+
+fun subClampOverflow(a: BigInteger, b: BigInteger, mn: BigInteger, mx: BigInteger): BigInteger = when {
+    b > 0.toBigInt() && (a < mn + b) -> mn
+    b < 0.toBigInt() && (a > mx + b) -> mx
     else -> a - b
 }
 

@@ -37,8 +37,7 @@ import imgui.ImGui.style
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.imgui.navRestoreLayer
 import imgui.imgui.navScoreItem
-import imgui.imgui.widgets.S8_MAX
-import imgui.imgui.widgets.S8_MIN
+import imgui.imgui.widgets.*
 import imgui.impl.windowsIme.COMPOSITIONFORM
 import imgui.impl.windowsIme.DWORD
 import imgui.impl.windowsIme.HIMC
@@ -49,7 +48,7 @@ import uno.glfw.HWND
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
 import uno.kotlin.setValue
-import unsigned.Ubyte
+import unsigned.*
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
@@ -448,8 +447,15 @@ fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 
 //        DataType.Double -> this() as Double
 //        else -> throw Error()
 //    }
-    // TODO check u8, s8, u16, s16 support
-    val string = format.format(style.locale, this())
+    val t = this()
+    val string = format.format(style.locale, when (t) {
+        // we need to intervene since java printf cant handle %u
+        is Ubyte -> t.i
+        is Ushort -> t.i
+        is Uint -> t.L
+        is Ulong -> t.toBigInt()
+        else -> t // normal scalar
+    })
     return when (size) {
         0 -> string.toCharArray()
         else -> string.toCharArray(CharArray(size))
@@ -490,29 +496,48 @@ fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 
 fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number): Number {
     assert(op == '+' || op == '-')
     return when (dataType) {
-        DataType.Byte -> when (op) {  // Signedness doesn't matter when adding or subtracting
-            '+' -> addClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX)
-            '-' -> subClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX)
+        /*  Signedness doesn't matter when adding or subtracting
+            Note: on jvm Byte and Short (and their unsigned counterparts use all unsigned under the hood),
+            so we directly switch to Integers in these cases. We also use some custom clamp min max values because of this
+         */
+        DataType.Byte -> when (op) {
+            '+' -> addClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX).b
+            '-' -> subClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX).b
             else -> throw Error()
         }
-        DataType.Ubyte -> when (op) {  // Signedness doesn't matter when adding or subtracting
-            '+' -> addClampOverflow((value1 as Ubyte).ui, (value2 as Byte).i, S8_MIN, S8_MAX)
-            '-' -> subClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX)
+        DataType.Ubyte -> when (op) {
+            '+' -> Ubyte(addClampOverflow((value1 as Ubyte).i, (value2 as Ubyte).i, U8_MIN, U8_MAX))
+            '-' -> Ubyte(subClampOverflow((value1 as Ubyte).i, (value2 as Ubyte).i, U8_MIN, U8_MAX))
             else -> throw Error()
         }
-        DataType.Int, DataType.Uint -> when (op) {  // Signedness doesn't matter when adding or subtracting
-            '+' -> value1 as Int + (value2 as Int)
-            '-' -> value1 as Int - (value2 as Int)
+        DataType.Short -> when (op) {
+            '+' -> addClampOverflow((value1 as Short).i, (value2 as Short).i, S16_MIN, S16_MAX).s
+            '-' -> subClampOverflow((value1 as Short).i, (value2 as Short).i, S16_MIN, S16_MAX).s
             else -> throw Error()
         }
-        DataType.Short, DataType.Ushort -> when (op) {  // Signedness doesn't matter when adding or subtracting
-            '+' -> value1 as Short + (value2 as Short)
-            '-' -> value1 as Short - (value2 as Short)
+        DataType.Ushort -> when (op) {
+            '+' -> Ushort(addClampOverflow((value1 as Ushort).i, (value2 as Ushort).i, U16_MIN, U16_MAX))
+            '-' -> Ushort(subClampOverflow((value1 as Ushort).i, (value2 as Ushort).i, U16_MIN, U16_MAX))
             else -> throw Error()
         }
-        DataType.Long, DataType.Ulong -> when (op) {  // Signedness doesn't matter when adding or subtracting
-            '+' -> value1 as Long + (value2 as Long)
-            '-' -> value1 as Long - (value2 as Long)
+        DataType.Int -> when (op) {
+            '+' -> addClampOverflow(value1 as Int, value2 as Int, Int.MIN_VALUE, Int.MAX_VALUE)
+            '-' -> subClampOverflow(value1 as Int, value2 as Int, Int.MIN_VALUE, Int.MAX_VALUE)
+            else -> throw Error()
+        }
+        DataType.Uint -> when (op) {
+            '+' -> Uint(addClampOverflow((value1 as Uint).L, (value2 as Uint).L, 0L, Uint.MAX_VALUE))
+            '-' -> Uint(subClampOverflow((value1 as Uint).L, (value2 as Uint).L, 0L, Uint.MAX_VALUE))
+            else -> throw Error()
+        }
+        DataType.Long -> when (op) {
+            '+' -> addClampOverflow(value1 as Long, value2 as Long, Long.MIN_VALUE, Long.MAX_VALUE)
+            '-' -> subClampOverflow(value1 as Long, value2 as Long, Long.MIN_VALUE, Long.MAX_VALUE)
+            else -> throw Error()
+        }
+        DataType.Ulong -> when (op) {
+            '+' -> Ulong(addClampOverflow((value1 as Ulong).toBigInt(), (value2 as Ulong).toBigInt(), Ulong.MIN_VALUE, Ulong.MAX_VALUE))
+            '-' -> Ulong(subClampOverflow((value1 as Ulong).toBigInt(), (value2 as Ulong).toBigInt(), Ulong.MIN_VALUE, Ulong.MAX_VALUE))
             else -> throw Error()
         }
         DataType.Float -> when (op) {

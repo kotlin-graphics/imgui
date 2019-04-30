@@ -67,6 +67,7 @@ import imgui.internal.*
 import kool.lib.fill
 import uno.kotlin.getValue
 import uno.kotlin.setValue
+import unsigned.Ubyte
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.nio.ByteBuffer
@@ -1917,12 +1918,11 @@ interface imgui_internal {
     }
 
     fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
-                     power: Float, flags: DragFlags): Boolean = withFloat(v, ptr) {
-        dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power, flags)
-    }
+                     power: Float, flags: DragFlags): Boolean =
+            withFloat(v, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power, flags) }
 
-    fun dragBehavior(id: ID, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number?, vMax: Number?,
-                     format: String, power: Float, flags: DragFlags): Boolean {
+    fun <N : Number> dragBehavior(id: ID, dataType: DataType, v_: KMutableProperty0<N>, vSpeed: Float, vMin: Number?, vMax: Number?,
+                                  format: String, power: Float, flags: DragFlags): Boolean {
 
         if (g.activeId == id)
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
@@ -1930,16 +1930,33 @@ interface imgui_internal {
             else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                 clearActiveId()
 
-        return when (g.activeId) {
-            id -> when (dataType) {
-                DataType.Int, DataType.Uint -> dragBehaviorT(dataType, v, vSpeed, vMin as? Int
-                        ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power, flags)
-                DataType.Long, DataType.Ulong -> dragBehaviorT(dataType, v, vSpeed, vMin as? Long
-                        ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power, flags)
-                DataType.Float -> dragBehaviorT(dataType, v, vSpeed, vMin as? Float
-                        ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power, flags)
-                DataType.Double -> dragBehaviorT(dataType, v, vSpeed, vMin as? Double
-                        ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power, flags)
+        var v by v_
+
+        return when {
+            g.activeId == id -> when (v) {
+                is Byte -> {
+                    _i = v.i
+                    val min = vMin?.let { it as Byte } ?: Byte.MIN_VALUE
+                    val max = vMax?.let { it as Byte } ?: Byte.MAX_VALUE
+                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+                            .also { v = _i.b as N }
+                }
+                is Ubyte -> {
+                    _i = v.i
+                    val min = vMin?.i ?: Ubyte.MIN_VALUE
+                    val max = vMax?.i ?: Ubyte.MAX_VALUE
+                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+                            .also { (v as Ubyte).v = _i.b }
+                }
+
+                //                DataType.Int, DataType.Uint -> dragBehaviorT(dataType, v_, vSpeed, vMin as? Int
+                //                        ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power, flags)
+                //                DataType.Long, DataType.Ulong -> dragBehaviorT(dataType, v_, vSpeed, vMin as? Long
+                //                        ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power, flags)
+                //                DataType.Float -> dragBehaviorT(dataType, v_, vSpeed, vMin as? Float
+                //                        ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power, flags)
+                //                DataType.Double -> dragBehaviorT(dataType, v_, vSpeed, vMin as? Double
+                //                        ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power, flags)
                 else -> throw Error()
             }
             else -> false
@@ -2811,7 +2828,7 @@ interface imgui_internal {
             }
 
             // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
-            bufDisplay = if(!isReadOnly && state.textAIsValid) state.textA else buf
+            bufDisplay = if (!isReadOnly && state.textAIsValid) state.textA else buf
             bufDisplayEnd[0] = state.curLenA
             if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength)
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, Col.Text.u32, bufDisplay, bufDisplayEnd[0], 0f, clipRect.takeIf { !isMultiline })
@@ -2831,7 +2848,7 @@ interface imgui_internal {
             }
         } else {
             // Render text only (no selection, no cursor)
-            bufDisplay = if(g.activeId == id && !isReadOnly && state!!.textAIsValid) state.textA else buf
+            bufDisplay = if (g.activeId == id && !isReadOnly && state!!.textAIsValid) state.textA else buf
             when {
                 // We don't need width
                 isMultiline -> textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufDisplayEnd) * g.fontSize)
@@ -3044,7 +3061,7 @@ interface imgui_internal {
 
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
 
-        val valuesCountMin = if(plotType == PlotType.Lines) 2 else 1
+        val valuesCountMin = if (plotType == PlotType.Lines) 2 else 1
         if (valuesCount >= valuesCountMin) {
             val resW = min(frameSize.x.i, valuesCount) + if (plotType == PlotType.Lines) -1 else 0
             val itemCount = valuesCount + if (plotType == PlotType.Lines) -1 else 0
@@ -3359,6 +3376,8 @@ interface imgui_internal {
     }
 
     companion object {
+
+        var _i = 0
 
         fun alphaBlendColor(colA: Int, colB: Int): Int {
             val t = ((colB ushr COL32_A_SHIFT) and 0xFF) / 255f
