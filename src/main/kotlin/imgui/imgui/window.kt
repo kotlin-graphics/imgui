@@ -887,7 +887,9 @@ interface imgui_window {
             contentRegionMax - (dc.cursorPos - pos)
         }
 
-    val contentRegionAvailWidth get() = contentRegionAvail.x
+    /** == GetContentRegionAvail().x */
+    val contentRegionAvailWidth: Float
+        get() = contentRegionAvail.x
     /** content boundaries min (roughly (0,0)-Scroll), in window coordinates    */
     val windowContentRegionMin: Vec2
         get() = currentWindowRead!!.run { contentsRegionRect.min - pos }
