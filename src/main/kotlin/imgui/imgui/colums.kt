@@ -55,7 +55,7 @@ interface imgui_colums {
         val columns = window.dc.columnsSet!!
 
         if (columns.count == 1) {
-            window.dc.cursorPos.x = (window.pos.x + window.dc.indent.x + window.dc.columnsOffset.x).i.f
+            window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
             assert(columns.current == 0)
             return
         }
