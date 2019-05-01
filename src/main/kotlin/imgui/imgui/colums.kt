@@ -52,17 +52,25 @@ interface imgui_colums {
         val window = currentWindow
         if (window.skipItems || window.dc.columnsSet == null) return
 
+        val columns = window.dc.columnsSet!!
+
+        if (columns.count == 1) {
+            window.dc.cursorPos.x = (window.pos.x + window.dc.indent.x + window.dc.columnsOffset.x).i.f
+            assert(columns.current == 0)
+            return
+        }
+
         popItemWidth()
         popClipRect()
 
         with(window) {
-            val columns = dc.columnsSet!!
             columns.lineMaxY = max(columns.lineMaxY, dc.cursorPos.y)
             if (++columns.current < columns.count) {
                 // Columns 1+ cancel out Indent.x
                 dc.columnsOffset = getColumnOffset(columns.current) - dc.indent + style.itemSpacing.x
                 drawList.channelsSetCurrent(columns.current)
             } else {
+                // New line
                 dc.columnsOffset = 0f
                 drawList.channelsSetCurrent(0)
                 columns.current = 0
@@ -182,7 +190,8 @@ interface imgui_colums {
 
         if (g.currentWindow!!.skipItems) return false
 
-        val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!") // FIXME-ERRORHANDLING
+        val tabBar = g.currentTabBar
+                ?: error("Needs to be called between BeginTabBar() and EndTabBar()!") // FIXME-ERRORHANDLING
         return tabBar.tabItemEx(label, pOpen, flags).also {
             if (it && flags hasnt TabItemFlag.NoPushId) {
                 val tab = tabBar.tabs[tabBar.lastTabItemIdx]
@@ -196,7 +205,8 @@ interface imgui_colums {
 
         if (g.currentWindow!!.skipItems) return
 
-        val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!") // FIXME-ERRORHANDLING
+        val tabBar = g.currentTabBar
+                ?: error("Needs to be called between BeginTabBar() and EndTabBar()!") // FIXME-ERRORHANDLING
         assert(tabBar.lastTabItemIdx >= 0)
         val tab = tabBar.tabs[tabBar.lastTabItemIdx]
         if (tab.flags hasnt TabItemFlag.NoPushId)
@@ -242,9 +252,9 @@ interface imgui_colums {
 
         val TabBar.tabBarRef: TabBarRef?
             get() {
-            if (this in g.tabBars)
-                return TabBarRef(g.tabBars.getIndex(this))
-            return TabBarRef(this)
-        }
+                if (this in g.tabBars)
+                    return TabBarRef(g.tabBars.getIndex(this))
+                return TabBarRef(this)
+            }
     }
 }

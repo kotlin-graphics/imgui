@@ -894,7 +894,7 @@ interface imgui_internal {
 
         with(currentWindow) {
 
-            assert(columnsCount > 1)
+            assert(columnsCount >= 1)
             assert(dc.columnsSet == null) { "Nested columns are currently not supported" }
 
             /*  Differentiate column ID with an arbitrary prefix for cases where users name their columns set the same
@@ -947,8 +947,10 @@ interface imgui_internal {
                 column.clipRect = Rect(clipX1, -Float.MAX_VALUE, clipX2, +Float.MAX_VALUE)
                 column.clipRect clipWith clipRect
             }
-            drawList.channelsSplit(columns.count)
-            pushColumnClipRect()
+            if (columns.count > 1) {
+                drawList.channelsSplit(columns.count)
+                pushColumnClipRect()
+            }
             pushItemWidth(getColumnWidth() * 0.65f)
         }
     }
@@ -958,8 +960,10 @@ interface imgui_internal {
         val columns = dc.columnsSet!!
 
         popItemWidth()
-        popClipRect()
-        drawList.channelsMerge()
+        if (columns.count > 1) {
+            popClipRect()
+            window.drawList.channelsMerge()
+        }
 
         columns.lineMaxY = glm.max(columns.lineMaxY, dc.cursorPos.y)
         dc.cursorPos.y = columns.lineMaxY
