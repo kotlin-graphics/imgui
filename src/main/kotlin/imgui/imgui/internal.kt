@@ -3019,20 +3019,20 @@ interface imgui_internal {
 
     /** Note: only access 3 floats if ColorEditFlag.NoAlpha flag is set.   */
     fun colorTooltip(text: String, col: FloatArray, flags: ColorEditFlags) {
-        val cr = F32_TO_INT8_SAT(col[0])
-        val cg = F32_TO_INT8_SAT(col[1])
-        val cb = F32_TO_INT8_SAT(col[2])
-        val ca = if (flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
-        beginTooltipEx(0, true)
 
+        beginTooltipEx(0, true)
         val textEnd = if (text.isEmpty()) findRenderedTextEnd(text) else 0
         if (textEnd > 0) {
             textEx(text, textEnd)
             separator()
         }
         val sz = Vec2(g.fontSize * 3 + style.framePadding.y * 2)
-        val f = (flags and (Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf)) or Cef.NoTooltip
-        colorButton("##preview", Vec4(col), f, sz)
+        val cf = Vec4(col[0], col[1], col[2], if(flags has Cef.NoAlpha) 1f else col[3])
+        val cr = F32_TO_INT8_SAT(col[0])
+        val cg = F32_TO_INT8_SAT(col[1])
+        val cb = F32_TO_INT8_SAT(col[2])
+        val ca = if(flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
+        colorButton("##preview", cf, (flags and (Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf)) or Cef.NoTooltip, sz)
         sameLine()
         if (flags has Cef.NoAlpha)
             text("#%02X%02X%02X\nR: $cr, G: $cg, B: $cb\n(%.3f, %.3f, %.3f)", cr, cg, cb, col[0], col[1], col[2])
