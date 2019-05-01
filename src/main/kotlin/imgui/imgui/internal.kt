@@ -2278,7 +2278,7 @@ interface imgui_internal {
      *  (FIXME: Rather confusing and messy function, among the worse part of our codebase, expecting to rewrite a V2 at some point.. Partly because we are
      *  doing UTF8 > U16 > UTF8 conversions on the go to easily interface with stb_textedit. Ideally should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
      */
-    fun inputTextEx(label: String, buf: CharArray/*, bufSize: Int*/, sizeArg: Vec2, flags: InputTextFlags,
+    fun inputTextEx(label: String, hint: String?, buf: CharArray, sizeArg: Vec2, flags: InputTextFlags,
                     callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean {
 
         val window = currentWindow
@@ -2774,7 +2774,8 @@ interface imgui_internal {
             Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
         val bufDisplayMaxLength = 2 * 1024 * 1024
         lateinit var bufDisplay: CharArray
-        var bufDisplayEnd = IntArray(1)
+        val bufDisplayEnd = IntArray(1)
+        lateinit var textColor: Col
 
         // Render text. We currently only render selection when the widget is active or while scrolling.
         // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
@@ -2911,11 +2912,19 @@ interface imgui_internal {
                 }
             }
 
+            if (state.curLenA != 0 || hint == null) {
+                bufDisplay = if (!isReadOnly && state.textAIsValid) state.textA else buf
+                bufDisplayEnd[0] = state.curLenA
+                textColor = Col.Text
+            } else {
+                hint.toCharArray(bufDisplay)
+                bufDisplayEnd[0] = hint.length
+                textColor = Col.TextDisabled
+            }
+
             // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
-            bufDisplay = if (!isReadOnly && state.textAIsValid) state.textA else buf
-            bufDisplayEnd[0] = state.curLenA
             if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength)
-                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, Col.Text.u32, bufDisplay, bufDisplayEnd[0], 0f, clipRect.takeIf { !isMultiline })
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, textColor.u32, bufDisplay, bufDisplayEnd[0], 0f, clipRect.takeUnless { isMultiline })
 
             // Draw blinking cursor
             if (renderCursor) {
@@ -2932,6 +2941,7 @@ interface imgui_internal {
             }
         } else {
             // Render text only (no selection, no cursor)
+            textColor = Col.Text
             bufDisplay = if (g.activeId == id && !isReadOnly && state!!.textAIsValid) state.textA else buf
             when {
                 // We don't need width
@@ -2939,8 +2949,15 @@ interface imgui_internal {
                 g.activeId == id -> bufDisplayEnd[0] = state!!.curLenA
                 else -> bufDisplayEnd[0] = bufDisplay.strlen
             }
+
+            if (bufDisplayEnd[0] == 0 && hint != null) {
+                hint.toCharArray(bufDisplay)
+                bufDisplayEnd[0] = bufDisplay.strlen
+                textColor = Col.TextDisabled
+            }
+
             if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength)
-                drawWindow.drawList.addText(g.font, g.fontSize, drawPos, Col.Text.u32, bufDisplay, bufDisplayEnd[0], 0f, clipRect)
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos, textColor.u32, bufDisplay, bufDisplayEnd[0], 0f, clipRect.takeUnless { isMultiline })
         }
 
         if (isMultiline) {
@@ -2984,7 +3001,7 @@ interface imgui_internal {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
-        val valueChanged = inputTextEx(label, dataBuf, bb.size, flags)
+        val valueChanged = inputTextEx(label, null, dataBuf, bb.size, flags)
         if (g.scalarAsInputTextId == 0) {
             assert(g.activeId == id) { "First frame we started displaying the InputText widget, we expect it to take the active id." }
             g.scalarAsInputTextId = g.activeId

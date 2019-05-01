@@ -63,6 +63,7 @@ import imgui.ImGui.inputInt3
 import imgui.ImGui.inputInt4
 import imgui.ImGui.inputText
 import imgui.ImGui.inputTextMultiline
+import imgui.ImGui.inputTextWithHint
 import imgui.ImGui.io
 import imgui.ImGui.isItemActivated
 import imgui.ImGui.isItemActive
@@ -159,6 +160,7 @@ object showDemoWindowWidgets {
     val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
     var currentItem0 = 0
     var str0 = "Hello, world!".toCharArray(CharArray(128))
+    var str1 = ""
     var i0 = 123
     var f0 = 0.001f
     var f1 = 1e10f
@@ -378,6 +380,8 @@ object showDemoWindowWidgets {
             run {
                 inputText("input text", str0)
                 sameLine(); showHelpMarker("USER:\nHold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\nCTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\nESCAPE to revert.\n\nPROGRAMMER:\nYou can use the InputTextFlag.CallbackResize facility if you need to wire InputText() to a dynamic string type. See misc/cpp/imgui_stl.h for an example (this is not demonstrated in imgui_demo.cpp).")
+
+                inputTextWithHint("input text (w/ hint)", "enter text here", str1.toCharArray()) // TODO check if convert str1 to CharArray
 
                 inputInt("input int", ::i0)
                 sameLine(); showHelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n")
