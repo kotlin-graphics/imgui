@@ -74,9 +74,9 @@ import imgui.internal.DrawCornerFlag as Dcf
 
 /** Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little colored preview square that can be
  *  left-clicked to open a picker, and right-clicked to open an option menu.)
- *  - Note that in C++ a 'float v[X]' function argument is the _same_ as 'float* v', the array syntax is just a way
- *      to document the number of elements that are expected to be accessible. You can the pass the address of
- *      a first float element out of a contiguous structure, e.g. &myvector.x  */
+ *  - Note that in C++ a 'float v[X]' function argument is the _same_ as 'float* v', the array syntax is just a way to
+ *      document the number of elements that are expected to be accessible.
+ *  - You can pass the address of a first float element out of a contiguous structure, e.g. &myvector.x  */
 interface colorEditorPicker {
 
     /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
