@@ -232,7 +232,7 @@ object showDemoWindowWidgets {
                     label""".trimMargin() +
                 "\tlock cmpxchg8b eax\n").toCharArray(it)
     }
-    var readOnly = false
+    var flags = Itf.AllowTabInput.i
 
 
     /* Color/Picker Widgets */
@@ -725,15 +725,15 @@ object showDemoWindowWidgets {
 //                ImGui::InputText("password (clear)", bufpass, 64, ImGuiInputTextFlags_CharsNoBlank);
         }
 
-        treeNode("Multi-line Text Input TODO") {
+        treeNode("Multi-line Text Input") {
             /*
                 Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
                 and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.
              */
-            showHelpMarker("You can use the InputTextFlag.CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stl.h for an example. (This is not demonstrated in imgui_demo.cpp)")
-            checkbox("Read-only", ::readOnly)
-
-            val flags = Itf.AllowTabInput or if (readOnly) Itf.ReadOnly else Itf.None
+            showHelpMarker("You can use the InputTextFlag.CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stl.h for an example. (This is not demonstrated in imgui_demo.cpp)") // TODO fix bug, some '?' appear at the end of the line
+            checkboxFlags("ImGuiInputTextFlags_ReadOnly", ::flags, Itf.ReadOnly.i)
+            checkboxFlags("ImGuiInputTextFlags_AllowTabInput", ::flags, Itf.AllowTabInput.i)
+            checkboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", ::flags, Itf.CtrlEnterForNewLine.i)
             inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
         }
 

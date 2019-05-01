@@ -97,7 +97,7 @@ infix fun Int.hasnt(b: WindowFlag) = and(b.i) == 0
 infix fun Int.wo(b: WindowFlag): WindowFlags = and(b.i.inv())
 
 /** Flags for ImGui::InputText()    */
-enum class InputTextFlag(@JvmField val i: Int) {
+enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flags the others enum
 
     None(0),
     /** Allow 0123456789 . + - * /      */
