@@ -1334,6 +1334,8 @@ class TabBar {
         if (tabAppearing && flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0)
             if (!tabBarAppearing || selectedTabId == 0)
                 nextSelectedTabId = id  // New tabs gets activated
+        if (flags has TabItemFlag.SetSelected && selectedTabId != id) // SetSelected can only be passed on explicit tab bar
+            nextSelectedTabId = id
 
         // Lock visibility
         var tabContentsVisible = visibleTabId == id
@@ -1382,9 +1384,9 @@ class TabBar {
         if (g.dragDropActive)
             buttonFlags = buttonFlags or ButtonFlag.PressedOnDragDropHold
         val (pressed, hovered_, held) = buttonBehavior(bb, id, buttonFlags)
-        val hovered = hovered_ || g.hoveredId == id
-        if (pressed || (flags_ has TabItemFlag.SetSelected && !tabContentsVisible)) // SetSelected can only be passed on explicit tab bar
+        if(pressed)
             nextSelectedTabId = id
+        val hovered = hovered_ || g.hoveredId == id
 
         // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
         if (!held)
