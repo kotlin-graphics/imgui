@@ -59,7 +59,6 @@ import imgui.ImGui.setTooltip
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
-import imgui.ImGui.textEx
 import imgui.TextEditState.K
 import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
 import imgui.imgui.widgets.main
@@ -325,20 +324,23 @@ interface imgui_internal {
     }
 
     /** Return true if focus is requested   */
-    fun focusableItemRegister(window: Window, id: ID, tabStop: Boolean = true): Boolean {
+    fun focusableItemRegister(window: Window, id: ID): Boolean {
 
+        // Increment counters
         val isTabStop = window.dc.itemFlags hasnt (If.NoTabStop or If.Disabled)
         window.focusIdxAllCounter++
         if (isTabStop)
             window.focusIdxTabCounter++
 
-        /*  Process keyboard input at this point: TAB/Shift-TAB to tab out of the currently focused item.
-            Note that we can always TAB out of a widget that doesn't allow tabbing in.         */
-        if (tabStop && g.activeId == id && window.focusIdxAllRequestNext == Int.MAX_VALUE &&
-                window.focusIdxTabRequestNext == Int.MAX_VALUE && !io.keyCtrl && Key.Tab.isPressed)
-        // Modulo on index will be applied at the end of frame once we've got the total counter of items.
-            window.focusIdxTabRequestNext = window.focusIdxTabCounter + if (io.keyShift) if (isTabStop) -1 else 0 else 1
-
+        // Process TAB/Shift-TAB to tab *OUT* of the currently focused item.
+        // (Note that we can always TAB out of a widget that doesn't allow tabbing in)
+        if (g.activeId == id && g.focusTabPressed && g.activeIdBlockNavInputFlags hasnt (1 shl NavInput.KeyTab.i))
+            if (window.focusIdxAllRequestNext == Int.MAX_VALUE && window.focusIdxTabRequestNext == Int.MAX_VALUE)
+            // Modulo on index will be applied at the end of frame once we've got the total counter of items.
+                window.focusIdxTabRequestNext = window.focusIdxTabCounter + when {
+                    io.keyShift -> if (isTabStop) -1 else 0
+                    else -> +1
+                }
         if (window.focusIdxAllCounter == window.focusIdxAllRequestCurrent) return true
 
         if (isTabStop && window.focusIdxTabCounter == window.focusIdxTabRequestCurrent) {
@@ -2339,9 +2341,7 @@ interface imgui_internal {
         // NB: we are only allowed to access 'editState' if we are the active widget.
         var state: TextEditState? = g.inputTextState.takeIf { it.id == id }
 
-        // Using completion callback disable keyboard tabbing
-        val tabStop = flags hasnt (Itf.CallbackCompletion or Itf.AllowTabInput)
-        val focusRequested = focusableItemRegister(window, id, tabStop)
+        val focusRequested = focusableItemRegister(window, id)
         val focusRequestedByCode = focusRequested && window.focusIdxAllCounter == window.focusIdxAllRequestCurrent
         val focusRequestedByTab = focusRequested && !focusRequestedByCode
 
@@ -2404,7 +2404,10 @@ interface imgui_internal {
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()
+            assert(NavInput.values().size < 32)
             g.activeIdBlockNavInputFlags = 1 shl NavInput.Cancel
+            if (flags has (Itf.CallbackCompletion or Itf.AllowTabInput))  // Disable keyboard tabbing out
+                g.activeIdBlockNavInputFlags = g.activeIdBlockNavInputFlags or (1 shl NavInput.KeyTab.i)
             if (!isMultiline && flags hasnt Itf.CallbackHistory)
                 g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
         }
@@ -2897,7 +2900,7 @@ interface imgui_internal {
             }
 
             // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
-            bufDisplay = if(!isReadOnly && state.textAIsValid) state.textA else buf
+            bufDisplay = if (!isReadOnly && state.textAIsValid) state.textA else buf
             bufDisplayEnd[0] = state.curLenA
             if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength)
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, Col.Text.u32, bufDisplay, bufDisplayEnd[0], 0f, clipRect.takeIf { !isMultiline })
@@ -2917,7 +2920,7 @@ interface imgui_internal {
             }
         } else {
             // Render text only (no selection, no cursor)
-            bufDisplay = if(g.activeId == id && !isReadOnly && state!!.textAIsValid) state.textA else buf
+            bufDisplay = if (g.activeId == id && !isReadOnly && state!!.textAIsValid) state.textA else buf
             when {
                 // We don't need width
                 isMultiline -> textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufDisplayEnd) * g.fontSize)
@@ -3130,7 +3133,7 @@ interface imgui_internal {
 
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
 
-        val valuesCountMin = if(plotType == PlotType.Lines) 2 else 1
+        val valuesCountMin = if (plotType == PlotType.Lines) 2 else 1
         if (valuesCount >= valuesCountMin) {
             val resW = min(frameSize.x.i, valuesCount) + if (plotType == PlotType.Lines) -1 else 0
             val itemCount = valuesCount + if (plotType == PlotType.Lines) -1 else 0

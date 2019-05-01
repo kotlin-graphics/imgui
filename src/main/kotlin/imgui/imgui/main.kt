@@ -64,7 +64,7 @@ interface imgui_main {
             as most assert handlers display their argument)         */
         assert(g.initialized)
         assert(io.deltaTime > 0f || g.frameCount == 0) { "Need a positive DeltaTime!" }
-        assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount)  { "Forgot to call Render() or EndFrame() at the end of the previous frame?" }
+        assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount) { "Forgot to call Render() or EndFrame() at the end of the previous frame?" }
         assert(io.displaySize.x >= 0f && io.displaySize.y >= 0f) { "Invalid DisplaySize value!" }
         assert(io.fonts.fonts.isNotEmpty()) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
         assert(io.fonts.fonts[0].isLoaded) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
@@ -118,7 +118,7 @@ interface imgui_main {
         g.backgroundDrawList.clear()
         g.backgroundDrawList.pushTextureId(io.fonts.texId)
         g.backgroundDrawList.pushClipRectFullScreen()
-        g.backgroundDrawList.flags = (if(style.antiAliasedLines) Dlf.AntiAliasedLines else Dlf.None) or if(style.antiAliasedFill) Dlf.AntiAliasedFill else Dlf.None
+        g.backgroundDrawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines else Dlf.None) or if (style.antiAliasedFill) Dlf.AntiAliasedFill else Dlf.None
 
         g.foregroundDrawList.clear()
         g.foregroundDrawList.pushTextureId(io.fonts.texId)
@@ -208,14 +208,15 @@ interface imgui_main {
         updateMouseWheel()
 
         // Pressing TAB activate widget focus
-        if (g.activeId == 0)
-            g.navWindow?.let {
-                if (it.active && it.flags hasnt Wf.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed(false))
-                    if (g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE)
-                        it.focusIdxTabRequestNext = g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
-                    else
-                        it.focusIdxTabRequestNext = if (io.keyShift) -1 else 0
-            }
+        // (This code is old and will be redesigned for Nav. In the meanwhile we use g.NavTabRequest as storage but this doesn't need ImGuiConfigFlags_NavEnableKeyboard to work!)
+        g.navWindow?.let {
+            g.focusTabPressed = it.active && it.flags hasnt Wf.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed
+            if (g.activeId == 0 && g.focusTabPressed)
+                it.focusIdxTabRequestNext = when {
+                    g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
+                    else -> if (io.keyShift) -1 else 0
+                }
+        }
         g.navIdTabCounter = Int.MAX_VALUE
 
         // Mark all windows as not visible
