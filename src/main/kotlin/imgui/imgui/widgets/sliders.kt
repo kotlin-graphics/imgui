@@ -114,14 +114,14 @@ interface sliders {
         }
         // Tabbing or CTRL-clicking on Slider turns it into an input box
         var startTextInput = false
-        val tabFocusRequested = focusableItemRegister(window, id)
+        val focusRequested = focusableItemRegister(window, id)
         val hovered = itemHoverable(frameBb, id)
-        if (tabFocusRequested || (hovered && io.mouseClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id)) {
+        if (focusRequested || (hovered && io.mouseClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id)) {
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()
             g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-            if (tabFocusRequested || io.keyCtrl || g.navInputId == id) {
+            if (focusRequested || io.keyCtrl || g.navInputId == id) {
                 startTextInput = true
                 g.scalarAsInputTextId = 0
             }

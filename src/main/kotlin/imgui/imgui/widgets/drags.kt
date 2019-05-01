@@ -248,13 +248,13 @@ interface drags {
 
         // Tabbing or CTRL-clicking on Drag turns it into an input box
         var startTextInput = false
-        val tabFocusRequested = focusableItemRegister(window, id)
-        if (tabFocusRequested || (hovered && (io.mouseClicked[0] || io.mouseDoubleClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id))) {
+        val focusRequested = focusableItemRegister(window, id)
+        if (focusRequested || (hovered && (io.mouseClicked[0] || io.mouseDoubleClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id))) {
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()
             g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-            if (tabFocusRequested || io.keyCtrl || io.mouseDoubleClicked[0] || g.navInputId == id) {
+            if (focusRequested || io.keyCtrl || io.mouseDoubleClicked[0] || g.navInputId == id) {
                 startTextInput = true
                 g.scalarAsInputTextId = 0
             }
