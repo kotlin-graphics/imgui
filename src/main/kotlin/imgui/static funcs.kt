@@ -767,6 +767,7 @@ fun navUpdate() {
         navMapKey(Key.RightArrow, NavInput.KeyRight)
         navMapKey(Key.UpArrow, NavInput.KeyUp)
         navMapKey(Key.DownArrow, NavInput.KeyDown)
+        navMapKey(Key.Tab, NavInput.KeyTab)
         if (io.keyCtrl)
             io.navInputs[NavInput.TweakSlow] = 1f
         if (io.keyShift)

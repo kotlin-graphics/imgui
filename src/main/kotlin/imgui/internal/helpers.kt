@@ -345,6 +345,7 @@ fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
 fun lerp(a: Double, b: Double, t: Float) = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float) = (a + (b - a) * t).i
 fun lerp(a: Long, b: Long, t: Float) = (a + (b - a) * t).L
+fun modPositive(a: Int, b: Int) = (a + b) % b
 fun Vec2.lerp(b: Vec2, t: Float) = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
 fun Vec2.lerp(b: Vec2, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
 fun Vec2.lerp(b: Vec2i, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)

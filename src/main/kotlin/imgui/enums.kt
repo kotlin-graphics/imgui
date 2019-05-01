@@ -500,6 +500,8 @@ enum class NavInput {
 
     /** toggle menu = io.keyAlt */
     KeyMenu,
+    /** tab = Tab key */
+    KeyTab,
     /** move left = Arrow keys  */
     KeyLeft,
     /** move right = Arrow keys  */

@@ -221,6 +221,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val navMoveResultLocalVisibleSet = NavMoveResult()
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     var navMoveResultOther = NavMoveResult()
+    /** Tabbing system (older than Nav, active when Nav is disabled. Probably needs a redesign) */
+    var focusTabPressed = false
 
 
     // ------------------------------------------------------------------

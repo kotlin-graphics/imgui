@@ -379,11 +379,11 @@ interface imgui_window {
             // Prepare for item focus requests
             window.focusIdxAllRequestCurrent = when {
                 window.focusIdxAllRequestNext == Int.MAX_VALUE || window.focusIdxAllCounter == -1 -> Int.MAX_VALUE
-                else -> (window.focusIdxAllRequestNext + (window.focusIdxAllCounter + 1)) % (window.focusIdxAllCounter + 1)
+                else -> modPositive(window.focusIdxAllRequestNext, window.focusIdxAllCounter + 1)
             }
             window.focusIdxTabRequestCurrent = when {
                 window.focusIdxTabRequestNext == Int.MAX_VALUE || window.focusIdxTabCounter == -1 -> Int.MAX_VALUE
-                else -> (window.focusIdxTabRequestNext + (window.focusIdxTabCounter + 1)) % (window.focusIdxTabCounter + 1)
+                else -> modPositive(window.focusIdxTabRequestNext, window.focusIdxTabCounter + 1)
             }
             window.focusIdxTabCounter = -1
             window.focusIdxAllCounter = -1
