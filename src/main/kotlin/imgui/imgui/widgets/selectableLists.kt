@@ -1,7 +1,6 @@
 package imgui.imgui.widgets
 
 import glm_.f
-import glm_.glm
 import glm_.i
 import glm_.max
 import glm_.vec2.Vec2
@@ -86,7 +85,18 @@ interface selectableLists {
         bb.min.y -= spacingU
         bb.max.x += spacingR
         bb.max.y += spacingD
-        if (!itemAdd(bb, id)) {
+
+        val itemAdd = when {
+            flags has Sf.Disabled -> {
+                val backupItemFlags = window.dc.itemFlags
+                window.dc.itemFlags = window.dc.itemFlags or If.NoNav or If.NoNavDefaultFocus
+                itemAdd(bb, id).also {
+                    window.dc.itemFlags = backupItemFlags
+                }
+            }
+            else -> itemAdd(bb, id)
+        }
+        if (!itemAdd) {
             if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null)
                 pushColumnClipRect()
             return false
