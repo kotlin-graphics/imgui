@@ -30,7 +30,7 @@ import imgui.functionalProgramming.selectable
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withId
-import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 
 object showDemoWindowColumns {
 
@@ -164,7 +164,7 @@ object showDemoWindowColumns {
             }
 
             val nodeOpen = treeNode("Tree within single cell")
-            sameLine(); showHelpMarker("NB: Tree node must be poped before ending the cell. There's no storage of state per-cell.")
+            sameLine(); helpMarker("NB: Tree node must be poped before ending the cell. There's no storage of state per-cell.")
             if (nodeOpen) {
                 columns(2, "tree items")
                 separator()

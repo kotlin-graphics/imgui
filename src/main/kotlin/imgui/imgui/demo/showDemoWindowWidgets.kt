@@ -140,7 +140,7 @@ import imgui.functionalProgramming.withStyleColor
 import imgui.functionalProgramming.withStyleVar
 import imgui.functionalProgramming.withTextWrapPos
 import imgui.functionalProgramming.withTooltip
-import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import imgui.or
 import kotlin.math.cos
 import kotlin.reflect.KMutableProperty0
@@ -374,30 +374,30 @@ object showDemoWindowWidgets {
                 // See "Combo" section for examples of how to use the more complete BeginCombo()/EndCombo() api.
                 val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO")
                 combo("combo", ::currentItem0, items)
-                sameLine(); showHelpMarker("Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, and demonstration of various flags.\n")
+                sameLine(); helpMarker("Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, and demonstration of various flags.\n")
             }
 
             run {
                 inputText("input text", str0)
-                sameLine(); showHelpMarker("USER:\nHold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\nCTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\nESCAPE to revert.\n\nPROGRAMMER:\nYou can use the InputTextFlag.CallbackResize facility if you need to wire InputText() to a dynamic string type. See misc/cpp/imgui_stl.h for an example (this is not demonstrated in imgui_demo.cpp).")
+                sameLine(); helpMarker("USER:\nHold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\nCTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\nESCAPE to revert.\n\nPROGRAMMER:\nYou can use the InputTextFlag.CallbackResize facility if you need to wire InputText() to a dynamic string type. See misc/cpp/imgui_stl.h for an example (this is not demonstrated in imgui_demo.cpp).")
 
                 inputTextWithHint("input text (w/ hint)", "enter text here", str1.toCharArray()) // TODO check if convert str1 to CharArray
 
                 inputInt("input int", ::i0)
-                sameLine(); showHelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n")
+                sameLine(); helpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n")
 
                 inputFloat("input float", ::f0, 0.01f, 1f, "%.3f")
 
                 inputDouble("input double", ::d0, 0.01, 1.0, "%.8f")
 
                 inputFloat("input scientific", ::f1, 0f, 0f, "%e")
-                sameLine(); showHelpMarker("You can input value using the scientific notation,\n  e.g. \"1e+8\" becomes \"100000000\".\n")
+                sameLine(); helpMarker("You can input value using the scientific notation,\n  e.g. \"1e+8\" becomes \"100000000\".\n")
 
                 inputFloat3("input float3", vec4a)
             }
             run {
                 dragInt("drag int", ::i1, 1f)
-                sameLine(); showHelpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.\nDouble-click or CTRL+click to input value.")
+                sameLine(); helpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.\nDouble-click or CTRL+click to input value.")
 
                 dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%d%%")
 
@@ -406,7 +406,7 @@ object showDemoWindowWidgets {
             }
             run {
                 sliderInt("slider int", ::i3, -1, 3)
-                sameLine(); showHelpMarker("CTRL+click to input value.")
+                sameLine(); helpMarker("CTRL+click to input value.")
 
                 sliderFloat("slider float", ::f4, 0f, 1f, "ratio = %.3f")
                 sliderFloat("slider float (curve)", ::f5, -10f, 10f, "%.4f", 2f)
@@ -416,7 +416,7 @@ object showDemoWindowWidgets {
 
             run {
                 colorEdit3("color 1", col1)
-                sameLine(); showHelpMarker("Click on the colored square to open a color picker.\nRight-click on the colored square to show options.\nCTRL+click on individual component to input value.\n")
+                sameLine(); helpMarker("Click on the colored square to open a color picker.\nRight-click on the colored square to show options.\nCTRL+click on individual component to input value.\n")
 
                 colorEdit4("color 2", col2)
             }
@@ -438,7 +438,7 @@ object showDemoWindowWidgets {
 
             treeNode("Advanced, with Selectable nodes") {
 
-                showHelpMarker("This is a more standard looking tree with selectable nodes.\nClick to select, CTRL+Click to toggle, click on arrows or double-click to open.")
+                helpMarker("This is a more standard looking tree with selectable nodes.\nClick to select, CTRL+Click to toggle, click on arrows or double-click to open.")
                 checkbox("Align label with current X position)", ::alignLabelWithCurrentXposition)
                 text("Hello!")
                 if (alignLabelWithCurrentXposition) unindent(treeNodeToLabelSpacing)
@@ -508,7 +508,7 @@ object showDemoWindowWidgets {
                 textColored(Vec4(1f, 0f, 1f, 1f), "Pink")
                 textColored(Vec4(1f, 1f, 0f, 1f), "Yellow")
                 textDisabled("Disabled")
-                sameLine(); showHelpMarker("The TextDisabled color is stored in ImGuiStyle.")
+                sameLine(); helpMarker("The TextDisabled color is stored in ImGuiStyle.")
             }
             treeNode("Word Wrapping") {
                 // Using shortcut. You can use PushTextWrapPos()/PopTextWrapPos() for more flexibility.
@@ -605,7 +605,7 @@ object showDemoWindowWidgets {
         treeNode("Combo") {
             // Expose flags as checkbox for the demo
             checkboxFlags("ComboFlag.PopupAlignLeft", ::flags0, ComboFlag.PopupAlignLeft.i)
-            sameLine(); showHelpMarker("Only makes a difference if the popup is larger than the combo")
+            sameLine(); helpMarker("Only makes a difference if the popup is larger than the combo")
             if (checkboxFlags("ComboFlag.NoArrowButton", ::flags0, ComboFlag.NoArrowButton.i))
                 flags0 = flags0 wo ComboFlag.NoPreview     // Clear the other flag, as we cannot combine both
             if (checkboxFlags("ComboFlag.NoPreview", ::flags0, ComboFlag.NoPreview.i))
@@ -661,7 +661,7 @@ object showDemoWindowWidgets {
                         selected0 = n
             }
             treeNode("Selection State: Multiple Selection") {
-                showHelpMarker("Hold CTRL and click to select multiple items.")
+                helpMarker("Hold CTRL and click to select multiple items.")
                 for (n in 0..4)
                     if (selectable("Object $n", selection1[n])) {
                         if (!io.keyCtrl)    // Clear selection when CTRL is not held
@@ -701,7 +701,7 @@ object showDemoWindowWidgets {
                     }
             }
             treeNode("Alignment") {
-                showHelpMarker("Alignment applies when a selectable is larger than its text content.\nBy default, Selectables uses style.SelectableTextAlign but it can be overriden on a per-item basis using PushStyleVar().")
+                helpMarker("Alignment applies when a selectable is larger than its text content.\nBy default, Selectables uses style.SelectableTextAlign but it can be overriden on a per-item basis using PushStyleVar().")
                 for (y in 0..2)
                     for (x in 0..2) {
                         val alignment = Vec2(x / 2f, y / 2f)
@@ -736,7 +736,7 @@ object showDemoWindowWidgets {
                 Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
                 and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.
              */
-            showHelpMarker("You can use the InputTextFlag.CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stl.h for an example. (This is not demonstrated in imgui_demo.cpp)") // TODO fix bug, some '?' appear at the end of the line
+            helpMarker("You can use the InputTextFlag.CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stl.h for an example. (This is not demonstrated in imgui_demo.cpp)") // TODO fix bug, some '?' appear at the end of the line
             checkboxFlags("ImGuiInputTextFlags_ReadOnly", ::flags, Itf.ReadOnly.i)
             checkboxFlags("ImGuiInputTextFlags_AllowTabInput", ::flags, Itf.AllowTabInput.i)
             checkboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", ::flags, Itf.CtrlEnterForNewLine.i)
@@ -802,8 +802,8 @@ object showDemoWindowWidgets {
             checkbox("With Alpha Preview", ::alphaPreview)
             checkbox("With Half Alpha Preview", ::alphaHalfPreview)
             checkbox("With Drag and Drop", ::dragAndDrop)
-            checkbox("With Options Menu", ::optionsMenu); sameLine(); showHelpMarker("Right-click on the individual color widget to show options.")
-            checkbox("With HDR", ::hdr); sameLine(); showHelpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.")
+            checkbox("With Options Menu", ::optionsMenu); sameLine(); helpMarker("Right-click on the individual color widget to show options.")
+            checkbox("With HDR", ::hdr); sameLine(); helpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.")
             var miscFlags = if (hdr) Cef.HDR.i else 0
             if (dragAndDrop) miscFlags = miscFlags or Cef.NoDragDrop
             if (alphaHalfPreview) miscFlags = miscFlags or Cef.AlphaPreviewHalf
@@ -811,7 +811,7 @@ object showDemoWindowWidgets {
             if (!optionsMenu) miscFlags = miscFlags or Cef.NoOptions
 
             text("Color widget:")
-            sameLine(); showHelpMarker("Click on the colored square to open a color picker.\nCTRL+click on individual component to input value.\n")
+            sameLine(); helpMarker("Click on the colored square to open a color picker.\nCTRL+click on individual component to input value.\n")
             colorEdit3("MyColor##1", color, miscFlags)
 
             text("Color widget HSV with Alpha:")
@@ -821,7 +821,7 @@ object showDemoWindowWidgets {
             colorEdit4("MyColor##2f", color, Cef.Float or miscFlags)
 
             text("Color button with Picker:")
-            sameLine(); showHelpMarker("With the ImGuiColorEditFlags_NoInputs flag you can hide all the slider/text inputs.\nWith the ImGuiColorEditFlags_NoLabel flag you can pass a non-empty label which will only be used for the tooltip and picker popup.")
+            sameLine(); helpMarker("With the ImGuiColorEditFlags_NoInputs flag you can hide all the slider/text inputs.\nWith the ImGuiColorEditFlags_NoLabel flag you can pass a non-empty label which will only be used for the tooltip and picker popup.")
             colorEdit4("MyColor##3", color, Cef.NoInputs or Cef.NoLabel or miscFlags)
 
             text("Color button with Custom Picker Popup:")
@@ -891,9 +891,9 @@ object showDemoWindowWidgets {
                 }
             }
             combo("Display Mode", ::displayMode, "Auto/Current\u0000None\u0000RGB Only\u0000HSV Only\u0000Hex Only\u0000")
-            sameLine(); showHelpMarker("ColorEdit defaults to displaying RGB inputs if you don't specify a display mode, but the user can change it with a right-click.\n\nColorPicker defaults to displaying RGB+HSV+Hex if you don't specify a display mode.\n\nYou can change the defaults using SetColorEditOptions().")
+            sameLine(); helpMarker("ColorEdit defaults to displaying RGB inputs if you don't specify a display mode, but the user can change it with a right-click.\n\nColorPicker defaults to displaying RGB+HSV+Hex if you don't specify a display mode.\n\nYou can change the defaults using SetColorEditOptions().")
             combo("Picker Mode", ::pickerMode, "Auto/Current\u0000Hue bar + SV rect\u0000Hue wheel + SV triangle\u0000")
-            sameLine(); showHelpMarker("User can right-click the picker to change mode.")
+            sameLine(); helpMarker("User can right-click the picker to change mode.")
             var flags = miscFlags
             // @formatter:off
             if (!alpha) flags = flags or Cef.NoAlpha // This is by default if you call ColorPicker3() instead of ColorPicker4()
@@ -909,7 +909,7 @@ object showDemoWindowWidgets {
             colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
 
             text("Programmatically set defaults:")
-            sameLine(); showHelpMarker("SetColorEditOptions() is designed to allow you to set boot-time default.\nWe don't have Push/Pop functions because you can force options on a per-widget basis if needed, and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid encouraging you to persistently save values that aren't forward-compatible.")
+            sameLine(); helpMarker("SetColorEditOptions() is designed to allow you to set boot-time default.\nWe don't have Push/Pop functions because you can force options on a per-widget basis if needed, and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid encouraging you to persistently save values that aren't forward-compatible.")
             if (button("Default: Uint8 + HSV + Hue Bar"))
                 setColorEditOptions(Cef.Uint8 or Cef.DisplayHSV or Cef.PickerHueBar)
             if (button("Default: Float + HDR + Hue Wheel"))

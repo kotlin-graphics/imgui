@@ -55,7 +55,7 @@ import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withTooltip
-import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import kotlin.math.sqrt
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -122,7 +122,7 @@ object StyleEditor {
         sameLine()
         if (button("Revert Ref")) g.style = ref!!
         sameLine()
-        showHelpMarker("Save/Revert in local non-persistent storage. Default Colors definition are not affected. Use \"Export Colors\" below to save them somewhere.")
+        helpMarker("Save/Revert in local non-persistent storage. Default Colors definition are not affected. Use \"Export Colors\" below to save them somewhere.")
 
         separator()
 
@@ -154,9 +154,9 @@ object StyleEditor {
                 sliderFloat("TabRounding", style::tabRounding, 0f, 12f, "%.0f")
                 text("Alignment")
                 sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
-                sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f"); sameLine(); showHelpMarker("Alignment applies when a button is larger than its text content.")
-                sliderVec2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f"); sameLine(); showHelpMarker("Alignment applies when a selectable is larger than its text content.")
-                text("Safe Area Padding"); sameLine(); showHelpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
+                sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f"); sameLine(); helpMarker("Alignment applies when a button is larger than its text content.")
+                sliderVec2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f"); sameLine(); helpMarker("Alignment applies when a selectable is larger than its text content.")
+                text("Safe Area Padding"); sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
                 sliderVec2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f")
                 endTabItem()
             }
@@ -189,7 +189,7 @@ object StyleEditor {
                 radioButton("Opaque", ::alphaFlags, 0); sameLine()
                 radioButton("Alpha", ::alphaFlags, Cef.AlphaPreview.i); sameLine()
                 radioButton("Both", ::alphaFlags, Cef.AlphaPreviewHalf.i); sameLine()
-                showHelpMarker("In the color list:\nLeft-click on colored square to open color picker,\nRight-click to open edit options menu.");
+                helpMarker("In the color list:\nLeft-click on colored square to open color picker,\nRight-click to open edit options menu.");
 
                 withChild("#colors", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf.NavFlattened) {
                     withItemWidth(-160) {
@@ -221,7 +221,7 @@ object StyleEditor {
 
             if (beginTabItem("Fonts")) {
                 val atlas = io.fonts
-                showHelpMarker("Read FAQ and misc/fonts/README.txt for details on font loading.")
+                helpMarker("Read FAQ and misc/fonts/README.txt for details on font loading.")
                 pushItemWidth(120)
                 atlas.fonts.forEachIndexed { i, font ->
                     pushId(font)
@@ -234,7 +234,7 @@ object StyleEditor {
                         popFont()
                         dragFloat("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")
                         sameLine()
-                        showHelpMarker("""
+                        helpMarker("""
                         |Note than the default embedded font is NOT meant to be scaled.
                         |
                         |Font are currently rendered into bitmaps at a given size at the time of building the atlas. You may oversample them to get some flexibility with scaling. You can also render at multiple sizes and select which one to use at runtime.

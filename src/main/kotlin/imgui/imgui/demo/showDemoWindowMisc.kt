@@ -33,7 +33,7 @@ import imgui.MouseCursor
 import imgui.TextFilter
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.treeNode
-import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
 
@@ -215,7 +215,7 @@ object showDemoWindowMisc {
             treeNode("Mouse cursors") {
                 text("Current mouse cursor = $mouseCursor")
                 text("Hover to see mouse cursors:")
-                sameLine(); showHelpMarker("Your application can render a different mouse cursor based on what GetMouseCursor() returns. If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, otherwise your backend needs to handle it.")
+                sameLine(); helpMarker("Your application can render a different mouse cursor based on what GetMouseCursor() returns. If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, otherwise your backend needs to handle it.")
                 for (i in 0 until MouseCursor.COUNT) {
                     bullet(); selectable("Mouse cursor $i: ${MouseCursor.of(i)}", false)
                     if (isItemHovered() || isItemFocused)

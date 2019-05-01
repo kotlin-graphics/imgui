@@ -26,7 +26,6 @@ import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
 import imgui.ImGui.dragVec2
 import imgui.ImGui.dummy
-import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
@@ -90,7 +89,7 @@ import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withStyleColor
 import imgui.functionalProgramming.withStyleVar
 import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
-import imgui.imgui.imgui_demoDebugInformations.Companion.showHelpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
@@ -149,7 +148,7 @@ object showDemoWindowLayout {
 
         treeNode("Child Windows") {
 
-            showHelpMarker("Use child windows to begin into a self-contained independent scrolling/clipping regions within a host window.")
+            helpMarker("Use child windows to begin into a self-contained independent scrolling/clipping regions within a host window.")
             checkbox("Disable Mouse Wheel", ::disableMouseWheel)
             checkbox("Disable Menu", ::disableMenu)
 
@@ -219,23 +218,23 @@ object showDemoWindowLayout {
         treeNode("Widgets Width") {
 
             text("PushItemWidth(100)")
-            sameLine(); showHelpMarker("Fixed width.")
+            sameLine(); helpMarker("Fixed width.")
             withItemWidth(100) { dragFloat("float##1", ::f) }
 
             text("PushItemWidth(GetWindowWidth() * 0.5f)")
-            sameLine(); showHelpMarker("Half of window width.")
+            sameLine(); helpMarker("Half of window width.")
             withItemWidth(windowWidth * 0.5f) { dragFloat("float##2", ::f) }
 
             text("PushItemWidth(GetContentRegionAvailWidth() * 0.5f)")
-            sameLine(); showHelpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
+            sameLine(); helpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
             withItemWidth(contentRegionAvailWidth * 0.5f) { dragFloat("float##3", ::f) }
 
             text("PushItemWidth(-100)")
-            sameLine(); showHelpMarker("Align to right edge minus 100")
+            sameLine(); helpMarker("Align to right edge minus 100")
             withItemWidth(-100) { dragFloat("float##4", ::f) }
 
             text("PushItemWidth(-1)")
-            sameLine(); showHelpMarker("Align to right edge")
+            sameLine(); helpMarker("Align to right edge")
             withItemWidth(-1) { dragFloat("float##5", ::f) }
         }
 
@@ -378,7 +377,7 @@ object showDemoWindowLayout {
 
         treeNode("Groups") {
 
-            showHelpMarker("Using BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundles the whole group so that you can use functions such as IsItemHovered() on it.")
+            helpMarker("Using BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundles the whole group so that you can use functions such as IsItemHovered() on it.")
             withGroup {
                 withGroup {
                     button("AAA")
@@ -417,7 +416,7 @@ object showDemoWindowLayout {
 
         treeNode("Text Baseline Alignment") {
 
-            showHelpMarker("This is testing the vertical alignment that gets applied on text to keep it aligned with widgets. Lines only composed of text or \"small\" widgets fit in less vertical spaces than lines with normal widgets.")
+            helpMarker("This is testing the vertical alignment that gets applied on text to keep it aligned with widgets. Lines only composed of text or \"small\" widgets fit in less vertical spaces than lines with normal widgets.")
 
             text("One\nTwo\nThree"); sameLine()
             text("Hello\nWorld"); sameLine()
@@ -474,7 +473,7 @@ object showDemoWindowLayout {
 
         treeNode("Scrolling") {
 
-            showHelpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given position.")
+            helpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given position.")
 
             checkbox("Track", ::track)
             pushItemWidth(100)
@@ -507,7 +506,7 @@ object showDemoWindowLayout {
 
         treeNode("Horizontal Scrolling") {
 
-            showHelpMarker("Horizontal scrolling for a window has to be enabled explicitly via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\nYou may want to explicitly specify content width by calling SetNextWindowContentWidth() before Begin().")
+            helpMarker("Horizontal scrolling for a window has to be enabled explicitly via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\nYou may want to explicitly specify content width by calling SetNextWindowContentWidth() before Begin().")
             sliderInt("Lines", ::lines, 1, 15)
             pushStyleVar(StyleVar.FrameRounding, 3f)
             pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
