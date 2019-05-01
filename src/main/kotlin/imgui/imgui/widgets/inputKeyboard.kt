@@ -24,7 +24,7 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
-import imgui.ImGui.textUnformatted
+import imgui.ImGui.textEx
 import imgui.imgui.withFloat
 import imgui.imgui.withInt
 import imgui.internal.or
@@ -194,7 +194,7 @@ interface inputKeyboard {
                 valueChanged = true
             }
             sameLine(0f, style.itemInnerSpacing.x)
-            textUnformatted(label, findRenderedTextEnd(label))
+            textEx(label, findRenderedTextEnd(label))
             style.framePadding put backupFramePadding
 
             popId()
@@ -226,7 +226,7 @@ interface inputKeyboard {
         }
         popId()
 
-        textUnformatted(label, findRenderedTextEnd(label))
+        textEx(label, findRenderedTextEnd(label))
         endGroup()
         return valueChanged
     }
@@ -249,7 +249,7 @@ interface inputKeyboard {
         }
         popId()
 
-        textUnformatted(label, findRenderedTextEnd(label))
+        textEx(label, findRenderedTextEnd(label))
         endGroup()
         return valueChanged
     }

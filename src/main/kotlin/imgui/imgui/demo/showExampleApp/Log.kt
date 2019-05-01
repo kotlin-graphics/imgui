@@ -13,14 +13,13 @@ import imgui.ImGui.endPopup
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.openPopup
 import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.smallButton
-import imgui.ImGui.textUnformatted
+import imgui.ImGui.textEx
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs
@@ -129,10 +128,10 @@ object Log {
                 for (line_no in 0 until lineOffsets.size) {
                     val line = buf.subSequence(lineOffsets[line_no], if (line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString()
                     if (filter.passFilter(line))
-                        textUnformatted(line)
+                        textEx(line)
                 }
             else {
-                textUnformatted(buf.toString())
+                textEx(buf.toString())
                 //TODO: Fix and remove above line
                 /*val clipper = ListClipper()
                 clipper.begin(lineOffsets.size)

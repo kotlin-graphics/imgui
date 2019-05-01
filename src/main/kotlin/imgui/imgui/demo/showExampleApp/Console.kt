@@ -29,10 +29,9 @@ import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setKeyboardFocusHere
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHereY
-import imgui.ImGui.textUnformatted
+import imgui.ImGui.textEx
 import imgui.ImGui.textWrapped
 import imgui.functionalProgramming.popupContextItem
-import imgui.functionalProgramming.smallButton
 import imgui.internal.textStr
 import uno.kotlin.getValue
 import uno.kotlin.setValue
@@ -168,7 +167,7 @@ object Console {
                     pushStyleColor(Col.Text, Vec4(1f, 0.8f, 0.6f, 1f))
                     popColor = true
                 }
-                textUnformatted(i)
+                textEx(i)
                 if (popColor)
                     popStyleColor()
             }

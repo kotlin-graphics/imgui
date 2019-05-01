@@ -63,7 +63,7 @@ import imgui.ImGui.shadeVertsLinearColorGradientKeepAlpha
 import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.text
-import imgui.ImGui.textUnformatted
+import imgui.ImGui.textEx
 import imgui.ImGui.u32
 import imgui.imgui.widgets.text.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
@@ -210,7 +210,7 @@ interface colorEditorPicker {
             if (beginPopup("picker")) {
                 pickerActiveWindow = g.currentWindow
                 if (0 != labelDisplayEnd) {
-                    textUnformatted(label, labelDisplayEnd)
+                    textEx(label, labelDisplayEnd)
                     spacing()
                 }
                 val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
@@ -226,7 +226,7 @@ interface colorEditorPicker {
 
         if (0 != labelDisplayEnd && flags hasnt Cef.NoLabel) { // TODO check first comparison
             sameLine(0f, style.itemInnerSpacing.x)
-            textUnformatted(label, labelDisplayEnd)
+            textEx(label, labelDisplayEnd)
         }
 
         // Convert back
@@ -447,7 +447,7 @@ interface colorEditorPicker {
             if (0 != labelDisplayEnd) {
                 if (flags has Cef.NoSidePreview)
                     sameLine(0f, style.itemInnerSpacing.x)
-                textUnformatted(label, labelDisplayEnd)
+                textEx(label, labelDisplayEnd)
             }
         }
         if (flags hasnt Cef.NoSidePreview) {
@@ -672,7 +672,7 @@ interface colorEditorPicker {
                 setDragDropPayload(PAYLOAD_TYPE_COLOR_4F, col, Vec4.size, Cond.Once)
             colorButton(descId, col, flags)
             sameLine()
-            textUnformatted("Color")
+            textEx("Color")
             endDragDropSource()
         }
         // Tooltip
