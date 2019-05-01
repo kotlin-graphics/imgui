@@ -49,7 +49,7 @@ import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textLineHeight
 import imgui.ImGui.textLineHeightWithSpacing
-import imgui.ImGui.textUnformatted
+import imgui.ImGui.textEx
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.version
@@ -318,7 +318,7 @@ interface imgui_demoDebugInformations {
             if (isItemHovered()) {
                 beginTooltip()
                 pushTextWrapPos(fontSize * 35f)
-                textUnformatted(desc)
+                textEx(desc)
                 popTextWrapPos()
                 endTooltip()
             }

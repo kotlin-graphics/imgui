@@ -39,7 +39,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
 import imgui.ImGui.style
-import imgui.ImGui.textUnformatted
+import imgui.ImGui.textEx
 import imgui.internal.DragFlag
 import imgui.internal.Rect
 import imgui.internal.focus
@@ -122,7 +122,7 @@ interface drags {
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
-        textUnformatted(label, findRenderedTextEnd(label))
+        textEx(label, findRenderedTextEnd(label))
         endGroup()
         popId()
         return valueChanged
@@ -189,7 +189,7 @@ interface drags {
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
-        textUnformatted(label, findRenderedTextEnd(label))
+        textEx(label, findRenderedTextEnd(label))
         endGroup()
         popId()
         return valueChanged
@@ -311,7 +311,7 @@ interface drags {
         }
         popId()
 
-        textUnformatted(label, findRenderedTextEnd(label))
+        textEx(label, findRenderedTextEnd(label))
         endGroup()
         return valueChanged
     }
@@ -333,7 +333,7 @@ interface drags {
         }
         popId()
 
-        textUnformatted(label, findRenderedTextEnd(label))
+        textEx(label, findRenderedTextEnd(label))
         endGroup()
         return valueChanged
     }

@@ -13,6 +13,9 @@ val PAYLOAD_TYPE_DOCKABLE = "_IMDOCK"   // ImGuiWindow* // [Internal] Docking/ta
 /** flags: for ButtonEx(), ButtonBehavior()  // enum ButtonFlag */
 typealias ButtonFlags = Int
 
+/** Flags: for DragBehavior()                // enum ImGuiDragFlags */
+typealias DragFlags = Int
+
 /** flags: for PushItemFlag()                // enum ItemFlag */
 typealias ItemFlags = Int
 
@@ -33,6 +36,9 @@ typealias SeparatorFlags = Int
 
 /** flags: for SliderBehavior()              // enum SliderFlag */
 typealias SliderFlags = Int
+
+/** flags: for TextEx()                      // enum ImGuiTextFlags */
+typealias TextFlags = Int
 
 enum class ButtonFlag {
 
@@ -82,8 +88,6 @@ infix fun Int.has(b: SliderFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: SliderFlag) = and(b.i) == 0
 
 enum class DragFlag(val i: Int) { None(0), Vertical(1 shl 0) }
-
-typealias DragFlags = Int
 
 infix fun Int.has(b: DragFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: DragFlag) = and(b.i) == 0
@@ -165,6 +169,13 @@ infix fun Int.or(b: ItemStatusFlag): ItemStatusFlags = or(b.i)
 infix fun Int.has(b: ItemStatusFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: ItemStatusFlag) = and(b.i) == 0
 
+enum class TextFlag(val i: Int) { None(0), NoWidthForLargeClippedText(1 shl 0) }
+
+infix fun Int.wo(b: TextFlag): TextFlags = and(b.i.inv())
+infix fun Int.or(b: TextFlag): TextFlags = or(b.i)
+infix fun Int.has(b: TextFlag) = and(b.i) != 0
+infix fun Int.hasnt(b: TextFlag) = and(b.i) == 0
+
 /** FIXME: this is in development, not exposed/functional as a generic feature yet.
  *  Horizontal/Vertical enums are fixed to 0/1 so they may be used to index ImVec2 */
 enum class LayoutType {
@@ -173,7 +184,8 @@ enum class LayoutType {
     val i = ordinal
 }
 
-enum class LogType{ None, TTY, File, Buffer, Clipboard;
+enum class LogType {
+    None, TTY, File, Buffer, Clipboard;
 
     val i = ordinal
 }

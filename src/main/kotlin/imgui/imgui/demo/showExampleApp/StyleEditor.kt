@@ -43,7 +43,7 @@ import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderVec2
 import imgui.ImGui.style
 import imgui.ImGui.text
-import imgui.ImGui.textUnformatted
+import imgui.ImGui.textEx
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
@@ -210,7 +210,7 @@ object StyleEditor {
                                     if (button("Revert")) style.colors[i] = Vec4(ref!!.colors[i])
                                 }
                                 sameLine(0f, style.itemInnerSpacing.x)
-                                textUnformatted(name)
+                                textEx(name)
                             }
                         }
                     }

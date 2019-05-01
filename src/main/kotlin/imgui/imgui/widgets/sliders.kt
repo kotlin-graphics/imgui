@@ -36,7 +36,7 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
 import imgui.ImGui.sliderBehavior
 import imgui.ImGui.style
-import imgui.ImGui.textUnformatted
+import imgui.ImGui.textEx
 import imgui.imgui.widgets.drags.Companion.patchFormatStringFloatToInt
 import imgui.imgui.withFloat
 import imgui.imgui.withInt
@@ -321,7 +321,7 @@ interface sliders {
         }
         popId()
 
-        textUnformatted(label, findRenderedTextEnd(label))
+        textEx(label, findRenderedTextEnd(label))
         endGroup()
         return valueChanged
     }
@@ -343,7 +343,7 @@ interface sliders {
         }
         popId()
 
-        textUnformatted(label, findRenderedTextEnd(label))
+        textEx(label, findRenderedTextEnd(label))
         endGroup()
         return valueChanged
     }

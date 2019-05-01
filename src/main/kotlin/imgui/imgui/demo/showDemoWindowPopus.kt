@@ -27,7 +27,7 @@ import imgui.ImGui.separator
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setTooltip
 import imgui.ImGui.text
-import imgui.ImGui.textUnformatted
+import imgui.ImGui.textEx
 import imgui.ImGui.textWrapped
 import imgui.functionalProgramming.button
 import imgui.functionalProgramming.menu
@@ -95,7 +95,7 @@ object showDemoWindowPopups {
                 using the "###" operator to preserve a constant ID with a variable label)                 */
             if (button("Select..")) openPopup("my_select_popup")
             sameLine()
-            textUnformatted(names.getOrElse(selectedFish) { "<None>" })
+            textEx(names.getOrElse(selectedFish) { "<None>" })
             popup("my_select_popup") {
                 text("Aquarium")
                 separator()

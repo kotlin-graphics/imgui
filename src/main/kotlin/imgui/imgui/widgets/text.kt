@@ -22,101 +22,17 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.style
+import imgui.ImGui.textEx
 import imgui.ImGui.textLineHeight
 import imgui.internal.Rect
+import imgui.internal.TextFlag
+import imgui.internal.TextFlags
 import imgui.internal.memchr
 import imgui.ColorEditFlag as Cef
 
 interface text {
 
-    /** Raw text without formatting. Roughly equivalent to text("%s", text) but:
-     *  A) doesn't require null terminated string if 'textEnd' is specified
-     *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
-    fun textUnformatted(text: String, textEnd: Int = text.length) {
-
-        val window = currentWindow
-        if (window.skipItems) return
-
-        val textPos = Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + window.dc.currentLineTextBaseOffset)
-        val wrapPosX = window.dc.textWrapPos
-        val wrapEnabled = wrapPosX >= 0f
-        if (textEnd > 2000 && !wrapEnabled) {
-            /*  Long text!
-                Perform manual coarse clipping to optimize for long multi-line text
-                - From this point we will only compute the width of lines that are visible. Optimization only available
-                    when word-wrapping is disabled.
-                - We also don't vertically center the text within the line full height, which is unlikely to matter
-                    because we are likely the biggest and only item on the line.
-                - We use memchr(), pay attention that well optimized versions of those str/mem functions are much faster
-                    than a casually written loop.   */
-
-            var line = 0
-            val lineHeight = textLineHeight
-            val clipRect = Rect(window.clipRect)
-            val textSize = Vec2()
-
-            // Lines to skip (can't skip when logging text)
-            val pos = Vec2(textPos)
-            if (!g.logEnabled) {
-
-                val linesSkippable = ((clipRect.min.y - textPos.y) / lineHeight).i
-                if (linesSkippable > 0) {
-                    var linesSkipped = 0
-                    while (line < textEnd && linesSkipped < linesSkippable) {
-                        val lineEnd = text.memchr(line, '\n') ?: textEnd
-                        line = lineEnd + 1
-                        linesSkipped++
-                    }
-                    pos.y += linesSkipped * lineHeight
-                }
-            }
-            // Lines to render
-            if (line < textEnd) {
-                val lineRect = Rect(pos, pos + Vec2(Float.MAX_VALUE, lineHeight))
-                while (line < textEnd) {
-                    if (isClippedEx(lineRect, 0, false)) break
-
-                    val lineEnd = text.memchr(line, '\n') ?: textEnd
-
-                    val pLine = text.substring(line)
-                    val lineSize = calcTextSize(pLine, lineEnd - line, false)
-                    textSize.x = glm.max(textSize.x, lineSize.x)
-                    renderText(pos, pLine, lineEnd - line, false)
-                    line = lineEnd + 1
-                    lineRect.min.y += lineHeight
-                    lineRect.max.y += lineHeight
-                    pos.y += lineHeight
-                }
-
-                // Count remaining lines
-                var linesSkipped = 0
-                while (line < textEnd) {
-                    var lineEnd = text.memchr(line, '\n') ?: textEnd
-                    if (lineEnd == 0)
-                        lineEnd = textEnd
-                    line = lineEnd + 1
-                    linesSkipped++
-                }
-                pos.y += linesSkipped * lineHeight
-            }
-            textSize.y += (pos - textPos).y
-
-            val bb = Rect(textPos, textPos + textSize)
-            itemSize(textSize)
-            itemAdd(bb, 0)
-        } else {
-            val wrapWidth = if (wrapEnabled) calcWrapWidthForPos(window.dc.cursorPos, wrapPosX) else 0f
-            val textSize = calcTextSize(text, textEnd, false, wrapWidth)
-
-            // Account of baseline offset
-            val bb = Rect(textPos, textPos + textSize)
-            itemSize(textSize)
-            if (!itemAdd(bb, 0)) return
-
-            // Render (we don't hide text after ## in this end-user function)
-            renderTextWrapped(bb.min, text, textEnd, wrapWidth)
-        }
-    }
+    fun textUnformatted(text: String, textEnd: Int) = textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText.i)
 
     fun text(fmt: String, vararg args: Any) = textV(fmt, args)
 
@@ -128,7 +44,7 @@ interface text {
         val fmt = if (args.isEmpty()) fmt_ else fmt_.format(style.locale, *args)
 
         val textEnd = fmt.length
-        textUnformatted(fmt, textEnd)
+        textEx(fmt, textEnd, TextFlag.NoWidthForLargeClippedText.i)
     }
 
     /** shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();   */

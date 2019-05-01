@@ -10,7 +10,7 @@ import imgui.ImGui.endChild
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.setNextWindowSize
-import imgui.ImGui.textUnformatted
+import imgui.ImGui.textEx
 import imgui.ListClipper
 import imgui.StyleVar
 import kotlin.reflect.KMutableProperty0
@@ -49,7 +49,7 @@ object LongText {
         beginChild("Log")
 
         when(testType) {
-            0 -> textUnformatted(log.toString())
+            0 -> textEx(log.toString())
             1 -> {
                 pushStyleVar(StyleVar.ItemSpacing, Vec2(0))
                 val clipper = ListClipper(lines)
