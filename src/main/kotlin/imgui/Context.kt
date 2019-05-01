@@ -241,7 +241,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
     var foregroundDrawList: DrawList = DrawList(null).apply {
         _data = drawListSharedData
-        _ownerName = "##Overlay" // Give it a name for debugging
+        _ownerName = "##Foreground" // Give it a name for debugging
     }
 
     var mouseCursor = MouseCursor.Arrow
