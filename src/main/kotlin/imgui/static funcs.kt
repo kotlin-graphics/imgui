@@ -1017,7 +1017,9 @@ fun navUpdate() {
         }
 }
 
-// Window management mode (hold to: change focus/move/resize, tap to: toggle menu layer)
+/** Windowing management mode
+ *  Keyboard: CTRL+Tab (change focus/move/resize), Alt (toggle menu layer)
+ *  Gamepad:  Hold Menu/Square (change focus/move/resize), Tap Menu/Square (toggle menu layer) */
 fun navUpdateWindowing() {
 
     var applyFocusWindow: Window? = null
@@ -1118,6 +1120,7 @@ fun navUpdateWindowing() {
         g.navDisableMouseHover = true
         applyFocusWindow = navRestoreLastChildNavWindow(applyFocusWindow!!)
         closePopupsOverWindow(applyFocusWindow)
+        clearActiveId()
         applyFocusWindow.focus()
         if (applyFocusWindow!!.navLastIds[0] == 0)
             navInitWindow(applyFocusWindow!!, false)
