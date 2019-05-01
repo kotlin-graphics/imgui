@@ -32,7 +32,9 @@ interface imgui_focusActivation {
      *  Use -1 to access previous widget.   */
     fun setKeyboardFocusHere(offset: Int = 0) = with(currentWindow) {
         assert(offset >= -1) { "-1 is allowed but not below" }
-        focusIdxAllRequestNext = focusIdxAllCounter + 1 + offset
-        focusIdxTabRequestNext = Int.MAX_VALUE
+        val window = g.currentWindow!!
+        g.focusRequestNextWindow = window
+        g.focusRequestNextCounterAll = window.dc.focusCounterAll + 1 + offset
+        g.focusRequestNextCounterTab = Int.MAX_VALUE
     }
 }

@@ -208,15 +208,33 @@ interface imgui_main {
         updateMouseWheel()
 
         // Pressing TAB activate widget focus
-        // (This code is old and will be redesigned for Nav. In the meanwhile we use g.NavTabRequest as storage but this doesn't need ImGuiConfigFlags_NavEnableKeyboard to work!)
-        g.navWindow?.let {
-            g.focusTabPressed = it.active && it.flags hasnt Wf.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed
-            if (g.activeId == 0 && g.focusTabPressed)
-                it.focusIdxTabRequestNext = when {
-                    g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
-                    else -> if (io.keyShift) -1 else 0
-                }
+        g.focusTabPressed = g.navWindow?.let { it.active && it.flags hasnt Wf.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed } == true
+        if (g.activeId == 0 && g.focusTabPressed) {
+            // Note that SetKeyboardFocusHere() sets the Next fields mid-frame. To be consistent we also
+            // manipulate the Next fields even, even though they will be turned into Curr fields by the code below.
+            g.focusRequestNextWindow = g.navWindow
+            g.focusRequestNextCounterAll = Int.MAX_VALUE
+            g.focusRequestNextCounterTab = when {
+                g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
+                else -> if (io.keyShift) -1 else 0
+            }
         }
+
+        // Turn queued focus request into current one
+        g.focusRequestCurrWindow = null
+        g.focusRequestCurrCounterTab = Int.MAX_VALUE
+        g.focusRequestCurrCounterAll = Int.MAX_VALUE
+        g.focusRequestNextWindow?.let { window ->
+            g.focusRequestCurrWindow = window
+            if (g.focusRequestNextCounterAll != Int.MAX_VALUE && window.dc.focusCounterAll != -1)
+                g.focusRequestCurrCounterAll = modPositive(g.focusRequestNextCounterAll, window.dc.focusCounterAll + 1)
+            if (g.focusRequestNextCounterTab != Int.MAX_VALUE && window.dc.focusCounterTab != -1)
+                g.focusRequestCurrCounterTab = modPositive(g.focusRequestNextCounterTab, window.dc.focusCounterTab + 1)
+            g.focusRequestNextWindow = null
+            g.focusRequestNextCounterTab = Int.MAX_VALUE
+            g.focusRequestNextCounterAll = Int.MAX_VALUE
+        }
+
         g.navIdTabCounter = Int.MAX_VALUE
 
         // Mark all windows as not visible

@@ -221,7 +221,21 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val navMoveResultLocalVisibleSet = NavMoveResult()
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     var navMoveResultOther = NavMoveResult()
-    /** Tabbing system (older than Nav, active when Nav is disabled. Probably needs a redesign) */
+
+    // Tabbing system (older than Nav, active even if Nav is disabled. FIXME-NAV: This needs a redesign!)
+
+    var focusRequestCurrWindow: Window? = null
+
+    var focusRequestNextWindow: Window? = null
+    /** Any item being requested for focus, stored as an index (we on layout to be stable between the frame pressing TAB and the next frame, semi-ouch) */
+    var focusRequestCurrCounterAll = Int.MAX_VALUE
+    /** Tab item being requested for focus, stored as an index */
+    var focusRequestCurrCounterTab = Int.MAX_VALUE
+    /** Stored for next frame */
+    var focusRequestNextCounterAll = Int.MAX_VALUE
+    /** Stored for next frame */
+    var focusRequestNextCounterTab = Int.MAX_VALUE
+
     var focusTabPressed = false
 
 

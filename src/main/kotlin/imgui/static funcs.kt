@@ -1331,7 +1331,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         g.navWindow = window    // Always refresh g.NavWindow, because some operations such as FocusItem() don't have a window.
         g.navLayer = window.dc.navLayerCurrent
         g.navIdIsAlive = true
-        g.navIdTabCounter = window.focusIdxTabCounter
+        g.navIdTabCounter = window.dc.focusCounterTab
         window.navRectRel[window.dc.navLayerCurrent.i] = navBbRel    // Store item bounding box (relative to window position)
     }
 }
