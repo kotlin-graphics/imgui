@@ -512,6 +512,10 @@ class WindowTempData {
     var layoutType = LayoutType.Vertical
 
     var parentLayoutType = LayoutType.Vertical
+    /** Counter for focus/tabbing system. Start at -1 and increase as assigned via FocusableItemRegister() (FIXME-NAV: Needs redesign) */
+    var focusCounterAll = -1
+    /** (same, but only count widgets which you can Tab through) */
+    var focusCounterTab = -1
 
 
     /*  We store the current settings outside of the vectors to increase memory locality (reduce cache misses).
@@ -704,23 +708,6 @@ class Window(var context: Context, var name: String) {
     /** Reference rectangle, in window relative space   */
     val navRectRel = Array(NavLayer.COUNT) { Rect() }
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // Navigation / Focus
-    // -----------------------------------------------------------------------------------------------------------------
-
-    /** Start at -1 and increase as assigned via FocusItemRegister()    */
-    var focusIdxAllCounter = -1
-    /** (same, but only count widgets which you can Tab through)    */
-    var focusIdxTabCounter = -1
-    /** Item being requested for focus  */
-    var focusIdxAllRequestCurrent = Int.MAX_VALUE
-    /** Tab-able item being requested for focus */
-    var focusIdxTabRequestCurrent = Int.MAX_VALUE
-    /** Item being requested for focus, for next update (relies on layout to be stable between the frame pressing TAB
-    and the next frame) */
-    var focusIdxAllRequestNext = Int.MAX_VALUE
-    /** "   */
-    var focusIdxTabRequestNext = Int.MAX_VALUE
 
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
     fun getId(str: String, end: Int = 0): ID {

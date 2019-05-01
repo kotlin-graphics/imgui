@@ -376,20 +376,6 @@ interface imgui_window {
                 }
             }
 
-            // Prepare for item focus requests
-            window.focusIdxAllRequestCurrent = when {
-                window.focusIdxAllRequestNext == Int.MAX_VALUE || window.focusIdxAllCounter == -1 -> Int.MAX_VALUE
-                else -> modPositive(window.focusIdxAllRequestNext, window.focusIdxAllCounter + 1)
-            }
-            window.focusIdxTabRequestCurrent = when {
-                window.focusIdxTabRequestNext == Int.MAX_VALUE || window.focusIdxTabCounter == -1 -> Int.MAX_VALUE
-                else -> modPositive(window.focusIdxTabRequestNext, window.focusIdxTabCounter + 1)
-            }
-            window.focusIdxTabCounter = -1
-            window.focusIdxAllCounter = -1
-            window.focusIdxTabRequestNext = Int.MAX_VALUE
-            window.focusIdxAllRequestNext = Int.MAX_VALUE
-
             // Apply scrolling
             window.scroll put calcNextScrollFromScrollTargetAndClamp(window, true)
             window.scrollTarget put Float.MAX_VALUE
@@ -570,6 +556,8 @@ interface imgui_window {
                 dc.childWindows.clear()
                 dc.layoutType = Lt.Vertical
                 dc.parentLayoutType = parentWindow?.dc?.layoutType ?: Lt.Vertical
+                dc.focusCounterTab = -1
+                dc.focusCounterAll = -1
                 dc.itemFlags = parentWindow?.dc?.itemFlags ?: If.Default_.i
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled

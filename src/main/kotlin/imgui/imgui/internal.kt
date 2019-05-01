@@ -323,36 +323,40 @@ interface imgui_internal {
         return false
     }
 
-    /** Return true if focus is requested   */
+    /** Return true if focus is requested   */ // TODO move both methods into Window class?
     fun focusableItemRegister(window: Window, id: ID): Boolean {
 
         // Increment counters
         val isTabStop = window.dc.itemFlags hasnt (If.NoTabStop or If.Disabled)
-        window.focusIdxAllCounter++
+        window.dc.focusCounterAll++
         if (isTabStop)
-            window.focusIdxTabCounter++
+            window.dc.focusCounterTab++
 
         // Process TAB/Shift-TAB to tab *OUT* of the currently focused item.
         // (Note that we can always TAB out of a widget that doesn't allow tabbing in)
-        if (g.activeId == id && g.focusTabPressed && g.activeIdBlockNavInputFlags hasnt (1 shl NavInput.KeyTab.i))
-            if (window.focusIdxAllRequestNext == Int.MAX_VALUE && window.focusIdxTabRequestNext == Int.MAX_VALUE)
-            // Modulo on index will be applied at the end of frame once we've got the total counter of items.
-                window.focusIdxTabRequestNext = window.focusIdxTabCounter + when {
-                    io.keyShift -> if (isTabStop) -1 else 0
-                    else -> +1
-                }
-        if (window.focusIdxAllCounter == window.focusIdxAllRequestCurrent) return true
-
-        if (isTabStop && window.focusIdxTabCounter == window.focusIdxTabRequestCurrent) {
-            g.navJustTabbedId = id
-            return true
+        if (g.activeId == id && g.focusTabPressed && g.activeIdBlockNavInputFlags hasnt (1 shl NavInput.KeyTab.i) && g.focusRequestNextWindow == null) {
+            g.focusRequestNextWindow = window
+            g.focusRequestNextCounterTab = window.dc.focusCounterTab + when {
+                // Modulo on index will be applied at the end of frame once we've got the total counter of items.
+                io.keyShift -> if (isTabStop) -1 else 0
+                else -> +1
+            }
+        }
+        // Handle focus requests
+        if (g.focusRequestCurrWindow === window) {
+            if (window.dc.focusCounterAll == g.focusRequestCurrCounterAll)
+                return true
+            if (isTabStop && window.dc.focusCounterTab == g.focusRequestCurrCounterTab) {
+                g.navJustTabbedId = id
+                return true
+            }
         }
         return false
     }
 
     fun focusableItemUnregister(window: Window) {
-        window.focusIdxAllCounter--
-        window.focusIdxTabCounter--
+        window.dc.focusCounterAll--
+        window.dc.focusCounterTab--
     }
 
     fun calcItemSize(size: Vec2, defaultX: Float, defaultY: Float): Vec2 {
@@ -2342,7 +2346,7 @@ interface imgui_internal {
         var state: TextEditState? = g.inputTextState.takeIf { it.id == id }
 
         val focusRequested = focusableItemRegister(window, id)
-        val focusRequestedByCode = focusRequested && window.focusIdxAllCounter == window.focusIdxAllRequestCurrent
+        val focusRequestedByCode = focusRequested && g.focusRequestCurrWindow === window && g.focusRequestCurrCounterAll == window.dc.focusCounterAll
         val focusRequestedByTab = focusRequested && !focusRequestedByCode
 
         val userClicked = hovered && io.mouseClicked[0]
