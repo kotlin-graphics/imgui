@@ -962,7 +962,7 @@ interface imgui_internal {
         popItemWidth()
         if (columns.count > 1) {
             popClipRect()
-            window.drawList.channelsMerge()
+            drawList.channelsMerge()
         }
 
         columns.lineMaxY = glm.max(columns.lineMaxY, dc.cursorPos.y)
