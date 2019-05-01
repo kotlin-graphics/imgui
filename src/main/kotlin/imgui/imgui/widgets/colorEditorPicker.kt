@@ -150,15 +150,6 @@ interface colorEditorPicker {
             val wItemLast = glm.max(1f, (wItemsAll - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
 
             val hidePrefix = wItemOne <= calcTextSize(if (flags has Cef.Float) "M:0.000" else "M:000").x
-            val ids = arrayOf("##X", "##Y", "##Z", "##W")
-            val fmtTableInt = arrayOf(
-                    arrayOf("%3d", "%3d", "%3d", "%3d"),             // Short display
-                    arrayOf("R:%3d", "G:%3d", "B:%3d", "A:%3d"),     // Long display for RGBA
-                    arrayOf("H:%3d", "S:%3d", "V:%3d", "A:%3d"))     // Long display for HSVA
-            val fmtTableFloat = arrayOf(
-                    arrayOf("%.3f", "%.3f", "%.3f", "%.3f"),            // Short display
-                    arrayOf("R:%.3f", "G:%.3f", "B:%.3f", "A:%.3f"),    // Long display for RGBA
-                    arrayOf("H:%.3f", "S:%.3f", "V:%.3f", "A:%.3f"))    // Long display for HSVA
             val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.DisplayHSV) 2 else 1
 
             pushItemWidth(wItemOne)
@@ -230,15 +221,13 @@ interface colorEditorPicker {
         }
 
         // Convert back
-        if (pickerActiveWindow == null) {
+        if (valueChanged && pickerActiveWindow == null) {
             if (!valueChangedAsFloat) for (n in 0..3) f[n] = i[n] / 255f
             if (flags has Cef.DisplayHSV) f.hsvToRGB()
-            if (valueChanged) {
-                col[0] = f[0]
-                col[1] = f[1]
-                col[2] = f[2]
-                if (alpha) col[3] = f[3]
-            }
+            col[0] = f[0]
+            col[1] = f[1]
+            col[2] = f[2]
+            if (alpha) col[3] = f[3]
         }
         popId()
         endGroup()
@@ -455,12 +444,12 @@ interface colorEditorPicker {
             val colV4 = Vec4(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
             if (flags has Cef.NoLabel)
                 text("Current")
-            val f = flags and (Cef.HDR or Cef.AlphaPreview or Cef.AlphaPreviewHalf or Cef.NoTooltip)
-            colorButton("##current", colV4, f, Vec2(squareSz * 3, squareSz * 2))
+            val subFlagsToForward = Cef.HDR or Cef.AlphaPreview or Cef.AlphaPreviewHalf or Cef.NoTooltip
+            colorButton("##current", colV4, flags and subFlagsToForward, Vec2(squareSz * 3, squareSz * 2))
             refCol?.let {
                 text("Original")
                 val refColV4 = Vec4(it[0], it[1], it[2], if (flags has Cef.NoAlpha) 1f else it[3])
-                if (colorButton("##original", refColV4, f, Vec2(squareSz * 3, squareSz * 2))) {
+                if (colorButton("##original", refColV4, flags and subFlagsToForward, Vec2(squareSz * 3, squareSz * 2))) {
                     for (i in 0 until components) col[i] = it[i]
                     valueChanged = true
                 }
@@ -702,5 +691,17 @@ interface colorEditorPicker {
         assert((flags and Cef._DataTypeMask).isPowerOfTwo) { "Check only 1 option is selected" }
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check only 1 option is selected" }
         g.colorEditOptions = flags
+    }
+
+    companion object {
+        val ids = arrayOf("##X", "##Y", "##Z", "##W")
+        val fmtTableInt = arrayOf(
+                arrayOf("%3d", "%3d", "%3d", "%3d"),             // Short display
+                arrayOf("R:%3d", "G:%3d", "B:%3d", "A:%3d"),     // Long display for RGBA
+                arrayOf("H:%3d", "S:%3d", "V:%3d", "A:%3d"))     // Long display for HSVA
+        val fmtTableFloat = arrayOf(
+                arrayOf("%.3f", "%.3f", "%.3f", "%.3f"),            // Short display
+                arrayOf("R:%.3f", "G:%.3f", "B:%.3f", "A:%.3f"),    // Long display for RGBA
+                arrayOf("H:%.3f", "S:%.3f", "V:%.3f", "A:%.3f"))    // Long display for HSVA
     }
 }
