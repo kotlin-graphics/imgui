@@ -48,8 +48,10 @@ interface inputKeyboard {
     }
 
     fun inputTextWithHint(label: String, hint: String, buf: CharArray, flags: InputTextFlags = 0
-        /*, ImGuiInputTextCallback callback = NULL, void* user_data = NULL*/): Boolean =
-        inputTextEx(label, hint, buf, Vec2(), flags/*, callback, user_data*/)
+        /*, ImGuiInputTextCallback callback = NULL, void* user_data = NULL*/): Boolean {
+        assert(flags hasnt Itf.Multiline) { "call InputTextMultiline()" }
+        return inputTextEx(label, hint, buf, Vec2(), flags/*, callback, user_data*/)
+    }
 
     fun inputTextMultiline(label: String, buf: CharArray, size: Vec2 = Vec2(), flags: InputTextFlags = 0
             /*,ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/) =

@@ -605,6 +605,7 @@ object showDemoWindowWidgets {
         treeNode("Combo") {
             // Expose flags as checkbox for the demo
             checkboxFlags("ComboFlag.PopupAlignLeft", ::flags0, ComboFlag.PopupAlignLeft.i)
+            sameLine(); showHelpMarker("Only makes a difference if the popup is larger than the combo")
             if (checkboxFlags("ComboFlag.NoArrowButton", ::flags0, ComboFlag.NoArrowButton.i))
                 flags0 = flags0 wo ComboFlag.NoPreview     // Clear the other flag, as we cannot combine both
             if (checkboxFlags("ComboFlag.NoPreview", ::flags0, ComboFlag.NoPreview.i))
@@ -726,6 +727,7 @@ object showDemoWindowWidgets {
 //                static char bufpass[64] = "password123";
 //                ImGui::InputText("password", bufpass, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
 //                ImGui::SameLine(); ShowHelpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
+//                ImGui::InputTextWithHint("password (w/ hint)", "<password>", bufpass, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
 //                ImGui::InputText("password (clear)", bufpass, 64, ImGuiInputTextFlags_CharsNoBlank);
         }
 

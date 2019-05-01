@@ -2436,6 +2436,18 @@ interface imgui_internal {
         var valueChanged = false
         var enterPressed = false
 
+        // Select the buffer to render.
+        var bufDisplay = when {
+            (renderCursor || renderSelection || g.activeId == id) && !isReadOnly && state!!.textAIsValid -> state.textA
+            else -> buf
+        }
+        val bufDisplayEnd = IntArray(1) // We have specialized paths below for setting the length
+        val isDisplayingHint = hint != null && bufDisplay[0] == NUL
+        if (isDisplayingHint) {
+            hint!!.toCharArray(bufDisplay)
+            bufDisplayEnd[0] = hint.length
+        }
+
         // Password pushes a temporary font with only a fallback glyph
         if (isPassword)
             g.inputTextPasswordFont.apply {
@@ -2773,13 +2785,15 @@ interface imgui_internal {
             without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
             Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
         val bufDisplayMaxLength = 2 * 1024 * 1024
-        lateinit var bufDisplay: CharArray
-        val bufDisplayEnd = IntArray(1)
         lateinit var textColor: Col
 
         // Render text. We currently only render selection when the widget is active or while scrolling.
         // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
         if (renderCursor || renderSelection) {
+
+            val state = state!!
+            if (!isDisplayingHint)
+                bufDisplayEnd[0] = state.curLenA
 
             /*  Render text (with cursor and selection)
                 This is going to be messy. We need to:
@@ -2791,7 +2805,6 @@ interface imgui_internal {
                 (non-negligible for large amount of text) + 2nd pass for selection rendering (we could merge them by an
                 extra refactoring effort)   */
             // FIXME: This should occur on bufDisplay but we'd need to maintain cursor/select_start/select_end for UTF-8.
-            val state = state!!
             val text = state.textW
             val cursorOffset = Vec2()
             val selectStartOffset = Vec2()
@@ -2912,19 +2925,11 @@ interface imgui_internal {
                 }
             }
 
-            if (state.curLenA != 0 || hint == null) {
-                bufDisplay = if (!isReadOnly && state.textAIsValid) state.textA else buf
-                bufDisplayEnd[0] = state.curLenA
-                textColor = Col.Text
-            } else {
-                hint.toCharArray(bufDisplay)
-                bufDisplayEnd[0] = hint.length
-                textColor = Col.TextDisabled
-            }
-
             // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
-            if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength)
-                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, textColor.u32, bufDisplay, bufDisplayEnd[0], 0f, clipRect.takeUnless { isMultiline })
+            if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength) {
+                val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, col, bufDisplay, bufDisplayEnd[0], 0f, clipRect.takeUnless { isMultiline })
+            }
 
             // Draw blinking cursor
             if (renderCursor) {
@@ -2941,23 +2946,17 @@ interface imgui_internal {
             }
         } else {
             // Render text only (no selection, no cursor)
-            textColor = Col.Text
-            bufDisplay = if (g.activeId == id && !isReadOnly && state!!.textAIsValid) state.textA else buf
-            when {
-                // We don't need width
-                isMultiline -> textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufDisplayEnd) * g.fontSize)
-                g.activeId == id -> bufDisplayEnd[0] = state!!.curLenA
-                else -> bufDisplayEnd[0] = bufDisplay.strlen
-            }
-
-            if (bufDisplayEnd[0] == 0 && hint != null) {
-                hint.toCharArray(bufDisplay)
+            if (isMultiline)
+                textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufDisplayEnd) * g.fontSize) // We don't need width
+            else if (!isDisplayingHint && g.activeId == id)
+                bufDisplayEnd[0] = state!!.curLenA
+            else if (!isDisplayingHint)
                 bufDisplayEnd[0] = bufDisplay.strlen
-                textColor = Col.TextDisabled
-            }
 
-            if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength)
-                drawWindow.drawList.addText(g.font, g.fontSize, drawPos, textColor.u32, bufDisplay, bufDisplayEnd[0], 0f, clipRect.takeUnless { isMultiline })
+            if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength) {
+                val col = getColorU32(if(isDisplayingHint) Col.TextDisabled else Col.Text)
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos, col, bufDisplay, bufDisplayEnd[0], 0f, clipRect.takeUnless { isMultiline })
+            }
         }
 
         if (isMultiline) {
@@ -2966,11 +2965,11 @@ interface imgui_internal {
             endGroup()
         }
 
-        if (isPassword)
+        if (isPassword && !isDisplayingHint)
             popFont()
 
         // Log as text
-        if (g.logEnabled && !isPassword)
+        if (g.logEnabled && !(isPassword && !isDisplayingHint))
             logRenderedText(drawPos, String(bufDisplay), bufDisplayEnd[0])
 
         if (labelSize.x > 0)
