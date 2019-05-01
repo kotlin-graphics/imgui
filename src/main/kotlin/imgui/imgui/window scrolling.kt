@@ -37,8 +37,7 @@ interface imgui_windowScrolling {
         setScrollFromPosY(targetY, centerYRatio)
     }
 
-    /** adjust scrolling amount to make given position valid. use GetCursorPos() or GetCursorStartPos()+offset to get
-     *  valid positions.    */
+    /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.   */
     fun setScrollFromPosY(localY: Float, centerYRatio: Float = 0.5f) = with(ImGui.currentWindow) {
         /*  We store a target position so centering can occur on the next frame when we are guaranteed to have a known
             window size         */

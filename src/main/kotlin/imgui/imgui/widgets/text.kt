@@ -55,50 +55,52 @@ interface text {
             val clipRect = Rect(window.clipRect)
             val textSize = Vec2()
 
-            if (textPos.y <= clipRect.max.y) {
+            // Lines to skip (can't skip when logging text)
+            val pos = Vec2(textPos)
+            if (!g.logEnabled) {
 
-                val pos = Vec2(textPos)
-                // Lines to skip (can't skip when logging text)
-                if (!g.logEnabled) {
-                    val linesSkippable = ((clipRect.min.y - textPos.y) / lineHeight).i
-                    if (linesSkippable > 0) {
-                        var linesSkipped = 0
-                        while (line < textEnd && linesSkipped < linesSkippable) {
-                            val lineEnd = text.memchr(line, '\n') ?: textEnd
-                            line = lineEnd + 1
-                            linesSkipped++
-                        }
-                        pos.y += linesSkipped * lineHeight
-                    }
-                }
-                // Lines to render
-                if (line < textEnd) {
-                    val lineRect = Rect(pos, pos + Vec2(Float.MAX_VALUE, lineHeight))
-                    while (line < textEnd) {
-                        if (isClippedEx(lineRect, 0, false)) break
-
-                        val lineEnd = text.memchr(line, '\n') ?: textEnd
-
-                        val pLine = text.substring(line)
-                        val lineSize = calcTextSize(pLine, lineEnd - line, false)
-                        textSize.x = glm.max(textSize.x, lineSize.x)
-                        renderText(pos, pLine, lineEnd - line, false)
-                        line = lineEnd + 1
-                        lineRect.min.y += lineHeight
-                        lineRect.max.y += lineHeight
-                        pos.y += lineHeight
-                    }
-                    // Count remaining lines
+                val linesSkippable = ((clipRect.min.y - textPos.y) / lineHeight).i
+                if (linesSkippable > 0) {
                     var linesSkipped = 0
-                    while (line < textEnd) {
+                    while (line < textEnd && linesSkipped < linesSkippable) {
                         val lineEnd = text.memchr(line, '\n') ?: textEnd
                         line = lineEnd + 1
                         linesSkipped++
                     }
                     pos.y += linesSkipped * lineHeight
                 }
-                textSize.y += (pos - textPos).y
             }
+            // Lines to render
+            if (line < textEnd) {
+                val lineRect = Rect(pos, pos + Vec2(Float.MAX_VALUE, lineHeight))
+                while (line < textEnd) {
+                    if (isClippedEx(lineRect, 0, false)) break
+
+                    val lineEnd = text.memchr(line, '\n') ?: textEnd
+
+                    val pLine = text.substring(line)
+                    val lineSize = calcTextSize(pLine, lineEnd - line, false)
+                    textSize.x = glm.max(textSize.x, lineSize.x)
+                    renderText(pos, pLine, lineEnd - line, false)
+                    line = lineEnd + 1
+                    lineRect.min.y += lineHeight
+                    lineRect.max.y += lineHeight
+                    pos.y += lineHeight
+                }
+
+                // Count remaining lines
+                var linesSkipped = 0
+                while (line < textEnd) {
+                    var lineEnd = text.memchr(line, '\n') ?: textEnd
+                    if (lineEnd == 0)
+                        lineEnd = textEnd
+                    line = lineEnd + 1
+                    linesSkipped++
+                }
+                pos.y += linesSkipped * lineHeight
+            }
+            textSize.y += (pos - textPos).y
+
             val bb = Rect(textPos, textPos + textSize)
             itemSize(textSize)
             itemAdd(bb, 0)
