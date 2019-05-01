@@ -323,7 +323,9 @@ interface imgui_internal {
         return false
     }
 
-    /** Return true if focus is requested   */ // TODO move both methods into Window class?
+    /** Return true if focus is requested
+     *  Process TAB/Shift+TAB. Be mindful that this function may _clear_ the ActiveID when tabbing out. */
+    // TODO move both methods into Window class?
     fun focusableItemRegister(window: Window, id: ID): Boolean {
 
         // Increment counters
@@ -351,6 +353,11 @@ interface imgui_internal {
                 return true
             }
         }
+
+        // If another item is about to be focused, we clear our own active id
+        if (g.activeId == id)
+            clearActiveId()
+
         return false
     }
 
