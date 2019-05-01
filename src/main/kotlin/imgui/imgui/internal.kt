@@ -2437,8 +2437,8 @@ interface imgui_internal {
         var enterPressed = false
 
         // Select the buffer to render.
-        var bufDisplay = when {
-            (renderCursor || renderSelection || g.activeId == id) && !isReadOnly && state!!.textAIsValid -> state.textA
+        val bufDisplay = when {
+            (renderCursor || renderSelection || g.activeId == id) && !isReadOnly && state?.textAIsValid == true -> state.textA
             else -> buf
         }
         val bufDisplayEnd = IntArray(1) // We have specialized paths below for setting the length
@@ -2791,7 +2791,7 @@ interface imgui_internal {
         // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
         if (renderCursor || renderSelection) {
 
-            val state = state!!
+            val state = state!! // ~assert
             if (!isDisplayingHint)
                 bufDisplayEnd[0] = state.curLenA
 

@@ -276,7 +276,7 @@ interface imgui_demoDebugInformations {
             endCombo()
         }
         sameLine()
-        showHelpMarker("""
+        helpMarker("""
             - Load additional fonts with io.Fonts->AddFontFromFileTTF().
             - The font atlas is built when calling io.Fonts->GetTexDataAsXXXX() or io.Fonts->Build().
             - Read FAQ and documentation in misc/fonts/ for more details.
@@ -313,7 +313,7 @@ interface imgui_demoDebugInformations {
         var showWindow = false
 
         /** Helper to display a little (?) mark which shows a tooltip when hovered. */
-        fun showHelpMarker(desc: String) {
+        fun helpMarker(desc: String) {
             textDisabled("(?)")
             if (isItemHovered()) {
                 beginTooltip()
