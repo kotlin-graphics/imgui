@@ -2333,22 +2333,6 @@ interface imgui_internal {
         val hovered = itemHoverable(frameBb, id)
         if (hovered) g.mouseCursor = MouseCursor.TextInput
 
-        // Password pushes a temporary font with only a fallback glyph
-        if (isPassword)
-            g.inputTextPasswordFont.apply {
-                val glyph = g.font.findGlyph('*')!!
-                fontSize = g.font.fontSize
-                scale = g.font.scale
-                displayOffset = g.font.displayOffset
-                ascent = g.font.ascent
-                descent = g.font.descent
-                containerAtlas = g.font.containerAtlas
-                fallbackGlyph = glyph
-                fallbackAdvanceX = glyph.advanceX
-                assert(glyphs.isEmpty() && indexAdvanceX.isEmpty() && indexLookup.isEmpty())
-                pushFont(this)
-            }
-
         // NB: we are only allowed to access 'editState' if we are the active widget.
         var state: TextEditState? = g.inputTextState.takeIf { it.id == id }
 
@@ -2431,10 +2415,6 @@ interface imgui_internal {
         if (g.activeId == id && io.mouseClicked[0] && !initState && !initMakeActive)
             clearActiveId = true
 
-        var valueChanged = false
-        var enterPressed = false
-        var backupCurrentTextLength = 0
-
         // When read-only we always use the live data passed to the function
         // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
         if (isReadOnly && state != null) {
@@ -2450,7 +2430,30 @@ interface imgui_internal {
             }
         }
 
+        // Lock the decision of whether we are going to take the path displaying the cursor or selection
+        val renderCursor = g.activeId == id || (state != null && userScrollActive)
+        val renderSelection = state?.hasSelection == true && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
+        var valueChanged = false
+        var enterPressed = false
+
+        // Password pushes a temporary font with only a fallback glyph
+        if (isPassword)
+            g.inputTextPasswordFont.apply {
+                val glyph = g.font.findGlyph('*')!!
+                fontSize = g.font.fontSize
+                scale = g.font.scale
+                displayOffset = g.font.displayOffset
+                ascent = g.font.ascent
+                descent = g.font.descent
+                containerAtlas = g.font.containerAtlas
+                fallbackGlyph = glyph
+                fallbackAdvanceX = glyph.advanceX
+                assert(glyphs.isEmpty() && indexAdvanceX.isEmpty() && indexLookup.isEmpty())
+                pushFont(this)
+            }
+
         // Process mouse inputs and character inputs
+        var backupCurrentTextLength = 0
         if (g.activeId == id) {
             val state = state!!
 
@@ -2775,8 +2778,6 @@ interface imgui_internal {
 
         // Render text. We currently only render selection when the widget is active or while scrolling.
         // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
-        val renderCursor = g.activeId == id || (state != null && userScrollActive)
-        val renderSelection = state?.hasSelection == true && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
         if (renderCursor || renderSelection) {
 
             /*  Render text (with cursor and selection)
