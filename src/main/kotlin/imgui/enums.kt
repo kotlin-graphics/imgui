@@ -22,7 +22,7 @@ enum class WindowFlag(@JvmField val i: Int) {
     NoResize(1 shl 1),
     /** Disable user moving the window  */
     NoMove(1 shl 2),
-    /** Disable scrollbars (window can still scroll with mouse or programatically)  */
+    /** Disable scrollbars (window can still scroll with mouse or programmatically)  */
     NoScrollbar(1 shl 3),
     /** Disable user vertically scrolling with mouse wheel. On child window, mouse wheel will be forwarded to the parent
      *  unless noScrollbar is also set.  */
@@ -44,7 +44,7 @@ enum class WindowFlag(@JvmField val i: Int) {
     HorizontalScrollbar(1 shl 11),
     /** Disable taking focus when transitioning from hidden to visible state    */
     NoFocusOnAppearing(1 shl 12),
-    /** Disable bringing window to front when taking focus (e.g. clicking on it or programatically giving it focus) */
+    /** Disable bringing window to front when taking focus (e.g. clicking on it or programmatically giving it focus) */
     NoBringToFrontOnFocus(1 shl 13),
     /** Always show vertical scrollbar (even if ContentSize.y < Size.y) */
     AlwaysVerticalScrollbar(1 shl 14),
@@ -297,7 +297,7 @@ enum class TabItemFlag(@JvmField val i: Int) {
     None(0),
     /** Append '*' to title without affecting the ID, as a convenience to avoid using the ### operator. Also: tab is selected on closure and closure is deferred by one frame to allow code to undo it without flicker. */
     UnsavedDocument(1 shl 0),
-    /** Trigger flag to programatically make the tab selected when calling BeginTabItem() */
+    /** Trigger flag to programmatically make the tab selected when calling BeginTabItem() */
     SetSelected(1 shl 1),
     /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button. You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
     NoCloseWithMiddleMouseButton(1 shl 2),

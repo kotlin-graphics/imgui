@@ -542,7 +542,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var configInputTextCursorBlink = true
     /** Enable resizing of windows from their edges and from the lower-left corner.
      *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
-     *  (This used to be the WindowFlag.ResizeFromAnySide flag) */
+     *  (This used to be WindowFlag.ResizeFromAnySide flag) */
     var configWindowsResizeFromEdges = true
     /** [BETA] Set to true to only allow moving windows when clicked+dragged from the title bar. Windows without a title bar are not affected. */
     var configWindowsMoveFromTitleBarOnly = false

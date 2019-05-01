@@ -18,7 +18,7 @@ interface imgui_tooltips {
         end()
     }
 
-    /** set a text-only tooltip, typically use with ImGui::IsItemHovered(). overidde any previous call to SetTooltip(). */
+    /** set a text-only tooltip, typically use with ImGui::IsItemHovered(). override any previous call to SetTooltip(). */
     fun setTooltipV(fmt: String, args: Array<out Any>) {
         if (g.dragDropWithinSourceOrTarget)
             beginTooltip()

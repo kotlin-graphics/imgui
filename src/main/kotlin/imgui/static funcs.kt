@@ -83,7 +83,7 @@ fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
 //-----------------------------------------------------------------------------
 
 /** Find window given position, search front-to-back
-FIXME: Note that we have an inconsequential lag here: OuterRectClipped is updated in Begin(), so windows moved programatically
+FIXME: Note that we have an inconsequential lag here: OuterRectClipped is updated in Begin(), so windows moved programmatically
 with SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time FindHoveredWindow() is
 called, aka before the next Begin(). Moving window isn't affected..    */
 fun findHoveredWindow() {

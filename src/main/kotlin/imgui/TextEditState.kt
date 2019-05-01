@@ -802,7 +802,7 @@ class TextEditState {
     /** API cut: delete selection   */
     fun cut(): Boolean = when {
         hasSelection -> {
-            deleteSelection() // implicity clamps
+            deleteSelection() // implicitly clamps
             stb.hasPreferredX = false
             true
         }
@@ -1072,7 +1072,7 @@ class TextEditState {
                             hasPreferredX = false
                         }
                     } else {
-                        deleteSelection() // implicity clamps
+                        deleteSelection() // implicitly clamps
                         if (insertChars(cursor, charArrayOf(ch), 0, 1)) {
                             makeundoInsert(cursor, 1)
                             ++cursor
