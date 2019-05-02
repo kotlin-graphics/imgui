@@ -72,6 +72,7 @@ import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
 import imgui.internal.DrawCornerFlag as Dcf
 
+
 /** Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little colored preview square that can be
  *  left-clicked to open a picker, and right-clicked to open an option menu.)
  *  - Note that in C++ a 'float v[X]' function argument is the _same_ as 'float* v', the array syntax is just a way to
@@ -128,7 +129,11 @@ interface colorEditorPicker {
         if (flags hasnt Cef._DisplayMask) flags = flags or (g.colorEditOptions and Cef._DisplayMask)
         if (flags hasnt Cef._DataTypeMask) flags = flags or (g.colorEditOptions and Cef._DataTypeMask)
         if (flags hasnt Cef._PickerMask) flags = flags or (g.colorEditOptions and Cef._PickerMask)
-        flags = flags or (g.colorEditOptions wo (Cef._DisplayMask or Cef._DataTypeMask or Cef._PickerMask))
+        if (flags hasnt Cef._InputMask)
+            flags = flags or (g.colorEditOptions and Cef._InputMask)
+        flags = flags or (g.colorEditOptions wo (Cef._DisplayMask or Cef._DataTypeMask or Cef._PickerMask or Cef._InputMask))
+        assert((flags and Cef._DisplayMask).isPowerOfTwo) { "Check that only 1 is selected" }
+        assert((flags and Cef._InputMask).isPowerOfTwo) { "Check that only 1 is selected" }
 
         val alpha = flags hasnt Cef.NoAlpha
         val hdr = flags has Cef.HDR
@@ -136,7 +141,10 @@ interface colorEditorPicker {
 
         // Convert to the formats we need
         val f = floatArrayOf(col[0], col[1], col[2], if (alpha) col[3] else 1f)
-        if (flags has Cef.DisplayHSV) f.rgbToHSV()
+        if (flags has Cef.InputHSV && flags has Cef.DisplayRGB)
+            f.hsvToRGB()
+        else if (flags has Cef.InputRGB && flags has Cef.DisplayHSV)
+            f.rgbToHSV()
 
         val i = IntArray(4) { F32_TO_INT8_UNBOUND(f[it]) }
 
@@ -204,8 +212,8 @@ interface colorEditorPicker {
                     textEx(label, labelDisplayEnd)
                     spacing()
                 }
-                val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
-                val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._DisplayMask or Cef.NoLabel or Cef.AlphaPreviewHalf
+                val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef._InputMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
+                val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef.DisplayHSV or Cef._DisplayMask or Cef.NoLabel or Cef.AlphaPreviewHalf
                 pushItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
                 val p = g.colorPickerRef to FloatArray(4)
                 valueChanged = colorPicker4("##picker", col, pickerFlags, p) or valueChanged
@@ -223,7 +231,10 @@ interface colorEditorPicker {
         // Convert back
         if (valueChanged && pickerActiveWindow == null) {
             if (!valueChangedAsFloat) for (n in 0..3) f[n] = i[n] / 255f
-            if (flags has Cef.DisplayHSV) f.hsvToRGB()
+            if (flags has Cef.DisplayHSV && flags has Cef.InputRGB)
+                f.hsvToRGB()
+            if (flags has Cef.DisplayRGB && flags has Cef.InputHSV)
+                f.rgbToHSV()
             col[0] = f[0]
             col[1] = f[1]
             col[2] = f[2]
@@ -236,17 +247,24 @@ interface colorEditorPicker {
 
         // NB: The flag test is merely an optional micro-optimization, BeginDragDropTarget() does the same test.
         if (window.dc.lastItemStatusFlags has ItemStatusFlag.HoveredRect && beginDragDropTarget()) {
+            var acceptedDragDrop = false
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
                 for (j in 0..2)  // Preserve alpha if any
                     col[j] = it.data!!.asFloatBuffer()[j]
+                acceptedDragDrop = true
                 valueChanged = true
             }
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_4F)?.let {
                 val floats = it.data!!.asFloatBuffer()
                 for (j in 0 until components)
                     col[j] = floats[j]
+                acceptedDragDrop = true
                 valueChanged = true
             }
+
+            // Drag-drop payloads are always RGB
+            if (acceptedDragDrop && flags has Cef.InputHSV)
+                col.rgbToHSV()
             endDragDropTarget()
         }
 
@@ -279,6 +297,7 @@ interface colorEditorPicker {
 
     /** ColorPicker
      *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
+     *  (In C++ the 'float col[4]' notation for a function argument is equivalent to 'float* col', we only specify a size to facilitate understanding of the code.)
      *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)   */
     fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = 0, refCol: Vec4? = null): Boolean {
@@ -328,7 +347,10 @@ interface colorEditorPicker {
         // Read stored options
         if (flags hasnt Cef._PickerMask)
             flags = flags or ((if (g.colorEditOptions has Cef._PickerMask) g.colorEditOptions else Cef._OptionsDefault.i) and Cef._PickerMask)
+        if (flags hasnt Cef._InputMask)
+            flags = flags or ((if (g.colorEditOptions has Cef._InputMask) g.colorEditOptions else Cef._OptionsDefault.i) and Cef._InputMask)
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check that only 1 is selected" }
+        assert((flags and Cef._InputMask).isPowerOfTwo);  // Check that only 1 is selected
         if (flags hasnt Cef.NoOptions)
             flags = flags or (g.colorEditOptions and Cef.AlphaBar)
 
@@ -357,7 +379,14 @@ interface colorEditorPicker {
         val trianglePb = Vec2(triangleR * -0.5f, triangleR * -0.866025f) // Black point.
         val trianglePc = Vec2(triangleR * -0.5f, triangleR * +0.866025f) // White point.
 
-        var (h, s, v) = colorConvertRGBtoHSV(col)
+        val hsv = FloatArray(3) { col[it] }
+        val rgb = FloatArray(3) { col[it] }
+        if (flags has Cef.InputRGB)
+            colorConvertRGBtoHSV(rgb, hsv)
+        else if (flags has Cef.InputHSV)
+            colorConvertHSVtoRGB(hsv, rgb)
+        var (H, S, V) = hsv
+        var (R, G, B) = rgb // turn to capital as cpp to avoid clashing with ImGui `g`
 
         var valueChanged = false
         var valueChangedH = false
@@ -373,22 +402,22 @@ interface colorEditorPicker {
                 val initialDist2 = initialOff.lengthSqr
                 if (initialDist2 >= (wheelRInner - 1) * (wheelRInner - 1) && initialDist2 <= (wheelROuter + 1) * (wheelROuter + 1)) {
                     // Interactive with Hue wheel
-                    h = glm.atan(currentOff.y, currentOff.x) / glm.PIf * 0.5f
-                    if (h < 0f)
-                        h += 1f
+                    H = glm.atan(currentOff.y, currentOff.x) / glm.PIf * 0.5f
+                    if (H < 0f)
+                        H += 1f
                     valueChanged = true
                     valueChangedH = true
                 }
-                val cosHueAngle = glm.cos(-h * 2f * glm.PIf)
-                val sinHueAngle = glm.sin(-h * 2f * glm.PIf)
+                val cosHueAngle = glm.cos(-H * 2f * glm.PIf)
+                val sinHueAngle = glm.sin(-H * 2f * glm.PIf)
                 if (triangleContainsPoint(trianglePa, trianglePb, trianglePc, initialOff.rotate(cosHueAngle, sinHueAngle))) {
                     // Interacting with SV triangle
                     val currentOffUnrotated = currentOff.rotate(cosHueAngle, sinHueAngle)
                     if (!triangleContainsPoint(trianglePa, trianglePb, trianglePc, currentOffUnrotated))
                         currentOffUnrotated put triangleClosestPoint(trianglePa, trianglePb, trianglePc, currentOffUnrotated)
                     val (uu, vv, _) = triangleBarycentricCoords(trianglePa, trianglePb, trianglePc, currentOffUnrotated)
-                    v = glm.clamp(1f - vv, 0.0001f, 1f)
-                    s = glm.clamp(uu / v, 0.0001f, 1f)
+                    V = glm.clamp(1f - vv, 0.0001f, 1f)
+                    S = glm.clamp(uu / V, 0.0001f, 1f)
                     valueChangedSv = true
                     valueChanged = true
                 }
@@ -399,8 +428,8 @@ interface colorEditorPicker {
             // SV rectangle logic
             invisibleButton("sv", Vec2(svPickerSize))
             if (isItemActive) {
-                s = saturate((io.mousePos.x - pickerPos.x) / (svPickerSize - 1))
-                v = 1f - saturate((io.mousePos.y - pickerPos.y) / (svPickerSize - 1))
+                S = saturate((io.mousePos.x - pickerPos.x) / (svPickerSize - 1))
+                V = 1f - saturate((io.mousePos.y - pickerPos.y) / (svPickerSize - 1))
                 valueChangedSv = true
                 valueChanged = true
             }
@@ -409,7 +438,7 @@ interface colorEditorPicker {
             cursorScreenPos = Vec2(bar0PosX, pickerPos.y)
             invisibleButton("hue", Vec2(barsWidth, svPickerSize))
             if (isItemActive) {
-                h = saturate((io.mousePos.y - pickerPos.y) / (svPickerSize - 1))
+                H = saturate((io.mousePos.y - pickerPos.y) / (svPickerSize - 1))
                 valueChangedH = true
                 valueChanged = true
             }
@@ -444,7 +473,8 @@ interface colorEditorPicker {
             val colV4 = Vec4(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
             if (flags has Cef.NoLabel)
                 text("Current")
-            val subFlagsToForward = Cef.HDR or Cef.AlphaPreview or Cef.AlphaPreviewHalf or Cef.NoTooltip
+
+            val subFlagsToForward = Cef._InputMask or Cef.HDR or Cef.AlphaPreview or Cef.AlphaPreviewHalf or Cef.NoTooltip
             colorButton("##current", colV4, flags and subFlagsToForward, Vec2(squareSz * 3, squareSz * 2))
             refCol?.let {
                 text("Original")
@@ -460,13 +490,19 @@ interface colorEditorPicker {
 
         // Convert back color to RGB
         if (valueChangedH || valueChangedSv)
-            colorConvertHSVtoRGB(if (h >= 1f) h - 10 * 1e-6f else h, if (s > 0f) s else 10 * 1e-6f, if (v > 0f) v else 1e-6f, col)
+            if (flags has Cef.InputRGB)
+                colorConvertHSVtoRGB(if(H >= 1f) H - 10 * 1e-6f else H, if(S > 0f) S else 10 * 1e-6f, if(V > 0f) V else 1e-6f, col)
+            else if (flags has Cef.InputHSV) {
+                col[0] = H
+                col[1] = S
+                col[2] = V
+            }
 
         // R,G,B and H,S,V slider color editor
         var valueChangedFixHueWrap = false
         if (flags hasnt Cef.NoInputs) {
             pushItemWidth((if (alphaBar) bar1PosX else bar0PosX) + barsWidth - pickerPos.x)
-            val subFlagsToForward = Cef._DataTypeMask or Cef.HDR or Cef.NoAlpha or Cef.NoOptions or Cef.NoSmallPreview or
+            val subFlagsToForward = Cef._DataTypeMask or Cef._InputMask or Cef.HDR or Cef.NoAlpha or Cef.NoOptions or Cef.NoSmallPreview or
                     Cef.AlphaPreview or Cef.AlphaPreviewHalf
             val subFlags = (flags and subFlagsToForward) or Cef.NoPicker
             valueChanged = when {
@@ -485,20 +521,42 @@ interface colorEditorPicker {
         }
 
         // Try to cancel hue wrap (after ColorEdit4 call), if any
-        if (valueChangedFixHueWrap) {
+        if (valueChangedFixHueWrap  && flags has Cef.InputRGB) {
             val (newH, newS, newV) = colorConvertRGBtoHSV(col)
-            if (newH <= 0 && h > 0) {
-                if (newV <= 0 && v != newV)
-                    colorConvertHSVtoRGB(h, s, if (newV <= 0) v * 0.5f else newV, col)
+            if (newH <= 0 && H > 0) {
+                if (newV <= 0 && V != newV)
+                    colorConvertHSVtoRGB(H, S, if (newV <= 0) V * 0.5f else newV, col)
                 else if (newS <= 0)
-                    colorConvertHSVtoRGB(h, if (newS <= 0) s * 0.5f else newS, newV, col)
+                    colorConvertHSVtoRGB(H, if (newS <= 0) S * 0.5f else newS, newV, col)
+            }
+        }
+
+        if (valueChanged) {
+            if (flags has Cef.InputRGB) {
+                R = col[0]
+                G = col[1]
+                B = col[2]
+                colorConvertRGBtoHSV(R, G, B).let {
+                    H = it[0]
+                    S = it[1]
+                    V = it[2]
+                }
+            } else if (flags has Cef.InputHSV) {
+                H = col[0]
+                S = col[1]
+                V = col[2]
+                colorConvertHSVtoRGB(H, S, V).let {
+                    R = it[0]
+                    G = it[1]
+                    B = it[2]
+                }
             }
         }
 
         val hueColorF = Vec4(1)
-        colorConvertHSVtoRGB(h, 1f, 1f).apply { hueColorF.x = this[0]; hueColorF.y = this[1]; hueColorF.z = this[2] }
+        colorConvertHSVtoRGB(H, 1f, 1f).apply { hueColorF.x = this[0]; hueColorF.y = this[1]; hueColorF.z = this[2] }
         val hueColor32 = hueColorF.u32
-        val col32NoAlpha = Vec4(col[0], col[1], col[2], 1f).u32
+        val col32NoAlpha = Vec4(R, G, B, 1f).u32
 
         val hueColors = arrayOf(COL32(255, 0, 0, 255), COL32(255, 255, 0, 255), COL32(0, 255, 0, 255),
                 COL32(0, 255, 255, 255), COL32(0, 0, 255, 255), COL32(255, 0, 255, 255), COL32(255, 0, 0, 255))
@@ -523,8 +581,8 @@ interface colorEditorPicker {
             }
 
             // Render Cursor + preview on Hue Wheel
-            val cosHueAngle = glm.cos(h * 2f * glm.PIf)
-            val sinHueAngle = glm.sin(h * 2f * glm.PIf)
+            val cosHueAngle = glm.cos(H * 2f * glm.PIf)
+            val sinHueAngle = glm.sin(H * 2f * glm.PIf)
             val hueCursorPos = Vec2(wheelCenter.x + cosHueAngle * (wheelRInner + wheelROuter) * 0.5f,
                     wheelCenter.y + sinHueAngle * (wheelRInner + wheelROuter) * 0.5f)
             val hueCursorRad = wheelThickness * if (valueChangedH) 0.65f else 0.55f
@@ -546,15 +604,15 @@ interface colorEditorPicker {
             drawList.primVtx(trb, uvWhite, COL32_BLACK)
             drawList.primVtx(trc, uvWhite, COL32_BLACK_TRANS)
             drawList.addTriangle(tra, trb, trc, COL32(128, 128, 128, 255), 1.5f)
-            svCursorPos put trc.lerp(tra, saturate(s)).lerp(trb, saturate(1 - v))
+            svCursorPos put trc.lerp(tra, saturate(S)).lerp(trb, saturate(1 - V))
         } else if (flags has Cef.PickerHueBar) {
             // Render SV Square
             drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_WHITE, hueColor32, hueColor32, COL32_WHITE)
             drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_BLACK_TRANS, COL32_BLACK_TRANS, COL32_BLACK, COL32_BLACK)
             renderFrameBorder(pickerPos, pickerPos + svPickerSize, 0f)
             // Sneakily prevent the circle to stick out too much
-            svCursorPos.x = glm.clamp((pickerPos.x + saturate(s) * svPickerSize + 0.5f).i.f, pickerPos.x + 2, pickerPos.x + svPickerSize - 2)
-            svCursorPos.y = glm.clamp((pickerPos.y + saturate(1 - v) * svPickerSize + 0.5f).i.f, pickerPos.y + 2, pickerPos.y + svPickerSize - 2)
+            svCursorPos.x = glm.clamp((pickerPos.x + saturate(S) * svPickerSize + 0.5f).i.f, pickerPos.x + 2, pickerPos.x + svPickerSize - 2)
+            svCursorPos.y = glm.clamp((pickerPos.y + saturate(1 - V) * svPickerSize + 0.5f).i.f, pickerPos.y + 2, pickerPos.y + svPickerSize - 2)
 
             // Render Hue Bar
             for (i in 0..5) {
@@ -562,7 +620,7 @@ interface colorEditorPicker {
                 val c = Vec2(bar0PosX + barsWidth, pickerPos.y + (i + 1) * (svPickerSize / 6))
                 drawList.addRectFilledMultiColor(a, c, hueColors[i], hueColors[i], hueColors[i + 1], hueColors[i + 1])
             }
-            val bar0LineY = (pickerPos.y + h * svPickerSize + 0.5f).i.f
+            val bar0LineY = (pickerPos.y + H * svPickerSize + 0.5f).i.f
             renderFrameBorder(Vec2(bar0PosX, pickerPos.y), Vec2(bar0PosX + barsWidth, pickerPos.y + svPickerSize), 0f)
             renderArrowsForVerticalBar(drawList, Vec2(bar0PosX - 1, bar0LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f)
         }
@@ -600,7 +658,8 @@ interface colorEditorPicker {
 
     /**  A little colored square. Return true when clicked.
      *  FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip.
-     *  'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.    */
+     *  'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.
+     *  Note that 'col' may be encoded in HSV if ImGuiColorEditFlags_InputHSV is set.   */
     fun colorButton(descId: String, col: Vec4, flags_: ColorEditFlags = 0, size: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
@@ -622,7 +681,11 @@ interface colorEditorPicker {
         if (flags has Cef.NoAlpha)
             flags = flags and (Cef.AlphaPreview or Cef.AlphaPreviewHalf).inv()
 
-        val colWithoutAlpha = Vec4(col.x, col.y, col.z, 1f)
+        val colRgb = Vec4(col)
+        if (flags has Cef.InputHSV)
+            colorConvertHSVtoRGB(colRgb)
+
+        val colRgbWithoutAlpha = Vec4(colRgb.x, colRgb.y, colRgb.z, 1f)
         val gridStep = glm.min(size.x, size.y) / 2.99f
         val rounding = glm.min(style.frameRounding, gridStep * 0.5f)
         val bbInner = Rect(bb)
@@ -630,16 +693,16 @@ interface colorEditorPicker {
             This offset seemed like a good middle ground to reduce those artifacts.  */
         val off = -0.75f
         bbInner expand off
-        if (flags has Cef.AlphaPreviewHalf && col.w < 1f) {
+        if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
             val midX = ((bbInner.min.x + bbInner.max.x) * 0.5f + 0.5f).i.f
-            renderColorRectWithAlphaCheckerboard(Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max, getColorU32(col),
+            renderColorRectWithAlphaCheckerboard(Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max, getColorU32(colRgb),
                     gridStep, Vec2(-gridStep + off, off), rounding, Dcf.TopRight or Dcf.BotRight)
-            window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colWithoutAlpha), rounding,
+            window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colRgbWithoutAlpha), rounding,
                     Dcf.TopLeft or Dcf.BotLeft)
         } else {
             /*  Because getColorU32() multiplies by the global style alpha and we don't want to display a checkerboard 
                 if the source code had no alpha */
-            val colSource = if (flags has Cef.AlphaPreview) col else colWithoutAlpha
+            val colSource = if (flags has Cef.AlphaPreview) colRgb else colRgbWithoutAlpha
             if (colSource.w < 1f)
                 renderColorRectWithAlphaCheckerboard(bbInner.min, bbInner.max, colSource.u32, gridStep, Vec2(off), rounding)
             else
@@ -656,9 +719,9 @@ interface colorEditorPicker {
         if (g.activeId == id && flags hasnt Cef.NoDragDrop && beginDragDropSource()) {
 
             if (flags has Cef.NoAlpha)
-                setDragDropPayload(PAYLOAD_TYPE_COLOR_3F, col, Vec3.size, Cond.Once)
+                setDragDropPayload(PAYLOAD_TYPE_COLOR_3F, colRgb, Vec3.size, Cond.Once)
             else
-                setDragDropPayload(PAYLOAD_TYPE_COLOR_4F, col, Vec4.size, Cond.Once)
+                setDragDropPayload(PAYLOAD_TYPE_COLOR_4F, colRgb, Vec4.size, Cond.Once)
             colorButton(descId, col, flags)
             sameLine()
             textEx("Color")
@@ -667,7 +730,7 @@ interface colorEditorPicker {
         // Tooltip
         if (flags hasnt Cef.NoTooltip && hovered) {
             val pF = floatArrayOf(col.x, col.y, col.z, col.w)
-            colorTooltip(descId, pF, flags and (Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf))
+            colorTooltip(descId, pF, flags and (Cef._InputMask or Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf))
             col.put(pF)
         }
 
@@ -687,9 +750,12 @@ interface colorEditorPicker {
             flags = flags or (Cef._OptionsDefault and Cef._DataTypeMask)
         if (flags hasnt Cef._PickerMask)
             flags = flags or (Cef._OptionsDefault and Cef._PickerMask)
+        if (flags hasnt Cef._InputMask)
+            flags = flags or (Cef._OptionsDefault and Cef._InputMask)
         assert((flags and Cef._DisplayMask).isPowerOfTwo) { "Check only 1 option is selected" }
         assert((flags and Cef._DataTypeMask).isPowerOfTwo) { "Check only 1 option is selected" }
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check only 1 option is selected" }
+        assert((flags and Cef._InputMask).isPowerOfTwo) { "Check only 1 option is selected" }
         g.colorEditOptions = flags
     }
 
