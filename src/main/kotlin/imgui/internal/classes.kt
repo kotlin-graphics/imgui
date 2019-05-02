@@ -1451,7 +1451,8 @@ class TabBar {
         window.dc.cursorPos = backupMainCursorPos
 
         // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
-        if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.50f)
+        // We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar (which g.HoveredId ignores)
+        if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.50f && isItemHovered())
             if (flags hasnt TabBarFlag.NoTooltip)
                 setTooltip(label.substring(0, findRenderedTextEnd(label)))
 
