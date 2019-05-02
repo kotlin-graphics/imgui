@@ -24,6 +24,7 @@ import imgui.ImGui.selectable
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
+import imgui.imgui.withInt
 import imgui.internal.Rect
 import kotlin.reflect.KMutableProperty0
 import imgui.SelectableFlag as Sf
@@ -36,6 +37,9 @@ import imgui.internal.ItemFlag as If
  * FIXME: To be consistent with all the newer API, ListBoxHeader/ListBoxFooter should in reality be called BeginListBox/EndListBox. Will rename them.
  */
 interface listBoxes {
+
+    fun listBox(label: String, currentItemPtr: IntArray, items: Array<String>, heightInItems: Int = -1): Boolean =
+            withInt(currentItemPtr, 0) { listBox(label, it, items, heightInItems) }
 
     fun listBox(label: String, currentItemPtr: KMutableProperty0<Int>, items: Array<String>, heightInItems: Int = -1): Boolean {
 
