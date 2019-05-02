@@ -159,12 +159,24 @@ object glyphRanges {
                 IntRange(0x0400, 0x052F), // Cyrillic + Cyrillic Supplement
                 IntRange(0x2DE0, 0x2DFF), // Cyrillic Extended-A
                 IntRange(0xA640, 0xA69F)) // Cyrillic Extended-B
+
     /** Default + Thai characters   */
     val thai: Array<IntRange>
         get() = arrayOf(
                 IntRange(0x0020, 0x00FF), // Basic Latin
                 IntRange(0x2010, 0x205E), // Punctuations
                 IntRange(0x0E00, 0x0E7F)) // Thai
+
+    val vietnamese: Array<IntRange>
+        get() = arrayOf(
+                IntRange(0x0020, 0x00FF), // Basic Latin
+                IntRange(0x0102, 0x0103),
+                IntRange(0x0110, 0x0111),
+                IntRange(0x0128, 0x0129),
+                IntRange(0x0168, 0x0169),
+                IntRange(0x01A0, 0x01A1),
+                IntRange(0x01AF, 0x01B0),
+                IntRange(0x1EA0, 0x1EF9))
 
 
     /** ~ unpackAccumulativeOffsetsIntoRanges */
