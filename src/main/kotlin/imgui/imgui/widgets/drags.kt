@@ -9,6 +9,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec3.Vec3
 import glm_.vec3.Vec3i
+import glm_.vec4.Vec4
 import glm_.vec4.Vec4i
 import imgui.*
 import imgui.ImGui.beginGroup
@@ -90,7 +91,7 @@ interface drags {
     fun dragFloat4(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
                    power: Float = 1f) = dragFloatN(label, v, 4, vSpeed, vMin, vMax, format, power)
 
-    fun dragVec4(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
+    fun dragVec4(label: String, v: Vec4, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
                  power: Float = 1f): Boolean {
         val floats = v to FloatArray(4)
         return dragFloatN(label, floats, 4, vSpeed, vMin, vMax, format, power).also {

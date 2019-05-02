@@ -278,10 +278,15 @@ interface imgui_utilities {
 
     /** Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
      *  Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv  */
-    fun colorConvertRGBtoHSV(rgb: FloatArray, hsv: FloatArray = FloatArray(3)): FloatArray {
+    fun colorConvertRGBtoHSV(rgb: FloatArray, hsv: FloatArray = FloatArray(3)): FloatArray =
+            colorConvertRGBtoHSV(rgb[0], rgb[1], rgb[2], hsv)
+
+    fun colorConvertRGBtoHSV(r_: Float, g_: Float, b_: Float, hsv: FloatArray = FloatArray(3)): FloatArray {
 
         var k = 0f
-        var (r, g, b) = rgb
+        var r = r_
+        var g = g_
+        var b = b_
         if (g < b) {
             val tmp = g; g = b; b = tmp
             k = -1f
@@ -343,6 +348,47 @@ interface imgui_utilities {
             else -> {
                 r = v; g = p; b = q; }
         }
+    }
+
+    fun colorConvertHSVtoRGB(col: Vec4) {
+
+        val h_ = col.x
+        val s = col.y
+        val v = col.z
+        var r: Float
+        var g: Float
+        var b: Float
+        if (s == 0f) {
+            // gray
+            r = v
+            g = v
+            b = v
+        }
+
+        val h = glm.mod(h_, 1f) / (60f / 360f)
+        val i = h.i
+        val f = h - i.f
+        val p = v * (1f - s)
+        val q = v * (1f - s * f)
+        val t = v * (1f - s * (1f - f))
+
+        when (i) {
+            0 -> {
+                r = v; g = t; b = p; }
+            1 -> {
+                r = q; g = v; b = p; }
+            2 -> {
+                r = p; g = v; b = t; }
+            3 -> {
+                r = p; g = q; b = v; }
+            4 -> {
+                r = t; g = p; b = v; }
+            else -> {
+                r = v; g = p; b = q; }
+        }
+        col.x = r
+        col.y = g
+        col.z = b
     }
 
     fun FloatArray.hsvToRGB() = colorConvertHSVtoRGB(this, this)

@@ -2958,7 +2958,7 @@ interface imgui_internal {
                 bufDisplayEnd[0] = bufDisplay.strlen
 
             if (isMultiline || bufDisplayEnd[0] < bufDisplayMaxLength) {
-                val col = getColorU32(if(isDisplayingHint) Col.TextDisabled else Col.Text)
+                val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos, col, bufDisplay, bufDisplayEnd[0], 0f, clipRect.takeUnless { isMultiline })
             }
         }
@@ -3027,17 +3027,24 @@ interface imgui_internal {
             separator()
         }
         val sz = Vec2(g.fontSize * 3 + style.framePadding.y * 2)
-        val cf = Vec4(col[0], col[1], col[2], if(flags has Cef.NoAlpha) 1f else col[3])
+        val cf = Vec4(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
         val cr = F32_TO_INT8_SAT(col[0])
         val cg = F32_TO_INT8_SAT(col[1])
         val cb = F32_TO_INT8_SAT(col[2])
-        val ca = if(flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
-        colorButton("##preview", cf, (flags and (Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf)) or Cef.NoTooltip, sz)
+        val ca = if (flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
+        colorButton("##preview", cf, (flags and (Cef._InputMask or Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf)) or Cef.NoTooltip, sz)
         sameLine()
-        if (flags has Cef.NoAlpha)
-            text("#%02X%02X%02X\nR: $cr, G: $cg, B: $cb\n(%.3f, %.3f, %.3f)", cr, cg, cb, col[0], col[1], col[2])
-        else
-            text("#%02X%02X%02X%02X\nR:$cr, G:$cg, B:$cb, A:$ca\n(%.3f, %.3f, %.3f, %.3f)", cr, cg, cb, ca, col[0], col[1], col[2], col[3])
+        if (flags has Cef.InputRGB || flags hasnt Cef._InputMask)
+            if (flags has Cef.NoAlpha)
+                text("#%02X%02X%02X\nR: $cr, G: $cg, B: $cb\n(%.3f, %.3f, %.3f)", cr, cg, cb, col[0], col[1], col[2])
+            else
+                text("#%02X%02X%02X%02X\nR:$cr, G:$cg, B:$cb, A:$ca\n(%.3f, %.3f, %.3f, %.3f)", cr, cg, cb, ca, col[0], col[1], col[2], col[3])
+        else if (flags has Cef.InputHSV)
+            if (flags has Cef.NoAlpha)
+                text("H: %.3f, S: %.3f, V: %.3f", col[0], col[1], col[2])
+            else
+                text("H: %.3f, S: %.3f, V: %.3f, A: %.3f", col[0], col[1], col[2], col[3])
+
         endTooltip()
     }
 

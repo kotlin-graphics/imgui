@@ -42,6 +42,7 @@ import imgui.ImGui.dragInt2
 import imgui.ImGui.dragInt3
 import imgui.ImGui.dragInt4
 import imgui.ImGui.dragIntRange2
+import imgui.ImGui.dragVec4
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endCombo
@@ -255,6 +256,7 @@ object showDemoWindowWidgets {
     var refColorV = Vec4(1f, 0f, 1f, 0.5f)
     var displayMode = 0
     var pickerMode = 0
+    var colorStoredAsHsv = Vec4(0.23f, 1f, 1f, 1f)
 
 
     /* Range Widgets */
@@ -914,6 +916,15 @@ object showDemoWindowWidgets {
                 setColorEditOptions(Cef.Uint8 or Cef.DisplayHSV or Cef.PickerHueBar)
             if (button("Default: Float + HDR + Hue Wheel"))
                 setColorEditOptions(Cef.Float or Cef.HDR or Cef.PickerHueWheel)
+
+            // HSV encoded support (to avoid RGB<>HSV round trips and singularities when S==0 or V==0)
+            spacing()
+            text("HSV encoded colors")
+            sameLine(); helpMarker("By default, colors are given to ColorEdit and ColorPicker in RGB, but ImGuiColorEditFlags_InputHSV allows you to store colors as HSV and pass them to ColorEdit and ColorPicker as HSV. This comes with the added benefit that you can manipulate hue values with the picker even when saturation or value are zero.")
+            text("Color widget with InputHSV:")
+            colorEdit4("HSV shown as HSV##1", colorStoredAsHsv, Cef.DisplayRGB or Cef.InputHSV or Cef.Float)
+            colorEdit4("HSV shown as RGB##1", colorStoredAsHsv, Cef.DisplayHSV or Cef.InputHSV or Cef.Float)
+            dragVec4("Raw HSV values", colorStoredAsHsv, 0.01f, 0f, 1f)
         }
 
         treeNode("Range Widgets") {

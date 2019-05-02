@@ -865,9 +865,8 @@ enum class ColorEditFlag(@JvmField val i: Int) {
     /** ColorEdit: disable drag and drop target. ColorButton: disable drag and drop source. */
     NoDragDrop(1 shl 9),
 
-    /*  User Options (right-click on widget to change some of them). You can set application defaults using SetColorEditOptions().
-        The intent is that you probably don't want to override them in most of your calls, let the user choose via the option menu
-        and/or call SetColorEditOptions() during startup.   */
+    // User Options (right-click on widget to change some of them).
+
     /** ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker. */
     AlphaBar(1 shl 16),
     /** ColorEdit, ColorPicker, ColorButton: display preview as a transparent color over a checkerboard, instead of opaque. */
@@ -888,17 +887,24 @@ enum class ColorEditFlag(@JvmField val i: Int) {
     /** [DataType] ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0.0f..1.0f floats instead of 0..255 integers.
      *  No round-trip of value via integers.    */
     Float(1 shl 24),
-    /** [PickerMode] ColorPicker: bar for Hue, rectangle for Sat/Value. */
+    /** [Picker]     // ColorPicker: bar for Hue, rectangle for Sat/Value. */
     PickerHueBar(1 shl 25),
-    /** [PickerMode] ColorPicker: wheel for Hue, triangle for Sat/Value.    */
+    /** [Picker]     // ColorPicker: wheel for Hue, triangle for Sat/Value. */
     PickerHueWheel(1 shl 26),
+    /** [Input]      // ColorEdit, ColorPicker: input and output data in RGB format. */
+    InputRGB(1 shl 27),
+    /** [Input]      // ColorEdit, ColorPicker: input and output data in HSV format. */
+    InputHSV(1 shl 28),
+
+    /** Defaults Options. You can set application defaults using SetColorEditOptions(). The intent is that you probably don't want to
+     *  override them in most of your calls. Let the user choose via the option menu and/or call SetColorEditOptions() once during startup. */
+    _OptionsDefault(Uint8 or DisplayRGB or InputRGB or PickerHueBar),
 
     // [Internal] Masks
     _DisplayMask(DisplayRGB or DisplayHSV or DisplayHEX),
     _DataTypeMask(Uint8 or Float),
     _PickerMask(PickerHueWheel or PickerHueBar),
-    /** Change application default using SetColorEditOptions()  */
-    _OptionsDefault(Uint8 or DisplayRGB or PickerHueBar)
+    _InputMask(InputRGB or InputHSV)
 }
 
 infix fun ColorEditFlag.and(other: ColorEditFlag): ColorEditFlags = i and other.i
