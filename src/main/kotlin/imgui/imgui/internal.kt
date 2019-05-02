@@ -2441,16 +2441,8 @@ interface imgui_internal {
         var enterPressed = false
 
         // Select the buffer to render.
-        val bufDisplay = when {
-            (renderCursor || renderSelection || g.activeId == id) && !isReadOnly && state?.textAIsValid == true -> state.textA
-            else -> buf
-        }
-        val bufDisplayEnd = IntArray(1) // We have specialized paths below for setting the length
-        val isDisplayingHint = hint != null && bufDisplay[0] == NUL
-        if (isDisplayingHint) {
-            hint!!.toCharArray(bufDisplay)
-            bufDisplayEnd[0] = hint.length
-        }
+        val bufDisplayFromState = (renderCursor || renderSelection || g.activeId == id) && !isReadOnly && state?.textAIsValid == true
+        val isDisplayingHint = hint != null && (if(bufDisplayFromState) state!!.textA else buf)[0] == NUL
 
         // Password pushes a temporary font with only a fallback glyph
         if (isPassword)
@@ -2789,7 +2781,12 @@ interface imgui_internal {
             without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
             Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
         val bufDisplayMaxLength = 2 * 1024 * 1024
-        lateinit var textColor: Col
+        val bufDisplay = if(bufDisplayFromState) state!!.textA else buf
+        val bufDisplayEnd = IntArray(1) // We have specialized paths below for setting the length
+        if (isDisplayingHint) {
+            hint!!.toCharArray(bufDisplay)
+            bufDisplayEnd[0] = hint.length
+        }
 
         // Render text. We currently only render selection when the widget is active or while scrolling.
         // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
