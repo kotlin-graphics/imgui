@@ -1298,7 +1298,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
     /*  Process Move Request (scoring for navigation)
         FIXME-NAV: Consider policy for double scoring
         (scoring from NavScoringRectScreen + scoring from a rect wrapped according to current wrapping policy)     */
-    if ((g.navId != id || g.navMoveRequestFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt ItemFlag.NoNav) {
+    if ((g.navId != id || g.navMoveRequestFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (ItemFlag.Disabled or ItemFlag.NoNav)) {
         var result by if (window === g.navWindow) g::navMoveResultLocal else g::navMoveResultOther
         val newBest = when {
             IMGUI_DEBUG_NAV_SCORING -> {  // [DEBUG] Score all items in NavWindow at all times
