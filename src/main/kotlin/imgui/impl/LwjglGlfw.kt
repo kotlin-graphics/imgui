@@ -157,9 +157,11 @@ class LwjglGlfw(val window: GlfwWindow, installCallbacks: Boolean = true, val cl
         assert(io.fonts.isBuilt) { "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame()." }
 
         // Setup display size (every frame to accommodate for window resizing)
+        val size = window.size
+        val displaySize = window.framebufferSize
         io.displaySize put (vrTexSize ?: window.size)
-        io.displayFramebufferScale.x = if (window.size.x > 0) window.framebufferSize.x / window.size.x.f else 0f
-        io.displayFramebufferScale.y = if (window.size.y > 0) window.framebufferSize.y / window.size.y.f else 0f
+        if(size allGreaterThan 0)
+            io.displayFramebufferScale put (displaySize / size)
 
         // Setup time step
         val currentTime = glfw.time
