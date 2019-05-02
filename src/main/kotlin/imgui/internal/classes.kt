@@ -282,7 +282,7 @@ class PopupRef(
         var parentWindow: Window,
         /** Set on OpenPopup()  */
         var openFrameCount: Int,
-        /** Set on OpenPopup(), we need this to differenciate multiple menu sets from each others
+        /** Set on OpenPopup(), we need this to differentiate multiple menu sets from each others
          *  (e.g. inside menu bar vs loose menu items)    */
         var openParentId: ID,
         /** Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)   */
