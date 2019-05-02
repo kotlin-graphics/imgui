@@ -224,22 +224,20 @@ class GroupData {
 /** Simple column measurement, currently used for MenuItem() only.. This is very short-sighted/throw-away code and NOT a generic helper. */
 class MenuColumns {
 
-    var count = 0
     var spacing = 0f
     var width = 0f
     var nextWidth = 0f
-    val pos = FloatArray(4)
-    var nextWidths = FloatArray(4)
+    val pos = FloatArray(3)
+    var nextWidths = FloatArray(3)
 
     fun update(count: Int, spacing: Float, clear: Boolean) {
-        assert(count <= pos.size)
-        this.count = count
+        assert(count == pos.size)
         nextWidth = 0f
         width = 0f
         this.spacing = spacing
         if (clear)
             nextWidths.fill(0f)
-        for (i in 0 until count) {
+        for (i in pos.indices) {
             if (i > 0 && nextWidths[i] > 0f)
                 width += spacing
             pos[i] = width.i.f
@@ -253,7 +251,7 @@ class MenuColumns {
         nextWidths[0] = glm.max(nextWidths[0], w0)
         nextWidths[1] = glm.max(nextWidths[1], w1)
         nextWidths[2] = glm.max(nextWidths[2], w2)
-        for (i in 0 until 3)
+        for (i in pos.indices)
             nextWidth += nextWidths[i] + (if (i > 0 && nextWidths[i] > 0f) spacing else 0f)
         return glm.max(width, nextWidth)
     }
