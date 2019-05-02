@@ -89,7 +89,7 @@ interface selectableLists {
         val itemAdd = when {
             flags has Sf.Disabled -> {
                 val backupItemFlags = window.dc.itemFlags
-                window.dc.itemFlags = window.dc.itemFlags or If.NoNav or If.NoNavDefaultFocus
+                window.dc.itemFlags = window.dc.itemFlags or If.Disabled or If.NoNavDefaultFocus
                 itemAdd(bb, id).also {
                     window.dc.itemFlags = backupItemFlags
                 }
