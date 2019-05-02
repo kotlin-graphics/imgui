@@ -41,6 +41,7 @@ import imgui.ImGui.tabItemLabelAndCloseButton
 import imgui.imgui.imgui_colums.Companion.tabBarRef
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sin
@@ -1204,6 +1205,8 @@ class TabBar {
     var offsetNextTab = 0f
     var scrollingAnim = 0f
     var scrollingTarget = 0f
+    var scrollingTargetDistToVisibility = 0f
+    var scrollingSpeed = 0f
     var flags: TabBarFlags = TabBarFlag.None.i
     var reorderRequestTabId: ID = 0
     var reorderRequestDir = 0
@@ -1382,7 +1385,7 @@ class TabBar {
         if (g.dragDropActive)
             buttonFlags = buttonFlags or ButtonFlag.PressedOnDragDropHold
         val (pressed, hovered_, held) = buttonBehavior(bb, id, buttonFlags)
-        if(pressed)
+        if (pressed)
             nextSelectedTabId = id
         val hovered = hovered_ || g.hoveredId == id
 
@@ -1611,9 +1614,14 @@ class TabBar {
             findTabByID(scrollTrackSelectedTabID)?.let(::scrollToTab)
         scrollingAnim = scrollClamp(scrollingAnim)
         scrollingTarget = scrollClamp(scrollingTarget)
-        val scrollingSpeed = if (prevFrameVisible + 1 < g.frameCount) Float.MAX_VALUE else io.deltaTime * g.fontSize * 70f
-        if (scrollingAnim != scrollingTarget)
-            scrollingAnim = linearSweep(scrollingAnim, scrollingTarget, scrollingSpeed)
+        if (scrollingAnim != scrollingTarget) {
+            // Scrolling speed adjust itself so we can always reach our target in 1/3 seconds.
+            // Teleport if we are aiming far off the visible line
+            scrollingSpeed = scrollingSpeed max (70f * g.fontSize)
+            scrollingSpeed = scrollingSpeed max (abs(scrollingTarget - scrollingAnim) / 0.3f)
+            val teleport = prevFrameVisible + 1 < g.frameCount || scrollingTargetDistToVisibility > 10f * g.fontSize
+            scrollingAnim = if (teleport) scrollingTarget else linearSweep(scrollingAnim, scrollingTarget, io.deltaTime * scrollingSpeed)
+        } else scrollingSpeed = 0f
 
         // Clear name buffers
         if (flags hasnt TabBarFlag.DockNode)
@@ -1644,10 +1652,14 @@ class TabBar {
         val order = tab.order
         val tabX1 = tab.offset + if (order > 0) -margin else 0f
         val tabX2 = tab.offset + tab.width + if (order + 1 < tabs.size) margin else 1f
-        if (scrollingTarget > tabX1)
+        scrollingTargetDistToVisibility = 0f
+        if (scrollingTarget > tabX1) {
+            scrollingTargetDistToVisibility = (scrollingAnim - tabX2) max 0f
             scrollingTarget = tabX1
-        if (scrollingTarget + barRect.width < tabX2)
+        } else if (scrollingTarget < tabX2 - barRect.width) {
+            scrollingTargetDistToVisibility = ((tabX1 - barRect.width) - scrollingAnim) max 0f
             scrollingTarget = tabX2 - barRect.width
+        }
     }
 
     /** ~ TabBarScrollingButtons */
