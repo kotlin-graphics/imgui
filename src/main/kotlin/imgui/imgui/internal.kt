@@ -352,11 +352,11 @@ interface imgui_internal {
                 g.navJustTabbedId = id
                 return true
             }
-        }
 
-        // If another item is about to be focused, we clear our own active id
-        if (g.activeId == id)
-            clearActiveId()
+            // If another item is about to be focused, we clear our own active id
+            if (g.activeId == id)
+                clearActiveId()
+        }
 
         return false
     }
