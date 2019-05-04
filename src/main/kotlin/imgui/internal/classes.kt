@@ -633,9 +633,9 @@ class Window(var context: Context, var name: String) {
 
     var autoPosLastDirection = Dir.None
     /** Hide the window for N frames */
-    var hiddenFramesRegular = 0
+    var hiddenFramesCanSkipItems = 0
     /** Hide the window for N frames while allowing items to be submitted so we can measure their size */
-    var hiddenFramesForResize = 0
+    var hiddenFramesCannotSkipItems = 0
     /** store acceptable condition flags for SetNextWindowPos() use. */
     var setWindowPosAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
     /** store acceptable condition flags for SetNextWindowSize() use.    */
@@ -1042,7 +1042,7 @@ class Window(var context: Context, var name: String) {
 
     fun calcSizeContents() = when {
         collapsed && autoFitFrames allLessThanEqual 0 -> Vec2(sizeContents)
-        hidden && hiddenFramesForResize == 0 && hiddenFramesRegular > 0 -> Vec2(sizeContents)
+        hidden && hiddenFramesCannotSkipItems == 0 && hiddenFramesCanSkipItems > 0 -> Vec2(sizeContents)
         else -> Vec2(
                 (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f + windowPadding.x,
                 (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f + windowPadding.y)

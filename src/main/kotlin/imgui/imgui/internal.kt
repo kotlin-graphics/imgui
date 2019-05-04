@@ -578,7 +578,7 @@ interface imgui_internal {
                 if (it.active) {
                     // Hide previous tooltip from being displayed. We can't easily "reset" the content of a window so we create a new one.
                     it.hidden = true
-                    it.hiddenFramesRegular = 1
+                    it.hiddenFramesCanSkipItems = 1
                     windowName = "##Tooltip_%02d".format(++g.tooltipOverrideCount)
                 }
             }
