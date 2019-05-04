@@ -2403,7 +2403,7 @@ interface imgui_internal {
             window.focus()
             assert(NavInput.values().size < 32)
             g.activeIdBlockNavInputFlags = 1 shl NavInput.Cancel
-            if (flags has (Itf.CallbackCompletion or Itf.AllowTabInput))  // Disable keyboard tabbing out
+            if (flags has (Itf.CallbackCompletion or Itf.AllowTabInput))  // Disable keyboard tabbing out as we will use the \t character.
                 g.activeIdBlockNavInputFlags = g.activeIdBlockNavInputFlags or (1 shl NavInput.KeyTab.i)
             if (!isMultiline && flags hasnt Itf.CallbackHistory)
                 g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
@@ -2589,12 +2589,6 @@ interface imgui_internal {
                                 state.onKeyPressed(c().i)
                         }
                 }
-                flags has Itf.AllowTabInput && Key.Tab.isPressed && !io.keyCtrl && !io.keyShift && !io.keyAlt && !isReadOnly ->
-                    withChar('\t') { c ->
-                        // Insert TAB
-                        if (inputTextFilterCharacter(c, flags, callback, callbackUserData))
-                            state.onKeyPressed(c().i)
-                    }
                 Key.Escape.isPressed -> {
                     cancelEdit = true
                     clearActiveId = true
