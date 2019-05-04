@@ -383,7 +383,7 @@ object showDemoWindowWidgets {
                 inputText("input text", str0)
                 sameLine(); helpMarker("USER:\nHold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\nCTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\nESCAPE to revert.\n\nPROGRAMMER:\nYou can use the InputTextFlag.CallbackResize facility if you need to wire InputText() to a dynamic string type. See misc/cpp/imgui_stl.h for an example (this is not demonstrated in imgui_demo.cpp).")
 
-                inputTextWithHint("input text (w/ hint)", "enter text here", str1) // TODO check if convert str1 to CharArray
+                inputTextWithHint("input text (w/ hint)", "enter text here", str1)
 
                 inputInt("input int", ::i0)
                 sameLine(); helpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n")

@@ -2781,10 +2781,10 @@ interface imgui_internal {
             without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
             Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
         val bufDisplayMaxLength = 2 * 1024 * 1024
-        val bufDisplay = if(bufDisplayFromState) state_!!.textA else buf
+        var bufDisplay = if(bufDisplayFromState) state_!!.textA else buf
         val bufDisplayEnd = IntArray(1) // We have specialized paths below for setting the length
         if (isDisplayingHint) {
-            hint!!.toCharArray(bufDisplay)
+            bufDisplay = hint!!.toCharArray()
             bufDisplayEnd[0] = hint.length
         }
 
