@@ -121,7 +121,7 @@ private class HelloWorld_lwjgl {
         ImGui.run {
 
             newFrame()
-//            colorPicker4debug()
+
             // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
             if (showDemo)
                 showDemoWindow(::showDemo)
