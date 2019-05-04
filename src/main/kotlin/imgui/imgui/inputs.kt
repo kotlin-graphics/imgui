@@ -111,7 +111,7 @@ interface imgui_inputs {
     /** retrieve backup of mouse position at the time of opening popup we have BeginPopup() into */
     val mousePosOnOpeningCurrentPopup get() = Vec2(g.beginPopupStack.lastOrNull()?.openMousePos ?: io.mousePos)
 
-    /** return the delta from the initial clicking position.
+    /** return the delta from the initial clicking position while the mouse button is clicked or was just released.
      *  This is locked and return 0.0f until the mouse moves past a distance threshold at least once.
      *  If lock_threshold < -1.0f uses io.MouseDraggingThreshold
      *
@@ -122,9 +122,10 @@ interface imgui_inputs {
         var lockThreshold = lockThreshold_
         if (lockThreshold < 0f)
             lockThreshold = io.mouseDragThreshold
-        if (io.mouseDown[button])
+        if (io.mouseDown[button] || io.mouseReleased[button])
             if (io.mouseDragMaxDistanceSqr[button] >= lockThreshold * lockThreshold)
-                return io.mousePos - io.mouseClickedPos[button] // Assume we can only get active with left-mouse button (at the moment).
+                if (isMousePosValid(io.mousePos) && isMousePosValid(io.mouseClickedPos[button]))
+                    return io.mousePos - io.mouseClickedPos[button]
         return Vec2()
     }
 
