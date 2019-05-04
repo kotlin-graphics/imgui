@@ -112,10 +112,10 @@ object ImGui :
     // Version
     val build = 0
     /** get the compiled version string e.g. "1.23" (essentially the compiled value for IMGUI_VERSION) */
-    val version = "1.69.$build"
+    val version = "1.70 WIP build: $build"
     /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
     Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-    val versionNum = 16900 + build
+    val versionNum = 16990 * 100 + build
 }
 
 var ptrIndices = 0
