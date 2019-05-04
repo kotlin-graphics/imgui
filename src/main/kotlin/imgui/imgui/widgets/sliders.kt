@@ -58,7 +58,7 @@ interface sliders {
      *  "Gold: %.0f"   Gold: 1
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
-    fun sliderFloat(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f)
+    fun sliderFloat(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f)
             : Boolean = sliderFloat(label, v, 0, vMin, vMax, format, power)
 
     /** Adjust format to decorate the value with a prefix or a suffix.
@@ -67,7 +67,7 @@ interface sliders {
      *  "Gold: %.0f"   Gold: 1
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
-    fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean =
+    fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f): Boolean =
             withFloat(v, ptr) { sliderFloat(label, it, vMin, vMax, format, power) }
 
     /** Adjust format to decorate the value with a prefix or a suffix.
@@ -76,8 +76,8 @@ interface sliders {
      *  "Gold: %.0f"   Gold: 1
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
-    fun sliderFloat(label: String, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f)
-            : Boolean = sliderScalar(label, DataType.Float, v, vMin, vMax, format, power)
+    fun sliderFloat(label: String, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String? = "%.3f",
+                    power: Float = 1f): Boolean = sliderScalar(label, DataType.Float, v, vMin, vMax, format, power)
 
     /** Adjust format to decorate the value with a prefix or a suffix.
      *  "%.3f"         1.234
@@ -159,30 +159,30 @@ interface sliders {
         return valueChanged
     }
 
-    fun sliderFloat2(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f) =
+    fun sliderFloat2(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f) =
             sliderFloatN(label, v, 2, vMin, vMax, format, power)
 
-    fun sliderVec2(label: String, v: Vec2, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean {
+    fun sliderVec2(label: String, v: Vec2, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f): Boolean {
         val floats = v to FloatArray(2)
         val res = sliderFloatN(label, floats, 2, vMin, vMax, format, power)
         v put floats
         return res
     }
 
-    fun sliderFloat3(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f) =
+    fun sliderFloat3(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f) =
             sliderFloatN(label, v, 3, vMin, vMax, format, power)
 
-    fun sliderVec3(label: String, v: Vec3, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean {
+    fun sliderVec3(label: String, v: Vec3, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f): Boolean {
         val floats = v to FloatArray(3)
         val res = sliderFloatN(label, floats, 3, vMin, vMax, format, power)
         v put floats
         return res
     }
 
-    fun sliderFloat4(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f) =
+    fun sliderFloat4(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f) =
             sliderFloatN(label, v, 4, vMin, vMax, format, power)
 
-    fun sliderVec4(label: String, v: Vec4, vMin: Float, vMax: Float, format: String? = null, power: Float = 1f): Boolean {
+    fun sliderVec4(label: String, v: Vec4, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f): Boolean {
         val floats = v to FloatArray(4)
         val res = sliderFloatN(label, floats, 4, vMin, vMax, format, power)
         v put floats
@@ -235,10 +235,8 @@ interface sliders {
         return res
     }
 
-    fun vSliderFloat(label: String, size: Vec2, v: KMutableProperty0<*>, vMin: Float, vMax: Float,
-                     format: String? = null, power: Float = 1f): Boolean {
-        return vSliderScalar(label, size, DataType.Float, v, vMin, vMax, format, power)
-    }
+    fun vSliderFloat(label: String, size: Vec2, v: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String? = "%.3f",
+                     power: Float = 1f): Boolean = vSliderScalar(label, size, DataType.Float, v, vMin, vMax, format, power)
 
     fun vSliderScalar(label: String, size: Vec2, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number,
                       format_: String? = null, power: Float = 1f): Boolean {
