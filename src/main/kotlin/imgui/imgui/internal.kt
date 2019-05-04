@@ -2502,14 +2502,21 @@ interface imgui_internal {
             if (state.selectedAllMouseLock && !io.mouseDown[0])
                 state.selectedAllMouseLock = false
 
-            if (io.inputQueueCharacters.size > 0) {
-                if (io.inputQueueCharacters[0] != NUL) {
-                    /*  Process text input (before we check for Return because using some IME will effectively send a
-                    Return?)
-                    We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR
-                    (which _is_ Alt+Ctrl) to input certain characters. */
-                    val ignoreInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
-                    if (!ignoreInputs && !isReadOnly && !userNavInputStart)
+            // It is ill-defined whether the back-end needs to send a \t character when pressing the TAB keys.
+            // Win32 and GLFW naturally do it but not SDL.
+            val ignoreCharInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
+            if (flags has Itf.AllowTabInput && Key.Tab.isPressed && !ignoreCharInputs && !io.keyShift && !isReadOnly)
+                if ('\t' !in io.inputQueueCharacters) {
+                    val c = '\t' // Insert TAB
+                    if (inputTextFilterCharacter(c, flags, callback, callbackUserData))
+                        state.onKeyPressed(c)
+                }
+
+            // Process regular text input (before we check for Return because using some IME will effectively send a Return?)
+            // We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
+            if (io.inputQueueCharacters.size > 0)
+                /*if (io.inputQueueCharacters[0] != NUL) I cant explaing why JVM had this TODO check */ {
+                    if (!ignoreCharInputs && !isReadOnly && !userNavInputStart)
                         io.inputQueueCharacters.filter { it != NUL }.map {
                             // TODO check
                             withChar { c ->
@@ -2521,7 +2528,6 @@ interface imgui_internal {
                     // Consume characters
                     io.inputQueueCharacters.clear()
                 }
-            }
         }
 
         // Process other shortcuts/key-presses
