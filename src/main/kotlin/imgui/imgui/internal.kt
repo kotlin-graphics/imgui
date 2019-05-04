@@ -2631,6 +2631,9 @@ interface imgui_internal {
                     }
                 }
             }
+
+            // Update render selection flag after events have been handled, so selection highlight can be displayed during the same frame.
+            renderSelection = renderSelection || (state.hasSelection && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor))
         }
 
         // Process callbacks and apply result back to user's buffer.
