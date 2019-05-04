@@ -6,6 +6,7 @@ import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.captureKeyboardFromApp
+import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.inputText
 import imgui.ImGui.io
@@ -191,25 +192,17 @@ object showDemoWindowMisc {
                 for (button in 0..2)
                     text("isMouseDragging($button):  w/ default threshold: ${isMouseDragging(button)},  w/ zero threshold: " +
                             "${isMouseDragging(button, 0f)}\n  w/ large threshold: ${isMouseDragging(button, 20f)}")
-                button("Drag Me")
-                if (isItemActive) {
-                    // Draw a line between the button and the mouse cursor
-                    with(windowDrawList) {
-                        pushClipRectFullScreen()
-                        addLine(io.mouseClickedPos[0], io.mousePos, Col.Button.u32, 4f)
-                        popClipRect()
-                    }
 
-                    /*  Drag operations gets "unlocked" when the mouse has moved past a certain threshold (the default
-                        threshold is stored in io.mouseDragThreshold)
-                        You can request a lower or higher threshold using the second parameter of isMouseDragging() and
-                        getMouseDragDelta()     */
-                    val valueRaw = getMouseDragDelta(0, 0f)
-                    val valueWithLockThreshold = getMouseDragDelta(0)
-                    val mouseDelta = io.mouseDelta
-                    sameLine(); text("Raw (${valueRaw.x.i}, ${valueRaw.y.i}), WithLockThresold (${valueWithLockThreshold.x.i}, " +
-                            "${valueWithLockThreshold.y.i}), MouseDelta (${mouseDelta.x.i}, ${mouseDelta.y.i})")
-                }
+                button("Drag Me")
+                if (isItemActive)
+                    foregroundDrawList.addLine(io.mouseClickedPos[0], io.mousePos, Col.Button.u32, 4f) // Draw a line between the button and the mouse cursor
+
+                // Drag operations gets "unlocked" when the mouse has moved past a certain threshold (the default threshold is stored in io.MouseDragThreshold)
+                // You can request a lower or higher threshold using the second parameter of IsMouseDragging() and GetMouseDragDelta()
+                val valueRaw = getMouseDragDelta(0, 0f)
+                val valueWithLockThreshold = getMouseDragDelta(0)
+                val mouseDelta = io.mouseDelta
+                text("GetMouseDragDelta(0):\n  w/ default threshold: (%.1f, %.1f),\n  w/ zero threshold: (%.1f, %.1f)\nMouseDelta: (%.1f, %.1f)", valueWithLockThreshold.x, valueWithLockThreshold.y, valueRaw.x, valueRaw.y, mouseDelta.x, mouseDelta.y)
             }
 
             treeNode("Mouse cursors") {
