@@ -1162,13 +1162,11 @@ interface imgui_internal {
         }
     }
 
-    fun renderTextWrapped(pos: Vec2, text: String, textEnd_: Int, wrapWidth: Float) {
+    fun renderTextWrapped(pos: Vec2, text: String, textEnd_: Int?, wrapWidth: Float) {
 
         val window = g.currentWindow!!
 
-        var textEnd = textEnd_
-        if (textEnd == 0)
-            textEnd = text.length // FIXME-OPT
+        val textEnd = textEnd_ ?: text.length // FIXME-OPT
 
         if (textEnd > 0) {
             window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textEnd, wrapWidth)

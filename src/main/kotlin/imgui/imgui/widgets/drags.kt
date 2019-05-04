@@ -63,9 +63,8 @@ interface drags {
             dragScalar(label, DataType.Float, v, vSpeed, vMin, vMax, format, power)
 
     fun dragFloat(label: String, v: FloatArray, ptr: Int, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                  format: String = "%.3f", power: Float = 1f): Boolean = withFloat(v, ptr) {
-        dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power)
-    }
+                  format: String = "%.3f", power: Float = 1f): Boolean =
+            withFloat(v, ptr) { dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power) }
 
     fun dragFloat2(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", power: Float = 1f) =
             dragFloatN(label, v, 2, vSpeed, vMin, vMax, format, power)
