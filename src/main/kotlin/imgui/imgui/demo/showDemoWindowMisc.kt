@@ -127,6 +127,10 @@ object showDemoWindowMisc {
                 val alt = if (io.keyAlt) "ALT " else ""
                 val super_ = if (io.keySuper) "SUPER " else ""
                 text("Keys mods: $ctrl$shift$alt$super_")
+                text("Chars queue:")
+                io.inputQueueCharacters.forEach { c ->
+                    sameLine();  text("\'%c\' (0x%04X)", if(c > ' ' && c.i <= 255) c else '?', c)
+                } // FIXME: We should convert 'c' to UTF-8 here but the functions are not public.
 
                 text("NavInputs down:")
                 io.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
