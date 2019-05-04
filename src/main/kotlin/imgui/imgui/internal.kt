@@ -2515,19 +2515,19 @@ interface imgui_internal {
             // Process regular text input (before we check for Return because using some IME will effectively send a Return?)
             // We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
             if (io.inputQueueCharacters.size > 0)
-                /*if (io.inputQueueCharacters[0] != NUL) I cant explaing why JVM had this TODO check */ {
-                    if (!ignoreCharInputs && !isReadOnly && !userNavInputStart)
-                        io.inputQueueCharacters.filter { it != NUL }.map {
-                            // TODO check
-                            withChar { c ->
-                                // Insert character if they pass filtering
-                                if (inputTextFilterCharacter(c.apply { set(it) }, flags, callback, callbackUserData))
-                                    state.onKeyPressed(c().i)
-                            }
+            /*if (io.inputQueueCharacters[0] != NUL) I cant explaing why JVM had this TODO check */ {
+                if (!ignoreCharInputs && !isReadOnly && !userNavInputStart)
+                    io.inputQueueCharacters.filter { it != NUL || (c == '\t' && io.keyShift) }.map {
+                        // TODO check
+                        withChar { c ->
+                            // Insert character if they pass filtering
+                            if (inputTextFilterCharacter(c.apply { set(it) }, flags, callback, callbackUserData))
+                                state.onKeyPressed(c().i)
                         }
-                    // Consume characters
-                    io.inputQueueCharacters.clear()
-                }
+                    }
+                // Consume characters
+                io.inputQueueCharacters.clear()
+            }
         }
 
         // Process other shortcuts/key-presses
