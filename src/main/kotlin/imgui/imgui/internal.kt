@@ -2297,7 +2297,7 @@ interface imgui_internal {
         val isMultiline = flags has Itf.Multiline
         val isReadOnly = flags has Itf.ReadOnly
         val isPassword = flags has Itf.Password
-        val isUndoable = flags has Itf.NoUndoRedo
+        val isUndoable = flags hasnt Itf.NoUndoRedo
         val isResizable = flags has Itf.CallbackResize
         if (isResizable)
             assert(callback != null) { "Must provide a callback if you set the ImGuiInputTextFlags_CallbackResize flag!" }
@@ -2338,7 +2338,7 @@ interface imgui_internal {
         if (hovered) g.mouseCursor = MouseCursor.TextInput
 
         // NB: we are only allowed to access 'editState' if we are the active widget.
-        var state: TextEditState? = g.inputTextState.takeIf { it.id == id }
+        var state_: TextEditState? = g.inputTextState.takeIf { it.id == id }
 
         val focusRequested = focusableItemRegister(window, id)
         val focusRequestedByCode = focusRequested && g.focusRequestCurrWindow === window && g.focusRequestCurrCounterAll == window.dc.focusCounterAll
@@ -2346,8 +2346,8 @@ interface imgui_internal {
 
         val userClicked = hovered && io.mouseClicked[0]
         val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.NavKeyboard))
-        val userScrollFinish = isMultiline && state != null && g.activeId == 0 && g.activeIdPreviousFrame == getScrollbarID(drawWindow, Axis.Y)
-        val userScrollActive = isMultiline && state != null && g.activeId == getScrollbarID(drawWindow, Axis.Y)
+        val userScrollFinish = isMultiline && state_ != null && g.activeId == 0 && g.activeIdPreviousFrame == getScrollbarID(drawWindow, Axis.Y)
+        val userScrollActive = isMultiline && state_ != null && g.activeId == getScrollbarID(drawWindow, Axis.Y)
 
         var clearActiveId = false
         var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || userNavInputStart) && !isMultiline
@@ -2357,49 +2357,49 @@ interface imgui_internal {
         val initState = initMakeActive || userScrollActive
         if (initState && g.activeId != id) {
             // Access state even if we don't own it yet.
-            state = g.inputTextState
-            state.cursorAnimReset()
+            state_ = g.inputTextState
+            state_.cursorAnimReset()
 
             // Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
             // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
             val bufLen = buf.strlen
-            state.initialTextA = CharArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
-            System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
+            state_.initialTextA = CharArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            System.arraycopy(buf, 0, state_.initialTextA, 0, bufLen)
 
             // Start edition
-            state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
-            state.textA = CharArray(0)
-            state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
+            state_.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            state_.textA = CharArray(0)
+            state_.textAIsValid = false // TextA is not valid yet (we will display buf until then)
 
-            state.curLenW = state.textW.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
+            state_.curLenW = state_.textW.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
             /*  We can't get the result from ImStrncpy() above because it is not UTF-8 aware.
                 Here we'll cut off malformed UTF-8.                 */
-            state.curLenA = state.curLenW //TODO check (int)(bufEnd - buf)
-            state.cursorAnimReset()
+            state_.curLenA = state_.curLenW //TODO check (int)(bufEnd - buf)
+            state_.cursorAnimReset()
 
             /*  Preserve cursor position and undo/redo stack if we come back to same widget
                 For non-readonly widgets we might be able to require that TextAIsValid && TextA == buf ? (untested) and discard undo stack if user buffer has changed. */
-            val recycleState = state.id == id
+            val recycleState = state_.id == id
             if (recycleState)
             /*  Recycle existing cursor/selection/undo stack but clamp position
                 Note a single mouse click will override the cursor/position immediately by calling
                 stb_textedit_click handler.                     */
-                state.cursorClamp()
+                state_.cursorClamp()
             else {
-                state.id = id
-                state.scrollX = 0f
-                state.stb.clear(!isMultiline)
+                state_.id = id
+                state_.scrollX = 0f
+                state_.stb.clear(!isMultiline)
                 if (!isMultiline && focusRequestedByCode)
                     selectAll = true
             }
             if (flags has Itf.AlwaysInsertMode)
-                state.stb.insertMode = true
+                state_.stb.insertMode = true
             if (!isMultiline && (focusRequestedByTab || (userClicked && io.keyCtrl)))
                 selectAll = true
         }
 
         if (g.activeId != id && initMakeActive) {
-            assert(state!!.id == id)
+            assert(state_!!.id == id)
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()
@@ -2412,7 +2412,7 @@ interface imgui_internal {
         }
 
         // We have an edge case if ActiveId was set through another widget (e.g. widget being swapped), clear id immediately (don't wait until the end of the function)
-        if (g.activeId == id && state == null)
+        if (g.activeId == id && state_ == null)
             clearActiveId()
 
         // Release focus when we click outside
@@ -2421,28 +2421,28 @@ interface imgui_internal {
 
         // When read-only we always use the live data passed to the function
         // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
-        if (isReadOnly && state != null) {
+        if (isReadOnly && state_ != null) {
             val willRenderCursor = g.activeId == id || userScrollActive
-            val willRenderSelection = state.hasSelection && (RENDER_SELECTION_WHEN_INACTIVE || willRenderCursor)
+            val willRenderSelection = state_.hasSelection && (RENDER_SELECTION_WHEN_INACTIVE || willRenderCursor)
             if (willRenderCursor || willRenderSelection) {
                 val tmp = CharArray(buf.size) // TODO resize()?
-                System.arraycopy(state.textW, 0, tmp, 0, state.textW.size)
+                System.arraycopy(state_.textW, 0, tmp, 0, state_.textW.size)
                 val bufEnd = -1
-                state.curLenW = state.textW.textStr(buf) // TODO check
-                state.curLenA = state.curLenW // TODO check
-                state.cursorClamp()
+                state_.curLenW = state_.textW.textStr(buf) // TODO check
+                state_.curLenA = state_.curLenW // TODO check
+                state_.cursorClamp()
             }
         }
 
         // Lock the decision of whether we are going to take the path displaying the cursor or selection
-        val renderCursor = g.activeId == id || (state != null && userScrollActive)
-        val renderSelection = state?.hasSelection == true && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
+        val renderCursor = g.activeId == id || (state_ != null && userScrollActive)
+        val renderSelection = state_?.hasSelection == true && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
         var valueChanged = false
         var enterPressed = false
 
         // Select the buffer to render.
-        val bufDisplayFromState = (renderCursor || renderSelection || g.activeId == id) && !isReadOnly && state?.textAIsValid == true
-        val isDisplayingHint = hint != null && (if(bufDisplayFromState) state!!.textA else buf)[0] == NUL
+        val bufDisplayFromState = (renderCursor || renderSelection || g.activeId == id) && !isReadOnly && state_?.textAIsValid == true
+        val isDisplayingHint = hint != null && (if(bufDisplayFromState) state_!!.textA else buf)[0] == NUL
 
         // Password pushes a temporary font with only a fallback glyph
         if (isPassword)
@@ -2463,7 +2463,7 @@ interface imgui_internal {
         // Process mouse inputs and character inputs
         var backupCurrentTextLength = 0
         if (g.activeId == id) {
-            val state = state!!
+            val state = state_!!
 
             backupCurrentTextLength = state.curLenA
             state.apply {
@@ -2533,7 +2533,7 @@ interface imgui_internal {
         // Process other shortcuts/key-presses
         var cancelEdit = false
         if (g.activeId == id && !g.activeIdIsJustActivated && !clearActiveId) {
-            val state = state!!
+            val state = state_!!
             val kMask = if (io.keyShift) K.SHIFT else 0
             val isOsx = io.configMacOSXBehaviors
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
@@ -2641,7 +2641,7 @@ interface imgui_internal {
 
         // Process callbacks and apply result back to user's buffer.
         if (g.activeId == id) {
-            val state = state!!
+            val state = state_!!
             var applyNewText = CharArray(0)
 //            var applyNewTextPtr = 0
             var applyNewTextLength = 0
@@ -2781,7 +2781,7 @@ interface imgui_internal {
             without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
             Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
         val bufDisplayMaxLength = 2 * 1024 * 1024
-        val bufDisplay = if(bufDisplayFromState) state!!.textA else buf
+        val bufDisplay = if(bufDisplayFromState) state_!!.textA else buf
         val bufDisplayEnd = IntArray(1) // We have specialized paths below for setting the length
         if (isDisplayingHint) {
             hint!!.toCharArray(bufDisplay)
@@ -2792,7 +2792,7 @@ interface imgui_internal {
         // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
         if (renderCursor || renderSelection) {
 
-            val state = state!! // ~assert
+            val state = state_!! // ~assert
             if (!isDisplayingHint)
                 bufDisplayEnd[0] = state.curLenA
 
@@ -2950,7 +2950,7 @@ interface imgui_internal {
             if (isMultiline)
                 textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay.contentToString(), bufDisplayEnd) * g.fontSize) // We don't need width
             else if (!isDisplayingHint && g.activeId == id)
-                bufDisplayEnd[0] = state!!.curLenA
+                bufDisplayEnd[0] = state_!!.curLenA
             else if (!isDisplayingHint)
                 bufDisplayEnd[0] = bufDisplay.strlen
 
@@ -2980,7 +2980,10 @@ interface imgui_internal {
             markItemEdited(id)
 
         ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
-        return if (flags has Itf.EnterReturnsTrue) enterPressed else valueChanged
+        return when {
+            flags has Itf.EnterReturnsTrue -> enterPressed
+            else -> valueChanged
+        }
     }
 
     /** Create text input in place of an active drag/slider (used when doing a CTRL+Click on drag/slider widgets)
