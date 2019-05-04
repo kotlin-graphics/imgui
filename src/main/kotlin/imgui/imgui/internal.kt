@@ -2506,11 +2506,12 @@ interface imgui_internal {
             // Win32 and GLFW naturally do it but not SDL.
             val ignoreCharInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
             if (flags has Itf.AllowTabInput && Key.Tab.isPressed && !ignoreCharInputs && !io.keyShift && !isReadOnly)
-                if ('\t' !in io.inputQueueCharacters) {
-                    val c = '\t' // Insert TAB
-                    if (inputTextFilterCharacter(c, flags, callback, callbackUserData))
-                        state.onKeyPressed(c)
-                }
+                if ('\t' !in io.inputQueueCharacters)
+                    withChar {
+                        it.set('\t') // Insert TAB
+                        if (inputTextFilterCharacter(it, flags, callback, callbackUserData))
+                            state.onKeyPressed(it().i)
+                    }
 
             // Process regular text input (before we check for Return because using some IME will effectively send a Return?)
             // We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
