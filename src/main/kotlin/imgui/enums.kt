@@ -217,7 +217,9 @@ enum class SelectableFlag(@JvmField val i: Int) {
     /** private  */
     PressedOnRelease(1 shl 12),
     /** private  */
-    DrawFillAvailWidth(1 shl 13);
+    DrawFillAvailWidth(1 shl 13),
+
+    AllowItemOverlap(1 shl 14);
 
     infix fun or(other: SelectableFlag): SelectableFlags = i or other.i
 }

@@ -20,6 +20,7 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.windowContentRegionMax
@@ -109,6 +110,8 @@ interface selectableLists {
         if (flags has Sf.PressedOnRelease) buttonFlags = buttonFlags or Bf.PressedOnRelease
         if (flags has Sf.Disabled) buttonFlags = buttonFlags or Bf.Disabled
         if (flags has Sf.AllowDoubleClick) buttonFlags = buttonFlags or Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
+        if (flags has Sf.AllowItemOverlap) buttonFlags = buttonFlags or Bf.AllowItemOverlap
+
         val selected = if (flags has Sf.Disabled) false else selected_
 
         val (pressed, hovered, held) = buttonBehavior(bb, id, buttonFlags)
@@ -121,6 +124,9 @@ interface selectableLists {
             }
         if (pressed)
             markItemEdited(id)
+
+        if (flags has Sf.AllowItemOverlap)
+            setItemAllowOverlap()
 
         // Render
         if (hovered || selected) {
