@@ -3,6 +3,7 @@ package imgui.impl
 import gli_.gl
 import glm_.*
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4ub
 import gln.*
 import gln.BufferTarget.Companion.ARRAY
 import gln.BufferTarget.Companion.ELEMENT_ARRAY
@@ -10,20 +11,14 @@ import gln.ShaderType.Companion.FRAGMENT_SHADER
 import gln.ShaderType.Companion.VERTEX_SHADER
 import gln.TextureTarget.Companion._2D
 import gln.Usage.Companion.STREAM_DRAW
-import gln.buffer.GlBufferDsl
-import gln.buffer.glBufferData
-import gln.buffer.glBufferSubData
 import gln.glf.semantic
 import gln.objects.*
 import gln.texture.TexFilter
 import gln.uniform.glUniform
 import gln.vertexArray.GlVertexArray
-import gln.vertexArray.glBindVertexArray
 import gln.vertexArray.glVertexAttribPointer
-import gln.vertexArray.withVertexArray
 import imgui.*
 import imgui.ImGui.io
-import imgui.ImGui.windowSize
 import kool.*
 import org.lwjgl.opengl.*
 import org.lwjgl.opengl.GL30C.*
@@ -31,11 +26,7 @@ import org.lwjgl.system.Platform
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
-import java.nio.ByteBuffer
-import java.nio.IntBuffer
 import javax.imageio.ImageIO
-import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KProperty0
 
 class ImplGL3 : LwjglRendererI {
     companion object {
@@ -63,7 +54,7 @@ class ImplGL3 : LwjglRendererI {
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
-        val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
+        val lastVertexArrayObject = glGetInteger(GL_VERTEX_ARRAY_BINDING)
         val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
 
         program = GlProgram.create().apply {
@@ -94,9 +85,9 @@ class ImplGL3 : LwjglRendererI {
 
                     data(vtxSize, STREAM_DRAW)
 
-                    glVertexAttribPointer(semantic.attr.POSITION, 2, GL_FLOAT, false, DrawVert.size, 0)
-                    glVertexAttribPointer(semantic.attr.TEX_COORD, 2, GL_FLOAT, false, DrawVert.size, Vec2.size)
-                    glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
+                    glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.size, 0)
+                    glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.size, Vec2.size)
+                    glVertexAttribPointer(semantic.attr.COLOR, Vec4ub.length, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
                 }
                 glEnableVertexAttribArray(semantic.attr.POSITION)
                 glEnableVertexAttribArray(semantic.attr.TEX_COORD)
@@ -115,7 +106,7 @@ class ImplGL3 : LwjglRendererI {
         glBindTexture(GL_TEXTURE_2D, lastTexture)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementBuffer)
-        glBindVertexArray(lastVertexArray)
+        glBindVertexArray(lastVertexArrayObject)
 
         return checkError("createDeviceObject")
     }
@@ -227,6 +218,7 @@ class ImplGL3 : LwjglRendererI {
 //                val a = v.col and 0xff
 //                println("vertex[$i] = pos(${v.pos.x}, ${v.pos.y}), uv(${v.uv.x}, ${v.uv.y}), col($r, $g, $b, $a)")
             }
+            // Upload vertex/index buffers
             buffers {
                 Buffer.Vertex.bind(ARRAY) {
                     subData(0, cmdList._vtxWritePtr * DrawVert.size, vtxBuffer)
@@ -250,7 +242,7 @@ class ImplGL3 : LwjglRendererI {
                         if (clipOriginLowerLeft)
                             glScissor(clipRectX.i, (fbHeight - clipRectW).i, (clipRectZ - clipRectX).i, (clipRectW - clipRectY).i)
                         else
-                            glScissor(clipRectX.i, clipRectY.i, clipRectZ.i, clipRectW.i) // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
+                            glScissor(clipRectX.i, clipRectY.i, clipRectZ.i, clipRectW.i) // Support for GL 4.5 rarely used glClipControl(GL_UPPER_LEFT)
 
                         // Bind texture, Draw
                         glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
