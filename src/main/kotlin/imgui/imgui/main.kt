@@ -486,43 +486,47 @@ interface imgui_main {
         }
 
         fun updateMouseWheel() {
-            val window = g.hoveredWindow
-            if (window == null || window.collapsed) return
+            var window = g.hoveredWindow ?: return
+            if (window.collapsed) return
             if (io.mouseWheel == 0f && io.mouseWheelH == 0f) return
 
-            // If a child window has the Wf.NoScrollWithMouse flag, we give a chance to scroll its parent (unless either Wf.NoInputs or Wf.NoScrollbar are also set).
-            var scrollWindow: Window = window
-            while (scrollWindow.flags has Wf.ChildWindow && scrollWindow.flags has Wf.NoScrollWithMouse &&
-                    scrollWindow.flags hasnt Wf.NoScrollbar && scrollWindow.flags hasnt Wf.NoMouseInputs && scrollWindow.parentWindow != null)
-                scrollWindow = scrollWindow.parentWindow!!
-            val scrollAllowed = scrollWindow.flags hasnt Wf.NoScrollWithMouse && scrollWindow.flags hasnt Wf.NoMouseInputs
-
-            if (io.mouseWheel != 0f)
-                if (io.keyCtrl && io.fontAllowUserScaling) {
-                    // Zoom / Scale window
-                    val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
-                    val scale = newFontScale / window.fontWindowScale
-                    window.fontWindowScale = newFontScale
-
+            // Zoom / Scale window
+            // FIXME-OBSOLETE: This is an old feature, it still works but pretty much nobody is using it and may be best redesigned.
+            if (io.mouseWheel != 0f && io.keyCtrl && io.fontAllowUserScaling) {
+                val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
+                val scale = newFontScale / window.fontWindowScale
+                window.fontWindowScale = newFontScale
+                if (window.flags hasnt Wf.ChildWindow) {
                     val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
-                    window.pos plusAssign offset
-                    window.size timesAssign scale
-                    window.sizeFull timesAssign scale
+                    window.pos = floor(window.pos + offset)
+                    window.size = floor(window.size * scale)
+                    window.sizeFull = floor(window.sizeFull * scale)
                 }
-                else if (!io.keyCtrl && io.keyShift && scrollAllowed) {
-                    // Mouse wheel horizontal scrolling
-                    val scrollAmount = 5 * scrollWindow.calcFontSize() min ((scrollWindow.contentsRegionRect.width + scrollWindow.windowPadding.x * 2f) * 0.67f)
-                    scrollWindow.setScrollX(scrollWindow.scroll.x - io.mouseWheel * scrollAmount.i.f)
-                } else if (!io.keyCtrl && scrollAllowed) {
-                    // Mouse wheel vertical scrolling
-                    var scrollAmount = 5 * scrollWindow.calcFontSize()
-                    scrollAmount = min(scrollAmount, (scrollWindow.contentsRegionRect.height + scrollWindow.windowPadding.y * 2f) * 0.67f).i.f
-                    scrollWindow.setScrollY(scrollWindow.scroll.y - io.mouseWheel * scrollAmount)
+                return
+            }
+
+            // Mouse wheel scrolling
+            // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent (unless either ImGuiWindowFlags_NoInputs or ImGuiWindowFlags_NoScrollbar are also set).
+            while (window.flags has Wf.ChildWindow && window.flags has Wf.NoScrollWithMouse && window.flags hasnt Wf.NoScrollbar && window.flags hasnt Wf.NoMouseInputs && window.parentWindow != null)
+                window = window.parentWindow!!
+            val scrollAllowed = window.flags hasnt Wf.NoScrollWithMouse && window.flags hasnt Wf.NoMouseInputs
+            if (scrollAllowed && (io.mouseWheel != 0f || io.mouseWheelH != 0f) && !io.keyCtrl) {
+                val maxStep = (window.contentsRegionRect.size + window.windowPadding * 2f) * 0.67f
+
+                // Vertical Mouse Wheel Scrolling (hold Shift to scroll horizontally)
+                if (io.mouseWheel != 0f && !io.keyShift) {
+                    val scrollStep = floor((5 * window.calcFontSize()) min maxStep.y)
+                    window.setScrollY(window.scroll.y-io.mouseWheel * scrollStep)
+                } else if (io.mouseWheel != 0f && io.keyShift) {
+                    val scrollStep = floor ((2 * window.calcFontSize()) min maxStep.x)
+                    window.setScrollX(window.scroll.x-io.mouseWheel * scrollStep)
                 }
-            if (io.mouseWheelH != 0f && scrollAllowed && !io.keyCtrl) {
-                // Mouse wheel horizontal scrolling (for hardware that supports it)
-                val scrollAmount = scrollWindow.calcFontSize()
-                scrollWindow.setScrollX(scrollWindow.scroll.x - io.mouseWheelH * scrollAmount)
+
+                // Horizontal Mouse Wheel Scrolling (for hardware that supports it)
+                if (io.mouseWheelH != 0f && !io.keyShift) {
+                    val scrollStep = floor ((2 * window.calcFontSize()) min maxStep.x)
+                    window.setScrollX(window.scroll.x-io.mouseWheelH * scrollStep)
+                }
             }
         }
 
