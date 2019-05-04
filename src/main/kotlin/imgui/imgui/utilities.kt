@@ -93,7 +93,7 @@ interface imgui_utilities {
 
     /** was the last item just made active (item was previously inactive). */
     val isItemActivated: Boolean
-        get() = when(g.activeId) {
+        get() = when (g.activeId) {
             0 -> false
             else -> g.currentWindow!!.run { g.activeId == dc.lastItemId && g.activeIdPreviousFrame != dc.lastItemId }
         }
@@ -185,12 +185,10 @@ interface imgui_utilities {
 
     fun calcTextSize(text: String, textEnd: Int = text.length, hideTextAfterDoubleHash: Boolean = false, wrapWidth: Float = -1f): Vec2 {
 
-        val textDisplayEnd =
-                when {
-                    hideTextAfterDoubleHash -> findRenderedTextEnd(text, textEnd)  // Hide anything after a '##' string
-                    textEnd == 0 -> text.length
-                    else -> textEnd
-                }
+        val textDisplayEnd = when {
+            hideTextAfterDoubleHash -> findRenderedTextEnd(text, textEnd)  // Hide anything after a '##' string
+            else -> textEnd
+        }
 
         val font = g.font
         val fontSize = g.fontSize
