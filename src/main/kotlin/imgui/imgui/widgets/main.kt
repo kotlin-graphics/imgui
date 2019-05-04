@@ -214,7 +214,7 @@ interface main {
         val squareSz = frameHeight
         val pos = window.dc.cursorPos
         val checkBb = Rect(pos, pos + squareSz)
-        val totalBb = Rect(pos, pos + Vec2(squareSz + if(labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
+        val totalBb = Rect(pos, pos + Vec2(squareSz + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id))
             return false
@@ -275,8 +275,9 @@ interface main {
         if (window.skipItems) return
 
         val pos = Vec2(window.dc.cursorPos)
-        val bb = Rect(pos, pos + calcItemSize(sizeArg, calcItemWidth(), g.fontSize + style.framePadding.y * 2f))
-        itemSize(bb, style.framePadding.y)
+        val size = calcItemSize(sizeArg, calcItemWidth(), g.fontSize + style.framePadding.y * 2f)
+        val bb = Rect(pos, pos + size)
+        itemSize(size, style.framePadding.y)
         if (!itemAdd(bb, 0)) return
         // Render
         val fraction = saturate(fraction_)

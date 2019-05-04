@@ -51,7 +51,7 @@ interface lowLevelLayoutHelpers {
         if (window.skipItems) return
 
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        itemSize(bb)
+        itemSize(size)
         itemAdd(bb, 0)
     }
 

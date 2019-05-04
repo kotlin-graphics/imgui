@@ -63,7 +63,7 @@ interface selectableLists {
         val pos = Vec2(window.dc.cursorPos)
         pos.y += window.dc.currentLineTextBaseOffset
         val bbInner = Rect(pos, pos + size)
-        itemSize(bbInner)
+        itemSize(size)
 
         // Fill horizontal space.
         val windowPadding = Vec2(window.windowPadding)
