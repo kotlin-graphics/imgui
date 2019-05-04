@@ -207,7 +207,8 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** we don't render 1 px sized rectangles properly.
      * @param a: upper-left
-     * @param b: b: lower-right */
+     * @param b: b: lower-right
+     * (== upper-left + size)   */
     fun addRect(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCornersFlags: Int = Dcf.All.i, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
         if (flags has DrawListFlag.AntiAliasedLines)
@@ -217,6 +218,9 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathStroke(col, true, thickness)
     }
 
+    /** @param a: upper-left
+     *  @param b: lower-right
+     *  (== upper-left + size) */
     fun addRectFilled(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCornersFlags: Int = Dcf.All.i) {
         if (col hasnt COL32_A_MASK) return
         if (rounding > 0f) {
@@ -335,7 +339,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         font.renderText(this, fontSize, pos, col, clipRect, text, textEnd, wrapWidth, cpuFineClipRect != null)
     }
 
-    fun addImage(userTextureId: TextureID, a: Vec2, b: Vec2, uvA: Vec2 = Vec2(0), uvB: Vec2 = Vec2(1), col: Int = 0xFFFFFFFF.i) {
+    fun addImage(userTextureId: TextureID, a: Vec2, b: Vec2, uvA: Vec2 = Vec2(0), uvB: Vec2 = Vec2(1), col: Int = COL32_WHITE) {
 
         if (col hasnt COL32_A_MASK) return
 
@@ -349,7 +353,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun addImageQuad(userTextureId: TextureID, a: Vec2, b: Vec2, c: Vec2, d: Vec2, uvA: Vec2 = Vec2(0), uvB: Vec2 = Vec2(1, 0),
-                     uvC: Vec2 = Vec2(1), uvD: Vec2 = Vec2(0, 1), col: Int = 0xFFFFFFFF.i) {
+                     uvC: Vec2 = Vec2(1), uvD: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE) {
 
         if (col hasnt COL32_A_MASK) return
 
