@@ -840,7 +840,7 @@ interface imgui_window {
         }
 
         return when {
-            !g.hoveredRootWindow!!.isContentHoverable(flags) -> false
+            !g.hoveredWindow!!.isContentHoverable(flags) -> false
             flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != g.hoveredWindow!!.moveId -> false
             else -> true
         }
