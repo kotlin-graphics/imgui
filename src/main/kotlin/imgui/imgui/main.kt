@@ -508,6 +508,11 @@ interface imgui_main {
                     window.pos plusAssign offset
                     window.size timesAssign scale
                     window.sizeFull timesAssign scale
+                }
+                else if (!io.keyCtrl && io.keyShift && scrollAllowed) {
+                    // Mouse wheel horizontal scrolling
+                    val scrollAmount = 5 * scrollWindow.calcFontSize() min ((scrollWindow.contentsRegionRect.width + scrollWindow.windowPadding.x * 2f) * 0.67f)
+                    scrollWindow.setScrollX(scrollWindow.scroll.x - io.mouseWheel * scrollAmount.i.f)
                 } else if (!io.keyCtrl && scrollAllowed) {
                     // Mouse wheel vertical scrolling
                     var scrollAmount = 5 * scrollWindow.calcFontSize()
