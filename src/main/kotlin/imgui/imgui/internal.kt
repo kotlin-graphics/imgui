@@ -2517,7 +2517,7 @@ interface imgui_internal {
             if (io.inputQueueCharacters.size > 0)
             /*if (io.inputQueueCharacters[0] != NUL) I cant explaing why JVM had this TODO check */ {
                 if (!ignoreCharInputs && !isReadOnly && !userNavInputStart)
-                    io.inputQueueCharacters.filter { it != NUL || (c == '\t' && io.keyShift) }.map {
+                    io.inputQueueCharacters.filter { it != NUL || (it == '\t' && io.keyShift) }.map {
                         // TODO check
                         withChar { c ->
                             // Insert character if they pass filtering
