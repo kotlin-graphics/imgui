@@ -2417,30 +2417,26 @@ interface imgui_internal {
         if (g.activeId == id && io.mouseClicked[0] && !initState && !initMakeActive)
             clearActiveId = true
 
-        // When read-only we always use the live data passed to the function
-        // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
-        if (isReadOnly && state_ != null) {
-            val willRenderCursor = g.activeId == id || userScrollActive
-            val willRenderSelection = state_.hasSelection && (RENDER_SELECTION_WHEN_INACTIVE || willRenderCursor)
-            if (willRenderCursor || willRenderSelection) {
-                val tmp = CharArray(buf.size) // TODO resize()?
-                System.arraycopy(state_.textW, 0, tmp, 0, state_.textW.size)
-                val bufEnd = -1
-                state_.curLenW = state_.textW.textStr(buf) // TODO check
-                state_.curLenA = state_.curLenW // TODO check
-                state_.cursorClamp()
-            }
-        }
-
         // Lock the decision of whether we are going to take the path displaying the cursor or selection
         val renderCursor = g.activeId == id || (state_ != null && userScrollActive)
-        val renderSelection = state_?.hasSelection == true && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
+        var renderSelection = state_?.hasSelection == true && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
         var valueChanged = false
         var enterPressed = false
 
+        // When read-only we always use the live data passed to the function
+        // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
+        if (isReadOnly && state_ != null && (renderCursor || renderSelection)) {
+            val tmp = CharArray(buf.size) // TODO resize()?
+            System.arraycopy(state_.textW, 0, tmp, 0, state_.textW.size)
+            state_.curLenW = state_.textW.textStr(buf) // TODO check
+            state_.curLenA = state_.curLenW // TODO check
+            state_.cursorClamp()
+            renderSelection = renderSelection && state_.hasSelection
+        }
+
         // Select the buffer to render.
         val bufDisplayFromState = (renderCursor || renderSelection || g.activeId == id) && !isReadOnly && state_?.textAIsValid == true
-        val isDisplayingHint = hint != null && (if(bufDisplayFromState) state_!!.textA else buf)[0] == NUL
+        val isDisplayingHint = hint != null && (if (bufDisplayFromState) state_!!.textA else buf)[0] == NUL
 
         // Password pushes a temporary font with only a fallback glyph
         if (isPassword)
@@ -2779,7 +2775,7 @@ interface imgui_internal {
             without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
             Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
         val bufDisplayMaxLength = 2 * 1024 * 1024
-        var bufDisplay = if(bufDisplayFromState) state_!!.textA else buf
+        var bufDisplay = if (bufDisplayFromState) state_!!.textA else buf
         val bufDisplayEnd = IntArray(1) // We have specialized paths below for setting the length
         if (isDisplayingHint) {
             bufDisplay = hint!!.toCharArray()
