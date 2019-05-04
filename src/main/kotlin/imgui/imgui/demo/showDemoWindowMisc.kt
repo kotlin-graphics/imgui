@@ -107,19 +107,19 @@ object showDemoWindowMisc {
                 for (i in io.keysDown.indices)
                     if (io.keysDownDuration[i] >= 0f) {
                         sameLine()
-                        text("$i (%.02f secs)", io.keysDownDuration[i])
+                        text("$i (0x%X) (%.02f secs)", i, io.keysDownDuration[i])
                     }
                 text("Keys pressed:")
                 for (i in io.keysDown.indices)
                     if (isKeyPressed(i)) {
                         sameLine()
-                        text("$i")
+                        text("$i (0x%X)", i)
                     }
                 text("Keys release:")
                 for (i in io.keysDown.indices)
                     if (isKeyReleased(i)) {
                         sameLine()
-                        text("$i")
+                        text("$i (0x%X)", i)
                     }
                 val ctrl = if (io.keyCtrl) "CTRL " else ""
                 val shift = if (io.keyShift) "SHIFT " else ""
