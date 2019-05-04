@@ -1483,6 +1483,8 @@ class Font {
 
     // [Internal] Don't use!
 
+    val TABSIZE = 4
+
     fun buildLookupTable() {
 
         val maxCodepoint = glyphs.map { it.codepoint.i }.max()!!
@@ -1505,7 +1507,7 @@ class Font {
             val tabGlyph = glyphs.last()
             tabGlyph put findGlyph(' ')!!
             tabGlyph.codepoint = '\t'
-            tabGlyph.advanceX *= 4
+            tabGlyph.advanceX *= TABSIZE
             indexAdvanceX[tabGlyph.codepoint.i] = tabGlyph.advanceX
             indexLookup[tabGlyph.codepoint.i] = glyphs.lastIndex
         }
