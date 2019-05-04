@@ -110,7 +110,7 @@ interface imgui_dragAndDrop {
                     g.currentWindow!!.apply {
                         // tooltipWindow
                         skipItems = true
-                        hiddenFramesRegular = 1
+                        hiddenFramesCanSkipItems = 1
                     }
             }
 

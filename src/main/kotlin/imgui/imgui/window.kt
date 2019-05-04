@@ -41,11 +41,11 @@ import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
-import imgui.internal.ItemFlag as If
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.DrawListFlag as Dlf
+import imgui.internal.ItemFlag as If
 import imgui.internal.LayoutType as Lt
 
 
@@ -126,7 +126,7 @@ interface imgui_window {
         // Update the Appearing flag
         // Not using !WasActive because the implicit "Debug" window would always toggle off->on
         var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1
-        val windowJustAppearingAfterHiddenForResize = window.hiddenFramesForResize > 0
+        val windowJustAppearingAfterHiddenForResize = window.hiddenFramesCannotSkipItems > 0
         if (flags has Wf.Popup) {
             val popupRef = g.openPopupStack[g.beginPopupStack.size]
             // We recycle popups so treat window as activated if popup id changed
@@ -215,20 +215,20 @@ interface imgui_window {
 
             // Update contents size from last frame for auto-fitting (or use explicit size)
             window.sizeContents = window.calcSizeContents()
-            if (window.hiddenFramesRegular > 0)
-                window.hiddenFramesRegular--
-            if (window.hiddenFramesForResize > 0)
-                window.hiddenFramesForResize--
+            if (window.hiddenFramesCanSkipItems > 0)
+                window.hiddenFramesCanSkipItems--
+            if (window.hiddenFramesCannotSkipItems > 0)
+                window.hiddenFramesCannotSkipItems--
 
             // Hide new windows for one frame until they calculate their size
             if (windowJustCreated && (!windowSizeXsetByApi || !windowSizeYsetByApi))
-                window.hiddenFramesForResize = 1
+                window.hiddenFramesCannotSkipItems = 1
 
             /*  Hide popup/tooltip window when re-opening while we measure size (because we recycle the windows)
                 We reset Size/SizeContents for reappearing popups/tooltips early in this function,
                 so further code won't be tempted to use the old size.             */
             if (windowJustActivatedByUser && flags has (Wf.Popup or Wf.Tooltip)) {
-                window.hiddenFramesForResize = 1
+                window.hiddenFramesCannotSkipItems = 1
                 if (flags has Wf.AlwaysAutoResize) {
                     if (!windowSizeXsetByApi) {
                         window.sizeFull.x = 0f
@@ -344,7 +344,7 @@ interface imgui_window {
                     window.pos put parentWindow.dc.cursorPos
             }
 
-            val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesForResize == 0
+            val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesCannotSkipItems == 0
             if (windowPosWithPivot)
             // Position given a pivot (e.g. for centering)
                 window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.None)
@@ -419,7 +419,7 @@ interface imgui_window {
                 pushClipRect(viewportRect.min, viewportRect.max, true)
 
             // Draw modal window background (darkens what is behind them, all viewports)
-            val dimBgForModal = flags has Wf.Modal && window === frontMostPopupModal && window.hiddenFramesForResize <= 0
+            val dimBgForModal = flags has Wf.Modal && window === frontMostPopupModal && window.hiddenFramesCannotSkipItems <= 0
             val dimBgForWindowList = g.navWindowingTargetAnim?.rootWindow === window
             if (dimBgForModal || dimBgForWindowList) {
                 val dimBgCol = getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
@@ -690,27 +690,27 @@ interface imgui_window {
             assert(flags has Wf.NoTitleBar)
             if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames allLessThanEqual 0)
                 if (window.outerRectClipped.min anyGreaterThanEqual window.outerRectClipped.max)
-                    window.hiddenFramesRegular = 1
+                    window.hiddenFramesCanSkipItems = 1
 
             // Completely hide along with parent or if parent is collapsed
             parentWindow?.let {
                 if (it.collapsed || it.hidden)
-                    window.hiddenFramesRegular = 1
+                    window.hiddenFramesCanSkipItems = 1
             }
         }
 
         // Don't render if style alpha is 0.0 at the time of Begin(). This is arbitrary and inconsistent but has been there for a long while (may remove at some point)
         if (style.alpha <= 0f)
-            window.hiddenFramesRegular = 1
+            window.hiddenFramesCanSkipItems = 1
 
         // Update the Hidden flag
-        window.hidden = window.hiddenFramesRegular > 0 || window.hiddenFramesForResize > 0
+        window.hidden = window.hiddenFramesCanSkipItems > 0 || window.hiddenFramesCannotSkipItems > 0
 
         // Return false if we don't intend to display anything to allow user to perform an early out optimization
-        window.apply {
-            skipItems = (collapsed || !active || hidden) && autoFitFrames allLessThanEqual 0 && hiddenFramesForResize <= 0
-        }
-        return !window.skipItems
+        // Update the SkipItems flag, used to early out of all items functions (no layout required)
+        val skipItems = window.run { (collapsed || !active || hidden) && autoFitFrames allLessThanEqual 0 && hiddenFramesCannotSkipItems <= 0 }
+        window.skipItems = skipItems
+        return !skipItems
     }
 
     /** Always call even if Begin() return false (which indicates a collapsed window)! finish appending to current window,
