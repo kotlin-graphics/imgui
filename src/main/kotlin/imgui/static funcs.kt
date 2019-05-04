@@ -320,16 +320,18 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
 
     var c by char
 
-    if (c < 128 && c != ' ' && !c.isPrintable) {
+    // Filter non-printable (NB: isprint is unreliable! see #2467) [JVM we can rely on custom ::isPrintable]
+    if (c < 0x20 && !c.isPrintable) {
         var pass = false
         pass = pass or (c == '\n' && flags has Itf.Multiline)
         pass = pass or (c == '\t' && flags has Itf.AllowTabInput)
         if (!pass) return false
     }
 
-    /*  Filter private Unicode range. I don't imagine anybody would want to input them. GLFW on OSX seems to send
-        private characters for special keys like arrow keys.     */
+    // Filter private Unicode range. GLFW on OSX seems to send private characters for special keys like arrow keys (FIXME)
     if (c >= 0xE000 && c <= 0xF8FF) return false
+
+    // Generic named filters
     if (flags has (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsUppercase or Itf.CharsNoBlank or Itf.CharsScientific)) {
 
         if (flags has Itf.CharsDecimal)
@@ -351,6 +353,7 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
             return false
     }
 
+    // Custom callback filter
     if (flags has Itf.CallbackCharFilter) {
         callback!! //callback is non-null from all calling functions
         val itcd = InputTextCallbackData()
