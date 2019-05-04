@@ -141,23 +141,23 @@ object ExampleApp {
 //            println("nav window name " + g.navWindow?.rootWindow?.name)
 //            println("Examples")
             menu("Examples") {
-                menuItem("Main menu bar", "", ExampleApp.show::mainMenuBar)
-                menuItem("Console", "", ExampleApp.show::console)
-                menuItem("Log", "", ExampleApp.show::log)
-                menuItem("Simple layout", "", ExampleApp.show::layout)
-                menuItem("Property editor", "", ExampleApp.show::propertyEditor)
-                menuItem("Long text display", "", ExampleApp.show::longText)
-                menuItem("Auto-resizing window", "", ExampleApp.show::autoResize)
-                menuItem("Constrained-resizing window", "", ExampleApp.show::constrainedResize)
-                menuItem("Simple overlay", "", ExampleApp.show::simpleOverlay)
-                menuItem("Manipulating window titles", "", ExampleApp.show::windowTitles)
-                menuItem("Custom rendering", "", ExampleApp.show::customRendering)
+                menuItem("Main menu bar", "", show::mainMenuBar)
+                menuItem("Console", "", show::console)
+                menuItem("Log", "", show::log)
+                menuItem("Simple layout", "", show::layout)
+                menuItem("Property editor", "", show::propertyEditor)
+                menuItem("Long text display", "", show::longText)
+                menuItem("Auto-resizing window", "", show::autoResize)
+                menuItem("Constrained-resizing window", "", show::constrainedResize)
+                menuItem("Simple overlay", "", show::simpleOverlay)
+                menuItem("Manipulating window titles", "", show::windowTitles)
+                menuItem("Custom rendering", "", show::customRendering)
                 menuItem("Documents", "", show::documents)
             }
             menu("Help") {
-                menuItem("Metrics", "", ExampleApp.show::metrics)
-                menuItem("Style Editor", "", ExampleApp.show::styleEditor)
-                menuItem("About Dear ImGui", "", ExampleApp.show::about)
+                menuItem("Metrics", "", show::metrics)
+                menuItem("Style Editor", "", show::styleEditor)
+                menuItem("About Dear ImGui", "", show::about)
             }
         }
 

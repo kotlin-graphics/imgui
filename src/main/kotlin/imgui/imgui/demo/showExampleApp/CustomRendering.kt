@@ -115,7 +115,7 @@ object CustomRendering {
                 x += sz
                 drawList.addRectFilledMultiColor(Vec2(x, y), Vec2(x + sz, y + sz), getColorU32(0, 0, 0, 255), getColorU32(255, 0, 0, 255),
                         getColorU32(255, 255, 0, 255), getColorU32(0, 255, 0, 255))
-                dummy(Vec2((sz + spacing) * 8, (sz + spacing) * 3))
+                dummy(Vec2((sz + spacing) * 9.5f, (sz + spacing) * 3))
                 endTabItem()
             }
 
