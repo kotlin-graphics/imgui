@@ -264,7 +264,7 @@ fun loadIniSettingsFromDisk(iniFilename: String?) {
                 type = "Window"
                 name = s.substring(1, firstCloseBracket)
             }
-            val typeHash = hash(type, 0)
+            val typeHash = hash(type)
             settings = findWindowSettings(typeHash) ?: createNewWindowSettings(name)
         } else settings?.apply {
             when {

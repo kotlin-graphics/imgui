@@ -86,7 +86,7 @@ interface imgui_dragAndDrop {
             sourceDragActive = isMouseDragging(mouseButton)
         } else {
             window = null
-            sourceId = hash("#SourceExtern", 0)
+            sourceId = hash("#SourceExtern")
             sourceDragActive = true
         }
 
