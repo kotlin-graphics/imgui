@@ -249,7 +249,8 @@ interface imgui_parametersStacks {
         }
     }
 
-    /** width of item given pushed settings and current cursor position */
+    /** width of item given pushed settings and current cursor position
+     *  Calculate default item width given value passed to PushItemWidth */
     fun calcItemWidth(): Float {
 
         val window = currentWindowRead!!
