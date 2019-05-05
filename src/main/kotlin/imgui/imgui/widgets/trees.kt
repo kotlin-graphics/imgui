@@ -92,11 +92,11 @@ interface trees {
 
         currentWindow.dc.treeDepth--
         if (g.navMoveDir == Dir.Left && g.navWindow === window && navMoveRequestButNoResultYet())
-            if (g.navIdIsAlive && window.dc.treeDepthMayJumpToParentOnPop has (1 shl window.dc.treeDepth)) {
+            if (g.navIdIsAlive && window.dc.treeStoreMayJumpToParentOnPop has (1 shl window.dc.treeDepth)) {
                 setNavId(window.idStack.last(), g.navLayer)
                 navMoveRequestCancel()
             }
-        window.dc.treeDepthMayJumpToParentOnPop = window.dc.treeDepthMayJumpToParentOnPop and (1 shl window.dc.treeDepth) - 1
+        window.dc.treeStoreMayJumpToParentOnPop = window.dc.treeStoreMayJumpToParentOnPop and (1 shl window.dc.treeDepth) - 1
 
         assert(window.idStack.size > 1) { "There should always be 1 element in the idStack (pushed during window creation). If this triggers you called ::treePop/popId() too much." }
         popId()

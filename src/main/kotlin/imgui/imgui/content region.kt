@@ -12,7 +12,7 @@ interface imgui_contentRegion {
 
     /** current content boundaries (typically window boundaries including scrolling, or current column boundaries), in
      *  windows coordinates
-     *  FIXME: This is in window space (not screen space!) */
+     *  FIXME: This is in window space (not screen space!). We should try to obsolete all those functions. */
     val contentRegionMax: Vec2
         get() = g.currentWindow!!.run {
             val mx = contentsRegionRect.max - pos

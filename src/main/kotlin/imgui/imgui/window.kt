@@ -18,7 +18,6 @@ import imgui.ImGui.findBestWindowPosForPopup
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getColorU32
-import imgui.ImGui.getColumnOffset
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemAdd
@@ -565,7 +564,7 @@ interface imgui_window {
                 dc.textWrapPosStack.clear()
                 dc.currentColumns = null
                 dc.treeDepth = 0
-                dc.treeDepthMayJumpToParentOnPop = 0
+                dc.treeStoreMayJumpToParentOnPop = 0
                 dc.stateStorage = stateStorage
                 dc.groupStack.clear()
                 menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
