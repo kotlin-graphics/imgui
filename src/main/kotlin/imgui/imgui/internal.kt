@@ -3076,19 +3076,21 @@ interface imgui_internal {
 
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
-        if (g.tempInputTextId == 0)
+        val init = g.tempInputTextId != 0
+        if(init)
             clearActiveId()
 
         val fmtBuf = CharArray(32)
         val format = parseFormatTrimDecorations(format_, fmtBuf)
         var dataBuf = data.format(dataType, format, 32)
         dataBuf = trimBlanks(dataBuf)
+        g.currentWindow!!.dc.cursorPos put bb.min
         val flags = Itf.AutoSelectAll or when (dataType) {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
         val valueChanged = inputTextEx(label, null, dataBuf, bb.size, flags)
-        if (g.tempInputTextId == 0) {
+        if (init) {
             assert(g.activeId == id) { "First frame we started displaying the InputText widget, we expect it to take the active id." }
             g.tempInputTextId = g.activeId
         }
