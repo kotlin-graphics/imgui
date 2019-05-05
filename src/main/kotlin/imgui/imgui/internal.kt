@@ -1758,7 +1758,7 @@ interface imgui_internal {
                     windowRect.max.x - borderSize, windowRect.max.y - otherScrollbarSizeW - borderSize)
         }
         if (!horizontal)
-            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f
+            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f  // FIXME: InnerRect?
 
         val bbHeight = bb.height
         if (bb.width <= 0f || bbHeight <= 0f)
