@@ -116,7 +116,7 @@ object ImGui :
     val version = "1.70 WIP build: $build"
     /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
     Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-    val versionNum = 16990 * 100 + build
+    val versionNum = 16991 * 100 + build
 }
 
 var ptrIndices = 0
