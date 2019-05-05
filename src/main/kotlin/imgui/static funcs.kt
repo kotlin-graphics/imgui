@@ -102,7 +102,7 @@ fun findHoveredWindow() {
         if (window.active && !window.hidden && window.flags hasnt Wf.NoMouseInputs) {
             // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
             val bb = Rect(window.outerRectClipped)
-            if (window.flags has Wf.ChildWindow || window.flags has Wf.NoResize)
+            if (window.flags has (Wf.ChildWindow or Wf.NoResize or Wf.AlwaysAutoResize))
                 bb expand paddingRegular
             else
                 bb expand paddingForResizeFromEdges
