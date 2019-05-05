@@ -241,6 +241,7 @@ interface imgui_main {
         assert(g.windowsFocusOrder.size == g.windows.size)
         g.windows.forEach {
             it.wasActive = it.active
+            it.beginCount = 0
             it.active = false
             it.writeAccessed = false
         }
@@ -516,16 +517,16 @@ interface imgui_main {
                 // Vertical Mouse Wheel Scrolling (hold Shift to scroll horizontally)
                 if (io.mouseWheel != 0f && !io.keyShift) {
                     val scrollStep = floor((5 * window.calcFontSize()) min maxStep.y)
-                    window.setScrollY(window.scroll.y-io.mouseWheel * scrollStep)
+                    window.setScrollY(window.scroll.y - io.mouseWheel * scrollStep)
                 } else if (io.mouseWheel != 0f && io.keyShift) {
-                    val scrollStep = floor ((2 * window.calcFontSize()) min maxStep.x)
-                    window.setScrollX(window.scroll.x-io.mouseWheel * scrollStep)
+                    val scrollStep = floor((2 * window.calcFontSize()) min maxStep.x)
+                    window.setScrollX(window.scroll.x - io.mouseWheel * scrollStep)
                 }
 
                 // Horizontal Mouse Wheel Scrolling (for hardware that supports it)
                 if (io.mouseWheelH != 0f && !io.keyShift) {
-                    val scrollStep = floor ((2 * window.calcFontSize()) min maxStep.x)
-                    window.setScrollX(window.scroll.x-io.mouseWheelH * scrollStep)
+                    val scrollStep = floor((2 * window.calcFontSize()) min maxStep.x)
+                    window.setScrollX(window.scroll.x - io.mouseWheelH * scrollStep)
                 }
             }
         }
@@ -552,7 +553,7 @@ interface imgui_main {
 
             // Resize grips and borders are on layer 1
             window.dc.navLayerCurrent = NavLayer.Menu
-            window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu.i
+            window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu
 
             // Manual resize grips
             pushId("#RESIZE")
@@ -651,11 +652,19 @@ interface imgui_main {
 
             // Resize nav layer
             window.dc.navLayerCurrent = NavLayer.Main
-            window.dc.navLayerCurrentMask = 1 shl NavLayer.Main.i
+            window.dc.navLayerCurrentMask = 1 shl NavLayer.Main
 
             window.size put window.sizeFull
 
             return borderHeld
+        }
+
+        fun clampWindowRect(window: Window, rect: Rect, padding: Vec2) {
+            val sizeForClamping = when {
+                io.configWindowsMoveFromTitleBarOnly && window.flags hasnt Wf.NoTitleBar -> Vec2(window.size.x, window.titleBarHeight)
+                else -> window.size
+            }
+            window.pos = glm.min(rect.max - padding, glm.max(window.pos + sizeForClamping, rect.min + padding) - sizeForClamping)
         }
 
         fun renderOuterBorders(window: Window) {

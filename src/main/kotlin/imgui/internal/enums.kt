@@ -296,6 +296,8 @@ enum class NavLayer {
     }
 }
 
+infix fun Int.shl(layer: NavLayer) = shl(layer.i)
+
 enum class PopupPositionPolicy { Default, ComboBox }
 
 enum class DrawCornerFlag(val i: Int) {

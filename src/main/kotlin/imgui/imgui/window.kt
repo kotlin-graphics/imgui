@@ -31,6 +31,7 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
 import imgui.ImGui.style
+import imgui.imgui.imgui_main.Companion.clampWindowRect
 import imgui.imgui.imgui_main.Companion.renderOuterBorders
 import imgui.imgui.imgui_main.Companion.resizeGripDef
 import imgui.imgui.imgui_main.Companion.updateManualResize
@@ -108,21 +109,6 @@ interface imgui_window {
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
 
-        // Update Flags, LastFrameActive, BeginOrderXXX fields
-        if (firstBeginOfTheFrame)
-            window.flags = flags
-        else
-            flags = window.flags
-
-        // Parent window is latched only on the first call to Begin() of the frame, so further append-calls can be done from a different window stack
-        val parentWindowInStack = g.currentWindowStack.lastOrNull()
-        val parentWindow = when {
-            firstBeginOfTheFrame -> parentWindowInStack.takeIf { flags has (Wf.ChildWindow or Wf.Popup) }
-            else -> window.parentWindow
-        }
-        assert(parentWindow != null || flags hasnt Wf.ChildWindow)
-        window.hasCloseButton = pOpen != null
-
         // Update the Appearing flag
         // Not using !WasActive because the implicit "Debug" window would always toggle off->on
         var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1
@@ -136,9 +122,27 @@ interface imgui_window {
         window.appearing = windowJustActivatedByUser || windowJustAppearingAfterHiddenForResize
         if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, true)
 
+        // Update Flags, LastFrameActive, BeginOrderXXX fields
+        if (firstBeginOfTheFrame) {
+            window.flags = flags
+            window.lastFrameActive = currentFrame
+            window.beginOrderWithinParent = 0
+            window.beginOrderWithinContext = g.windowsActiveCount++
+        } else
+            flags = window.flags
+
+        // Parent window is latched only on the first call to Begin() of the frame, so further append-calls can be done from a different window stack
+        val parentWindowInStack = g.currentWindowStack.lastOrNull()
+        val parentWindow = when {
+            firstBeginOfTheFrame -> parentWindowInStack.takeIf { flags has (Wf.ChildWindow or Wf.Popup) }
+            else -> window.parentWindow
+        }
+        assert(parentWindow != null || flags hasnt Wf.ChildWindow)
+
         // Add to stack
+        // We intentionally set g.CurrentWindow to NULL to prevent usage until when the viewport is set, then will call SetCurrentWindow()
         g.currentWindowStack += window
-        window.setCurrent()
+        g.currentWindow = null
         checkStacksSize(window, true)
         if (flags has Wf.Popup) {
             val popupRef = g.openPopupStack[g.beginPopupStack.size]
@@ -191,11 +195,8 @@ interface imgui_window {
             window.updateParentAndRootLinks(flags, parentWindow)
 
             window.active = true
-            window.beginOrderWithinParent = 0
-            window.beginOrderWithinContext = g.windowsActiveCount++
-            window.beginCount = 0
+            window.hasCloseButton = pOpen != null
             window.clipRect.put(-Float.MAX_VALUE, -Float.MAX_VALUE, +Float.MAX_VALUE, +Float.MAX_VALUE)
-            window.lastFrameActive = currentFrame
             for (i in 1 until window.idStack.size) window.idStack.pop()  // resize 1
 
             // Update stored window name when it changes (which can _only_ happen with the "###" operator, so the ID would stay unchanged).
@@ -357,13 +358,12 @@ interface imgui_window {
 
             // Clamp position so it stays visible
             // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
+            val viewportRect = viewportRect
             if (!windowPosSetByApi && flags hasnt Wf.ChildWindow && window.autoFitFrames allLessThanEqual 0)
             // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
                 if (io.displaySize allGreaterThan 0) {
-                    val padding = glm.max(style.displayWindowPadding, style.displaySafeAreaPadding)
-                    window.pos = glm.max(window.pos + window.size, padding) - window.size
-                    window.pos.x = glm.min(window.pos.x, (io.displaySize.x - padding.x).f)
-                    window.pos.y = glm.min(window.pos.y, (io.displaySize.y - padding.y).f)
+                    val clampPadding = style.displayWindowPadding max style.displaySafeAreaPadding
+                    clampWindowRect(window, viewportRect, clampPadding)
                 }
             window.pos put floor(window.pos)
 
@@ -412,7 +412,6 @@ interface imgui_window {
             window.drawList.clear()
             window.drawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
             window.drawList.pushTextureId(g.font.containerAtlas.texId)
-            val viewportRect = viewportRect
             if (flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip)
                 pushClipRect(parentWindow!!.clipRect.min, parentWindow.clipRect.max, true)
             else
@@ -477,7 +476,7 @@ interface imgui_window {
                     // Soft clipping, in particular child window don't have minimum size covering the menu bar so this is useful for them.
                     menuBarRect clipWith window.rect()
                     val rounding = if (flags has Wf.NoTitleBar) windowRounding else 0f
-                    window.drawList.addRectFilled(menuBarRect.min, menuBarRect.max, Col.MenuBarBg.u32, rounding, Dcf.Top.i)
+                    window.drawList.addRectFilled(menuBarRect.min + Vec2(windowBorderSize, 0f), menuBarRect.max - Vec2(windowBorderSize, 0f), Col.MenuBarBg.u32, rounding, Dcf.Top.i)
                     if (style.frameBorderSize > 0f && menuBarRect.max.y < window.pos.y + window.size.y)
                         window.drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32, style.frameBorderSize)
                 }
@@ -592,7 +591,7 @@ interface imgui_window {
                 val itemFlagsBackup = window.dc.itemFlags
                 window.dc.itemFlags = window.dc.itemFlags or If.NoNavDefaultFocus
                 window.dc.navLayerCurrent = NavLayer.Menu
-                window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu.i
+                window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu
 
                 // Collapse button
                 if (flags hasnt Wf.NoCollapse)
@@ -601,14 +600,13 @@ interface imgui_window {
 
                 // Close button
                 if (pOpen != null) {
-                    val pad = style.framePadding.y
                     val rad = g.fontSize * 0.5f
-                    if (closeButton(window.getId("#CLOSE"), window.rect().tr + Vec2(-pad - rad, pad + rad), rad + 1))
+                    if (closeButton(window.getId("#CLOSE"), Vec2(window.pos.x + window.size.x - style.framePadding.x - rad, window.pos.y + style.framePadding.y + rad), rad + 1))
                         pOpen[0] = false
                 }
 
                 window.dc.navLayerCurrent = NavLayer.Main
-                window.dc.navLayerCurrentMask = 1 shl NavLayer.Main.i
+                window.dc.navLayerCurrentMask = 1 shl NavLayer.Main
                 window.dc.itemFlags = itemFlagsBackup
 
                 // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
@@ -668,15 +666,16 @@ interface imgui_window {
             window.innerClipRect.max.x = floor(0.5f + window.innerMainRect.max.x - max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
             window.innerClipRect.max.y = floor(0.5f + window.innerMainRect.max.y)
 
-            // We fill last item data based on Title Bar, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
+            // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
             // This is useful to allow creating context menus on title bar only, etc.
             window.dc.lastItemId = window.moveId
             window.dc.lastItemStatusFlags = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max)) ItemStatusFlag.HoveredRect.i else 0
             window.dc.lastItemRect = titleBarRect
-        }
 
-        if(IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
-            ImGuiTestEngineHook_ItemAdd(window.dc.lastItemRect, window.dc.lastItemId)
+            if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
+                ImGuiTestEngineHook_ItemAdd(window.dc.lastItemRect, window.dc.lastItemId)
+        } else   // Append
+            window.setCurrent()
 
         pushClipRect(window.innerClipRect.min, window.innerClipRect.max, true)
 

@@ -112,7 +112,7 @@ interface imgui_menus {
             cursorPos.put(barRect.min.x + window.dc.menuBarOffset.x, barRect.min.y + window.dc.menuBarOffset.y)
             layoutType = LayoutType.Horizontal
             navLayerCurrent = NavLayer.Menu
-            navLayerCurrentMask = 1 shl NavLayer.Menu.i
+            navLayerCurrentMask = 1 shl NavLayer.Menu
             menuBarAppending = true
         }
         alignTextToFramePadding()
@@ -154,7 +154,7 @@ interface imgui_menus {
             endGroup() // Restore position on layer 0
             layoutType = LayoutType.Vertical
             navLayerCurrent = NavLayer.Main
-            navLayerCurrentMask = 1 shl NavLayer.Main.i
+            navLayerCurrentMask = 1 shl NavLayer.Main
             menuBarAppending = false
         }
     }

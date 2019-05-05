@@ -397,10 +397,10 @@ interface imgui_demoDebugInformations {
                 if (!nodeOpen)
                     return
 
-                val overlayDrawList = getForegroundDrawList(window)   // Render additional visuals into the top-most draw list
+                val fgDrawList = getForegroundDrawList(window)   // Render additional visuals into the top-most draw list
                 window?.let {
                     if (isItemHovered())
-                        overlayDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
+                        fgDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
                 }
 
                 var elemOffset = 0
@@ -415,13 +415,13 @@ interface imgui_demoDebugInformations {
                     val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
                     val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
                     val cmdNodeOpen = treeNode(i, "Draw %4d $mode vtx, tex = ${cmd.textureId!!.toHexString}, clip_rect = (%4.0f,%4.0f)-(%4.0f,%4.0f)", cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
-                    if (showDrawCmdClipRects && isItemHovered()) {
+                    if (showDrawCmdClipRects && fgDrawList != null && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
                         val vtxsRect = Rect()
                         for (e in elemOffset until elemOffset + cmd.elemCount)
                             vtxsRect.add(drawList.vtxBuffer[idxBuffer?.get(e) ?: e].pos)
-                        clipRect.floor(); overlayDrawList.addRect(clipRect.min, clipRect.max, COL32(255, 255, 0, 255))
-                        vtxsRect.floor(); overlayDrawList.addRect(vtxsRect.min, vtxsRect.max, COL32(255, 0, 255, 255))
+                        clipRect.floor(); fgDrawList.addRect(clipRect.min, clipRect.max, COL32(255, 255, 0, 255))
+                        vtxsRect.floor(); fgDrawList.addRect(vtxsRect.min, vtxsRect.max, COL32(255, 0, 255, 255))
                     }
                     if (!cmdNodeOpen) continue
                     // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
@@ -445,12 +445,12 @@ interface imgui_demoDebugInformations {
                                 idxI++
                             }
                             selectable(buf.joinToString("", limit = bufP, truncated = ""), false)
-                            if (isItemHovered()) {
-                                val backupFlags = overlayDrawList.flags
+                            if (fgDrawList != null && isItemHovered()) {
+                                val backupFlags = fgDrawList.flags
                                 // Disable AA on triangle outlines at is more readable for very large and thin triangles.
-                                overlayDrawList.flags = overlayDrawList.flags and DrawListFlag.AntiAliasedLines.i.inv()
-                                overlayDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f)
-                                overlayDrawList.flags = backupFlags
+                                fgDrawList.flags = fgDrawList.flags and DrawListFlag.AntiAliasedLines.i.inv()
+                                fgDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f)
+                                fgDrawList.flags = backupFlags
                             }
 
                         }
