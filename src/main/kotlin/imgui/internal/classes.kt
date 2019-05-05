@@ -489,7 +489,7 @@ class WindowTempData {
     /** Current layer, 0..31 (we currently only use 0..1)   */
     var navLayerCurrent = NavLayer.Main
     /** = (1 << navLayerCurrent) used by ::itemAdd prior to clipping. */
-    var navLayerCurrentMask = 1 shl NavLayer.Main.i
+    var navLayerCurrentMask = 1 shl NavLayer.Main
     /** Which layer have been written to (result from previous frame)   */
     var navLayerActiveMask = 0
     /** Which layer have been written to (buffer for current frame) */
@@ -610,7 +610,7 @@ class Window(var context: Context, var name: String) {
     var skipItems = false
     /** Set during the frame where the window is appearing (or re-appearing)    */
     var appearing = false
-    /** Do not display (== (HiddenFramesForResize > 0) || */
+    /** Do not display (== (HiddenFrames*** > 0)) */
     var hidden = false
     /** Set when the window has a close button (p_open != NULL) */
     var hasCloseButton = false
@@ -928,6 +928,7 @@ class Window(var context: Context, var name: String) {
         }
     }
 
+    /** Layer is locked for the root window, however child windows may use a different viewport (e.g. extruding menu) */
     fun addRootWindowToDrawData() = addToDrawData(if (flags has Wf.Tooltip) g.drawDataBuilder.layers[1] else g.drawDataBuilder.layers[0])
 
     // FIXME: Add a more explicit sort order in the window structure.

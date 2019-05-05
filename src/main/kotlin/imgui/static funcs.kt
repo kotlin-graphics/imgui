@@ -17,9 +17,9 @@ import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getColumnOffset
+import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.getNavInputAmount2d
-import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMousePosValid
@@ -831,7 +831,7 @@ fun navUpdate() {
 
     // Store our return window (for returning from Layer 1 to Layer 0) and clear it as soon as we step back in our own Layer 0
     g.navWindow?.let {
-        navSaveLastChildNavWindow(it)
+        navSaveLastChildNavWindowIntoParent(it)
         if (it.navLastChildNavWindow != null && g.navLayer == NavLayer.Main)
             it.navLastChildNavWindow = null
     }
@@ -1095,7 +1095,9 @@ fun navUpdateWindowing() {
 
     // Keyboard: Press and Release ALT to toggle menu layer
     // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of back-end clearing releases all keys on ALT-TAB
-    if ((g.activeId == 0 || g.activeIdAllowOverlap) && NavInput.KeyMenu.isPressed(InputReadMode.Released))
+    if (NavInput.KeyMenu.isPressed(InputReadMode.Pressed))
+        g.navWindowingToggleLayer = true
+    if ((g.activeId == 0 || g.activeIdAllowOverlap) && g.navWindowingToggleLayer && NavInput.KeyMenu.isPressed(InputReadMode.Released))
         if (isMousePosValid(io.mousePos) == isMousePosValid(io.mousePosPrev))
             applyToggleLayer = true
 
@@ -1130,7 +1132,7 @@ fun navUpdateWindowing() {
             navInitWindow(applyFocusWindow!!, false)
 
         // If the window only has a menu layer, select it directly
-        if (applyFocusWindow!!.dc.navLayerActiveMask == 1 shl NavLayer.Menu.i)
+        if (applyFocusWindow!!.dc.navLayerActiveMask == 1 shl NavLayer.Menu)
             g.navLayer = NavLayer.Menu
     }
     applyFocusWindow?.let { g.navWindowingTarget = null }
@@ -1140,9 +1142,10 @@ fun navUpdateWindowing() {
         g.navWindow?.let {
             // Move to parent menu if necessary
             var newNavWindow = it
-            while (newNavWindow.dc.navLayerActiveMask hasnt (1 shl 1)
-                    && newNavWindow.flags has Wf.ChildWindow
-                    && newNavWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
+            while (newNavWindow.parentWindow != null &&
+                    newNavWindow.dc.navLayerActiveMask hasnt (1 shl NavLayer.Menu) &&
+                    newNavWindow.flags has Wf.ChildWindow &&
+                    newNavWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
                 newNavWindow = newNavWindow.parentWindow!!
 
             if (newNavWindow !== it) {
@@ -1152,7 +1155,12 @@ fun navUpdateWindowing() {
             }
             g.navDisableHighlight = false
             g.navDisableMouseHover = true
-            navRestoreLayer(if (it.dc.navLayerActiveMask has (1 shl NavLayer.Menu.i)) NavLayer of (g.navLayer.i xor 1) else NavLayer.Main)
+            // When entering a regular menu bar with the Alt key, we always reinitialize the navigation ID.
+            val newNavLayer = when {
+                it.dc.navLayerActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer.i xor 1)
+                else -> NavLayer.Main
+            }
+            navRestoreLayer(newNavLayer)
         }
 }
 
@@ -1354,7 +1362,9 @@ fun navCalcPreferredRefPos(): Vec2 {
     }
 }
 
-fun navSaveLastChildNavWindow(childWindow: Window?) {
+/** FIXME: This could be replaced by updating a frame number in each window when (window == NavWindow) and (NavLayer == 0).
+ *  This way we could find the last focused window among our children. It would be much less confusing this way? */
+fun navSaveLastChildNavWindowIntoParent(childWindow: Window?) {
     var parentWindow = childWindow
     while (parentWindow != null && parentWindow.flags has Wf.ChildWindow && parentWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
         parentWindow = parentWindow.parentWindow
@@ -1362,7 +1372,8 @@ fun navSaveLastChildNavWindow(childWindow: Window?) {
 }
 
 
-/** Call when we are expected to land on Layer 0 after FocusWindow()    */
+/** Restore the last focused child.
+ *  Call when we are expected to land on the Main Layer (0) after FocusWindow()    */
 fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow ?: window
 
 //-----------------------------------------------------------------------------
