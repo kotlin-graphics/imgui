@@ -550,6 +550,10 @@ interface imgui_main {
             val posTarget = Vec2(Float.MAX_VALUE)
             val sizeTarget = Vec2(Float.MAX_VALUE)
 
+            // Resize grips and borders are on layer 1
+            window.dc.navLayerCurrent = NavLayer.Menu
+            window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu.i
+
             // Manual resize grips
             pushId("#RESIZE")
             for (resizeGripN in 0 until resizeGripCount) {
@@ -644,6 +648,10 @@ interface imgui_main {
                 window.pos = floor(posTarget)
                 window.markIniSettingsDirty()
             }
+
+            // Resize nav layer
+            window.dc.navLayerCurrent = NavLayer.Main
+            window.dc.navLayerCurrentMask = 1 shl NavLayer.Main.i
 
             window.size put window.sizeFull
 
