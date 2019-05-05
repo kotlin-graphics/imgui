@@ -16,6 +16,7 @@ import imgui.ImGui.isRectVisible
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
+import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.renderText
@@ -88,7 +89,7 @@ interface listBoxes {
         val labelSize = calcTextSize(label, true)
 
         // Size default to hold ~7 items. Fractional number of items helps seeing that we can scroll down/up without looking at scrollbar.
-        val size = calcItemSize(sizeArg, calcItemWidth(), textLineHeightWithSpacing * 7.4f + style.itemSpacing.y)
+        val size = calcItemSize(sizeArg, nextItemWidth, textLineHeightWithSpacing * 7.4f + style.itemSpacing.y)
         val frameSize = Vec2(size.x, glm.max(size.y, labelSize.y))
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
         val bb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))

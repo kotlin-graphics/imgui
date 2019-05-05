@@ -1,6 +1,7 @@
 package imgui.imgui.widgets
 
 import gli_.hasnt
+import glm_.func.common.max
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec3.Vec3
@@ -17,6 +18,7 @@ import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.frameHeight
 import imgui.ImGui.inputTextEx
 import imgui.ImGui.io
+import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
@@ -178,10 +180,9 @@ interface inputKeyboard {
 
             beginGroup() // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
             pushId(label)
-            pushItemWidth(max(1f, calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
+            nextItemWidth = 1f max (nextItemWidth - (buttonSize + style.itemInnerSpacing.x) * 2)
             if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
                 valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialTextA, dataType, dataPtr, format)
-            popItemWidth()
 
             // Step buttons
             val backupFramePadding = Vec2(style.framePadding)
@@ -220,7 +221,7 @@ interface inputKeyboard {
         var valueChanged = false
         beginGroup()
         pushId(label)
-        pushMultiItemsWidths(components)
+        pushMultiItemsWidths(components, nextItemWidth)
         for (i in 0 until components) {
             pushId(i)
             withFloat(v, i) {
@@ -245,7 +246,7 @@ interface inputKeyboard {
         var valueChanged = false
         beginGroup()
         pushId(label)
-        pushMultiItemsWidths(components)
+        pushMultiItemsWidths(components, nextItemWidth)
         for (i in 0 until components) {
             pushId(i)
             withInt(v, i) { valueChanged = inputScalar("", DataType.Int, it, step, stepFast, format, flags) || valueChanged }

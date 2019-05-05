@@ -19,6 +19,7 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
+import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.renderBullet
@@ -275,7 +276,7 @@ interface main {
         if (window.skipItems) return
 
         val pos = Vec2(window.dc.cursorPos)
-        val size = calcItemSize(sizeArg, calcItemWidth(), g.fontSize + style.framePadding.y * 2f)
+        val size = calcItemSize(sizeArg, nextItemWidth, g.fontSize + style.framePadding.y * 2f)
         val bb = Rect(pos, pos + size)
         itemSize(size, style.framePadding.y)
         if (!itemAdd(bb, 0)) return

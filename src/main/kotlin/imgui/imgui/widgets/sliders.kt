@@ -24,6 +24,7 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
+import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
@@ -93,7 +94,7 @@ interface sliders {
         if (window.skipItems) return false
 
         val id = window.getId(label)
-        val w = calcItemWidth()
+        val w = nextItemWidth
 
         val labelSize = calcTextSize(label, 0, true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
@@ -310,7 +311,7 @@ interface sliders {
         var valueChanged = false
         beginGroup()
         pushId(label)
-        pushMultiItemsWidths(component)
+        pushMultiItemsWidths(component, nextItemWidth)
         for (i in 0 until component) {
             pushId(i)
             withFloat(v, i) { valueChanged = sliderFloat("", it, vMin, vMax, format, power) || valueChanged }
@@ -332,7 +333,7 @@ interface sliders {
         var valueChanged = false
         beginGroup()
         pushId(label)
-        pushMultiItemsWidths(components)
+        pushMultiItemsWidths(components, nextItemWidth)
         for (i in 0 until components) {
             pushId(i)
             withInt(v, i) { valueChanged = sliderInt("", it, vMin, vMax, format) || valueChanged }

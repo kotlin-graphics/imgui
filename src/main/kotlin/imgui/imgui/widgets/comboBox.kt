@@ -15,6 +15,7 @@ import imgui.ImGui.frameHeight
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.nextItemWidth
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popId
 import imgui.ImGui.popStyleVar
@@ -60,7 +61,8 @@ interface comboBox {
 
         val arrowSize = if (flags has Cf.NoArrowButton) 0f else frameHeight
         val labelSize = calcTextSize(label, true)
-        val w = if (flags has Cf.NoPreview) arrowSize else calcItemWidth()
+        val expectedW = nextItemWidth
+        val w = if(flags has Cf.NoPreview) arrowSize else expectedW
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
         itemSize(totalBb, style.framePadding.y)

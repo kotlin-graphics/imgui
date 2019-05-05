@@ -37,6 +37,7 @@ import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.logText
+import imgui.ImGui.nextItemWidth
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
@@ -369,7 +370,7 @@ interface imgui_internal {
     /** [Internal] Calculate full item size given user provided 'size' parameter and default width/height. Default width is often == CalcItemWidth().
      *  Those two functions CalcItemWidth vs CalcItemSize are awkwardly named because they are not fully symmetrical.
      *  Note that only CalcItemWidth() is publicly exposed.
-     *  The 4.0f here may be changed to match CalcItemWidth() and/or BeginChild() (right now we have a mismatch which is harmless but undesirable) */
+     *  The 4.0f here may be changed to match GetNextItemWidth() and/or BeginChild() (right now we have a mismatch which is harmless but undesirable) */
     fun calcItemSize(size: Vec2, defaultW: Float, defaultH: Float): Vec2 {
         val window = g.currentWindow!!
 
@@ -402,10 +403,9 @@ interface imgui_internal {
         return glm.max(wrapPosX - pos.x, 1f)
     }
 
-    fun pushMultiItemsWidths(components: Int, wFull_: Float = 0f) {
+    fun pushMultiItemsWidths(components: Int, wFull: Float) {
 
         val window = ImGui.currentWindow
-        val wFull = if (wFull_ <= 0f) calcItemWidth() else wFull_
         val wItemOne = glm.max(1f, ((wFull - (style.itemInnerSpacing.x) * (components - 1)) / components.f).i.f)
         val wItemLast = glm.max(1f, (wFull - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
         window.dc.itemWidthStack.push(wItemLast)
@@ -2388,7 +2388,7 @@ interface imgui_internal {
             beginGroup()
         val id = window.getId(label)
         val labelSize = calcTextSize(label, 0, true)
-        val size = calcItemSize(sizeArg, calcItemWidth(),
+        val size = calcItemSize(sizeArg, nextItemWidth,
                 // Arbitrary default of 8 lines high for multi-line
                 (if (isMultiline) textLineHeight * 8f else labelSize.y) + style.framePadding.y * 2f)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
@@ -3227,7 +3227,7 @@ interface imgui_internal {
         val valuesCount = data.count()
 
         val labelSize = calcTextSize(label, 0, true)
-        if (frameSize.x == 0f) frameSize.x = calcItemWidth()
+        if (frameSize.x == 0f) frameSize.x = nextItemWidth
         if (frameSize.y == 0f) frameSize.y = labelSize.y + style.framePadding.y * 2
 
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)

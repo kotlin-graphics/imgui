@@ -524,6 +524,8 @@ class WindowTempData {
     var itemFlags: ItemFlags = 0
     /** == ItemWidthStack.back(). 0.0: default, >0.0: width in pixels, <0.0: align xx pixels to the right of window */
     var itemWidth = 0f
+
+    var nextItemWidth = Float.MAX_VALUE
     /** == TextWrapPosStack.back() [empty == -1.0f] */
     var textWrapPos = -1f
 
