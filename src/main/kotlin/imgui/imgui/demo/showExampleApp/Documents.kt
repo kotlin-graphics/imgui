@@ -241,12 +241,10 @@ object Documents {
                 if (beginPopupModal("Save?")) {
                     text("Save change to the following items?")
                     pushItemWidth(-1f)
-                    listBoxHeader("##", closeQueueUnsavedDocuments, 6)
-                    closeQueue.forEach {
-                        if (it.dirty)
-                            text(it.name)
+                    if (listBoxHeader("##", closeQueueUnsavedDocuments, 6)) {
+                        closeQueue.forEach { if (it.dirty) text(it.name) }
+                        listBoxFooter()
                     }
-                    listBoxFooter()
 
                     if (button("Yes", Vec2(80, 0))) {
                         closeQueue.forEach {
