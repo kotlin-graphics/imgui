@@ -120,12 +120,13 @@ interface sliders {
         var tempInputStart = false
         if (!tempInputIsActive) {
             val focusRequested = focusableItemRegister(window, id)
-            if (focusRequested || (hovered && io.mouseClicked[0]) || g.navActivateId == id || g.navInputId == id) {
+            val clicked = hovered && io.mouseClicked[0]
+            if (focusRequested || clicked || g.navActivateId == id || g.navInputId == id) {
                 setActiveId(id, window)
                 setFocusId(id, window)
                 window.focus()
                 g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-                if (focusRequested || io.keyCtrl || g.navInputId == id) {
+                if (focusRequested || (clicked && io.keyCtrl) || g.navInputId == id) {
                     tempInputStart = true
                     focusableItemUnregister(window)
                 }
