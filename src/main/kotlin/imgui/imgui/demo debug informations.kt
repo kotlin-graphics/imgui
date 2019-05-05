@@ -248,7 +248,7 @@ interface imgui_demoDebugInformations {
 
         if (showWindowsRects || showWindowsBeginOrder)
             for (window in g.windows) {
-                if (window.flags has Wf.ChildWindow || !window.wasActive)
+                if (!window.wasActive)
                     continue
                 val drawList = getForegroundDrawList(window)
                 if (showWindowsRects) {
@@ -262,7 +262,7 @@ interface imgui_demoDebugInformations {
                     }
                     drawList.addRect(r.min, r.max, COL32(255, 0, 128, 255))
                 }
-                if (showWindowsBeginOrder) {
+                if (showWindowsBeginOrder  && window.flags hasnt Wf.ChildWindow) {
                     val buf = "${window.beginOrderWithinContext}".toCharArray(CharArray(32))
                     drawList.addRectFilled(window.pos, window.pos + Vec2(fontSize), COL32(200, 100, 100, 255))
                     drawList.addText(window.pos, COL32(255, 255, 255, 255), buf)
@@ -507,14 +507,8 @@ interface imgui_demoDebugInformations {
             }
 
             fun nodeWindow(window: Window, label: String) {
-                val nodeOpen = treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x%p", window.hashCode())
-                if (showWindowsRects && isItemHovered())
-                    getForegroundDrawList(window)?.let { fgDrawList -> }
-
-
-                if (!nodeOpen)
+                if(treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x%p", window.hashCode()))
                     return
-
                 val flags = window.flags
                 nodeDrawList(window, window.drawList, "DrawList")
                 bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,

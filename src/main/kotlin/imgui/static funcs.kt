@@ -34,7 +34,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
-import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
+import imgui.imgui.imgui_colums.Companion.COLUMNS_HIT_RECT_HALF_WIDTH
 import imgui.imgui.navRestoreLayer
 import imgui.imgui.navScoreItem
 import imgui.impl.windowsIme.COMPOSITIONFORM
@@ -70,7 +70,7 @@ fun getDraggedColumnOffset(columns: Columns, columnIndex: Int): Float {
     assert(columnIndex > 0) { "We are not supposed to drag column 0." }
     assert(g.activeId == columns.id + columnIndex/* as ID */)
 
-    var x = io.mousePos.x - g.activeIdClickOffset.x + columnsRectHalfWidth - window.pos.x
+    var x = io.mousePos.x - g.activeIdClickOffset.x + COLUMNS_HIT_RECT_HALF_WIDTH - window.pos.x
     x = glm.max(x, getColumnOffset(columnIndex - 1) + style.columnsMinSpacing)
     if (columns.flags has ColumnsFlag.NoPreserveWidths)
         x = glm.min(x, getColumnOffset(columnIndex + 1) - style.columnsMinSpacing)

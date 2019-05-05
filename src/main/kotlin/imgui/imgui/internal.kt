@@ -60,7 +60,7 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
 import imgui.TextEditState.K
-import imgui.imgui.imgui_colums.Companion.columnsRectHalfWidth
+import imgui.imgui.imgui_colums.Companion.COLUMNS_HIT_RECT_HALF_WIDTH
 import imgui.imgui.widgets.main
 import imgui.internal.*
 import kool.lib.fill
@@ -917,8 +917,8 @@ interface imgui_internal {
             with(columns) {
                 minX = dc.indent - style.itemSpacing.x // Lock our horizontal range
                 maxX = max(contentRegionWidth - scroll.x, minX + 1f)
-                startPosY = dc.cursorPos.y
-                startMaxPosX = dc.cursorMaxPos.x
+                backupCursorPosY = dc.cursorPos.y
+                backupCursorMaxPosX = dc.cursorMaxPos.x
                 lineMaxY = dc.cursorPos.y
                 lineMinY = dc.cursorPos.y
             }
@@ -965,41 +965,42 @@ interface imgui_internal {
         columns.lineMaxY = glm.max(columns.lineMaxY, dc.cursorPos.y)
         dc.cursorPos.y = columns.lineMaxY
         if (columns.flags hasnt Cf.GrowParentContentsSize)
-            dc.cursorMaxPos.x = columns.startMaxPosX // Restore cursor max pos, as columns don't grow parent
+            dc.cursorMaxPos.x = columns.backupCursorMaxPosX // Restore cursor max pos, as columns don't grow parent
 
         // Draw columns borders and handle resize
         var isBeingResized = false
         if (columns.flags hasnt Cf.NoBorder && !skipItems) {
 
-            val y1 = columns.startPosY
-            val y2 = dc.cursorPos.y
+            // We clip Y boundaries CPU side because very long triangles are mishandled by some GPU drivers.
+            val y1 = columns.backupCursorPosY max clipRect.min.y
+            val y2 = dc.cursorPos.y min clipRect.max.y
             var draggingColumn = -1
             for (n in 1 until columns.count) {
-
+                val column = columns.columns[n]
                 val x = pos.x + getColumnOffset(n)
                 val columnId: ID = columns.id + n
-                val columnHw = columnsRectHalfWidth // Half-width for interaction
-                val columnRect = Rect(x - columnHw, y1, x + columnHw, y2)
+                val columnHitHw = COLUMNS_HIT_RECT_HALF_WIDTH
+                val columnHitRect = Rect (Vec2(x - columnHitHw, y1), Vec2(x + columnHitHw, y2))
                 keepAliveId(columnId)
-                if (isClippedEx(columnRect, columnId, false)) continue
+                if (isClippedEx(columnHitRect, columnId, false)) continue
 
                 var hovered = false
                 var held = false
                 if (columns.flags hasnt Cf.NoResize) {
 
-                    val (_, b, c) = buttonBehavior(columnRect, columnId)
+                    val (_, b, c) = buttonBehavior(columnHitRect, columnId)
                     hovered = b
                     held = c
                     if (hovered || held)
                         g.mouseCursor = MouseCursor.ResizeEW
-                    if (held && columns.columns[n].flags hasnt Cf.NoResize)
+                    if (held && column.flags hasnt Cf.NoResize)
                         draggingColumn = n
                 }
 
-                // Draw column (we clip the Y boundaries CPU side because very long triangles are mishandled by some GPU drivers.)
+                // Draw column
                 val col = getColorU32(if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator)
                 val xi = x.i.f
-                drawList.addLine(Vec2(xi, max(y1 + 1f, clipRect.min.y)), Vec2(xi, min(y2, clipRect.max.y)), col)
+                window.drawList.addLine(Vec2(xi, y1 + 1f), Vec2(xi, y2), col)
             }
 
             // Apply dragging after drawing the column lines, so our rendered lines are in sync with how items were displayed during the frame.

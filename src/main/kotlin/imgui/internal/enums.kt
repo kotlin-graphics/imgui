@@ -1,5 +1,6 @@
 package imgui.internal
 
+import imgui.ColumnsFlags
 import imgui.DrawCornerFlags
 import imgui.DrawListFlags
 
@@ -94,7 +95,7 @@ enum class DragFlag(val i: Int) { None(0), Vertical(1 shl 0) }
 infix fun Int.has(b: DragFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: DragFlag) = and(b.i) == 0
 
-enum class ColumnsFlag(val i: Int) {
+enum class ColumnsFlag(val i: ColumnsFlags) {
 
     None(0),
     /** Disable column dividers */

@@ -127,8 +127,6 @@ object ExampleApp {
             return
         }
 
-        text("dear imgui says hello. ($version)")
-
         // Most "big" widgets share a common width settings by default.
         //pushItemWidth(windowWidth * 0.65f)    // Use 2/3 of the space for widgets and 1/3 for labels (default)
         // Use fixed width for labels (by passing a negative value), the rest goes to widgets. We choose a width proportional to our font size.
@@ -161,6 +159,7 @@ object ExampleApp {
             }
         }
 
+        text("dear imgui says hello. ($version)")
         spacing()
 
         collapsingHeader("Help") {

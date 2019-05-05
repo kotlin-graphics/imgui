@@ -16,30 +16,29 @@ import imgui.internal.SeparatorFlag as Sf
 
 interface imgui_cursorLayout {
 
+    fun sameLine(offsetFromStartX: Int) = sameLine(offsetFromStartX, 1)
 
-    /** Call between widgets or groups to layout them horizontally. X position given in window coordinates.
-     *  Gets back to previous line and continue with horizontal layout
-     *      localPosX == 0      : follow right after previous item
-     *      localPosX != 0      : align to specified x position (relative to window/group left)
-     *      spacingW < 0   : use default spacing if localPosX == 0, no spacing if localPosX != 0
-     *      spacingW >= 0  : enforce spacing amount    */
-    fun sameLine(localPosX: Int) = sameLine(localPosX, 1)
-
-    fun sameLine(localPosX: Int, spacingW: Int) = sameLine(localPosX.f, spacingW.f)
+    fun sameLine(offsetFromStartX: Int, spacing: Int) = sameLine(offsetFromStartX.f, spacing.f)
 
     fun sameLine() = sameLine(0f, -1f)
 
-    fun sameLine(localPosX: Float = 0f, spacingW: Float = -1f) {
+    /** Call between widgets or groups to layout them horizontally. X position given in window coordinates.
+     *  Gets back to previous line and continue with horizontal layout
+     *      offset_from_start_x == 0 : follow right after previous item
+     *      offset_from_start_x != 0 : align to specified x position (relative to window/group left)
+     *      spacing_w < 0            : use default spacing if pos_x == 0, no spacing if pos_x != 0
+     *      spacing_w >= 0           : enforce spacing amount    */
+    fun sameLine(offsetFromStartX: Float = 0f, spacing: Float = -1f) {
 
         val window = currentWindow
         if (window.skipItems) return
 
         with(window) {
             dc.cursorPos.put(
-                    if (localPosX != 0f)
-                        pos.x - scroll.x + localPosX + glm.max(0f, spacingW) + dc.groupOffset + dc.columnsOffset
+                    if (offsetFromStartX != 0f)
+                        pos.x - scroll.x + offsetFromStartX + glm.max(0f, spacing) + dc.groupOffset + dc.columnsOffset
                     else
-                        dc.cursorPosPrevLine.x + if (spacingW < 0f) style.itemSpacing.x else spacingW
+                        dc.cursorPosPrevLine.x + if (spacing < 0f) style.itemSpacing.x else spacing
                     , dc.cursorPosPrevLine.y)
             dc.currentLineSize.y = dc.prevLineSize.y
             dc.currentLineTextBaseOffset = dc.prevLineTextBaseOffset

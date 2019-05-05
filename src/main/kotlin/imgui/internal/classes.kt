@@ -302,32 +302,32 @@ class ColumnData {
 /** Storage data for a columns set */
 class Columns {
     var id: ID = 0
-    var flags: ColumnsFlags = 0
+    var flags: ColumnsFlags = ColumnsFlag.None.i
     var isFirstFrame = false
     var isBeingResized = false
     var current = 0
     var count = 1
     var minX = 0f
     var maxX = 0f
-    /** Copy of CursorPos */
-    var startPosY = 0f
-    /** Copy of CursorMaxPos */
-    var startMaxPosX = 0f
+    /** Backup of CursorPos at the time of BeginColumns() */
+    var backupCursorPosY = 0f
+    /** Backup of CursorMaxPos at the time of BeginColumns() */
+    var backupCursorMaxPosX = 0f
     var lineMinY = 0f
     var lineMaxY = 0f
     val columns = ArrayList<ColumnData>()
 
     fun clear() {
         id = 0
-        flags = 0
+        flags = ColumnsFlag.None.i
         isFirstFrame = false
         isBeingResized = false
         current = 0
         count = 1
         maxX = 0f
         minX = 0f
-        startPosY = 0f
-        startMaxPosX = 0f
+        backupCursorPosY = 0f
+        backupCursorMaxPosX = 0f
         lineMaxY = 0f
         lineMinY = 0f
         columns.clear()
