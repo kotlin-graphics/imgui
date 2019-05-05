@@ -134,10 +134,11 @@ interface imgui_menus {
                 /*  To do so we claim focus back, restore NavId and then process the movement request for yet another
                     frame. This involve a one-frame delay which isn't very problematic in this situation.
                     We could remove it by scoring in advance for multiple window (probably not worth the hassle/cost)   */
-                assert(window.dc.navLayerActiveMaskNext has 0x02) { "Sanity check" }
+                val layer = NavLayer.Menu
+                assert(window.dc.navLayerActiveMaskNext has (1 shl layer)) { "Sanity check" }
                 window.focus()
-                setNavIDWithRectRel(window.navLastIds[1], NavLayer.Menu, window.navRectRel[1])
-                g.navLayer = NavLayer.Menu
+                setNavIDWithRectRel(window.navLastIds[layer.i], layer, window.navRectRel[layer.i])
+                g.navLayer = layer
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
                 g.navMoveRequestForward = NavForward.ForwardQueued
                 navMoveRequestCancel()
@@ -189,7 +190,7 @@ interface imgui_menus {
                 For ChildMenu, the popup position will be overwritten by the call to FindBestWindowPosForPopup() in begin() */
             popupPos.put(pos.x - 1.0f - (style.itemSpacing.x * 0.5f).i.f, pos.y - style.framePadding.y + window.menuBarHeight)
             window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
-            pushStyleVar(StyleVar.ItemSpacing, style.itemSpacing * 2f)
+            pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             val w = labelSize.x
             val flags = Sf.NoHoldingActiveID or Sf.PressedOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
             pressed = selectable(label, menuIsOpen, flags, Vec2(w, 0f))
@@ -325,7 +326,7 @@ interface imgui_menus {
                 Note that in this situation we render neither the shortcut neither the selected tick mark   */
             val w = labelSize.x
             window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
-            pushStyleVar(StyleVar.ItemSpacing, style.itemSpacing * 2f)
+            pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             pressed = selectable(label, false, flags, Vec2(w, 0f))
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
