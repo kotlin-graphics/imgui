@@ -675,6 +675,9 @@ interface imgui_window {
             window.dc.lastItemRect = titleBarRect
         }
 
+        if(IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
+            ImGuiTestEngineHook_ItemAdd(window.dc.lastItemRect, window.dc.lastItemId)
+
         pushClipRect(window.innerClipRect.min, window.innerClipRect.max, true)
 
         // Clear 'accessed' flag last thing

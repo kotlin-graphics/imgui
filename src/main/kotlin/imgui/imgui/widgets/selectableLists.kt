@@ -149,6 +149,8 @@ interface selectableLists {
         // Automatically close popups
         if (pressed && window.flags has Wf.Popup && flags hasnt Sf.DontClosePopups && window.dc.itemFlags hasnt If.SelectableDontClosePopup)
             closeCurrentPopup()
+
+        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
         return pressed
     }
 
