@@ -3214,6 +3214,7 @@ interface imgui_internal {
             var vMax = -Float.MAX_VALUE
             for (i in 0 until valuesCount) {
                 val v = data[i]
+                if(v.isNaN) continue
                 vMin = vMin min v
                 vMax = vMax max v
             }
