@@ -371,11 +371,19 @@ interface imgui_internal {
      *  Note that only CalcItemWidth() is publicly exposed. */
     fun calcItemSize(size: Vec2, defaultW: Float, defaultH: Float): Vec2 {
         val window = g.currentWindow!!
-        val contentMax = if (size anyLessThan 0f) contentRegionMaxScreen else Vec2()
-        if (size.x <= 0f)
-            size.x = if (size.x == 0f) defaultW else max(contentMax.x - window.dc.cursorPos.x, 4f) + size.x
-        if (size.y <= 0f)
-            size.y = if (size.y == 0f) defaultH else max(contentMax.y - window.dc.cursorPos.y, 4f) + size.y
+
+        val regionMax = if (size anyLessThan 0f) contentRegionMaxScreen else Vec2()
+
+        if (size.x == 0f)
+            size.x = defaultW
+        else if (size.x < 0f)
+            size.x = 4f max (regionMax.x - window.dc.cursorPos.x) + size.x
+
+        if (size.y == 0f)
+            size.y = defaultH
+        else if (size.y < 0f)
+            size.y = 4f max (regionMax.y - window.dc.cursorPos.y) + size.y
+
         return size
     }
 

@@ -1,15 +1,14 @@
 package imgui.imgui
 
 import glm_.f
-import glm_.glm
 import glm_.i
+import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.contentRegionAvail
+import imgui.ImGui.contentRegionMaxScreen
 import imgui.ImGui.currentWindow
-import imgui.ImGui.currentWindowRead
 import imgui.ImGui.defaultFont
 import imgui.ImGui.popItemFlag
 import imgui.ImGui.pushItemFlag
@@ -256,9 +255,8 @@ interface imgui_parametersStacks {
         val window = g.currentWindow!!
         var w = window.dc.itemWidth
         if (w < 0f) {
-            // Align to a right-side limit. We include 1 frame padding in the calculation because this is how the width is always used (we add 2 frame padding to it), but we could move that responsibility to the widget as well.
-            val widthToRightEdge = contentRegionAvail.x
-            w = glm.max(1f, widthToRightEdge + w)
+            val regionMaxX = contentRegionMaxScreen.x
+            w = 1f max (regionMaxX - window.dc.cursorPos.x + w)
         }
         return w.i.f
     }
