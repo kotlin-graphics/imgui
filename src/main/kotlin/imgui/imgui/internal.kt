@@ -1000,7 +1000,7 @@ interface imgui_internal {
                 // Draw column
                 val col = getColorU32(if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator)
                 val xi = x.i.f
-                window.drawList.addLine(Vec2(xi, y1 + 1f), Vec2(xi, y2), col)
+                drawList.addLine(Vec2(xi, y1 + 1f), Vec2(xi, y2), col)
             }
 
             // Apply dragging after drawing the column lines, so our rendered lines are in sync with how items were displayed during the frame.
@@ -1750,19 +1750,21 @@ interface imgui_internal {
         // Render background
         val otherScrollbar = if (horizontal) window.scrollbar.y else window.scrollbar.x
         val otherScrollbarSizeW = if (otherScrollbar) style.scrollbarSize else 0f
-        val windowRect = window.rect()
+        val hostRect = window.rect()
         val borderSize = window.windowBorderSize
         val bb = when (horizontal) {
-            true -> Rect(window.pos.x + borderSize, windowRect.max.y - style.scrollbarSize,
-                    windowRect.max.x - otherScrollbarSizeW - borderSize, windowRect.max.y - borderSize)
-            else -> Rect(windowRect.max.x - style.scrollbarSize, window.pos.y + borderSize,
-                    windowRect.max.x - borderSize, windowRect.max.y - otherScrollbarSizeW - borderSize)
+            true -> Rect(hostRect.min.x + borderSize, hostRect.max.y - style.scrollbarSize,
+                    hostRect.max.x - otherScrollbarSizeW - borderSize, hostRect.max.y - borderSize)
+            else -> Rect(hostRect.max.x - style.scrollbarSize, hostRect.min.y + borderSize,
+                    hostRect.max.x - borderSize, hostRect.max.y - otherScrollbarSizeW - borderSize)
         }
+        bb.min maxAssign hostRect.min // Handle case where the host rectangle is smaller than the scrollbar
         if (!horizontal)
             bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f  // FIXME: InnerRect?
 
+        val bbWidth = bb.width
         val bbHeight = bb.height
-        if (bb.width <= 0f || bbHeight <= 0f)
+        if (bbWidth <= 0f || bbHeight <= 0f)
             return
 
         // When we are too small, start hiding and disabling the grab (this reduce visual noise on very small window and facilitate using the resize grab)
@@ -1781,8 +1783,8 @@ interface imgui_internal {
         }
         window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, window.windowRounding, windowRoundingCorners)
         bb.expand(Vec2(
-                -glm.clamp(((bb.max.x - bb.min.x - 2f) * 0.5f).i.f, 0f, 3f),
-                -glm.clamp(((bb.max.y - bb.min.y - 2f) * 0.5f).i.f, 0f, 3f)))
+                -glm.clamp(((bbWidth - 2f) * 0.5f).i.f, 0f, 3f),
+                -glm.clamp(((bbHeight - 2f) * 0.5f).i.f, 0f, 3f)))
 
         // V denote the main, longer axis of the scrollbar (= height for a vertical scrollbar)
         val scrollbarSizeV = if (horizontal) bb.width else bb.height
@@ -1856,9 +1858,9 @@ interface imgui_internal {
         }, alpha)
         val grabRect = when {
             horizontal -> Rect(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y,
-                    min(lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, windowRect.max.x), bb.max.y)
+                    min(lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, hostRect.max.x), bb.max.y)
             else -> Rect(bb.min.x, lerp(bb.min.y, bb.max.y, grabVNorm),
-                    bb.max.x, min(lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels, windowRect.max.y))
+                    bb.max.x, min(lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels, hostRect.max.y))
         }
         window.drawList.addRectFilled(grabRect.min, grabRect.max, grabCol, style.scrollbarRounding)
     }

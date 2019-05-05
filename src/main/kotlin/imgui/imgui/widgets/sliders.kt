@@ -17,6 +17,7 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.focusableItemUnregister
+import imgui.ImGui.getColorU32
 import imgui.ImGui.inputScalarAsWidgetReplacement
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
@@ -145,8 +146,8 @@ interface sliders {
             markItemEdited(id)
 
         // Render grab
-        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
-        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
+        if (grabBb.max.x > grabBb.min.x)
+            window.drawList.addRectFilled(grabBb.min, grabBb.max, getColorU32(if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab), style.grabRounding)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
         val value = format.format(style.locale, v())
@@ -283,8 +284,8 @@ interface sliders {
             markItemEdited(id)
 
         // Render grab
-        val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
-        window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, style.grabRounding)
+        if (grabBb.max.y > grabBb.min.y)
+            window.drawList.addRectFilled(grabBb.min, grabBb.max, getColorU32(if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab), style.grabRounding)
 
         /*  Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
             For the vertical slider we allow centered text to overlap the frame padding         */
