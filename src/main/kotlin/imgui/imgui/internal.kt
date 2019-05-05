@@ -366,14 +366,18 @@ interface imgui_internal {
         window.dc.focusCounterTab--
     }
 
-    fun calcItemSize(size: Vec2, defaultX: Float, defaultY: Float): Vec2 {
+    /** [Internal] Calculate full item size given user provided 'size' parameter and default width/height. Default width is often == CalcItemWidth().
+     *  Those two functions CalcItemWidth vs CalcItemSize are awkwardly named because they are not fully symmetrical.
+     *  Note that only CalcItemWidth() is publicly exposed. */
+    fun calcItemSize(size: Vec2, defaultW: Float, defaultH: Float): Vec2 {
+        val window = currentWindowRead
         val contentMax = Vec2()
-        if (size.x < 0f || size.y < 0f)
-            contentMax put g.currentWindow!!.pos + contentRegionMax
+        if (size anyLessThan 0f)
+            contentMax = window.pos + contentRegionMax
         if (size.x <= 0f)
-            size.x = if (size.x == 0f) defaultX else glm.max(contentMax.x - g.currentWindow!!.dc.cursorPos.x, 4f) + size.x
+            size.x = if(size.x == 0f) defaultW else max(contentMax.x - window.dc.cursorPos.x, 4f) + size.x
         if (size.y <= 0f)
-            size.y = if (size.y == 0f) defaultY else glm.max(contentMax.y - g.currentWindow!!.dc.cursorPos.y, 4f) + size.y
+            size.y = if(size.y == 0f) defaultH else max(contentMax.y - window.dc.cursorPos.y, 4f) + size.y
         return size
     }
 
