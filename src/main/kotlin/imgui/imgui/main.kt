@@ -155,8 +155,8 @@ interface imgui_main {
         g.activeIdIsAlive = 0
         g.activeIdPreviousFrameIsAlive = false
         g.activeIdIsJustActivated = false
-        if (g.scalarAsInputTextId != 0 && g.activeId != g.scalarAsInputTextId)
-            g.scalarAsInputTextId = 0
+        if (g.tempInputTextId != 0 && g.activeId != g.tempInputTextId)
+            g.tempInputTextId = 0
 
         // Drag and drop
         g.dragDropAcceptIdPrev = g.dragDropAcceptIdCurr

@@ -10,7 +10,6 @@ import glm_.vec4.Vec4
 import glm_.vec4.Vec4i
 import imgui.*
 import imgui.ImGui.beginGroup
-import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endGroup
@@ -18,7 +17,7 @@ import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.focusableItemUnregister
 import imgui.ImGui.getColorU32
-import imgui.ImGui.inputScalarAsWidgetReplacement
+import imgui.ImGui.tempInputTextScalar
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
@@ -38,6 +37,7 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
 import imgui.ImGui.sliderBehavior
 import imgui.ImGui.style
+import imgui.ImGui.tempInputTextIsActive
 import imgui.ImGui.textEx
 import imgui.imgui.widgets.drags.Companion.patchFormatStringFloatToInt
 import imgui.imgui.withFloat
@@ -115,24 +115,25 @@ interface sliders {
             else -> format_
         }
         // Tabbing or CTRL-clicking on Slider turns it into an input box
-        var startTextInput = false
+        val tempInputIsActive = tempInputTextIsActive(id)
+        var tempInputStart = false
         val focusRequested = focusableItemRegister(window, id)
         val hovered = itemHoverable(frameBb, id)
-        if (focusRequested || (hovered && io.mouseClicked[0]) || g.navActivateId == id || (g.navInputId == id && g.scalarAsInputTextId != id)) {
+        if (focusRequested || (hovered && io.mouseClicked[0]) || g.navActivateId == id || (g.navInputId == id && !tempInputIsActive)) {
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()
             g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
             if (focusRequested || io.keyCtrl || g.navInputId == id) {
-                startTextInput = true
-                g.scalarAsInputTextId = 0
+                tempInputStart = true
+                g.tempInputTextId = 0
             }
         }
 
-        if (startTextInput || (g.activeId == id && g.scalarAsInputTextId == id)) {
+        if (tempInputIsActive || tempInputStart) {
             window.dc.cursorPos put frameBb.min
             focusableItemUnregister(window)
-            return inputScalarAsWidgetReplacement(frameBb, id, label, DataType.Float, v, format)
+            return tempInputTextScalar(frameBb, id, label, DataType.Float, v, format)
         }
 
         // Draw frame

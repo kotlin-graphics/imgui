@@ -188,7 +188,7 @@ interface imgui_colums {
     /** create a Tab. Returns true if the Tab is selected. */
     fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = 0): Boolean {
 
-        val window = g.currentWindow
+        val window = g.currentWindow!!
         if (window.skipItems) return false
 
         val tabBar = g.currentTabBar
@@ -204,7 +204,7 @@ interface imgui_colums {
     /** only call EndTabItem() if BeginTabItem() returns true! */
     fun endTabItem() {
 
-        val window = g.currentWindow
+        val window = g.currentWindow!!
         if (window.skipItems) return
 
         val tabBar = g.currentTabBar

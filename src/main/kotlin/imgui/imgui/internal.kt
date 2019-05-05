@@ -221,7 +221,7 @@ interface imgui_internal {
 
     /** Push a given id value ignoring the ID stack as a seed. */
     fun pushOverrideID(id: ID) {
-        g.currentWindow.idStack.push(id)
+        g.currentWindow!!.idStack.push(id)
     }
 
 
@@ -3069,14 +3069,14 @@ interface imgui_internal {
         }
     }
 
-    /** Create text input in place of an active drag/slider (used when doing a CTRL+Click on drag/slider widgets)
+    /** Create text input in place of another active widget (e.g. used when doing a CTRL+Click on drag/slider widgets)
      *  FIXME: Facilitate using this in variety of other situations. */
-    fun inputScalarAsWidgetReplacement(bb: Rect, id: ID, label: String, dataType: DataType, data: KMutableProperty0<*>,
-                                       format_: String): Boolean {
+    fun tempInputTextScalar(bb: Rect, id: ID, label: String, dataType: DataType, data: KMutableProperty0<*>,
+                            format_: String): Boolean {
 
-        // On the first frame, g.ScalarAsInputTextId == 0, then on subsequent frames it becomes == id.
+        // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
-        if (g.scalarAsInputTextId == 0)
+        if (g.tempInputTextId == 0)
             clearActiveId()
 
         val fmtBuf = CharArray(32)
@@ -3088,15 +3088,17 @@ interface imgui_internal {
             else -> Itf.CharsDecimal
         }
         val valueChanged = inputTextEx(label, null, dataBuf, bb.size, flags)
-        if (g.scalarAsInputTextId == 0) {
+        if (g.tempInputTextId == 0) {
             assert(g.activeId == id) { "First frame we started displaying the InputText widget, we expect it to take the active id." }
-            g.scalarAsInputTextId = g.activeId
+            g.tempInputTextId = g.activeId
         }
         return when {
             valueChanged -> dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, data)
             else -> false
         }
     }
+
+    fun tempInputTextIsActive(id: ID): Boolean = g.activeId == id && g.tempInputTextId == id
 
     // Color
 

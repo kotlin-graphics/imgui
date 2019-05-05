@@ -311,7 +311,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var inputTextPasswordFont = Font()
     /** Temporary text input when CTRL+clicking on a slider, etc.   */
-    var scalarAsInputTextId: ID = 0
+    var tempInputTextId: ID = 0
     /** Store user options for color edit widgets   */
     var colorEditOptions: ColorEditFlags = ColorEditFlag._OptionsDefault.i
 
