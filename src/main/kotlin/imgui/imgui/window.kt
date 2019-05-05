@@ -530,6 +530,25 @@ interface imgui_window {
                     it.max.put(pos.x - scroll.x - windowPadding.x + x, pos.y - scroll.y - windowPadding.y + y)
                 }
 
+                // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
+                outerRectClipped put rect()
+                outerRectClipped clipWith clipRect
+
+                /*  Inner rectangle
+                We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
+                Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.   */
+                innerMainRect.min.x = titleBarRect.min.x + windowBorderSize
+                innerMainRect.min.y = titleBarRect.max.y + menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else windowBorderSize
+                innerMainRect.max.x = pos.x + size.x - (scrollbarSizes.x max windowBorderSize)
+                innerMainRect.max.y = pos.y + size.y - (scrollbarSizes.y max windowBorderSize)
+
+                // Inner clipping rectangle
+                // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
+                innerClipRect.min.x = floor(0.5f + innerMainRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize)))
+                innerClipRect.min.y = floor(0.5f + innerMainRect.min.y)
+                innerClipRect.max.x = floor(0.5f + innerMainRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize)))
+                innerClipRect.max.y = floor(0.5f + innerMainRect.max.y)
+
                 /*  Setup drawing context
                     (NB: That term "drawing context / DC" lost its meaning a long time ago. Initially was meant to hold
                     transient data only. Nowadays difference between window-> and window->DC-> is dubious.)
@@ -645,26 +664,6 @@ interface imgui_window {
             if (g.io.KeyCtrl && IsKeyPressedMap(ImGuiKey_C))
                 ImGui::LogToClipboard();
         */
-
-            // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
-            window.outerRectClipped put window.rect()
-            window.outerRectClipped clipWith window.clipRect
-
-            /*  Inner rectangle
-            We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
-            Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.   */
-            window.innerMainRect.min.x = titleBarRect.min.x + window.windowBorderSize
-            window.innerMainRect.min.y = titleBarRect.max.y + window.menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else window.windowBorderSize
-            window.innerMainRect.max.x = window.pos.x + window.size.x - (window.scrollbarSizes.x max window.windowBorderSize)
-            window.innerMainRect.max.y = window.pos.y + window.size.y - (window.scrollbarSizes.y max window.windowBorderSize)
-            //window->DrawList->AddRect(window->InnerRect.Min, window->InnerRect.Max, IM_COL32_WHITE);
-
-            // Inner clipping rectangle
-            // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
-            window.innerClipRect.min.x = floor(0.5f + window.innerMainRect.min.x + max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
-            window.innerClipRect.min.y = floor(0.5f + window.innerMainRect.min.y)
-            window.innerClipRect.max.x = floor(0.5f + window.innerMainRect.max.x - max(0f, floor(window.windowPadding.x * 0.5f - window.windowBorderSize)))
-            window.innerClipRect.max.y = floor(0.5f + window.innerMainRect.max.y)
 
             // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
             // This is useful to allow creating context menus on title bar only, etc.
