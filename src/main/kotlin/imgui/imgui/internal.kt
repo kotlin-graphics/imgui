@@ -370,14 +370,12 @@ interface imgui_internal {
      *  Those two functions CalcItemWidth vs CalcItemSize are awkwardly named because they are not fully symmetrical.
      *  Note that only CalcItemWidth() is publicly exposed. */
     fun calcItemSize(size: Vec2, defaultW: Float, defaultH: Float): Vec2 {
-        val window = currentWindowRead
-        val contentMax = Vec2()
-        if (size anyLessThan 0f)
-            contentMax = window.pos + contentRegionMax
+        val window = g.currentWindow!!
+        val contentMax = if (size anyLessThan 0f) contentRegionMaxScreen else Vec2()
         if (size.x <= 0f)
-            size.x = if(size.x == 0f) defaultW else max(contentMax.x - window.dc.cursorPos.x, 4f) + size.x
+            size.x = if (size.x == 0f) defaultW else max(contentMax.x - window.dc.cursorPos.x, 4f) + size.x
         if (size.y <= 0f)
-            size.y = if(size.y == 0f) defaultH else max(contentMax.y - window.dc.cursorPos.y, 4f) + size.y
+            size.y = if (size.y == 0f) defaultH else max(contentMax.y - window.dc.cursorPos.y, 4f) + size.y
         return size
     }
 
@@ -385,10 +383,10 @@ interface imgui_internal {
 
         if (wrapPosX_ < 0f) return 0f
 
-        val window = currentWindowRead!!
+        val window = g.currentWindow!!
         var wrapPosX = wrapPosX_
         if (wrapPosX == 0f)
-            wrapPosX = contentRegionMax.x + window.pos.x
+            wrapPosX = contentRegionMaxScreen.x
         else if (wrapPosX > 0f)
             wrapPosX += window.pos.x - window.scroll.x // wrap_pos_x is provided is window local space
 
@@ -424,6 +422,17 @@ interface imgui_internal {
 
     /** was the last item selection toggled? (after Selectable(), TreeNode() etc. We only returns toggle _event_ in order to handle clipping correctly) */
     fun isItemToggledSelection() = g.currentWindow!!.dc.lastItemStatusFlags has ItemStatusFlag.ToggledSelection
+
+    /** [Internal] Absolute coordinate. Saner. This is not exposed until we finishing refactoring work rect features. */
+    val contentRegionMaxScreen: Vec2
+        get() {
+            val window = g.currentWindow!!
+            val mx = Vec2(window.contentsRegionRect.max)
+            window.dc.currentColumns?.let {
+                mx.x = window.pos.x + getColumnOffset(it.current + 1) - window.windowPadding.x
+            }
+            return mx
+        }
 
     // Logging/Capture
 
@@ -984,7 +993,7 @@ interface imgui_internal {
                 val x = pos.x + getColumnOffset(n)
                 val columnId: ID = columns.id + n
                 val columnHitHw = COLUMNS_HIT_RECT_HALF_WIDTH
-                val columnHitRect = Rect (Vec2(x - columnHitHw, y1), Vec2(x + columnHitHw, y2))
+                val columnHitRect = Rect(Vec2(x - columnHitHw, y1), Vec2(x + columnHitHw, y2))
                 keepAliveId(columnId)
                 if (isClippedEx(columnHitRect, columnId, false)) continue
 
@@ -2162,7 +2171,7 @@ interface imgui_internal {
         // We vertically grow up to current line height up the typical widget height.
         val textBaseOffsetY = glm.max(padding.y, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
         val frameHeight = glm.max(glm.min(window.dc.currentLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
-        val frameBb = Rect(window.dc.cursorPos, Vec2(window.pos.x + contentRegionMax.x, window.dc.cursorPos.y + frameHeight))
+        val frameBb = Rect(window.dc.cursorPos, Vec2(contentRegionMaxScreen.x, window.dc.cursorPos.y + frameHeight))
         if (displayFrame) {
             // Framed header expand a little outside the default padding
             frameBb.min.x -= (window.windowPadding.x * 0.5f).i.f - 1

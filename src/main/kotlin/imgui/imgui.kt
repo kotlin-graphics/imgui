@@ -78,6 +78,7 @@ object ImGui :
         imgui_main,
         imgui_demoDebugInformations,
         imgui_window,
+        imgui_contentRegion,
         imgui_windowScrolling,
         imgui_parametersStacks,
         imgui_cursorLayout,

@@ -861,36 +861,7 @@ interface imgui_window {
 
     val windowHeight get() = g.currentWindow!!.size.y
 
-    /** current content boundaries (typically window boundaries including scrolling, or current column boundaries), in
-     *  windows coordinates
-     *  FOXME: This is in window space (not screen space!) */
-    val contentRegionMax: Vec2
-        get() = currentWindowRead!!.run {
-            val mx = contentsRegionRect.max - pos
-            dc.currentColumns?.let { mx.x = getColumnOffset(it.current + 1) - windowPadding.x }
-            mx
-        }
-
-    /** == GetContentRegionMax() - GetCursorPos()   */
-    val contentRegionAvail
-        get() = with(currentWindowRead!!) {
-            contentRegionMax - (dc.cursorPos - pos)
-        }
-
-    /** == GetContentRegionAvail().x */
-    val contentRegionAvailWidth: Float
-        get() = contentRegionAvail.x
-    /** content boundaries min (roughly (0,0)-Scroll), in window coordinates    */
-    val windowContentRegionMin: Vec2
-        get() = currentWindowRead!!.run { contentsRegionRect.min - pos }
-    /** content boundaries max (roughly (0,0)+Size-Scroll) where Size can be override with SetNextWindowContentSize(),
-     * in window coordinates    */
-    val windowContentRegionMax: Vec2
-        get() = currentWindowRead!!.run { contentsRegionRect.max - pos }
-
-    val windowContentRegionWidth: Float
-        get() = currentWindowRead!!.contentsRegionRect.width
-
+    // Prefer using SetNextXXX functions (before Begin) rather that SetXXX functions (after Begin).
 
     /** set next window position. call before Begin()   */
     fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always, pivot: Vec2 = Vec2()) {
