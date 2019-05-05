@@ -3077,7 +3077,7 @@ interface imgui_internal {
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
         val init = g.tempInputTextId != 0
-        if(init)
+        if (init)
             clearActiveId()
 
         val fmtBuf = CharArray(32)
