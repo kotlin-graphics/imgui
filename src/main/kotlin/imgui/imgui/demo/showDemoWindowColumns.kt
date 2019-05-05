@@ -13,6 +13,8 @@ import imgui.ImGui.getColumnWidth
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.nextColumn
+import imgui.ImGui.popStyleVar
+import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
@@ -24,6 +26,7 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ListClipper
 import imgui.SelectableFlag
+import imgui.StyleVar
 import imgui.WindowFlag
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.selectable
@@ -36,6 +39,7 @@ object showDemoWindowColumns {
 
     /* Columns */
     var selected = -1
+    var disableIndent = false
 
 
     /* Mixed Items */
@@ -54,6 +58,12 @@ object showDemoWindowColumns {
             return
 
         withId("Columns") {
+
+            checkbox("Disable tree indentation", ::disableIndent)
+            sameLine()
+            helpMarker("Disable the indenting of tree nodes so demo columns can use the full window width.")
+            if (disableIndent)
+                pushStyleVar(StyleVar.IndentSpacing, 0f)
 
             // Basic columns
             treeNode("Basic") {
@@ -140,7 +150,10 @@ object showDemoWindowColumns {
                 for (i in 0 until 4 * 3) {
                     if (hBorders && columnIndex == 0) separator()
                     text("%c%c%c", 'a' + i, 'a' + i, 'a' + i)
-                    text("Width %.2f\nOffset %.2f", getColumnWidth(), getColumnOffset())
+                    text("Width %.2f", getColumnWidth())
+                    text("Offset %.2f", getColumnOffset())
+                    text("Long text that is likely to clip")
+                    button("Button", Vec2(-1f, 0f))
                     nextColumn()
                 }
                 columns(1)
@@ -174,6 +187,9 @@ object showDemoWindowColumns {
                 separator()
                 treePop()
             }
+
+            if (disableIndent)
+                popStyleVar()
         }
     }
 }

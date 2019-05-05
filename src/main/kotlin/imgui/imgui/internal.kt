@@ -14,11 +14,9 @@ import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginPopup
 import imgui.ImGui.button
-import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.clipboardText
 import imgui.ImGui.colorButton
-import imgui.ImGui.contentRegionMax
 import imgui.ImGui.dummy
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
@@ -2202,7 +2200,7 @@ interface imgui_internal {
             For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
             This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero. */
         if (isOpen && !g.navIdIsAlive && flags has Tnf.NavLeftJumpsBackHere && flags hasnt Tnf.NoTreePushOnOpen)
-            window.dc.treeDepthMayJumpToParentOnPop = window.dc.treeDepthMayJumpToParentOnPop or (1 shl window.dc.treeDepth)
+            window.dc.treeStoreMayJumpToParentOnPop = window.dc.treeStoreMayJumpToParentOnPop or (1 shl window.dc.treeDepth)
 
         val itemAdd = itemAdd(interactBb, id)
         window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HasDisplayRect
