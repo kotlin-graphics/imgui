@@ -312,7 +312,8 @@ interface imgui_demoDebugInformations {
 
         var showWindow = false
 
-        /** Helper to display a little (?) mark which shows a tooltip when hovered. */
+        /** Helper to display a little (?) mark which shows a tooltip when hovered.
+         *  In your own code you may want to display an actual icon if you are using a merged icon fonts (see misc/fonts/README.txt)    */
         fun helpMarker(desc: String) {
             textDisabled("(?)")
             if (isItemHovered()) {
@@ -331,6 +332,7 @@ interface imgui_demoDebugInformations {
 
         var showConfigInfo = false
 
+        /** Note that shortcuts are currently provided for display only (future version will add flags to BeginMenu to process shortcuts) */
         fun showExampleMenuFile() {
             menuItem("(dummy menu)", "", false, false)
             menuItem("New")

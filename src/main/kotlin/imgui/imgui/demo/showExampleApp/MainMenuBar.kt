@@ -11,7 +11,10 @@ import imgui.SelectableFlag as Sf
 import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 
-/** Demonstrate creating a fullscreen menu bar and populating it.   */
+/** Demonstrate creating a "main" fullscreen menu bar and populating it.
+ *  Note the difference between BeginMainMenuBar() and BeginMenuBar():
+ *  - BeginMenuBar() = menu-bar inside current window we Begin()-ed into (the window needs the ImGuiWindowFlags_MenuBar flag)
+ *  - BeginMainMenuBar() = helper to create menu-bar-sized window at the top of the main viewport + call BeginMenuBar() into it.   */
 object MainMenuBar {
 
     operator fun invoke() = mainMenuBar {

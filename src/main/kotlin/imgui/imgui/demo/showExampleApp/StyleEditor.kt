@@ -290,7 +290,9 @@ object StyleEditor {
                     popId()
                 }
                 treeNode("Atlas texture", "Atlas texture (${atlas.texSize.x}x${atlas.texSize.y} pixels)") {
-                    image(atlas.texId, Vec2(atlas.texSize), Vec2(), Vec2(1), Vec4.fromColor(255), Vec4.fromColor(255, 255, 255, 128))
+                    val tintCol = Vec4(1f)
+                    val borderCol = Vec4(1f, 1f, 1f, 0.5f)
+                    image(atlas.texId, Vec2(atlas.texSize), Vec2(), Vec2(1), tintCol, borderCol)
                 }
 
                 if (dragFloat("this window scale", ::windowScale, 0.005f, 0.3f, 2f, "%.2f"))    // scale only this window

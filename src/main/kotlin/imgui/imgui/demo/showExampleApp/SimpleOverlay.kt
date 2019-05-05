@@ -29,13 +29,15 @@ object SimpleOverlay {
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         val DISTANCE = 10f
-        var flags = Wf.NoTitleBar or Wf.NoResize or Wf.AlwaysAutoResize or Wf.NoSavedSettings or Wf.NoFocusOnAppearing or Wf.NoNav
+
+        var flags = Wf.NoDecoration or Wf.AlwaysAutoResize or Wf.NoSavedSettings or Wf.NoFocusOnAppearing or Wf.NoNav
         if (corner != -1) {
             val windowPos = Vec2{ if (corner has it + 1) io.displaySize[it] - DISTANCE else DISTANCE }
             val windowPosPivot = Vec2(if (corner has 1) 1f else 0f, if (corner has 2) 1f else 0f)
             setNextWindowPos(windowPos, Cond.Always, windowPosPivot)
+            flags = flags or Wf.NoMove
         }
-        setNextWindowBgAlpha(0.3f)  // Transparent background
+        setNextWindowBgAlpha(0.35f)  // Transparent background
         withWindow("Example: Simple Overlay", open, flags) {
             text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
             separator()
