@@ -14,6 +14,7 @@ import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.pushItemWidth
+import imgui.ImGui.pushOverrideID
 import imgui.ImGui.style
 import imgui.internal.*
 import kotlin.math.max
@@ -187,14 +188,15 @@ interface imgui_colums {
     /** create a Tab. Returns true if the Tab is selected. */
     fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = 0): Boolean {
 
-        if (g.currentWindow!!.skipItems) return false
+        val window = g.currentWindow
+        if (window.skipItems) return false
 
         val tabBar = g.currentTabBar
                 ?: error("Needs to be called between BeginTabBar() and EndTabBar()!") // FIXME-ERRORHANDLING
         return tabBar.tabItemEx(label, pOpen, flags).also {
             if (it && flags hasnt TabItemFlag.NoPushId) {
                 val tab = tabBar.tabs[tabBar.lastTabItemIdx]
-                g.currentWindow!!.idStack += tab.id // We already hashed 'label' so push into the ID stack directly instead of doing another hash through PushID(label)
+                pushOverrideID(tab.id) // We already hashed 'label' so push into the ID stack directly instead of doing another hash through PushID(label)
             }
         }
     }
@@ -202,14 +204,15 @@ interface imgui_colums {
     /** only call EndTabItem() if BeginTabItem() returns true! */
     fun endTabItem() {
 
-        if (g.currentWindow!!.skipItems) return
+        val window = g.currentWindow
+        if (window.skipItems) return
 
         val tabBar = g.currentTabBar
                 ?: error("Needs to be called between BeginTabBar() and EndTabBar()!") // FIXME-ERRORHANDLING
         assert(tabBar.lastTabItemIdx >= 0)
         val tab = tabBar.tabs[tabBar.lastTabItemIdx]
         if (tab.flags hasnt TabItemFlag.NoPushId)
-            g.currentWindow!!.idStack.pop()
+            window.idStack.pop()
     }
 
     /** notify TabBar or Docking system of a closed tab/window ahead (useful to reduce visual flicker on reorderable tab bars).

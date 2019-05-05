@@ -219,6 +219,11 @@ interface imgui_internal {
         g.currentWindow!!.dc.apply { lastItemStatusFlags = lastItemStatusFlags or ItemStatusFlag.Edited }
     }
 
+    /** Push a given id value ignoring the ID stack as a seed. */
+    fun pushOverrideID(id: ID) {
+        g.currentWindow.idStack.push(id)
+    }
+
 
     // Basic Helpers for widget code
 
@@ -2208,7 +2213,7 @@ interface imgui_internal {
 
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
-                treePushRawId(id)
+                treePushOverrideID(id)
             ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, label, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
             return isOpen
         }
@@ -2300,7 +2305,7 @@ interface imgui_internal {
         }
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
-            treePushRawId(id)
+            treePushOverrideID(id)
         ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
         return isOpen
     }
@@ -2342,7 +2347,7 @@ interface imgui_internal {
         return isOpen
     }
 
-    fun treePushRawId(id: ID) {
+    fun treePushOverrideID(id: ID) {
         val window = currentWindow
         indent()
         window.dc.treeDepth++
