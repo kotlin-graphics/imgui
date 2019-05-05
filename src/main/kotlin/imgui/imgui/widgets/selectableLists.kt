@@ -25,10 +25,7 @@ import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.windowContentRegionMax
 import imgui.imgui.withBoolean
-import imgui.internal.NavHighlightFlag
-import imgui.internal.Rect
-import imgui.internal.hasnt
-import imgui.internal.or
+import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
 import imgui.internal.ItemFlag as If
 import imgui.SelectableFlag as Sf
@@ -78,14 +75,13 @@ interface selectableLists {
             bb.max.x += windowPadding.x
 
         // Selectables are tightly packed together, we extend the box to cover spacing between selectable.
-        val spacingL = (style.itemSpacing.x * 0.5f).i.f
-        val spacingU = (style.itemSpacing.y * 0.5f).i.f
-        val spacingR = style.itemSpacing.x - spacingL
-        val spacingD = style.itemSpacing.y - spacingU
+        val spacing = style.itemSpacing
+        val spacingL = (spacing.x * 0.5f).i.f
+        val spacingU = (spacing.y * 0.5f).i.f
         bb.min.x -= spacingL
         bb.min.y -= spacingU
-        bb.max.x += spacingR
-        bb.max.y += spacingD
+        bb.max.x += spacing.x - spacingL
+        bb.max.y += spacing.y - spacingU
 
         val itemAdd = when {
             flags has Sf.Disabled -> {
@@ -114,6 +110,8 @@ interface selectableLists {
 
         val selected = if (flags has Sf.Disabled) false else selected_
 
+        val wasSelected = selected
+
         val (pressed, hovered, held) = buttonBehavior(bb, id, buttonFlags)
         /*  Hovering selectable with mouse updates navId accordingly so navigation can be resumed with gamepad/keyboard
             (this doesn't happen on most widgets)         */
@@ -127,6 +125,10 @@ interface selectableLists {
 
         if (flags has Sf.AllowItemOverlap)
             setItemAllowOverlap()
+
+        // In this branch, Selectable() cannot toggle the selection so this will never trigger.
+        if (selected != wasSelected)
+            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledSelection
 
         // Render
         if (hovered || selected) {

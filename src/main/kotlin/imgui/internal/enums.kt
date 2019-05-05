@@ -71,7 +71,9 @@ enum class ButtonFlag {
     /** press when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
     PressedOnDragDropHold,
     /** don't override navigation focus when activated; */
-    NoNavFocus;
+    NoNavFocus,
+    /** don't report as hovered when navigated on */
+    NoHoveredOnNav;
 
     val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
@@ -155,6 +157,9 @@ enum class ItemStatusFlag(@JvmField val i: Int) {
     HasDisplayRect(1 shl 1),
     /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
     Edited(1 shl 2),
+    /** Set when Selectable(), TreeNode() reports toggling a selection. We can't report "Selected" because reporting
+     *  the change allows us to handle clipping with less issues. */
+    ToggledSelection(1 shl 3),
 
     //  #ifdef IMGUI_ENABLE_TEST_ENGINE
 //  [imgui-test only]

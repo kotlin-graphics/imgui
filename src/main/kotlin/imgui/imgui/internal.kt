@@ -418,6 +418,9 @@ interface imgui_internal {
         itemFlags = itemFlagsStack.lastOrNull() ?: If.Default_.i
     }
 
+    /** was the last item selection toggled? (after Selectable(), TreeNode() etc. We only returns toggle _event_ in order to handle clipping correctly) */
+    fun isItemToggledSelection() = g.currentWindow!!.dc.lastItemStatusFlags has ItemStatusFlag.ToggledSelection
+
     // Logging/Capture
 
     /** -> BeginCapture() when we design v2 api, for now stay under the radar by using the old name. */
@@ -1976,7 +1979,8 @@ interface imgui_internal {
         /*  Gamepad/Keyboard navigation
             We report navigated item as hovered but we don't set g.HoveredId to not interfere with mouse.         */
         if (g.navId == id && !g.navDisableHighlight && g.navDisableMouseHover && (g.activeId == 0 || g.activeId == id || g.activeId == window.moveId))
-            hovered = true
+            if (flags hasnt Bf.NoHoveredOnNav)
+                hovered = true
 
         if (g.navActivateDownId == id) {
             val navActivatedByCode = g.navActivateId == id
@@ -2153,6 +2157,8 @@ interface imgui_internal {
             buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
 
         val selected = flags has Tnf.Selected
+        val wasSelected = selected
+
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
         var toggled = false
         if (!isLeaf) {
@@ -2185,6 +2191,10 @@ interface imgui_internal {
         }
         if (flags has Tnf.AllowItemOverlap)
             setItemAllowOverlap()
+
+        // In this branch, TreeNodeBehavior() cannot toggle the selection so this will never trigger.
+        if (selected != wasSelected)
+            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledSelection
 
         // Render
         val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
