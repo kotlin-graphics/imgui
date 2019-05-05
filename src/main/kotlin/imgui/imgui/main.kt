@@ -508,8 +508,12 @@ interface imgui_main {
 
             // Mouse wheel scrolling
             // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent (unless either ImGuiWindowFlags_NoInputs or ImGuiWindowFlags_NoScrollbar are also set).
-            while (window.flags has Wf.ChildWindow && window.flags has Wf.NoScrollWithMouse && window.flags hasnt Wf.NoScrollbar && window.flags hasnt Wf.NoMouseInputs && window.parentWindow != null)
-                window = window.parentWindow!!
+            tailrec fun Window.getParent(): Window {
+                val parent = parentWindow
+                return if (flags has Wf.ChildWindow && flags has Wf.NoScrollWithMouse && flags hasnt Wf.NoScrollbar && flags hasnt Wf.NoMouseInputs && parent != null) getParent() else this
+            }
+
+            window = window.getParent()
             val scrollAllowed = window.flags hasnt Wf.NoScrollWithMouse && window.flags hasnt Wf.NoMouseInputs
             if (scrollAllowed && (io.mouseWheel != 0f || io.mouseWheelH != 0f) && !io.keyCtrl) {
                 val maxStep = (window.contentsRegionRect.size + window.windowPadding * 2f) * 0.67f

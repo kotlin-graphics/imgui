@@ -128,8 +128,13 @@ interface imgui_menus {
         // Nav: When a move request within one of our child menu failed, capture the request to navigate among our siblings.
         if (navMoveRequestButNoResultYet() && (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right) && g.navWindow!!.flags has Wf.ChildMenu) {
             var navEarliestChild = g.navWindow!!
-            while (navEarliestChild.parentWindow != null && navEarliestChild.parentWindow!!.flags has Wf.ChildMenu)
-                navEarliestChild = navEarliestChild.parentWindow!!
+
+            tailrec fun Window.getParent(): Window {
+                val parent = parentWindow
+                return if (parent != null && parent.flags has Wf.ChildMenu) getParent() else this
+            }
+
+            navEarliestChild = navEarliestChild.getParent()
             if (navEarliestChild.parentWindow == window && navEarliestChild.dc.parentLayoutType == Lt.Horizontal && g.navMoveRequestForward == NavForward.None) {
                 /*  To do so we claim focus back, restore NavId and then process the movement request for yet another
                     frame. This involve a one-frame delay which isn't very problematic in this situation.
