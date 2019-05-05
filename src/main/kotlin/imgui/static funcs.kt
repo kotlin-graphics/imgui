@@ -1142,11 +1142,13 @@ fun navUpdateWindowing() {
         g.navWindow?.let {
             // Move to parent menu if necessary
             var newNavWindow = it
-            while (newNavWindow.parentWindow != null &&
-                    newNavWindow.dc.navLayerActiveMask hasnt (1 shl NavLayer.Menu) &&
-                    newNavWindow.flags has Wf.ChildWindow &&
-                    newNavWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
-                newNavWindow = newNavWindow.parentWindow!!
+
+            tailrec fun Window.getParent(): Window {
+                val parent = parentWindow
+                return if (parent != null && dc.navLayerActiveMask hasnt (1 shl NavLayer.Menu) && flags has Wf.ChildWindow && flags hasnt (Wf.Popup or Wf.ChildMenu)) getParent() else this
+            }
+
+            newNavWindow = newNavWindow.getParent()
 
             if (newNavWindow !== it) {
                 val oldNavWindow = it
@@ -1365,10 +1367,14 @@ fun navCalcPreferredRefPos(): Vec2 {
 /** FIXME: This could be replaced by updating a frame number in each window when (window == NavWindow) and (NavLayer == 0).
  *  This way we could find the last focused window among our children. It would be much less confusing this way? */
 fun navSaveLastChildNavWindowIntoParent(childWindow: Window?) {
-    var parentWindow = childWindow
-    while (parentWindow != null && parentWindow.flags has Wf.ChildWindow && parentWindow.flags hasnt (Wf.Popup or Wf.ChildMenu))
-        parentWindow = parentWindow.parentWindow
-    parentWindow?.let { if (it !== childWindow) it.navLastChildNavWindow = childWindow }
+    val parentWindow = childWindow
+
+    tailrec fun Window.getParent(): Window {
+        val parent = this.parentWindow
+        return if (parent != null && parent.flags has Wf.ChildWindow && parent.flags hasnt (Wf.Popup or Wf.ChildMenu)) getParent() else this
+    }
+
+    parentWindow?.getParent()?.let { if (it !== childWindow) it.navLastChildNavWindow = childWindow }
 }
 
 
