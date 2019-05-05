@@ -37,10 +37,9 @@ interface imgui_colums {
         window.dc.currentColumns?.let {
             if (it.count == columnsCount && it.flags == flags)
                 return
-        }
 
-        if (window.dc.currentColumns != null)
             endColumns()
+        }
 
         if (columnsCount != 1)
             beginColumns(id, columnsCount, flags)
@@ -66,11 +65,11 @@ interface imgui_colums {
         with(window) {
             columns.lineMaxY = max(columns.lineMaxY, dc.cursorPos.y)
             if (++columns.current < columns.count) {
-                // Columns 1+ cancel out Indent.x
+                // New column (columns 1+ cancels out IndentX)
                 dc.columnsOffset = getColumnOffset(columns.current) - dc.indent + style.itemSpacing.x
                 drawList.channelsSetCurrent(columns.current)
             } else {
-                // New line
+                // New row/line
                 dc.columnsOffset = 0f
                 drawList.channelsSetCurrent(0)
                 columns.current = 0
@@ -82,7 +81,7 @@ interface imgui_colums {
             dc.currentLineTextBaseOffset = 0f
         }
         pushColumnClipRect()
-        pushItemWidth(getColumnWidth() * 0.65f)  // FIXME: Move on columns setup
+        pushItemWidth(getColumnWidth() * 0.65f)  // FIXME-COLUMNS: Move on columns setup
     }
 
     /** get current column index    */
@@ -234,7 +233,7 @@ interface imgui_colums {
 
         fun pixelsToOffsetNorm(columns: Columns, offset: Float) = offset / (columns.maxX - columns.minX)
 
-        val columnsRectHalfWidth get() = 4f
+        val COLUMNS_HIT_RECT_HALF_WIDTH = 4f
 
         fun getColumnWidthEx(columns: Columns, columnIndex_: Int, beforeResize: Boolean = false): Float {
             val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
