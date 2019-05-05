@@ -44,6 +44,7 @@ import imgui.ImGui.isItemActive
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
+import imgui.ImGui.nextItemWidth
 import imgui.ImGui.openPopup
 import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popId
@@ -110,7 +111,7 @@ interface colorEditorPicker {
 
         val squareSz = frameHeight
         val wExtra = if (flags_ has Cef.NoSmallPreview) 0f else squareSz + style.itemInnerSpacing.x
-        val wItemsAll = calcItemWidth() - wExtra
+        val wItemsAll = nextItemWidth - wExtra
         val labelDisplayEnd = findRenderedTextEnd(label)
 
         beginGroup()
@@ -160,10 +161,9 @@ interface colorEditorPicker {
             val hidePrefix = wItemOne <= calcTextSize(if (flags has Cef.Float) "M:0.000" else "M:000").x
             val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.DisplayHSV) 2 else 1
 
-            pushItemWidth(wItemOne)
             for (n in 0 until components) {
                 if (n > 0) sameLine(0f, style.itemInnerSpacing.x)
-                if (n + 1 == components) pushItemWidth(wItemLast)
+                nextItemWidth = if (n + 1 < components) wItemOne else wItemLast
                 valueChanged = when {
                     flags has Cef.Float -> {
                         // operands inverted to have dragScalar always executed, no matter valueChanged
@@ -174,15 +174,13 @@ interface colorEditorPicker {
                 }
                 if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
             }
-            popItemWidth()
-            popItemWidth()
 
         } else if (flags has Cef.DisplayHEX && flags hasnt Cef.NoInputs) {
             // RGB Hexadecimal Input
             val text = if (alpha) "#%02X%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255), glm.clamp(i[3], 0, 255))
             else "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))
             val buf = text.toCharArray(CharArray(64))
-            pushItemWidth(wItemsAll)
+            nextItemWidth = wItemsAll
             if (inputText("##Text", buf, Itf.CharsHexadecimal or Itf.CharsUppercase)) {
                 valueChanged = true
                 var p = 0
@@ -191,7 +189,6 @@ interface colorEditorPicker {
                 String(buf, p, buf.strlen - p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
             }
             if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
-            popItemWidth()
         }
 
         var pickerActiveWindow: Window? = null
@@ -214,11 +211,10 @@ interface colorEditorPicker {
                 }
                 val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef._InputMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
                 val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef.DisplayHSV or Cef._DisplayMask or Cef.NoLabel or Cef.AlphaPreviewHalf
-                pushItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
+                nextItemWidth =squareSz * 12f   // Use 256 + bar sizes?
                 val p = g.colorPickerRef to FloatArray(4)
                 valueChanged = colorPicker4("##picker", col, pickerFlags, p) or valueChanged
                 g.colorPickerRef put p
-                popItemWidth()
                 endPopup()
             }
         }
@@ -361,7 +357,7 @@ interface colorEditorPicker {
         val squareSz = frameHeight
         val barsWidth = squareSz     // Arbitrary smallish width of Hue/Alpha picking bars
         // Saturation/Value picking box
-        val svPickerSize = glm.max(barsWidth * 1, calcItemWidth() - (if (alphaBar) 2 else 1) * (barsWidth + style.itemInnerSpacing.x))
+        val svPickerSize = glm.max(barsWidth * 1, nextItemWidth - (if (alphaBar) 2 else 1) * (barsWidth + style.itemInnerSpacing.x))
         val bar0PosX = pickerPos.x + svPickerSize + style.itemInnerSpacing.x
         val bar1PosX = bar0PosX + barsWidth + style.itemInnerSpacing.x
         val barsTrianglesHalfSz = (barsWidth * 0.2f).i.f
@@ -491,7 +487,7 @@ interface colorEditorPicker {
         // Convert back color to RGB
         if (valueChangedH || valueChangedSv)
             if (flags has Cef.InputRGB)
-                colorConvertHSVtoRGB(if(H >= 1f) H - 10 * 1e-6f else H, if(S > 0f) S else 10 * 1e-6f, if(V > 0f) V else 1e-6f, col)
+                colorConvertHSVtoRGB(if (H >= 1f) H - 10 * 1e-6f else H, if (S > 0f) S else 10 * 1e-6f, if (V > 0f) V else 1e-6f, col)
             else if (flags has Cef.InputHSV) {
                 col[0] = H
                 col[1] = S
@@ -521,7 +517,7 @@ interface colorEditorPicker {
         }
 
         // Try to cancel hue wrap (after ColorEdit4 call), if any
-        if (valueChangedFixHueWrap  && flags has Cef.InputRGB) {
+        if (valueChangedFixHueWrap && flags has Cef.InputRGB) {
             val (newH, newS, newV) = colorConvertRGBtoHSV(col)
             if (newH <= 0 && H > 0) {
                 if (newV <= 0 && V != newV)

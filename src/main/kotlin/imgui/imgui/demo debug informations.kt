@@ -31,11 +31,11 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
+import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushId
-import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -239,9 +239,8 @@ interface imgui_demoDebugInformations {
             checkbox("Show windows begin order", ::showWindowsBeginOrder)
             checkbox("Show windows rectangles", ::showWindowsRects)
             sameLine()
-            pushItemWidth(fontSize * 12)
+            nextItemWidth = fontSize * 12
             showWindowsRects = showWindowsRects || combo("##rects_type", ::showWindowsRectTypeInt, "OuterRect\u0000OuterRectClipped\u0000InnerMainRect\u0000InnerClipRect\u0000ContentsRegionRect\u0000")
-            popItemWidth()
             checkbox("Show clipping rectangle when hovering ImDrawCmd node", ::showDrawcmdClipRects)
             treePop()
         }
@@ -252,7 +251,7 @@ interface imgui_demoDebugInformations {
                     continue
                 val drawList = getForegroundDrawList(window)
                 if (showWindowsRects) {
-                    val r = when(showWindowsRectType) {
+                    val r = when (showWindowsRectType) {
                         RT.OuterRect -> window.rect()
                         RT.OuterRectClipped -> window.outerRectClipped
                         RT.InnerMainRect -> window.innerMainRect
@@ -262,7 +261,7 @@ interface imgui_demoDebugInformations {
                     }
                     drawList.addRect(r.min, r.max, COL32(255, 0, 128, 255))
                 }
-                if (showWindowsBeginOrder  && window.flags hasnt Wf.ChildWindow) {
+                if (showWindowsBeginOrder && window.flags hasnt Wf.ChildWindow) {
                     val buf = "${window.beginOrderWithinContext}".toCharArray(CharArray(32))
                     drawList.addRectFilled(window.pos, window.pos + Vec2(fontSize), COL32(200, 100, 100, 255))
                     drawList.addText(window.pos, COL32(255, 255, 255, 255), buf)
@@ -507,7 +506,7 @@ interface imgui_demoDebugInformations {
             }
 
             fun nodeWindow(window: Window, label: String) {
-                if(treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x%p", window.hashCode()))
+                if (treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x%p", window.hashCode()))
                     return
                 val flags = window.flags
                 nodeDrawList(window, window.drawList, "DrawList")

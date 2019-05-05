@@ -12,6 +12,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushStyleColor
@@ -87,7 +88,7 @@ interface text {
 
         val window = currentWindow
         if (window.skipItems) return
-        val w = calcItemWidth()
+        val w = nextItemWidth
 
         val labelSize = calcTextSize(label, 0, true)
         val valueBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2))
