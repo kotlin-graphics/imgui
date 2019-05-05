@@ -524,10 +524,9 @@ interface imgui_window {
                 contentsRegionRect.let {
                     it.min.put(pos.x - scroll.x + windowPadding.x,
                             pos.y - scroll.y + windowPadding.y + titleBarHeight + menuBarHeight)
-                    val a = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else size.x - scrollbarSizes.x
-                    val b = if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else size.y - scrollbarSizes.y
-                    it.max.put(pos.x - scroll.x - windowPadding.x + a,
-                            pos.y - scroll.y - windowPadding.y + b)
+                    val x = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else size.x - scrollbarSizes.x + windowBorderSize
+                    val y = if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else size.y - scrollbarSizes.y + windowBorderSize
+                    it.max.put(pos.x - scroll.x - windowPadding.x + x, pos.y - scroll.y - windowPadding.y + y)
                 }
 
                 /*  Setup drawing context
@@ -637,10 +636,6 @@ interface imgui_window {
                 }
             }
 
-            // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
-            window.outerRectClipped put window.rect()
-            window.outerRectClipped clipWith window.clipRect
-
             // Pressing CTRL+C while holding on a window copy its content to the clipboard
             // This works but 1. doesn't handle multiple Begin/End pairs, 2. recursing into another Begin/End pair - so we need to work that out and add better logging scope.
             // Maybe we can support CTRL+C on every element?
@@ -649,13 +644,18 @@ interface imgui_window {
             if (g.io.KeyCtrl && IsKeyPressedMap(ImGuiKey_C))
                 ImGui::LogToClipboard();
         */
+
+            // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
+            window.outerRectClipped put window.rect()
+            window.outerRectClipped clipWith window.clipRect
+
             /*  Inner rectangle
             We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
             Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.   */
             window.innerMainRect.min.x = titleBarRect.min.x + window.windowBorderSize
             window.innerMainRect.min.y = titleBarRect.max.y + window.menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else window.windowBorderSize
-            window.innerMainRect.max.x = window.pos.x + window.size.x - window.scrollbarSizes.x - window.windowBorderSize
-            window.innerMainRect.max.y = window.pos.y + window.size.y - window.scrollbarSizes.y - window.windowBorderSize
+            window.innerMainRect.max.x = window.pos.x + window.size.x - (window.scrollbarSizes.x max window.windowBorderSize)
+            window.innerMainRect.max.y = window.pos.y + window.size.y - (window.scrollbarSizes.y max window.windowBorderSize)
             //window->DrawList->AddRect(window->InnerRect.Min, window->InnerRect.Max, IM_COL32_WHITE);
 
             // Inner clipping rectangle
