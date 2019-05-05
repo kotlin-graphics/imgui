@@ -939,7 +939,7 @@ interface imgui_internal {
 
                 // Compute clipping rectangle
                 val column = columns.columns[n]
-                val clipX1 = floor(0.5f + pos.x + getColumnOffset(n) - 1f)
+                val clipX1 = floor(0.5f + pos.x + getColumnOffset(n))
                 val clipX2 = floor(0.5f + pos.x + getColumnOffset(n + 1) - 1f)
                 column.clipRect = Rect(clipX1, -Float.MAX_VALUE, clipX2, +Float.MAX_VALUE)
                 column.clipRect clipWith clipRect
