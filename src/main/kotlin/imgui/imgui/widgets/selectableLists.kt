@@ -52,7 +52,7 @@ interface selectableLists {
         val window = currentWindow
         if (window.skipItems) return false
 
-        if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null)  // FIXME-OPT: Avoid if vertically clipped.
+        if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)  // FIXME-OPT: Avoid if vertically clipped.
             popClipRect()
 
         val id = window.getId(label)
@@ -94,7 +94,7 @@ interface selectableLists {
             else -> itemAdd(bb, id)
         }
         if (!itemAdd) {
-            if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null)
+            if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)
                 pushColumnClipRect()
             return false
         }
@@ -137,7 +137,7 @@ interface selectableLists {
             renderNavHighlight(bb, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
         }
 
-        if (flags has Sf.SpanAllColumns && window.dc.columnsSet != null) {
+        if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null) {
             pushColumnClipRect()
             bb.max.x -= contentRegionMax.x - maxX
         }

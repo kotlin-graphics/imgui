@@ -564,7 +564,7 @@ interface imgui_window {
                 dc.itemFlagsStack.clear()
                 dc.itemWidthStack.clear()
                 dc.textWrapPosStack.clear()
-                dc.columnsSet = null
+                dc.currentColumns = null
                 dc.treeDepth = 0
                 dc.treeDepthMayJumpToParentOnPop = 0
                 dc.stateStorage = stateStorage
@@ -728,7 +728,7 @@ interface imgui_window {
 
         val window = g.currentWindow!!
 
-        if (window.dc.columnsSet != null) // close columns set if any is open
+        if (window.dc.currentColumns != null) // close columns set if any is open
             endColumns()
         popClipRect()   // Inner window clip rectangle
 
@@ -868,7 +868,7 @@ interface imgui_window {
     val contentRegionMax: Vec2
         get() = currentWindowRead!!.run {
             val mx = contentsRegionRect.max - pos
-            dc.columnsSet?.let { mx.x = getColumnOffset(it.current + 1) - windowPadding.x }
+            dc.currentColumns?.let { mx.x = getColumnOffset(it.current + 1) - windowPadding.x }
             mx
         }
 

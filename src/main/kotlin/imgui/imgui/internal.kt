@@ -898,25 +898,19 @@ interface imgui_internal {
         with(currentWindow) {
 
             assert(columnsCount >= 1)
-            assert(dc.columnsSet == null) { "Nested columns are currently not supported" }
+            assert(dc.currentColumns == null) { "Nested columns are currently not supported" }
 
-            /*  Differentiate column ID with an arbitrary prefix for cases where users name their columns set the same
-                as another widget.
-                In addition, when an identifier isn't explicitly provided we include the number of columns in the hash
-                to make it uniquer. */
-            pushId(0x11223347 + if (strId.isNotEmpty()) 0 else columnsCount)
-            val id = getId(if (strId.isEmpty()) "columns" else strId)
-            popId()
+            val id = getColumnsID(strId, columnsCount)
 
             // Acquire storage for the columns set
-            val columns = findOrAddColumnsSet(id)
+            val columns = findOrCreateColumns(id)
             assert(columns.id == id)
             with(columns) {
                 current = 0
                 count = columnsCount
                 this.flags = flags
             }
-            dc.columnsSet = columns
+            dc.currentColumns = columns
 
             // Set state for first column
             val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else innerClipRect.max.x - pos.x
@@ -960,7 +954,7 @@ interface imgui_internal {
 
     fun endColumns() = with(currentWindow) {
 
-        val columns = dc.columnsSet!!
+        val columns = dc.currentColumns!!
 
         popItemWidth()
         if (columns.count > 1) {
@@ -1021,7 +1015,7 @@ interface imgui_internal {
         }
         columns.isBeingResized = isBeingResized
 
-        dc.columnsSet = null
+        dc.currentColumns = null
         dc.columnsOffset = 0f
         dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
     }
@@ -1029,12 +1023,22 @@ interface imgui_internal {
     fun pushColumnClipRect(columnIndex_: Int = -1) {
 
         val window = currentWindowRead!!
-        val columns = window.dc.columnsSet!!
+        val columns = window.dc.currentColumns!!
         val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
 
         pushClipRect(columns.columns[columnIndex].clipRect.min, columns.columns[columnIndex].clipRect.max, false)
     }
 
+    fun getColumnsID(strId: String, columnsCount: Int): ID {
+
+        val window = g.currentWindow!!
+
+        // Differentiate column ID with an arbitrary prefix for cases where users name their columns set the same as another widget.
+        // In addition, when an identifier isn't explicitly provided we include the number of columns in the hash to make it uniquer.
+        pushId(0x11223347 + if (strId.isNotEmpty()) 0 else columnsCount)
+        return window.getId(if (strId.isNotEmpty()) strId else "columns")
+                .also { popId() }
+    }
 
     // Tab Bars
 
@@ -3214,7 +3218,7 @@ interface imgui_internal {
             var vMax = -Float.MAX_VALUE
             for (i in 0 until valuesCount) {
                 val v = data[i]
-                if(v.isNaN) continue
+                if (v.isNaN) continue
                 vMin = vMin min v
                 vMax = vMax max v
             }

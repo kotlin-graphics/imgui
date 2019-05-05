@@ -300,7 +300,7 @@ class ColumnData {
 }
 
 /** Storage data for a columns set */
-class ColumnsSet {
+class Columns {
     var id: ID = 0
     var flags: ColumnsFlags = 0
     var isFirstFrame = false
@@ -550,7 +550,7 @@ class WindowTempData {
     cases like Tree->Column->Tree. Need revamp columns API. */
     var columnsOffset = 0f
     /** Current columns set */
-    var columnsSet: ColumnsSet? = null
+    var currentColumns: Columns? = null
 }
 
 /** Storage for one window */
@@ -680,7 +680,7 @@ class Window(var context: Context, var name: String) {
 
     var stateStorage = Storage()
 
-    val columnsStorage = ArrayList<ColumnsSet>()
+    val columnsStorage = ArrayList<Columns>()
     /** Index into SettingsWindow[] (indices are always valid as we only grow the array from the back) */
     var settingsIdx = -1
     /** User scale multiplier per-window */
@@ -1048,12 +1048,14 @@ class Window(var context: Context, var name: String) {
                 (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f + windowPadding.y)
     }
 
-    fun findOrAddColumnsSet(id: ID): ColumnsSet {
+    fun findOrCreateColumns(id: ID): Columns {
+
+        // We have few columns per window so for now we don't need bother much with turning this into a faster lookup.
         for (c in columnsStorage)
             if (c.id == id)
                 return c
 
-        return ColumnsSet().also {
+        return Columns().also {
             columnsStorage += it
             it.id = id
         }

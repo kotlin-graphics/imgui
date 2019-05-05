@@ -11,7 +11,6 @@ import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
-import imgui.ImGui.logText
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.popClipRect
@@ -93,7 +92,7 @@ interface lowLevelLayoutHelpers {
             return
         }
         // Horizontal Separator
-        window.dc.columnsSet?.let { popClipRect() }
+        window.dc.currentColumns?.let { popClipRect() }
 
         var x1 = window.pos.x
         val x2 = window.pos.x + window.size.x
@@ -104,7 +103,7 @@ interface lowLevelLayoutHelpers {
         // NB: we don't provide our width so that it doesn't get feed back into AutoFit, we don't provide height to not alter layout.
         itemSize(Vec2())
         if (!itemAdd(bb, 0)) {
-            window.dc.columnsSet?.let { pushColumnClipRect() }
+            window.dc.currentColumns?.let { pushColumnClipRect() }
             return
         }
 
@@ -113,7 +112,7 @@ interface lowLevelLayoutHelpers {
         if (g.logEnabled)
             logRenderedText(bb.min, "--------------------------------")
 
-        window.dc.columnsSet?.let {
+        window.dc.currentColumns?.let {
             pushColumnClipRect()
             it.lineMinY = window.dc.cursorPos.y
         }

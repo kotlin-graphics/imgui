@@ -34,12 +34,12 @@ interface imgui_colums {
 
         val flags: ColumnsFlags = if (border) 0 else Cf.NoBorder.i
         //flags |= ImGuiColumnsFlags_NoPreserveWidths; // NB: Legacy behavior
-        window.dc.columnsSet?.let {
+        window.dc.currentColumns?.let {
             if (it.count == columnsCount && it.flags == flags)
                 return
         }
 
-        if (window.dc.columnsSet != null)
+        if (window.dc.currentColumns != null)
             endColumns()
 
         if (columnsCount != 1)
@@ -50,9 +50,9 @@ interface imgui_colums {
     fun nextColumn() {
 
         val window = currentWindow
-        if (window.skipItems || window.dc.columnsSet == null) return
+        if (window.skipItems || window.dc.currentColumns == null) return
 
-        val columns = window.dc.columnsSet!!
+        val columns = window.dc.currentColumns!!
 
         if (columns.count == 1) {
             window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
@@ -86,13 +86,13 @@ interface imgui_colums {
     }
 
     /** get current column index    */
-    val columnIndex get() = currentWindowRead!!.dc.columnsSet?.current ?: 0
+    val columnIndex get() = currentWindowRead!!.dc.currentColumns?.current ?: 0
 
     /** get column width (in pixels). pass -1 to use current column   */
     fun getColumnWidth(columnIndex_: Int = -1): Float {
 
         val window = currentWindowRead!!
-        val columns = window.dc.columnsSet!!
+        val columns = window.dc.currentColumns!!
         val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
         return offsetNormToPixels(columns, columns.columns[columnIndex + 1].offsetNorm - columns.columns[columnIndex].offsetNorm)
     }
@@ -100,7 +100,7 @@ interface imgui_colums {
     /** set column width (in pixels). pass -1 to use current column */
     fun setColumnWidth(columnIndex_: Int, width: Float) {
         val window = currentWindowRead!!
-        val columns = window.dc.columnsSet!!
+        val columns = window.dc.currentColumns!!
         val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
 
         setColumnOffset(columnIndex + 1, getColumnOffset(columnIndex) + width)
@@ -111,7 +111,7 @@ interface imgui_colums {
     fun getColumnOffset(columnIndex_: Int = -1): Float {
 
         val window = currentWindowRead!!
-        val columns = window.dc.columnsSet!!
+        val columns = window.dc.currentColumns!!
 
         val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
 
@@ -122,7 +122,7 @@ interface imgui_colums {
     /** set position of column line (in pixels, from the left side of the contents region). pass -1 to use current column  */
     fun setColumnOffset(columnIndex_: Int, offset_: Float) {
         val window = g.currentWindow!!
-        val columns = window.dc.columnsSet!!
+        val columns = window.dc.currentColumns!!
 
         val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
         assert(columnIndex < columns.columns.size)
@@ -139,7 +139,7 @@ interface imgui_colums {
     }
 
     /** number of columns (what was passed to Columns())    */
-    val columnsCount get() = currentWindowRead!!.dc.columnsSet?.count ?: 1
+    val columnsCount get() = currentWindowRead!!.dc.currentColumns?.count ?: 1
 
     // Tab Bars, Tabs
     // [BETA API] API may evolve!
@@ -230,13 +230,13 @@ interface imgui_colums {
 
     companion object {
 
-        fun offsetNormToPixels(columns: ColumnsSet, offsetNorm: Float) = offsetNorm * (columns.maxX - columns.minX)
+        fun offsetNormToPixels(columns: Columns, offsetNorm: Float) = offsetNorm * (columns.maxX - columns.minX)
 
-        fun pixelsToOffsetNorm(columns: ColumnsSet, offset: Float) = offset / (columns.maxX - columns.minX)
+        fun pixelsToOffsetNorm(columns: Columns, offset: Float) = offset / (columns.maxX - columns.minX)
 
         val columnsRectHalfWidth get() = 4f
 
-        fun getColumnWidthEx(columns: ColumnsSet, columnIndex_: Int, beforeResize: Boolean = false): Float {
+        fun getColumnWidthEx(columns: Columns, columnIndex_: Int, beforeResize: Boolean = false): Float {
             val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
 
             val offsetNorm =
