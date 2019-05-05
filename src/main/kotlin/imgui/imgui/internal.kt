@@ -1902,7 +1902,7 @@ interface imgui_internal {
         val y1 = window.dc.cursorPos.y
         val y2 = window.dc.cursorPos.y + window.dc.currentLineSize.y
         val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
-        itemSize(Vec2(bb.width, 0f))
+        itemSize(Vec2(1f, 0f))
         if (!itemAdd(bb, 0)) return
 
         window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)

@@ -82,7 +82,7 @@ interface lowLevelLayoutHelpers {
         val window = currentWindow
         if (window.skipItems) return
 
-        // Those flags should eventually be overridable by the user
+        // Those flags should eventually be overrideable by the user
         val flag: Sf = if (window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
         // useless on JVM with enums
         // assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo)
@@ -100,8 +100,8 @@ interface lowLevelLayoutHelpers {
             x1 += window.dc.indent.i
 
         val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
-        // NB: we don't provide our width so that it doesn't get feed back into AutoFit, we don't provide height to not alter layout.
-        itemSize(Vec2())
+        // NB: we don't provide our width so that it doesn't get feed back into AutoFit
+        itemSize(Vec2(0f, 1f))
         if (!itemAdd(bb, 0)) {
             window.dc.currentColumns?.let { pushColumnClipRect() }
             return
