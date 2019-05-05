@@ -553,15 +553,20 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
         }
     }
 
-    // Output grab position so it can be displayed by the caller
-    var grabT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-    if (axis == Axis.Y)
-        grabT = 1f - grabT
-    val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-    if (axis == Axis.X)
-        outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-    else
-        outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+    when {
+        sliderSz < 1f -> outGrabBb.put(bb.min, bb.min)
+        else -> {
+            // Output grab position so it can be displayed by the caller
+            var grabT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
+            if (axis == Axis.Y)
+                grabT = 1f - grabT
+            val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+            if (axis == Axis.X)
+                outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+            else
+                outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+        }
+    }
 
     return valueChanged
 }
@@ -688,15 +693,20 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
         }
     }
 
-    // Output grab position so it can be displayed by the caller
-    var grabT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-    if (axis == Axis.Y)
-        grabT = 1f - grabT
-    val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-    if (axis == Axis.X)
-        outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-    else
-        outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+    when {
+        sliderSz < 1f -> outGrabBb.put(bb.min, bb.min)
+        else -> {
+            // Output grab position so it can be displayed by the caller
+            var grabT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
+            if (axis == Axis.Y)
+                grabT = 1f - grabT
+            val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+            if (axis == Axis.X)
+                outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+            else
+                outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+        }
+    }
 
     return valueChanged
 }
@@ -823,23 +833,28 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutablePropert
         }
     }
 
-    // Output grab position so it can be displayed by the caller
-    var grabT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
-    if (axis == Axis.Y)
-        grabT = 1f - grabT
-    val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-    if (axis == Axis.X)
-        outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-    else
-        outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+    when {
+        sliderSz < 1f -> outGrabBb.put(bb.min, bb.min)
+        else -> {
+            // Output grab position so it can be displayed by the caller
+            var grabT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
+            if (axis == Axis.Y)
+                grabT = 1f - grabT
+            val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+            if (axis == Axis.X)
+                outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+            else
+                outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+        }
+    }
 
     return valueChanged
 }
 
-fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<*>, vMin: Double, vMax: Double, format: String,
+fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, vPtr: KMutableProperty0<*>, vMin: Double, vMax: Double, format: String,
                     power: Float, flags: SliderFlags = 0, outGrabBb: Rect): Boolean {
 
-    v as KMutableProperty0<Double>
+    var v by vPtr as KMutableProperty0<Double>
 
     val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
     val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -889,7 +904,7 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<
             if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                 clearActiveId()
             else if (delta != 0f) {
-                clickedT = sliderCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
+                clickedT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
                 val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                 delta = when {
                     decimalPrecision > 0 || isPower -> when { // Gamepad/keyboard tweak speeds in % of slider bounds
@@ -951,22 +966,27 @@ fun sliderBehaviorT(bb: Rect, id: Int, dataType: DataType, v: KMutableProperty0<
             vNew = roundScalarWithFormat(format, vNew)
 
             // Apply result
-            if (v() != vNew) {
-                v.set(vNew)
+            if (v != vNew) {
+                v = vNew
                 valueChanged = true
             }
         }
     }
 
-    // Output grab position so it can be displayed by the caller
-    var grabT = sliderCalcRatioFromValue(dataType, v(), vMin, vMax, power, linearZeroPos)
-    if (axis == Axis.Y)
-        grabT = 1f - grabT
-    val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
-    if (axis == Axis.X)
-        outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
-    else
-        outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+    when {
+        sliderSz < 1f -> outGrabBb.put(bb.min, bb.min)
+        else -> {
+            // Output grab position so it can be displayed by the caller
+            var grabT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
+            if (axis == Axis.Y)
+                grabT = 1f - grabT
+            val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+            if (axis == Axis.X)
+                outGrabBb.put(grabPos - grabSz * 0.5f, bb.min.y + grabPadding, grabPos + grabSz * 0.5f, bb.max.y - grabPadding)
+            else
+                outGrabBb.put(bb.min.x + grabPadding, grabPos - grabSz * 0.5f, bb.max.x - grabPadding, grabPos + grabSz * 0.5f)
+        }
+    }
 
     return valueChanged
 }

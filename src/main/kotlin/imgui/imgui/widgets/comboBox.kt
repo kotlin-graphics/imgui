@@ -69,21 +69,21 @@ interface comboBox {
         val (pressed, hovered, held) = buttonBehavior(frameBb, id)
         var popupOpen = isPopupOpen(id)
 
-        val valueBb = Rect(frameBb.min, frameBb.max - Vec2(arrowSize, 0f))
         val frameCol = if (hovered) Col.FrameBgHovered else Col.FrameBg
+        val valueX2 = frameBb.min.x max (frameBb.max.x - arrowSize)
         renderNavHighlight(frameBb, id)
         if (flags hasnt Cf.NoPreview)
-            window.drawList.addRectFilled(frameBb.min, Vec2(frameBb.max.x - arrowSize, frameBb.max.y), frameCol.u32,
+            window.drawList.addRectFilled(frameBb.min, Vec2(valueX2, frameBb.max.y), frameCol.u32,
                     style.frameRounding, DrawCornerFlag.Left.i)
         if (flags hasnt Cf.NoArrowButton) {
             val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
             val f = if (w <= arrowSize) DrawCornerFlag.All else DrawCornerFlag.Right
-            window.drawList.addRectFilled(Vec2(frameBb.max.x - arrowSize, frameBb.min.y), frameBb.max, col.u32, style.frameRounding, f.i)
-            renderArrow(Vec2(frameBb.max.x - arrowSize + style.framePadding.y, frameBb.min.y + style.framePadding.y), Dir.Down)
+            window.drawList.addRectFilled(Vec2(valueX2, frameBb.min.y), frameBb.max, col.u32, style.frameRounding, f.i)
+            renderArrow(Vec2(valueX2 + style.framePadding.y, frameBb.min.y + style.framePadding.y), Dir.Down)
         }
         renderFrameBorder(frameBb.min, frameBb.max, style.frameRounding)
         if (previewValue != null && flags hasnt Cf.NoPreview)
-            renderTextClipped(frameBb.min + style.framePadding, valueBb.max, previewValue)
+            renderTextClipped(frameBb.min + style.framePadding, Vec2(valueX2, frameBb.max.y), previewValue)
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
