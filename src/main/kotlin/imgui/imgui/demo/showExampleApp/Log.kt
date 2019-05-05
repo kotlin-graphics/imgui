@@ -42,7 +42,7 @@ object Log {
     operator fun invoke(pOpen: KMutableProperty0<Boolean>) {
 
         // For the demo: add a debug button _BEFORE_ the normal log window contents
-        // We take advantage of the fact that multiple calls to Begin()/End() are appending to the same window.
+        // We take advantage of a rarely used feature: multiple calls to Begin()/End() are appending to the _same_ window.
         setNextWindowSize(Vec2(500, 400), Cond.FirstUseEver)
         begin_("Example: Log", pOpen)
         if (smallButton("[Debug] Add 5 entries"))
@@ -55,6 +55,7 @@ object Log {
             }
         end()
 
+        // Actually call in the regular Log helper (which will Begin() into the same window as we just did)
         log.draw("Example: Log", pOpen)
     }
 

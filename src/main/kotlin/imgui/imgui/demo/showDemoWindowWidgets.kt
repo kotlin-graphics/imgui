@@ -440,7 +440,7 @@ object showDemoWindowWidgets {
 
             treeNode("Advanced, with Selectable nodes") {
 
-                helpMarker("This is a more standard looking tree with selectable nodes.\nClick to select, CTRL+Click to toggle, click on arrows or double-click to open.")
+                helpMarker("This is a more typical looking tree with selectable nodes.\nClick to select, CTRL+Click to toggle, click on arrows or double-click to open.")
                 checkbox("Align label with current X position)", ::alignLabelWithCurrentXposition)
                 text("Hello!")
                 if (alignLabelWithCurrentXposition) unindent(treeNodeToLabelSpacing)
@@ -453,9 +453,11 @@ object showDemoWindowWidgets {
                     for (i in 0..5) {
                         /*  Disable the default open on single-click behavior and pass in Selected flag according
                             to our selection state.                             */
-                        var nodeFlags = Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick or
-                                if (selectionMask has (1 shl i)) Tnf.Selected else Tnf.None
-                        if (i < 3) {    // Node
+                        var nodeFlags = Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick
+                        if (selectionMask has (1 shl i))
+                            nodeFlags = nodeFlags or Tnf.Selected
+                        if (i < 3) {
+                            // Items 0..2 are Tree Node
                             val nodeOpen = treeNodeExV(i, nodeFlags, "Selectable Node $i")
                             if (isItemClicked()) nodeClicked = i
                             if (nodeOpen) {
@@ -463,8 +465,9 @@ object showDemoWindowWidgets {
                                 treePop()
                             }
                         } else {
-                            /*  Leaf: The only reason we have a TreeNode at all is to allow selection of the leaf.
-                                Otherwise we can use BulletText() or TreeAdvanceToLabelPos()+Text().                                 */
+                            /*  Items 3..5 are Tree Leaves
+                                The only reason we use TreeNode at all is to allow selection of the leaf.
+                                Otherwise we can use BulletText() or TreeAdvanceToLabelPos()+Text().    */
                             nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
                             treeNodeExV(i, nodeFlags, "Selectable Leaf $i")
                             if (isItemClicked()) nodeClicked = i
@@ -486,7 +489,7 @@ object showDemoWindowWidgets {
         }
 
         treeNode("Collapsing Headers") {
-            checkbox("Enable extra group", ::closableGroup)
+            checkbox("Show 2nd header", ::closableGroup)
             collapsingHeader("Header") {
                 text("IsItemHovered: ${isItemHovered()}")
                 for (i in 0..4) text("Some content $i")
@@ -578,7 +581,7 @@ object showDemoWindowWidgets {
 
             text("%.0fx%.0f", myTexSize.x, myTexSize.y)
             val pos = Vec2(cursorScreenPos)
-            image(myTexId, myTexSize, Vec2(), Vec2(1), Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
+            image(myTexId, myTexSize, Vec2(), Vec2(1), Vec4(1), Vec4(1, 1, 1, 0.5))
             if (isItemHovered())
                 withTooltip {
                     val regionSz = 32f
@@ -590,13 +593,13 @@ object showDemoWindowWidgets {
                     text("Max: (%.2f, %.2f)", region.x + regionSz, region.y + regionSz)
                     val uv0 = Vec2(region.x / myTexSize.x, region.y / myTexSize.y)
                     val uv1 = Vec2((region.x + regionSz) / myTexSize.x, (region.y + regionSz) / myTexSize.y)
-                    image(myTexId, Vec2(regionSz * zoom), uv0, uv1, Vec4.fromColor(255, 255, 255, 255), Vec4.fromColor(255, 255, 255, 128))
+                    image(myTexId, Vec2(regionSz * zoom), uv0, uv1, Vec4(1), Vec4(1, 1, 1, 0.5))
                 }
             textWrapped("And now some textured buttons..")
             for (i in 0..7)
                 withId(i) {
                     val framePadding = -1 + i  // -1 = uses default padding
-                    if (imageButton(myTexId, Vec2(32, 32), Vec2(), 32 / myTexSize, framePadding, Vec4.fromColor(0, 0, 0, 255)))
+                    if (imageButton(myTexId, Vec2(32, 32), Vec2(), 32 / myTexSize, framePadding, Vec4(0, 0, 0, 1)))
                         pressedCount++
                     sameLine()
                 }
@@ -766,7 +769,8 @@ object showDemoWindowWidgets {
                                 return 0;
                             }
 
-                            // Tip: Because ImGui:: is a namespace you can add your own function into the namespace from your own source files.
+                            // Tip: Because ImGui:: is a namespace you would typicall add your own function into the namespace in your own source files.
+                            // For example, you may add a function called ImGui::InputText(const char* label, MyString* my_str).
                             static bool MyInputTextMultiline(const char* label, ImVector<char>* my_str, const ImVec2& size = ImVec2(0, 0), ImGuiInputTextFlags flags = 0)
                             {
                                 IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);

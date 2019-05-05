@@ -181,7 +181,7 @@ object CustomRendering {
                 val windowSize = ImGui.windowSize
                 val windowCenter = Vec2(windowPos.x + windowSize.x * 0.5f, windowPos.y + windowSize.y * 0.5f)
                 if (drawBg)
-                    ImGui.backgroundDrawList.addCircle(windowCenter, windowSize.x * 0.6f, COL32(255, 0, 0, 200), 32, 10f)
+                    ImGui.backgroundDrawList.addCircle(windowCenter, windowSize.x * 0.6f, COL32(255, 0, 0, 200), 32, 10f + 4)
                 if (drawFg)
                     ImGui.foregroundDrawList.addCircle(windowCenter, windowSize.y * 0.6f, COL32(0, 255, 0, 200), 32, 10f)
                 endTabItem()

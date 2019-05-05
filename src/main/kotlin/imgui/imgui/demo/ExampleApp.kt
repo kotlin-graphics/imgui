@@ -34,8 +34,8 @@ import imgui.functionalProgramming.menuBar
 import imgui.functionalProgramming.treeNode
 import imgui.functionalProgramming.withWindow
 import imgui.imgui.demo.showExampleApp.*
-import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -84,7 +84,7 @@ object ExampleApp {
 
         var open = open_
 
-        if (show.documents) Documents(show::documents);     // Process the Document app next, as it may also use a DockSpace()
+        if (show.documents) Documents(show::documents);
         if (show.mainMenuBar) MainMenuBar()
         if (show.console) Console(show::console)
         if (show.log) Log(show::log)
@@ -134,7 +134,7 @@ object ExampleApp {
         // Use fixed width for labels (by passing a negative value), the rest goes to widgets. We choose a width proportional to our font size.
         pushItemWidth(fontSize * -12)
 
-        // Menu
+        // Menu Bar
         menuBar {
             menu("Menu") { showExampleMenuFile() }
 //            stop = true
@@ -208,7 +208,7 @@ object ExampleApp {
             }
             treeNode("Backend Flags") {
                 helpMarker("Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.")
-                val backendFlags = intArrayOf(io.backendFlags) // Make a local copy to avoid modifying the back-end flags.
+                val backendFlags = intArrayOf(io.backendFlags) // Make a local copy to avoid modifying actual back-end flags.
                 checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
                 checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)
                 checkboxFlags("io.BackendFlags: HasSetMousePos", backendFlags, BackendFlag.HasSetMousePos.i)
