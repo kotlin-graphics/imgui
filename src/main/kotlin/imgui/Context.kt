@@ -156,7 +156,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Just navigated to this id (result of a successfully MoveRequest)    */
     var navJustMovedToId: ID = 0
     /** Just navigated to this select scope id (result of a successfully MoveRequest). */
-    var navJustMovedToSelectScopeId: ID = 0
+    var navJustMovedToMultiSelectScopeId: ID = 0
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
     /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
