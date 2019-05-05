@@ -20,11 +20,11 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.focusableItemUnregister
-import imgui.ImGui.tempInputTextScalar
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
+import imgui.ImGui.markItemEdited
 import imgui.ImGui.nextItemWidth
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart
@@ -41,6 +41,7 @@ import imgui.ImGui.setActiveId
 import imgui.ImGui.setFocusId
 import imgui.ImGui.style
 import imgui.ImGui.tempInputTextIsActive
+import imgui.ImGui.tempInputTextScalar
 import imgui.ImGui.textEx
 import imgui.internal.DragFlag
 import imgui.internal.Rect
@@ -234,8 +235,6 @@ interface drags {
         if (!itemAdd(totalBb, id, frameBb))
             return false
 
-        val hovered = itemHoverable(frameBb, id)
-
         // Default format string when passing NULL
         // Patch old "%.0f" format string to use "%d", read function comments for more details.
         val format = when {
@@ -248,27 +247,24 @@ interface drags {
         }
 
         // Tabbing or CTRL-clicking on Drag turns it into an input box
+        val hovered = itemHoverable(frameBb, id)
         val tempInputIsActive = tempInputTextIsActive(id)
         var tempInputStart = false
-        val focusRequested = focusableItemRegister(window, id)
-        if (focusRequested || (hovered && (io.mouseClicked[0] || io.mouseDoubleClicked[0]) || g.navActivateId == id || (g.navInputId == id && !tempInputIsActive))) {
-            setActiveId(id, window)
-            setFocusId(id, window)
-            window.focus()
-            g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-            if (focusRequested || io.keyCtrl || io.mouseDoubleClicked[0] || g.navInputId == id) {
-                tempInputStart = true
-                g.tempInputTextId = 0
+        if (!tempInputIsActive) {
+            val focusRequested = focusableItemRegister(window, id)
+            if (focusRequested || (hovered && (io.mouseClicked[0] || io.mouseDoubleClicked[0])) || g.navActivateId == id || g.navInputId == id) {
+                setActiveId(id, window)
+                setFocusId(id, window)
+                window.focus()
+                g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
+                if (focusRequested || io.keyCtrl || io.mouseDoubleClicked[0] || g.navInputId == id) {
+                    tempInputStart = true
+                    focusableItemUnregister(window)
+                }
             }
         }
-        if (tempInputIsActive || tempInputStart) {
-            window.dc.cursorPos put frameBb.min
-            focusableItemUnregister(window)
+        if (tempInputIsActive || tempInputStart)
             return tempInputTextScalar(frameBb, id, label, dataType, v, format)
-        }
-
-        // Actual drag behavior
-        val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power, DragFlag.None.i)
 
         // Draw frame
         val frameCol = when (g.activeId) {
@@ -280,6 +276,11 @@ interface drags {
         }
         renderNavHighlight(frameBb, id)
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
+
+        // Actual drag behavior
+        val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power, DragFlag.None.i)
+        if(valueChanged)
+            markItemEdited(id)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
         val value = String(v.format(dataType, format))

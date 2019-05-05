@@ -17,7 +17,6 @@ import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.focusableItemUnregister
 import imgui.ImGui.getColorU32
-import imgui.ImGui.tempInputTextScalar
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
@@ -38,6 +37,7 @@ import imgui.ImGui.setFocusId
 import imgui.ImGui.sliderBehavior
 import imgui.ImGui.style
 import imgui.ImGui.tempInputTextIsActive
+import imgui.ImGui.tempInputTextScalar
 import imgui.ImGui.textEx
 import imgui.imgui.widgets.drags.Companion.patchFormatStringFloatToInt
 import imgui.imgui.withFloat
@@ -115,26 +115,25 @@ interface sliders {
             else -> format_
         }
         // Tabbing or CTRL-clicking on Slider turns it into an input box
+        val hovered = itemHoverable(frameBb, id)
         val tempInputIsActive = tempInputTextIsActive(id)
         var tempInputStart = false
-        val focusRequested = focusableItemRegister(window, id)
-        val hovered = itemHoverable(frameBb, id)
-        if (focusRequested || (hovered && io.mouseClicked[0]) || g.navActivateId == id || (g.navInputId == id && !tempInputIsActive)) {
-            setActiveId(id, window)
-            setFocusId(id, window)
-            window.focus()
-            g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-            if (focusRequested || io.keyCtrl || g.navInputId == id) {
-                tempInputStart = true
-                g.tempInputTextId = 0
+        if (!tempInputIsActive) {
+            val focusRequested = focusableItemRegister(window, id)
+            if (focusRequested || (hovered && io.mouseClicked[0]) || g.navActivateId == id || g.navInputId == id) {
+                setActiveId(id, window)
+                setFocusId(id, window)
+                window.focus()
+                g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
+                if (focusRequested || io.keyCtrl || g.navInputId == id) {
+                    tempInputStart = true
+                    focusableItemUnregister(window)
+                }
             }
         }
 
-        if (tempInputIsActive || tempInputStart) {
-            window.dc.cursorPos put frameBb.min
-            focusableItemUnregister(window)
+        if (tempInputIsActive || tempInputStart)
             return tempInputTextScalar(frameBb, id, label, DataType.Float, v, format)
-        }
 
         // Draw frame
         val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
@@ -149,7 +148,7 @@ interface sliders {
 
         // Render grab
         if (grabBb.max.x > grabBb.min.x)
-            window.drawList.addRectFilled(grabBb.min, grabBb.max, getColorU32(if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab), style.grabRounding)
+            window.drawList.addRectFilled(grabBb.min, grabBb.max, getColorU32(if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab), style.grabRounding)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
         val value = format.format(style.locale, v())
@@ -287,7 +286,7 @@ interface sliders {
 
         // Render grab
         if (grabBb.max.y > grabBb.min.y)
-            window.drawList.addRectFilled(grabBb.min, grabBb.max, getColorU32(if(g.activeId == id) Col.SliderGrabActive else Col.SliderGrab), style.grabRounding)
+            window.drawList.addRectFilled(grabBb.min, grabBb.max, getColorU32(if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab), style.grabRounding)
 
         /*  Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
             For the vertical slider we allow centered text to overlap the frame padding         */
