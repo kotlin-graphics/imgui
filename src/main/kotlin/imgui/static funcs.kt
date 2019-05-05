@@ -61,7 +61,7 @@ import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
 
 
-fun getDraggedColumnOffset(columns: ColumnsSet, columnIndex: Int): Float {
+fun getDraggedColumnOffset(columns: Columns, columnIndex: Int): Float {
     /*  Active (dragged) column always follow mouse. The reason we need this is that dragging a column to the right edge
         of an auto-resizing window creates a feedback loop because we store normalized positions. So while dragging we
         enforce absolute positioning.   */
