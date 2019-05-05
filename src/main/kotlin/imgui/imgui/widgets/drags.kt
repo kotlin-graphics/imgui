@@ -252,12 +252,14 @@ interface drags {
         var tempInputStart = false
         if (!tempInputIsActive) {
             val focusRequested = focusableItemRegister(window, id)
-            if (focusRequested || (hovered && (io.mouseClicked[0] || io.mouseDoubleClicked[0])) || g.navActivateId == id || g.navInputId == id) {
+            val clicked = hovered && io.mouseClicked[0]
+            val doubleClicked = hovered && io.mouseDoubleClicked[0]
+            if (focusRequested || clicked || doubleClicked || g.navActivateId == id || g.navInputId == id) {
                 setActiveId(id, window)
                 setFocusId(id, window)
                 window.focus()
                 g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
-                if (focusRequested || io.keyCtrl || io.mouseDoubleClicked[0] || g.navInputId == id) {
+                if (focusRequested || (clicked && io.keyCtrl) || doubleClicked || g.navInputId == id) {
                     tempInputStart = true
                     focusableItemUnregister(window)
                 }
