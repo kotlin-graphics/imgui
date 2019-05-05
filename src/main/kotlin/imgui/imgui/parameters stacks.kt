@@ -253,7 +253,7 @@ interface imgui_parametersStacks {
      *  Calculate default item width given value passed to PushItemWidth */
     fun calcItemWidth(): Float {
 
-        val window = currentWindowRead!!
+        val window = g.currentWindow!!
         var w = window.dc.itemWidth
         if (w < 0f) {
             // Align to a right-side limit. We include 1 frame padding in the calculation because this is how the width is always used (we add 2 frame padding to it), but we could move that responsibility to the widget as well.
