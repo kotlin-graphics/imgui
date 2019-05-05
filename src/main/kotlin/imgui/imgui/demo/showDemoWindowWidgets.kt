@@ -123,6 +123,7 @@ import imgui.ImGui.textDisabled
 import imgui.ImGui.textLineHeight
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
+import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treeNodeExV
 import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
@@ -1224,7 +1225,9 @@ object showDemoWindowWidgets {
             radioButton("SliderFloat", ::itemType, 3)
             radioButton("InputText", ::itemType, 4)
             radioButton("ColorEdit4", ::itemType, 5)
-            radioButton("ListBox", ::itemType, 6)
+            radioButton("MenuItem", ::itemType, 6)
+            radioButton("TreeNode (w/ double-click)", ::itemType, 7)
+            radioButton("ListBox", ::itemType, 8)
             separator()
             val ret = when (itemType) {
                 0 -> false.also { text("ITEM: Text") }   // Testing text items with no identifier/interaction
@@ -1233,7 +1236,9 @@ object showDemoWindowWidgets {
                 3 -> sliderVec4("ITEM: SliderFloat", col, 0f, 1f)   // Testing basic item
                 4 -> inputText("ITEM: InputText", str)  // Testing input text (which handles tabbing)
                 5 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
-                6 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                6 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
+                7 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen) // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
+                8 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
                 else -> false
             }
             bulletText("Return value = $ret\n" +
@@ -1249,6 +1254,7 @@ object showDemoWindowWidgets {
                     "isItemDeactivated = $isItemDeactivated\n" +
                     "isItemDeactivatedAfterEdit = $isItemDeactivatedAfterEdit\n" +
                     "isItemVisible = $isItemVisible\n" +
+                    "isItemClicked = ${isItemClicked()}\n" +
                     "GetItemRectMin() = (%.1f, %.1f)\n" +
                     "GetItemRectMax() = (%.1f, %.1f)\n" +
                     "GetItemRectSize() = (%.1f, %.1f)", itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)

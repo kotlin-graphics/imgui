@@ -23,8 +23,8 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameCount
-import imgui.ImGui.getId
 import imgui.ImGui.getForegroundDrawList
+import imgui.ImGui.getId
 import imgui.ImGui.inputFloat
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
@@ -47,9 +47,9 @@ import imgui.ImGui.styleColorsLight
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
+import imgui.ImGui.textEx
 import imgui.ImGui.textLineHeight
 import imgui.ImGui.textLineHeightWithSpacing
-import imgui.ImGui.textEx
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.version
@@ -102,7 +102,10 @@ interface imgui_demoDebugInformations {
         open[0] = showWindow
     }
 
-    fun showDemoWindow(open: KMutableProperty0<Boolean>) = ExampleApp(open)
+    fun showDemoWindow(open: KMutableProperty0<Boolean>) {
+        assert(gImGui != null) { "Missing dear imgui context. Refer to examples app!" } // Exceptionally add an extra assert here for people confused with initial dear imgui setup
+        ExampleApp(open)
+    }
 
     //-----------------------------------------------------------------------------
     // [SECTION] About Window / ShowAboutWindow()
@@ -138,21 +141,21 @@ interface imgui_demoDebugInformations {
             text("io.backendRendererName: ${io.backendRendererName}")
             text("io.configFlags: 0x%08X", io.configFlags)
             // @formatter:off
-            if (io.configFlags has ConfigFlag.NavEnableKeyboard)        text(" NavEnableKeyboard")
-            if (io.configFlags has ConfigFlag.NavEnableGamepad)         text(" NavEnableGamepad")
-            if (io.configFlags has ConfigFlag.NavEnableSetMousePos)     text(" NavEnableSetMousePos")
-            if (io.configFlags has ConfigFlag.NavNoCaptureKeyboard)     text(" NavNoCaptureKeyboard")
-            if (io.configFlags has ConfigFlag.NoMouse)                  text(" NoMouse")
-            if (io.configFlags has ConfigFlag.NoMouseCursorChange)      text(" NoMouseCursorChange")
-            if (io.mouseDrawCursor)                                     text("io.mouseDrawCursor")
-            if (io.configMacOSXBehaviors)                               text("io.configMacOSXBehaviors")
-            if (io.configInputTextCursorBlink)                          text("io.configInputTextCursorBlink")
-            if (io.configWindowsResizeFromEdges)                        text("io.configWindowsResizeFromEdges")
-            if (io.configWindowsMoveFromTitleBarOnly)                   text("io.configWindowsMoveFromTitleBarOnly")
+            if (io.configFlags has ConfigFlag.NavEnableKeyboard) text(" NavEnableKeyboard")
+            if (io.configFlags has ConfigFlag.NavEnableGamepad) text(" NavEnableGamepad")
+            if (io.configFlags has ConfigFlag.NavEnableSetMousePos) text(" NavEnableSetMousePos")
+            if (io.configFlags has ConfigFlag.NavNoCaptureKeyboard) text(" NavNoCaptureKeyboard")
+            if (io.configFlags has ConfigFlag.NoMouse) text(" NoMouse")
+            if (io.configFlags has ConfigFlag.NoMouseCursorChange) text(" NoMouseCursorChange")
+            if (io.mouseDrawCursor) text("io.mouseDrawCursor")
+            if (io.configMacOSXBehaviors) text("io.configMacOSXBehaviors")
+            if (io.configInputTextCursorBlink) text("io.configInputTextCursorBlink")
+            if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
+            if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
             text("io.backendFlags: 0x%08X", io.backendFlags)
-            if (io.backendFlags has BackendFlag.HasGamepad)             text(" HasGamepad")
-            if (io.backendFlags has BackendFlag.HasMouseCursors)        text(" HasMouseCursors")
-            if (io.backendFlags has BackendFlag.HasSetMousePos)         text(" HasSetMousePos")
+            if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
+            if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
+            if (io.backendFlags has BackendFlag.HasSetMousePos) text(" HasSetMousePos")
             // @formatter:on
             separator()
             text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
@@ -207,7 +210,7 @@ interface imgui_demoDebugInformations {
             treePop()
         }
         if (treeNode("TabBars", "Tab Bars (${g.tabBars.size})")) {
-            for(n in 0 until g.tabBars.size)
+            for (n in 0 until g.tabBars.size)
                 Funcs.nodeTabBar(g.tabBars[n]!!)
             treePop()
         }
@@ -405,7 +408,8 @@ interface imgui_demoDebugInformations {
                     val cmd = drawList.cmdBuffer[i]
                     if (cmd.userCallback == null && cmd.elemCount == 0) continue
                     if (cmd.userCallback != null) {
-                        bulletText("Callback %s, UserData %s", cmd.userCallback!!.toString(), String((cmd.userCallbackData ?: ByteBuffer.wrap(byteArrayOf())).array()))
+                        bulletText("Callback %s, UserData %s", cmd.userCallback!!.toString(), String((cmd.userCallbackData
+                                ?: ByteBuffer.wrap(byteArrayOf())).array()))
                         continue
                     }
                     val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }

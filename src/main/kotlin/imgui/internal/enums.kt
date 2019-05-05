@@ -45,7 +45,7 @@ enum class ButtonFlag {
     None,
     /** hold to repeat  */
     Repeat,
-    /** return true on click + release on same item [DEFAULT if no PressedOn* flag is set]  */
+    /** [Default] return true on click + release on same item  */
     PressedOnClickRelease,
     /** return true on click (default requires click+release)    */
     PressedOnClick,
