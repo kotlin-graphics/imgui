@@ -108,7 +108,7 @@ interface imgui_internal {
 
     fun findWindowByID(id: ID): Window? = g.windowsById[id]
 
-    fun findWindowByName(name: String): Window? = g.windowsById[hash(name, 0)]
+    fun findWindowByName(name: String): Window? = g.windowsById[hash(name)]
 
     fun setCurrentFont(font: Font) {
         assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }

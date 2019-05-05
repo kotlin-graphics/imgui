@@ -155,7 +155,7 @@ fun hash(data: ByteBuffer, dataSize_: Int = data.rem, seed: Int = 0): Int {
     return crc.inv()
 }
 
-fun hash(data: String, dataSize_: Int, seed_: Int = 0): Int {
+fun hash(data: String, dataSize_: Int = 0, seed_: Int = 0): Int {
 
     /*
     convert to "Extended ASCII" Windows-1252 (CP1252) https://en.wikipedia.org/wiki/Windows-1252

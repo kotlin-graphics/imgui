@@ -265,7 +265,7 @@ class MenuColumns {
  *  Windows data saved in imgui.ini file
  *  ~ CreateNewWindowSettings */
 class WindowSettings(val name: String = "") {
-    var id: ID = hash(name, 0)
+    var id: ID = hash(name)
     var pos = Vec2()
     var size = Vec2()
     var collapsed = false
@@ -558,7 +558,7 @@ class WindowTempData {
 /** Storage for one window */
 class Window(var context: Context, var name: String) {
     /** == ImHash(Name) */
-    val id: ID = hash(name, 0)
+    val id: ID = hash(name)
     /** See enum WindowFlags */
     var flags = Wf.None.i
 
@@ -1638,7 +1638,7 @@ class TabBar {
     infix fun calcTabID(label: String): Int {
         return when {
             flags has TabBarFlag.DockNode -> {
-                val id = hash(label, 0)
+                val id = hash(label)
                 keepAliveId(id)
                 id
             }
