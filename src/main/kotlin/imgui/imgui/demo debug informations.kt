@@ -32,8 +32,10 @@ import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
 import imgui.ImGui.popId
+import imgui.ImGui.popItemWidth
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushId
+import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -60,10 +62,7 @@ import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withIndent
 import imgui.imgui.demo.ExampleApp
 import imgui.imgui.imgui_colums.Companion.offsetNormToPixels
-import imgui.internal.DrawListFlag
-import imgui.internal.Rect
-import imgui.internal.TabBar
-import imgui.internal.Window
+import imgui.internal.*
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.reflect.KMutableProperty0
@@ -190,9 +189,7 @@ interface imgui_demoDebugInformations {
         text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
         text("${io.metricsRenderVertices} vertices, ${io.metricsRenderIndices} indices (${io.metricsRenderIndices / 3} triangles)")
         text("${io.metricsActiveWindows} active windows (${io.metricsRenderWindows} visible)")
-        text("%d allocations", io.metricsAllocs)
-        checkbox("Show clipping rectangles when hovering draw commands", Companion::showDrawCmdClipRects)
-        checkbox("Ctrl shows window begin order", Companion::showWindowBeginOrder)
+        text("${io.metricsAllocs} active allocations")
         separator()
 
         Funcs.nodeWindows(g.windows, "Windows")
@@ -200,6 +197,7 @@ interface imgui_demoDebugInformations {
             g.drawDataBuilder.layers.forEach { layer -> layer.forEach { Funcs.nodeDrawList(null, it, "DrawList") } }
             treePop()
         }
+
         if (treeNode("Popups", "Popups (${g.openPopupStack.size})")) {
             for (popup in g.openPopupStack) {
                 val window = popup.window
@@ -209,11 +207,13 @@ interface imgui_demoDebugInformations {
             }
             treePop()
         }
+
         if (treeNode("TabBars", "Tab Bars (${g.tabBars.size})")) {
             for (n in 0 until g.tabBars.size)
                 Funcs.nodeTabBar(g.tabBars[n]!!)
             treePop()
         }
+
         if (treeNode("Internal state")) {
             text("HoveredWindow: '${g.hoveredWindow?.name}'")
             text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
@@ -234,16 +234,38 @@ interface imgui_demoDebugInformations {
                     "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
             treePop()
         }
-        if (io.keyCtrl && showWindowBeginOrder)
+
+        if (treeNode("Tools")) {
+            checkbox("Show windows begin order", ::showWindowsBeginOrder)
+            checkbox("Show windows rectangles", ::showWindowsRects)
+            sameLine()
+            pushItemWidth(fontSize * 12)
+            showWindowsRects = showWindowsRects || combo("##rects_type", ::showWindowsRectTypeInt, "OuterRect\u0000OuterRectClipped\u0000InnerMainRect\u0000InnerClipRect\u0000ContentsRegionRect\u0000")
+            popItemWidth()
+            checkbox("Show clipping rectangle when hovering ImDrawCmd node", ::showDrawcmdClipRects)
+            treePop()
+        }
+
+        if (showWindowsRects || showWindowsBeginOrder)
             for (window in g.windows) {
                 if (window.flags has Wf.ChildWindow || !window.wasActive)
                     continue
-                val buf = CharArray(32)
-                "${window.beginOrderWithinContext}".toCharArray(buf)
-                val fontSize = fontSize * 2
-                getForegroundDrawList(window).apply {
-                    addRectFilled(Vec2(window.pos), window.pos + fontSize, COL32(200, 100, 100, 255))
-                    addText(null, fontSize, Vec2(window.pos), COL32(255, 255, 255, 255), buf)
+                val drawList = getForegroundDrawList(window)
+                if (showWindowsRects) {
+                    val r = when(showWindowsRectType) {
+                        RT.OuterRect -> window.rect()
+                        RT.OuterRectClipped -> window.outerRectClipped
+                        RT.InnerMainRect -> window.innerMainRect
+                        RT.InnerClipRect -> window.innerClipRect
+                        RT.ContentsRegionRect -> window.contentsRegionRect
+                        else -> error("Invalid type")
+                    }
+                    drawList.addRect(r.min, r.max, COL32(255, 0, 128, 255))
+                }
+                if (showWindowsBeginOrder) {
+                    val buf = "${window.beginOrderWithinContext}".toCharArray(CharArray(32))
+                    drawList.addRectFilled(window.pos, window.pos + Vec2(fontSize), COL32(200, 100, 100, 255))
+                    drawList.addText(window.pos, COL32(255, 255, 255, 255), buf)
                 }
             }
     }
@@ -310,8 +332,14 @@ interface imgui_demoDebugInformations {
 
     companion object {
 
-        var showDrawCmdClipRects = true
-        var showWindowBeginOrder = false
+        enum class RT { OuterRect, OuterRectClipped, InnerMainRect, InnerClipRect, ContentsRegionRect, ContentsFullRect }
+
+        var showWindowsBeginOrder = false
+        var showWindowsRects = false
+        var showWindowsRectTypeInt: Int = RT.ContentsRegionRect.ordinal
+        val showWindowsRectType: RT
+            get() = RT.values().first { it.ordinal == showWindowsRectTypeInt }
+        var showDrawcmdClipRects = true
 
         var showWindow = false
 
@@ -415,7 +443,7 @@ interface imgui_demoDebugInformations {
                     val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
                     val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
                     val cmdNodeOpen = treeNode(i, "Draw %4d $mode vtx, tex = ${cmd.textureId!!.toHexString}, clip_rect = (%4.0f,%4.0f)-(%4.0f,%4.0f)", cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
-                    if (showDrawCmdClipRects && fgDrawList != null && isItemHovered()) {
+                    if (showDrawcmdClipRects && fgDrawList != null && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
                         val vtxsRect = Rect()
                         for (e in elemOffset until elemOffset + cmd.elemCount)
@@ -461,6 +489,16 @@ interface imgui_demoDebugInformations {
                 treePop()
             }
 
+            fun nodeColumns(columns: Columns) {
+                if (!treeNode(columns.id, "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X", columns.id, columns.flags))
+                    return
+                bulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", columns.maxX - columns.minX, columns.minX, columns.maxX)
+                columns.columns.forEachIndexed { i, c ->
+                    bulletText("Column %02d: OffsetNorm %.3f (= %.1f px)", i, c.offsetNorm, offsetNormToPixels(columns, c.offsetNorm))
+                }
+                treePop()
+            }
+
             fun nodeWindows(windows: ArrayList<Window>, label: String) {
                 if (!treeNode(label, "$label (${windows.size})")) return
                 for (i in 0 until windows.size)
@@ -469,9 +507,14 @@ interface imgui_demoDebugInformations {
             }
 
             fun nodeWindow(window: Window, label: String) {
-                val active = if (window.active or window.wasActive) "active" else "inactive"
-                if (!treeNode(window, "$label '${window.name}', $active @ 0x%X", System.identityHashCode(window)))
+                val nodeOpen = treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x%p", window.hashCode())
+                if (showWindowsRects && isItemHovered())
+                    getForegroundDrawList(window)?.let { fgDrawList -> }
+
+
+                if (!nodeOpen)
                     return
+
                 val flags = window.flags
                 nodeDrawList(window, window.drawList, "DrawList")
                 bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
@@ -501,15 +544,7 @@ interface imgui_demoDebugInformations {
                 window.parentWindow?.let { nodeWindow(it, "ParentWindow") }
                 if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
                 if (window.columnsStorage.isNotEmpty() && treeNode("Columns", "Columns sets (${window.columnsStorage.size})")) {
-                    window.columnsStorage.forEach {
-                        if (treeNode(it.id, "Columns Id: 0x%08X, Count: ${it.count}, Flags: 0x%04X", it.id, it.flags)) {
-                            bulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", it.maxX - it.minX, it.minX, it.maxX)
-                            it.columns.forEachIndexed { n, c ->
-                                bulletText("Column %02d: OffsetNorm %.3f (= %.1f px)", n, c.offsetNorm, offsetNormToPixels(it, c.offsetNorm))
-                            }
-                            treePop()
-                        }
-                    }
+                    window.columnsStorage.forEach(::nodeColumns)
                     treePop()
                 }
                 bulletText("Storage: %d bytes", window.stateStorage.data.size * Int.BYTES * 2)
