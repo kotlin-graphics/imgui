@@ -1251,12 +1251,12 @@ fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
                     if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {
                         // Fallback manual-scroll when window has no navigable item
                         if (Key.PageUp.isPressed)
-                            window.setScrollY(window.scroll.y - window.innerClipRect.height)
+                            window.setScrollY(window.scroll.y - window.innerMainRect.height)
                         else if (Key.PageDown.isPressed)
-                            window.setScrollY(window.scroll.y + window.innerClipRect.height)
+                            window.setScrollY(window.scroll.y + window.innerMainRect.height)
                     } else {
                         val navRectRel = window.navRectRel[g.navLayer.i]
-                        val pageOffsetY = 0f max (window.innerClipRect.height - window.calcFontSize() + navRectRel.height)
+                        val pageOffsetY = 0f max (window.innerMainRect.height - window.calcFontSize() + navRectRel.height)
                         return when { // nav_scoring_rect_offset_y
                             Key.PageUp.isPressed -> {
                                 g.navMoveDir = Dir.Down // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
