@@ -5,11 +5,11 @@ import glm_.BYTES
 import glm_.f
 import glm_.func.common.max
 import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.ImGui.shadeVertsLinearUV
+import imgui.imgui.g
 import imgui.internal.*
 import java.nio.ByteBuffer
 import java.util.*

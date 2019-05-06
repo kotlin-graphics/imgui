@@ -6,7 +6,6 @@ import imgui.*
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemSize
-import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endChildFrame
@@ -25,6 +24,7 @@ import imgui.ImGui.selectable
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
+import imgui.imgui.g
 import imgui.imgui.withInt
 import imgui.internal.Rect
 import kotlin.reflect.KMutableProperty0

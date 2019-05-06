@@ -7,7 +7,6 @@ import imgui.ImGui.calcTypematicPressedRepeatAmount
 import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.MOUSE_INVALID
-import imgui.g
 import imgui.internal.Rect
 
 

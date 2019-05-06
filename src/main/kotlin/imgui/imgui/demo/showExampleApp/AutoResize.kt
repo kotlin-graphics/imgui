@@ -1,6 +1,7 @@
 package imgui.imgui.demo.showExampleApp
 
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.begin_
 import imgui.ImGui.end
 import imgui.ImGui.sliderInt
@@ -19,7 +20,7 @@ object AutoResize {
     /** Demonstrate creating a window which gets auto-resized according to its content. */
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
-        if (!begin_("Example: Auto-resizing window", open, Wf.AlwaysAutoResize.i)) {
+        if (!begin("Example: Auto-resizing window", open, Wf.AlwaysAutoResize.i)) {
             end()
             return
         }

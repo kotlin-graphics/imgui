@@ -2,6 +2,7 @@ package imgui.imgui
 
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.beginPopupEx
 import imgui.ImGui.begin_
 import imgui.ImGui.closePopupToLevel
@@ -107,7 +108,7 @@ interface imgui_popupsModals {
             setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
 
         val flags = flags_ or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings
-        val isOpen = begin_(name, pOpen, flags)
+        val isOpen = begin(name, pOpen, flags)
         // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
         if (!isOpen || pOpen?.get() == false) {
             endPopup()

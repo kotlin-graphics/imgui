@@ -5,12 +5,13 @@ import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.Context
 import imgui.DEBUG
 import imgui.ImGui
-import imgui.impl.ImplGL3
+import imgui.imgui.Context
 import imgui.impl.LwjglGlfw
 import imgui.impl.LwjglGlfw.GlfwClientApi
+import kool.stak
+import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
 import org.lwjgl.system.MemoryStack
@@ -18,8 +19,6 @@ import org.lwjgl.system.Platform
 import uno.glfw.GlfwWindow
 import uno.glfw.VSync
 import uno.glfw.glfw
-import org.lwjgl.glfw.GLFW
-import kool.stak
 
 fun main() {
 	TestMultipleWindowsLwjgl()
@@ -148,7 +147,7 @@ private class TestMultipleWindowsLwjgl {
 				// 3. Show another simple window.
 				if (showAnotherWindow) {
 					// Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-					begin_("Another Window", ::showAnotherWindow)
+					begin("Another Window", ::showAnotherWindow)
 					text("Hello from another window!")
 					if (button("Close Me"))
 						showAnotherWindow = false

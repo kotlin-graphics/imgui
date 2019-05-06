@@ -13,7 +13,7 @@ import com.jogamp.opengl.util.Animator
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.Cond
-import imgui.Context
+import imgui.imgui.Context
 import imgui.ImGui
 import imgui.impl.JoglGL3
 
@@ -124,7 +124,7 @@ private class HelloWorld_jogl : GLEventListener {
 
             // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name your windows.
             if (showAnotherWindow) {
-                begin_("Another Window", ::showAnotherWindow)
+                begin("Another Window", ::showAnotherWindow)
                 text("Hello from another window!")
                 if (button("Close Me"))
                     showAnotherWindow = false

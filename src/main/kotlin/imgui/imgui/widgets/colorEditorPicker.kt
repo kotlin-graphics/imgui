@@ -17,7 +17,6 @@ import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginPopup
 import imgui.ImGui.buttonBehavior
-import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorConvertRGBtoHSV
@@ -66,6 +65,7 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.ImGui.u32
+import imgui.imgui.g
 import imgui.imgui.widgets.text.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
 import imgui.ColorEditFlag as Cef

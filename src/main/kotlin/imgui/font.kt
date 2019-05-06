@@ -10,6 +10,7 @@ import glm_.vec2.operators.times
 import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.ImGui.style
+import imgui.imgui.g
 import imgui.internal.*
 import imgui.stb.*
 import kool.*
