@@ -1,18 +1,20 @@
 package imgui.unittests
 
 import glm_.vec3.Vec3
-import glm_.vec4.Vec4
 import gln.checkError
 import gln.glGetVec2
 import gln.glGetVec4
 import gln.glGetVec4i
-import imgui.Context
 import imgui.DEBUG
 import imgui.ImGui
+import imgui.imgui.Context
 import imgui.impl.LwjglGlfw
 import io.kotlintest.specs.AbstractAnnotationSpec
+import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL43
 import org.lwjgl.opengl.GL46.*
+import org.lwjgl.opengl.GLDebugMessageCallback
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryStack.stackPush
 import org.lwjgl.system.MemoryUtil
@@ -21,11 +23,6 @@ import uno.glfw.GlfwWindow
 import uno.glfw.VSync
 import uno.glfw.glfw
 import java.util.logging.LogManager
-import org.lwjgl.opengl.GLDebugMessageCallback
-import org.lwjgl.BufferUtils
-import org.lwjgl.opengl.GL43
-
-
 
 
 class GLDebugCallback_43 : GLDebugMessageCallback() {
@@ -752,7 +749,7 @@ class RendererTests {
                 // 3. Show another simple window.
                 if (showAnotherWindow) {
                     // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-                    begin_("Another Window", ::showAnotherWindow)
+                    begin("Another Window", ::showAnotherWindow)
                     text("Hello from another window!")
                     if (button("Close Me"))
                         showAnotherWindow = false

@@ -9,6 +9,7 @@ import imgui.*
 import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.arrowButton
+import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropSource
@@ -1308,7 +1309,7 @@ object showDemoWindowWidgets {
                 associated to the title bar of a window.                 */
             checkbox("Hovered/Active tests after Begin() for title bar testing", ::testWindow)
             if (testWindow) {
-                begin_("Title bar Hovered/Active tests", ::testWindow)
+                begin("Title bar Hovered/Active tests", ::testWindow)
                 if (beginPopupContextItem()) { // <-- This is using IsItemHovered()
                     if (menuItem("Close")) testWindow = false
                     endPopup()

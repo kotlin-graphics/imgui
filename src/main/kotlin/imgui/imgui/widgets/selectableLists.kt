@@ -24,6 +24,7 @@ import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.windowContentRegionMax
+import imgui.imgui.g
 import imgui.imgui.withBoolean
 import imgui.internal.*
 import kotlin.reflect.KMutableProperty0

@@ -1,9 +1,6 @@
 package imgui.imgui
 
 import imgui.ID
-import imgui.ImGui.currentWindow
-import imgui.ImGui.currentWindowRead
-import imgui.g
 
 /** ID stack/scopes
  *  - Read the FAQ for more details about how ID are handled in dear imgui. If you are creating widgets in a loop you most

@@ -6,6 +6,7 @@ import glm_.toHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginTooltip
@@ -33,7 +34,6 @@ import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
 import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popId
-import imgui.ImGui.popItemWidth
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushId
 import imgui.ImGui.pushTextWrapPos
@@ -54,13 +54,12 @@ import imgui.ImGui.textLineHeight
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
-import imgui.ImGui.version
-import imgui.ImGui.versionNum
 import imgui.ImGui.windowDrawList
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withIndent
 import imgui.imgui.demo.ExampleApp
+import imgui.imgui.demo.showExampleApp.StyleEditor
 import imgui.imgui.imgui_colums.Companion.offsetNormToPixels
 import imgui.internal.*
 import java.nio.ByteBuffer
@@ -88,6 +87,9 @@ import imgui.WindowFlag as Wf
  *
  *  Thank you,
  *  -Your beloved friend, imgui_demo.cpp (that you won't delete)
+ *
+ *
+ *  Demo, Debug, Information
  */
 interface imgui_demoDebugInformations {
 
@@ -114,7 +116,7 @@ interface imgui_demoDebugInformations {
     /** create about window. display Dear ImGui version, credits and build/system information. */
     fun showAboutWindow(open: KMutableProperty0<Boolean>) {
 
-        if (!begin_("About Dear ImGui", open, Wf.AlwaysAutoResize.i)) {
+        if (!begin("About Dear ImGui", open, Wf.AlwaysAutoResize.i)) {
             end()
             return
         }
@@ -131,7 +133,7 @@ interface imgui_demoDebugInformations {
             if (copyToClipboard)
                 logToClipboard()
 
-            text("Dear ImGui $version ($versionNum)")
+            text("Dear ImGui $version ($IMGUI_VERSION_NUM)")
             separator()
             text("sizeof(size_t): ${Int.BYTES}, sizeof(DrawIdx): ${DrawIdx.BYTES}, sizeof(DrawVert): ${DrawVert.size}")
             text("IMGUI_USE_BGRA_PACKED_COLOR: $USE_BGRA_PACKED_COLOR")
@@ -180,7 +182,7 @@ interface imgui_demoDebugInformations {
      *  window list, basic internal state, etc.    */
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
-        if (!begin_("ImGui Metrics", open)) {
+        if (!begin("ImGui Metrics", open)) {
             end()
             return
         }
@@ -269,6 +271,10 @@ interface imgui_demoDebugInformations {
             }
     }
 
+    /** add style editor block (not a window). you can pass in a reference ImGuiStyle structure to compare to,
+     *  revert to and save to (else it uses the default style)  */
+    fun showStyleEditor(ref: Style? = null)  = StyleEditor.invoke(ref)
+
     /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
      *  Here we use the simplified combo() api that packs items into a single literal string. Useful for quick combo
      *  boxes where the choices are known locally.
@@ -328,6 +334,10 @@ interface imgui_demoDebugInformations {
             bulletText("You can apply arithmetic operators +,*,/ on numerical values.\nUse +- to subtract.")
         }
     }
+
+    /** get the compiled version string e.g. "1.23" (essentially the compiled value for IMGUI_VERSION) */
+    val version: String
+        get() = IMGUI_VERSION
 
     companion object {
 

@@ -3,7 +3,6 @@ package imgui.imgui
 import glm_.f
 import glm_.i
 import imgui.ImGui
-import imgui.g
 
 interface imgui_windowScrolling {
 

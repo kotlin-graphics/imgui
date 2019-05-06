@@ -8,7 +8,6 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.style
-import imgui.g
 import imgui.internal.GroupData
 import imgui.internal.Rect
 import imgui.internal.LayoutType as Lt

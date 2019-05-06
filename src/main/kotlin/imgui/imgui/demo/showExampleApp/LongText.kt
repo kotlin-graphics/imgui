@@ -3,6 +3,7 @@ package imgui.imgui.demo.showExampleApp
 import glm_.vec2.Vec2
 import imgui.Cond
 import imgui.ImGui
+import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.begin_
 import imgui.ImGui.end
@@ -30,7 +31,7 @@ object LongText {
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         setNextWindowSize(Vec2(520, 600), Cond.FirstUseEver)
-        if (!begin_("Example: Long text display, TODO", open)) {
+        if (!begin("Example: Long text display, TODO", open)) {
             end()
             return
         }

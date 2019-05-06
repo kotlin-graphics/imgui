@@ -18,6 +18,7 @@ import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.style
 import imgui.ImGui.verticalSeparator
+import imgui.imgui.g
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0

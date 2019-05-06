@@ -3,6 +3,7 @@ package imgui.imgui.demo
 import glm_.f
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.begin_
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -27,7 +28,6 @@ import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
-import imgui.ImGui.version
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.menuBar
@@ -122,7 +122,7 @@ object ExampleApp {
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
 
         // Main body of the Demo window starts here.
-        if (!begin_("ImGui Demo", open, windowFlags)) {
+        if (!begin("ImGui Demo", open, windowFlags)) {
             end()   // Early out if the window is collapsed, as an optimization.
             return
         }
@@ -159,7 +159,7 @@ object ExampleApp {
             }
         }
 
-        text("dear imgui says hello. ($version)")
+        text("dear imgui says hello. ($IMGUI_VERSION)")
         spacing()
 
         collapsingHeader("Help") {

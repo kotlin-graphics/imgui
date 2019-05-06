@@ -11,7 +11,6 @@ import glm_.vec4.Vec4i
 import imgui.*
 import imgui.ImGui.beginGroup
 import imgui.ImGui.buttonEx
-import imgui.ImGui.calcItemWidth
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
@@ -22,15 +21,14 @@ import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
-import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.ImGui.textEx
+import imgui.imgui.g
 import imgui.imgui.withFloat
 import imgui.imgui.withInt
 import imgui.internal.or
-import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
 import imgui.internal.ButtonFlag as Bf

@@ -3,7 +3,6 @@ package imgui.imgui
 import glm_.vec4.Vec4
 import imgui.Col
 import imgui.Style
-import imgui.g
 import imgui.internal.lerp
 
 /** Styles  */
