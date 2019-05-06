@@ -143,11 +143,11 @@ interface inputKeyboard {
         inputScalar(label, dataType, it, step, stepFast, format, flags)
     }
 
-    @Suppress("UNCHECKED_CAST")
-    fun inputScalar(label: String, dataType: DataType, dataPtr: KMutableProperty0<*>, step: Number?, stepFast: Number?,
+//    @Suppress("UNCHECKED_CAST")
+    fun <N : Number> inputScalar(label: String, dataType: DataType, dataPtr: KMutableProperty0<N>, step: N?, stepFast: N?,
                     format_: String? = null, flags: InputTextFlags = 0): Boolean {
 
-        var data by dataPtr as KMutableProperty0<Number>
+        var data by dataPtr
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -218,7 +218,8 @@ interface inputKeyboard {
         for (i in 0 until components) {
             pushId(i)
             withFloat(v, i) {
-                valueChanged = inputScalar("", DataType.Float, it, step, stepFast, format, flags) || valueChanged
+                val pN = it as KMutableProperty0<Number>
+                valueChanged = inputScalar("", DataType.Float, pN, step, stepFast, format, flags) || valueChanged
             }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
