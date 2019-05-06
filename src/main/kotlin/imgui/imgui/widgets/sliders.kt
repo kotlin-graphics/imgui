@@ -87,8 +87,8 @@ interface sliders {
      *  "Gold: %.0f"   Gold: 1
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
-    fun sliderScalar(label: String, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number, format_: String? = null,
-                     power: Float = 1f): Boolean {
+    fun <N> sliderScalar(label: String, dataType: DataType, v: KMutableProperty0<N>, vMin: N, vMax: N,
+                         format_: String? = null, power: Float = 1f): Boolean where N : Number, N : Comparable<N> {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -205,7 +205,7 @@ interface sliders {
     fun sliderInt(label: String, v: IntArray, ptr: Int, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
             withInt(v, ptr) { sliderInt(label, it, vMin, vMax, format) }
 
-    fun sliderInt(label: String, v: KMutableProperty0<*>, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
+    fun sliderInt(label: String, v: KMutableProperty0<Int>, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
             sliderScalar(label, DataType.Int, v, vMin, vMax, format)
 
     fun sliderInt2(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
@@ -238,11 +238,17 @@ interface sliders {
         return res
     }
 
-    fun vSliderFloat(label: String, size: Vec2, v: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String? = "%.3f",
-                     power: Float = 1f): Boolean = vSliderScalar(label, size, DataType.Float, v, vMin, vMax, format, power)
+    // TODO this doesnt look right..
+    fun <N> vSliderFloat(label: String, size: Vec2,
+                         v: KMutableProperty0<N>,
+                         vMin: Float, vMax: Float,
+                         format: String? = "%.3f", power: Float = 1f): Boolean where N : Number, N : Comparable<N> =
+            vSliderScalar(label, size, DataType.Float, v, vMin as N, vMax as N, format, power)
 
-    fun vSliderScalar(label: String, size: Vec2, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number,
-                      format_: String? = null, power: Float = 1f): Boolean {
+    fun <N> vSliderScalar(label: String, size: Vec2,
+                          dataType: DataType, v: KMutableProperty0<N>,
+                          vMin: N, vMax: N,
+                          format_: String? = null, power: Float = 1f): Boolean where N : Number, N : Comparable<N> {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -300,8 +306,8 @@ interface sliders {
         return valueChanged
     }
 
-    fun vSliderInt(label: String, size: Vec2, v: KMutableProperty0<*>, vMin: Int, vMax: Int, format: String = "%d")
-            : Boolean = vSliderScalar(label, size, DataType.Int, v, vMin, vMax, format)
+    fun vSliderInt(label: String, size: Vec2, v: KMutableProperty0<Int>, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
+            vSliderScalar(label, size, DataType.Int, v, vMin, vMax, format)
 
     /** Add multiple sliders on 1 line for compact edition of multiple components   */
     fun sliderFloatN(label: String, v: FloatArray, component: Int, vMin: Float, vMax: Float, format: String?, power: Float = 1f)

@@ -42,7 +42,7 @@ interface inputKeyboard {
 
 
     fun inputText(label: String, buf: CharArray, flags: InputTextFlags = 0
-            , callback: InputTextCallback? = null, userData: Any? = null): Boolean {
+                  , callback: InputTextCallback? = null, userData: Any? = null): Boolean {
 
         // TODO, enable callback and userData, related: https://github.com/kotlin-graphics/imgui/commit/082d94e359b2c262cd67c429bfff7fe3900d74cc
         assert(flags hasnt Itf.Multiline) { "call InputTextMultiline()" }
@@ -50,7 +50,7 @@ interface inputKeyboard {
     }
 
     fun inputTextWithHint(label: String, hint: String, buf: CharArray, flags: InputTextFlags = 0
-        /*, ImGuiInputTextCallback callback = NULL, void* user_data = NULL*/): Boolean {
+            /*, ImGuiInputTextCallback callback = NULL, void* user_data = NULL*/): Boolean {
         assert(flags hasnt Itf.Multiline) { "call InputTextMultiline()" }
         return inputTextEx(label, hint, buf, Vec2(), flags/*, callback, user_data*/)
     }
@@ -146,16 +146,18 @@ interface inputKeyboard {
         return res
     }
 
-    fun inputScalar(label: String, dataType: DataType, data: IntArray, step: Int?, stepFast: Int?, format: String? = null,
-                    flags: InputTextFlags = 0): Boolean = withInt(data, 0) {
-        inputScalar(label, dataType, it, step, stepFast, format, flags)
-    }
+    fun <N> inputScalar(label: String, dataType: DataType,
+                        data: IntArray, step: Int?, stepFast: Int?,
+                        format: String? = null, flags: InputTextFlags = 0): Boolean where N : Number, N : Comparable<N> =
+            withInt(data, 0) { inputScalar(label, dataType, it, step, stepFast, format, flags) }
 
-    @Suppress("UNCHECKED_CAST")
-    fun inputScalar(label: String, dataType: DataType, dataPtr: KMutableProperty0<*>, step: Number?, stepFast: Number?,
-                    format_: String? = null, flags: InputTextFlags = 0): Boolean {
+    //    @Suppress("UNCHECKED_CAST")
+    fun <N> inputScalar(label: String, dataType: DataType,
+                        dataPtr: KMutableProperty0<N>,
+                        step: N? = null, stepFast: N? = null,
+                        format_: String? = null, flags: InputTextFlags = 0): Boolean where N : Number, N : Comparable<N> {
 
-        var data by dataPtr as KMutableProperty0<Number>
+        var data by dataPtr
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -213,8 +215,10 @@ interface inputKeyboard {
         return valueChanged
     }
 
-    fun inputFloatN(label: String, v: FloatArray, components: Int, step: Number? = null, stepFast: Number? = null,
-                    format: String? = null, flags: Int): Boolean {
+    fun <N> inputFloatN(label: String, v: FloatArray,
+                        components: Int,
+                        step: N? = null, stepFast: N? = null,
+                        format: String? = null, flags: Int): Boolean where N : Number, N : Comparable<N> {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -225,7 +229,8 @@ interface inputKeyboard {
         for (i in 0 until components) {
             pushId(i)
             withFloat(v, i) {
-                valueChanged = inputScalar("", DataType.Float, it, step, stepFast, format, flags) || valueChanged
+                val pN = it as KMutableProperty0<N>
+                valueChanged = inputScalar("", DataType.Float, pN, step, stepFast, format, flags) || valueChanged
             }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()

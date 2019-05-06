@@ -38,6 +38,20 @@ import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
 
+// @formatter:off
+val S8_MIN: Int  = -128
+val S8_MAX: Int  = 127
+val U8_MIN: Int  = 0
+val U8_MAX: Int  = 0xFF
+val S16_MIN: Int = -32768
+val S16_MAX: Int = 32767
+val U16_MIN: Int = 0
+val U16_MAX: Int = 0xFFFF
+val S32_MIN: Int = Integer.MIN_VALUE
+val S32_MAX: Int = Integer.MAX_VALUE
+// @formatter:on
+
+
 /** Widgets: Main
  *  - Most widgets return true when the value has been changed or when pressed/selected  */
 interface main {

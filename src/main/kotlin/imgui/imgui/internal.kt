@@ -65,6 +65,7 @@ import imgui.internal.*
 import kool.lib.fill
 import uno.kotlin.getValue
 import uno.kotlin.setValue
+import unsigned.Ubyte
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.nio.ByteBuffer
@@ -2097,12 +2098,11 @@ interface imgui_internal {
     }
 
     fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
-                     power: Float, flags: DragFlags): Boolean = withFloat(v, ptr) {
-        dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power, flags)
-    }
+                     power: Float, flags: DragFlags): Boolean =
+            withFloat(v, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power, flags) }
 
-    fun dragBehavior(id: ID, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number?, vMax: Number?,
-                     format: String, power: Float, flags: DragFlags): Boolean {
+    fun <N : Number> dragBehavior(id: ID, dataType: DataType, v_: KMutableProperty0<N>, vSpeed: Float, vMin: Number?, vMax: Number?,
+                                  format: String, power: Float, flags: DragFlags): Boolean {
 
         if (g.activeId == id)
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
@@ -2110,17 +2110,81 @@ interface imgui_internal {
             else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                 clearActiveId()
 
-        return when (g.activeId) {
-            id -> when (dataType) {
-                DataType.Int, DataType.Uint -> dragBehaviorT(dataType, v, vSpeed, vMin as? Int
-                        ?: Int.MIN_VALUE, vMax as? Int ?: Int.MAX_VALUE, format, power, flags)
-                DataType.Long, DataType.Ulong -> dragBehaviorT(dataType, v, vSpeed, vMin as? Long
-                        ?: Long.MIN_VALUE, vMax as? Long ?: Long.MAX_VALUE, format, power, flags)
-                DataType.Float -> dragBehaviorT(dataType, v, vSpeed, vMin as? Float
-                        ?: -Float.MAX_VALUE, vMax as? Float ?: Float.MAX_VALUE, format, power, flags)
-                DataType.Double -> dragBehaviorT(dataType, v, vSpeed, vMin as? Double
-                        ?: -Double.MAX_VALUE, vMax as? Double ?: Double.MAX_VALUE, format, power, flags)
-                else -> throw Error()
+        var v by v_
+
+        return when {
+            g.activeId == id -> when (dataType) {
+                DataType.Byte -> {
+                    _i = (v as Byte).i
+                    val min = vMin?.let { it as Byte } ?: Byte.MIN_VALUE
+                    val max = vMax?.let { it as Byte } ?: Byte.MAX_VALUE
+                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+                            .also { v = _i.b as N }
+                }
+//                DataType.Ubyte -> {
+//                    _i = (v as Ubyte).v.i
+//                    val min = vMin?.let { it as Ubyte } ?: Ub
+//                    val max = vMax?.let { it as Ubyte } ?: Byte.MAX_VALUE
+//                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+//                            .also { v = _i.b as N }
+//                }
+                DataType.Short -> {
+                    _i = (v as Short).i
+                    val min = vMin?.let { it as Short } ?: Short.MIN_VALUE
+                    val max = vMax?.let { it as Short } ?: Short.MAX_VALUE
+                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+                            .also { v = _i.s as N }
+                }
+//                is Ubyte -> {
+//                    _i = v.i
+//                    val min = vMin?.i ?: Ubyte.MIN_VALUE
+//                    val max = vMax?.i ?: Ubyte.MAX_VALUE
+//                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+//                            .also { (v as Ubyte).v = _i.b }
+//                }
+                DataType.Int -> {
+                    _i = v as Int
+                    val min = vMin?.let { it as Int } ?: Int.MIN_VALUE
+                    val max = vMax?.let { it as Int } ?: Int.MAX_VALUE
+                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+                            .also { v = _i as N }
+                }
+//                is Ubyte -> {
+//                    _i = v.i
+//                    val min = vMin?.i ?: Ubyte.MIN_VALUE
+//                    val max = vMax?.i ?: Ubyte.MAX_VALUE
+//                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+//                            .also { (v as Ubyte).v = _i.b }
+//                }
+                DataType.Long -> {
+                    _L = v as Long
+                    val min = vMin?.let { it as Long } ?: Long.MIN_VALUE
+                    val max = vMax?.let { it as Long } ?: Long.MAX_VALUE
+                    dragBehaviorT(dataType, ::_L, vSpeed, min.L, max.L, format, power, flags)
+                            .also { v = _L as N }
+                }
+//                is Ubyte -> {
+//                    _i = v.i
+//                    val min = vMin?.i ?: Ubyte.MIN_VALUE
+//                    val max = vMax?.i ?: Ubyte.MAX_VALUE
+//                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+//                            .also { (v as Ubyte).v = _i.b }
+//                }
+                DataType.Float -> {
+                    _f = v as Float
+                    val min = vMin?.let { it as Float } ?: Float.MIN_VALUE
+                    val max = vMax?.let { it as Float } ?: Float.MAX_VALUE
+                    dragBehaviorT(dataType, ::_f, vSpeed, min.f, max.f, format, power, flags)
+                            .also { v = _f as N }
+                }
+                DataType.Double -> {
+                    _d = v as Double
+                    val min = vMin?.let { it as Double } ?: Double.MIN_VALUE
+                    val max = vMax?.let { it as Double } ?: Double.MAX_VALUE
+                    dragBehaviorT(dataType, ::_d, vSpeed, min.d, max.d, format, power, flags)
+                            .also { v = _d as N }
+                }
+                else -> error("Invalid")
             }
             else -> false
         }
@@ -2128,8 +2192,7 @@ interface imgui_internal {
 
     /** For 32-bits and larger types, slider bounds are limited to half the natural type range.
      *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2 will be ok.
-     *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders.
-     *  ------------- JVM imgui does *not* have this limitations!! -------------  */
+     *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
     fun sliderBehavior(bb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
                        flags: SliderFlags, outGrabBb: Rect) = sliderBehavior(bb, id, v, 0, vMin, vMax, format, power, flags, outGrabBb)
 
@@ -2138,36 +2201,46 @@ interface imgui_internal {
         sliderBehavior(bb, id, DataType.Float, it, vMin, vMax, format, power, flags, outGrabBb)
     }
 
-    fun sliderBehavior(bb: Rect, id: ID, v: KMutableProperty0<*>, vMin: Float, vMax: Float, format: String, power: Float,
-                       flags: SliderFlags, outGrabBb: Rect): Boolean = sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags, outGrabBb)
+//    fun <N> sliderBehavior(bb: Rect, id: ID,
+//                           v: KMutableProperty0<N>,
+//                           vMin: Float, vMax: Float,
+//                           format: String, power: Float,
+//                           flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
+//            sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags, outGrabBb)
 
-    fun sliderBehavior(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<*>, vMin: Number, vMax: Number,
-                       format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun <N> sliderBehavior(bb: Rect, id: ID,
+                           dataType: DataType, v: KMutableProperty0<N>,
+                           vMin: N, vMax: N,
+                           format: String, power: Float,
+                           flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> = when (dataType) {
 
-        return when (dataType) {
-
-            DataType.Int, DataType.Uint -> {
-//                assert(vMin as Int >= Int.MIN_VALUE / 2)
-//                assert(vMax as Int <= Int.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, v, vMin as Int, vMax as Int, format, power, flags, outGrabBb)
-            }
-            DataType.Long, DataType.Ulong -> {
-//                assert(vMin as Long >= Long.MIN_VALUE / 2)
-//                assert(vMax as Long <= Long.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, v, vMin as Long, vMax as Long, format, power, flags, outGrabBb)
-            }
-            DataType.Float -> {
-//                assert(vMin as Float >= -Float.MAX_VALUE / 2f)
-//                assert(vMax as Float <= Float.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, v, vMin as Float, vMax as Float, format, power, flags, outGrabBb)
-            }
-            DataType.Double -> {
-//                assert(vMin as Double >= -Double.MAX_VALUE / 2f)
-//                assert(vMax as Double <= Double.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, v, vMin as Double, vMax as Double, format, power, flags, outGrabBb)
-            }
-            else -> throw Error()
+        DataType.Byte -> {
+            _i = (v() as Byte).i
+            sliderBehaviorT(bb, id, dataType, ::_i, vMin.i, vMax.i, format, power, flags, outGrabBb)
+                    .also { v.set(_i.b as N) }
         }
+        DataType.Short -> {
+            _i = (v() as Short).i
+            sliderBehaviorT(bb, id, dataType, ::_i, vMin.i, vMax.i, format, power, flags, outGrabBb)
+                    .also { v.set(_i.s as N) }
+        }
+        DataType.Int -> {
+            assert(vMin as Int >= Int.MIN_VALUE / 2 && vMax as Int <= Int.MAX_VALUE / 2)
+            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax as N, format, power, flags, outGrabBb)
+        }
+        DataType.Long -> {
+            assert(vMin as Long >= Long.MIN_VALUE / 2 && vMax as Long <= Long.MAX_VALUE / 2)
+            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax as N, format, power, flags, outGrabBb)
+        }
+        DataType.Float -> {
+            assert(vMin as Float >= -Float.MAX_VALUE / 2f && vMax as Float <= Float.MAX_VALUE / 2f)
+            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax as N, format, power, flags, outGrabBb)
+        }
+        DataType.Double -> {
+            assert(vMin as Double >= -Double.MAX_VALUE / 2f && vMax as Double <= Double.MAX_VALUE / 2f)
+            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax as N, format, power, flags, outGrabBb)
+        }
+        else -> throw Error()
     }
 
     fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd: Int = findRenderedTextEnd(label)): Boolean {
@@ -3575,6 +3648,11 @@ interface imgui_internal {
     }
 
     companion object {
+
+        var _i = 0
+        var _L = 0L
+        var _f = 0f
+        var _d = 0.0
 
         fun alphaBlendColor(colA: Int, colB: Int): Int {
             val t = ((colB ushr COL32_A_SHIFT) and 0xFF) / 255f

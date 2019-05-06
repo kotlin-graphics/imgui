@@ -135,8 +135,9 @@ interface drags {
     fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
             withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, format) }
 
-    fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
-            dragScalar(label, DataType.Int, v, vSpeed, vMin as Number, vMax as Number, format)
+    fun <N> dragInt(label: String, v: KMutableProperty0<N>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
+                    format: String = "%d") where N : Number, N : Comparable<N> =
+            dragScalar(label, DataType.Int, v, vSpeed, vMin as N, vMax as N, format)
 
     fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
             dragIntN(label, v, 2, vSpeed, vMin, vMax, format)
@@ -213,11 +214,11 @@ interface drags {
         dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power)
     }
 
-    @Suppress("UNCHECKED_CAST")
-    fun dragScalar(label: String, dataType: DataType, v: KMutableProperty0<*>, vSpeed: Float, vMin: Number? = null, vMax: Number? = null,
-                   format_: String? = null, power: Float = 1f): Boolean {
+    fun <N> dragScalar(label: String, dataType: DataType,
+                       v: KMutableProperty0<N>, vSpeed: Float,
+                       vMin: N? = null, vMax: N? = null,
+                       format_: String? = null, power: Float = 1f): Boolean where N : Number, N : Comparable<N> {
 
-        v as KMutableProperty0<Number>
         val window = currentWindow
         if (window.skipItems) return false
 
