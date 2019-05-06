@@ -493,7 +493,7 @@ fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 
 //    return string.toCharArray(buf).size
 //}
 
-fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number): Number {
+fun <N : Number> dataTypeApplyOp(dataType: DataType, op: Char, value1: N, value2: N): N {
     assert(op == '+' || op == '-')
     return when (dataType) {
         /*  Signedness doesn't matter when adding or subtracting
@@ -501,56 +501,55 @@ fun dataTypeApplyOp(dataType: DataType, op: Char, value1: Number, value2: Number
             so we directly switch to Integers in these cases. We also use some custom clamp min max values because of this
          */
         DataType.Byte -> when (op) {
-            '+' -> addClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX).b
-            '-' -> subClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX).b
+            '+' -> addClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX).b as N
+            '-' -> subClampOverflow((value1 as Byte).i, (value2 as Byte).i, S8_MIN, S8_MAX).b as N
             else -> throw Error()
         }
         DataType.Ubyte -> when (op) {
-            '+' -> Ubyte(addClampOverflow((value1 as Ubyte).i, (value2 as Ubyte).i, U8_MIN, U8_MAX))
-            '-' -> Ubyte(subClampOverflow((value1 as Ubyte).i, (value2 as Ubyte).i, U8_MIN, U8_MAX))
+            '+' -> Ubyte(addClampOverflow((value1 as Ubyte).i, (value2 as Ubyte).i, U8_MIN, U8_MAX)) as N
+            '-' -> Ubyte(subClampOverflow((value1 as Ubyte).i, (value2 as Ubyte).i, U8_MIN, U8_MAX)) as N
             else -> throw Error()
         }
         DataType.Short -> when (op) {
-            '+' -> addClampOverflow((value1 as Short).i, (value2 as Short).i, S16_MIN, S16_MAX).s
-            '-' -> subClampOverflow((value1 as Short).i, (value2 as Short).i, S16_MIN, S16_MAX).s
+            '+' -> addClampOverflow((value1 as Short).i, (value2 as Short).i, S16_MIN, S16_MAX).s as N
+            '-' -> subClampOverflow((value1 as Short).i, (value2 as Short).i, S16_MIN, S16_MAX).s as N
             else -> throw Error()
         }
         DataType.Ushort -> when (op) {
-            '+' -> Ushort(addClampOverflow((value1 as Ushort).i, (value2 as Ushort).i, U16_MIN, U16_MAX))
-            '-' -> Ushort(subClampOverflow((value1 as Ushort).i, (value2 as Ushort).i, U16_MIN, U16_MAX))
+            '+' -> Ushort(addClampOverflow((value1 as Ushort).i, (value2 as Ushort).i, U16_MIN, U16_MAX)) as N
+            '-' -> Ushort(subClampOverflow((value1 as Ushort).i, (value2 as Ushort).i, U16_MIN, U16_MAX)) as N
             else -> throw Error()
         }
         DataType.Int -> when (op) {
-            '+' -> addClampOverflow(value1 as Int, value2 as Int, Int.MIN_VALUE, Int.MAX_VALUE)
-            '-' -> subClampOverflow(value1 as Int, value2 as Int, Int.MIN_VALUE, Int.MAX_VALUE)
+            '+' -> addClampOverflow(value1 as Int, value2 as Int, Int.MIN_VALUE, Int.MAX_VALUE) as N
+            '-' -> subClampOverflow(value1 as Int, value2 as Int, Int.MIN_VALUE, Int.MAX_VALUE) as N
             else -> throw Error()
         }
         DataType.Uint -> when (op) {
-            '+' -> Uint(addClampOverflow((value1 as Uint).L, (value2 as Uint).L, 0L, Uint.MAX_VALUE))
-            '-' -> Uint(subClampOverflow((value1 as Uint).L, (value2 as Uint).L, 0L, Uint.MAX_VALUE))
+            '+' -> Uint(addClampOverflow((value1 as Uint).L, (value2 as Uint).L, 0L, Uint.MAX_VALUE)) as N
+            '-' -> Uint(subClampOverflow((value1 as Uint).L, (value2 as Uint).L, 0L, Uint.MAX_VALUE)) as N
             else -> throw Error()
         }
         DataType.Long -> when (op) {
-            '+' -> addClampOverflow(value1 as Long, value2 as Long, Long.MIN_VALUE, Long.MAX_VALUE)
-            '-' -> subClampOverflow(value1 as Long, value2 as Long, Long.MIN_VALUE, Long.MAX_VALUE)
+            '+' -> addClampOverflow(value1 as Long, value2 as Long, Long.MIN_VALUE, Long.MAX_VALUE) as N
+            '-' -> subClampOverflow(value1 as Long, value2 as Long, Long.MIN_VALUE, Long.MAX_VALUE) as N
             else -> throw Error()
         }
         DataType.Ulong -> when (op) {
-            '+' -> Ulong(addClampOverflow((value1 as Ulong).toBigInt(), (value2 as Ulong).toBigInt(), Ulong.MIN_VALUE, Ulong.MAX_VALUE))
-            '-' -> Ulong(subClampOverflow((value1 as Ulong).toBigInt(), (value2 as Ulong).toBigInt(), Ulong.MIN_VALUE, Ulong.MAX_VALUE))
+            '+' -> Ulong(addClampOverflow((value1 as Ulong).toBigInt(), (value2 as Ulong).toBigInt(), Ulong.MIN_VALUE, Ulong.MAX_VALUE)) as N
+            '-' -> Ulong(subClampOverflow((value1 as Ulong).toBigInt(), (value2 as Ulong).toBigInt(), Ulong.MIN_VALUE, Ulong.MAX_VALUE)) as N
             else -> throw Error()
         }
         DataType.Float -> when (op) {
-            '+' -> value1 as Float + (value2 as Float)
-            '-' -> value1 as Float - (value2 as Float)
+            '+' -> (value1 as Float + value2 as Float) as N
+            '-' -> (value1 as Float - value2 as Float) as N
             else -> throw Error()
         }
         DataType.Double -> when (op) {
-            '+' -> value1 as Double + (value2 as Double)
-            '-' -> value1 as Double - (value2 as Double)
+            '+' -> (value1 as Double + value2 as Double) as N
+            '-' -> (value1 as Double - value2 as Double) as N
             else -> throw Error()
         }
-        else -> throw Error()
     }
 }
 
