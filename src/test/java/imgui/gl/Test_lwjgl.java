@@ -14,6 +14,7 @@ import uno.glfw.VSync;
 import uno.glfw.windowHint.Profile;
 
 import static gln.GlnKt.*;
+import static imgui.FunctionalUtils.call;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -24,6 +25,7 @@ public class Test_lwjgl {
     private GlfwWindow window;
     private uno.glfw.glfw glfw = uno.glfw.glfw.INSTANCE;
     private LwjglGlfw lwjglGlfw;
+    private functionalProgramming func = functionalProgramming.INSTANCE;
     private ImGui imgui = ImGui.INSTANCE;
     private IO io;
     private float[] f = {0f};
@@ -148,7 +150,7 @@ public class Test_lwjgl {
 
         lwjglGlfw.renderDrawData(imgui.getDrawData());
 
-        if(ImguiKt.getDEBUG())
+        if (ImguiKt.getDEBUG())
             checkError("loop", true); // TODO remove
     }
 }
