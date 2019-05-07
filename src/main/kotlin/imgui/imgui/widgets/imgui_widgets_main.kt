@@ -7,6 +7,7 @@ import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.arrowButtonEx
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemSize
@@ -54,7 +55,7 @@ val S32_MAX: Int = Integer.MAX_VALUE
 
 /** Widgets: Main
  *  - Most widgets return true when the value has been changed or when pressed/selected  */
-interface main {
+interface imgui_widgets_main {
 
     /** button  */
     fun button(label: String, sizeArg: Vec2 = Vec2()) = buttonEx(label, sizeArg, 0)
@@ -90,6 +91,8 @@ interface main {
 
         return pressed
     }
+
+    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), 0)
 
     fun image(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(1), tintCol: Vec4 = Vec4(1),
               borderCol: Vec4 = Vec4()) {

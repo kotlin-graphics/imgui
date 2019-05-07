@@ -32,7 +32,7 @@ import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.menu
 import imgui.functionalProgramming.menuBar
 import imgui.functionalProgramming.treeNode
-import imgui.functionalProgramming.withWindow
+import imgui.functionalProgramming.window
 import imgui.imgui.demo.showExampleApp.*
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
@@ -98,7 +98,7 @@ object ExampleApp {
         if (show.customRendering) CustomRendering(show::customRendering)
         if (show.metrics) ImGui.showMetricsWindow(show::metrics)
         if (show.styleEditor)
-            withWindow("Style Editor", show::styleEditor) {
+            window("Style Editor", show::styleEditor) {
                 StyleEditor()
             }
 

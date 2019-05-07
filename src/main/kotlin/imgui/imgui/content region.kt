@@ -20,15 +20,17 @@ interface imgui_contentRegion {
         }
 
     /** == GetContentRegionMax() - GetCursorPos()   */
-    val contentRegionAvail
+    val contentRegionAvail: Vec2
         get() = g.currentWindow!!.run { contentRegionMaxScreen - dc.cursorPos }
 
     /** == GetContentRegionAvail().x */
     val contentRegionAvailWidth: Float
         get() = contentRegionAvail.x
+
     /** content boundaries min (roughly (0,0)-Scroll), in window coordinates    */
     val windowContentRegionMin: Vec2
         get() = currentWindowRead!!.run { contentsRegionRect.min - pos }
+
     /** content boundaries max (roughly (0,0)+Size-Scroll) where Size can be override with SetNextWindowContentSize(),
      * in window coordinates    */
     val windowContentRegionMax: Vec2

@@ -4,15 +4,17 @@ import glm_.f
 import glm_.i
 import imgui.ImGui
 
+
+/** Windows Scrolling */
 interface imgui_windowScrolling {
 
     /** Scrolling amount [0..GetScrollMaxX()]   */
-    var scrollX
+    var scrollX: Float
         get() = g.currentWindow!!.scroll.x
         set(value) = with(ImGui.currentWindow) { scrollTarget.x = value; scrollTargetCenterRatio.x = 0f }
 
     /** scrolling amount [0..GetScrollMaxY()]   */
-    var scrollY
+    var scrollY: Float
         get() = g.currentWindow!!.scroll.y
         set(value) = with(ImGui.currentWindow) {
             // title bar height canceled out when using ScrollTargetRelY
@@ -21,10 +23,12 @@ interface imgui_windowScrolling {
         }
 
     /** get maximum scrolling amount ~~ ContentSize.X - WindowSize.X    */
-    val scrollMaxX get() = ImGui.currentWindowRead!!.scrollMaxX
+    val scrollMaxX: Float
+        get() = ImGui.currentWindowRead!!.scrollMaxX
 
     /** get maximum scrolling amount ~~ ContentSize.Y - WindowSize.Y    */
-    val scrollMaxY get() = ImGui.currentWindowRead!!.scrollMaxY
+    val scrollMaxY: Float
+        get() = ImGui.currentWindowRead!!.scrollMaxY
 
     /** adjust scrolling amount to make current cursor position visible.
      *  centerYRatio = 0.0: top, 0.5: center, 1.0: bottom.

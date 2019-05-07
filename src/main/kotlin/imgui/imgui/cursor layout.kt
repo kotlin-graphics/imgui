@@ -2,18 +2,71 @@ package imgui.imgui
 
 import glm_.f
 import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
+import imgui.Col
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.logRenderedText
+import imgui.ImGui.popClipRect
+import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.style
+import imgui.ImGui.verticalSeparator
 import imgui.internal.GroupData
 import imgui.internal.Rect
 import imgui.internal.LayoutType as Lt
 import imgui.internal.SeparatorFlag as Sf
 
+
+/** Cursor / Layout
+ *  - By "cursor" we mean the current output position.
+ *  - The typical widget behavior is to output themselves at the current cursor position, then move the cursor one line down. */
 interface imgui_cursorLayout {
+
+    /** Horizontal/vertical separating line
+     *  Separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a vertical separator. */
+    fun separator() {
+
+        val window = currentWindow
+        if (window.skipItems) return
+
+        // Those flags should eventually be overrideable by the user
+        val flag: Sf = if (window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
+        // useless on JVM with enums
+        // assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo)
+
+        if (flag == Sf.Vertical) {
+            verticalSeparator()
+            return
+        }
+        // Horizontal Separator
+        window.dc.currentColumns?.let { popClipRect() }
+
+        var x1 = window.pos.x
+        val x2 = window.pos.x + window.size.x
+        if (window.dc.groupStack.isNotEmpty())
+            x1 += window.dc.indent.i
+
+        val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
+        // NB: we don't provide our width so that it doesn't get feed back into AutoFit
+        itemSize(Vec2(0f, 1f))
+        if (!itemAdd(bb, 0)) {
+            window.dc.currentColumns?.let { pushColumnClipRect() }
+            return
+        }
+
+        window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
+
+        if (g.logEnabled)
+            logRenderedText(bb.min, "--------------------------------")
+
+        window.dc.currentColumns?.let {
+            pushColumnClipRect()
+            it.lineMinY = window.dc.cursorPos.y
+        }
+    }
 
     fun sameLine(offsetFromStartX: Int) = sameLine(offsetFromStartX, 1)
 
@@ -44,6 +97,35 @@ interface imgui_cursorLayout {
         }
     }
 
+    /** undo a sameLine() or force a new line when in an horizontal-layout context.   */
+    fun newLine() {
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val backupLayoutType = window.dc.layoutType
+        window.dc.layoutType = Lt.Vertical
+        // In the event that we are on a line with items that is smaller that FontSize high, we will preserve its height.
+        itemSize(Vec2(0f, if (window.dc.currentLineSize.y > 0f) 0f else g.fontSize))
+        window.dc.layoutType = backupLayoutType
+    }
+
+    /** add vertical spacing.    */
+    fun spacing() {
+        if (currentWindow.skipItems) return
+        itemSize(Vec2())
+    }
+
+    /** add a dummy item of given size. unlike InvisibleButton(), Dummy() won't take the mouse click or be navigable into.  */
+    fun dummy(size: Vec2) {
+
+        val window = currentWindow
+        if (window.skipItems) return
+
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
+        itemSize(size)
+        itemAdd(bb, 0)
+    }
+
     /** move content position toward the right, by style.indentSpacing or indentW if != 0    */
     fun indent(indentW: Float = 0f) = with(currentWindow) {
         dc.indent += if (indentW != 0f) indentW else style.indentSpacing
@@ -55,7 +137,6 @@ interface imgui_cursorLayout {
         dc.indent -= if (indentW != 0f) indentW else style.indentSpacing
         dc.cursorPos.x = pos.x + dc.indent + dc.columnsOffset
     }
-
 
     /** Lock horizontal starting position + capture group bounding box into one "item" (so you can use IsItemHovered()
      *  or layout primitives such as SameLine() on whole group, etc.)   */
@@ -127,7 +208,7 @@ interface imgui_cursorLayout {
         //window->DrawList->AddRect(groupBb.Min, groupBb.Max, IM_COL32(255,0,255,255));   // [Debug]
     }
 
-    var cursorPos
+    var cursorPos: Vec2
         /** cursor position in window coordinates (relative to window position)
          *
          *  Cursor position is relative to window position
@@ -142,7 +223,7 @@ interface imgui_cursorLayout {
             dc.cursorMaxPos = glm.max(dc.cursorMaxPos, dc.cursorPos)
         }
 
-    var cursorPosX
+    var cursorPosX: Float
         /** cursor position is relative to window position
          *  (some functions are using window-relative coordinates, such as: GetCursorPos, GetCursorStartPos, GetContentRegionMax, GetWindowContentRegion* etc. */
         get() = with(currentWindowRead!!) { dc.cursorPos.x - pos.x + scroll.x }
@@ -152,7 +233,7 @@ interface imgui_cursorLayout {
             dc.cursorMaxPos.x = glm.max(dc.cursorMaxPos.x, dc.cursorPos.x)
         }
 
-    var cursorPosY
+    var cursorPosY: Float
         /** cursor position is relative to window position
          *  other functions such as GetCursorScreenPos or everything in ImDrawList:: */
         get() = with(currentWindowRead!!) { dc.cursorPos.y - pos.y + scroll.y }
@@ -173,17 +254,30 @@ interface imgui_cursorLayout {
             cursorMaxPos maxAssign cursorPos
         }
 
+    /** Vertically align/lower upcoming text to framePadding.y so that it will aligns to upcoming widgets
+     *  (call if you have text on a line before regular widgets)    */
+    fun alignTextToFramePadding() {
+        val window = currentWindow
+        if (window.skipItems) return
+        window.dc.currentLineSize.y = glm.max(window.dc.currentLineSize.y, g.fontSize + style.framePadding.y * 2)
+        window.dc.currentLineTextBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, style.framePadding.y)
+    }
+
     /** ~ FontSize   */
-    val textLineHeight get() = g.fontSize
+    val textLineHeight: Float
+        get() = g.fontSize
 
     /** ~ FontSize + style.ItemSpacing.y (distance in pixels between 2 consecutive lines of text)  */
-    val textLineHeightWithSpacing get() = g.fontSize + style.itemSpacing.y
+    val textLineHeightWithSpacing: Float
+        get() = g.fontSize + style.itemSpacing.y
 
     /** ~ FontSize + style.FramePadding.y * 2 */
-    val frameHeight get() = g.fontSize + style.framePadding.y * 2f
+    val frameHeight: Float
+        get() = g.fontSize + style.framePadding.y * 2f
 
     /** distance (in pixels) between 2 consecutive lines of standard height widgets ==
      *  GetWindowFontSize() + GetStyle().FramePadding.y*2 + GetStyle().ItemSpacing.y    */
-    val frameHeightWithSpacing get() = g.fontSize + style.framePadding.y * 2f + style.itemSpacing.y
+    val frameHeightWithSpacing: Float
+        get() = g.fontSize + style.framePadding.y * 2f + style.itemSpacing.y
 
 }

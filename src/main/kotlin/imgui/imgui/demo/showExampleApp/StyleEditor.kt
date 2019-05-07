@@ -51,7 +51,7 @@ import imgui.ImGui.windowWidth
 import imgui.functionalProgramming.button
 import imgui.functionalProgramming.smallButton
 import imgui.functionalProgramming.treeNode
-import imgui.functionalProgramming.withChild
+import imgui.functionalProgramming.child
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withTooltip
@@ -192,7 +192,7 @@ object StyleEditor {
                 radioButton("Both", ::alphaFlags, Cef.AlphaPreviewHalf.i); sameLine()
                 helpMarker("In the color list:\nLeft-click on colored square to open color picker,\nRight-click to open edit options menu.");
 
-                withChild("#colors", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf.NavFlattened) {
+                child("#colors", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf.NavFlattened) {
                     withItemWidth(-160) {
                         for (i in 0 until Col.COUNT) {
                             val name = Col.values()[i].name

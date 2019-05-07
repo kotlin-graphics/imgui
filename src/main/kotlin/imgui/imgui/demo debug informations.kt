@@ -56,7 +56,7 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
 import imgui.functionalProgramming.menu
-import imgui.functionalProgramming.withChild
+import imgui.functionalProgramming.child
 import imgui.functionalProgramming.withIndent
 import imgui.imgui.demo.ExampleApp
 import imgui.imgui.demo.showExampleApp.StyleEditor
@@ -392,7 +392,7 @@ interface imgui_demoDebugInformations {
             separator()
             menu("Options") {
                 menuItem("Enabled", "", Companion::enabled)
-                withChild("child", Vec2(0, 60), true) {
+                child("child", Vec2(0, 60), true) {
                     for (i in 0 until 10) text("Scrolling Text %d", i)
                 }
                 sliderFloat("Value", Companion::float, 0f, 1f)

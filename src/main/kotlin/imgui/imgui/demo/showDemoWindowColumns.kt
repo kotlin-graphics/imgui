@@ -31,7 +31,7 @@ import imgui.WindowFlag
 import imgui.functionalProgramming.collapsingHeader
 import imgui.functionalProgramming.selectable
 import imgui.functionalProgramming.treeNode
-import imgui.functionalProgramming.withChild
+import imgui.functionalProgramming.child
 import imgui.functionalProgramming.withId
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 
@@ -162,7 +162,7 @@ object showDemoWindowColumns {
 
             treeNode("Horizontal Scrolling") {
                 setNextWindowContentSize(Vec2(1500f, 0f))
-                withChild("##Scrollingregion", Vec2(0, fontSize * 20), false, WindowFlag.HorizontalScrollbar.i) {
+                child("##Scrollingregion", Vec2(0, fontSize * 20), false, WindowFlag.HorizontalScrollbar.i) {
                     columns(10)
                     val ITEMS_COUNT = 2000
                     val clipper = ListClipper(ITEMS_COUNT)  // Also demonstrate using the clipper for large list

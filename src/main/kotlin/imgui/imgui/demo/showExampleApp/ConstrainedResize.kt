@@ -13,7 +13,7 @@ import imgui.ImGui.setWindowSize
 import imgui.ImGui.text
 import imgui.functionalProgramming.button
 import imgui.functionalProgramming.withItemWidth
-import imgui.functionalProgramming.withWindow
+import imgui.functionalProgramming.window
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
@@ -40,7 +40,7 @@ object ConstrainedResize {
             6 -> setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE), CustomConstraints.step, 100)// Fixed Step
         }
         val flags: WindowFlags = if (autoResize) Wf.AlwaysAutoResize.i else 0
-        withWindow("Example: Constrained Resize", open, flags) {
+        window("Example: Constrained Resize", open, flags) {
             val desc = listOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
                     "Width 400-500", "Height 400-500", "Custom: Always Square", "Custom: Fixed Steps (100)")
             button("200x200") { setWindowSize(Vec2(200)) }; sameLine()

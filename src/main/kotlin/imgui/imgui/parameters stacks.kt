@@ -19,10 +19,10 @@ import imgui.internal.ColorMod
 import imgui.internal.StyleMod
 import imgui.internal.ItemFlag as If
 
-
+/** Parameters stacks */
 interface imgui_parametersStacks {
 
-// Parameters stacks (shared)
+    // Parameters stacks
 
     /** use NULL as a shortcut to push default font */
     fun pushFont(font: Font = defaultFont) {
@@ -230,7 +230,7 @@ interface imgui_parametersStacks {
         return c.u32
     }
 
-// Parameters stacks (current window)
+    // Parameters stacks (current window)
 
     /** set width of items for common large "item+label" widgets. >0.0f: width in pixels, <0.0f align xx pixels to the right of window
      *  (so -1.0f always align width to the right side). 0.0f = default to ~2/3 of windows width,     */
@@ -250,7 +250,10 @@ interface imgui_parametersStacks {
 
     var nextItemWidth: Float
         /** Calculate default item width given value passed to PushItemWidth() or SetNextItemWidth(),
-         *  Then consume the    */
+         *  Then consume the
+         *
+         *
+         *  ~ GetNextItemWidth   */
         get() {
             val window = g.currentWindow!!
             var w = 0f
@@ -270,7 +273,10 @@ interface imgui_parametersStacks {
             return w.i.f
         }
         /** set width of the _next_ common large "item+label" widget. >0.0f: width in pixels, <0.0f align xx pixels to the right of window
-         *  (so -1.0f always align width to the right side) */
+         *  (so -1.0f always align width to the right side)
+         *
+         *
+         *  ~ SetNextItemWidth*/
         set(value) {
             currentWindow.dc.nextItemWidth = value
         }

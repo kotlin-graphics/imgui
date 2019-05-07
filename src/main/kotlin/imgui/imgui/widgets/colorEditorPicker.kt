@@ -66,7 +66,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.ImGui.u32
 import imgui.imgui.g
-import imgui.imgui.widgets.text.Companion.renderArrowsForVerticalBar
+import imgui.imgui.widgets.imgui_widgets_text.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf

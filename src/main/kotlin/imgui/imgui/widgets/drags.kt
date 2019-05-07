@@ -61,45 +61,38 @@ import kotlin.reflect.KMutableProperty0
  *      For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision). */
 interface drags {
 
+    /** If v_min >= v_max we have no bound */
     fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                   format: String? = "%.3f", power: Float = 1f): Boolean =
             dragScalar(label, DataType.Float, v, vSpeed, vMin, vMax, format, power)
 
+    /** If v_min >= v_max we have no bound */
     fun dragFloat(label: String, v: FloatArray, ptr: Int, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                   format: String = "%.3f", power: Float = 1f): Boolean =
             withFloat(v, ptr) { dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power) }
 
     fun dragFloat2(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", power: Float = 1f) =
-            dragFloatN(label, v, 2, vSpeed, vMin, vMax, format, power)
+            dragScalarN(label, DataType.Float, v, 2, vSpeed, vMin, vMax, format, power)
 
-    fun dragVec2(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", power: Float = 1f): Boolean {
-        val floats = v to FloatArray(2)
-        return dragFloatN(label, floats, 2, vSpeed, vMin, vMax, format, power).also {
-            v put floats
-        }
-    }
+    fun dragVec2(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", power: Float = 1f): Boolean =
+            dragScalarN(label, DataType.Float, v to _f, 2, vSpeed, vMin, vMax, format, power)
+                    .also { v put _f }
 
     fun dragFloat3(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
-                   power: Float = 1f) = dragFloatN(label, v, 3, vSpeed, vMin, vMax, format, power)
+                   power: Float = 1f) = dragScalarN(label, DataType.Float, v, 3, vSpeed, vMin, vMax, format, power)
 
     fun dragVec3(label: String, v: Vec3, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
-                 power: Float = 1f): Boolean {
-        val floats = v to FloatArray(3)
-        return dragFloatN(label, floats, 3, vSpeed, vMin, vMax, format, power).also {
-            v put floats
-        }
-    }
+                 power: Float = 1f): Boolean =
+            dragScalarN(label, DataType.Float, v to _f, 3, vSpeed, vMin, vMax, format, power)
+                    .also { v put _f }
 
     fun dragFloat4(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
-                   power: Float = 1f) = dragFloatN(label, v, 4, vSpeed, vMin, vMax, format, power)
+                   power: Float = 1f): Boolean = dragScalarN(label, DataType.Float, v, 4, vSpeed, vMin, vMax, format, power)
 
     fun dragVec4(label: String, v: Vec4, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
-                 power: Float = 1f): Boolean {
-        val floats = v to FloatArray(4)
-        return dragFloatN(label, floats, 4, vSpeed, vMin, vMax, format, power).also {
-            v put floats
-        }
-    }
+                 power: Float = 1f): Boolean =
+            dragScalarN(label, DataType.Float, v to _f, 4, vSpeed, vMin, vMax, format, power)
+                    .also { v put _f }
 
     fun dragFloatRange2(label: String, vCurrentMinPtr: KMutableProperty0<Float>, vCurrentMaxPtr: KMutableProperty0<Float>,
                         vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", formatMax: String = format,
@@ -132,43 +125,34 @@ interface drags {
     }
 
     /** If v_min >= v_max we have no bound
+     *
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
-    fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
+    fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean =
             withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, format) }
 
-    fun <N> dragInt(label: String, v: KMutableProperty0<N>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                    format: String = "%d") where N : Number, N : Comparable<N> =
-            dragScalar(label, DataType.Int, v, vSpeed, vMin as N, vMax as N, format)
+    fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
+                format: String = "%d"): Boolean = dragScalar(label, DataType.Int, v, vSpeed, vMin, vMax, format)
 
-    fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
-            dragIntN(label, v, 2, vSpeed, vMin, vMax, format)
+    fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean =
+            dragScalarN(label, DataType.Int, v, 2, vSpeed, vMin, vMax, format)
 
-    fun dragVec2i(label: String, v: Vec2i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean {
-        val ints = v to IntArray(2)
-        return dragIntN(label, ints, 2, vSpeed, vMin, vMax, format).also {
-            v put ints
-        }
-    }
+    fun dragVec2i(label: String, v: Vec2i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean =
+            dragScalarN(label, DataType.Int, v to _i, 2, vSpeed, vMin, vMax, format)
+                    .also { v put _i }
 
-    fun dragInt3(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
-            dragIntN(label, v, 3, vSpeed, vMin, vMax, format)
+    fun dragInt3(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean =
+            dragScalarN(label, DataType.Int, v, 3, vSpeed, vMin, vMax, format)
 
-    fun dragVec3i(label: String, v: Vec3i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean {
-        val ints = v to IntArray(3)
-        return dragIntN(label, ints, 3, vSpeed, vMin, vMax, format).also {
-            v put ints
-        }
-    }
+    fun dragVec3i(label: String, v: Vec3i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean =
+            dragScalarN(label, DataType.Int, v to _i, 3, vSpeed, vMin, vMax, format)
+                    .also { v put _i }
 
-    fun dragInt4(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d") =
-            dragIntN(label, v, 4, vSpeed, vMin, vMax, format)
+    fun dragInt4(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean =
+            dragScalarN(label, DataType.Int, v, 4, vSpeed, vMin, vMax, format)
 
-    fun dragVec4i(label: String, v: Vec4i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean {
-        val ints = v to IntArray(4)
-        return dragIntN(label, ints, 4, vSpeed, vMin, vMax, format).also {
-            v put ints
-        }
-    }
+    fun dragVec4i(label: String, v: Vec4i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean =
+            dragScalarN(label, DataType.Int, v to _i, 4, vSpeed, vMin, vMax, format)
+                    .also { v put _i }
 
     fun dragIntRange2(label: String, vCurrentMinPtr: KMutableProperty0<Int>, vCurrentMaxPtr: KMutableProperty0<Int>, vSpeed: Float = 1f,
                       vMin: Int = 0, vMax: Int = 0, format: String = "%d", formatMax: String = format): Boolean {
@@ -211,9 +195,8 @@ interface drags {
 
     /** If vMin >= vMax we have no bound  */
     fun dragScalar(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float, vMin: Float? = null, vMax: Float? = null,
-                   format: String? = null, power: Float = 1f): Boolean = withFloat(v, ptr) {
-        dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power)
-    }
+                   format: String? = null, power: Float = 1f): Boolean =
+            withFloat(v, ptr) { dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power) }
 
     fun <N> dragScalar(label: String, dataType: DataType,
                        v: KMutableProperty0<N>, vSpeed: Float,
@@ -283,7 +266,7 @@ interface drags {
 
         // Actual drag behavior
         val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power, DragFlag.None.i)
-        if(valueChanged)
+        if (valueChanged)
             markItemEdited(id)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
@@ -297,8 +280,8 @@ interface drags {
         return valueChanged
     }
 
-    fun dragFloatN(label: String, v: FloatArray, components: Int, vSpeed: Float, vMin: Float, vMax: Float, format: String? = null,
-                   power: Float = 1f): Boolean {
+    fun <N> dragScalarN(label: String, dataType: DataType, v: Any, components: Int, vSpeed: Float, vMin: N? = null, vMax: N? = null,
+                        format: String? = null, power: Float = 1f): Boolean where N : Number, N : Comparable<N> {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -309,31 +292,15 @@ interface drags {
         pushMultiItemsWidths(components, nextItemWidth)
         for (i in 0 until components) {
             pushId(i)
-            withFloat(v, i) {
-                valueChanged = dragScalar("", DataType.Float, it, vSpeed, vMin, vMax, format, power) || valueChanged
+            when (dataType) {
+                DataType.Int -> withInt(v as IntArray, i) {
+                    valueChanged = dragScalar("", dataType, it as KMutableProperty0<N>, vSpeed, vMin, vMax, format, power) or valueChanged
+                }
+                DataType.Float -> withFloat(v as FloatArray, i) {
+                    valueChanged = dragScalar("", dataType, it as KMutableProperty0<N>, vSpeed, vMin, vMax, format, power) or valueChanged
+                }
+                else -> error("invalid")
             }
-            sameLine(0f, style.itemInnerSpacing.x)
-            popId()
-            popItemWidth()
-        }
-        popId()
-
-        textEx(label, findRenderedTextEnd(label))
-        endGroup()
-        return valueChanged
-    }
-
-    fun dragIntN(label: String, v: IntArray, components: Int, vSpeed: Float, vMin: Int, vMax: Int, format: String = "%d"): Boolean {
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        var valueChanged = false
-        beginGroup()
-        pushId(label)
-        pushMultiItemsWidths(components, nextItemWidth)
-        for (i in 0 until components) {
-            pushId(i)
-            withInt(v, i) { valueChanged = dragInt("", it, vSpeed, vMin, vMax, format) || valueChanged }
             sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
@@ -347,26 +314,9 @@ interface drags {
 
     companion object {
 
-        // TODO delete and use them in just one single place
-        private inline fun <R> withFloat(block: (KMutableProperty0<Float>) -> R): R {
-            Ref.fPtr++
-            return block(Ref::float).also { Ref.fPtr-- }
-        }
-
-        private inline fun <R> withInt(block: (KMutableProperty0<Int>) -> R): R {
-            Ref.iPtr++
-            return block(Ref::int).also { Ref.iPtr-- }
-        }
-
-        private inline fun <R> withFloatAsInt(value: KMutableProperty0<Float>, block: (KMutableProperty0<Int>) -> R): R {
-            Ref.iPtr++
-            val i = Ref::int
-            i.set(glm.floatBitsToInt(value()))
-            val res = block(i)
-            value.set(glm.intBitsToFloat(i()))
-            Ref.iPtr--
-            return res
-        }
+        // static arrays to avoid GC pressure
+        val _f = FloatArray(4)
+        val _i = IntArray(4)
 
         private inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
             Ref.iPtr++
@@ -384,16 +334,6 @@ interface drags {
             f.set(floats[ptr])
             val res = block(f)
             floats[ptr] = f()
-            Ref.fPtr--
-            return res
-        }
-
-        private inline fun <R> withFloat(value: KMutableProperty0<Int>, block: (KMutableProperty0<Float>) -> R): R {
-            Ref.fPtr++
-            val f = Ref::float
-            f.set(value().f)
-            val res = block(f)
-            value.set(f().i)
             Ref.fPtr--
             return res
         }
