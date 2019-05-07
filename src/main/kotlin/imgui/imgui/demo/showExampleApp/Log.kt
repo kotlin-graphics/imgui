@@ -2,6 +2,7 @@ package imgui.imgui.demo.showExampleApp
 
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginPopup
 import imgui.ImGui.begin_
@@ -20,6 +21,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.smallButton
 import imgui.ImGui.textEx
+import imgui.imgui.g
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs
@@ -44,7 +46,7 @@ object Log {
         // For the demo: add a debug button _BEFORE_ the normal log window contents
         // We take advantage of a rarely used feature: multiple calls to Begin()/End() are appending to the _same_ window.
         setNextWindowSize(Vec2(500, 400), Cond.FirstUseEver)
-        begin_("Example: Log", pOpen)
+        begin("Example: Log", pOpen)
         if (smallButton("[Debug] Add 5 entries"))
             for (n in 0..4) {
                 val categories = arrayOf("info", "warn", "error")
@@ -90,7 +92,7 @@ object Log {
 
         fun draw(title: String, open: KMutableProperty0<Boolean>? = null) {
 
-            if (!begin_(title, open)) {
+            if (!begin(title, open)) {
                 end()
                 return
             }

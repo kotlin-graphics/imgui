@@ -6,13 +6,10 @@ import imgui.ImGui.logBegin
 import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.popId
-import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushAllowKeyboardFocus
 import imgui.ImGui.pushId
-import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.sliderInt
-import imgui.g
 import imgui.internal.LogType
 import java.io.File
 import java.io.FileWriter

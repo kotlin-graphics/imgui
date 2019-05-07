@@ -10,7 +10,6 @@ import imgui.*
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemSize
-import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.frameHeight
@@ -31,6 +30,7 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
+import imgui.imgui.g
 import imgui.internal.*
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf

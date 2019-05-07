@@ -5,7 +5,6 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
-import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endPopup
@@ -31,6 +30,7 @@ import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
+import imgui.imgui.g
 import imgui.internal.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue

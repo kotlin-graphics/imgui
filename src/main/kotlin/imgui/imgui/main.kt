@@ -37,6 +37,7 @@ import imgui.internal.DrawListFlag as Dlf
 
 @Suppress("UNCHECKED_CAST")
 
+/** Main */
 interface imgui_main {
 
     /** access the IO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags) */
@@ -350,7 +351,6 @@ interface imgui_main {
         io.inputQueueCharacters.clear()
         io.navInputs.fill(0f)
     }
-
 
     /** ends the Dear ImGui frame, finalize the draw data. You can get call GetDrawData() to obtain it and run your rendering function.
      *  (Obsolete: this used to call io.RenderDrawListsFn(). Nowadays, we allow and prefer calling your render function yourself.)   */

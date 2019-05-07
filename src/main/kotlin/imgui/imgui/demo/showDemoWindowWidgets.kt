@@ -9,6 +9,7 @@ import imgui.*
 import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.arrowButton
+import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropSource
@@ -1016,16 +1017,16 @@ object showDemoWindowWidgets {
             val u8_zero : Ubyte  = Ubyte(0); val u8_one : Ubyte  = Ubyte(1); val u8_fifty : Ubyte = Ubyte(50); val u8_min : Ubyte = Ubyte(0);           val u8_max : Ubyte = Ubyte(255)
             val s16_zero: Short  = 0.s;      val s16_one: Short  = 1.s;      val s16_fifty: Short = 50.s;      val s16_min: Short = (-32768).s;         val s16_max: Short = 32767.s
 //            const ImU16   u16_zero = 0,   u16_one = 1,   u16_fifty = 50, u16_min = 0,           u16_max = 65535;
-            val s32_zero: Int    = 0;        val s32_one: Int    = 1;        val s32_fifty: Int   = 50;        val s32_min: Int   = Int.MIN_VALUE / 2;  val s32_max: Int   = Int.MAX_VALUE / 2;//    s32_hi_a = INT_MAX/2 - 100,    s32_hi_b = INT_MAX/2;
+            val s32_zero: Int    = 0;        val s32_one: Int    = 1;        val s32_fifty: Int   = 50;        val s32_min: Int   = Int.MIN_VALUE / 2;  val s32_max: Int   = Int.MAX_VALUE / 2;  val s32_hi_a = Int.MAX_VALUE / 2 - 100;  val s32_hi_b = Int.MAX_VALUE / 2
 //            const ImU32   u32_zero = 0,   u32_one = 1,   u32_fifty = 50, u32_min = 0,           u32_max = UINT_MAX/2,   u32_hi_a = UINT_MAX/2 - 100,   u32_hi_b = UINT_MAX/2;
-            val s64_zero: Long   = 0L;       val s64_one: Long   = 1L;       val s64_fifty: Long  = 50L;       val s64_min: Long  = Long.MIN_VALUE / 2; val s64_max: Long  = Long.MAX_VALUE / 2; //  s64_hi_a = LLONG_MAX/2 - 100,  s64_hi_b = LLONG_MAX/2;
+            val s64_zero: Long   = 0L;       val s64_one: Long   = 1L;       val s64_fifty: Long  = 50L;       val s64_min: Long  = Long.MIN_VALUE / 2; val s64_max: Long  = Long.MAX_VALUE / 2; val s64_hi_a = Long.MAX_VALUE / 2 - 100; val s64_hi_b = Long.MAX_VALUE / 2
 //            const ImU64   u64_zero = 0,   u64_one = 1,   u64_fifty = 50, u64_min = 0,           u64_max = ULLONG_MAX/2, u64_hi_a = ULLONG_MAX/2 - 100, u64_hi_b = ULLONG_MAX/2;
             val f32_zero: Float  = 0f;       val f32_one: Float  = 1f;       val f32_lo_a: Float  = -10_000_000_000f;         val f32_hi_a: Float = +10_000_000_000f
             val f64_zero: Double = 0.0;      val f64_one: Double = 1.0;      val f64_lo_a: Double = -1_000_000_000_000_000.0; val f64_hi_a: Double = +1_000_000_000_000_000.0
 
             val dragSpeed = 0.2f
             text("Drags:")
-            checkbox("Clamp integers to 0..50", ::dragClamp); sameLine(); showHelpMarker("As with every widgets in dear imgui, we never modify values unless there is a user interaction.\nYou can override the clamping limits by using CTRL+Click to input a value.")
+            checkbox("Clamp integers to 0..50", ::dragClamp); sameLine(); helpMarker("As with every widgets in dear imgui, we never modify values unless there is a user interaction.\nYou can override the clamping limits by using CTRL+Click to input a value.")
             dragScalar("drag s8",        DataType.Byte,   ::s8_v, dragSpeed,        s8_zero.takeIf { dragClamp },  s8_fifty.takeIf { dragClamp })
 //            dragScalar("drag u8", DataType.Ubyte, ::u8_v, dragSpeed, u8_zero.takeIf { dragClamp }, u8_fifty.takeIf { dragClamp }, "%d ms")
             dragScalar("drag s16",       DataType.Short,  ::s16_v, dragSpeed,       s16_zero.takeIf { dragClamp }, s16_fifty.takeIf { dragClamp })
@@ -1035,48 +1036,48 @@ object showDemoWindowWidgets {
             dragScalar("drag s64",       DataType.Long,   ::s64_v, dragSpeed,       s64_zero.takeIf { dragClamp }, s64_fifty.takeIf { dragClamp })
 //            ImGui::DragScalar("drag u64",       ImGuiDataType_U64,    &u64_v, drag_speed, drag_clamp ? &u64_zero : NULL, drag_clamp ? &u64_fifty : NULL);
             dragScalar("drag float",     DataType.Float,  ::f32_v, 0.005f,  f32_zero, f32_one, "%f", 1f)
-            dragScalar("drag float ^2",  DataType.Float,  ::f32_v, 0.005f,  f32_zero, f32_one, "%f", 2f); sameLine(); showHelpMarker("You can use the 'power' parameter to increase tweaking precision on one side of the range.")
+            dragScalar("drag float ^2",  DataType.Float,  ::f32_v, 0.005f,  f32_zero, f32_one, "%f", 2f); sameLine(); helpMarker("You can use the 'power' parameter to increase tweaking precision on one side of the range.")
             dragScalar("drag double",    DataType.Double, ::f64_v, 0.0005f, f64_zero, null, "%.10f grams", 1f)
             dragScalar("drag double ^2", DataType.Double, ::f64_v, 0.0005f, f64_zero, f64_one, "0 < %.10f < 1", 2f)
 
             text("Sliders")
             sliderScalar("slider s8 full", DataType.Byte, ::s8_v, s8_min, s8_max, "%d")
 //            ImGui::SliderScalar("slider u8 full",     ImGuiDataType_U8,     &u8_v,  &u8_min,   &u8_max,   "%u");
-//            ImGui::SliderScalar("slider s16 full",    ImGuiDataType_S16,    &s16_v, &s16_min,  &s16_max,  "%d");
+            sliderScalar("slider s16 full", DataType.Short, ::s16_v, s16_min, s16_max, "%d")
 //            ImGui::SliderScalar("slider u16 full",    ImGuiDataType_U16,    &u16_v, &u16_min,  &u16_max,  "%u");
-//            ImGui::SliderScalar("slider s32 low",     ImGuiDataType_S32,    &s32_v, &s32_zero, &s32_fifty,"%d");
-//            ImGui::SliderScalar("slider s32 high",    ImGuiDataType_S32,    &s32_v, &s32_hi_a, &s32_hi_b, "%d");
-//            ImGui::SliderScalar("slider s32 full",    ImGuiDataType_S32,    &s32_v, &s32_min,  &s32_max,  "%d");
+            sliderScalar("slider s32 low", DataType.Int, ::s32_v, s32_zero, s32_fifty, "%d")
+            sliderScalar("slider s32 high", DataType.Int, ::s32_v, s32_hi_a, s32_hi_b, "%d")
+            sliderScalar("slider s32 full", DataType.Int, ::s32_v, s32_min, s32_max, "%d")
 //            ImGui::SliderScalar("slider u32 low",     ImGuiDataType_U32,    &u32_v, &u32_zero, &u32_fifty,"%u");
 //            ImGui::SliderScalar("slider u32 high",    ImGuiDataType_U32,    &u32_v, &u32_hi_a, &u32_hi_b, "%u");
 //            ImGui::SliderScalar("slider u32 full",    ImGuiDataType_U32,    &u32_v, &u32_min,  &u32_max,  "%u");
-//            ImGui::SliderScalar("slider s64 low",     ImGuiDataType_S64,    &s64_v, &s64_zero, &s64_fifty,"%I64d");
-//            ImGui::SliderScalar("slider s64 high",    ImGuiDataType_S64,    &s64_v, &s64_hi_a, &s64_hi_b, "%I64d");
-//            ImGui::SliderScalar("slider s64 full",    ImGuiDataType_S64,    &s64_v, &s64_min,  &s64_max,  "%I64d");
+            sliderScalar("slider s64 low", DataType.Long, ::s64_v, s64_zero, s64_fifty, "%d")
+            sliderScalar("slider s64 high", DataType.Long, ::s64_v, s64_hi_a, s64_hi_b, "%d")
+            sliderScalar("slider s64 full", DataType.Long, ::s64_v, s64_min, s64_max, "%d")
 //            ImGui::SliderScalar("slider u64 low",     ImGuiDataType_U64,    &u64_v, &u64_zero, &u64_fifty,"%I64u ms");
 //            ImGui::SliderScalar("slider u64 high",    ImGuiDataType_U64,    &u64_v, &u64_hi_a, &u64_hi_b, "%I64u ms");
 //            ImGui::SliderScalar("slider u64 full",    ImGuiDataType_U64,    &u64_v, &u64_min,  &u64_max,  "%I64u ms");
-//            ImGui::SliderScalar("slider float low",   ImGuiDataType_Float,  &f32_v, &f32_zero, &f32_one);
-//            ImGui::SliderScalar("slider float low^2", ImGuiDataType_Float,  &f32_v, &f32_zero, &f32_one,  "%.10f", 2.0f);
-//            ImGui::SliderScalar("slider float high",  ImGuiDataType_Float,  &f32_v, &f32_lo_a, &f32_hi_a, "%e");
-//            ImGui::SliderScalar("slider double low",  ImGuiDataType_Double, &f64_v, &f64_zero, &f64_one,  "%.10f grams", 1.0f);
-//            ImGui::SliderScalar("slider double low^2",ImGuiDataType_Double, &f64_v, &f64_zero, &f64_one,  "%.10f", 2.0f);
-//            ImGui::SliderScalar("slider double high", ImGuiDataType_Double, &f64_v, &f64_lo_a, &f64_hi_a, "%e grams", 1.0f);
+            sliderScalar("slider float low",    DataType.Float,  ::f32_v, f32_zero, f32_one)
+            sliderScalar("slider float low^2",  DataType.Float,  ::f32_v, f32_zero, f32_one,  "%.10f", 2f)
+            sliderScalar("slider float high",   DataType.Float,  ::f32_v, f32_lo_a, f32_hi_a, "%e")
+            sliderScalar("slider double low",   DataType.Double, ::f64_v, f64_zero, f64_one,  "%.10f grams", 1f)
+            sliderScalar("slider double low^2", DataType.Double, ::f64_v, f64_zero, f64_one,  "%.10f", 2f)
+            sliderScalar("slider double high",  DataType.Double, ::f64_v, f64_lo_a, f64_hi_a, "%e grams", 1f)
 
-            text("Inputs");
+            text("Inputs")
             checkbox("Show step buttons", ::inputsStep)
-            inputScalar("input s8", DataType.Byte, ::s8_v, s8_one.takeIf { inputsStep }, null, "%d")
-            inputScalar("input u8", DataType.Ubyte, ::u8_v, u8_one.takeIf { inputsStep }, null, "%d")
-//            ImGui::InputScalar("input s16",     ImGuiDataType_S16,    &s16_v, inputs_step ? &s16_one : NULL, NULL, "%d");
+            inputScalar("input s8",  DataType.Byte,  ::s8_v,  s8_one.takeIf { inputsStep },  null, "%d")
+//            inputScalar("input u8",  DataType.Ubyte, ::u8_v,  u8_one.takeIf { inputsStep },  null, "%d")
+            inputScalar("input s16", DataType.Short, ::s16_v, s16_one.takeIf { inputsStep }, null, "%d")
 //            ImGui::InputScalar("input u16",     ImGuiDataType_U16,    &u16_v, inputs_step ? &u16_one : NULL, NULL, "%u");
-//            ImGui::InputScalar("input s32",     ImGuiDataType_S32,    &s32_v, inputs_step ? &s32_one : NULL, NULL, "%d");
-//            ImGui::InputScalar("input s32 hex", ImGuiDataType_S32,    &s32_v, inputs_step ? &s32_one : NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
+            inputScalar("input s32", DataType.Int, ::s32_v, s32_one.takeIf { inputsStep }, null, "%d")
+            inputScalar("input s32 hex", DataType.Int, ::s32_v, s32_one.takeIf { inputsStep }, null, "%08X", Itf.CharsHexadecimal.i)
 //            ImGui::InputScalar("input u32",     ImGuiDataType_U32,    &u32_v, inputs_step ? &u32_one : NULL, NULL, "%u");
 //            ImGui::InputScalar("input u32 hex", ImGuiDataType_U32,    &u32_v, inputs_step ? &u32_one : NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
-//            ImGui::InputScalar("input s64",     ImGuiDataType_S64,    &s64_v, inputs_step ? &s64_one : NULL);
+            inputScalar("input s64", DataType.Long, ::s64_v, s64_one.takeIf { inputsStep })
 //            ImGui::InputScalar("input u64",     ImGuiDataType_U64,    &u64_v, inputs_step ? &u64_one : NULL);
-//            ImGui::InputScalar("input float",   ImGuiDataType_Float,  &f32_v, inputs_step ? &f32_one : NULL);
-//            ImGui::InputScalar("input double",  ImGuiDataType_Double, &f64_v, inputs_step ? &f64_one : NULL);
+            inputScalar("input float", DataType.Float, ::f32_v, f32_one.takeIf { inputsStep })
+            inputScalar("input double", DataType.Double, ::f64_v, f64_one.takeIf { inputsStep })
             // @formatter:on
         }
 
@@ -1308,7 +1309,7 @@ object showDemoWindowWidgets {
                 associated to the title bar of a window.                 */
             checkbox("Hovered/Active tests after Begin() for title bar testing", ::testWindow)
             if (testWindow) {
-                begin_("Title bar Hovered/Active tests", ::testWindow)
+                begin("Title bar Hovered/Active tests", ::testWindow)
                 if (beginPopupContextItem()) { // <-- This is using IsItemHovered()
                     if (menuItem("Close")) testWindow = false
                     endPopup()

@@ -38,6 +38,8 @@ import imgui.ImGui.style
 import imgui.ImGui.tabItemBackground
 import imgui.ImGui.tabItemCalcSize
 import imgui.ImGui.tabItemLabelAndCloseButton
+import imgui.imgui.Context
+import imgui.imgui.g
 import imgui.imgui.imgui_colums.Companion.tabBarRef
 import java.util.*
 import kotlin.collections.ArrayList
@@ -196,6 +198,16 @@ class Rect {
     }
 
     override fun toString() = "min: $min, max: $max"
+}
+
+/** Type information associated to one ImGuiDataType. Retrieve with DataTypeGetInfo(). */
+class DataTypeInfo{
+    /** Size in byte */
+    var size = 0
+    /** Default printf format for the type */
+    lateinit var printFmt: String
+    /** Default scanf format for the type */
+    lateinit var scanFmt: String
 }
 
 /** Stacked color modifier, backup of modified data so we can restore it    */

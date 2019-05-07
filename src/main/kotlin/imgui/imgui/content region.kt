@@ -4,7 +4,6 @@ import glm_.vec2.Vec2
 import imgui.ImGui.contentRegionMaxScreen
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.getColumnOffset
-import imgui.g
 
 /** Content region
  *  - Those functions are bound to be redesigned soon (they are confusing, incomplete and return values in local window coordinates which increases confusion) */

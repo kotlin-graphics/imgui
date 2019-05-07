@@ -55,6 +55,7 @@ import imgui.functionalProgramming.withChild
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
 import imgui.functionalProgramming.withTooltip
+import imgui.imgui.g
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import kotlin.math.sqrt
 import imgui.ColorEditFlag as Cef

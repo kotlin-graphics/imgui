@@ -289,15 +289,7 @@ fun <N> sliderBehaviorT(bb: Rect, id: Int,
                         val vNewOffFloor: N
                         val vNewOffRound: N
                         when(dataType) {
-                            DataType.Byte -> {
-                                vNewOffFloor = vNewOff_f.b as N
-                                vNewOffRound = (vNewOff_f + 0.5f).b as N
-                            }
-                            DataType.Short -> {
-                                vNewOffFloor = vNewOff_f.s as N
-                                vNewOffRound = (vNewOff_f + 0.5f).s as N
-                            }
-                            DataType.Int -> {
+                            DataType.Byte, DataType.Short, DataType.Int -> {
                                 vNewOffFloor = vNewOff_f.i as N
                                 vNewOffRound = (vNewOff_f + 0.5f).i as N
                             }
@@ -369,7 +361,10 @@ fun <N> sliderCalcRatioFromValue(dataType: DataType, v: N, vMin: N, vMax: N, pow
             }
         }
         // Linear slider
-        else -> ((vClamped - vMin) / (vMax - vMin)).f
+        else -> when(dataType) {
+            DataType.Long, DataType.Ulong, DataType.Double -> ((vClamped - vMin).d / (vMax - vMin).d).f
+            else -> (vClamped - vMin).f / (vMax - vMin).f
+        }
     }
 }
 

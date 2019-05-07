@@ -2,6 +2,7 @@ package imgui.imgui.demo.showExampleApp
 
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginTabBar
@@ -38,7 +39,7 @@ object SimpleLayout {
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         setNextWindowSize(Vec2(500, 440), Cond.FirstUseEver)
-        if (begin_("Example: SimpleLayout", open, Wf.MenuBar.i)) {
+        if (begin("Example: SimpleLayout", open, Wf.MenuBar.i)) {
             menuBar {
                 menu("File") {
                     if (menuItem("Close")) open.set(false)
