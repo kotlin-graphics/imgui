@@ -36,8 +36,6 @@ import imgui.imgui.imgui_main.Companion.renderOuterBorders
 import imgui.imgui.imgui_main.Companion.resizeGripDef
 import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
-import uno.kotlin.getValue
-import uno.kotlin.setValue
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.FocusedFlag as Ff
@@ -57,10 +55,17 @@ import imgui.internal.LayoutType as Lt
  *  - Begin() return false to indicate the window is collapsed or fully clipped, so you may early out and omit submitting anything to the window.
  *    Always call a matching End() for each Begin() call, regardless of its return value
  *    [this is due to legacy reason and is inconsistent with most other functions such as BeginMenu/EndMenu, BeginPopup/EndPopup, etc.
- *    where the EndXXX call should only be called if the corresponding BeginXXX function returned true.]    */
-interface imgui_window {
+ *    where the EndXXX call should only be called if the corresponding BeginXXX function returned true.]
+ *
+ *
+ *    Windows   */
+interface imgui_windows {
 
-    // Windows
+    fun begin_(name: String, pOpen: BooleanArray? = null, index: Int = 0, flags: WindowFlags = 0) = when (pOpen) {
+        null -> begin(name, null, flags)
+        else -> withBoolean(pOpen, 0) { begin(name, it, flags) }
+    }
+
     /*  Push a new ImGui window to add widgets to:
         - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use
             widgets without explicitly calling a Begin/End pair.
@@ -73,16 +78,7 @@ interface imgui_window {
             regardless. You always need to call ImGui::End() even if false is returned.
         - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
             be set to false when the button is pressed. */
-    fun begin_(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags: WindowFlags = 0) = when (pOpen) {
-        null -> begin(name, null, flags)
-        else -> {
-            var open by pOpen
-            val bool = booleanArrayOf(open)
-            begin(name, bool, flags).also { open = bool[0] }
-        }
-    }
-
-    fun begin(name: String, pOpen: BooleanArray? = null, flags_: WindowFlags = 0): Boolean {
+    fun begin(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = 0): Boolean {
 
         assert(name.isNotEmpty()) { "Window name required" }
         assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()" }
@@ -620,7 +616,7 @@ interface imgui_window {
                 if (pOpen != null) {
                     val rad = g.fontSize * 0.5f
                     if (closeButton(window.getId("#CLOSE"), Vec2(window.pos.x + window.size.x - style.framePadding.x - rad, window.pos.y + style.framePadding.y + rad), rad + 1))
-                        pOpen[0] = false
+                        pOpen.set(false)
                 }
 
                 window.dc.navLayerCurrent = NavLayer.Main
@@ -647,7 +643,7 @@ interface imgui_window {
                 textR.max.x -= padRight
                 val clipRect = Rect(textR)
                 // Match the size of CloseButton()
-                clipRect.max.x = window.pos.x + window.size.x - (if (pOpen?.get(0) == true) titleBarRect.height - 3 else style.framePadding.x)
+                clipRect.max.x = window.pos.x + window.size.x - (if (pOpen?.get() == true) titleBarRect.height - 3 else style.framePadding.x)
                 renderTextClipped(textR.min, textR.max, name, 0, textSize, style.windowTitleAlign, clipRect)
                 if (flags has Wf.UnsavedDocument) {
                     val markerPos = Vec2(max(textR.min.x, textR.min.x + (textR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, textR.min.y) + Vec2(2 - markerSizeX, 0f)

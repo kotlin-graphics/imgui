@@ -3,6 +3,7 @@ package imgui
 import gli_.has
 import glm_.c
 import glm_.glm
+import imgui.imgui.g
 import imgui.internal.isBlankW
 import kotlin.math.max
 

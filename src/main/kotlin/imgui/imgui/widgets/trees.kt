@@ -15,6 +15,7 @@ import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
+import imgui.imgui.g
 import imgui.internal.itemHoveredDataBackup
 import uno.kotlin.getValue
 import uno.kotlin.setValue

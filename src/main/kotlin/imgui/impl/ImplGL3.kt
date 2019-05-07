@@ -19,6 +19,7 @@ import gln.vertexArray.GlVertexArray
 import gln.vertexArray.glVertexAttribPointer
 import imgui.*
 import imgui.ImGui.io
+import imgui.imgui.g
 import kool.*
 import org.lwjgl.opengl.*
 import org.lwjgl.opengl.GL30C.*

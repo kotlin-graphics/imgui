@@ -3,6 +3,7 @@ package imgui.imgui.demo.showExampleApp
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginPopup
 import imgui.ImGui.beginPopupContextWindow
@@ -83,7 +84,7 @@ object Console {
             var open by pOpen
 
             setNextWindowSize(Vec2(520, 600), Cond.FirstUseEver)
-            if (!begin_(title, pOpen)) {
+            if (!begin(title, pOpen)) {
                 end()
                 return
             }

@@ -43,6 +43,7 @@ import imgui.ImGui.style
 import imgui.ImGui.tempInputTextIsActive
 import imgui.ImGui.tempInputTextScalar
 import imgui.ImGui.textEx
+import imgui.imgui.g
 import imgui.internal.DragFlag
 import imgui.internal.Rect
 import imgui.internal.focus

@@ -4,7 +4,7 @@ import glm_.bool
 import glm_.i
 import glm_.toHexString
 import imgui.DEBUG
-import imgui.g
+import imgui.imgui.g
 import kool.adr
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform

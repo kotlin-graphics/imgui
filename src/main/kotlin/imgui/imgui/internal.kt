@@ -65,7 +65,6 @@ import imgui.internal.*
 import kool.lib.fill
 import uno.kotlin.getValue
 import uno.kotlin.setValue
-import unsigned.Ubyte
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.nio.ByteBuffer
@@ -2214,7 +2213,16 @@ interface imgui_internal {
                            format: String, power: Float,
                            flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> = when (dataType) {
 
-        DataType.Byte, DataType.Short -> sliderBehaviorT(bb, id, dataType, v, vMin, vMax, format, power, flags, outGrabBb)
+        DataType.Byte -> {
+            _i = (v() as Byte).i
+            sliderBehaviorT(bb, id, dataType, ::_i, vMin.i, vMax.i, format, power, flags, outGrabBb)
+                    .also { v.set(_i.b as N) }
+        }
+        DataType.Short -> {
+            _i = (v() as Short).i
+            sliderBehaviorT(bb, id, dataType, ::_i, vMin.i, vMax.i, format, power, flags, outGrabBb)
+                    .also { v.set(_i.s as N) }
+        }
         DataType.Int -> {
             assert(vMin as Int >= Int.MIN_VALUE / 2 && vMax as Int <= Int.MAX_VALUE / 2)
             sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax as N, format, power, flags, outGrabBb)

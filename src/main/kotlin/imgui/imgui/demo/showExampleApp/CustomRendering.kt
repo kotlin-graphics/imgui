@@ -3,6 +3,7 @@ package imgui.imgui.demo.showExampleApp
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.beginTabBar
 import imgui.ImGui.beginTabItem
 import imgui.ImGui.begin_
@@ -43,7 +44,7 @@ object CustomRendering {
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         setNextWindowSize(Vec2(350, 560), Cond.FirstUseEver)
-        if (!begin_("Example: Custom rendering", open)) {
+        if (!begin("Example: Custom rendering", open)) {
             end()
             return
         }

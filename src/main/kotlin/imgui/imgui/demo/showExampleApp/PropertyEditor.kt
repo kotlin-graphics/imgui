@@ -3,6 +3,7 @@ package imgui.imgui.demo.showExampleApp
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.alignTextToFramePadding
+import imgui.ImGui.begin
 import imgui.ImGui.begin_
 import imgui.ImGui.columns
 import imgui.ImGui.dragFloat
@@ -35,7 +36,7 @@ object PropertyEditor {
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         setNextWindowSize(Vec2(430, 450), Cond.FirstUseEver)
-        if (!begin_("Example: Property editor", open)) {
+        if (!begin("Example: Property editor", open)) {
             end()
             return
         }

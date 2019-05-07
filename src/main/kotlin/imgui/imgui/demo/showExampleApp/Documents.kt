@@ -3,6 +3,7 @@ package imgui.imgui.demo.showExampleApp
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.begin
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
 import imgui.ImGui.beginPopupContextItem
@@ -138,7 +139,7 @@ object Documents {
 
     operator fun invoke(pOpen: KMutableProperty0<Boolean>) {
 
-        if (!begin_("Example: Documents", pOpen, WindowFlag.MenuBar.i)) {
+        if (!begin("Example: Documents", pOpen, WindowFlag.MenuBar.i)) {
             end()
             return
         }

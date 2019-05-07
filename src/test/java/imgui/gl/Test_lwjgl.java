@@ -4,6 +4,7 @@ import glm_.vec2.Vec2;
 import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
 import imgui.*;
+import imgui.imgui.Context;
 import imgui.impl.LwjglGlfw;
 import imgui.impl.LwjglGlfw.GlfwClientApi;
 import kotlin.Unit;
@@ -27,7 +28,8 @@ public class Test_lwjgl {
     private IO io;
     private float[] f = {0f};
     private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
-    private boolean[] showAnotherWindow = {false};
+    // Java users can use both a MutableProperty0 or a Boolean Array
+    private MutableProperty0<Boolean> showAnotherWindow = new MutableProperty0<>(false);
     private boolean[] showDemo = {true};
     private int[] counter = {0};
 
@@ -121,11 +123,11 @@ public class Test_lwjgl {
         imgui.text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.getFramerate(), io.getFramerate());
 
         // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name the window.
-        if (showAnotherWindow[0]) {
+        if (showAnotherWindow.get()) {
             imgui.begin("Another Window", showAnotherWindow, 0);
             imgui.text("Hello from another window!");
             if (imgui.button("Close Me", new Vec2()))
-                showAnotherWindow[0] = false;
+                showAnotherWindow.set(false);
             imgui.end();
         }
 

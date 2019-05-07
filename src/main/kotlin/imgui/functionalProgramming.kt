@@ -3,6 +3,7 @@ package imgui
 import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
+import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginMainMenuBar
@@ -53,13 +54,13 @@ object functionalProgramming {
     }
 
     inline fun withWindow(name: String, open: KMutableProperty0<Boolean>? = null, flags: Int = 0, block: () -> Unit) {
-        begin_(name, open, flags)
+        begin(name, open, flags)
         block()
         end()
     }
 
     inline fun window(name: String, open: KMutableProperty0<Boolean>?, flags: Int = 0, block: () -> Unit) {
-        if (!begin_(name, open, flags)) {
+        if (!begin(name, open, flags)) {
             block()
             end()
         }

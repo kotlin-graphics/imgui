@@ -5,7 +5,7 @@ import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.Context
+import imgui.imgui.Context
 import imgui.DEBUG
 import imgui.ImGui
 import imgui.impl.ImplGL3
@@ -154,7 +154,7 @@ private class HelloWorld_lwjgl {
                 // 3. Show another simple window.
                 if (showAnotherWindow) {
                     // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-                    begin_("Another Window", ::showAnotherWindow)
+                    begin("Another Window", ::showAnotherWindow)
                     text("Hello from another window!")
                     if (button("Close Me"))
                         showAnotherWindow = false
