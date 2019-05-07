@@ -64,19 +64,35 @@ var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: ItemStatusFlags
 
 object ImGui :
 
+        // imgui_context doesnt exist, only Context class
         imgui_main,
+
         imgui_demoDebugInformations,
+
+        imgui_styles,
+
         imgui_windows,
+
+        imgui_childWindows,
+
+        imgui_windowsUtilities,
+
         imgui_contentRegion,
+
         imgui_windowScrolling,
+
         imgui_parametersStacks,
+
         imgui_cursorLayout,
-        imgui_colums,
+
         imgui_idScopes,
+
+        imgui_widgets_text,
+        imgui_widgets_main,
+        imgui_widgets_comboBox,
+
+        imgui_colums,
         listBoxes,
-        text,
-        main,
-        comboBox,
         dataPlotting,
         drags,
         inputKeyboard,
@@ -91,7 +107,6 @@ object ImGui :
         imgui_logging,
         imgui_dragAndDrop,
         imgui_clipping,
-        imgui_styles,
         imgui_focusActivation,
         imgui_utilities,
         imgui_inputs,

@@ -24,10 +24,16 @@ import imgui.internal.Rect
 import imgui.internal.TextFlag
 import imgui.ColorEditFlag as Cef
 
-interface text {
 
+/** Widgets: Text */
+interface imgui_widgets_text {
+
+    /** raw text without formatting. Roughly equivalent to Text("%s", text) but:
+     *  A) doesn't require null terminated string if 'text_end' is specified,
+     *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
     fun textUnformatted(text: String, textEnd: Int) = textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText.i)
 
+    /** simple formatted text */
     fun text(fmt: String, vararg args: Any) = textV(fmt, args)
 
     fun textV(fmt_: String, args: Array<out Any>) {
@@ -41,12 +47,17 @@ interface text {
         textEx(fmt, textEnd, TextFlag.NoWidthForLargeClippedText.i)
     }
 
-    /** shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();   */
+    /** shortcut for
+     *      PushStyleColor(ImGuiCol_Text, col);
+     *      Text(fmt, ...);
+     *      PopStyleColor();   */
     fun textColored(col: Vec4, fmt: String, vararg args: Any) {
         pushStyleColor(Col.Text, col)
         text(fmt, *args)
         popStyleColor()
     }
+
+//    IMGUI_API void          TextColoredV(const ImVec4& col, const char* fmt, va_list args)  IM_FMTLIST(2);
 
     /** shortcut for:
      *      pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
@@ -72,6 +83,8 @@ interface text {
         if (needBackup)
             popTextWrapPos()
     }
+
+//    IMGUI_API void          TextWrappedV(const char* fmt, va_list args)                     IM_FMTLIST(1);
 
     /** Display text+label aligned the same way as value+label widgets  */
     fun labelText(label: String, fmt: String, vararg args: Any) = labelTextV(label, fmt, args)

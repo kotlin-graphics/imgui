@@ -66,7 +66,7 @@ interface imgui_windows {
         else -> withBoolean(pOpen, 0) { begin(name, it, flags) }
     }
 
-    /*  Push a new ImGui window to add widgets to:
+    /**  Push a new ImGui window to add widgets to:
         - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use
             widgets without explicitly calling a Begin/End pair.
         - Begin/End can be called multiple times during the frame with the same window name to append content.
@@ -77,7 +77,10 @@ interface imgui_windows {
         - Return false when window is collapsed (so you can early out in your code) but you always need to call End()
             regardless. You always need to call ImGui::End() even if false is returned.
         - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
-            be set to false when the button is pressed. */
+            be set to false when the button is pressed.
+
+        @return isOpen
+     */
     fun begin(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = 0): Boolean {
 
         assert(name.isNotEmpty()) { "Window name required" }
@@ -738,218 +741,9 @@ interface imgui_windows {
         setCurrentWindow(g.currentWindowStack.lastOrNull())
     }
 
-    // Child Windows
-
-    /** - Use child windows to begin into a self-contained independent scrolling/clipping regions within a host window. Child windows can embed their own child.
-     *  - For each independent axis of 'size': ==0.0f: use remaining host window size / >0.0f: fixed size
-     *      / <0.0f: use remaining window size minus abs(size) / Each axis can use a different mode, e.g. ImVec2(0,400).
-     *  - BeginChild() returns false to indicate the window is collapsed or fully clipped, so you may early out and omit submitting anything to the window.
-     *    Always call a matching EndChild() for each BeginChild() call, regardless of its return value [this is due to legacy reason and
-     *    is inconsistent with most other functions such as BeginMenu/EndMenu, BeginPopup/EndPopup, etc. where the EndXXX call
-     *    should only be called if the corresponding BeginXXX function returned true.]  */
-    fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = 0) =
-            beginChildEx(strId, currentWindow.getId(strId), size, border, flags)
-
-    /** begin a scrolling region.
-     *  size == 0f: use remaining window size
-     *  size < 0f: use remaining window size minus abs(size)
-     *  size > 0f: fixed size. each axis can use a different mode, e.g. Vec2(0, 400).   */
-    fun beginChild(id: ID, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = 0): Boolean {
-        assert(id != 0)
-        return beginChildEx("", id, sizeArg, border, flags)
-    }
-
-    /** Always call even if BeginChild() return false (which indicates a collapsed or clipping child window)    */
-    fun endChild() {
-
-        val window = currentWindow
-
-        assert(window.flags has Wf.ChildWindow) { "Mismatched BeginChild()/EndChild() callss" }
-        if (window.beginCount > 1) end()
-        else {
-            /*  When using auto-filling child window, we don't provide full width/height to ItemSize so that it doesn't
-                feed back into automatic size-fitting.             */
-            val sz = Vec2(window.size)
-            // Arbitrary minimum zero-ish child size of 4.0f causes less trouble than a 0.0f
-            if (window.autoFitChildAxes has (1 shl Axis.X))
-                sz.x = glm.max(4f, sz.x)
-            if (window.autoFitChildAxes has (1 shl Axis.Y))
-                sz.y = glm.max(4f, sz.y)
-            end()
-
-            val parentWindow = currentWindow
-            val bb = Rect(parentWindow.dc.cursorPos, parentWindow.dc.cursorPos + sz)
-            itemSize(sz)
-            if ((window.dc.navLayerActiveMask != 0 || window.dc.navHasScroll) && window.flags hasnt Wf.NavFlattened) {
-                itemAdd(bb, window.childId)
-                renderNavHighlight(bb, window.childId)
-
-                // When browsing a window that has no activable items (scroll only) we keep a highlight on the child
-                if (window.dc.navLayerActiveMask == 0 && window === g.navWindow)
-                    renderNavHighlight(Rect(bb.min - 2, bb.max + 2), g.navId, NavHighlightFlag.TypeThin.i)
-            } else // Not navigable into
-                itemAdd(bb, 0)
-        }
-    }
-
-    // Windows Utilities
-    // - "current window" = the window we are appending into while inside a Begin()/End() block. "next window" = next window we will Begin() into.
 
 
-    val isWindowAppearing get() = currentWindowRead!!.appearing
 
-    val isWindowCollapsed get() = currentWindowRead!!.collapsed
-
-    /** is current window focused? or its root/child, depending on flags. see flags for options.    */
-    fun isWindowFocused(flag: Ff) = isWindowFocused(flag.i)
-
-    /** is current window focused? or its root/child, depending on flags. see flags for options.    */
-    fun isWindowFocused(flags: FocusedFlags = Ff.None.i): Boolean {
-
-        if (flags has Ff.AnyWindow)
-            return g.navWindow != null
-
-        val curr = g.currentWindow!!     // Not inside a Begin()/End()
-        return when (flags and (Ff.RootWindow or Ff.ChildWindows)) {
-            Ff.RootWindow or Ff.ChildWindows -> g.navWindow?.let { it.rootWindow === curr.rootWindow } ?: false
-            Ff.RootWindow.i -> g.navWindow === curr.rootWindow
-            Ff.ChildWindows.i -> g.navWindow?.isChildOf(curr) ?: false
-            else -> g.navWindow === curr
-        }
-    }
-
-    /** iis current window hovered (and typically: not blocked by a popup/modal)? see flag for options. */
-    fun isWindowHovered(flag: Hf) = isWindowHovered(flag.i)
-
-    /** Is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
-     *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
-     *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
-    fun isWindowHovered(flags: HoveredFlags = Hf.None.i): Boolean {
-        assert(flags hasnt Hf.AllowWhenOverlapped) { "Flags not supported by this function" }
-        if (flags has Hf.AnyWindow) {
-            if (g.hoveredWindow == null)
-                return false
-        } else when (flags and (Hf.RootWindow or Hf.ChildWindows)) {
-            Hf.RootWindow or Hf.ChildWindows -> if (g.hoveredRootWindow !== g.currentWindow!!.rootWindow) return false
-            Hf.RootWindow.i -> if (g.hoveredWindow != g.currentWindow!!.rootWindow) return false
-            Hf.ChildWindows.i -> g.hoveredWindow.let { if (it == null || !it.isChildOf(g.currentWindow)) return false }
-            else -> if (g.hoveredWindow !== g.currentWindow) return false
-        }
-
-        return when {
-            !g.hoveredWindow!!.isContentHoverable(flags) -> false
-            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != g.hoveredWindow!!.moveId -> false
-            else -> true
-        }
-    }
-
-    /** get draw list associated to the current window, to append your own drawing primitives   */
-    val windowDrawList get() = currentWindow.drawList
-
-    /** get current window position in screen space (useful if you want to do your own drawing via the DrawList api)    */
-    val windowPos get() = g.currentWindow!!.pos
-
-    /** get current window size */
-    val windowSize get() = currentWindowRead!!.size
-
-    val windowWidth get() = g.currentWindow!!.size.x
-
-    val windowHeight get() = g.currentWindow!!.size.y
-
-    // Prefer using SetNextXXX functions (before Begin) rather that SetXXX functions (after Begin).
-
-    /** set next window position. call before Begin()   */
-    fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always, pivot: Vec2 = Vec2()) {
-//        JVM, useless
-//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
-        with(g.nextWindowData) {
-            posVal put pos
-            posPivotVal put pivot
-            posCond = cond
-        }
-    }
-
-    /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
-    fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Always) {
-//        JVM, useless
-//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
-        with(g.nextWindowData) {
-            sizeVal put size
-            sizeCond = cond
-        }
-    }
-
-    /** set next window size limits. use -1,-1 on either X/Y axis to preserve the current size. Use callback to apply
-     *  non-trivial programmatic constraints.   */
-    fun setNextWindowSizeConstraints(sizeMin: Vec2, sizeMax: Vec2, customCallback: SizeCallback? = null, customCallbackUserData: Any? = null) {
-        with(g.nextWindowData) {
-            sizeConstraintCond = Cond.Always
-            sizeConstraintRect.min put sizeMin
-            sizeConstraintRect.max put sizeMax
-            sizeCallback = customCallback
-            sizeCallbackUserData = customCallbackUserData
-        }
-    }
-
-    /** Set next window content size (~ enforce the range of scrollbars). not including window decorations (title bar, menu bar, etc.).
-     *  set an axis to 0.0f to leave it automatic. call before Begin() */
-    fun setNextWindowContentSize(size: Vec2) {
-        // In Begin() we will add the size of window decorations (title bar, menu etc.) to that to form a SizeContents value.
-        with(g.nextWindowData) {
-            contentSizeVal put size
-            contentSizeCond = Cond.Always
-        }
-    }
-
-    /** Set next window collapsed state. call before Begin()    */
-    fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Always) {
-//        JVM, useless
-//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
-        with(g.nextWindowData) {
-            collapsedVal = collapsed
-            collapsedCond = cond
-        }
-    }
-
-    /** Set next window to be focused / front-most. call before Begin() */
-    fun setNextWindowFocus() {
-        // Using a Cond member for consistency (may transition all of them to single flag set for fast Clear() op)
-        g.nextWindowData.focusCond = Cond.Always
-    }
-
-    /** Set next window background color alpha. helper to easily modify ImGuiCol_WindowBg/ChildBg/PopupBg.
-     *  You may also use ImGuiWindowFlags_NoBackground. */
-    fun setNextWindowBgAlpha(alpha: Float) {
-        g.nextWindowData.bgAlphaVal = alpha
-        // Using a Cond member for consistency (may transition all of them to single flag set for fast Clear() op)
-        g.nextWindowData.bgAlphaCond = Cond.Always
-    }
-
-    /** (not recommended) set current window position - call within Begin()/End(). prefer using SetNextWindowPos(),
-     *  as this may incur tearing and side-effects. */
-    fun setWindowPos(pos: Vec2, cond: Cond = Cond.None) = currentWindowRead!!.setPos(pos, cond)
-
-    /** (not recommended) set current window size - call within Begin()/End(). set to ImVec2(0,0) to force an auto-fit.
-     *  prefer using SetNextWindowSize(), as this may incur tearing and minor side-effects. */
-    fun setWindowSize(size: Vec2, cond: Cond = Cond.None) = g.currentWindow!!.setSize(size, cond)
-
-    /** (not recommended) set current window collapsed state. prefer using SetNextWindowCollapsed().    */
-    fun setWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.None) = g.currentWindow!!.setCollapsed(collapsed, cond)
-
-    /** (not recommended) set current window to be focused / front-most. prefer using SetNextWindowFocus(). */
-    fun setWindowFocus() = g.currentWindow.focus()
-
-    /** Set named window position.  */
-    fun setWindowPos(name: String, pos: Vec2, cond: Cond = Cond.None) = findWindowByName(name)?.setPos(pos, cond)
-
-    /** Set named window size. set axis to 0.0f to force an auto-fit on this axis.  */
-    fun setWindowSize(name: String, size: Vec2, cond: Cond = Cond.None) = findWindowByName(name)?.setSize(size, cond)
-
-    /** Set named window collapsed state    */
-    fun setWindowCollapsed(name: String, collapsed: Boolean, cond: Cond = Cond.None) = findWindowByName(name)?.setCollapsed(collapsed, cond)
-
-    /** Set named window to be focused / front-most. use NULL to remove focus.  */
-    fun setWindowFocus(name: String) = findWindowByName(name).focus()
 
     /** per-window font scale. Adjust io.FontGlobalScale if you want to scale all windows   */
     fun setWindowFontScale(scale: Float) = with(currentWindow) {

@@ -12,7 +12,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.text
 import imgui.functionalProgramming.menuItem
 import imgui.functionalProgramming.popupContextWindow
-import imgui.functionalProgramming.withWindow
+import imgui.functionalProgramming.window
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -38,7 +38,7 @@ object SimpleOverlay {
             flags = flags or Wf.NoMove
         }
         setNextWindowBgAlpha(0.35f)  // Transparent background
-        withWindow("Example: Simple Overlay", open, flags) {
+        window("Example: Simple Overlay", open, flags) {
             text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
             separator()
             text("Mouse Position: " + when {

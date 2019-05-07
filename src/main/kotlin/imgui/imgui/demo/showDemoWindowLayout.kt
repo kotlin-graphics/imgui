@@ -82,7 +82,7 @@ import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowWidth
 import imgui.functionalProgramming.treeNode
-import imgui.functionalProgramming.withChild
+import imgui.functionalProgramming.child
 import imgui.functionalProgramming.withGroup
 import imgui.functionalProgramming.withId
 import imgui.functionalProgramming.withItemWidth
@@ -161,7 +161,7 @@ object showDemoWindowLayout {
             // Child 1: no border, enable horizontal scrollbar
             run {
                 val windowFlags = Wf.HorizontalScrollbar or if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.None
-                withChild("Child1", Vec2(windowContentRegionWidth * 0.5f, 260), false, windowFlags) {
+                child("Child1", Vec2(windowContentRegionWidth * 0.5f, 260), false, windowFlags) {
                     for (i in 0..99) {
                         text("%04d: scrollable region", i)
                         if (gotoLine && line == i) setScrollHereY()
@@ -175,7 +175,7 @@ object showDemoWindowLayout {
             run {
                 val windowFlags = (if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.None) or if (disableMenu) Wf.None else Wf.MenuBar
                 withStyleVar(StyleVar.ChildRounding, 5f) {
-                    withChild("Child2", Vec2(0, 260), true, windowFlags) {
+                    child("Child2", Vec2(0, 260), true, windowFlags) {
                         if (!disableMenu && beginMenuBar()) {
                             if (beginMenu("Menu")) {
                                 showExampleMenuFile()

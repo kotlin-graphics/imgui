@@ -38,86 +38,9 @@ import imgui.internal.SeparatorFlag as Sf
 
 interface lowLevelLayoutHelpers {
 
-    /** add vertical spacing.    */
-    fun spacing() {
-        if (currentWindow.skipItems) return
-        itemSize(Vec2())
-    }
 
-    /** add a dummy item of given size. unlike InvisibleButton(), Dummy() won't take the mouse click or be navigable into.  */
-    fun dummy(size: Vec2) {
 
-        val window = currentWindow
-        if (window.skipItems) return
 
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        itemSize(size)
-        itemAdd(bb, 0)
-    }
-
-    /** undo a sameLine() or force a new line when in an horizontal-layout context.   */
-    fun newLine() {
-        val window = currentWindow
-        if (window.skipItems) return
-
-        val backupLayoutType = window.dc.layoutType
-        window.dc.layoutType = Lt.Vertical
-        // In the event that we are on a line with items that is smaller that FontSize high, we will preserve its height.
-        itemSize(Vec2(0f, if (window.dc.currentLineSize.y > 0f) 0f else g.fontSize))
-        window.dc.layoutType = backupLayoutType
-    }
-
-    /** Vertically align/lower upcoming text to framePadding.y so that it will aligns to upcoming widgets
-     *  (call if you have text on a line before regular widgets)    */
-    fun alignTextToFramePadding() {
-        val window = currentWindow
-        if (window.skipItems) return
-        window.dc.currentLineSize.y = glm.max(window.dc.currentLineSize.y, g.fontSize + style.framePadding.y * 2)
-        window.dc.currentLineTextBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, style.framePadding.y)
-    }
-
-    /** Horizontal/vertical separating line
-     *  Separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a vertical separator. */
-    fun separator() {
-
-        val window = currentWindow
-        if (window.skipItems) return
-
-        // Those flags should eventually be overrideable by the user
-        val flag: Sf = if (window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
-        // useless on JVM with enums
-        // assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo)
-
-        if (flag == Sf.Vertical) {
-            verticalSeparator()
-            return
-        }
-        // Horizontal Separator
-        window.dc.currentColumns?.let { popClipRect() }
-
-        var x1 = window.pos.x
-        val x2 = window.pos.x + window.size.x
-        if (window.dc.groupStack.isNotEmpty())
-            x1 += window.dc.indent.i
-
-        val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
-        // NB: we don't provide our width so that it doesn't get feed back into AutoFit
-        itemSize(Vec2(0f, 1f))
-        if (!itemAdd(bb, 0)) {
-            window.dc.currentColumns?.let { pushColumnClipRect() }
-            return
-        }
-
-        window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
-
-        if (g.logEnabled)
-            logRenderedText(bb.min, "--------------------------------")
-
-        window.dc.currentColumns?.let {
-            pushColumnClipRect()
-            it.lineMinY = window.dc.cursorPos.y
-        }
-    }
 
     /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
     fun splitterBehavior(bb: Rect, id: ID, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,

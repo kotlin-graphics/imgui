@@ -60,7 +60,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
 import imgui.TextEditState.K
 import imgui.imgui.imgui_colums.Companion.COLUMNS_HIT_RECT_HALF_WIDTH
-import imgui.imgui.widgets.main
+import imgui.imgui.widgets.imgui_widgets_main
 import imgui.internal.*
 import kool.lib.fill
 import uno.kotlin.getValue
@@ -1727,7 +1727,7 @@ interface imgui_internal {
         }
     }
 
-    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), 0)
+
 
     /** square button with an arrow shape */
     fun arrowButtonEx(strId: String, dir: Dir, size: Vec2, flags_: ButtonFlags): Boolean {
@@ -3295,7 +3295,7 @@ interface imgui_internal {
 
     // Plot
 
-    fun plotEx(plotType: PlotType, label: String, data: main.PlotArray, valuesOffset: Int, overlayText: String,
+    fun plotEx(plotType: PlotType, label: String, data: imgui_widgets_main.PlotArray, valuesOffset: Int, overlayText: String,
                scaleMin_: Float, scaleMax_: Float, frameSize: Vec2) {
 
         val window = currentWindow

@@ -14,9 +14,9 @@ import imgui.ImGui.beginPopupContextItem
 import imgui.ImGui.beginPopupContextWindow
 import imgui.ImGui.beginPopupModal
 import imgui.ImGui.beginTooltip
-import imgui.ImGui.begin_
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.combo
+import imgui.ImGui.defaultFont
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
@@ -27,11 +27,17 @@ import imgui.ImGui.endPopup
 import imgui.ImGui.endTooltip
 import imgui.ImGui.indent
 import imgui.ImGui.menuItem
+import imgui.ImGui.popAllowKeyboardFocus
+import imgui.ImGui.popButtonRepeat
+import imgui.ImGui.popFont
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.popTextWrapPos
+import imgui.ImGui.pushAllowKeyboardFocus
+import imgui.ImGui.pushButtonRepeat
+import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
@@ -45,25 +51,160 @@ import kotlin.reflect.KMutableProperty0
 
 object functionalProgramming {
 
+    // Windows
+
+    inline fun window(name: String, open: KMutableProperty0<Boolean>? = null, flags: WindowFlags = 0, block: () -> Unit) {
+        if (begin(name, open, flags)) // ~open
+            block()
+        end()
+    }
+
+    // Child Windows
+
+    inline fun child(strId: String, size: Vec2 = Vec2(), border: Boolean = false, extraFlags: WindowFlags = 0, block: () -> Unit) {
+        if (beginChild(strId, size, border, extraFlags)) // ~open
+            block()
+        endChild()
+    }
+
+    // Parameters stacks (shared)
+
+    inline fun withFont(font: Font = defaultFont, block: () -> Unit) {
+        pushFont(font)
+        block()
+        popFont()
+    }
+
+    fun _push(idx: Col, col: Any) {
+        if (col is Int)
+            pushStyleColor(idx, col)
+        else
+            pushStyleColor(idx, col as Vec4)
+    }
+
+    inline fun withStyleColor(idx: Col, col: Any, block: () -> Unit) {
+        _push(idx, col)
+        block()
+        popStyleColor()
+    }
+
+    inline fun withStyleColor(idx0: Col, col0: Any,
+                              idx1: Col, col1: Any, block: () -> Unit) {
+        _push(idx0, col0)
+        _push(idx1, col1)
+        block()
+        popStyleColor(2)
+    }
+
+    inline fun withStyleColor(idx0: Col, col0: Any,
+                              idx1: Col, col1: Any,
+                              idx2: Col, col2: Any, block: () -> Unit) {
+        _push(idx0, col0)
+        _push(idx1, col1)
+        _push(idx2, col2)
+        block()
+        popStyleColor(3)
+    }
+
+    inline fun withStyleColor(idx0: Col, col0: Any,
+                              idx1: Col, col1: Any,
+                              idx2: Col, col2: Any,
+                              idx3: Col, col3: Any,
+                              block: () -> Unit) {
+        _push(idx0, col0)
+        _push(idx1, col1)
+        _push(idx2, col2)
+        _push(idx3, col3)
+        block()
+        popStyleColor(4)
+    }
+
+    inline fun withStyleColor(idx0: Col, col0: Any,
+                              idx1: Col, col1: Any,
+                              idx2: Col, col2: Any,
+                              idx3: Col, col3: Any,
+                              idx4: Col, col4: Any, block: () -> Unit) {
+        _push(idx0, col0)
+        _push(idx1, col1)
+        _push(idx2, col2)
+        _push(idx3, col3)
+        _push(idx4, col4)
+        block()
+        popStyleColor(5)
+    }
+
+    inline fun withStyleVar(idx: StyleVar, value: Any, block: () -> Unit) {
+        pushStyleVar(idx, value)
+        block()
+        popStyleVar()
+    }
+
+    // Parameters stacks (current window)
+
+    inline fun withItemWidth(itemWidth: Int, block: () -> Unit) = withItemWidth(itemWidth.f, block)
+    inline fun withItemWidth(itemWidth: Float, block: () -> Unit) {
+        pushItemWidth(itemWidth)
+        block()
+        popItemWidth()
+    }
+
+    inline fun withTextWrapPos(wrapPosX: Float = 0f, block: () -> Unit) {
+        pushTextWrapPos(wrapPosX)
+        block()
+        popTextWrapPos()
+    }
+
+    inline fun withPushAllowKeyboardFocus(allowKeyboardFocus: Boolean, block: () -> Unit) {
+        pushAllowKeyboardFocus(allowKeyboardFocus)
+        block()
+        popAllowKeyboardFocus()
+    }
+
+    inline fun withPushButtonRepeat(repeat: Boolean, block: () -> Unit) {
+        pushButtonRepeat(repeat)
+        block()
+        popButtonRepeat()
+    }
+
+
+    // Cursor / Layout
+
+    inline fun withIndent(indentW: Float = 0f, block: () -> Unit) {
+        indent(indentW)
+        block()
+        unindent(indentW)
+    }
+
+    inline fun withGroup(block: () -> Unit) {
+        beginGroup()
+        block()
+        endGroup()
+    }
+
+
+    // ID stack/scopes
+
+    inline fun withId(id: Int, block: () -> Unit) {
+        pushId(id)
+        block()
+        popId()
+    }
+
+    inline fun withId(id: String, block: () -> Unit) {
+        pushId(id)
+        block()
+        popId()
+    }
+
+
+    // Widgets: Main TODO finish to complete this file downward
+
     inline fun button(label: String, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
         if (ImGui.buttonEx(label, sizeArg, 0)) block()
     }
 
     inline fun smallButton(label: String, block: () -> Unit) {
         if (ImGui.smallButton(label)) block()
-    }
-
-    inline fun withWindow(name: String, open: KMutableProperty0<Boolean>? = null, flags: Int = 0, block: () -> Unit) {
-        begin(name, open, flags)
-        block()
-        end()
-    }
-
-    inline fun window(name: String, open: KMutableProperty0<Boolean>?, flags: Int = 0, block: () -> Unit) {
-        if (!begin(name, open, flags)) {
-            block()
-            end()
-        }
     }
 
     inline fun menuBar(block: () -> Unit) {
@@ -107,12 +248,6 @@ object functionalProgramming {
         }
     }
 
-    inline fun withChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, extraFlags: Int = 0, block: () -> Unit) {
-        beginChild(strId, size, border, extraFlags)
-        block()
-        endChild()
-    }
-
     inline fun treeNode(strId: String, fmt: String, block: () -> Unit) {
         if (treeNode(strId, fmt)) {
             block()
@@ -134,30 +269,7 @@ object functionalProgramming {
         }
     }
 
-    inline fun withStyleVar(idx: StyleVar, value: Any, block: () -> Unit) {
-        pushStyleVar(idx, value)
-        block()
-        popStyleVar()
-    }
 
-    inline fun withItemWidth(itemWidth: Int, block: () -> Unit) = withItemWidth(itemWidth.f, block)
-    inline fun withItemWidth(itemWidth: Float, block: () -> Unit) {
-        pushItemWidth(itemWidth)
-        block()
-        popItemWidth()
-    }
-
-    inline fun withId(id: Int, block: () -> Unit) {
-        pushId(id)
-        block()
-        popId()
-    }
-
-    inline fun withId(id: String, block: () -> Unit) {
-        pushId(id)
-        block()
-        popId()
-    }
 
     inline fun withTooltip(block: () -> Unit) {
         beginTooltip()
@@ -165,11 +277,7 @@ object functionalProgramming {
         endTooltip()
     }
 
-    inline fun withTextWrapPos(wrapPosX: Float = 0f, block: () -> Unit) {
-        pushTextWrapPos(wrapPosX)
-        block()
-        popTextWrapPos()
-    }
+
 
     inline fun popupContextWindow(block: () -> Unit) {
         if (beginPopupContextWindow()) {
@@ -178,59 +286,7 @@ object functionalProgramming {
         }
     }
 
-    inline fun withGroup(block: () -> Unit) {
-        beginGroup()
-        block()
-        endGroup()
-    }
 
-    inline fun withStyleColor(idx: Col, col: Int, block: () -> Unit) {
-        pushStyleColor(idx, col)
-        block()
-        popStyleColor()
-    }
-
-    inline fun withStyleColor(idx: Col, col: Vec4, block: () -> Unit) {
-        pushStyleColor(idx, col)
-        block()
-        popStyleColor()
-    }
-
-    inline fun withStyleColor(idx0: Col, col0: Vec4, idx1: Col, col1: Vec4, block: () -> Unit) {
-        pushStyleColor(idx0, col0)
-        pushStyleColor(idx1, col1)
-        block()
-        popStyleColor(2)
-    }
-
-    inline fun withStyleColor(idx0: Col, col0: Vec4, idx1: Col, col1: Vec4, idx2: Col, col2: Vec4, block: () -> Unit) {
-        pushStyleColor(idx0, col0)
-        pushStyleColor(idx1, col1)
-        pushStyleColor(idx2, col2)
-        block()
-        popStyleColor(3)
-    }
-
-    inline fun withStyleColor(idx0: Col, col0: Vec4, idx1: Col, col1: Vec4, idx2: Col, col2: Vec4, idx3: Col, col3: Vec4,
-                              block: () -> Unit) {
-        pushStyleColor(idx0, col0)
-        pushStyleColor(idx1, col1)
-        pushStyleColor(idx2, col2)
-        pushStyleColor(idx3, col3)
-        block()
-        popStyleColor(4)
-    }
-
-    inline fun withStyleColor(idx0: Col, col0: Vec4, idx1: Col, col1: Vec4, idx2: Col, col2: Vec4, idx3: Col, col3: Vec4,
-                              idx4: Col, col4: Vec4, block: () -> Unit) {
-        pushStyleColor(idx0, col0)
-        pushStyleColor(idx1, col1)
-        pushStyleColor(idx2, col2)
-        pushStyleColor(idx3, col3)
-        pushStyleColor(idx4, col4)
-        block()
-        popStyleColor(5)
-    }
 
     inline fun popup(strId: String, block: () -> Unit) {
         if (beginPopup(strId)) {
@@ -248,12 +304,6 @@ object functionalProgramming {
 
     inline fun selectable(label: String, selected: Boolean = false, flags: Int = 0, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
         if (selectable(label, selected, flags, sizeArg)) block()
-    }
-
-    inline fun withIndent(indentW: Float = 0f, block: () -> Unit) {
-        indent(indentW)
-        block()
-        unindent(indentW)
     }
 
     inline fun combo(label: String, currentItem: KMutableProperty0<Int>, itemsSeparatedByZeros: String, heightInItems: Int = -1,

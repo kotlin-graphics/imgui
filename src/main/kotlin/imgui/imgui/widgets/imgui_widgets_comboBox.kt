@@ -42,7 +42,7 @@ import imgui.internal.ButtonFlag as Bf
 /** Widgets: Combo Box
  *  - The new BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it, by creating e.g. Selectable() items.
  *  - The old Combo() api are helpers over BeginCombo()/EndCombo() which are kept available for convenience purpose.    */
-interface comboBox {
+interface imgui_widgets_comboBox {
 
     fun beginCombo(label: String, previewValue: String?, flags_: ComboFlags = 0): Boolean {
 
