@@ -417,13 +417,14 @@ enum class DataType {
 
 /** A cardinal direction */
 enum class Dir {
-    None, Left, Right, Up, Down, Count;
+    None, Left, Right, Up, Down;
 
     @JvmField
     val i = ordinal - 1
 
     companion object {
-        fun of(i: Int) = values()[i]
+        infix fun of(i: Int) = values().first { it.i == i }
+        val COUNT = Down.i + 1
     }
 }
 

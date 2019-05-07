@@ -676,7 +676,7 @@ interface imgui_internal {
         // Combo Box policy (we want a connecting edge)
         if (policy == PopupPositionPolicy.ComboBox) {
             val dirPreferedOrder = arrayOf(Dir.Down, Dir.Right, Dir.Left, Dir.Up)
-            for (n in (if (lastDir != Dir.None) -1 else 0) until Dir.Count.i) {
+            for (n in (if (lastDir != Dir.None) -1 else 0) until Dir.COUNT) {
                 val dir = if (n == -1) lastDir else dirPreferedOrder[n]
                 if (n != -1 && dir == lastDir) continue // Already tried this direction?
                 val pos = Vec2()
@@ -692,7 +692,7 @@ interface imgui_internal {
 
         // Default popup policy
         val dirPreferedOrder = arrayOf(Dir.Right, Dir.Down, Dir.Up, Dir.Left)
-        for (n in (if (lastDir != Dir.None) -1 else 0) until Dir.values().size) {
+        for (n in (if (lastDir != Dir.None) -1 else 0) until Dir.COUNT) {
             val dir = if (n == -1) lastDir else dirPreferedOrder[n]
             if (n != -1 && dir == lastDir) continue  // Already tried this direction?
             val availW = (if (dir == Dir.Left) rAvoid.min.x else rOuter.max.x) - if (dir == Dir.Right) rAvoid.max.x else rOuter.min.x
