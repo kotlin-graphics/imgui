@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class MutableProperty0<T> implements KMutableProperty0<T> {
 
-    T t = null;
+    private T t = null;
 
     public MutableProperty0() {
     }
