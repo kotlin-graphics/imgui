@@ -59,7 +59,7 @@ import kotlin.reflect.KMutableProperty0
  *      e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
  *  - Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by 1).
  *      For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision). */
-interface drags {
+interface imgui_widgets_drags {
 
     /** If v_min >= v_max we have no bound */
     fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,

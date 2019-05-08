@@ -10,9 +10,9 @@ import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.text
-import imgui.functionalProgramming.menuItem
-import imgui.functionalProgramming.popupContextWindow
-import imgui.functionalProgramming.window
+import imgui.dsl.menuItem
+import imgui.dsl.popupContextWindow
+import imgui.dsl.window
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf

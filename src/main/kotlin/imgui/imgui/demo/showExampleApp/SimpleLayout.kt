@@ -7,7 +7,6 @@ import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginTabBar
 import imgui.ImGui.beginTabItem
-import imgui.ImGui.begin_
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
@@ -21,9 +20,9 @@ import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
-import imgui.functionalProgramming.button
-import imgui.functionalProgramming.menu
-import imgui.functionalProgramming.menuBar
+import imgui.dsl.button
+import imgui.dsl.menu
+import imgui.dsl.menuBar
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf

@@ -2,8 +2,8 @@ package imgui.imgui.demo.showExampleApp
 
 import imgui.ImGui.menuItem
 import imgui.ImGui.separator
-import imgui.functionalProgramming.mainMenuBar
-import imgui.functionalProgramming.menu
+import imgui.dsl.mainMenuBar
+import imgui.dsl.menu
 import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf

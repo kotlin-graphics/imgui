@@ -6,7 +6,6 @@ import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.beginTabBar
 import imgui.ImGui.beginTabItem
-import imgui.ImGui.begin_
 import imgui.ImGui.checkbox
 import imgui.ImGui.colorEdit4
 import imgui.ImGui.dragFloat
@@ -19,7 +18,7 @@ import imgui.ImGui.invisibleButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.text
-import imgui.functionalProgramming.button
+import imgui.dsl.button
 import imgui.internal.DrawCornerFlag
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef

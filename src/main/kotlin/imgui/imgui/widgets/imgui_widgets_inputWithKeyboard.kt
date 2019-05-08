@@ -36,7 +36,7 @@ import imgui.internal.ButtonFlag as Bf
 /** Widgets: Input with Keyboard
  *  - If you want to use InputText() with a dynamic string type such as std::string or your own, see cpp/imgui_stdlib.h
  *  - Most of the ImGuiInputTextFlags flags are only useful for InputText() and not for InputFloatX, InputIntX, InputDouble etc. */
-interface inputKeyboard {
+interface imgui_widgets_inputWithKeyboard {
 
 
     fun inputText(label: String, buf: CharArray, flags: InputTextFlags = 0

@@ -7,7 +7,6 @@ import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginPopup
 import imgui.ImGui.beginPopupContextWindow
-import imgui.ImGui.begin_
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.end
@@ -32,7 +31,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.textEx
 import imgui.ImGui.textWrapped
-import imgui.functionalProgramming.popupContextItem
+import imgui.dsl.popupContextItem
 import imgui.internal.textStr
 import uno.kotlin.getValue
 import uno.kotlin.setValue
