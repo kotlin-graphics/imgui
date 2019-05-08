@@ -49,7 +49,7 @@ import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import kotlin.reflect.KMutableProperty0
 
-object functionalProgramming {
+object dsl {
 
     // Windows
 
@@ -197,15 +197,65 @@ object functionalProgramming {
     }
 
 
-    // Widgets: Main TODO finish to complete this file downward
+    // Widgets: Main
 
     inline fun button(label: String, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
-        if (ImGui.buttonEx(label, sizeArg, 0)) block()
+        if (ImGui.button(label, sizeArg))
+            block()
     }
 
     inline fun smallButton(label: String, block: () -> Unit) {
-        if (ImGui.smallButton(label)) block()
+        if (ImGui.smallButton(label))
+            block()
     }
+
+    inline fun invisibleButton(strId: String, sizeArg: Vec2, block: () -> Unit) {
+        if (ImGui.invisibleButton(strId, sizeArg))
+            block()
+    }
+
+    inline fun arrowButton(id: String, dir: Dir, block: () -> Unit) {
+        if (ImGui.arrowButton(id, dir))
+            block()
+    }
+
+    inline fun imageButton(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(),
+                           framePadding: Int = -1, bgCol: Vec4 = Vec4(), tintCol: Vec4 = Vec4(1), block: () -> Unit) {
+        if (ImGui.imageButton(userTextureId, size, uv0, uv1, framePadding, bgCol, tintCol))
+            block()
+    }
+
+    inline fun checkbox(label: String, vPtr: KMutableProperty0<Boolean>, block: () -> Unit) {
+        if (ImGui.checkbox(label, vPtr))
+            block()
+    }
+
+    inline fun checkboxFlags(label: String, vPtr: KMutableProperty0<Int>, flagsValue: Int, block: () -> Unit) {
+        if (ImGui.checkboxFlags(label, vPtr, flagsValue))
+            block()
+    }
+
+    inline fun radioButton(label: String, active: Boolean, block: () -> Unit) {
+        if (ImGui.radioButton(label, active))
+            block()
+    }
+
+    inline fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int, block: () -> Unit) {
+        if (ImGui.radioButton(label, v, vButton))
+            block()
+    }
+
+
+    // Widgets: Combo Box
+
+
+    inline fun combo(label: String, previewValue: String?, flags: ComboFlags = 0, block: () -> Unit) {
+        if (ImGui.beginCombo(label, previewValue, flags))
+            block()
+        ImGui.endCombo()
+    }
+
+
 
     inline fun menuBar(block: () -> Unit) {
         if (beginMenuBar()) {
