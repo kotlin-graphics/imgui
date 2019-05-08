@@ -11,9 +11,9 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.setWindowSize
 import imgui.ImGui.text
-import imgui.functionalProgramming.button
-import imgui.functionalProgramming.withItemWidth
-import imgui.functionalProgramming.window
+import imgui.dsl.button
+import imgui.dsl.withItemWidth
+import imgui.dsl.window
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef

@@ -28,11 +28,11 @@ import imgui.ListClipper
 import imgui.SelectableFlag
 import imgui.StyleVar
 import imgui.WindowFlag
-import imgui.functionalProgramming.collapsingHeader
-import imgui.functionalProgramming.selectable
-import imgui.functionalProgramming.treeNode
-import imgui.functionalProgramming.child
-import imgui.functionalProgramming.withId
+import imgui.dsl.collapsingHeader
+import imgui.dsl.selectable
+import imgui.dsl.treeNode
+import imgui.dsl.child
+import imgui.dsl.withId
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 
 object showDemoWindowColumns {

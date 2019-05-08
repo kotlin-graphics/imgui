@@ -58,7 +58,7 @@ val S32_MAX: Int = Integer.MAX_VALUE
 interface imgui_widgets_main {
 
     /** button  */
-    fun button(label: String, sizeArg: Vec2 = Vec2()) = buttonEx(label, sizeArg, 0)
+    fun button(label: String, sizeArg: Vec2 = Vec2()): Boolean = buttonEx(label, sizeArg, 0)
 
     /** button with FramePadding = (0,0) to easily embed within text
      *  Small buttons fits within text without additional vertical spacing.     */
@@ -268,10 +268,12 @@ interface imgui_widgets_main {
     }
 
     /** shortcut to handle the above pattern when value is an integer */
-    fun radioButton(label: String, v: IntArray, vButton: Int) = radioButton(label, v[0] == vButton).also { if (it) v[0] = vButton }
+    fun radioButton(label: String, v: IntArray, vButton: Int): Boolean =
+            radioButton(label, v[0] == vButton).also { if (it) v[0] = vButton }
 
     /** shortcut to handle the above pattern when value is an integer */
-    fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int) = radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
+    fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int): Boolean =
+            radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
 
     interface PlotArray {
         operator fun get(idx: Int): Float

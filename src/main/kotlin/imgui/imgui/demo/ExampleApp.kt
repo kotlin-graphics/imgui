@@ -4,7 +4,6 @@ import glm_.f
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
-import imgui.ImGui.begin_
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
@@ -28,11 +27,11 @@ import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
-import imgui.functionalProgramming.collapsingHeader
-import imgui.functionalProgramming.menu
-import imgui.functionalProgramming.menuBar
-import imgui.functionalProgramming.treeNode
-import imgui.functionalProgramming.window
+import imgui.dsl.collapsingHeader
+import imgui.dsl.menu
+import imgui.dsl.menuBar
+import imgui.dsl.treeNode
+import imgui.dsl.window
 import imgui.imgui.demo.showExampleApp.*
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile

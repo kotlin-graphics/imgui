@@ -7,7 +7,7 @@ import imgui.ImGui.frameCount
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.text
 import imgui.ImGui.time
-import imgui.functionalProgramming.window
+import imgui.dsl.window
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf

@@ -40,7 +40,7 @@ import imgui.ImGui.tempInputTextIsActive
 import imgui.ImGui.tempInputTextScalar
 import imgui.ImGui.textEx
 import imgui.imgui.g
-import imgui.imgui.widgets.drags.Companion.patchFormatStringFloatToInt
+import imgui.imgui.widgets.imgui_widgets_drags.Companion.patchFormatStringFloatToInt
 import imgui.imgui.withFloat
 import imgui.imgui.withInt
 import imgui.internal.Rect

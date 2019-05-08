@@ -29,11 +29,10 @@ import imgui.ImGui.setKeyboardFocusHere
 import imgui.ImGui.sliderFloat3
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
-import imgui.ImGui.windowDrawList
 import imgui.MouseCursor
 import imgui.TextFilter
-import imgui.functionalProgramming.collapsingHeader
-import imgui.functionalProgramming.treeNode
+import imgui.dsl.collapsingHeader
+import imgui.dsl.treeNode
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf

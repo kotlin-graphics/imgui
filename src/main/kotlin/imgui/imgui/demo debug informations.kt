@@ -10,7 +10,6 @@ import imgui.ImGui.begin
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginTooltip
-import imgui.ImGui.begin_
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
@@ -55,9 +54,9 @@ import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
-import imgui.functionalProgramming.menu
-import imgui.functionalProgramming.child
-import imgui.functionalProgramming.withIndent
+import imgui.dsl.menu
+import imgui.dsl.child
+import imgui.dsl.withIndent
 import imgui.imgui.demo.ExampleApp
 import imgui.imgui.demo.showExampleApp.StyleEditor
 import imgui.imgui.imgui_colums.Companion.offsetNormToPixels
