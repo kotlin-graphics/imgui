@@ -501,4 +501,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
         g.initialized = false
     }
+
+    companion object {
+        // static arrays to avoid GC pressure
+        val _fa = FloatArray(4)
+        val _ia = IntArray(4)
+    }
 }
