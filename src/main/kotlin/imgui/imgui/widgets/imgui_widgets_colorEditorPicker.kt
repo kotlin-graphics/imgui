@@ -65,6 +65,8 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.ImGui.u32
+import imgui.imgui.Context.Companion._fa
+import imgui.imgui.Context.Companion._fa2
 import imgui.imgui.g
 import imgui.imgui.widgets.imgui_widgets_text.Companion.renderArrowsForVerticalBar
 import imgui.internal.*
@@ -79,30 +81,25 @@ import imgui.internal.DrawCornerFlag as Dcf
  *  - Note that in C++ a 'float v[X]' function argument is the _same_ as 'float* v', the array syntax is just a way to
  *      document the number of elements that are expected to be accessible.
  *  - You can pass the address of a first float element out of a contiguous structure, e.g. &myvector.x  */
-interface colorEditorPicker {
+interface imgui_widgets_colorEditorPicker {
 
     /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
      *  Hint: 'float col[3]' function argument is same as 'float* col'.
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
-    fun colorEdit3(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean {
-        val floats = col to FloatArray(4)
-        return colorEdit4(label, floats, flags or Cef.NoAlpha).also {
-            col put floats
-        }
-    }
+    fun colorEdit3(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
+            colorEdit4(label, col to _fa, flags or Cef.NoAlpha)
+                    .also { col put _fa }
 
-    fun colorEdit3(label: String, col: FloatArray, flags: ColorEditFlags = 0) = colorEdit4(label, col, flags or Cef.NoAlpha)
+    fun colorEdit3(label: String, col: FloatArray, flags: ColorEditFlags = 0): Boolean =
+            colorEdit4(label, col, flags or Cef.NoAlpha)
 
     /** Edit colors components (each component in 0.0f..1.0f range).
      *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ColorEditFlags.NoAlpha flag is set.
      *  With typical options: Left-click on colored square to open color picker. Right-click to open option menu.
      *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
-    fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean {
-        val floats = col to FloatArray(4)
-        return colorEdit4(label, floats, flags).also {
-            col put floats
-        }
-    }
+    fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
+            colorEdit4(label, col to _fa, flags)
+                    .also { col put _fa }
 
     fun colorEdit4(label: String, col: FloatArray, flags_: ColorEditFlags = 0): Boolean {
 
@@ -211,7 +208,7 @@ interface colorEditorPicker {
                 }
                 val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef._InputMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
                 val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef.DisplayHSV or Cef._DisplayMask or Cef.NoLabel or Cef.AlphaPreviewHalf
-                nextItemWidth =squareSz * 12f   // Use 256 + bar sizes?
+                nextItemWidth = squareSz * 12f   // Use 256 + bar sizes?
                 val p = g.colorPickerRef to FloatArray(4)
                 valueChanged = colorPicker4("##picker", col, pickerFlags, p) or valueChanged
                 g.colorPickerRef put p
@@ -296,31 +293,9 @@ interface colorEditorPicker {
      *  (In C++ the 'float col[4]' notation for a function argument is equivalent to 'float* col', we only specify a size to facilitate understanding of the code.)
      *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)   */
-    fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = 0, refCol: Vec4? = null): Boolean {
-        val floats = col to FloatArray(4)
-        val res = when (refCol) {
-            null -> colorPicker4(label, floats, flags, null)
-            else -> {
-                val floats2 = refCol to FloatArray(4)
-                val res = colorPicker4(label, floats, flags, floats2)
-                refCol put floats2
-                res
-            }
-        }
-        col put floats
-        return res
-    }
-
-    fun colorPicker4debug(): Boolean {
-        val window = currentWindow
-        val drawList = window.drawList
-        val pickerPos = Vec2(window.dc.cursorPos)
-        val svPickerSize = 237f
-        val hueColor32 = -22016
-        //drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_WHITE, hueColor32, hueColor32, COL32_WHITE)
-        drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_BLACK_TRANS, COL32_BLACK_TRANS, COL32_BLACK, COL32_BLACK)
-        return false
-    }
+    fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = 0, refCol: Vec4? = null): Boolean =
+            colorPicker4(label, col to _fa, flags, refCol?.to(_fa2))
+                    .also { col put _fa; refCol?.put(_fa2) }
 
     fun colorPicker4(label: String, col: FloatArray, flags_: ColorEditFlags = 0, refCol: FloatArray? = null): Boolean {
 

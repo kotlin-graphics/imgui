@@ -93,12 +93,12 @@ object ImGui :
         imgui_widgets_drags,
         imgui_widgets_sliders,
         imgui_widgets_inputWithKeyboard,
+        imgui_widgets_colorEditorPicker,
 
         imgui_colums,
         listBoxes,
         dataPlotting,
         lowLevelLayoutHelpers,
-        colorEditorPicker,
         trees,
         selectableLists,
         imgui_tooltips,
