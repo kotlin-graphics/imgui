@@ -12,7 +12,7 @@
 //import imgui.ImGui.showDemoWindow
 //import imgui.ImGui.text
 //import imgui.destroy
-//import imgui.functionalProgramming.withWindow
+//import imgui.dsl.withWindow
 //import imgui.impl.ImplVk
 //import imgui.impl.LwjglGlfw
 //import imgui.impl.LwjglGlfw.GlfwClientApi
