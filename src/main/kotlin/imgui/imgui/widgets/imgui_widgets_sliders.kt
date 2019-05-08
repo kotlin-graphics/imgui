@@ -39,6 +39,8 @@ import imgui.ImGui.style
 import imgui.ImGui.tempInputTextIsActive
 import imgui.ImGui.tempInputTextScalar
 import imgui.ImGui.textEx
+import imgui.imgui.Context.Companion._fa
+import imgui.imgui.Context.Companion._ia
 import imgui.imgui.g
 import imgui.imgui.widgets.imgui_widgets_drags.Companion.patchFormatStringFloatToInt
 import imgui.imgui.withFloat
@@ -52,7 +54,7 @@ import kotlin.reflect.KMutableProperty0
  *  - CTRL+Click on any slider to turn them into an input box. Manually input values aren't clamped and can go off-bounds.
  *  - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
  *      e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.   */
-interface sliders {
+interface imgui_widgets_sliders {
 
 
     /** Adjust format to decorate the value with a prefix or a suffix.
@@ -61,16 +63,7 @@ interface sliders {
      *  "Gold: %.0f"   Gold: 1
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
-    fun sliderFloat(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f)
-            : Boolean = sliderFloat(label, v, 0, vMin, vMax, format, power)
-
-    /** Adjust format to decorate the value with a prefix or a suffix.
-     *  "%.3f"         1.234
-     *  "%5.2f secs"   01.23 secs
-     *  "Gold: %.0f"   Gold: 1
-     *  Use power != 1.0f for non-linear sliders.
-     *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
-    fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f): Boolean =
+    fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean =
             withFloat(v, ptr) { sliderFloat(label, it, vMin, vMax, format, power) }
 
     /** Adjust format to decorate the value with a prefix or a suffix.
@@ -79,8 +72,65 @@ interface sliders {
      *  "Gold: %.0f"   Gold: 1
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
-    fun sliderFloat(label: String, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String? = "%.3f",
-                    power: Float = 1f): Boolean = sliderScalar(label, DataType.Float, v, vMin, vMax, format, power)
+    fun sliderFloat(label: String, v: KMutableProperty0<Float>, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean =
+            sliderScalar(label, DataType.Float, v, vMin, vMax, format, power)
+
+    fun sliderFloat2(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean =
+            sliderScalarN(label, DataType.Float, v, 2, vMin, vMax, format, power)
+
+    fun sliderVec2(label: String, v: Vec2, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean =
+            sliderScalarN(label, DataType.Float, v to _fa, 2, vMin, vMax, format, power)
+                    .also { v put _fa }
+
+    fun sliderFloat3(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f) =
+            sliderScalarN(label, DataType.Float, v, 3, vMin, vMax, format, power)
+
+    fun sliderVec3(label: String, v: Vec3, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean =
+            sliderScalarN(label, DataType.Float, v to _fa, 3, vMin, vMax, format, power)
+                    .also { v put _fa }
+
+    fun sliderFloat4(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f) =
+            sliderScalarN(label, DataType.Float, v, 4, vMin, vMax, format, power)
+
+    fun sliderVec4(label: String, v: Vec4, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean =
+            sliderScalarN(label, DataType.Float, v to _fa, 4, vMin, vMax, format, power)
+                    .also { v put _fa }
+
+    fun sliderAngle(label: String, vRadPtr: KMutableProperty0<Float>, vDegreesMin: Float = -360f,
+                    vDegreesMax: Float = 360f, format_: String = "%.0f deg"): Boolean {
+        val format = if (format_.isEmpty()) "%.0f deg" else format_
+        var vRad by vRadPtr
+        vRad = vRad.deg
+        return sliderFloat(label, vRadPtr, vDegreesMin, vDegreesMax, format, 1f)
+                .also { vRad = vRad.rad }
+    }
+
+    fun sliderInt(label: String, v: IntArray, ptr: Int, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
+            withInt(v, ptr) { sliderInt(label, it, vMin, vMax, format) }
+
+    fun sliderInt(label: String, v: KMutableProperty0<Int>, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
+            sliderScalar(label, DataType.Int, v, vMin, vMax, format)
+
+    fun sliderInt2(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
+            sliderScalarN(label, DataType.Int, v, 2, vMin, vMax, format)
+
+    fun sliderVec2i(label: String, v: Vec2i, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
+            sliderScalarN(label, DataType.Int, v to _ia, 2, vMin, vMax, format)
+                    .also { v put _ia }
+
+    fun sliderInt3(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
+            sliderScalarN(label, DataType.Int, v, 3, vMin, vMax, format)
+
+    fun sliderVec3i(label: String, v: Vec3i, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
+            sliderScalarN(label, DataType.Int, v to _ia, 3, vMin, vMax, format)
+                    .also { v put _ia }
+
+    fun sliderInt4(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
+            sliderScalarN(label, DataType.Int, v, 4, vMin, vMax, format)
+
+    fun sliderVec4i(label: String, v: Vec4i, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
+            sliderScalarN(label, DataType.Int, v to _ia, 4, vMin, vMax, format)
+                    .also { v put _ia }
 
     /** Adjust format to decorate the value with a prefix or a suffix.
      *  "%.3f"         1.234
@@ -163,92 +213,44 @@ interface sliders {
         return valueChanged
     }
 
-    fun sliderFloat2(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f) =
-            sliderFloatN(label, v, 2, vMin, vMax, format, power)
+    /** Add multiple sliders on 1 line for compact edition of multiple components */
+    fun <N> sliderScalarN(label: String, dataType: DataType, v: Any, components: Int, vMin: N, vMax: N,
+                          format: String? = null, power: Float = 1f): Boolean where N : Number, N : Comparable<N> {
 
-    fun sliderVec2(label: String, v: Vec2, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f): Boolean {
-        val floats = v to FloatArray(2)
-        val res = sliderFloatN(label, floats, 2, vMin, vMax, format, power)
-        v put floats
-        return res
-    }
+        val window = currentWindow
+        if (window.skipItems) return false
 
-    fun sliderFloat3(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f) =
-            sliderFloatN(label, v, 3, vMin, vMax, format, power)
+        var valueChanged = false
+        beginGroup()
+        pushId(label)
+        pushMultiItemsWidths(components, nextItemWidth)
+        for (i in 0 until components) {
+            pushId(i)
+            valueChanged = when (dataType) {
+                DataType.Int -> withInt(v as IntArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, vMin, vMax, format, power) }
+                DataType.Float -> withFloat(v as FloatArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, vMin, vMax, format, power) }
+                else -> error("invalid")
+            } || valueChanged
+            sameLine(0f, style.itemInnerSpacing.x)
+            popId()
+            popItemWidth()
+        }
+        popId()
 
-    fun sliderVec3(label: String, v: Vec3, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f): Boolean {
-        val floats = v to FloatArray(3)
-        val res = sliderFloatN(label, floats, 3, vMin, vMax, format, power)
-        v put floats
-        return res
-    }
-
-    fun sliderFloat4(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f) =
-            sliderFloatN(label, v, 4, vMin, vMax, format, power)
-
-    fun sliderVec4(label: String, v: Vec4, vMin: Float, vMax: Float, format: String? = "%.3f", power: Float = 1f): Boolean {
-        val floats = v to FloatArray(4)
-        val res = sliderFloatN(label, floats, 4, vMin, vMax, format, power)
-        v put floats
-        return res
-    }
-
-    fun sliderAngle(label: String, vRadPtr: KMutableProperty0<Float>, vDegreesMin: Float = -360f,
-                    vDegreesMax: Float = 360f, format_: String = "%.0f deg"): Boolean {
-        val format = if (format_.isEmpty()) "%.0f deg" else format_
-        var vRad by vRadPtr
-        vRad = vRad.deg
-        val valueChanged = sliderFloat(label, vRadPtr, vDegreesMin, vDegreesMax, format, 1f)
-        vRad = vRad.rad
+        textEx(label, findRenderedTextEnd(label))
+        endGroup()
         return valueChanged
     }
 
-    fun sliderInt(label: String, v: IntArray, ptr: Int, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
-            withInt(v, ptr) { sliderInt(label, it, vMin, vMax, format) }
-
-    fun sliderInt(label: String, v: KMutableProperty0<Int>, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
-            sliderScalar(label, DataType.Int, v, vMin, vMax, format)
-
-    fun sliderInt2(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
-            sliderIntN(label, v, 2, vMin, vMax, format)
-
-    fun sliderVec2i(label: String, v: Vec2i, vMin: Int, vMax: Int, format: String = "%d"): Boolean {
-        val ints = v to IntArray(2)
-        val res = sliderIntN(label, ints, 2, vMin, vMax, format)
-        v put ints
-        return res
-    }
-
-    fun sliderInt3(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
-            sliderIntN(label, v, 3, vMin, vMax, format)
-
-    fun sliderVec3i(label: String, v: Vec3i, vMin: Int, vMax: Int, format: String = "%d"): Boolean {
-        val ints = v to IntArray(3)
-        val res = sliderIntN(label, ints, 3, vMin, vMax, format)
-        v put ints
-        return res
-    }
-
-    fun sliderInt4(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
-            sliderIntN(label, v, 4, vMin, vMax, format)
-
-    fun sliderVec4i(label: String, v: Vec4i, vMin: Int, vMax: Int, format: String = "%d"): Boolean {
-        val ints = v to IntArray(4)
-        val res = sliderIntN(label, ints, 4, vMin, vMax, format)
-        v put ints
-        return res
-    }
-
-    // TODO this doesnt look right..
-    fun <N> vSliderFloat(label: String, size: Vec2,
-                         v: KMutableProperty0<N>,
-                         vMin: Float, vMax: Float,
-                         format: String? = "%.3f", power: Float = 1f): Boolean where N : Number, N : Comparable<N> =
+    fun <N> vSliderFloat(label: String, size: Vec2, v: KMutableProperty0<N>, vMin: Float, vMax: Float,
+                         format: String = "%.3f", power: Float = 1f): Boolean where N : Number, N : Comparable<N> =
             vSliderScalar(label, size, DataType.Float, v, vMin as N, vMax as N, format, power)
 
-    fun <N> vSliderScalar(label: String, size: Vec2,
-                          dataType: DataType, v: KMutableProperty0<N>,
-                          vMin: N, vMax: N,
+    fun <N> vSliderInt(label: String, size: Vec2, v: KMutableProperty0<N>, vMin: N, vMax: N,
+                       format: String = "%d"): Boolean where N : Number, N : Comparable<N> =
+            vSliderScalar(label, size, DataType.Int, v, vMin, vMax, format)
+
+    fun <N> vSliderScalar(label: String, size: Vec2, dataType: DataType, v: KMutableProperty0<N>, vMin: N, vMax: N,
                           format_: String? = null, power: Float = 1f): Boolean where N : Number, N : Comparable<N> {
 
         val window = currentWindow
@@ -304,55 +306,6 @@ interface sliders {
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
-        return valueChanged
-    }
-
-    fun vSliderInt(label: String, size: Vec2, v: KMutableProperty0<Int>, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
-            vSliderScalar(label, size, DataType.Int, v, vMin, vMax, format)
-
-    /** Add multiple sliders on 1 line for compact edition of multiple components   */
-    fun sliderFloatN(label: String, v: FloatArray, component: Int, vMin: Float, vMax: Float, format: String?, power: Float = 1f)
-            : Boolean {
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        var valueChanged = false
-        beginGroup()
-        pushId(label)
-        pushMultiItemsWidths(component, nextItemWidth)
-        for (i in 0 until component) {
-            pushId(i)
-            withFloat(v, i) { valueChanged = sliderFloat("", it, vMin, vMax, format, power) || valueChanged }
-            sameLine(0f, style.itemInnerSpacing.x)
-            popId()
-            popItemWidth()
-        }
-        popId()
-
-        textEx(label, findRenderedTextEnd(label))
-        endGroup()
-        return valueChanged
-    }
-
-    fun sliderIntN(label: String, v: IntArray, components: Int, vMin: Int, vMax: Int, format: String): Boolean {
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        var valueChanged = false
-        beginGroup()
-        pushId(label)
-        pushMultiItemsWidths(components, nextItemWidth)
-        for (i in 0 until components) {
-            pushId(i)
-            withInt(v, i) { valueChanged = sliderInt("", it, vMin, vMax, format) || valueChanged }
-            sameLine(0f, style.itemInnerSpacing.x)
-            popId()
-            popItemWidth()
-        }
-        popId()
-
-        textEx(label, findRenderedTextEnd(label))
-        endGroup()
         return valueChanged
     }
 }
