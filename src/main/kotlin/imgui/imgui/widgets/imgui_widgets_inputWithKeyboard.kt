@@ -12,6 +12,8 @@ import imgui.*
 import imgui.ImGui.beginGroup
 import imgui.ImGui.buttonEx
 import imgui.ImGui.currentWindow
+import imgui.ImGui.dataTypeApplyOp
+import imgui.ImGui.dataTypeApplyOpFromText
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.format
