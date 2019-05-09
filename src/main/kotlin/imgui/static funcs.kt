@@ -1389,6 +1389,17 @@ fun navSaveLastChildNavWindowIntoParent(childWindow: Window?) {
  *  Call when we are expected to land on the Main Layer (0) after FocusWindow()    */
 fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow ?: window
 
+// FIXME-OPT O(N)
+fun findWindowFocusIndex(window: Window): Int {
+    var i = g.windowsFocusOrder.lastIndex
+    while (i >= 0) {
+        if (g.windowsFocusOrder[i] == window)
+            return i
+        i--
+    }
+    return -1
+}
+
 //-----------------------------------------------------------------------------
 // Platform dependent default implementations
 //-----------------------------------------------------------------------------
@@ -1453,15 +1464,4 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
         g.navWindowingTargetAnim = it
     }
     g.navWindowingToggleLayer = false
-}
-
-// FIXME-OPT O(N)
-fun findWindowFocusIndex(window: Window): Int {
-    var i = g.windowsFocusOrder.lastIndex
-    while (i >= 0) {
-        if (g.windowsFocusOrder[i] == window)
-            return i
-        i--
-    }
-    return -1
 }

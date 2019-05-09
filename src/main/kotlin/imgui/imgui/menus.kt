@@ -81,7 +81,7 @@ interface imgui_widgets_menus {
 
         // When the user has left the menu layer (typically: closed menus through activation of an item), we restore focus to the previous window
         if (g.currentWindow == g.navWindow && g.navLayer == NavLayer.Main)
-            focusPreviousWindowIgnoringOne(g.navWindow)
+            focusTopMostWindowIgnoringOne(g.navWindow)
 
         end()
     }

@@ -151,9 +151,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Stack for PushFont()/PopFont()  */
     val fontStack = Stack<Font>()
     /** Which popups are open (persistent)  */
-    val openPopupStack = Stack<PopupRef>()
+    val openPopupStack = Stack<PopupData>()
     /** Which level of BeginPopup() we are in (reset every frame)   */
-    val beginPopupStack = Stack<PopupRef>()
+    val beginPopupStack = Stack<PopupData>()
 
     /** Storage for SetNextWindow** functions   */
     val nextWindowData = NextWindowData()

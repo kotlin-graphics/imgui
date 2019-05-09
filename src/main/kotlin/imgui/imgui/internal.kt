@@ -69,8 +69,6 @@ import unsigned.Ubyte
 import unsigned.Uint
 import unsigned.Ulong
 import unsigned.Ushort
-import java.awt.Toolkit
-import java.awt.datatransfer.DataFlavor
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.regex.Pattern
@@ -486,7 +484,7 @@ interface imgui_internal {
         val currentStackSize = g.beginPopupStack.size
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
         val openPopupPos = navCalcPreferredRefPos()
-        val popupRef = PopupRef(popupId = id, window = null, parentWindow = parentWindow, openFrameCount = g.frameCount,
+        val popupRef = PopupData(popupId = id, window = null, parentWindow = parentWindow, openFrameCount = g.frameCount,
                 openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
                 openMousePos = if (isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
 //        println("" + g.openPopupStack.size +", "+currentStackSize)
@@ -517,8 +515,10 @@ interface imgui_internal {
 
     fun closePopupToLevel(remaining: Int, applyFocusToWindowUnder: Boolean) {
         assert(remaining >= 0)
-        var focusWindow = if (remaining > 0) g.openPopupStack[remaining - 1].window!!
-        else g.openPopupStack[0].parentWindow
+        var focusWindow = when {
+            remaining > 0 -> g.openPopupStack[remaining - 1].window
+            else -> g.openPopupStack[0].parentWindow
+        }!!
         for (i in remaining until g.openPopupStack.size) // resize(remaining)
             g.openPopupStack.pop()
 
