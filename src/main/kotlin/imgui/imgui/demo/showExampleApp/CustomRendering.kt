@@ -2,7 +2,9 @@ package imgui.imgui.demo.showExampleApp
 
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import imgui.*
+import imgui.COL32
+import imgui.Cond
+import imgui.ImGui
 import imgui.ImGui.begin
 import imgui.ImGui.beginTabBar
 import imgui.ImGui.beginTabItem
@@ -73,46 +75,30 @@ object CustomRendering {
                 for (n in 0 until 2) {
                     // First line uses a thickness of 1.0, second line uses the configurable thickness
                     val th = if (n == 0) 1.0f else thickness
-                    drawList.addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col32, 6, th) // Hexagon
-                    x += sz + spacing
-                    drawList.addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col32, 20, th)          // Circle
-                    x += sz + spacing
-                    drawList.addRect(Vec2(x, y), Vec2(x + sz, y + sz), col32, 0.0f, DrawCornerFlag.All.i, th)
-                    x += sz + spacing
-                    drawList.addRect(Vec2(x, y), Vec2(x + sz, y + sz), col32, 10.0f, DrawCornerFlag.All.i, th)
-                    x += sz + spacing
-                    drawList.addRect(Vec2(x, y), Vec2(x + sz, y + sz), col32, 10.0f, DrawCornerFlag.TopLeft.i or DrawCornerFlag.BotRight.i, th)
-                    x += sz + spacing
-                    drawList.addTriangle(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col32, th)
-                    x += sz + spacing
-                    drawList.addLine(Vec2(x, y), Vec2(x + sz, y), col32, th)  // Horizontal line (note: drawing a filled rectangle will be faster!)
-                    x += sz + spacing
-                    drawList.addLine(Vec2(x, y), Vec2(x, y + sz), col32, th) // Vertical line (note: drawing a filled rectangle will be faster!)
-                    x += spacing
-                    drawList.addLine(Vec2(x, y), Vec2(x + sz, y + sz), col32, th) // Diagonal line
-                    x += sz + spacing
+                    drawList.addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col32, 6, th); x += sz + spacing  // Hexagon
+                    drawList.addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col32, 20, th); x += sz + spacing // Circle
+                    drawList.addRect(Vec2(x, y), Vec2(x + sz, y + sz), col32, 0.0f, DrawCornerFlag.All.i, th); x += sz + spacing
+                    drawList.addRect(Vec2(x, y), Vec2(x + sz, y + sz), col32, 10.0f, DrawCornerFlag.All.i, th); x += sz + spacing
+                    drawList.addRect(Vec2(x, y), Vec2(x + sz, y + sz), col32, 10.0f, DrawCornerFlag.TopLeft.i or DrawCornerFlag.BotRight.i, th); x += sz + spacing
+                    drawList.addTriangle(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col32, th); x += sz + spacing
+                    drawList.addTriangle(Vec2(x + sz * 0.5f, y), Vec2(x + sz * 0.6f, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col32, th); x += sz + spacing
+                    drawList.addLine(Vec2(x, y), Vec2(x + sz, y), col32, th); x += sz + spacing  // Horizontal line (note: drawing a filled rectangle will be faster!)
+                    drawList.addLine(Vec2(x, y), Vec2(x, y + sz), col32, th); x += spacing // Vertical line (note: drawing a filled rectangle will be faster!)
+                    drawList.addLine(Vec2(x, y), Vec2(x + sz, y + sz), col32, th); x += sz + spacing // Diagonal line
                     drawList.addBezierCurve(Vec2(x, y), Vec2(x + sz * 1.3f, y + sz * 0.3f), Vec2(x + sz - sz * 1.3f, y + sz - sz * 0.3f), Vec2(x + sz, y + sz), col32, th)
                     x = p.x + 4
                     y += sz + spacing
                 }
-                drawList.addCircleFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col32, 6)
-                x += sz + spacing
-                drawList.addCircleFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col32, 32)
-                x += sz + spacing
-                drawList.addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col32)
-                x += sz + spacing
-                drawList.addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col32, 10.0f)
-                x += sz + spacing
-                drawList.addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col32, 10.0f, DrawCornerFlag.TopLeft.i or DrawCornerFlag.BotRight.i)
-                x += sz + spacing
-                drawList.addTriangleFilled(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col32)
-                x += sz + spacing
-                drawList.addRectFilled(Vec2(x, y), Vec2(x + sz, y + thickness), col32)
-                x += sz + spacing
-                drawList.addRectFilled(Vec2(x, y), Vec2(x + thickness, y + sz), col32)
-                x += spacing + spacing
-                drawList.addRectFilled(Vec2(x, y), Vec2(x + 1, y + 1), col32)
-                x += sz
+                drawList.addCircleFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col32, 6); x += sz + spacing  // Hexagon
+                drawList.addCircleFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col32, 32); x += sz + spacing // Circle
+                drawList.addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col32); x += sz + spacing
+                drawList.addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col32, 10.0f); x += sz + spacing
+                drawList.addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col32, 10.0f, DrawCornerFlag.TopLeft.i or DrawCornerFlag.BotRight.i); x += sz + spacing
+                drawList.addTriangleFilled(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col32); x += sz + spacing
+                drawList.addTriangleFilled(Vec2(x + sz * 0.5f, y), Vec2(x + sz * 0.6f, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col32); x += sz + spacing
+                drawList.addRectFilled(Vec2(x, y), Vec2(x + sz, y + thickness), col32); x += sz + spacing      // Horizontal line (faster than AddLine, but only handle integer thickness)
+                drawList.addRectFilled(Vec2(x, y), Vec2(x + thickness, y + sz), col32); x += spacing + spacing // Vertical line (faster than AddLine, but only handle integer thickness)
+                drawList.addRectFilled(Vec2(x, y), Vec2(x + 1, y + 1), col32); x += sz                         // Pixel (faster than AddLine)
                 drawList.addRectFilledMultiColor(Vec2(x, y), Vec2(x + sz, y + sz), getColorU32(0, 0, 0, 255), getColorU32(255, 0, 0, 255),
                         getColorU32(255, 255, 0, 255), getColorU32(0, 255, 0, 255))
                 dummy(Vec2((sz + spacing) * 9.5f, (sz + spacing) * 3))

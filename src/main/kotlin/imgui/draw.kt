@@ -448,13 +448,14 @@ class DrawList(sharedData: DrawListSharedData?) {
                     // Average normals
                     var dmX = (temp[i1].x + temp[i2].x) * 0.5f
                     var dmY = (temp[i1].y + temp[i2].y) * 0.5f
-//                    IM_NORMALIZE2F_OVER_EPSILON_CLAMP(dmX, dmY, 0.000001f, 100.0f)
-                    val d2 = dmX * dmX + dmY * dmY
-                    if (d2 > 0.000001f) {
-                        var invLen = 1f / sqrt(d2)
-                        if (invLen > 100f) invLen = 100f
-                        dmX *= invLen
-                        dmY *= invLen
+//                    IM_FIXNORMAL2F(dm_x, dm_y)
+                    run {
+                        var d2 = dmX * dmX + dmY * dmY
+                        if (d2 < 0.5f)
+                            d2 = 0.5f
+                        val invLensq = 1f / d2
+                        dmX *= invLensq
+                        dmY *= invLensq
                     }
                     dmX *= AA_SIZE
                     dmY *= AA_SIZE
@@ -519,13 +520,14 @@ class DrawList(sharedData: DrawListSharedData?) {
                     // Average normals
                     var dmX = (temp[i1].x + temp[i2].x) * 0.5f
                     var dmY = (temp[i1].y + temp[i2].y) * 0.5f
-//                    IM_NORMALIZE2F_OVER_EPSILON_CLAMP(dmX, dmY, 0.000001f, 100.0f)
-                    val d2 = dmX * dmX + dmY * dmY
-                    if (d2 > 0.000001f) {
-                        var invLen = 1f / sqrt(d2)
-                        if (invLen > 100f) invLen = 100f
-                        dmX *= invLen
-                        dmY *= invLen
+//                    IM_FIXNORMAL2F(dm_x, dm_y)
+                    run {
+                        var d2 = dmX * dmX + dmY * dmY
+                        if (d2 < 0.5f)
+                            d2 = 0.5f
+                        val invLensq = 1f / d2
+                        dmX *= invLensq
+                        dmY *= invLensq
                     }
                     val dmOutX = dmX * (halfInnerThickness + AA_SIZE)
                     val dmOutY = dmY * (halfInnerThickness + AA_SIZE)
@@ -695,14 +697,14 @@ class DrawList(sharedData: DrawListSharedData?) {
                 val n1 = tempNormals[i1]
                 var dmX = (n0.x + n1.x) * 0.5f
                 var dmY = (n0.y + n1.y) * 0.5f
-//                IM_NORMALIZE2F_OVER_EPSILON_CLAMP(dmX, dmY, 0.000001f, 100.0f)
-                val d2 = dmX * dmX + dmY * dmY
-                if (d2 > 0.000001f) {
-                    var invLen = 1f / sqrt(d2)
-                    if (invLen > 100f)
-                        invLen = 100f
-                    dmX *= invLen
-                    dmY *= invLen
+//                    IM_FIXNORMAL2F(dm_x, dm_y)
+                run {
+                    var d2 = dmX * dmX + dmY * dmY
+                    if (d2 < 0.5f)
+                        d2 = 0.5f
+                    val invLensq = 1f / d2
+                    dmX *= invLensq
+                    dmY *= invLensq
                 }
                 dmX *= AA_SIZE * 0.5f
                 dmY *= AA_SIZE * 0.5f
