@@ -201,7 +201,7 @@ class Rect {
 }
 
 /** Type information associated to one ImGuiDataType. Retrieve with DataTypeGetInfo(). */
-class DataTypeInfo{
+class DataTypeInfo {
     /** Size in byte */
     var size = 0
     /** Default printf format for the type */
@@ -284,22 +284,22 @@ class WindowSettings(val name: String = "") {
 }
 
 /* Storage for current popup stack  */
-class PopupRef(
+class PopupData(
         /** Set on OpenPopup()  */
-        var popupId: ID,
+        var popupId: ID = 0,
         /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
-        var window: Window?,
+        var window: Window? = null,
         /** Set on OpenPopup()  */
-        var parentWindow: Window,
+        var parentWindow: Window? = null,
         /** Set on OpenPopup()  */
-        var openFrameCount: Int,
+        var openFrameCount: Int = -1,
         /** Set on OpenPopup(), we need this to differentiate multiple menu sets from each others
          *  (e.g. inside menu bar vs loose menu items)    */
-        var openParentId: ID,
+        var openParentId: ID = 0,
         /** Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)   */
-        var openPopupPos: Vec2,
+        var openPopupPos: Vec2 = Vec2(),
         /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
-        var openMousePos: Vec2)
+        var openMousePos: Vec2 = Vec2())
 
 /** Storage data for a single column */
 class ColumnData {
@@ -1825,7 +1825,7 @@ fun itemHoveredDataBackup(block: () -> Unit) {
     window.dc.lastItemDisplayRect = lastItemDisplayRect
 }
 
-fun focusPreviousWindowIgnoringOne(ignoreWindow: Window?) {
+fun focusTopMostWindowIgnoringOne(ignoreWindow: Window?) {
     for (i in g.windowsFocusOrder.lastIndex downTo 0) {
         // We may later decide to test for different NoXXXInputs based on the active navigation input (mouse vs nav) but that may feel more confusing to the user.
         val window = g.windowsFocusOrder[i]
