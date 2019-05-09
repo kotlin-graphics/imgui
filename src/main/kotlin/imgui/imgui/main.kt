@@ -249,7 +249,7 @@ interface imgui_main {
 
         // Closing the focused window restore focus to the first active root window in descending z-order
         if (g.navWindow?.wasActive == false)
-            focusTopMostWindowIgnoringOne(null)
+            focusTopMostWindowUnderOne(null, null)
 
         // No window should be open at the beginning of the frame.
         // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.

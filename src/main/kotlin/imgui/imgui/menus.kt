@@ -81,7 +81,7 @@ interface imgui_widgets_menus {
 
         // When the user has left the menu layer (typically: closed menus through activation of an item), we restore focus to the previous window
         if (g.currentWindow == g.navWindow && g.navLayer == NavLayer.Main)
-            focusTopMostWindowIgnoringOne(g.navWindow)
+            focusTopMostWindowUnderOne(g.navWindow, null)
 
         end()
     }
@@ -226,7 +226,7 @@ interface imgui_widgets_menus {
                 so menus feels more reactive.             */
             var movingWithinOpenedTriangle = false
             if (g.hoveredWindow === window && g.openPopupStack.size > g.beginPopupStack.size &&
-                    g.openPopupStack[g.beginPopupStack.size].parentWindow === window && window.flags hasnt Wf.MenuBar)
+                    g.openPopupStack[g.beginPopupStack.size].sourceWindow === window && window.flags hasnt Wf.MenuBar)
 
                 g.openPopupStack[g.beginPopupStack.size].window?.let {
                     // FIXME-DPI: Values should be derived from a master "scale" factor.
