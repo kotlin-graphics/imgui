@@ -16,6 +16,7 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.focusableItemUnregister
+import imgui.ImGui.format
 import imgui.ImGui.getColorU32
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
@@ -156,11 +157,10 @@ interface imgui_widgets_sliders {
             return false
 
         // Default format string when passing NULL
-        // Patch old "%.0f" format string to use "%d", read function comments for more details.
         val format = when {
             format_ == null -> when (dataType) {
                 DataType.Float, DataType.Double -> "%f"
-                else -> "%d"
+                else -> "%d" // (FIXME-LEGACY: Patch old "%.0f" format string to use "%d", read function more details.)
             }
             dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
             else -> format_
@@ -266,11 +266,10 @@ interface imgui_widgets_sliders {
         if (!itemAdd(frameBb, id)) return false
 
         // Default format string when passing NULL
-        // Patch old "%.0f" format string to use "%d", read function comments for more details.
         val format = when {
             format_ == null -> when (dataType) {
                 DataType.Float, DataType.Double -> "%f"
-                else -> "%d"
+                else -> "%d" // (FIXME-LEGACY: Patch old "%.0f" format string to use "%d", read function more details.)
             }
             dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
             else -> format_

@@ -441,31 +441,6 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
 //    return Format.format(style.locale, value).toCharArray(buf)
 //}
 
-/** DataTypeFormatString */
-fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 0): CharArray {
-    // useless
-//    val value: Number = when (dataType) {
-//        DataType.Int, DataType.Uint -> this() as Int    // Signedness doesn't matter when pushing the argument
-//        DataType.Long, DataType.Ulong -> this() as Long // Signedness doesn't matter when pushing the argument
-//        DataType.Float -> this() as Float
-//        DataType.Double -> this() as Double
-//        else -> throw Error()
-//    }
-    val t = this()
-    val string = format.format(style.locale, when (t) {
-        // we need to intervene since java printf cant handle %u
-        is Ubyte -> t.i
-        is Ushort -> t.i
-        is Uint -> t.L
-        is Ulong -> t.toBigInt()
-        else -> t // normal scalar
-    })
-    return when (size) {
-        0 -> string.toCharArray()
-        else -> string.toCharArray(CharArray(size))
-    }
-}
-
 /** JVM Imgui, dataTypeFormatString replacement TODO check if needed */
 //fun IntArray.format(dataType: DataType, decimalPrecision: Int, buf: CharArray) = when (dataType) {
 //

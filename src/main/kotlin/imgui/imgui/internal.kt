@@ -65,6 +65,10 @@ import imgui.internal.*
 import kool.lib.fill
 import uno.kotlin.getValue
 import uno.kotlin.setValue
+import unsigned.Ubyte
+import unsigned.Uint
+import unsigned.Ulong
+import unsigned.Ushort
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.nio.ByteBuffer
@@ -2423,6 +2427,34 @@ interface imgui_internal {
         indent()
         window.dc.treeDepth++
         window.idStack.push(id)
+    }
+
+    // Data type helpers
+//    IMGUI_API const ImGuiDataTypeInfo*  DataTypeGetInfo(ImGuiDataType data_type);
+
+    /** DataTypeFormatString */
+    fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 0): CharArray {
+        // useless
+//    val value: Number = when (dataType) {
+//        DataType.Int, DataType.Uint -> this() as Int    // Signedness doesn't matter when pushing the argument
+//        DataType.Long, DataType.Ulong -> this() as Long // Signedness doesn't matter when pushing the argument
+//        DataType.Float -> this() as Float
+//        DataType.Double -> this() as Double
+//        else -> throw Error()
+//    }
+        val t = this()
+        val string = format.format(style.locale, when (t) {
+            // we need to intervene since java printf cant handle %u
+            is Ubyte -> t.i
+            is Ushort -> t.i
+            is Uint -> t.L
+            is Ulong -> t.toBigInt()
+            else -> t // normal scalar
+        })
+        return when (size) {
+            0 -> string.toCharArray()
+            else -> string.toCharArray(CharArray(size))
+        }
     }
 
     // InputText

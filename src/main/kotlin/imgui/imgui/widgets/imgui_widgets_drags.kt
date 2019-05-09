@@ -1,10 +1,7 @@
 package imgui.imgui.widgets
 
-import glm_.f
 import glm_.func.common.max
 import glm_.func.common.min
-import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec3.Vec3
@@ -20,6 +17,7 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.focusableItemUnregister
+import imgui.ImGui.format
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
@@ -221,11 +219,10 @@ interface imgui_widgets_drags {
             return false
 
         // Default format string when passing NULL
-        // Patch old "%.0f" format string to use "%d", read function comments for more details.
         val format = when {
             format_ == null -> when (dataType) {
                 DataType.Float, DataType.Double -> "%f"
-                else -> "%d"
+                else -> "%d" // (FIXME-LEGACY: Patch old "%.0f" format string to use "%d", read function more details.)
             }
             dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
             else -> format_
