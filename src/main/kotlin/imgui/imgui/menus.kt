@@ -42,6 +42,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
 import imgui.internal.*
 import imgui.internal.LayoutType
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.SelectableFlag as Sf
@@ -222,31 +223,35 @@ interface imgui_widgets_menus {
         var wantOpen = false
         var wantClose = false
         if (window.dc.layoutType == Lt.Vertical) {    // (window->Flags & (ImGuiWindowFlags_Popup|ImGuiWindowFlags_ChildMenu))
-            /*  Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers,
+            /*  Close menu when not hovering it anymore unless we are moving roughly in the direction of the menu
+                Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers,
                 so menus feels more reactive.             */
-            var movingWithinOpenedTriangle = false
-            if (g.hoveredWindow === window && g.openPopupStack.size > g.beginPopupStack.size &&
-                    g.openPopupStack[g.beginPopupStack.size].sourceWindow === window && window.flags hasnt Wf.MenuBar)
+            var movingTowardOtherChildMenu = false
 
-                g.openPopupStack[g.beginPopupStack.size].window?.let {
-                    // FIXME-DPI: Values should be derived from a master "scale" factor.
-                    val nextWindowRect = it.rect()
-                    val ta = io.mousePos - io.mouseDelta
-                    val tb = if (window.pos.x < it.pos.x) nextWindowRect.tl else nextWindowRect.tr
-                    val tc = if (window.pos.x < it.pos.x) nextWindowRect.bl else nextWindowRect.br
-                    val extra = glm.clamp(glm.abs(ta.x - tb.x) * 0.3f, 5f, 30f) // add a bit of extra slack.
-                    ta.x += if (window.pos.x < it.pos.x) -0.5f else +0.5f   // to avoid numerical issues
-                    /*  triangle is maximum 200 high to limit the slope and the bias toward large sub-menus
-                        FIXME: Multiply by fb_scale?                     */
-                    tb.y = ta.y + glm.max((tb.y - extra) - ta.y, -100f)
-                    tc.y = ta.y + glm.min((tc.y + extra) - ta.y, +100f)
-                    movingWithinOpenedTriangle = triangleContainsPoint(ta, tb, tc, io.mousePos)
-                    //window->DrawList->PushClipRectFullScreen(); window->DrawList->AddTriangleFilled(ta, tb, tc, movingWithinOpenedTriangle ? IM_COL32(0,128,0,128) : IM_COL32(128,0,0,128)); window->DrawList->PopClipRect(); // Debug
-                }
+            val childMenuWindow = when {
+                g.beginPopupStack.size < g.openPopupStack.size && g.openPopupStack[g.beginPopupStack.size].sourceWindow == window -> g.openPopupStack[g.beginPopupStack.size].window
+                else -> null
+            }
+            if (g.hoveredWindow === window && childMenuWindow != null && window.flags hasnt Wf.MenuBar) {
+                // FIXME-DPI: Values should be derived from a master "scale" factor.
+                val nextWindowRect = childMenuWindow.rect()
+                val ta = io.mousePos - io.mouseDelta
+                val tb = if(window.pos.x < childMenuWindow.pos.x) nextWindowRect.tl else nextWindowRect.tr
+                val tc = if(window.pos.x < childMenuWindow.pos.x) nextWindowRect.bl else nextWindowRect.br
+                val extra = glm.clamp (abs(ta.x - tb.x) * 0.3f, 5f, 30f)    // add a bit of extra slack.
+                ta.x += if(window.pos.x < childMenuWindow.pos.x) -0.5f else +0.5f // to avoid numerical issues
+                tb.y = ta.y + max((tb.y - extra) - ta.y, -100f)                // triangle is maximum 200 high to limit the slope and the bias toward large sub-menus // FIXME: Multiply by fb_scale?
+                tc.y = ta.y + min((tc.y + extra) - ta.y, +100f)
+                movingTowardOtherChildMenu = triangleContainsPoint(ta, tb, tc, io.mousePos)
+                //GetForegroundDrawList()->AddTriangleFilled(ta, tb, tc, moving_within_opened_triangle ? IM_COL32(0,128,0,128) : IM_COL32(128,0,0,128)); // [DEBUG]
+            }
+            if (menuIsOpen && !hovered && g.hoveredWindow === window && g.hoveredIdPreviousFrame != 0 && g.hoveredIdPreviousFrame != id && !movingTowardOtherChildMenu)
+                wantClose = true
 
-            wantClose = (menuIsOpen && !hovered && g.hoveredWindow === window && g.hoveredIdPreviousFrame != 0 &&
-                    g.hoveredIdPreviousFrame != id && !movingWithinOpenedTriangle)
-            wantOpen = (!menuIsOpen && hovered && !movingWithinOpenedTriangle) || (!menuIsOpen && hovered && pressed)
+            if (!menuIsOpen && hovered && pressed) // Click to open
+                wantOpen = true
+            else if (!menuIsOpen && hovered && !movingTowardOtherChildMenu) // Hover to open
+                wantOpen = true
 
             if (g.navActivateId == id) {
                 wantClose = menuIsOpen

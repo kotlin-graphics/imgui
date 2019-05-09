@@ -99,13 +99,13 @@ class Rect {
     val width get() = max.x - min.x
     val height get() = max.y - min.y
     /** Top-left    */
-    val tl get() = min
+    val tl get() = Vec2(min)
     /** Top-right   */
     val tr get() = Vec2(max.x, min.y)
     /** Bottom-left */
     val bl get() = Vec2(min.x, max.y)
     /** Bottom-right    */
-    val br get() = max
+    val br get() = Vec2(max)
 
     infix operator fun contains(p: Vec2) = p.x >= min.x && p.y >= min.y && p.x < max.x && p.y < max.y
     infix operator fun contains(r: Rect) = r.min.x >= min.x && r.min.y >= min.y && r.max.x <= max.x && r.max.y <= max.y
