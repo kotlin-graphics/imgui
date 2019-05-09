@@ -811,16 +811,16 @@ class TextEditState {
     }
 
     /** API paste: replace existing selection with passed-in text   */
-    fun paste(len: Int): Boolean {
+    fun paste(text: CharArray, len: Int): Boolean {
 
         // if there's a selection, the paste should delete it
         clamp()
         deleteSelection()
         // try to insert the characters
-        if (insertChars(stb.cursor, textW, 0, len)) {
+        if (insertChars(stb.cursor, text, 0, len)) {
             makeundoInsert(stb.cursor, len)
             stb.cursor += len
-            stb.hasPreferredX = true
+            stb.hasPreferredX = false
             return true
         }
         // remove the undo since we didn't actually insert the characters

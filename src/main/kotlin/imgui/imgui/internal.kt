@@ -1500,7 +1500,7 @@ interface imgui_internal {
             } else if (logNewLine) {
                 // An empty "" string at a different Y position should output a carriage return.
                 logText("\n")
-                break;
+                break
             }
 
 
@@ -1726,7 +1726,6 @@ interface imgui_internal {
                 window.startMouseMoving()
         }
     }
-
 
 
     /** square button with an arrow shape */
@@ -2225,19 +2224,19 @@ interface imgui_internal {
         }
         DataType.Int -> {
             assert(vMin as Int >= Int.MIN_VALUE / 2 && vMax as Int <= Int.MAX_VALUE / 2)
-            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax as N, format, power, flags, outGrabBb)
+            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax, format, power, flags, outGrabBb)
         }
         DataType.Long -> {
             assert(vMin as Long >= Long.MIN_VALUE / 2 && vMax as Long <= Long.MAX_VALUE / 2)
-            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax as N, format, power, flags, outGrabBb)
+            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax, format, power, flags, outGrabBb)
         }
         DataType.Float -> {
             assert(vMin as Float >= -Float.MAX_VALUE / 2f && vMax as Float <= Float.MAX_VALUE / 2f)
-            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax as N, format, power, flags, outGrabBb)
+            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax, format, power, flags, outGrabBb)
         }
         DataType.Double -> {
             assert(vMin as Double >= -Double.MAX_VALUE / 2f && vMax as Double <= Double.MAX_VALUE / 2f)
-            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax as N, format, power, flags, outGrabBb)
+            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax, format, power, flags, outGrabBb)
         }
         else -> throw Error()
     }
@@ -2770,7 +2769,7 @@ interface imgui_internal {
                     io.setClipboardTextFn?.let {
                         val ib = if (state.hasSelection) min(state.stb.selectStart, state.stb.selectEnd) else 0
                         val ie = if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
-                        clipboardText = String(state.textW, ib, ie)
+                        clipboardText = String(state.textW, ib, ie - ib)
                     }
                     if (isCut) {
                         if (!state.hasSelection)
@@ -2780,12 +2779,24 @@ interface imgui_internal {
                     }
                 }
                 isPaste -> {
-                    if (state.hasSelection)
-                        state.deleteSelection()
-                    val data = Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as? String
-                    data?.let {
-                        state.insertChars(state.stb.cursor, data.toCharArray(), 0, data.toCharArray().size)
-                        state.stb.cursor += data.length
+
+                    val clipboard = clipboardText
+
+                    // Filter pasted buffer
+                    val clipboardLen = clipboard.length
+                    val clipboardFiltered = CharArray(clipboardLen)
+                    var clipboardFilteredLen = 0
+                    for(c in clipboard) {
+                        if (c == NUL)
+                            break
+                        _c = c
+                        if (_c >= 0x10000 || !inputTextFilterCharacter(::_c, flags, callback, callbackUserData))
+                            continue
+                        clipboardFiltered[clipboardFilteredLen++] = _c
+                    }
+                    if (clipboardFilteredLen > 0) { // If everything was filtered, ignore the pasting operation
+                        state.paste(clipboardFiltered, clipboardFilteredLen)
+                        state.cursorFollow = true
                     }
                 }
             }
@@ -2908,7 +2919,7 @@ interface imgui_internal {
                 }
                 /*  If the underlying buffer resize was denied or not carried to the next frame,
                     apply_new_text_length+1 may be >= buf_size.                 */
-                buf.strncpy(applyNewText, (applyNewTextLength + 1) min buf.size)
+                buf.strncpy(applyNewText, applyNewTextLength min buf.size)
                 valueChanged = true
             }
 
@@ -3652,6 +3663,7 @@ interface imgui_internal {
         var _L = 0L
         var _f = 0f
         var _d = 0.0
+        var _c = NUL
 
         fun alphaBlendColor(colA: Int, colB: Int): Int {
             val t = ((colB ushr COL32_A_SHIFT) and 0xFF) / 255f
