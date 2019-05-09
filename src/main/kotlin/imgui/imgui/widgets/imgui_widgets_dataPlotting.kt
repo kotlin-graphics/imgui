@@ -4,7 +4,7 @@ import glm_.vec2.Vec2
 import imgui.ImGui
 import imgui.internal.PlotType
 
-interface dataPlotting {
+interface imgui_widgets_dataPlotting {
 
     fun plotLines(label: String, values: FloatArray, valuesOffset: Int = 0, overlayText: String = "", scaleMin: Float = Float.MAX_VALUE,
                   scaleMax: Float = Float.MAX_VALUE, graphSize: Vec2 = Vec2(), stride: Int = 1) {

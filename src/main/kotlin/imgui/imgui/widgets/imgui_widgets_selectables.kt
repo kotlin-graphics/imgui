@@ -36,7 +36,7 @@ import imgui.internal.ButtonFlag as Bf
 /** Widgets: Selectables
  *  - A selectable highlights when hovered, and can display another color when selected.
  *  - Neighbors selectable extend their highlight bounds in order to leave no gap between them. */
-interface selectableLists {
+interface imgui_widgets_selectables {
 
 
     /** Tip: pass a non-visible label (e.g. "##dummy") then you can use the space to draw other text or image.

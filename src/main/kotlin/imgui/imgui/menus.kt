@@ -49,7 +49,7 @@ import imgui.WindowFlag as Wf
 import imgui.internal.LayoutType as Lt
 
 /** Menu    */
-interface imgui_menus {
+interface imgui_widgets_menus {
 
 
     /** Create and append to a full screen menu-bar.
@@ -357,14 +357,13 @@ interface imgui_menus {
     }
 
     /** return true when activated + toggle (*p_selected) if p_selected != NULL */
-    fun menuItem(label: String, shortcut: String = "", pSelected: BooleanArray?, enabled: Boolean = true) =
+    fun menuItem(label: String, shortcut: String = "", pSelected: BooleanArray?, enabled: Boolean = true): Boolean =
             if (menuItem(label, shortcut, pSelected?.get(0) == true, enabled)) {
                 pSelected?.let { it[0] = !it[0] }
                 true
             } else false
 
-    fun menuItem(label: String, shortcut: String = "", selected: KMutableProperty0<Boolean>?, enabled: Boolean = true) =
-            menuItem(label, shortcut, selected?.get() == true, enabled).also {
-                if (it) selected?.apply { set(!get()) }
-            }
+    fun menuItem(label: String, shortcut: String = "", selected: KMutableProperty0<Boolean>?, enabled: Boolean = true): Boolean =
+            menuItem(label, shortcut, selected?.get() == true, enabled)
+                    .also { if (it) selected?.apply { set(!get()) } }
 }

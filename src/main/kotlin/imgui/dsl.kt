@@ -249,47 +249,20 @@ object dsl {
     // Widgets: Combo Box
 
 
-    inline fun combo(label: String, previewValue: String?, flags: ComboFlags = 0, block: () -> Unit) {
+    inline fun useCombo(label: String, previewValue: String?, flags: ComboFlags = 0, block: () -> Unit) {
         if (ImGui.beginCombo(label, previewValue, flags))
             block()
         ImGui.endCombo()
     }
 
-
-
-    inline fun menuBar(block: () -> Unit) {
-        if (beginMenuBar()) {
-            block()
-            endMenuBar()
-        }
-    }
-
-    inline fun mainMenuBar(block: () -> Unit) {
-        if (beginMainMenuBar()) {
-            block()
-            endMainMenuBar()
-        }
-    }
-
-    inline fun menu(label: String, enabled: Boolean = true, block: () -> Unit) {
-        if (beginMenu(label, enabled)) {
-            block()
-            endMenu()
-        }
-    }
-
-    inline fun menuItem(label: String, shortcut: String = "", selected: Boolean = false, enabled: Boolean = true, block: () -> Unit) {
-        if (menuItem(label, shortcut, selected, enabled)) block()
-    }
-
-    inline fun collapsingHeader(label: String, flags: TreeNodeFlags = 0, block: () -> Unit) {
-        if (collapsingHeader(label, flags)) block()
-    }
-
-    inline fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>, flags: TreeNodeFlags = 0, block: () -> Unit) {
-        if (collapsingHeader(label, open, flags))
+    inline fun combo(label: String, currentItem: KMutableProperty0<Int>, itemsSeparatedByZeros: String, heightInItems: Int = -1,
+                     block: () -> Unit) {
+        if (combo(label, currentItem, itemsSeparatedByZeros, heightInItems))
             block()
     }
+
+
+    // Widgets: Trees
 
     inline fun treeNode(label: String, block: () -> Unit) {
         if (treeNode(label)) {
@@ -312,13 +285,62 @@ object dsl {
         }
     }
 
+    inline fun treePushed(ptrId: Any?, block: () -> Unit) {
+        ImGui.treePush(ptrId)
+        ImGui.treePop()
+    }
+
+    inline fun collapsingHeader(label: String, flags: TreeNodeFlags = 0, block: () -> Unit) {
+        if (collapsingHeader(label, flags)) block()
+    }
+
+    inline fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>, flags: TreeNodeFlags = 0, block: () -> Unit) {
+        if (collapsingHeader(label, open, flags))
+            block()
+    }
+
+
+    // Widgets: Selectables
+
+    inline fun selectable(label: String, selected: Boolean = false, flags: Int = 0, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
+        if (selectable(label, selected, flags, sizeArg)) block()
+    }
+
+
+    // Widgets: Menus
+
+    inline fun mainMenuBar(block: () -> Unit) {
+        if (beginMainMenuBar()) {
+            block()
+            endMainMenuBar()
+        }
+    }
+
+    inline fun menuBar(block: () -> Unit) {
+        if (beginMenuBar()) {
+            block()
+            endMenuBar()
+        }
+    }
+
+    inline fun menu(label: String, enabled: Boolean = true, block: () -> Unit) {
+        if (beginMenu(label, enabled)) {
+            block()
+            endMenu()
+        }
+    }
+
+    inline fun menuItem(label: String, shortcut: String = "", selected: Boolean = false, enabled: Boolean = true, block: () -> Unit) {
+        if (menuItem(label, shortcut, selected, enabled)) block()
+    }
+
+
     inline fun popupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, extraFlags: WindowFlags = 0, block: () -> Unit) {
         if (beginPopupModal(name, pOpen, extraFlags)) {
             block()
             endPopup()
         }
     }
-
 
 
     inline fun withTooltip(block: () -> Unit) {
@@ -328,14 +350,12 @@ object dsl {
     }
 
 
-
     inline fun popupContextWindow(block: () -> Unit) {
         if (beginPopupContextWindow()) {
             block()
             endPopup()
         }
     }
-
 
 
     inline fun popup(strId: String, block: () -> Unit) {
@@ -352,13 +372,5 @@ object dsl {
         }
     }
 
-    inline fun selectable(label: String, selected: Boolean = false, flags: Int = 0, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
-        if (selectable(label, selected, flags, sizeArg)) block()
-    }
 
-    inline fun combo(label: String, currentItem: KMutableProperty0<Int>, itemsSeparatedByZeros: String, heightInItems: Int = -1,
-                     block: () -> Unit) {
-        if (combo(label, currentItem, itemsSeparatedByZeros, heightInItems))
-            block()
-    }
 }
