@@ -24,7 +24,7 @@ import imgui.TreeNodeFlag as Tnf
 
 /** Widgets: Trees
  *  - TreeNode functions return true when the node is open, in which case you need to also call TreePop() when you are finished displaying the tree node contents. */
-interface trees {
+interface imgui_widgets_trees {
 
     /** if returning 'true' the node is open and the tree id is pushed into the id stack. user is responsible for
      *  calling TreePop().  */
@@ -36,11 +36,11 @@ interface trees {
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
      *  Bullet().   */
-    fun treeNode(strId: String, fmt: String, vararg args: Any) = treeNodeExV(strId, 0, fmt, *args)
+    fun treeNode(strId: String, fmt: String, vararg args: Any): Boolean = treeNodeExV(strId, 0, fmt, *args)
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
      *  Bullet().   */
-    fun treeNode(ptrId: Any, fmt: String, vararg args: Any) = treeNodeExV(ptrId, 0, fmt, *args)
+    fun treeNode(ptrId: Any, fmt: String, vararg args: Any): Boolean = treeNodeExV(ptrId, 0, fmt, *args)
 //    IMGUI_API bool          TreeNodeV(const char* str_id, const char* fmt, va_list args);           // "
 //    IMGUI_API bool          TreeNodeV(const void* ptr_id, const char* fmt, va_list args);           // "
 
@@ -110,7 +110,8 @@ interface trees {
 
     /** horizontal distance preceding label when using TreeNode*() or Bullet() == (g.FontSize + style.FramePadding.x*2)
      *  for a regular unframed TreeNode */
-    val treeNodeToLabelSpacing get() = g.fontSize + style.framePadding.x * 2f
+    val treeNodeToLabelSpacing: Float
+        get() = g.fontSize + style.framePadding.x * 2f
 
     /** set next TreeNode/CollapsingHeader open state.  */
     fun setNextTreeNodeOpen(isOpen: Boolean, cond: Cond = Cond.Always) {

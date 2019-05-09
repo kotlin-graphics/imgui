@@ -37,7 +37,7 @@ import imgui.internal.ItemFlag as If
  * Widgets: List Boxes
  * FIXME: To be consistent with all the newer API, ListBoxHeader/ListBoxFooter should in reality be called BeginListBox/EndListBox. Will rename them.
  */
-interface listBoxes {
+interface imgui_widgets_listBoxes {
 
     fun listBox(label: String, currentItemPtr: IntArray, items: Array<String>, heightInItems: Int = -1): Boolean =
             withInt(currentItemPtr, 0) { listBox(label, it, items, heightInItems) }
