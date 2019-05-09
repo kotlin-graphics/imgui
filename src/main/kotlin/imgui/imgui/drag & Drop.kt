@@ -12,6 +12,7 @@ import imgui.ImGui.hoveredId
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
+import imgui.ImGui.itemHoverable
 import imgui.ImGui.setActiveId
 import imgui.internal.*
 import kool.lib.fill
@@ -59,18 +60,20 @@ interface imgui_dragAndDrop {
                     B) Use the DragDropFlag.SourceAllowNullID flag
                      C) Swallow your programmer pride.  */
                 if (flags hasnt Ddf.SourceAllowNullID) throw Error()
+
+                // Early out
+                if (window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect && (g.activeId == 0 || g.activeIdWindow !== window))
+                    return false
+
                 /*  Magic fallback (=somehow reprehensible) to handle items with no assigned ID, e.g. text(), image()
                     We build a throwaway ID based on current ID stack + relative AABB of items in window.
                     THE IDENTIFIER WON'T SURVIVE ANY REPOSITIONING OF THE WIDGET, so if your widget moves
                     your dragging operation will be canceled.
                     We don't need to maintain/call clearActiveID() as releasing the button will early out this function
                     and trigger !activeIdIsAlive. */
-                val isHovered = window.dc.lastItemStatusFlags has ItemStatusFlag.HoveredRect
-                if (!isHovered && (g.activeId == 0 || g.activeIdWindow !== window))
-                    return false
                 window.dc.lastItemId = window.getIdFromRectangle(window.dc.lastItemRect)
                 sourceId = window.dc.lastItemId
-                if (isHovered) hoveredId = sourceId
+                val isHovered = itemHoverable(window.dc.lastItemRect, sourceId)
                 if (isHovered && io.mouseClicked[mouseButton]) {
                     setActiveId(sourceId, window)
                     window.focus()
