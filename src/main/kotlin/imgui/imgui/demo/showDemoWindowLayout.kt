@@ -18,7 +18,7 @@ import imgui.ImGui.checkboxFlags
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columns
 import imgui.ImGui.combo
-import imgui.ImGui.contentRegionAvailWidth
+import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.cursorPosX
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.cursorStartPos
@@ -48,6 +48,7 @@ import imgui.ImGui.listBox
 import imgui.ImGui.listBoxFooter
 import imgui.ImGui.listBoxHeader
 import imgui.ImGui.nextColumn
+import imgui.ImGui.nextItemWidth
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
@@ -81,15 +82,15 @@ import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowWidth
-import imgui.dsl.treeNode
 import imgui.dsl.child
+import imgui.dsl.treeNode
 import imgui.dsl.withGroup
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
 import imgui.dsl.withStyleVar
-import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
+import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
 import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
@@ -225,9 +226,10 @@ object showDemoWindowLayout {
             sameLine(); helpMarker("Half of window width.")
             withItemWidth(windowWidth * 0.5f) { dragFloat("float##2", ::f) }
 
-            text("PushItemWidth(GetContentRegionAvailWidth() * 0.5f)")
+            text("SetNextItemWidth/PushItemWidth(GetContentRegionAvail().x * 0.5f)")
             sameLine(); helpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
-            withItemWidth(contentRegionAvailWidth * 0.5f) { dragFloat("float##3", ::f) }
+            nextItemWidth = contentRegionAvail.x * 0.5f
+            dragFloat("float##3", ::f)
 
             text("PushItemWidth(-100)")
             sameLine(); helpMarker("Align to right edge minus 100")
