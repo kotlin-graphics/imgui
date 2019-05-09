@@ -556,8 +556,8 @@ interface imgui_internal {
                 var popupOrDescendentIsRefWindow = false
                 var m = popupCountToKeep
                 while (m < g.openPopupStack.size && !popupOrDescendentIsRefWindow) {
-                    g.openPopupStack[m].window?.let {
-                        if (it.rootWindow === refWindow.rootWindow)
+                    g.openPopupStack[m].window?.let { popupWindow ->
+                        if (popupWindow.rootWindow === refWindow.rootWindow)
                             popupOrDescendentIsRefWindow = true
                     }
                     m++
