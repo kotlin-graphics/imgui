@@ -289,8 +289,8 @@ class PopupData(
         var popupId: ID = 0,
         /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
         var window: Window? = null,
-        /** Set on OpenPopup()  */
-        var parentWindow: Window? = null,
+        /** Set on OpenPopup() copy of NavWindow at the time of opening the popup  */
+        var sourceWindow: Window? = null,
         /** Set on OpenPopup()  */
         var openFrameCount: Int = -1,
         /** Set on OpenPopup(), we need this to differentiate multiple menu sets from each others
@@ -1149,7 +1149,7 @@ fun Window?.setCurrent() {
     }
 }
 
-/** Moving window to front of display (which happens to be back of our sorted list) */
+/** Moving window to front of display (which happens to be back of our sorted list)  ~ FocusWindow  */
 fun Window?.focus() {
 
     if (g.navWindow !== this) {
@@ -1825,8 +1825,14 @@ fun itemHoveredDataBackup(block: () -> Unit) {
     window.dc.lastItemDisplayRect = lastItemDisplayRect
 }
 
-fun focusTopMostWindowIgnoringOne(ignoreWindow: Window?) {
-    for (i in g.windowsFocusOrder.lastIndex downTo 0) {
+fun focusTopMostWindowUnderOne(underThisWindow: Window?, ignoreWindow: Window?) {
+    var startIdx = g.windowsFocusOrder.lastIndex
+    underThisWindow?.let {
+        val underThisWindowIdx = findWindowFocusIndex(it)
+        if (underThisWindowIdx != -1)
+            startIdx = underThisWindowIdx - 1
+    }
+    for (i in startIdx downTo 0) {
         // We may later decide to test for different NoXXXInputs based on the active navigation input (mouse vs nav) but that may feel more confusing to the user.
         val window = g.windowsFocusOrder[i]
         if (window !== ignoreWindow && window.wasActive && window.flags hasnt Wf.ChildWindow)
@@ -1835,4 +1841,5 @@ fun focusTopMostWindowIgnoringOne(ignoreWindow: Window?) {
                 return
             }
     }
+    null.focus()
 }
