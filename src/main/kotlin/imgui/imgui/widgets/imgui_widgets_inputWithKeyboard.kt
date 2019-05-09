@@ -14,6 +14,7 @@ import imgui.ImGui.buttonEx
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.format
 import imgui.ImGui.frameHeight
 import imgui.ImGui.inputTextEx
 import imgui.ImGui.io
@@ -34,6 +35,7 @@ import imgui.internal.or
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
 import imgui.internal.ButtonFlag as Bf
+
 
 /** Widgets: Input with Keyboard
  *  - If you want to use InputText() with a dynamic string type such as std::string or your own, see cpp/imgui_stdlib.h
