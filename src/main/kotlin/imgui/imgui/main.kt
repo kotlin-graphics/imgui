@@ -255,7 +255,7 @@ interface imgui_main {
         // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.
         g.currentWindowStack.clear()
         g.beginPopupStack.clear()
-        closePopupsOverWindow(g.navWindow)
+        closePopupsOverWindow(g.navWindow, false)
 
         /*  Create implicit/fallback window - which we will only render it if the user has added something to it.
             We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
