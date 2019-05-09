@@ -927,11 +927,11 @@ fun navUpdateWindowing() {
 
     // Apply final focus
     if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootWindow)) {
+        clearActiveId()
         g.navDisableHighlight = false
         g.navDisableMouseHover = true
         applyFocusWindow = navRestoreLastChildNavWindow(applyFocusWindow!!)
-        closePopupsOverWindow(applyFocusWindow)
-        clearActiveId()
+        closePopupsOverWindow(applyFocusWindow, false)
         applyFocusWindow.focus()
         if (applyFocusWindow!!.navLastIds[0] == 0)
             navInitWindow(applyFocusWindow!!, false)

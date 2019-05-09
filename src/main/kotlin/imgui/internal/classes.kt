@@ -12,6 +12,7 @@ import imgui.ImGui.arrowButtonEx
 import imgui.ImGui.beginCombo
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.clearActiveId
+import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.endCombo
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.io
@@ -1162,6 +1163,9 @@ fun Window?.focus() {
         g.navLayer = NavLayer.Main
         //IMGUI_DEBUG_LOG("FocusWindow(\"%s\")\n", window ? window->Name : NULL);
     }
+
+    // Close popups if any
+    closePopupsOverWindow(this, false)
 
     // Passing NULL allow to disable keyboard focus
     if (this == null) return

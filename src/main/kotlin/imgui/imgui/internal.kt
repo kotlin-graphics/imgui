@@ -513,7 +513,7 @@ interface imgui_internal {
         }
     }
 
-    fun closePopupToLevel(remaining: Int, applyFocusToWindowUnder: Boolean) {
+    fun closePopupToLevel(remaining: Int, restoreFocusToWindowUnderPopup: Boolean) {
 
         assert(remaining >= 0 && remaining < g.openPopupStack.size)
         var focusWindow = g.openPopupStack[remaining].sourceWindow
@@ -521,7 +521,7 @@ interface imgui_internal {
         for (i in remaining until g.openPopupStack.size) // resize(remaining)
             g.openPopupStack.pop()
 
-        if (applyFocusToWindowUnder)
+        if (restoreFocusToWindowUnderPopup)
             if (focusWindow?.wasActive == false && popupWindow != null)
                 focusTopMostWindowUnderOne(popupWindow, null)   // Fallback
             else {
@@ -531,7 +531,7 @@ interface imgui_internal {
             }
     }
 
-    fun closePopupsOverWindow(refWindow: Window?) {
+    fun closePopupsOverWindow(refWindow: Window?, restoreFocusToWindowUnderPopup: Boolean) {
 
         if (g.openPopupStack.empty())
             return
@@ -552,23 +552,23 @@ interface imgui_internal {
                     popupCountToKeep++
                     continue
                 }
-                // Trim the stack if popups are not direct descendant of the reference window (which is often the NavWindow)
-                var popupOrDescendentHasFocus = false
+                // Trim the stack when popups are not direct descendant of the reference window (the reference window is often the NavWindow)
+                var popupOrDescendentIsRefWindow = false
                 var m = popupCountToKeep
-                while (m < g.openPopupStack.size && !popupOrDescendentHasFocus) {
+                while (m < g.openPopupStack.size && !popupOrDescendentIsRefWindow) {
                     g.openPopupStack[m].window?.let {
                         if (it.rootWindow === refWindow.rootWindow)
-                            popupOrDescendentHasFocus = true
+                            popupOrDescendentIsRefWindow = true
                     }
                     m++
                 }
-                if (!popupOrDescendentHasFocus) break
+                if (!popupOrDescendentIsRefWindow) break
                 popupCountToKeep++
             }
 
         if (popupCountToKeep < g.openPopupStack.size) { // This test is not required but it allows to set a convenient breakpoint on the statement below
             //IMGUI_DEBUG_LOG("ClosePopupsOverWindow(%s) -> ClosePopupToLevel(%d)\n", ref_window->Name, popup_count_to_keep);
-            closePopupToLevel(popupCountToKeep, false)
+            closePopupToLevel(popupCountToKeep, restoreFocusToWindowUnderPopup)
         }
     }
 
@@ -3752,8 +3752,9 @@ interface imgui_internal {
                 null.focus()  // Clicking on void disable focus
         }
 
-        // With right mouse button we close popups without changing focus
-        // (The left mouse button path calls FocusWindow which will lead NewFrame->ClosePopupsOverWindow to trigger)
+        /*  With right mouse button we close popups without changing focus based on where the mouse is aimed
+            Instead, focus will be restored to the window under the bottom-most closed popup.
+            (The left mouse button path calls FocusWindow on the hovered window, which will lead NewFrame->ClosePopupsOverWindow to trigger)    */
         if (io.mouseClicked[1]) {
             // Find the top-most window between HoveredWindow and the front most Modal Window.
             // This is where we can trim the popup stack.
@@ -3770,7 +3771,7 @@ interface imgui_internal {
                     hoveredWindowAboveModal = true
                 i--
             }
-            closePopupsOverWindow(if (hoveredWindowAboveModal) g.hoveredWindow else modal)
+            closePopupsOverWindow(if (hoveredWindowAboveModal) g.hoveredWindow else modal, true)
         }
     }
 

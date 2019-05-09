@@ -59,6 +59,7 @@ interface imgui_utilities {
                     flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeId != window.dc.lastItemId &&
                             !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
                     // Test if interactions on this window are blocked by an active popup or modal
+                    // The ImGuiHoveredFlags_AllowWhenBlockedByPopup flag will be tested here.
                     g.navDisableMouseHover || !window.isContentHoverable(flags) -> false
                     // Test if the item is disabled
                     window.dc.itemFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled -> false

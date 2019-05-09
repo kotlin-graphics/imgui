@@ -116,7 +116,11 @@ object showDemoWindowPopups {
                 if (button("Stacked Popup")) openPopup("another popup")
                 popup("another popup") {
                     names.forEachIndexed { i, n -> withBool(toggles, i) { b -> menuItem(n, "", b) } }
-                    menu("Sub-menu") { menuItem("Click me") }
+                    menu("Sub-menu") {
+                        menuItem("Click me")
+                        button("Stacked Popup") { openPopup("another popup") }
+                        popup("another popup") { text("I am the last one here.") }
+                    }
                 }
             }
 
