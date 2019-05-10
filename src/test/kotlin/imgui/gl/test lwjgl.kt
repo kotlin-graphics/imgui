@@ -8,7 +8,6 @@ import gln.glViewport
 import imgui.imgui.Context
 import imgui.DEBUG
 import imgui.ImGui
-import imgui.dsl.popupContextWindow
 import imgui.impl.ImplGL3
 import imgui.impl.LwjglGlfw
 import imgui.impl.LwjglGlfw.GlfwClientApi
@@ -130,43 +129,37 @@ private class HelloWorld_lwjgl {
             // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
             run {
 
-                calcTextSize("some text", false)
-                listBoxHeader("Prova")
-                popupContextWindow {
-                    if (button("Button")) counter++
+                begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
+
+                text("This is some useful text.")                // Display some text (you can use a format strings too)
+                checkbox("Demo Window", ::showDemo)             // Edit bools storing our window open/close state
+                checkbox("Another Window", ::showAnotherWindow)
+
+                sliderFloat("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f
+                colorEdit3("clear color", clearColor)           // Edit 3 floats representing a color
+
+                if (button("Button"))                           // Buttons return true when clicked (most widgets return true when edited/activated)
+                    counter++
+
+                /*  Or you can take advantage of functional programming and pass directly a lambda as last parameter:
+                    button("Button") { counter++ }                */
+
+                sameLine()
+                text("counter = $counter")
+
+                text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.framerate, io.framerate)
+
+                end()
+
+                // 3. Show another simple window.
+                if (showAnotherWindow) {
+                    // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+                    begin("Another Window", ::showAnotherWindow)
+                    text("Hello from another window!")
+                    if (button("Close Me"))
+                        showAnotherWindow = false
+                    end()
                 }
-                listBoxFooter()
-//                begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
-//
-//                text("This is some useful text.")                // Display some text (you can use a format strings too)
-//                checkbox("Demo Window", ::showDemo)             // Edit bools storing our window open/close state
-//                checkbox("Another Window", ::showAnotherWindow)
-//
-//                sliderFloat("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f
-//                colorEdit3("clear color", clearColor)           // Edit 3 floats representing a color
-//
-//                if (button("Button"))                           // Buttons return true when clicked (most widgets return true when edited/activated)
-//                    counter++
-//
-//                /*  Or you can take advantage of functional programming and pass directly a lambda as last parameter:
-//                    button("Button") { counter++ }                */
-//
-//                sameLine()
-//                text("counter = $counter")
-//
-//                text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / io.framerate, io.framerate)
-//
-//                end()
-//
-//                // 3. Show another simple window.
-//                if (showAnotherWindow) {
-//                    // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-//                    begin("Another Window", ::showAnotherWindow)
-//                    text("Hello from another window!")
-//                    if (button("Close Me"))
-//                        showAnotherWindow = false
-//                    end()
-//                }
             }
         }
 
