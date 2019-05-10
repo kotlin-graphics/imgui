@@ -1209,7 +1209,7 @@ interface imgui_internal {
     /** Default clipRect uses (pos_min,pos_max)
      *  Handle clipping on CPU immediately (vs typically let the GPU clip the triangles that are overlapping the clipping
      *  rectangle edges)    */
-    fun renderTextClippedEx(drawList: DrawList, posMin: Vec2, posMax: Vec2, text: String, textDisplayEnd: Int = 0,
+    fun renderTextClippedEx(drawList: DrawList, posMin: Vec2, posMax: Vec2, text: String, textDisplayEnd: Int = -1,
                             textSizeIfKnown: Vec2? = null, align: Vec2 = Vec2(), clipRect: Rect? = null) {
 
         // Perform CPU side clipping for single clipped element to avoid using scissor state
@@ -1236,7 +1236,7 @@ interface imgui_internal {
             drawList.addText(null, 0f, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, null)
     }
 
-    fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: String, textEnd: Int = 0, textSizeIfKnown: Vec2? = null,
+    fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: String, textEnd: Int = -1, textSizeIfKnown: Vec2? = null,
                           align: Vec2 = Vec2(), clipRect: Rect? = null) {
         // Hide anything after a '##' string
         val textDisplayEnd = findRenderedTextEnd(text, textEnd)
@@ -1671,7 +1671,7 @@ interface imgui_internal {
         val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
         renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
-        renderTextClipped(bb.min + style.framePadding, bb.max - style.framePadding, label, 0, labelSize,
+        renderTextClipped(bb.min + style.framePadding, bb.max - style.framePadding, label, -1, labelSize,
                 style.buttonTextAlign, bb)
 
         // Automatically close popups
