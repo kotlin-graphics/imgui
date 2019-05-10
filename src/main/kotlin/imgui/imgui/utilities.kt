@@ -182,9 +182,9 @@ interface imgui_utilities {
 
     /** Calculate text size. Text can be multi-line. Optionally ignore text after a ## marker.
      *  CalcTextSize("") should return ImVec2(0.0f, GImGui->FontSize)   */
-    fun calcTextSize(text: String, hideTextAfterDoubleHash: Boolean) = calcTextSize(text, 0, hideTextAfterDoubleHash)
+    fun calcTextSize(text: String, hideTextAfterDoubleHash: Boolean) = calcTextSize(text, -1, hideTextAfterDoubleHash)
 
-    fun calcTextSize(text: String, textEnd: Int = text.length, hideTextAfterDoubleHash: Boolean = false, wrapWidth: Float = -1f): Vec2 {
+    fun calcTextSize(text: String, textEnd: Int = -1, hideTextAfterDoubleHash: Boolean = false, wrapWidth: Float = -1f): Vec2 {
 
         val textDisplayEnd = when {
             hideTextAfterDoubleHash -> findRenderedTextEnd(text, textEnd)  // Hide anything after a '##' string
