@@ -1454,8 +1454,9 @@ interface imgui_internal {
     }
 
     /** Find the optional ## from which we stop displaying text.    */
-    fun findRenderedTextEnd(text: String, textEnd: Int = -1): Int { // TODO function extension?
+    fun findRenderedTextEnd(text: String, textEnd_: Int = -1): Int { // TODO function extension?
         var textDisplayEnd = 0
+        val textEnd = if(textEnd_ == -1) text.length else textEnd_
         while (textDisplayEnd < textEnd && text[textDisplayEnd] != NUL && (text[textDisplayEnd + 0] != '#' || text[textDisplayEnd + 1] != '#'))
             textDisplayEnd++
         return textDisplayEnd
