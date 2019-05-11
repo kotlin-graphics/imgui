@@ -22,7 +22,7 @@ import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMouseReleased
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.keepAliveId
+import imgui.ImGui.keepAliveID
 import imgui.ImGui.markIniSettingsDirty
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popItemFlag
@@ -732,7 +732,7 @@ class Window(var context: Context, var name: String) {
         // FIXME: ImHash with str_end doesn't behave same as with identical zero-terminated string, because of ### handling.
         val seed: ID = idStack.last()
         val id: ID = hash(str, end, seed)
-        keepAliveId(id)
+        keepAliveID(id)
         return id
     }
 
@@ -745,7 +745,7 @@ class Window(var context: Context, var name: String) {
             ptrId = newBuf
         }
         val id: ID = System.identityHashCode(ptrId[ptrIndex])
-        keepAliveId(id)
+        keepAliveID(id)
         return id
     }
 
@@ -769,7 +769,7 @@ class Window(var context: Context, var name: String) {
     fun getIdFromRectangle(rAbs: Rect): ID {
         val seed: ID = idStack.last()
         val rRel = intArrayOf((rAbs.min.x - pos.x).i, (rAbs.min.y - pos.y).i, (rAbs.max.x - pos.x).i, (rAbs.max.y - pos.y).i)
-        return hash(rRel, seed).also { keepAliveId(it) } // id
+        return hash(rRel, seed).also { keepAliveID(it) } // id
     }
 
     /** We don't use g.FontSize because the window may be != g.CurrentWidow. */
@@ -1661,7 +1661,7 @@ class TabBar {
         return when {
             flags has TabBarFlag.DockNode -> {
                 val id = hash(label)
-                keepAliveId(id)
+                keepAliveID(id)
                 id
             }
             else -> g.currentWindow!!.getId(label)
