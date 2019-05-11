@@ -32,12 +32,14 @@ interface imgui_cursorLayout {
 
         assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo) { "Check that only 1 option is selected" }
 
+        val thicknessDraw = 1f
+        val thicknessLayout = 0f
         if (flags has Sf.Vertical) {
             // Vertical separator, for menu bars (use current line height). Not exposed because it is misleading and it doesn't have an effect on regular layout.
             val y1 = window.dc.cursorPos.y
             val y2 = window.dc.cursorPos.y + window.dc.currentLineSize.y
-            val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
-            itemSize(Vec2(1f, 0f))
+            val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + thicknessDraw, y2))
+            itemSize(Vec2(thicknessLayout, 0f))
             if (!itemAdd(bb, 0))
                 return
             // Draw
@@ -56,8 +58,9 @@ interface imgui_cursorLayout {
             if (columns != null)
                 pushColumnsBackground()
 
-            val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
-            itemSize(Vec2(0f, 1f)) // NB: we don't provide our width so that it doesn't get feed back into AutoFit
+            // We don't provide our width to the layout so that it doesn't get feed back into AutoFit
+            val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + thicknessDraw))
+            itemSize(Vec2(0f, thicknessLayout))
             if (!itemAdd(bb, 0)) {
                 if (columns != null)
                     popColumnsBackground()
