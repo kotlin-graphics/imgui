@@ -210,7 +210,7 @@ interface imgui_widgets_drags {
         val id = window.getId(label)
         val w = nextItemWidth
 
-        val labelSize = calcTextSize(label, 0, true)
+        val labelSize = calcTextSize(label, -1, true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 

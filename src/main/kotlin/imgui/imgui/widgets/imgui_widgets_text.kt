@@ -96,7 +96,7 @@ interface imgui_widgets_text {
         if (window.skipItems) return
         val w = nextItemWidth
 
-        val labelSize = calcTextSize(label, 0, true)
+        val labelSize = calcTextSize(label, -1, true)
         val valueBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2))
         val totalBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w + if (labelSize.x > 0f) style.itemInnerSpacing.x else 0f, style.framePadding.y * 2) + labelSize)
         itemSize(totalBb, style.framePadding.y)
