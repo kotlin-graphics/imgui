@@ -500,7 +500,7 @@ interface imgui_demoDebugInformations {
             fun nodeColumns(columns: Columns) {
                 if (!treeNode(columns.id, "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X", columns.id, columns.flags))
                     return
-                bulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", columns.maxX - columns.minX, columns.minX, columns.maxX)
+                bulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", columns.offMaxX - columns.offMinX, columns.offMinX, columns.offMaxX)
                 columns.columns.forEachIndexed { i, c ->
                     bulletText("Column %02d: OffsetNorm %.3f (= %.1f px)", i, c.offsetNorm, offsetNormToPixels(columns, c.offsetNorm))
                 }

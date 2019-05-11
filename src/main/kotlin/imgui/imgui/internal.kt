@@ -49,7 +49,6 @@ import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.selectable
-import imgui.ImGui.separator
 import imgui.ImGui.separatorEx
 import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setItemAllowOverlap
@@ -924,9 +923,8 @@ interface imgui_internal {
             assert(columnsCount >= 1)
             assert(dc.currentColumns == null) { "Nested columns are currently not supported" }
 
-            val id = getColumnsID(strId, columnsCount)
-
             // Acquire storage for the columns set
+            val id = getColumnsID(strId, columnsCount)
             val columns = findOrCreateColumns(id)
             assert(columns.id == id)
             with(columns) {
@@ -939,11 +937,11 @@ interface imgui_internal {
             // Set state for first column
             val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else innerClipRect.max.x - pos.x
             with(columns) {
-                minX = dc.indent - style.itemSpacing.x // Lock our horizontal range
-                maxX = max(contentRegionWidth - scroll.x, minX + 1f)
-                backupCursorPosY = dc.cursorPos.y
-                backupCursorMaxPosX = dc.cursorMaxPos.x
-                backupClipRect put clipRect
+                offMinX = dc.indent - style.itemSpacing.x // Lock our horizontal range
+                offMaxX = max(contentRegionWidth - scroll.x, offMinX + 1f)
+                hostCursorPosY = dc.cursorPos.y
+                hostCursorMaxPosX = dc.cursorMaxPos.x
+                hostClipRect put clipRect
                 lineMaxY = dc.cursorPos.y
                 lineMinY = dc.cursorPos.y
             }
@@ -954,7 +952,7 @@ interface imgui_internal {
             if (columns.columns.isNotEmpty() && columns.columns.size != columnsCount + 1)
                 columns.columns.clear()
 
-            // Initialize defaults
+            // Initialize default widths
             columns.isFirstFrame = columns.columns.isEmpty()
             if (columns.columns.isEmpty())
                 for (n in 0..columnsCount)
@@ -988,17 +986,19 @@ interface imgui_internal {
             drawList.channelsMerge()
         }
 
+        val flags = columns.flags
         columns.lineMaxY = glm.max(columns.lineMaxY, dc.cursorPos.y)
         dc.cursorPos.y = columns.lineMaxY
-        if (columns.flags hasnt Cf.GrowParentContentsSize)
-            dc.cursorMaxPos.x = columns.backupCursorMaxPosX // Restore cursor max pos, as columns don't grow parent
+        if (flags hasnt Cf.GrowParentContentsSize)
+            dc.cursorMaxPos.x = columns.hostCursorMaxPosX // Restore cursor max pos, as columns don't grow parent
 
         // Draw columns borders and handle resize
+        // The IsBeingResized flag ensure we preserve pre-resize columns width so back-and-forth are not lossy
         var isBeingResized = false
-        if (columns.flags hasnt Cf.NoBorder && !skipItems) {
+        if (flags hasnt Cf.NoBorder && !skipItems) {
 
             // We clip Y boundaries CPU side because very long triangles are mishandled by some GPU drivers.
-            val y1 = columns.backupCursorPosY max clipRect.min.y
+            val y1 = columns.hostCursorPosY max clipRect.min.y
             val y2 = dc.cursorPos.y min clipRect.max.y
             var draggingColumn = -1
             for (n in 1 until columns.count) {
@@ -1019,7 +1019,7 @@ interface imgui_internal {
                     held = c
                     if (hovered || held)
                         g.mouseCursor = MouseCursor.ResizeEW
-                    if (held && column.flags hasnt Cf.NoResize)
+                    if (held && flags hasnt Cf.NoResize)
                         draggingColumn = n
                 }
 
@@ -1062,7 +1062,7 @@ interface imgui_internal {
         val columns = window.dc.currentColumns!!
         window.drawList.channelsSetCurrent(0)
         val cmdSize = window.drawList.cmdBuffer.size
-        pushClipRect(columns.backupClipRect.min, columns.backupClipRect.max, false)
+        pushClipRect(columns.hostClipRect.min, columns.hostClipRect.max, false)
         assert(cmdSize == window.drawList.cmdBuffer.size) // Being in channel 0 this should not have created an ImDrawCmd
     }
 

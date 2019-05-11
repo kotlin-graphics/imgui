@@ -116,7 +116,7 @@ interface imgui_colums {
         val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
 
         val t = columns.columns[columnIndex].offsetNorm
-        return lerp(columns.minX, columns.maxX, t) // xOffset
+        return lerp(columns.offMinX, columns.offMaxX, t) // xOffset
     }
 
     /** set position of column line (in pixels, from the left side of the contents region). pass -1 to use current column  */
@@ -131,8 +131,8 @@ interface imgui_colums {
         val width = if (preserveWidth) getColumnWidthEx(columns, columnIndex, columns.isBeingResized) else 0f
 
         val offset = if (columns.flags has Cf.NoForceWithinWindow) offset_
-        else min(offset_, columns.maxX - style.columnsMinSpacing * (columns.count - columnIndex))
-        columns.columns[columnIndex].offsetNorm = pixelsToOffsetNorm(columns, offset - columns.minX)
+        else min(offset_, columns.offMaxX - style.columnsMinSpacing * (columns.count - columnIndex))
+        columns.columns[columnIndex].offsetNorm = pixelsToOffsetNorm(columns, offset - columns.offMinX)
 
         if (preserveWidth)
             setColumnOffset(columnIndex + 1, offset + glm.max(style.columnsMinSpacing, width))
@@ -232,9 +232,9 @@ interface imgui_colums {
 
     companion object {
 
-        fun offsetNormToPixels(columns: Columns, offsetNorm: Float) = offsetNorm * (columns.maxX - columns.minX)
+        fun offsetNormToPixels(columns: Columns, offsetNorm: Float) = offsetNorm * (columns.offMaxX - columns.offMinX)
 
-        fun pixelsToOffsetNorm(columns: Columns, offset: Float) = offset / (columns.maxX - columns.minX)
+        fun pixelsToOffsetNorm(columns: Columns, offset: Float) = offset / (columns.offMaxX - columns.offMinX)
 
         val COLUMNS_HIT_RECT_HALF_WIDTH = 4f
 
