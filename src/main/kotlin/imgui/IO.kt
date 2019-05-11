@@ -218,9 +218,10 @@ class IO(sharedFontAtlas: FontAtlas?) {
     val mouseDoubleClicked = BooleanArray(5)
     /** Mouse button went from Down to !Down    */
     val mouseReleased = BooleanArray(5)
-    /** Track if button was clicked inside a window. We don't request mouse capture from the application if click
-    started outside ImGui bounds.   */
+    /** Track if button was clicked inside an imgui window. We don't request mouse capture from the application if click started outside ImGui bounds.   */
     var mouseDownOwned = BooleanArray(5)
+    /** Track if button down was a double-click */
+    var mouseDownWasDoubleClick = BooleanArray(5)
     /** Duration the mouse button has been down (0.0f == just clicked)  */
     val mouseDownDuration = FloatArray(5) { -1f }
     /** Previous time the mouse button has been down    */

@@ -457,6 +457,7 @@ interface imgui_main {
                         } else
                             mouseClickedTime[i] = g.time
                         mouseClickedPos[i] put mousePos
+                        mouseDownWasDoubleClick[i] = mouseDoubleClicked[i]
                         mouseDragMaxDistanceAbs[i] put 0f
                         mouseDragMaxDistanceSqr[i] = 0f
                     } else if (mouseDown[i]) {
@@ -479,6 +480,8 @@ interface imgui_main {
                         mouseDragMaxDistanceAbs[i].y = mouseDragMaxDistanceAbs[i].y max if (mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y
                         mouseDragMaxDistanceSqr[i] = mouseDragMaxDistanceSqr[i] max mouseDelta.lengthSqr
                     }
+                    if (!mouseDown[i] && !mouseReleased[i])
+                        mouseDownWasDoubleClick[i] = false
                     // Clicking any mouse button reactivate mouse hovering which may have been deactivated by gamepad/keyboard navigation
                     if (mouseClicked[i])
                         g.navDisableMouseHover = false

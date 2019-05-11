@@ -1954,6 +1954,10 @@ interface imgui_internal {
      *    Frame N+6 (mouse button is released)   -             true             -               -                  true                 -
      *    Frame N+7 (mouse button is released)   -             true             -               -                  -                    -
      *  ------------------------------------------------------------------------------------------------------------------------------------------------
+     *  Note that some combinations are supported,
+     *  - PressedOnDragDropHold can generally be associated with any flag.
+     *  - PressedOnDoubleClick can be associated by PressedOnClickRelease/PressedOnRelease, in which case the second release event won't be reported.
+     *  ------------------------------------------------------------------------------------------------------------------------------------------------
      *  The behavior of the return-value changes when ImGuiButtonFlags_Repeat is set:
      *                                          Repeat+                  Repeat+           Repeat+             Repeat+
      *                                          PressedOnClickRelease    PressedOnClick    PressedOnRelease    PressedOnDoubleClick
@@ -2078,10 +2082,12 @@ interface imgui_internal {
                 if (io.mouseDown[0])
                     held = true
                 else {
-                    if (hovered && flags has Bf.PressedOnClickRelease)
-                        if (!(flags has Bf.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay)) // Repeat mode trumps <on release>
-                            if (!g.dragDropActive)
-                                pressed = true
+                    if (hovered && flags has Bf.PressedOnClickRelease && !g.dragDropActive) {
+                        val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && io.mouseDownWasDoubleClick[0]
+                        val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay // Repeat mode trumps <on release>
+                        if (!isDoubleClickRelease && !isRepeatingAlready)
+                            pressed = true
+                    }
                     clearActiveId()
                 }
                 if (flags hasnt Bf.NoNavFocus)
