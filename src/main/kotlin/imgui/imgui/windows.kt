@@ -13,7 +13,6 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
 import imgui.ImGui.collapseButton
 import imgui.ImGui.currentWindow
-import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endColumns
 import imgui.ImGui.findBestWindowPosForPopup
 import imgui.ImGui.findWindowByName
@@ -21,13 +20,10 @@ import imgui.ImGui.frontMostPopupModal
 import imgui.ImGui.getColorU32
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
-import imgui.ImGui.itemAdd
-import imgui.ImGui.itemSize
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.renderFrame
-import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
 import imgui.ImGui.style
@@ -67,19 +63,19 @@ interface imgui_windows {
     }
 
     /**  Push a new ImGui window to add widgets to:
-        - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use
-            widgets without explicitly calling a Begin/End pair.
-        - Begin/End can be called multiple times during the frame with the same window name to append content.
-        - The window name is used as a unique identifier to preserve window information across frames (and save
-            rudimentary information to the .ini file).
-            You can use the "##" or "###" markers to use the same label with different id, or same id with different
-            label. See documentation at the top of this file.
-        - Return false when window is collapsed (so you can early out in your code) but you always need to call End()
-            regardless. You always need to call ImGui::End() even if false is returned.
-        - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
-            be set to false when the button is pressed.
+    - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use
+    widgets without explicitly calling a Begin/End pair.
+    - Begin/End can be called multiple times during the frame with the same window name to append content.
+    - The window name is used as a unique identifier to preserve window information across frames (and save
+    rudimentary information to the .ini file).
+    You can use the "##" or "###" markers to use the same label with different id, or same id with different
+    label. See documentation at the top of this file.
+    - Return false when window is collapsed (so you can early out in your code) but you always need to call End()
+    regardless. You always need to call ImGui::End() even if false is returned.
+    - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will
+    be set to false when the button is pressed.
 
-        @return isOpen
+    @return isOpen
      */
     fun begin(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = 0): Boolean {
 
@@ -404,6 +400,44 @@ interface imgui_windows {
                 else -> g.fontSize * 16f
             }.i.f
 
+            val titleBarRect = window.titleBarRect()
+            window.apply {
+                // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars.
+                sizeFullAtLastBegin put sizeFull
+
+                // UPDATE RECTANGLES
+
+                // Update various regions. Variables they depends on are set above in this function.
+                // FIXME: ContentsRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
+                // NB: WindowBorderSize is included in WindowPadding _and_ ScrollbarSizes so we need to cancel one out.
+                contentsRegionRect.put(
+                        pos.x - scroll.x + windowPadding.x,
+                        pos.y - scroll.y + windowPadding.y + titleBarHeight + menuBarHeight,
+                        pos.x - scroll.x - windowPadding.x + if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else (size.x - scrollbarSizes.x + min(scrollbarSizes.x, windowBorderSize)),
+                        pos.y - scroll.y - windowPadding.y + if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else (size.y - scrollbarSizes.y + min(scrollbarSizes.y, windowBorderSize)))
+
+                // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
+                outerRectClipped put rect()
+                outerRectClipped clipWith clipRect
+
+                // Inner rectangle
+                // We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
+                // Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.
+                innerMainRect.put(
+                        titleBarRect.min.x + windowBorderSize,
+                        titleBarRect.max.y + menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else windowBorderSize,
+                        pos.x + size.x - max(scrollbarSizes.x, windowBorderSize),
+                        pos.y + size.y - max(scrollbarSizes.y, windowBorderSize))
+
+                // Inner clipping rectangle will extend a little bit outside the work region.
+                // This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
+                // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
+                innerClipRect.put(
+                        floor(0.5f + innerMainRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
+                        floor(0.5f + innerMainRect.min.y),
+                        floor(0.5f + innerMainRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
+                        floor(0.5f + innerMainRect.max.y))
+            }
 
             /* ---------- DRAWING ---------- */
 
@@ -439,7 +473,6 @@ interface imgui_windows {
             val windowToHighlight = g.navWindowingTarget ?: g.navWindow
             val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
                     ?: false)
-            val titleBarRect = window.titleBarRect()
             if (window.collapsed) {
                 // Title bar only
                 val backupBorderSize = style.frameBorderSize
@@ -517,37 +550,6 @@ interface imgui_windows {
             window.sizeFullAtLastBegin put window.sizeFull
 
             with(window) {
-
-                /*  Update ContentsRegionMax. Variables they depends on are set above in this function.
-                    FIXME: window->ContentsRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
-                    NB: WindowBorderSize is included in WindowPadding _and_ ScrollbarSizes so we need to cancel one out. */
-                contentsRegionRect.let {
-                    it.min.put(pos.x - scroll.x + windowPadding.x,
-                            pos.y - scroll.y + windowPadding.y + titleBarHeight + menuBarHeight)
-                    val x = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else size.x - scrollbarSizes.x + min(scrollbarSizes.x, windowBorderSize)
-                    val y = if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else size.y - scrollbarSizes.y + min(scrollbarSizes.y, windowBorderSize)
-                    it.max.put(pos.x - scroll.x - windowPadding.x + x, pos.y - scroll.y - windowPadding.y + y)
-                }
-
-                // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
-                outerRectClipped put rect()
-                outerRectClipped clipWith clipRect
-
-                /*  Inner rectangle
-                We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
-                Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.   */
-                innerMainRect.min.x = titleBarRect.min.x + windowBorderSize
-                innerMainRect.min.y = titleBarRect.max.y + menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else windowBorderSize
-                innerMainRect.max.x = pos.x + size.x - (scrollbarSizes.x max windowBorderSize)
-                innerMainRect.max.y = pos.y + size.y - (scrollbarSizes.y max windowBorderSize)
-
-                /*  Inner clipping rectangle will extend a little bit outside the work region.
-                    This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
-                    Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.                 */
-                innerClipRect.min.x = floor(0.5f + innerMainRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize)))
-                innerClipRect.min.y = floor(0.5f + innerMainRect.min.y)
-                innerClipRect.max.x = floor(0.5f + innerMainRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize)))
-                innerClipRect.max.y = floor(0.5f + innerMainRect.max.y)
 
                 /*  Setup drawing context
                     (NB: That term "drawing context / DC" lost its meaning a long time ago. Initially was meant to hold
@@ -741,9 +743,6 @@ interface imgui_windows {
         checkStacksSize(window, false)
         setCurrentWindow(g.currentWindowStack.lastOrNull())
     }
-
-
-
 
 
     /** per-window font scale. Adjust io.FontGlobalScale if you want to scale all windows   */
