@@ -469,7 +469,7 @@ class Style {
     var touchExtraPadding = Vec2()
     /** Horizontal spacing when e.g. entering a tree node. Generally == (FontSize + FramePadding.x*2).  */
     var indentSpacing = 21f
-    /** Minimum horizontal spacing between two columns.  */
+    /** Minimum horizontal spacing between two columns. Preferably > (FramePadding.x + 1).  */
     var columnsMinSpacing = 6f
     /** Width of the vertical scrollbar, Height of the horizontal scrollbar. */
     var scrollbarSize = 16f

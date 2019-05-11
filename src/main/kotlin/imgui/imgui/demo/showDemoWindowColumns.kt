@@ -42,14 +42,13 @@ object showDemoWindowColumns {
     var disableIndent = false
 
 
-    /* Mixed Items */
-    var foo = 1f
-    var bar = 1f
-
-
     /* Borders */
     var hBorders = true
     var vBorders = true
+
+    /* Mixed Items */
+    var foo = 1f
+    var bar = 1f
 
 
     operator fun invoke() {
@@ -101,6 +100,28 @@ object showDemoWindowColumns {
                 separator()
             }
 
+            if (treeNode("Borders")) {
+                // NB: Future columns API should allow automatic horizontal borders.
+                checkbox("horizontal", ::hBorders)
+                sameLine()
+                checkbox("vertical", ::vBorders)
+                columns(4, "", vBorders)
+                for (i in 0 until 4 * 3)                {
+                    if (hBorders && columnIndex == 0)
+                        separator()
+                    text("%c%c%c", 'a' + i, 'a' + i, 'a' + i)
+                    text("Width %.2f", getColumnWidth())
+                    text("Offset %.2f", getColumnOffset())
+                    text("Long text that is likely to clip")
+                    button("Button", Vec2(-1f, 0f))
+                    nextColumn()
+                }
+                columns(1)
+                if (hBorders)
+                    separator()
+                treePop()
+            }
+
             // Create multiple items in a same cell before switching to next column
             treeNode("Mixed items") {
                 columns(3, "mixed")
@@ -139,25 +160,6 @@ object showDemoWindowColumns {
                 textWrapped("Hello Right")
                 columns(1)
                 separator()
-            }
-
-            treeNode("Borders") {
-                // NB: Future columns API should allow automatic horizontal borders.
-                checkbox("horizontal", ::hBorders)
-                sameLine()
-                checkbox("vertical", ::vBorders)
-                columns(4, "", vBorders)
-                for (i in 0 until 4 * 3) {
-                    if (hBorders && columnIndex == 0) separator()
-                    text("%c%c%c", 'a' + i, 'a' + i, 'a' + i)
-                    text("Width %.2f", getColumnWidth())
-                    text("Offset %.2f", getColumnOffset())
-                    text("Long text that is likely to clip")
-                    button("Button", Vec2(-1f, 0f))
-                    nextColumn()
-                }
-                columns(1)
-                if (hBorders) separator()
             }
 
             treeNode("Horizontal Scrolling") {

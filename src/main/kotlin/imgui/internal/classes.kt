@@ -320,13 +320,16 @@ class Columns {
     var isBeingResized = false
     var current = 0
     var count = 1
-    var minX = 0f
-    var maxX = 0f
+    /** Offsets from HostWorkRect.Min.x */
+    var offMinX = 0f
+    /** Offsets from HostWorkRect.Min.x */
+    var offMaxX = 0f
     /** Backup of CursorPos at the time of BeginColumns() */
-    var backupCursorPosY = 0f
+    var hostCursorPosY = 0f
     /** Backup of CursorMaxPos at the time of BeginColumns() */
-    var backupCursorMaxPosX = 0f
-    var backupClipRect = Rect()
+    var hostCursorMaxPosX = 0f
+    /** Backup of ClipRect at the time of BeginColumns() */
+    var hostClipRect = Rect()
     var lineMinY = 0f
     var lineMaxY = 0f
     val columns = ArrayList<ColumnData>()
@@ -338,10 +341,10 @@ class Columns {
         isBeingResized = false
         current = 0
         count = 1
-        maxX = 0f
-        minX = 0f
-        backupCursorPosY = 0f
-        backupCursorMaxPosX = 0f
+        offMaxX = 0f
+        offMinX = 0f
+        hostCursorPosY = 0f
+        hostCursorMaxPosX = 0f
         lineMaxY = 0f
         lineMinY = 0f
         columns.clear()
