@@ -152,7 +152,7 @@ object JoglGL3 {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
 
-        program = JoglProgram(this, vertexShader, fragmentShader)
+//        program = JoglProgram(this, vertexShader, fragmentShader)
 
         glGenBuffers(Buffer.MAX, bufferName)
 

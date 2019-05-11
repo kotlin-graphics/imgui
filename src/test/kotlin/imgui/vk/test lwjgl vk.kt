@@ -14,9 +14,9 @@
 //import imgui.destroy
 //import imgui.dsl.withWindow
 //import imgui.impl.ImplVk
-//import imgui.impl.LwjglGlfw
-//import imgui.impl.LwjglGlfw.GlfwClientApi
-//import imgui.impl.LwjglGlfw.window
+//import imgui.impl.ImplGlfw
+//import imgui.impl.ImplGlfw.GlfwClientApi
+//import imgui.impl.ImplGlfw.window
 //import org.lwjgl.system.MemoryUtil
 //import org.lwjgl.vulkan.VkPresentInfoKHR
 //import uno.glfw.GlfwWindow
@@ -25,13 +25,13 @@
 //import vkk.*
 //
 //fun main(args: Array<String>) {
-//    HelloWorld_lwjgl().run()
+//    ImGuiOpenGL3().run()
 //}
 //
 //var DEBUG_REPORT = true
 //var UNLIMITED_FRAME_RATE = false
 //
-//private class HelloWorld_lwjgl {
+//private class ImGuiOpenGL3 {
 //
 //    var resizeWanted = false
 //    var resizeSize = Vec2i()
@@ -75,7 +75,7 @@
 //        //ImGui.styleColorsClassic()
 //
 //        // Setup GLFW and Vulkan binding
-//        LwjglGlfw.init(window, true, GlfwClientApi.Vulkan)
+//        ImplGlfw.init(window, true, GlfwClientApi.Vulkan)
 //
 //        // Load Fonts
 //        // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -246,7 +246,7 @@
 //        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
 //        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
 //        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-//        LwjglGlfw.window.loop {
+//        ImplGlfw.window.loop {
 //
 //            if (resizeWanted) {
 //                ImplVk.createWindowDataSwapChainAndFramebuffer(resizeSize)
@@ -254,7 +254,7 @@
 //            }
 //
 //            // Start the ImGui frame
-//            LwjglGlfw.newFrame()
+//            ImplGlfw.newFrame()
 //
 //            // 1. Show a simple window.
 //            // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets automatically appears in a window called "Debug".
@@ -263,7 +263,7 @@
 //                sliderFloat("float", ::f, 0f, 1f)            // Edit 1 float using a slider from 0.0f to 1.0f
 //                colorEdit3("clear color", clearColor) // Edit 3 floats representing a color (nb: you could use (float*)&wd->ClearValue instead)
 //
-//                checkbox("Demo Window", this@HelloWorld_lwjgl::showDemoWindow)      // Edit bools storing our windows open/close state
+//                checkbox("Demo Window", this@ImGuiOpenGL3::showDemoWindow)      // Edit bools storing our windows open/close state
 //                checkbox("Another Window", ::showAnotherWindow)
 //
 //                if (button("Button"))                            // Buttons return true when clicked (NB: most widgets return true when edited/activated)
@@ -298,7 +298,7 @@
 //
 //        // Cleanup
 //        ImplVk.device.waitIdle()
-//        LwjglGlfw.shutdown()
+//        ImplGlfw.shutdown()
 //        ctx.destroy()
 //        cleanupVulkan()
 //
