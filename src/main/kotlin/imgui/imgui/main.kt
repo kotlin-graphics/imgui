@@ -7,9 +7,12 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.clearActiveId
 import imgui.ImGui.clearDragDrop
+import imgui.ImGui.closeButton
 import imgui.ImGui.closePopupsOverWindow
+import imgui.ImGui.collapseButton
 import imgui.ImGui.defaultFont
 import imgui.ImGui.end
 import imgui.ImGui.frontMostPopupModal
@@ -20,6 +23,7 @@ import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
+import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
@@ -31,6 +35,7 @@ import imgui.internal.*
 import org.lwjgl.system.Platform
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.reflect.KMutableProperty0
 import imgui.ConfigFlag as Cf
 import imgui.WindowFlag as Wf
 import imgui.internal.DrawListFlag as Dlf
@@ -674,7 +679,7 @@ interface imgui_main {
             window.pos = glm.min(rect.max - padding, glm.max(window.pos + sizeForClamping, rect.min + padding) - sizeForClamping)
         }
 
-        fun renderOuterBorders(window: Window) {
+        fun renderWindowOuterBorders(window: Window) {
 
             val rounding = window.windowRounding
             val borderSize = window.windowBorderSize
@@ -694,6 +699,61 @@ interface imgui_main {
             if (style.frameBorderSize > 0f && window.flags hasnt Wf.NoTitleBar) {
                 val y = window.pos.y + window.titleBarHeight - 1
                 window.drawList.addLine(Vec2(window.pos.x + borderSize, y), Vec2(window.pos.x + window.size.x - borderSize, y), Col.Border.u32, style.frameBorderSize)
+            }
+        }
+
+        fun renderWindowTitleBarContents(window: Window, titleBarRect: Rect, name: String, pOpen: KMutableProperty0<Boolean>?) {
+
+            val flags = window.flags
+
+            // Close & collapse button are on layer 1 (same as menus) and don't default focus
+            val itemFlagsBackup = window.dc.itemFlags
+            window.dc.itemFlags = window.dc.itemFlags or ItemFlag.NoNavDefaultFocus
+            window.dc.navLayerCurrent = NavLayer.Menu
+            window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu
+
+            // Collapse button
+            if (flags hasnt Wf.NoCollapse)
+                if (collapseButton(window.getId("#COLLAPSE"), window.pos))
+                    window.wantCollapseToggle = true // Defer collapsing to next frame as we are too far in the Begin() function
+
+            // Close button
+            if (pOpen != null) {
+                val rad = g.fontSize * 0.5f
+                if (closeButton(window.getId("#CLOSE"), Vec2(window.pos.x + window.size.x - style.framePadding.x - rad, window.pos.y + style.framePadding.y + rad), rad + 1))
+                    pOpen.set(false)
+            }
+
+            window.dc.navLayerCurrent = NavLayer.Main
+            window.dc.navLayerCurrentMask = 1 shl NavLayer.Main
+            window.dc.itemFlags = itemFlagsBackup
+
+            // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
+            // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
+            val UNSAVED_DOCUMENT_MARKER = "*"
+            val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, -1, false).x else 0f
+            val textSize = calcTextSize(name, -1, true) + Vec2(markerSizeX, 0f)
+            val textR = Rect(titleBarRect)
+            val padLeft = when {
+                flags has Wf.NoCollapse -> style.framePadding.x
+                else -> style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
+            }
+            var padRight = style.framePadding.x + when (pOpen) {
+                null -> 0f
+                else -> g.fontSize + style.itemInnerSpacing.x
+            }
+            if (style.windowTitleAlign.x > 0f)
+                padRight = lerp(padRight, padLeft, style.windowTitleAlign.x)
+            textR.min.x += padLeft
+            textR.max.x -= padRight
+            val clipRect = Rect(textR)
+            // Match the size of CloseButton()
+            clipRect.max.x = window.pos.x + window.size.x - (if (pOpen?.get() == true) titleBarRect.height - 3 else style.framePadding.x) // Match the size of CloseButton()
+            renderTextClipped(textR.min, textR.max, name, -1, textSize, style.windowTitleAlign, clipRect)
+            if (flags has Wf.UnsavedDocument) {
+                val markerPos = Vec2(max(textR.min.x, textR.min.x + (textR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, textR.min.y) + Vec2(2 - markerSizeX, 0f)
+                val off = Vec2(0f, (-g.fontSize * 0.25f).i.f)
+                renderTextClipped(markerPos + off, textR.max + off, UNSAVED_DOCUMENT_MARKER, -1, null, Vec2(0, style.windowTitleAlign.y), clipRect)
             }
         }
 

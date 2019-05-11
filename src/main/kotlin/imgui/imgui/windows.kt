@@ -5,13 +5,9 @@ import gli_.hasnt
 import glm_.f
 import glm_.glm
 import glm_.i
-import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.F32_TO_INT8_SAT
-import imgui.ImGui.calcTextSize
-import imgui.ImGui.closeButton
-import imgui.ImGui.collapseButton
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endColumns
 import imgui.ImGui.findBestWindowPosForPopup
@@ -24,11 +20,11 @@ import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.renderFrame
-import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
 import imgui.ImGui.style
 import imgui.imgui.imgui_main.Companion.clampWindowRect
-import imgui.imgui.imgui_main.Companion.renderOuterBorders
+import imgui.imgui.imgui_main.Companion.renderWindowOuterBorders
+import imgui.imgui.imgui_main.Companion.renderWindowTitleBarContents
 import imgui.imgui.imgui_main.Companion.resizeGripDef
 import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
@@ -62,7 +58,7 @@ interface imgui_windows {
         else -> withBoolean(pOpen, 0) { begin(name, it, flags) }
     }
 
-    /**  Push a new ImGui window to add widgets to:
+    /**  Push a new Dear ImGui window to add widgets to:
     - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use
     widgets without explicitly calling a Begin/End pair.
     - Begin/End can be called multiple times during the frame with the same window name to append content.
@@ -531,7 +527,7 @@ interface imgui_windows {
                     }
 
                 // Borders
-                renderOuterBorders(window)
+                renderWindowOuterBorders(window)
             }
 
             // Draw navigation selection/windowing rectangle border
@@ -606,57 +602,8 @@ interface imgui_windows {
             }
 
             // Title bar
-            if (flags hasnt Wf.NoTitleBar) {
-                // Close & collapse button are on layer 1 (same as menus) and don't default focus
-                val itemFlagsBackup = window.dc.itemFlags
-                window.dc.itemFlags = window.dc.itemFlags or If.NoNavDefaultFocus
-                window.dc.navLayerCurrent = NavLayer.Menu
-                window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu
-
-                // Collapse button
-                if (flags hasnt Wf.NoCollapse)
-                    if (collapseButton(window.getId("#COLLAPSE"), window.pos + style.framePadding))
-                        window.wantCollapseToggle = true // Defer collapsing to next frame as we are too far in the Begin() function
-
-                // Close button
-                if (pOpen != null) {
-                    val rad = g.fontSize * 0.5f
-                    if (closeButton(window.getId("#CLOSE"), Vec2(window.pos.x + window.size.x - style.framePadding.x - rad, window.pos.y + style.framePadding.y + rad), rad + 1))
-                        pOpen.set(false)
-                }
-
-                window.dc.navLayerCurrent = NavLayer.Main
-                window.dc.navLayerCurrentMask = 1 shl NavLayer.Main
-                window.dc.itemFlags = itemFlagsBackup
-
-                // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
-                // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
-                val UNSAVED_DOCUMENT_MARKER = "*"
-                val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, -1, false).x else 0f
-                val textSize = calcTextSize(name, -1, true) + Vec2(markerSizeX, 0f)
-                val textR = Rect(titleBarRect)
-                val padLeft = when {
-                    flags has Wf.NoCollapse -> style.framePadding.x
-                    else -> style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
-                }
-                var padRight = when (pOpen) {
-                    null -> style.framePadding.x
-                    else -> style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
-                }
-                if (style.windowTitleAlign.x > 0f)
-                    padRight = lerp(padRight, padLeft, style.windowTitleAlign.x)
-                textR.min.x += padLeft
-                textR.max.x -= padRight
-                val clipRect = Rect(textR)
-                // Match the size of CloseButton()
-                clipRect.max.x = window.pos.x + window.size.x - (if (pOpen?.get() == true) titleBarRect.height - 3 else style.framePadding.x)
-                renderTextClipped(textR.min, textR.max, name, -1, textSize, style.windowTitleAlign, clipRect)
-                if (flags has Wf.UnsavedDocument) {
-                    val markerPos = Vec2(max(textR.min.x, textR.min.x + (textR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, textR.min.y) + Vec2(2 - markerSizeX, 0f)
-                    val off = Vec2(0f, (-g.fontSize * 0.25f).i.f)
-                    renderTextClipped(markerPos + off, textR.max + off, UNSAVED_DOCUMENT_MARKER, -1, null, Vec2(0, style.windowTitleAlign.y), clipRect)
-                }
-            }
+            if (flags hasnt Wf.NoTitleBar)
+                renderWindowTitleBarContents(window, titleBarRect, name, pOpen)
 
             // Pressing CTRL+C while holding on a window copy its content to the clipboard
             // This works but 1. doesn't handle multiple Begin/End pairs, 2. recursing into another Begin/End pair - so we need to work that out and add better logging scope.
