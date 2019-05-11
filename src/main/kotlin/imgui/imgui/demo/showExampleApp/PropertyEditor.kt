@@ -4,7 +4,6 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
-import imgui.ImGui.begin_
 import imgui.ImGui.columns
 import imgui.ImGui.dragFloat
 import imgui.ImGui.end

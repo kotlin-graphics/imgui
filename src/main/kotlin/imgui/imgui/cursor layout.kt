@@ -2,7 +2,6 @@ package imgui.imgui
 
 import glm_.f
 import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
 import imgui.Col
 import imgui.ImGui.currentWindow
@@ -10,13 +9,11 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
-import imgui.ImGui.popClipRect
-import imgui.ImGui.pushColumnClipRect
+import imgui.ImGui.logText
+import imgui.ImGui.popColumnsBackground
 import imgui.ImGui.pushColumnsBackground
 import imgui.ImGui.style
-import imgui.ImGui.verticalSeparator
-import imgui.internal.GroupData
-import imgui.internal.Rect
+import imgui.internal.*
 import imgui.internal.LayoutType as Lt
 import imgui.internal.SeparatorFlag as Sf
 
@@ -28,44 +25,54 @@ interface imgui_cursorLayout {
 
     /** Horizontal/vertical separating line
      *  Separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a vertical separator. */
-    fun separator() {
+    fun separatorEx(flags: SeparatorFlags) {
 
         val window = currentWindow
         if (window.skipItems) return
 
-        // Those flags should eventually be overrideable by the user
-        val flag: Sf = if (window.dc.layoutType == Lt.Horizontal) Sf.Vertical else Sf.Horizontal
-        // useless on JVM with enums
-        // assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo)
+        assert((flags and (Sf.Horizontal or Sf.Vertical)).isPowerOfTwo) { "Check that only 1 option is selected" }
 
-        if (flag == Sf.Vertical) {
-            verticalSeparator()
-            return
-        }
-        // Horizontal Separator
-        window.dc.currentColumns?.let { pushColumnsBackground() }
+        if (flags has Sf.Vertical) {
+            // Vertical separator, for menu bars (use current line height). Not exposed because it is misleading and it doesn't have an effect on regular layout.
+            val y1 = window.dc.cursorPos.y
+            val y2 = window.dc.cursorPos.y + window.dc.currentLineSize.y
+            val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
+            itemSize(Vec2(1f, 0f))
+            if (!itemAdd(bb, 0))
+                return
+            // Draw
+            window.drawList.addLine(Vec2(bb.min.x, bb.min.y), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
+            if (g.logEnabled)
+                logText(" |")
 
-        var x1 = window.pos.x
-        val x2 = window.pos.x + window.size.x
-        if (window.dc.groupStack.isNotEmpty())
-            x1 += window.dc.indent.i
+        } else if (flags has Sf.Horizontal) {
+            // Horizontal Separator
+            var x1 = window.pos.x
+            val x2 = window.pos.x + window.size.x
+            if (window.dc.groupStack.isNotEmpty())
+                x1 += window.dc.indent
 
-        val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
-        // NB: we don't provide our width so that it doesn't get feed back into AutoFit
-        itemSize(Vec2(0f, 1f))
-        if (!itemAdd(bb, 0)) {
-            window.dc.currentColumns?.let { pushColumnsBackground() }
-            return
-        }
+            val columns = window.dc.currentColumns.takeIf { flags has Sf.SpanAllColumns }
+            if (columns != null)
+                pushColumnsBackground()
 
-        window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
+            val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + 1f))
+            itemSize(Vec2(0f, 1f)) // NB: we don't provide our width so that it doesn't get feed back into AutoFit
+            if (!itemAdd(bb, 0)) {
+                if (columns != null)
+                    popColumnsBackground()
+                return
+            }
 
-        if (g.logEnabled)
-            logRenderedText(bb.min, "--------------------------------")
+            // Draw
+            window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
+            if (g.logEnabled)
+                logRenderedText(bb.min, "--------------------------------")
 
-        window.dc.currentColumns?.let {
-            pushColumnsBackground()
-            it.lineMinY = window.dc.cursorPos.y
+            columns?.let {
+                popColumnsBackground()
+                it.lineMinY = window.dc.cursorPos.y
+            }
         }
     }
 
@@ -161,7 +168,7 @@ interface imgui_cursorLayout {
             dc.cursorMaxPos put dc.cursorPos
             dc.currentLineSize.y = 0f
             if (g.logEnabled)
-                g.logLinePosY = -Float.MAX_VALUE;// To enforce Log carriage return
+                g.logLinePosY = -Float.MAX_VALUE// To enforce Log carriage return
         }
     }
 

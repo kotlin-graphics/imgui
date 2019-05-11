@@ -1,25 +1,20 @@
 package imgui.imgui.widgets
 
-import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
-import imgui.*
 import imgui.Col
+import imgui.ID
 import imgui.ImGui.buttonBehavior
-import imgui.ImGui.currentWindow
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
-import imgui.ImGui.itemSize
-import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.mouseCursor
-import imgui.ImGui.popClipRect
-import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.style
-import imgui.ImGui.verticalSeparator
+import imgui.MouseCursor
+import imgui.getValue
 import imgui.imgui.g
 import imgui.internal.*
+import imgui.setValue
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import glm_.pow as _
@@ -27,12 +22,12 @@ import imgui.ColorEditFlag as Cef
 import imgui.DragDropFlag as Ddf
 import imgui.HoveredFlag as Hf
 import imgui.InputTextFlag as Itf
-import imgui.internal.ItemFlag as If
 import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 import imgui.internal.ColumnsFlag as Cf
 import imgui.internal.DrawCornerFlag as Dcf
+import imgui.internal.ItemFlag as If
 import imgui.internal.LayoutType as Lt
 import imgui.internal.SeparatorFlag as Sf
 

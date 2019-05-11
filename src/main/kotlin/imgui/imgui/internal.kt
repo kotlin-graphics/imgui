@@ -50,6 +50,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.separatorEx
 import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setNextWindowBgAlpha
@@ -1911,18 +1912,14 @@ interface imgui_internal {
 
     /** Vertical separator, for menu bars (use current line height). not exposed because it is misleading
      *  what it doesn't have an effect on regular layout.   */
-    fun verticalSeparator() {
-        val window = currentWindow
-        if (window.skipItems) return
+    fun separator() {
+        val window = g.currentWindow!!
+        if (window.skipItems)
+        return
 
-        val y1 = window.dc.cursorPos.y
-        val y2 = window.dc.cursorPos.y + window.dc.currentLineSize.y
-        val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + 1f, y2))
-        itemSize(Vec2(1f, 0f))
-        if (!itemAdd(bb, 0)) return
-
-        window.drawList.addLine(Vec2(bb.min), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
-        if (g.logEnabled) logText(" |")
+        // Those flags should eventually be overridable by the user
+        val flags = if(window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical else SeparatorFlag.Horizontal
+        separatorEx(flags or SeparatorFlag.SpanAllColumns)
     }
 
 
