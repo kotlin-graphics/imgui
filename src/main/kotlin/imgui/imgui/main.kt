@@ -17,7 +17,7 @@ import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.keepAliveId
+import imgui.ImGui.keepAliveID
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.setCurrentFont
@@ -131,7 +131,7 @@ interface imgui_main {
 
         // Drag and drop keep the source ID alive so even if the source disappear our state is consistent
         if (g.dragDropActive && g.dragDropPayload.sourceId == g.activeId)
-            keepAliveId(g.dragDropPayload.sourceId)
+            keepAliveID(g.dragDropPayload.sourceId)
 
         // Clear reference to active widget if the widget isn't alive anymore
         if (g.hoveredIdPreviousFrame == 0)

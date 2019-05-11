@@ -302,7 +302,7 @@ infix fun Int.shl(layer: NavLayer) = shl(layer.i)
 
 enum class PopupPositionPolicy { Default, ComboBox }
 
-enum class DrawCornerFlag(val i: Int) {
+enum class DrawCornerFlag(val i: DrawCornerFlags) {
     TopLeft(1 shl 0), // 0x1
     TopRight(1 shl 1), // 0x2
     BotLeft(1 shl 2), // 0x4

@@ -351,7 +351,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var dragSpeedDefaultRatio = 1f / 100f
 
     /** Distance between mouse and center of grab box, normalized in parent space. Use storage? */
-    var scrollbarClickDeltaToGrabCenter = Vec2()
+    var scrollbarClickDeltaToGrabCenter = 0f
 
     var tooltipOverrideCount = 0
     /** If no custom clipboard handler is defined   */

@@ -204,7 +204,7 @@ interface imgui_internal {
             }
         }
 
-    fun keepAliveId(id: ID) {
+    fun keepAliveID(id: ID) {
         if (g.activeId == id)
             g.activeIdIsAlive = id
         if (g.activeIdPreviousFrame == id)
@@ -1007,7 +1007,7 @@ interface imgui_internal {
                 val columnId: ID = columns.id + n
                 val columnHitHw = COLUMNS_HIT_RECT_HALF_WIDTH
                 val columnHitRect = Rect(Vec2(x - columnHitHw, y1), Vec2(x + columnHitHw, y2))
-                keepAliveId(columnId)
+                keepAliveID(columnId)
                 if (isClippedEx(columnHitRect, columnId, false)) continue
 
                 var hovered = false
@@ -1476,7 +1476,7 @@ interface imgui_internal {
     /** Find the optional ## from which we stop displaying text.    */
     fun findRenderedTextEnd(text: String, textEnd_: Int = -1): Int { // TODO function extension?
         var textDisplayEnd = 0
-        val textEnd = if(textEnd_ == -1) text.length else textEnd_
+        val textEnd = if (textEnd_ == -1) text.length else textEnd_
         while (textDisplayEnd < textEnd && text[textDisplayEnd] != NUL && (text[textDisplayEnd + 0] != '#' || text[textDisplayEnd + 1] != '#'))
             textDisplayEnd++
         return textDisplayEnd
@@ -1787,96 +1787,106 @@ interface imgui_internal {
 
         val horizontal = axis == Axis.X
         val id = getScrollbarID(window, axis)
-        keepAliveId(id)
+        keepAliveID(id)
 
-        // Render background
-        val otherScrollbar = if (horizontal) window.scrollbar.y else window.scrollbar.x
-        val otherScrollbarSizeW = if (otherScrollbar) style.scrollbarSize else 0f
-        val hostRect = window.rect()
+        // Calculate our bounding box (FIXME: This is messy, should be made simpler using e.g. InnerRect/WorkRect data).
+        val otherScrollbarSize = window.scrollbarSizes[axis.i]
+        val winRect = window.rect()
         val borderSize = window.windowBorderSize
-        val bb = when (horizontal) {
-            true -> Rect(hostRect.min.x + borderSize, hostRect.max.y - style.scrollbarSize,
-                    hostRect.max.x - otherScrollbarSizeW - borderSize, hostRect.max.y - borderSize)
-            else -> Rect(hostRect.max.x - style.scrollbarSize, hostRect.min.y + borderSize,
-                    hostRect.max.x - borderSize, hostRect.max.y - otherScrollbarSizeW - borderSize)
+        val bb = when {
+            horizontal -> Rect(winRect.min.x + borderSize, winRect.max.y - style.scrollbarSize, winRect.max.x - otherScrollbarSize - borderSize, winRect.max.y - borderSize)
+            else -> Rect(winRect.max.x - style.scrollbarSize, winRect.min.y + borderSize, winRect.max.x - borderSize, winRect.max.y - otherScrollbarSize - borderSize)
         }
-        bb.min maxAssign hostRect.min // Handle case where the host rectangle is smaller than the scrollbar
+        bb.min.x = max(winRect.min.x, bb.min.x) // Handle case where the host rectangle is smaller than the scrollbar
+        bb.min.y = max(winRect.min.y, bb.min.y)
         if (!horizontal)
-            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f  // FIXME: InnerRect?
+            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f // FIXME: InnerRect?
 
-        val bbWidth = bb.width
-        val bbHeight = bb.height
-        if (bbWidth <= 0f || bbHeight <= 0f)
-            return
+        // Select rounding
+        var roundingCorners = when {
+            horizontal -> Dcf.BotLeft.i
+            window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar -> Dcf.TopRight.i
+            else -> 0
+        }
+        if (otherScrollbarSize <= 0f)
+            roundingCorners = roundingCorners or Dcf.BotRight
+
+        if (horizontal)
+            scrollbarEx(bb, id, axis, window.scroll::x, window.sizeFull.x - otherScrollbarSize, window.sizeContents.x, roundingCorners)
+        else
+            scrollbarEx(bb, id, axis, window.scroll::y, window.sizeFull.y - otherScrollbarSize, window.sizeContents.y, roundingCorners)
+    }
+
+    /** Vertical/Horizontal scrollbar
+     *  The entire piece of code below is rather confusing because:
+     *  - We handle absolute seeking (when first clicking outside the grab) and relative manipulation (afterward or when clicking inside the grab)
+     *  - We store values as normalized ratio and in a form that allows the window content to change while we are holding on a scrollbar
+     *  - We handle both horizontal and vertical scrollbars, which makes the terminology not ideal.
+     *  Still, the code should probably be made simpler..   */
+    fun scrollbarEx(bbFrame: Rect, id: ID, axis: Axis, pScrollV: KMutableProperty0<Float>, sizeAvailV: Float, sizeContentsV: Float, roundingCorners: DrawCornerFlags): Boolean {
+
+        var scrollV by pScrollV
+
+        val window = g.currentWindow!!
+        if (window.skipItems)
+            return false
+
+        val bbFrameWidth = bbFrame.width
+        val bbFrameHeight = bbFrame.height
+        if (bbFrameWidth <= 0f || bbFrameHeight <= 0f)
+            return false
 
         // When we are too small, start hiding and disabling the grab (this reduce visual noise on very small window and facilitate using the resize grab)
-        var alpha = 1.f
-        if (axis == Axis.Y && bbHeight < g.fontSize + style.framePadding.y * 2f) {
-            alpha = saturate((bbHeight - g.fontSize) / (style.framePadding.y * 2f))
-            if (alpha <= 0f)
-                return
-        }
-        val allowInteraction = alpha >= 1f
+        var alpha = 1f
+        if (axis == Axis.Y && bbFrameHeight < g.fontSize + style.framePadding.y * 2f)
+            alpha = saturate((bbFrameHeight - g.fontSize) / (style.framePadding.y * 2f))
+        if (alpha <= 0f)
+            return false
 
-        val windowRoundingCorners = when {
-            horizontal -> Dcf.BotLeft.i or if (otherScrollbar) 0 else Dcf.BotRight.i
-            else -> (if (window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar) Dcf.TopRight.i else 0) or
-                    if (otherScrollbar) 0 else Dcf.BotRight.i
-        }
-        window.drawList.addRectFilled(bb.min, bb.max, Col.ScrollbarBg.u32, window.windowRounding, windowRoundingCorners)
-        bb.expand(Vec2(
-                -glm.clamp(((bbWidth - 2f) * 0.5f).i.f, 0f, 3f),
-                -glm.clamp(((bbHeight - 2f) * 0.5f).i.f, 0f, 3f)))
+        val allowInteraction = alpha >= 1f
+        val horizontal = axis == Axis.X
+
+        val bb = Rect(bbFrame)
+        bb.expand(Vec2(-clamp(((bbFrameWidth - 2f) * 0.5f).i.f, 0f, 3f), -clamp(((bbFrameHeight - 2f) * 0.5f).i.f, 0f, 3f)))
 
         // V denote the main, longer axis of the scrollbar (= height for a vertical scrollbar)
         val scrollbarSizeV = if (horizontal) bb.width else bb.height
-        var scrollV = if (horizontal) window.scroll.x else window.scroll.y
-        val winSizeAvailV = (if (horizontal) window.sizeFull.x else window.sizeFull.y) - otherScrollbarSizeW
-        val winSizeContentsV = if (horizontal) window.sizeContents.x else window.sizeContents.y
 
-        /*  Calculate the height of our grabbable box. It generally represent the amount visible (vs the total scrollable amount)
-            But we maintain a minimum size in pixel to allow for the user to still aim inside.  */
-        // Adding this assert to check if the ImMax(XXX,1.0f) is still needed. PLEASE CONTACT ME if this triggers.
-        assert(glm.max(winSizeContentsV, winSizeAvailV) > 0f)
-        val winSizeV = glm.max(glm.max(winSizeContentsV, winSizeAvailV), 1f)
-        val grabHPixels = glm.clamp(scrollbarSizeV * (winSizeAvailV / winSizeV), style.grabMinSize, scrollbarSizeV)
+        // Calculate the height of our grabbable box. It generally represent the amount visible (vs the total scrollable amount)
+        // But we maintain a minimum size in pixel to allow for the user to still aim inside.
+        assert(max(sizeContentsV, sizeAvailV) > 0f) { "Adding this assert to check if the ImMax(XXX,1.0f) is still needed. PLEASE CONTACT ME if this triggers." }
+        val winSizeV = max(sizeContentsV max sizeAvailV, 1f)
+        val grabHPixels = clamp(scrollbarSizeV * (sizeAvailV / winSizeV), style.grabMinSize, scrollbarSizeV)
         val grabHNorm = grabHPixels / scrollbarSizeV
 
         // Handle input right away. None of the code of Begin() is relying on scrolling position before calling Scrollbar().
-        val previouslyHeld = g.activeId == id
         val (_, hovered, held) = buttonBehavior(bb, id, Bf.NoNavFocus)
 
-        val scrollMax = glm.max(1f, winSizeContentsV - winSizeAvailV)
+        val scrollMax = max(1f, sizeContentsV - sizeAvailV)
         var scrollRatio = saturate(scrollV / scrollMax)
         var grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV
         if (held && allowInteraction && grabHNorm < 1f) {
             val scrollbarPosV = if (horizontal) bb.min.x else bb.min.y
             val mousePosV = if (horizontal) io.mousePos.x else io.mousePos.y
-            var clickDeltaToGrabCenterV = if (horizontal) g.scrollbarClickDeltaToGrabCenter.x else g.scrollbarClickDeltaToGrabCenter.y
 
             // Click position in scrollbar normalized space (0.0f->1.0f)
             val clickedVNorm = saturate((mousePosV - scrollbarPosV) / scrollbarSizeV)
             hoveredId = id
 
             var seekAbsolute = false
-            if (!previouslyHeld)
-            // On initial click calculate the distance between mouse and the center of the grab
-                if (clickedVNorm >= grabVNorm && clickedVNorm <= grabVNorm + grabHNorm)
-                    clickDeltaToGrabCenterV = clickedVNorm - grabVNorm - grabHNorm * 0.5f
-                else {
-                    seekAbsolute = true
-                    clickDeltaToGrabCenterV = 0f
+            if (g.activeIdIsJustActivated) {
+                // On initial click calculate the distance between mouse and the center of the grab
+                seekAbsolute = (clickedVNorm < grabVNorm || clickedVNorm > grabVNorm + grabHNorm)
+                g.scrollbarClickDeltaToGrabCenter = when {
+                    seekAbsolute -> 0f
+                    else -> clickedVNorm - grabVNorm - grabHNorm * 0.5f
                 }
+            }
 
-            /*  Apply scroll
-                It is ok to modify Scroll here because we are being called in Begin() after the calculation of SizeContents
-                and before setting up our starting position */
-            val scrollVNorm = saturate((clickedVNorm - clickDeltaToGrabCenterV - grabHNorm * 0.5f) / (1f - grabHNorm))
-            scrollV = (0.5f + scrollVNorm * scrollMax).i.f  //(winSizeContentsV - winSizeV));
-            if (horizontal)
-                window.scroll.x = scrollV
-            else
-                window.scroll.y = scrollV
+            // Apply scroll
+            // It is ok to modify Scroll here because we are being called in Begin() after the calculation of SizeContents and before setting up our starting position
+            val scrollVNorm = saturate((clickedVNorm - g.scrollbarClickDeltaToGrabCenter - grabHNorm * 0.5f) / (1f - grabHNorm))
+            scrollV = (0.5f + scrollVNorm * scrollMax).i.f//(win_size_contents_v - win_size_v));
 
             // Update values for rendering
             scrollRatio = saturate(scrollV / scrollMax)
@@ -1884,27 +1894,23 @@ interface imgui_internal {
 
             // Update distance to grab now that we have seeked and saturated
             if (seekAbsolute)
-                clickDeltaToGrabCenterV = clickedVNorm - grabVNorm - grabHNorm * 0.5f
-
-            if (horizontal)
-                g.scrollbarClickDeltaToGrabCenter.x = clickDeltaToGrabCenterV
-            else
-                g.scrollbarClickDeltaToGrabCenter.y = clickDeltaToGrabCenterV
+                g.scrollbarClickDeltaToGrabCenter = clickedVNorm - grabVNorm - grabHNorm * 0.5f
         }
 
-        // Render grab
+        // Render
+        window.drawList.addRectFilled(bbFrame.min, bbFrame.max, Col.ScrollbarBg.u32, window.windowRounding, roundingCorners)
         val grabCol = getColorU32(when {
             held -> Col.ScrollbarGrabActive
             hovered -> Col.ScrollbarGrabHovered
             else -> Col.ScrollbarGrab
         }, alpha)
         val grabRect = when {
-            horizontal -> Rect(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y,
-                    min(lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, hostRect.max.x), bb.max.y)
-            else -> Rect(bb.min.x, lerp(bb.min.y, bb.max.y, grabVNorm),
-                    bb.max.x, min(lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels, hostRect.max.y))
+            horizontal -> Rect(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y, lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, bb.max.y)
+            else -> Rect(bb.min.x, lerp(bb.min.y, bb.max.y, grabVNorm), bb.max.x, lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels)
         }
         window.drawList.addRectFilled(grabRect.min, grabRect.max, grabCol, style.scrollbarRounding)
+
+        return held
     }
 
     fun getScrollbarID(window: Window, axis: Axis): ID =
@@ -1915,10 +1921,10 @@ interface imgui_internal {
     fun separator() {
         val window = g.currentWindow!!
         if (window.skipItems)
-        return
+            return
 
         // Those flags should eventually be overridable by the user
-        val flags = if(window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical else SeparatorFlag.Horizontal
+        val flags = if (window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical else SeparatorFlag.Horizontal
         separatorEx(flags or SeparatorFlag.SpanAllColumns)
     }
 
@@ -3730,7 +3736,7 @@ interface imgui_internal {
                 (could be a child window).
                 We track it to preserve Focus and so that generally activeIdWindow === movingWindow and
                 activeId == movingWindow.moveId for consistency.    */
-            keepAliveId(g.activeId)
+            keepAliveID(g.activeId)
             assert(mov.rootWindow != null)
             val movingWindow = mov.rootWindow!!
             if (io.mouseDown[0] && isMousePosValid(io.mousePos)) {
@@ -3748,7 +3754,7 @@ interface imgui_internal {
         /*  When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order
             to prevent hovering others.                 */
             if (g.activeIdWindow?.moveId == g.activeId) {
-                keepAliveId(g.activeId)
+                keepAliveID(g.activeId)
                 if (!io.mouseDown[0])
                     clearActiveId()
             }
