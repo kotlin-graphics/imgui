@@ -12,16 +12,13 @@ import imgui.ImGui
 import imgui.imgui.Context
 import imgui.impl.ImplGL2
 import imgui.impl.ImplGlfw
-import imgui.impl.glslVersion
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
 import org.lwjgl.system.MemoryStack
-import org.lwjgl.system.Platform
 import uno.glfw.GlfwWindow
 import uno.glfw.VSync
 import uno.glfw.glfw
-import uno.glfw.windowHint.Profile.core
 
 
 fun main() {
