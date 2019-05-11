@@ -12,10 +12,10 @@ import kotlin.reflect.KProperty
 // Version
 val IMGUI_BUILD = 0
 /** get the compiled version string e.g. "1.23" (essentially the compiled value for IMGUI_VERSION) */
-val IMGUI_VERSION = "1.70 WIP build: $IMGUI_BUILD"
+val IMGUI_VERSION = "1.70 build: $IMGUI_BUILD"
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-val IMGUI_VERSION_NUM = 16991 * 100 + IMGUI_BUILD
+val IMGUI_VERSION_NUM = 16700
 
 
 // Helpers macros to generate 32-bits encoded colors
