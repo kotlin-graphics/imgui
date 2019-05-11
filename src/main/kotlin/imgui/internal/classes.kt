@@ -326,6 +326,7 @@ class Columns {
     var backupCursorPosY = 0f
     /** Backup of CursorMaxPos at the time of BeginColumns() */
     var backupCursorMaxPosX = 0f
+    var backupClipRect = Rect()
     var lineMinY = 0f
     var lineMaxY = 0f
     val columns = ArrayList<ColumnData>()

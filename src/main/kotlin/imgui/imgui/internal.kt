@@ -942,6 +942,7 @@ interface imgui_internal {
                 maxX = max(contentRegionWidth - scroll.x, minX + 1f)
                 backupCursorPosY = dc.cursorPos.y
                 backupCursorMaxPosX = dc.cursorMaxPos.x
+                backupClipRect put clipRect
                 lineMaxY = dc.cursorPos.y
                 lineMinY = dc.cursorPos.y
             }
@@ -968,8 +969,9 @@ interface imgui_internal {
                 column.clipRect clipWith clipRect
             }
             if (columns.count > 1) {
-                drawList.channelsSplit(columns.count)
-                pushColumnClipRect()
+                drawList.channelsSplit(1 + columns.count)
+                drawList.channelsSetCurrent(1)
+                pushColumnClipRect(0)
             }
             pushItemWidth(getColumnWidth() * 0.65f)
         }
@@ -1044,13 +1046,30 @@ interface imgui_internal {
         dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
     }
 
-    fun pushColumnClipRect(columnIndex_: Int = -1) {
+    fun pushColumnClipRect(columnIndex_: Int) {
 
         val window = currentWindowRead!!
         val columns = window.dc.currentColumns!!
         val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
 
         pushClipRect(columns.columns[columnIndex].clipRect.min, columns.columns[columnIndex].clipRect.max, false)
+    }
+
+    /** Get into the columns background draw command (which is generally the same draw command as before we called BeginColumns) */
+    fun pushColumnsBackground() {
+        val window = currentWindowRead!!
+        val columns = window.dc.currentColumns!!
+        window.drawList.channelsSetCurrent(0)
+        val cmdSize = window.drawList.cmdBuffer.size
+        pushClipRect(columns.backupClipRect.min, columns.backupClipRect.max, false)
+        assert(cmdSize == window.drawList.cmdBuffer.size) // Being in channel 0 this should not have created an ImDrawCmd
+    }
+
+    fun popColumnsBackground() {
+        val window = currentWindowRead!!
+        val columns = window.dc.currentColumns!!
+        window.drawList.channelsSetCurrent(columns.current + 1)
+        popClipRect()
     }
 
     fun getColumnsID(strId: String, columnsCount: Int): ID {

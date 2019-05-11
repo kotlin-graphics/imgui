@@ -12,6 +12,7 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushColumnClipRect
+import imgui.ImGui.pushColumnsBackground
 import imgui.ImGui.style
 import imgui.ImGui.verticalSeparator
 import imgui.internal.GroupData
@@ -42,7 +43,7 @@ interface imgui_cursorLayout {
             return
         }
         // Horizontal Separator
-        window.dc.currentColumns?.let { popClipRect() }
+        window.dc.currentColumns?.let { pushColumnsBackground() }
 
         var x1 = window.pos.x
         val x2 = window.pos.x + window.size.x
@@ -53,7 +54,7 @@ interface imgui_cursorLayout {
         // NB: we don't provide our width so that it doesn't get feed back into AutoFit
         itemSize(Vec2(0f, 1f))
         if (!itemAdd(bb, 0)) {
-            window.dc.currentColumns?.let { pushColumnClipRect() }
+            window.dc.currentColumns?.let { pushColumnsBackground() }
             return
         }
 
@@ -63,7 +64,7 @@ interface imgui_cursorLayout {
             logRenderedText(bb.min, "--------------------------------")
 
         window.dc.currentColumns?.let {
-            pushColumnClipRect()
+            pushColumnsBackground()
             it.lineMinY = window.dc.cursorPos.y
         }
     }

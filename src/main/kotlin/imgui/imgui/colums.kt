@@ -68,11 +68,11 @@ interface imgui_colums {
             if (++columns.current < columns.count) {
                 // New column (columns 1+ cancels out IndentX)
                 dc.columnsOffset = getColumnOffset(columns.current) - dc.indent + style.itemSpacing.x
-                drawList.channelsSetCurrent(columns.current)
+                drawList.channelsSetCurrent(columns.current + 1)
             } else {
                 // New row/line
                 dc.columnsOffset = 0f
-                drawList.channelsSetCurrent(0)
+                drawList.channelsSetCurrent(1)
                 columns.current = 0
                 columns.lineMinY = columns.lineMaxY
             }
@@ -81,7 +81,7 @@ interface imgui_colums {
             dc.currentLineSize.y = 0f
             dc.currentLineTextBaseOffset = 0f
         }
-        pushColumnClipRect()
+        pushColumnClipRect(columns.current)
         pushItemWidth(getColumnWidth() * 0.65f)  // FIXME-COLUMNS: Move on columns setup
     }
 

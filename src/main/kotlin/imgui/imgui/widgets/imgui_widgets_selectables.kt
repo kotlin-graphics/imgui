@@ -16,6 +16,7 @@ import imgui.ImGui.markItemEdited
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.pushColumnClipRect
+import imgui.ImGui.pushColumnsBackground
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
@@ -54,7 +55,7 @@ interface imgui_widgets_selectables {
         if (window.skipItems) return false
 
         if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)  // FIXME-OPT: Avoid if vertically clipped.
-            popClipRect()
+            pushColumnsBackground()
 
         val id = window.getId(label)
         val labelSize = calcTextSize(label, true)
@@ -96,7 +97,7 @@ interface imgui_widgets_selectables {
         }
         if (!itemAdd) {
             if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)
-                pushColumnClipRect()
+                pushColumnsBackground()
             return false
         }
 
@@ -139,7 +140,7 @@ interface imgui_widgets_selectables {
         }
 
         if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null) {
-            pushColumnClipRect()
+            pushColumnsBackground()
             bb.max.x -= contentRegionMax.x - maxX
         }
 
