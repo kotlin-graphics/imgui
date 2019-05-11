@@ -145,7 +145,7 @@ interface imgui_widgets_selectables {
         }
 
         if (flags has Sf.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-        renderTextClipped(bbInner.min, bbInner.max, label, 0, labelSize, style.selectableTextAlign, bb)
+        renderTextClipped(bbInner.min, bbInner.max, label, -1, labelSize, style.selectableTextAlign, bb)
         if (flags has Sf.Disabled) popStyleColor()
 
         // Automatically close popups

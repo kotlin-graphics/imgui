@@ -630,8 +630,8 @@ interface imgui_windows {
                 // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
                 // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
                 val UNSAVED_DOCUMENT_MARKER = "*"
-                val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, 0, false).x else 0f
-                val textSize = calcTextSize(name, 0, true) + Vec2(markerSizeX, 0f)
+                val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, -1, false).x else 0f
+                val textSize = calcTextSize(name, -1, true) + Vec2(markerSizeX, 0f)
                 val textR = Rect(titleBarRect)
                 val padLeft = when {
                     flags has Wf.NoCollapse -> style.framePadding.x
@@ -648,11 +648,11 @@ interface imgui_windows {
                 val clipRect = Rect(textR)
                 // Match the size of CloseButton()
                 clipRect.max.x = window.pos.x + window.size.x - (if (pOpen?.get() == true) titleBarRect.height - 3 else style.framePadding.x)
-                renderTextClipped(textR.min, textR.max, name, 0, textSize, style.windowTitleAlign, clipRect)
+                renderTextClipped(textR.min, textR.max, name, -1, textSize, style.windowTitleAlign, clipRect)
                 if (flags has Wf.UnsavedDocument) {
                     val markerPos = Vec2(max(textR.min.x, textR.min.x + (textR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, textR.min.y) + Vec2(2 - markerSizeX, 0f)
                     val off = Vec2(0f, (-g.fontSize * 0.25f).i.f)
-                    renderTextClipped(markerPos + off, textR.max + off, UNSAVED_DOCUMENT_MARKER, 0, null, Vec2(0, style.windowTitleAlign.y), clipRect)
+                    renderTextClipped(markerPos + off, textR.max + off, UNSAVED_DOCUMENT_MARKER, -1, null, Vec2(0, style.windowTitleAlign.y), clipRect)
                 }
             }
 

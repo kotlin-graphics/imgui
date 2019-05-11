@@ -1088,7 +1088,7 @@ interface imgui_internal {
 
     fun tabItemCalcSize(label: String, hasCloseButton: Boolean): Vec2 {
 
-        val labelSize = calcTextSize(label, 0, true)
+        val labelSize = calcTextSize(label, -1, true)
         val size = Vec2(labelSize.x + style.framePadding.x, labelSize.y + style.framePadding.y * 2f)
         size.x += style.framePadding.x + when {
             hasCloseButton -> style.itemInnerSpacing.x + g.fontSize // We use Y intentionally to fit the close button circle.
@@ -1125,14 +1125,14 @@ interface imgui_internal {
      *  We tend to lock style.FramePadding for a given tab-bar, hence the 'frame_padding' parameter.    */
     fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, framePadding: Vec2, label: String, tabId: ID, closeButtonId: ID): Boolean {
 
-        val labelSize = calcTextSize(label, 0, true)
+        val labelSize = calcTextSize(label, -1, true)
         if (bb.width <= 1f) return false
 
         // Render text label (with clipping + alpha gradient) + unsaved marker
         val TAB_UNSAVED_MARKER = "*"
         val textPixelClipBb = Rect(bb.min.x + framePadding.x, bb.min.y + framePadding.y, bb.max.x - framePadding.x, bb.max.y)
         if (flags has TabItemFlag.UnsavedDocument) {
-            textPixelClipBb.max.x -= calcTextSize(TAB_UNSAVED_MARKER, 0, false).x
+            textPixelClipBb.max.x -= calcTextSize(TAB_UNSAVED_MARKER, -1, false).x
             val unsavedMarkerPos = Vec2(min(bb.min.x + framePadding.x + labelSize.x + 2, textPixelClipBb.max.x), bb.min.y + framePadding.y + (-g.fontSize * 0.25f).i.f)
             renderTextClippedEx(drawList, unsavedMarkerPos, bb.max - framePadding, TAB_UNSAVED_MARKER, 0, null)
         }
@@ -1785,36 +1785,27 @@ interface imgui_internal {
 
         val window = g.currentWindow!!
 
-        val horizontal = axis == Axis.X
         val id = getScrollbarID(window, axis)
         keepAliveID(id)
 
-        // Calculate our bounding box (FIXME: This is messy, should be made simpler using e.g. InnerRect/WorkRect data).
+        // Calculate scrollbar bounding box
+        val outerRect = window.rect()
         val otherScrollbarSize = window.scrollbarSizes[axis.i]
-        val winRect = window.rect()
-        val borderSize = window.windowBorderSize
-        val bb = when {
-            horizontal -> Rect(winRect.min.x + borderSize, winRect.max.y - style.scrollbarSize, winRect.max.x - otherScrollbarSize - borderSize, winRect.max.y - borderSize)
-            else -> Rect(winRect.max.x - style.scrollbarSize, winRect.min.y + borderSize, winRect.max.x - borderSize, winRect.max.y - otherScrollbarSize - borderSize)
+        var roundingCorners: DrawCornerFlags = if (otherScrollbarSize <= 0f) Dcf.BotRight.i else 0
+        val bb = Rect()
+        if (axis == Axis.X) {
+            bb.min.put(window.innerMainRect.min.x, window.innerMainRect.max.y)
+            bb.max.put(window.innerMainRect.max.x, outerRect.max.y - window.windowBorderSize)
+            roundingCorners = roundingCorners or Dcf.BotLeft
+        } else {
+            bb.min.put(window.innerMainRect.max.x, window.innerMainRect.min.y)
+            bb.max.put(outerRect.max.x - window.windowBorderSize, window.innerMainRect.max.y)
+            roundingCorners = roundingCorners or when {
+                window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar -> Dcf.TopRight.i
+                else -> 0
+            }
         }
-        bb.min.x = max(winRect.min.x, bb.min.x) // Handle case where the host rectangle is smaller than the scrollbar
-        bb.min.y = max(winRect.min.y, bb.min.y)
-        if (!horizontal)
-            bb.min.y += window.titleBarHeight + if (window.flags has Wf.MenuBar) window.menuBarHeight else 0f // FIXME: InnerRect?
-
-        // Select rounding
-        var roundingCorners = when {
-            horizontal -> Dcf.BotLeft.i
-            window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar -> Dcf.TopRight.i
-            else -> 0
-        }
-        if (otherScrollbarSize <= 0f)
-            roundingCorners = roundingCorners or Dcf.BotRight
-
-        if (horizontal)
-            scrollbarEx(bb, id, axis, window.scroll::x, window.sizeFull.x - otherScrollbarSize, window.sizeContents.x, roundingCorners)
-        else
-            scrollbarEx(bb, id, axis, window.scroll::y, window.sizeFull.y - otherScrollbarSize, window.sizeContents.y, roundingCorners)
+        scrollbarEx(bb, id, axis, if(axis == Axis.X) window.scroll::x else window.scroll::y, window.sizeFull[axis.i] - otherScrollbarSize, window.sizeContents[axis.i], roundingCorners)
     }
 
     /** Vertical/Horizontal scrollbar
@@ -2715,7 +2706,7 @@ interface imgui_internal {
         if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope
             beginGroup()
         val id = window.getId(label)
-        val labelSize = calcTextSize(label, 0, true)
+        val labelSize = calcTextSize(label, -1, true)
         val size = calcItemSize(sizeArg, nextItemWidth,
                 // Arbitrary default of 8 lines high for multi-line
                 (if (isMultiline) textLineHeight * 8f else labelSize.y) + style.framePadding.y * 2f)
@@ -3570,7 +3561,7 @@ interface imgui_internal {
         var scaleMax = scaleMax_
         val valuesCount = data.count()
 
-        val labelSize = calcTextSize(label, 0, true)
+        val labelSize = calcTextSize(label, -1, true)
         if (frameSize.x == 0f) frameSize.x = nextItemWidth
         if (frameSize.y == 0f) frameSize.y = labelSize.y + style.framePadding.y * 2
 
@@ -3654,7 +3645,7 @@ interface imgui_internal {
         }
         // Text overlay
         if (overlayText.isNotEmpty())
-            renderTextClipped(Vec2(frameBb.min.x, frameBb.min.y + style.framePadding.y), frameBb.max, overlayText, 0, null, Vec2(0.5f, 0f))
+            renderTextClipped(Vec2(frameBb.min.x, frameBb.min.y + style.framePadding.y), frameBb.max, overlayText, -1, null, Vec2(0.5f, 0f))
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, innerBb.min.y), label)
     }
