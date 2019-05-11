@@ -1,43 +1,11 @@
 package imgui.imgui
 
-import gli_.has
-import gli_.hasnt
-import glm_.f
-import glm_.glm
-import glm_.i
-import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.F32_TO_INT8_SAT
-import imgui.ImGui.calcTextSize
-import imgui.ImGui.closeButton
-import imgui.ImGui.collapseButton
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
-import imgui.ImGui.endColumns
-import imgui.ImGui.findBestWindowPosForPopup
 import imgui.ImGui.findWindowByName
-import imgui.ImGui.frontMostPopupModal
-import imgui.ImGui.getColorU32
-import imgui.ImGui.io
-import imgui.ImGui.isMouseHoveringRect
-import imgui.ImGui.itemAdd
-import imgui.ImGui.itemSize
-import imgui.ImGui.navInitWindow
-import imgui.ImGui.popClipRect
-import imgui.ImGui.pushClipRect
-import imgui.ImGui.renderFrame
-import imgui.ImGui.renderNavHighlight
-import imgui.ImGui.renderTextClipped
-import imgui.ImGui.scrollbar
-import imgui.ImGui.style
-import imgui.imgui.imgui_main.Companion.clampWindowRect
-import imgui.imgui.imgui_main.Companion.renderOuterBorders
-import imgui.imgui.imgui_main.Companion.resizeGripDef
-import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
-import kotlin.math.max
-import kotlin.reflect.KMutableProperty0
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
