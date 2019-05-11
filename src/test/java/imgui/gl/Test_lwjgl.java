@@ -5,8 +5,7 @@ import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
 import imgui.*;
 import imgui.imgui.Context;
-import imgui.impl.LwjglGlfw;
-import imgui.impl.LwjglGlfw.GlfwClientApi;
+import imgui.impl.ImplGlfw;
 import kotlin.Unit;
 import org.lwjgl.system.MemoryStack;
 import uno.glfw.GlfwWindow;
@@ -23,7 +22,7 @@ public class Test_lwjgl {
     // The window handle
     private GlfwWindow window;
     private uno.glfw.glfw glfw = uno.glfw.glfw.INSTANCE;
-    private LwjglGlfw lwjglGlfw;
+    private ImplGlfw implGlfw;
     private dsl func = dsl.INSTANCE;
     private ImGui imgui = ImGui.INSTANCE;
     private IO io;
@@ -58,7 +57,7 @@ public class Test_lwjgl {
 //        imgui.styleColorsClassic();
 
         // Setup Platform/Renderer bindings
-        lwjglGlfw = new LwjglGlfw(window, true, GlfwClientApi.OpenGL, null);
+        implGlfw = new ImplGlfw(window, true, null);
 
         io = imgui.getIo();
 
@@ -95,7 +94,7 @@ public class Test_lwjgl {
             return Unit.INSTANCE;
         });
 
-        lwjglGlfw.shutdown();
+        implGlfw.shutdown();
         ctx.destroy();
 
         window.destroy();
@@ -105,7 +104,7 @@ public class Test_lwjgl {
     private void mainLoop() {
 
         // Start the Dear ImGui frame
-        lwjglGlfw.newFrame();
+        implGlfw.newFrame();
         imgui.newFrame();
 
         imgui.text("Hello, world!");                                // Display some text (you can use a format string too)
@@ -146,10 +145,10 @@ public class Test_lwjgl {
         glViewport(window.getFramebufferSize());
         glClearColor(clearColor);
         glClear(GL_COLOR_BUFFER_BIT);
+throw new Error();
+//        implGlfw.renderDrawData(imgui.getDrawData());
 
-        lwjglGlfw.renderDrawData(imgui.getDrawData());
-
-        if (ImguiKt.getDEBUG())
-            checkError("loop", true); // TODO remove
+//        if (ImguiKt.getDEBUG())
+//            checkError("loop", true); // TODO remove
     }
 }

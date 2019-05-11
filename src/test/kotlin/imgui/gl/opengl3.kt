@@ -5,30 +5,29 @@ import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.imgui.Context
 import imgui.DEBUG
 import imgui.ImGui
+import imgui.imgui.Context
 import imgui.impl.ImplGL3
-import imgui.impl.LwjglGlfw
-import imgui.impl.LwjglGlfw.GlfwClientApi
+import imgui.impl.ImplGlfw
+import imgui.impl.glslVersion
+import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
 import org.lwjgl.system.MemoryStack
-import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
-import org.lwjgl.util.remotery.Remotery
-import org.lwjgl.util.remotery.RemoteryGL
-//import org.lwjgl.util.remotery.Remotery
-//import org.lwjgl.util.remotery.RemoteryGL
 import uno.glfw.GlfwWindow
 import uno.glfw.VSync
 import uno.glfw.glfw
+import uno.glfw.windowHint.Profile.core
+//import org.lwjgl.util.remotery.Remotery
+//import org.lwjgl.util.remotery.RemoteryGL
 
 fun main() {
-    HelloWorld_lwjgl()
+    ImGuiOpenGL3()
 }
 
-private class HelloWorld_lwjgl {
+private class ImGuiOpenGL3 {
 
     val window: GlfwWindow
     val ctx: Context
@@ -40,23 +39,45 @@ private class HelloWorld_lwjgl {
     var showDemo = true
     var counter = 0
 
-    val lwjglGlfw: LwjglGlfw
+    val implGlfw: ImplGlfw
+    val implGl3: ImplGL3
 
 //    val rmt = MemoryUtil.memAllocPointer(1).also { Remotery.rmt_CreateGlobalInstance(it) }
 
     init {
 
-        glfw.init(if (Platform.get() == Platform.MACOSX) "3.2" else "3.0")
-        glfw.windowHint { debug = true }
-
-        window = GlfwWindow(1280, 720, "Dear ImGui Lwjgl OpenGL example").apply {
+        // Setup window
+        glfw {
+            errorCallback = { error, description -> println("Glfw Error $error: $description") }
             init()
+            windowHint {
+                debug = true
+
+                // Decide GL+GLSL versions
+                when (Platform.get()) {
+                    Platform.MACOSX -> {    // GL 3.2 + GLSL 150
+                        glslVersion = 150
+                        context.version = "3.2"
+                        profile = core      // 3.2+ only
+                        forwardComp = true  // Required on Mac
+                    }
+                    else -> {   // GL 3.0 + GLSL 130
+                        glslVersion = 130
+                        context.version = "3.0"
+                        //profile = core      // 3.2+ only
+                        //forwardComp = true  // 3.0+ only
+                    }
+                }
+            }
         }
 
+        // Create window with graphics context
+        window = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
+        window.makeContextCurrent()
         glfw.swapInterval = VSync.ON   // Enable vsync
 
-        // Setup ImGui binding
-//         glslVersion = 330 // set here your desidered glsl version
+        // Initialize OpenGL loader
+        GL.createCapabilities()
 
         // Setup Dear ImGui context
         ctx = Context()
@@ -68,7 +89,8 @@ private class HelloWorld_lwjgl {
 //        ImGui.styleColorsClassic()
 
         // Setup Platform/Renderer bindings
-        lwjglGlfw = LwjglGlfw(window, true, GlfwClientApi.OpenGL2)
+        implGlfw = ImplGlfw(window, true)
+        implGl3 = ImplGL3()
 
 //        RemoteryGL.rmt_BindOpenGL()
 
@@ -102,7 +124,8 @@ private class HelloWorld_lwjgl {
             Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
         window.loop(::mainLoop)
 
-        lwjglGlfw.shutdown()
+        implGl3.shutdown()
+        implGlfw.shutdown()
         ctx.destroy()
 
 //        Remotery.rmt_DestroyGlobalInstance(rmt.get(0))
@@ -116,7 +139,8 @@ private class HelloWorld_lwjgl {
 //        RemoteryGL.rmt_BeginOpenGLSample("imgui", null)
 
         // Start the Dear ImGui frame
-        lwjglGlfw.newFrame()
+        implGl3.newFrame()
+        implGlfw.newFrame()
 
         ImGui.run {
 
@@ -169,7 +193,7 @@ private class HelloWorld_lwjgl {
         glClearColor(clearColor)
         glClear(GL_COLOR_BUFFER_BIT)
 
-        lwjglGlfw.renderDrawData(ImGui.drawData!!)
+        implGl3.renderDrawData(ImGui.drawData!!)
 
         if (DEBUG)
             checkError("mainLoop")

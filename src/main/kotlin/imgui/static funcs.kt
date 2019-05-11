@@ -1202,11 +1202,11 @@ fun findWindowFocusIndex(window: Window): Int {
 // Platform dependent default implementations
 //-----------------------------------------------------------------------------
 
-val getClipboardTextFn_DefaultImpl: () -> String = {
+val getClipboardTextFn_DefaultImpl: () -> String? = {
     // Create a Clipboard object using getSystemClipboard() method
     val clipboard = Toolkit.getDefaultToolkit().systemClipboard
     // Get data stored in the clipboard that is in the form of a string (text)
-    clipboard.getData(DataFlavor.stringFlavor) as String
+    clipboard.getData(DataFlavor.stringFlavor) as? String
 }
 
 val setClipboardTextFn_DefaultImpl: (String) -> Unit = {
