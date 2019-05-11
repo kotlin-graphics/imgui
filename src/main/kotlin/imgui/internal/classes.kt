@@ -882,6 +882,8 @@ class Window(var context: Context, var name: String) {
                     pos = Vec2(this@Window.pos),
                     currentSize = sizeFull,
                     desiredSize = newSize))
+            newSize.x = floor(newSize.x)
+            newSize.y = floor(newSize.y)
         }
 
         // Minimum size

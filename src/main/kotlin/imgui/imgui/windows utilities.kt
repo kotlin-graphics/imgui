@@ -143,8 +143,8 @@ interface imgui_windowsUtilities {
         }
     }
 
-    /** set next window size limits. use -1,-1 on either X/Y axis to preserve the current size. Use callback to apply
-     *  non-trivial programmatic constraints.   */
+    /** set next window size limits. use -1,-1 on either X/Y axis to preserve the current size.
+     *  Sizes will be rounded down. Use callback to apply non-trivial programmatic constraints.   */
     fun setNextWindowSizeConstraints(sizeMin: Vec2, sizeMax: Vec2, customCallback: SizeCallback? = null, customCallbackUserData: Any? = null) {
         with(g.nextWindowData) {
             sizeConstraintCond = Cond.Always
