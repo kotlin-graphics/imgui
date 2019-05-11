@@ -61,9 +61,9 @@ interface imgui_inputs {
             return true
 
         if (repeat && t > io.keyRepeatDelay) {
-            val delay = io.keyRepeatDelay
-            val rate = io.keyRepeatRate
-            if ((glm.mod(t - delay, rate) > rate * 0.5f) != (glm.mod(t - delay - io.deltaTime, rate) > rate * 0.5f))
+            // FIXME: 2019/05/03: Our old repeat code was wrong here and led to doubling the repeat rate, which made it an ok rate for repeat on mouse hold.
+            val amount = calcTypematicPressedRepeatAmount(t, t - io.deltaTime, io.keyRepeatDelay, io.keyRepeatRate * 0.5f)
+            if (amount > 0)
                 return true
         }
         return false
