@@ -24,12 +24,6 @@ import imgui.internal.DrawCornerFlag as Dcf
  *      B) render a complex 3D scene inside a UI element without an intermediate texture/render target, etc.    */
 typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
-/** Special Draw Callback value to request renderer back-end to reset the graphics/render state.
- *  The renderer back-end needs to handle this special value, otherwise it will crash trying to call a function at this address.
- *  This is useful for example if you submitted callbacks which you know have altered the render state and you want it to be restored.
- *  It is not done by default because they are many perfectly useful way of altering render state for imgui contents (e.g. changing shader/blending settings before an Image call). */
-//typealias DrawCallback_ResetRenderState     (DrawCallback)(-1)
-
 /** A single draw command within a parent ImDrawList (generally maps to 1 GPU draw call, unless it is a callback)
  *
  *  Typically, 1 command = 1 gpu draw call (unless command is a callback)   */
@@ -55,6 +49,11 @@ class DrawCmd {
     /** If != NULL, call the function instead of rendering the vertices. clip_rect and texture_id will be set normally. */
     var userCallback: DrawCallback? = null
 
+    /** Special Draw Callback value to request renderer back-end to reset the graphics/render state.
+     *  The renderer back-end needs to handle this special value, otherwise it will crash trying to call a function at this address.
+     *  This is useful for example if you submitted callbacks which you know have altered the render state and you want it to be restored.
+     *  It is not done by default because they are many perfectly useful way of altering render state for imgui contents
+     *  (e.g. changing shader/blending settings before an Image call). */
     var resetRenderState = false
 
     var userCallbackData: ByteBuffer? = null
