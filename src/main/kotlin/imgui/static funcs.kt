@@ -38,7 +38,6 @@ import imgui.imgui.g
 import imgui.imgui.imgui_colums.Companion.COLUMNS_HIT_RECT_HALF_WIDTH
 import imgui.imgui.navRestoreLayer
 import imgui.imgui.navScoreItem
-import imgui.imgui.widgets.*
 import imgui.impl.windowsIme.COMPOSITIONFORM
 import imgui.impl.windowsIme.DWORD
 import imgui.impl.windowsIme.HIMC
@@ -49,7 +48,6 @@ import uno.glfw.HWND
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
 import uno.kotlin.setValue
-import unsigned.*
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
@@ -1171,15 +1169,17 @@ fun navCalcPreferredRefPos(): Vec2 {
 
 /** FIXME: This could be replaced by updating a frame number in each window when (window == NavWindow) and (NavLayer == 0).
  *  This way we could find the last focused window among our children. It would be much less confusing this way? */
-fun navSaveLastChildNavWindowIntoParent(childWindow: Window?) {
-    val parentWindow = childWindow
+fun navSaveLastChildNavWindowIntoParent(navWindow: Window?) {
 
     tailrec fun Window.getParent(): Window {
-        val parent = this.parentWindow
-        return if (parent != null && parent.flags has Wf.ChildWindow && parent.flags hasnt (Wf.Popup or Wf.ChildMenu)) getParent() else this
+        val parent = parentWindow
+        return when {
+            parent != null && flags has Wf.ChildWindow && flags hasnt (Wf.Popup or Wf.ChildMenu) -> getParent()
+            else -> this
+        }
     }
 
-    parentWindow?.getParent()?.let { if (it !== childWindow) it.navLastChildNavWindow = childWindow }
+    navWindow?.getParent()?.let { if (it !== navWindow) it.navLastChildNavWindow = navWindow }
 }
 
 
