@@ -118,7 +118,8 @@ enum class SeparatorFlag {
     None,
     /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
     Horizontal,
-    Vertical;
+    Vertical,
+    SpanAllColumns;
 
     val i = if (ordinal == 0) 0 else 1 shl ordinal
 }

@@ -541,8 +541,9 @@ interface imgui_windows {
                 innerMainRect.max.x = pos.x + size.x - (scrollbarSizes.x max windowBorderSize)
                 innerMainRect.max.y = pos.y + size.y - (scrollbarSizes.y max windowBorderSize)
 
-                // Inner clipping rectangle
-                // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
+                /*  Inner clipping rectangle will extend a little bit outside the work region.
+                    This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
+                    Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.                 */
                 innerClipRect.min.x = floor(0.5f + innerMainRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize)))
                 innerClipRect.min.y = floor(0.5f + innerMainRect.min.y)
                 innerClipRect.max.x = floor(0.5f + innerMainRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize)))
