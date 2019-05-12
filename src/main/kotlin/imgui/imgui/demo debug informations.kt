@@ -450,7 +450,8 @@ interface imgui_demoDebugInformations {
                     }
                     val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
                     val mode = if (drawList.idxBuffer.isNotEmpty()) "indexed" else "non-indexed"
-                    val cmdNodeOpen = treeNode(i, "Draw %4d $mode vtx, tex = ${cmd.textureId!!.toHexString}, clip_rect = (%4.0f,%4.0f)-(%4.0f,%4.0f)", cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                    val cmdNodeOpen = treeNode(i, "Draw %4d $mode vtx, tex = ${cmd.textureId!!.toHexString}, clip_rect = (%4.0f,%4.0f)-(%4.0f,%4.0f)",
+                            cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
                     if (showDrawcmdClipRects && fgDrawList != null && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
                         val vtxsRect = Rect()
