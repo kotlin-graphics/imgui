@@ -1,29 +1,27 @@
 package imgui.impl
 
-import glm_.*
+import glm_.BYTES
+import glm_.L
+import glm_.d
+import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4b
+import gln.glGetVec2i
 import gln.glGetVec4i
 import gln.glScissor
 import gln.glViewport
 import gln.glf.semantic
-import gln.objects.GlProgram
 import gln.texture.glBindTexture
-import gln.uniform.glUniform
-import gln.vertexArray.GlVertexArray
 import imgui.*
 import imgui.ImGui.io
 import kool.*
+import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL13C.GL_TEXTURE_2D
-import org.lwjgl.opengl.GL15C.GL_ELEMENT_ARRAY_BUFFER
-import org.lwjgl.opengl.GL21C.*
+import org.lwjgl.opengl.GL14C.GL_FUNC_ADD
+import org.lwjgl.opengl.GL14C.glBlendEquation
+import org.lwjgl.opengl.GL20C.*
 
 class ImplGL2 : GLInterface {
-
-    var program = GlProgram(0)
-    var matUL = -1
-
-    val buffers = IntBuffer<Buffer>()
 
     init {
         io.backendRendererName = "imgui_impl_opengl2"
@@ -44,38 +42,36 @@ class ImplGL2 : GLInterface {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
+        glDisable(GL11.GL_LIGHTING)
+        glDisable(GL11.GL_COLOR_MATERIAL)
         glEnable(GL_SCISSOR_TEST)
+        GL11.glEnableClientState(GL_VERTEX_ARRAY)
+        GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY)
+        GL11.glEnableClientState(GL11.GL_COLOR_ARRAY)
+        glEnable(GL_TEXTURE_2D)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+
+        /*  If you are using this code with non-legacy OpenGL header/contexts (which you should not, prefer using imgui_impl_opengl3.cpp!!),
+            you may need to backup/reset/restore current shader using the lines below. DO NOT MODIFY THIS FILE! Add the code in your calling function:         */
+//          val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
+//          glUseProgram(0)
+//          ImplGL2.renderDrawData(...)
+//          glUseProgram(lastProgram)
 
         // Setup viewport, orthographic projection matrix
         // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
         // DisplayMin is typically (0,0) for single viewport apps.
         glViewport(0, 0, fbWidth, fbHeight)
-        val orthoProjection = glm.ortho(mat, 0f, io.displaySize.x.f, io.displaySize.y.f, 0f)
-        glUseProgram(program.i)
-        glUniform(matUL, orthoProjection)
+        GL11.glMatrixMode(GL11.GL_PROJECTION)
+        GL11.glPushMatrix()
+        GL11.glLoadIdentity()
+        drawData.run { GL11.glOrtho(displayPos.x.d, displayPos.x.d + displaySize.x, displayPos.y.d + displaySize.y, displayPos.y.d, -1.0, +1.0) }
+        GL11.glMatrixMode(GL11.GL_MODELVIEW)
+        GL11.glPushMatrix()
+        GL11.glLoadIdentity()
 
-        if (resizeIfNeeded(drawData.cmdLists)) {
-            // Bind vertex/index buffers and setup attributes for ImDrawVert [JVM] buffers are new
-            glBindBuffer(GL_ARRAY_BUFFER, buffers[Buffer.Vertex])
-            glBufferData(GL_ARRAY_BUFFER, vtxSize.L, GL_STREAM_DRAW)
-
-            glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.size, 0)
-            glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.size, Vec2.size.L)
-            glVertexAttribPointer(semantic.attr.COLOR, Vec4b.length, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size.L)
-
-            glEnableVertexAttribArray(semantic.attr.POSITION)
-            glEnableVertexAttribArray(semantic.attr.TEX_COORD)
-            glEnableVertexAttribArray(semantic.attr.COLOR)
-
-            glBindBuffer(GL_ARRAY_BUFFER, 0)
-
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[Buffer.Element])
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize.L, GL_STREAM_DRAW)
-
-            if (DEBUG)
-                println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
-        }
+        if (resizeIfNeeded(drawData.cmdLists) && DEBUG)
+            println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
     }
 
     /** OpenGL2 Render function.
@@ -92,23 +88,11 @@ class ImplGL2 : GLInterface {
         // Backup GL state
         val lastActiveTexture = glGetInteger(GL_ACTIVE_TEXTURE)
         glActiveTexture(GL_TEXTURE0 + semantic.sampler.DIFFUSE)
-        val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
-        val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
-        val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
-        val lastPolygonMode = glGetInteger(GL_POLYGON_MODE)
+        val lastPolygonMode = glGetVec2i(GL_POLYGON_MODE)
         val lastViewport = glGetVec4i(GL_VIEWPORT)
         val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
-        val lastBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
-        val lastBlendDstRgb = glGetInteger(GL_BLEND_DST_RGB)
-        val lastBlendSrcAlpha = glGetInteger(GL_BLEND_SRC_ALPHA)
-        val lastBlendDstAlpha = glGetInteger(GL_BLEND_DST_ALPHA)
-        val lastBlendEquationRgb = glGetInteger(GL_BLEND_EQUATION_RGB)
-        val lastBlendEquationAlpha = glGetInteger(GL_BLEND_EQUATION_ALPHA)
-        val lastEnableBlend = glIsEnabled(GL_BLEND)
-        val lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
-        val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
-        val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
+        GL11.glPushAttrib(GL11.GL_ENABLE_BIT or GL_COLOR_BUFFER_BIT or GL11.GL_TRANSFORM_BIT)
 
         // Setup desired GL state
         setupRenderState(drawData, fbWidth, fbHeight)
@@ -128,12 +112,11 @@ class ImplGL2 : GLInterface {
                 vtxBuffer.putInt(offset + Vec2.size * 2, v.col)
             }
             cmdList.idxBuffer.forEachIndexed { i, idx -> idxBuffer[i] = idx }
-            glBindBuffer(GL_ARRAY_BUFFER, buffers[Buffer.Vertex])
-            nglBufferSubData(GL_ARRAY_BUFFER, 0, cmdList._vtxWritePtr * DrawVert.size.L, vtxBuffer.adr)
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[Buffer.Element])
-            nglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, cmdList._idxWritePtr * Int.BYTES.L, idxBuffer.adr)
+            GL11.glVertexPointer(Vec2.length, GL_FLOAT, DrawVert.size, vtxBuffer.adr + 0)
+            GL11.glTexCoordPointer(Vec2.length, GL_FLOAT, DrawVert.size, vtxBuffer.adr + Vec2.size)
+            GL11.glColorPointer(Vec4b.length, GL_UNSIGNED_BYTE, DrawVert.size, vtxBuffer.adr + Vec2.size * 2)
 
-            var idxBufferOffset = 0L
+            var idxBufferOffset = idxBuffer.adr
 
             for (cmd in cmdList.cmdBuffer) {
 
@@ -166,59 +149,22 @@ class ImplGL2 : GLInterface {
         }
 
         // Restore modified GL state
-        glUseProgram(lastProgram)
+        GL11.glDisableClientState(GL11.GL_COLOR_ARRAY)
+        GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY)
+        GL11.glDisableClientState(GL_VERTEX_ARRAY)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
         glActiveTexture(lastActiveTexture)
-        glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementBuffer)
-        glBlendEquationSeparate(lastBlendEquationRgb, lastBlendEquationAlpha)
-        glBlendFuncSeparate(lastBlendSrcRgb, lastBlendDstRgb, lastBlendSrcAlpha, lastBlendDstAlpha)
-        if (lastEnableBlend) glEnable(GL_BLEND) else glDisable(GL_BLEND)
-        if (lastEnableCullFace) glEnable(GL_CULL_FACE) else glDisable(GL_CULL_FACE)
-        if (lastEnableDepthTest) glEnable(GL_DEPTH_TEST) else glDisable(GL_DEPTH_TEST)
-        if (lastEnableScissorTest) glEnable(GL_SCISSOR_TEST) else glDisable(GL_SCISSOR_TEST)
-        glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode)
+        GL11.glMatrixMode(GL11.GL_MODELVIEW)
+        GL11.glPopMatrix()
+        GL11.glMatrixMode(GL11.GL_PROJECTION)
+        GL11.glPopMatrix()
+        GL11.glPopAttrib()
+        glPolygonMode(GL_FRONT, lastPolygonMode[0]); glPolygonMode(GL_BACK, lastPolygonMode[1])
         glViewport(lastViewport)
         glScissor(lastScissorBox)
     }
 
-    override fun createDeviceObjects(): Boolean {
-
-        val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
-        val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
-        val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
-        val lastElementArrayBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
-
-        program = createProgram()
-        program.used {
-            matUL = "ProjMtx".uniform
-            "Texture".unit = semantic.sampler.DIFFUSE
-        }
-
-        glGenBuffers(buffers)
-
-        glBindBuffer(GL_ARRAY_BUFFER, buffers[Buffer.Vertex])
-        glBufferData(GL_ARRAY_BUFFER, vtxSize.L, GL_STREAM_DRAW)
-        glEnableVertexAttribArray(semantic.attr.POSITION)
-        glEnableVertexAttribArray(semantic.attr.TEX_COORD)
-        glEnableVertexAttribArray(semantic.attr.COLOR)
-
-        glVertexAttribPointer(semantic.attr.POSITION, 2, GL_FLOAT, false, DrawVert.size, 0)
-        glVertexAttribPointer(semantic.attr.TEX_COORD, 2, GL_FLOAT, false, DrawVert.size, Vec2.size.toLong())
-        glVertexAttribPointer(semantic.attr.COLOR, 4, GL_UNSIGNED_BYTE, true, DrawVert.size, 2L * Vec2.size)
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[Buffer.Element])
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxSize.L, GL_STREAM_DRAW)
-
-        createFontsTexture()
-
-        glUseProgram(lastProgram)
-        glBindTexture(GL_TEXTURE_2D, lastTexture)
-        glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementArrayBuffer)
-
-        return true
-    }
+    override fun createDeviceObjects(): Boolean = createFontsTexture()
 
     /** Build texture atlas */
     override fun createFontsTexture(): Boolean {
@@ -255,11 +201,5 @@ class ImplGL2 : GLInterface {
         }
     }
 
-    override fun destroyDeviceObjects() {
-        glDeleteBuffers(buffers)
-
-        if (program.i >= 0) glDeleteProgram(program.i)
-
-        destroyFontsTexture()
-    }
+    override fun destroyDeviceObjects() = destroyFontsTexture()
 }
