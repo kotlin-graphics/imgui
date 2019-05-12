@@ -5,27 +5,37 @@ import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
 import imgui.*;
 import imgui.imgui.Context;
+import imgui.impl.ImplGL3;
 import imgui.impl.ImplGlfw;
+import static imgui.impl.CommonKt.setGlslVersion;
 import kotlin.Unit;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.Platform;
 import uno.glfw.GlfwWindow;
 import uno.glfw.VSync;
-import uno.glfw.windowHint.Profile;
 
-import static gln.GlnKt.*;
+import static gln.GlnKt.glClearColor;
+import static gln.GlnKt.glViewport;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static uno.glfw.windowHint.Profile.core;
 
-public class Test_lwjgl {
+public class OpenGL3 {
 
     // The window handle
     private GlfwWindow window;
+    private Context ctx;
+
     private uno.glfw.glfw glfw = uno.glfw.glfw.INSTANCE;
-    private ImplGlfw implGlfw;
-    private dsl func = dsl.INSTANCE;
+    private uno.glfw.windowHint windowHint = uno.glfw.windowHint.INSTANCE;
     private ImGui imgui = ImGui.INSTANCE;
+    private dsl func = dsl.INSTANCE;
     private IO io;
+
+
     private float[] f = {0f};
     private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
     // Java users can use both a MutableProperty0 or a Boolean Array
@@ -33,31 +43,56 @@ public class Test_lwjgl {
     private boolean[] showDemo = {true};
     private int[] counter = {0};
 
+    private ImplGlfw implGlfw;
+    private ImplGL3 implGl3;
+
     public static void main(String[] args) {
-        new Test_lwjgl();
+        new OpenGL3();
     }
 
-    private Test_lwjgl() {
+    private OpenGL3() {
 
-        glfw.init("3.3", Profile.core, true);
+        // Setup window
+        GLFW.glfwSetErrorCallback((error, description) -> System.out.println("Glfw Error " + error + ": " + description));
+        glfw.init();
+        windowHint.setDebug(true);
 
-        window = new GlfwWindow(1280, 720, "Dear ImGui Lwjgl OpenGL3 example", NULL, new Vec2i(Integer.MIN_VALUE), true);
-        window.init(true);
+        // Decide GL+GLSL versions
+        if(Platform.get() == Platform.MACOSX) { // GL 3.2 + GLSL 150
 
-        glfw.setSwapInterval(VSync.ON);    // Enable vsync
+            setGlslVersion(150);
+            windowHint.getContext().setVersion("3.2");
+            windowHint.setProfile(core);     // 3.2+ only
+            windowHint.setForwardComp(true); // Required on Mac
 
-        // Setup ImGui binding
-        //setGlslVersion(330); // set here your desidered glsl version
-        Context ctx = new Context(null);
+        } else {   // GL 3.0 + GLSL 130
+
+            setGlslVersion(130);
+            windowHint.getContext().setVersion("3.0");
+            //profile = core      // 3.2+ only
+            //forwardComp = true  // 3.0+ only
+        }
+
+        // Create window with graphics context
+        window = new GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example", NULL, new Vec2i(30), true);
+        window.makeContextCurrent();
+        glfw.setSwapInterval(VSync.ON);   // Enable vsync
+
+        // Initialize OpenGL loader
+        GL.createCapabilities();
+
+        // Setup Dear ImGui context
+        ctx = new Context();
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
 
-        // Setup Style
+        // Setup Dear ImGui style
         imgui.styleColorsDark();
-//        imgui.styleColorsClassic();
+//        ImGui.styleColorsClassic()
 
         // Setup Platform/Renderer bindings
         implGlfw = new ImplGlfw(window, true, null);
+        implGl3 = new ImplGL3();
 
         io = imgui.getIo();
 
@@ -95,6 +130,7 @@ public class Test_lwjgl {
         });
 
         implGlfw.shutdown();
+        implGl3.shutdown();
         ctx.destroy();
 
         window.destroy();
@@ -104,7 +140,9 @@ public class Test_lwjgl {
     private void mainLoop() {
 
         // Start the Dear ImGui frame
+        implGl3.newFrame();
         implGlfw.newFrame();
+
         imgui.newFrame();
 
         imgui.text("Hello, world!");                                // Display some text (you can use a format string too)
@@ -145,10 +183,6 @@ public class Test_lwjgl {
         glViewport(window.getFramebufferSize());
         glClearColor(clearColor);
         glClear(GL_COLOR_BUFFER_BIT);
-throw new Error();
-//        implGlfw.renderDrawData(imgui.getDrawData());
-
-//        if (ImguiKt.getDEBUG())
-//            checkError("loop", true); // TODO remove
+        implGl3.renderDrawData(imgui.getDrawData());
     }
 }
