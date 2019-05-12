@@ -315,6 +315,10 @@ class ImplGL3 : GLInterface {
 
         var POLYGON_MODE = true
         var SAMPLER_BINDING = GL.getCapabilities().OpenGL33
+            set(value) {
+                //prevent crashes
+                field = value and GL.getCapabilities().OpenGL33
+            }
         var UNPACK_ROW_LENGTH = true
         var SINGLE_GL_CONTEXT = true
     }

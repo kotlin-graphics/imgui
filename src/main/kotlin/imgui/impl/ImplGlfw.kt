@@ -101,7 +101,7 @@ class ImplGlfw(
         mouseCursors.forEach(::glfwDestroyCursor)
         mouseCursors.fill(NULL)
 
-        clientApi = GlfwClientApi.Unkown
+        clientApi = GlfwClientApi.Unknown
     }
 
     private fun updateMousePosAndButtons() {
