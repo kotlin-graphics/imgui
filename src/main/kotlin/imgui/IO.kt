@@ -2,6 +2,7 @@ package imgui
 
 import com.sun.jdi.VirtualMachine
 import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
@@ -148,7 +149,10 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // Functions
 
     /** Queue new character input */
-    fun addInputCharacter(c: Char) = inputQueueCharacters.add(c)
+    fun addInputCharacter(c: Char){
+        if(c.i in 1..65535)
+        inputQueueCharacters.add(c)
+    }
 
 //    IMGUI_API void  AddInputCharactersUTF8(const char* str);    // Queue new characters input from an UTF-8 string
 
