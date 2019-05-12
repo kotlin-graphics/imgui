@@ -254,9 +254,9 @@ fun GlBufferDsl.subData(offset: Int, size: Int, data: ByteBuffer) = GL15C.nglBuf
 fun GlBufferDsl.subData(offset: Int, size: Int, data: IntBuffer) = GL15C.nglBufferSubData(target.i, offset.L, size.L, data.adr)
 
 
-var clientApi = GlfwClientApi.Unkown
+var clientApi = GlfwClientApi.Unknown
 var time = 0.0
 val mouseJustPressed = BooleanArray(5)
 val mouseCursors = LongArray(MouseCursor.COUNT)
 
-enum class GlfwClientApi { Unkown, OpenGL, Vulkan }
+enum class GlfwClientApi { Unknown, OpenGL, Vulkan }
