@@ -51,7 +51,7 @@ private class ImGuiOpenGL3 {
             errorCallback = { error, description -> println("Glfw Error $error: $description") }
             init()
             windowHint {
-                debug = true
+//                debug = true
 
                 // Decide GL+GLSL versions
                 when (Platform.get()) {
