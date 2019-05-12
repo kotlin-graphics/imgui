@@ -251,6 +251,6 @@ class ImplGlfw(
             }
         }
 
-        val charCallback: CharCallbackT = { c: Int -> if (!g.imeInProgress && c in 1..65535) io.addInputCharacter(c.c) }
+        val charCallback: CharCallbackT = { c: Int -> if (!g.imeInProgress) io.addInputCharacter(c.c) }
     }
 }
