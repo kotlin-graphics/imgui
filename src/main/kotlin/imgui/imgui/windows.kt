@@ -23,6 +23,7 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.scrollbar
 import imgui.ImGui.style
 import imgui.imgui.imgui_main.Companion.clampWindowRect
+import imgui.imgui.imgui_main.Companion.renderWindowDecorations
 import imgui.imgui.imgui_main.Companion.renderWindowOuterBorders
 import imgui.imgui.imgui_main.Companion.renderWindowTitleBarContents
 import imgui.imgui.imgui_main.Companion.resizeGripDef
@@ -385,7 +386,7 @@ interface imgui_windows {
             var borderHeld = -1
             val resizeGripCol = IntArray(4)
             val resizeGripCount = if (io.configWindowsResizeFromEdges) 2 else 1 // 4
-            val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
+            val resizeGripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             if (!window.collapsed)
                 borderHeld = updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
             window.resizeBorderHeld = borderHeld
@@ -462,73 +463,10 @@ interface imgui_windows {
                     window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f), g.style.windowRounding)
             }
 
-            // Draw window + handle manual resize
-            // As we highlight the title bar when want_focus is set, multiple reappearing windows will have have their title bar highlighted on their reappearing frame.
-            val windowRounding = window.windowRounding
-            val windowBorderSize = window.windowBorderSize
             val windowToHighlight = g.navWindowingTarget ?: g.navWindow
             val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
                     ?: false)
-            if (window.collapsed) {
-                // Title bar only
-                val backupBorderSize = style.frameBorderSize
-                g.style.frameBorderSize = window.windowBorderSize
-                val titleBarCol = (if (titleBarIsHighlight && !g.navDisableHighlight) Col.TitleBgActive else Col.TitleBgCollapsed)
-                renderFrame(titleBarRect.min, titleBarRect.max, titleBarCol.u32, true, windowRounding)
-                style.frameBorderSize = backupBorderSize
-            } else {
-
-                // Window background
-                if (flags hasnt Wf.NoBackground) {
-                    var bgCol = getWindowBgColorIdxFromFlags(flags).u32
-                    val alpha = when (g.nextWindowData.bgAlphaCond) {
-                        Cond.None -> 1f
-                        else -> g.nextWindowData.bgAlphaVal
-                    }
-                    if (alpha != 1f)
-                        bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
-                    window.drawList.addRectFilled(window.pos + Vec2(0f, window.titleBarHeight), window.pos + window.size, bgCol, windowRounding,
-                            if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
-                }
-                g.nextWindowData.bgAlphaCond = Cond.None
-
-                // Title bar
-                if (flags hasnt Wf.NoTitleBar) {
-                    val titleBarCol = if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
-                    window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, Dcf.Top.i)
-                }
-
-                // Menu bar
-                if (flags has Wf.MenuBar) {
-                    val menuBarRect = window.menuBarRect()
-                    // Soft clipping, in particular child window don't have minimum size covering the menu bar so this is useful for them.
-                    menuBarRect clipWith window.rect()
-                    val rounding = if (flags has Wf.NoTitleBar) windowRounding else 0f
-                    window.drawList.addRectFilled(menuBarRect.min + Vec2(windowBorderSize, 0f), menuBarRect.max - Vec2(windowBorderSize, 0f), Col.MenuBarBg.u32, rounding, Dcf.Top.i)
-                    if (style.frameBorderSize > 0f && menuBarRect.max.y < window.pos.y + window.size.y)
-                        window.drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32, style.frameBorderSize)
-                }
-
-                // Scrollbars
-                if (window.scrollbar.x) scrollbar(Axis.X)
-                if (window.scrollbar.y) scrollbar(Axis.Y)
-
-                // Render resize grips (after their input handling so we don't have a frame of latency)
-                if (flags hasnt Wf.NoResize)
-                    for (resizeGripN in 0 until resizeGripCount) {
-                        val grip = resizeGripDef[resizeGripN]
-                        val corner = window.pos.lerp(window.pos + window.size, grip.cornerPosN)
-                        with(window.drawList) {
-                            pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(windowBorderSize, gripDrawSize) else Vec2(gripDrawSize, windowBorderSize)))
-                            pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(gripDrawSize, windowBorderSize) else Vec2(windowBorderSize, gripDrawSize)))
-                            pathArcToFast(Vec2(corner.x + grip.innerDir.x * (windowRounding + windowBorderSize), corner.y + grip.innerDir.y * (windowRounding + windowBorderSize)), windowRounding, grip.angleMin12, grip.angleMax12)
-                            pathFillConvex(resizeGripCol[resizeGripN])
-                        }
-                    }
-
-                // Borders
-                renderWindowOuterBorders(window)
-            }
+            renderWindowDecorations(window, titleBarRect, titleBarIsHighlight, resizeGripCount, resizeGripCol, resizeGripDrawSize)
 
             // Draw navigation selection/windowing rectangle border
             if (g.navWindowingTargetAnim === window) {

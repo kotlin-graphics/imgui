@@ -5,6 +5,7 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.begin
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
@@ -23,7 +24,9 @@ import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
+import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.scrollbar
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
@@ -31,6 +34,7 @@ import imgui.ImGui.style
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
+import imgui.imgui.imgui_windows.Companion.getWindowBgColorIdxFromFlags
 import imgui.internal.*
 import org.lwjgl.system.Platform
 import kotlin.math.max
@@ -38,6 +42,7 @@ import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 import imgui.ConfigFlag as Cf
 import imgui.WindowFlag as Wf
+import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.DrawListFlag as Dlf
 
 @Suppress("UNCHECKED_CAST")
@@ -684,7 +689,7 @@ interface imgui_main {
             val rounding = window.windowRounding
             val borderSize = window.windowBorderSize
             if (borderSize > 0f && window.flags hasnt Wf.NoBackground)
-                window.drawList.addRect(window.pos, window.pos + window.size, Col.Border.u32, rounding, DrawCornerFlag.All.i, borderSize)
+                window.drawList.addRect(window.pos, window.pos + window.size, Col.Border.u32, rounding, Dcf.All.i, borderSize)
 
             val borderHeld = window.resizeBorderHeld
             if (borderHeld != -1) {
@@ -699,6 +704,74 @@ interface imgui_main {
             if (style.frameBorderSize > 0f && window.flags hasnt Wf.NoTitleBar) {
                 val y = window.pos.y + window.titleBarHeight - 1
                 window.drawList.addLine(Vec2(window.pos.x + borderSize, y), Vec2(window.pos.x + window.size.x - borderSize, y), Col.Border.u32, style.frameBorderSize)
+            }
+        }
+
+        fun renderWindowDecorations(window: Window, titleBarRect: Rect, titleBarIsHighlight: Boolean, resizeGripCount: Int, resizeGripCol: IntArray, resizeGripDrawSize: Float) {
+
+            val flags = window.flags
+
+            // Draw window + handle manual resize
+            // As we highlight the title bar when want_focus is set, multiple reappearing windows will have have their title bar highlighted on their reappearing frame.
+            val windowRounding = window.windowRounding
+            val windowBorderSize = window.windowBorderSize
+            if (window.collapsed) {
+                // Title bar only
+                val backupBorderSize = style.frameBorderSize
+                g.style.frameBorderSize = window.windowBorderSize
+                val titleBarCol = if (titleBarIsHighlight && !g.navDisableHighlight) Col.TitleBgActive else Col.TitleBgCollapsed
+                renderFrame(titleBarRect.min, titleBarRect.max, titleBarCol.u32, true, windowRounding)
+                style.frameBorderSize = backupBorderSize
+            } else {
+                // Window background
+                if (flags hasnt Wf.NoBackground) {
+                    var bgCol = getWindowBgColorIdxFromFlags(flags).u32
+                    val alpha = when (g.nextWindowData.bgAlphaCond) {
+                        Cond.None -> 1f
+                        else -> g.nextWindowData.bgAlphaVal
+                    }
+                    if (alpha != 1f)
+                        bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
+                    window.drawList.addRectFilled(window.pos + Vec2(0f, window.titleBarHeight), window.pos + window.size, bgCol, windowRounding,
+                            if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
+                }
+                g.nextWindowData.bgAlphaCond = Cond.None
+
+                // Title bar
+                if (flags hasnt Wf.NoTitleBar) {
+                    val titleBarCol = if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
+                    window.drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, Dcf.Top.i)
+                }
+
+                // Menu bar
+                if (flags has Wf.MenuBar) {
+                    val menuBarRect = window.menuBarRect()
+                    menuBarRect clipWith window.rect() // Soft clipping, in particular child window don't have minimum size covering the menu bar so this is useful for them.
+                    val rounding = if (flags has Wf.NoTitleBar) windowRounding else 0f
+                    window.drawList.addRectFilled(menuBarRect.min + Vec2(windowBorderSize, 0f), menuBarRect.max - Vec2(windowBorderSize, 0f), Col.MenuBarBg.u32, rounding, Dcf.Top.i)
+                    if (style.frameBorderSize > 0f && menuBarRect.max.y < window.pos.y + window.size.y)
+                        window.drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32, style.frameBorderSize)
+                }
+
+                // Scrollbars
+                if (window.scrollbar.x) scrollbar(Axis.X)
+                if (window.scrollbar.y) scrollbar(Axis.Y)
+
+                // Render resize grips (after their input handling so we don't have a frame of latency)
+                if (flags hasnt Wf.NoResize)
+                    repeat(resizeGripCount) { resizeGripN ->
+                        val grip = resizeGripDef[resizeGripN]
+                        val corner = window.pos.lerp(window.pos + window.size, grip.cornerPosN)
+                        with(window.drawList) {
+                            pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(windowBorderSize, resizeGripDrawSize) else Vec2(resizeGripDrawSize, windowBorderSize)))
+                            pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(resizeGripDrawSize, windowBorderSize) else Vec2(windowBorderSize, resizeGripDrawSize)))
+                            pathArcToFast(Vec2(corner.x + grip.innerDir.x * (windowRounding + windowBorderSize), corner.y + grip.innerDir.y * (windowRounding + windowBorderSize)), windowRounding, grip.angleMin12, grip.angleMax12)
+                            pathFillConvex(resizeGripCol[resizeGripN])
+                        }
+                    }
+
+                // Borders
+                renderWindowOuterBorders(window)
             }
         }
 
