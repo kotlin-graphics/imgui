@@ -1174,7 +1174,7 @@ fun navSaveLastChildNavWindowIntoParent(navWindow: Window?) {
     tailrec fun Window.getParent(): Window {
         val parent = parentWindow
         return when {
-            parent != null && flags has Wf.ChildWindow && flags hasnt (Wf.Popup or Wf.ChildMenu) -> getParent()
+            parent != null && flags has Wf.ChildWindow && flags hasnt (Wf.Popup or Wf.ChildMenu) -> parent.getParent()
             else -> this
         }
     }
