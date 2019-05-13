@@ -447,7 +447,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     fun destroy() {
         shutdown()
         if (gImGui === this)
-            gImGui = null
+            gImGui = null // SetCurrentContext(NULL);
     }
 
     /** This function is merely here to free heap allocations.     */
