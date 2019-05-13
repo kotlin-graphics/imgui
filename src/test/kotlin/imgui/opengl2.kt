@@ -45,7 +45,7 @@ private class ImGuiOpenGL2 {
         glfw {
             errorCallback = { error, description -> println("Glfw Error $error: $description") }
             init()
-            windowHint { debug = true }
+            windowHint { debug = DEBUG }
         }
 
         // Create window with graphics context

@@ -23,6 +23,7 @@ import uno.glfw.windowHint.Profile.core
 
 fun main() {
     ImGuiOpenGL3()
+    ImGuiOpenGL3()
 }
 
 private class ImGuiOpenGL3 {
@@ -49,7 +50,7 @@ private class ImGuiOpenGL3 {
             errorCallback = { error, description -> println("Glfw Error $error: $description") }
             init()
             windowHint {
-//                debug = true
+                debug = DEBUG
 
                 // Decide GL+GLSL versions
                 when (Platform.get()) {
@@ -193,8 +194,7 @@ private class ImGuiOpenGL3 {
 
         implGl3.renderDrawData(ImGui.drawData!!)
 
-        if (DEBUG)
-            checkError("mainLoop")
+        if (DEBUG) checkError("mainLoop")
 
 //        RemoteryGL.rmt_EndOpenGLSample()
     }

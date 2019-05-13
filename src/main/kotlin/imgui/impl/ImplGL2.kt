@@ -6,10 +6,7 @@ import glm_.d
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4b
-import gln.glGetVec2i
-import gln.glGetVec4i
-import gln.glScissor
-import gln.glViewport
+import gln.*
 import gln.glf.semantic
 import gln.texture.glBindTexture
 import imgui.*
@@ -190,7 +187,10 @@ class ImplGL2 : GLInterface {
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)
 
-        return true
+        return when {
+            DEBUG -> checkError("mainLoop")
+            else -> true
+        }
     }
 
     override fun destroyFontsTexture() {

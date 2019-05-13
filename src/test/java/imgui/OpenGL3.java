@@ -6,7 +6,7 @@ import glm_.vec4.Vec4;
 import imgui.imgui.Context;
 import imgui.impl.ImplGL3;
 import imgui.impl.ImplGlfw;
-import static imgui.ImguiKt.setDEBUG;
+import static imgui.ImguiKt.getDEBUG;
 import static imgui.impl.CommonKt.setGlslVersion;
 import kotlin.Unit;
 import org.lwjgl.glfw.GLFW;
@@ -55,7 +55,7 @@ public class OpenGL3 {
         // Setup window
         GLFW.glfwSetErrorCallback((error, description) -> System.out.println("Glfw Error " + error + ": " + description));
         glfw.init();
-        windowHint.setDebug(true);
+        windowHint.setDebug(getDEBUG());
 
         // Decide GL+GLSL versions
         if(Platform.get() == Platform.MACOSX) { // GL 3.2 + GLSL 150
