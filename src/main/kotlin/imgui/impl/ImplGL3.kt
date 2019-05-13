@@ -23,11 +23,8 @@ import imgui.DrawVert
 import imgui.ImGui.io
 import imgui.imgui.g
 import kool.*
-import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11C
-import org.lwjgl.opengl.GL20C
+import org.lwjgl.opengl.*
 import org.lwjgl.opengl.GL30C.*
-import org.lwjgl.opengl.GL33C
 import org.lwjgl.opengl.GL33C.glBindSampler
 import org.lwjgl.opengl.GL45C.GL_CLIP_ORIGIN
 import org.lwjgl.system.Platform
@@ -292,8 +289,23 @@ class ImplGL3 : GLInterface {
 
         createFontsTexture()
 
-        vao = GlVertexArray.gen()
+        vao = GlVertexArray.gen().bound {
 
+            buffers {
+                Buffer.Vertex.bound(ARRAY) {
+                    data(vtxSize, STREAM_DRAW)
+
+                    glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.size, 0)
+                    glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.size, Vec2.size)
+                    glVertexAttribPointer(semantic.attr.COLOR, Vec4b.length, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
+                }
+                glEnableVertexAttribArray(semantic.attr.POSITION)
+                glEnableVertexAttribArray(semantic.attr.TEX_COORD)
+                glEnableVertexAttribArray(semantic.attr.COLOR)
+
+                Buffer.Element.bind(ELEMENT_ARRAY) { data(idxSize, STREAM_DRAW) }
+            }
+        }
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)

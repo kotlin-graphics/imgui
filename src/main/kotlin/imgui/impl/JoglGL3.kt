@@ -26,7 +26,6 @@ import kool.set
 object JoglGL3 {
 
     lateinit var window: GLWindow
-    var time = 0.0
 
     lateinit var program: JoglProgram
 
