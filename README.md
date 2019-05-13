@@ -108,7 +108,7 @@ Dear ImGui allows you create elaborate tools as well as very short-lived ones. O
 
 ### Demo
 
-You should be able to try the examples from `test` (tested on Windows/Mac/Linux) within minutes. If you don't, let me know!
+You should be able to try the examples from `test` (tested on Windows/Mac/Linux) within seconds: clone, sync and run. If you don't, let me know!
 
 Kotlin:
 
