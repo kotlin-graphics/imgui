@@ -1,12 +1,12 @@
-package imgui.gl;
+package imgui;
 
 import glm_.vec2.Vec2;
 import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
-import imgui.*;
 import imgui.imgui.Context;
 import imgui.impl.ImplGL3;
 import imgui.impl.ImplGlfw;
+import static imgui.ImguiKt.setDEBUG;
 import static imgui.impl.CommonKt.setGlslVersion;
 import kotlin.Unit;
 import org.lwjgl.glfw.GLFW;
