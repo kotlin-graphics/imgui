@@ -6,6 +6,7 @@ import glm_.vec4.Vec4b
 import gln.BufferTarget.Companion.ARRAY
 import gln.BufferTarget.Companion.ELEMENT_ARRAY
 import gln.Usage.Companion.STREAM_DRAW
+import gln.checkError
 import gln.glGetVec4i
 import gln.glScissor
 import gln.glViewport
@@ -258,7 +259,10 @@ class ImplGL3 : GLInterface {
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)
 
-        return true
+        return when {
+            DEBUG -> checkError("mainLoop")
+            else -> true
+        }
     }
 
     override fun destroyFontsTexture() {
@@ -296,7 +300,10 @@ class ImplGL3 : GLInterface {
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementBuffer)
 
-        return true
+        return when {
+            DEBUG -> checkError("mainLoop")
+            else -> true
+        }
     }
 
     override fun destroyDeviceObjects() {
