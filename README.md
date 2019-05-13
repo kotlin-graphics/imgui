@@ -108,27 +108,27 @@ Dear ImGui allows you create elaborate tools as well as very short-lived ones. O
 
 ### Demo
 
-You should be able to try the examples from `test` (tested on Windows/Mac/Linux) within minutes. If you don't, let me know!
+You should be able to try the examples from `test` (tested on Windows/Mac/Linux) within seconds: clone, sync and run. If you don't, let me know!
 
-OpenGL Kotlin:
+Kotlin:
 
-- [lwjgl](src/test/kotlin/imgui/gl/test%20lwjgl.kt) 
-- [jogl](src/test/kotlin/imgui/gl/test%20jogl.kt)
+- [OpenGL3](src/test/kotlin/imgui/opengl3.kt) 
+- [OpenGL2](src/test/kotlin/imgui/opengl2.kt) 
+- [Vulkan](src/test/kotlin/imgui/vulkan.kt) (broken, to fix, but still valuable for the moment)
 
-OpenGL Java:
+- [jogl-GL3](src/test/kotlin/imgui/gl/test%20jogl.kt) (not mantained anymore ufficially but keeping dormant in case something comes up)
 
-- [lwjgl](src/test/java/imgui/gl/Test_lwjgl.java) 
+Java:
 
-Vulkan Kotlin:
+- [OpenGL3](src/test/java/imgui/OpenGL3.java) 
 
-- [lwjgl](src/test/kotlin/imgui/vk/test%20lwjgl%20vk.kt) (broken, to fix)
-
+Note:
+- we tend to avoid nullability, whenever Omar uses `NULL` with the string endings, we passes `-1` instead.
+- `DEBUG = false` (`import static imgui.ImguiKt.setDEBUG;` for Java users)  to turn off `println()` debugs
 
 You should refer to those also to learn how to use the imgui library.
 
-The demo applications are unfortunately not yet DPI aware so expect some blurriness on a 4K screen. For DPI awareness you can load/reload your font at different scale, and scale your Style with `style.ScaleAllSizes()`.
-
-Ps: `DEBUG = false` to turn off debugs `println()`
+The demo applications are unfortunately not yet DPI aware so expect some blurriness on a 4K screen. For DPI awareness you can load/reload your font at different scale, and scale your Style with `style.scaleAllSizes()`.
 
 ### Native Roadmap
 
