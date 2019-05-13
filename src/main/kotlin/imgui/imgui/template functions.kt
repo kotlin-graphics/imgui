@@ -31,14 +31,29 @@ fun <N> dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<N>,
     var v by vPtr
 
     val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
-    val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+
+    val isDecimal: Boolean
+    val maxDecimal:Any = when(dataType){
+        DataType.Float -> {
+            isDecimal = true
+            Float.MAX_VALUE
+        }
+        DataType.Double -> {
+            isDecimal = true
+            Double.MAX_VALUE
+        }
+        else -> {
+            isDecimal = false
+        }
+    }
+
     val hasMinMax = vMin != vMax
     val range = vMax - vMin
-    val isPower = power != 1f && isDecimal && hasMinMax && range < Float.MAX_VALUE as N
+    val isPower = power != 1f && isDecimal && hasMinMax && range < maxDecimal as N
 
     // Default tweak speed
     var vSpeed = vSpeed_
-    if (vSpeed == 0f && hasMinMax && range < Float.MAX_VALUE as N)
+    if (vSpeed == 0f && hasMinMax && range < maxDecimal as N)
         vSpeed = range.f * g.dragSpeedDefaultRatio
 
     // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
