@@ -425,7 +425,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
 //    char                    TempBuffer[1024*3+1];               // Temporary text buffer
 
-    /* Context creation and access
+    /*  Context creation and access
         Each context create its own ImFontAtlas by default. You may instance one yourself and pass it to Context()
         to share a font atlas between imgui contexts.
         All those functions are not reliant on the current context.     */
@@ -447,7 +447,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     fun destroy() {
         shutdown()
         if (gImGui === this)
-            setCurrent()
+            gImGui = null
     }
 
     /** This function is merely here to free heap allocations.     */
