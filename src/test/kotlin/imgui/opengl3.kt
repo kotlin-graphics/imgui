@@ -1,12 +1,10 @@
-package imgui.gl
+package imgui
 
 
 import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.DEBUG
-import imgui.ImGui
 import imgui.imgui.Context
 import imgui.impl.ImplGL3
 import imgui.impl.ImplGlfw
