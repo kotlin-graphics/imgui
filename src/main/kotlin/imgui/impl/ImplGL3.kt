@@ -78,23 +78,27 @@ class ImplGL3 : GLInterface {
 
         if (resizeIfNeeded(drawData.cmdLists)) {
             // Bind vertex/index buffers and setup attributes for ImDrawVert [JVM] buffers are new
-            buffers {
-                Buffer.Vertex.bound(ARRAY) {
-                    data(vtxSize, STREAM_DRAW)
-
-                    glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.size, 0)
-                    glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.size, Vec2.size)
-                    glVertexAttribPointer(semantic.attr.COLOR, Vec4b.length, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
-                }
-                glEnableVertexAttribArray(semantic.attr.POSITION)
-                glEnableVertexAttribArray(semantic.attr.TEX_COORD)
-                glEnableVertexAttribArray(semantic.attr.COLOR)
-
-                Buffer.Element.bind(ELEMENT_ARRAY) { data(idxSize, STREAM_DRAW) }
-            }
+            vaoSetup()
 
             if (DEBUG)
                 println("new buffers sizes, vtx: $vtxSize, idx: $idxSize")
+        }
+    }
+
+    fun vaoSetup() {
+        buffers {
+            Buffer.Vertex.bound(ARRAY) {
+                data(vtxSize, STREAM_DRAW)
+
+                glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.size, 0)
+                glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.size, Vec2.size)
+                glVertexAttribPointer(semantic.attr.COLOR, Vec4b.length, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
+            }
+            glEnableVertexAttribArray(semantic.attr.POSITION)
+            glEnableVertexAttribArray(semantic.attr.TEX_COORD)
+            glEnableVertexAttribArray(semantic.attr.COLOR)
+
+            Buffer.Element.bind(ELEMENT_ARRAY) { data(idxSize, STREAM_DRAW) }
         }
     }
 
@@ -289,23 +293,8 @@ class ImplGL3 : GLInterface {
 
         createFontsTexture()
 
-        vao = GlVertexArray.gen().bound {
+        vao = GlVertexArray.gen().bound { vaoSetup() }
 
-            buffers {
-                Buffer.Vertex.bound(ARRAY) {
-                    data(vtxSize, STREAM_DRAW)
-
-                    glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.size, 0)
-                    glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.size, Vec2.size)
-                    glVertexAttribPointer(semantic.attr.COLOR, Vec4b.length, GL_UNSIGNED_BYTE, true, DrawVert.size, 2 * Vec2.size)
-                }
-                glEnableVertexAttribArray(semantic.attr.POSITION)
-                glEnableVertexAttribArray(semantic.attr.TEX_COORD)
-                glEnableVertexAttribArray(semantic.attr.COLOR)
-
-                Buffer.Element.bind(ELEMENT_ARRAY) { data(idxSize, STREAM_DRAW) }
-            }
-        }
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
