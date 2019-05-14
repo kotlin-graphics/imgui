@@ -130,7 +130,7 @@ You should refer to those also to learn how to use the imgui library.
 
 The demo applications are unfortunately not yet DPI aware so expect some blurriness on a 4K screen. For DPI awareness you can load/reload your font at different scale, and scale your Style with `style.scaleAllSizes()`.
 
-### Functional Programming
+### Functional Programming / Domain Specific Language
 
 All the functions are ported exactly as the original. Moreover in order to take advantage of Functional Programming 
 this port offers some comfortable constructs, giving the luxury to forget about some annoying and very error prone
@@ -180,6 +180,8 @@ Or in Java:
             });
     });
 ```
+
+The demo mixes some traditional imgui-calls with these DSL calls.
 
 ### Native Roadmap
 
