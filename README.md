@@ -183,6 +183,8 @@ Or in Java:
 
 The demo mixes some traditional imgui-calls with these DSL calls.
 
+Refer to the corresponding [`dsl`](src/main/kotlin/imgui/dsl.kt) object for Kotlin or [`dsl_`](src/main/java/imgui/dsl_.java) class for Java.
+
 ### Native Roadmap
 
 Some of the goals of Omar for 2018 are:
