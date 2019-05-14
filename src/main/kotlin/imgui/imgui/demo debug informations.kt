@@ -23,7 +23,6 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameCount
-import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getId
 import imgui.ImGui.inputFloat
 import imgui.ImGui.io
@@ -54,12 +53,13 @@ import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
-import imgui.dsl.menu
 import imgui.dsl.child
-import imgui.dsl.withIndent
+import imgui.dsl.indent
+import imgui.dsl.menu
 import imgui.imgui.demo.ExampleApp
 import imgui.imgui.demo.showExampleApp.StyleEditor
 import imgui.imgui.imgui_colums.Companion.offsetNormToPixels
+import imgui.imgui.imgui_miscellaneousUtilities.Companion.getForegroundDrawList
 import imgui.internal.*
 import java.nio.ByteBuffer
 import java.util.*
@@ -323,7 +323,7 @@ interface imgui_demoDebugInformations {
             bulletText("CTRL+Mouse Wheel to zoom window contents.")
         bulletText("Mouse Wheel to scroll.")
         bulletText("While editing text:\n")
-        withIndent {
+        indent {
             bulletText("Hold SHIFT or use mouse to select text.")
             bulletText("CTRL+Left/Right to word jump.")
             bulletText("CTRL+A or double-click to select all.")

@@ -2186,11 +2186,11 @@ interface imgui_internal {
 //                            .also { (v as Ubyte).v = _i.b }
 //                }
                 DataType.Float -> {
-                    _f = v as Float
+                    _f0 = v as Float
                     val min = vMin?.let { it as Float } ?: Float.MIN_VALUE
                     val max = vMax?.let { it as Float } ?: Float.MAX_VALUE
-                    dragBehaviorT(dataType, ::_f, vSpeed, min.f, max.f, format, power, flags)
-                            .also { v = _f as N }
+                    dragBehaviorT(dataType, ::_f0, vSpeed, min.f, max.f, format, power, flags)
+                            .also { v = _f0 as N }
                 }
                 DataType.Double -> {
                     _d = v as Double
@@ -3907,7 +3907,9 @@ interface imgui_internal {
 
         var _i = 0
         var _L = 0L
-        var _f = 0f
+        var _f0 = 0f
+        var _f1 = 0f
+        var _f2 = 0f
         var _d = 0.0
         var _c = NUL
 

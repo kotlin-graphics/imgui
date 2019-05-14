@@ -22,10 +22,12 @@ import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveID
+import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.scrollbar
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize

@@ -23,3 +23,12 @@ class test : StringSpec() {
         }
     }
 }
+
+class Class {
+    companion object {
+        @JvmStatic
+        fun prova(block: Runnable) = block.run()
+        @JvmStatic
+        fun prova2(block: () -> Unit) = block()
+    }
+}

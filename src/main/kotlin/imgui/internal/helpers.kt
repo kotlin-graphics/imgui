@@ -214,11 +214,6 @@ fun fileLoadToCharArray(filename: String, paddingBytes: Int = 0) =
             CharArray(bytes.size) { bytes[it].c }
         }
 
-fun fileLoadToLines(filename: String): List<String>? {
-    val file = File(Paths.get(filename).toUri())
-    return file.takeIf { it.exists() && it.canRead() }?.readLines()
-}
-
 
 //IMGUI_API FILE*         ImFileOpen(const char* filename, const char* file_open_mode);
 

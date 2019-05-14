@@ -6,8 +6,11 @@ import glm_.vec4.Vec4;
 import imgui.imgui.Context;
 import imgui.impl.ImplGL3;
 import imgui.impl.ImplGlfw;
+
 import static imgui.ImguiKt.getDEBUG;
+import static imgui.dsl_.button;
 import static imgui.impl.CommonKt.setGlslVersion;
+
 import kotlin.Unit;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
@@ -15,6 +18,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.Platform;
 import uno.glfw.GlfwWindow;
 import uno.glfw.VSync;
+
+import java.util.function.Consumer;
 
 import static gln.GlnKt.glClearColor;
 import static gln.GlnKt.glViewport;
@@ -32,7 +37,6 @@ public class OpenGL3 {
     private uno.glfw.glfw glfw = uno.glfw.glfw.INSTANCE;
     private uno.glfw.windowHint windowHint = uno.glfw.windowHint.INSTANCE;
     private ImGui imgui = ImGui.INSTANCE;
-    private dsl func = dsl.INSTANCE;
     private IO io;
 
 
@@ -58,7 +62,7 @@ public class OpenGL3 {
         windowHint.setDebug(getDEBUG());
 
         // Decide GL+GLSL versions
-        if(Platform.get() == Platform.MACOSX) { // GL 3.2 + GLSL 150
+        if (Platform.get() == Platform.MACOSX) { // GL 3.2 + GLSL 150
 
             setGlslVersion(150);
             windowHint.getContext().setVersion("3.2");
@@ -124,10 +128,7 @@ public class OpenGL3 {
             - When io.wantCaptureMouse is true, do not dispatch mouse input data to your main application.
             - When io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
             Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
-        window.loop((MemoryStack stack) -> {
-            mainLoop();
-            return Unit.INSTANCE;
-        });
+        window.loop((MemoryStack stack) -> mainLoop());
 
         implGlfw.shutdown();
         implGl3.shutdown();
@@ -152,7 +153,7 @@ public class OpenGL3 {
         imgui.checkbox("Demo Window", showDemo);                 // Edit bools storing our windows open/close state
         imgui.checkbox("Another Window", showAnotherWindow);
 
-        if (imgui.button("Button", new Vec2()))                               // Buttons return true when clicked (NB: most widgets return true when edited/activated)
+        if (imgui.button("Button", new Vec2())) // Buttons return true when clicked (NB: most widgets return true when edited/activated)
             counter[0]++;
 
         imgui.sameLine(0f, -1f);

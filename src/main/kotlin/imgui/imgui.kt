@@ -98,19 +98,37 @@ object ImGui :
         imgui_widgets_selectables,
         imgui_widgets_listBoxes,
         imgui_widgets_dataPlotting,
+        imgui_widgets_menus,
+
+        imgui_tooltips,
+
+        imgui_popupsModals,
 
         imgui_colums,
-        lowLevelLayoutHelpers,
-        imgui_tooltips,
-        imgui_widgets_menus,
-        imgui_popupsModals,
+
+        imgui_tabBarsTabs,
+
         imgui_logging,
+
         imgui_dragAndDrop,
+
         imgui_clipping,
+
         imgui_focusActivation,
-        imgui_utilities,
-        imgui_inputs,
-        imgui_helpers,
+
+        imgui_itemWidgetsUtilities,
+
+        imgui_miscellaneousUtilities,
+
+        imgui_colorUtilities,
+
+        imgui_inputsUtilities,
+
+        imgui_clipboardUtilities,
+
+        settingsIniUtilities,
+
+        lowLevelLayoutHelpers,
 
         imgui_internal
 

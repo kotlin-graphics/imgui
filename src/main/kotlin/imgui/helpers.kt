@@ -11,8 +11,6 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.cursorPosY
 import imgui.ImGui.inputText
 import imgui.ImGui.nextItemWidth
-import imgui.ImGui.popItemWidth
-import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
 import imgui.internal.TabBar
 import imgui.internal.strlen

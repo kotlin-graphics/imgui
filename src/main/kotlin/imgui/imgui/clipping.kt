@@ -3,6 +3,7 @@ package imgui.imgui
 import glm_.vec2.Vec2
 import imgui.ImGui.currentWindow
 
+/** Clipping */
 interface imgui_clipping {
 
     /** When using this function it is sane to ensure that float are perfectly rounded to integer values, to that e.g.
@@ -20,5 +21,4 @@ interface imgui_clipping {
             clipRect put drawList._clipRectStack.last()
         }
     }
-
 }

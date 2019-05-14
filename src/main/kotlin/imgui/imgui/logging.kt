@@ -23,7 +23,18 @@ interface imgui_logging {
     fun logToTTY(autoOpenDepth: Int  = -1): Nothing = TODO()
 
     /** Start logging/capturing text output to given file */
-    fun logToFile(autoOpenDepth: Int  = -1, filename: String? = null): Nothing = TODO()
+    fun logToFile(maxDepth: Int = -1, file_: File? = null) {
+        if (g.logEnabled)
+            return
+        val window = g.currentWindow!!
+
+        g.logFile = file_ ?: g.logFile ?: return
+
+        g.logEnabled = true
+        g.logDepthRef = window.dc.treeDepth
+        if (maxDepth >= 0)
+            g.logDepthToExpandDefault = maxDepth
+    }
 
     /** start logging ImGui output to OS clipboard   */
     fun logToClipboard(autoOpenDepth: Int = -1) {
@@ -76,19 +87,6 @@ interface imgui_logging {
         if (logToTty) logToTTY()
         if (logToFile) logToFile()
         if (logToClipboard) logToClipboard()
-    }
-
-    fun logToFile(maxDepth: Int, file_: File?) {
-        if (g.logEnabled)
-            return
-        val window = g.currentWindow!!
-
-        g.logFile = file_ ?: g.logFile ?: return
-
-        g.logEnabled = true
-        g.logDepthRef = window.dc.treeDepth
-        if (maxDepth >= 0)
-            g.logDepthToExpandDefault = maxDepth
     }
 
     /** pass text data straight to log (without being displayed)    */

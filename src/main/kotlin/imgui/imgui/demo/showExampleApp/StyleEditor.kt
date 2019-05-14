@@ -49,12 +49,12 @@ import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
 import imgui.dsl.button
-import imgui.dsl.smallButton
-import imgui.dsl.treeNode
 import imgui.dsl.child
+import imgui.dsl.smallButton
+import imgui.dsl.tooltip
+import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
-import imgui.dsl.withTooltip
 import imgui.imgui.g
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import kotlin.math.sqrt
@@ -272,7 +272,7 @@ object StyleEditor {
                                         if (glyph != null) {
                                             font.renderChar(drawList, cellSize, cellP1, Col.Text.u32, (base + n).c)
                                             if (isMouseHoveringRect(cellP1, cellP2))
-                                                withTooltip {
+                                                tooltip {
                                                     text("Codepoint: U+%04X", base + n)
                                                     separator()
                                                     text("AdvanceX+1: %.1f", glyph.advanceX)
