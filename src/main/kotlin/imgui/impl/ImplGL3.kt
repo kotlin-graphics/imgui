@@ -11,8 +11,8 @@ import gln.glGetVec4i
 import gln.glScissor
 import gln.glViewport
 import gln.glf.semantic
-import gln.objects.GlBuffers
-import gln.objects.GlProgram
+import gln.identifiers.GlBuffers
+import gln.identifiers.GlProgram
 import gln.uniform.glUniform
 import gln.vertexArray.GlVertexArray
 import gln.vertexArray.glVertexAttribPointer
@@ -69,7 +69,7 @@ class ImplGL3 : GLInterface {
         // DisplayMin is typically (0,0) for single viewport apps.
         glViewport(0, 0, fbWidth, fbHeight)
         val orthoProjection = glm.ortho(mat, 0f, io.displaySize.x.f, io.displaySize.y.f, 0f)
-        glUseProgram(program.i)
+        glUseProgram(program.name)
         glUniform(matUL, orthoProjection)
         if (SAMPLER_BINDING)
             glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.

@@ -10,10 +10,10 @@ import gln.ShaderType.Companion.FRAGMENT_SHADER
 import gln.ShaderType.Companion.VERTEX_SHADER
 import gln.buffer.GlBufferDsl
 import gln.glf.semantic
-import gln.objects.GlBuffers
-import gln.objects.GlProgram
-import gln.objects.GlShader
-import gln.objects.GlTexture
+import gln.identifiers.GlBuffers
+import gln.identifiers.GlProgram
+import gln.identifiers.GlShader
+import gln.identifiers.GlTexture
 import gln.vertexArray.GlVertexArray
 import imgui.MouseCursor
 import kool.ByteBuffer

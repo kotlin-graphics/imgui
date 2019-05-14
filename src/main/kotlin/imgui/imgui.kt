@@ -5,6 +5,7 @@ import imgui.imgui.*
 import imgui.imgui.widgets.*
 import imgui.internal.ItemStatusFlags
 import imgui.internal.Rect
+import kool.Stack
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
@@ -234,3 +235,5 @@ infix fun CharArray.cmp(other: CharArray): Boolean {
     }
     return true
 }
+
+typealias stak = Stack
