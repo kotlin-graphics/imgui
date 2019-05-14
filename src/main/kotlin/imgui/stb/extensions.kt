@@ -3,12 +3,11 @@ package imgui.stb
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
+import imgui.stak
 import kool.adr
-import kool.stak
 import org.lwjgl.stb.*
 import org.lwjgl.system.CustomBuffer
 import org.lwjgl.system.MemoryUtil.*
-import org.lwjgl.system.Pointer.POINTER_SIZE
 import java.nio.ByteBuffer
 import java.nio.IntBuffer
 
