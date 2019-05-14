@@ -24,7 +24,6 @@ import uno.glfw.windowHint.Profile.core
 
 fun main() {
     ImGuiOpenGL3()
-    ImGuiOpenGL3()
 }
 
 private class ImGuiOpenGL3 {

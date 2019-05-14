@@ -41,7 +41,7 @@ import imgui.ImGui.tabItemCalcSize
 import imgui.ImGui.tabItemLabelAndCloseButton
 import imgui.imgui.Context
 import imgui.imgui.g
-import imgui.imgui.imgui_colums.Companion.tabBarRef
+import imgui.imgui.imgui_tabBarsTabs.Companion.tabBarRef
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs

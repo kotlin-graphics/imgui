@@ -84,7 +84,7 @@ import imgui.ImGui.windowPos
 import imgui.ImGui.windowWidth
 import imgui.dsl.child
 import imgui.dsl.treeNode
-import imgui.dsl.withGroup
+import imgui.dsl.group
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
@@ -380,13 +380,13 @@ object showDemoWindowLayout {
         treeNode("Groups") {
 
             helpMarker("Using BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundles the whole group so that you can use functions such as IsItemHovered() on it.")
-            withGroup {
-                withGroup {
+            group {
+                group {
                     button("AAA")
                     sameLine()
                     button("BBB")
                     sameLine()
-                    withGroup {
+                    group {
                         button("CCC")
                         button("DDD")
                     }
@@ -487,7 +487,7 @@ object showDemoWindowLayout {
 
             for (i in 0..4) {
                 if (i > 0) sameLine()
-                withGroup {
+                group {
                     text("%s", if (i == 0) "Top" else if (i == 1) "25%" else if (i == 2) "Center" else if (i == 3) "75%" else "Bottom")
                     beginChild(getId(i), Vec2(windowWidth * 0.17f, 200f), true)
                     if (scrollTo)

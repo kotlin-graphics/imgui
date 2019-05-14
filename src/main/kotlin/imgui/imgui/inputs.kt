@@ -7,21 +7,22 @@ import imgui.ImGui.calcTypematicPressedRepeatAmount
 import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.MOUSE_INVALID
+import imgui.MouseCursor
 import imgui.internal.Rect
 
 
 /** Inputs Utilities */
-interface imgui_inputs {
+interface imgui_inputsUtilities {
 
-    fun getKeyIndex(imguiKey: Int) = io.keyMap[imguiKey]
+    fun getKeyIndex(imguiKey: Int): Int = io.keyMap[imguiKey]
 
     /** is key being held. == io.KeysDown[user_key_index]. note that imgui doesn't know the semantic of each entry of io.KeysDown[].
      *  Use your own indices/enums according to how your back-end/engine stored them into io.KeysDown[]! */
-    fun isKeyDown(userKeyIndex: Int) = if (userKeyIndex < 0) false else io.keysDown[userKeyIndex]
+    fun isKeyDown(userKeyIndex: Int): Boolean = if (userKeyIndex < 0) false else io.keysDown[userKeyIndex]
 
     /** uses user's key indices as stored in the keys_down[] array. if repeat=true.
      *  uses io.KeyRepeatDelay / KeyRepeatRate  */
-    fun isKeyPressed(userKeyIndex: Int, repeat: Boolean = true) = if (userKeyIndex < 0) false
+    fun isKeyPressed(userKeyIndex: Int, repeat: Boolean = true): Boolean = if (userKeyIndex < 0) false
     else {
         val t = io.keysDownDuration[userKeyIndex]
         when {
@@ -32,7 +33,7 @@ interface imgui_inputs {
     }
 
     /** was key released (went from Down to !Down)..    */
-    fun isKeyReleased(userKeyIndex: Int) = if (userKeyIndex < 0) false else io.keysDownDurationPrev[userKeyIndex] >= 0f && !io.keysDown[userKeyIndex]
+    fun isKeyReleased(userKeyIndex: Int): Boolean = if (userKeyIndex < 0) false else io.keysDownDurationPrev[userKeyIndex] >= 0f && !io.keysDown[userKeyIndex]
 
     /** Uses provided repeat rate/delay. return a count, most often 0 or 1 but might be >1 if RepeatRate is small enough
      *  that DeltaTime > RepeatRate */
@@ -50,7 +51,8 @@ interface imgui_inputs {
     }
 
     /** is any mouse button held    */
-    val isAnyMouseDown get() = io.mouseDown.any()
+    val isAnyMouseDown: Boolean
+        get() = io.mouseDown.any()
 
     /** did mouse button clicked (went from !Down to Down)  (0=left, 1=right, 2=middle) */
     fun isMouseClicked(button: Int, repeat: Boolean = false): Boolean {
@@ -70,10 +72,10 @@ interface imgui_inputs {
     }
 
     /** did mouse button double-clicked. a double-click returns false in IsMouseClicked(). uses io.MouseDoubleClickTime.    */
-    fun isMouseDoubleClicked(button: Int) = io.mouseDoubleClicked[button]
+    fun isMouseDoubleClicked(button: Int): Boolean = io.mouseDoubleClicked[button]
 
     /** did mouse button released (went from Down to !Down) */
-    fun isMouseReleased(button: Int) = io.mouseReleased[button]
+    fun isMouseReleased(button: Int): Boolean = io.mouseReleased[button]
 
     /** is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold */
     fun isMouseDragging(button: Int = 0, lockThreshold_: Float = -1f): Boolean {
@@ -87,7 +89,7 @@ interface imgui_inputs {
      *  NB- Expand the rectangle to be generous on imprecise inputs systems (g.style.TouchExtraPadding)
      *  is mouse hovering given bounding rect (in screen space). clipped by current clipping settings, but disregarding
      *  of other consideration of focus/window ordering/popup-block.  */
-    fun isMouseHoveringRect(r: Rect, clip: Boolean = true) = isMouseHoveringRect(r.min, r.max, clip)
+    fun isMouseHoveringRect(r: Rect, clip: Boolean = true): Boolean = isMouseHoveringRect(r.min, r.max, clip)
 
     fun isMouseHoveringRect(rMin: Vec2, rMax: Vec2, clip: Boolean = true): Boolean {
 
@@ -102,13 +104,15 @@ interface imgui_inputs {
     }
 
     /** We typically use ImVec2(-FLT_MAX,-FLT_MAX) to denote an invalid mouse position.  */
-    fun isMousePosValid(mousePos: Vec2? = null) = (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
+    fun isMousePosValid(mousePos: Vec2? = null): Boolean = (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
 
     /** shortcut to io.mousePos provided by user, to be consistent with other calls */
-    val mousePos get() = io.mousePos
+    val mousePos: Vec2
+        get() = io.mousePos
 
     /** retrieve backup of mouse position at the time of opening popup we have BeginPopup() into */
-    val mousePosOnOpeningCurrentPopup get() = Vec2(g.beginPopupStack.lastOrNull()?.openMousePos ?: io.mousePos)
+    val mousePosOnOpeningCurrentPopup: Vec2
+        get() = Vec2(g.beginPopupStack.lastOrNull()?.openMousePos ?: io.mousePos)
 
     /** return the delta from the initial clicking position while the mouse button is clicked or was just released.
      *  This is locked and return 0.0f until the mouse moves past a distance threshold at least once.
@@ -128,9 +132,13 @@ interface imgui_inputs {
         return Vec2()
     }
 
-//    fun resetMouseDragDelta(button: Int = 0) = io.mouseClickedPos[button].put(io.mousePos) // NB: We don't need to reset g.io.MouseDragMaxDistanceSqr
+    fun resetMouseDragDelta(button: Int = 0) {
+        assert(button in io.mouseDown.indices)
+        // NB: We don't need to reset g.IO.MouseDragMaxDistanceSqr
+        io.mouseClickedPos[button] = io.mousePos
+    }
 
-    var mouseCursor
+    var mouseCursor: MouseCursor
         /** Get desired cursor type, reset in newFrame(), this is updated during the frame. valid before render().
          *  If you use software rendering by setting io.mouseDrawCursor ImGui will render those for you */
         get() = g.mouseCursor

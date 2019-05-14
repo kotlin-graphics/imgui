@@ -269,13 +269,6 @@ interface imgui_dragAndDrop {
      *  Only call EndDragDropTarget() if BeginDragDropTarget() returns true!    */
     fun endDragDropTarget() = assert(g.dragDropActive)
 
-    fun getDragDropPayload(): Payload? = g.dragDropPayload.takeIf { g.dragDropActive }
-
-    //-----------------------------------------------------------------------------
-    // [SECTION] DOCKING
-    //-----------------------------------------------------------------------------
-
-    // (this section is filled in the 'docking' branch)
-
-
+    val dragDropPayload: Payload?
+        get() = g.dragDropPayload.takeIf { g.dragDropActive }
 }

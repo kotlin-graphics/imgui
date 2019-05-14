@@ -3,6 +3,7 @@ package imgui.imgui
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.saveIniSettingsToDisk
 import imgui.internal.*
 import java.io.File
 import java.nio.ByteBuffer

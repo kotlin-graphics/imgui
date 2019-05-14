@@ -40,8 +40,8 @@ import imgui.ImGui.dragInt2
 import imgui.ImGui.dragInt3
 import imgui.ImGui.dragInt4
 import imgui.ImGui.dragIntRange2
-import imgui.ImGui.dragVec4
 import imgui.ImGui.dragScalar
+import imgui.ImGui.dragVec4
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endCombo
@@ -133,16 +133,16 @@ import imgui.ImGui.vSliderFloat
 import imgui.ImGui.vSliderInt
 import imgui.ImGui.windowDrawList
 import imgui.dsl.collapsingHeader
+import imgui.dsl.group
 import imgui.dsl.popup
 import imgui.dsl.smallButton
+import imgui.dsl.tooltip
 import imgui.dsl.treeNode
-import imgui.dsl.withGroup
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
 import imgui.dsl.withStyleVar
 import imgui.dsl.withTextWrapPos
-import imgui.dsl.withTooltip
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import imgui.or
 import unsigned.Ubyte
@@ -384,7 +384,7 @@ object showDemoWindowWidgets {
             sameLine()
             text("- or me")
             if (isItemHovered())
-                withTooltip {
+                tooltip {
                     text("I am a fancy tooltip")
                     plotLines("Curve", arr)
                 }
@@ -603,7 +603,7 @@ object showDemoWindowWidgets {
             val pos = Vec2(cursorScreenPos)
             image(myTexId, myTexSize, Vec2(), Vec2(1), Vec4(1), Vec4(1, 1, 1, 0.5))
             if (isItemHovered())
-                withTooltip {
+                tooltip {
                     val regionSz = 32f
                     val region = io.mousePos - pos - regionSz * 0.5f
                     region.x = if (region.x < 0f) 0f else if (region.x > myTexSize.x - regionSz) myTexSize.x - regionSz else region.x
@@ -910,7 +910,7 @@ object showDemoWindowWidgets {
                 colorPicker4("##picker", color, miscFlags or Cef.NoSidePreview or Cef.NoSmallPreview)
                 sameLine()
 
-                withGroup {
+                group {
                     // Lock X position
                     text("Current")
                     colorButton("##current", color, Cef.NoPicker or Cef.AlphaPreviewHalf, Vec2(60, 40))
@@ -1136,7 +1136,7 @@ object showDemoWindowWidgets {
                     val smallSliderSize = Vec2(18, (160f - (rows - 1) * spacing) / rows)
                     for (nx in 0..3) {
                         if (nx > 0) sameLine()
-                        withGroup {
+                        group {
                             for (ny in 0 until rows) {
                                 withId(nx * rows + ny) {
                                     withFloat(values2, nx) { f ->

@@ -2,13 +2,13 @@ package imgui.imgui
 
 import imgui.ImGui.io
 
-/** Helpers functions to access functions pointers in ImGui::GetIO()    */
-interface imgui_helpers {
+/** Clipboard Utilities (also see the LogToClipboard() function to capture or output text data to the clipboard)    */
+interface imgui_clipboardUtilities {
 
-    //    IMGUI_API void*         MemAlloc(size_t sz);
-//    IMGUI_API void          MemFree(void* ptr);
     var clipboardText: String
+        /** ~GetClipboardText */
         get() = io.getClipboardTextFn?.invoke() ?: ""
+        /** ~SetClipboardText */
         set(value) {
             io.setClipboardTextFn?.invoke(value)
         }

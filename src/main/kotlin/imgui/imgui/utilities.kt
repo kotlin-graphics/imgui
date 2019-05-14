@@ -28,7 +28,7 @@ import imgui.WindowFlag as Wf
 /** Item/Widgets Utilities
  *  - Most of the functions are referring to the last/previous item we submitted.
  *  - See Demo Window under "Widgets->Querying Status" for an interactive visualization of most of those functions. */
-interface imgui_utilities {
+interface imgui_itemWidgetsUtilities {
 
     /** This is roughly matching the behavior of internal-facing ItemHoverable()
      *      - we allow hovering to be true when activeId==window.moveID, so that clicking on non-interactive items
@@ -83,7 +83,7 @@ interface imgui_utilities {
         get() = g.navId != 0 && !g.navDisableHighlight && g.navId == g.currentWindow!!.dc.lastItemId
 
     /** Is the last item clicked? (e.g. button/node just clicked on) == IsMouseClicked(mouse_button) && IsItemHovered() */
-    fun isItemClicked(mouseButton: Int = 0) = isMouseClicked(mouseButton) && isItemHovered(Hf.None)
+    fun isItemClicked(mouseButton: Int = 0): Boolean = isMouseClicked(mouseButton) && isItemHovered(Hf.None)
 
     /** Is the last item visible? (items may be out of sight because of clipping/scrolling)    */
     val isItemVisible: Boolean
@@ -123,15 +123,15 @@ interface imgui_utilities {
         get() = g.navId != 0 && !g.navDisableHighlight
 
     /** get upper-left bounding rectangle of the last item (screen space)  */
-    val itemRectMin
+    val itemRectMin: Vec2
         get() = currentWindowRead!!.dc.lastItemRect.min
 
     /** get lower-right bounding rectangle of the last item (screen space)  */
-    val itemRectMax
+    val itemRectMax: Vec2
         get() = currentWindowRead!!.dc.lastItemRect.max
 
     /** get size of last item  */
-    val itemRectSize
+    val itemRectSize: Vec2
         get() = currentWindowRead!!.dc.lastItemRect.size
 
     /** allow last item to be overlapped by a subsequent item. sometimes useful with invisible buttons, selectables, etc.
@@ -142,116 +142,6 @@ interface imgui_utilities {
         if (g.activeId == g.currentWindow!!.dc.lastItemId)
             g.activeIdAllowOverlap = true
     }
-
-
-    // Miscellaneous Utilities
-
-    /** test if rectangle (of given size, starting from cursor position) is visible / not clipped.  */
-    fun isRectVisible(size: Vec2) = with(currentWindowRead!!) { clipRect overlaps Rect(dc.cursorPos, dc.cursorPos + size) }
-
-    /** test if rectangle (in screen space) is visible / not clipped. to perform coarse clipping on user's side.    */
-    fun isRectVisible(rectMin: Vec2, rectMax: Vec2) = currentWindowRead!!.clipRect overlaps Rect(rectMin, rectMax)
-
-    val time: Double
-        get() = g.time
-
-    val frameCount: Int
-        get() = g.frameCount
-
-    /** This seemingly unnecessary wrapper simplifies compatibility between the 'master' and 'docking' branches. */
-    fun getForegroundDrawList(window: Window?): DrawList = g.foregroundDrawList
-
-    /** this draw list will be the first rendering one. Useful to quickly draw shapes/text behind dear imgui contents. */
-    val backgroundDrawList: DrawList
-        get() = g.backgroundDrawList
-
-    /** this draw list will be the last rendered one. Useful to quickly draw shapes/text over dear imgui contents.   */
-    val foregroundDrawList: DrawList
-        get() = g.foregroundDrawList
-
-    /** you may use this when creating your own ImDrawList instances. */
-    val drawListSharedData: DrawListSharedData
-        get() = g.drawListSharedData
-
-    /** Useless on JVM with Enums */
-    //IMGUI_API const char*   GetStyleColorName(ImGuiCol idx);
-
-    //IMGUI_API void          SetStateStorage(ImGuiStorage* tree);                                // replace tree state storage with our own (if you want to manipulate it yourself, typically clear subsection of it)
-
-    //IMGUI_API ImGuiStorage* GetStateStorage();
-
-    /** Calculate text size. Text can be multi-line. Optionally ignore text after a ## marker.
-     *  CalcTextSize("") should return ImVec2(0.0f, GImGui->FontSize)   */
-    fun calcTextSize(text: String, hideTextAfterDoubleHash: Boolean) = calcTextSize(text, -1, hideTextAfterDoubleHash)
-
-    fun calcTextSize(text: String, textEnd: Int = -1, hideTextAfterDoubleHash: Boolean = false, wrapWidth: Float = -1f): Vec2 {
-
-        val textDisplayEnd = when {
-            hideTextAfterDoubleHash -> findRenderedTextEnd(text, textEnd)  // Hide anything after a '##' string
-            else -> textEnd
-        }
-
-        val font = g.font
-        val fontSize = g.fontSize
-        if (0 == textDisplayEnd)
-            return Vec2(0f, fontSize)
-        val textSize = font.calcTextSizeA(fontSize, Float.MAX_VALUE, wrapWidth, text, textDisplayEnd)
-
-        // Round
-        textSize.x = (textSize.x + 0.95f).i.f
-
-        return textSize
-    }
-
-    /** calculate coarse clipping for large list of evenly sized items. Prefer using the ImGuiListClipper higher-level
-     *  helper if you can.
-     *  Helper to calculate coarse clipping of large list of evenly sized items.
-     *  NB: Prefer using the ImGuiListClipper higher-level helper if you can! Read comments and instructions there on
-     *  how those use this sort of pattern.
-     *  NB: 'items_count' is only used to clamp the result, if you don't know your count you can use INT_MAX    */
-    fun calcListClipping(itemsCount: Int, itemsHeight: Float): IntRange {
-        val window = g.currentWindow!!
-        return when {
-            g.logEnabled -> 0..itemsCount // If logging is active, do not perform any clipping
-            window.skipItems -> 0..0
-            else -> {
-                // We create the union of the ClipRect and the NavScoringRect which at worst should be 1 page away from ClipRect
-                val unclippedRect = window.clipRect
-                if (g.navMoveRequest)
-                    unclippedRect add g.navScoringRectScreen
-
-                val pos = window.dc.cursorPos
-                var start = ((unclippedRect.min.y - pos.y) / itemsHeight).i
-                var end = ((unclippedRect.max.y - pos.y) / itemsHeight).i
-
-                // When performing a navigation request, ensure we have one item extra in the direction we are moving to
-                if (g.navMoveRequest && g.navMoveDir == Dir.Up)
-                    start--
-                if (g.navMoveRequest && g.navMoveDir == Dir.Down)
-                    end++
-                start = glm.clamp(start, 0, itemsCount)
-                end = glm.clamp(end + 1, start, itemsCount)
-                start..end
-            }
-        }
-    }
-
-
-    /** helper to create a child window / scrolling region that looks like a normal widget frame    */
-    fun beginChildFrame(id: ID, size: Vec2, extraFlags: WindowFlags = 0): Boolean {
-        pushStyleColor(Col.ChildBg, style.colors[Col.FrameBg])
-        pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
-        pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)
-        pushStyleVar(StyleVar.WindowPadding, style.framePadding)
-        val flags = Wf.NoMove or Wf.AlwaysUseWindowPadding or extraFlags
-        return beginChild(id, size, true, Wf.NoMove or Wf.AlwaysUseWindowPadding or extraFlags).also {
-            popStyleVar(3)
-            popStyleColor()
-        }
-    }
-
-    /** Always call EndChildFrame() regardless of BeginChildFrame() return values (which indicates a collapsed/clipped window)  */
-    fun endChildFrame() = endChild()
 
     val Int.vec4: Vec4
         get() {
@@ -271,136 +161,9 @@ interface imgui_utilities {
             return out or (F32_TO_INT8_SAT(w) shl COL32_A_SHIFT)
         }
 
-
-    // Color Utilities
-
-
-    /** Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
-     *  Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv  */
-    fun colorConvertRGBtoHSV(rgb: FloatArray, hsv: FloatArray = FloatArray(3)): FloatArray =
-            colorConvertRGBtoHSV(rgb[0], rgb[1], rgb[2], hsv)
-
-    fun colorConvertRGBtoHSV(r_: Float, g_: Float, b_: Float, hsv: FloatArray = FloatArray(3)): FloatArray {
-
-        var k = 0f
-        var r = r_
-        var g = g_
-        var b = b_
-        if (g < b) {
-            val tmp = g; g = b; b = tmp
-            k = -1f
-        }
-        if (r < g) {
-            val tmp = r; r = g; g = tmp
-            k = -2f / 6f - k
-        }
-
-        val chroma = r - (if (g < b) g else b)
-        hsv[0] = glm.abs(k + (g - b) / (6f * chroma + 1e-20f))
-        hsv[1] = chroma / (r + 1e-20f)
-        hsv[2] = r
-        return hsv
-    }
-
-    fun FloatArray.rgbToHSV() = colorConvertRGBtoHSV(this, this)
-
-    /** Convert hsv floats ([0-1],[0-1],[0-1]) to rgb floats ([0-1],[0-1],[0-1]), from Foley & van Dam p593
-     *  also http://en.wikipedia.org/wiki/HSL_and_HSV   */
-    fun colorConvertHSVtoRGB(hsv: FloatArray, rgb: FloatArray = FloatArray(3)) = colorConvertHSVtoRGB(hsv[0], hsv[1], hsv[2], rgb)
-
-    fun colorConvertHSVtoRGB(h: Float, s: Float, v: Float, rgb: FloatArray = FloatArray(3)): FloatArray {
-        colorConvertHSVtoRGB(h, s, v, ::f0, ::f1, ::f2)
-        return rgb.apply { set(0, f0); set(1, f1); set(2, f2) }
-    }
-
-    fun colorConvertHSVtoRGB(h_: Float, s: Float, v: Float, rPtr: KMutableProperty0<Float>, gPtr: KMutableProperty0<Float>,
-                             bPtr: KMutableProperty0<Float>) {
-
-        var r by rPtr
-        var g by gPtr
-        var b by bPtr
-        if (s == 0f) {
-            // gray
-            r = v
-            g = v
-            b = v
-        }
-
-        val h = glm.mod(h_, 1f) / (60f / 360f)
-        val i = h.i
-        val f = h - i.f
-        val p = v * (1f - s)
-        val q = v * (1f - s * f)
-        val t = v * (1f - s * (1f - f))
-
-        when (i) {
-            0 -> {
-                r = v; g = t; b = p; }
-            1 -> {
-                r = q; g = v; b = p; }
-            2 -> {
-                r = p; g = v; b = t; }
-            3 -> {
-                r = p; g = q; b = v; }
-            4 -> {
-                r = t; g = p; b = v; }
-            else -> {
-                r = v; g = p; b = q; }
-        }
-    }
-
-    fun colorConvertHSVtoRGB(col: Vec4) {
-
-        val h_ = col.x
-        val s = col.y
-        val v = col.z
-        var r: Float
-        var g: Float
-        var b: Float
-        if (s == 0f) {
-            // gray
-            r = v
-            g = v
-            b = v
-        }
-
-        val h = glm.mod(h_, 1f) / (60f / 360f)
-        val i = h.i
-        val f = h - i.f
-        val p = v * (1f - s)
-        val q = v * (1f - s * f)
-        val t = v * (1f - s * (1f - f))
-
-        when (i) {
-            0 -> {
-                r = v; g = t; b = p; }
-            1 -> {
-                r = q; g = v; b = p; }
-            2 -> {
-                r = p; g = v; b = t; }
-            3 -> {
-                r = p; g = q; b = v; }
-            4 -> {
-                r = t; g = p; b = v; }
-            else -> {
-                r = v; g = p; b = q; }
-        }
-        col.x = r
-        col.y = g
-        col.z = b
-    }
-
-    fun FloatArray.hsvToRGB() = colorConvertHSVtoRGB(this, this)
-
     /** Unsaturated, for display purpose    */
     fun F32_TO_INT8_UNBOUND(_val: Float) = (_val * 255f + if (_val >= 0) 0.5f else -0.5f).i
 
     /** Saturated, always output 0..255 */
     fun F32_TO_INT8_SAT(_val: Float) = (saturate(_val) * 255f + 0.5f).i
-
-    companion object {
-        var f0 = 0f
-        var f1 = 0f
-        var f2 = 0f
-    }
 }
