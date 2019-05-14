@@ -49,7 +49,7 @@ public class MutableProperty0<T> implements KMutableProperty0<T> {
 
     @Override
     public T invoke() {
-        return null;
+        return t;
     }
 
     @Override
