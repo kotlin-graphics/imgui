@@ -139,7 +139,7 @@ burden code such as the ending `*Pop()`, `*end()` and so on.
 These constucts shine especially in Kotlin, where they are also inlined.
  
 Let's take an original cpp sample and let's see how we can make it nicer:
-
+```cpp
     if (ImGui::TreeNode("Querying Status (Active/Focused/Hovered etc.)")) {            
         ImGui::Checkbox("Hovered/Active tests after Begin() for title bar testing", &test_window);
         if (test_window) {            
@@ -153,7 +153,7 @@ Let's take an original cpp sample and let's see how we can make it nicer:
         }
         ImGui::TreePop();
     }
-    
+```
 This may become in Kotlin:
 ```kotlin
     treeNode("Querying Status (Active/Focused/Hovered etc.)") {            
