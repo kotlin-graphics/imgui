@@ -13,8 +13,9 @@ import imgui.impl.ImplGL2_mac
 import imgui.impl.ImplGlfw
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
-import org.lwjgl.opengl.GL11.glClear
+import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GL30C
 import org.lwjgl.system.MemoryStack
 import uno.glfw.GlfwWindow
 import uno.glfw.VSync
@@ -47,17 +48,18 @@ private class ImGuiOpenGL2_Mac {
         glfw {
             errorCallback = { error, description -> println("Glfw Error $error: $description") }
             GLFW.glfwInit()
-            windowHint { debug = DEBUG }
+            windowHint {
+                debug = DEBUG
+                context.version = "2.0"
+            }
         }
 
         // Create window with graphics context
         window = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
         window.makeContextCurrent()
         glfw.swapInterval = VSync.ON   // Enable vsync
-
         // Initialize OpenGL loader
         GL.createCapabilities()
-
         // Setup Dear ImGui context
         ctx = Context()
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
@@ -72,6 +74,15 @@ private class ImGuiOpenGL2_Mac {
 //        implGl2 = ImplGL2()
 
 //        RemoteryGL.rmt_BindOpenGL()
+
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        val fh = 0.5
+        val fw = fh * window.size.aspect
+        glFrustum(-fw, fw, -fh, fh, 1.0, 1_000.0)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+        glTranslatef(0.0f, 0.0f, -5.0f)
 
         // Load Fonts
         /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use
@@ -123,9 +134,19 @@ private class ImGuiOpenGL2_Mac {
 
         // Rendering
 //        ImGui.render()
-        glViewport(window.framebufferSize)
+//        glViewport(window.framebufferSize)
         glClearColor(clearColor)
         glClear(GL_COLOR_BUFFER_BIT)
+
+        // Draw A Quad
+        glBegin(GL_QUADS)
+        glColor3f(0.0f, 1.0f, 1.0f)   // set the color of the quad
+        glVertex3f(-1.0f, 1.0f, 0.0f)   // Top Left
+        glVertex3f( 1.0f, 1.0f, 0.0f)   // Top Right
+        glVertex3f( 1.0f,-1.0f, 0.0f)   // Bottom Right
+        glVertex3f(-1.0f,-1.0f, 0.0f)   // Bottom Left
+        // Done Drawing The Quad
+        glEnd()
 
 //        implGl2.renderDrawData(ImGui.drawData!!)
 
