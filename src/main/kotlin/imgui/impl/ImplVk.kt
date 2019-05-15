@@ -1,852 +1,485 @@
-//package imgui.impl
-//
-//import ab.appBuffer
-//import gli_.has
-//import glm_.*
-//import glm_.buffer.adr
-//import glm_.vec2.Vec2
-//import glm_.vec2.Vec2i
-//import glm_.vec4.Vec4b
-//import imgui.*
-//import org.lwjgl.system.MemoryUtil.*
-//import org.lwjgl.vulkan.*
-//import org.lwjgl.vulkan.VK10.*
-//import uno.buffer.toBuffer
-//import vkk.*
-//import kotlin.reflect.KMutableProperty0
-//
-//object ImplVk {
-//
-//
-//    // ===== impl_vk.h =====
-//
-//    var VK_QUEUED_FRAMES = 2
-//    val BINDING = 0 // TODO -> Omar
-//
-//    // Called by user code
-//
-//    fun init(): Boolean {
-//
-//        assert(::instance.isInitialized)
-//        assert(::physicalDevice.isInitialized)
-//        assert(::device.isInitialized)
-//        assert(::queue.isInitialized)
-//        assert(descriptorPool != NULL)
-//        assert(renderPass != NULL)
-//
-//        renderPass = wd.renderPass
-//
-//        createDeviceObjects()
-//
-//        return true
-//    }
-//
-//    fun shutdown() = invalidateDeviceObjects()
-//
-//    fun newFrame() {}
-//
-//    /** Render function
-//     *  (this used to be set in io.renderDrawListsFn and called by ImGui::render(),
-//     *  but you can now call this directly from your main loop) */
-//    fun renderDrawData(drawData: DrawData) {
-//
-//        if (drawData.totalVtxCount == 0) return
-//
-//        val fd = framesDataBuffers[frameIndex]
-//        frameIndex = (frameIndex + 1) % VK_QUEUED_FRAMES
-//
-//        // Create the Vertex and Index buffers:
-//        val vertexSize = drawData.totalVtxCount * DrawVert.size.L
-//        val indexSize = drawData.totalIdxCount * DrawIdx.BYTES.L
-//        if (fd.vertexBuffer == NULL || fd.vertexBufferSize < vertexSize)
-//            fd.vertexBufferSize = createOrResizeBuffer(fd::vertexBuffer, fd::vertexBufferMemory, vertexSize, VkBufferUsage.VERTEX_BUFFER_BIT)
-//        if (fd.indexBuffer == NULL || fd.indexBufferSize < indexSize)
-//            fd.indexBufferSize = createOrResizeBuffer(fd::indexBuffer, fd::indexBufferMemory, indexSize, VkBufferUsage.INDEX_BUFFER_BIT)
-//
-//        // Upload Vertex and index Data:
-//        run {
-//            var vtxDst = device.mapMemory(fd.vertexBufferMemory, 0, vertexSize)
-//            var idxDst = device.mapMemory(fd.indexBufferMemory, 0, indexSize)
-//            for (n in 0 until drawData.cmdListsCount) {
-//                val cmdList = drawData.cmdLists[n]
-//                cmdList.vtxBuffer.forEachIndexed { i, v ->
-//                    memPutFloat(vtxDst + DrawVert.size * i, v.pos.x)
-//                    memPutFloat(vtxDst + DrawVert.size * i + Float.BYTES, v.pos.y)
-//                    memPutFloat(vtxDst + DrawVert.size * i + Vec2.size, v.uv.x)
-//                    memPutFloat(vtxDst + DrawVert.size * i + Vec2.size + Float.BYTES, v.uv.y)
-//                    memPutInt(vtxDst + DrawVert.size * i + Vec2.size * 2, v.col)
-//                }
-//                cmdList.idxBuffer.forEachIndexed { i, it -> memPutInt(idxDst + DrawIdx.BYTES * i, it) }
-//                vtxDst += cmdList.vtxBuffer.size.L
-//                idxDst += cmdList.idxBuffer.size.L
-//            }
-//            val range = vk.MappedMemoryRange(2).also {
-//                it[0].apply {
-//                    memory = fd.vertexBufferMemory
-//                    size = VK_WHOLE_SIZE
-//                }
-//                it[1].apply {
-//                    memory = fd.indexBufferMemory
-//                    size = VK_WHOLE_SIZE
-//                }
-//            }
-//            device.apply {
-//                flushMappedMemoryRanges(range)
-//                unmapMemory(fd.vertexBufferMemory)
-//                unmapMemory(fd.indexBufferMemory)
-//            }
-//        }
-//
-//        val commandBuffer = wd.frame.commandBuffer.apply {
-//
-//            // Bind pipeline and descriptor sets:
-//            bindPipeline(VkPipelineBindPoint.GRAPHICS, pipeline)
-//            bindDescriptorSets(VkPipelineBindPoint.GRAPHICS, pipelineLayout, descriptorSet)
-//
-//            // Bind Vertex And Index Buffer:
-//            bindVertexBuffers(fd.vertexBuffer)
-//            bindIndexBuffer(fd.indexBuffer, 0, VkIndexType.UINT16)
-//
-//            // Setup viewport:
-//            setViewport(vk.Viewport(drawData.displaySize.x, drawData.displaySize.y))
-//
-//            /*  Setup scale and translation:
-//                Our visible imgui space lies from drawData.displayPps (top left) to drawData.displayPos+dataData.displaySize (bottom right).
-//                DisplayMin is typically (0,0) for single viewport apps.         */
-//            val scale = appBuffer.floatBufferOf(2f / drawData.displaySize.x, 2f / drawData.displaySize.y)
-//            val translate = appBuffer.floatBufferOf(-1f - drawData.displayPos.x * scale[0], -1f - drawData.displayPos.y * scale[1])
-//            pushConstants(pipelineLayout, VkShaderStage.VERTEX_BIT.i, 0, scale)
-//            pushConstants(pipelineLayout, VkShaderStage.VERTEX_BIT.i, scale.size, translate)
-//        }
-//
-//        // Render the command lists:
-//        var vtxOffset = 0
-//        var idxOffset = 0
-//        val displayPos = drawData.displayPos
-//        for (cmdList in drawData.cmdLists) {
-//            for (cmd in cmdList.cmdBuffer) {
-//                val cb = cmd.userCallback
-//                if (cb != null)
-//                    cb(cmdList, cmd)
-//                else {
-//                    // Apply scissor/clipping rectangle
-//                    // FIXME: We could clamp width/height based on clamped min/max values.
-//                    commandBuffer setScissor vk.Rect2D(
-//                            offsetX = (cmd.clipRect.x - displayPos.x).i.takeIf { it > 0 } ?: 0,
-//                            offsetY = (cmd.clipRect.y - displayPos.y).i.takeIf { it > 0 } ?: 0,
-//                            width = (cmd.clipRect.z - cmd.clipRect.x).i,
-//                            height = (cmd.clipRect.w - cmd.clipRect.y + 1).i) // FIXME: Why +1 here?
-//
-//                    // Draw
-//                    commandBuffer.drawIndexed(cmd.elemCount, 1, idxOffset, vtxOffset, 0)
-//                }
-//                idxOffset += cmd.elemCount * Int.BYTES // TODO check
-//            }
-//            vtxOffset += cmdList.vtxBuffer.size * DrawVert.size
-//        }
-//    }
-//
-//    fun createOrResizeBuffer(bufferPtr: KMutableProperty0<VkBuffer>, bufferMemoryPtr: KMutableProperty0<VkDeviceMemory>, newSize: Long, usage: VkBufferUsage): VkDeviceSize {
-//
-//        var buffer by bufferPtr
-//        var bufferMemory by bufferMemoryPtr
-//        if (buffer != NULL)
-//            device destroyBuffer buffer
-//        if (bufferMemory != NULL)
-//            device freeMemory bufferMemory
-//
-//        val vertexBufferSizeAligned: VkDeviceSize = ((newSize - 1) / bufferMemoryAlignment + 1) * bufferMemoryAlignment
-//        val bufferInfo = vk.BufferCreateInfo {
-//            size = vertexBufferSizeAligned
-//            this.usage = usage.i
-//            sharingMode = VkSharingMode.EXCLUSIVE
-//        }
-//        buffer = device createBuffer bufferInfo
-//
-//        val req = device getBufferMemoryRequirements buffer
-//        bufferMemoryAlignment = bufferMemoryAlignment.takeIf { it > req.alignment } ?: req.alignment
-//        val allocInfo = vk.MemoryAllocateInfo {
-//            allocationSize = req.size
-//            memoryTypeIndex = memoryType(VkMemoryProperty.HOST_VISIBLE_BIT, req.memoryTypeBits)
-//        }
-//        bufferMemory = device allocateMemory allocInfo
-//
-//        device.bindBufferMemory(buffer, bufferMemory)
-//
-//        return newSize
-//    }
-//
-//// Called by Init/NewFrame/Shutdown
-//
-//
-//// ===== impl_vk.cpp =====
-//
-//    // Vulkan data
-//    lateinit var physicalDevice: VkPhysicalDevice
-//    lateinit var instance: VkInstance
-//    lateinit var device: VkDevice
-//    var queueFamily = -1
-//    lateinit var queue: VkQueue
-//    var debugReport: VkDebugReportCallback = NULL
-//    var pipelineCache: VkPipelineCache = NULL
-//    var descriptorPool: VkDescriptorPool = NULL
-//    var renderPass: VkRenderPass = NULL
-//
-//    var bufferMemoryAlignment: VkDeviceSize = 256
-//    var pipelineCreateFlags: VkPipelineCreateFlags = 0
-//
-//    var descriptorSetLayout: VkDescriptorSetLayout = NULL
-//    var pipelineLayout: VkPipelineLayout = NULL
-//    var descriptorSet: VkDescriptorSet = NULL
-//    var pipeline: VkPipeline = NULL
-//
-//    // Frame data
-//    class FrameDataForRender {
-//        var vertexBufferMemory: VkDeviceMemory = NULL
-//        var indexBufferMemory: VkDeviceMemory = NULL
-//        var vertexBufferSize: VkDeviceSize = NULL
-//        var indexBufferSize: VkDeviceSize = NULL
-//        var vertexBuffer: VkBuffer = NULL
-//        var indexBuffer: VkBuffer = NULL
-//    }
-//
-//    var frameIndex = 0
-//    val framesDataBuffers = Array(VK_QUEUED_FRAMES) { FrameDataForRender() }
-//
-//    // Font data
-//    var fontSampler: VkSampler = NULL
-//    var fontMemory: VkDeviceMemory = NULL
-//    var fontImage: VkImage = NULL
-//    var fontView: VkImageView = NULL
-//    var uploadBufferMemory: VkDeviceMemory = NULL
-//    var uploadBuffer: VkBuffer = NULL
-//
-//    fun createFontsTexture(commandBuffer: VkCommandBuffer): Boolean {
-//
-//        val (pixels, size) = ImGui.io.fonts.getTexDataAsRGBA32()
-//        val uploadSize = size.x * size.y * Vec4b.size.L
-//
-//        // Create the Image:
-//        run {
-//            val info = vk.ImageCreateInfo {
-//                imageType = VkImageType.`2D`
-//                format = VkFormat.R8G8B8A8_UNORM
-//                extent(size, 1)
-//                mipLevels = 1
-//                arrayLayers = 1
-//                samples = VkSampleCount.`1_BIT`
-//                tiling = VkImageTiling.OPTIMAL
-//                usage = VkImageUsage.SAMPLED_BIT or VkImageUsage.TRANSFER_DST_BIT
-//                sharingMode = VkSharingMode.EXCLUSIVE
-//                initialLayout = VkImageLayout.UNDEFINED
-//            }
-//            fontImage = device createImage info
-//            val req = device getImageMemoryRequirements fontImage
-//            val allocInfo = vk.MemoryAllocateInfo {
-//                allocationSize = req.size
-//                memoryTypeIndex = memoryType(VkMemoryProperty.DEVICE_LOCAL_BIT, req.memoryTypeBits)
-//            }
-//            fontMemory = device allocateMemory allocInfo
-//            device.bindImageMemory(fontImage, fontMemory)
-//        }
-//
-//        // Create the Image View:
-//        fontView = device createImageView vk.ImageViewCreateInfo {
-//            image = fontImage
-//            viewType = VkImageViewType.`2D`
-//            format = VkFormat.R8G8B8A8_UNORM
-//            subresourceRange.apply {
-//                aspectMask = VkImageAspect.COLOR_BIT.i
-//                levelCount = 1
-//                layerCount = 1
-//            }
-//        }
-//
-//        // Update the Descriptor Set:
-//        run {
-//            val descImage = vk.DescriptorImageInfo(fontSampler, fontView, VkImageLayout.SHADER_READ_ONLY_OPTIMAL)
-//            val writeDesc = vk.WriteDescriptorSet(descriptorSet, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 0, descImage)
-//            device updateDescriptorSets writeDesc
-//        }
-//
-//        // Create the Upload Buffer:
-//        run {
-//            val bufferInfo = vk.BufferCreateInfo {
-//                this.size = uploadSize
-//                usage = VkBufferUsage.TRANSFER_SRC_BIT.i
-//                sharingMode = VkSharingMode.EXCLUSIVE
-//            }
-//            uploadBuffer = device createBuffer bufferInfo
-//            val req = device getBufferMemoryRequirements uploadBuffer
-//            bufferMemoryAlignment = if (bufferMemoryAlignment > req.alignment) bufferMemoryAlignment else req.alignment
-//            val allocInfo = vk.MemoryAllocateInfo {
-//                allocationSize = req.size
-//                memoryTypeIndex = memoryType(VkMemoryProperty.HOST_VISIBLE_BIT, req.memoryTypeBits)
-//            }
-//            uploadBufferMemory = device allocateMemory allocInfo
-//            device.bindBufferMemory(uploadBuffer, uploadBufferMemory)
-//        }
-//
-//        // Upload to Buffer:
-//        device.mappingMemory(uploadBufferMemory, 0, uploadSize) { map ->
-//            memCopy(pixels.adr, map, uploadSize)
-//            val range = vk.MappedMemoryRange {
-//                memory = uploadBufferMemory
-//                this.size = uploadSize
-//            }
-//            device flushMappedMemoryRanges range
-//        }
-//
-//        // Copy to Image:
-//        run {
-//            val copyBarrier = vk.ImageMemoryBarrier {
-//                dstAccessMask = VkAccess.TRANSFER_WRITE_BIT.i
-//                oldLayout = VkImageLayout.UNDEFINED
-//                newLayout = VkImageLayout.TRANSFER_DST_OPTIMAL
-//                srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED
-//                dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED
-//                image = fontImage
-//                subresourceRange.apply {
-//                    aspectMask = VkImageAspect.COLOR_BIT.i
-//                    levelCount = 1
-//                    layerCount = 1
-//                }
-//            }
-//            commandBuffer.pipelineBarrier(VkPipelineStage.HOST_BIT, VkPipelineStage.TRANSFER_BIT, imageMemoryBarrier = copyBarrier)
-//
-//            val region = vk.BufferImageCopy {
-//                imageSubresource.apply {
-//                    aspectMask = VkImageAspect.COLOR_BIT.i
-//                    layerCount = 1
-//                }
-//                imageExtent(size, 1)
-//            }
-//            commandBuffer.copyBufferToImage(uploadBuffer, fontImage, VkImageLayout.TRANSFER_DST_OPTIMAL, region)
-//
-//            val useBarrier = vk.ImageMemoryBarrier {
-//                srcAccessMask = VkAccess.TRANSFER_WRITE_BIT.i
-//                dstAccessMask = VkAccess.SHADER_READ_BIT.i
-//                oldLayout = VkImageLayout.TRANSFER_DST_OPTIMAL
-//                newLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL
-//                srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED
-//                dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED
-//                image = fontImage
-//                subresourceRange.apply {
-//                    aspectMask = VkImageAspect.COLOR_BIT.i
-//                    levelCount = 1
-//                    layerCount = 1
-//                }
-//            }
-//            commandBuffer.pipelineBarrier(VkPipelineStage.TRANSFER_BIT, VkPipelineStage.FRAGMENT_SHADER_BIT, imageMemoryBarrier = useBarrier)
-//        }
-//
-//        // Store our identifier
-//        ImGui.io.fonts.texId = fontImage.i
-//
-//        return true
-//    }
-//
-//    fun invalidateFontUploadObjects() {
-//        if (uploadBuffer != NULL) {
-//            device destroyBuffer uploadBuffer
-//            uploadBuffer = NULL
-//        }
-//        if (uploadBufferMemory != NULL) {
-//            device freeMemory uploadBufferMemory
-//            uploadBufferMemory = NULL
-//        }
-//    }
-//
-//    // Called by ImGui_ImplVulkan_Init() might be useful elsewhere.
-//
-//    fun createDeviceObjects(): Boolean {
-//
-//        // Create The Shader Modules:
-//        val vertModule: VkShaderModule = device createShaderModule vk.ShaderModuleCreateInfo { code = glslShaderVertSpv }
-//        val fragModule: VkShaderModule = device createShaderModule vk.ShaderModuleCreateInfo { code = glslShaderFragSpv }
-//
-//        if (fontSampler == NULL)
-//            fontSampler = device createSampler vk.SamplerCreateInfo {
-//                magFilter = VkFilter.LINEAR
-//                minFilter = VkFilter.LINEAR
-//                mipmapMode = VkSamplerMipmapMode.LINEAR
-//                addressMode = VkSamplerAddressMode.REPEAT
-//                minLod = -1000f
-//                maxLod = 1000f
-//                maxAnisotropy = 1f
-//            }
-//
-//        if (descriptorSetLayout == NULL) {
-//            val binding = vk.DescriptorSetLayoutBinding {
-//                descriptorType = VkDescriptorType.COMBINED_IMAGE_SAMPLER
-//                descriptorCount = 1
-//                stageFlag = VkShaderStage.FRAGMENT_BIT
-//
-//                val pSampler = appBuffer.long
-//                memPutLong(pSampler, fontSampler)
-//                memPutAddress(adr + VkDescriptorSetLayoutBinding.PIMMUTABLESAMPLERS, pSampler)
-//                VkDescriptorSetLayoutBinding.ndescriptorCount(adr, 1)
-////                immutableSampler = fontSampler TODO BUG
-//            }
-//            val info = vk.DescriptorSetLayoutCreateInfo(binding)
-//            descriptorSetLayout = device createDescriptorSetLayout info
-//        }
-//
-//        // Create Descriptor Set:
-//        descriptorSet = device allocateDescriptorSets vk.DescriptorSetAllocateInfo(descriptorPool, descriptorSetLayout)
-//
-//        if (pipelineLayout == NULL) {
-//            // Constants: we are using 'vec2 offset' and 'vec2 scale' instead of a full 3d projection matrix
-//            val pushConstant = vk.PushConstantRange(VkShaderStage.VERTEX_BIT, Vec2.size * 2)
-//            val layoutInfo = vk.PipelineLayoutCreateInfo {
-//                setLayout = descriptorSetLayout
-//                pushConstantRange = pushConstant
-//            }
-//            pipelineLayout = device createPipelineLayout layoutInfo
-//        }
-//
-//        val stage = vk.PipelineShaderStageCreateInfo(2).also {
-//            it[0].apply {
-//                stage = VkShaderStage.VERTEX_BIT
-//                module = vertModule
-//                name = "main"
-//            }
-//            it[1].apply {
-//                stage = VkShaderStage.FRAGMENT_BIT
-//                module = fragModule
-//                name = "main"
-//            }
-//        }
-//
-//        val bindingDesc = vk.VertexInputBindingDescription(BINDING, DrawVert.size, VkVertexInputRate.VERTEX)
-//
-//        val attributeDesc = vk.VertexInputAttributeDescription(
-//                bindingDesc.binding, 0, VkFormat.R32G32_SFLOAT, DrawVert.ofsPos,
-//                bindingDesc.binding, 1, VkFormat.R32G32_SFLOAT, DrawVert.ofsUv,
-//                bindingDesc.binding, 2, VkFormat.R8G8B8A8_UNORM, DrawVert.ofsCol)
-//
-//        val vertexInfo = vk.PipelineVertexInputStateCreateInfo {
-//            vertexBindingDescription = bindingDesc
-//            vertexAttributeDescriptions = attributeDesc
-//        }
-//        val iaInfo = vk.PipelineInputAssemblyStateCreateInfo(VkPrimitiveTopology.TRIANGLE_LIST)
-//
-//        val viewportInfo = vk.PipelineViewportStateCreateInfo(1, 1)
-//
-//        val rasterInfo = vk.PipelineRasterizationStateCreateInfo(VkPolygonMode.FILL, VkCullMode.NONE.i, VkFrontFace.COUNTER_CLOCKWISE)
-//
-//        val msInfo = vk.PipelineMultisampleStateCreateInfo(VkSampleCount.`1_BIT`)
-//
-//        val colorAttachment = vk.PipelineColorBlendAttachmentState {
-//            blendEnable = true
-//            srcColorBlendFactor = VkBlendFactor.SRC_ALPHA
-//            dstColorBlendFactor = VkBlendFactor.ONE_MINUS_SRC_ALPHA
-//            colorBlendOp = VkBlendOp.ADD
-//            srcAlphaBlendFactor = VkBlendFactor.ONE_MINUS_SRC_ALPHA
-//            dstAlphaBlendFactor = VkBlendFactor.ZERO
-//            alphaBlendOp = VkBlendOp.ADD
-//            colorWriteMask = VkColorComponent.R_BIT or VkColorComponent.G_BIT or VkColorComponent.B_BIT or VkColorComponent.A_BIT
-//        }
-//
-//        val depthInfo = vk.PipelineDepthStencilStateCreateInfo()
-//
-//        val blendInfo = vk.PipelineColorBlendStateCreateInfo(colorAttachment)
-//
-//        val dynamicStates = listOf(VkDynamicState.VIEWPORT, VkDynamicState.SCISSOR)
-//        val dynamicState = vk.PipelineDynamicStateCreateInfo(dynamicStates)
-//
-//        val info = vk.GraphicsPipelineCreateInfo {
-//            flags = pipelineCreateFlags
-//            stages = stage
-//            vertexInputState = vertexInfo
-//            inputAssemblyState = iaInfo
-//            viewportState = viewportInfo
-//            rasterizationState = rasterInfo
-//            multisampleState = msInfo
-//            depthStencilState = depthInfo
-//            colorBlendState = blendInfo
-//            this.dynamicState = dynamicState
-//            layout = pipelineLayout
-//            renderPass = this@ImplVk.renderPass
-//        }
-//        pipeline = device.createGraphicsPipelines(pipelineCache, info)
-//
-//        device destroyShaderModule vertModule
-//        device destroyShaderModule fragModule
-//
-//        return true
-//    }
-//
-//    fun invalidateDeviceObjects() {
-//        invalidateFontUploadObjects()
-//        device.apply {
-//            framesDataBuffers.forEach { fd ->
-//                if (fd.vertexBuffer != NULL) destroyBuffer(fd.vertexBuffer).also { fd.vertexBuffer = NULL }
-//                if (fd.vertexBufferMemory != NULL) freeMemory(fd.vertexBufferMemory).also { fd.vertexBufferMemory = NULL }
-//                if (fd.indexBuffer != NULL) destroyBuffer(fd.indexBuffer).also { fd.indexBuffer = NULL }
-//                if (fd.indexBufferMemory != NULL) freeMemory(fd.indexBufferMemory).also { fd.indexBufferMemory = NULL }
-//            }
-//
-//            if (fontView != NULL) destroyImageView(fontView).also { fontView = NULL }
-//            if (fontImage != NULL) destroyImage(fontImage).also { fontImage = NULL }
-//            if (fontMemory != NULL) freeMemory(fontMemory).also { fontMemory = NULL }
-//            if (fontSampler != NULL) destroySampler(fontSampler).also { fontSampler = NULL }
-//            if (descriptorSetLayout != NULL) destroyDescriptorSetLayout(descriptorSetLayout).also { descriptorSetLayout = NULL }
-//            if (pipelineLayout != NULL) destroyPipelineLayout(pipelineLayout).also { pipelineLayout = NULL }
-//            if (pipeline != NULL) destroyPipeline(pipeline).also { pipeline = NULL }
-//        }
-//    }
-//
-//    //-------------------------------------------------------------------------
-//    // Internal / Miscellaneous Vulkan Helpers
-//    //-------------------------------------------------------------------------
-//
-//    /*  You probably do NOT need to use or care about those functions.
-//        Those functions only exist because:
-//            1) they facilitate the readability and maintenance of the multiple main.cpp examples files.
-//            2) the upcoming multi-viewport feature will need them internally.
-//        Generally we avoid exposing any kind of superfluous high-level helpers in the bindings,
-//        but it is too much code to duplicate everywhere so we exceptionally expose them.
-//        Your application/engine will likely already have code to setup all that stuff (swap chain, render pass, frame buffers, etc.).
-//        You may read this code to learn about Vulkan, but it is recommended you use you own custom tailored code to do equivalent work.
-//        (those functions do not interact with any of the state used by the regular ImGui_ImplVulkan_XXX functions)  */
-//
-//    /** Window Data */
-//    var wd = WindowData()
-//
-//    /** Helper structure to hold the data needed by one rendering context into one OS window */
-//    class WindowData {
-//        var size = Vec2i()
-//        var swapchain: VkSwapchainKHR = NULL
-//        var surface: VkSurfaceKHR = NULL
-//        lateinit var surfaceFormat: VkSurfaceFormatKHR
-//        var presentMode = VkPresentMode.IMMEDIATE_KHR
-//        var renderPass: VkRenderPass = NULL
-//        var clearEnable = false
-//        var clearValue: VkClearValue = VkClearValue.calloc()
-//        var backBufferCount = 0
-//        var backBuffer = VkImageArray(16)
-//        var backBufferView = VkImageViewArray(16)
-//        var framebuffer = VkFramebufferArray(16)
-//        var frameIndex = 0
-//        var frames = Array(VK_QUEUED_FRAMES) { FrameData() }
-//        val frame: FrameData
-//            get() = frames[frameIndex]
-//    }
-//
-//    /** Helper structure to hold the data needed by one rendering frame */
-//    class FrameData {
-//        /** Keep track of recently rendered swapchain frame indices */
-//        var backbufferIndex = 0
-//        var commandPool: VkCommandPool = NULL
-//        lateinit var commandBuffer: VkCommandBuffer
-//        var fence: VkFence = NULL
-//        var imageAcquiredSemaphore: VkSemaphore = NULL
-//        var renderCompleteSemaphore: VkSemaphore = NULL
-//    }
-//
-//    fun createWindowDataCommandBuffers() {
-//
-//        // Create Command Buffers
-//        for (i in 0 until VK_QUEUED_FRAMES)
-//
-//            wd.frames[i].apply {
-//
-//                commandPool = device createCommandPool vk.CommandPoolCreateInfo {
-//                    flag = VkCommandPoolCreate.RESET_COMMAND_BUFFER_BIT
-//                    queueFamilyIndex = queueFamily
-//                }
-//
-//                commandBuffer = device allocateCommandBuffer vk.CommandBufferAllocateInfo {
-//                    this.commandPool = this@apply.commandPool
-//                    level = VkCommandBufferLevel.PRIMARY
-//                    commandBufferCount = 1
-//                }
-//                fence = device createFence VkFenceCreate.SIGNALED_BIT
-//
-//                val info = vk.SemaphoreCreateInfo()
-//                imageAcquiredSemaphore = device createSemaphore info
-//                renderCompleteSemaphore = device createSemaphore info
-//            }
-//    }
-//
-//    fun createWindowDataSwapChainAndFramebuffer(size: Vec2i) {
-//
-//        var minImageCount = 2    // FIXME: this should become a function parameter
-//
-//        val oldSwapchain = wd.swapchain
-//        device.waitIdle()
-//
-//        // Destroy old Framebuffer
-//        for (i in 0 until wd.backBufferCount) {
-//            if (wd.backBufferView[i] != NULL)
-//                device destroyImageView wd.backBufferView[i]
-//            if (wd.framebuffer[i] != NULL)
-//                device destroyFramebuffer wd.framebuffer[i]
-//        }
-//        wd.backBufferCount = 0
-//        if (wd.renderPass != NULL)
-//            device destroyRenderPass wd.renderPass
-//
-//        // If min image count was not specified, request different count of images dependent on selected present mode
-//        if (minImageCount == 0)
-//            minImageCount = getMinImageCountFromPresentMode(wd.presentMode)
-//
-//        // Create Swapchain
-//        run {
-//            val info = vk.SwapchainCreateInfoKHR {
-//                surface = wd.surface
-//                this.minImageCount = minImageCount
-//                imageFormat = wd.surfaceFormat.format
-//                imageColorSpace = wd.surfaceFormat.colorSpace
-//                imageArrayLayers = 1
-//                imageUsage = VkImageUsage.COLOR_ATTACHMENT_BIT.i
-//                imageSharingMode = VkSharingMode.EXCLUSIVE           // Assume that graphics family == present family
-//                preTransform = VkSurfaceTransform.IDENTITY_BIT_KHR
-//                compositeAlpha = VkCompositeAlpha.OPAQUE_BIT_KHR
-//                presentMode = wd.presentMode
-//                clipped = true
-//                this.oldSwapchain = oldSwapchain
-//            }
-//            val cap = physicalDevice getSurfaceCapabilitiesKHR wd.surface
-//
-//            if (info.minImageCount < cap.minImageCount)
-//                info.minImageCount = cap.minImageCount
-//            else if (cap.maxImageCount != 0 && info.minImageCount > cap.maxImageCount)
-//                info.minImageCount = cap.maxImageCount
-//
-//            if (cap.currentExtent.width == 0xffffffff.i) {
-//                wd.size(size)           // TODO bug cant inception
-//                info.imageExtent(size)
-//            } else {
-//                wd.size(cap.currentExtent.width, cap.currentExtent.height)  // TOOD bug
-//                info.imageExtent(wd.size)
-//            }
-//            wd.swapchain = device createSwapchainKHR info
-//            wd.backBuffer = device getSwapchainImagesKHR wd.swapchain
-//            wd.backBufferCount = wd.backBuffer.size
-//        }
-//        if (oldSwapchain != NULL)
-//            device destroySwapchainKHR oldSwapchain
-//
-//        // Create the Render Pass
-//        run {
-//            val attachment = vk.AttachmentDescription {
-//                format = wd.surfaceFormat.format
-//                samples = VkSampleCount.`1_BIT`
-//                loadOp = if (wd.clearEnable) VkAttachmentLoadOp.CLEAR else VkAttachmentLoadOp.DONT_CARE
-//                storeOp = VkAttachmentStoreOp.STORE
-//                stencilLoadOp = VkAttachmentLoadOp.DONT_CARE
-//                stencilStoreOp = VkAttachmentStoreOp.DONT_CARE
-//                initialLayout = VkImageLayout.UNDEFINED
-//                finalLayout = VkImageLayout.PRESENT_SRC_KHR
-//            }
-//            val colorAttachment = vk.AttachmentReference(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
-//            val subpass = vk.SubpassDescription {
-//                pipelineBindPoint = VkPipelineBindPoint.GRAPHICS
-//                colorAttachmentCount = 1
-//                this.colorAttachment = colorAttachment
-//            }
-//            val dependency = vk.SubpassDependency {
-//                srcSubpass = VK_SUBPASS_EXTERNAL
-//                dstSubpass = 0
-//                srcStageMask = VkPipelineStage.COLOR_ATTACHMENT_OUTPUT_BIT.i
-//                dstStageMask = VkPipelineStage.COLOR_ATTACHMENT_OUTPUT_BIT.i
-//                srcAccessMask = 0
-//                dstAccessMask = VkAccess.COLOR_ATTACHMENT_WRITE_BIT.i
-//            }
-//            val info = vk.RenderPassCreateInfo().also {
-//                it.attachment = attachment
-//                it.subpass = subpass
-//                it.dependency = dependency
-//            }
-//            wd.renderPass = device createRenderPass info
-//        }
-//
-//        // Create The Image Views
-//        run {
-//            val info = vk.ImageViewCreateInfo {
-//                viewType = VkImageViewType.`2D`
-//                format = wd.surfaceFormat.format
-//                components(VkComponentSwizzle.R, VkComponentSwizzle.G, VkComponentSwizzle.B, VkComponentSwizzle.A)
-//            }
-//            val imageRange = vk.ImageSubresourceRange(VkImageAspect.COLOR_BIT, 0, 1, 0, 1)
-//            info.subresourceRange = imageRange
-//            for (i in 0 until wd.backBufferCount) {
-//                info.image = wd.backBuffer[i]
-//                wd.backBufferView[i] = device createImageView info
-//            }
-//        }
-//
-//        // Create Framebuffer
-//        run {
-//            val attachment: VkImageViewBuffer = appBuffer.longBuffer
-//            val info = vk.FramebufferCreateInfo {
-//                renderPass = wd.renderPass
-//                this.attachments = attachment //TODO bug
-//                extent(wd.size, 1)
-//            }
-//            for (i in 0 until wd.backBufferCount) {
-//                attachment[0] = wd.backBufferView[i]
-//                wd.framebuffer[i] = device createFramebuffer info
-//            }
-//        }
-//    }
-//
-//    fun destroyWindowData() {
-//        device.apply {
-//            waitIdle() // FIXME: We could wait on the Queue if we had the queue in wd-> (otherwise VulkanH functions can't use globals)
-//            //vkQueueWaitIdle(g_Queue);
-//
-//            wd.frames.forEach { fd ->
-//                destroyFence(fd.fence)
-//                freeCommandBuffer(fd.commandPool, fd.commandBuffer)
-//                destroyCommandPool(fd.commandPool)
-//                destroySemaphores(fd.imageAcquiredSemaphore, fd.renderCompleteSemaphore)
-//            }
-//            for (i in 0 until wd.backBufferCount) {
-//                destroyImageView(wd.backBufferView[i])
-//                destroyFramebuffer(wd.framebuffer[i])
-//            }
-//            destroyRenderPass(wd.renderPass)
-//            destroySwapchainKHR(wd.swapchain)
-//            instance destroySurfaceKHR wd.surface
-//            wd = WindowData()
-//        }
-//    }
-//
-//    fun selectSurfaceFormat(physicalDevice: VkPhysicalDevice, surface: VkSurfaceKHR, requestFormats: Array<VkFormat>, requestColorSpace: VkColorSpace): VkSurfaceFormatKHR {
-//        assert(requestFormats.isNotEmpty())
-//
-//        /*  Per Spec Format and View Format are expected to be the same unless VK_IMAGE_CREATE_MUTABLE_BIT was set at image creation
-//            Assuming that the default behavior is without setting this bit, there is no need for separate Swapchain image and image view format
-//            Additionally several new color spaces were introduced with Vulkan Spec v1.0.40,
-//            hence we must make sure that a format with the mostly available color space, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, is found and used. */
-//        val availFormat = physicalDevice getSurfaceFormatsKHR surface
-//
-//        // First check if only one format, VK_FORMAT_UNDEFINED, is available, which would imply that any format is available
-//        return when (availFormat.size) {
-//            1 -> when (availFormat[0].format) {
-//                VkFormat.UNDEFINED -> vk.SurfaceFormatKHR(requestFormats[0], requestColorSpace)
-//                else -> availFormat[0] // No point in searching another format
-//            }
-//            else -> {
-//                // Request several formats, the first found will be used
-//                for (request in requestFormats.indices)
-//                    for (avail in availFormat.indices)
-//                        if (availFormat[avail].format == requestFormats[request] && availFormat[avail].colorSpace == requestColorSpace)
-//                            return availFormat[avail]
-//
-//                // If none of the requested image formats could be found, use the first available
-//                return availFormat[0]
-//            }
-//        }
-//    }
-//
-//    fun selectPresentMode(requestModes: Array<VkPresentMode>): VkPresentMode {
-//
-//        // Request a certain mode and confirm that it is available. If not use VK_PRESENT_MODE_FIFO_KHR which is mandatory
-//        val availModes = physicalDevice getSurfacePresentModesKHR wd.surface
-//      for (uint32_t avail_i = 0; avail_i < avail_count; avail_i++)
-//      printf("[vulkan] avail_modes[%d] = %d\n", avail_i, avail_modes[avail_i]);
-//        for (request in requestModes.indices)
-//            for (avail in availModes.indices)
-//                if (requestModes[request] == availModes[avail])
-//                    return requestModes[request]
-//
-//        return VkPresentMode.FIFO_KHR // Always available
-//    }
-//
-//    fun getMinImageCountFromPresentMode(presentMode: VkPresentMode) = when (presentMode) {
-//        VkPresentMode.MAILBOX_KHR -> 3
-//        VkPresentMode.FIFO_KHR, VkPresentMode.FIFO_RELAXED_KHR -> 2
-//        VkPresentMode.IMMEDIATE_KHR -> 1
-//        else -> throw Error()
-//    }
-//
-//
-//    fun memoryType(properties: VkMemoryProperty, typeBits: Int) = memoryType(properties.i, typeBits)
-//    fun memoryType(properties: VkMemoryPropertyFlags, typeBits: Int): Int {
-//        val prop = physicalDevice.memoryProperties
-//        for (i in 0 until prop.memoryTypeCount)
-//            if ((prop.memoryTypes[i].propertyFlags and properties) == properties && typeBits has (1 shl i))
-//                return i
-//        return -1 // Unable to find memoryType
-//    }
-//
-//    /** glsl_shader.vert, compiled with:
-//     *  # glslangValidator -V -x -o glsl_shader.vert.u32 glsl_shader.vert
-//     */
-//    val glslShaderVertSpv = intArrayOf(
-//            0x07230203, 0x00010000, 0x00080001, 0x0000002e, 0x00000000, 0x00020011, 0x00000001, 0x0006000b,
-//            0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e, 0x00000000, 0x00000001,
-//            0x000a000f, 0x00000000, 0x00000004, 0x6e69616d, 0x00000000, 0x0000000b, 0x0000000f, 0x00000015,
-//            0x0000001b, 0x0000001c, 0x00030003, 0x00000002, 0x000001c2, 0x00040005, 0x00000004, 0x6e69616d,
-//            0x00000000, 0x00030005, 0x00000009, 0x00000000, 0x00050006, 0x00000009, 0x00000000, 0x6f6c6f43,
-//            0x00000072, 0x00040006, 0x00000009, 0x00000001, 0x00005655, 0x00030005, 0x0000000b, 0x0074754f,
-//            0x00040005, 0x0000000f, 0x6c6f4361, 0x0000726f, 0x00030005, 0x00000015, 0x00565561, 0x00060005,
-//            0x00000019, 0x505f6c67, 0x65567265, 0x78657472, 0x00000000, 0x00060006, 0x00000019, 0x00000000,
-//            0x505f6c67, 0x7469736f, 0x006e6f69, 0x00030005, 0x0000001b, 0x00000000, 0x00040005, 0x0000001c,
-//            0x736f5061, 0x00000000, 0x00060005, 0x0000001e, 0x73755075, 0x6e6f4368, 0x6e617473, 0x00000074,
-//            0x00050006, 0x0000001e, 0x00000000, 0x61635375, 0x0000656c, 0x00060006, 0x0000001e, 0x00000001,
-//            0x61725475, 0x616c736e, 0x00006574, 0x00030005, 0x00000020, 0x00006370, 0x00040047, 0x0000000b,
-//            0x0000001e, 0x00000000, 0x00040047, 0x0000000f, 0x0000001e, 0x00000002, 0x00040047, 0x00000015,
-//            0x0000001e, 0x00000001, 0x00050048, 0x00000019, 0x00000000, 0x0000000b, 0x00000000, 0x00030047,
-//            0x00000019, 0x00000002, 0x00040047, 0x0000001c, 0x0000001e, 0x00000000, 0x00050048, 0x0000001e,
-//            0x00000000, 0x00000023, 0x00000000, 0x00050048, 0x0000001e, 0x00000001, 0x00000023, 0x00000008,
-//            0x00030047, 0x0000001e, 0x00000002, 0x00020013, 0x00000002, 0x00030021, 0x00000003, 0x00000002,
-//            0x00030016, 0x00000006, 0x00000020, 0x00040017, 0x00000007, 0x00000006, 0x00000004, 0x00040017,
-//            0x00000008, 0x00000006, 0x00000002, 0x0004001e, 0x00000009, 0x00000007, 0x00000008, 0x00040020,
-//            0x0000000a, 0x00000003, 0x00000009, 0x0004003b, 0x0000000a, 0x0000000b, 0x00000003, 0x00040015,
-//            0x0000000c, 0x00000020, 0x00000001, 0x0004002b, 0x0000000c, 0x0000000d, 0x00000000, 0x00040020,
-//            0x0000000e, 0x00000001, 0x00000007, 0x0004003b, 0x0000000e, 0x0000000f, 0x00000001, 0x00040020,
-//            0x00000011, 0x00000003, 0x00000007, 0x0004002b, 0x0000000c, 0x00000013, 0x00000001, 0x00040020,
-//            0x00000014, 0x00000001, 0x00000008, 0x0004003b, 0x00000014, 0x00000015, 0x00000001, 0x00040020,
-//            0x00000017, 0x00000003, 0x00000008, 0x0003001e, 0x00000019, 0x00000007, 0x00040020, 0x0000001a,
-//            0x00000003, 0x00000019, 0x0004003b, 0x0000001a, 0x0000001b, 0x00000003, 0x0004003b, 0x00000014,
-//            0x0000001c, 0x00000001, 0x0004001e, 0x0000001e, 0x00000008, 0x00000008, 0x00040020, 0x0000001f,
-//            0x00000009, 0x0000001e, 0x0004003b, 0x0000001f, 0x00000020, 0x00000009, 0x00040020, 0x00000021,
-//            0x00000009, 0x00000008, 0x0004002b, 0x00000006, 0x00000028, 0x00000000, 0x0004002b, 0x00000006,
-//            0x00000029, 0x3f800000, 0x00050036, 0x00000002, 0x00000004, 0x00000000, 0x00000003, 0x000200f8,
-//            0x00000005, 0x0004003d, 0x00000007, 0x00000010, 0x0000000f, 0x00050041, 0x00000011, 0x00000012,
-//            0x0000000b, 0x0000000d, 0x0003003e, 0x00000012, 0x00000010, 0x0004003d, 0x00000008, 0x00000016,
-//            0x00000015, 0x00050041, 0x00000017, 0x00000018, 0x0000000b, 0x00000013, 0x0003003e, 0x00000018,
-//            0x00000016, 0x0004003d, 0x00000008, 0x0000001d, 0x0000001c, 0x00050041, 0x00000021, 0x00000022,
-//            0x00000020, 0x0000000d, 0x0004003d, 0x00000008, 0x00000023, 0x00000022, 0x00050085, 0x00000008,
-//            0x00000024, 0x0000001d, 0x00000023, 0x00050041, 0x00000021, 0x00000025, 0x00000020, 0x00000013,
-//            0x0004003d, 0x00000008, 0x00000026, 0x00000025, 0x00050081, 0x00000008, 0x00000027, 0x00000024,
-//            0x00000026, 0x00050051, 0x00000006, 0x0000002a, 0x00000027, 0x00000000, 0x00050051, 0x00000006,
-//            0x0000002b, 0x00000027, 0x00000001, 0x00070050, 0x00000007, 0x0000002c, 0x0000002a, 0x0000002b,
-//            0x00000028, 0x00000029, 0x00050041, 0x00000011, 0x0000002d, 0x0000001b, 0x0000000d, 0x0003003e,
-//            0x0000002d, 0x0000002c, 0x000100fd, 0x00010038).toBuffer()
-//
-//    /** glsl_shader.frag, compiled with:
-//     *  # glslangValidator -V -x -o glsl_shader.frag.u32 glsl_shader.frag
-//     */
-//    val glslShaderFragSpv = intArrayOf(
-//            0x07230203, 0x00010000, 0x00080001, 0x0000001e, 0x00000000, 0x00020011, 0x00000001, 0x0006000b,
-//            0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e, 0x00000000, 0x00000001,
-//            0x0007000f, 0x00000004, 0x00000004, 0x6e69616d, 0x00000000, 0x00000009, 0x0000000d, 0x00030010,
-//            0x00000004, 0x00000007, 0x00030003, 0x00000002, 0x000001c2, 0x00040005, 0x00000004, 0x6e69616d,
-//            0x00000000, 0x00040005, 0x00000009, 0x6c6f4366, 0x0000726f, 0x00030005, 0x0000000b, 0x00000000,
-//            0x00050006, 0x0000000b, 0x00000000, 0x6f6c6f43, 0x00000072, 0x00040006, 0x0000000b, 0x00000001,
-//            0x00005655, 0x00030005, 0x0000000d, 0x00006e49, 0x00050005, 0x00000016, 0x78655473, 0x65727574,
-//            0x00000000, 0x00040047, 0x00000009, 0x0000001e, 0x00000000, 0x00040047, 0x0000000d, 0x0000001e,
-//            0x00000000, 0x00040047, 0x00000016, 0x00000022, 0x00000000, 0x00040047, 0x00000016, 0x00000021,
-//            0x00000000, 0x00020013, 0x00000002, 0x00030021, 0x00000003, 0x00000002, 0x00030016, 0x00000006,
-//            0x00000020, 0x00040017, 0x00000007, 0x00000006, 0x00000004, 0x00040020, 0x00000008, 0x00000003,
-//            0x00000007, 0x0004003b, 0x00000008, 0x00000009, 0x00000003, 0x00040017, 0x0000000a, 0x00000006,
-//            0x00000002, 0x0004001e, 0x0000000b, 0x00000007, 0x0000000a, 0x00040020, 0x0000000c, 0x00000001,
-//            0x0000000b, 0x0004003b, 0x0000000c, 0x0000000d, 0x00000001, 0x00040015, 0x0000000e, 0x00000020,
-//            0x00000001, 0x0004002b, 0x0000000e, 0x0000000f, 0x00000000, 0x00040020, 0x00000010, 0x00000001,
-//            0x00000007, 0x00090019, 0x00000013, 0x00000006, 0x00000001, 0x00000000, 0x00000000, 0x00000000,
-//            0x00000001, 0x00000000, 0x0003001b, 0x00000014, 0x00000013, 0x00040020, 0x00000015, 0x00000000,
-//            0x00000014, 0x0004003b, 0x00000015, 0x00000016, 0x00000000, 0x0004002b, 0x0000000e, 0x00000018,
-//            0x00000001, 0x00040020, 0x00000019, 0x00000001, 0x0000000a, 0x00050036, 0x00000002, 0x00000004,
-//            0x00000000, 0x00000003, 0x000200f8, 0x00000005, 0x00050041, 0x00000010, 0x00000011, 0x0000000d,
-//            0x0000000f, 0x0004003d, 0x00000007, 0x00000012, 0x00000011, 0x0004003d, 0x00000014, 0x00000017,
-//            0x00000016, 0x00050041, 0x00000019, 0x0000001a, 0x0000000d, 0x00000018, 0x0004003d, 0x0000000a,
-//            0x0000001b, 0x0000001a, 0x00050057, 0x00000007, 0x0000001c, 0x00000017, 0x0000001b, 0x00050085,
-//            0x00000007, 0x0000001d, 0x00000012, 0x0000001c, 0x0003003e, 0x00000009, 0x0000001d, 0x000100fd,
-//            0x00010038).toBuffer()
-//}
+package imgui.impl
+
+import glm_.vec2.Vec2i
+import kool.adr
+import kool.isValid
+import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.vulkan.*
+import org.lwjgl.vulkan.VK10.VK_SUBPASS_EXTERNAL
+import vkk.*
+import vkk.entities.*
+import vkk.extensionFunctions.*
+
+
+// Initialization data, for ImGui_ImplVulkan_Init()
+// [Please zero-clear before use!]
+object VkInitInfo {
+    lateinit var instance: VkInstance
+    lateinit var physicalDevice: VkPhysicalDevice
+    lateinit var device: VkDevice
+    var queueFamily = 0
+    lateinit var queue: VkQueue
+    var pipelineCache = VkPipelineCache()
+    var descriptorPool = VkDescriptorPool()
+    var minImageCount = 0 // >= 2
+    var imageCount = 0 // >= MinImageCount
+}
+
+// Called by user code -> ImplVk_userCode
+//IMGUI_IMPL_API bool     ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass);
+//IMGUI_IMPL_API void     ImGui_ImplVulkan_Shutdown();
+//IMGUI_IMPL_API void     ImGui_ImplVulkan_NewFrame();
+//IMGUI_IMPL_API void     ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer);
+//IMGUI_IMPL_API bool     ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer);
+//IMGUI_IMPL_API void     ImGui_ImplVulkan_DestroyFontUploadObjects();
+//IMGUI_IMPL_API void     ImGui_ImplVulkan_SetMinImageCount(uint32_t min_image_count); // To override MinImageCount after initialization (e.g. if swap chain is recreated)
+
+//-------------------------------------------------------------------------
+// Internal / Miscellaneous Vulkan Helpers
+// (Used by example's main.cpp. Used by multi-viewport features. PROBABLY NOT used by your own engine/app.)
+//-------------------------------------------------------------------------
+// You probably do NOT need to use or care about those functions.
+// Those functions only exist because:
+//   1) they facilitate the readability and maintenance of the multiple main.cpp examples files.
+//   2) the upcoming multi-viewport feature will need them internally.
+// Generally we avoid exposing any kind of superfluous high-level helpers in the bindings,
+// but it is too much code to duplicate everywhere so we exceptionally expose them.
+//
+// Your engine/app will likely _already_ have code to setup all that stuff (swap chain, render pass, frame buffers, etc.).
+// You may read this code to learn about Vulkan, but it is recommended you use you own custom tailored code to do equivalent work.
+// (The ImGui_ImplVulkanH_XXX functions do not interact with any of the state used by the regular ImGui_ImplVulkan_XXX functions)
+//-------------------------------------------------------------------------
+
+struct ImGui_ImplVulkanH_Frame
+struct ImGui_ImplVulkanH_Window
+
+// Helpers -> ImplVk_helpers
+//IMGUI_IMPL_API void                 ImGui_ImplVulkanH_CreateWindow(VkInstance instance, VkPhysicalDevice physical_device, VkDevice device, ImGui_ImplVulkanH_Window* wnd, uint32_t queue_family, const VkAllocationCallbacks* allocator, int w, int h, uint32_t min_image_count);
+//IMGUI_IMPL_API void                 ImGui_ImplVulkanH_DestroyWindow(VkInstance instance, VkDevice device, ImGui_ImplVulkanH_Window* wnd, const VkAllocationCallbacks* allocator);
+//IMGUI_IMPL_API VkSurfaceFormatKHR   ImGui_ImplVulkanH_SelectSurfaceFormat(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkFormat* request_formats, int request_formats_count, VkColorSpaceKHR request_color_space);
+//IMGUI_IMPL_API VkPresentModeKHR     ImGui_ImplVulkanH_SelectPresentMode(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkPresentModeKHR* request_modes, int request_modes_count);
+//IMGUI_IMPL_API int                  ImGui_ImplVulkanH_GetMinImageCountFromPresentMode(VkPresentModeKHR present_mode);
+
+/** Helper structure to hold the data needed by one rendering frame
+ *  (Used by example's main.cpp. Used by multi-viewport features. Probably NOT used by your own engine/app.)
+ *  [Please zero-clear before use!] */
+class VkFrame {
+    var commandPool = VkCommandPool()
+    var commandBuffer: VkCommandBuffer? = null
+    var fence = VkFence()
+    var backbuffer = VkImage()
+    var backbufferView = VkImageView()
+    var framebuffer = VkFramebuffer()
+}
+
+class VkFrameSemaphores {
+    var imageAcquiredSemaphore = VkSemaphore()
+    var renderCompleteSemaphore = VkSemaphore()
+}
+
+/** Helper structure to hold the data needed by one rendering context into one OS window
+ *  (Used by example's main.cpp. Used by multi-viewport features. Probably NOT used by your own engine/app.)
+ *  [JVM] we can use an object */
+object VkWindow {
+    val size = Vec2i()
+    var swapchain = VkSwapchainKHR()
+    var surface = VkSurfaceKHR()
+    var surfaceFormat = VkSurfaceFormatKHR.calloc()
+    var presentMode = VkPresentModeKHR(0x7FFFFFFF)
+    var renderPass = VkRenderPass()
+    var clearEnable = true
+    var clearValue = VkClearValue.calloc()
+    /** Current frame being rendered to (0 <= FrameIndex < FrameInFlightCount) */
+    var frameIndex = 0
+    /** Number of simultaneous in-flight frames (returned by vkGetSwapchainImagesKHR, usually derived from min_image_count) */
+    var imageCount = 0
+    /** Current set of swapchain wait semaphores we're using (needs to be distinct from per frame data) */
+    var semaphoreIndex = 0
+    var frames = emptyArray<VkFrame>()
+    var frameSemaphores = emptyArray<VkFrameSemaphores>()
+
+    fun reset() {
+        size put 0f
+        swapchain = VkSwapchainKHR()
+        surface = VkSurfaceKHR()
+        surfaceFormat.free()
+        surfaceFormat = VkSurfaceFormatKHR.calloc()
+        presentMode = VkPresentModeKHR(0x7FFFFFFF)
+        renderPass = VkRenderPass()
+        clearEnable = true
+        clearValue.free()
+        clearValue = VkClearValue.calloc()
+        /** Current frame being rendered to (0 <= FrameIndex < FrameInFlightCount) */
+        frameIndex = 0
+        /** Number of simultaneous in-flight frames (returned by vkGetSwapchainImagesKHR, usually derived from min_image_count) */
+        imageCount = 0
+        /** Current set of swapchain wait semaphores we're using (needs to be distinct from per frame data) */
+        semaphoreIndex = 0
+        frames = emptyArray()
+        frameSemaphores = emptyArray()
+    }
+}
+
+// --------------------------------- imgui_impl_vulkan.cpp ---------------------------------
+
+// Reusable buffers used for rendering 1 current in-flight frame, for ImGui_ImplVulkan_RenderDrawData()
+// [Please zero-clear before use!]
+class VkFrameRenderBuffers {
+    var vertexBufferMemory = VkDeviceMemory()
+    var indexBufferMemory = VkDeviceMemory()
+    var vertexBufferSize = VkDeviceSize()
+    var indexBufferSize = VkDeviceSize()
+    var vertexBuffer = VkBuffer()
+    var indexBuffer = VkBuffer()
+}
+
+// Each viewport will hold 1 ImGui_ImplVulkanH_WindowRenderBuffers
+// [Please zero-clear before use!]
+struct ImGui_ImplVulkanH_WindowRenderBuffers
+{
+    uint32_t Index
+            uint32_t Count
+            ImGui_ImplVulkanH_FrameRenderBuffers * FrameRenderBuffers
+}
+
+// Vulkan data
+static ImGui_ImplVulkan_InitInfo g_VulkanInitInfo = {}
+static VkRenderPass             g_RenderPass = VK_NULL_HANDLE
+var bufferMemoryAlignment = VkDeviceSize(256)
+static VkPipelineCreateFlags    g_PipelineCreateFlags = 0x00
+static VkDescriptorSetLayout    g_DescriptorSetLayout = VK_NULL_HANDLE
+static VkPipelineLayout         g_PipelineLayout = VK_NULL_HANDLE
+static VkDescriptorSet          g_DescriptorSet = VK_NULL_HANDLE
+static VkPipeline               g_Pipeline = VK_NULL_HANDLE
+
+// Font data
+static VkSampler                g_FontSampler = VK_NULL_HANDLE
+static VkDeviceMemory           g_FontMemory = VK_NULL_HANDLE
+static VkImage                  g_FontImage = VK_NULL_HANDLE
+static VkImageView              g_FontView = VK_NULL_HANDLE
+static VkDeviceMemory           g_UploadBufferMemory = VK_NULL_HANDLE
+static VkBuffer                 g_UploadBuffer = VK_NULL_HANDLE
+
+/** Render buffers
+ *
+ *  Each viewport will hold 1 ImGui_ImplVulkanH_WindowRenderBuffers
+ *  [Please zero-clear before use!] */
+object MainWindowRenderBuffers {
+
+    var index = 0
+    var count = 0
+    var frameRenderBuffers = emptyArray<VkFrameRenderBuffers>()
+}
+
+// Forward Declarations
+bool ImGui_ImplVulkan_CreateDeviceObjects()
+void ImGui_ImplVulkan_DestroyDeviceObjects()
+
+fun destroyFrame(device: VkDevice, fd: VkFrame) {
+
+    device destroy fd.fence
+    device.freeCommandBuffer(fd.commandPool, fd.commandBuffer!!)
+    device destroy fd.commandPool
+    fd.fence = VkFence()
+    fd.commandBuffer = null
+    fd.commandPool = VkCommandPool()
+
+    device destroy fd.backbufferView
+    device destroy fd.framebuffer
+}
+
+fun destroyFrameSemaphores(device: VkDevice, fsd: VkFrameSemaphores) {
+
+    device destroy fsd.imageAcquiredSemaphore
+    device destroy fsd.renderCompleteSemaphore
+    fsd.renderCompleteSemaphore = VkSemaphore()
+    fsd.imageAcquiredSemaphore = VkSemaphore()
+}
+
+void ImGui_ImplVulkanH_DestroyFrameRenderBuffers(VkDevice device, ImGui_ImplVulkanH_FrameRenderBuffers* buffers, const VkAllocationCallbacks* allocator)
+void ImGui_ImplVulkanH_DestroyWindowRenderBuffers(VkDevice device, ImGui_ImplVulkanH_WindowRenderBuffers* buffers, const VkAllocationCallbacks* allocator)
+
+/** Also destroy old swap chain and in-flight frames data, if any. */
+fun createWindowSwapChain(physicalDevice: VkPhysicalDevice, device: VkDevice, size: Vec2i, minImageCount_: Int) {
+
+    val wd = VkWindow
+
+    val oldSwapchain = wd.swapchain
+    device.waitIdle()
+
+    // We don't use ImGui_ImplVulkanH_DestroyWindow() because we want to preserve the old swapchain to create the new one.
+    // Destroy old Framebuffer
+    repeat(wd.imageCount) {
+        destroyFrame(device, wd.frames[it])
+        destroyFrameSemaphores(device, wd.frameSemaphores[it])
+    }
+    wd.frames = emptyArray()
+    wd.frameSemaphores = emptyArray()
+    wd.imageCount = 0
+    if (wd.renderPass.isValid)
+        device destroy wd.renderPass
+
+    // If min image count was not specified, request different count of images dependent on selected present mode
+    val minImageCount = when {
+        minImageCount_ == 0 -> wd.presentMode.minImageCount
+        else -> minImageCount_
+    }
+
+    // Create Swapchain
+    run {
+        val info = vk.SwapchainCreateInfoKHR {
+            surface = wd.surface
+            this.minImageCount = minImageCount
+            imageFormat = wd.surfaceFormat.format
+            imageColorSpace = wd.surfaceFormat.colorSpace
+            imageArrayLayers = 1
+            imageUsage = VkImageUsage.COLOR_ATTACHMENT_BIT.i
+            imageSharingMode = VkSharingMode.EXCLUSIVE           // Assume that graphics family == present family
+            preTransform = VkSurfaceTransformKHR.IDENTITY_BIT_KHR
+            compositeAlpha = VkCompositeAlphaKHR.OPAQUE_BIT_KHR
+            presentMode = wd.presentMode
+            clipped = true
+            this.oldSwapchain = oldSwapchain
+        }
+        val cap = physicalDevice getSurfaceCapabilitiesKHR wd.surface
+        if (info.minImageCount < cap.minImageCount)
+            info.minImageCount = cap.minImageCount
+        else if (cap.maxImageCount != 0 && info.minImageCount > cap.maxImageCount)
+            info.minImageCount = cap.maxImageCount
+
+        if (cap.currentExtent.width == -1) {
+            wd.size put size
+            info.imageExtent.size put size
+        } else {
+            wd.size put cap.currentExtent.size
+            info.imageExtent.size put cap.currentExtent.size
+        }
+        wd.swapchain = device createSwapchainKHR info
+        wd.imageCount = device.getSwapchainImagesKHR(wd.swapchain)
+        val backbuffers = VkImage_Buffer(16)
+        assert(wd.imageCount >= minImageCount && wd.imageCount < backbuffers.rem)
+        device.getSwapchainImagesKHR(wd.swapchain, backbuffers)
+
+        assert(wd.frames.isEmpty())
+        wd.frames = Array(wd.imageCount) { VkFrame() }
+        wd.frameSemaphores = Array(wd.imageCount) { VkFrameSemaphores() }
+        for (i in 0 until wd.imageCount)
+            wd.frames[i].backbuffer = backbuffers[i]
+    }
+    if (oldSwapchain.isValid)
+        device destroy oldSwapchain
+
+    // Create the Render Pass
+    run {
+        val attachment = vk.AttachmentDescription {
+            format = wd.surfaceFormat.format
+            samples = VkSampleCount._1_BIT
+            loadOp = if (wd.clearEnable) VkAttachmentLoadOp.CLEAR else VkAttachmentLoadOp.DONT_CARE
+            storeOp = VkAttachmentStoreOp.STORE
+            stencilLoadOp = VkAttachmentLoadOp.DONT_CARE
+            stencilStoreOp = VkAttachmentStoreOp.DONT_CARE
+            initialLayout = VkImageLayout.UNDEFINED
+            finalLayout = VkImageLayout.PRESENT_SRC_KHR
+        }
+        val colorAttachment = vk.AttachmentReference {
+            this.attachment = 0
+            layout = VkImageLayout.COLOR_ATTACHMENT_OPTIMAL
+        }
+        val subpass = vk.SubpassDescription {
+            pipelineBindPoint = VkPipelineBindPoint.GRAPHICS
+            colorAttachmentCount = 1
+            this.colorAttachment = colorAttachment
+        }
+        val dependency = vk.SubpassDependency {
+            srcSubpass = VK_SUBPASS_EXTERNAL
+            dstSubpass = 0
+            srcStageMask = VkPipelineStage.COLOR_ATTACHMENT_OUTPUT_BIT.i
+            dstStageMask = VkPipelineStage.COLOR_ATTACHMENT_OUTPUT_BIT.i
+            srcAccessMask = 0
+            dstAccessMask = VkAccess.COLOR_ATTACHMENT_WRITE_BIT.i
+        }
+        val info = vk.RenderPassCreateInfo {
+            this.attachment = attachment
+            this.subpass = subpass
+            this.dependency = dependency
+        }
+        wd.renderPass = device createRenderPass info
+    }
+
+    // Create The Image Views
+    run {
+        val info = vk.ImageViewCreateInfo {
+            viewType = VkImageViewType._2D
+            format = wd.surfaceFormat.format
+            components(VkComponentSwizzle.R, VkComponentSwizzle.G, VkComponentSwizzle.B, VkComponentSwizzle.A)
+        }
+        val imageRange = vk.ImageSubresourceRange {
+            aspectMask = VkImageAspect.COLOR_BIT.i
+            baseMipLevel = 0
+            levelCount = 1
+            baseArrayLayer = 0
+            layerCount = 1
+        }
+        info.subresourceRange = imageRange
+        for (fd in wd.frames) {
+            info.image = fd.backbuffer
+            fd.backbufferView = device createImageView info
+        }
+    }
+
+    // Create Framebuffer
+    run {
+        val attachment = vk.ImageView_Buffer(1)
+        val info = vk.FramebufferCreateInfo {
+            renderPass = wd.renderPass
+            attachments = attachment
+            extent(wd.size, 1)
+        }
+        for (fd in wd.frames) {
+            attachment[0] = fd.backbufferView
+            device createFramebuffer info
+        }
+    }
+}
+
+fun createWindowCommandBuffers(physicalDevice: VkPhysicalDevice, device: VkDevice, queueFamily: Int) {
+
+    assert(physicalDevice.adr != NULL && device.isValid)
+
+    val wd = VkWindow
+
+    // Create Command Buffers
+    for (i in 0 until wd.imageCount) {
+        val fd = wd.frames[i]
+        val fsd = wd.frameSemaphores[i]
+        run {
+            val info = vk.CommandPoolCreateInfo {
+                flags = VkCommandPoolCreate.RESET_COMMAND_BUFFER_BIT.i
+                queueFamilyIndex = queueFamily
+            }
+            fd.commandPool = device createCommandPool info
+        }
+        run {
+            val info = vk.CommandBufferAllocateInfo {
+                commandPool = fd.commandPool
+                level = VkCommandBufferLevel.PRIMARY
+                commandBufferCount = 1
+            }
+            fd.commandBuffer = device allocateCommandBuffers info
+        }
+        run {
+            val info = vk.FenceCreateInfo { flags = VkFenceCreate.SIGNALED_BIT.i }
+            fd.fence = device createFence info
+        }
+        run {
+            val info = vk.SemaphoreCreateInfo()
+            fsd.imageAcquiredSemaphore = device createSemaphore info
+            fsd.renderCompleteSemaphore = device createSemaphore info
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+// SHADERS
+//-----------------------------------------------------------------------------
+
+// glsl_shader.vert, compiled with:
+// # glslangValidator -V -x -o glsl_shader.vert.u32 glsl_shader.vert
+/*
+#version 450 core
+layout(location = 0) in vec2 aPos;
+layout(location = 1) in vec2 aUV;
+layout(location = 2) in vec4 aColor;
+layout(push_constant) uniform uPushConstant { vec2 uScale; vec2 uTranslate; } pc;
+
+out gl_PerVertex { vec4 gl_Position; };
+layout(location = 0) out struct { vec4 Color; vec2 UV; } Out;
+
+void main()
+{
+    Out.Color = aColor;
+    Out.UV = aUV;
+    gl_Position = vec4(aPos * pc.uScale + pc.uTranslate, 0, 1);
+}
+*/
+val __glsl_shader_vert_spv = intArrayOf(
+    0x07230203, 0x00010000, 0x00080001, 0x0000002e, 0x00000000, 0x00020011, 0x00000001, 0x0006000b,
+    0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e, 0x00000000, 0x00000001,
+    0x000a000f, 0x00000000, 0x00000004, 0x6e69616d, 0x00000000, 0x0000000b, 0x0000000f, 0x00000015,
+    0x0000001b, 0x0000001c, 0x00030003, 0x00000002, 0x000001c2, 0x00040005, 0x00000004, 0x6e69616d,
+    0x00000000, 0x00030005, 0x00000009, 0x00000000, 0x00050006, 0x00000009, 0x00000000, 0x6f6c6f43,
+    0x00000072, 0x00040006, 0x00000009, 0x00000001, 0x00005655, 0x00030005, 0x0000000b, 0x0074754f,
+    0x00040005, 0x0000000f, 0x6c6f4361, 0x0000726f, 0x00030005, 0x00000015, 0x00565561, 0x00060005,
+    0x00000019, 0x505f6c67, 0x65567265, 0x78657472, 0x00000000, 0x00060006, 0x00000019, 0x00000000,
+    0x505f6c67, 0x7469736f, 0x006e6f69, 0x00030005, 0x0000001b, 0x00000000, 0x00040005, 0x0000001c,
+    0x736f5061, 0x00000000, 0x00060005, 0x0000001e, 0x73755075, 0x6e6f4368, 0x6e617473, 0x00000074,
+    0x00050006, 0x0000001e, 0x00000000, 0x61635375, 0x0000656c, 0x00060006, 0x0000001e, 0x00000001,
+    0x61725475, 0x616c736e, 0x00006574, 0x00030005, 0x00000020, 0x00006370, 0x00040047, 0x0000000b,
+    0x0000001e, 0x00000000, 0x00040047, 0x0000000f, 0x0000001e, 0x00000002, 0x00040047, 0x00000015,
+    0x0000001e, 0x00000001, 0x00050048, 0x00000019, 0x00000000, 0x0000000b, 0x00000000, 0x00030047,
+    0x00000019, 0x00000002, 0x00040047, 0x0000001c, 0x0000001e, 0x00000000, 0x00050048, 0x0000001e,
+    0x00000000, 0x00000023, 0x00000000, 0x00050048, 0x0000001e, 0x00000001, 0x00000023, 0x00000008,
+    0x00030047, 0x0000001e, 0x00000002, 0x00020013, 0x00000002, 0x00030021, 0x00000003, 0x00000002,
+    0x00030016, 0x00000006, 0x00000020, 0x00040017, 0x00000007, 0x00000006, 0x00000004, 0x00040017,
+    0x00000008, 0x00000006, 0x00000002, 0x0004001e, 0x00000009, 0x00000007, 0x00000008, 0x00040020,
+    0x0000000a, 0x00000003, 0x00000009, 0x0004003b, 0x0000000a, 0x0000000b, 0x00000003, 0x00040015,
+    0x0000000c, 0x00000020, 0x00000001, 0x0004002b, 0x0000000c, 0x0000000d, 0x00000000, 0x00040020,
+    0x0000000e, 0x00000001, 0x00000007, 0x0004003b, 0x0000000e, 0x0000000f, 0x00000001, 0x00040020,
+    0x00000011, 0x00000003, 0x00000007, 0x0004002b, 0x0000000c, 0x00000013, 0x00000001, 0x00040020,
+    0x00000014, 0x00000001, 0x00000008, 0x0004003b, 0x00000014, 0x00000015, 0x00000001, 0x00040020,
+    0x00000017, 0x00000003, 0x00000008, 0x0003001e, 0x00000019, 0x00000007, 0x00040020, 0x0000001a,
+    0x00000003, 0x00000019, 0x0004003b, 0x0000001a, 0x0000001b, 0x00000003, 0x0004003b, 0x00000014,
+    0x0000001c, 0x00000001, 0x0004001e, 0x0000001e, 0x00000008, 0x00000008, 0x00040020, 0x0000001f,
+    0x00000009, 0x0000001e, 0x0004003b, 0x0000001f, 0x00000020, 0x00000009, 0x00040020, 0x00000021,
+    0x00000009, 0x00000008, 0x0004002b, 0x00000006, 0x00000028, 0x00000000, 0x0004002b, 0x00000006,
+    0x00000029, 0x3f800000, 0x00050036, 0x00000002, 0x00000004, 0x00000000, 0x00000003, 0x000200f8,
+    0x00000005, 0x0004003d, 0x00000007, 0x00000010, 0x0000000f, 0x00050041, 0x00000011, 0x00000012,
+    0x0000000b, 0x0000000d, 0x0003003e, 0x00000012, 0x00000010, 0x0004003d, 0x00000008, 0x00000016,
+    0x00000015, 0x00050041, 0x00000017, 0x00000018, 0x0000000b, 0x00000013, 0x0003003e, 0x00000018,
+    0x00000016, 0x0004003d, 0x00000008, 0x0000001d, 0x0000001c, 0x00050041, 0x00000021, 0x00000022,
+    0x00000020, 0x0000000d, 0x0004003d, 0x00000008, 0x00000023, 0x00000022, 0x00050085, 0x00000008,
+    0x00000024, 0x0000001d, 0x00000023, 0x00050041, 0x00000021, 0x00000025, 0x00000020, 0x00000013,
+    0x0004003d, 0x00000008, 0x00000026, 0x00000025, 0x00050081, 0x00000008, 0x00000027, 0x00000024,
+    0x00000026, 0x00050051, 0x00000006, 0x0000002a, 0x00000027, 0x00000000, 0x00050051, 0x00000006,
+    0x0000002b, 0x00000027, 0x00000001, 0x00070050, 0x00000007, 0x0000002c, 0x0000002a, 0x0000002b,
+    0x00000028, 0x00000029, 0x00050041, 0x00000011, 0x0000002d, 0x0000001b, 0x0000000d, 0x0003003e,
+    0x0000002d, 0x0000002c, 0x000100fd, 0x00010038)
+
+// glsl_shader.frag, compiled with:
+// # glslangValidator -V -x -o glsl_shader.frag.u32 glsl_shader.frag
+/*
+#version 450 core
+layout(location = 0) out vec4 fColor;
+layout(set=0, binding=0) uniform sampler2D sTexture;
+layout(location = 0) in struct { vec4 Color; vec2 UV; } In;
+void main()
+{
+    fColor = In.Color * texture(sTexture, In.UV.st);
+}
+*/
+val __glsl_shader_frag_spv = intArrayOf(
+    0x07230203, 0x00010000, 0x00080001, 0x0000001e, 0x00000000, 0x00020011, 0x00000001, 0x0006000b,
+    0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e, 0x00000000, 0x00000001,
+    0x0007000f, 0x00000004, 0x00000004, 0x6e69616d, 0x00000000, 0x00000009, 0x0000000d, 0x00030010,
+    0x00000004, 0x00000007, 0x00030003, 0x00000002, 0x000001c2, 0x00040005, 0x00000004, 0x6e69616d,
+    0x00000000, 0x00040005, 0x00000009, 0x6c6f4366, 0x0000726f, 0x00030005, 0x0000000b, 0x00000000,
+    0x00050006, 0x0000000b, 0x00000000, 0x6f6c6f43, 0x00000072, 0x00040006, 0x0000000b, 0x00000001,
+    0x00005655, 0x00030005, 0x0000000d, 0x00006e49, 0x00050005, 0x00000016, 0x78655473, 0x65727574,
+    0x00000000, 0x00040047, 0x00000009, 0x0000001e, 0x00000000, 0x00040047, 0x0000000d, 0x0000001e,
+    0x00000000, 0x00040047, 0x00000016, 0x00000022, 0x00000000, 0x00040047, 0x00000016, 0x00000021,
+    0x00000000, 0x00020013, 0x00000002, 0x00030021, 0x00000003, 0x00000002, 0x00030016, 0x00000006,
+    0x00000020, 0x00040017, 0x00000007, 0x00000006, 0x00000004, 0x00040020, 0x00000008, 0x00000003,
+    0x00000007, 0x0004003b, 0x00000008, 0x00000009, 0x00000003, 0x00040017, 0x0000000a, 0x00000006,
+    0x00000002, 0x0004001e, 0x0000000b, 0x00000007, 0x0000000a, 0x00040020, 0x0000000c, 0x00000001,
+    0x0000000b, 0x0004003b, 0x0000000c, 0x0000000d, 0x00000001, 0x00040015, 0x0000000e, 0x00000020,
+    0x00000001, 0x0004002b, 0x0000000e, 0x0000000f, 0x00000000, 0x00040020, 0x00000010, 0x00000001,
+    0x00000007, 0x00090019, 0x00000013, 0x00000006, 0x00000001, 0x00000000, 0x00000000, 0x00000000,
+    0x00000001, 0x00000000, 0x0003001b, 0x00000014, 0x00000013, 0x00040020, 0x00000015, 0x00000000,
+    0x00000014, 0x0004003b, 0x00000015, 0x00000016, 0x00000000, 0x0004002b, 0x0000000e, 0x00000018,
+    0x00000001, 0x00040020, 0x00000019, 0x00000001, 0x0000000a, 0x00050036, 0x00000002, 0x00000004,
+    0x00000000, 0x00000003, 0x000200f8, 0x00000005, 0x00050041, 0x00000010, 0x00000011, 0x0000000d,
+    0x0000000f, 0x0004003d, 0x00000007, 0x00000012, 0x00000011, 0x0004003d, 0x00000014, 0x00000017,
+    0x00000016, 0x00050041, 0x00000019, 0x0000001a, 0x0000000d, 0x00000018, 0x0004003d, 0x0000000a,
+    0x0000001b, 0x0000001a, 0x00050057, 0x00000007, 0x0000001c, 0x00000017, 0x0000001b, 0x00050085,
+    0x00000007, 0x0000001d, 0x00000012, 0x0000001c, 0x0003003e, 0x00000009, 0x0000001d, 0x000100fd,
+    0x00010038)
