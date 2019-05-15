@@ -9,6 +9,7 @@ import gln.glClearColor
 import gln.glViewport
 import imgui.imgui.Context
 import imgui.impl.ImplGL2
+import imgui.impl.ImplGL2_mac
 import imgui.impl.ImplGlfw
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
@@ -35,7 +36,7 @@ private class ImGuiOpenGL2_Mac {
     var counter = 0
 
     lateinit var implGlfw: ImplGlfw
-    lateinit var implGl2: ImplGL2
+    lateinit var implGl2: ImplGL2_mac
 
 //    val rmt = MemoryUtil.memAllocPointer(1).also { Remotery.rmt_CreateGlobalInstance(it) }
 
