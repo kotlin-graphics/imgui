@@ -11,6 +11,7 @@ import imgui.imgui.Context
 import imgui.impl.ImplGL2
 import imgui.impl.ImplGL2_mac
 import imgui.impl.ImplGlfw
+import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
@@ -45,7 +46,7 @@ private class ImGuiOpenGL2_Mac {
         // Setup window
         glfw {
             errorCallback = { error, description -> println("Glfw Error $error: $description") }
-            init()
+            GLFW.glfwInit()
             windowHint { debug = DEBUG }
         }
 
