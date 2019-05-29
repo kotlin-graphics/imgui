@@ -10,6 +10,12 @@ import java.nio.IntBuffer
 fun DrawVert_Buffer(size: Int = 0) = DrawVert_Buffer(ByteBuffer(size))
 inline class DrawVert_Buffer(val data: ByteBuffer) {
 
+    operator fun get(index: Int) = DrawVert().apply {
+        pos.put(data, index * DrawVert.size)
+        uv.put(data, index * DrawVert.size + DrawVert.ofsUv)
+        col = data.getInt(index * DrawVert.size + DrawVert.ofsCol)
+    }
+
     operator fun plusAssign(v: Vec2) {
         data.putFloat(v.x)
         data.putFloat(v.y)
