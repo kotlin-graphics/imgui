@@ -1,0 +1,74 @@
+plugins {
+    id 'maven'
+    id 'java'
+    id "org.jetbrains.kotlin.jvm"
+    id "com.github.johnrengelman.shadow"
+    id 'org.openjfx.javafxplugin' version '0.0.7'
+}
+
+group 'com.github.kotlin-graphics'
+
+sourceCompatibility = 1.8
+
+ext {
+    moduleName = 'com.github.kotlin_graphics.imgui_jfx'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation 'com.github.kotlin-graphics.glm:glm:v0.9.9.0-build-13'
+    api project(':imgui-core')
+
+    [""].each {
+        String base = "org.lwjgl:lwjgl$it:$lwjgl_version"
+        implementation base
+        testRuntime "$base:natives-$lwjgl_natives"
+        shadow "$base:natives-$lwjgl_natives"
+    }
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+javafx {
+    version = "11.0.1"
+    modules = ['javafx.graphics']
+}
+
+task lightJar(type: Jar) {
+    classifier = 'light'
+    from sourceSets.main.output
+    exclude 'extraFonts'
+    inputs.property("moduleName", moduleName)
+    manifest {
+        attributes('Automatic-Module-Name': moduleName)
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives lightJar
+    archives sourcesJar
+    archives javadocJar
+}
+
+shadowJar {
+    exclude 'module-info.class'
+    inputs.property("moduleName", moduleName)
+    manifest.attributes('Automatic-Module-Name': moduleName)
+}
+
+jar {
+    inputs.property("moduleName", moduleName)
+    manifest.attributes('Automatic-Module-Name': moduleName)
+}
+
+shadowJar.classifier = 'all'
