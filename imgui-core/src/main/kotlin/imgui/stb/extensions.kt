@@ -189,8 +189,8 @@ fun stbtt_GetPackedQuad(chardata: STBTTPackedchar.Buffer, p: Vec2i, charIndex: I
     STBTruetype.nstbtt_GetPackedQuad(chardata.adr, p.x, p.y, charIndex, dummy, dummy + Float.BYTES, q.adr, alignToInteger.i)
 }
 
-fun stbtt_GetGlyphBitmapBoxSubpixel(font: STBTTFontinfo, glyph: Int, scale: Vec2, shift: Vec2 = Vec2()): IntArray = stak {
-    val tmp = it.callocInt(4).adr
+fun stbtt_GetGlyphBitmapBoxSubpixel(font: STBTTFontinfo, glyph: Int, scale: Vec2, shift: Vec2 = Vec2()): IntArray = stak { s ->
+    val tmp = s.callocInt(4).adr
     STBTruetype.nstbtt_GetGlyphBitmapBoxSubpixel(font.adr, glyph, scale.x, scale.y, shift.x, shift.y,
             tmp, tmp + Int.BYTES, tmp + Int.BYTES * 2, tmp + Int.BYTES * 3)
     IntArray(4) { memGetInt(tmp + Int.BYTES * it) }
