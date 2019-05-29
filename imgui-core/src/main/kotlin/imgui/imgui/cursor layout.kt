@@ -2,6 +2,7 @@ package imgui.imgui
 
 import glm_.f
 import glm_.glm
+import glm_.max
 import glm_.vec2.Vec2
 import imgui.Col
 import imgui.ImGui.currentWindow
@@ -164,7 +165,7 @@ interface imgui_cursorLayout {
                         backupCurrentLineTextBaseOffset = dc.currentLineTextBaseOffset
                         backupActiveIdIsAlive = g.activeIdIsAlive
                         backupActiveIdPreviousFrameIsAlive = g.activeIdPreviousFrameIsAlive
-                        advanceCursor = true
+                        emitItem = true
                     })
             dc.groupOffset = dc.cursorPos.x - pos.x - dc.columnsOffset
             dc.indent = dc.groupOffset
@@ -184,8 +185,7 @@ interface imgui_cursorLayout {
 
         val groupData = window.dc.groupStack.last()
 
-        val groupBb = Rect(groupData.backupCursorPos, window.dc.cursorMaxPos)
-        groupBb.max = glm.max(groupBb.min, groupBb.max)
+        val groupBb = Rect(groupData.backupCursorPos, window.dc.cursorMaxPos max groupData.backupCursorPos)
 
         with(window.dc) {
             cursorPos put groupData.backupCursorPos
@@ -198,11 +198,14 @@ interface imgui_cursorLayout {
                 g.logLinePosY = -Float.MAX_VALUE // To enforce Log carriage return
         }
 
-        if (groupData.advanceCursor) {
-            window.dc.currentLineTextBaseOffset = glm.max(window.dc.prevLineTextBaseOffset, groupData.backupCurrentLineTextBaseOffset)      // FIXME: Incorrect, we should grab the base offset from the *first line* of the group but it is hard to obtain now.
-            itemSize(groupBb.size, 0f)
-            itemAdd(groupBb, 0)
+        if (!groupData.emitItem) {
+            window.dc.groupStack.pop()
+            return
         }
+
+        window.dc.currentLineTextBaseOffset = window.dc.prevLineTextBaseOffset max groupData.backupCurrentLineTextBaseOffset      // FIXME: Incorrect, we should grab the base offset from the *first line* of the group but it is hard to obtain now.
+        itemSize(groupBb.size, 0f)
+        itemAdd(groupBb, 0)
 
         /*  If the current ActiveId was declared within the boundary of our group, we copy it to ::lastItemId so ::isItemActive,
             ::isItemDeactivated etc. will be functional on the entire group.

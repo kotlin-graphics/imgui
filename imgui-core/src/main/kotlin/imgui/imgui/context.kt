@@ -76,6 +76,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var frameCountEnded = -1
 
     var frameCountRendered = -1
+
+
+    // Windows state
+
     /** Windows, sorted in display order, back to front */
     val windows = ArrayList<Window>()
     /** Windows, sorted in focus order, back to front */
@@ -94,6 +98,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var hoveredWindow: Window? = null
     /** Will catch mouse inputs (for focus/move only)   */
     var hoveredRootWindow: Window? = null
+    /** Track the window we clicked on (in order to preserve focus). The actually window that is moved is generally MovingWindow->RootWindow. */
+    var movingWindow: Window? = null
+
+
+    // Item/widgets state and tracking information
+
     /** Hovered widget  */
     var hoveredId: ID = 0
 
@@ -107,7 +117,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Active widget   */
     var activeId: ID = 0
 
-    var activeIdPreviousFrame: ID = 0
     /** Active widget has been seen this frame (we can't use a bool as the ActiveId may change within the frame) */
     var activeIdIsAlive: ID = 0
 
@@ -120,10 +129,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdHasBeenPressed = false
     /** Was the value associated to the widget edited over the course of the Active state. */
     var activeIdHasBeenEdited = false
-
-    var activeIdPreviousFrameIsAlive = false
-
-    var activeIdPreviousFrameHasBeenEdited = false
     /** Active widget allows using directional navigation (e.g. can activate a button and move away from it)    */
     var activeIdAllowNavDirFlags = 0
 
@@ -132,19 +137,32 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdClickOffset = Vec2(-1)
 
     var activeIdWindow: Window? = null
-
-    var activeIdPreviousFrameWindow: Window? = null
     /** Activating with mouse or nav (gamepad/keyboard) */
     var activeIdSource = InputSource.None
+
+    var activeIdPreviousFrame: ID = 0
+
+    var activeIdPreviousFrameIsAlive = false
+
+    var activeIdPreviousFrameHasBeenEdited = false
+
+    var activeIdPreviousFrameWindow: Window? = null
     /** Store the last non-zero ActiveId, useful for animation. */
     var lastActiveId: ID = 0
     /** Store the last non-zero ActiveId timer since the beginning of activation, useful for animation. */
     var lastActiveIdTimer = 0f
 
-    var lastValidMousePos = Vec2()
-    /** Track the window we clicked on (in order to preserve focus).
-     *  The actually window that is moved is generally MovingWindow.rootWindow.  */
-    var movingWindow: Window? = null
+
+    // Next window/item data
+
+    /** Storage for SetNextWindow** functions   */
+    val nextWindowData = NextWindowData()
+    /** Storage for SetNextTreeNode** functions */
+    var nextTreeNodeOpenVal = false
+
+    var nextTreeNodeOpenCond = Cond.None
+
+
     /** Stack for PushStyleColor()/PopStyleColor()  */
     var colorModifiers = Stack<ColorMod>()
     /** Stack for PushStyleVar()/PopStyleVar()  */
@@ -156,12 +174,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Which level of BeginPopup() we are in (reset every frame)   */
     val beginPopupStack = Stack<PopupData>()
 
-    /** Storage for SetNextWindow** functions   */
-    val nextWindowData = NextWindowData()
-    /** Storage for SetNextTreeNode** functions */
-    var nextTreeNodeOpenVal = false
 
-    var nextTreeNodeOpenCond = Cond.None
 
     //------------------------------------------------------------------
     // Navigation data (for gamepad/keyboard)
@@ -334,6 +347,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     //------------------------------------------------------------------
     // Widget state
     //------------------------------------------------------------------
+
+    var lastValidMousePos = Vec2()
 
     var inputTextState = TextEditState()
 
