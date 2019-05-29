@@ -208,10 +208,13 @@ interface imgui_cursorLayout {
             ::isItemDeactivated etc. will be functional on the entire group.
             It would be be neater if we replaced window.dc.lastItemId by e.g. 'lastItemIsActive: Boolean',
             but would put a little more burden on individual widgets.
-            (and if you grep for LastItemId you'll notice it is only used in that context.    */
-        if (groupData.backupActiveIdIsAlive != g.activeId && g.activeIdIsAlive == g.activeId && g.activeId != 0) // && g.ActiveIdWindow->RootWindow == window->RootWindow)
+            Also if you grep for LastItemId you'll notice it is only used in that context.
+            (The tests not symmetrical because ActiveIdIsAlive is an ID itself, in order to be able to handle ActiveId being overwritten during the frame.)         */
+        val grouContainsCurrActiveId = groupData.backupActiveIdIsAlive != g.activeId && g.activeIdIsAlive == g.activeId && g.activeId != 0
+        val groupContainsPrevActiveId = !groupData.backupActiveIdPreviousFrameIsAlive && g.activeIdPreviousFrameIsAlive
+        if (grouContainsCurrActiveId)
             window.dc.lastItemId = g.activeId
-        else if (!groupData.backupActiveIdPreviousFrameIsAlive && g.activeIdPreviousFrameIsAlive) // && g.ActiveIdPreviousFrameWindow->RootWindow == window->RootWindow)
+        else if (groupContainsPrevActiveId)
             window.dc.lastItemId = g.activeIdPreviousFrame
         window.dc.lastItemRect put groupBb
         window.dc.groupStack.pop() // TODO last() on top -> pop?
