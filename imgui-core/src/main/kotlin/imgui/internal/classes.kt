@@ -232,7 +232,7 @@ class GroupData {
     var backupCurrentLineTextBaseOffset = 0f
     var backupActiveIdIsAlive = 0
     var backupActiveIdPreviousFrameIsAlive = false
-    var advanceCursor = false
+    var emitItem = false
 }
 
 /** Simple column measurement, currently used for MenuItem() only.. This is very short-sighted/throw-away code and NOT a generic helper. */

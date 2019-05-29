@@ -157,7 +157,7 @@ interface imgui_widgets_menus {
         with(window.dc) {
             // Save horizontal position so next append can reuse it. This is kinda equivalent to a per-layer CursorPos.
             menuBarOffset.x = cursorPos.x - window.menuBarRect().min.x
-            groupStack.last().advanceCursor = false
+            groupStack.last().emitItem = false
             endGroup() // Restore position on layer 0
             layoutType = LayoutType.Vertical
             navLayerCurrent = NavLayer.Main
