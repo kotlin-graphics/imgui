@@ -108,82 +108,27 @@ Dear ImGui allows you create elaborate tools as well as very short-lived ones. O
 
 ### Demo
 
-You should be able to try the examples from `test` (tested on Windows/Mac/Linux) within seconds: clone, sync and run. If you don't, let me know!
+You should be able to try the examples from `test` (tested on Windows/Mac/Linux) within minutes. If you don't, let me know!
 
-Kotlin:
+OpenGL Kotlin:
 
-- [OpenGL3](src/test/kotlin/imgui/opengl3.kt) 
-- [OpenGL2](src/test/kotlin/imgui/opengl2.kt) 
-- [Vulkan](src/test/kotlin/imgui/vulkan.kt) (broken, to fix, but still valuable for the moment)
+- [lwjgl](src/test/kotlin/imgui/gl/test%20lwjgl.kt) 
+- [jogl](src/test/kotlin/imgui/gl/test%20jogl.kt)
 
-- [jogl-GL3](src/test/kotlin/imgui/gl/test%20jogl.kt) (not mantained anymore ufficially but keeping dormant in case something comes up)
+OpenGL Java:
 
-Java:
+- [lwjgl](src/test/java/imgui/gl/Test_lwjgl.java) 
 
-- [OpenGL3](src/test/java/imgui/OpenGL3.java) 
+Vulkan Kotlin:
 
-Note:
-- we tend to avoid nullability, whenever Omar uses `NULL` with the string endings, we passes `-1` instead.
-- `DEBUG = false` (`import static imgui.ImguiKt.setDEBUG;` for Java users)  to turn off `println()` debugs
+- [lwjgl](src/test/kotlin/imgui/vk/test%20lwjgl%20vk.kt) (broken, to fix)
+
 
 You should refer to those also to learn how to use the imgui library.
 
-The demo applications are unfortunately not yet DPI aware so expect some blurriness on a 4K screen. For DPI awareness you can load/reload your font at different scale, and scale your Style with `style.scaleAllSizes()`.
+The demo applications are unfortunately not yet DPI aware so expect some blurriness on a 4K screen. For DPI awareness you can load/reload your font at different scale, and scale your Style with `style.ScaleAllSizes()`.
 
-### Functional Programming / Domain Specific Language
-
-All the functions are ported exactly as the original. Moreover in order to take advantage of Functional Programming 
-this port offers some comfortable constructs, giving the luxury to forget about some annoying and very error prone
-burden code such as the ending `*Pop()`, `*end()` and so on.
-
-These constucts shine especially in Kotlin, where they are also inlined.
- 
-Let's take an original cpp sample and let's see how we can make it nicer:
-```cpp
-    if (ImGui::TreeNode("Querying Status (Active/Focused/Hovered etc.)")) {            
-        ImGui::Checkbox("Hovered/Active tests after Begin() for title bar testing", &test_window);
-        if (test_window) {            
-            ImGui::Begin("Title bar Hovered/Active tests", &test_window);
-            if (ImGui::BeginPopupContextItem()) // <-- This is using IsItemHovered() {                
-                if (ImGui::MenuItem("Close")) { test_window = false; }
-                ImGui::EndPopup();
-            }
-            ImGui::Text("whatever\n");
-            ImGui::End();
-        }
-        ImGui::TreePop();
-    }
-```
-This may become in Kotlin:
-```kotlin
-    treeNode("Querying Status (Active/Focused/Hovered etc.)") {            
-        checkbox("Hovered/Active tests after Begin() for title bar testing", ::test_window)
-        if (test_window)
-            window ("Title bar Hovered/Active tests", ::test_window) {
-                popupContextItem { // <-- This is using IsItemHovered() {                    
-                    menuItem("Close") { test_window = false }
-                }
-                text("whatever\n")
-            }
-    }
-```
-Or in Java:
-```java
-    treeNode("Querying Status (Active/Focused/Hovered etc.)", () -> {            
-        checkbox("Hovered/Active tests after Begin() for title bar testing", test_window)
-        if (test_window[0])
-            window ("Title bar Hovered/Active tests", test_window, () -> {
-                popupContextItem(() -> { // <-- This is using IsItemHovered() {                    
-                    menuItem("Close", () -> test_window = false);
-                });
-                text("whatever\n");
-            });
-    });
-```
-
-The demo mixes some traditional imgui-calls with these DSL calls.
-
-Refer to the corresponding [`dsl`](src/main/kotlin/imgui/dsl.kt) object for Kotlin or [`dsl_`](src/main/java/imgui/dsl_.java) class for Java.
+Ps: `DEBUG = false` to turn off debugs `println()`
 
 ### Native Roadmap
 
