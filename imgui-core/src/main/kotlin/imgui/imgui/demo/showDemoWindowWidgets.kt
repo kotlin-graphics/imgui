@@ -328,10 +328,11 @@ object showDemoWindowWidgets {
     /* Active, Focused, Hovered & Focused Tests */
     var itemType = 1
     var b0 = false
-    val col = Vec4(1f, 0.5, 0f, 1f)
+    val col = floatArrayOf(1f, 0.5f, 0f, 1f)
     val str = CharArray(16)
     var currentItem1 = 1
     var embedAllInsideAChildWindow = false
+    var dummyStr = "This is a dummy field to be able to tab-out of the widgets above.".toCharArray()
     var testWindow = false
 
     operator fun invoke() {
@@ -1239,21 +1240,23 @@ object showDemoWindowWidgets {
             radioButton("Checkbox", ::itemType, 2)
             radioButton("SliderFloat", ::itemType, 3)
             radioButton("InputText", ::itemType, 4)
-            radioButton("ColorEdit4", ::itemType, 5)
-            radioButton("MenuItem", ::itemType, 6)
-            radioButton("TreeNode (w/ double-click)", ::itemType, 7)
-            radioButton("ListBox", ::itemType, 8)
+            radioButton("InputFloat3", ::itemType, 5)
+            radioButton("ColorEdit4", ::itemType, 6)
+            radioButton("MenuItem", ::itemType, 7)
+            radioButton("TreeNode (w/ double-click)", ::itemType, 8)
+            radioButton("ListBox", ::itemType, 9)
             separator()
             val ret = when (itemType) {
                 0 -> false.also { text("ITEM: Text") }   // Testing text items with no identifier/interaction
                 1 -> button("ITEM: Button")   // Testing button
                 2 -> checkbox("ITEM: Checkbox", ::b0)  // Testing checkbox
-                3 -> sliderVec4("ITEM: SliderFloat", col, 0f, 1f)   // Testing basic item
+                3 -> sliderFloat("ITEM: SliderFloat", col, 0, 0f, 1f)   // Testing basic item
                 4 -> inputText("ITEM: InputText", str)  // Testing input text (which handles tabbing)
-                5 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
-                6 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
-                7 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen) // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
-                8 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                5 -> inputFloat3("ITEM: InputFloat3", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
+                6 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
+                7 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
+                8 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen) // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
+                9 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
                 else -> false
             }
             bulletText("Return value = $ret\n" +
@@ -1302,6 +1305,8 @@ object showDemoWindowWidgets {
             endChild()
             if (embedAllInsideAChildWindow)
                 endChild()
+
+            inputText("dummy", dummyStr, Itf.ReadOnly.i)
 
             /*  Calling IsItemHovered() after begin returns the hovered status of the title bar.
                 This is useful in particular if you want to create a context menu (with BeginPopupContextItem)
