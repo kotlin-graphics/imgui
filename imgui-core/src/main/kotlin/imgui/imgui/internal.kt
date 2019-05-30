@@ -579,7 +579,7 @@ interface imgui_internal {
     fun beginPopupEx(id: ID, extraFlags: WindowFlags): Boolean {
 
         if (!isPopupOpen(id)) {
-            g.nextWindowData.clear() // We behave like Begin() and need to consume those values
+            g.nextWindowData.clearFlags() // We behave like Begin() and need to consume those values
             return false
         }
 

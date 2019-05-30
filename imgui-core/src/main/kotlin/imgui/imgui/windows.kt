@@ -86,7 +86,10 @@ interface imgui_windows {
         var windowJustCreated = false
         val window = findWindowByName(name) ?: run {
             // Any condition flag will do since we are creating a new window here.
-            val sizeOnFirstUse = if (g.nextWindowData.sizeCond != Cond.None) Vec2(g.nextWindowData.sizeVal) else Vec2()
+            val sizeOnFirstUse = when {
+                g.nextWindowData.flags has NextWindowDataFlag.HasSize -> Vec2(g.nextWindowData.sizeVal)
+                else -> Vec2()
+            }
             windowJustCreated = true
             createNewWindow(name, sizeOnFirstUse, flags)
         }
@@ -150,7 +153,7 @@ interface imgui_windows {
         var windowPosSetByApi = false
         var windowSizeXsetByApi = false
         var windowSizeYsetByApi = false
-        if (g.nextWindowData.posCond != Cond.None) {
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasPos) {
             windowPosSetByApi = window.setWindowPosAllowFlags has g.nextWindowData.posCond
             if (windowPosSetByApi && g.nextWindowData.posPivotVal.lengthSqr > 0.00001f) {
                 /*  May be processed on the next frame if this is our first frame and we are measuring size
@@ -161,21 +164,21 @@ interface imgui_windows {
             } else
                 window.setPos(g.nextWindowData.posVal, g.nextWindowData.posCond)
         }
-        if (g.nextWindowData.sizeCond != Cond.None) {
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasSize) {
             windowSizeXsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.x > 0f
             windowSizeYsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.y > 0f
             window.setSize(g.nextWindowData.sizeVal, g.nextWindowData.sizeCond)
         }
-        if (g.nextWindowData.contentSizeCond != Cond.None) {
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasContentSize) {
             // Adjust passed "client size" to become a "window size"
             window.sizeContentsExplicit put g.nextWindowData.contentSizeVal
             if (window.sizeContentsExplicit.y != 0f)
                 window.sizeContentsExplicit.y += window.titleBarHeight + window.menuBarHeight
         } else if (firstBeginOfTheFrame)
             window.sizeContentsExplicit put 0f
-        if (g.nextWindowData.collapsedCond != Cond.None)
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasCollapsed)
             window.setCollapsed(g.nextWindowData.collapsedVal, g.nextWindowData.collapsedCond)
-        if (g.nextWindowData.focusCond != Cond.None)
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasFocus)
             window.focus()
         if (window.appearing)
             window.setConditionAllowFlags(Cond.Appearing.i, false)
@@ -569,7 +572,7 @@ interface imgui_windows {
         if (firstBeginOfTheFrame) window.writeAccessed = false
 
         window.beginCount++
-        g.nextWindowData.clear()
+        g.nextWindowData.clearFlags()
 
         if (flags has Wf.ChildWindow) {
 

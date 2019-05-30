@@ -49,8 +49,8 @@ interface imgui_widgets_comboBox {
         var flags = flags_
 
         // Always consume the SetNextWindowSizeConstraint() call in our early return paths
-        val backupNextWindowSizeConstraint = g.nextWindowData.sizeConstraintCond
-        g.nextWindowData.sizeConstraintCond = Cond.None
+        val hasWindowSizeConstraint = g.nextWindowData.flags has NextWindowDataFlag.HasSizeConstraint
+        g.nextWindowData.flags = g.nextWindowData.flags wo NextWindowDataFlag.HasSizeConstraint
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -98,8 +98,8 @@ interface imgui_widgets_comboBox {
 
         if (!popupOpen) return false
 
-        if (backupNextWindowSizeConstraint != Cond.None) {
-            g.nextWindowData.sizeConstraintCond = backupNextWindowSizeConstraint
+        if (hasWindowSizeConstraint) {
+            g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasSizeConstraint
             g.nextWindowData.sizeConstraintRect.min.x = g.nextWindowData.sizeConstraintRect.min.x max w
         } else {
             if (flags hasnt Cf.HeightMask_)
@@ -180,7 +180,7 @@ interface imgui_widgets_comboBox {
 
         /*  The old Combo() API exposed "popup_max_height_in_items". The new more general BeginCombo() API doesn't,
             have/need it, but we emulate it here.         */
-        if (popupMaxHeightInItem != -1 && g.nextWindowData.sizeConstraintCond == Cond.None)
+        if (popupMaxHeightInItem != -1 && g.nextWindowData.flags hasnt NextWindowDataFlag.HasSizeConstraint)
             setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, calcMaxPopupHeightFromItemCount(popupMaxHeightInItem)))
 
         if (!beginCombo(label, previewValue, Cf.None.i)) return false

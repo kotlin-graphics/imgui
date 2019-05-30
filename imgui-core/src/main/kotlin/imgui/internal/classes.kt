@@ -419,15 +419,25 @@ class NavMoveResult {
     }
 }
 
-/** Storage for SetNexWindow** functions    */
+typealias NextWindowDataFlags = Int
+
+enum class NextWindowDataFlag {
+    None, HasPos, HasSize, HasContentSize, HasCollapsed, HasSizeConstraint, HasFocus, HasBgAlpha;
+
+    val i: NextWindowDataFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+}
+
+infix fun Int.has(f: NextWindowDataFlag) = and(f.i) != 0
+infix fun Int.hasnt(f: NextWindowDataFlag) = and(f.i) == 0
+infix fun Int.or(f: NextWindowDataFlag) = or(f.i)
+infix fun Int.wo(f: NextWindowDataFlag) = and(f.i.inv())
+
+/** Storage for SetNextWindow** functions    */
 class NextWindowData {
+    var flags = NextWindowDataFlag.None.i
     var posCond = Cond.None
     var sizeCond = Cond.None
-    var contentSizeCond = Cond.None
     var collapsedCond = Cond.None
-    var sizeConstraintCond = Cond.None
-    var focusCond = Cond.None
-    var bgAlphaCond = Cond.None
     val posVal = Vec2()
     val posPivotVal = Vec2()
     val sizeVal = Vec2()
@@ -441,14 +451,8 @@ class NextWindowData {
     /** This is not exposed publicly, so we don't clear it. */
     var menuBarOffsetMinVal = Vec2()
 
-    fun clear() {
-        posCond = Cond.None
-        sizeCond = Cond.None
-        contentSizeCond = Cond.None
-        collapsedCond = Cond.None
-        sizeConstraintCond = Cond.None
-        focusCond = Cond.None
-        bgAlphaCond = Cond.None
+    fun clearFlags() {
+        flags = NextWindowDataFlag.None.i
     }
 }
 
@@ -870,7 +874,7 @@ class Window(var context: Context, var name: String) {
 
     fun calcSizeAfterConstraint(newSize: Vec2): Vec2 {
 
-        if (g.nextWindowData.sizeConstraintCond != Cond.None) {
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasSizeConstraint) {
             // Using -1,-1 on either X/Y axis to preserve the current size.
             val cr = g.nextWindowData.sizeConstraintRect
             newSize.x = if (cr.min.x >= 0 && cr.max.x >= 0) glm.clamp(newSize.x, cr.min.x, cr.max.x) else sizeFull.x

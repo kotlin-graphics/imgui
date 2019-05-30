@@ -4,7 +4,6 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.beginPopupEx
-import imgui.ImGui.begin_
 import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
@@ -18,6 +17,8 @@ import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
 import imgui.internal.NavMoveFlag
+import imgui.internal.NextWindowDataFlag
+import imgui.internal.hasnt
 import kotlin.reflect.KMutableProperty0
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
@@ -42,7 +43,7 @@ interface imgui_popupsModals {
     /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returns true!    */
     fun beginPopup(strId: String, flags_: WindowFlags = 0): Boolean {
         if (g.openPopupStack.size <= g.beginPopupStack.size) {    // Early out for performance
-            g.nextWindowData.clear()    // We behave like Begin() and need to consume those values
+            g.nextWindowData.clearFlags()    // We behave like Begin() and need to consume those values
             return false
         }
         val flags = flags_ or Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings
@@ -99,12 +100,12 @@ interface imgui_popupsModals {
         val window = g.currentWindow!!
         val id = window.getId(name)
         if (!isPopupOpen(id)) {
-            g.nextWindowData.clear() // We behave like Begin() and need to consume those values
+            g.nextWindowData.clearFlags() // We behave like Begin() and need to consume those values
             return false
         }
         // Center modal windows by default
         // FIXME: Should test for (PosCond & window->SetWindowPosAllowFlags) with the upcoming window.
-        if (g.nextWindowData.posCond == Cond.None)
+        if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasPos)
             setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
 
         val flags = flags_ or Wf.Popup or Wf.Modal or Wf.NoCollapse or Wf.NoSavedSettings
