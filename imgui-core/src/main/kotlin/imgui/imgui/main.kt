@@ -728,16 +728,15 @@ interface imgui_main {
                 // Window background
                 if (flags hasnt Wf.NoBackground) {
                     var bgCol = getWindowBgColorIdxFromFlags(flags).u32
-                    val alpha = when (g.nextWindowData.bgAlphaCond) {
-                        Cond.None -> 1f
-                        else -> g.nextWindowData.bgAlphaVal
+                    val alpha = when {
+                        g.nextWindowData.flags has NextWindowDataFlag.HasBgAlpha -> g.nextWindowData.bgAlphaVal
+                        else -> 1f
                     }
                     if (alpha != 1f)
                         bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
                     window.drawList.addRectFilled(window.pos + Vec2(0f, window.titleBarHeight), window.pos + window.size, bgCol, windowRounding,
                             if (flags has Wf.NoTitleBar) Dcf.All.i else Dcf.Bot.i)
                 }
-                g.nextWindowData.bgAlphaCond = Cond.None
 
                 // Title bar
                 if (flags hasnt Wf.NoTitleBar) {
