@@ -125,8 +125,8 @@ private class ImGuiOpenGL2_Mac {
 //        RemoteryGL.rmt_BeginOpenGLSample("imgui", null)
 
         // Start the Dear ImGui frame
-//        implGl2.newFrame()
-//        implGlfw.newFrame()
+        implGl2_mac.newFrame()
+        implGlfw.newFrame()
 
         // Rendering
 //        ImGui.render()
