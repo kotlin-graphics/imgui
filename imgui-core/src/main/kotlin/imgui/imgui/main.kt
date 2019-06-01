@@ -292,7 +292,8 @@ interface imgui_main {
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos.x == Float.MAX_VALUE || (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f)) {
-            println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
+            if(DEBUG)
+                println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
 //            io.imeSetInputScreenPosFn!!(g.platformImePos.x.i, g.platformImePos.y.i)
             io.imeSetInputScreenPosFn!!(1000, 1000)
             g.platformImeLastPos put g.platformImePos
