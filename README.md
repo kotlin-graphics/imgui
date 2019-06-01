@@ -162,7 +162,21 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.kotlin-graphics:imgui:-SNAPSHOT'
+    /*
+    Each renderer will need different dependencies.
+    Each one needs core.
+    OpenGL needs "gl", "glfw"
+    Vulkan needs "vk", "glfw"
+    JOGL needs "jogl"
+    OpenJFX needs "openjfx"
+    
+    To get all the dependencies in one sweep, create an array of the strings needed and loop through them like below.
+    Any number of renderers can be added to the project like this however, you could all all of them with the array ["gl", "glfw", "core", "vk", "jogl", "openjfx"] 
+    This example gets the OpenGL needed modules.
+     */
+    ["gl", "glfw", "core"].each {
+        implementation "com.github.kotlin-graphics.imgui:imgui-$it:-SNAPSHOT"
+    }
 	
     switch ( OperatingSystem.current() ) {
         case OperatingSystem.WINDOWS:
