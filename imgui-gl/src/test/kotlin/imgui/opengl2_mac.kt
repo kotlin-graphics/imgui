@@ -33,8 +33,8 @@ private class ImGuiOpenGL2_Mac {
     var showDemo = true
     var counter = 0
 
-    lateinit var implGlfw: ImplGlfw
-    lateinit var implGl2: ImplGL2_mac
+    var implGlfw: ImplGlfw
+    var implGl2_mac: ImplGL2_mac
 
 //    val rmt = MemoryUtil.memAllocPointer(1).also { Remotery.rmt_CreateGlobalInstance(it) }
 
@@ -66,9 +66,9 @@ private class ImGuiOpenGL2_Mac {
 //        ImGui.styleColorsClassic()
 
         // Setup Platform/Renderer bindings
-//        implGlfw = ImplGlfw(window, true)
-//        implGl2 = ImplGL2()
-
+        implGlfw = ImplGlfw(window, true)
+        implGl2_mac = ImplGL2_mac()
+//
 //        RemoteryGL.rmt_BindOpenGL()
 
         glMatrixMode(GL_PROJECTION)
@@ -110,9 +110,9 @@ private class ImGuiOpenGL2_Mac {
             Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
         window.loop(::mainLoop)
 
-//        implGl2.shutdown()
-//        implGlfw.shutdown()
-//        ctx.destroy()
+        implGl2_mac.shutdown()
+        implGlfw.shutdown()
+        ctx.destroy()
 
 //        Remotery.rmt_DestroyGlobalInstance(rmt.get(0))
 
@@ -125,8 +125,8 @@ private class ImGuiOpenGL2_Mac {
 //        RemoteryGL.rmt_BeginOpenGLSample("imgui", null)
 
         // Start the Dear ImGui frame
-//        implGl2.newFrame()
-//        implGlfw.newFrame()
+        implGl2_mac.newFrame()
+        implGlfw.newFrame()
 
         // Rendering
 //        ImGui.render()

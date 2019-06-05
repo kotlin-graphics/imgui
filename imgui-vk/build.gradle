@@ -53,7 +53,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 artifacts {
     archives lightJar
     archives sourcesJar
-    archives javadocJar
+//    archives javadocJar
 }
 
 shadowJar {
