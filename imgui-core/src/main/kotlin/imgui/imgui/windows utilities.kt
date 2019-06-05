@@ -95,6 +95,7 @@ interface imgui_windowsUtilities {
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
+            flags = flags or NextWindowDataFlag.HasPos
             posVal put pos
             posPivotVal put pivot
             posCond = cond
@@ -106,6 +107,7 @@ interface imgui_windowsUtilities {
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
+            flags = flags or NextWindowDataFlag.HasSize
             sizeVal put size
             sizeCond = cond
         }
@@ -115,7 +117,7 @@ interface imgui_windowsUtilities {
      *  Sizes will be rounded down. Use callback to apply non-trivial programmatic constraints.   */
     fun setNextWindowSizeConstraints(sizeMin: Vec2, sizeMax: Vec2, customCallback: SizeCallback? = null, customCallbackUserData: Any? = null) {
         with(g.nextWindowData) {
-            sizeConstraintCond = Cond.Always
+            flags = flags or NextWindowDataFlag.HasSizeConstraint
             sizeConstraintRect.min put sizeMin
             sizeConstraintRect.max put sizeMax
             sizeCallback = customCallback
@@ -128,8 +130,8 @@ interface imgui_windowsUtilities {
     fun setNextWindowContentSize(size: Vec2) {
         // In Begin() we will add the size of window decorations (title bar, menu etc.) to that to form a SizeContents value.
         with(g.nextWindowData) {
+            flags = flags or NextWindowDataFlag.HasContentSize
             contentSizeVal put size
-            contentSizeCond = Cond.Always
         }
     }
 
@@ -138,6 +140,7 @@ interface imgui_windowsUtilities {
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
+            flags = flags or NextWindowDataFlag.HasCollapsed
             collapsedVal = collapsed
             collapsedCond = cond
         }
@@ -146,15 +149,16 @@ interface imgui_windowsUtilities {
     /** Set next window to be focused / front-most. call before Begin() */
     fun setNextWindowFocus() {
         // Using a Cond member for consistency (may transition all of them to single flag set for fast Clear() op)
-        g.nextWindowData.focusCond = Cond.Always
+        g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasFocus
     }
 
     /** Set next window background color alpha. helper to easily modify ImGuiCol_WindowBg/ChildBg/PopupBg.
      *  You may also use ImGuiWindowFlags_NoBackground. */
     fun setNextWindowBgAlpha(alpha: Float) {
-        g.nextWindowData.bgAlphaVal = alpha
-        // Using a Cond member for consistency (may transition all of them to single flag set for fast Clear() op)
-        g.nextWindowData.bgAlphaCond = Cond.Always
+        g.nextWindowData.apply {
+            flags = flags or NextWindowDataFlag.HasBgAlpha
+            bgAlphaVal = alpha
+        }
     }
 
     /** (not recommended) set current window position - call within Begin()/End(). prefer using SetNextWindowPos(),
