@@ -19,13 +19,6 @@ dependencies {
     implementation 'com.github.kotlin-graphics.glm:glm:v0.9.9.0-build-13'
     api project(':imgui-core')
 
-    [""].each {
-        String base = "org.lwjgl:lwjgl$it:$lwjgl_version"
-        implementation base
-        testRuntime "$base:natives-$lwjgl_natives"
-        shadow "$base:natives-$lwjgl_natives"
-    }
-
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
