@@ -23,7 +23,7 @@ import java.nio.FloatBuffer
 import kotlin.collections.set
 
 
-class ImplGlfw(
+class ImplGlfw @JvmOverloads constructor(
         val window: GlfwWindow, installCallbacks: Boolean = true,
         /** for vr environment */
         val vrTexSize: Vec2i? = null) {
