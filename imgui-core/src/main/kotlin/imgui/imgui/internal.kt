@@ -3164,7 +3164,7 @@ interface imgui_internal {
                 }
                 /*  If the underlying buffer resize was denied or not carried to the next frame,
                     apply_new_text_length+1 may be >= buf_size.                 */
-                buf.strncpy(applyNewText, applyNewTextLength min buf.size)
+                buf.strncpy(applyNewText, (applyNewTextLength + 1) min buf.size)
                 valueChanged = true
             }
 
