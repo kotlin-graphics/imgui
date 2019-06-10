@@ -16,8 +16,8 @@ ext {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    implementation 'com.github.kotlin-graphics.glm:glm:v0.9.9.0-build-13'
     api project(':imgui-core')
+    implementation 'com.github.kotlin-graphics:uno-sdk:ae2f5a51953f78c71f0a6a052037f6e399e80937'
 
     [""].each {
         String base = "org.lwjgl:lwjgl$it:$lwjgl_version"
