@@ -19,13 +19,12 @@ import javafx.scene.shape.FillRule
 import javafx.scene.shape.StrokeLineCap
 import javafx.scene.shape.StrokeLineJoin
 import javafx.stage.Stage
-import org.lwjgl.system.MemoryUtil.NULL
 
 typealias JFXColor = javafx.scene.paint.Color
 
-const val COLOR_SIZE_MASK = 0xFF
+private const val COLOR_SIZE_MASK = 0xFF
 //-1 is no multiplication (each pixel * 1.0 for each component, so the original)
-const val TEXTURE_COLOR_UNMULTIPLIED = -1
+private const val TEXTURE_COLOR_UNMULTIPLIED = -1
 
 /**
  * Make this too small, and some barycentric items will be drawn that are inefficient to draw.
@@ -44,7 +43,6 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
     private lateinit var charListener: EventHandler<KeyEvent>
 
     private var mousePos = Vec2()
-    private val mouseJustPressed = BooleanArray(5)
     private val mouseJustReleased = BooleanArray(io.mouseDown.size) { false }
 
     private lateinit var r: Robot
@@ -130,7 +128,7 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         io.getClipboardTextFn = {
             Clipboard.getSystemClipboard().getContent(DataFormat.PLAIN_TEXT) as String
         }
-        io.clipboardUserData = NULL
+        io.clipboardUserData = 0L
 
         val (pixels, size) = io.fonts.getTexDataAsAlpha8()
 
