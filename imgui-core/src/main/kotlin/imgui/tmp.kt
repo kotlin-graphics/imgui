@@ -1,5 +1,6 @@
 package imgui
 
+import glm_.BYTES
 import glm_.L
 import glm_.vec2.Vec2
 import kool.*
@@ -7,12 +8,15 @@ import org.lwjgl.system.MemoryUtil
 import java.nio.ByteBuffer
 import java.nio.IntBuffer
 
+private val DRAW_VERT_FLOAT_OFFSET = (DrawVert.size / Float.BYTES)
+private val DRAW_VERT_PER_UV_OFFSET = (DrawVert.ofsUv / Float.BYTES)
+
 fun DrawVert_Buffer(size: Int = 0) = DrawVert_Buffer(ByteBuffer(size))
 inline class DrawVert_Buffer(val data: ByteBuffer) {
 
     operator fun get(index: Int) = DrawVert().apply {
-        pos.put(data, index * DrawVert.size)
-        uv.put(data, index * DrawVert.size + DrawVert.ofsUv)
+        pos.put(data.asFloatBuffer(), index * DRAW_VERT_FLOAT_OFFSET)
+        uv.put(data.asFloatBuffer(), index * DRAW_VERT_FLOAT_OFFSET + DRAW_VERT_PER_UV_OFFSET)
         col = data.getInt(index * DrawVert.size + DrawVert.ofsCol)
     }
 
