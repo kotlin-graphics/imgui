@@ -21,8 +21,7 @@ dependencies {
 
     [""].each {
         String base = "org.lwjgl:lwjgl$it:$lwjgl_version"
-        implementation base
-        testRuntime "$base:natives-$lwjgl_natives"
+        runtime "$base:natives-$lwjgl_natives"
         shadow "$base:natives-$lwjgl_natives"
     }
 
