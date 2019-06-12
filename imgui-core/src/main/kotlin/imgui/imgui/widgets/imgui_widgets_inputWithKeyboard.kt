@@ -45,8 +45,8 @@ import imgui.internal.ButtonFlag as Bf
 interface imgui_widgets_inputWithKeyboard {
 
 
-    fun inputText(label: String, buf: CharArray, flags: InputTextFlags = 0
-                  , callback: InputTextCallback? = null, userData: Any? = null): Boolean {
+    fun inputText(label: String, buf: CharArray, flags: InputTextFlags = 0,
+                  callback: InputTextCallback? = null, userData: Any? = null): Boolean {
 
         // TODO, enable callback and userData, related: https://github.com/kotlin-graphics/imgui/commit/082d94e359b2c262cd67c429bfff7fe3900d74cc
         assert(flags hasnt Itf.Multiline) { "call InputTextMultiline()" }

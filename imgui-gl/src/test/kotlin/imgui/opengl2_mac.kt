@@ -6,6 +6,7 @@ package imgui
 import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
+import gln.glViewport
 import imgui.imgui.Context
 import imgui.impl.ImplGL2_mac
 import imgui.impl.ImplGlfw
@@ -129,8 +130,8 @@ private class ImGuiOpenGL2_Mac {
         implGlfw.newFrame()
 
         // Rendering
-//        ImGui.render()
-//        glViewport(window.framebufferSize)
+        ImGui.render()
+        glViewport(window.framebufferSize)
         glClearColor(clearColor)
         glClear(GL_COLOR_BUFFER_BIT)
 
