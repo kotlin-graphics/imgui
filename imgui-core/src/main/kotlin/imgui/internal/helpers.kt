@@ -408,8 +408,6 @@ fun linearSweep(current: Float, target: Float, speed: Float) = when {
 
 
 // JVM IMGUI
-infix fun CharArray.strncpy(src: CharArray) = strncpy(src, size)
-
 fun CharArray.strncpy(src: CharArray, count: Int) {
     if (count < 1) return
     for (i in 0 until count) {
