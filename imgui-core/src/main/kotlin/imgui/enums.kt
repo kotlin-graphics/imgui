@@ -951,7 +951,7 @@ enum class MouseCursor {
     }
 }
 
-/** Enumateration for ImGui::SetWindow***(), SetNextWindow***(), SetNextTreeNode***() functions
+/** Enumateration for ImGui::SetWindow***(), SetNextWindow***(), SetNextItem***() functions
  *  Represent a condition.
  *  Important: Treat as a regular enum! Do NOT combine multiple values using binary operators!
  *  All the functions above treat 0 as a shortcut to Cond.Always. */

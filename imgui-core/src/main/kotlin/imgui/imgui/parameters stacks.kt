@@ -15,8 +15,8 @@ import imgui.ImGui.pushItemFlag
 import imgui.ImGui.style
 import imgui.ImGui.u32
 import imgui.ImGui.vec4
-import imgui.internal.ColorMod
-import imgui.internal.StyleMod
+import imgui.internal.*
+import imgui.wo
 import imgui.internal.ItemFlag as If
 
 /** Parameters stacks */
@@ -250,21 +250,17 @@ interface imgui_parametersStacks {
 
     var nextItemWidth: Float
         /** Calculate default item width given value passed to PushItemWidth() or SetNextItemWidth(),
-         *  Then consume the
+         *  Then _consume_ the SetNextItemWidth() data.
          *
          *
          *  ~ GetNextItemWidth   */
         get() {
             val window = g.currentWindow!!
-            var w = 0f
-            when {
-                window.dc.nextItemWidth != Float.MAX_VALUE -> {
-                    w = window.dc.nextItemWidth
-                    window.dc.nextItemWidth = Float.MAX_VALUE
+            var w = when {
+                g.nextItemData.flags has NextItemDataFlag.HasWidth -> g.nextItemData.width.also {
+                    g.nextItemData.flags = g.nextItemData.flags wo NextItemDataFlag.HasWidth
                 }
-                else -> {
-                    w = window.dc.itemWidth
-                }
+                else -> window.dc.itemWidth
             }
             if (w < 0f) {
                 val regionMaxX = contentRegionMaxScreen.x
@@ -278,16 +274,16 @@ interface imgui_parametersStacks {
          *
          *  ~ SetNextItemWidth*/
         set(value) {
-            currentWindow.dc.nextItemWidth = value
+            g.nextItemData.flags = g.nextItemData.flags or NextItemDataFlag.HasWidth
+            g.nextItemData.width = value
         }
 
     /** Calculate item width *without* popping/consuming NextItemWidth if it was set.
     // (rarely used, which is why we avoid calling this from GetNextItemWidth() and instead do a backup/restore here) */
     fun calcItemWidth(): Float {
-        val window = g.currentWindow!!
-        val backupNextItemWidth = window.dc.nextItemWidth
+        val backupFlags = g.nextItemData.flags
         return nextItemWidth.also {
-            window.dc.nextItemWidth = backupNextItemWidth
+            g.nextItemData.flags = backupFlags
         }
     }
 

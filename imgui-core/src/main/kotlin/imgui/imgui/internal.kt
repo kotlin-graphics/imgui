@@ -288,6 +288,7 @@ interface imgui_internal {
             lastItemRect = bb
             lastItemStatusFlags = ItemStatusFlag.None.i
         }
+        g.nextItemData.flags = NextItemDataFlag.None.i
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0)
             ImGuiTestEngineHook_ItemAdd(navBbArg ?: bb, id)
@@ -2398,31 +2399,30 @@ interface imgui_internal {
         return isOpen
     }
 
-    /** Consume previous SetNextTreeNodeOpened() data, if any. May return true when logging */
+    /** Consume previous SetNextItemOpen() data, if any. May return true when logging */
     fun treeNodeBehaviorIsOpen(id: ID, flags: TreeNodeFlags = 0): Boolean {
 
         if (flags has Tnf.Leaf) return true
 
-        // We only write to the tree storage if the user clicks (or explicitly use SetNextTreeNode*** functions)
+        // We only write to the tree storage if the user clicks (or explicitly use the SetNextItemOpen function)
         val window = g.currentWindow!!
         val storage = window.dc.stateStorage
 
         var isOpen: Boolean
-        if (g.nextTreeNodeOpenCond != Cond.None) {
-            if (g.nextTreeNodeOpenCond has Cond.Always) {
-                isOpen = g.nextTreeNodeOpenVal
+        if (g.nextItemData.flags has NextItemDataFlag.HasOpen) {
+            if (g.nextItemData.openCond has Cond.Always) {
+                isOpen = g.nextItemData.openVal
                 storage[id] = isOpen
             } else {
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
                 val storedValue = storage.int(id, -1)
                 if (storedValue == -1) {
-                    isOpen = g.nextTreeNodeOpenVal
+                    isOpen = g.nextItemData.openVal
                     storage[id] = isOpen
                 } else
                     isOpen = storedValue != 0
             }
-            g.nextTreeNodeOpenCond = Cond.None
         } else
             isOpen = storage.int(id, if (flags has Tnf.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
