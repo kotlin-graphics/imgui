@@ -1,26 +1,13 @@
 package imgui.imgui
 
 import gli_.hasnt
-import glm_.f
-import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.beginChild
 import imgui.ImGui.currentWindowRead
-import imgui.ImGui.endChild
-import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.isMouseClicked
-import imgui.ImGui.popStyleColor
-import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushStyleColor
-import imgui.ImGui.pushStyleVar
-import imgui.ImGui.style
 import imgui.internal.*
-import uno.kotlin.getValue
-import uno.kotlin.setValue
-import kotlin.reflect.KMutableProperty0
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
@@ -108,7 +95,7 @@ interface imgui_itemWidgetsUtilities {
      *  Useful for Undo/Redo patterns with widgets that requires continuous editing.
      *  Note that you may get false positives (some widgets such as Combo()/ListBox()/Selectable() will return true even when clicking an already selected item). */
     val isItemDeactivatedAfterEdit: Boolean
-        get() = isItemDeactivated && (g.activeIdPreviousFrameHasBeenEdited || (g.activeId == 0 && g.activeIdHasBeenEdited))
+        get() = isItemDeactivated && (g.activeIdPreviousFrameHasBeenEdited || (g.activeId == 0 && g.activeIdHasBeenEditedBefore))
 
     /** is any item hovered? */
     val isAnyItemHovered: Boolean
