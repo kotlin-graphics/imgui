@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 
-import static org.lwjgl.bgfx.BGFX.*;
 import static glm_.detail.SetupKt.setGLM_DEPTH_CLIP_SPACE;
+import static org.lwjgl.bgfx.BGFX.*;
 import static org.lwjgl.system.APIUtil.apiLog;
 import static org.lwjgl.system.MemoryUtil.*;
 
