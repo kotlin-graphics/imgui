@@ -157,10 +157,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Storage for SetNextWindow** functions   */
     val nextWindowData = NextWindowData()
-    /** Storage for SetNextTreeNode** functions */
-    var nextTreeNodeOpenVal = false
-
-    var nextTreeNodeOpenCond = Cond.None
+    /** Storage for SetNextItem** functions */
+    var nextItemData = NextItemData()
 
 
     /** Stack for PushStyleColor()/PopStyleColor()  */

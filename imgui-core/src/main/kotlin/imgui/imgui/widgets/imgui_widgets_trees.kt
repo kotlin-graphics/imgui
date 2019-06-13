@@ -16,7 +16,9 @@ import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.imgui.g
+import imgui.internal.NextItemDataFlag
 import imgui.internal.itemHoveredDataBackup
+import imgui.internal.or
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
@@ -113,13 +115,6 @@ interface imgui_widgets_trees {
     val treeNodeToLabelSpacing: Float
         get() = g.fontSize + style.framePadding.x * 2f
 
-    /** set next TreeNode/CollapsingHeader open state.  */
-    fun setNextTreeNodeOpen(isOpen: Boolean, cond: Cond = Cond.Always) {
-        if (g.currentWindow!!.skipItems) return
-        g.nextTreeNodeOpenVal = isOpen
-        g.nextTreeNodeOpenCond = cond
-    }
-
     /** CollapsingHeader returns true when opened but do not indent nor push into the ID stack (because of the
      *  ImGuiTreeNodeFlags_NoTreePushOnOpen flag).
      *  This is basically the same as calling
@@ -156,5 +151,15 @@ interface imgui_widgets_trees {
             }
         }
         return isOpen
+    }
+
+    /** set next TreeNode/CollapsingHeader open state.  */
+    fun setNextItemOpen(isOpen: Boolean, cond: Cond = Cond.Always) {
+        if (g.currentWindow!!.skipItems) return
+        g.nextItemData.apply {
+            flags = flags or NextItemDataFlag.HasOpen
+            openVal = isOpen
+            openCond = cond.takeUnless { it == Cond.None } ?: Cond.Always
+        }
     }
 }

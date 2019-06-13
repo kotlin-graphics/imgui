@@ -103,6 +103,7 @@ import imgui.ImGui.separator
 import imgui.ImGui.setColorEditOptions
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setItemDefaultFocus
+import imgui.ImGui.setNextItemOpen
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderAngle
 import imgui.ImGui.sliderFloat
@@ -452,10 +453,17 @@ object showDemoWindowWidgets {
 
         treeNode("Trees") {
             treeNode("Basic trees") {
-                for (i in 0..4) treeNode(i, "Child $i") {
-                    text("blah blah")
-                    sameLine()
-                    smallButton("print") { println("Child $i pressed") }
+                for (i in 0..4) {
+                    // Use SetNextItemOpen() so set the default state of a node to be open.
+                    // We could also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
+                    if (i == 0)
+                        setNextItemOpen(true, Cond.Once)
+
+                    treeNode(i, "Child $i") {
+                        text("blah blah")
+                        sameLine()
+                        smallButton("button") { }
+                    }
                 }
             }
 

@@ -456,6 +456,31 @@ class NextWindowData {
     }
 }
 
+typealias NextItemDataFlags = Int
+
+enum class NextItemDataFlag(val i: NextItemDataFlags) {
+    None(0),
+    HasWidth(1 shl 0),
+    HasOpen(1 shl 1)
+}
+
+infix fun Int.has(f: NextItemDataFlag) = and(f.i) != 0
+infix fun Int.or(f: NextItemDataFlag) = or(f.i)
+infix fun Int.wo(f: NextItemDataFlag) = and(f.i.inv())
+
+class NextItemData {
+    var flags: NextItemDataFlags = 0
+    /** Set by SetNextItemWidth(). */
+    var width = 0f
+    /** Set by SetNextItemOpen() function. */
+    var openVal = false
+    var openCond = Cond.None
+
+    fun clearFlags() {
+        flags = NextItemDataFlag.None.i
+    }
+}
+
 class TabBarSortItem(var index: Int, var width: Float)
 
 class TabBarRef {
@@ -545,8 +570,6 @@ class WindowTempData {
     var itemFlags: ItemFlags = 0
     /** == ItemWidthStack.back(). 0.0: default, >0.0: width in pixels, <0.0: align xx pixels to the right of window */
     var itemWidth = 0f
-
-    var nextItemWidth = Float.MAX_VALUE
     /** == TextWrapPosStack.back() [empty == -1.0f] */
     var textWrapPos = -1f
 
