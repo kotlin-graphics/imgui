@@ -11,6 +11,7 @@ import glm_.vec4.Vec4i
 import imgui.*
 import imgui.ImGui.beginGroup
 import imgui.ImGui.buttonEx
+import imgui.ImGui.calcItemWidth
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dataTypeApplyOp
 import imgui.ImGui.dataTypeApplyOpFromText
@@ -20,12 +21,12 @@ import imgui.ImGui.format
 import imgui.ImGui.frameHeight
 import imgui.ImGui.inputTextEx
 import imgui.ImGui.io
-import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
+import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.style
 import imgui.ImGui.textEx
 import imgui.imgui.Context.Companion._fa
@@ -168,7 +169,7 @@ interface imgui_widgets_inputWithKeyboard {
 
             beginGroup() // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
             pushId(label)
-            nextItemWidth = 1f max (nextItemWidth - (buttonSize + style.itemInnerSpacing.x) * 2)
+            setNextItemWidth(1f max (calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
             if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
                 valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialTextA, dataType, dataPtr, format)
 
@@ -210,7 +211,7 @@ interface imgui_widgets_inputWithKeyboard {
         var valueChanged = false
         beginGroup()
         pushId(label)
-        pushMultiItemsWidths(components, nextItemWidth)
+        pushMultiItemsWidths(components, calcItemWidth())
         for (i in 0 until components) {
             pushId(i)
             valueChanged = when (dataType) {

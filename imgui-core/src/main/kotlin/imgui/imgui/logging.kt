@@ -3,12 +3,12 @@ package imgui.imgui
 import imgui.ImGui.button
 import imgui.ImGui.clipboardText
 import imgui.ImGui.logBegin
-import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.popId
 import imgui.ImGui.pushAllowKeyboardFocus
 import imgui.ImGui.pushId
 import imgui.ImGui.sameLine
+import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.sliderInt
 import imgui.internal.LogType
 import java.io.File
@@ -78,7 +78,7 @@ interface imgui_logging {
         val logToFile = button("Log To File"); sameLine()
         val logToClipboard = button("Log To Clipboard"); sameLine()
         pushAllowKeyboardFocus(false)
-        nextItemWidth = 80f
+        setNextItemWidth(80f)
         sliderInt("Default Depth", g::logDepthToExpandDefault, 0, 9)
         popAllowKeyboardFocus()
         popId()

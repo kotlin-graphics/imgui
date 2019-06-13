@@ -48,7 +48,6 @@ import imgui.ImGui.listBox
 import imgui.ImGui.listBoxFooter
 import imgui.ImGui.listBoxHeader
 import imgui.ImGui.nextColumn
-import imgui.ImGui.nextItemWidth
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
@@ -65,6 +64,7 @@ import imgui.ImGui.scrollX
 import imgui.ImGui.scrollY
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.setTooltip
@@ -83,8 +83,8 @@ import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowWidth
 import imgui.dsl.child
-import imgui.dsl.treeNode
 import imgui.dsl.group
+import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
@@ -228,7 +228,7 @@ object showDemoWindowLayout {
 
             text("SetNextItemWidth/PushItemWidth(GetContentRegionAvail().x * 0.5f)")
             sameLine(); helpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
-            nextItemWidth = contentRegionAvail.x * 0.5f
+            setNextItemWidth(contentRegionAvail.x * 0.5f)
             dragFloat("float##3", ::f)
 
             text("PushItemWidth(-100)")

@@ -4,11 +4,11 @@ import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushStyleColor
@@ -94,7 +94,7 @@ interface imgui_widgets_text {
 
         val window = currentWindow
         if (window.skipItems) return
-        val w = nextItemWidth
+        val w = calcItemWidth()
 
         val labelSize = calcTextSize(label, -1, true)
         val valueBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2))

@@ -10,7 +10,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.cursorPosY
 import imgui.ImGui.inputText
-import imgui.ImGui.nextItemWidth
+import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.style
 import imgui.internal.TabBar
 import imgui.internal.strlen
@@ -52,7 +52,7 @@ class TextFilter(defaultFilter: String? = "") {
     /** Helper calling InputText+Build   */
     fun draw(label: String = "Filter (inc,-exc)", width: Float): Boolean {
         if (width != 0f)
-            nextItemWidth = width
+            setNextItemWidth(width)
         val valueChanged = inputText(label, inputBuf)
         if (valueChanged)
             build()

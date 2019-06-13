@@ -30,7 +30,6 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
-import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popId
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushId
@@ -38,6 +37,7 @@ import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.smallButton
 import imgui.ImGui.style
@@ -241,7 +241,7 @@ interface imgui_demoDebugInformations {
             checkbox("Show windows begin order", ::showWindowsBeginOrder)
             checkbox("Show windows rectangles", ::showWindowsRects)
             sameLine()
-            nextItemWidth = fontSize * 12
+            setNextItemWidth(fontSize * 12)
             showWindowsRects = showWindowsRects || combo("##rects_type", ::showWindowsRectTypeInt, "OuterRect\u0000OuterRectClipped\u0000InnerMainRect\u0000InnerClipRect\u0000ContentsRegionRect\u0000")
             checkbox("Show clipping rectangle when hovering ImDrawCmd node", ::showDrawcmdClipRects)
             treePop()
