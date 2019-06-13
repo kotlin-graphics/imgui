@@ -236,9 +236,12 @@ interface imgui_parametersStacks {
      *  (so -1.0f always align width to the right side). 0.0f = default to ~2/3 of windows width,     */
     fun pushItemWidth(itemWidth: Int) = pushItemWidth(itemWidth.f)
 
-    fun pushItemWidth(itemWidth: Float) = with(currentWindow) {
-        dc.itemWidth = if (itemWidth == 0f) itemWidthDefault else itemWidth
-        dc.itemWidthStack.push(dc.itemWidth)
+    fun pushItemWidth(itemWidth: Float) {
+        currentWindow.apply {
+            dc.itemWidth = if (itemWidth == 0f) itemWidthDefault else itemWidth
+            dc.itemWidthStack.push(dc.itemWidth)
+        }
+        g.nextItemData.flags = g.nextItemData.flags wo NextItemDataFlag.HasWidth
     }
 
     fun popItemWidth() {
@@ -248,43 +251,29 @@ interface imgui_parametersStacks {
         }
     }
 
-    var nextItemWidth: Float
-        /** Calculate default item width given value passed to PushItemWidth() or SetNextItemWidth(),
-         *  Then _consume_ the SetNextItemWidth() data.
-         *
-         *
-         *  ~ GetNextItemWidth   */
-        get() {
-            val window = g.currentWindow!!
-            var w = when {
-                g.nextItemData.flags has NextItemDataFlag.HasWidth -> g.nextItemData.width.also {
-                    g.nextItemData.flags = g.nextItemData.flags wo NextItemDataFlag.HasWidth
-                }
-                else -> window.dc.itemWidth
-            }
-            if (w < 0f) {
-                val regionMaxX = contentRegionMaxScreen.x
-                w = 1f max (regionMaxX - window.dc.cursorPos.x + w)
-            }
-            return w.i.f
-        }
-        /** set width of the _next_ common large "item+label" widget. >0.0f: width in pixels, <0.0f align xx pixels to the right of window
-         *  (so -1.0f always align width to the right side)
-         *
-         *
-         *  ~ SetNextItemWidth*/
-        set(value) {
-            g.nextItemData.flags = g.nextItemData.flags or NextItemDataFlag.HasWidth
-            g.nextItemData.width = value
-        }
-
-    /** Calculate item width *without* popping/consuming NextItemWidth if it was set.
-    // (rarely used, which is why we avoid calling this from GetNextItemWidth() and instead do a backup/restore here) */
+    /** Calculate default item width given value passed to PushItemWidth() or SetNextItemWidth().
+     *  The SetNextItemWidth() data is generally cleared/consumed by ItemAdd() or NextItemData.ClearFlags()
+     *
+     *
+     *  ~ GetNextItemWidth   */
     fun calcItemWidth(): Float {
-        val backupFlags = g.nextItemData.flags
-        return nextItemWidth.also {
-            g.nextItemData.flags = backupFlags
+        val window = g.currentWindow!!
+        var w = when {
+            g.nextItemData.flags has NextItemDataFlag.HasWidth -> g.nextItemData.width
+            else -> window.dc.itemWidth
         }
+        if (w < 0f) {
+            val regionMaxX = contentRegionMaxScreen.x
+            w = 1f max (regionMaxX - window.dc.cursorPos.x + w)
+        }
+        return w.i.f
+    }
+
+    /** set width of the _next_ common large "item+label" widget. >0.0f: width in pixels, <0.0f align xx pixels to the right of window
+     *  (so -1.0f always align width to the right side) */
+    fun setNextItemWidth(itemWidth: Float) {
+        g.nextItemData.flags = g.nextItemData.flags or NextItemDataFlag.HasWidth
+        g.nextItemData.width = itemWidth
     }
 
     /** word-wrapping for Text*() commands. < 0.0f: no wrapping; 0.0f: wrap to end of window (or column);

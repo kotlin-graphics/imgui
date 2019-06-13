@@ -10,6 +10,7 @@ import glm_.vec4.Vec4
 import glm_.vec4.Vec4i
 import imgui.*
 import imgui.ImGui.beginGroup
+import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dragBehavior
@@ -23,7 +24,6 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.nextItemWidth
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart
 import imgui.ImGui.popId
@@ -103,7 +103,7 @@ interface imgui_widgets_drags {
 
         pushId(label)
         beginGroup()
-        pushMultiItemsWidths(2, nextItemWidth)
+        pushMultiItemsWidths(2, calcItemWidth())
 
         var min = if (vMin >= vMax) -Float.MAX_VALUE else vMin
         var max = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
@@ -162,7 +162,7 @@ interface imgui_widgets_drags {
 
         pushId(label)
         beginGroup()
-        pushMultiItemsWidths(2, nextItemWidth)
+        pushMultiItemsWidths(2, calcItemWidth())
 
         var min = if (vMin >= vMax) Int.MIN_VALUE else vMin
         var max = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
@@ -208,8 +208,7 @@ interface imgui_widgets_drags {
             assert(vMin != null && vMax != null) { "When using a power curve the drag needs to have known bounds" }
 
         val id = window.getId(label)
-        val w = nextItemWidth
-
+        val w = calcItemWidth()
         val labelSize = calcTextSize(label, -1, true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
@@ -280,7 +279,7 @@ interface imgui_widgets_drags {
         var valueChanged = false
         beginGroup()
         pushId(label)
-        pushMultiItemsWidths(components, nextItemWidth)
+        pushMultiItemsWidths(components, calcItemWidth())
         for (i in 0 until components) {
             pushId(i)
             when (dataType) {

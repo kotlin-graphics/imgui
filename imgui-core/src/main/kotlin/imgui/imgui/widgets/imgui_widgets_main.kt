@@ -11,6 +11,7 @@ import imgui.ImGui.arrowButtonEx
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemSize
+import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.frameHeight
@@ -19,7 +20,6 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.nextItemWidth
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.renderBullet
@@ -295,7 +295,7 @@ interface imgui_widgets_main {
         if (window.skipItems) return
 
         val pos = Vec2(window.dc.cursorPos)
-        val size = calcItemSize(sizeArg, nextItemWidth, g.fontSize + style.framePadding.y * 2f)
+        val size = calcItemSize(sizeArg, calcItemWidth(), g.fontSize + style.framePadding.y * 2f)
         val bb = Rect(pos, pos + size)
         itemSize(size, style.framePadding.y)
         if (!itemAdd(bb, 0)) return

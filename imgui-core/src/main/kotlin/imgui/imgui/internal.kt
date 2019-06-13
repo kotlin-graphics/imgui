@@ -14,6 +14,7 @@ import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginPopup
 import imgui.ImGui.button
+import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.clipboardText
 import imgui.ImGui.colorButton
@@ -35,7 +36,6 @@ import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.logText
-import imgui.ImGui.nextItemWidth
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
@@ -376,7 +376,7 @@ interface imgui_internal {
     /** [Internal] Calculate full item size given user provided 'size' parameter and default width/height. Default width is often == CalcItemWidth().
      *  Those two functions CalcItemWidth vs CalcItemSize are awkwardly named because they are not fully symmetrical.
      *  Note that only CalcItemWidth() is publicly exposed.
-     *  The 4.0f here may be changed to match GetNextItemWidth() and/or BeginChild() (right now we have a mismatch which is harmless but undesirable) */
+     *  The 4.0f here may be changed to match CalcItemWidth() and/or BeginChild() (right now we have a mismatch which is harmless but undesirable) */
     fun calcItemSize(size: Vec2, defaultW: Float, defaultH: Float): Vec2 {
         val window = g.currentWindow!!
 
@@ -418,6 +418,7 @@ interface imgui_internal {
         for (i in 0 until components - 1)
             window.dc.itemWidthStack.push(wItemOne)
         window.dc.itemWidth = window.dc.itemWidthStack.last()
+        g.nextItemData.flags = g.nextItemData.flags wo NextItemDataFlag.HasWidth
     }
 
     /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets
@@ -1806,7 +1807,7 @@ interface imgui_internal {
                 else -> 0
             }
         }
-        scrollbarEx(bb, id, axis, if(axis == Axis.X) window.scroll::x else window.scroll::y, window.sizeFull[axis.i] - otherScrollbarSize, window.sizeContents[axis.i], roundingCorners)
+        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, window.sizeFull[axis.i] - otherScrollbarSize, window.sizeContents[axis.i], roundingCorners)
     }
 
     /** Vertical/Horizontal scrollbar
@@ -2707,7 +2708,7 @@ interface imgui_internal {
             beginGroup()
         val id = window.getId(label)
         val labelSize = calcTextSize(label, -1, true)
-        val size = calcItemSize(sizeArg, nextItemWidth,
+        val size = calcItemSize(sizeArg, calcItemWidth(),
                 // Arbitrary default of 8 lines high for multi-line
                 (if (isMultiline) textLineHeight * 8f else labelSize.y) + style.framePadding.y * 2f)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
@@ -3562,7 +3563,7 @@ interface imgui_internal {
         val valuesCount = data.count()
 
         val labelSize = calcTextSize(label, -1, true)
-        if (frameSize.x == 0f) frameSize.x = nextItemWidth
+        if (frameSize.x == 0f) frameSize.x = calcItemWidth()
         if (frameSize.y == 0f) frameSize.y = labelSize.y + style.framePadding.y * 2
 
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
