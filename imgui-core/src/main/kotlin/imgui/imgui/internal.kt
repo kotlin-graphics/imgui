@@ -147,8 +147,8 @@ interface imgui_internal {
         g.activeIdIsJustActivated = g.activeId != id
         if (g.activeIdIsJustActivated) {
             g.activeIdTimer = 0f
-            g.activeIdHasBeenPressed = false
-            g.activeIdHasBeenEdited = false
+            g.activeIdHasBeenPressedBefore = false
+            g.activeIdHasBeenEditedBefore = false
             if (id != 0) {
                 g.lastActiveId = id
                 g.lastActiveIdTimer = 0f
@@ -217,7 +217,7 @@ interface imgui_internal {
             but still need need to fill the data.         */
         assert(g.activeId == id || g.activeId == 0 || g.dragDropActive)
         //IM_ASSERT(g.CurrentWindow->DC.LastItemId == id)
-        g.activeIdHasBeenEdited = true
+        g.activeIdHasBeenEditedBefore = true
         g.currentWindow!!.dc.apply { lastItemStatusFlags = lastItemStatusFlags or ItemStatusFlag.Edited }
     }
 
@@ -237,8 +237,8 @@ interface imgui_internal {
         if (window.skipItems) return
 
         // Always align ourselves on pixel boundaries
-        val lineHeight = glm.max(window.dc.currentLineSize.y, size.y)
-        val textBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, textOffsetY)
+        val lineHeight = glm.max(window.dc.currLineSize.y, size.y)
+        val textBaseOffset = glm.max(window.dc.currLineTextBaseOffset, textOffsetY)
         window.dc.apply {
             //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
             cursorPosPrevLine.put(cursorPos.x + size.x, cursorPos.y)
@@ -251,8 +251,8 @@ interface imgui_internal {
 
             prevLineSize.y = lineHeight
             prevLineTextBaseOffset = textBaseOffset
-            currentLineTextBaseOffset = 0f
-            currentLineSize.y = 0f
+            currLineTextBaseOffset = 0f
+            currLineSize.y = 0f
 
             // Horizontal layout mode
             if (layoutType == Lt.Horizontal) sameLine()
@@ -1585,7 +1585,7 @@ interface imgui_internal {
         val window = currentWindow
         if (window.skipItems) return
 
-        val textPos = Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + window.dc.currentLineTextBaseOffset)
+        val textPos = Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
         val wrapPosX = window.dc.textWrapPos
         val wrapEnabled = wrapPosX >= 0f
         if (textEnd > 2000 && !wrapEnabled) {
@@ -1675,8 +1675,8 @@ interface imgui_internal {
         val pos = Vec2(window.dc.cursorPos)
         /*  Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky,
             since it shouldn't be a flag)         */
-        if (flags_ has Bf.AlignTextBaseLine && style.framePadding.y < window.dc.currentLineTextBaseOffset)
-            pos.y += window.dc.currentLineTextBaseOffset - style.framePadding.y
+        if (flags_ has Bf.AlignTextBaseLine && style.framePadding.y < window.dc.currLineTextBaseOffset)
+            pos.y += window.dc.currLineTextBaseOffset - style.framePadding.y
         val size = calcItemSize(sizeArg, labelSize.x + style.framePadding.x * 2f, labelSize.y + style.framePadding.y * 2f)
 
         val bb = Rect(pos, pos + size)
@@ -2090,7 +2090,7 @@ interface imgui_internal {
         var held = false
         if (g.activeId == id) {
             if (pressed)
-                g.activeIdHasBeenPressed = true
+                g.activeIdHasBeenPressedBefore = true
             if (g.activeIdSource == InputSource.Mouse) {
                 if (g.activeIdIsJustActivated)
                     g.activeIdClickOffset = io.mousePos - bb.min
@@ -2271,8 +2271,8 @@ interface imgui_internal {
         val labelSize = calcTextSize(label, labelEnd, false)
 
         // We vertically grow up to current line height up the typical widget height.
-        val textBaseOffsetY = glm.max(padding.y, window.dc.currentLineTextBaseOffset) // Latch before ItemSize changes it
-        val frameHeight = glm.max(glm.min(window.dc.currentLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
+        val textBaseOffsetY = glm.max(padding.y, window.dc.currLineTextBaseOffset) // Latch before ItemSize changes it
+        val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
         val frameBb = Rect(window.dc.cursorPos, Vec2(contentRegionMaxScreen.x, window.dc.cursorPos.y + frameHeight))
         if (displayFrame) {
             // Framed header expand a little outside the default padding

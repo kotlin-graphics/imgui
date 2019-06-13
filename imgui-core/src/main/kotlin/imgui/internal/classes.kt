@@ -228,8 +228,8 @@ class GroupData {
     var backupCursorMaxPos = Vec2()
     var backupIndent = 0f
     var backupGroupOffset = 0f
-    var backupCurrentLineSize = Vec2()
-    var backupCurrentLineTextBaseOffset = 0f
+    var backupCurrLineSize = Vec2()
+    var backupCurrLineTextBaseOffset = 0f
     var backupActiveIdIsAlive = 0
     var backupActiveIdPreviousFrameIsAlive = false
     var emitItem = false
@@ -448,7 +448,7 @@ class NextWindowData {
     var sizeCallback: SizeCallback? = null
     var sizeCallbackUserData: Any? = null
     var bgAlphaVal = Float.MAX_VALUE
-    /** This is not exposed publicly, so we don't clear it. */
+    /** *Always on* This is not exposed publicly, so we don't clear it. */
     var menuBarOffsetMinVal = Vec2()
 
     fun clearFlags() {
@@ -513,11 +513,11 @@ class WindowTempData {
      *  Turned into window.sizeContents at the beginning of next frame   */
     var cursorMaxPos = Vec2()
 
-    var currentLineSize = Vec2()
-
-    var currentLineTextBaseOffset = 0f
+    var currLineSize = Vec2()
 
     var prevLineSize = Vec2()
+
+    var currLineTextBaseOffset = 0f
 
     var prevLineTextBaseOffset = 0f
 

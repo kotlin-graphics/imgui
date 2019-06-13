@@ -3,23 +3,19 @@ package imgui.imgui
 import glm_.f
 import glm_.glm
 import glm_.i
-import glm_.max
 import imgui.*
 import imgui.ImGui.beginColumns
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endColumns
 import imgui.ImGui.popClipRect
-import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.pushItemWidth
-import imgui.ImGui.pushOverrideID
 import imgui.ImGui.style
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.reflect.KMutableProperty0
 import imgui.internal.ColumnsFlag as Cf
 
 /** Columns
@@ -78,8 +74,8 @@ interface imgui_colums {
             }
             dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
             dc.cursorPos.y = columns.lineMinY
-            dc.currentLineSize.y = 0f
-            dc.currentLineTextBaseOffset = 0f
+            dc.currLineSize.y = 0f
+            dc.currLineTextBaseOffset = 0f
         }
         pushColumnClipRect(columns.current)
         pushItemWidth(getColumnWidth() * 0.65f)  // FIXME-COLUMNS: Move on columns setup

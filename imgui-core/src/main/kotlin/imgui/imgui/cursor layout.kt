@@ -38,7 +38,7 @@ interface imgui_cursorLayout {
         if (flags has Sf.Vertical) {
             // Vertical separator, for menu bars (use current line height). Not exposed because it is misleading and it doesn't have an effect on regular layout.
             val y1 = window.dc.cursorPos.y
-            val y2 = window.dc.cursorPos.y + window.dc.currentLineSize.y
+            val y2 = window.dc.cursorPos.y + window.dc.currLineSize.y
             val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + thicknessDraw, y2))
             itemSize(Vec2(thicknessLayout, 0f))
             if (!itemAdd(bb, 0))
@@ -104,8 +104,8 @@ interface imgui_cursorLayout {
                     else
                         dc.cursorPosPrevLine.x + if (spacing < 0f) style.itemSpacing.x else spacing
                     , dc.cursorPosPrevLine.y)
-            dc.currentLineSize.y = dc.prevLineSize.y
-            dc.currentLineTextBaseOffset = dc.prevLineTextBaseOffset
+            dc.currLineSize.y = dc.prevLineSize.y
+            dc.currLineTextBaseOffset = dc.prevLineTextBaseOffset
         }
     }
 
@@ -117,7 +117,7 @@ interface imgui_cursorLayout {
         val backupLayoutType = window.dc.layoutType
         window.dc.layoutType = Lt.Vertical
         // In the event that we are on a line with items that is smaller that FontSize high, we will preserve its height.
-        itemSize(Vec2(0f, if (window.dc.currentLineSize.y > 0f) 0f else g.fontSize))
+        itemSize(Vec2(0f, if (window.dc.currLineSize.y > 0f) 0f else g.fontSize))
         window.dc.layoutType = backupLayoutType
     }
 
@@ -161,8 +161,8 @@ interface imgui_cursorLayout {
                         backupCursorMaxPos put dc.cursorMaxPos
                         backupIndent = dc.indent
                         backupGroupOffset = dc.groupOffset
-                        backupCurrentLineSize put dc.currentLineSize
-                        backupCurrentLineTextBaseOffset = dc.currentLineTextBaseOffset
+                        backupCurrLineSize put dc.currLineSize
+                        backupCurrLineTextBaseOffset = dc.currLineTextBaseOffset
                         backupActiveIdIsAlive = g.activeIdIsAlive
                         backupActiveIdPreviousFrameIsAlive = g.activeIdPreviousFrameIsAlive
                         emitItem = true
@@ -170,7 +170,7 @@ interface imgui_cursorLayout {
             dc.groupOffset = dc.cursorPos.x - pos.x - dc.columnsOffset
             dc.indent = dc.groupOffset
             dc.cursorMaxPos put dc.cursorPos
-            dc.currentLineSize.y = 0f
+            dc.currLineSize.y = 0f
             if (g.logEnabled)
                 g.logLinePosY = -Float.MAX_VALUE// To enforce Log carriage return
         }
@@ -192,8 +192,8 @@ interface imgui_cursorLayout {
             cursorMaxPos put glm.max(groupData.backupCursorMaxPos, cursorMaxPos)
             indent = groupData.backupIndent
             groupOffset = groupData.backupGroupOffset
-            currentLineSize put groupData.backupCurrentLineSize
-            currentLineTextBaseOffset = groupData.backupCurrentLineTextBaseOffset
+            currLineSize put groupData.backupCurrLineSize
+            currLineTextBaseOffset = groupData.backupCurrLineTextBaseOffset
             if (g.logEnabled)
                 g.logLinePosY = -Float.MAX_VALUE // To enforce Log carriage return
         }
@@ -203,7 +203,7 @@ interface imgui_cursorLayout {
             return
         }
 
-        window.dc.currentLineTextBaseOffset = window.dc.prevLineTextBaseOffset max groupData.backupCurrentLineTextBaseOffset      // FIXME: Incorrect, we should grab the base offset from the *first line* of the group but it is hard to obtain now.
+        window.dc.currLineTextBaseOffset = window.dc.prevLineTextBaseOffset max groupData.backupCurrLineTextBaseOffset      // FIXME: Incorrect, we should grab the base offset from the *first line* of the group but it is hard to obtain now.
         itemSize(groupBb.size, 0f)
         itemAdd(groupBb, 0)
 
@@ -221,7 +221,6 @@ interface imgui_cursorLayout {
             window.dc.lastItemId = g.activeIdPreviousFrame
         window.dc.lastItemRect put groupBb
         window.dc.groupStack.pop() // TODO last() on top -> pop?
-
         //window->DrawList->AddRect(groupBb.Min, groupBb.Max, IM_COL32(255,0,255,255));   // [Debug]
     }
 
@@ -276,8 +275,8 @@ interface imgui_cursorLayout {
     fun alignTextToFramePadding() {
         val window = currentWindow
         if (window.skipItems) return
-        window.dc.currentLineSize.y = glm.max(window.dc.currentLineSize.y, g.fontSize + style.framePadding.y * 2)
-        window.dc.currentLineTextBaseOffset = glm.max(window.dc.currentLineTextBaseOffset, style.framePadding.y)
+        window.dc.currLineSize.y = glm.max(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2)
+        window.dc.currLineTextBaseOffset = glm.max(window.dc.currLineTextBaseOffset, style.framePadding.y)
     }
 
     /** ~ FontSize   */

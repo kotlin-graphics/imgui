@@ -126,9 +126,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)   */
     var activeIdAllowOverlap = false
     /** Track whether the active id led to a press (this is to allow changing between PressOnClick and PressOnRelease without pressing twice). Used by range_select branch. */
-    var activeIdHasBeenPressed = false
+    var activeIdHasBeenPressedBefore = false
     /** Was the value associated to the widget edited over the course of the Active state. */
-    var activeIdHasBeenEdited = false
+    var activeIdHasBeenEditedBefore = false
     /** Active widget allows using directional navigation (e.g. can activate a button and move away from it)    */
     var activeIdAllowNavDirFlags = 0
 

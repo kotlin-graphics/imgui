@@ -13,9 +13,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popClipRect
 import imgui.ImGui.popStyleColor
-import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.pushColumnsBackground
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderFrame
@@ -61,7 +59,7 @@ interface imgui_widgets_selectables {
         val labelSize = calcTextSize(label, true)
         val size = Vec2(if (sizeArg.x != 0f) sizeArg.x else labelSize.x, if (sizeArg.y != 0f) sizeArg.y else labelSize.y)
         val pos = Vec2(window.dc.cursorPos)
-        pos.y += window.dc.currentLineTextBaseOffset
+        pos.y += window.dc.currLineTextBaseOffset
         val bbInner = Rect(pos, pos + size)
         itemSize(size)
 

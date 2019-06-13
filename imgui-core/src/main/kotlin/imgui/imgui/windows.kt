@@ -7,7 +7,6 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endColumns
 import imgui.ImGui.findBestWindowPosForPopup
@@ -19,14 +18,10 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
-import imgui.ImGui.renderFrame
-import imgui.ImGui.scrollbar
 import imgui.ImGui.style
 import imgui.imgui.imgui_main.Companion.clampWindowRect
 import imgui.imgui.imgui_main.Companion.renderWindowDecorations
-import imgui.imgui.imgui_main.Companion.renderWindowOuterBorders
 import imgui.imgui.imgui_main.Companion.renderWindowTitleBarContents
-import imgui.imgui.imgui_main.Companion.resizeGripDef
 import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
 import kotlin.math.max
@@ -501,9 +496,9 @@ interface imgui_windows {
                 dc.cursorPosPrevLine put dc.cursorPos
                 dc.cursorMaxPos put dc.cursorStartPos
                 dc.prevLineSize put 0f
-                dc.currentLineSize put 0f
+                dc.currLineSize put 0f
                 dc.prevLineTextBaseOffset = 0f
-                dc.currentLineTextBaseOffset = 0f
+                dc.currLineTextBaseOffset = 0f
                 dc.navHideHighlightOneFrame = false
                 dc.navHasScroll = window.scrollMaxY > 0f
                 dc.navLayerActiveMask = window.dc.navLayerActiveMaskNext
