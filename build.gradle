@@ -19,69 +19,27 @@ ext{
     lwjgl_natives = current() == WINDOWS ? "windows" : current() == LINUX ? "linux" : "macos"
 }
 
+sourceCompatibility = 1.8
+
 dependencies {
-
-    implementation "$kotlin-stdlib"
-
-    implementation 'com.github.kotlin-graphics:uno-sdk:ae2f5a51953f78c71f0a6a052037f6e399e80937'
+    implementation "$kotlin-stdlib-jdk8"
 
     testImplementation "io.kotlintest:kotlintest-runner-junit5:$kotlintest_version".toString()
-
-    def joglVersion = '2.3.2'
-    implementation "org.jogamp.gluegen:gluegen-rt-main:$joglVersion"
-    implementation "org.jogamp.jogl:jogl-all-main:$joglVersion"
-
-    ["", "-glfw", "-jemalloc", "-opengl", "-stb", "-remotery", "-bgfx"].each {
-        String base = "org.lwjgl:lwjgl$it:$lwjgl_version"
-        implementation base
-        testRuntime "$base:natives-$lwjgl_natives"
-        shadow "$base:natives-$lwjgl_natives"
-    }
 
     compile files("${System.properties['java.home']}/../lib/tools.jar") // for debug, classes instances
 }
 
-repositories {
-    mavenCentral()
-    maven { setUrl("https://oss.sonatype.org/content/repositories/snapshots/") }
-    maven { url 'https://jitpack.io' }
-}
-
-task lightJar(type: Jar) {
-    classifier = 'light'
-    from sourceSets.main.output
-    exclude 'extraFonts'
-    inputs.property("moduleName", moduleName)
-    manifest {
-        attributes('Automatic-Module-Name': moduleName)
+allprojects {
+    repositories {
+        mavenCentral()
+        maven { setUrl("https://oss.sonatype.org/content/repositories/snapshots/") }
+        maven { url 'https://jitpack.io' }
     }
 }
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-    archiveClassifier = 'sources'
-    from sourceSets.main.allSource
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
 }
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    archiveClassifier = 'javadoc'
-    from javadoc.destinationDir
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
 }
-
-artifacts {
-    archives lightJar
-    archives sourcesJar
-    archives javadocJar
-}
-
-shadowJar {
-    exclude 'module-info.class'
-    inputs.property("moduleName", moduleName)
-    manifest.attributes('Automatic-Module-Name': moduleName)
-}
-
-jar {
-    inputs.property("moduleName", moduleName)
-    manifest.attributes('Automatic-Module-Name': moduleName)
-}
-
-shadowJar.archiveClassifier = 'all'
