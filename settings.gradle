@@ -1,9 +1,14 @@
 rootProject.name = 'imgui'
 
+include "imgui-core"
+
 include "imgui-glfw"
 include "imgui-gl"
 include "imgui-vk"
+
 include "imgui-jogl"
+
 include "imgui-openjfx"
-include "imgui-core"
+
+include "imgui-bgfx"
 

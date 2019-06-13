@@ -1,8 +1,12 @@
 package imgui;
 
 import org.lwjgl.bgfx.*;
-import org.lwjgl.glfw.*;
-import org.lwjgl.system.*;
+import org.lwjgl.glfw.GLFWNativeCocoa;
+import org.lwjgl.glfw.GLFWNativeWin32;
+import org.lwjgl.glfw.GLFWNativeX11;
+import org.lwjgl.system.Callback;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.Platform;
 import org.lwjgl.system.libc.LibCStdio;
 
 import java.io.IOException;
@@ -14,7 +18,7 @@ import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.APIUtil.apiLog;
 import static org.lwjgl.system.MemoryUtil.*;
-import static org.lwjgl.system.Pointer.*;
+import static org.lwjgl.system.Pointer.POINTER_SIZE;
 import static org.lwjgl.system.libc.LibCString.nmemmove;
 
 /**

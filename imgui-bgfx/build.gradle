@@ -1,0 +1,65 @@
+plugins {
+    id 'maven'
+    id 'java'
+    id "org.jetbrains.kotlin.jvm"
+    id "com.github.johnrengelman.shadow"
+}
+
+group 'com.github.kotlin-graphics'
+
+sourceCompatibility = 1.8
+
+ext.moduleName = 'com.github.kotlin_graphics.imgui_gl'
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    api project(':imgui-core')
+    implementation 'com.github.kotlin-graphics:uno-sdk:ae2f5a51953f78c71f0a6a052037f6e399e80937'
+
+    ["", "-bgfx", "-stb"].each {
+        String base = "org.lwjgl:lwjgl$it:$lwjgl_version"
+        implementation base
+        testRuntime "$base:natives-$lwjgl_natives"
+        shadow "$base:natives-$lwjgl_natives"
+    }
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+task lightJar(type: Jar) {
+    classifier = 'light'
+    from sourceSets.main.output
+    exclude 'extraFonts'
+    inputs.property("moduleName", moduleName)
+    manifest {
+        attributes('Automatic-Module-Name': moduleName)
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives lightJar
+    archives sourcesJar
+    archives javadocJar
+}
+
+shadowJar {
+    exclude 'module-info.class'
+    inputs.property("moduleName", moduleName)
+    manifest.attributes('Automatic-Module-Name': moduleName)
+}
+
+jar {
+    inputs.property("moduleName", moduleName)
+    manifest.attributes('Automatic-Module-Name': moduleName)
+}
+
+shadowJar.classifier = 'all'
