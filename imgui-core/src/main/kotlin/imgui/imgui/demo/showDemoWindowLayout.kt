@@ -483,13 +483,15 @@ object showDemoWindowLayout {
             var scrollTo = button("Scroll To Pos")
             sameLine(130); scrollTo = scrollTo or dragInt("##pos_y", ::scrollToPx, 1f, 0, 9999, "Y = %d px")
             popItemWidth()
-            if (scrollTo) track = false
+            if (scrollTo)
+                track = false
 
+            val childW = (contentRegionAvail.x - 4 * style.itemSpacing.x) / 5
             for (i in 0..4) {
                 if (i > 0) sameLine()
                 group {
                     text("%s", if (i == 0) "Top" else if (i == 1) "25%" else if (i == 2) "Center" else if (i == 3) "75%" else "Bottom")
-                    beginChild(getId(i), Vec2(windowWidth * 0.17f, 200f), true)
+                    beginChild(getId(i), Vec2(childW, 200f), true)
                     if (scrollTo)
                         setScrollFromPosY(cursorStartPos.y + scrollToPx, i * 0.25f)
                     for (line in 0..99)

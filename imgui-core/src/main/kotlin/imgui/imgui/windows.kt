@@ -396,6 +396,7 @@ interface imgui_windows {
             }.i.f
 
             val titleBarRect = window.titleBarRect()
+            val hostRect: Rect
             window.apply {
                 // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars.
                 sizeFullAtLastBegin put sizeFull
@@ -411,10 +412,6 @@ interface imgui_windows {
                         pos.x - scroll.x - windowPadding.x + if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else (size.x - scrollbarSizes.x + min(scrollbarSizes.x, windowBorderSize)),
                         pos.y - scroll.y - windowPadding.y + if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else (size.y - scrollbarSizes.y + min(scrollbarSizes.y, windowBorderSize)))
 
-                // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
-                outerRectClipped put rect()
-                outerRectClipped clipWith clipRect
-
                 // Inner rectangle
                 // We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
                 // Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.
@@ -424,14 +421,27 @@ interface imgui_windows {
                         pos.x + size.x - max(scrollbarSizes.x, windowBorderSize),
                         pos.y + size.y - max(scrollbarSizes.y, windowBorderSize))
 
-                // Inner clipping rectangle will extend a little bit outside the work region.
-                // This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
-                // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
+                // Outer host rectangle for drawing background and borders
+                hostRect = when {
+                    flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip -> parentWindow!!.clipRect
+                    else -> viewportRect
+                }
+
+                // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
+                window.outerRectClipped = window.rect() // save, new allocation
+                window.outerRectClipped clipWith hostRect
+
+                /*  Inner clipping rectangle will extend a little bit outside the work region.
+                    This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
+                    Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
+                    FIXME: This is currently not clipped by the host rectangle, which is misleading because our call to PushClipRect() below will do it anyway.
+                    If we fix the value in InnerClipRect, which is desirable, we need to fix the two lines of code relying on it.                 */
                 innerClipRect.put(
                         floor(0.5f + innerMainRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
                         floor(0.5f + innerMainRect.min.y),
                         floor(0.5f + innerMainRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
                         floor(0.5f + innerMainRect.max.y))
+                //window->InnerClipRect.ClipWithFull(host_rect);
             }
 
             /* ---------- DRAWING ---------- */
@@ -440,10 +450,7 @@ interface imgui_windows {
             window.drawList.clear()
             window.drawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
             window.drawList.pushTextureId(g.font.containerAtlas.texId)
-            if (flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip)
-                pushClipRect(parentWindow!!.clipRect.min, parentWindow.clipRect.max, true)
-            else
-                pushClipRect(viewportRect.min, viewportRect.max, true)
+            pushClipRect(hostRect.min, hostRect.max, false)
 
             // Draw modal window background (darkens what is behind them, all viewports)
             val dimBgForModal = flags has Wf.Modal && window === frontMostPopupModal && window.hiddenFramesCannotSkipItems <= 0

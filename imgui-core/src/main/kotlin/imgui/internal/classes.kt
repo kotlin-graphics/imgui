@@ -708,11 +708,11 @@ class Window(var context: Context, var name: String) {
 
     /** Current clipping rectangle. = DrawList->clip_rect_stack.back(). Scissoring / clipping rectangle. x1, y1, x2, y2. */
     var clipRect = Rect()
-    /** = WindowRect just after setup in Begin(). == window->Rect() for root window. */
+    /** == WindowRect just after setup in Begin(). == window->Rect() for root window. */
     var outerRectClipped = Rect()
-
+    /** == WindowRect just after setup in Begin(). == window->Rect() for root window. */
     var innerMainRect = Rect()
-
+    /** == InnerMainRect, minus WindowPadding on each side, clipped within viewport or parent. */
     var innerClipRect = Rect()
     /** FIXME: This is currently confusing/misleading. Maximum visible content position ~~ Pos + (SizeContentsExplicit ? SizeContentsExplicit : Size - ScrollbarSizes) - CursorStartPos, per axis */
     var contentsRegionRect = Rect()
