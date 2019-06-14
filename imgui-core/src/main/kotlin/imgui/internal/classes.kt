@@ -365,6 +365,8 @@ class DrawListSharedData {
     var curveTessellationTol = 0f
     /** Value for pushClipRectFullscreen() */
     var clipRectFullscreen = Vec4(-8192f, -8192f, 8192f, 8192f)
+    /** Initial flags at the beginning of the frame (it is possible to alter flags on a per-drawlist basis afterwards) */
+    var initialFlags = DrawListFlag.None.i
 
     // Const data
     // FIXME: Bake rounded corners fill/borders in atlas
@@ -737,7 +739,7 @@ class Window(var context: Context, var name: String) {
     /** User scale multiplier per-window */
     var fontWindowScale = 1f
 
-    var drawListInst: DrawList = DrawList(context.drawListSharedData).apply { _ownerName = name }
+    var drawListInst = DrawList(context.drawListSharedData).apply { _ownerName = name }
     /** == &DrawListInst (for backward compatibility reason with code using imgui_internal.h we keep this a pointer) */
     var drawList = drawListInst
     /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */

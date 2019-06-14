@@ -129,16 +129,16 @@ interface imgui_main {
         assert(g.font.isLoaded)
         g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
+        g.drawListSharedData.initialFlags = (if(style.antiAliasedLines) Dlf.AntiAliasedLines else Dlf.None) or
+            if(style.antiAliasedFill) Dlf.AntiAliasedFill else Dlf.None
 
         g.backgroundDrawList.clear()
         g.backgroundDrawList.pushTextureId(io.fonts.texId)
         g.backgroundDrawList.pushClipRectFullScreen()
-        g.backgroundDrawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines else Dlf.None) or if (style.antiAliasedFill) Dlf.AntiAliasedFill else Dlf.None
 
         g.foregroundDrawList.clear()
         g.foregroundDrawList.pushTextureId(io.fonts.texId)
         g.foregroundDrawList.pushClipRectFullScreen()
-        g.foregroundDrawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
 
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it.
         g.drawData.clear()

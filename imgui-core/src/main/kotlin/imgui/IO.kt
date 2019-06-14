@@ -562,7 +562,7 @@ class Style {
     fun scaleAllSizes(scaleFactor: Float) {
         windowPadding = floor(windowPadding * scaleFactor)
         windowRounding = floor(windowRounding * scaleFactor)
-        windowMinSize.put(floor(windowMinSize.x * scaleFactor), glm.floor(windowMinSize.y * scaleFactor))
+        windowMinSize.put(floor(windowMinSize.x * scaleFactor), floor(windowMinSize.y * scaleFactor))
         childRounding = floor(childRounding * scaleFactor)
         popupRounding = floor(popupRounding * scaleFactor)
         framePadding = floor(framePadding * scaleFactor)

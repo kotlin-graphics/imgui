@@ -946,7 +946,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         cmdBuffer.clear()
         idxBuffer.resize(0) // we dont assign because it wont create a new istance for sure
         vtxBuffer.resize(0)
-        flags = DrawListFlag.AntiAliasedLines or DrawListFlag.AntiAliasedFill
+        flags = _data.initialFlags
         _vtxCurrentIdx = 0
         _vtxWritePtr = 0
         _idxWritePtr = 0
