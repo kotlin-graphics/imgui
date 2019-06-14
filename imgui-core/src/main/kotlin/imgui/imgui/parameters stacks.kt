@@ -7,7 +7,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.contentRegionMaxScreen
+import imgui.ImGui.workRectMax
 import imgui.ImGui.currentWindow
 import imgui.ImGui.defaultFont
 import imgui.ImGui.popItemFlag
@@ -16,7 +16,6 @@ import imgui.ImGui.style
 import imgui.ImGui.u32
 import imgui.ImGui.vec4
 import imgui.internal.*
-import imgui.wo
 import imgui.internal.ItemFlag as If
 
 /** Parameters stacks */
@@ -263,7 +262,7 @@ interface imgui_parametersStacks {
             else -> window.dc.itemWidth
         }
         if (w < 0f) {
-            val regionMaxX = contentRegionMaxScreen.x
+            val regionMaxX = workRectMax.x
             w = 1f max (regionMaxX - window.dc.cursorPos.x + w)
         }
         return w.i.f
