@@ -106,7 +106,7 @@ object showDemoWindowColumns {
                 sameLine()
                 checkbox("vertical", ::vBorders)
                 columns(4, "", vBorders)
-                for (i in 0 until 4 * 3)                {
+                for (i in 0 until 4 * 3) {
                     if (hBorders && columnIndex == 0)
                         separator()
                     text("%c%c%c", 'a' + i, 'a' + i, 'a' + i)
@@ -164,7 +164,7 @@ object showDemoWindowColumns {
 
             treeNode("Horizontal Scrolling") {
                 setNextWindowContentSize(Vec2(1500f, 0f))
-                child("##Scrollingregion", Vec2(0, fontSize * 20), false, WindowFlag.HorizontalScrollbar.i) {
+                child("##ScrollingRegion", Vec2(0, fontSize * 20), false, WindowFlag.HorizontalScrollbar.i) {
                     columns(10)
                     val ITEMS_COUNT = 2000
                     val clipper = ListClipper(ITEMS_COUNT)  // Also demonstrate using the clipper for large list
@@ -178,16 +178,32 @@ object showDemoWindowColumns {
                 }
             }
 
-            val nodeOpen = treeNode("Tree within single cell")
-            sameLine(); helpMarker("NB: Tree node must be poped before ending the cell. There's no storage of state per-cell.")
-            if (nodeOpen) {
-                columns(2, "tree items")
-                separator()
-                treeNode("Hello") { bulletText("Sailor") }; nextColumn()
-                treeNode("Bonjour") { bulletText("Marin") }; nextColumn()
+            treeNode("Tree") {
+                columns(2, "tree", true)
+                for (x in 0..2) {
+                    val open1 = treeNode(x, "Node%d", x)
+                    nextColumn()
+                    text("Node contents")
+                    nextColumn()
+                    if (open1) {
+                        for (y in 0..2) {
+                            val open2 = treeNode(y, "Node$x.$y")
+                            nextColumn()
+                            text("Node contents")
+                            if (open2) {
+                                text("Even more contents")
+                                treeNode("Tree in column") {
+                                    text("The quick brown fox jumps over the lazy dog")
+                                }
+                            }
+                            nextColumn()
+                            if (open2)
+                                treePop()
+                        }
+                        treePop()
+                    }
+                }
                 columns(1)
-                separator()
-                treePop()
             }
 
             if (disableIndent)
