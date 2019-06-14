@@ -274,11 +274,15 @@ interface imgui_internal {
             /*  Navigation processing runs prior to clipping early-out
                 (a) So that NavInitRequest can be honored, for newly opened windows to select a default widget
                 (b) So that we can scroll up/down past clipped items. This adds a small O(N) cost to regular navigation
-                    requests unfortunately, but it is still limited to one window.
-                    it may not scale very well for windows with ten of thousands of item, but at least navMoveRequest
-                    is only set on user interaction, aka maximum once a frame.
-                    We could early out with "if (isClipped && !g.navInitRequest) return false" but when we wouldn't be
-                    able to reach unclipped widgets. This would work if user had explicit scrolling control (e.g. mapped on a stick)    */
+                    requests unfortunately, but it is still limited to one window. It may not scale very well for windows
+                     with ten of thousands of item, but at least NavMoveRequest is only set on user interaction,
+                     aka maximum once a frame.
+                     We could early out with "if (is_clipped && !g.NavInitRequest) return false;" but when we wouldn't
+                     be able to reach unclipped widgets. This would work if user had explicit scrolling control
+                     (e.g. mapped on a stick).
+                We intentionally don't check if g.NavWindow != NULL because g.NavAnyRequest should only be set
+                when it is non null.
+                If we crash on a NULL g.NavWindow we need to fix the bug elsewhere.    */
             window.dc.navLayerActiveMaskNext = window.dc.navLayerActiveMaskNext or window.dc.navLayerCurrentMask
             if (g.navId == id || g.navAnyRequest)
                 if (g.navWindow!!.rootWindowForNav === window.rootWindowForNav)
