@@ -191,8 +191,12 @@ interface imgui_widgets_inputWithKeyboard {
                 data = dataTypeApplyOp(dataType, '+', data, stepFast?.takeIf { io.keyCtrl } ?: step)
                 valueChanged = true
             }
-            sameLine(0f, style.itemInnerSpacing.x)
-            textEx(label, findRenderedTextEnd(label))
+
+            val labelEnd = findRenderedTextEnd(label)
+            if (0 != labelEnd)            {
+                sameLine(0f, style.itemInnerSpacing.x)
+                textEx(label, labelEnd)
+            }
             style.framePadding put backupFramePadding
 
             popId()
@@ -218,6 +222,8 @@ interface imgui_widgets_inputWithKeyboard {
         pushMultiItemsWidths(components, calcItemWidth())
         for (i in 0 until components) {
             pushId(i)
+            if (i > 0)
+                sameLine(0f, style.itemInnerSpacing.x)
             valueChanged = when (dataType) {
                 DataType.Float -> withFloat(v as FloatArray, i) { inputScalar("", dataType, it as KMutableProperty0<N>, step, stepFast, format, flags) }
                 DataType.Int -> withInt(v as IntArray, i) { inputScalar("", dataType, it as KMutableProperty0<N>, step, stepFast, format, flags) }
@@ -229,7 +235,12 @@ interface imgui_widgets_inputWithKeyboard {
         }
         popId()
 
-        textEx(label, findRenderedTextEnd(label))
+        val labelEnd = findRenderedTextEnd(label)
+        if (0 != labelEnd)        {
+            sameLine(0f, style.itemInnerSpacing.x)
+            textEx(label, labelEnd)
+        }
+
         endGroup()
         return valueChanged
     }

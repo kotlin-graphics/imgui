@@ -227,18 +227,23 @@ interface imgui_widgets_sliders {
         pushMultiItemsWidths(components, calcItemWidth())
         for (i in 0 until components) {
             pushId(i)
+            if (i > 0)
+                sameLine(0f, style.itemInnerSpacing.x)
             valueChanged = when (dataType) {
                 DataType.Int -> withInt(v as IntArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, vMin, vMax, format, power) }
                 DataType.Float -> withFloat(v as FloatArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, vMin, vMax, format, power) }
                 else -> error("invalid")
             } || valueChanged
-            sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
         }
         popId()
 
-        textEx(label, findRenderedTextEnd(label))
+        val labelEnd = findRenderedTextEnd(label)
+        if (0 != labelEnd) {
+            sameLine(0f, style.itemInnerSpacing.x)
+            textEx(label, labelEnd)
+        }
         endGroup()
         return valueChanged
     }

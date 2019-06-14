@@ -282,6 +282,8 @@ interface imgui_widgets_drags {
         pushMultiItemsWidths(components, calcItemWidth())
         for (i in 0 until components) {
             pushId(i)
+            if (i > 0)
+                sameLine(0f, style.itemInnerSpacing.x)
             when (dataType) {
                 DataType.Int -> withInt(v as IntArray, i) {
                     valueChanged = dragScalar("", dataType, it as KMutableProperty0<N>, vSpeed, vMin, vMax, format, power) or valueChanged
@@ -291,13 +293,17 @@ interface imgui_widgets_drags {
                 }
                 else -> error("invalid")
             }
-            sameLine(0f, style.itemInnerSpacing.x)
             popId()
             popItemWidth()
         }
         popId()
 
-        textEx(label, findRenderedTextEnd(label))
+        val labelEnd = findRenderedTextEnd(label)
+        if (0 != labelEnd)        {
+            sameLine(0f, style.itemInnerSpacing.x)
+            textEx(label, labelEnd)
+        }
+
         endGroup()
         return valueChanged
     }
