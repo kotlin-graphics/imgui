@@ -242,7 +242,7 @@ interface imgui_demoDebugInformations {
             checkbox("Show windows rectangles", ::showWindowsRects)
             sameLine()
             setNextItemWidth(fontSize * 12)
-            showWindowsRects = showWindowsRects || combo("##rects_type", ::showWindowsRectTypeInt, "OuterRect\u0000OuterRectClipped\u0000InnerMainRect\u0000InnerClipRect\u0000ContentsRegionRect\u0000")
+            showWindowsRects = showWindowsRects || combo("##rects_type", ::showWindowsRectTypeInt, "OuterRect\u0000OuterRectClipped\u0000InnerMainRect\u0000InnerWorkRect\u0000InnerWorkRectClipped\u0000ContentsRegionRect\u0000")
             checkbox("Show clipping rectangle when hovering ImDrawCmd node", ::showDrawcmdClipRects)
             treePop()
         }
@@ -257,7 +257,8 @@ interface imgui_demoDebugInformations {
                         RT.OuterRect -> window.rect()
                         RT.OuterRectClipped -> window.outerRectClipped
                         RT.InnerMainRect -> window.innerMainRect
-                        RT.InnerClipRect -> window.innerClipRect
+                        RT.InnerWorkRect -> window.innerWorkRect
+                        RT.InnerWorkRectClipped -> window.innerWorkRectClipped
                         RT.ContentsRegionRect -> window.contentsRegionRect
                         else -> error("Invalid type")
                     }
@@ -341,13 +342,12 @@ interface imgui_demoDebugInformations {
 
     companion object {
 
-        enum class RT { OuterRect, OuterRectClipped, InnerMainRect, InnerClipRect, ContentsRegionRect, ContentsFullRect }
+        enum class RT { OuterRect, OuterRectClipped, InnerMainRect, InnerWorkRect, InnerWorkRectClipped, ContentsRegionRect, ContentsFullRect }
 
         var showWindowsBeginOrder = false
         var showWindowsRects = false
         var showWindowsRectTypeInt: Int = RT.ContentsRegionRect.ordinal
-        val showWindowsRectType: RT
-            get() = RT.values().first { it.ordinal == showWindowsRectTypeInt }
+        val showWindowsRectType = RT.InnerWorkRect
         var showDrawcmdClipRects = true
 
         var showWindow = false

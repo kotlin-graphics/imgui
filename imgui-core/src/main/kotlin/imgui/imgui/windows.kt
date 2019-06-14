@@ -431,17 +431,16 @@ interface imgui_windows {
                 window.outerRectClipped = window.rect() // save, new allocation
                 window.outerRectClipped clipWith hostRect
 
-                /*  Inner clipping rectangle will extend a little bit outside the work region.
+                /*  Inner work/clipping rectangle will extend a little bit outside the work region.
                     This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
-                    Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
-                    FIXME: This is currently not clipped by the host rectangle, which is misleading because our call to PushClipRect() below will do it anyway.
-                    If we fix the value in InnerClipRect, which is desirable, we need to fix the two lines of code relying on it.                 */
-                innerClipRect.put(
+                    Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result. */
+                innerWorkRect.put(
                         floor(0.5f + innerMainRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
                         floor(0.5f + innerMainRect.min.y),
                         floor(0.5f + innerMainRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
                         floor(0.5f + innerMainRect.max.y))
-                //window->InnerClipRect.ClipWithFull(host_rect);
+                innerWorkRectClipped put innerWorkRect
+                innerWorkRectClipped clipWithFull hostRect
             }
 
             /* ---------- DRAWING ---------- */
@@ -568,9 +567,9 @@ interface imgui_windows {
         } else   // Append
             window.setCurrent()
 
-        pushClipRect(window.innerClipRect.min, window.innerClipRect.max, true)
+        pushClipRect(window.innerWorkRectClipped.min, window.innerWorkRectClipped.max, true)
 
-        // Clear 'accessed' flag last thing
+        // Clear 'accessed' flag last thing (After PushClipRect which will set the flag. We want the flag to stay false when the default "Debug" window is unused)
         if (firstBeginOfTheFrame) window.writeAccessed = false
 
         window.beginCount++
