@@ -162,6 +162,10 @@ enum class ItemStatusFlag(@JvmField val i: Int) {
     /** Set when Selectable(), TreeNode() reports toggling a selection. We can't report "Selected" because reporting
      *  the change allows us to handle clipping with less issues. */
     ToggledSelection(1 shl 3),
+    /** Set if the widget/group is able to provide data for the ImGuiItemStatusFlags_Deactivated flag. */
+    HasDeactivated(1 shl 4),
+    /** Only valid if ImGuiItemStatusFlags_HasDeactivated is set. */
+    Deactivated(1 shl 5),
 
     //  #ifdef IMGUI_ENABLE_TEST_ENGINE
 //  [imgui-test only]

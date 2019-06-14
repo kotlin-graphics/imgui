@@ -166,6 +166,7 @@ interface imgui_main {
         g.activeIdPreviousFrameWindow = g.activeIdWindow
         g.activeIdPreviousFrameHasBeenEdited = g.activeIdHasBeenEditedBefore
         g.activeIdIsAlive = 0
+        g.activeIdHasBeenEditedThisFrame = false
         g.activeIdPreviousFrameIsAlive = false
         g.activeIdIsJustActivated = false
         if (g.tempInputTextId != 0 && g.activeId != g.tempInputTextId)

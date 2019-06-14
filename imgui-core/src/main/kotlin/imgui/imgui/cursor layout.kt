@@ -213,13 +213,23 @@ interface imgui_cursorLayout {
             but would put a little more burden on individual widgets.
             Also if you grep for LastItemId you'll notice it is only used in that context.
             (The tests not symmetrical because ActiveIdIsAlive is an ID itself, in order to be able to handle ActiveId being overwritten during the frame.)         */
-        val grouContainsCurrActiveId = groupData.backupActiveIdIsAlive != g.activeId && g.activeIdIsAlive == g.activeId && g.activeId != 0
+        val groupContainsCurrActiveId = groupData.backupActiveIdIsAlive != g.activeId && g.activeIdIsAlive == g.activeId && g.activeId != 0
         val groupContainsPrevActiveId = !groupData.backupActiveIdPreviousFrameIsAlive && g.activeIdPreviousFrameIsAlive
-        if (grouContainsCurrActiveId)
+        if (groupContainsCurrActiveId)
             window.dc.lastItemId = g.activeId
         else if (groupContainsPrevActiveId)
             window.dc.lastItemId = g.activeIdPreviousFrame
         window.dc.lastItemRect put groupBb
+
+        // Forward Edited flag
+        if (groupContainsCurrActiveId && g.activeIdHasBeenEditedThisFrame)
+            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.Edited
+
+        // Forward Deactivated flag
+        window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HasDeactivated
+        if (groupContainsPrevActiveId && g.activeId != g.activeIdPreviousFrame)
+            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.Deactivated
+
         window.dc.groupStack.pop() // TODO last() on top -> pop?
         //window->DrawList->AddRect(groupBb.Min, groupBb.Max, IM_COL32(255,0,255,255));   // [Debug]
     }

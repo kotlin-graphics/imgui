@@ -129,6 +129,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdHasBeenPressedBefore = false
     /** Was the value associated to the widget edited over the course of the Active state. */
     var activeIdHasBeenEditedBefore = false
+
+    var activeIdHasBeenEditedThisFrame = false
     /** Active widget allows using directional navigation (e.g. can activate a button and move away from it)    */
     var activeIdAllowNavDirFlags = 0
 
