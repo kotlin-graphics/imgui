@@ -16,6 +16,7 @@ import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.imgui.g
+import imgui.imgui.max
 import imgui.imgui.min
 import imgui.internal.NextItemDataFlag
 import imgui.internal.itemHoveredDataBackup
@@ -140,7 +141,7 @@ interface imgui_widgets_trees {
         if (openPtr != null && !open) return false
 
         val id = window.getId(label)
-        val flags = flags_ or Tnf.CollapsingHeader or if (openPtr != null) Tnf.AllowItemOverlap else Tnf.None
+        val flags = flags_ or Tnf.CollapsingHeader or if (openPtr != null) Tnf.AllowItemOverlap or Tnf._ClipLabelForTrailingButton else 0
         val isOpen = treeNodeBehavior(id, flags, label)
         if (openPtr != null) {
             /*  Create a small overlapping close button
@@ -148,7 +149,9 @@ interface imgui_widgets_trees {
                 FIXME: CloseButton can overlap into text, need find a way to clip the text somehow.
              */
             val buttonSize = g.fontSize
-            val buttonPos = Vec2(min(window.dc.lastItemRect.max.x, window.clipRect.max.x) - style.framePadding.x * 2f - buttonSize, window.dc.lastItemRect.min.y)
+            val buttonPos = Vec2(
+                    max(window.dc.lastItemRect.min.x, window.dc.lastItemRect.max.x - style.framePadding.x * 2f - buttonSize),
+                    (window.dc.lastItemRect.min.y))
             itemHoveredDataBackup {
                 if (closeButton(window.getId(id + 1), buttonPos))
                     open = false
