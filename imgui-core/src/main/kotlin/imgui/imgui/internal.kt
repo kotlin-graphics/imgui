@@ -3388,7 +3388,7 @@ interface imgui_internal {
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
-        if (valueChanged)
+        if (valueChanged && flags hasnt Itf.NoMarkEdited)
             markItemEdited(id)
 
         ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
@@ -3414,19 +3414,21 @@ interface imgui_internal {
         var dataBuf = data.format(dataType, format, 32)
         dataBuf = trimBlanks(dataBuf)
         g.currentWindow!!.dc.cursorPos put bb.min
-        val flags = Itf.AutoSelectAll or when (dataType) {
+        val flags: InputTextFlags = Itf.AutoSelectAll or Itf.NoMarkEdited or when(dataType) {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
-        val valueChanged = inputTextEx(label, null, dataBuf, bb.size, flags)
+        var valueChanged = inputTextEx(label, null, dataBuf, bb.size, flags)
         if (init) {
             assert(g.activeId == id) { "First frame we started displaying the InputText widget, we expect it to take the active id." }
             g.tempInputTextId = g.activeId
         }
-        return when {
-            valueChanged -> dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, data)
-            else -> false
+        if(valueChanged){
+            valueChanged = dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, data)
+            if (valueChanged)
+                markItemEdited(id)
         }
+        return false
     }
 
     fun tempInputTextIsActive(id: ID): Boolean = g.activeId == id && g.tempInputTextId == id
