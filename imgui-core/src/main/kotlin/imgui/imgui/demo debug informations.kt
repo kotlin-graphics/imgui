@@ -182,7 +182,7 @@ interface imgui_demoDebugInformations {
      *  window list, basic internal state, etc.    */
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
-        if (!begin("ImGui Metrics", open)) {
+        if (!begin("Dear ImGui Metrics", open)) {
             end()
             return
         }

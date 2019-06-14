@@ -101,13 +101,8 @@ class DrawVert {
  *  rendered.   */
 class DrawChannel {
 
-    var cmdBuffer = Stack<DrawCmd>()
-    lateinit var idxBuffer: IntBuffer
-
-    fun clear() {
-        cmdBuffer.clear()
-        idxBuffer.free()
-    }
+    val cmdBuffer = Stack<DrawCmd>()
+    val idxBuffer = Stack<Int>()
 }
 
 
@@ -134,7 +129,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
 
     /** Draw commands. Typically 1 command = 1 GPU draw call, unless the command is a callback.    */
-    var cmdBuffer = Stack<DrawCmd>()
+    val cmdBuffer = Stack<DrawCmd>()
     /** Index buffer. Each command consume ImDrawCmd::ElemCount of those    */
     var idxBuffer = IntBuffer(0)
     /** Vertex buffer.  */
@@ -860,13 +855,15 @@ class DrawList(sharedData: DrawListSharedData?) {
             into _CmdBuffer/_IdxBuffer  */
         _channels[0] = DrawChannel()
         for (i in 1 until channelsCount) {
-            if (i < oldChannelsCount)
-                _channels[i].clear()
+            if (i < oldChannelsCount) {
+                _channels[i].cmdBuffer.clear()
+                _channels[i].idxBuffer.clear()
+            }
             if (_channels[i].cmdBuffer.isEmpty()) {
-                val drawCmd = DrawCmd()
-                drawCmd.clipRect = Vec4(_clipRectStack.last())
-                drawCmd.textureId = _textureIdStack.last()
-                _channels[i].cmdBuffer.add(drawCmd)
+                _channels[i].cmdBuffer += DrawCmd().apply {
+                    clipRect put _clipRectStack.last()
+                    textureId = _textureIdStack.last()
+                }
             }
         }
     }
@@ -888,9 +885,9 @@ class DrawList(sharedData: DrawListSharedData?) {
             if (ch.cmdBuffer.isNotEmpty() && ch.cmdBuffer.last().elemCount == 0)
                 ch.cmdBuffer.pop()
             newCmdBufferCount += ch.cmdBuffer.size
-            newIdxBufferCount += ch.idxBuffer.lim
+            newIdxBufferCount += ch.idxBuffer.size
         }
-        for (i in 0 until newCmdBufferCount) cmdBuffer.add(DrawCmd())   // resize(cmdBuffer.size + newCmdBufferCount)
+        for (i in 0 until newCmdBufferCount) cmdBuffer += DrawCmd()   // resize(cmdBuffer.size + newCmdBufferCount)
         idxBuffer = idxBuffer.resize(idxBuffer.lim + newIdxBufferCount)
 
         var cmdWrite = cmdBuffer.size - newCmdBufferCount
@@ -898,15 +895,8 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         for (i in 1 until _channelsCount) {
             val ch = _channels[i]
-            if (ch.cmdBuffer.isNotEmpty())
-                for (j in ch.cmdBuffer.indices)
-                    cmdBuffer[cmdWrite++] put ch.cmdBuffer[j]
-            val sz = ch.idxBuffer.lim
-            if (sz != 0) {
-                idxBuffer.pos = _idxWritePtr
-                memCopy(ch.idxBuffer.adr, idxBuffer.adr, sz * DrawIdx.BYTES.L)
-                _idxWritePtr += sz
-            }
+            for (j in ch.cmdBuffer.indices) cmdBuffer[cmdWrite++] put ch.cmdBuffer[j]
+            for (j in ch.idxBuffer.indices) idxBuffer[_idxWritePtr + j] = ch.idxBuffer[j]
         }
         updateClipRect() // We call this instead of addDrawCmd(), so that empty channels won't produce an extra draw call.
         _channelsCount = 1
@@ -972,7 +962,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         clear()
         _channels.forEach {
             it.cmdBuffer.clear()
-            it.idxBuffer.free()
+            it.idxBuffer.clear()
         }
         _channels.clear()
         vtxBuffer.data.free()

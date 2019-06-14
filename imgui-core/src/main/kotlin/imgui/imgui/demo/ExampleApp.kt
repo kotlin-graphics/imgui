@@ -121,7 +121,7 @@ object ExampleApp {
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
 
         // Main body of the Demo window starts here.
-        if (!begin("ImGui Demo", open, windowFlags)) {
+        if (!begin("Dear ImGui Demo", open, windowFlags)) {
             end()   // Early out if the window is collapsed, as an optimization.
             return
         }
