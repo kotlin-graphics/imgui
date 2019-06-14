@@ -31,6 +31,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.imgui.g
+import imgui.imgui.imgui_internal
 import imgui.internal.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue
@@ -157,6 +158,15 @@ interface imgui_widgets_comboBox {
         val res = combo(label, Companion::i, items, heightInItems)
         currentItem[0] = i
         return res
+    }
+
+    fun combo_(label: String, currentItem: KMutableProperty0<Dir>, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
+        val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
+        // FIXME-OPT: Avoid computing this, or at least only when combo is open
+        imgui_internal._i = currentItem().i
+        return combo(label, imgui_internal.Companion::_i, items, heightInItems).also {
+            currentItem.set(Dir.values().first { it.i == imgui_internal._i })
+        }
     }
 
     fun combo(label: String, currentItem: KMutableProperty0<Int>, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
