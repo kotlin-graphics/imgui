@@ -18,7 +18,7 @@ import imgui.internal.LayoutType as Lt
 
 /** Windows Utilities
  *  - "current window" = the window we are appending into while inside a Begin()/End() block.
- *  "next window" = next window we will Begin() into. */
+ *  "next window" = next window we will Begin() into.   */
 interface imgui_windowsUtilities {
 
     val isWindowAppearing: Boolean

@@ -14,6 +14,7 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.combo
+import imgui.ImGui.combo1
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dummy
 import imgui.ImGui.end
@@ -242,7 +243,12 @@ interface imgui_demoDebugInformations {
             checkbox("Show windows rectangles", ::showWindowsRects)
             sameLine()
             setNextItemWidth(fontSize * 12)
-            showWindowsRects = showWindowsRects || combo("##rects_type", ::showWindowsRectTypeInt, "OuterRect\u0000OuterRectClipped\u0000InnerMainRect\u0000InnerWorkRect\u0000InnerWorkRectClipped\u0000ContentsRegionRect\u0000")
+            showWindowsRects = showWindowsRects || combo1("##rects_type", ::showWindowsRectType, "OuterRect\u0000OuterRectClipped\u0000InnerVisibleRect\u0000InnerWorkRect\u0000InnerWorkRectClipped\u0000ContentsRegionRect\u0000")
+            if (showWindowsRects)
+                g.navWindow?.let { nav ->
+                    val r = Funcs.getRect(nav, showWindowsRectType)
+                    bulletText("'${nav.name}': (%.1f,%.1f) (%.1f,%.1f) Size (%.1f,%.1f)", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                }
             checkbox("Show clipping rectangle when hovering ImDrawCmd node", ::showDrawcmdClipRects)
             treePop()
         }
@@ -253,15 +259,7 @@ interface imgui_demoDebugInformations {
                     continue
                 val drawList = getForegroundDrawList(window)
                 if (showWindowsRects) {
-                    val r = when (showWindowsRectType) {
-                        RT.OuterRect -> window.rect()
-                        RT.OuterRectClipped -> window.outerRectClipped
-                        RT.InnerMainRect -> window.innerMainRect
-                        RT.InnerWorkRect -> window.innerWorkRect
-                        RT.InnerWorkRectClipped -> window.innerWorkRectClipped
-                        RT.ContentsRegionRect -> window.contentsRegionRect
-                        else -> error("Invalid type")
-                    }
+                    val r = Funcs.getRect(window, showWindowsRectType)
                     drawList.addRect(r.min, r.max, COL32(255, 0, 128, 255))
                 }
                 if (showWindowsBeginOrder && window.flags hasnt Wf.ChildWindow) {
@@ -274,7 +272,7 @@ interface imgui_demoDebugInformations {
 
     /** add style editor block (not a window). you can pass in a reference ImGuiStyle structure to compare to,
      *  revert to and save to (else it uses the default style)  */
-    fun showStyleEditor(ref: Style? = null)  = StyleEditor.invoke(ref)
+    fun showStyleEditor(ref: Style? = null) = StyleEditor.invoke(ref)
 
     /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
      *  Here we use the simplified combo() api that packs items into a single literal string. Useful for quick combo
@@ -342,12 +340,11 @@ interface imgui_demoDebugInformations {
 
     companion object {
 
-        enum class RT { OuterRect, OuterRectClipped, InnerMainRect, InnerWorkRect, InnerWorkRectClipped, ContentsRegionRect, ContentsFullRect }
+        enum class RT { OuterRect, OuterRectClipped, InnerVisibleRect, InnerWorkRect, InnerWorkRectClipped, ContentsRegionRect, ContentsFullRect }
 
         var showWindowsBeginOrder = false
         var showWindowsRects = false
-        var showWindowsRectTypeInt: Int = RT.ContentsRegionRect.ordinal
-        val showWindowsRectType = RT.InnerWorkRect
+        var showWindowsRectType = RT.InnerWorkRect
         var showDrawcmdClipRects = true
 
         var showWindow = false
@@ -419,6 +416,16 @@ interface imgui_demoDebugInformations {
 
 
         object Funcs {
+
+            fun getRect(window: Window, rectType: RT): Rect = when (rectType) {
+                RT.OuterRect -> window.rect()
+                RT.OuterRectClipped -> window.outerRectClipped
+                RT.InnerVisibleRect -> window.innerVisibleRect
+                RT.InnerWorkRect -> window.innerWorkRect
+                RT.InnerWorkRectClipped -> window.innerWorkRectClipped
+                RT.ContentsRegionRect -> window.contentsRegionRect
+                else -> error("invalid")
+            }
 
             fun nodeDrawList(window: Window?, drawList: DrawList, label: String) {
 

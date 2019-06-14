@@ -13,7 +13,7 @@ import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.colorEditVec4
 import imgui.ImGui.combo
-import imgui.ImGui.combo_
+import imgui.ImGui.combo0
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
@@ -156,7 +156,7 @@ object StyleEditor {
                 sliderFloat("TabRounding", style::tabRounding, 0f, 12f, "%.0f")
                 text("Alignment")
                 sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
-                combo_("WindowMenuButtonPosition", style::windowMenuButtonPosition, "Left\u0000Right\u0000")
+                combo0("WindowMenuButtonPosition", style::windowMenuButtonPosition, "Left\u0000Right\u0000")
                 sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f"); sameLine(); helpMarker("Alignment applies when a button is larger than its text content.")
                 sliderVec2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f"); sameLine(); helpMarker("Alignment applies when a selectable is larger than its text content.")
                 text("Safe Area Padding"); sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
