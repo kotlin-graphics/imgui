@@ -62,7 +62,8 @@ interface imgui_colums {
         with(window) {
             columns.lineMaxY = max(columns.lineMaxY, dc.cursorPos.y)
             if (++columns.current < columns.count) {
-                // New column (columns 1+ cancels out IndentX)
+                // Columns 1+ cancel out IndentX
+                // FIXME-COLUMNS: Unnecessary, could be locked?
                 dc.columnsOffset = getColumnOffset(columns.current) - dc.indent + style.itemSpacing.x
                 drawList.channelsSetCurrent(columns.current + 1)
             } else {
@@ -77,7 +78,7 @@ interface imgui_colums {
             dc.currLineSize.y = 0f
             dc.currLineTextBaseOffset = 0f
         }
-        pushColumnClipRect(columns.current)
+        pushColumnClipRect(columns.current)     // FIXME-COLUMNS: Could it be an overwrite?
         pushItemWidth(getColumnWidth() * 0.65f)  // FIXME-COLUMNS: Move on columns setup
     }
 
