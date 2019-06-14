@@ -147,7 +147,9 @@ enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flag
     // [Internal]
 
     /** For internal use by InputTextMultiline()    */
-    Multiline(1 shl 20);
+    Multiline(1 shl 20),
+    /** For internal use by functions using InputText() before reformatting data */
+    NoMarkEdited(1 shl 21);
 
     infix fun or(b: InputTextFlag): InputTextFlags = i or b.i
 }

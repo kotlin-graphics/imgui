@@ -21,6 +21,7 @@ import imgui.ImGui.format
 import imgui.ImGui.frameHeight
 import imgui.ImGui.inputTextEx
 import imgui.ImGui.io
+import imgui.ImGui.markItemEdited
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
@@ -142,7 +143,7 @@ interface imgui_widgets_inputWithKeyboard {
     fun <N> inputScalar(label: String, dataType: DataType,
                         dataPtr: KMutableProperty0<N>,
                         step: N? = null, stepFast: N? = null,
-                        format_: String? = null, flags: InputTextFlags = 0): Boolean where N : Number, N : Comparable<N> {
+                        format_: String? = null, flags_: InputTextFlags = 0): Boolean where N : Number, N : Comparable<N> {
 
         var data by dataPtr
         val window = currentWindow
@@ -159,10 +160,11 @@ interface imgui_widgets_inputWithKeyboard {
         val buf = dataPtr.format(dataType, format, 64)
 
         var valueChanged = false
-        var extraFlags = flags
-        if (extraFlags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
-            extraFlags = extraFlags or Itf.CharsDecimal
-        extraFlags = extraFlags or Itf.AutoSelectAll
+        var flags = flags_
+        if (flags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
+            flags = flags or Itf.CharsDecimal
+        flags = flags or Itf.AutoSelectAll
+        flags = flags or Itf.NoMarkEdited  // We call MarkItemEdited() ourselve by comparing the actual data rather than the string.
 
         if (step != null) {
             val buttonSize = frameHeight
@@ -170,14 +172,14 @@ interface imgui_widgets_inputWithKeyboard {
             beginGroup() // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
             pushId(label)
             setNextItemWidth(1f max (calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
-            if (inputText("", buf, extraFlags)) // PushId(label) + "" gives us the expected ID from outside point of view
+            if (inputText("", buf, flags)) // PushId(label) + "" gives us the expected ID from outside point of view
                 valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialTextA, dataType, dataPtr, format)
 
             // Step buttons
             val backupFramePadding = Vec2(style.framePadding)
             style.framePadding.x = style.framePadding.y
             var buttonFlags = Bf.Repeat or Bf.DontClosePopups
-            if (extraFlags has Itf.ReadOnly)
+            if (flags has Itf.ReadOnly)
                 buttonFlags = buttonFlags or Bf.Disabled
             sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("-", Vec2(buttonSize), buttonFlags)) {
@@ -195,9 +197,11 @@ interface imgui_widgets_inputWithKeyboard {
 
             popId()
             endGroup()
-        } else if (inputText(label, buf, extraFlags))
+        } else if (inputText(label, buf, flags))
             valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialTextA, dataType, dataPtr, format)
 
+        if (valueChanged)
+            markItemEdited(window.dc.lastItemId)
 
         return valueChanged
     }
