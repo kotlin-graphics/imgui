@@ -58,6 +58,7 @@ interface imgui_popupsModals {
      *  id here. read comments in .cpp! */
     fun beginPopupContextItem(strId: String = "", mouseButton: Int = 1): Boolean {
         val window = currentWindow
+        if (window.skipItems) return false
         // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!
         val id = if (strId.isNotEmpty()) window.getId(strId) else window.dc.lastItemId
         assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)" }
