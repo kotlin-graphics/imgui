@@ -41,10 +41,12 @@ import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
+import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
+import imgui.ImGui.pushStyleVar
 import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
@@ -1180,17 +1182,19 @@ interface imgui_internal {
             if (g.hoveredId == tabId || g.hoveredId == closeButtonId || g.activeId == closeButtonId)
                 closeButtonVisible = true
         if (closeButtonVisible) {
-            val closeButtonSz = g.fontSize * 0.5f
+            val closeButtonSz = g.fontSize
+            pushStyleVar(StyleVar.FramePadding, framePadding)
             itemHoveredDataBackup {
-                if (closeButton(closeButtonId, Vec2(bb.max.x - framePadding.x - closeButtonSz, bb.min.y + framePadding.y + closeButtonSz), closeButtonSz))
+                if (closeButton(closeButtonId, Vec2(bb.max.x - framePadding.x * 2f - closeButtonSz, bb.min.y)))
                     closeButtonPressed = true
             }
+            popStyleVar()
 
             // Close with middle mouse button
             if (flags hasnt TabItemFlag.NoCloseWithMiddleMouseButton && isMouseClicked(2))
                 closeButtonPressed = true
 
-            textPixelClipBb.max.x -= closeButtonSz * 2f
+            textPixelClipBb.max.x -= closeButtonSz
         }
 
         // Label with ellipsis
@@ -1733,14 +1737,14 @@ interface imgui_internal {
     }
 
     /* Button to close a window    */
-    fun closeButton(id: ID, pos: Vec2, radius: Float): Boolean {
+    fun closeButton(id: ID, pos: Vec2): Boolean {
 
         val window = currentWindow
 
         /*  We intentionally allow interaction when clipped so that a mechanical Alt, Right, Validate sequence close
             a window. (this isn't the regular behavior of buttons, but it doesn't affect the user much because
             navigation tends to keep items visible).   */
-        val bb = Rect(pos - radius, pos + radius)
+        val bb = Rect(pos, pos + g.fontSize + style.framePadding * 2f)
         val isClipped = !itemAdd(bb, id)
 
         val (pressed, hovered, held) = buttonBehavior(bb, id)
@@ -1750,10 +1754,10 @@ interface imgui_internal {
         val center = Vec2(bb.center)
         if (hovered) {
             val col = if (held) Col.ButtonActive else Col.ButtonHovered
-            window.drawList.addCircleFilled(center, 2f max radius, col.u32, 9)
+            window.drawList.addCircleFilled(center, 2f max (g.fontSize * 0.5f + 1f), col.u32, 12)
         }
 
-        val crossExtent = (radius * 0.7071f) - 1f
+        val crossExtent = g.fontSize * 0.5f * 0.7071f - 1f
         val crossCol = Col.Text.u32
         center -= 0.5f
         window.drawList.addLine(center + crossExtent, center - crossExtent, crossCol, 1f)
@@ -1766,13 +1770,20 @@ interface imgui_internal {
         val window = g.currentWindow!!
         val bb = Rect(pos, pos + g.fontSize)
         itemAdd(bb, id)
-        return buttonBehavior(bb, id, Bf.None)[0].also {
-            renderNavHighlight(bb, id)
-            renderArrow(bb.min, if (window.collapsed) Dir.Right else Dir.Down, 1f)
-            // Switch to moving the window after mouse is moved beyond the initial drag threshold
-            if (isItemActive && isMouseDragging())
-                window.startMouseMoving()
-        }
+        val (pressed, hovered, held) = buttonBehavior(bb, id, Bf.None)
+
+        // Render
+        val col = if(held && hovered) Col.ButtonActive else if(hovered) Col.ButtonHovered else Col.Button
+        val center =  bb.center
+        if (hovered || held)
+            window.drawList.addCircleFilled(center/* + Vec2(0.0f, -0.5f)*/, g.fontSize * 0.5f + 1f, col.u32, 12)
+        renderArrow(bb.min, if (window.collapsed) Dir.Right else Dir.Down, 1f)
+
+        // Switch to moving the window after mouse is moved beyond the initial drag threshold
+        if (isItemActive && isMouseDragging())
+            window.startMouseMoving()
+
+        return pressed
     }
 
 

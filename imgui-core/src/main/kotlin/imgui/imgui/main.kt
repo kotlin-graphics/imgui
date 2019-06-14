@@ -795,8 +795,8 @@ interface imgui_main {
 
             // Close button
             if (pOpen != null) {
-                val rad = g.fontSize * 0.5f
-                if (closeButton(window.getId("#CLOSE"), Vec2(window.pos.x + window.size.x - style.framePadding.x - rad, window.pos.y + style.framePadding.y + rad), rad + 1))
+                val buttonSz = g.fontSize
+                if (closeButton(window.getId("#CLOSE"), Vec2(window.pos.x + window.size.x - style.framePadding.x * 2f - buttonSz, window.pos.y)))
                     pOpen.set(false)
             }
 
