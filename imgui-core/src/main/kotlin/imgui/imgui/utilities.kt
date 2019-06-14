@@ -89,7 +89,13 @@ interface imgui_itemWidgetsUtilities {
     /** Was the last item just made inactive (item was previously active).
      *  Useful for Undo/Redo patterns with widgets that requires continuous editing. */
     val isItemDeactivated: Boolean
-        get() = g.currentWindow!!.dc.let { g.activeIdPreviousFrame == it.lastItemId && g.activeIdPreviousFrame != 0 && g.activeId != it.lastItemId }
+        get() = g.currentWindow!!.run {
+            when {
+                dc.lastItemStatusFlags has ItemStatusFlag.HasDeactivated ->
+                    dc.lastItemStatusFlags has ItemStatusFlag.Deactivated
+                else -> g.activeIdPreviousFrame == dc.lastItemId && g.activeIdPreviousFrame != 0 && g.activeId != dc.lastItemId
+            }
+        }
 
     /** Was the last item just made inactive and made a value change when it was active? (e.g. Slider/Drag moved).
      *  Useful for Undo/Redo patterns with widgets that requires continuous editing.

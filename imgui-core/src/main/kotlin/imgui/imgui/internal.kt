@@ -159,6 +159,7 @@ interface imgui_internal {
         g.activeIdBlockNavInputFlags = 0
         g.activeIdAllowOverlap = false
         g.activeIdWindow = window
+        g.activeIdHasBeenEditedThisFrame = false
         if (id != 0) {
             g.activeIdIsAlive = id
             g.activeIdSource = when (id) {
@@ -217,6 +218,7 @@ interface imgui_internal {
             but still need need to fill the data.         */
         assert(g.activeId == id || g.activeId == 0 || g.dragDropActive)
         //IM_ASSERT(g.CurrentWindow->DC.LastItemId == id)
+        g.activeIdHasBeenEditedThisFrame = true
         g.activeIdHasBeenEditedBefore = true
         g.currentWindow!!.dc.apply { lastItemStatusFlags = lastItemStatusFlags or ItemStatusFlag.Edited }
     }
