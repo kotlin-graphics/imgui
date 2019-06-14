@@ -374,13 +374,14 @@ class FontAtlas {
 
 
     //-------------------------------------------
-    // Custom Rectangles/Glyphs API
+    // [BETA] Custom Rectangles/Glyphs API
     //-------------------------------------------
 
-    /** You can request arbitrary rectangles to be packed into the atlas, for your own purposes. After calling build(),
-     *  you can query the rectangle position and render your pixels.
+    /** You can request arbitrary rectangles to be packed into the atlas, for your own purposes.
+     *  After calling Build(), you can query the rectangle position and render your pixels.
      *  You can also request your rectangles to be mapped as font glyph (given a font + Unicode point),
-     *  so you can render e.g. custom colorful icons and use them as regular glyphs.    */
+     *  so you can render e.g. custom colorful icons and use them as regular glyphs.
+     *  Read misc/fonts/README.txt for more details about using colorful icons.    */
     class CustomRect {
 
         /** Input, User ID. Use <0x10000 to map into a font glyph, >=0x10000 for other/internal/custom texture data.   */
