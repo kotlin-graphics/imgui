@@ -35,6 +35,7 @@ import imgui.ImGui.selectable
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setTooltip
+import imgui.ImGui.shrinkWidths
 import imgui.ImGui.style
 import imgui.ImGui.tabItemBackground
 import imgui.ImGui.tabItemCalcSize
@@ -481,7 +482,7 @@ class NextItemData {
     }
 }
 
-class TabBarSortItem(var index: Int, var width: Float)
+class ShrinkWidthItem(var index: Int, var width: Float)
 
 class TabBarRef {
     // Either field can be set, not both. Dock node tab bars are loose while BeginTabBar() ones are in a pool.
@@ -1573,9 +1574,8 @@ class TabBar {
                 scrollTrackSelectedTabID = tabToSelect.id
             }
 
-        val widthSortBuffer = g.tabSortByWidthBuffer
-
         // Compute ideal widths
+        g.shrinkWidthBuffer.clear() // it will automatically resized in the following for loop
         var widthTotalContents = 0f
         var mostRecentlySelectedTab: TabItem? = null
         var foundSelectedTabID = false
@@ -1596,7 +1596,7 @@ class TabBar {
             widthTotalContents += (if (tabN > 0) style.itemInnerSpacing.x else 0f) + tab.widthContents
 
             // Store data so we can build an array sorted by width if we need to shrink tabs down
-            widthSortBuffer += TabBarSortItem(tabN, tab.widthContents)
+            g.shrinkWidthBuffer += ShrinkWidthItem(tabN, tab.widthContents)
         }
 
         // Compute width
@@ -1604,23 +1604,9 @@ class TabBar {
         var widthExcess = if (widthAvail < widthTotalContents) widthTotalContents - widthAvail else 0f
         if (widthExcess > 0f && flags has TabBarFlag.FittingPolicyResizeDown) {
             // If we don't have enough room, resize down the largest tabs first
-            if (tabs.size > 1)
-                widthSortBuffer.sortWith(compareBy(TabBarSortItem::width, TabBarSortItem::index))
-            var tabCountSameWidth = 1
-            while (widthExcess > 0f && tabCountSameWidth < tabs.size) {
-                while (tabCountSameWidth < tabs.size && widthSortBuffer[0].width == widthSortBuffer[tabCountSameWidth].width)
-                    tabCountSameWidth++
-                val widthToRemovePerTabMax = when {
-                    tabCountSameWidth < tabs.size -> widthSortBuffer[0].width - widthSortBuffer[tabCountSameWidth].width
-                    else -> widthSortBuffer[0].width - 1f
-                }
-                val widthToRemovePerTab = (widthExcess / tabCountSameWidth) min widthToRemovePerTabMax
-                for (tabN in 0 until tabCountSameWidth)
-                    widthSortBuffer[tabN].width -= widthToRemovePerTab
-                widthExcess -= widthToRemovePerTab * tabCountSameWidth
-            }
+            shrinkWidths(g.shrinkWidthBuffer, widthExcess)
             for (tabN in tabs.indices)
-                tabs[widthSortBuffer[tabN].index].width = widthSortBuffer[tabN].width.i.f
+                tabs[g.shrinkWidthBuffer[tabN].index].width = g.shrinkWidthBuffer[tabN].width.i.f
         } else {
             val tabMaxWidth = calcMaxTabWidth()
             for (tab in tabs)

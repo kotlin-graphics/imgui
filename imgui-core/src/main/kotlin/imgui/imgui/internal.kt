@@ -72,6 +72,7 @@ import unsigned.Ushort
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.regex.Pattern
+import kotlin.Comparator
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -386,7 +387,7 @@ interface imgui_internal {
     fun calcItemSize(size: Vec2, defaultW: Float, defaultH: Float): Vec2 {
         val window = g.currentWindow!!
 
-        val regionMax = if (size anyLessThan 0f) contentRegionMaxScreen else Vec2()
+        val regionMax = if (size anyLessThan 0f) workRectMax else Vec2()
 
         if (size.x == 0f)
             size.x = defaultW
@@ -408,7 +409,7 @@ interface imgui_internal {
         val window = g.currentWindow!!
         var wrapPosX = wrapPosX_
         if (wrapPosX == 0f)
-            wrapPosX = contentRegionMaxScreen.x
+            wrapPosX = workRectMax.x
         else if (wrapPosX > 0f)
             wrapPosX += window.pos.x - window.scroll.x // wrap_pos_x is provided is window local space
 
@@ -446,7 +447,7 @@ interface imgui_internal {
     fun isItemToggledSelection() = g.currentWindow!!.dc.lastItemStatusFlags has ItemStatusFlag.ToggledSelection
 
     /** [Internal] Absolute coordinate. Saner. This is not exposed until we finishing refactoring work rect features. */
-    val contentRegionMaxScreen: Vec2
+    val workRectMax: Vec2
         get() {
             val window = g.currentWindow!!
             val mx = Vec2(window.contentsRegionRect.max)
@@ -455,6 +456,27 @@ interface imgui_internal {
             }
             return mx
         }
+
+    /** Shrink excess width from a set of item, by removing width from the larger items first. */
+    fun shrinkWidths(items: ArrayList<ShrinkWidthItem>, widthExcess_: Float) {
+        val count = items.size
+        if (count > 1)
+            items.sortWith(shrinkWidthItemComparer)
+        var countSameWidth = 1
+        var widthExcess = widthExcess_
+        while (widthExcess > 0f && countSameWidth < count) {
+            while (countSameWidth < count && items[0].width == items[countSameWidth].width)
+                countSameWidth++
+            val widthToRemovePerItemMax = when {
+                countSameWidth < count -> items[0].width - items[countSameWidth].width
+                else -> items[0].width - 1f
+            }
+            val widthToRemovePerItem = (widthExcess / countSameWidth) min widthToRemovePerItemMax
+            for (itemN in 0 until countSameWidth)
+                items[itemN].width -= widthToRemovePerItem
+            widthExcess -= widthToRemovePerItem * countSameWidth
+        }
+    }
 
     // Logging/Capture
 
@@ -2279,7 +2301,7 @@ interface imgui_internal {
         // We vertically grow up to current line height up the typical widget height.
         val textBaseOffsetY = glm.max(padding.y, window.dc.currLineTextBaseOffset) // Latch before ItemSize changes it
         val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
-        val frameBb = Rect(window.dc.cursorPos, Vec2(contentRegionMaxScreen.x, window.dc.cursorPos.y + frameHeight))
+        val frameBb = Rect(window.dc.cursorPos, Vec2(workRectMax.x, window.dc.cursorPos.y + frameHeight))
         if (displayFrame) {
             // Framed header expand a little outside the default padding
             frameBb.min.x -= (window.windowPadding.x * 0.5f).i.f - 1
@@ -3420,7 +3442,7 @@ interface imgui_internal {
         var dataBuf = data.format(dataType, format, 32)
         dataBuf = trimBlanks(dataBuf)
         g.currentWindow!!.dc.cursorPos put bb.min
-        val flags: InputTextFlags = Itf.AutoSelectAll or Itf.NoMarkEdited or when(dataType) {
+        val flags: InputTextFlags = Itf.AutoSelectAll or Itf.NoMarkEdited or when (dataType) {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
@@ -3429,7 +3451,7 @@ interface imgui_internal {
             assert(g.activeId == id) { "First frame we started displaying the InputText widget, we expect it to take the active id." }
             g.tempInputTextId = g.activeId
         }
-        if(valueChanged){
+        if (valueChanged) {
             valueChanged = dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, data)
             if (valueChanged)
                 markItemEdited(id)
@@ -3952,6 +3974,8 @@ interface imgui_internal {
             else -> glm.acos(x)
             //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
+
+        val shrinkWidthItemComparer: Comparator<ShrinkWidthItem> = compareBy(ShrinkWidthItem::width, ShrinkWidthItem::index)
     }
 }
 
