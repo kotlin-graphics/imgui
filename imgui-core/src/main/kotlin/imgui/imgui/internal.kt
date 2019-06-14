@@ -943,7 +943,7 @@ interface imgui_internal {
             dc.currentColumns = columns
 
             // Set state for first column
-            val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else innerClipRect.max.x - pos.x
+            val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else innerWorkRect.max.x - pos.x
             with(columns) {
                 offMinX = dc.indent - style.itemSpacing.x // Lock our horizontal range
                 offMaxX = max(contentRegionWidth - scroll.x, offMinX + 1f)
