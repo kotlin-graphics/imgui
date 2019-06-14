@@ -2409,6 +2409,8 @@ interface imgui_internal {
             renderFrame(frameBb.min, frameBb.max, col.u32, true, style.frameRounding)
             renderNavHighlight(frameBb, id, navHighlightFlags)
             renderArrow(frameBb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
+            if (flags has Tnf._ClipLabelForTrailingButton)
+                frameBb.max.x -= g.fontSize + style.framePadding.x
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
                     range to make sure the ## aren't stripped out here.                 */
