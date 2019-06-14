@@ -209,7 +209,7 @@ interface imgui_widgets_colorEditorPicker {
                     spacing()
                 }
                 val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef._InputMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
-                val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef.DisplayHSV or Cef._DisplayMask or Cef.NoLabel or Cef.AlphaPreviewHalf
+                val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._DisplayMask or Cef._DisplayMask or Cef.NoLabel or Cef.AlphaPreviewHalf
                 setNextItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
                 val p = g.colorPickerRef to FloatArray(4)
                 valueChanged = colorPicker4("##picker", col, pickerFlags, p) or valueChanged

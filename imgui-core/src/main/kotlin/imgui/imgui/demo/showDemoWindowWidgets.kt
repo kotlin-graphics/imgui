@@ -995,8 +995,8 @@ object showDemoWindowWidgets {
             text("HSV encoded colors")
             sameLine(); helpMarker("By default, colors are given to ColorEdit and ColorPicker in RGB, but ImGuiColorEditFlags_InputHSV allows you to store colors as HSV and pass them to ColorEdit and ColorPicker as HSV. This comes with the added benefit that you can manipulate hue values with the picker even when saturation or value are zero.")
             text("Color widget with InputHSV:")
-            colorEdit4("HSV shown as HSV##1", colorStoredAsHsv, Cef.DisplayRGB or Cef.InputHSV or Cef.Float)
-            colorEdit4("HSV shown as RGB##1", colorStoredAsHsv, Cef.DisplayHSV or Cef.InputHSV or Cef.Float)
+            colorEdit4("HSV shown as RGB##1", colorStoredAsHsv, Cef.DisplayRGB or Cef.InputHSV or Cef.Float)
+            colorEdit4("HSV shown as HSV##1", colorStoredAsHsv, Cef.DisplayHSV or Cef.InputHSV or Cef.Float)
             dragVec4("Raw HSV values", colorStoredAsHsv, 0.01f, 0f, 1f)
         }
 
