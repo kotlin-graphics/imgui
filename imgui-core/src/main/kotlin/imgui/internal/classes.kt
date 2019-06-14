@@ -615,9 +615,10 @@ class Window(var context: Context, var name: String) {
     var sizeFull = Vec2()
     /** Copy of SizeFull at the end of Begin. This is the reference value we'll use on the next frame to decide if we need scrollbars.  */
     var sizeFullAtLastBegin = Vec2()
-    /** Size of contents (== extents reach of the drawing cursor) from previous frame    */
+    /** Size of contents (== extents reach of the drawing cursor) from previous frame.
+     * FIXME: Include decoration, window title, border, menu, etc. Ideally should remove them from this value? */
     var sizeContents = Vec2()
-    /** Size of contents explicitly set by the user via SetNextWindowContentSize()  */
+    /** Size of contents explicitly set by the user via SetNextWindowContentSize(). EXCLUDE decorations. Making this not consistent with the above!  */
     var sizeContentsExplicit = Vec2()
     /** Window padding at the time of begin. */
     var windowPadding = Vec2()
@@ -711,8 +712,9 @@ class Window(var context: Context, var name: String) {
     var clipRect = Rect()
     /** == WindowRect just after setup in Begin(). == window->Rect() for root window. */
     var outerRectClipped = Rect()
-    /** == WindowRect just after setup in Begin(). == window->Rect() for root window. */
-    var innerMainRect = Rect()
+    /** == WindowRect just after setup in Begin(). == window->Rect() for root window.
+     *  Inner visible rectangle */
+    var innerVisibleRect = Rect()
     /** == InnerMainRect minus WindowPadding.x */
     var innerWorkRect = Rect()
     /** == InnerMainRect minus WindowPadding.x, clipped within viewport or parent clip rect. */

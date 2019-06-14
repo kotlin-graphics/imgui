@@ -415,7 +415,7 @@ interface imgui_windows {
                 // Inner rectangle
                 // We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
                 // Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.
-                innerMainRect.put(
+                innerVisibleRect.put(
                         titleBarRect.min.x + windowBorderSize,
                         titleBarRect.max.y + menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else windowBorderSize,
                         pos.x + size.x - max(scrollbarSizes.x, windowBorderSize),
@@ -435,10 +435,10 @@ interface imgui_windows {
                     This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
                     Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result. */
                 innerWorkRect.put(
-                        floor(0.5f + innerMainRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
-                        floor(0.5f + innerMainRect.min.y),
-                        floor(0.5f + innerMainRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
-                        floor(0.5f + innerMainRect.max.y))
+                        floor(0.5f + innerVisibleRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
+                        floor(0.5f + innerVisibleRect.min.y),
+                        floor(0.5f + innerVisibleRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
+                        floor(0.5f + innerVisibleRect.max.y))
                 innerWorkRectClipped put innerWorkRect
                 innerWorkRectClipped clipWithFull hostRect
             }
