@@ -213,15 +213,15 @@ enum class SelectableFlag(@JvmField val i: Int) {
 
     Disabled(1 shl 3),
     /** private  */
-    NoHoldingActiveID(1 shl 10),
+    NoHoldingActiveID(1 shl 20),
     /** private  */
-    PressedOnClick(1 shl 11),
+    PressedOnClick(1 shl 21),
     /** private  */
-    PressedOnRelease(1 shl 12),
+    PressedOnRelease(1 shl 22),
     /** private  */
-    DrawFillAvailWidth(1 shl 13),
+    DrawFillAvailWidth(1 shl 23),
 
-    AllowItemOverlap(1 shl 14);
+    AllowItemOverlap(1 shl 24);
 
     infix fun or(other: SelectableFlag): SelectableFlags = i or other.i
 }
@@ -264,10 +264,12 @@ enum class TabBarFlag(@JvmField val i: Int) {
     Reorderable(1 shl 0),
     /** Automatically select new tabs when they appear */
     AutoSelectNewTabs(1 shl 1),
+    /** Disable buttons to open the tab list popup */
     TabListPopupButton(1 shl 2),
     /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button.
      *  You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
     NoCloseWithMiddleMouseButton(1 shl 3),
+    /** Disable scrolling buttons (apply when fitting policy is ImGuiTabBarFlags_FittingPolicyScroll) */
     NoTabListScrollingButtons(1 shl 4),
     /** Disable tooltips when hovering a tab */
     NoTooltip(1 shl 5),
