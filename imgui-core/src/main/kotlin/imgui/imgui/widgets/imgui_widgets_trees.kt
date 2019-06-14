@@ -143,7 +143,10 @@ interface imgui_widgets_trees {
         val flags = flags_ or Tnf.CollapsingHeader or if (openPtr != null) Tnf.AllowItemOverlap else Tnf.None
         val isOpen = treeNodeBehavior(id, flags, label)
         if (openPtr != null) {
-            // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
+            /*  Create a small overlapping close button
+                FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
+                FIXME: CloseButton can overlap into text, need find a way to clip the text somehow.
+             */
             val buttonSize = g.fontSize
             val buttonPos = Vec2(min(window.dc.lastItemRect.max.x, window.clipRect.max.x) - style.framePadding.x * 2f - buttonSize, window.dc.lastItemRect.min.y)
             itemHoveredDataBackup {

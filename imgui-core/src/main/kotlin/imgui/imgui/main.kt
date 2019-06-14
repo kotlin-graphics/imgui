@@ -39,6 +39,7 @@ import imgui.ImGui.updateMouseMovingWindowNewFrame
 import imgui.imgui.imgui_windows.Companion.getWindowBgColorIdxFromFlags
 import imgui.internal.*
 import org.lwjgl.system.Platform
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
@@ -84,6 +85,7 @@ interface imgui_main {
         assert(style.curveTessellationTol > 0f) { "Invalid style setting!" }
         assert(style.alpha in 0f..1f) { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)!" }
         assert(style.windowMinSize allGreaterThanEqual 1) { "Invalid style setting." }
+        assert(style.windowMenuButtonPosition == Dir.Left || style.windowMenuButtonPosition == Dir.Right)
         for (n in 0 until Key.COUNT)
             assert(io.keyMap[n] >= -1 && io.keyMap[n] < io.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
 
@@ -778,27 +780,49 @@ interface imgui_main {
             }
         }
 
+        /** Render title text, collapse button, close button */
         fun renderWindowTitleBarContents(window: Window, titleBarRect: Rect, name: String, pOpen: KMutableProperty0<Boolean>?) {
 
             val flags = window.flags
 
-            // Close & collapse button are on layer 1 (same as menus) and don't default focus
+            val hasCloseButton = pOpen != null
+            val hasCollapseButton = flags hasnt Wf.NoCollapse
+
+            // Close & collapse button are on the Menu NavLayer and don't default focus (unless there's nothing else on that layer)
             val itemFlagsBackup = window.dc.itemFlags
             window.dc.itemFlags = window.dc.itemFlags or ItemFlag.NoNavDefaultFocus
             window.dc.navLayerCurrent = NavLayer.Menu
             window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu
 
-            // Collapse button
-            if (flags hasnt Wf.NoCollapse)
-                if (collapseButton(window.getId("#COLLAPSE"), window.pos))
-                    window.wantCollapseToggle = true // Defer collapsing to next frame as we are too far in the Begin() function
+            // Layout buttons
+            // FIXME: Would be nice to generalize the subtleties expressed here into reusable code.
+            var padL = style.framePadding.x
+            var padR = style.framePadding.x
+            val buttonSz = g.fontSize
+            val closeButtonPos = Vec2()
+            val collapseButtonPos = Vec2()
+            if (hasCloseButton)            {
+                padR += buttonSz
+                closeButtonPos.put(titleBarRect.max.x - padR - style.framePadding.x, titleBarRect.min.y)
+            }
+            if (hasCollapseButton && style.windowMenuButtonPosition == Dir.Right)            {
+                padR += buttonSz
+                collapseButtonPos.put(titleBarRect.max.x - padR - style.framePadding.x, titleBarRect.min.y)
+            }
+            if (hasCollapseButton && style.windowMenuButtonPosition == Dir.Left)            {
+                collapseButtonPos.put(titleBarRect.min.x + padL - style.framePadding.x, titleBarRect.min.y)
+                padL += buttonSz
+            }
+
+            // Collapse button (submitting first so it gets priority when choosing a navigation init fallback)
+            if (hasCollapseButton)
+                if (collapseButton(window.getId("#COLLAPSE"), collapseButtonPos))
+            window.wantCollapseToggle = true // Defer actual collapsing to next frame as we are too far in the Begin() function
 
             // Close button
-            if (pOpen != null) {
-                val buttonSz = g.fontSize
-                if (closeButton(window.getId("#CLOSE"), Vec2(window.pos.x + window.size.x - style.framePadding.x * 2f - buttonSz, window.pos.y)))
-                    pOpen.set(false)
-            }
+            if (hasCloseButton)
+                if (closeButton(window.getId("#CLOSE"), closeButtonPos))
+                    pOpen!!.set(false)
 
             window.dc.navLayerCurrent = NavLayer.Main
             window.dc.navLayerCurrentMask = 1 shl NavLayer.Main
@@ -809,27 +833,29 @@ interface imgui_main {
             val UNSAVED_DOCUMENT_MARKER = "*"
             val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, -1, false).x else 0f
             val textSize = calcTextSize(name, -1, true) + Vec2(markerSizeX, 0f)
-            val textR = Rect(titleBarRect)
-            val padLeft = when {
-                flags has Wf.NoCollapse -> style.framePadding.x
-                else -> style.framePadding.x + g.fontSize + style.itemInnerSpacing.x
+
+            // As a nice touch we try to ensure that centered title text doesn't get affected by visibility of Close/Collapse button,
+            // while uncentered title text will still reach edges correct.
+            if (padL > style.framePadding.x)
+                padL += style.itemInnerSpacing.x
+            if (padR > style.framePadding.x)
+                padR += style.itemInnerSpacing.x
+            if (style.windowTitleAlign.x > 0f && style.windowTitleAlign.x < 1f)            {
+                val centerness = saturate(1f - abs(style.windowTitleAlign.x - 0.5f) * 2f) // 0.0f on either edges, 1.0f on center
+                val padExtend = min(max(padL, padR), titleBarRect.width - padL - padR - textSize.x)
+                padL = padL max (padExtend * centerness)
+                padR = padR max (padExtend * centerness)
             }
-            var padRight = style.framePadding.x + when (pOpen) {
-                null -> 0f
-                else -> g.fontSize + style.itemInnerSpacing.x
-            }
-            if (style.windowTitleAlign.x > 0f)
-                padRight = lerp(padRight, padLeft, style.windowTitleAlign.x)
-            textR.min.x += padLeft
-            textR.max.x -= padRight
-            val clipRect = Rect(textR)
-            // Match the size of CloseButton()
-            clipRect.max.x = window.pos.x + window.size.x - (if (pOpen?.get() == true) titleBarRect.height - 3 else style.framePadding.x) // Match the size of CloseButton()
-            renderTextClipped(textR.min, textR.max, name, -1, textSize, style.windowTitleAlign, clipRect)
+
+            val layoutR = Rect(titleBarRect.min.x + padL, titleBarRect.min.y, titleBarRect.max.x - padR, titleBarRect.max.y)
+            val clipR = Rect(layoutR.min.x, layoutR.min.y, layoutR.max.x + style.itemInnerSpacing.x, layoutR.max.y)
+            //if (g.IO.KeyCtrl) window->DrawList->AddRect(layout_r.Min, layout_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
+            renderTextClipped(layoutR.min, layoutR.max, name, -1, textSize, style.windowTitleAlign, clipR)
+
             if (flags has Wf.UnsavedDocument) {
-                val markerPos = Vec2(max(textR.min.x, textR.min.x + (textR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, textR.min.y) + Vec2(2 - markerSizeX, 0f)
+                val markerPos = Vec2(max(layoutR.min.x, layoutR.min.x + (layoutR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, layoutR.min.y) + Vec2(2 - markerSizeX, 0f)
                 val off = Vec2(0f, (-g.fontSize * 0.25f).i.f)
-                renderTextClipped(markerPos + off, textR.max + off, UNSAVED_DOCUMENT_MARKER, -1, null, Vec2(0, style.windowTitleAlign.y), clipRect)
+                renderTextClipped(markerPos + off, layoutR.max + off, UNSAVED_DOCUMENT_MARKER, -1, null, Vec2(0, style.windowTitleAlign.y), clipR)
             }
         }
 
