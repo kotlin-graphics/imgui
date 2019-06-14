@@ -94,7 +94,7 @@ import imgui.WindowFlag as Wf
  */
 interface imgui_demoDebugInformations {
 
-    /** Create demo/test window.
+    /** Create Demo window.
      *  Demonstrate most Dear ImGui features (this is big function!)
      *  You may execute this function to experiment with the UI and understand what it does.
      *  You may then search for keywords in the code when you are interested by a specific feature. */
@@ -114,7 +114,7 @@ interface imgui_demoDebugInformations {
     // Access from ImGui Demo -> Help -> About
     //-----------------------------------------------------------------------------
 
-    /** create about window. display Dear ImGui version, credits and build/system information. */
+    /** create About window. display Dear ImGui version, credits and build/system information. */
     fun showAboutWindow(open: KMutableProperty0<Boolean>) {
 
         if (!begin("About Dear ImGui", open, Wf.AlwaysAutoResize.i)) {
@@ -179,7 +179,7 @@ interface imgui_demoDebugInformations {
         end()
     }
 
-    /** Create metrics/debug window. display Dear ImGui internals: draw commands (with individual draw calls and vertices),
+    /** Create Metrics/Debug window. display Dear ImGui internals: draw commands (with individual draw calls and vertices),
      *  window list, basic internal state, etc.    */
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 

@@ -447,7 +447,6 @@ interface imgui_windows {
 
             // Setup draw list and outer clipping rectangle
             window.drawList.clear()
-            window.drawList.flags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines.i else 0) or if (style.antiAliasedFill) Dlf.AntiAliasedFill.i else 0
             window.drawList.pushTextureId(g.font.containerAtlas.texId)
             pushClipRect(hostRect.min, hostRect.max, false)
 
