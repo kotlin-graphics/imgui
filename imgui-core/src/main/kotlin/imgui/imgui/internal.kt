@@ -3430,7 +3430,7 @@ interface imgui_internal {
             if (valueChanged)
                 markItemEdited(id)
         }
-        return false
+        return valueChanged
     }
 
     fun tempInputTextIsActive(id: ID): Boolean = g.activeId == id && g.tempInputTextId == id
