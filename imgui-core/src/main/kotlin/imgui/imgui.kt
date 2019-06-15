@@ -11,35 +11,44 @@ import kotlin.reflect.KProperty
 
 
 // Version
-val IMGUI_BUILD = 0
+const val IMGUI_BUILD = 0
 /** get the compiled version string e.g. "1.23" (essentially the compiled value for IMGUI_VERSION) */
-val IMGUI_VERSION = "1.71 WIP build: $IMGUI_BUILD"
+const val IMGUI_VERSION = "1.71 WIP build: $IMGUI_BUILD"
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-val IMGUI_VERSION_NUM = 17002
+const val IMGUI_VERSION_NUM = 17002
 
 
 // Helpers macros to generate 32-bits encoded colors
+@JvmField
 var USE_BGRA_PACKED_COLOR = false
 
-val COL32_R_SHIFT by lazy { if (USE_BGRA_PACKED_COLOR) 16 else 0 }
+@JvmField
+val COL32_R_SHIFT = lazy { if (USE_BGRA_PACKED_COLOR) 16 else 0 }.value
 val COL32_G_SHIFT = 8
-val COL32_B_SHIFT by lazy { if (USE_BGRA_PACKED_COLOR) 0 else 16 }
+@JvmField
+val COL32_B_SHIFT = lazy { if (USE_BGRA_PACKED_COLOR) 0 else 16 }.value
 val COL32_A_SHIFT = 24
+@JvmField
 val COL32_A_MASK = 0xFF000000.i
 
 fun COL32(r: Int, g: Int, b: Int, a: Int) = (a shl COL32_A_SHIFT) or (b shl COL32_B_SHIFT) or (g shl COL32_G_SHIFT) or (r shl COL32_R_SHIFT)
+@JvmField
 val COL32_WHITE = COL32(255, 255, 255, 255) // Opaque white = 0xFFFFFFFF
+@JvmField
 val COL32_BLACK = COL32(0, 0, 0, 255)       // Opaque black
+@JvmField
 val COL32_BLACK_TRANS = COL32(0, 0, 0, 0)   // Transparent black = 0x00000000
 
-val MOUSE_INVALID = -256000f
+const val MOUSE_INVALID = -256000f
 
 // Debug options
 
 /** Display navigation scoring preview when hovering items. Display last moving direction matches when holding CTRL */
+@JvmField
 val IMGUI_DEBUG_NAV_SCORING = false
 /** Display the reference navigation rectangle for each window */
+@JvmField
 val IMGUI_DEBUG_NAV_RECTS = false
 
 // When using CTRL+TAB (or Gamepad Square+L/R) we delay the visual a little in order to reduce visual noise doing a fast switch.
@@ -57,10 +66,15 @@ const val WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS = 4f
 const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f
 
 // Test engine hooks (imgui-test)
+@JvmField
 var IMGUI_ENABLE_TEST_ENGINE = false
+@JvmField
 var ImGuiTestEngineHook_PreNewFrame: () -> Unit = {}
+@JvmField
 var ImGuiTestEngineHook_PostNewFrame: () -> Unit = {}
+@JvmField
 var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID) -> Unit = { _, _ -> }
+@JvmField
 var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: ItemStatusFlags) -> Unit = { _, _, _ -> }
 
 object ImGui :
@@ -133,14 +147,15 @@ object ImGui :
 
         imgui_internal
 
-var ptrIndices = 0
-var ptrId = Array(512) { it } // it was: java.lang.Byte.valueOf(it.b)
+internal var ptrIndices = 0
+internal var ptrId = Array(512) { it } // it was: java.lang.Byte.valueOf(it.b)
 
 // TODO get rid of local top value KMutableProperty in favor of the better with*{} solution
 
 
-val NUL = '\u0000'
+const val NUL = '\u0000'
 
+@JvmField
 var DEBUG = true
 
 operator fun StringBuilder.plusAssign(string: String) {
@@ -208,12 +223,6 @@ typealias SizeCallback = (SizeCallbackData) -> Unit
 
 typealias TextEditCallbackData = InputTextCallbackData
 
-// dummy main
-fun main(args: Array<String>) {
-}
-
-var stop = false
-
 inline operator fun <R> KMutableProperty0<R>.setValue(host: Any?, property: KProperty<*>, value: R) = set(value)
 inline operator fun <R> KMutableProperty0<R>.getValue(host: Any?, property: KProperty<*>): R = get()
 
@@ -236,4 +245,4 @@ infix fun CharArray.cmp(other: CharArray): Boolean {
     return true
 }
 
-typealias stak = Stack
+internal typealias stak = Stack

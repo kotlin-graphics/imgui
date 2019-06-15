@@ -1,5 +1,5 @@
 @file:Suppress("UNCHECKED_CAST")
-
+@file:JvmName("ImGuiStaticFunctions")
 package imgui
 
 import gli_.has
