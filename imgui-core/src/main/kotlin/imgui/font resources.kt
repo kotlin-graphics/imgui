@@ -17,7 +17,7 @@ object glyphRanges {
     /** Default + Korean characters */
     val korean: Array<IntRange>
         get() = arrayOf(
-                IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+                *default, // Basic Latin + Latin Supplement
                 IntRange(0x3131, 0x3163), // Korean alphabets
                 IntRange(0xAC00, 0xD79D)) // Korean characters
 
@@ -65,7 +65,7 @@ object glyphRanges {
 
         // not zero-terminated
         val baseRanges = arrayOf(
-                IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+                *default, // Basic Latin + Latin Supplement
                 IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
                 IntRange(0xFF00, 0xFFEF)) // Half-width characters
@@ -80,7 +80,7 @@ object glyphRanges {
     /** Default + Half-Width + Japanese Hiragana/Katakana + full set of about 21000 CJK Unified Ideographs */
     val chineseFull: Array<IntRange>
         get() = arrayOf(
-                IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+                *default, // Basic Latin + Latin Supplement
                 IntRange(0x2000, 0x206F), // General Punctuation
                 IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
@@ -88,7 +88,7 @@ object glyphRanges {
                 IntRange(0x4e00, 0x9FAF)) // CJK Ideograms
 
     /** Default + Half-Width + Japanese Hiragana/Katakana + set of 2500 CJK Unified Ideographs for common simplified Chinese */
-    val chinesSimplifiedCommon: Array<IntRange> by lazy {
+    val chineseSimplifiedCommon: Array<IntRange> by lazy {
 
         /*  Store 2500 regularly used characters for Simplified Chinese.
             Sourced from https://zh.wiktionary.org/wiki/%E9%99%84%E5%BD%95:%E7%8E%B0%E4%BB%A3%E6%B1%89%E8%AF%AD%E5%B8%B8%E7%94%A8%E5%AD%97%E8%A1%A8
@@ -139,7 +139,7 @@ object glyphRanges {
 
         // not zero-terminated
         val baseRanges = arrayOf(
-                IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+                *default, // Basic Latin + Latin Supplement
                 IntRange(0x2000, 0x206F), // General Punctuation
                 IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
@@ -155,7 +155,7 @@ object glyphRanges {
     /** Default + about 400 Cyrillic characters */
     val cyrillic: Array<IntRange>
         get() = arrayOf(
-                IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+                *default, // Basic Latin + Latin Supplement
                 IntRange(0x0400, 0x052F), // Cyrillic + Cyrillic Supplement
                 IntRange(0x2DE0, 0x2DFF), // Cyrillic Extended-A
                 IntRange(0xA640, 0xA69F)) // Cyrillic Extended-B
@@ -163,13 +163,13 @@ object glyphRanges {
     /** Default + Thai characters   */
     val thai: Array<IntRange>
         get() = arrayOf(
-                IntRange(0x0020, 0x00FF), // Basic Latin
+                *default, // Basic Latin
                 IntRange(0x2010, 0x205E), // Punctuations
                 IntRange(0x0E00, 0x0E7F)) // Thai
 
     val vietnamese: Array<IntRange>
         get() = arrayOf(
-                IntRange(0x0020, 0x00FF), // Basic Latin
+                *default, // Basic Latin
                 IntRange(0x0102, 0x0103),
                 IntRange(0x0110, 0x0111),
                 IntRange(0x0128, 0x0129),
