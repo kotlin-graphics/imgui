@@ -45,7 +45,6 @@ private class ImGuiOpenGL3 {
 //    val rmt = MemoryUtil.memAllocPointer(1).also { Remotery.rmt_CreateGlobalInstance(it) }
 
     init {
-
         //Configuration.DEBUG_MEMORY_ALLOCATOR.set(true) // for native leaks
 
         // Setup window

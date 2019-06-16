@@ -54,12 +54,12 @@ import imgui.internal.DrawListFlag as Dlf
 interface imgui_main {
 
     /** access the IO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags) */
-    val io
+    val io: IO
         get() = gImGui?.io
                 ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
 
     /** access the Style structure (colors, sizes). Always use PushStyleCol(), PushStyleVar() to modify style mid-frame. */
-    val style
+    val style: Style
         get() = gImGui?.style
                 ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
 
@@ -129,8 +129,8 @@ interface imgui_main {
         assert(g.font.isLoaded)
         g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
-        g.drawListSharedData.initialFlags = (if(style.antiAliasedLines) Dlf.AntiAliasedLines else Dlf.None) or
-            if(style.antiAliasedFill) Dlf.AntiAliasedFill else Dlf.None
+        g.drawListSharedData.initialFlags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines else Dlf.None) or
+                if (style.antiAliasedFill) Dlf.AntiAliasedFill else Dlf.None
 
         g.backgroundDrawList.clear()
         g.backgroundDrawList.pushTextureId(io.fonts.texId)
@@ -295,7 +295,7 @@ interface imgui_main {
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos.x == Float.MAX_VALUE || (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f)) {
-            if(DEBUG)
+            if (DEBUG)
                 println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
 //            io.imeSetInputScreenPosFn!!(g.platformImePos.x.i, g.platformImePos.y.i)
             io.imeSetInputScreenPosFn!!(1000, 1000)
@@ -425,7 +425,11 @@ interface imgui_main {
 
     /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
      *  ::newFrame()   */
-    val drawData get() = if (Platform.get() == Platform.MACOSX) g.drawData.clone().takeIf { it.valid } else g.drawData.takeIf { it.valid }
+    val drawData: DrawData?
+        get() = when (Platform.get()) {
+            Platform.MACOSX -> g.drawData.clone()
+            else -> g.drawData
+        }.takeIf { it.valid }
 
     companion object {
 
@@ -801,15 +805,15 @@ interface imgui_main {
             val buttonSz = g.fontSize
             val closeButtonPos = Vec2()
             val collapseButtonPos = Vec2()
-            if (hasCloseButton)            {
+            if (hasCloseButton) {
                 padR += buttonSz
                 closeButtonPos.put(titleBarRect.max.x - padR - style.framePadding.x, titleBarRect.min.y)
             }
-            if (hasCollapseButton && style.windowMenuButtonPosition == Dir.Right)            {
+            if (hasCollapseButton && style.windowMenuButtonPosition == Dir.Right) {
                 padR += buttonSz
                 collapseButtonPos.put(titleBarRect.max.x - padR - style.framePadding.x, titleBarRect.min.y)
             }
-            if (hasCollapseButton && style.windowMenuButtonPosition == Dir.Left)            {
+            if (hasCollapseButton && style.windowMenuButtonPosition == Dir.Left) {
                 collapseButtonPos.put(titleBarRect.min.x + padL - style.framePadding.x, titleBarRect.min.y)
                 padL += buttonSz
             }
@@ -817,7 +821,7 @@ interface imgui_main {
             // Collapse button (submitting first so it gets priority when choosing a navigation init fallback)
             if (hasCollapseButton)
                 if (collapseButton(window.getId("#COLLAPSE"), collapseButtonPos))
-            window.wantCollapseToggle = true // Defer actual collapsing to next frame as we are too far in the Begin() function
+                    window.wantCollapseToggle = true // Defer actual collapsing to next frame as we are too far in the Begin() function
 
             // Close button
             if (hasCloseButton)
@@ -840,7 +844,7 @@ interface imgui_main {
                 padL += style.itemInnerSpacing.x
             if (padR > style.framePadding.x)
                 padR += style.itemInnerSpacing.x
-            if (style.windowTitleAlign.x > 0f && style.windowTitleAlign.x < 1f)            {
+            if (style.windowTitleAlign.x > 0f && style.windowTitleAlign.x < 1f) {
                 val centerness = saturate(1f - abs(style.windowTitleAlign.x - 0.5f) * 2f) // 0.0f on either edges, 1.0f on center
                 val padExtend = min(max(padL, padR), titleBarRect.width - padL - padR - textSize.x)
                 padL = padL max (padExtend * centerness)

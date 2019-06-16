@@ -7,7 +7,7 @@ import imgui.imgui.Context;
 import imgui.impl.ImplGL3;
 import imgui.impl.ImplGlfw;
 
-import static imgui.ImguiKt.getDEBUG;
+import static imgui.ImguiKt.DEBUG;
 import static imgui.dsl_.button;
 import static imgui.impl.CommonGLKt.setGlslVersion;
 
@@ -56,7 +56,7 @@ public class OpenGL3 {
         // Setup window
         GLFW.glfwSetErrorCallback((error, description) -> System.out.println("Glfw Error " + error + ": " + description));
         glfw.init();
-        windowHint.setDebug(getDEBUG());
+        windowHint.setDebug(DEBUG);
 
         // Decide GL+GLSL versions
         if (Platform.get() == Platform.MACOSX) { // GL 3.2 + GLSL 150
