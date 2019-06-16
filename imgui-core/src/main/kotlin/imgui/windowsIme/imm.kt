@@ -2,12 +2,10 @@ package imgui.windowsIme
 
 import glm_.BYTES
 import glm_.L
-import org.lwjgl.system.JNI
-import org.lwjgl.system.Library
-import org.lwjgl.system.MemoryUtil
+import imgui.MINECRAFT_BEHAVIORS
+import org.lwjgl.system.*
 import org.lwjgl.system.MemoryUtil.memGetLong
 import org.lwjgl.system.MemoryUtil.memPutLong
-import org.lwjgl.system.SharedLibrary
 import uno.glfw.HWND
 import java.nio.ByteBuffer
 
@@ -20,7 +18,7 @@ object imm {
     val ImmSetCompositionWindow = lib.getFunctionAddress("ImmSetCompositionWindow")
     val ImmReleaseContext = lib.getFunctionAddress("ImmReleaseContext")
 
-    fun getContext(hwnd: HWND) = JNI.callPP(hwnd.L, ImmGetContext)
+    fun getContext(hwnd: HWND) = if(Platform.get() == Platform.WINDOWS && MINECRAFT_BEHAVIORS) 0 else JNI.callPP(hwnd.L, ImmGetContext)
     fun setCompositionWindow(himc: HIMC, compForm: COMPOSITIONFORM) = JNI.callPPI(himc.L, compForm.adr, ImmSetCompositionWindow)
     fun releaseContext(hwnd: HWND, himc: HIMC) = JNI.callPPI(hwnd.L, himc.L, ImmReleaseContext)
 

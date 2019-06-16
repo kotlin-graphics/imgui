@@ -77,6 +77,9 @@ var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID) -> Unit = { _, _ -> }
 @JvmField
 var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: ItemStatusFlags) -> Unit = { _, _, _ -> }
 
+@JvmField
+var MINECRAFT_BEHAVIORS = false
+
 object ImGui :
 
         // imgui_context doesnt exist, only Context class
