@@ -211,7 +211,7 @@ enum class SelectableFlag(@JvmField val i: Int) {
     SpanAllColumns(1 shl 1),
     /** Generate press events on double clicks too  */
     AllowDoubleClick(1 shl 2),
-
+    /** Cannot be selected, display grayed out text */
     Disabled(1 shl 3),
     /** private  */
     NoHoldingActiveID(1 shl 20),

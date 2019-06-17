@@ -1604,8 +1604,9 @@ class TabBar {
         }
 
         // Compute width
-        val widthAvail = barRect.width
-        var widthExcess = if (widthAvail < widthTotalContents) widthTotalContents - widthAvail else 0f
+        val initialOffsetX = 0f // g.Style.ItemInnerSpacing.x;
+        val widthAvail = (barRect.width - initialOffsetX) max 0f
+        val widthExcess = if (widthAvail < widthTotalContents) widthTotalContents - widthAvail else 0f
         if (widthExcess > 0f && flags has TabBarFlag.FittingPolicyResizeDown) {
             // If we don't have enough room, resize down the largest tabs first
             shrinkWidths(g.shrinkWidthBuffer, widthExcess)
@@ -1618,7 +1619,8 @@ class TabBar {
         }
 
         // Layout all active tabs
-        var offsetX = 0f
+        var offsetX = initialOffsetX
+        offsetNextTab = offsetX // This is used by non-reorderable tab bar where the submission order is always honored.
         for (tab in tabs) {
             tab.offset = offsetX
             if (scrollTrackSelectedTabID == 0 && g.navJustMovedToId == tab.id)
@@ -1626,7 +1628,6 @@ class TabBar {
             offsetX += tab.width + style.itemInnerSpacing.x
         }
         offsetMax = (offsetX - style.itemInnerSpacing.x) max 0f
-        offsetNextTab = 0f
 
         // Horizontal scrolling buttons
         val scrollingButtons = offsetMax > barRect.width && tabs.size > 1 && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll
