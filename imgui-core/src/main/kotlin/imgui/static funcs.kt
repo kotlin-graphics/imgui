@@ -139,10 +139,10 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
                 size put floor(s.size)
         }
     }
-    sizeFullAtLastBegin put floor(size)
-    sizeFull put sizeFullAtLastBegin
+    sizeFull put floor(size)
     this.size put sizeFull
     dc.cursorMaxPos put pos // So first call to calcSizeContents() doesn't return crazy values
+    dc.cursorStartPos put pos
 
     if (flags has Wf.AlwaysAutoResize) {
         autoFitFrames put 2
@@ -216,7 +216,7 @@ fun checkStacksSize(window: Window, write: Boolean) {
 fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean): Vec2 {  // TODO -> window class?
     val scroll = Vec2(window.scroll)
     if (window.scrollTarget.x < Float.MAX_VALUE)
-        scroll.x = window.scrollTarget.x - window.scrollTargetCenterRatio.x * (window.sizeFull.x - window.scrollbarSizes.x)
+        scroll.x = window.scrollTarget.x - window.scrollTargetCenterRatio.x * window.innerRect.width
     if (window.scrollTarget.y < Float.MAX_VALUE) {
         /*  'snap_on_edges' allows for a discontinuity at the edge of scrolling limits to take account of WindowPadding
             so that scrolling to make the last item visible scroll far enough to see the padding.         */
@@ -224,9 +224,9 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean)
         var targetY = window.scrollTarget.y
         if (snapOnEdges && crY <= 0f && targetY <= window.windowPadding.y)
             targetY = 0f
-        if (snapOnEdges && crY >= 1f && targetY >= window.sizeContents.y - window.windowPadding.y + style.itemSpacing.y)
-            targetY = window.sizeContents.y
-        scroll.y = targetY - (1f - crY) * (window.titleBarHeight + window.menuBarHeight) - crY * (window.sizeFull.y - window.scrollbarSizes.y)
+        if (snapOnEdges && crY >= 1f && targetY >= window.sizeContents.y + window.windowPadding.y + style.itemSpacing.y)
+            targetY = window.sizeContents.y  + window.windowPadding.y * 2f
+        scroll.y = targetY - crY * window.innerRect.height
     }
     scroll maxAssign 0f
     if (!window.collapsed && !window.skipItems) {

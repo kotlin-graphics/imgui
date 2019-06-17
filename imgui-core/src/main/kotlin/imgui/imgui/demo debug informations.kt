@@ -423,7 +423,10 @@ interface imgui_demoDebugInformations {
                 RT.InnerRect -> window.innerRect
                 RT.InnerClipRect -> window.innerClipRect
                 RT.WorkRect -> window.workRect
-                RT.Contents -> Rect(window.pos, window.pos + window.sizeContents)
+                RT.Contents -> {
+                    val min = window.innerRect.min - window.scroll + window.windowPadding
+                    Rect(min, min + window.sizeContents)
+                }
                 RT.ContentsRegionRect -> window.contentsRegionRect
                 else -> error("invalid")
             }

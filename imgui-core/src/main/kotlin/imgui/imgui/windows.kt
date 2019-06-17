@@ -164,12 +164,9 @@ interface imgui_windows {
             windowSizeYsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.y > 0f
             window.setSize(g.nextWindowData.sizeVal, g.nextWindowData.sizeCond)
         }
-        if (g.nextWindowData.flags has NextWindowDataFlag.HasContentSize) {
-            // Adjust passed "client size" to become a "window size"
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasContentSize)
             window.sizeContentsExplicit put g.nextWindowData.contentSizeVal
-            if (window.sizeContentsExplicit.y != 0f)
-                window.sizeContentsExplicit.y += window.titleBarHeight + window.menuBarHeight
-        } else if (firstBeginOfTheFrame)
+        else if (firstBeginOfTheFrame)
             window.sizeContentsExplicit put 0f
         if (g.nextWindowData.flags has NextWindowDataFlag.HasCollapsed)
             window.setCollapsed(g.nextWindowData.collapsedVal, g.nextWindowData.collapsedCond)
@@ -233,9 +230,11 @@ interface imgui_windows {
                 }
             }
 
+            // FIXME-VIEWPORT: In the docking/viewport branch, this is the point where we select the current viewport (which may affect the style)
             setCurrentWindow(window)
 
-            // Lock border size and padding for the frame (so that altering them doesn't cause inconsistencies)
+            // LOCK BORDER SIZE AND PADDING FOR THE FRAME (so that altering them doesn't cause inconsistencies)
+
             window.windowBorderSize = when {
                 flags has Wf.ChildWindow -> style.childBorderSize
                 flags has (Wf.Popup or Wf.Tooltip) && flags hasnt Wf.Modal -> style.popupBorderSize
@@ -306,13 +305,14 @@ interface imgui_windows {
 
             // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size).
             if (!window.collapsed) {
-                // When reading the current size we need to read it after size constraints have been applied
-                val sizeXforScrollbars = if (sizeFullModified.x != Float.MAX_VALUE) window.sizeFull.x else window.sizeFullAtLastBegin.x
-                val sizeYforScrollbars = if (sizeFullModified.y != Float.MAX_VALUE) window.sizeFull.y else window.sizeFullAtLastBegin.y
-                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (window.sizeContents.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar)
-                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((window.sizeContents.x > sizeXforScrollbars - if (window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+                // When reading the current size we need to read it after size constraints have been applied.
+                // When we use InnerRect here we are intentionally reading last frame size, same for ScrollbarSizes values before we set them again.
+                val sizeXforScrollbars = if(sizeFullModified.x != Float.MAX_VALUE) window.sizeFull.x else window.innerRect.width + window.scrollbarSizes.x
+                val sizeYforScrollbars = if(sizeFullModified.y != Float.MAX_VALUE) window.sizeFull.y - window.titleBarHeight - window.menuBarHeight else window.innerRect.height + window.scrollbarSizes.y
+                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || ((window.sizeContents.y + window.windowPadding.y * 2f > sizeYforScrollbars) && flags hasnt Wf.NoScrollbar)
+                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((window.sizeContents.x + window.windowPadding.x * 2f > sizeXforScrollbars - if(window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar) && flags has Wf.HorizontalScrollbar
                 if (window.scrollbar.x && !window.scrollbar.y)
-                    window.scrollbar.y = window.sizeContents.y > sizeYforScrollbars - style.scrollbarSize && flags hasnt Wf.NoScrollbar
+                    window.scrollbar.y = window.sizeContents.y + window.windowPadding.y * 2f > sizeYforScrollbars && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f, if (window.scrollbar.x) style.scrollbarSize else 0f)
             }
 
@@ -398,9 +398,6 @@ interface imgui_windows {
             val titleBarRect = window.titleBarRect()
             val hostRect: Rect
             window.apply {
-                // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars.
-                sizeFullAtLastBegin put sizeFull
-
                 // UPDATE RECTANGLES (1- THOSE NOT AFFECTED BY SCROLLING)
                 // Update various regions. Variables they depends on should be set above in this function.
                 // We set this up after processing the resize grip so that our rectangles doesn't lag by a frame.
@@ -488,9 +485,6 @@ interface imgui_windows {
                 }
                 window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha), rounding, 0.inv(), 3f)
             }
-
-            // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars.
-            window.sizeFullAtLastBegin put window.sizeFull
 
             with(window) {
 

@@ -615,12 +615,9 @@ class Window(var context: Context, var name: String) {
     var size = Vec2()
     /** Size when non collapsed */
     var sizeFull = Vec2()
-    /** Copy of SizeFull at the end of Begin. This is the reference value we'll use on the next frame to decide if we need scrollbars.  */
-    var sizeFullAtLastBegin = Vec2()
-    /** Size of contents (== extents reach of the drawing cursor) from previous frame.
-     * FIXME: Include decoration, window title, border, menu, etc. Ideally should remove them from this value? */
+    /** Size of contents/scrollable client area (calculated from the extents reach of the cursor) from previous frame. Does not include window decoration or window padding. */
     var sizeContents = Vec2()
-    /** Size of contents explicitly set by the user via SetNextWindowContentSize(). EXCLUDE decorations. Making this not consistent with the above!  */
+    /** Size of contents/scrollable client area explicitly request by the user via SetNextWindowContentSize(). */
     var sizeContentsExplicit = Vec2()
     /** Window padding at the time of begin. */
     var windowPadding = Vec2()
@@ -843,11 +840,10 @@ class Window(var context: Context, var name: String) {
         // Set
         val oldPos = Vec2(this.pos)
         this.pos put floor(pos)
-        // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least
-        // offset the cursor
-        val offset = pos - oldPos
-        dc.cursorPos plusAssign offset
-        dc.cursorMaxPos plusAssign offset // And more importantly we need to adjust this so size calculation doesn't get affected.
+        val offset = this.pos - oldPos
+        dc.cursorPos plusAssign offset         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least offset the cursor
+        dc.cursorMaxPos plusAssign offset      // And more importantly we need to offset CursorMaxPos/CursorStartPos this so SizeContents calculation doesn't get affected.
+        dc.cursorStartPos plusAssign offset
     }
 
     fun setSize(size: Vec2, cond: Cond = Cond.None) {
@@ -927,36 +923,42 @@ class Window(var context: Context, var name: String) {
         return newSize
     }
 
-    fun calcSizeAutoFit(sizeContents: Vec2) = when {
-        flags has Wf.Tooltip -> Vec2(sizeContents) // Tooltip always resize
-        else -> {
-            // Maximum window size is determined by the display size
-            val isPopup = flags has Wf.Popup
-            val isMenu = flags has Wf.ChildMenu
-            val sizeMin = Vec2(style.windowMinSize)
-            // Popups and menus bypass style.WindowMinSize by default, but we give then a non-zero minimum size to facilitate understanding problematic cases (e.g. empty popups)
-            if (isPopup || isMenu)
-                sizeMin minAssign 4f
-            val sizeAutoFit = glm.clamp(sizeContents, sizeMin, glm.max(sizeMin, Vec2(io.displaySize) - style.displaySafeAreaPadding * 2f))
+    fun calcSizeAutoFit(sizeContents: Vec2): Vec2 {
+        val sizeDecorations = Vec2(0f, titleBarHeight + menuBarHeight)
+        val sizePad = windowPadding * 2f
+        val sizeDesired = sizeContents + sizePad + sizeDecorations
+        return when {
+            flags has Wf.Tooltip -> sizeDesired // Tooltip always resize
+            else -> {
+                // Maximum window size is determined by the display size
+                val isPopup = flags has Wf.Popup
+                val isMenu = flags has Wf.ChildMenu
+                val sizeMin = Vec2(style.windowMinSize)
+                // Popups and menus bypass style.WindowMinSize by default, but we give then a non-zero minimum size to facilitate understanding problematic cases (e.g. empty popups)
+                if (isPopup || isMenu)
+                    sizeMin minAssign 4f
+                val sizeAutoFit = glm.clamp(sizeDesired, sizeMin, glm.max(sizeMin, Vec2(io.displaySize) - style.displaySafeAreaPadding * 2f))
 
-            // When the window cannot fit all contents (either because of constraints, either because screen is too small),
-            // we are growing the size on the other axis to compensate for expected scrollbar.
-            // FIXME: Might turn bigger than ViewportSize-WindowPadding.
-            val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
-            if (sizeAutoFitAfterConstraint.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
-                sizeAutoFit.y += style.scrollbarSize
-            if (sizeAutoFitAfterConstraint.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
-                sizeAutoFit.x += style.scrollbarSize
-            sizeAutoFit
+                // When the window cannot fit all contents (either because of constraints, either because screen is too small),
+                // we are growing the size on the other axis to compensate for expected scrollbar.
+                // FIXME: Might turn bigger than ViewportSize-WindowPadding.
+                val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
+                if (sizeAutoFitAfterConstraint.x - sizePad.x - sizeDecorations.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+                    sizeAutoFit.y += style.scrollbarSize
+                if (sizeAutoFitAfterConstraint.y - sizePad.y - sizeDecorations.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
+                    sizeAutoFit.x += style.scrollbarSize
+                sizeAutoFit
+            }
         }
     }
 
     /** ~GetWindowScrollMaxX */
     val scrollMaxX: Float
-        get() = max(0f, sizeContents.x - (sizeFull.x - scrollbarSizes.x))
+        get() = max(0f, sizeContents.x + (windowPadding.x * 2f - innerRect.width))
+
     /** ~GetWindowScrollMaxY */
     val scrollMaxY: Float
-        get() = max(0f, sizeContents.y - (sizeFull.y - scrollbarSizes.y))
+        get() = max(0f, sizeContents.y + (windowPadding.y * 2f - innerRect.height))
 
     /** AddWindowToDrawData */
     infix fun addToDrawData(outList: ArrayList<DrawList>) {
@@ -1046,18 +1048,12 @@ class Window(var context: Context, var name: String) {
 
     /** SetWindowScrollX */
     fun setScrollX(newScrollX: Float) {
-        dc.cursorMaxPos.x += scroll.x // SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need to apply our change to it.
         scroll.x = newScrollX
-        dc.cursorMaxPos.x -= scroll.x
     }
 
     /** SetWindowScrollY */
     fun setScrollY(newScrollY: Float) {
-        /*  SizeContents is generally computed based on CursorMaxPos which is affected by scroll position, so we need
-            to apply our change to it.         */
-        dc.cursorMaxPos.y += scroll.y
         scroll.y = newScrollY
-        dc.cursorMaxPos.y -= scroll.y
     }
 
     fun getAllowedExtentRect(): Rect {
@@ -1090,12 +1086,12 @@ class Window(var context: Context, var name: String) {
         }
     }
 
-    fun calcSizeContents() = when {
+    fun calcSizeContents(): Vec2 = when {
         collapsed && autoFitFrames allLessThanEqual 0 -> Vec2(sizeContents)
         hidden && hiddenFramesCannotSkipItems == 0 && hiddenFramesCanSkipItems > 0 -> Vec2(sizeContents)
         else -> Vec2(
-                (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - pos.x + scroll.x).i.f + windowPadding.x,
-                (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - pos.y + scroll.y).i.f + windowPadding.y)
+                (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - dc.cursorStartPos.x).i.f + windowPadding.x,
+                (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - dc.cursorStartPos.y).i.f + windowPadding.y)
     }
 
     fun findOrCreateColumns(id: ID): Columns {
