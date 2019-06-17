@@ -403,7 +403,7 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
 /** Scroll to keep newly navigated item fully into view
  *  NB: We modify rect_rel by the amount we scrolled for, so it is immediately updated. */
 fun navScrollToBringItemIntoView(window: Window, itemRect: Rect) {
-    val windowRectRel = Rect(window.innerVisibleRect.min - 1, window.innerVisibleRect.max + 1)
+    val windowRectRel = Rect(window.innerRect.min - 1, window.innerRect.max + 1)
     //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
     if (itemRect in windowRectRel) return
 
@@ -717,7 +717,7 @@ fun navUpdate() {
     // When we have manually scrolled (without using navigation) and NavId becomes out of bounds, we project its bounding box to the visible area to restart navigation within visible items
     if (g.navMoveRequest && g.navMoveFromClampedRefRect && g.navLayer == NavLayer.Main) {
         val window = g.navWindow!!
-        val windowRectRel = Rect(window.innerVisibleRect.min - window.pos - 1, window.innerVisibleRect.max - window.pos + 1)
+        val windowRectRel = Rect(window.innerRect.min - window.pos - 1, window.innerRect.max - window.pos + 1)
         if (window.navRectRel[g.navLayer.i] !in windowRectRel) {
             val pad = window.calcFontSize() * 0.5f
             windowRectRel expand Vec2(-min(windowRectRel.width, pad), -min(windowRectRel.height, pad)) // Terrible approximation for the intent of starting navigation from first fully visible item
@@ -985,12 +985,12 @@ fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
                     if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {
                         // Fallback manual-scroll when window has no navigable item
                         if (Key.PageUp.isPressed)
-                            window.setScrollY(window.scroll.y - window.innerVisibleRect.height)
+                            window.setScrollY(window.scroll.y - window.innerRect.height)
                         else if (Key.PageDown.isPressed)
-                            window.setScrollY(window.scroll.y + window.innerVisibleRect.height)
+                            window.setScrollY(window.scroll.y + window.innerRect.height)
                     } else {
                         val navRectRel = window.navRectRel[g.navLayer.i]
-                        val pageOffsetY = 0f max (window.innerVisibleRect.height - window.calcFontSize() + navRectRel.height)
+                        val pageOffsetY = 0f max (window.innerRect.height - window.calcFontSize() + navRectRel.height)
                         return when { // nav_scoring_rect_offset_y
                             Key.PageUp.isPressed -> {
                                 g.navMoveDir = Dir.Down // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)

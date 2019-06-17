@@ -389,7 +389,7 @@ interface imgui_internal {
     fun calcItemSize(size: Vec2, defaultW: Float, defaultH: Float): Vec2 {
         val window = g.currentWindow!!
 
-        val regionMax = if (size anyLessThan 0f) workRectMax else Vec2()
+        val regionMax = if (size anyLessThan 0f) contentRegionMaxAbs else Vec2()
 
         if (size.x == 0f)
             size.x = defaultW
@@ -411,7 +411,7 @@ interface imgui_internal {
         val window = g.currentWindow!!
         var wrapPosX = wrapPosX_
         if (wrapPosX == 0f)
-            wrapPosX = workRectMax.x
+            wrapPosX = contentRegionMaxAbs.x
         else if (wrapPosX > 0f)
             wrapPosX += window.pos.x - window.scroll.x // wrap_pos_x is provided is window local space
 
@@ -445,11 +445,11 @@ interface imgui_internal {
         itemFlags = itemFlagsStack.lastOrNull() ?: If.Default_.i
     }
 
-    /** was the last item selection toggled? (after Selectable(), TreeNode() etc. We only returns toggle _event_ in order to handle clipping correctly) */
+    /** Was the last item selection toggled? (after Selectable(), TreeNode() etc. We only returns toggle _event_ in order to handle clipping correctly) */
     fun isItemToggledSelection() = g.currentWindow!!.dc.lastItemStatusFlags has ItemStatusFlag.ToggledSelection
 
     /** [Internal] Absolute coordinate. Saner. This is not exposed until we finishing refactoring work rect features. */
-    val workRectMax: Vec2
+    val contentRegionMaxAbs: Vec2
         get() {
             val window = g.currentWindow!!
             val mx = Vec2(window.contentsRegionRect.max)
@@ -967,7 +967,7 @@ interface imgui_internal {
             dc.currentColumns = columns
 
             // Set state for first column
-            val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else innerWorkRect.max.x - pos.x
+            val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else innerClipRect.max.x - pos.x
             with(columns) {
                 offMinX = dc.indent - style.itemSpacing.x // Lock our horizontal range
                 offMaxX = max(contentRegionWidth - scroll.x, offMinX + 1f)
@@ -1835,12 +1835,12 @@ interface imgui_internal {
         var roundingCorners: DrawCornerFlags = if (otherScrollbarSize <= 0f) Dcf.BotRight.i else 0
         val bb = Rect()
         if (axis == Axis.X) {
-            bb.min.put(window.innerVisibleRect.min.x, window.innerVisibleRect.max.y)
-            bb.max.put(window.innerVisibleRect.max.x, outerRect.max.y - window.windowBorderSize)
+            bb.min.put(window.innerRect.min.x, window.innerRect.max.y)
+            bb.max.put(window.innerRect.max.x, outerRect.max.y - window.windowBorderSize)
             roundingCorners = roundingCorners or Dcf.BotLeft
         } else {
-            bb.min.put(window.innerVisibleRect.max.x, window.innerVisibleRect.min.y)
-            bb.max.put(outerRect.max.x - window.windowBorderSize, window.innerVisibleRect.max.y)
+            bb.min.put(window.innerRect.max.x, window.innerRect.min.y)
+            bb.max.put(outerRect.max.x - window.windowBorderSize, window.innerRect.max.y)
             roundingCorners = roundingCorners or when {
                 window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar -> Dcf.TopRight.i
                 else -> 0
@@ -2312,7 +2312,7 @@ interface imgui_internal {
         // We vertically grow up to current line height up the typical widget height.
         val textBaseOffsetY = glm.max(padding.y, window.dc.currLineTextBaseOffset) // Latch before ItemSize changes it
         val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
-        val frameBb = Rect(window.dc.cursorPos, Vec2(workRectMax.x, window.dc.cursorPos.y + frameHeight))
+        val frameBb = Rect(window.dc.cursorPos, Vec2(contentRegionMaxAbs.x, window.dc.cursorPos.y + frameHeight))
         if (displayFrame) {
             // Framed header expand a little outside the default padding
             frameBb.min.x -= (window.windowPadding.x * 0.5f).i.f - 1

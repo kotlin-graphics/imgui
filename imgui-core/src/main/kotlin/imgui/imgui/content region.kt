@@ -1,7 +1,7 @@
 package imgui.imgui
 
 import glm_.vec2.Vec2
-import imgui.ImGui.workRectMax
+import imgui.ImGui.contentRegionMaxAbs
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.getColumnOffset
 
@@ -21,7 +21,7 @@ interface imgui_contentRegion {
 
     /** == GetContentRegionMax() - GetCursorPos()   */
     val contentRegionAvail: Vec2
-        get() = g.currentWindow!!.run { workRectMax - dc.cursorPos }
+        get() = g.currentWindow!!.run { contentRegionMaxAbs - dc.cursorPos }
 
     /** content boundaries min (roughly (0,0)-Scroll), in window coordinates    */
     val windowContentRegionMin: Vec2
