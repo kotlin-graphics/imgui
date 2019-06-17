@@ -7,7 +7,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.workRectMax
+import imgui.ImGui.contentRegionMaxAbs
 import imgui.ImGui.currentWindow
 import imgui.ImGui.defaultFont
 import imgui.ImGui.popItemFlag
@@ -262,7 +262,7 @@ interface imgui_parametersStacks {
             else -> window.dc.itemWidth
         }
         if (w < 0f) {
-            val regionMaxX = workRectMax.x
+            val regionMaxX = contentRegionMaxAbs.x
             w = 1f max (regionMaxX - window.dc.cursorPos.x + w)
         }
         return w.i.f

@@ -24,7 +24,7 @@ interface imgui_tabBarsTabs {
 
         val id = window.getId(strId)
         val tabBar = g.tabBars.getOrAddByKey(id)
-        val tabBarBb = Rect(window.dc.cursorPos.x, window.dc.cursorPos.y, window.innerWorkRect.max.x, window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
+        val tabBarBb = Rect(window.dc.cursorPos.x, window.dc.cursorPos.y, window.innerClipRect.max.x, window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
         tabBar.id = id
         return tabBar.beginEx(tabBarBb, flags or TabBarFlag.IsFocused)
     }

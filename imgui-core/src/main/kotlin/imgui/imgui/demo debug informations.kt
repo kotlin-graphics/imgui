@@ -243,7 +243,7 @@ interface imgui_demoDebugInformations {
             checkbox("Show windows rectangles", ::showWindowsRects)
             sameLine()
             setNextItemWidth(fontSize * 12)
-            showWindowsRects = showWindowsRects || combo1("##rects_type", ::showWindowsRectType, "OuterRect\u0000OuterRectClipped\u0000InnerVisibleRect\u0000InnerWorkRect\u0000InnerWorkRectClipped\u0000ContentsRegionRect\u0000")
+            showWindowsRects = showWindowsRects || combo1("##rects_type", ::showWindowsRectType, "OuterRect\u0000OuterRectClipped\u0000InnerRect\u0000InnerClipRect\u0000WorkRect\u0000Contents\u0000ContentsRegionRect\u0000")
             if (showWindowsRects)
                 g.navWindow?.let { nav ->
                     val r = Funcs.getRect(nav, showWindowsRectType)
@@ -340,11 +340,11 @@ interface imgui_demoDebugInformations {
 
     companion object {
 
-        enum class RT { OuterRect, OuterRectClipped, InnerVisibleRect, InnerWorkRect, InnerWorkRectClipped, ContentsRegionRect, ContentsFullRect }
+        enum class RT { OuterRect, OuterRectClipped, InnerRect, InnerClipRect, WorkRect, Contents, ContentsRegionRect }
 
         var showWindowsBeginOrder = false
         var showWindowsRects = false
-        var showWindowsRectType = RT.InnerWorkRect
+        var showWindowsRectType = RT.InnerClipRect
         var showDrawcmdClipRects = true
 
         var showWindow = false
@@ -420,9 +420,10 @@ interface imgui_demoDebugInformations {
             fun getRect(window: Window, rectType: RT): Rect = when (rectType) {
                 RT.OuterRect -> window.rect()
                 RT.OuterRectClipped -> window.outerRectClipped
-                RT.InnerVisibleRect -> window.innerVisibleRect
-                RT.InnerWorkRect -> window.innerWorkRect
-                RT.InnerWorkRectClipped -> window.innerWorkRectClipped
+                RT.InnerRect -> window.innerRect
+                RT.InnerClipRect -> window.innerClipRect
+                RT.WorkRect -> window.workRect
+                RT.Contents -> Rect(window.pos, window.pos + window.sizeContents)
                 RT.ContentsRegionRect -> window.contentsRegionRect
                 else -> error("invalid")
             }

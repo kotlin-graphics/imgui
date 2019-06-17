@@ -715,12 +715,12 @@ class Window(var context: Context, var name: String) {
     /** == WindowRect just after setup in Begin(). == window->Rect() for root window. */
     var outerRectClipped = Rect()
     /** == WindowRect just after setup in Begin(). == window->Rect() for root window.
-     *  Inner visible rectangle */
-    var innerVisibleRect = Rect()
-    /** == InnerMainRect minus WindowPadding.x */
-    var innerWorkRect = Rect()
-    /** == InnerMainRect minus WindowPadding.x, clipped within viewport or parent clip rect. */
-    var innerWorkRectClipped = Rect()
+     *  Inner rectangle */
+    var innerRect = Rect()
+    /** == InnerRect minus WindowPadding.x, clipped within viewport or parent clip rect. */
+    var innerClipRect = Rect()
+    /** == InnerRect minus WindowPadding.x */
+    var workRect = Rect()
     /** FIXME: This is currently confusing/misleading. Maximum visible content position ~~ Pos + (SizeContentsExplicit ? SizeContentsExplicit : Size - ScrollbarSizes) - CursorStartPos, per axis */
     var contentsRegionRect = Rect()
     /** Last frame number the window was Active. */

@@ -415,7 +415,7 @@ interface imgui_windows {
                 // Inner rectangle
                 // We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
                 // Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.
-                innerVisibleRect.put(
+                innerRect.put(
                         titleBarRect.min.x + windowBorderSize,
                         titleBarRect.max.y + menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else windowBorderSize,
                         pos.x + size.x - max(scrollbarSizes.x, windowBorderSize),
@@ -434,13 +434,13 @@ interface imgui_windows {
                 /*  Inner work/clipping rectangle will extend a little bit outside the work region.
                     This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
                     Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result. */
-                innerWorkRect.put(
-                        floor(0.5f + innerVisibleRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
-                        floor(0.5f + innerVisibleRect.min.y),
-                        floor(0.5f + innerVisibleRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
-                        floor(0.5f + innerVisibleRect.max.y))
-                innerWorkRectClipped put innerWorkRect
-                innerWorkRectClipped clipWithFull hostRect
+                innerClipRect.put(
+                        floor(0.5f + innerRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
+                        floor(0.5f + innerRect.min.y),
+                        floor(0.5f + innerRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
+                        floor(0.5f + innerRect.max.y))
+                workRect put innerClipRect
+                workRect clipWithFull hostRect
             }
 
             /* ---------- DRAWING ---------- */
@@ -566,7 +566,7 @@ interface imgui_windows {
         } else   // Append
             window.setCurrent()
 
-        pushClipRect(window.innerWorkRectClipped.min, window.innerWorkRectClipped.max, true)
+        pushClipRect(window.workRect.min, window.workRect.max, true)
 
         // Clear 'accessed' flag last thing (After PushClipRect which will set the flag. We want the flag to stay false when the default "Debug" window is unused)
         if (firstBeginOfTheFrame) window.writeAccessed = false
