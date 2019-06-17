@@ -894,7 +894,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
         var newCmdBufferCount = 0
         var newIdxBufferCount = 0
-        var idxOffset = cmdBuffer.last().run { idxOffset + elemCount }
+        var idxOffset = cmdBuffer.lastOrNull()?.run { idxOffset + elemCount } ?: 0
         for (i in 1 until _channelsCount) {
             val ch = _channels[i]
             if (ch.cmdBuffer.isNotEmpty() && ch.cmdBuffer.last().elemCount == 0)
