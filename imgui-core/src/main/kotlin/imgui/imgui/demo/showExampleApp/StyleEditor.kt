@@ -13,7 +13,6 @@ import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.colorEditVec4
 import imgui.ImGui.combo
-import imgui.ImGui.combo0
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
@@ -58,6 +57,7 @@ import imgui.dsl.withId
 import imgui.dsl.withItemWidth
 import imgui.imgui.g
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
+import imgui.imgui.imgui_internal
 import kotlin.math.sqrt
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -155,7 +155,9 @@ object StyleEditor {
                 sliderFloat("TabRounding", style::tabRounding, 0f, 12f, "%.0f")
                 text("Alignment")
                 sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
-                combo0("WindowMenuButtonPosition", style::windowMenuButtonPosition, "Left\u0000Right\u0000")
+                imgui_internal._i = style.windowMenuButtonPosition.i
+                combo("WindowMenuButtonPosition", imgui_internal.Companion::_i, "Left\u0000Right\u0000")
+                style.windowMenuButtonPosition = Dir.values().first { it.i == imgui_internal._i }
                 sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f"); sameLine(); helpMarker("Alignment applies when a button is larger than its text content.")
                 sliderVec2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f"); sameLine(); helpMarker("Alignment applies when a selectable is larger than its text content.")
                 text("Safe Area Padding"); sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")

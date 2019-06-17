@@ -4,7 +4,6 @@ import glm_.f
 import glm_.i
 import imgui.ImGui
 
-
 /** Windows Scrolling */
 interface imgui_windowScrolling {
 

@@ -165,9 +165,9 @@ interface imgui_windows {
             window.setSize(g.nextWindowData.sizeVal, g.nextWindowData.sizeCond)
         }
         if (g.nextWindowData.flags has NextWindowDataFlag.HasContentSize)
-            window.sizeContentsExplicit put g.nextWindowData.contentSizeVal
+            window.contentSizeExplicit put g.nextWindowData.contentSizeVal
         else if (firstBeginOfTheFrame)
-            window.sizeContentsExplicit put 0f
+            window.contentSizeExplicit put 0f
         if (g.nextWindowData.flags has NextWindowDataFlag.HasCollapsed)
             window.setCollapsed(g.nextWindowData.collapsedVal, g.nextWindowData.collapsedCond)
         if (g.nextWindowData.flags has NextWindowDataFlag.HasFocus)
@@ -202,7 +202,7 @@ interface imgui_windows {
             // UPDATE CONTENTS SIZE, UPDATE HIDDEN STATUS
 
             // Update contents size from last frame for auto-fitting (or use explicit size)
-            window.sizeContents = window.calcSizeContents()
+            window.contentSize = window.calcContentSize()
             if (window.hiddenFramesCanSkipItems > 0)
                 window.hiddenFramesCanSkipItems--
             if (window.hiddenFramesCannotSkipItems > 0)
@@ -226,7 +226,7 @@ interface imgui_windows {
                         window.size.y = 0f
                         window.sizeFull.y = 0f
                     }
-                    window.sizeContents put 0f
+                    window.contentSize put 0f
                 }
             }
 
@@ -267,7 +267,7 @@ interface imgui_windows {
             /* ---------- SIZE ---------- */
 
             // Calculate auto-fit size, handle automatic resize
-            val sizeAutoFit = window.calcSizeAutoFit(window.sizeContents)
+            val sizeAutoFit = window.calcSizeAutoFit(window.contentSize)
             val sizeFullModified = Vec2(Float.MAX_VALUE)
             if (flags has Wf.AlwaysAutoResize && !window.collapsed) {
                 // Using SetNextWindowSize() overrides ImGuiWindowFlags_AlwaysAutoResize, so it can be used on tooltips/popups, etc.
@@ -309,10 +309,10 @@ interface imgui_windows {
                 // When we use InnerRect here we are intentionally reading last frame size, same for ScrollbarSizes values before we set them again.
                 val sizeXforScrollbars = if(sizeFullModified.x != Float.MAX_VALUE) window.sizeFull.x else window.innerRect.width + window.scrollbarSizes.x
                 val sizeYforScrollbars = if(sizeFullModified.y != Float.MAX_VALUE) window.sizeFull.y - window.titleBarHeight - window.menuBarHeight else window.innerRect.height + window.scrollbarSizes.y
-                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || ((window.sizeContents.y + window.windowPadding.y * 2f > sizeYforScrollbars) && flags hasnt Wf.NoScrollbar)
-                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((window.sizeContents.x + window.windowPadding.x * 2f > sizeXforScrollbars - if(window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar) && flags has Wf.HorizontalScrollbar
+                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || ((window.contentSize.y + window.windowPadding.y * 2f > sizeYforScrollbars) && flags hasnt Wf.NoScrollbar)
+                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((window.contentSize.x + window.windowPadding.x * 2f > sizeXforScrollbars - if(window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar) && flags has Wf.HorizontalScrollbar
                 if (window.scrollbar.x && !window.scrollbar.y)
-                    window.scrollbar.y = window.sizeContents.y + window.windowPadding.y * 2f > sizeYforScrollbars && flags hasnt Wf.NoScrollbar
+                    window.scrollbar.y = window.contentSize.y + window.windowPadding.y * 2f > sizeYforScrollbars && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f, if (window.scrollbar.x) style.scrollbarSize else 0f)
             }
 
@@ -493,8 +493,8 @@ interface imgui_windows {
                 // - BeginTabBar() for right-most edge
                 val allowScrollbarX = flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar
                 val allowScrollbarY = flags hasnt Wf.NoScrollbar
-                val workRectSizeX = if(window.sizeContentsExplicit.x != 0f) window.sizeContentsExplicit.x else max(if(allowScrollbarX) window.sizeContents.x else 0f, window.innerRect.width - window.windowPadding.x * 2f)
-                val workRectSizeY = if(window.sizeContentsExplicit.y != 0f) window.sizeContentsExplicit.y else max(if(allowScrollbarY) window.sizeContents.y else 0f, window.innerRect.height - window.windowPadding.y * 2f)
+                val workRectSizeX = if(window.contentSizeExplicit.x != 0f) window.contentSizeExplicit.x else max(if(allowScrollbarX) window.contentSize.x else 0f, window.innerRect.width - window.windowPadding.x * 2f)
+                val workRectSizeY = if(window.contentSizeExplicit.y != 0f) window.contentSizeExplicit.y else max(if(allowScrollbarY) window.contentSize.y else 0f, window.innerRect.height - window.windowPadding.y * 2f)
                 window.workRect.put(
                         minX = floor(window.innerRect.min.x - window.scroll.x + max(window.windowPadding.x, window.windowBorderSize)),
                         minY = floor(window.innerRect.min.y - window.scroll.y + max(window.windowPadding.y, window.windowBorderSize)),
@@ -511,13 +511,13 @@ interface imgui_windows {
                 contentsRegionRect.put(
                         minX = pos.x - scroll.x + windowPadding.x,
                         minY = pos.y - scroll.y + windowPadding.y + titleBarHeight + menuBarHeight,
-                        maxX = pos.x - scroll.x - windowPadding.x + when (sizeContentsExplicit.x) {
+                        maxX = pos.x - scroll.x - windowPadding.x + when (contentSizeExplicit.x) {
                             0f -> size.x - scrollbarSizes.x + min(scrollbarSizes.x, windowBorderSize)
-                            else -> sizeContentsExplicit.x
+                            else -> contentSizeExplicit.x
                         },
-                        maxY = pos.y - scroll.y - windowPadding.y + when (sizeContentsExplicit.y) {
+                        maxY = pos.y - scroll.y - windowPadding.y + when (contentSizeExplicit.y) {
                             0f -> (size.y - scrollbarSizes.y + min(scrollbarSizes.y, windowBorderSize))
-                            else -> sizeContentsExplicit.y
+                            else -> contentSizeExplicit.y
                         })
 
                 /*  Setup drawing context
