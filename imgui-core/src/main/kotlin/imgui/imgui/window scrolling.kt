@@ -8,17 +8,18 @@ import imgui.ImGui
 /** Windows Scrolling */
 interface imgui_windowScrolling {
 
-    /** Scrolling amount [0..GetScrollMaxX()]   */
+    /** Scrolling amount [0..GetScrollMaxX()]
+     *  ~ SetScrollX */
     var scrollX: Float
         get() = g.currentWindow!!.scroll.x
         set(value) = with(ImGui.currentWindow) { scrollTarget.x = value; scrollTargetCenterRatio.x = 0f }
 
-    /** scrolling amount [0..GetScrollMaxY()]   */
+    /** scrolling amount [0..GetScrollMaxY()]
+     *  ~SetScrollY */
     var scrollY: Float
         get() = g.currentWindow!!.scroll.y
         set(value) = with(ImGui.currentWindow) {
-            // title bar height canceled out when using ScrollTargetRelY
-            scrollTarget.y = value + titleBarHeight + menuBarHeight
+            scrollTarget.y = value
             scrollTargetCenterRatio.y = 0f
         }
 

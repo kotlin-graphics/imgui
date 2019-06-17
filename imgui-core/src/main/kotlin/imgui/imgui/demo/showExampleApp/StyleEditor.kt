@@ -83,7 +83,6 @@ object StyleEditor {
     var windowScale = 1f
 
     operator fun invoke(ref_: Style? = null) {
-
         /*  You can pass in a reference ImGuiStyle structure to compare to, revert to and save to
             (else it compares to the default style)         */
 

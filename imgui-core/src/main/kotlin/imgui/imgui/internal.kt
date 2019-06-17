@@ -791,7 +791,7 @@ interface imgui_internal {
 
         var clipDir = g.navMoveDir
         if (g.navMoveDir == Dir.Left && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
-            bbRel.min.x = max(window.sizeFull.x, window.sizeContents.x) - window.scroll.x
+            bbRel.min.x = max(window.sizeFull.x, window.sizeContents.x + window.windowPadding.x * 2f) - window.scroll.x
             bbRel.max.x = bbRel.min.x
             if (moveFlags has NavMoveFlag.WrapX) {
                 bbRel translateY -bbRel.height
@@ -801,7 +801,7 @@ interface imgui_internal {
         }
         if (g.navMoveDir == Dir.Right && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
             bbRel.min.x = -window.scroll.x
-            bbRel.max.x = bbRel.min.x
+            bbRel.max.x = -window.scroll.x
             if (moveFlags has NavMoveFlag.WrapX) {
                 bbRel translateY +bbRel.height
                 clipDir = Dir.Down
@@ -809,8 +809,8 @@ interface imgui_internal {
             navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
         }
         if (g.navMoveDir == Dir.Up && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
-            bbRel.min.y = max(window.sizeFull.y, window.sizeContents.y) - window.scroll.y
-            bbRel.max.y = max(window.sizeFull.y, window.sizeContents.y) - window.scroll.y
+            bbRel.min.y = max(window.sizeFull.y, window.sizeContents.y + window.windowPadding.y * 2f) - window.scroll.y
+            bbRel.max.y = bbRel.min.y
             if (moveFlags has NavMoveFlag.WrapY) {
                 bbRel translateX -bbRel.width
                 clipDir = Dir.Left
@@ -819,7 +819,7 @@ interface imgui_internal {
         }
         if (g.navMoveDir == Dir.Down && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
             bbRel.min.y = -window.scroll.y
-            bbRel.max.y = bbRel.min.y
+            bbRel.max.y = -window.scroll.y
             if (moveFlags has NavMoveFlag.WrapY) {
                 bbRel translateX +bbRel.width
                 clipDir = Dir.Right
@@ -1773,8 +1773,8 @@ interface imgui_internal {
         val (pressed, hovered, held) = buttonBehavior(bb, id, Bf.None)
 
         // Render
-        val col = if(held && hovered) Col.ButtonActive else if(hovered) Col.ButtonHovered else Col.Button
-        val center =  bb.center
+        val col = if (held && hovered) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        val center = bb.center
         if (hovered || held)
             window.drawList.addCircleFilled(center/* + Vec2(0.0f, -0.5f)*/, g.fontSize * 0.5f + 1f, col.u32, 12)
         renderArrow(bb.min, if (window.collapsed) Dir.Right else Dir.Down, 1f)
@@ -1846,7 +1846,7 @@ interface imgui_internal {
                 else -> 0
             }
         }
-        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, window.sizeFull[axis.i] - otherScrollbarSize, window.sizeContents[axis.i], roundingCorners)
+        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, window.innerRect.max[axis.i] - window.innerRect.min[axis.i], window.sizeContents[axis.i] + window.windowPadding[axis.i] * 2f, roundingCorners)
     }
 
     /** Vertical/Horizontal scrollbar

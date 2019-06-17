@@ -125,10 +125,12 @@ interface imgui_windowsUtilities {
         }
     }
 
-    /** Set next window content size (~ enforce the range of scrollbars). not including window decorations (title bar, menu bar, etc.).
-     *  set an axis to 0.0f to leave it automatic. call before Begin() */
+    /** set next window content size (~ scrollable client area, which enforce the range of scrollbars).
+     *  Not including window decorations (title bar, menu bar, etc.) nor WindowPadding. set an axis to 0.0f to leave it automatic. call before Begin()
+     *
+     *  Content size = inner scrollable rectangle, padded with WindowPadding.
+     *  SetNextWindowContentSize(ImVec2(100,100) + ImGuiWindowFlags_AlwaysAutoResize will always allow submitting a 100x100 item.*/
     fun setNextWindowContentSize(size: Vec2) {
-        // In Begin() we will add the size of window decorations (title bar, menu etc.) to that to form a SizeContents value.
         with(g.nextWindowData) {
             flags = flags or NextWindowDataFlag.HasContentSize
             contentSizeVal put size
