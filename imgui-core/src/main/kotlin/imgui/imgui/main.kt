@@ -722,6 +722,8 @@ interface imgui_main {
             }
         }
 
+        /** Draw background and borders
+         *  Draw and handle scrollbars */
         fun renderWindowDecorations(window: Window, titleBarRect: Rect, titleBarIsHighlight: Boolean, resizeGripCount: Int, resizeGripCol: IntArray, resizeGripDrawSize: Float) {
 
             val flags = window.flags
