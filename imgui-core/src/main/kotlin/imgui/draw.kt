@@ -891,18 +891,25 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (cmdBuffer.isNotEmpty() && cmdBuffer.last().elemCount == 0)
             cmdBuffer.pop()
 
+        // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
         var newCmdBufferCount = 0
         var newIdxBufferCount = 0
+        var idxOffset = cmdBuffer.last().run { idxOffset + elemCount }
         for (i in 1 until _channelsCount) {
             val ch = _channels[i]
             if (ch.cmdBuffer.isNotEmpty() && ch.cmdBuffer.last().elemCount == 0)
                 ch.cmdBuffer.pop()
             newCmdBufferCount += ch.cmdBuffer.size
             newIdxBufferCount += ch.idxBuffer.size
+            ch.cmdBuffer.forEach {
+                it.idxOffset = idxOffset
+                idxOffset += it.elemCount
+            }
         }
         for (i in 0 until newCmdBufferCount) cmdBuffer += DrawCmd()   // resize(cmdBuffer.size + newCmdBufferCount)
         idxBuffer = idxBuffer.resize(idxBuffer.lim + newIdxBufferCount)
 
+        // Flatten our N channels at the end of the first one.
         var cmdWrite = cmdBuffer.size - newCmdBufferCount
         _idxWritePtr = idxBuffer.lim - newIdxBufferCount
 
