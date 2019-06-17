@@ -418,15 +418,15 @@ interface imgui_windows {
                 window.outerRectClipped clipWith hostRect
 
                 // Inner rectangle
-                // Used by:
+                // Not affected by window border size. Used by:
                 // - NavScrollToBringItemIntoView()
                 // - NavUpdatePageUpPageDown()
                 // - Scrollbar()
                 innerRect.put(
-                        titleBarRect.min.x + windowBorderSize,
-                        titleBarRect.max.y + menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else windowBorderSize,
-                        pos.x + size.x - max(scrollbarSizes.x, windowBorderSize),
-                        pos.y + size.y - max(scrollbarSizes.y, windowBorderSize))
+                        minX = titleBarRect.min.x,
+                        minY = titleBarRect.max.y + menuBarHeight,
+                        maxX = pos.x + size.x - scrollbarSizes.x,
+                        maxY = pos.y + size.y - scrollbarSizes.y)
 
                 // Work rectangle.
                 // Affected by window padding and border size. Used by:
