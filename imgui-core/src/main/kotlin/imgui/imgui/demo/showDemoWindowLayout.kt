@@ -6,6 +6,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.alignTextToFramePadding
+import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
@@ -26,6 +27,7 @@ import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
 import imgui.ImGui.dragVec2
 import imgui.ImGui.dummy
+import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
@@ -34,6 +36,7 @@ import imgui.ImGui.endTabItem
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameHeightWithSpacing
+import imgui.ImGui.getColumnWidth
 import imgui.ImGui.getId
 import imgui.ImGui.inputInt
 import imgui.ImGui.invisibleButton
@@ -65,12 +68,14 @@ import imgui.ImGui.scrollY
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemWidth
+import imgui.ImGui.setNextWindowContentSize
 import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderInt
 import imgui.ImGui.smallButton
+import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textColored
@@ -136,6 +141,15 @@ object showDemoWindowLayout {
 
     /* Horizontal Scrolling */
     var lines = 7
+    var showHorizontalContentsSizeDemoWindow = false
+    var showHscrollbar = true
+    var showButton = true
+    var showTreeNodes = true
+    var open = true
+    var showColumns = true
+    var showTabBar = true
+    var explicitContentSize = false
+    var contentsSizeX = 300f
 
 
     /* Clipping */
@@ -549,6 +563,66 @@ object showDemoWindowLayout {
                 beginChild("scrolling")
                 scrollX += scrollXDelta
                 endChild()
+            }
+            spacing()
+
+            checkbox("Show Horizontal contents size demo window", ::showHorizontalContentsSizeDemoWindow)
+
+            if (showHorizontalContentsSizeDemoWindow) {
+                if (explicitContentSize)
+                    setNextWindowContentSize(Vec2(contentsSizeX, 0f))
+                begin("Horizontal contents size demo window", ::showHorizontalContentsSizeDemoWindow, if (showHscrollbar) Wf.HorizontalScrollbar.i else Wf.None.i)
+                pushStyleVar(StyleVar.ItemSpacing, Vec2(2, 0))
+                pushStyleVar(StyleVar.FramePadding, Vec2(2, 0))
+                helpMarker("Test of different widgets react and impact the work rectangle growing when horizontal scrolling is enabled.\n\nUse 'Metrics->Tools->Show windows rectangles' to visualize rectangles.")
+                checkbox("H-scrollbar", ::showHscrollbar)
+                checkbox("Button", ::showButton)            // Will grow contents size (unless explicitly overwritten)
+                checkbox("Tree nodes", ::showTreeNodes)    // Will grow contents size and display highlight over full width
+                checkbox("Columns", ::showColumns)          // Will use contents size
+                checkbox("Tab bar", ::showTabBar)          // Will use contents size
+                checkbox("Explicit content size", ::explicitContentSize)
+                if (explicitContentSize) {
+                    sameLine()
+                    setNextItemWidth(100f)
+                    dragFloat("##csx", ::contentsSizeX)
+                    val p = cursorScreenPos
+                    windowDrawList.addRectFilled(p, Vec2(p.x + 10, p.y + 10), COL32_WHITE)
+                    windowDrawList.addRectFilled(Vec2(p.x + contentsSizeX - 10, p.y), Vec2(p.x + contentsSizeX, p.y + 10), COL32_WHITE)
+                    dummy(Vec2(0, 10))
+                }
+                popStyleVar(2)
+                separator()
+                if (showButton)
+                    button("this is a 300-wide button", Vec2(300, 0))
+                if (showTreeNodes) {
+                    open = true
+                    treeNode("this is a tree node") {
+                        treeNode("another one of those tree node...") {
+                            text("Some tree contents")
+                        }
+                    }
+                    collapsingHeader("CollapsingHeader", ::open)
+                }
+                if (showColumns) {
+                    columns(4)
+                    for (n in 0..3)                    {
+                        text("Width %.2f", getColumnWidth())
+                        nextColumn()
+                    }
+                    columns(1)
+                }
+                if (showTabBar && beginTabBar("Hello")) {
+                    if (beginTabItem("OneOneOne"))
+                        endTabItem()
+                    if (beginTabItem("TwoTwoTwo"))
+                        endTabItem()
+                    if (beginTabItem("ThreeThreeThree"))
+                        endTabItem()
+                    if (beginTabItem("FourFourFour"))
+                        endTabItem()
+                    endTabBar()
+                }
+                end()
             }
         }
 

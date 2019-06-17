@@ -411,7 +411,8 @@ interface imgui_windows {
                     flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip -> parentWindow!!.clipRect
                     else -> viewportRect
                 }
-                window.outerRectClipped = window.rect()
+                val outerRect = window.rect()
+                window.outerRectClipped = outerRect
                 window.outerRectClipped clipWith hostRect
 
                 // Inner rectangle
@@ -425,16 +426,6 @@ interface imgui_windows {
                         maxX = pos.x + size.x - scrollbarSizes.x,
                         maxY = pos.y + size.y - scrollbarSizes.y)
 
-                // Work rectangle.
-                // Affected by window padding and border size. Used by:
-                // - Columns() for right-most edge
-                // - BeginTabBar() for right-most edge
-                innerClipRect.put(
-                        floor(0.5f + innerRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
-                        floor(0.5f + innerRect.min.y),
-                        floor(0.5f + innerRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
-                        floor(0.5f + innerRect.max.y))
-
                 // Inner clipping rectangle.
                 // Will extend a little bit outside the normal work region.
                 // This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
@@ -442,7 +433,12 @@ interface imgui_windows {
                 // Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.
                 // Affected by window/frame border size. Used by:
                 // - Begin() initial clip rect
-                workRect put innerClipRect
+                val topBorderSize = if(flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else window.windowBorderSize
+                window.innerClipRect.put(
+                        minX = floor(0.5f + window.innerRect.min.x + max(floor(window.windowPadding.x * 0.5f), window.windowBorderSize)),
+                        minY = floor(0.5f + window.innerRect.min.y + topBorderSize),
+                        maxX = floor(0.5f + window.innerRect.max.x - max(floor(window.windowPadding.y * 0.5f), window.windowBorderSize)),
+                        maxY = floor(0.5f + window.innerRect.max.y - window.windowBorderSize))
                 workRect clipWithFull hostRect
             }
 
@@ -490,12 +486,28 @@ interface imgui_windows {
 
                 // UPDATE RECTANGLES (2- THOSE AFFECTED BY SCROLLING)
 
+                // Work rectangle.
+                // Affected by window padding and border size. Used by:
+                // - Columns() for right-most edge
+                // - TreeNode(), CollapsingHeader() for right-most edge
+                // - BeginTabBar() for right-most edge
+                val allowScrollbarX = flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar
+                val allowScrollbarY = flags hasnt Wf.NoScrollbar
+                val workRectSizeX = if(window.sizeContentsExplicit.x != 0f) window.sizeContentsExplicit.x else max(if(allowScrollbarX) window.sizeContents.x else 0f, window.innerRect.width - window.windowPadding.x * 2f)
+                val workRectSizeY = if(window.sizeContentsExplicit.y != 0f) window.sizeContentsExplicit.y else max(if(allowScrollbarY) window.sizeContents.y else 0f, window.innerRect.height - window.windowPadding.y * 2f)
+                window.workRect.put(
+                        minX = floor(window.innerRect.min.x - window.scroll.x + max(window.windowPadding.x, window.windowBorderSize)),
+                        minY = floor(window.innerRect.min.y - window.scroll.y + max(window.windowPadding.y, window.windowBorderSize)),
+                        maxX = window.workRect.min.x + workRectSizeX,
+                        maxY = window.workRect.min.y + workRectSizeY)
+
+
+
                 // [LEGACY] Contents Region
-                // FIXME: window->ContentsRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
+                // FIXME-OBSOLETE: window->ContentsRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
                 // NB: WindowBorderSize is included in WindowPadding _and_ ScrollbarSizes so we need to cancel one out when we have both.
                 // Used by:
-                // - Mouse wheel scrolling
-                // - ... (many things)
+                // - Mouse wheel scrolling + many other things
                 contentsRegionRect.put(
                         minX = pos.x - scroll.x + windowPadding.x,
                         minY = pos.y - scroll.y + windowPadding.y + titleBarHeight + menuBarHeight,
