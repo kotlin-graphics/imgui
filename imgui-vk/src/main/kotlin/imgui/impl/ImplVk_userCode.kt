@@ -31,7 +31,7 @@ import kotlin.reflect.KMutableProperty0
 fun ImplVk_Init(renderPass_: VkRenderPass): Boolean {
 
     io.backendRendererName = "imgui_impl_vulkan"
-    io.backendFlags = io.backendFlags or BackendFlag.HasVtxOffset // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
+    io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     val info = VkInitInfo
 
     info.run { assert(queue.isValid && descriptorPool.isValid && minImageCount >= 2 && imageCount >= minImageCount) }

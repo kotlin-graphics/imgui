@@ -331,7 +331,7 @@ enum class DrawListFlag(val i: Int) {
     AntiAliasedLines(1 shl 0),
     /** Filled shapes have anti-aliased edges (*2 the number of vertices) */
     AntiAliasedFill(1 shl 1),
-    /** Can emit 'VtxOffset > 0' to allow large meshes. Set when 'io.BackendFlags & ImGuiBackendFlags_HasVtxOffset' is enabled. */
+    /** Can emit 'VtxOffset > 0' to allow large meshes. Set when 'ImGuiBackendFlags_RendererHasVtxOffset' is enabled. */
     AllowVtxOffset(1 shl 2)
 }
 

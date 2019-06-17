@@ -33,7 +33,7 @@ typealias DrawCallback = (DrawList, DrawCmd) -> Unit
  *
  *  Typically, 1 command = 1 gpu draw call (unless command is a callback)
  *
- *  Pre 1.71 back-ends will typically ignore the VtxOffset/IdxOffset fields. When (io.BackendFlags & ImGuiBackendFlags_HasVtxOffset)
+ *  Pre 1.71 back-ends will typically ignore the VtxOffset/IdxOffset fields. When 'io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset'
  *  is enabled, those fields allow us to render meshes larger than 64K vertices while keeping 16-bits indices.*/
 class DrawCmd {
 
@@ -54,8 +54,8 @@ class DrawCmd {
     /** User-provided texture ID. Set by user in ImfontAtlas::SetTexID() for fonts or passed to Image*() functions.
     Ignore if never using images or multiple fonts atlas.   */
     var textureId: TextureID? = null
-    /** Start offset in vertex buffer. Pre-1.71 or without ImGuiBackendFlags_HasVtxOffset: always 0.
-     *  With ImGuiBackendFlags_HasVtxOffset: may be >0 to support meshes larger than 64K vertices with 16-bits indices. */
+    /** Start offset in vertex buffer. Pre-1.71 or without ImGuiBackendFlags_RendererHasVtxOffset: always 0.
+     *  With ImGuiBackendFlags_RendererHasVtxOffset: may be >0 to support meshes larger than 64K vertices with 16-bits indices. */
     var vtxOffset = 0
     /** Start offset in index buffer. Always equal to sum of ElemCount drawn so far. */
     var idxOffset = 0
@@ -81,7 +81,7 @@ class DrawCmd {
 }
 
 /** Vertex index
- *  (to allow large meshes with 16-bits indices: set 'io.BackendFlags |= ImGuiBackendFlags_HasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer back-end)
+ *  (to allow large meshes with 16-bits indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer back-end)
  *  (to use 32-bits indices: override with '#define ImDrawIdx unsigned int' in imconfig.h) */
 typealias DrawIdx = Int
 
@@ -1185,7 +1185,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             - First, make sure you are coarse clipping yourself and not trying to draw many things outside visible bounds.
               Be mindful that the ImDrawList API doesn't filter vertices. Use the Metrics window to inspect draw list contents.
             - If you want large meshes with more than 64K vertices, you can either:
-              (A) Handle the ImDrawCmd::VtxOffset value in your renderer back-end, and set 'io.BackendFlags |= ImGuiBackendFlags_HasVtxOffset'.
+              (A) Handle the ImDrawCmd::VtxOffset value in your renderer back-end, and set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset'.
                   Most example back-ends already support this from 1.71. Pre-1.71 back-ends won't.
                   Some graphics API such as GL ES 1/2 don't have a way to offset the starting vertex so it is not supported for them.
               (B) Or handle 32-bits indices in your renderer back-end, and uncomment '#define ImDrawIdx unsigned int' line in imconfig.h.
