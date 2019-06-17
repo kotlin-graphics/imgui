@@ -158,6 +158,7 @@ interface imgui_demoDebugInformations {
             if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
             if (io.backendFlags has BackendFlag.HasSetMousePos) text(" HasSetMousePos")
+            if (io.backendFlags has BackendFlag.HasVtxOffset)           text(" HasVtxOffset")
             // @formatter:on
             separator()
             text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
@@ -458,8 +459,10 @@ interface imgui_demoDebugInformations {
                     }
                     val idxBuffer = drawList.idxBuffer.takeIf { it.hasRemaining() }
                     val mode = if (idxBuffer != null) "indexed" else "non-indexed"
-                    val cmdNodeOpen = treeNode(i, "Draw %4d $mode vtx, tex = ${cmd.textureId!!.toHexString}, clip_rect = (%4.0f,%4.0f)-(%4.0f,%4.0f)",
-                            cmd.elemCount, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                    val buf = CharArray(300)
+                    "Draw %4d triangles, tex 0x%p, clip_rect (%4.0f,%4.0f)-(%4.0f,%4.0f)".format(
+                            cmd.elemCount/3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w).toCharArray(buf)
+                    val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), "%s", buf)
                     if (showDrawcmdClipRects && fgDrawList != null && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
                         val vtxsRect = Rect()
@@ -470,12 +473,12 @@ interface imgui_demoDebugInformations {
                     }
                     if (!cmdNodeOpen) continue
                     // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
+                    text("ElemCount: ${cmd.elemCount}, ElemCount/3: ${cmd.elemCount / 3}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}")
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
                     val clipper = ListClipper(cmd.elemCount / 3)
                     while (clipper.step()) {
                         var idxI = elemOffset + clipper.display.start * 3
                         for (prim in clipper.display.start until clipper.display.last) {
-                            val buf = CharArray(300)
                             var bufP = 0
                             val trianglesPos = arrayListOf(Vec2(), Vec2(), Vec2())
                             for (n in 0 until 3) {
@@ -484,7 +487,7 @@ interface imgui_demoDebugInformations {
                                 val uv = Vec2(drawList.vtxBuffer.data, vtxI * DrawVert.size + Vec2.size)
                                 val col = drawList.vtxBuffer.data.getInt(vtxI * DrawVert.size + Vec2.size * 2)
                                 trianglesPos[n] = pos
-                                val name = if (n == 0) "idx" else "   "
+                                val name = if (n == 0) "elem" else "    "
                                 val string = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n".format(style.locale,
                                         idxI, pos.x, pos.y, uv.x, uv.y, col)
                                 string.toCharArray(buf, bufP)

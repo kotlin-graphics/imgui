@@ -210,6 +210,7 @@ object ExampleApp {
                 checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
                 checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)
                 checkboxFlags("io.BackendFlags: HasSetMousePos", backendFlags, BackendFlag.HasSetMousePos.i)
+                checkboxFlags("io.BackendFlags: HasVtxOffset", backendFlags, BackendFlag.HasVtxOffset.i)
                 separator()
             }
 

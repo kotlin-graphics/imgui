@@ -129,8 +129,13 @@ interface imgui_main {
         assert(g.font.isLoaded)
         g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
-        g.drawListSharedData.initialFlags = (if (style.antiAliasedLines) Dlf.AntiAliasedLines else Dlf.None) or
-                if (style.antiAliasedFill) Dlf.AntiAliasedFill else Dlf.None
+        g.drawListSharedData.initialFlags = Dlf.None.i
+        if (style.antiAliasedLines)
+            g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedLines
+        if (style.antiAliasedFill)
+            g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedFill
+        if (io.backendFlags has BackendFlag.HasVtxOffset)
+            g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AllowVtxOffset
 
         g.backgroundDrawList.clear()
         g.backgroundDrawList.pushTextureId(io.fonts.texId)
