@@ -26,6 +26,7 @@ import imgui.imgui.g
 import kool.*
 import org.lwjgl.opengl.*
 import org.lwjgl.opengl.GL30C.*
+import org.lwjgl.opengl.GL32C.glDrawElementsBaseVertex
 import org.lwjgl.opengl.GL33C.glBindSampler
 import org.lwjgl.opengl.GL45C.GL_CLIP_ORIGIN
 import org.lwjgl.system.Platform
@@ -183,7 +184,10 @@ class ImplGL3 : GLInterface {
 
                         // Bind texture, Draw
                         glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                        glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
+                        if (HAS_DRAW_WITH_BASE_VERTEX)
+                            glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
+                        else
+                            glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
                     }
                 }
                 idxBufferOffset += cmd.elemCount * DrawIdx.BYTES
@@ -305,6 +309,7 @@ class ImplGL3 : GLInterface {
             }
         var UNPACK_ROW_LENGTH = true
         var SINGLE_GL_CONTEXT = true
+        var HAS_DRAW_WITH_BASE_VERTEX = true
     }
 
     private fun debugSave(fbWidth: Int, fbHeight: Int) {
