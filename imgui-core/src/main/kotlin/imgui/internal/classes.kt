@@ -184,9 +184,9 @@ class Rect {
         this.max put max
     }
 
-    fun put(x1: Float, y1: Float, x2: Float, y2: Float) {
-        min.put(x1, y1)
-        max.put(x2, y2)
+    fun put(minX: Float, minY: Float, maxX: Float, maxY: Float) {
+        min.put(minX, minY)
+        max.put(maxX, maxY)
     }
 
     infix fun put(vec4: Vec4) {

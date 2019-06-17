@@ -401,44 +401,50 @@ interface imgui_windows {
                 // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars.
                 sizeFullAtLastBegin put sizeFull
 
-                // UPDATE RECTANGLES
+                // UPDATE RECTANGLES (1- THOSE NOT AFFECTED BY SCROLLING)
+                // Update various regions. Variables they depends on should be set above in this function.
+                // We set this up after processing the resize grip so that our rectangles doesn't lag by a frame.
 
-                // Update various regions. Variables they depends on are set above in this function.
-                // FIXME: ContentsRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
-                // NB: WindowBorderSize is included in WindowPadding _and_ ScrollbarSizes so we need to cancel one out.
-                contentsRegionRect.put(
-                        pos.x - scroll.x + windowPadding.x,
-                        pos.y - scroll.y + windowPadding.y + titleBarHeight + menuBarHeight,
-                        pos.x - scroll.x - windowPadding.x + if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else (size.x - scrollbarSizes.x + min(scrollbarSizes.x, windowBorderSize)),
-                        pos.y - scroll.y - windowPadding.y + if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else (size.y - scrollbarSizes.y + min(scrollbarSizes.y, windowBorderSize)))
+                // Outer rectangle
+                // Not affected by window border size. Used by:
+                // - FindHoveredWindow() (w/ extra padding when border resize is enabled)
+                // - Begin() initial clipping rect for drawing window background and borders.
+                // - Begin() clipping whole child
+                hostRect = when {
+                    flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip -> parentWindow!!.clipRect
+                    else -> viewportRect
+                }
+                window.outerRectClipped = window.rect()
+                window.outerRectClipped clipWith hostRect
 
                 // Inner rectangle
-                // We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
-                // Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.
+                // Used by:
+                // - NavScrollToBringItemIntoView()
+                // - NavUpdatePageUpPageDown()
+                // - Scrollbar()
                 innerRect.put(
                         titleBarRect.min.x + windowBorderSize,
                         titleBarRect.max.y + menuBarHeight + if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else windowBorderSize,
                         pos.x + size.x - max(scrollbarSizes.x, windowBorderSize),
                         pos.y + size.y - max(scrollbarSizes.y, windowBorderSize))
 
-                // Outer host rectangle for drawing background and borders
-                hostRect = when {
-                    flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip -> parentWindow!!.clipRect
-                    else -> viewportRect
-                }
-
-                // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
-                window.outerRectClipped = window.rect() // save, new allocation
-                window.outerRectClipped clipWith hostRect
-
-                /*  Inner work/clipping rectangle will extend a little bit outside the work region.
-                    This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
-                    Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result. */
+                // Work rectangle.
+                // Affected by window padding and border size. Used by:
+                // - Columns() for right-most edge
+                // - BeginTabBar() for right-most edge
                 innerClipRect.put(
                         floor(0.5f + innerRect.min.x + max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
                         floor(0.5f + innerRect.min.y),
                         floor(0.5f + innerRect.max.x - max(0f, floor(windowPadding.x * 0.5f - windowBorderSize))),
                         floor(0.5f + innerRect.max.y))
+
+                // Inner clipping rectangle.
+                // Will extend a little bit outside the normal work region.
+                // This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
+                // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
+                // Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.
+                // Affected by window/frame border size. Used by:
+                // - Begin() initial clip rect
                 workRect put innerClipRect
                 workRect clipWithFull hostRect
             }
@@ -487,6 +493,26 @@ interface imgui_windows {
             window.sizeFullAtLastBegin put window.sizeFull
 
             with(window) {
+
+                // UPDATE RECTANGLES (2- THOSE AFFECTED BY SCROLLING)
+
+                // [LEGACY] Contents Region
+                // FIXME: window->ContentsRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
+                // NB: WindowBorderSize is included in WindowPadding _and_ ScrollbarSizes so we need to cancel one out when we have both.
+                // Used by:
+                // - Mouse wheel scrolling
+                // - ... (many things)
+                contentsRegionRect.put(
+                        minX = pos.x - scroll.x + windowPadding.x,
+                        minY = pos.y - scroll.y + windowPadding.y + titleBarHeight + menuBarHeight,
+                        maxX = pos.x - scroll.x - windowPadding.x + when (sizeContentsExplicit.x) {
+                            0f -> size.x - scrollbarSizes.x + min(scrollbarSizes.x, windowBorderSize)
+                            else -> sizeContentsExplicit.x
+                        },
+                        maxY = pos.y - scroll.y - windowPadding.y + when (sizeContentsExplicit.y) {
+                            0f -> (size.y - scrollbarSizes.y + min(scrollbarSizes.y, windowBorderSize))
+                            else -> sizeContentsExplicit.y
+                        })
 
                 /*  Setup drawing context
                     (NB: That term "drawing context / DC" lost its meaning a long time ago. Initially was meant to hold
