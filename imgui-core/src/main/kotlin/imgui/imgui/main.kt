@@ -134,7 +134,7 @@ interface imgui_main {
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedLines
         if (style.antiAliasedFill)
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedFill
-        if (io.backendFlags has BackendFlag.HasVtxOffset)
+        if (io.backendFlags has BackendFlag.RendererHasVtxOffset)
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AllowVtxOffset
 
         g.backgroundDrawList.clear()

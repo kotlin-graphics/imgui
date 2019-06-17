@@ -17,10 +17,7 @@ import gln.identifiers.GlProgram
 import gln.uniform.glUniform
 import gln.vertexArray.GlVertexArray
 import gln.vertexArray.glVertexAttribPointer
-import imgui.DEBUG
-import imgui.DrawData
-import imgui.DrawIdx
-import imgui.DrawVert
+import imgui.*
 import imgui.ImGui.io
 import imgui.imgui.g
 import kool.*
@@ -48,6 +45,8 @@ class ImplGL3 : GLInterface {
 
     init {
         io.backendRendererName = "imgui_impl_opengl3"
+        if(HAS_DRAW_WITH_BASE_VERTEX)
+            io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     }
 
     override fun shutdown() = destroyDeviceObjects()

@@ -2,7 +2,6 @@ package imgui.imgui
 
 import glm_.BYTES
 import glm_.f
-import glm_.toHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -158,7 +157,7 @@ interface imgui_demoDebugInformations {
             if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
             if (io.backendFlags has BackendFlag.HasSetMousePos) text(" HasSetMousePos")
-            if (io.backendFlags has BackendFlag.HasVtxOffset)           text(" HasVtxOffset")
+            if (io.backendFlags has BackendFlag.RendererHasVtxOffset)           text(" RendererHasVtxOffset")
             // @formatter:on
             separator()
             text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
