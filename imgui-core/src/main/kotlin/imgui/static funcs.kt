@@ -1,5 +1,6 @@
 @file:Suppress("UNCHECKED_CAST")
 @file:JvmName("ImGuiStaticFunctions")
+
 package imgui
 
 import gli_.has
@@ -238,9 +239,6 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean)
 fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 
 fun createNewWindowSettings(name: String) = WindowSettings(name).also { g.settingsWindows += it }
-
-
-
 
 
 val viewportRect get() = Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
@@ -519,16 +517,17 @@ fun navUpdate() {
         }
 
     // Process navigation init request (select first/default focus)
-    if (g.navInitResultId != 0 && (!g.navDisableHighlight || g.navInitRequestFromMove)) {
-        /*  Apply result from previous navigation init request (will typically select the first item,
-            unless setItemDefaultFocus() has been called)         */
-//        assert(g.navWindow != null) !! later
-        if (g.navInitRequestFromMove)
-            setNavIDWithRectRel(g.navInitResultId, g.navLayer, g.navInitResultRectRel)
-        else
-            setNavId(g.navInitResultId, g.navLayer)
-        g.navWindow!!.navRectRel[g.navLayer.i] = g.navInitResultRectRel
-    }
+    // In very rare cases g.NavWindow may be null (e.g. clearing focus after requesting an init request, which does happen when releasing Alt while clicking on void)
+    if (g.navInitResultId != 0 && (!g.navDisableHighlight || g.navInitRequestFromMove))
+        g.navWindow?.let { nav ->
+            /*  Apply result from previous navigation init request (will typically select the first item,
+                unless setItemDefaultFocus() has been called)         */
+            if (g.navInitRequestFromMove)
+                setNavIDWithRectRel(g.navInitResultId, g.navLayer, g.navInitResultRectRel)
+            else
+                setNavId(g.navInitResultId, g.navLayer)
+            nav.navRectRel[g.navLayer.i] = g.navInitResultRectRel
+        }
     g.navInitRequest = false
     g.navInitRequestFromMove = false
     g.navInitResultId = 0
