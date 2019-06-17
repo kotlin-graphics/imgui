@@ -31,7 +31,10 @@ typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
 /** A single draw command within a parent ImDrawList (generally maps to 1 GPU draw call, unless it is a callback)
  *
- *  Typically, 1 command = 1 gpu draw call (unless command is a callback)   */
+ *  Typically, 1 command = 1 gpu draw call (unless command is a callback)
+ *
+ *  Pre 1.71 back-ends will typically ignore the VtxOffset/IdxOffset fields. When (io.BackendFlags & ImGuiBackendFlags_HasVtxOffset)
+ *  is enabled, those fields allow us to render meshes larger than 64K vertices while keeping 16-bits indices.*/
 class DrawCmd {
 
     constructor()
@@ -51,10 +54,15 @@ class DrawCmd {
     /** User-provided texture ID. Set by user in ImfontAtlas::SetTexID() for fonts or passed to Image*() functions.
     Ignore if never using images or multiple fonts atlas.   */
     var textureId: TextureID? = null
+    /** Start offset in vertex buffer. Pre-1.71 or without ImGuiBackendFlags_HasVtxOffset: always 0.
+     *  With ImGuiBackendFlags_HasVtxOffset: may be >0 to support meshes larger than 64K vertices with 16-bits indices. */
+    var vtxOffset = 0
+    /** Start offset in index buffer. Always equal to sum of ElemCount drawn so far. */
+    var idxOffset = 0
     /** If != NULL, call the function instead of rendering the vertices. clip_rect and texture_id will be set normally. */
     var userCallback: DrawCallback? = null
 
-    /** Special Draw Callback value to request renderer back-end to reset the graphics/render state.
+    /** Special Draw callback value to request renderer back-end to reset the graphics/render state.
      *  The renderer back-end needs to handle this special value, otherwise it will crash trying to call a function at this address.
      *  This is useful for example if you submitted callbacks which you know have altered the render state and you want it to be restored.
      *  It is not done by default because they are many perfectly useful way of altering render state for imgui contents
@@ -72,6 +80,9 @@ class DrawCmd {
     }
 }
 
+/** Vertex index
+ *  (to allow large meshes with 16-bits indices: set 'io.BackendFlags |= ImGuiBackendFlags_HasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer back-end)
+ *  (to use 32-bits indices: override with '#define ImDrawIdx unsigned int' in imconfig.h) */
 typealias DrawIdx = Int
 
 /** Vertex layout
@@ -146,7 +157,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     var _data: DrawListSharedData = sharedData ?: DrawListSharedData()
     /** Pointer to owner window's name for debugging    */
     var _ownerName = ""
-    /** Internal == VtxBuffer.Size    */
+    /** [Internal] Always 0 unless 'Flags & ImDrawListFlags_AllowVtxOffset'. */
+    var _vtxCurrentOffset = 0
+    /** [Internal] Generally == VtxBuffer.Size unless we are past 64K vertices, in which case this gets reset to 0. */
     var _vtxCurrentIdx = 0
     /** [Internal] point within VtxBuffer.Data after each add command (to avoid using the ImVector<> operators too much)    */
     var _vtxWritePtr = 0
@@ -924,10 +937,12 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** This is useful if you need to forcefully create a new draw call (to allow for dependent rendering / blending).
     Otherwise primitives are merged into the same draw-call as much as possible */
     fun addDrawCmd() {
-        val drawCmd = DrawCmd()
-        drawCmd.clipRect put currentClipRect
-        drawCmd.textureId = currentTextureId
-
+        val drawCmd = DrawCmd().apply {
+            clipRect put currentClipRect
+            textureId = currentTextureId
+            vtxOffset = _vtxCurrentOffset
+            idxOffset = idxBuffer.rem
+        }
         assert(drawCmd.clipRect.x <= drawCmd.clipRect.z && drawCmd.clipRect.y <= drawCmd.clipRect.w)
         cmdBuffer.add(drawCmd)
     }
@@ -939,14 +954,15 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Internal helpers
-    // NB: all primitives needs to be reserved via PrimReserve() beforehand!
-    // -----------------------------------------------------------------------------------------------------------------
+// Internal helpers
+// NB: all primitives needs to be reserved via PrimReserve() beforehand!
+// -----------------------------------------------------------------------------------------------------------------
     fun clear() {
         cmdBuffer.clear()
         idxBuffer.resize(0) // we dont assign because it wont create a new istance for sure
         vtxBuffer.resize(0)
         flags = _data.initialFlags
+        _vtxCurrentOffset = 0
         _vtxCurrentIdx = 0
         _vtxWritePtr = 0
         _idxWritePtr = 0
@@ -971,6 +987,13 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** NB: this can be called with negative count for removing primitives (as long as the result does not underflow)    */
     fun primReserve(idxCount: Int, vtxCount: Int) {
+
+        // Large mesh support (when enabled)
+        if (DrawIdx.BYTES == 2 && _vtxCurrentIdx + vtxCount >= (1 shl 16) && flags has DrawListFlag.AllowVtxOffset)        {
+            _vtxCurrentOffset = vtxBuffer.rem
+            _vtxCurrentIdx = 0
+            addDrawCmd()
+        }
 
         cmdBuffer.last().elemCount += idxCount
 
@@ -1032,8 +1055,8 @@ class DrawList(sharedData: DrawListSharedData?) {
         idxBuffer.pos = 0
     }
 
-    // On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superflous function calls to optimize debug/non-inlined builds.
-    // Those macros expects l-values.
+// On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superflous function calls to optimize debug/non-inlined builds.
+// Those macros expects l-values.
 //    fun NORMALIZE2F_OVER_ZERO(vX: Float, vY: Float) {
 //        val d2 = vX * vX + vY * vY
 //        if (d2 > 0.0f) {
@@ -1148,29 +1171,30 @@ class DrawList(sharedData: DrawListSharedData?) {
             if (cmdBuffer.empty()) return
         }
 
-        /*  Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx,
-            _VtxWritePtr etc. May trigger for you if you are using PrimXXX functions incorrectly.   */
+        /*  Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx, _VtxWritePtr etc.
+            May trigger for you if you are using PrimXXX functions incorrectly.   */
         assert(vtxBuffer.rem == 0 || _vtxWritePtr == vtxBuffer.rem)
         assert(idxBuffer.rem == 0 || _idxWritePtr == idxBuffer.rem)
-        assert(_vtxCurrentIdx == vtxBuffer.rem)
+        if (flags hasnt DrawListFlag.AllowVtxOffset)
+            assert(_vtxCurrentIdx == vtxBuffer.rem)
 
         // JVM ImGui, this doesnt apply, we use Ints by default, TODO make Int/Short option?
         /*  Check that drawList doesn't use more vertices than indexable
             (default DrawIdx = unsigned short = 2 bytes = 64K vertices per DrawList = per window)
             If this assert triggers because you are drawing lots of stuff manually:
-            A) Make sure you are coarse clipping, because DrawList let all your vertices pass. You can use the Metrics
-                window to inspect draw list contents.
-            B) If you need/want meshes with more than 64K vertices, uncomment the '#define DrawIdx unsigned int' line in
-                imconfig.h to set the index size to 4 bytes.
-                You'll need to handle the 4-bytes indices to your renderer. For example, the OpenGL example code detect
-                index size at compile-time by doing:
-                glDrawElements(GL_TRIANGLES, cmd.elemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idxBufferOffset)
-                Your own engine or render API may use different parameters or function calls to specify index sizes.
-                2 and 4 bytes indices are generally supported by most API.
-            C) If for some reason you cannot use 4 bytes indices or don't want to, a workaround is to call
-                beginChild()/endChild() before reaching the 64K limit to split your draw commands in multiple draw lists.*/
-//        assert(_vtxCurrentIdx <= (1L shl (Int.BYTES * 8))) // Too many vertices in same Im See comment above.
-
+            - First, make sure you are coarse clipping yourself and not trying to draw many things outside visible bounds.
+              Be mindful that the ImDrawList API doesn't filter vertices. Use the Metrics window to inspect draw list contents.
+            - If you want large meshes with more than 64K vertices, you can either:
+              (A) Handle the ImDrawCmd::VtxOffset value in your renderer back-end, and set 'io.BackendFlags |= ImGuiBackendFlags_HasVtxOffset'.
+                  Most example back-ends already support this from 1.71. Pre-1.71 back-ends won't.
+                  Some graphics API such as GL ES 1/2 don't have a way to offset the starting vertex so it is not supported for them.
+              (B) Or handle 32-bits indices in your renderer back-end, and uncomment '#define ImDrawIdx unsigned int' line in imconfig.h.
+                  Most example back-ends already support this. For example, the OpenGL example code detect index size at compile-time:
+                    glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
+                  Your own engine or render API may use different parameters or function calls to specify index sizes.
+                  2 and 4 bytes indices are generally supported by most graphics API.
+            - If for some reason neither of those solutions works for you, a workaround is to call BeginChild()/EndChild() before reaching
+              the 64K limit to split your draw commands in multiple draw lists.         */
         outList += this
         io.metricsRenderVertices += vtxBuffer.rem
         io.metricsRenderIndices += idxBuffer.rem

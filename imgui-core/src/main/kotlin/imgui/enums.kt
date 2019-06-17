@@ -584,12 +584,14 @@ typealias BackendFlags = Int
 /** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end. */
 enum class BackendFlag(@JvmField val i: Int) {
     None(0),
-    /** Back-end supports gamepad and currently has one connected. */
+    /** Platform Back-end supports gamepad and currently has one connected. */
     HasGamepad(1 shl 0),
-    /** Back-end supports honoring ::mouseCursor value to change the OS cursor shape. */
+    /** Platform Back-end supports honoring GetMouseCursor() value to change the OS cursor shape. */
     HasMouseCursors(1 shl 1),
-    /** Back-end supports io.wantSetMousePos requests to reposition the OS mouse position (only used if ConfigFlags.NavEnableSetMousePos is set). */
+    /** Platform Back-end supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set). */
     HasSetMousePos(1 shl 2),
+    /** Renderer Back-end supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bits indices. */
+    HasVtxOffset(1 shl 3)
 }
 
 

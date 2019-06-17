@@ -1474,7 +1474,7 @@ class Font {
         drawList.cmdBuffer.last().elemCount -= (idxExpectedSize - drawList.idxBuffer.lim)
         drawList._vtxWritePtr = vtxWrite
         drawList._idxWritePtr = idxWrite
-        drawList._vtxCurrentIdx = drawList.vtxBuffer.lim
+        drawList._vtxCurrentIdx = vtxCurrentIdx
     }
 
     // [Internal] Don't use!
