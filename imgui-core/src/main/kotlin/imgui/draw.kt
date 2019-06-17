@@ -154,7 +154,7 @@ class DrawListSplitter {
     }
 
     fun split(drawList: DrawList, channelsCount: Int) {
-        assert(_current == 0 && _count == 1)
+        assert(_current == 0 && _count <= 1)
         val oldChannelsCount = _channels.size
         if (oldChannelsCount < channelsCount)
             for (i in oldChannelsCount until channelsCount)
@@ -176,6 +176,11 @@ class DrawListSplitter {
         }
     }
 
+    companion object {
+        fun canMergeDrawCommands(a: DrawCmd, b: DrawCmd): Boolean = a.clipRect == b.clipRect &&
+                a.textureId == b.textureId && a.userCallback == null && b.userCallback == null
+    }
+
     fun merge(drawList: DrawList) {
 
         // Note that we never use or rely on channels.Size because it is merely a buffer that we never shrink back to 0 to keep all sub-buffers ready for use.
@@ -188,11 +193,20 @@ class DrawListSplitter {
         // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
         var newCmdBufferCount = 0
         var newIdxBufferCount = 0
-        var idxOffset = drawList.cmdBuffer.lastOrNull()?.run { idxOffset + elemCount } ?: 0
+        var lastCmd = if(_count > 0 && _channels[0].cmdBuffer.isNotEmpty()) _channels[0].cmdBuffer.last() else null
+        var idxOffset = lastCmd?.run { idxOffset + elemCount } ?: 0
         for (i in 1 until _count) {
             val ch = _channels[i]
             if (ch.cmdBuffer.lastOrNull()?.elemCount == 0)
                 ch.cmdBuffer.pop()
+            else if (ch.cmdBuffer.isNotEmpty() && lastCmd != null && canMergeDrawCommands(lastCmd, ch.cmdBuffer[0]))            {
+                // Merge previous channel last draw command with current channel first draw command if matching.
+                lastCmd.elemCount += ch.cmdBuffer[0].elemCount
+                TODO()
+//                ch.cmdBuffer.erase(ch.CmdBuffer.Data);
+            }
+            if (ch.cmdBuffer.isNotEmpty())
+                lastCmd = ch.cmdBuffer.last()
             newCmdBufferCount += ch.cmdBuffer.size
             newIdxBufferCount += ch.idxBuffer.size
             ch.cmdBuffer.forEach {
