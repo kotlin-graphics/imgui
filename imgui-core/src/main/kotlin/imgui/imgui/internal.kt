@@ -791,7 +791,7 @@ interface imgui_internal {
 
         var clipDir = g.navMoveDir
         if (g.navMoveDir == Dir.Left && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
-            bbRel.min.x = max(window.sizeFull.x, window.sizeContents.x + window.windowPadding.x * 2f) - window.scroll.x
+            bbRel.min.x = max(window.sizeFull.x, window.contentSize.x + window.windowPadding.x * 2f) - window.scroll.x
             bbRel.max.x = bbRel.min.x
             if (moveFlags has NavMoveFlag.WrapX) {
                 bbRel translateY -bbRel.height
@@ -809,7 +809,7 @@ interface imgui_internal {
             navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
         }
         if (g.navMoveDir == Dir.Up && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
-            bbRel.min.y = max(window.sizeFull.y, window.sizeContents.y + window.windowPadding.y * 2f) - window.scroll.y
+            bbRel.min.y = max(window.sizeFull.y, window.contentSize.y + window.windowPadding.y * 2f) - window.scroll.y
             bbRel.max.y = bbRel.min.y
             if (moveFlags has NavMoveFlag.WrapY) {
                 bbRel translateX -bbRel.width
@@ -1845,7 +1845,7 @@ interface imgui_internal {
                 else -> 0
             }
         }
-        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, window.innerRect.max[axis.i] - window.innerRect.min[axis.i], window.sizeContents[axis.i] + window.windowPadding[axis.i] * 2f, roundingCorners)
+        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, window.innerRect.max[axis.i] - window.innerRect.min[axis.i], window.contentSize[axis.i] + window.windowPadding[axis.i] * 2f, roundingCorners)
     }
 
     /** Vertical/Horizontal scrollbar
@@ -1915,7 +1915,7 @@ interface imgui_internal {
             }
 
             // Apply scroll
-            // It is ok to modify Scroll here because we are being called in Begin() after the calculation of SizeContents and before setting up our starting position
+            // It is ok to modify Scroll here because we are being called in Begin() after the calculation of ContentSize and before setting up our starting position
             val scrollVNorm = saturate((clickedVNorm - g.scrollbarClickDeltaToGrabCenter - grabHNorm * 0.5f) / (1f - grabHNorm))
             scrollV = (0.5f + scrollVNorm * scrollMax).i.f//(win_size_contents_v - win_size_v));
 

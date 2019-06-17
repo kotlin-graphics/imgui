@@ -162,25 +162,6 @@ interface imgui_widgets_comboBox {
         return res
     }
 
-    fun combo0(label: String, currentItem: KMutableProperty0<Dir>, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
-        val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
-        // FIXME-OPT: Avoid computing this, or at least only when combo is open
-        imgui_internal._i = currentItem().i
-        return combo(label, imgui_internal.Companion::_i, items, heightInItems).also {
-            currentItem.set(Dir.values().first { it.i == imgui_internal._i })
-        }
-    }
-
-    // Fuck, this is getting out of hand, find a better solution
-    fun combo1(label: String, currentItem: KMutableProperty0<RT>, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
-        val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
-        // FIXME-OPT: Avoid computing this, or at least only when combo is open
-        imgui_internal._i = currentItem().ordinal
-        return combo(label, imgui_internal.Companion::_i, items, heightInItems).also {
-            currentItem.set(RT.values().first { it.ordinal == imgui_internal._i })
-        }
-    }
-
     fun combo(label: String, currentItem: KMutableProperty0<Int>, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
         val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
         // FIXME-OPT: Avoid computing this, or at least only when combo is open

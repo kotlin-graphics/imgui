@@ -141,7 +141,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
     }
     sizeFull put floor(size)
     this.size put sizeFull
-    dc.cursorMaxPos put pos // So first call to calcSizeContents() doesn't return crazy values
+    dc.cursorMaxPos put pos // So first call to CalcContentSize() doesn't return crazy values
     dc.cursorStartPos put pos
 
     if (flags has Wf.AlwaysAutoResize) {
@@ -224,8 +224,8 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean)
         var targetY = window.scrollTarget.y
         if (snapOnEdges && crY <= 0f && targetY <= window.windowPadding.y)
             targetY = 0f
-        if (snapOnEdges && crY >= 1f && targetY >= window.sizeContents.y + window.windowPadding.y + style.itemSpacing.y)
-            targetY = window.sizeContents.y  + window.windowPadding.y * 2f
+        if (snapOnEdges && crY >= 1f && targetY >= window.contentSize.y + window.windowPadding.y + style.itemSpacing.y)
+            targetY = window.contentSize.y  + window.windowPadding.y * 2f
         scroll.y = targetY - crY * window.innerRect.height
     }
     scroll maxAssign 0f

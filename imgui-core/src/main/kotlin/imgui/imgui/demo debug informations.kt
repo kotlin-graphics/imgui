@@ -13,7 +13,6 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.combo
-import imgui.ImGui.combo1
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dummy
 import imgui.ImGui.end
@@ -24,6 +23,7 @@ import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameCount
 import imgui.ImGui.getId
+import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
@@ -52,6 +52,7 @@ import imgui.ImGui.textLineHeight
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
+import imgui.ImGui.unindent
 import imgui.ImGui.windowDrawList
 import imgui.dsl.child
 import imgui.dsl.indent
@@ -243,11 +244,19 @@ interface imgui_demoDebugInformations {
             checkbox("Show windows rectangles", ::showWindowsRects)
             sameLine()
             setNextItemWidth(fontSize * 12)
-            showWindowsRects = showWindowsRects || combo1("##rects_type", ::showWindowsRectType, "OuterRect\u0000OuterRectClipped\u0000InnerRect\u0000InnerClipRect\u0000WorkRect\u0000Contents\u0000ContentsRegionRect\u0000")
+            val rectsNames = arrayOf("OuterRect", "OuterRectClipped", "InnerRect", "InnerClipRect", "WorkRect", "Contents", "ContentsRegionRect")
+            imgui_internal._i = showWindowsRectType.ordinal
+            showWindowsRects = showWindowsRects || combo("##rects_type", imgui_internal.Companion::_i, rectsNames)
+            showWindowsRectType = RT.values()[imgui_internal._i]
             if (showWindowsRects)
                 g.navWindow?.let { nav ->
-                    val r = Funcs.getRect(nav, showWindowsRectType)
-                    bulletText("'${nav.name}': (%.1f,%.1f) (%.1f,%.1f) Size (%.1f,%.1f)", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                    bulletText("'${nav.name}':")
+                    indent()
+                    for (n in RT.values())                    {
+                        val r = Funcs.getRect(nav, n)
+                        text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height, rectsNames[n.ordinal])
+                    }
+                    unindent()
                 }
             checkbox("Show clipping rectangle when hovering ImDrawCmd node", ::showDrawcmdClipRects)
             treePop()
@@ -425,7 +434,7 @@ interface imgui_demoDebugInformations {
                 RT.WorkRect -> window.workRect
                 RT.Contents -> {
                     val min = window.innerRect.min - window.scroll + window.windowPadding
-                    Rect(min, min + window.sizeContents)
+                    Rect(min, min + window.contentSize)
                 }
                 RT.ContentsRegionRect -> window.contentsRegionRect
                 else -> error("invalid")
@@ -464,7 +473,7 @@ interface imgui_demoDebugInformations {
                     val mode = if (idxBuffer != null) "indexed" else "non-indexed"
                     val buf = CharArray(300)
                     "Draw %4d triangles, tex 0x%p, clip_rect (%4.0f,%4.0f)-(%4.0f,%4.0f)".format(
-                            cmd.elemCount/3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w).toCharArray(buf)
+                            cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w).toCharArray(buf)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), "%s", buf)
                     if (showDrawcmdClipRects && fgDrawList != null && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
@@ -537,7 +546,7 @@ interface imgui_demoDebugInformations {
                 val flags = window.flags
                 nodeDrawList(window, window.drawList, "DrawList")
                 bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
-                        window.size.x, window.size.y, window.sizeContents.x, window.sizeContents.y)
+                        window.size.x, window.size.y, window.contentSize.x, window.contentSize.y)
                 val builder = StringBuilder()
                 if (flags has Wf.ChildWindow) builder += "Child "
                 if (flags has Wf.Tooltip) builder += "Tooltip "

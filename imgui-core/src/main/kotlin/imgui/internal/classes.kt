@@ -512,8 +512,7 @@ class WindowTempData {
     var cursorPosPrevLine = Vec2()
 
     var cursorStartPos = Vec2()
-    /** Used to implicitly calculate the size of our contents, always growing during the frame.
-     *  Turned into window.sizeContents at the beginning of next frame   */
+    /** Used to implicitly calculate the size of our contents, always growing during the frame. Used to calculate window->ContentSize at the beginning of next frame */
     var cursorMaxPos = Vec2()
 
     var currLineSize = Vec2()
@@ -616,9 +615,9 @@ class Window(var context: Context, var name: String) {
     /** Size when non collapsed */
     var sizeFull = Vec2()
     /** Size of contents/scrollable client area (calculated from the extents reach of the cursor) from previous frame. Does not include window decoration or window padding. */
-    var sizeContents = Vec2()
+    var contentSize = Vec2()
     /** Size of contents/scrollable client area explicitly request by the user via SetNextWindowContentSize(). */
-    var sizeContentsExplicit = Vec2()
+    var contentSizeExplicit = Vec2()
     /** Window padding at the time of begin. */
     var windowPadding = Vec2()
     /** Window rounding at the time of begin.   */
@@ -847,7 +846,7 @@ class Window(var context: Context, var name: String) {
         this.pos put floor(pos)
         val offset = this.pos - oldPos
         dc.cursorPos plusAssign offset         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least offset the cursor
-        dc.cursorMaxPos plusAssign offset      // And more importantly we need to offset CursorMaxPos/CursorStartPos this so SizeContents calculation doesn't get affected.
+        dc.cursorMaxPos plusAssign offset      // And more importantly we need to offset CursorMaxPos/CursorStartPos this so ContentSize calculation doesn't get affected.
         dc.cursorStartPos plusAssign offset
     }
 
@@ -959,11 +958,11 @@ class Window(var context: Context, var name: String) {
 
     /** ~GetWindowScrollMaxX */
     val scrollMaxX: Float
-        get() = max(0f, sizeContents.x + (windowPadding.x * 2f - innerRect.width))
+        get() = max(0f, contentSize.x + (windowPadding.x * 2f - innerRect.width))
 
     /** ~GetWindowScrollMaxY */
     val scrollMaxY: Float
-        get() = max(0f, sizeContents.y + (windowPadding.y * 2f - innerRect.height))
+        get() = max(0f, contentSize.y + (windowPadding.y * 2f - innerRect.height))
 
     /** AddWindowToDrawData */
     infix fun addToDrawData(outList: ArrayList<DrawList>) {
@@ -1091,12 +1090,12 @@ class Window(var context: Context, var name: String) {
         }
     }
 
-    fun calcSizeContents(): Vec2 = when {
-        collapsed && autoFitFrames allLessThanEqual 0 -> Vec2(sizeContents)
-        hidden && hiddenFramesCannotSkipItems == 0 && hiddenFramesCanSkipItems > 0 -> Vec2(sizeContents)
+    fun calcContentSize(): Vec2 = when {
+        collapsed && autoFitFrames allLessThanEqual 0 -> Vec2(contentSize)
+        hidden && hiddenFramesCannotSkipItems == 0 && hiddenFramesCanSkipItems > 0 -> Vec2(contentSize)
         else -> Vec2(
-                (if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else dc.cursorMaxPos.x - dc.cursorStartPos.x).i.f + windowPadding.x,
-                (if (sizeContentsExplicit.y != 0f) sizeContentsExplicit.y else dc.cursorMaxPos.y - dc.cursorStartPos.y).i.f + windowPadding.y)
+                (if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else dc.cursorMaxPos.x - dc.cursorStartPos.x).i.f + windowPadding.x,
+                (if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else dc.cursorMaxPos.y - dc.cursorStartPos.y).i.f + windowPadding.y)
     }
 
     fun findOrCreateColumns(id: ID): Columns {
@@ -1173,7 +1172,7 @@ class Window(var context: Context, var name: String) {
     }
 
     fun calcExpectedSize(): Vec2 {
-        val sizeContents = calcSizeContents()
+        val sizeContents = calcContentSize()
         return calcSizeAfterConstraint(calcSizeAutoFit(sizeContents))
     }
 }
