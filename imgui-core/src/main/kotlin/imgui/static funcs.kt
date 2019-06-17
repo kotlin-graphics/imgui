@@ -845,7 +845,7 @@ fun navUpdateWindowing() {
                 val NAV_MOVE_SPEED = 800f
                 // FIXME: Doesn't code variable framerate very well
                 val moveSpeed = floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
-                it.rootWindow!!.pos plusAssign moveDelta * moveSpeed
+                it.rootWindow!!.setPos(it.rootWindow!!.pos + moveDelta * moveSpeed, Cond.Always)
                 g.navDisableMouseHover = true
                 it.markIniSettingsDirty()
             }

@@ -521,13 +521,13 @@ interface imgui_main {
 
             // Zoom / Scale window
             // FIXME-OBSOLETE: This is an old feature, it still works but pretty much nobody is using it and may be best redesigned.
-            if (io.mouseWheel != 0f && io.keyCtrl && io.fontAllowUserScaling) {
+            if (io.mouseWheel != 0f && io.keyCtrl && io.fontAllowUserScaling && !window.collapsed) {
                 val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
                 val scale = newFontScale / window.fontWindowScale
                 window.fontWindowScale = newFontScale
                 if (window.flags hasnt Wf.ChildWindow) {
                     val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
-                    window.pos = floor(window.pos + offset)
+                    window.setPos(window.pos + offset)
                     window.size = floor(window.size * scale)
                     window.sizeFull = floor(window.sizeFull * scale)
                 }

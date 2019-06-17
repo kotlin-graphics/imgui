@@ -830,7 +830,7 @@ class Window(var context: Context, var name: String) {
 
     // _______________________________________ JVM _______________________________________
 
-    fun setPos(pos: Vec2, cond: Cond) {
+    fun setPos(pos: Vec2, cond: Cond = Cond.None) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
         if (cond != Cond.None && setWindowPosAllowFlags hasnt cond)
             return
@@ -850,7 +850,7 @@ class Window(var context: Context, var name: String) {
         dc.cursorMaxPos plusAssign offset // And more importantly we need to adjust this so size calculation doesn't get affected.
     }
 
-    fun setSize(size: Vec2, cond: Cond) {
+    fun setSize(size: Vec2, cond: Cond = Cond.None) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
         if (cond != Cond.None && setWindowSizeAllowFlags hasnt cond)
             return
@@ -875,7 +875,7 @@ class Window(var context: Context, var name: String) {
         }
     }
 
-    fun setCollapsed(collapsed: Boolean, cond: Cond) {
+    fun setCollapsed(collapsed: Boolean, cond: Cond = Cond.None) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
         if (cond != Cond.None && setWindowCollapsedAllowFlags hasnt cond)
             return
