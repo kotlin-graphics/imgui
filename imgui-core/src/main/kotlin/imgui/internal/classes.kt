@@ -707,19 +707,24 @@ class Window(var context: Context, var name: String) {
         childId = 0
     }
 
-    /** Current clipping rectangle. = DrawList->clip_rect_stack.back(). Scissoring / clipping rectangle. x1, y1, x2, y2. */
-    var clipRect = Rect()
-    /** == WindowRect just after setup in Begin(). == window->Rect() for root window. */
+
+    // The best way to understand what those rectangles are is to use the 'Metrics -> Tools -> Show windows rectangles' viewer.
+    // The main 'OuterRect', omitted as a field, is window->Rect().
+
+    /** == Window->Rect() just after setup in Begin(). == window->Rect() for root window. */
     var outerRectClipped = Rect()
-    /** == WindowRect just after setup in Begin(). == window->Rect() for root window.
-     *  Inner rectangle */
+    /** Inner rectangle (omit title bar, menu bar) */
     var innerRect = Rect()
-    /** == InnerRect minus WindowPadding.x, clipped within viewport or parent clip rect. */
+    /**  == InnerRect shrunk by WindowPadding*0.5f on each side, clipped within viewport or parent clip rect. */
     var innerClipRect = Rect()
-    /** == InnerRect minus WindowPadding.x */
+    /** Cover the whole scrolling region, shrunk by WindowPadding*1.0f on each side. This is meant to replace ContentsRegionRect over time (from 1.71+ onward). */
     var workRect = Rect()
-    /** FIXME: This is currently confusing/misleading. Maximum visible content position ~~ Pos + (SizeContentsExplicit ? SizeContentsExplicit : Size - ScrollbarSizes) - CursorStartPos, per axis */
+    /** Current clipping/scissoring rectangle, evolve as we are using PushClipRect(), etc. == DrawList->clip_rect_stack.back(). */
+    var clipRect = Rect()
+    /** FIXME: This is currently confusing/misleading. It is essentially WorkRect but not handling of scrolling. We currently rely on it as right/bottom aligned sizing operation need some size to rely on. */
     var contentsRegionRect = Rect()
+
+
     /** Last frame number the window was Active. */
     var lastFrameActive = -1
 
@@ -1316,15 +1321,15 @@ class TabBar {
         currFrameVisible = g.frameCount
 
         // Layout
-        itemSize(Vec2(offsetMax, barRect.height))
+        itemSize(Vec2(0f /*offsetMax*/, barRect.height)) // Don't feed width back
         window.dc.cursorPos.x = barRect.min.x
 
         // Draw separator
         val col = if (flags has TabBarFlag.IsFocused) Col.TabActive else Col.Tab
         val y = barRect.max.y - 1f
         run {
-            val separatorMinX = barRect.min.x - window.windowPadding.x
-            val separatorMaxX = barRect.max.x + window.windowPadding.x
+            val separatorMinX = barRect.min.x - floor(window.windowPadding.x * 0.5f)
+            val separatorMaxX = barRect.max.x + floor(window.windowPadding.x * 0.5f)
             window.drawList.addLine(Vec2(separatorMinX, y), Vec2(separatorMaxX, y), col.u32, 1f)
         }
         return true
@@ -1424,7 +1429,10 @@ class TabBar {
         if (wantClipRect)
             pushClipRect(Vec2(bb.min.x max barRect.min.x, bb.min.y - 1), Vec2(barRect.max.x, bb.max.y), true)
 
-        itemSize(bb, style.framePadding.y)
+        val backupCursorMaxPos = Vec2(window.dc.cursorMaxPos)
+        itemSize(bb.size, style.framePadding.y)
+        window.dc.cursorMaxPos = backupCursorMaxPos
+
         if (!itemAdd(bb, id)) {
             if (wantClipRect)
                 popClipRect()

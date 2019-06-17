@@ -966,11 +966,10 @@ interface imgui_internal {
             }
             dc.currentColumns = columns
 
-            // Set state for first column
-            val contentRegionWidth = if (sizeContentsExplicit.x != 0f) sizeContentsExplicit.x else innerClipRect.max.x - pos.x
+            // Set state for first columnf
             with(columns) {
-                offMinX = dc.indent - style.itemSpacing.x // Lock our horizontal range
-                offMaxX = max(contentRegionWidth - scroll.x, offMinX + 1f)
+                offMinX = dc.indent - style.itemSpacing.x
+                offMaxX = max(workRect.max.x - pos.x, offMinX + 1f)
                 hostCursorPosY = dc.cursorPos.y
                 hostCursorMaxPosX = dc.cursorMaxPos.x
                 hostClipRect put clipRect
@@ -2312,11 +2311,11 @@ interface imgui_internal {
         // We vertically grow up to current line height up the typical widget height.
         val textBaseOffsetY = glm.max(padding.y, window.dc.currLineTextBaseOffset) // Latch before ItemSize changes it
         val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
-        val frameBb = Rect(window.dc.cursorPos, Vec2(contentRegionMaxAbs.x, window.dc.cursorPos.y + frameHeight))
+        val frameBb = Rect(window.dc.cursorPos, Vec2(window.workRect.max.x, window.dc.cursorPos.y + frameHeight))
         if (displayFrame) {
             // Framed header expand a little outside the default padding
-            frameBb.min.x -= (window.windowPadding.x * 0.5f).i.f - 1
-            frameBb.max.x += (window.windowPadding.x * 0.5f).i.f - 1
+            frameBb.min.x -= (window.windowPadding.x * 0.5f - 1f).i.f
+            frameBb.max.x += (window.windowPadding.x * 0.5f - 1f).i.f
         }
 
         val textOffsetX = g.fontSize + padding.x * if (displayFrame) 3 else 2   // Collapser arrow width + Spacing
