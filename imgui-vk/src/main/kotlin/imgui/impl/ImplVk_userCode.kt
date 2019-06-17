@@ -8,9 +8,7 @@ import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4ub
-import imgui.DrawData
-import imgui.DrawIdx
-import imgui.DrawVert
+import imgui.*
 import imgui.ImGui.io
 import kool.adr
 import kool.isValid
@@ -33,6 +31,7 @@ import kotlin.reflect.KMutableProperty0
 fun ImplVk_Init(renderPass_: VkRenderPass): Boolean {
 
     io.backendRendererName = "imgui_impl_vulkan"
+    io.backendFlags = io.backendFlags or BackendFlag.HasVtxOffset // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     val info = VkInitInfo
 
     info.run { assert(queue.isValid && descriptorPool.isValid && minImageCount >= 2 && imageCount >= minImageCount) }
@@ -114,8 +113,9 @@ fun renderDrawData(drawData: DrawData, commandBuffer: VkCommandBuffer) {
     val clipScale = drawData.framebufferScale // (1,1) unless using retina display which are often (2,2)
 
     // Render command lists
-    var vtxOffset = 0
-    var idxOffset = 0
+    // (Because we merged all buffers into a single one, we maintain our own offset into them)
+    var globalVtxOffset = 0
+    var globalIdxOffset = 0
     for (cmdList in drawData.cmdLists) {
         for (cmd in cmdList.cmdBuffer) {
             val userCB = cmd.userCallback
@@ -145,12 +145,12 @@ fun renderDrawData(drawData: DrawData, commandBuffer: VkCommandBuffer) {
                     commandBuffer.setScissor(scissor)
 
                     // Draw
-                    commandBuffer.drawIndexed(cmd.elemCount, 1, idxOffset, vtxOffset, 0)
+                    commandBuffer.drawIndexed(cmd.elemCount, 1, cmd.idxOffset + globalIdxOffset, cmd.vtxOffset + globalVtxOffset, 0)
                 }
             }
-            idxOffset += cmd.elemCount
+            globalIdxOffset += cmdList.idxBuffer.rem
+            globalVtxOffset += cmdList.vtxBuffer.rem
         }
-        vtxOffset += cmdList.vtxBuffer.data.rem // TODO -data
     }
 }
 
