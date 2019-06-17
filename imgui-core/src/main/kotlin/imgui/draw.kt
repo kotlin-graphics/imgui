@@ -2,7 +2,6 @@ package imgui
 
 import gli_.hasnt
 import glm_.BYTES
-import glm_.L
 import glm_.f
 import glm_.func.common.max
 import glm_.glm
@@ -13,13 +12,10 @@ import imgui.ImGui.shadeVertsLinearUV
 import imgui.imgui.g
 import imgui.internal.*
 import kool.*
-import org.lwjgl.system.MemoryUtil.memCopy
 import java.nio.ByteBuffer
-import java.nio.IntBuffer
 import java.util.Stack
 import kotlin.math.sqrt
 import imgui.internal.DrawCornerFlag as Dcf
-import imgui.plusAssign
 import uno.kotlin.plusAssign
 
 /** Draw callbacks for advanced uses.
@@ -104,7 +100,7 @@ class DrawVert {
     override fun toString() = "pos: $pos, uv: $uv, col: $col"
 }
 
-/** Temporary storage for ImDrawList ot output draw commands out of order, used by ImDrawList::ChannelsSplit()
+/** Temporary storage to output draw commands out of order, used by ImDrawListSplitter and ImDrawList::ChannelsSplit()
  *
  *  Draw channels are used by the Columns API to "split" the render list into different channels while building, so
  *  items of each column can be batched together.
@@ -114,16 +110,136 @@ class DrawChannel {
 
     val cmdBuffer = Stack<DrawCmd>()
     val idxBuffer = Stack<Int>()
+
+    fun clear() {
+        cmdBuffer.clear()
+        idxBuffer.clear()
+    }
+}
+
+//-----------------------------------------------------------------------------
+// ImDrawListSplitter
+//-----------------------------------------------------------------------------
+// FIXME: This may be a little confusing, trying to be a little too low-level/optimal instead of just doing vector swap..
+//-----------------------------------------------------------------------------
+/** Split/Merge functions are used to split the draw list into different layers which can be drawn into out of order.
+ *  This is used by the Columns api, so items of each column can be batched together in a same draw call. */
+class DrawListSplitter {
+    /** Current channel number (0) */
+    var _current = 0
+    /** Number of active channels (1+) */
+    var _count = 0
+    /** Draw channels (not resized down so Count might be < Channels.Size) */
+    val _channels = Stack<DrawChannel>()
+
+    init {
+        clear()
+    }
+
+    fun clear() {
+        _current = 0
+        _count = 1
+    } // Do not clear Channels[] so our allocations are reused next frame
+
+    fun clearFreeMemory() {
+        _channels.forEachIndexed { i, c ->
+            //            if (i == _current)
+//                memset(&_Channels[i], 0, sizeof(_Channels[i]));  // Current channel is a copy of CmdBuffer/IdxBuffer, don't destruct again
+            c.cmdBuffer.clear()
+            c.idxBuffer.clear()
+        }
+        _current = 0
+        _count = 1
+        _channels.clear()
+    }
+
+    fun split(drawList: DrawList, channelsCount: Int) {
+        assert(_current == 0 && _count == 1)
+        val oldChannelsCount = _channels.size
+        if (oldChannelsCount < channelsCount)
+            for (i in oldChannelsCount until channelsCount)
+                _channels += DrawChannel()
+        _count = channelsCount
+
+        // Channels[] (24/32 bytes each) hold storage that we'll swap with draw_list->_CmdBuffer/_IdxBuffer
+        // The content of Channels[0] at this point doesn't matter. We clear it to make state tidy in a debugger but we don't strictly need to.
+        // When we switch to the next channel, we'll copy draw_list->_CmdBuffer/_IdxBuffer into Channels[0] and then Channels[1] into draw_list->CmdBuffer/_IdxBuffer
+        _channels[0].clear()
+        for (i in 1 until channelsCount) {
+            if (i < oldChannelsCount)
+                _channels[i].clear()
+            if (_channels[i].cmdBuffer.isEmpty())
+                _channels[i].cmdBuffer += DrawCmd().apply {
+                    clipRect put drawList._clipRectStack.last()
+                    textureId = drawList._textureIdStack.last()
+                }
+        }
+    }
+
+    fun merge(drawList: DrawList) {
+
+        // Note that we never use or rely on channels.Size because it is merely a buffer that we never shrink back to 0 to keep all sub-buffers ready for use.
+        if (_count <= 1) return
+
+        setCurrentChannel(drawList, 0)
+        if (drawList.cmdBuffer.lastOrNull()?.elemCount == 0)
+            drawList.cmdBuffer.pop()
+
+        // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
+        var newCmdBufferCount = 0
+        var newIdxBufferCount = 0
+        var idxOffset = drawList.cmdBuffer.lastOrNull()?.run { idxOffset + elemCount } ?: 0
+        for (i in 1 until _count) {
+            val ch = _channels[i]
+            if (ch.cmdBuffer.lastOrNull()?.elemCount == 0)
+                ch.cmdBuffer.pop()
+            newCmdBufferCount += ch.cmdBuffer.size
+            newIdxBufferCount += ch.idxBuffer.size
+            ch.cmdBuffer.forEach {
+                it.idxOffset = idxOffset
+                idxOffset += it.elemCount
+            }
+        }
+        for (i in drawList.cmdBuffer.size until newCmdBufferCount)
+            drawList.cmdBuffer += DrawCmd()
+        drawList.idxBuffer = drawList.idxBuffer.resize(drawList.idxBuffer.rem + newIdxBufferCount)
+
+        // Write commands and indices in order (they are fairly small structures, we don't copy vertices only indices)
+        var cmdWrite = drawList.cmdBuffer.size - newCmdBufferCount
+        var idxWrite = drawList.idxBuffer.rem - newIdxBufferCount
+        for (i in 1 until _count) {
+            val ch = _channels[i]
+            for (j in ch.cmdBuffer.indices)
+                drawList.cmdBuffer[cmdWrite++] put ch.cmdBuffer[j]
+            for (j in ch.idxBuffer.indices)
+                drawList.idxBuffer[idxWrite++] = ch.idxBuffer[j]
+        }
+        drawList._idxWritePtr = idxWrite
+        drawList.updateClipRect() // We call this instead of AddDrawCmd(), so that empty channels won't produce an extra draw call.
+        _count = 1
+    }
+
+    fun setCurrentChannel(drawList: DrawList, idx: Int) {
+        assert(idx < _count)
+        if (_current == idx) return
+        // Overwrite ImVector (12/16 bytes), four times. This is merely a silly optimization instead of doing .swap()
+        for (i in drawList.cmdBuffer.indices) _channels[_current].cmdBuffer[i] put drawList.cmdBuffer[i]
+        for (i in 0 until drawList.idxBuffer.rem) _channels[_current].idxBuffer[i] = drawList.idxBuffer[i]
+        _current = idx
+        for (i in drawList.cmdBuffer.indices) drawList.cmdBuffer[i] put _channels[idx].cmdBuffer[i]
+        for (i in 0 until drawList.idxBuffer.rem) drawList.idxBuffer[i] = _channels[idx].idxBuffer[i]
+        drawList._idxWritePtr = drawList.idxBuffer.rem
+    }
 }
 
 
 /** A single draw command list (generally one per window, conceptually you may see this as a dynamic "mesh" builder)
  *
  *  Draw command list
- *  This is the low-level list of polygons that ImGui functions are filling. At the end of the frame, all command lists
- *  are passed to your IO.renderDrawListFn function for rendering.
- *  Each ImGui window contains its own DrawList. You can use ImGui::windowDrawList to access the current
- *  window draw list and draw custom primitives.
+ *  This is the low-level list of polygons that ImGui:: functions are filling. At the end of the frame,
+ *  all command lists are passed to your ImGuiIO::RenderDrawListFn function for rendering.
+ *  Each dear imgui window contains its own ImDrawList. You can use ImGui::GetWindowDrawList() to
+ *  access the current window draw list and draw custom primitives.
  *  You can interleave normal ImGui:: calls and adding primitives to the current draw list.
  *  All positions are generally in pixel coordinates (top-left at (0,0), bottom-right at io.DisplaySize),
  *  but you are totally free to apply whatever transformation matrix to want to the data
@@ -171,12 +287,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     val _textureIdStack = Stack<TextureID>()
     /** [Internal] current path building    */
     val _path = ArrayList<Vec2>()
-    /** [Internal] current channel number (0)   */
-    var _channelsCurrent = 0
-    /** [Internal] number of active channels (1+)   */
-    var _channelsCount = 0
-    /** [Internal] draw channels for columns API (not resized down so _ChannelsCount may be smaller than _Channels.Size)    */
-    val _channels = ArrayList<DrawChannel>()
+    /** [Internal] for channels api */
+    val _splitter = DrawListSplitter()
 
     fun destroy() = clearFreeMemory()
 
@@ -846,94 +958,6 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Channels
-    // - Use to simulate layers. By switching channels to can render out-of-order (e.g. submit foreground primitives before background primitives)
-    // - Use to minimize draw calls (e.g. if going back-and-forth between multiple non-overlapping clipping rectangles, prefer to append into separate channels then merge at the end)
-    // -----------------------------------------------------------------------------------------------------------------
-
-    fun channelsSplit(channelsCount: Int) {
-
-        assert(_channelsCurrent == 0 && _channelsCount == 1)
-        val oldChannelsCount = _channels.size
-        if (oldChannelsCount < channelsCount)
-            for (i in oldChannelsCount until channelsCount) _channels += DrawChannel()   // resize(channelsCount)
-        _channelsCount = channelsCount
-
-        /*  _Channels[] (24/32 bytes each) hold storage that we'll swap with this->_CmdBuffer/_IdxBuffer
-            The content of _Channels[0] at this point doesn't matter. We clear it to make state tidy in a debugger but
-            we don't strictly need to.
-            When we switch to the next channel, we'll copy _CmdBuffer/_IdxBuffer into _Channels[0] and then _Channels[1]
-            into _CmdBuffer/_IdxBuffer  */
-        _channels[0] = DrawChannel()
-        for (i in 1 until channelsCount) {
-            if (i < oldChannelsCount) {
-                _channels[i].cmdBuffer.clear()
-                _channels[i].idxBuffer.clear()
-            }
-            if (_channels[i].cmdBuffer.isEmpty()) {
-                _channels[i].cmdBuffer += DrawCmd().apply {
-                    clipRect put _clipRectStack.last()
-                    textureId = _textureIdStack.last()
-                }
-            }
-        }
-    }
-
-    fun channelsMerge() {
-
-        /*  Note that we never use or rely on channels.Size because it is merely a buffer that we never shrink back to 0
-            to keep all sub-buffers ready for use.  */
-        if (_channelsCount <= 1) return
-
-        channelsSetCurrent(0)
-        if (cmdBuffer.isNotEmpty() && cmdBuffer.last().elemCount == 0)
-            cmdBuffer.pop()
-
-        // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
-        var newCmdBufferCount = 0
-        var newIdxBufferCount = 0
-        var idxOffset = cmdBuffer.lastOrNull()?.run { idxOffset + elemCount } ?: 0
-        for (i in 1 until _channelsCount) {
-            val ch = _channels[i]
-            if (ch.cmdBuffer.isNotEmpty() && ch.cmdBuffer.last().elemCount == 0)
-                ch.cmdBuffer.pop()
-            newCmdBufferCount += ch.cmdBuffer.size
-            newIdxBufferCount += ch.idxBuffer.size
-            ch.cmdBuffer.forEach {
-                it.idxOffset = idxOffset
-                idxOffset += it.elemCount
-            }
-        }
-        for (i in 0 until newCmdBufferCount) cmdBuffer += DrawCmd()   // resize(cmdBuffer.size + newCmdBufferCount)
-        idxBuffer = idxBuffer.resize(idxBuffer.lim + newIdxBufferCount)
-
-        // Flatten our N channels at the end of the first one.
-        var cmdWrite = cmdBuffer.size - newCmdBufferCount
-        _idxWritePtr = idxBuffer.lim - newIdxBufferCount
-
-        for (i in 1 until _channelsCount) {
-            val ch = _channels[i]
-            for (j in ch.cmdBuffer.indices) cmdBuffer[cmdWrite++] put ch.cmdBuffer[j]
-            for (j in ch.idxBuffer.indices) idxBuffer[_idxWritePtr + j] = ch.idxBuffer[j]
-        }
-        updateClipRect() // We call this instead of addDrawCmd(), so that empty channels won't produce an extra draw call.
-        _channelsCount = 1
-    }
-
-    fun channelsSetCurrent(idx: Int) {
-
-        assert(idx < _channelsCount)
-        if (_channelsCurrent == idx) return
-//        _channels[_channelsCurrent].cmdBuffer = cmdBuffer.cl()
-//        _channels[_channelsCurrent].idxBuffer = idxBuffer
-//        _channelsCurrent = idx
-//        cmdBuffer = _channels[_channelsCurrent].cmdBuffer
-//        idxBuffer = _channels[_channelsCurrent].idxBuffer
-//        _idxWritePtr = idxBuffer.size
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     // Advanced
     // -----------------------------------------------------------------------------------------------------------------
@@ -961,9 +985,21 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-// Internal helpers
-// NB: all primitives needs to be reserved via PrimReserve() beforehand!
-// -----------------------------------------------------------------------------------------------------------------
+    // Advanced: Channels
+    // - Use to split render into layers. By switching channels to can render out-of-order (e.g. submit foreground primitives before background primitives)
+    // - Use to minimize draw calls (e.g. if going back-and-forth between multiple non-overlapping clipping rectangles, prefer to append into separate channels then merge at the end)
+    // -----------------------------------------------------------------------------------------------------------------
+
+    fun channelsSplit(count: Int) = _splitter.split(this, count)
+
+    fun channelsMerge() = _splitter::merge
+
+    fun channelsSetCurrent(idx: Int) = _splitter.setCurrentChannel(this, idx)
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Internal helpers
+    // NB: all primitives needs to be reserved via PrimReserve() beforehand!
+    // -----------------------------------------------------------------------------------------------------------------
     fun clear() {
         cmdBuffer.clear()
         idxBuffer.resize(0) // we dont assign because it wont create a new istance for sure
@@ -976,18 +1012,12 @@ class DrawList(sharedData: DrawListSharedData?) {
         _clipRectStack.clear()
         _textureIdStack.clear()
         _path.clear()
-        _channelsCurrent = 0
-        _channelsCount = 1
-        // NB: Do not clear channels so our allocations are re-used after the first frame.
+        _splitter.clear()
     }
 
     fun clearFreeMemory() {
         clear()
-        _channels.forEach {
-            it.cmdBuffer.clear()
-            it.idxBuffer.clear()
-        }
-        _channels.clear()
+        _splitter.clearFreeMemory()
         vtxBuffer.data.free()
         idxBuffer.free()
     }
@@ -996,7 +1026,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun primReserve(idxCount: Int, vtxCount: Int) {
 
         // Large mesh support (when enabled)
-        if (DrawIdx.BYTES == 2 && _vtxCurrentIdx + vtxCount >= (1 shl 16) && flags has DrawListFlag.AllowVtxOffset)        {
+        if (DrawIdx.BYTES == 2 && _vtxCurrentIdx + vtxCount >= (1 shl 16) && flags has DrawListFlag.AllowVtxOffset) {
             _vtxCurrentOffset = vtxBuffer.rem
             _vtxCurrentIdx = 0
             addDrawCmd()
