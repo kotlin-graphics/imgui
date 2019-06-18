@@ -13,7 +13,7 @@ import imgui.internal.InputReadMode
 
 
 /** Flags for ImGui::Begin()    */
-enum class WindowFlag(@JvmField val i: Int) {
+enum class WindowFlag(@JvmField val i: WindowFlags) {
 
     None(0),
     /** Disable title-bar   */

@@ -136,7 +136,8 @@ object showDemoWindowLayout {
     /* Scrolling */
     var track = true
     var trackLine = 50
-    var scrollToPx = 200
+    var scrollToOffPx = 0f
+    var scrollToPosPx = 200f
 
 
     /* Horizontal Scrolling */
@@ -494,11 +495,16 @@ object showDemoWindowLayout {
 
             checkbox("Track", ::track)
             pushItemWidth(100)
-            sameLine(130); track = track or dragInt("##line", ::trackLine, 0.25f, 0, 99, "Line = %d")
-            var scrollTo = button("Scroll To Pos")
-            sameLine(130); scrollTo = scrollTo or dragInt("##pos_y", ::scrollToPx, 1f, 0, 9999, "Y = %d px")
+            sameLine(140); track = dragInt("##line", ::trackLine, 0.25f, 0, 99, "Line = %d") or track
+
+            var scrollToOff = button("Scroll Offset")
+            sameLine(140); scrollToOff = dragFloat("##off_y", ::scrollToOffPx, 1f, 0f, 9999f, "+%.0f px") or scrollToOff
+
+            var scrollToPos = button("Scroll To Pos")
+            sameLine(140); scrollToPos = dragFloat("##pos_y", ::scrollToPosPx, 1f, 0f, 9999f, "Y = %.0f px") or scrollToPos
+
             popItemWidth()
-            if (scrollTo)
+            if (scrollToOff || scrollToPos)
                 track = false
 
             val childW = (contentRegionAvail.x - 4 * style.itemSpacing.x) / 5
@@ -506,9 +512,13 @@ object showDemoWindowLayout {
                 if (i > 0) sameLine()
                 group {
                     text("%s", if (i == 0) "Top" else if (i == 1) "25%" else if (i == 2) "Center" else if (i == 3) "75%" else "Bottom")
-                    beginChild(getId(i), Vec2(childW, 200f), true)
-                    if (scrollTo)
-                        setScrollFromPosY(cursorStartPos.y + scrollToPx, i * 0.25f)
+
+                    val childFlags = Wf.MenuBar.i
+                    beginChild(getId(i), Vec2(childW, 200f), true, childFlags)
+                    if (scrollToOff)
+                        scrollY  = scrollToOffPx
+                    if (scrollToPos)
+                        setScrollFromPosY(cursorStartPos.y + scrollToPosPx, i * 0.25f)
                     for (line in 0..99)
                         if (track && line == trackLine) {
                             textColored(Vec4(1, 1, 0, 1), "Line %d", line)
