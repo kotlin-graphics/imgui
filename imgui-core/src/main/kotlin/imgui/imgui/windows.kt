@@ -435,10 +435,10 @@ interface imgui_windows {
                     flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip -> parentWindow!!.clipRect
                     else -> viewportRect
                 }
-                val outerRect = window.rect()
-                titleBarRect = window.titleBarRect()
-                window.outerRectClipped = outerRect
-                window.outerRectClipped clipWith hostRect
+                val outerRect = rect()
+                titleBarRect = titleBarRect()
+                outerRectClipped = outerRect
+                outerRectClipped clipWith hostRect
 
                 // Inner rectangle
                 // Not affected by window border size. Used by:
@@ -460,11 +460,11 @@ interface imgui_windows {
                 // Affected by window/frame border size. Used by:
                 // - Begin() initial clip rect
                 val topBorderSize = if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else window.windowBorderSize
-                window.innerClipRect.put(
-                        minX = floor(0.5f + window.innerRect.min.x + max(floor(window.windowPadding.x * 0.5f), window.windowBorderSize)),
-                        minY = floor(0.5f + window.innerRect.min.y + topBorderSize),
-                        maxX = floor(0.5f + window.innerRect.max.x - max(floor(window.windowPadding.y * 0.5f), window.windowBorderSize)),
-                        maxY = floor(0.5f + window.innerRect.max.y - window.windowBorderSize))
+                innerClipRect.put(
+                        minX = floor(0.5f + innerRect.min.x + max(floor(windowPadding.x * 0.5f), windowBorderSize)),
+                        minY = floor(0.5f + innerRect.min.y + topBorderSize),
+                        maxX = floor(0.5f + innerRect.max.x - max(floor(windowPadding.y * 0.5f), windowBorderSize)),
+                        maxY = floor(0.5f + innerRect.max.y - windowBorderSize))
                 workRect clipWithFull hostRect
             }
 
