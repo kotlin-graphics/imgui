@@ -392,7 +392,7 @@ interface imgui_windows {
             val resizeGripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             if (!window.collapsed) {
                 val (borderHeld_, ret) = updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
-                if(ret) {
+                if (ret) {
                     useCurrentSizeForScrollbarX = true
                     useCurrentSizeForScrollbarY = true
                 }
@@ -509,10 +509,25 @@ interface imgui_windows {
                     window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f), g.style.windowRounding)
             }
 
+            // Since 1.71, child window can render their decoration (bg color, border, scrollbars, etc.) within their parent to save a draw call.
+            // When using overlapping child windows, this will break the assumption that child z-order is mapped to submission order.
+            // We disable this when the parent window has zero vertices, which is a common pattern leading to laying out multiple overlapping child.
+            // We also disabled this when we have dimming overlay behind this specific one child.
+            // FIXME: More code may rely on explicit sorting of overlapping child window and would need to disable this somehow. Please get in contact if you are affected.
+            var renderDecorationsInParent = false
+            if (flags has Wf.ChildWindow && flags hasnt Wf.Popup && !windowIsChildTooltip)
+                if (window.drawList.cmdBuffer.last().elemCount == 0 && parentWindow!!.drawList.vtxBuffer.rem > 0)
+                    renderDecorationsInParent = true
+            if (renderDecorationsInParent)
+                window.drawList = parentWindow!!.drawList
+
             val windowToHighlight = g.navWindowingTarget ?: g.navWindow
             val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
                     ?: false)
             renderWindowDecorations(window, titleBarRect, titleBarIsHighlight, resizeGripCount, resizeGripCol, resizeGripDrawSize)
+
+            if (renderDecorationsInParent)
+                window.drawList = window.drawListInst
 
             // Draw navigation selection/windowing rectangle border
             if (g.navWindowingTargetAnim === window) {
