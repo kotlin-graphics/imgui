@@ -354,7 +354,7 @@ interface imgui_windows {
             else if (flags has Wf.Tooltip && !windowPosSetByApi && !windowIsChildTooltip)
                 window.pos = findBestWindowPosForPopup(window)
 
-            // Clamp position so it stays visible
+            // Clamp position/size so it stays visible
             // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
             val viewportRect = viewportRect
             if (!windowPosSetByApi && flags hasnt Wf.ChildWindow && window.autoFitFrames allLessThanEqual 0)
@@ -393,11 +393,24 @@ interface imgui_windows {
                 borderHeld = updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
             window.resizeBorderHeld = borderHeld
 
-            // Default item width. Make it proportional to window size if window manually resizes
-            window.itemWidthDefault = when {
-                window.size.x > 0f && flags hasnt Wf.Tooltip && flags hasnt Wf.AlwaysAutoResize -> window.size.x * 0.65f
-                else -> g.fontSize * 16f
-            }.i.f
+            // SCROLLBAR VISIBILITY
+
+            // Update scrollbar visibility (based on the Size that was effective during last frame or the auto-resized Size).
+            if (!window.collapsed) {
+                // When reading the current size we need to read it after size constraints have been applied.
+                // When we use InnerRect here we are intentionally reading last frame size, same for ScrollbarSizes values before we set them again.
+                val availSizeFromCurrentFrame = Vec2(window.sizeFull.x, window.sizeFull.y - decorationUpHeight)
+                val availSizeFromLastFrame = window.innerRect.size + window.scrollbarSizes
+                val neededSizeFromLastFrame = if (windowJustCreated) Vec2() else window.contentSize + window.windowPadding * 2f
+                val sizeXforScrollbars = if (useCurrentSizeForScrollbarX) availSizeFromCurrentFrame.x else availSizeFromLastFrame.x
+                val sizeYforScrollbars = if (useCurrentSizeForScrollbarY) availSizeFromCurrentFrame.y else availSizeFromLastFrame.y
+                //bool scrollbar_y_from_last_frame = window->ScrollbarY; // FIXME: May want to use that in the ScrollbarX expression? How many pros vs cons?
+                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (neededSizeFromLastFrame.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar)
+                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((neededSizeFromLastFrame.x > sizeXforScrollbars - if (window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+                if (window.scrollbar.x && !window.scrollbar.y)
+                    window.scrollbar.y = neededSizeFromLastFrame.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar
+                window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f, if (window.scrollbar.x) style.scrollbarSize else 0f)
+            }
 
             val titleBarRect: Rect
             val hostRect: Rect
@@ -446,6 +459,12 @@ interface imgui_windows {
                         maxX = floor(0.5f + window.innerRect.max.x - max(floor(window.windowPadding.y * 0.5f), window.windowBorderSize)),
                         maxY = floor(0.5f + window.innerRect.max.y - window.windowBorderSize))
                 workRect clipWithFull hostRect
+            }
+
+            // Default item width. Make it proportional to window size if window manually resizes
+            window.itemWidthDefault = when {
+                window.size.x > 0f && flags hasnt Wf.Tooltip && flags hasnt Wf.AlwaysAutoResize -> (window.size.x * 0.65f).i.f
+                else -> (g.fontSize * 16f).i.f
             }
 
             // SCROLLING
