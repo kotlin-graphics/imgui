@@ -564,17 +564,19 @@ interface imgui_main {
         }
 
         /** Handle resize for: Resize Grips, Borders, Gamepad
-         * @return borderHelf   */
-        fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int, resizeGripCol: IntArray): Int {
+         * @return [JVM] borderHelf to Boolean   */
+        fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int, resizeGripCol: IntArray): Pair<Int, Boolean> {
 
             var borderHeld = borderHeld_
 
             val flags = window.flags
-            if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames anyGreaterThan 0)
-                return borderHeld
-            if (!window.wasActive) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
-                return borderHeld
 
+            if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || window.autoFitFrames anyGreaterThan 0)
+                return borderHeld to false
+            if (!window.wasActive) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
+                return borderHeld to false
+
+            var retAutoFit = false
             val resizeBorderCount = if (io.configWindowsResizeFromEdges) 4 else 0
             val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
             val gripHoverInnerSize = (gripDrawSize * 0.75f).i.f
@@ -608,6 +610,7 @@ interface imgui_main {
                 if (held && g.io.mouseDoubleClicked[0] && resizeGripN == 0) {
                     // Manual auto-fit when double-clicking
                     sizeTarget put window.calcSizeAfterConstraint(sizeAutoFit)
+                    retAutoFit = true
                     clearActiveId()
                 } else if (held) {
                     // Resize from any of the four corners
@@ -688,7 +691,7 @@ interface imgui_main {
 
             window.size put window.sizeFull
 
-            return borderHeld
+            return borderHeld to retAutoFit
         }
 
         fun clampWindowRect(window: Window, rect: Rect, padding: Vec2) {

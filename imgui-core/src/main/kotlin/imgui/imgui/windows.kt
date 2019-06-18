@@ -389,8 +389,14 @@ interface imgui_windows {
             val resizeGripCol = IntArray(4)
             val resizeGripCount = if (io.configWindowsResizeFromEdges) 2 else 1 // 4
             val resizeGripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
-            if (!window.collapsed)
-                borderHeld = updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
+            if (!window.collapsed) {
+                val (borderHeld_, ret) = updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
+                if(ret) {
+                    useCurrentSizeForScrollbarX = true
+                    useCurrentSizeForScrollbarY = true
+                }
+                borderHeld = borderHeld_
+            }
             window.resizeBorderHeld = borderHeld
 
             // SCROLLBAR VISIBILITY
