@@ -83,11 +83,7 @@ typealias DrawIdx = Int
 
 /** Vertex layout
  *
- *  (You can override the vertex format layout by using e.g. #define ImDrawVert MyDrawVert in imconfig.h
- *  The code expect ImVec2 pos (8 bytes), ImVec2 uv (8 bytes), ImU32 col (4 bytes), but you can re-order them or add other fields
- *  as needed to simplify integration in your engine. IMPORTANT: dear imgui DOES NOT CLEAR THE STRUCTURE AND DOESN"T CALL ITS CONSTRUCTOR,
- *  so any field other than pos/uv/col will be uninitialized. If you add extra fields (such as a Z coordinate) you will need to either
- *  ignore them, either set them up yourself.) */
+ *  A single vertex (pos + uv + col = 20 bytes by default. Override layout with IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT) */
 class DrawVert {
 
     var pos = Vec2()
