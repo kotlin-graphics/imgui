@@ -201,9 +201,10 @@ class DrawListSplitter {
             val ch = _channels[i]
             if (ch.cmdBuffer.lastOrNull()?.elemCount == 0)
                 ch.cmdBuffer.pop()
-            else if (ch.cmdBuffer.isNotEmpty() && lastCmd != null && canMergeDrawCommands(lastCmd, ch.cmdBuffer[0]))            {
+            if (ch.cmdBuffer.isNotEmpty() && lastCmd != null && canMergeDrawCommands(lastCmd, ch.cmdBuffer[0]))            {
                 // Merge previous channel last draw command with current channel first draw command if matching.
                 lastCmd.elemCount += ch.cmdBuffer[0].elemCount
+                idxOffset += ch.cmdBuffer[0].elemCount
                 TODO()
 //                ch.cmdBuffer.erase(ch.CmdBuffer.Data);
             }
