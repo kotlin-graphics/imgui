@@ -222,7 +222,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     val mouseDoubleClicked = BooleanArray(5)
     /** Mouse button went from Down to !Down    */
     val mouseReleased = BooleanArray(5)
-    /** Track if button was clicked inside an imgui window. We don't request mouse capture from the application if click started outside ImGui bounds.   */
+    /** Track if button was clicked inside a dear imgui window. We don't request mouse capture from the application if click started outside ImGui bounds.   */
     var mouseDownOwned = BooleanArray(5)
     /** Track if button down was a double-click */
     var mouseDownWasDoubleClick = BooleanArray(5)
@@ -437,7 +437,7 @@ operator fun FloatArray.get(index: NavInput) = get(index.i)
  *  ----------------------------------------------------------------------------- */
 class Style {
 
-    /**  Global alpha applies to everything in ImGui.    */
+    /**  Global alpha applies to everything in Dear ImGui.    */
     var alpha = 1f
     /** Padding within a window. */
     var windowPadding = Vec2(8)

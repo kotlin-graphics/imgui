@@ -27,7 +27,7 @@ import imgui.WindowFlag as Wf
  *  The properties of popups windows are:
  *  - They block normal mouse hovering detection outside them. (*)
  *  - Unless modal, they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
- *  - Their visibility state (~bool) is held internally by imgui instead of being held by the programmer as we are used to with regular Begin() calls.
+ *  - Their visibility state (~bool) is held internally by Dear ImGui instead of being held by the programmer as we are used to with regular Begin() calls.
  *      User can manipulate the visibility state by calling OpenPopup().
  *  (*) One can use IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) to bypass it and detect hovering even when normally blocked by a popup.
  *  Those three properties are connected. The library needs to hold their visibility state because it can close popups at any time. */
@@ -87,7 +87,7 @@ interface imgui_popupsModals {
     /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside)
      *
      *  If 'p_open' is specified for a modal popup window, the popup will have a regular close button which will close the popup.
-     *  Note that popup visibility status is owned by imgui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
+     *  Note that popup visibility status is owned by Dear ImGui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
     fun beginPopupModal(name: String, pOpen: BooleanArray, flags_: WindowFlags = 0): Boolean = withBoolean(pOpen) {
         beginPopupModal(name, it, flags_)
     }
@@ -95,7 +95,7 @@ interface imgui_popupsModals {
     /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside)
      *
      *  If 'p_open' is specified for a modal popup window, the popup will have a regular close button which will close the popup.
-     *  Note that popup visibility status is owned by imgui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
+     *  Note that popup visibility status is owned by Dear ImGui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
     fun beginPopupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = 0): Boolean {
 
         val window = g.currentWindow!!

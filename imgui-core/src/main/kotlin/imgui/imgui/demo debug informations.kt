@@ -111,7 +111,7 @@ interface imgui_demoDebugInformations {
 
     //-----------------------------------------------------------------------------
     // [SECTION] About Window / ShowAboutWindow()
-    // Access from ImGui Demo -> Help -> About
+    // Access from Dear ImGui Demo -> Help -> About
     //-----------------------------------------------------------------------------
 
     /** create About window. display Dear ImGui version, credits and build/system information. */

@@ -975,7 +975,7 @@ class FontAtlas {
 
 
     /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
-        The white texels on the top left are the ones we'll use everywhere in ImGui to render filled shapes.     */
+        The white texels on the top left are the ones we'll use everywhere in Dear ImGui to render filled shapes.     */
     object DefaultTexData {
         val wHalf = 108
         val h = 27

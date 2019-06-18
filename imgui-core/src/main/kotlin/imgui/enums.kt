@@ -384,7 +384,7 @@ enum class DragDropFlag(@JvmField val i: Int) {
      *  by manufacturing a temporary identifier based on their window-relative position.
      *  This is extremely unusual within the dear imgui ecosystem and so we made it explicit. */
     SourceAllowNullID(1 shl 3),
-    /** External source (from outside of imgui), won't attempt to read current item/window info. Will always return true.
+    /** External source (from outside of dear imgui), won't attempt to read current item/window info. Will always return true.
      *  Only one Extern source can be active simultaneously.    */
     SourceExtern(1 shl 4),
     /** Automatically expire the payload if the source cease to be submitted (otherwise payloads are persisting while being dragged) */
@@ -565,7 +565,7 @@ enum class ConfigFlag(@JvmField val i: Int) {
     NoKeyboardUpdate(1 shl 13),
 
     /*  User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects.
-        Those flags are not used by core ImGui)     */
+        Those flags are not used by core Dear ImGui)     */
 
     /** Application is SRGB-aware. */
     IsSRGB(1 shl 20),
@@ -936,7 +936,7 @@ enum class MouseCursor {
     Arrow,
     /** When hovering over InputText, etc.  */
     TextInput,
-    /** (Unused by imgui functions) */
+    /** (Unused by Dear ImGui functions) */
     ResizeAll,
     /** When hovering over an horizontal border  */
     ResizeNS,
@@ -946,7 +946,7 @@ enum class MouseCursor {
     ResizeNESW,
     /** When hovering over the bottom-right corner of a window  */
     ResizeNWSE,
-    /** (Unused by imgui functions. Use for e.g. hyperlinks) */
+    /** (Unused by Dear ImGui functions. Use for e.g. hyperlinks) */
     Hand;
 
     @JvmField

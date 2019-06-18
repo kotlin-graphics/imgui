@@ -42,7 +42,7 @@ var gImGui: Context? = null
  */
 
 
-/** Main imgui context
+/** Main Dear ImGui context
  *
  *  Dear ImGui context (opaque structure, unless including imgui_internal.h)
  *
@@ -473,7 +473,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             io.fonts.locked = false
         io.fonts.clear()
 
-        // Cleanup of other data are conditional on actually having initialized ImGui.
+        // Cleanup of other data are conditional on actually having initialized Dear ImGui.
         if (!g.initialized) return
 
         // Save settings (unless we haven't attempted to load them: CreateContext/DestroyContext without a call to NewFrame shouldn't save an empty file)
