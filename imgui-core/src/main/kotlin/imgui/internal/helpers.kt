@@ -8,26 +8,39 @@ import imgui.Dir
 import imgui.NUL
 import kool.rem
 import org.lwjgl.system.Platform
-import unsigned.Ulong
 import unsigned.toBigInt
 import java.io.ByteArrayInputStream
-import java.io.File
 import java.io.InputStreamReader
 import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
-import java.nio.file.Paths
 import java.util.*
 import kotlin.math.abs
+import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: UTF-8 <> wchar
 // -----------------------------------------------------------------------------------------------------------------
 
-//IMGUI_API int           ImTextStrToUtf8(char* buf, int buf_size, const ImWchar* in_text, const ImWchar* in_text_end);      // return output UTF-8 bytes count
+/**  return output UTF-8 bytes count */
+//fun String.toUtf8(bufSize: Int, inTextEnd: Int): CharArray {
+//    val bufOut = CharArray(bufSize)
+//    var pBufOut = 0
+//    var p = 0
+//    val bufEnd = bufSize
+//    while (pBufOut < bufEnd && (inTextEnd == -1 || p < inTextEnd) && this[p] != NUL)    {
+//        val c = (*in_text++);
+//        if (c < 0x80)
+//        *buf_out++ = (char)c;
+//        else
+//        buf_out += ImTextCharToUtf8(buf_out, (int)(bufEnd-buf_out-1), c);
+//    }
+//    *buf_out = 0;
+//    return (int)(buf_out - buf);
+//}
 
 /** Convert UTF-8 to 32-bits character, process single character input.
  *  Based on stb_from_utf8() from github.com/nothings/stb/
@@ -90,6 +103,9 @@ import kotlin.reflect.KMutableProperty0
 //}
 //IMGUI_API int           ImTextStrFromUtf8(ImWchar* buf, int buf_size, const char* in_text, const char* in_text_end, const char** in_remaining = NULL);   // return input UTF-8 bytes count
 //IMGUI_API int           ImTextCountCharsFromUtf8(const char* in_text, const char* in_text_end);                            // return number of UTF-8 code-points (NOT bytes count)
+
+/** return number of bytes to express one char in UTF-8 */
+fun String.countUtf8BytesFromChar(textEnd: Int) = min(length, textEnd)
 //IMGUI_API int           ImTextCountUtf8BytesFromStr(const ImWchar* in_text, const ImWchar* in_text_end);                   // return number of bytes to express string as UTF-8 code-points
 
 
