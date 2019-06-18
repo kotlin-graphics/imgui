@@ -252,7 +252,7 @@ interface imgui_demoDebugInformations {
                 g.navWindow?.let { nav ->
                     bulletText("'${nav.name}':")
                     indent()
-                    for (n in RT.values())                    {
+                    for (n in RT.values()) {
                         val r = Funcs.getRect(nav, n)
                         text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height, rectsNames[n.ordinal])
                     }
@@ -480,8 +480,8 @@ interface imgui_demoDebugInformations {
                         val vtxsRect = Rect()
                         for (e in elemOffset until elemOffset + cmd.elemCount)
                             vtxsRect.add(Vec2(drawList.vtxBuffer.data, idxBuffer?.get(e) ?: e))
-                        clipRect.floor(); fgDrawList.addRect(clipRect.min, clipRect.max, COL32(255, 255, 0, 255))
-                        vtxsRect.floor(); fgDrawList.addRect(vtxsRect.min, vtxsRect.max, COL32(255, 0, 255, 255))
+                        clipRect.floor(); fgDrawList.addRect(clipRect.min, clipRect.max, COL32(255, 0, 255, 255))
+                        vtxsRect.floor(); fgDrawList.addRect(vtxsRect.min, vtxsRect.max, COL32(255, 255, 0, 255))
                     }
                     if (!cmdNodeOpen) continue
                     // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
