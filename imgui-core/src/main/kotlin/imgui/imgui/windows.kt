@@ -307,10 +307,13 @@ interface imgui_windows {
             if (!window.collapsed) {
                 // When reading the current size we need to read it after size constraints have been applied.
                 // When we use InnerRect here we are intentionally reading last frame size, same for ScrollbarSizes values before we set them again.
-                val sizeXforScrollbars = if(sizeFullModified.x != Float.MAX_VALUE) window.sizeFull.x else window.innerRect.width + window.scrollbarSizes.x
-                val sizeYforScrollbars = if(sizeFullModified.y != Float.MAX_VALUE) window.sizeFull.y - window.titleBarHeight - window.menuBarHeight else window.innerRect.height + window.scrollbarSizes.y
-                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || ((window.contentSize.y + window.windowPadding.y * 2f > sizeYforScrollbars) && flags hasnt Wf.NoScrollbar)
-                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((window.contentSize.x + window.windowPadding.x * 2f > sizeXforScrollbars - if(window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar) && flags has Wf.HorizontalScrollbar
+                val availSizeFromCurrentFrame = Vec2(window.sizeFull.x, window.sizeFull.y - window.titleBarHeight - window.menuBarHeight)
+                val availSizeFromLastFrame = window.innerRect.size + window.scrollbarSizes
+                val neededSizeFromLastFrame = if(windowJustCreated) Vec2() else window.contentSize + window.windowPadding * 2f
+                val sizeXforScrollbars = if(sizeFullModified.x != Float.MAX_VALUE || windowJustCreated) availSizeFromCurrentFrame.x else availSizeFromLastFrame.x
+                val sizeYforScrollbars = if(sizeFullModified.y != Float.MAX_VALUE || windowJustCreated) availSizeFromCurrentFrame.y else availSizeFromLastFrame.y
+                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (neededSizeFromLastFrame.y > sizeYforScrollbars) && flags hasnt Wf.NoScrollbar
+                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((neededSizeFromLastFrame.x > sizeXforScrollbars - if(window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
                 if (window.scrollbar.x && !window.scrollbar.y)
                     window.scrollbar.y = window.contentSize.y + window.windowPadding.y * 2f > sizeYforScrollbars && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f, if (window.scrollbar.x) style.scrollbarSize else 0f)
