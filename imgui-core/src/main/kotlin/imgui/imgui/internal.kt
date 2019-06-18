@@ -1793,7 +1793,7 @@ interface imgui_internal {
 
     fun collapseButton(id: ID, pos: Vec2): Boolean {
         val window = g.currentWindow!!
-        val bb = Rect(pos, pos + g.fontSize)
+        val bb = Rect(pos, pos + g.fontSize + style.framePadding * 2f)
         itemAdd(bb, id)
         val (pressed, hovered, held) = buttonBehavior(bb, id, Bf.None)
 
