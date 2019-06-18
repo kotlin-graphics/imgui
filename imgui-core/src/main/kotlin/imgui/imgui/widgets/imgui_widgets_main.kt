@@ -331,7 +331,9 @@ interface imgui_widgets_main {
         }
 
         // Render and stay on same line
-        renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
+        val textCol = Col.Text.u32
+        renderBullet(window.drawList, bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f), textCol)
+        sameLine(0f, style.framePadding.x * 2f)
         sameLine(0f, style.framePadding.x * 2)
     }
 

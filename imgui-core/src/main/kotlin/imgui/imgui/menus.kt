@@ -211,9 +211,8 @@ interface imgui_widgets_menus {
             val extraW = glm.max(0f, contentRegionAvail.x - w)
             val flags = Sf.NoHoldingActiveID or Sf.PressedOnClick or Sf.DontClosePopups or Sf.DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.None else Sf.Disabled, Vec2(w, 0f))
-            if (!enabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-            renderArrow(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), Dir.Right)
-            if (!enabled) popStyleColor()
+            val textCol = if(enabled) Col.Text else Col.TextDisabled
+            renderArrow(window.drawList, pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
         }
         val hovered = enabled && itemHoverable(window.dc.lastItemRect, id)
 
