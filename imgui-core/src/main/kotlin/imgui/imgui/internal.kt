@@ -1830,22 +1830,25 @@ interface imgui_internal {
 
         // Calculate scrollbar bounding box
         val outerRect = window.rect()
+        val innerRect = window.innerRect
+        val scrollbarSize = window.scrollbarSizes[axis.i xor 1]
+        assert(scrollbarSize > 0f)
         val otherScrollbarSize = window.scrollbarSizes[axis.i]
         var roundingCorners: DrawCornerFlags = if (otherScrollbarSize <= 0f) Dcf.BotRight.i else 0
         val bb = Rect()
         if (axis == Axis.X) {
-            bb.min.put(window.innerRect.min.x, window.innerRect.max.y)
-            bb.max.put(window.innerRect.max.x, outerRect.max.y - window.windowBorderSize)
+            bb.min.put(innerRect.min.x, innerRect.max.y)
+            bb.max.put(innerRect.max.x, outerRect.max.y - window.windowBorderSize)
             roundingCorners = roundingCorners or Dcf.BotLeft
         } else {
-            bb.min.put(window.innerRect.max.x, window.innerRect.min.y)
+            bb.min.put(innerRect.max.x, innerRect.min.y)
             bb.max.put(outerRect.max.x - window.windowBorderSize, window.innerRect.max.y)
             roundingCorners = roundingCorners or when {
                 window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar -> Dcf.TopRight.i
                 else -> 0
             }
         }
-        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, window.innerRect.max[axis.i] - window.innerRect.min[axis.i], window.contentSize[axis.i] + window.windowPadding[axis.i] * 2f, roundingCorners)
+        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, innerRect.max[axis.i] - innerRect.min[axis.i], window.contentSize[axis.i] + window.windowPadding[axis.i] * 2f, roundingCorners)
     }
 
     /** Vertical/Horizontal scrollbar

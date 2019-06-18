@@ -301,19 +301,22 @@ interface imgui_windows {
                 else -> window.sizeFull
             }
 
+            // Decoration size
+            val decorationUpHeight = window.titleBarHeight + window.menuBarHeight
+
             /* ---------- SCROLLBAR STATUS ---------- */
 
             // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size).
             if (!window.collapsed) {
                 // When reading the current size we need to read it after size constraints have been applied.
                 // When we use InnerRect here we are intentionally reading last frame size, same for ScrollbarSizes values before we set them again.
-                val availSizeFromCurrentFrame = Vec2(window.sizeFull.x, window.sizeFull.y - window.titleBarHeight - window.menuBarHeight)
+                val availSizeFromCurrentFrame = Vec2(window.sizeFull.x, window.sizeFull.y - decorationUpHeight)
                 val availSizeFromLastFrame = window.innerRect.size + window.scrollbarSizes
-                val neededSizeFromLastFrame = if(windowJustCreated) Vec2() else window.contentSize + window.windowPadding * 2f
-                val sizeXforScrollbars = if(sizeFullModified.x != Float.MAX_VALUE || windowJustCreated) availSizeFromCurrentFrame.x else availSizeFromLastFrame.x
-                val sizeYforScrollbars = if(sizeFullModified.y != Float.MAX_VALUE || windowJustCreated) availSizeFromCurrentFrame.y else availSizeFromLastFrame.y
+                val neededSizeFromLastFrame = if (windowJustCreated) Vec2() else window.contentSize + window.windowPadding * 2f
+                val sizeXforScrollbars = if (sizeFullModified.x != Float.MAX_VALUE || windowJustCreated) availSizeFromCurrentFrame.x else availSizeFromLastFrame.x
+                val sizeYforScrollbars = if (sizeFullModified.y != Float.MAX_VALUE || windowJustCreated) availSizeFromCurrentFrame.y else availSizeFromLastFrame.y
                 window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (neededSizeFromLastFrame.y > sizeYforScrollbars) && flags hasnt Wf.NoScrollbar
-                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((neededSizeFromLastFrame.x > sizeXforScrollbars - if(window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((neededSizeFromLastFrame.x > sizeXforScrollbars - if (window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
                 if (window.scrollbar.x && !window.scrollbar.y)
                     window.scrollbar.y = window.contentSize.y + window.windowPadding.y * 2f > sizeYforScrollbars && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f, if (window.scrollbar.x) style.scrollbarSize else 0f)
@@ -394,7 +397,7 @@ interface imgui_windows {
                 else -> g.fontSize * 16f
             }.i.f
 
-            val titleBarRect = window.titleBarRect()
+            val titleBarRect: Rect
             val hostRect: Rect
             window.apply {
                 // UPDATE RECTANGLES (1- THOSE NOT AFFECTED BY SCROLLING)
@@ -411,17 +414,19 @@ interface imgui_windows {
                     else -> viewportRect
                 }
                 val outerRect = window.rect()
+                titleBarRect = window.titleBarRect()
                 window.outerRectClipped = outerRect
                 window.outerRectClipped clipWith hostRect
 
                 // Inner rectangle
                 // Not affected by window border size. Used by:
+                // - InnerClipRect
                 // - NavScrollToBringItemIntoView()
                 // - NavUpdatePageUpPageDown()
                 // - Scrollbar()
                 innerRect.put(
-                        minX = titleBarRect.min.x,
-                        minY = titleBarRect.max.y + menuBarHeight,
+                        minX = pos.x,
+                        minY = pos.y + decorationUpHeight,
                         maxX = pos.x + size.x - scrollbarSizes.x,
                         maxY = pos.y + size.y - scrollbarSizes.y)
 
@@ -432,7 +437,7 @@ interface imgui_windows {
                 // Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.
                 // Affected by window/frame border size. Used by:
                 // - Begin() initial clip rect
-                val topBorderSize = if(flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else window.windowBorderSize
+                val topBorderSize = if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else window.windowBorderSize
                 window.innerClipRect.put(
                         minX = floor(0.5f + window.innerRect.min.x + max(floor(window.windowPadding.x * 0.5f), window.windowBorderSize)),
                         minY = floor(0.5f + window.innerRect.min.y + topBorderSize),
@@ -504,14 +509,13 @@ interface imgui_windows {
                 // - BeginTabBar() for right-most edge
                 val allowScrollbarX = flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar
                 val allowScrollbarY = flags hasnt Wf.NoScrollbar
-                val workRectSizeX = if(window.contentSizeExplicit.x != 0f) window.contentSizeExplicit.x else max(if(allowScrollbarX) window.contentSize.x else 0f, window.innerRect.width - window.windowPadding.x * 2f)
-                val workRectSizeY = if(window.contentSizeExplicit.y != 0f) window.contentSizeExplicit.y else max(if(allowScrollbarY) window.contentSize.y else 0f, window.innerRect.height - window.windowPadding.y * 2f)
+                val workRectSizeX = if (window.contentSizeExplicit.x != 0f) window.contentSizeExplicit.x else max(if (allowScrollbarX) window.contentSize.x else 0f, window.innerRect.width - window.windowPadding.x * 2f)
+                val workRectSizeY = if (window.contentSizeExplicit.y != 0f) window.contentSizeExplicit.y else max(if (allowScrollbarY) window.contentSize.y else 0f, window.innerRect.height - window.windowPadding.y * 2f)
                 window.workRect.put(
                         minX = floor(window.innerRect.min.x - window.scroll.x + max(window.windowPadding.x, window.windowBorderSize)),
                         minY = floor(window.innerRect.min.y - window.scroll.y + max(window.windowPadding.y, window.windowBorderSize)),
                         maxX = window.workRect.min.x + workRectSizeX,
                         maxY = window.workRect.min.y + workRectSizeY)
-
 
 
                 // [LEGACY] Contents Region
@@ -521,7 +525,7 @@ interface imgui_windows {
                 // - Mouse wheel scrolling + many other things
                 contentsRegionRect.put(
                         minX = pos.x - scroll.x + windowPadding.x,
-                        minY = pos.y - scroll.y + windowPadding.y + titleBarHeight + menuBarHeight,
+                        minY = pos.y - scroll.y + windowPadding.y + decorationUpHeight,
                         maxX = pos.x - scroll.x - windowPadding.x + when (contentSizeExplicit.x) {
                             0f -> size.x - scrollbarSizes.x + min(scrollbarSizes.x, windowBorderSize)
                             else -> contentSizeExplicit.x
@@ -538,8 +542,7 @@ interface imgui_windows {
                 dc.indent = 0f + windowPadding.x - scroll.x
                 dc.groupOffset = 0f
                 dc.columnsOffset = 0f
-                dc.cursorStartPos.put(pos.x + dc.indent + dc.columnsOffset,
-                        pos.y + titleBarHeight + menuBarHeight + windowPadding.y - scroll.y)
+                dc.cursorStartPos.put(pos.x + dc.indent + dc.columnsOffset, pos.y + decorationUpHeight + windowPadding.y - scroll.y)
                 dc.cursorPos put dc.cursorStartPos
                 dc.cursorPosPrevLine put dc.cursorPos
                 dc.cursorMaxPos put dc.cursorStartPos
