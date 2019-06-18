@@ -110,12 +110,12 @@ class DrawVert {
  *  rendered.   */
 class DrawChannel {
 
-    val cmdBuffer = Stack<DrawCmd>()
-    val idxBuffer = Stack<Int>()
+    val _cmdBuffer = Stack<DrawCmd>()
+    val _idxBuffer = Stack<Int>()
 
     fun clear() {
-        cmdBuffer.clear()
-        idxBuffer.clear()
+        _cmdBuffer.clear()
+        _idxBuffer.clear()
     }
 }
 
@@ -131,7 +131,7 @@ class DrawListSplitter {
     var _current = 0
     /** Number of active channels (1+) */
     var _count = 0
-    /** Draw channels (not resized down so Count might be < Channels.Size) */
+    /** Draw channels (not resized down so _Count might be < Channels.Size) */
     val _channels = Stack<DrawChannel>()
 
     init {
@@ -147,8 +147,8 @@ class DrawListSplitter {
         _channels.forEachIndexed { i, c ->
             //            if (i == _current)
 //                memset(&_Channels[i], 0, sizeof(_Channels[i]));  // Current channel is a copy of CmdBuffer/IdxBuffer, don't destruct again
-            c.cmdBuffer.clear()
-            c.idxBuffer.clear()
+            c._cmdBuffer.clear()
+            c._idxBuffer.clear()
         }
         _current = 0
         _count = 1
@@ -170,8 +170,8 @@ class DrawListSplitter {
         for (i in 1 until channelsCount) {
             if (i < oldChannelsCount)
                 _channels[i].clear()
-            if (_channels[i].cmdBuffer.isEmpty())
-                _channels[i].cmdBuffer += DrawCmd().apply {
+            if (_channels[i]._cmdBuffer.isEmpty())
+                _channels[i]._cmdBuffer += DrawCmd().apply {
                     clipRect put drawList._clipRectStack.last()
                     textureId = drawList._textureIdStack.last()
                 }
@@ -180,7 +180,7 @@ class DrawListSplitter {
 
     companion object {
         fun canMergeDrawCommands(a: DrawCmd, b: DrawCmd): Boolean = a.clipRect == b.clipRect &&
-                a.textureId == b.textureId && a.userCallback == null && b.userCallback == null
+                a.textureId == b.textureId && a.vtxOffset == b.vtxOffset && a.userCallback == null && b.userCallback == null
     }
 
     fun merge(drawList: DrawList) {
@@ -195,24 +195,24 @@ class DrawListSplitter {
         // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
         var newCmdBufferCount = 0
         var newIdxBufferCount = 0
-        var lastCmd = if(_count > 0 && _channels[0].cmdBuffer.isNotEmpty()) _channels[0].cmdBuffer.last() else null
+        var lastCmd = if (_count > 0 && _channels[0]._cmdBuffer.isNotEmpty()) _channels[0]._cmdBuffer.last() else null
         var idxOffset = lastCmd?.run { idxOffset + elemCount } ?: 0
         for (i in 1 until _count) {
             val ch = _channels[i]
-            if (ch.cmdBuffer.lastOrNull()?.elemCount == 0)
-                ch.cmdBuffer.pop()
-            if (ch.cmdBuffer.isNotEmpty() && lastCmd != null && canMergeDrawCommands(lastCmd, ch.cmdBuffer[0]))            {
+            if (ch._cmdBuffer.lastOrNull()?.elemCount == 0)
+                ch._cmdBuffer.pop()
+            if (ch._cmdBuffer.isNotEmpty() && lastCmd != null && canMergeDrawCommands(lastCmd, ch._cmdBuffer[0])) {
                 // Merge previous channel last draw command with current channel first draw command if matching.
-                lastCmd.elemCount += ch.cmdBuffer[0].elemCount
-                idxOffset += ch.cmdBuffer[0].elemCount
+                lastCmd.elemCount += ch._cmdBuffer[0].elemCount
+                idxOffset += ch._cmdBuffer[0].elemCount
                 TODO()
 //                ch.cmdBuffer.erase(ch.CmdBuffer.Data);
             }
-            if (ch.cmdBuffer.isNotEmpty())
-                lastCmd = ch.cmdBuffer.last()
-            newCmdBufferCount += ch.cmdBuffer.size
-            newIdxBufferCount += ch.idxBuffer.size
-            ch.cmdBuffer.forEach {
+            if (ch._cmdBuffer.isNotEmpty())
+                lastCmd = ch._cmdBuffer.last()
+            newCmdBufferCount += ch._cmdBuffer.size
+            newIdxBufferCount += ch._idxBuffer.size
+            ch._cmdBuffer.forEach {
                 it.idxOffset = idxOffset
                 idxOffset += it.elemCount
             }
@@ -226,10 +226,10 @@ class DrawListSplitter {
         var idxWrite = drawList.idxBuffer.rem - newIdxBufferCount
         for (i in 1 until _count) {
             val ch = _channels[i]
-            for (j in ch.cmdBuffer.indices)
-                drawList.cmdBuffer[cmdWrite++] put ch.cmdBuffer[j]
-            for (j in ch.idxBuffer.indices)
-                drawList.idxBuffer[idxWrite++] = ch.idxBuffer[j]
+            for (j in ch._cmdBuffer.indices)
+                drawList.cmdBuffer[cmdWrite++] put ch._cmdBuffer[j]
+            for (j in ch._idxBuffer.indices)
+                drawList.idxBuffer[idxWrite++] = ch._idxBuffer[j]
         }
         drawList._idxWritePtr = idxWrite
         drawList.updateClipRect() // We call this instead of AddDrawCmd(), so that empty channels won't produce an extra draw call.
@@ -240,11 +240,11 @@ class DrawListSplitter {
         assert(idx < _count)
         if (_current == idx) return
         // Overwrite ImVector (12/16 bytes), four times. This is merely a silly optimization instead of doing .swap()
-        for (i in drawList.cmdBuffer.indices) _channels[_current].cmdBuffer[i] put drawList.cmdBuffer[i]
-        for (i in 0 until drawList.idxBuffer.rem) _channels[_current].idxBuffer[i] = drawList.idxBuffer[i]
+        for (i in drawList.cmdBuffer.indices) _channels[_current]._cmdBuffer[i] put drawList.cmdBuffer[i]
+        for (i in 0 until drawList.idxBuffer.rem) _channels[_current]._idxBuffer[i] = drawList.idxBuffer[i]
         _current = idx
-        for (i in drawList.cmdBuffer.indices) drawList.cmdBuffer[i] put _channels[idx].cmdBuffer[i]
-        for (i in 0 until drawList.idxBuffer.rem) drawList.idxBuffer[i] = _channels[idx].idxBuffer[i]
+        for (i in drawList.cmdBuffer.indices) drawList.cmdBuffer[i] put _channels[idx]._cmdBuffer[i]
+        for (i in 0 until drawList.idxBuffer.rem) drawList.idxBuffer[i] = _channels[idx]._idxBuffer[i]
         drawList._idxWritePtr = drawList.idxBuffer.rem
     }
 }
