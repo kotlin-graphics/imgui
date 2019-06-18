@@ -24,6 +24,7 @@ import kotlin.collections.set
 
 
 class ImplGlfw @JvmOverloads constructor(
+        /** Main window */
         val window: GlfwWindow, installCallbacks: Boolean = true,
         /** for vr environment */
         val vrTexSize: Vec2i? = null) {

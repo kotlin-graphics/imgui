@@ -936,7 +936,7 @@ class Window(var context: Context, var name: String) {
         return when {
             flags has Wf.Tooltip -> sizeDesired // Tooltip always resize
             else -> {
-                // Maximum window size is determined by the display size
+                // Maximum window size is determined by the viewport size or monitor size
                 val isPopup = flags has Wf.Popup
                 val isMenu = flags has Wf.ChildMenu
                 val sizeMin = Vec2(style.windowMinSize)
@@ -1594,7 +1594,8 @@ class TabBar {
             // Refresh tab width immediately, otherwise changes of style e.g. style.FramePadding.x would noticeably lag in the tab bar.
             // Additionally, when using TabBarAddTab() to manipulate tab bar order we occasionally insert new tabs that don't have a width yet,
             // and we cannot wait for the next BeginTabItem() call. We cannot compute this width within TabBarAddTab() because font size depends on the active window.
-            tab.widthContents = tabItemCalcSize(tab.name, tab.flags hasnt TabItemFlag.NoCloseButton).x
+            val hasCloseButton = tab.flags hasnt TabItemFlag.NoCloseButton
+            tab.widthContents = tabItemCalcSize(tab.name, hasCloseButton).x
 
             widthTotalContents += (if (tabN > 0) style.itemInnerSpacing.x else 0f) + tab.widthContents
 

@@ -2040,7 +2040,8 @@ interface imgui_internal {
             flags = flags or Bf.PressedOnClickRelease
 
         val backupHoveredWindow = g.hoveredWindow
-        if (flags has Bf.FlattenChildren && g.hoveredRootWindow === window)
+        val flattenHoveredChildren = flags has Bf.FlattenChildren && g.hoveredRootWindow === window
+        if (flattenHoveredChildren)
             g.hoveredWindow = window
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0 && window.dc.lastItemId != id)
@@ -2065,7 +2066,7 @@ interface imgui_internal {
                 }
             }
 
-        if (flags has Bf.FlattenChildren && g.hoveredRootWindow === window)
+        if (flattenHoveredChildren)
             g.hoveredWindow = backupHoveredWindow
 
         /*  AllowOverlap mode (rarely used) requires previous frame hoveredId to be null or to match. This allows using
