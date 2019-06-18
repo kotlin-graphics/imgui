@@ -1831,18 +1831,19 @@ interface imgui_internal {
         // Calculate scrollbar bounding box
         val outerRect = window.rect()
         val innerRect = window.innerRect
+        val borderSize = window.windowBorderSize
         val scrollbarSize = window.scrollbarSizes[axis.i xor 1]
         assert(scrollbarSize > 0f)
         val otherScrollbarSize = window.scrollbarSizes[axis.i]
         var roundingCorners: DrawCornerFlags = if (otherScrollbarSize <= 0f) Dcf.BotRight.i else 0
         val bb = Rect()
         if (axis == Axis.X) {
-            bb.min.put(innerRect.min.x, innerRect.max.y)
-            bb.max.put(innerRect.max.x, outerRect.max.y - window.windowBorderSize)
+            bb.min.put(innerRect.min.x, outerRect.max.y)
+            bb.max.put(innerRect.max.x, outerRect.max.y - borderSize - scrollbarSize)
             roundingCorners = roundingCorners or Dcf.BotLeft
         } else {
-            bb.min.put(innerRect.max.x, innerRect.min.y)
-            bb.max.put(outerRect.max.x - window.windowBorderSize, window.innerRect.max.y)
+            bb.min.put(outerRect.max.x, innerRect.min.y)
+            bb.max.put(outerRect.max.x - borderSize - scrollbarSize, window.innerRect.max.y)
             roundingCorners = roundingCorners or when {
                 window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar -> Dcf.TopRight.i
                 else -> 0

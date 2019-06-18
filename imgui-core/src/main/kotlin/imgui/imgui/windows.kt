@@ -268,28 +268,29 @@ interface imgui_windows {
 
             // Calculate auto-fit size, handle automatic resize
             val sizeAutoFit = window.calcSizeAutoFit(window.contentSize)
-            val sizeFullModified = Vec2(Float.MAX_VALUE)
+            var useCurrentSizeForScrollbarX = windowJustCreated
+            var useCurrentSizeForScrollbarY = windowJustCreated
             if (flags has Wf.AlwaysAutoResize && !window.collapsed) {
                 // Using SetNextWindowSize() overrides ImGuiWindowFlags_AlwaysAutoResize, so it can be used on tooltips/popups, etc.
                 if (!windowSizeXsetByApi) {
-                    sizeFullModified.x = sizeAutoFit.x
                     window.sizeFull.x = sizeAutoFit.x
+                    useCurrentSizeForScrollbarX = true
                 }
                 if (!windowSizeYsetByApi) {
-                    sizeFullModified.y = sizeAutoFit.y
                     window.sizeFull.y = sizeAutoFit.y
+                    useCurrentSizeForScrollbarY = true
                 }
             } else if (window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0) {
                 /*  Auto-fit may only grow window during the first few frames
                     We still process initial auto-fit on collapsed windows to get a window width,
                     but otherwise don't honor WindowFlag.AlwaysAutoResize when collapsed.                 */
                 if (!windowSizeXsetByApi && window.autoFitFrames.x > 0) {
-                    sizeFullModified.x = if (window.autoFitOnlyGrows) max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
-                    window.sizeFull.x = sizeFullModified.x
+                    window.sizeFull.x = if (window.autoFitOnlyGrows) max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
+                    useCurrentSizeForScrollbarX = true
                 }
                 if (!windowSizeYsetByApi && window.autoFitFrames.y > 0) {
-                    sizeFullModified.y = if (window.autoFitOnlyGrows) max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
-                    window.sizeFull.y = sizeFullModified.y
+                    window.sizeFull.y = if (window.autoFitOnlyGrows) max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
+                    useCurrentSizeForScrollbarY = true
                 }
                 if (!window.collapsed) window.markIniSettingsDirty()
             }
@@ -304,17 +305,18 @@ interface imgui_windows {
             // Decoration size
             val decorationUpHeight = window.titleBarHeight + window.menuBarHeight
 
-            /* ---------- SCROLLBAR STATUS ---------- */
+            /* ---------- SCROLLBAR VISIBILITY ---------- */
 
-            // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size).
+            // Update scrollbar visibility (based on the Size that was effective during last frame or the auto-resized Size).
             if (!window.collapsed) {
                 // When reading the current size we need to read it after size constraints have been applied.
                 // When we use InnerRect here we are intentionally reading last frame size, same for ScrollbarSizes values before we set them again.
                 val availSizeFromCurrentFrame = Vec2(window.sizeFull.x, window.sizeFull.y - decorationUpHeight)
                 val availSizeFromLastFrame = window.innerRect.size + window.scrollbarSizes
                 val neededSizeFromLastFrame = if (windowJustCreated) Vec2() else window.contentSize + window.windowPadding * 2f
-                val sizeXforScrollbars = if (sizeFullModified.x != Float.MAX_VALUE || windowJustCreated) availSizeFromCurrentFrame.x else availSizeFromLastFrame.x
-                val sizeYforScrollbars = if (sizeFullModified.y != Float.MAX_VALUE || windowJustCreated) availSizeFromCurrentFrame.y else availSizeFromLastFrame.y
+                val sizeXforScrollbars = if (useCurrentSizeForScrollbarX) availSizeFromCurrentFrame.x else availSizeFromLastFrame.x
+                val sizeYforScrollbars = if (useCurrentSizeForScrollbarY) availSizeFromCurrentFrame.y else availSizeFromLastFrame.y
+                //bool scrollbar_y_from_last_frame = window->ScrollbarY; // FIXME: May want to use that in the ScrollbarX expression? How many pros vs cons?
                 window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (neededSizeFromLastFrame.y > sizeYforScrollbars) && flags hasnt Wf.NoScrollbar
                 window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((neededSizeFromLastFrame.x > sizeXforScrollbars - if (window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
                 if (window.scrollbar.x && !window.scrollbar.y)
@@ -509,8 +511,8 @@ interface imgui_windows {
                 // - BeginTabBar() for right-most edge
                 val allowScrollbarX = flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar
                 val allowScrollbarY = flags hasnt Wf.NoScrollbar
-                val workRectSizeX = if (window.contentSizeExplicit.x != 0f) window.contentSizeExplicit.x else max(if (allowScrollbarX) window.contentSize.x else 0f, window.innerRect.width - window.windowPadding.x * 2f)
-                val workRectSizeY = if (window.contentSizeExplicit.y != 0f) window.contentSizeExplicit.y else max(if (allowScrollbarY) window.contentSize.y else 0f, window.innerRect.height - window.windowPadding.y * 2f)
+                val workRectSizeX = if (window.contentSizeExplicit.x != 0f) window.contentSizeExplicit.x else max(if (allowScrollbarX) window.contentSize.x else 0f, window.size.x - window.windowPadding.x * 2f - window.scrollbarSizes.x)
+                val workRectSizeY = if (window.contentSizeExplicit.y != 0f) window.contentSizeExplicit.y else max(if (allowScrollbarY) window.contentSize.y else 0f, window.size.y - window.windowPadding.y * 2f - decorationUpHeight - window.scrollbarSizes.y)
                 window.workRect.put(
                         minX = floor(window.innerRect.min.x - window.scroll.x + max(window.windowPadding.x, window.windowBorderSize)),
                         minY = floor(window.innerRect.min.y - window.scroll.y + max(window.windowPadding.y, window.windowBorderSize)),
@@ -526,12 +528,12 @@ interface imgui_windows {
                 contentsRegionRect.put(
                         minX = pos.x - scroll.x + windowPadding.x,
                         minY = pos.y - scroll.y + windowPadding.y + decorationUpHeight,
-                        maxX = pos.x - scroll.x - windowPadding.x + when (contentSizeExplicit.x) {
-                            0f -> size.x - scrollbarSizes.x + min(scrollbarSizes.x, windowBorderSize)
+                        maxX = contentsRegionRect.min.x + when (contentSizeExplicit.x) {
+                            0f -> size.x - windowPadding.x * 2f - scrollbarSizes.x
                             else -> contentSizeExplicit.x
                         },
-                        maxY = pos.y - scroll.y - windowPadding.y + when (contentSizeExplicit.y) {
-                            0f -> (size.y - scrollbarSizes.y + min(scrollbarSizes.y, windowBorderSize))
+                        maxY = contentsRegionRect.min.y + when (contentSizeExplicit.y) {
+                            0f -> size.y - windowPadding.y * 2f - decorationUpHeight - scrollbarSizes.y
                             else -> contentSizeExplicit.y
                         })
 
