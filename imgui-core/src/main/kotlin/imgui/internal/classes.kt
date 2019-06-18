@@ -949,9 +949,11 @@ class Window(var context: Context, var name: String) {
                 // we are growing the size on the other axis to compensate for expected scrollbar.
                 // FIXME: Might turn bigger than ViewportSize-WindowPadding.
                 val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
-                if (sizeAutoFitAfterConstraint.x - sizePad.x - sizeDecorations.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+                val willHaveScrollbarX = (sizeAutoFitAfterConstraint.x - sizePad.x - sizeDecorations.x < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar) || flags has Wf.AlwaysHorizontalScrollbar
+                val willHaveScrollbarY = (sizeAutoFitAfterConstraint.y - sizePad.y - sizeDecorations.y < sizeContents.y && flags hasnt Wf.NoScrollbar) || flags has Wf.AlwaysVerticalScrollbar
+                if (willHaveScrollbarX)
                     sizeAutoFit.y += style.scrollbarSize
-                if (sizeAutoFitAfterConstraint.y - sizePad.y - sizeDecorations.y < sizeContents.y && flags hasnt Wf.NoScrollbar)
+                if (willHaveScrollbarY)
                     sizeAutoFit.x += style.scrollbarSize
                 sizeAutoFit
             }
