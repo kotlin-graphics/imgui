@@ -72,17 +72,22 @@ var IMGUI_ENABLE_TEST_ENGINE = false
 var ImGuiTestEngineHook_PreNewFrame: () -> Unit = {}
 @JvmField
 var ImGuiTestEngineHook_PostNewFrame: () -> Unit = {}
+/** Register item bounding box */
 @JvmField
 var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID) -> Unit = { _, _ -> }
+/** Register item label and status flags (optional) */
 @JvmField
 var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: ItemStatusFlags) -> Unit = { _, _, _ -> }
+@JvmField
+/** Custom log entry from user land into test log */
+var ImGuiTestEngineHook_Log: (g: Context, /*vararg*/ fmt: String) -> Unit = { g, fmt -> }
 
 @JvmField
 var MINECRAFT_BEHAVIORS = false
 
 object ImGui :
 
-        // imgui_context doesnt exist, only Context class
+// imgui_context doesnt exist, only Context class
         imgui_main,
 
         imgui_demoDebugInformations,
