@@ -1217,7 +1217,7 @@ interface imgui_internal {
 
             val ellipsisX = textPixelClipBb.min.x + labelSizeClippedX + 1f
             if (!closeButtonVisible && ellipsisX + ellipsisWidth <= bb.max.x)
-                renderPixelEllipsis(drawList, Vec2(ellipsisX, textPixelClipBb.min.y), ellipsisDotCount, Col.Text.u32)
+                renderPixelEllipsis(drawList, Vec2(ellipsisX, textPixelClipBb.min.y), Col.Text.u32, ellipsisDotCount)
         } else
             renderTextClippedEx(drawList, textPixelClipBb.min, textPixelClipBb.max, label, labelDisplayEnd, labelSize, Vec2())
 
@@ -1368,37 +1368,6 @@ interface imgui_internal {
             window.drawList.addRectFilled(pMin, pMax, col, rounding, roundingCornerFlags)
     }
 
-    /** Render an arrow aimed to be aligned with text (p_min is a position in the same space text would be positioned). To e.g. denote expanded/collapsed state  */
-    fun renderArrow(pMin: Vec2, dir: Dir, scale: Float = 1f) {
-
-        val h = g.fontSize * 1f
-        var r = h * 0.4f * scale
-        val center = pMin + Vec2(h * 0.5f, h * 0.5f * scale)
-
-        val a: Vec2
-        val b: Vec2
-        val c: Vec2
-        when (dir) {
-            Dir.Up, Dir.Down -> {
-                if (dir == Dir.Up) r = -r
-                a = Vec2(+0.000f, +0.75f) * r
-                b = Vec2(-0.866f, -0.75f) * r
-                c = Vec2(+0.866f, -0.75f) * r
-            }
-            Dir.Left, Dir.Right -> {
-                if (dir == Dir.Left) r = -r
-                a = Vec2(+0.75f, +0.000f) * r
-                b = Vec2(-0.75f, +0.866f) * r
-                c = Vec2(-0.75f, -0.866f) * r
-            }
-            else -> throw Error()
-        }
-
-        g.currentWindow!!.drawList.addTriangleFilled(center + a, center + b, center + c, Col.Text.u32)
-    }
-
-    fun renderBullet(pos: Vec2) = currentWindow.drawList.addCircleFilled(pos, g.fontSize * 0.2f, Col.Text.u32, 8)
-
     fun renderCheckMark(pos: Vec2, col: Int, sz_: Float) {
 
         val window = g.currentWindow!!
@@ -1498,7 +1467,7 @@ interface imgui_internal {
     /** FIXME: Rendering an ellipsis "..." is a surprisingly tricky problem for us... we cannot rely on font glyph having it,
      *  and regular dot are typically too wide. If we render a dot/shape ourselves it comes with the risk that it wouldn't match
      *  the boldness or positioning of what the font uses... */
-    fun renderPixelEllipsis(drawList: DrawList, pos: Vec2, count: Int, col: Int) {
+    fun renderPixelEllipsis(drawList: DrawList, pos: Vec2, col: Int, count: Int) {
         val font = drawList._data.font!!
         val fontScale = drawList._data.fontSize / font.fontSize
         pos.y += (font.displayOffset.y + font.ascent * fontScale + 0.5f - 1f).i.f
@@ -1572,6 +1541,37 @@ interface imgui_internal {
     //-----------------------------------------------------------------------------
     // Render helpers (those functions don't access any ImGui state!)
 
+    /** Render an arrow aimed to be aligned with text (p_min is a position in the same space text would be positioned). To e.g. denote expanded/collapsed state  */
+    fun renderArrow(drawList: DrawList, pos: Vec2, col: Int, dir: Dir, scale: Float = 1f) {
+
+        val h = drawList._data.fontSize * 1f
+        var r = h * 0.4f * scale
+        val center = pos + Vec2(h * 0.5f, h * 0.5f * scale)
+
+        val a: Vec2
+        val b: Vec2
+        val c: Vec2
+        when (dir) {
+            Dir.Up, Dir.Down -> {
+                if (dir == Dir.Up) r = -r
+                a = Vec2(+0.000f, +0.75f) * r
+                b = Vec2(-0.866f, -0.75f) * r
+                c = Vec2(+0.866f, -0.75f) * r
+            }
+            Dir.Left, Dir.Right -> {
+                if (dir == Dir.Left) r = -r
+                a = Vec2(+0.75f, +0.000f) * r
+                b = Vec2(-0.75f, +0.866f) * r
+                c = Vec2(-0.75f, -0.866f) * r
+            }
+            else -> throw Error()
+        }
+
+        drawList.addTriangleFilled(center + a, center + b, center + c, col)
+    }
+
+    fun renderBullet(drawList: DrawList, pos: Vec2, col: Int) =
+            drawList.addCircleFilled(pos, drawList._data.fontSize * 0.2f, col, 8)
 
     fun renderMouseCursor(drawList: DrawList, pos: Vec2, scale: Float, mouseCursor: MouseCursor) {
         if (mouseCursor == MouseCursor.None) return
@@ -1772,11 +1772,12 @@ interface imgui_internal {
         val (pressed, hovered, held) = buttonBehavior(bb, id, Bf.None)
 
         // Render
-        val col = if (held && hovered) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        val bgCol = if (held && hovered) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        val textCol = Col.Text
         val center = bb.center
         if (hovered || held)
-            window.drawList.addCircleFilled(center/* + Vec2(0.0f, -0.5f)*/, g.fontSize * 0.5f + 1f, col.u32, 12)
-        renderArrow(bb.min, if (window.collapsed) Dir.Right else Dir.Down, 1f)
+            window.drawList.addCircleFilled(center/* + Vec2(0.0f, -0.5f)*/, g.fontSize * 0.5f + 1f, bgCol.u32, 12)
+        renderArrow(window.drawList, bb.min + style.framePadding, textCol.u32, if (window.collapsed) Dir.Right else Dir.Down, 1f)
 
         // Switch to moving the window after mouse is moved beyond the initial drag threshold
         if (isItemActive && isMouseDragging())
@@ -1806,10 +1807,11 @@ interface imgui_internal {
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 
         // Render
-        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        val bgCol = if (held && hovered) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+        val textCol = Col.Text
         renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, col.u32, true, g.style.frameRounding)
-        renderArrow(bb.min + Vec2(max(0f, (size.x - g.fontSize) * 0.5f), max(0f, (size.y - g.fontSize) * 0.5f)), dir)
+        renderFrame(bb.min, bb.max, bgCol.u32, true, g.style.frameRounding)
+        renderArrow(window.drawList, bb.min + Vec2(max(0f, (size.x - g.fontSize) * 0.5f), max(0f, (size.y - g.fontSize) * 0.5f)), textCol.u32, dir)
 
         return pressed
     }
@@ -2405,14 +2407,15 @@ interface imgui_internal {
             window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledSelection
 
         // Render
-        val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
+        val bgCol = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
+        val textCol = Col.Text
         val textPos = frameBb.min + Vec2(textOffsetX, textBaseOffsetY)
         val navHighlightFlags: NavHighlightFlags = NavHighlightFlag.TypeThin.i
         if (displayFrame) {
             // Framed type
-            renderFrame(frameBb.min, frameBb.max, col.u32, true, style.frameRounding)
+            renderFrame(frameBb.min, frameBb.max, bgCol.u32, true, style.frameRounding)
             renderNavHighlight(frameBb, id, navHighlightFlags)
-            renderArrow(frameBb.min + Vec2(padding.x, textBaseOffsetY), if (isOpen) Dir.Down else Dir.Right, 1f)
+            renderArrow(window.drawList, frameBb.min + Vec2(padding.x, textBaseOffsetY), textCol.u32, if (isOpen) Dir.Down else Dir.Right, 1f)
             if (flags has Tnf._ClipLabelForTrailingButton)
                 frameBb.max.x -= g.fontSize + style.framePadding.x
             if (g.logEnabled) {
@@ -2426,14 +2429,13 @@ interface imgui_internal {
         } else {
             // Unframed typed for tree nodes
             if (hovered || selected) {
-                renderFrame(frameBb.min, frameBb.max, col.u32, false)
+                renderFrame(frameBb.min, frameBb.max, bgCol.u32, false)
                 renderNavHighlight(frameBb, id, navHighlightFlags)
             }
             if (flags has Tnf.Bullet)
-                renderBullet(frameBb.min + Vec2(textOffsetX * 0.5f, g.fontSize * 0.5f + textBaseOffsetY))
+                renderBullet(window.drawList, frameBb.min + Vec2(textOffsetX * 0.5f, g.fontSize * 0.5f + textBaseOffsetY), textCol.u32)
             else if (!isLeaf)
-                renderArrow(frameBb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY),
-                        if (isOpen) Dir.Down else Dir.Right, 0.7f)
+                renderArrow(window.drawList, frameBb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY), textCol.u32, if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
             renderText(textPos, label, labelEnd, false)

@@ -81,10 +81,10 @@ interface imgui_widgets_comboBox {
             window.drawList.addRectFilled(frameBb.min, Vec2(valueX2, frameBb.max.y), frameCol.u32,
                     style.frameRounding, if(flags has Cf.NoArrowButton) Dcf.All.i else Dcf.Left.i)
         if (flags hasnt Cf.NoArrowButton) {
-            val col = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
-            val f = if (w <= arrowSize) Dcf.All else Dcf.Right
-            window.drawList.addRectFilled(Vec2(valueX2, frameBb.min.y), frameBb.max, col.u32, style.frameRounding, f.i)
-            renderArrow(Vec2(valueX2 + style.framePadding.y, frameBb.min.y + style.framePadding.y), Dir.Down)
+            val bgCol = if(popupOpen || hovered) Col.ButtonHovered else Col.Button
+            val textCol = Col.Text
+            window.drawList.addRectFilled(Vec2(valueX2, frameBb.min.y), frameBb.max, bgCol.u32, style.frameRounding, if(w <= arrowSize) Dcf.All.i else Dcf.Right.i)
+            renderArrow(window.drawList, Vec2(valueX2 + style.framePadding.y, frameBb.min.y + style.framePadding.y), textCol.u32, Dir.Down)
         }
         renderFrameBorder(frameBb.min, frameBb.max, style.frameRounding)
         if (previewValue != null && flags hasnt Cf.NoPreview)

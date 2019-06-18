@@ -119,7 +119,7 @@ interface imgui_widgets_text {
 
         val text = fmt.format(style.locale, *args)
         val textEnd = text.length
-        val labelSize = calcTextSize(text, textEnd,false)
+        val labelSize = calcTextSize(text, textEnd, false)
         val textBaseOffsetY = glm.max(0f, window.dc.currLineTextBaseOffset) // Latch before ItemSize changes it
         val lineHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), g.fontSize)
         val x = g.fontSize + if (labelSize.x > 0f) labelSize.x + style.framePadding.x * 2 else 0f
@@ -129,7 +129,8 @@ interface imgui_widgets_text {
         if (!itemAdd(bb, 0)) return
 
         // Render
-        renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f))
+        val textCol = Col.Text.u32
+        renderBullet(window.drawList, bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f), textCol)
         renderText(bb.min + Vec2(g.fontSize + style.framePadding.x * 2, textBaseOffsetY), text, text.length, false)
     }
 
