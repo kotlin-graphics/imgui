@@ -43,6 +43,7 @@ import imgui.ImGui.tabItemLabelAndCloseButton
 import imgui.imgui.Context
 import imgui.imgui.g
 import imgui.imgui.imgui_tabBarsTabs.Companion.tabBarRef
+import java.nio.ByteBuffer
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs
@@ -786,6 +787,14 @@ class Window(var context: Context, var name: String) {
         return id
     }
 
+    fun getId(n: Int): ID {
+        val seed = idStack.last()
+        val bytes = ByteBuffer.allocate(Int.BYTES).apply { putInt(0, n) }
+        return hash(bytes, seed).also { id ->
+            keepAliveID(id)
+        }
+    }
+
     fun getIdNoKeepAlive(str: String, strEnd: Int = str.length): ID {
         val seed: ID = idStack.last()
         return hash(str, str.length - strEnd, seed)
@@ -800,6 +809,12 @@ class Window(var context: Context, var name: String) {
             ptrId = newBuf
         }
         return System.identityHashCode(ptrId[ptrIndex])
+    }
+
+    fun getIdNoKeepAlive(n: Int): ID    {
+        val seed = idStack.last()
+        val bytes = ByteBuffer.allocate(Int.BYTES).apply { putInt(0, n) }
+        return hash(bytes, seed)
     }
 
     /** This is only used in rare/specific situations to manufacture an ID out of nowhere. */
