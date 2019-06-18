@@ -3766,13 +3766,13 @@ interface imgui_internal {
         if (!mouseAvailToImgui && !mouseDraggingExternPayload)
             nullate()
 
-        // Update io.WantCaptureMouse for the user application (true = dispatch mouse info to imgui, false = dispatch mouse info to imgui + app)
+        // Update io.WantCaptureMouse for the user application (true = dispatch mouse info to Dear ImGui, false = dispatch mouse info to imgui + app)
         if (g.wantCaptureMouseNextFrame != -1)
             io.wantCaptureMouse = g.wantCaptureMouseNextFrame != 0
         else
             io.wantCaptureMouse = (mouseAvailToImgui && (g.hoveredWindow != null || mouseAnyDown)) || g.openPopupStack.isNotEmpty()
 
-        // Update io.WantCaptureKeyboard for the user application (true = dispatch keyboard info to imgui, false = dispatch keyboard info to imgui + app)
+        // Update io.WantCaptureKeyboard for the user application (true = dispatch keyboard info to Dear ImGui, false = dispatch keyboard info to imgui + app)
         if (g.wantCaptureKeyboardNextFrame != -1)
             io.wantCaptureKeyboard = g.wantCaptureKeyboardNextFrame != 0
         else
