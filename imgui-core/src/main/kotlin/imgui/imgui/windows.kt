@@ -366,10 +366,6 @@ interface imgui_windows {
                 }
             }
 
-            // Apply scrolling
-            window.scroll put calcNextScrollFromScrollTargetAndClamp(window, true)
-            window.scrollTarget put Float.MAX_VALUE
-
             // Apply window focus (new and reactivated windows are moved to front)
             val wantFocus = when {
                 !windowJustActivatedByUser || flags has Wf.NoFocusOnAppearing -> false
@@ -441,6 +437,18 @@ interface imgui_windows {
                         maxY = floor(0.5f + window.innerRect.max.y - window.windowBorderSize))
                 workRect clipWithFull hostRect
             }
+
+            // SCROLLING
+
+            // Lock down maximum scrolling
+            // The value of ScrollMax are ahead from ScrollbarX/ScrollbarY which is intentionally using InnerRect from previous rect in order to accommodate
+            // for right/bottom aligned items without creating a scrollbar.
+            window.scrollMax.x = max(0f, window.contentSize.x + window.windowPadding.x * 2f - window.innerRect.width)
+            window.scrollMax.y = max(0f, window.contentSize.y + window.windowPadding.y * 2f - window.innerRect.height)
+
+            // Apply scrolling
+            window.scroll = calcNextScrollFromScrollTargetAndClamp(window, true)
+            window.scrollTarget put Float.MAX_VALUE
 
             /* ---------- DRAWING ---------- */
 
@@ -537,7 +545,7 @@ interface imgui_windows {
                 dc.prevLineTextBaseOffset = 0f
                 dc.currLineTextBaseOffset = 0f
                 dc.navHideHighlightOneFrame = false
-                dc.navHasScroll = window.scrollMaxY > 0f
+                dc.navHasScroll = window.scrollMax.y > 0f
                 dc.navLayerActiveMask = window.dc.navLayerActiveMaskNext
                 dc.navLayerActiveMaskNext = 0
                 dc.menuBarAppending = false

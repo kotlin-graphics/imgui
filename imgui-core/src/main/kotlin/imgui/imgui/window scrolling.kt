@@ -7,28 +7,32 @@ import imgui.ImGui
 /** Windows Scrolling */
 interface imgui_windowScrolling {
 
-    /** Scrolling amount [0..GetScrollMaxX()]
-     *  ~ SetScrollX */
+    /** Scrolling amount [0..GetScrollMaxX()] */
     var scrollX: Float
+        /** ~GetScrollX */
         get() = g.currentWindow!!.scroll.x
+        /**  ~ SetScrollX */
         set(value) = with(ImGui.currentWindow) { scrollTarget.x = value; scrollTargetCenterRatio.x = 0f }
 
-    /** scrolling amount [0..GetScrollMaxY()]
-     *  ~SetScrollY */
+    /** scrolling amount [0..GetScrollMaxY()] */
     var scrollY: Float
+        /** GetScrollY */
         get() = g.currentWindow!!.scroll.y
+        /**  ~SetScrollY */
         set(value) = with(ImGui.currentWindow) {
             scrollTarget.y = value
             scrollTargetCenterRatio.y = 0f
         }
 
-    /** get maximum scrolling amount ~~ ContentSize.X - WindowSize.X    */
+    /** get maximum scrolling amount ~~ ContentSize.X - WindowSize.X
+     *  ~GetScrollMaxX */
     val scrollMaxX: Float
-        get() = ImGui.currentWindowRead!!.scrollMaxX
+        get() = ImGui.currentWindow.scrollMax.x
 
-    /** get maximum scrolling amount ~~ ContentSize.Y - WindowSize.Y    */
+    /** get maximum scrolling amount ~~ ContentSize.Y - WindowSize.Y
+     *  ~GetScrollMaxY */
     val scrollMaxY: Float
-        get() = ImGui.currentWindowRead!!.scrollMaxY
+        get() = ImGui.currentWindow.scrollMax.y
 
     /** adjust scrolling amount to make current cursor position visible.
      *  centerYRatio = 0.0: top, 0.5: center, 1.0: bottom.

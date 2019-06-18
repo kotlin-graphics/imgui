@@ -230,8 +230,8 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean)
     }
     scroll maxAssign 0f
     if (!window.collapsed && !window.skipItems) {
-        scroll.x = glm.min(scroll.x, window.scrollMaxX)
-        scroll.y = glm.min(scroll.y, window.scrollMaxY)
+        scroll.x = glm.min(scroll.x, window.scrollMax.x)
+        scroll.y = glm.min(scroll.y, window.scrollMax.y)
     }
     return scroll
 }
