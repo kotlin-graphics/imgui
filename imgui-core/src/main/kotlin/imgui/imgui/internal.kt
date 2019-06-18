@@ -411,7 +411,7 @@ interface imgui_internal {
         val window = g.currentWindow!!
         var wrapPosX = wrapPosX_
         if (wrapPosX == 0f)
-            wrapPosX = contentRegionMaxAbs.x
+            wrapPosX = window.workRect.max.x
         else if (wrapPosX > 0f)
             wrapPosX += window.pos.x - window.scroll.x // wrap_pos_x is provided is window local space
 

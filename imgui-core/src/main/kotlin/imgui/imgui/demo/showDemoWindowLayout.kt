@@ -145,6 +145,7 @@ object showDemoWindowLayout {
     var showHscrollbar = true
     var showButton = true
     var showTreeNodes = true
+    var showTextWrapped = false
     var open = true
     var showColumns = true
     var showTabBar = true
@@ -578,6 +579,7 @@ object showDemoWindowLayout {
                 checkbox("H-scrollbar", ::showHscrollbar)
                 checkbox("Button", ::showButton)            // Will grow contents size (unless explicitly overwritten)
                 checkbox("Tree nodes", ::showTreeNodes)    // Will grow contents size and display highlight over full width
+                checkbox("Text wrapped", ::showTextWrapped)     // Will grow and use contents size
                 checkbox("Columns", ::showColumns)          // Will use contents size
                 checkbox("Tab bar", ::showTabBar)          // Will use contents size
                 checkbox("Explicit content size", ::explicitContentSize)
@@ -603,6 +605,8 @@ object showDemoWindowLayout {
                     }
                     collapsingHeader("CollapsingHeader", ::open)
                 }
+                if (showTextWrapped)
+                    textWrapped("This text should automatically wrap on the edge of the work rectangle.")
                 if (showColumns) {
                     columns(4)
                     for (n in 0..3)                    {
