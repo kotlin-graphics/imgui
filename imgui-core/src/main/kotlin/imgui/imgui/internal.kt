@@ -2339,7 +2339,7 @@ interface imgui_internal {
         if (displayFrame) {
             // Framed header expand a little outside the default padding
             frameBb.min.x -= (window.windowPadding.x * 0.5f - 1f).i.f
-            frameBb.max.x += (window.windowPadding.x * 0.5f - 1f).i.f
+            frameBb.max.x += (window.windowPadding.x * 0.5f).i.f
         }
 
         val textOffsetX = g.fontSize + padding.x * if (displayFrame) 3 else 2   // Collapser arrow width + Spacing
