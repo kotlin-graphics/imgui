@@ -1197,29 +1197,8 @@ interface imgui_internal {
         }
 
         // Label with ellipsis
-        // FIXME: This should be extracted into a helper but the use of text_pixel_clip_bb and !close_button_visible makes it tricky to abstract at the moment
-        val labelDisplayEnd = findRenderedTextEnd(label)
-        if (labelSize.x > textEllipsisClipBb.width) {
-            val ellipsisDotCount = 3
-            val ellipsisWidth = (1f + 1f) * ellipsisDotCount - 1f
-            val remaining = IntArray(1)
-            var labelSizeClippedX = g.font.calcTextSizeA(g.fontSize, textEllipsisClipBb.width - ellipsisWidth + 1f, 0f, label, labelDisplayEnd, remaining).x
-            var labelEnd = remaining[0]
-            if (labelEnd == 0 && labelEnd < labelDisplayEnd) {    // Always display at least 1 character if there's no room for character + ellipsis
-                labelEnd = labelDisplayEnd // TODO CHECK textCountUtf8BytesFromChar(label, labelDisplayEnd)
-                labelSizeClippedX = g.font.calcTextSizeA(g.fontSize, Float.MAX_VALUE, 0f, label, labelEnd).x
-            }
-            while (labelEnd > 0 && label[labelEnd - 1].isBlankA) { // Trim trailing space
-                labelEnd--
-                labelSizeClippedX -= g.font.calcTextSizeA(g.fontSize, Float.MAX_VALUE, 0f, label, labelEnd + 1).x // Ascii blanks are always 1 byte
-            }
-            renderTextClippedEx(drawList, textPixelClipBb.min, textPixelClipBb.max, label, labelEnd, labelSize, Vec2())
-
-            val ellipsisX = textPixelClipBb.min.x + labelSizeClippedX + 1f
-            if (!closeButtonVisible && ellipsisX + ellipsisWidth <= bb.max.x)
-                renderPixelEllipsis(drawList, Vec2(ellipsisX, textPixelClipBb.min.y), Col.Text.u32, ellipsisDotCount)
-        } else
-            renderTextClippedEx(drawList, textPixelClipBb.min, textPixelClipBb.max, label, labelDisplayEnd, labelSize, Vec2())
+        val ellipsisMaxX = if(closeButtonVisible) -Float.MAX_VALUE else bb.max.x
+        renderTextEllipsis(drawList, textEllipsisClipBb.min, textEllipsisClipBb.max, textPixelClipBb.max.x, ellipsisMaxX, label, -1, labelSize)
 
         return closeButtonPressed
     }
@@ -1287,6 +1266,44 @@ interface imgui_internal {
             drawList.addText(null, 0f, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, fineClipRect)
         } else
             drawList.addText(null, 0f, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, null)
+    }
+
+    /** Another overly complex function until we reorganize everything into a nice all-in-one helper.
+     *  This is made more complex because we have dissociated the layout rectangle (pos_min..pos_max) which define where the ellipsis is, from actual clipping and limit of the ellipsis display.
+     *  This is because in the context of tabs we selectively hide part of the text when the Close Button appears, but we don't want the ellipsis to move. */
+    fun renderTextEllipsis(drawList: DrawList, posMin: Vec2, posMax: Vec2, clipMaxX: Float, ellipsisMaxX: Float,
+                           text: String, textEndFull_: Int, textSizeIfKnown: Vec2?)    {
+
+        val textEndFull = if (textEndFull_ == -1) findRenderedTextEnd(text) else textEndFull_
+        val textSize = textSizeIfKnown ?: calcTextSize(text, textEndFull, false, 0f)
+
+        if (textSize.x > posMax.x - posMin.x)        {
+
+            val font = drawList._data.font!!
+            val fontSize = drawList._data.fontSize
+            val ellipsisDotCount = 3
+            val ellipsisWidth = (1f + 1f) * ellipsisDotCount - 1f
+            val textEndEllipsis = intArrayOf(-1)
+            var textSizeClippedX = font.calcTextSizeA(fontSize, (posMax.x - posMin.x) - ellipsisWidth + 1f, 0f, text, textEndFull, textEndEllipsis).x
+            if (0 == textEndEllipsis[0] && textEndEllipsis[0] < textEndFull) {    // Always display at least 1 character if there's no room for character + ellipsis
+                textEndEllipsis[0] = text.countUtf8BytesFromChar(textEndFull)
+                textSizeClippedX = font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text, textEndEllipsis[0]).x
+            }
+            while (textEndEllipsis[0] > 0 && text[textEndEllipsis[0] -1].isBlankA) { // Trim trailing space
+                textEndEllipsis[0]--
+                textSizeClippedX -= font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text.substring(textEndEllipsis[0]), textEndEllipsis[0] + 1).x // Ascii blanks are always 1 byte
+            }
+            renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndEllipsis[0], textSize, Vec2())
+
+            val ellipsisX = posMin.x + textSizeClippedX + 1f
+            if (ellipsisX + ellipsisWidth <= ellipsisMaxX)
+                renderPixelEllipsis(drawList, Vec2(ellipsisX, posMin.y), Col.Text.u32, ellipsisDotCount)
+        }
+        else
+            renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndFull, textSize, Vec2())
+
+        if (g.logEnabled)
+            logRenderedText(posMin, text, textEndFull)
     }
 
     fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: String, textEnd: Int = -1, textSizeIfKnown: Vec2? = null,
