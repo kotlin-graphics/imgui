@@ -150,6 +150,7 @@ object showDemoWindowLayout {
     var open = true
     var showColumns = true
     var showTabBar = true
+    var showChild = false
     var explicitContentSize = false
     var contentsSizeX = 300f
 
@@ -516,7 +517,7 @@ object showDemoWindowLayout {
                     val childFlags = Wf.MenuBar.i
                     beginChild(getId(i), Vec2(childW, 200f), true, childFlags)
                     if (scrollToOff)
-                        scrollY  = scrollToOffPx
+                        scrollY = scrollToOffPx
                     if (scrollToPos)
                         setScrollFromPosY(cursorStartPos.y + scrollToPosPx, i * 0.25f)
                     for (line in 0..99)
@@ -592,7 +593,9 @@ object showDemoWindowLayout {
                 checkbox("Text wrapped", ::showTextWrapped)     // Will grow and use contents size
                 checkbox("Columns", ::showColumns)          // Will use contents size
                 checkbox("Tab bar", ::showTabBar)          // Will use contents size
+                checkbox("Child", ::showChild)              // Will grow and use contents size
                 checkbox("Explicit content size", ::explicitContentSize)
+                text("Scroll %.1f/%.1f %.1f/%.1f", scrollX, scrollMaxX, scrollY, scrollMaxY)
                 if (explicitContentSize) {
                     sameLine()
                     setNextItemWidth(100f)
@@ -619,7 +622,7 @@ object showDemoWindowLayout {
                     textWrapped("This text should automatically wrap on the edge of the work rectangle.")
                 if (showColumns) {
                     columns(4)
-                    for (n in 0..3)                    {
+                    for (n in 0..3) {
                         text("Width %.2f", getColumnWidth())
                         nextColumn()
                     }
@@ -635,6 +638,10 @@ object showDemoWindowLayout {
                     if (beginTabItem("FourFourFour"))
                         endTabItem()
                     endTabBar()
+                }
+                if (showChild) {
+                    beginChild("child", Vec2(), true)
+                    endChild()
                 }
                 end()
             }

@@ -478,7 +478,7 @@ class Style {
     /** Minimum horizontal spacing between two columns. Preferably > (FramePadding.x + 1).  */
     var columnsMinSpacing = 6f
     /** Width of the vertical scrollbar, Height of the horizontal scrollbar. */
-    var scrollbarSize = 16f
+    var scrollbarSize = 14f
     /** Radius of grab corners rounding for scrollbar.   */
     var scrollbarRounding = 9f
     /** Minimum width/height of a grab box for slider/scrollbar */
