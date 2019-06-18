@@ -558,7 +558,7 @@ interface imgui_demoDebugInformations {
                 if (flags has Wf.NoNavInputs) builder += "NoNavInputs"
                 if (flags has Wf.AlwaysAutoResize) builder += "AlwaysAutoResize"
                 bulletText("Flags: 0x%08X ($builder..)", flags)
-                bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f)", window.scroll.x, window.scrollMaxX, window.scroll.y, window.scrollMaxY)
+                bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f)", window.scroll.x, window.scrollMax.x, window.scroll.y, window.scrollMax.y)
                 val order = if (window.active || window.wasActive) window.beginOrderWithinContext else -1
                 bulletText("Active: ${window.active}/${window.wasActive}, WriteAccessed: ${window.writeAccessed} BeginOrderWithinContext: $order")
                 bulletText("Appearing: ${window.appearing}, Hidden: ${window.hidden} (CanSkip ${window.hiddenFramesCanSkipItems} Cannot ${window.hiddenFramesCannotSkipItems}), SkipItems: ${window.skipItems}")

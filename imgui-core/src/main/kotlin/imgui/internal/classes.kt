@@ -632,6 +632,8 @@ class Window(var context: Context, var name: String) {
     var childId: ID = 0
 
     var scroll = Vec2()
+
+    var scrollMax = Vec2()
     /** target scroll position. stored as cursor position with scrolling canceled out, so the highest point is always
     0.0f. (FLT_MAX for no change)   */
     var scrollTarget = Vec2(Float.MAX_VALUE)
@@ -955,14 +957,6 @@ class Window(var context: Context, var name: String) {
             }
         }
     }
-
-    /** ~GetWindowScrollMaxX */
-    val scrollMaxX: Float
-        get() = max(0f, contentSize.x + (windowPadding.x * 2f - innerRect.width))
-
-    /** ~GetWindowScrollMaxY */
-    val scrollMaxY: Float
-        get() = max(0f, contentSize.y + (windowPadding.y * 2f - innerRect.height))
 
     /** AddWindowToDrawData */
     infix fun addToDrawData(outList: ArrayList<DrawList>) {
