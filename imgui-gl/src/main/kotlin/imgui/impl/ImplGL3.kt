@@ -43,7 +43,7 @@ class ImplGL3 : GLInterface {
     var currentVtxSize = 0
     var currentIdxSize = 0
 
-    init {
+    init { // Setup back-end capabilities flags
         io.backendRendererName = "imgui_impl_opengl3"
         if(HAS_DRAW_WITH_BASE_VERTEX)
             io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
@@ -70,7 +70,7 @@ class ImplGL3 : GLInterface {
 
         // Setup viewport, orthographic projection matrix
         // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
-        // DisplayMin is typically (0,0) for single viewport apps.
+        // DisplayPos is (0,0) for single viewport apps.
         glViewport(0, 0, fbWidth, fbHeight)
         val orthoProjection = glm.ortho(mat, 0f, io.displaySize.x.f, io.displaySize.y.f, 0f)
         glUseProgram(program.name)

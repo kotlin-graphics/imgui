@@ -29,7 +29,7 @@ import vkk.extensionFunctions.*
 import kotlin.reflect.KMutableProperty0
 
 fun ImplVk_Init(renderPass_: VkRenderPass): Boolean {
-
+    // Setup back-end capabilities flags
     io.backendRendererName = "imgui_impl_vulkan"
     io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     val info = VkInitInfo
@@ -214,7 +214,7 @@ fun setupRenderState(drawData: DrawData, commandBuffer: VkCommandBuffer, rb: Imp
     commandBuffer.setViewport(fbWidth.f, fbHeight.f)
 
     // Setup scale and translation:
-    // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayMin is typically (0,0) for single viewport apps.
+    // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayPos is (0,0) for single viewport apps.
     stak {
         val scale = it.floats(2f / drawData.displaySize.x, 2f / drawData.displaySize.y)
         val translate = it.floats(-1f - drawData.displayPos.x * scale[0], -1f - drawData.displayPos.y * scale[1])

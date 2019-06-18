@@ -354,7 +354,8 @@ interface imgui_windows {
             else if (flags has Wf.Tooltip && !windowPosSetByApi && !windowIsChildTooltip)
                 window.pos = findBestWindowPosForPopup(window)
 
-            // Clamp position/size so it stays visible
+            // Clamp position/size so window stays visible within its viewport or monitor
+
             // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
             val viewportRect = viewportRect
             if (!windowPosSetByApi && flags hasnt Wf.ChildWindow && window.autoFitFrames allLessThanEqual 0)

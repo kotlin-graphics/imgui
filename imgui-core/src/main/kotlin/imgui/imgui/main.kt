@@ -210,9 +210,12 @@ interface imgui_main {
             else -> Float.MAX_VALUE
         }
 
+        // Find hovered window
+        // (needs to be before UpdateMouseMovingWindowNewFrame so we fill g.HoveredWindowUnderMovingWindow on the mouse release frame)
+        updateHoveredWindowAndCaptureFlags()
+
         // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering)
         updateMouseMovingWindowNewFrame()
-        updateHoveredWindowAndCaptureFlags()
 
         // Background darkening/whitening
         g.dimBgRatio = when {
@@ -800,7 +803,7 @@ interface imgui_main {
             val hasCloseButton = pOpen != null
             val hasCollapseButton = flags hasnt Wf.NoCollapse
 
-            // Close & collapse button are on the Menu NavLayer and don't default focus (unless there's nothing else on that layer)
+            // Close & Collapse button are on the Menu NavLayer and don't default focus (unless there's nothing else on that layer)
             val itemFlagsBackup = window.dc.itemFlags
             window.dc.itemFlags = window.dc.itemFlags or ItemFlag.NoNavDefaultFocus
             window.dc.navLayerCurrent = NavLayer.Menu
