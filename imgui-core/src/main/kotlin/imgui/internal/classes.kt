@@ -848,6 +848,7 @@ class Window(var context: Context, var name: String) {
 
     // _______________________________________ JVM _______________________________________
 
+    /** ~ SetWindowPos */
     fun setPos(pos: Vec2, cond: Cond = Cond.None) {
         // Test condition (NB: bit 0 is always true) and clear flags for next time
         if (cond != Cond.None && setWindowPosAllowFlags hasnt cond)
@@ -856,7 +857,6 @@ class Window(var context: Context, var name: String) {
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         setWindowPosAllowFlags = setWindowPosAllowFlags wo (Cond.Once or Cond.FirstUseEver or Cond.Appearing)
         setWindowPosVal put Float.MAX_VALUE
-        setWindowPosPivot put Float.MAX_VALUE
 
         // Set
         val oldPos = Vec2(this.pos)
