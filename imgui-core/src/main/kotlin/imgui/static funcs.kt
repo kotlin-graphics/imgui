@@ -120,7 +120,6 @@ fun findHoveredWindow() {
 
 fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).apply {
     // Create window the first time
-
     this.flags = flags
     g.windowsById[id] = this
 
