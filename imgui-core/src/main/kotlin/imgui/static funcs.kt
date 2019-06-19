@@ -241,7 +241,8 @@ fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 fun createNewWindowSettings(name: String) = WindowSettings(name).also { g.settingsWindows += it }
 
 
-val viewportRect get() = Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
+val viewportRect: Rect
+    get() = Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
 
 /** Return false to discard a character.    */
 fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags, callback: InputTextCallback?, userData: Any?): Boolean {
