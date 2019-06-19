@@ -137,7 +137,7 @@ interface imgui_windows {
         if (flags has Wf.Popup) {
             val popupRef = g.openPopupStack[g.beginPopupStack.size]
             popupRef.window = window
-            g.beginPopupStack.push(popupRef)
+            g.beginPopupStack += popupRef
             window.popupId = popupRef.popupId
         }
 
@@ -296,7 +296,7 @@ interface imgui_windows {
             }
 
             // Apply minimum/maximum window size constraints and final size
-            window.sizeFull put window.calcSizeAfterConstraint(window.sizeFull)
+            window.sizeFull = window.calcSizeAfterConstraint(window.sizeFull)
             window.size put when (window.collapsed && flags hasnt Wf.ChildWindow) {
                 true -> window.titleBarRect().size
                 else -> window.sizeFull
@@ -465,7 +465,7 @@ interface imgui_windows {
                         minY = floor(0.5f + innerRect.min.y + topBorderSize),
                         maxX = floor(0.5f + innerRect.max.x - max(floor(windowPadding.y * 0.5f), windowBorderSize)),
                         maxY = floor(0.5f + innerRect.max.y - windowBorderSize))
-                workRect clipWithFull hostRect
+                innerClipRect clipWithFull hostRect
             }
 
             // Default item width. Make it proportional to window size if window manually resizes
@@ -554,11 +554,10 @@ interface imgui_windows {
                 val allowScrollbarY = flags hasnt Wf.NoScrollbar
                 val workRectSizeX = if (window.contentSizeExplicit.x != 0f) window.contentSizeExplicit.x else max(if (allowScrollbarX) window.contentSize.x else 0f, window.size.x - window.windowPadding.x * 2f - window.scrollbarSizes.x)
                 val workRectSizeY = if (window.contentSizeExplicit.y != 0f) window.contentSizeExplicit.y else max(if (allowScrollbarY) window.contentSize.y else 0f, window.size.y - window.windowPadding.y * 2f - decorationUpHeight - window.scrollbarSizes.y)
-                window.workRect.put(
-                        minX = floor(window.innerRect.min.x - window.scroll.x + max(window.windowPadding.x, window.windowBorderSize)),
-                        minY = floor(window.innerRect.min.y - window.scroll.y + max(window.windowPadding.y, window.windowBorderSize)),
-                        maxX = window.workRect.min.x + workRectSizeX,
-                        maxY = window.workRect.min.y + workRectSizeY)
+                window.workRect.min.put(
+                        floor(window.innerRect.min.x - window.scroll.x + max(window.windowPadding.x, window.windowBorderSize)),
+                        floor(window.innerRect.min.y - window.scroll.y + max(window.windowPadding.y, window.windowBorderSize)))
+                window.workRect.max.put(window.workRect.min.x + workRectSizeX, window.workRect.min.y + workRectSizeY)
 
 
                 // [LEGACY] Contents Region
@@ -566,14 +565,15 @@ interface imgui_windows {
                 // NB: WindowBorderSize is included in WindowPadding _and_ ScrollbarSizes so we need to cancel one out when we have both.
                 // Used by:
                 // - Mouse wheel scrolling + many other things
-                contentsRegionRect.put(
-                        minX = pos.x - scroll.x + windowPadding.x,
-                        minY = pos.y - scroll.y + windowPadding.y + decorationUpHeight,
-                        maxX = contentsRegionRect.min.x + when (contentSizeExplicit.x) {
+                contentsRegionRect.min.put(
+                        x = pos.x - scroll.x + windowPadding.x,
+                        y = pos.y - scroll.y + windowPadding.y + decorationUpHeight)
+                contentsRegionRect.max.put(
+                        x = contentsRegionRect.min.x + when (contentSizeExplicit.x) {
                             0f -> size.x - windowPadding.x * 2f - scrollbarSizes.x
                             else -> contentSizeExplicit.x
                         },
-                        maxY = contentsRegionRect.min.y + when (contentSizeExplicit.y) {
+                        y = contentsRegionRect.min.y + when (contentSizeExplicit.y) {
                             0f -> size.y - windowPadding.y * 2f - decorationUpHeight - scrollbarSizes.y
                             else -> contentSizeExplicit.y
                         })
@@ -655,7 +655,7 @@ interface imgui_windows {
         } else   // Append
             window.setCurrent()
 
-        pushClipRect(window.workRect.min, window.workRect.max, true)
+        pushClipRect(window.innerClipRect.min, window.innerClipRect.max, true)
 
         // Clear 'accessed' flag last thing (After PushClipRect which will set the flag. We want the flag to stay false when the default "Debug" window is unused)
         if (firstBeginOfTheFrame) window.writeAccessed = false

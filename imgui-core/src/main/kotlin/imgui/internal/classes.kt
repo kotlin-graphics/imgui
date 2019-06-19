@@ -811,7 +811,7 @@ class Window(var context: Context, var name: String) {
         return System.identityHashCode(ptrId[ptrIndex])
     }
 
-    fun getIdNoKeepAlive(n: Int): ID    {
+    fun getIdNoKeepAlive(n: Int): ID {
         val seed = idStack.last()
         val bytes = ByteBuffer.allocate(Int.BYTES).apply { putInt(0, n) }
         return hash(bytes, seed)
@@ -919,8 +919,8 @@ class Window(var context: Context, var name: String) {
         return true
     }
 
-    fun calcSizeAfterConstraint(newSize: Vec2): Vec2 {
-
+    fun calcSizeAfterConstraint(newSize_: Vec2): Vec2 {
+        val newSize = Vec2(newSize_)
         if (g.nextWindowData.flags has NextWindowDataFlag.HasSizeConstraint) {
             // Using -1,-1 on either X/Y axis to preserve the current size.
             val cr = g.nextWindowData.sizeConstraintRect
@@ -997,8 +997,10 @@ class Window(var context: Context, var name: String) {
     /** Layer is locked for the root window, however child windows may use a different viewport (e.g. extruding menu) */
     fun addRootWindowToDrawData() = addToDrawData(if (flags has Wf.Tooltip) g.drawDataBuilder.layers[1] else g.drawDataBuilder.layers[0])
 
-    // FIXME: Add a more explicit sort order in the window structure.
-    private val childWindowComparer = compareBy<Window>({ it.flags has Wf.Popup }, { it.flags has Wf.Tooltip }, { it.beginOrderWithinParent })
+    companion object {
+        // FIXME: Add a more explicit sort order in the window structure.
+        private val childWindowComparer = compareBy<Window>({ it.flags has Wf.Popup }, { it.flags has Wf.Tooltip }, { it.beginOrderWithinParent })
+    }
 
     fun setConditionAllowFlags(flags: Int, enabled: Boolean) = if (enabled) {
         setWindowPosAllowFlags = setWindowPosAllowFlags or flags

@@ -6,6 +6,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
+import imgui.ImGui.beginChild
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginTooltip
@@ -16,6 +17,7 @@ import imgui.ImGui.combo
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dummy
 import imgui.ImGui.end
+import imgui.ImGui.endChild
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
@@ -398,9 +400,10 @@ interface imgui_demoDebugInformations {
             separator()
             menu("Options") {
                 menuItem("Enabled", "", Companion::enabled)
-                child("child", Vec2(0, 60), true) {
-                    for (i in 0 until 10) text("Scrolling Text %d", i)
-                }
+                beginChild("child", Vec2(0, 60), true)
+                for (i in 0 until 10)
+                    text("Scrolling Text $i")
+                endChild()
                 sliderFloat("Value", Companion::float, 0f, 1f)
                 inputFloat("Input", Companion::float, 0.1f)
                 combo("Combo", Companion::combo, "Yes\u0000No\u0000Maybe\u0000\u0000")
