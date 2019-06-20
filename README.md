@@ -112,16 +112,16 @@ You should be able to try the examples from `test` (tested on Windows/Mac/Linux)
 
 OpenGL Kotlin:
 
-- [lwjgl](imgui-gl/src/test/kotlin/imgui/test%20lwjgl.kt) 
-- [jogl](imgui-jogl/src/test/kotlin/imgui/test%20jogl.kt) (currently not-maintained)
+- [lwjgl](imgui-gl/src/test/kotlin/imgui/opengl3.kt) 
+- [jogl](imgui-jogl/src/test/kotlin/imgui/JoglGL3.kt) (currently not-maintained)
 
 OpenGL Java:
 
-- [lwjgl](imgui-gl/src/test/java/imgui/Test_lwjgl.java) 
+- [lwjgl](imgui-gl/src/test/java/imgui/OpenGL3.java) 
 
 Vulkan Kotlin:
 
-- [lwjgl](imgui-vk/src/test/kotlin/imgui/test%20lwjgl%20vk.kt) (broken, to fix)
+- [lwjgl](imgui-vk/src/test/kotlin/imgui/vulkan.kt) (broken, to fix)
 
 
 You should refer to those also to learn how to use the imgui library.
