@@ -165,50 +165,30 @@ fun checkStacksSize(window: Window, write: Boolean) {
     val backup = window.dc.stackSizesBackup
     var ptr = 0
 
-    run {
-        // Too few or too many PopID()/TreePop()
-        val current = window.idStack.size
-        if (write) backup[ptr] = current
-        else assert(backup[ptr] == current) {
-            "PushID/PopID or TreeNode/TreePop Mismatch!"
-        }
-        ptr++
+    window.idStack.size.let {// Too few or too many PopID()/TreePop()
+        if (write) backup[ptr++] = it
+        else assert(backup[ptr++] == it) { "PushID/PopID or TreeNode/TreePop Mismatch!" }
     }
-    run {
-        // Too few or too many EndGroup()
-        val current = window.dc.groupStack.size
-        if (write) backup[ptr] = current
-        else assert(backup[ptr] == current) { "BeginGroup/EndGroup Mismatch!" }
-        ptr++
+    window.dc.groupStack.size.let { // Too few or too many EndGroup()
+        if (write) backup[ptr++] = it
+        else assert(backup[ptr++] == it) { "BeginGroup/EndGroup Mismatch!" }
     }
-    run {
-        // Too few or too many EndMenu()/EndPopup()
-        val current = g.beginPopupStack.size
-        if (write) backup[ptr] = current
-        else assert(backup[ptr] == current) { "BeginMenu/EndMenu or BeginPopup/EndPopup Mismatch" }
-        ptr++
+    g.beginPopupStack.size.let { // Too few or too many EndMenu()/EndPopup()
+        if (write) backup[ptr++] = it
+        else assert(backup[ptr++] == it) { "BeginMenu/EndMenu or BeginPopup/EndPopup Mismatch" }
     }
     // For color, style and font stacks there is an incentive to use Push/Begin/Pop/.../End patterns, so we relax our checks a little to allow them.
-    run {
-        // Too few or too many PopStyleColor()
-        val current = g.colorModifiers.size
-        if (write) backup[ptr] = current
-        else assert(backup[ptr] >= current) { "PushStyleColor/PopStyleColor Mismatch!" }
-        ptr++
+    g.colorModifiers.size.let { // Too few or too many PopStyleColor()
+        if (write) backup[ptr++] = it
+        else assert(backup[ptr++] >= it) { "PushStyleColor/PopStyleColor Mismatch!" }
     }
-    run {
-        // Too few or too many PopStyleVar()
-        val current = g.styleModifiers.size
-        if (write) backup[ptr] = current
-        else assert(backup[ptr] >= current) { "PushStyleVar/PopStyleVar Mismatch!" }
-        ptr++
+    g.styleModifiers.size.let { // Too few or too many PopStyleVar()
+        if (write) backup[ptr++] = it
+        else assert(backup[ptr++] >= it) { "PushStyleVar/PopStyleVar Mismatch!" }
     }
-    run {
-        // Too few or too many PopFont()
-        val current = g.fontStack.size
-        if (write) backup[ptr] = current
-        else assert(backup[ptr] >= current) { "PushFont/PopFont Mismatch!" }
-        ptr++
+    g.fontStack.size.let { // Too few or too many PopFont()
+        if (write) backup[ptr++] = it
+        else assert(backup[ptr++] >= it) { "PushFont/PopFont Mismatch!" }
     }
     assert(ptr == window.dc.stackSizesBackup.size)
 }
@@ -225,7 +205,7 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean)
         if (snapOnEdges && crY <= 0f && targetY <= window.windowPadding.y)
             targetY = 0f
         if (snapOnEdges && crY >= 1f && targetY >= window.contentSize.y + window.windowPadding.y + style.itemSpacing.y)
-            targetY = window.contentSize.y  + window.windowPadding.y * 2f
+            targetY = window.contentSize.y + window.windowPadding.y * 2f
         scroll.y = targetY - crY * window.innerRect.height
     }
     scroll maxAssign 0f

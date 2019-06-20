@@ -13,7 +13,6 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
 import imgui.ImGui.frameHeightWithSpacing
-import imgui.ImGui.menuItem
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
@@ -23,6 +22,7 @@ import imgui.ImGui.textWrapped
 import imgui.dsl.button
 import imgui.dsl.menu
 import imgui.dsl.menuBar
+import imgui.dsl.menuItem
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -35,22 +35,23 @@ object SimpleLayout {
     var selectedChild = 0
 
     /** Demonstrate create a window with multiple child windows.    */
-    operator fun invoke(open: KMutableProperty0<Boolean>) {
+    operator fun invoke(pOpen: KMutableProperty0<Boolean>) {
+
+        var open by pOpen
 
         setNextWindowSize(Vec2(500, 440), Cond.FirstUseEver)
-        if (begin("Example: SimpleLayout", open, Wf.MenuBar.i)) {
+        if (begin("Example: Simple Layout", pOpen, Wf.MenuBar.i)) {
             menuBar {
                 menu("File") {
-                    if (menuItem("Close")) open.set(false)
+                    menuItem("Close") { open = false }
                 }
             }
 
             // left
             beginChild("left pane", Vec2(150, 0), true)
-            repeat(100) {
-                if (selectable("MyObject $it", selectedChild == it))
-                    selectedChild = it
-            }
+            for (i in 0..99)
+                if (selectable("MyObject $i", selectedChild == i))
+                    selectedChild = i
             endChild()
             sameLine()
 
