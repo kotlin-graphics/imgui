@@ -5,6 +5,7 @@ import glm_.BYTES
 import glm_.f
 import glm_.func.common.max
 import glm_.glm
+import glm_.min
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.io
@@ -12,6 +13,7 @@ import imgui.ImGui.shadeVertsLinearUV
 import imgui.imgui.g
 import imgui.internal.*
 import kool.*
+import kool.lib.indices
 import java.nio.ByteBuffer
 import java.util.Stack
 import kotlin.math.sqrt
@@ -236,16 +238,20 @@ class DrawListSplitter {
         _count = 1
     }
 
-    fun setCurrentChannel(drawList: DrawList, idx: Int) {
+    fun setCurrentChannel(drawList: DrawList, idx: Int) { // JVM wtf, check
         assert(idx < _count)
         if (_current == idx) return
         // Overwrite ImVector (12/16 bytes), four times. This is merely a silly optimization instead of doing .swap()
-        for (i in drawList.cmdBuffer.indices) _channels[_current]._cmdBuffer[i] put drawList.cmdBuffer[i]
-        for (i in 0 until drawList.idxBuffer.rem) _channels[_current]._idxBuffer[i] = drawList.idxBuffer[i]
-        _current = idx
-        for (i in drawList.cmdBuffer.indices) drawList.cmdBuffer[i] put _channels[idx]._cmdBuffer[i]
-        for (i in 0 until drawList.idxBuffer.rem) drawList.idxBuffer[i] = _channels[idx]._idxBuffer[i]
-        drawList._idxWritePtr = drawList.idxBuffer.rem
+//        _channels[_current]._cmdBuffer.clear()
+//        for (i in drawList.cmdBuffer.indices) _channels[_current]._cmdBuffer += drawList.cmdBuffer[i]
+//        _channels[_current]._idxBuffer.clear()
+//        for (i in drawList.idxBuffer.indices) _channels[_current]._idxBuffer += drawList.idxBuffer[i]
+//        _current = idx
+//        drawList.cmdBuffer.clear()
+//        for (i in 0 until _channels[idx]._cmdBuffer.size) drawList.cmdBuffer += DrawCmd(_channels[idx]._cmdBuffer[i])
+//        drawList.idxBuffer.lim = _channels[idx]._idxBuffer.size
+//        for (i in 0 until _channels[idx]._idxBuffer.size) drawList.idxBuffer[i] = _channels[idx]._idxBuffer[i]
+//        drawList._idxWritePtr = drawList.idxBuffer.rem
     }
 }
 

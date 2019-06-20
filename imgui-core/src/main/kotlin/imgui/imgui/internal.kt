@@ -950,61 +950,56 @@ interface imgui_internal {
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
     fun beginColumns(strId: String = "", columnsCount: Int, flags: ColumnsFlags) {
 
-        with(currentWindow) {
+        val window = currentWindow
 
-            assert(columnsCount >= 1)
-            assert(dc.currentColumns == null) { "Nested columns are currently not supported" }
+        assert(columnsCount >= 1)
+        assert(window.dc.currentColumns == null) { "Nested columns are currently not supported" }
 
-            // Acquire storage for the columns set
-            val id = getColumnsID(strId, columnsCount)
-            val columns = findOrCreateColumns(id)
-            assert(columns.id == id)
-            with(columns) {
-                current = 0
-                count = columnsCount
-                this.flags = flags
-            }
-            dc.currentColumns = columns
+        // Acquire storage for the columns set
+        val id = getColumnsID(strId, columnsCount)
+        val columns = window.findOrCreateColumns(id)
+        assert(columns.id == id)
+        columns.current = 0
+        columns.count = columnsCount
+        columns.flags = flags
+        window.dc.currentColumns = columns
 
-            // Set state for first columnf
-            with(columns) {
-                offMinX = dc.indent - style.itemSpacing.x
-                offMaxX = max(workRect.max.x - pos.x, offMinX + 1f)
-                hostCursorPosY = dc.cursorPos.y
-                hostCursorMaxPosX = dc.cursorMaxPos.x
-                hostClipRect put clipRect
-                lineMaxY = dc.cursorPos.y
-                lineMinY = dc.cursorPos.y
-            }
-            dc.columnsOffset = 0f
-            dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
+        // Set state for first column
+        columns.offMinX = window.dc.indent - style.itemSpacing.x
+        columns.offMaxX = max(window.workRect.max.x - window.pos.x, columns.offMinX + 1f)
+        columns.hostCursorPosY = window.dc.cursorPos.y
+        columns.hostCursorMaxPosX = window.dc.cursorMaxPos.x
+        columns.hostClipRect = window.clipRect
+        columns.lineMinY = window.dc.cursorPos.y
+        columns.lineMaxY = window.dc.cursorPos.y
+        window.dc.columnsOffset = 0f
+        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
 
-            // Clear data if columns count changed
-            if (columns.columns.isNotEmpty() && columns.columns.size != columnsCount + 1)
-                columns.columns.clear()
+        // Clear data if columns count changed
+        if (columns.columns.isNotEmpty() && columns.columns.size != columnsCount + 1)
+            columns.columns.clear()
 
-            // Initialize default widths
-            columns.isFirstFrame = columns.columns.isEmpty()
-            if (columns.columns.isEmpty())
-                for (n in 0..columnsCount)
-                    columns.columns += ColumnData().apply { offsetNorm = n / columnsCount.f }
+        // Initialize default widths
+        columns.isFirstFrame = columns.columns.isEmpty()
+        if (columns.columns.isEmpty())
+            for (i in 0..columnsCount)
+                columns.columns += ColumnData().apply { offsetNorm = i / columnsCount.f }
 
-            for (n in 0 until columnsCount) {
-
-                // Compute clipping rectangle
-                val column = columns.columns[n]
-                val clipX1 = floor(0.5f + pos.x + getColumnOffset(n))
-                val clipX2 = floor(0.5f + pos.x + getColumnOffset(n + 1) - 1f)
-                column.clipRect = Rect(clipX1, -Float.MAX_VALUE, clipX2, +Float.MAX_VALUE)
-                column.clipRect clipWith clipRect
-            }
-            if (columns.count > 1) {
-                drawList.channelsSplit(1 + columns.count)
-                drawList.channelsSetCurrent(1)
-                pushColumnClipRect(0)
-            }
-            pushItemWidth(getColumnWidth() * 0.65f)
+        for (n in 0 until columnsCount) {
+            // Compute clipping rectangle
+            val column = columns.columns[n]
+            val clipX1 = floor(0.5f + window.pos.x + getColumnOffset(n))
+            val clipX2 = floor(0.5f + window.pos.x + getColumnOffset(n + 1) - 1f)
+            column.clipRect = Rect(clipX1, -Float.MAX_VALUE, clipX2, +Float.MAX_VALUE)
+            column.clipRect clipWith window.clipRect
         }
+
+        if (columns.count > 1) {
+            window.drawList.channelsSplit(1 + columns.count)
+            window.drawList.channelsSetCurrent(1)
+            pushColumnClipRect(0)
+        }
+        pushItemWidth(getColumnWidth() * 0.65f)
     }
 
     fun endColumns() = with(currentWindow) {
@@ -1197,7 +1192,7 @@ interface imgui_internal {
         }
 
         // Label with ellipsis
-        val ellipsisMaxX = if (closeButtonVisible) textPixelClipBb.max.x else bb.max.x -1f
+        val ellipsisMaxX = if (closeButtonVisible) textPixelClipBb.max.x else bb.max.x - 1f
         renderTextEllipsis(drawList, textEllipsisClipBb.min, textEllipsisClipBb.max, textPixelClipBb.max.x, ellipsisMaxX, label, -1, labelSize)
 
         return closeButtonPressed

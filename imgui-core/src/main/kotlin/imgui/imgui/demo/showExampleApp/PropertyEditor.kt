@@ -49,7 +49,6 @@ object PropertyEditor {
         columns(2)
         separator()
 
-
         // Iterate dummy objects with dummy members (all the same data)
         for (objI in 0..2)
             showDummyObject("Object", objI)
