@@ -10,10 +10,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4ub
 import imgui.*
 import imgui.ImGui.io
-import kool.adr
-import kool.isValid
-import kool.rem
-import kool.set
+import kool.*
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.MemoryUtil.memCopy
 import org.lwjgl.vulkan.VK10.VK_QUEUE_FAMILY_IGNORED
@@ -77,7 +74,7 @@ fun renderDrawData(drawData: DrawData, commandBuffer: VkCommandBuffer) {
         createOrResizeBuffer(rb::indexBuffer, rb::indexBufferMemory, rb::indexBufferSize, indexSize, VkBufferUsage.INDEX_BUFFER_BIT)
 
     // Upload vertex/index data into a single contiguous GPU buffer
-    stak { s ->
+    Stack { s ->
         val vtxDst = s.pointers(NULL)
         val idxDst = s.pointers(NULL)
         v.device.mapMemory(rb.vertexBufferMemory, VkDeviceSize(0), vertexSize, 0, vtxDst)
@@ -215,7 +212,7 @@ fun setupRenderState(drawData: DrawData, commandBuffer: VkCommandBuffer, rb: Imp
 
     // Setup scale and translation:
     // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayPos is (0,0) for single viewport apps.
-    stak {
+    Stack {
         val scale = it.floats(2f / drawData.displaySize.x, 2f / drawData.displaySize.y)
         val translate = it.floats(-1f - drawData.displayPos.x * scale[0], -1f - drawData.displayPos.y * scale[1])
         commandBuffer.pushConstants(pipelineLayout, VkShaderStage.VERTEX_BIT.i, 0, scale)

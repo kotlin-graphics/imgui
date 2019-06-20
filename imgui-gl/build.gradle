@@ -14,7 +14,9 @@ ext.moduleName = 'com.github.kotlin_graphics.imgui_gl'
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     api project(':imgui-core'), project(':imgui-glfw')
-    implementation 'com.github.kotlin-graphics:uno-sdk:ae2f5a51953f78c71f0a6a052037f6e399e80937'
+    ["core", "gl"].each {
+        implementation "com.github.kotlin-graphics.uno-sdk:uno-$it:f5bdd9cc13a52e0ab9c334eb6c98cd8377309af1"
+    }
 
     ["", "-glfw", "-opengl", "-remotery", "-stb"].each {
         String base = "org.lwjgl:lwjgl$it:$lwjgl_version"
@@ -63,3 +65,10 @@ jar {
 }
 
 shadowJar.classifier = 'all'
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
