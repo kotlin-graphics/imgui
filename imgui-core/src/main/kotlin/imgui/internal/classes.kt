@@ -269,7 +269,7 @@ class MenuColumns {
         nextWidths[2] = glm.max(nextWidths[2], w2)
         for (i in pos.indices)
             nextWidth += nextWidths[i] + (if (i > 0 && nextWidths[i] > 0f) spacing else 0f)
-        return glm.max(width, nextWidth)
+        return width max nextWidth.i.f // JVM only
     }
 
 
@@ -1107,8 +1107,8 @@ class Window(var context: Context, var name: String) {
         collapsed && autoFitFrames allLessThanEqual 0 -> Vec2(contentSize)
         hidden && hiddenFramesCannotSkipItems == 0 && hiddenFramesCanSkipItems > 0 -> Vec2(contentSize)
         else -> Vec2(
-                (if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else dc.cursorMaxPos.x - dc.cursorStartPos.x).i.f + windowPadding.x,
-                (if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else dc.cursorMaxPos.y - dc.cursorStartPos.y).i.f + windowPadding.y)
+                (if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else dc.cursorMaxPos.x - dc.cursorStartPos.x).i.f,
+                (if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else dc.cursorMaxPos.y - dc.cursorStartPos.y).i.f)
     }
 
     fun findOrCreateColumns(id: ID): Columns {

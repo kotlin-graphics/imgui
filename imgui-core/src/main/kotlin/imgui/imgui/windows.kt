@@ -552,12 +552,12 @@ interface imgui_windows {
                 // - BeginTabBar() for right-most edge
                 val allowScrollbarX = flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar
                 val allowScrollbarY = flags hasnt Wf.NoScrollbar
-                val workRectSizeX = if (window.contentSizeExplicit.x != 0f) window.contentSizeExplicit.x else max(if (allowScrollbarX) window.contentSize.x else 0f, window.size.x - window.windowPadding.x * 2f - window.scrollbarSizes.x)
-                val workRectSizeY = if (window.contentSizeExplicit.y != 0f) window.contentSizeExplicit.y else max(if (allowScrollbarY) window.contentSize.y else 0f, window.size.y - window.windowPadding.y * 2f - decorationUpHeight - window.scrollbarSizes.y)
-                window.workRect.min.put(
-                        floor(window.innerRect.min.x - window.scroll.x + max(window.windowPadding.x, window.windowBorderSize)),
-                        floor(window.innerRect.min.y - window.scroll.y + max(window.windowPadding.y, window.windowBorderSize)))
-                window.workRect.max.put(window.workRect.min.x + workRectSizeX, window.workRect.min.y + workRectSizeY)
+                val workRectSizeX = if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else max(if (allowScrollbarX) window.contentSize.x else 0f, size.x - windowPadding.x * 2f - scrollbarSizes.x)
+                val workRectSizeY = if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else max(if (allowScrollbarY) window.contentSize.y else 0f, size.y - windowPadding.y * 2f - decorationUpHeight - scrollbarSizes.y)
+                workRect.min.put(
+                        floor(innerRect.min.x - scroll.x + max(windowPadding.x, windowBorderSize)),
+                        floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
+                workRect.max.put(workRect.min.x + workRectSizeX, workRect.min.y + workRectSizeY)
 
 
                 // [LEGACY] Contents Region
@@ -594,8 +594,8 @@ interface imgui_windows {
                 dc.prevLineTextBaseOffset = 0f
                 dc.currLineTextBaseOffset = 0f
                 dc.navHideHighlightOneFrame = false
-                dc.navHasScroll = window.scrollMax.y > 0f
-                dc.navLayerActiveMask = window.dc.navLayerActiveMaskNext
+                dc.navHasScroll = scrollMax.y > 0f
+                dc.navLayerActiveMask = dc.navLayerActiveMaskNext
                 dc.navLayerActiveMaskNext = 0
                 dc.menuBarAppending = false
                 dc.childWindows.clear()
