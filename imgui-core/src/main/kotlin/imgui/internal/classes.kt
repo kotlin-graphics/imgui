@@ -1347,8 +1347,9 @@ class TabBar {
         return true
     }
 
-    fun tabItemEx(label: String, pOpen: KMutableProperty0<Boolean>?, flags_: TabItemFlags): Boolean {
+    fun tabItemEx(label: String, pOpen: KMutableProperty0<Boolean>?, flags__: TabItemFlags): Boolean {
 
+        var flags_ = flags__
         // Layout whole tab bar if not already done
         if (wantLayout)
             layout()
@@ -1381,13 +1382,13 @@ class TabBar {
         tab.widthContents = size.x
 
         if (pOpen == null)
-            flags = flags or TabItemFlag.NoCloseButton
+            flags_ = flags_ or TabItemFlag.NoCloseButton
 
         val tabBarAppearing = prevFrameVisible + 1 < g.frameCount
         val tabBarFocused = flags has TabBarFlag.IsFocused
         val tabAppearing = tab.lastFrameVisible + 1 < g.frameCount
         tab.lastFrameVisible = g.frameCount
-        tab.flags = flags_
+        tab.flags = flags__
 
         // Append name with zero-terminator
         tab.nameOffset = tabsNames.size
@@ -1404,7 +1405,7 @@ class TabBar {
         if (tabAppearing && flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0)
             if (!tabBarAppearing || selectedTabId == 0)
                 nextSelectedTabId = id  // New tabs gets activated
-        if (flags has TabItemFlag.SetSelected && selectedTabId != id) // SetSelected can only be passed on explicit tab bar
+        if (flags_ has TabItemFlag.SetSelected && selectedTabId != id) // SetSelected can only be passed on explicit tab bar
             nextSelectedTabId = id
 
         // Lock visibility
@@ -1507,14 +1508,12 @@ class TabBar {
         if (hoveredUnblocked && (isMouseClicked(1) || isMouseReleased(1)))
             nextSelectedTabId = id
 
-        val flags__ = when {
-            flags_ has TabBarFlag.NoCloseWithMiddleMouseButton -> flags_ or TabItemFlag.NoCloseWithMiddleMouseButton
-            else -> flags_
-        }
+        if (flags has TabBarFlag.NoCloseWithMiddleMouseButton)
+            flags_ = flags_ or TabItemFlag.NoCloseWithMiddleMouseButton
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) window.getId(id + 1) else 0
-        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags__, framePadding, label, id, closeButtonId)
+        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags_, framePadding, label, id, closeButtonId)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
             closeTab(tab)
