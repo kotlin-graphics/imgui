@@ -112,8 +112,8 @@ class DrawVert {
  *  rendered.   */
 class DrawChannel {
 
-    val _cmdBuffer = Stack<DrawCmd>()
-    val _idxBuffer = Stack<Int>()
+    var _cmdBuffer = Stack<DrawCmd>()
+    var _idxBuffer = IntBuffer(0)
 
     fun clear() {
         _cmdBuffer.clear()
@@ -173,10 +173,10 @@ class DrawListSplitter {
             if (i < oldChannelsCount)
                 _channels[i].clear()
             if (_channels[i]._cmdBuffer.isEmpty())
-                _channels[i]._cmdBuffer += DrawCmd().apply {
+                _channels[i]._cmdBuffer.add(DrawCmd().apply {
                     clipRect put drawList._clipRectStack.last()
                     textureId = drawList._textureIdStack.last()
-                }
+                })
         }
     }
 
@@ -213,14 +213,14 @@ class DrawListSplitter {
             if (ch._cmdBuffer.isNotEmpty())
                 lastCmd = ch._cmdBuffer.last()
             newCmdBufferCount += ch._cmdBuffer.size
-            newIdxBufferCount += ch._idxBuffer.size
+            newIdxBufferCount += ch._idxBuffer.lim
             ch._cmdBuffer.forEach {
                 it.idxOffset = idxOffset
                 idxOffset += it.elemCount
             }
         }
         for (i in drawList.cmdBuffer.size until newCmdBufferCount)
-            drawList.cmdBuffer += DrawCmd()
+            drawList.cmdBuffer.push(DrawCmd())
         drawList.idxBuffer = drawList.idxBuffer.resize(drawList.idxBuffer.rem + newIdxBufferCount)
 
         // Write commands and indices in order (they are fairly small structures, we don't copy vertices only indices)
@@ -238,20 +238,16 @@ class DrawListSplitter {
         _count = 1
     }
 
-    fun setCurrentChannel(drawList: DrawList, idx: Int) { // JVM wtf, check
+    fun setCurrentChannel(drawList: DrawList, idx: Int) {
         assert(idx < _count)
         if (_current == idx) return
         // Overwrite ImVector (12/16 bytes), four times. This is merely a silly optimization instead of doing .swap()
-//        _channels[_current]._cmdBuffer.clear()
-//        for (i in drawList.cmdBuffer.indices) _channels[_current]._cmdBuffer += drawList.cmdBuffer[i]
-//        _channels[_current]._idxBuffer.clear()
-//        for (i in drawList.idxBuffer.indices) _channels[_current]._idxBuffer += drawList.idxBuffer[i]
-//        _current = idx
-//        drawList.cmdBuffer.clear()
-//        for (i in 0 until _channels[idx]._cmdBuffer.size) drawList.cmdBuffer += DrawCmd(_channels[idx]._cmdBuffer[i])
-//        drawList.idxBuffer.lim = _channels[idx]._idxBuffer.size
-//        for (i in 0 until _channels[idx]._idxBuffer.size) drawList.idxBuffer[i] = _channels[idx]._idxBuffer[i]
-//        drawList._idxWritePtr = drawList.idxBuffer.rem
+        _channels[_current]._cmdBuffer = drawList.cmdBuffer
+        _channels[_current]._idxBuffer = drawList.idxBuffer
+        _current = idx
+        drawList.cmdBuffer = _channels[idx]._cmdBuffer
+        drawList.idxBuffer = _channels[idx]._idxBuffer
+        drawList._idxWritePtr = drawList.idxBuffer.lim
     }
 }
 
@@ -279,7 +275,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
 
     /** Draw commands. Typically 1 command = 1 GPU draw call, unless the command is a callback.    */
-    val cmdBuffer = Stack<DrawCmd>()
+    var cmdBuffer = Stack<DrawCmd>()
     /** Index buffer. Each command consume ImDrawCmd::ElemCount of those    */
     var idxBuffer = IntBuffer(0)
     /** Vertex buffer.  */
@@ -332,7 +328,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         cr.z = cr.x max cr.z
         cr.w = cr.y max cr.w
 
-        _clipRectStack.push(cr)
+        _clipRectStack += cr
         updateClipRect()
     }
 
@@ -1015,7 +1011,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun channelsSplit(count: Int) = _splitter.split(this, count)
 
-    fun channelsMerge() = _splitter::merge
+    fun channelsMerge() = _splitter.merge(this)
 
     fun channelsSetCurrent(idx: Int) = _splitter.setCurrentChannel(this, idx)
 

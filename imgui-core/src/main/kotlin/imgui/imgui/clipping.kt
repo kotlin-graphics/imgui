@@ -9,7 +9,7 @@ interface imgui_clipping {
     /** When using this function it is sane to ensure that float are perfectly rounded to integer values, to that e.g.
     (int)(max.x-min.x) in user's render produce correct result. */
     fun pushClipRect(clipRectMin: Vec2, clipRectMax: Vec2, intersectWithCurrentClipRect: Boolean) {
-        with(currentWindow) {
+        currentWindow.apply {
             drawList.pushClipRect(clipRectMin, clipRectMax, intersectWithCurrentClipRect)
             clipRect put drawList._clipRectStack.last()
         }
