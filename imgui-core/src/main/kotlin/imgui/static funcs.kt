@@ -279,17 +279,17 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
     return true
 }
 
-fun inputTextCalcTextLenAndLineCount(text: String, outTextEnd: IntArray): Int {
+fun inputTextCalcTextLenAndLineCount(text: CharArray, outTextEnd: KMutableProperty0<Int>): Int {
 
     var lineCount = 0
     var s = 0
-    while (s < text.length) // We are only matching for \n so we can ignore UTF-8 decoding
-        if (text[s++] == '\n')
+    while (text.getOrElse(s++) { NUL } != NUL) // We are only matching for \n so we can ignore UTF-8 decoding
+        if (text.getOrElse(s) { NUL } == '\n')
             lineCount++
     s--
     if (text[s] != '\n' && text[s] != '\r')
         lineCount++
-    outTextEnd[0] = s
+    outTextEnd.set(s)
     return lineCount
 }
 

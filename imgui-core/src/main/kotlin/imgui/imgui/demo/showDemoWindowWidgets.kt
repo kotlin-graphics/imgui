@@ -228,17 +228,18 @@ object showDemoWindowWidgets {
     /* Multi-line Text Input */
     val textMultiline = """
         /*
-        The Pentium F00F bug, shorthand for F0 0F C7 C8,
-        the hexadecimal encoding of one offending instruction,
-        more formally, the invalid operand with locked CMPXCHG8B
-        instruction bug, is a design flaw in the majority of
-        Intel Pentium, Pentium MMX, and Pentium OverDrive
-        processors (all in the P5 microarchitecture).
+         The Pentium F00F bug, shorthand for F0 0F C7 C8,
+         the hexadecimal encoding of one offending instruction,
+         more formally, the invalid operand with locked CMPXCHG8B
+         instruction bug, is a design flaw in the majority of
+         Intel Pentium, Pentium MMX, and Pentium OverDrive
+         processors (all in the P5 microarchitecture).
         */
 
         label:
-            lock cmpxchg8b eax
-        """.toCharArray(CharArray(1024 * 16))
+        ${'\t'}lock cmpxchg8b eax
+        
+        """.trimIndent().toCharArray(CharArray(1024 * 16))
     var flags = Itf.AllowTabInput.i
 
 
