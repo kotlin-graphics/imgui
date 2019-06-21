@@ -271,7 +271,7 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
         itcd.flags = flags
         itcd.userData = userData
 
-        if (callback(itcd) != 0)
+        if (callback(itcd))
             return false
         if (itcd.eventChar == NUL)
             return false
