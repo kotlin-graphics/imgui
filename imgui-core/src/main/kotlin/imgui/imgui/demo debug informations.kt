@@ -476,9 +476,8 @@ interface imgui_demoDebugInformations {
                     }
                     val idxBuffer = drawList.idxBuffer.takeIf { it.hasRemaining() }
                     val mode = if (idxBuffer != null) "indexed" else "non-indexed"
-                    val buf = CharArray(300)
-                    "Draw %4d triangles, tex 0x%p, clip_rect (%4.0f,%4.0f)-(%4.0f,%4.0f)".format(
-                            cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w).toCharArray(buf)
+                    var buf = "Draw %4d triangles, tex 0x%d, clip_rect (%4.0f,%4.0f)-(%4.0f,%4.0f)".format(
+                            cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), "%s", buf)
                     if (showDrawcmdClipRects && fgDrawList != null && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
@@ -496,7 +495,6 @@ interface imgui_demoDebugInformations {
                     while (clipper.step()) {
                         var idxI = elemOffset + clipper.display.start * 3
                         for (prim in clipper.display.start until clipper.display.last) {
-                            var bufP = 0
                             val trianglesPos = arrayListOf(Vec2(), Vec2(), Vec2())
                             for (n in 0 until 3) {
                                 val vtxI = idxBuffer?.get(idxI) ?: idxI
@@ -505,13 +503,11 @@ interface imgui_demoDebugInformations {
                                 val col = drawList.vtxBuffer.data.getInt(vtxI * DrawVert.size + Vec2.size * 2)
                                 trianglesPos[n] = pos
                                 val name = if (n == 0) "elem" else "    "
-                                val string = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n".format(style.locale,
+                                buf = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n".format(style.locale,
                                         idxI, pos.x, pos.y, uv.x, uv.y, col)
-                                string.toCharArray(buf, bufP)
-                                bufP += string.length
                                 idxI++
                             }
-                            selectable(buf.joinToString("", limit = bufP, truncated = ""), false)
+                            selectable(buf, false)
                             if (fgDrawList != null && isItemHovered()) {
                                 val backupFlags = fgDrawList.flags
                                 // Disable AA on triangle outlines at is more readable for very large and thin triangles.
@@ -546,7 +542,7 @@ interface imgui_demoDebugInformations {
             }
 
             fun nodeWindow(window: Window, label: String) {
-                if (treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x%p", window.hashCode()))
+                if (!treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x%d", window.hashCode()))
                     return
                 val flags = window.flags
                 nodeDrawList(window, window.drawList, "DrawList")
@@ -600,8 +596,8 @@ interface imgui_demoDebugInformations {
                             text("%02d${if (tab.id == tabBar.selectedTabId) '*' else ' '} Tab 0x%08X", tabN, tab.id)
                             popId()
                         }
-                        treePop()
                     }
+                    treePop()
                 }
             }
         }
