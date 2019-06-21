@@ -121,7 +121,7 @@ enum class SeparatorFlag {
     Vertical,
     SpanAllColumns;
 
-    val i = if (ordinal == 0) 0 else 1 shl ordinal
+    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 }
 
 infix fun SeparatorFlag.or(b: SeparatorFlag): SeparatorFlags = i or b.i
