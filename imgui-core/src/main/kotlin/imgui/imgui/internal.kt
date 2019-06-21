@@ -1861,8 +1861,8 @@ interface imgui_internal {
         var roundingCorners: DrawCornerFlags = if (otherScrollbarSize <= 0f) Dcf.BotRight.i else 0
         val bb = Rect()
         if (axis == Axis.X) {
-            bb.min.put(innerRect.min.x, outerRect.max.y)
-            bb.max.put(innerRect.max.x, outerRect.max.y - borderSize - scrollbarSize)
+            bb.min.put(innerRect.min.x, outerRect.max.y - borderSize - scrollbarSize)
+            bb.max.put(innerRect.max.x, outerRect.max.y)
             roundingCorners = roundingCorners or Dcf.BotLeft
         } else {
             bb.min.put(outerRect.max.x - borderSize - scrollbarSize, innerRect.min.y)
@@ -3431,8 +3431,7 @@ interface imgui_internal {
                 _i = bufDisplayEnd
                 textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay, ::_i) * g.fontSize) // We don't need width
                 bufDisplayEnd = _i
-            }
-            else if (!isDisplayingHint && g.activeId == id)
+            } else if (!isDisplayingHint && g.activeId == id)
                 bufDisplayEnd = state_!!.curLenA
             else if (!isDisplayingHint)
                 bufDisplayEnd = bufDisplay.strlen
