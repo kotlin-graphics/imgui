@@ -79,7 +79,6 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.reflect.KMutableProperty0
-import glm_.pow as _
 import imgui.ColorEditFlag as Cef
 import imgui.DragDropFlag as Ddf
 import imgui.HoveredFlag as Hf
@@ -1002,57 +1001,57 @@ interface imgui_internal {
         pushItemWidth(getColumnWidth() * 0.65f)
     }
 
-    fun endColumns() = with(currentWindow) {
+    fun endColumns() {
 
-        val columns = dc.currentColumns!!
+        val window = currentWindow
+        val columns = window.dc.currentColumns!! // ~IM_ASSERT(columns != NULL)
 
         popItemWidth()
         if (columns.count > 1) {
             popClipRect()
-            drawList.channelsMerge()
+            window.drawList.channelsMerge()
         }
 
         val flags = columns.flags
-        columns.lineMaxY = glm.max(columns.lineMaxY, dc.cursorPos.y)
-        dc.cursorPos.y = columns.lineMaxY
+        columns.lineMaxY = columns.lineMaxY max window.dc.cursorPos.y
+        window.dc.cursorPos.y = columns.lineMaxY
         if (flags hasnt Cf.GrowParentContentsSize)
-            dc.cursorMaxPos.x = columns.hostCursorMaxPosX // Restore cursor max pos, as columns don't grow parent
+            window.dc.cursorMaxPos.x = columns.hostCursorMaxPosX  // Restore cursor max pos, as columns don't grow parent
 
         // Draw columns borders and handle resize
         // The IsBeingResized flag ensure we preserve pre-resize columns width so back-and-forth are not lossy
         var isBeingResized = false
-        if (flags hasnt Cf.NoBorder && !skipItems) {
-
+        if (flags hasnt Cf.NoBorder && !window.skipItems) {
             // We clip Y boundaries CPU side because very long triangles are mishandled by some GPU drivers.
-            val y1 = columns.hostCursorPosY max clipRect.min.y
-            val y2 = dc.cursorPos.y min clipRect.max.y
+            val y1 = columns.hostCursorPosY max window.clipRect.min.y
+            val y2 = window.dc.cursorPos.y min window.clipRect.max.y
             var draggingColumn = -1
             for (n in 1 until columns.count) {
                 val column = columns.columns[n]
-                val x = pos.x + getColumnOffset(n)
-                val columnId: ID = columns.id + n
+                val x = window.pos.x + getColumnOffset(n)
+                val columnId = columns.id + n
                 val columnHitHw = COLUMNS_HIT_RECT_HALF_WIDTH
                 val columnHitRect = Rect(Vec2(x - columnHitHw, y1), Vec2(x + columnHitHw, y2))
                 keepAliveID(columnId)
-                if (isClippedEx(columnHitRect, columnId, false)) continue
+                if (isClippedEx(columnHitRect, columnId, false))
+                    continue
 
                 var hovered = false
                 var held = false
-                if (columns.flags hasnt Cf.NoResize) {
-
-                    val (_, b, c) = buttonBehavior(columnHitRect, columnId)
-                    hovered = b
-                    held = c
+                if (flags hasnt Cf.NoResize) {
+                    val (_, ho, he) = buttonBehavior(columnHitRect, columnId)
+                    hovered = ho
+                    held = he
                     if (hovered || held)
                         g.mouseCursor = MouseCursor.ResizeEW
-                    if (held && flags hasnt Cf.NoResize)
+                    if (held && column.flags hasnt Cf.NoResize)
                         draggingColumn = n
                 }
 
                 // Draw column
-                val col = getColorU32(if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator)
+                val col = if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator
                 val xi = x.i.f
-                drawList.addLine(Vec2(xi, y1 + 1f), Vec2(xi, y2), col)
+                window.drawList.addLine(Vec2(xi, y1 + 1f), Vec2(xi, y2), col.u32)
             }
 
             // Apply dragging after drawing the column lines, so our rendered lines are in sync with how items were displayed during the frame.
@@ -1060,17 +1059,19 @@ interface imgui_internal {
                 if (!columns.isBeingResized)
                     for (n in 0..columns.count)
                         columns.columns[n].offsetNormBeforeResize = columns.columns[n].offsetNorm
-                isBeingResized = true
                 columns.isBeingResized = true
+                isBeingResized = true
                 val x = getDraggedColumnOffset(columns, draggingColumn)
-                setColumnOffset(draggingColumn, getDraggedColumnOffset(columns, draggingColumn))
+                setColumnOffset(draggingColumn, x)
             }
         }
         columns.isBeingResized = isBeingResized
 
-        dc.currentColumns = null
-        dc.columnsOffset = 0f
-        dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
+        window.apply {
+            dc.currentColumns = null
+            dc.columnsOffset = 0f
+            dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
+        }
     }
 
     fun pushColumnClipRect(columnIndex_: Int) {
@@ -1089,7 +1090,7 @@ interface imgui_internal {
         window.drawList.channelsSetCurrent(0)
         val cmdSize = window.drawList.cmdBuffer.size
         pushClipRect(columns.hostClipRect.min, columns.hostClipRect.max, false)
-        assert(cmdSize == window.drawList.cmdBuffer.size) // Being in channel 0 this should not have created an ImDrawCmd
+        assert(cmdSize == window.drawList.cmdBuffer.size) { "Being in channel 0 this should not have created an ImDrawCmd" }
     }
 
     fun popColumnsBackground() {
