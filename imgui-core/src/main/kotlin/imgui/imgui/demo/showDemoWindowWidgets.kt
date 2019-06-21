@@ -700,7 +700,7 @@ object showDemoWindowWidgets {
                     if (selectable("Object $n", selection1[n])) {
                         if (!io.keyCtrl)    // Clear selection when CTRL is not held
                             selection1.fill(false)
-                        selection0[n] = selection0[n] xor true
+                        selection1[n] = selection1[n] xor true
                     }
             }
             treeNode("Rendering more text into the same line") {
