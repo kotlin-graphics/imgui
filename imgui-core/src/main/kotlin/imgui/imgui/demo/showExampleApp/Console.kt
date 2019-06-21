@@ -223,13 +223,11 @@ object Console {
             scrollToBottom = true
         }
 
-        val textEditCallbackStub = object : InputTextCallback {
-            override fun invoke(p1: InputTextCallbackData): Int {
-                return (p1.userData as ExampleAppConsole).inputTextCallback(p1)
-            }
+        val textEditCallbackStub: InputTextCallback = { data: InputTextCallbackData ->
+            (data.userData as ExampleAppConsole).inputTextCallback(data)
         }
 
-        fun inputTextCallback(data: TextEditCallbackData): Int {
+        fun inputTextCallback(data: TextEditCallbackData): Boolean {
             when (data.eventFlag) {
                 imgui.InputTextFlag.CallbackCompletion.i -> {
                     val wordEnd = data.cursorPos
@@ -302,7 +300,7 @@ object Console {
                     }
                 }
             }
-            return 0
+            return false
         }
     }
 }

@@ -115,7 +115,6 @@ import imgui.ImGui.sliderInt2
 import imgui.ImGui.sliderInt3
 import imgui.ImGui.sliderInt4
 import imgui.ImGui.sliderScalar
-import imgui.ImGui.sliderVec4
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
@@ -153,7 +152,6 @@ import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.SelectableFlag as Sf
 import imgui.TreeNodeFlag as Tnf
-import imgui.WindowFlag as Wf
 
 object showDemoWindowWidgets {
 
@@ -242,6 +240,13 @@ object showDemoWindowWidgets {
         """.trimIndent().toCharArray(CharArray(1024 * 16))
     var flags = Itf.AllowTabInput.i
 
+    val bufs = Array(6) { CharArray(64) }
+    object TextFilters {
+        val filterImGuiLetters: InputTextCallback = { data: InputTextCallbackData ->
+            !(data.eventChar.i < 256 && data.eventChar in "imgui")
+        }
+    }
+    val bufPass = "password123".toCharArray(CharArray(64))
 
     /* Color/Picker Widgets */
     val color = Vec4.fromColor(114, 144, 154, 200)
@@ -761,26 +766,22 @@ object showDemoWindowWidgets {
                 inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
             }
 
-            /*if (ImGui::TreeNode("Filtered Text Input"))
-            {
-                static char buf1[64] = ""; ImGui::InputText("default", buf1, 64);
-                static char buf2[64] = ""; ImGui::InputText("decimal", buf2, 64, ImGuiInputTextFlags_CharsDecimal);
-                static char buf3[64] = ""; ImGui::InputText("hexadecimal", buf3, 64, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
-                static char buf4[64] = ""; ImGui::InputText("uppercase", buf4, 64, ImGuiInputTextFlags_CharsUppercase);
-                static char buf5[64] = ""; ImGui::InputText("no blank", buf5, 64, ImGuiInputTextFlags_CharsNoBlank);
-                struct TextFilters { static int FilterImGuiLetters(ImGuiInputTextCallbackData* data) { if (data->EventChar < 256 && strchr("imgui", (char)data->EventChar)) return 0; return 1; } };
-                static char buf6[64] = ""; ImGui::InputText("\"imgui\" letters", buf6, 64, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterImGuiLetters);
+            treeNode("Filtered Text Input") {
+                inputText("default", bufs[0])
+                inputText("decimal", bufs[1], Itf.CharsDecimal.i)
+                inputText("hexadecimal", bufs[2], Itf.CharsHexadecimal or Itf.CharsUppercase)
+                inputText("uppercase", bufs[3], Itf.CharsUppercase.i)
+                inputText("no blank", bufs[4], Itf.CharsNoBlank.i)
+                inputText("\"imgui\" letters", bufs[5], Itf.CallbackCharFilter.i, TextFilters.filterImGuiLetters)
 
-                ImGui::Text("Password input");
-                static char bufpass[64] = "password123";
-                ImGui::InputText("password", bufpass, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
-                ImGui::SameLine(); HelpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
-                ImGui::InputTextWithHint("password (w/ hint)", "<password>", bufpass, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
-                ImGui::InputText("password (clear)", bufpass, 64, ImGuiInputTextFlags_CharsNoBlank);
-                ImGui::TreePop();
+                text("Password input")
+                inputText("password", bufPass, Itf.Password or Itf.CharsNoBlank)
+                sameLine(); helpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.")
+                inputTextWithHint("password (w/ hint)", "<password>", bufPass, Itf.Password or Itf.CharsNoBlank)
+                inputText("password (clear)", bufPass, Itf.CharsNoBlank.i)
             }
 
-            if (ImGui::TreeNode("Resize Callback"))
+/*            if (ImGui::TreeNode("Resize Callback"))
             {
                 // If you have a custom string type you would typically create a ImGui::InputText() wrapper than takes your type as input.
                 // See misc/cpp/imgui_stdlib.h and .cpp for an implementation of this using std::string.
