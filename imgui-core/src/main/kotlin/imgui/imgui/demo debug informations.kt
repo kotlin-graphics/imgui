@@ -520,7 +520,6 @@ interface imgui_demoDebugInformations {
                     while (clipper.step()) {
                         var idxI = elemOffset + clipper.display.start * 3
                         for (prim in clipper.display.start until clipper.display.last) {
-                            var bufP = 0
                             val trianglesPos = arrayListOf(Vec2(), Vec2(), Vec2())
                             for (n in 0 until 3) {
                                 val vtxI = idxBuffer?.get(idxI) ?: idxI
