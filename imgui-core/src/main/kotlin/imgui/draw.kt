@@ -1238,7 +1238,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (flags hasnt DrawListFlag.AllowVtxOffset)
             assert(_vtxCurrentIdx == vtxBuffer.rem)
 
-        // JVM ImGui, this doesnt apply, we use Ints by default, TODO make Int/Short option?
+        // JVM ImGui, this doesnt apply, we use Ints by default
         /*  Check that drawList doesn't use more vertices than indexable
             (default DrawIdx = unsigned short = 2 bytes = 64K vertices per DrawList = per window)
             If this assert triggers because you are drawing lots of stuff manually:
