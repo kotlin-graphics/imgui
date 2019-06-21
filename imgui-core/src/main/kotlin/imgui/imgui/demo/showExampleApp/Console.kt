@@ -130,7 +130,7 @@ object Console {
             separator()
 
             val footerHeightToReserve = ImGui.style.itemSpacing.y + ImGui.frameHeightWithSpacing
-            beginChild("ScrollingRegion", Vec2(0, -footerHeightToReserve), false, imgui.WindowFlag.HorizontalScrollbar.i)
+            beginChild("ScrollingRegion", Vec2(0, -footerHeightToReserve), false, Wf.HorizontalScrollbar.i)
 
             if (beginPopupContextWindow()) {
                 if (selectable("Clear"))
@@ -149,11 +149,10 @@ object Console {
             // A typical application wanting coarse clipping and filtering may want to pre-compute an array of indices that passed the filtering test, recomputing this array when user changes the filter,
             // and appending newly elements as they are inserted. This is left as a task to the user until we can manage to improve this example code!
             // If your items are of variable size you may want to implement code similar to what ImGuiListClipper does. Or split your data into fixed height items to allow random-seeking into your list.
-            pushStyleVar(StyleVar.ItemSpacing, Vec2(4, 1))
+            pushStyleVar(StyleVar.ItemSpacing, Vec2(4, 1)) // Tighten spacing
             if (copyToClipboard)
                 logToClipboard()
 
-            val colDefaultText = getStyleColorVec4(Col.Text)
             for (i in items) {
                 if (!filter.passFilter(i))
                     continue
@@ -174,21 +173,21 @@ object Console {
             if (copyToClipboard)
                 logFinish()
             if (scrollToBottom)
-                setScrollHereY(1.0f)
+                setScrollHereY(1f)
             scrollToBottom = false
             popStyleVar()
             endChild()
             separator()
 
             var reclaimFocus = false
-            if (inputText("Input", inputBuf, imgui.InputTextFlag.EnterReturnsTrue.i or imgui.InputTextFlag.CallbackCompletion.i or imgui.InputTextFlag.CallbackHistory.i, textEditCallbackStub, this)) {
+            if (inputText("Input", inputBuf, Itf.EnterReturnsTrue.i or Itf.CallbackCompletion.i or Itf.CallbackHistory.i, textEditCallbackStub, this)) {
                 val slen = inputBuf.textStr(inputBuf)
                 val s = String(inputBuf.copyOf(slen)).split(" ")[0]
                 if (s.isNotEmpty())
                     execCommand(s)
-                for (i in 0 until slen) {
+                for (i in 0 until slen)
                     inputBuf[i] = NUL
-                }
+
                 reclaimFocus = true
             }
 
