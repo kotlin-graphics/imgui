@@ -9,6 +9,7 @@ import imgui.NUL
 import kool.rem
 import org.lwjgl.system.Platform
 import unsigned.toBigInt
+import unsigned.toUInt
 import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
 import java.math.BigInteger
@@ -170,7 +171,7 @@ fun hash(data: ByteBuffer, seed: Int = 0): Int {
     val crc32Lut = GCrc32LookupTable
     var dataSize = data.rem
     while (dataSize-- != 0)
-        crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor data.get().i]
+        crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor data.get().toUInt()]
     return crc.inv()
 }
 
