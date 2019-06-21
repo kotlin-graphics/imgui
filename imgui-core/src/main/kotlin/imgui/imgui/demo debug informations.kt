@@ -279,6 +279,8 @@ interface imgui_demoDebugInformations {
                     drawList.addText(window.pos, COL32(255, 255, 255, 255), buf)
                 }
             }
+
+        end()
     }
 
     /** add style editor block (not a window). you can pass in a reference ImGuiStyle structure to compare to,
