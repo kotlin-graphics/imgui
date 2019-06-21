@@ -44,6 +44,7 @@ import imgui.imgui.Context
 import imgui.imgui.g
 import imgui.imgui.imgui_tabBarsTabs.Companion.tabBarRef
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs
@@ -789,7 +790,10 @@ class Window(var context: Context, var name: String) {
 
     fun getId(n: Int): ID {
         val seed = idStack.last()
-        val bytes = ByteBuffer.allocate(Int.BYTES).apply { putInt(0, n) }
+        val bytes = ByteBuffer.allocate(Int.BYTES).apply {
+            order(ByteOrder.LITTLE_ENDIAN)
+            putInt(0, n)
+        }
         return hash(bytes, seed).also { id ->
             keepAliveID(id)
         }
@@ -813,7 +817,10 @@ class Window(var context: Context, var name: String) {
 
     fun getIdNoKeepAlive(n: Int): ID {
         val seed = idStack.last()
-        val bytes = ByteBuffer.allocate(Int.BYTES).apply { putInt(0, n) }
+        val bytes = ByteBuffer.allocate(Int.BYTES).apply {
+            order(ByteOrder.LITTLE_ENDIAN)
+            putInt(0, n)
+        }
         return hash(bytes, seed)
     }
 
