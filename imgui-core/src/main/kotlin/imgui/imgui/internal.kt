@@ -1865,8 +1865,8 @@ interface imgui_internal {
             bb.max.put(innerRect.max.x, outerRect.max.y - borderSize - scrollbarSize)
             roundingCorners = roundingCorners or Dcf.BotLeft
         } else {
-            bb.min.put(outerRect.max.x, innerRect.min.y)
-            bb.max.put(outerRect.max.x - borderSize - scrollbarSize, window.innerRect.max.y)
+            bb.min.put(outerRect.max.x - borderSize - scrollbarSize, innerRect.min.y)
+            bb.max.put(outerRect.max.x, window.innerRect.max.y)
             roundingCorners = roundingCorners or when {
                 window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar -> Dcf.TopRight.i
                 else -> 0
