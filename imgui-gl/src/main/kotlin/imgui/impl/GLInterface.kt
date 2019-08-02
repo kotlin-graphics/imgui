@@ -1,13 +1,6 @@
 package imgui.impl
 
-import glm_.BYTES
 import imgui.DrawData
-import imgui.DrawList
-import imgui.DrawVert
-import kool.ByteBuffer
-import kool.IntBuffer
-import kool.free
-import kool.lim
 
 interface GLInterface {
 

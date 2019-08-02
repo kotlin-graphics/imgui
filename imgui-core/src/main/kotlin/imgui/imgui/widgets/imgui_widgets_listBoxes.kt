@@ -25,16 +25,12 @@ import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ListClipper
 import imgui.Ref
-import imgui.getValue
 import imgui.imgui.g
 import imgui.imgui.withInt
 import imgui.internal.Rect
-import imgui.setValue
+import kool.getValue
+import kool.setValue
 import kotlin.reflect.KMutableProperty0
-import imgui.SelectableFlag as Sf
-import imgui.WindowFlag as Wf
-import imgui.internal.ButtonFlag as Bf
-import imgui.internal.ItemFlag as If
 
 /**
  * Widgets: List Boxes
