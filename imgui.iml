@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output/>
+    <orderEntry type="inheritedJdk"/>
+    <content url="file://$MODULE_DIR$/">
+      <excludeFolder url="file://$MODULE_DIR$/.gradle"/>
+      <excludeFolder url="file://$MODULE_DIR$/build"/>
+    </content>
+    <orderEntry type="sourceFolder" forTests="false"/>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.3.41/e24bd38de28a326cce8b1f0d61e809e9a92dad6a/kotlin-stdlib-1.3.41.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.3.41/785575d6b699a02527a4ad16f0972fa2c1ee583f/kotlin-stdlib-1.3.41-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.3.41/2ecf4aa059427d7186312fd1736afedf7972e7f7/kotlin-stdlib-common-1.3.41.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.3.41/8f361846168f853fb213b0ab02d193f02644548/kotlin-stdlib-common-1.3.41-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/5991ca87ef1fb5544943d9abc5a9a37583fabe03/annotations-13.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Program Files/Java/lib/tools.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES/>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kotlintest/kotlintest-runner-junit5/3.3.3/40222e864770dd7c5febc21f9f998bb057103102/kotlintest-runner-junit5-3.3.3.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kotlintest/kotlintest-runner-junit5/3.3.3/e3153cfec17c3c7c7e3defbe8501a16ee8cf780c/kotlintest-runner-junit5-3.3.3-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kotlintest/kotlintest-runner-jvm/3.3.3/c70b02df9a61f3ef35d51fc06ba7307a6a6cd397/kotlintest-runner-jvm-3.3.3.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kotlintest/kotlintest-runner-jvm/3.3.3/a4107440fbb1aadfb6db15fe25d58316304854bc/kotlintest-runner-jvm-3.3.3-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kotlintest/kotlintest-core/3.3.3/751432e71a606e1154316ab2f88472f41445b551/kotlintest-core-3.3.3.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kotlintest/kotlintest-core/3.3.3/964a5585841d49833d5f86ee388bda58bfb0541a/kotlintest-core-3.3.3-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kotlintest/kotlintest-assertions/3.3.3/267a58fe0e3d6bc960e4f4ec0a6b96c6079be39a/kotlintest-assertions-3.3.3.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kotlintest/kotlintest-assertions/3.3.3/e6cb9f653fbcde0c2ae1f78ea1a1cc91c84841fc/kotlintest-assertions-3.3.3-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.3.40/f2f8357e000fd80d8d799110f012b86fd4637386/kotlin-reflect-1.3.40.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.3.40/e03e6009b731f9140bc05b7ec950b9336bd8eedc/kotlin-reflect-1.3.40-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.1.1/3d2b7321cdef9ebf9cb7729ea4f75a6f6457df86/kotlinx-coroutines-core-1.1.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.1.1/7fa353579a38ee5bc873511455e4cca65d930b52/kotlinx-coroutines-core-1.1.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.arrow-kt/arrow-core/0.8.2/15c1949942a7081557d737644a3b182043a1b180/arrow-core-0.8.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.arrow-kt/arrow-core/0.8.2/59640023b2acd760eaf881589e22b2d65cda756c/arrow-core-0.8.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.3.11/4839661cf6ce3c14b65ed7dcf5b9249b44ecca16/kotlin-stdlib-jdk7-1.3.11.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.3.11/60c4910ffd5d3c522e8876d19b9e12d43972c4f4/kotlin-stdlib-jdk7-1.3.11-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.arrow-kt/arrow-annotations/0.8.2/8b4178e25f04348747a25305df2afd80ee2b2254/arrow-annotations-0.8.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.arrow-kt/arrow-annotations/0.8.2/bc6a44e346eeeb2950ff74dd24cd72950ea4d220/arrow-annotations-0.8.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core-common/1.1.1/7ed04382bdf0c89c5d87ac462aa4935ae8e85243/kotlinx-coroutines-core-common-1.1.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core-common/1.1.1/113450f5f2a971252086c89dd26cde062455fbe8/kotlinx-coroutines-core-common-1.1.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-launcher/1.4.0/5cc8b7b305ffc79aa124a1a4fe5efab114f28cac/junit-platform-launcher-1.4.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-launcher/1.4.0/6c7b5c5038e82f9b969d3a9d3d9624ea9fca98aa/junit-platform-launcher-1.4.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-engine/1.4.0/b4419dc190a5d82b9cac6b52e0af9140895c3f87/junit-platform-engine-1.4.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-engine/1.4.0/44fdbe60e0df90028edf59d9ffdf06d9fc0e43d9/junit-platform-engine-1.4.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-suite-api/1.4.0/8c03ee0615180d219c2dac86b004bd5d32b5649c/junit-platform-suite-api-1.4.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-suite-api/1.4.0/d4569abb18a1a21dc94dc877b0bbe9188be5bce2/junit-platform-suite-api-1.4.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.25/da76ca59f6a57ee3102f8f9bd9cee742973efa8a/slf4j-api-1.7.25.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.25/962153db4a9ea71b79d047dfd1b2a0d80d8f4739/slf4j-api-1.7.25-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/com.univocity/univocity-parsers/2.8.1/aa34369bc8766909a5633ce29eaba601e8e2e899/univocity-parsers-2.8.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/com.univocity/univocity-parsers/2.8.1/17f244c967d5a2086004ac27c2a369b4aec9da60/univocity-parsers-2.8.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/com.github.wumpz/diffutils/2.2/647f913ef6c350d3b1bc1ffa48a74747a13e89f/diffutils-2.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/com.github.wumpz/diffutils/2.2/1533f8ad61349ed86479f4c092cb24c4a23d8a87/diffutils-2.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kotlintest/kotlintest-extensions/3.3.3/8a47cc5879fa574ad0b51536d00b059b6212bc41/kotlintest-extensions-3.3.3.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kotlintest/kotlintest-extensions/3.3.3/c5f15646a82311b29fc20b424340f54f0aadafef/kotlintest-extensions-3.3.3-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.github.classgraph/classgraph/4.8.1/7120de37e85a2cf12ef807041434fac73eee94cc/classgraph-4.8.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.github.classgraph/classgraph/4.8.1/77449c90f26e899586b84764a0ca6925e3ce5654/classgraph-4.8.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-commons/1.4.0/e0b2ed8fac32ad6469d75d034e759f1969db8dda/junit-platform-commons-1.4.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-commons/1.4.0/12517867d09f09a4e829b80bfc958f69d883fc11/junit-platform-commons-1.4.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.apiguardian/apiguardian-api/1.0.0/3ef5276905e36f4d8055fe3cb0bdcc7503ffc85d/apiguardian-api-1.0.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.apiguardian/apiguardian-api/1.0.0/777508fa9f3e03cafb3c1fb2eba3dca317f4b1ee/apiguardian-api-1.0.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.opentest4j/opentest4j/1.1.1/efd9f971e91074491ea55b19f67b13470cf4fcdd/opentest4j-1.1.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.opentest4j/opentest4j/1.1.1/88a3a2cb15c413565462cea99f201b67bc6d2f10/opentest4j-1.1.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.eclipse.jgit/org.eclipse.jgit/4.4.1.201607150455-r/63998ced66e425d9e8bcd0c59f710c98f0c021ff/org.eclipse.jgit-4.4.1.201607150455-r.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.eclipse.jgit/org.eclipse.jgit/4.4.1.201607150455-r/34a4358ede1c8dde5f4a5f10a3c9e6f304f6facc/org.eclipse.jgit-4.4.1.201607150455-r-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/commons-io/commons-io/2.6/815893df5f31da2ece4040fe0a12fd44b577afaf/commons-io-2.6.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/commons-io/commons-io/2.6/2566800dc841d9d2c5a0d34d807e45d4107dbbdf/commons-io-2.6-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kindedj/kindedj/1.1.0/462731347602a3f24e3f21feec50928f9a657741/kindedj-1.1.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.kindedj/kindedj/1.1.0/3d0b22938dc6ddc667f628533a8d625935817bc0/kindedj-1.1.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk/1.9.1/5058fc2840d2247795bc94afa609c824a06520f9/mockk-1.9.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk/1.9.1/c3dbad99400d595d9a3305be263a0969d123dcdc/mockk-1.9.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-dsl-jvm/1.9.1/8f4e5f96e6dc2f26793184383d8bdaeabb78f71a/mockk-dsl-jvm-1.9.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-dsl-jvm/1.9.1/d1fd4939a2e37c84ea82d741cb99ef38ae607741/mockk-dsl-jvm-1.9.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-common/1.9.1/2c51a6b13c8735a4819d89c91b1795c8fc5b2191/mockk-common-1.9.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-common/1.9.1/af3a9fe9caedb37777fc0f49255341f5e55b93ed/mockk-common-1.9.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-agent-jvm/1.9.1/903c006fcf4864f6152a1e08ca1fa63bf40f978b/mockk-agent-jvm-1.9.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-agent-jvm/1.9.1/947b2a79e31292775d9c799416473233a7d09be4/mockk-agent-jvm-1.9.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-dsl/1.9.1/4fd7932a2cd635d9b1266b97594654f269496edb/mockk-dsl-1.9.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-dsl/1.9.1/a72c98043755e397b4d4278760b6ff16e5755424/mockk-dsl-1.9.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-agent-common/1.9.1/e51943c5f7f9582eb330c238666746c0c9d97487/mockk-agent-common-1.9.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-agent-common/1.9.1/cd583b9a4c44713352838b55298dee0b202805b4/mockk-agent-common-1.9.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-agent-api/1.9.1/f836690e4bbd99fead6f55115c4e8de850095ca1/mockk-agent-api-1.9.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/io.mockk/mockk-agent-api/1.9.1/9bbe33e8289a8786feac40da86efc4b0d3d6b1a3/mockk-agent-api-1.9.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.objenesis/objenesis/2.6/639033469776fd37c08358c6b92a4761feb2af4b/objenesis-2.6.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/org.objenesis/objenesis/2.6/96614f514a1031296657bf0dde452dc15e42fcb8/objenesis-2.6-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.9.3/f32e510b239620852fc9a2387fac41fd053d6a4d/byte-buddy-1.9.3.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.9.3/ef8bdb760633510eed72e262193d6afbc451cc72/byte-buddy-1.9.3-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.9.3/f5b78c16cf4060664d80b6ca32d80dca4bd3d264/byte-buddy-agent-1.9.3.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://C:/Users/gbarbieri/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.9.3/331129f3735b57bdb899a4e73731cf5f3322cff4/byte-buddy-agent-1.9.3-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+  <component name="ModuleRootManager"/>
+</module>

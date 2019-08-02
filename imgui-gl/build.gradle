@@ -5,30 +5,32 @@ plugins {
     id "com.github.johnrengelman.shadow"
 }
 
-group 'com.github.kotlin-graphics'
-
-sourceCompatibility = 1.8
-
-ext.moduleName = 'com.github.kotlin_graphics.imgui_gl'
+ext.moduleName = "${group}.imgui_gl"
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    api project(':imgui-core'), project(':imgui-glfw')
+    implementation "$kot-stdlib"
+    implementation project(':imgui-core'), project(':imgui-glfw')
+
+    implementation "${kx}.glm:glm:$glm_version"
+    implementation "$kx:gln:$gln_version"
+    implementation "$kx:kool:$kool_version"
+    implementation "$kx:kotlin-unsigned:$unsigned_version"
     ["core", "gl"].each {
-        implementation "com.github.kotlin-graphics.uno-sdk:uno-$it:f5bdd9cc13a52e0ab9c334eb6c98cd8377309af1"
+        implementation "${kx}.uno-sdk:uno-$it:$uno_version"
     }
 
-    ["", "-glfw", "-opengl", "-remotery", "-stb"].each {
+    ["", "-jemalloc", "-glfw", "-opengl", "-remotery", "-stb"].each {
         String base = "org.lwjgl:lwjgl$it:$lwjgl_version"
         implementation base
-        testRuntime "$base:natives-$lwjgl_natives"
-        shadow "$base:natives-$lwjgl_natives"
+        String natives = "$base:natives-$lwjgl_natives"
+        testRuntime natives
+        shadow natives
     }
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
 task lightJar(type: Jar) {
-    classifier = 'light'
+    archiveClassifier = 'light'
     from sourceSets.main.output
     exclude 'extraFonts'
     inputs.property("moduleName", moduleName)
@@ -38,12 +40,12 @@ task lightJar(type: Jar) {
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 
@@ -56,19 +58,15 @@ artifacts {
 shadowJar {
     exclude 'module-info.class'
     inputs.property("moduleName", moduleName)
-    manifest.attributes('Automatic-Module-Name': moduleName)
+//    manifest.attributes('Automatic-Module-Name': moduleName)
 }
 
 jar {
     inputs.property("moduleName", moduleName)
-    manifest.attributes('Automatic-Module-Name': moduleName)
+//    manifest.attributes('Automatic-Module-Name': moduleName)
 }
 
-shadowJar.classifier = 'all'
+shadowJar.archiveClassifier = 'all'
 
-compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-}
-compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-}
+compileKotlin.kotlinOptions.jvmTarget = "11"
+compileTestKotlin.kotlinOptions.jvmTarget = "11"

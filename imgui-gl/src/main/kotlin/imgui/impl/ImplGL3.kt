@@ -2,11 +2,7 @@ package imgui.impl
 
 import glm_.*
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4b
 import glm_.vec4.Vec4ub
-import gln.BufferTarget.Companion.ARRAY
-import gln.BufferTarget.Companion.ELEMENT_ARRAY
-import gln.Usage.Companion.STREAM_DRAW
 import gln.checkError
 import gln.glGetVec4i
 import gln.glScissor
@@ -21,12 +17,16 @@ import imgui.*
 import imgui.ImGui.io
 import imgui.imgui.g
 import kool.*
-import org.lwjgl.opengl.*
+import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GL11C
+import org.lwjgl.opengl.GL20C
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL32C.glDrawElementsBaseVertex
+import org.lwjgl.opengl.GL33C
 import org.lwjgl.opengl.GL33C.glBindSampler
 import org.lwjgl.opengl.GL45C.GL_CLIP_ORIGIN
 import org.lwjgl.system.Platform
+import unsigned.toUInt
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
@@ -329,9 +329,9 @@ class ImplGL3 : GLInterface {
             for (h in 0 until fbHeight) {
                 for (w in 0 until fbWidth) {
 
-                    val iR = buffer[i + 0].toUnsignedInt
-                    val iG = buffer[i + 1].toUnsignedInt
-                    val iB = buffer[i + 2].toUnsignedInt
+                    val iR = buffer[i + 0].toUInt()
+                    val iG = buffer[i + 1].toUInt()
+                    val iB = buffer[i + 2].toUInt()
                     val iA = buffer[i + 3].toInt() and 0xff
 
                     graphicsColor.color = Color(iR, iG, iB, iA)

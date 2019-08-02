@@ -36,6 +36,8 @@ import imgui.imgui.g
 import imgui.imgui.withFloat
 import imgui.imgui.withInt
 import imgui.internal.or
+import kool.getValue
+import kool.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
 import imgui.internal.ButtonFlag as Bf
