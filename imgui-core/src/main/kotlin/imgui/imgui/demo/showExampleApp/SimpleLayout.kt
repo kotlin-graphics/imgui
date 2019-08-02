@@ -1,7 +1,7 @@
 package imgui.imgui.demo.showExampleApp
 
 import glm_.vec2.Vec2
-import imgui.*
+import imgui.Cond
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
@@ -19,15 +19,14 @@ import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
+import imgui.TabBarFlag
 import imgui.dsl.button
 import imgui.dsl.menu
 import imgui.dsl.menuBar
 import imgui.dsl.menuItem
+import kool.getValue
+import kool.setValue
 import kotlin.reflect.KMutableProperty0
-import imgui.ColorEditFlag as Cef
-import imgui.InputTextFlag as Itf
-import imgui.SelectableFlag as Sf
-import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 
 object SimpleLayout {
