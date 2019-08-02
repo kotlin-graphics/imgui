@@ -5,30 +5,27 @@ plugins {
     id "com.github.johnrengelman.shadow"
 }
 
-group 'com.github.kotlin-graphics'
-
-sourceCompatibility = 1.8
-
-ext {
-    moduleName = 'com.github.kotlin_graphics.imgui_gl'
-}
+ext.moduleName = "${group}.imgui_gl"
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    api project(':imgui-core')
-    implementation 'com.github.kotlin-graphics:uno-sdk:ae2f5a51953f78c71f0a6a052037f6e399e80937'
+    implementation "$kot-stdlib"
+    implementation project(':imgui-core')
+    implementation "$kx:uno-sdk:$uno_version"
+    implementation "${kx}.glm:glm:$glm_version"
+    implementation "$kx:kool:$kool_version"
 
     ["", "-glfw", "-opengl", "-remotery"].each {
         String base = "org.lwjgl:lwjgl$it:$lwjgl_version"
         implementation base
-        testRuntime "$base:natives-$lwjgl_natives"
-        shadow "$base:natives-$lwjgl_natives"
+        String natives = "$base:natives-$lwjgl_natives"
+        testRuntime natives
+        shadow natives
     }
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
 task lightJar(type: Jar) {
-    classifier = 'light'
+    archiveClassifier = 'light'
     from sourceSets.main.output
     exclude 'extraFonts'
     inputs.property("moduleName", moduleName)
@@ -38,12 +35,12 @@ task lightJar(type: Jar) {
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 
@@ -56,12 +53,25 @@ artifacts {
 shadowJar {
     exclude 'module-info.class'
     inputs.property("moduleName", moduleName)
-    manifest.attributes('Automatic-Module-Name': moduleName)
+//    manifest.attributes('Automatic-Module-Name': moduleName)
 }
 
 jar {
     inputs.property("moduleName", moduleName)
-    manifest.attributes('Automatic-Module-Name': moduleName)
+//    manifest.attributes('Automatic-Module-Name': moduleName)
 }
 
-shadowJar.classifier = 'all'
+shadowJar.archiveClassifier = 'all'
+
+compileKotlin.kotlinOptions.jvmTarget = "11"
+compileTestKotlin.kotlinOptions.jvmTarget = "11"
+
+compileJava {
+    dependsOn(':compileKotlin')
+    doFirst {
+        options.compilerArgs = [
+                '--module-path', classpath.asPath,
+        ]
+        classpath = files()
+    }
+}

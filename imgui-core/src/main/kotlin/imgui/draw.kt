@@ -242,11 +242,18 @@ class DrawListSplitter {
         assert(idx < _count)
         if (_current == idx) return
         // Overwrite ImVector (12/16 bytes), four times. This is merely a silly optimization instead of doing .swap()
-        _channels[_current]._cmdBuffer = drawList.cmdBuffer
-        _channels[_current]._idxBuffer = drawList.idxBuffer
+        _channels[_current]._cmdBuffer.clear()
+        for (cmd in drawList.cmdBuffer)
+            _channels[_current]._cmdBuffer.push(cmd)
+        _channels[_current]._idxBuffer = IntBuffer(drawList.idxBuffer.cap)
+        for(i in 0 until drawList.idxBuffer.rem)
+            _channels[_current]._idxBuffer[i] = drawList.idxBuffer[i]
         _current = idx
-        drawList.cmdBuffer = _channels[idx]._cmdBuffer
-        drawList.idxBuffer = _channels[idx]._idxBuffer
+        drawList.cmdBuffer.clear()
+        for (cmd in _channels[idx]._cmdBuffer) drawList.cmdBuffer.push(cmd)
+        drawList.idxBuffer = IntBuffer(_channels[idx]._idxBuffer.cap)
+        for(i in 0 until _channels[idx]._idxBuffer.rem)
+            drawList.idxBuffer[i] = _channels[idx]._idxBuffer[i]
         drawList._idxWritePtr = drawList.idxBuffer.lim
     }
 }
@@ -1212,8 +1219,10 @@ class DrawList(sharedData: DrawListSharedData?) {
 
 
     // Macros
-    val currentClipRect get() = _clipRectStack.lastOrNull() ?: _data.clipRectFullscreen
-    val currentTextureId get() = _textureIdStack.lastOrNull()
+    val currentClipRect: Vec4
+        get() = _clipRectStack.lastOrNull() ?: _data.clipRectFullscreen
+    val currentTextureId: TextureID?
+        get() = _textureIdStack.lastOrNull()
 
     /** AddDrawListToDrawData */
     infix fun addTo(outList: ArrayList<DrawList>) {

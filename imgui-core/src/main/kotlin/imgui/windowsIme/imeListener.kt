@@ -1,8 +1,8 @@
 package imgui.windowsIme
 
+import glm_.asHexString
 import glm_.bool
 import glm_.i
-import glm_.toHexString
 import imgui.DEBUG
 import imgui.imgui.g
 import kool.adr
@@ -69,7 +69,7 @@ object imeListener : WindowProc() {
                 GCS_RESULTSTR -> "the string of the composition result."
                 else -> "new character> ${w.i}".also { latestChange = w.i }
             }
-            if (DEBUG) println("Ime composition/keyLast = latestChange: 0x${w.toHexString}, how: $how")
+            if (DEBUG) println("Ime composition/keyLast = latestChange: 0x${w.asHexString}, how: $how")
             window.charCallback!!(w.i)
             NULL
         }

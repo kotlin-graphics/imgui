@@ -82,22 +82,22 @@ object showDemoWindowColumns {
             text("With border:")
             columns(4, "mycolumns") // 4-ways, with border
             separator()
-//                text("ID"); nextColumn()
-//                text("Name"); nextColumn()
-//                text("Path"); nextColumn()
-//                text("Hovered"); nextColumn()
-//                separator()
-//                val names = listOf("One", "Two", "Three")
-//                val paths = listOf("/path/one", "/path/two", "/path/three")
-//                for (i in 0..2) {
-//                    selectable("%04d".format(style.locale, i), selected == i, SelectableFlag.SpanAllColumns.i) {
-//                        selected = i
-//                    }
-//                    nextColumn()
-//                    text(names[i]); nextColumn()
-//                    text(paths[i]); nextColumn()
-//                    text("${isItemHovered()}"); nextColumn()
-//                }
+            text("ID"); nextColumn()
+            text("Name"); nextColumn()
+            text("Path"); nextColumn()
+            text("Hovered"); nextColumn()
+            separator()
+            val names = listOf("One", "Two", "Three")
+            val paths = listOf("/path/one", "/path/two", "/path/three")
+            for (i in 0..2) {
+                selectable("%04d".format(style.locale, i), selected == i, SelectableFlag.SpanAllColumns.i) {
+                    selected = i
+                }
+                nextColumn()
+                text(names[i]); nextColumn()
+                text(paths[i]); nextColumn()
+                text("${isItemHovered()}"); nextColumn()
+            }
             columns(1)
             separator()
         }

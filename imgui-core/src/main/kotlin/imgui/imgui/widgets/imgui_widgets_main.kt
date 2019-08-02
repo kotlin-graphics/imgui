@@ -33,9 +33,9 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.imgui.g
 import imgui.internal.*
+import kool.getValue
+import kool.setValue
 import kotlin.reflect.KMutableProperty0
-import imgui.ComboFlag as Cf
-import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
 

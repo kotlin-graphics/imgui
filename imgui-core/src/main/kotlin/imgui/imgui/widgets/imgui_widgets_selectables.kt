@@ -26,6 +26,8 @@ import imgui.ImGui.windowContentRegionMax
 import imgui.imgui.g
 import imgui.imgui.withBoolean
 import imgui.internal.*
+import kool.getValue
+import kool.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.internal.ItemFlag as If
 import imgui.SelectableFlag as Sf
