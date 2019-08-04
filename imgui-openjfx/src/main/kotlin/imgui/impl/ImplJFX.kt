@@ -6,6 +6,7 @@ import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.*
 import javafx.application.Platform
+import javafx.event.Event
 import javafx.event.EventHandler
 import javafx.geometry.Point2D
 import javafx.scene.Cursor
@@ -19,6 +20,7 @@ import javafx.scene.shape.FillRule
 import javafx.scene.shape.StrokeLineCap
 import javafx.scene.shape.StrokeLineJoin
 import javafx.stage.Stage
+import kotlin.math.roundToInt
 
 typealias JFXColor = javafx.scene.paint.Color
 
@@ -32,7 +34,7 @@ private const val TEXTURE_COLOR_UNMULTIPLIED = -1
  */
 var BARYCENTRIC_SIZE_THRESHOLD = 500.0
 
-class ImplJFX(val stage: Stage, var canvas: Canvas) {
+class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
     private val startTime = System.currentTimeMillis()
     private var time = 0.0
 
@@ -79,7 +81,8 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
         }
 
         mouseMoveListener = EventHandler {
-            mousePos = Vec2(it.sceneX.f, it.sceneY.f)
+            val point = it.pickResult.intersectedPoint
+            mousePos = Vec2(point.x.f, point.y.f)
         }
 
         keyListener = EventHandler {
@@ -97,25 +100,26 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                 keyAlt = it.isAltDown
                 keySuper = it.isMetaDown
             }
+            it.consume()
         }
 
         charListener = EventHandler {
             it.character.forEach { char -> io.addInputCharacter(char) }
+            it.consume()
         }
 
         scrollListener = EventHandler {
             io.mouseWheelH += it.deltaX.f / 10.0f
             io.mouseWheel += it.deltaY.f / 10.0f
+            it.consume()
         }
 
-        stage.addEventHandler(MouseEvent.MOUSE_PRESSED, mousePressListener)
-        stage.addEventHandler(MouseEvent.MOUSE_RELEASED, mousePressListener)
-        stage.addEventHandler(MouseEvent.MOUSE_MOVED, mouseMoveListener)
-        stage.addEventHandler(MouseEvent.MOUSE_DRAGGED, mouseMoveListener)
-        stage.addEventHandler(KeyEvent.KEY_PRESSED, keyListener)
-        stage.addEventHandler(KeyEvent.KEY_RELEASED, keyListener)
-        stage.addEventHandler(KeyEvent.KEY_TYPED, charListener)
-        stage.addEventHandler(ScrollEvent.ANY, scrollListener)
+        updateCanvas(canvas)
+
+
+        stage.addEventHandler(Event.ANY) {
+            canvas.fireEvent(it)
+        }
 
         io.backendRendererName = "imgui impl jfx"
         io.backendPlatformName = null
@@ -144,6 +148,18 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
 
         io.fonts.texId = addTex(createTex)
         isInit = true
+    }
+
+    fun updateCanvas(newCanvas: Canvas) {
+        canvas = newCanvas
+        canvas.onMousePressed = mousePressListener
+        canvas.onMouseReleased = mousePressListener
+        canvas.onMouseMoved = mouseMoveListener
+        canvas.onMouseDragged = mouseMoveListener
+        canvas.onKeyPressed = keyListener
+        canvas.onKeyReleased = keyListener
+        canvas.onKeyTyped = charListener
+        canvas.onScroll = scrollListener
     }
 
     private fun addTex(tex: Image): Int {
@@ -590,8 +606,8 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                     if (vtx1.uv.y == vtx2.uv.y) {
                                         //Top flat triangle
                                         if (vtx3.uv.y > vtx1.uv.y) {
-                                            val minY = Math.round(vtx1.pos.y).i
-                                            val maxY = Math.round(vtx3.pos.y).i
+                                            val minY = vtx1.pos.y.roundToInt()
+                                            val maxY = vtx3.pos.y.roundToInt()
                                             val minYUV = vtx1.uv.y
                                             val maxYUV = vtx3.uv.y
                                             val yuvDiff = maxYUV - minYUV
@@ -617,8 +633,8 @@ class ImplJFX(val stage: Stage, var canvas: Canvas) {
                                         }
                                     } else if (vtx2.uv.y == vtx3.uv.y) {
                                         if (vtx3.uv.y > vtx1.uv.y) {
-                                            val minY = Math.round(vtx1.pos.y).i
-                                            val maxY = Math.round(vtx3.pos.y).i
+                                            val minY = vtx1.pos.y.roundToInt()
+                                            val maxY = vtx3.pos.y.roundToInt()
                                             val minYUV = vtx1.uv.y
                                             val maxYUV = vtx3.uv.y
                                             val yuvDiff = maxYUV - minYUV

@@ -65,7 +65,7 @@ class HelloWorld_jfx {
             if (canvas.width != scene.width || canvas.height != scene.height) {
                 canvas = Canvas(scene.width, scene.height)
                 internalCanvas = Canvas(scene.width, scene.height)
-                s.canvas = internalCanvas
+                s.updateCanvas(internalCanvas)
                 if (!Platform.isFxApplicationThread()) {
                     Platform.runLater {
                         val vb = Pane(canvas)
