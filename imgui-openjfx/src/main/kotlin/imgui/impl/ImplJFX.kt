@@ -10,7 +10,6 @@ import javafx.event.Event
 import javafx.event.EventHandler
 import javafx.geometry.Point2D
 import javafx.scene.Cursor
-import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.effect.BlendMode
 import javafx.scene.image.Image
@@ -81,6 +80,7 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                 MouseButton.SECONDARY -> 1
                 else -> return@EventHandler
             }] = true
+            canvas.requestFocus()
         }
 
         mouseMoveListener = EventHandler {
@@ -121,18 +121,11 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
 
 
         stage.addEventHandler(Event.ANY) {
-            if(it is MouseEvent) {
-                selected = if(it.target is Canvas) {
-                    (it.target as Canvas).boundsInLocal == canvas.boundsInLocal
-                } else {
-                    false
-                }
-            }
             if (it.target is Canvas) {
                 if ((it.target as Canvas).boundsInLocal == canvas.boundsInLocal) {
                     canvas.fireEvent(it)
                 }
-            } else if (selected && (it.eventType == KeyEvent.KEY_PRESSED || it.eventType == KeyEvent.KEY_RELEASED || it.eventType == KeyEvent.KEY_TYPED)) {
+            } else if (canvas.isFocused && (it.eventType == KeyEvent.KEY_PRESSED || it.eventType == KeyEvent.KEY_RELEASED || it.eventType == KeyEvent.KEY_TYPED)) {
                 canvas.fireEvent(it)
             }
         }
@@ -176,6 +169,7 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
         canvas.onKeyReleased = keyListener
         canvas.onKeyTyped = charListener
         canvas.onScroll = scrollListener
+        canvas.isFocusTraversable = true
     }
 
     private fun addTex(tex: Image): Int {
