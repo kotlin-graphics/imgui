@@ -54,6 +54,8 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
 
     private var isInit = false
 
+    private var selected = false
+
     fun createDeviceObjects() {
         if (ImGui.io.fonts.isBuilt)
             return
@@ -119,11 +121,18 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
 
 
         stage.addEventHandler(Event.ANY) {
+            if(it is MouseEvent) {
+                selected = if(it.target is Canvas) {
+                    (it.target as Canvas).boundsInLocal == canvas.boundsInLocal
+                } else {
+                    false
+                }
+            }
             if (it.target is Canvas) {
                 if ((it.target as Canvas).boundsInLocal == canvas.boundsInLocal) {
                     canvas.fireEvent(it)
                 }
-            } else if (it.target is Scene && (it.eventType == KeyEvent.KEY_PRESSED || it.eventType == KeyEvent.KEY_RELEASED || it.eventType == KeyEvent.KEY_TYPED)) {
+            } else if (selected && (it.eventType == KeyEvent.KEY_PRESSED || it.eventType == KeyEvent.KEY_RELEASED || it.eventType == KeyEvent.KEY_TYPED)) {
                 canvas.fireEvent(it)
             }
         }
