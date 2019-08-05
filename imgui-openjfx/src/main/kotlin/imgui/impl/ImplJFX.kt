@@ -10,6 +10,7 @@ import javafx.event.Event
 import javafx.event.EventHandler
 import javafx.geometry.Point2D
 import javafx.scene.Cursor
+import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.effect.BlendMode
 import javafx.scene.image.Image
@@ -118,10 +119,12 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
 
 
         stage.addEventHandler(Event.ANY) {
-            if(it.target is Canvas) {
-                if((it.target as Canvas).boundsInLocal == canvas.boundsInLocal) {
+            if (it.target is Canvas) {
+                if ((it.target as Canvas).boundsInLocal == canvas.boundsInLocal) {
                     canvas.fireEvent(it)
                 }
+            } else if (it.target is Scene && (it.eventType == KeyEvent.KEY_PRESSED || it.eventType == KeyEvent.KEY_RELEASED || it.eventType == KeyEvent.KEY_TYPED)) {
+                canvas.fireEvent(it)
             }
         }
 
@@ -390,8 +393,8 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                                 val doBary = if (isBary) {
                                     triangleArea(vtx1.pos, vtx2.pos, vtx3.pos) >= BARYCENTRIC_SIZE_THRESHOLD &&
                                             atLeastTwo(Math.abs(vtx1.pos.x - vtx2.pos.x) >= 2.0,
-                                            Math.abs(vtx1.pos.x - vtx3.pos.x) >= 2.0,
-                                            Math.abs(vtx3.pos.x - vtx2.pos.x) >= 2.0)
+                                                    Math.abs(vtx1.pos.x - vtx3.pos.x) >= 2.0,
+                                                    Math.abs(vtx3.pos.x - vtx2.pos.x) >= 2.0)
                                 } else {
                                     false
                                 }
@@ -565,7 +568,7 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                                             //set color to the first color
                                             val color = texPr.getColor((vtx1.uv.x * currentTex.width).toInt(), (vtx1.uv.y * currentTex.height).toInt())
                                             //if it is barycentric but missed the size check, get the most saturated color
-                                            if(isBary) {
+                                            if (isBary) {
                                                 col1 = if (vtx1.col.toVec4().length() > vtx2.col.toVec4().length())
                                                     if (vtx1.col.toVec4().length() > vtx3.col.toVec4().length())
                                                         vtx1.col
