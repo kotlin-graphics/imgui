@@ -10,6 +10,7 @@ import javafx.event.Event
 import javafx.event.EventHandler
 import javafx.geometry.Point2D
 import javafx.scene.Cursor
+import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.effect.BlendMode
 import javafx.scene.image.Image
