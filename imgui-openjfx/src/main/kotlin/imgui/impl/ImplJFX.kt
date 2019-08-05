@@ -10,7 +10,6 @@ import javafx.event.Event
 import javafx.event.EventHandler
 import javafx.geometry.Point2D
 import javafx.scene.Cursor
-import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.effect.BlendMode
 import javafx.scene.image.Image
@@ -122,13 +121,6 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
 
 
         stage.addEventHandler(Event.ANY) {
-            if(it is MouseEvent) {
-                selected = if(it.target is Canvas) {
-                    (it.target as Canvas).boundsInLocal == canvas.boundsInLocal
-                } else {
-                    false
-                }
-            }
             if (it.target is Canvas) {
                 if ((it.target as Canvas).boundsInLocal == canvas.boundsInLocal) {
                     canvas.fireEvent(it)
