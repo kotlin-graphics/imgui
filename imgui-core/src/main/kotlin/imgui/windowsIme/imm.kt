@@ -14,11 +14,18 @@ object imm {
 
     val lib: SharedLibrary = Library.loadNative("Imm32")
 
+    val ImmCreateContext = lib.getFunctionAddress("ImmCreateContext")
     val ImmGetContext = lib.getFunctionAddress("ImmGetContext")
     val ImmSetCompositionWindow = lib.getFunctionAddress("ImmSetCompositionWindow")
     val ImmReleaseContext = lib.getFunctionAddress("ImmReleaseContext")
 
-    fun getContext(hwnd: HWND) = if(Platform.get() == Platform.WINDOWS && MINECRAFT_BEHAVIORS) 0 else JNI.callPP(hwnd.L, ImmGetContext)
+    fun getContext(hwnd: HWND): Long{
+        return if(Platform.get() == Platform.WINDOWS && MINECRAFT_BEHAVIORS) {
+            JNI.callP(ImmCreateContext)
+        } else {
+            JNI.callPP(hwnd.L, ImmGetContext)
+        }
+    }
     fun setCompositionWindow(himc: HIMC, compForm: COMPOSITIONFORM) = JNI.callPPI(himc.L, compForm.adr, ImmSetCompositionWindow)
     fun releaseContext(hwnd: HWND, himc: HIMC) = JNI.callPPI(hwnd.L, himc.L, ImmReleaseContext)
 
