@@ -118,7 +118,11 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
 
 
         stage.addEventHandler(Event.ANY) {
-            canvas.fireEvent(it)
+            if(it.target is Canvas) {
+                if((it.target as Canvas).boundsInLocal == canvas.boundsInLocal) {
+                    canvas.fireEvent(it)
+                }
+            }
         }
 
         io.backendRendererName = "imgui impl jfx"
