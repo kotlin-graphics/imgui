@@ -3,20 +3,14 @@ package imgui.impl
 import com.jogamp.opengl.GL2ES3
 import com.jogamp.opengl.GL3
 import glm_.BYTES
-import glm_.L
 import glm_.mat4x4.Mat4
 import gln.GlBufferEnum
 import gln.glf.semantic
-import gln.objects.GlTexture
 import kool.ByteBuffer
 import kool.IntBuffer
-import kool.adr
 import kool.lib.toByteArray
 import kool.use
 import org.lwjgl.system.Platform
-import java.nio.ByteBuffer
-import java.nio.IntBuffer
-import kotlin.reflect.KMutableProperty0
 
 
 var USE_GL_ES3 = false

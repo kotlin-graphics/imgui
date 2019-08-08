@@ -13,6 +13,7 @@ dependencies {
     implementation "${kx}.glm:glm:$glm_version"
     implementation "$kx:uno-sdk:$uno_version"
     implementation "$kx:gln:$gln_version"
+    implementation "$kx:kool:$kool_version"
 
     def joglVersion = '2.3.2'
     implementation "org.jogamp.gluegen:gluegen-rt-main:$joglVersion"
