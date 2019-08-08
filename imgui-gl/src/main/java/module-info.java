@@ -5,6 +5,7 @@ module com.github.kotlin_graphics.imgui_gl {
     requires kotlin.stdlib;
 
     requires com.github.kotlin_graphics.imgui_core;
+    requires com.github.kotlin_graphics.imgui_glfw;
     requires com.github.kotlin_graphics.uno_core;
     requires com.github.kotlin_graphics.glm;
     requires com.github.kotlin_graphics.gln;
