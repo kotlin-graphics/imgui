@@ -96,3 +96,11 @@ fun IntBuffer.reserve(newCapacity: Int): IntBuffer {
     free()
     return newData
 }
+
+fun IntBuffer(from: IntBuffer): IntBuffer {
+    val res = IntBuffer(from.cap)
+    res.lim = from.lim
+    for(i in 0 until from.lim)
+        res[i] = from[i]
+    return res
+}
