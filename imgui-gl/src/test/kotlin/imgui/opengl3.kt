@@ -7,7 +7,7 @@ import gln.glClearColor
 import gln.glViewport
 import imgui.imgui.Context
 import imgui.impl.ImplGL3
-import imgui.impl.ImplGlfw
+import imgui.impl2.ImplGlfw
 import imgui.impl.glslVersion
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT

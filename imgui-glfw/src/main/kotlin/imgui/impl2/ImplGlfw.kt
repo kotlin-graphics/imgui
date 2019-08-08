@@ -1,4 +1,4 @@
-package imgui.impl
+package imgui.impl2
 
 import glm_.b
 import glm_.c
@@ -11,6 +11,7 @@ import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
 import imgui.Key
 import imgui.imgui.g
+import imgui.impl.*
 import imgui.windowsIme.imeListener
 import kool.cap
 import org.lwjgl.glfw.GLFW.*

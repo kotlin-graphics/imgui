@@ -9,7 +9,7 @@ import gln.glClearColor
 import gln.glViewport
 import imgui.imgui.Context
 import imgui.impl.ImplGL2_mac
-import imgui.impl.ImplGlfw
+import imgui.impl2.ImplGlfw
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*

@@ -11,6 +11,10 @@ dependencies {
     implementation "$kot-stdlib"
     implementation project(':imgui-core'), project(':imgui-glfw')
     implementation "$kx:uno-sdk:$uno_version"
+    implementation "${kx}.glm:glm:$glm_version"
+    implementation "$kx:kool:$kool_version"
+    implementation "$kx:vkk:$vkk_version"
+    implementation "$kx:gli:$gli_version"
 
 //    implementation 'com.github.LWJGL:lwjgl3-demos:b402ed620e'
 

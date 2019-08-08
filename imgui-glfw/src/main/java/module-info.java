@@ -8,4 +8,6 @@ module com.github.kotlin_graphics.imgui_glfw {
     requires com.github.kotlin_graphics.kool;
 
     requires org.lwjgl.glfw;
+
+    exports imgui.impl2;
 }
