@@ -968,7 +968,7 @@ interface imgui_internal {
         columns.offMaxX = max(window.workRect.max.x - window.pos.x, columns.offMinX + 1f)
         columns.hostCursorPosY = window.dc.cursorPos.y
         columns.hostCursorMaxPosX = window.dc.cursorMaxPos.x
-        columns.hostClipRect = window.clipRect
+        columns.hostClipRect put window.clipRect
         columns.lineMinY = window.dc.cursorPos.y
         columns.lineMaxY = window.dc.cursorPos.y
         window.dc.columnsOffset = 0f
@@ -3921,7 +3921,7 @@ interface imgui_internal {
         if (fmt[i] == '.') {
             val s = fmt.substring(i).filter { it.isDigit() }
             if (s.isNotEmpty()) {
-                precision = s.parseInt
+                precision = s.parseInt()
                 if (precision < 0 || precision > 99)
                     precision = defaultPrecision
             }

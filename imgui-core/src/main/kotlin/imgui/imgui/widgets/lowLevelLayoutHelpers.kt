@@ -11,25 +11,16 @@ import imgui.ImGui.mouseCursor
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.style
 import imgui.MouseCursor
-import imgui.getValue
 import imgui.imgui.g
-import imgui.internal.*
-import imgui.setValue
+import imgui.internal.Axis
+import imgui.internal.Rect
+import imgui.internal.or
+import kool.getValue
+import kool.setValue
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
-import glm_.pow as _
-import imgui.ColorEditFlag as Cef
-import imgui.DragDropFlag as Ddf
-import imgui.HoveredFlag as Hf
-import imgui.InputTextFlag as Itf
-import imgui.TreeNodeFlag as Tnf
-import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
-import imgui.internal.ColumnsFlag as Cf
-import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.ItemFlag as If
-import imgui.internal.LayoutType as Lt
-import imgui.internal.SeparatorFlag as Sf
 
 interface lowLevelLayoutHelpers {
 

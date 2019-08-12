@@ -206,7 +206,7 @@ fun hash(data: String, dataSize_: Int = 0, seed_: Int = 0): Int {
 //            val d = crc and 0xFF
 //            val e = d xor c.b.toUnsignedInt
 //            crc = b xor crc32Lut[e]
-            crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c.b.toUnsignedInt] // unsigned -> avoid negative values being passed as indices
+            crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c.b.toUInt()] // unsigned -> avoid negative values being passed as indices
         }
     return crc.inv()
 }

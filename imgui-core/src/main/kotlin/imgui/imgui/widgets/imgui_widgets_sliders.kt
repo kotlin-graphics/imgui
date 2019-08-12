@@ -49,6 +49,8 @@ import imgui.imgui.withInt
 import imgui.internal.Rect
 import imgui.internal.SliderFlag
 import imgui.internal.focus
+import kool.getValue
+import kool.setValue
 import kotlin.reflect.KMutableProperty0
 
 /** Widgets: Sliders
