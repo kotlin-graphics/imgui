@@ -1,5 +1,6 @@
 package imgui.imgui.demo
 
+import glm_.i
 import glm_.vec2.Vec2
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -96,7 +97,7 @@ object showDemoWindowColumns {
                 nextColumn()
                 text(names[i]); nextColumn()
                 text(paths[i]); nextColumn()
-                text("${isItemHovered()}"); nextColumn()
+                text("${isItemHovered().i}"); nextColumn() // TODO set back boolean (debugging)
             }
             columns(1)
             separator()
