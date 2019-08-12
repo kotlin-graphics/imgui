@@ -5,7 +5,6 @@ import glm_.BYTES
 import glm_.f
 import glm_.func.common.max
 import glm_.glm
-import glm_.min
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.io
@@ -112,12 +111,18 @@ class DrawVert {
  *  rendered.   */
 class DrawChannel {
 
-    var _cmdBuffer = Stack<DrawCmd>()
+    val _cmdBuffer = Stack<DrawCmd>()
     var _idxBuffer = IntBuffer(0)
 
-    fun clear() {
+    fun memset0() {
         _cmdBuffer.clear()
-        _idxBuffer.clear()
+        _idxBuffer.free()
+        _idxBuffer = IntBuffer(0)
+    }
+
+    fun resize0() {
+        _cmdBuffer.clear()
+        _idxBuffer.lim = 0
     }
 }
 
@@ -168,10 +173,10 @@ class DrawListSplitter {
         // Channels[] (24/32 bytes each) hold storage that we'll swap with draw_list->_CmdBuffer/_IdxBuffer
         // The content of Channels[0] at this point doesn't matter. We clear it to make state tidy in a debugger but we don't strictly need to.
         // When we switch to the next channel, we'll copy draw_list->_CmdBuffer/_IdxBuffer into Channels[0] and then Channels[1] into draw_list->CmdBuffer/_IdxBuffer
-        _channels[0].clear()
+        _channels[0].memset0()
         for (i in 1 until channelsCount) {
             if (i < oldChannelsCount)
-                _channels[i].clear()
+                _channels[i].resize0()
             if (_channels[i]._cmdBuffer.isEmpty())
                 _channels[i]._cmdBuffer.add(DrawCmd().apply {
                     clipRect put drawList._clipRectStack.last()
@@ -219,7 +224,7 @@ class DrawListSplitter {
                 idxOffset += it.elemCount
             }
         }
-        for (i in drawList.cmdBuffer.size until newCmdBufferCount)
+        for (i in 0 until newCmdBufferCount)
             drawList.cmdBuffer.push(DrawCmd())
         drawList.idxBuffer = drawList.idxBuffer.resize(drawList.idxBuffer.rem + newIdxBufferCount)
 
@@ -242,11 +247,17 @@ class DrawListSplitter {
         assert(idx < _count)
         if (_current == idx) return
         // Overwrite ImVector (12/16 bytes), four times. This is merely a silly optimization instead of doing .swap()
-        _channels[_current]._cmdBuffer = drawList.cmdBuffer
-        _channels[_current]._idxBuffer = drawList.idxBuffer
+        _channels[_current]._cmdBuffer.clear()
+        for (cmd in drawList.cmdBuffer)
+            _channels[_current]._cmdBuffer.push(cmd)
+        _channels[_current]._idxBuffer.free()
+        _channels[_current]._idxBuffer = IntBuffer(drawList.idxBuffer)
         _current = idx
-        drawList.cmdBuffer = _channels[idx]._cmdBuffer
-        drawList.idxBuffer = _channels[idx]._idxBuffer
+        drawList.cmdBuffer.clear()
+        for (cmd in _channels[idx]._cmdBuffer)
+            drawList.cmdBuffer.push(cmd)
+        drawList.idxBuffer.free()
+        drawList.idxBuffer = IntBuffer(_channels[idx]._idxBuffer)
         drawList._idxWritePtr = drawList.idxBuffer.lim
     }
 }
@@ -1212,8 +1223,10 @@ class DrawList(sharedData: DrawListSharedData?) {
 
 
     // Macros
-    val currentClipRect get() = _clipRectStack.lastOrNull() ?: _data.clipRectFullscreen
-    val currentTextureId get() = _textureIdStack.lastOrNull()
+    val currentClipRect: Vec4
+        get() = _clipRectStack.lastOrNull() ?: _data.clipRectFullscreen
+    val currentTextureId: TextureID?
+        get() = _textureIdStack.lastOrNull()
 
     /** AddDrawListToDrawData */
     infix fun addTo(outList: ArrayList<DrawList>) {

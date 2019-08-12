@@ -5,7 +5,7 @@ import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
 import imgui.imgui.Context;
 import imgui.impl.ImplGL3;
-import imgui.impl.ImplGlfw;
+import imgui.impl2.ImplGlfw;
 
 import static imgui.ImguiKt.DEBUG;
 import static imgui.dsl_.button;

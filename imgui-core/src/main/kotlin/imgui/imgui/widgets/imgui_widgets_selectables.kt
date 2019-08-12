@@ -13,6 +13,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
+import imgui.ImGui.popColumnsBackground
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.pushColumnsBackground
 import imgui.ImGui.pushStyleColor
@@ -26,6 +27,8 @@ import imgui.ImGui.windowContentRegionMax
 import imgui.imgui.g
 import imgui.imgui.withBoolean
 import imgui.internal.*
+import kool.getValue
+import kool.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.internal.ItemFlag as If
 import imgui.SelectableFlag as Sf
@@ -138,7 +141,7 @@ interface imgui_widgets_selectables {
         }
 
         if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null) {
-            pushColumnsBackground()
+            popColumnsBackground()
             bb.max.x -= contentRegionMax.x - maxX
         }
 

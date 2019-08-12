@@ -1,7 +1,6 @@
 package imgui.imgui.widgets
 
 import gli_.has
-import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.closeButton
@@ -17,12 +16,9 @@ import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.imgui.g
 import imgui.imgui.max
-import imgui.imgui.min
 import imgui.internal.NextItemDataFlag
 import imgui.internal.itemHoveredDataBackup
 import imgui.internal.or
-import uno.kotlin.getValue
-import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 
@@ -132,18 +128,17 @@ interface imgui_widgets_trees {
     }
 
     /** when 'open' isn't NULL, display an additional small close button on upper right of the header */
-    fun collapsingHeader(label: String, openPtr: KMutableProperty0<Boolean>?, flags_: TreeNodeFlags = 0): Boolean {
+    fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>?, flags_: TreeNodeFlags = 0): Boolean {
 
-        var open by openPtr
         val window = currentWindow
         if (window.skipItems) return false
 
-        if (openPtr != null && !open) return false
+        if (open?.get()  == false) return false
 
         val id = window.getId(label)
-        val flags = flags_ or Tnf.CollapsingHeader or if (openPtr != null) Tnf.AllowItemOverlap or Tnf._ClipLabelForTrailingButton else 0
+        val flags = flags_ or Tnf.CollapsingHeader or if (open != null) Tnf.AllowItemOverlap or Tnf._ClipLabelForTrailingButton else 0
         val isOpen = treeNodeBehavior(id, flags, label)
-        if (openPtr != null) {
+        if (open != null) {
             /*  Create a small overlapping close button
                 FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
                 FIXME: CloseButton can overlap into text, need find a way to clip the text somehow.
@@ -154,7 +149,7 @@ interface imgui_widgets_trees {
                     (window.dc.lastItemRect.min.y))
             itemHoveredDataBackup {
                 if (closeButton(window.getId(id + 1), buttonPos))
-                    open = false
+                    open.set(false)
             }
         }
         return isOpen

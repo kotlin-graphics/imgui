@@ -3,7 +3,6 @@ package imgui.impl
 import imgui.DrawData
 import org.lwjgl.opengl.GL
 import org.lwjgl.system.Platform
-import uno.glfw.glfw
 
 class ImplBestGL: GLInterface {
     private val internalImpl: GLInterface

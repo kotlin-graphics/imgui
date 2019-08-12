@@ -13,7 +13,9 @@ import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.style
 import imgui.imgui.imgui_internal.Companion.getMinimumStepAtDecimalPrecision
 import imgui.internal.*
+import kool.getValue
 import kool.lim
+import kool.setValue
 import java.util.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
@@ -494,10 +496,10 @@ fun <N : Number> roundScalarWithFormat(format: String, value: N): N {
         formattedValue = "-$formattedValue"
     }
     return when (value) {
-        is Byte -> formattedValue.parseByte as N
-        is Short -> formattedValue.parseShort as N
-        is Int -> formattedValue.parseInt as N
-        is Long -> formattedValue.parseLong as N
+        is Byte -> formattedValue.parseByte() as N
+        is Short -> formattedValue.parseShort() as N
+        is Int -> formattedValue.parseInt() as N
+        is Long -> formattedValue.parseLong() as N
         is Float -> formattedValue.parseFloat as N
         is Double -> formattedValue.parseDouble as N
         else -> throw Error("not supported")

@@ -92,7 +92,15 @@ fun IntBuffer.reserve(newCapacity: Int): IntBuffer {
         return this
     val newData = IntBuffer(newCapacity)
     if (lim > 0)
-        MemoryUtil.memCopy(adr, newData.adr, lim.L)
+        MemoryUtil.memCopy(adr, newData.adr, remSize.L)
     free()
     return newData
+}
+
+fun IntBuffer(from: IntBuffer): IntBuffer {
+    val res = IntBuffer(from.cap)
+    res.lim = from.lim
+    for(i in 0 until from.lim)
+        res[i] = from[i]
+    return res
 }
