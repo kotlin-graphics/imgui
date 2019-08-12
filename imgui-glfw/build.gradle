@@ -63,8 +63,14 @@ jar {
 
 shadowJar.archiveClassifier = 'all'
 
-compileKotlin.kotlinOptions.jvmTarget = "11"
-compileTestKotlin.kotlinOptions.jvmTarget = "11"
+compileKotlin{
+    kotlinOptions.jvmTarget = "11"
+    destinationDir = compileJava.destinationDir
+}
+compileTestKotlin{
+    kotlinOptions.jvmTarget = "11"
+    destinationDir = compileTestJava.destinationDir
+}
 
 compileJava {
     dependsOn(':compileKotlin')
