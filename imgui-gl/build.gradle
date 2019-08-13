@@ -52,7 +52,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 artifacts {
     archives lightJar
     archives sourcesJar
-    archives javadocJar
+//    archives javadocJar
 }
 
 shadowJar {
@@ -80,9 +80,7 @@ compileTestKotlin{
 compileJava {
     dependsOn(':compileKotlin')
     doFirst {
-        options.compilerArgs = [
-                '--module-path', classpath.asPath,
-        ]
+        options.compilerArgs = ['--module-path', classpath.asPath,]
         classpath = files()
     }
 }

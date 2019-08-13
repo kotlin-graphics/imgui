@@ -51,7 +51,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 artifacts {
     archives lightJar
     archives sourcesJar
-    archives javadocJar
+//    archives javadocJar
 }
 
 shadowJar {
@@ -67,5 +67,19 @@ jar {
 
 shadowJar.archiveClassifier = 'all'
 
-compileKotlin.kotlinOptions.jvmTarget = "11"
-compileTestKotlin.kotlinOptions.jvmTarget = "11"
+compileKotlin {
+    kotlinOptions.jvmTarget = "11"
+    destinationDir = compileJava.destinationDir
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "11"
+    destinationDir = compileTestJava.destinationDir
+}
+
+compileJava {
+    dependsOn(':compileKotlin')
+    doFirst {
+        options.compilerArgs = ['--module-path', classpath.asPath,]
+        classpath = files()
+    }
+}
