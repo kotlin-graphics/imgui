@@ -3,10 +3,10 @@ plugins {
     id 'java'
     id "org.jetbrains.kotlin.jvm"
     id "com.github.johnrengelman.shadow"
-    id 'org.openjfx.javafxplugin' version '0.0.7'
+    id 'org.openjfx.javafxplugin' version '0.0.8'
 }
 
-ext.moduleName = "${group}.imgui_jfx"
+ext.moduleName = "${group}.imgui_openjfx"
 
 dependencies {
     implementation "$kot-stdlib"
@@ -23,10 +23,10 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-javafx {
-    version = "11.0.1"
-    modules = ['javafx.graphics']
-}
+//javafx {
+//    version = "11.0.2"
+//    modules = ['javafx.graphics']
+//}
 
 task lightJar(type: Jar) {
     archiveClassifier = 'light'
@@ -49,7 +49,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 artifacts {
     archives lightJar
     archives sourcesJar
-    archives javadocJar
+//    archives javadocJar
 }
 
 shadowJar {
@@ -65,5 +65,19 @@ jar {
 
 shadowJar.archiveClassifier = 'all'
 
-compileKotlin.kotlinOptions.jvmTarget = "11"
-compileTestKotlin.kotlinOptions.jvmTarget = "11"
+compileKotlin {
+    kotlinOptions.jvmTarget = "11"
+    destinationDir = compileJava.destinationDir
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "11"
+    destinationDir = compileTestJava.destinationDir
+}
+
+compileJava {
+    dependsOn(':compileKotlin')
+    doFirst {
+        options.compilerArgs = ['--module-path', classpath.asPath,]
+        classpath = files()
+    }
+}
