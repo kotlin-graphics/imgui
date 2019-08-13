@@ -39,10 +39,7 @@ class DrawCmd {
     constructor()
 
     constructor(drawCmd: DrawCmd) {
-        elemCount = drawCmd.elemCount
-        clipRect put drawCmd.clipRect
-        textureId = drawCmd.textureId
-        userCallback = drawCmd.userCallback
+        put(drawCmd)
     }
 
     /** Number of indices (multiple of 3) to be rendered as triangles. Vertices are stored in the callee ImDrawList's
@@ -75,7 +72,11 @@ class DrawCmd {
         elemCount = drawCmd.elemCount
         clipRect put drawCmd.clipRect
         textureId = drawCmd.textureId
+        vtxOffset = drawCmd.vtxOffset
+        idxOffset = drawCmd.idxOffset
         userCallback = drawCmd.userCallback
+        resetRenderState = drawCmd.resetRenderState
+        userCallbackData = drawCmd.userCallbackData
     }
 }
 
