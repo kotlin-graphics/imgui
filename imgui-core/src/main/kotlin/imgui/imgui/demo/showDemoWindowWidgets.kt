@@ -909,7 +909,7 @@ object showDemoWindowWidgets {
                 }
             savedPaletteInit = false
             var openPopup = colorButton("MyColor##3b", color, miscFlags)
-            sameLine()
+            sameLine(0f, style.itemInnerSpacing.x)
             openPopup = openPopup or button("Palette")
             if (openPopup) {
                 openPopup("mypicker")
