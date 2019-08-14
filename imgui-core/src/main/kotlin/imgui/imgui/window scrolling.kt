@@ -34,6 +34,17 @@ interface imgui_windowScrolling {
     val scrollMaxY: Float
         get() = ImGui.currentWindow.scrollMax.y
 
+    /** center_x_ratio: 0.0f left of last item, 0.5f horizontal center of last item, 1.0f right of last item.
+     *
+     *  adjust scrolling amount to make current cursor position visible. center_x_ratio=0.0: left, 0.5: center, 1.0: right. When using to make a "default/current item" visible, consider using SetItemDefaultFocus() instead. */
+    fun setScrollHereX(centerXratio: Float) {
+        val window = g.currentWindow!!
+        var targetX = window.dc.lastItemRect.min.x - window.pos.x // Left of last item, in window space
+        val lastItemWidth = window.dc.lastItemRect.width
+        targetX += lastItemWidth * centerXratio + g.style.itemSpacing.x * (centerXratio - 0.5f) * 2f // Precisely aim before, in the middle or after the last item.
+        setScrollFromPosX(targetX, centerXratio)
+    }
+
     /** adjust scrolling amount to make current cursor position visible.
      *  centerYRatio = 0.0: top, 0.5: center, 1.0: bottom.
      *   When using to make a "default/current item" visible, consider using setItemDefaultFocus() instead.*/
@@ -42,6 +53,16 @@ interface imgui_windowScrolling {
         // Precisely aim above, in the middle or below the last line.
         targetY += (dc.prevLineSize.y * centerYRatio) + ImGui.style.itemSpacing.y * (centerYRatio - 0.5f) * 2f
         setScrollFromPosY(targetY, centerYRatio)
+    }
+
+    /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position. */
+    fun setScrollFromPosX(localX: Float, centerXratio: Float) {
+        // We store a target position so centering can occur on the next frame when we are guaranteed to have a known window size
+        g.currentWindow!!.apply {
+            assert(centerXratio in 0f..1f)
+            scrollTarget.x = (localX + scroll.x).i.f
+            scrollTargetCenterRatio.x = centerXratio
+        }
     }
 
     /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.   */
