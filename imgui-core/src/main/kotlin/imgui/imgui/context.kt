@@ -175,7 +175,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val beginPopupStack = Stack<PopupData>()
 
 
-
     //------------------------------------------------------------------
     // Navigation data (for gamepad/keyboard)
     //------------------------------------------------------------------
@@ -418,6 +417,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var logDepthToExpand = 2
 
     var logDepthToExpandDefault = 2
+
+    // Debug Tools
+    var debugBreakItemId: ID = 0
 
 
     //------------------------------------------------------------------

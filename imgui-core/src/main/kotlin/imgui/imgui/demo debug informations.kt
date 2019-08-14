@@ -25,13 +25,16 @@ import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameCount
 import imgui.ImGui.getId
+import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.isMouseClicked
 import imgui.ImGui.logFinish
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
+import imgui.ImGui.mouseCursor
 import imgui.ImGui.popId
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushId
@@ -40,6 +43,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemWidth
+import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.smallButton
 import imgui.ImGui.style
@@ -237,6 +241,26 @@ interface imgui_demoDebugInformations {
         }
 
         if (treeNode("Tools")) {
+
+            if (button("Item Picker.."))
+                pickingEnabled = true
+            if (pickingEnabled)            {
+                val hoveredId = g.hoveredIdPreviousFrame
+                mouseCursor = MouseCursor.Hand
+                if (Key.Escape.isPressed)
+                    pickingEnabled = false
+                if (isMouseClicked(0) && hoveredId != 0)                {
+                    g.debugBreakItemId = hoveredId
+                    pickingEnabled = false
+                }
+                setNextWindowBgAlpha(0.5f)
+                beginTooltip()
+                text("HoveredId: 0x%08X", hoveredId)
+                text("Press ESC to abort picking.")
+                textColored(getStyleColorVec4(if(hoveredId != 0) Col.Text else Col.TextDisabled), "Click to break in debugger!")
+                endTooltip()
+            }
+
             checkbox("Show windows begin order", ::showWindowsBeginOrder)
             checkbox("Show windows rectangles", ::showWindowsRects)
             sameLine()
@@ -356,6 +380,7 @@ interface imgui_demoDebugInformations {
             }
         }
 
+        var pickingEnabled = false
         var showWindowsBeginOrder = false
         var showWindowsRects = false
         var showWindowsRectType = WRT.InnerClipRect
