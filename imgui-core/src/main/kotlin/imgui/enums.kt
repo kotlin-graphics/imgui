@@ -12,7 +12,7 @@ import imgui.internal.InputReadMode
 //-----------------------------------------------------------------------------
 
 
-/** Flags for ImGui::Begin()    */
+/** Flags: for Begin(), BeginChild()    */
 enum class WindowFlag(@JvmField val i: WindowFlags) {
 
     None(0),
@@ -96,7 +96,7 @@ infix fun Int.has(b: WindowFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: WindowFlag) = and(b.i) == 0
 infix fun Int.wo(b: WindowFlag): WindowFlags = and(b.i.inv())
 
-/** Flags for ImGui::InputText()    */
+/** Flags for ImGui::InputText(), InputTextMultiline()    */
 enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flags the others enum
 
     None(0),
@@ -158,7 +158,7 @@ infix fun Int.or(b: InputTextFlag): InputTextFlags = this or b.i
 infix fun Int.has(b: InputTextFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: InputTextFlag) = (this and b.i) == 0
 
-/** Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader*()   */
+/** Flags: for TreeNode(), TreeNodeEx(), CollapsingHeader()   */
 enum class TreeNodeFlag(@JvmField val i: Int) {
 
     None(0),
@@ -231,6 +231,7 @@ infix fun Int.or(other: SelectableFlag): SelectableFlags = this or other.i
 infix fun Int.has(b: SelectableFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: SelectableFlag) = (this and b.i) == 0
 
+/** Flags: for BeginCombo() */
 enum class ComboFlag(@JvmField val i: Int) {
     None(0),
     /** Align the popup toward the left by default */
@@ -319,7 +320,7 @@ infix fun Int.has(b: TabItemFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: TabItemFlag) = and(b.i) == 0
 
 
-// Flags for ImGui::IsWindowFocused()
+/** Flags for ImGui::IsWindowFocused() */
 enum class FocusedFlag(@JvmField val i: Int) {
     None(0),
     /** isWindowFocused(): Return true if any children of the window is focused */
@@ -338,6 +339,7 @@ infix fun Int.or(other: FocusedFlag): FocusedFlags = or(other.i)
 infix fun Int.has(b: FocusedFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: FocusedFlag) = and(b.i) == 0
 
+/** Flags: for IsItemHovered(), IsWindowHovered() etc. */
 enum class HoveredFlag(@JvmField val i: Int) {
     /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active
      *  popup or modal blocking inputs under them.  */
@@ -353,7 +355,7 @@ enum class HoveredFlag(@JvmField val i: Int) {
     //AllowWhenBlockedByModal     (1 shl 4),   // Return true even if a modal popup window is normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
     /** Return true even if an active item is blocking access to this item/window. Useful for Drag and Drop patterns.   */
     AllowWhenBlockedByActiveItem(1 shl 5),
-    /** Return true even if the position is overlapped by another window,   */
+    /** Return true even if the position is obstructed or overlapped by another window,   */
     AllowWhenOverlapped(1 shl 6),
     /** Return true even if the item is disabled */
     AllowWhenDisabled(1 shl 7),
@@ -435,7 +437,9 @@ enum class Dir {
 
 infix fun Int.shl(b: Dir) = shl(b.i)
 
-/** User fill ImGuiio.KeyMap[] array with indices into the ImGuiio.KeysDown[512] array  */
+/** User fill ImGuiio.KeyMap[] array with indices into the ImGuiio.KeysDown[512] array
+ *
+ *  A key identifier (ImGui-side enum) */
 enum class Key {
     Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
     Space, Enter, Escape, A, C, V, X, Y, Z, Count;
@@ -465,7 +469,9 @@ enum class Key {
  *  based on your io.keysDown[] + io.keyMap[] arrays.
  *  Gamepad:  Set io.configFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling
  *  ::newFrame(). Note that io.navInputs[] is cleared by ::endFrame().
- *  Read instructions in imgui.cpp for more details.    */
+ *  Read instructions in imgui.cpp for more details.
+ *
+ *  An input identifier for navigation */
 enum class NavInput {
     // Gamepad Mapping
     /** activate / open / toggle / tweak value       // e.g. Cross (PS4), A (Xbox), B (Switch), Space (Keyboard)   */
@@ -538,7 +544,9 @@ enum class NavInput {
 
 infix fun Int.shl(f: NavInput) = shl(f.i)
 
-/** Configuration flags stored in io.configFlags  */
+/** Configuration flags stored in io.configFlags
+ *
+ *  Flags: for io.ConfigFlags   */
 enum class ConfigFlag(@JvmField val i: Int) {
     None(0),
     /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeysDown[]. */
@@ -581,7 +589,9 @@ infix fun ConfigFlag.or(b: ConfigFlag): ConfigFlags = i or b.i
 
 typealias BackendFlags = Int
 
-/** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end. */
+/** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end.
+ *
+ *  Flags: for io.BackendFlags  */
 enum class BackendFlag(@JvmField val i: Int) {
     None(0),
     /** Back-end Platform supports gamepad and currently has one connected. */
@@ -725,6 +735,7 @@ infix fun BackendFlag.or(b: BackendFlag): BackendFlags = i or b.i
 //    }
 //}
 
+/** A color identifier for styling */
 enum class Col {
 
     Text,
@@ -799,7 +810,9 @@ enum class Col {
  *  NB: the enum only refers to fields of ImGuiStyle which makes sense to be pushed/poped inside UI code.
  *  During initialization, feel free to just poke into ImGuiStyle directly.
  *  NB: if changing this enum, you need to update the associated internal table GStyleVarInfo[] accordingly. This is
- *  where we link enum values to members offset/type.   */
+ *  where we link enum values to members offset/type.
+ *
+ *  A variable identifier for styling   */
 enum class StyleVar {
     /** float   */
     Alpha,
@@ -852,7 +865,9 @@ enum class StyleVar {
     val i = ordinal
 }
 
-/** Flags for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()   */
+/** Flags for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()
+ *
+ *  Flags: for ColorEdit4(), ColorPicker4() etc.    */
 enum class ColorEditFlag(@JvmField val i: Int) {
 
     None(0),
@@ -929,7 +944,9 @@ infix fun Int.wo(b: Int): ColorEditFlags = this and b.inv()
 
 /** Enumeration for GetMouseCursor()
  *  User code may request binding to display given cursor by calling SetMouseCursor(),
- *  which is why we have some cursors that are marked unused here */
+ *  which is why we have some cursors that are marked unused here
+ *
+ *  A mouse cursor identifier */
 enum class MouseCursor {
 
     None,
@@ -958,10 +975,12 @@ enum class MouseCursor {
     }
 }
 
-/** Enumateration for ImGui::SetWindow***(), SetNextWindow***(), SetNextItem***() functions
+/** Enumeration for ImGui::SetWindow***(), SetNextWindow***(), SetNextItem***() functions
  *  Represent a condition.
  *  Important: Treat as a regular enum! Do NOT combine multiple values using binary operators!
- *  All the functions above treat 0 as a shortcut to Cond.Always. */
+ *  All the functions above treat 0 as a shortcut to Cond.Always.
+ *
+ *  Enum: A condition for many Set*() functions */
 enum class Cond(@JvmField val i: Int) {
 
     None(0),
