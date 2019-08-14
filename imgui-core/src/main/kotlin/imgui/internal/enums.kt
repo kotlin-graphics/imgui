@@ -14,6 +14,8 @@ val PAYLOAD_TYPE_DOCKABLE = "_IMDOCK"   // ImGuiWindow* // [Internal] Docking/ta
 /** flags: for ButtonEx(), ButtonBehavior()  // enum ButtonFlag */
 typealias ButtonFlags = Int
 
+typealias ColumnsFlags = Int          // -> enum ImGuiColumnsFlags_       // Flags: BeginColumns()
+
 /** Flags: for DragBehavior()                // enum ImGuiDragFlags */
 typealias DragFlags = Int
 
