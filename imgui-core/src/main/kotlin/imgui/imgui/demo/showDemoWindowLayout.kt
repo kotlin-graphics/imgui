@@ -69,7 +69,9 @@ import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowContentSize
+import imgui.ImGui.setScrollFromPosX
 import imgui.ImGui.setScrollFromPosY
+import imgui.ImGui.setScrollHereX
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderFloat
@@ -79,6 +81,8 @@ import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textColored
+import imgui.ImGui.textLineHeight
+import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
@@ -98,10 +102,7 @@ import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import imgui.imgui.imgui_demoDebugInformations.Companion.showExampleMenuFile
 import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
-import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
-import imgui.SelectableFlag as Sf
-import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 
 object showDemoWindowLayout {
@@ -130,12 +131,14 @@ object showDemoWindowLayout {
 
     /* Tabs */
     var tabBarFlags: TabBarFlags = TabBarFlag.Reorderable.i
-    val names = arrayOf("Artichoke", "Beetroot", "Celery", "Daikon")
+    val names0 = arrayOf("Artichoke", "Beetroot", "Celery", "Daikon")
     val opened = BooleanArray(4) { true } // Persistent user state
 
     /* Scrolling */
     var track = true
-    var trackLine = 50
+    var trackItem = 50
+    val names1 = arrayOf("Top", "25%%", "Center", "75%%", "Bottom") // double quote for ::format escaping
+    val names2 = arrayOf("Left", "25%%", "Center", "75%%", "Right")
     var scrollToOffPx = 0f
     var scrollToPosPx = 200f
 
@@ -220,7 +223,7 @@ object showDemoWindowLayout {
                 - Using ImGui::GetItemRectMin/Max() to query the "item" state (because the child window is an item from the POV of the parent window)
                     See "Widgets" -> "Querying Status (Active/Focused/Hovered etc.)" section for more details about this. */
             run {
-                cursorPosX = 50f
+                cursorPosX += 10f
                 withStyleColor(Col.ChildBg, COL32(255, 0, 0, 100)) {
                     beginChild("blah", Vec2(200, 100), true, Wf.None.i)
                     for (n in 0..49)
@@ -376,14 +379,14 @@ object showDemoWindowLayout {
                 // Tab Bar
                 for (n in opened.indices) {
                     if (n > 0) sameLine()
-                    checkbox(names[n], opened, n)
+                    checkbox(names0[n], opened, n)
                 }
 
                 // Passing a bool* to BeginTabItem() is similar to passing one to Begin(): the underlying bool will be set to false when the tab is closed.
                 if (beginTabBar("MyTabBar", tabBarFlags)) {
                     for (n in opened.indices)
-                        if (opened[n] && beginTabItem(names[n], opened, n)) {
-                            text("This is the ${names[n]} tab!")
+                        if (opened[n] && beginTabItem(names0[n], opened, n)) {
+                            text("This is the ${names0[n]} tab!")
                             if (n has 1)
                                 text("I am an odd tab.")
                             endTabItem()
@@ -396,7 +399,7 @@ object showDemoWindowLayout {
 
         treeNode("Groups") {
 
-            helpMarker("Using BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundles the whole group so that you can use functions such as IsItemHovered() on it.")
+            helpMarker("BeginGroup() basically locks the horizontal position for new line. EndGroup() bundles the whole group so that you can use \"item\" functions such as IsItemHovered()/IsItemActive() or SameLine() etc. on the whole group.")
             group {
                 group {
                     button("AAA")
@@ -492,49 +495,78 @@ object showDemoWindowLayout {
 
         treeNode("Scrolling") {
 
-            helpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given position.")
+            // Vertical scroll functions
+            helpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given vertical position.")
 
             checkbox("Track", ::track)
             pushItemWidth(100)
-            sameLine(140); track = dragInt("##line", ::trackLine, 0.25f, 0, 99, "Line = %d") or track
+            sameLine(140); track = dragInt("##item", ::trackItem, 0.25f, 0, 99, "Item = %d") or track
 
             var scrollToOff = button("Scroll Offset")
-            sameLine(140); scrollToOff = dragFloat("##off_y", ::scrollToOffPx, 1f, 0f, 9999f, "+%.0f px") or scrollToOff
+            sameLine(140); scrollToOff = dragFloat("##off", ::scrollToOffPx, 1f, 0f, 9999f, "+%.0f px") or scrollToOff
 
             var scrollToPos = button("Scroll To Pos")
-            sameLine(140); scrollToPos = dragFloat("##pos_y", ::scrollToPosPx, 1f, 0f, 9999f, "Y = %.0f px") or scrollToPos
+            sameLine(140); scrollToPos = dragFloat("##pos", ::scrollToPosPx, 1f, 0f, 9999f, "X/Y = %.0f px") or scrollToPos
 
             popItemWidth()
             if (scrollToOff || scrollToPos)
                 track = false
 
-            val childW = (contentRegionAvail.x - 4 * style.itemSpacing.x) / 5
+            var childW = (contentRegionAvail.x - 4 * style.itemSpacing.x) / 5
+            if (childW < 20f)
+                childW = 20f
+            pushId("##VerticalScrolling")
             for (i in 0..4) {
                 if (i > 0) sameLine()
                 group {
-                    text("%s", if (i == 0) "Top" else if (i == 1) "25%" else if (i == 2) "Center" else if (i == 3) "75%" else "Bottom")
+                    textUnformatted(names1[i])
 
-                    val childFlags = Wf.MenuBar.i
-                    beginChild(getId(i), Vec2(childW, 200f), true, childFlags)
+                    beginChild(getId(i), Vec2(childW, 200f), true)
                     if (scrollToOff)
                         scrollY = scrollToOffPx
                     if (scrollToPos)
                         setScrollFromPosY(cursorStartPos.y + scrollToPosPx, i * 0.25f)
-                    for (line in 0..99)
-                        if (track && line == trackLine) {
-                            textColored(Vec4(1, 1, 0, 1), "Line %d", line)
+                    for (item in 0..99)
+                        if (track && item == trackItem) {
+                            textColored(Vec4(1, 1, 0, 1), "Item %d", item)
                             setScrollHereY(i * 0.25f) // 0.0f:top, 0.5f:center, 1.0f:bottom
                         } else
-                            text("Line $line")
+                            text("Item $item")
                     val scrollY = scrollY
                     val scrollMaxY = scrollMaxY
                     endChild()
                     text("%.0f/%.0f", scrollY, scrollMaxY)
                 }
             }
-        }
+            popId()
 
-        treeNode("Horizontal Scrolling") {
+            // Horizontal scroll functions
+            spacing()
+            helpMarker("Use SetScrollHereX() or SetScrollFromPosX() to scroll to a given horizontal position.\n\nUsing the \"Scroll To Pos\" button above will make the discontinuity at edges visible: scrolling to the top/bottom/left/right-most item will add an additional WindowPadding to reflect on reaching the edge of the list.\n\nBecause the clipping rectangle of most window hides half worth of WindowPadding on the left/right, using SetScrollFromPosX(+1) will usually result in clipped text whereas the equivalent SetScrollFromPosY(+1) wouldn't.")
+            pushId("##HorizontalScrolling")
+            for (i in 0..4) {
+                val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
+                beginChild(getId(i), Vec2(-100f, childHeight), true, Wf.HorizontalScrollbar.i)
+                if (scrollToOff)
+                    scrollX = scrollToOffPx
+                if (scrollToPos)
+                    setScrollFromPosX(cursorStartPos.x + scrollToPosPx, i * 0.25f)
+                for (item in 0..99) {
+                    if (track && item == trackItem) {
+                        textColored(Vec4(1, 1, 0, 1), "Item $item")
+                        setScrollHereX(i * 0.25f) // 0.0f:left, 0.5f:center, 1.0f:right
+                    } else
+                        text("Item $item")
+                    sameLine()
+                }
+                endChild()
+                sameLine()
+                text("${names2[i]}\n%.0f/%.0f", scrollX, scrollMaxX)
+                spacing()
+            }
+            popId()
+
+            // Miscellaneous Horizontal Scrolling Demo
 
             helpMarker("Horizontal scrolling for a window has to be enabled explicitly via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\nYou may want to explicitly specify content width by calling SetNextWindowContentWidth() before Begin().")
             sliderInt("Lines", ::lines, 1, 15)
