@@ -1868,11 +1868,11 @@ interface imgui_internal {
         var roundingCorners: DrawCornerFlags = if (otherScrollbarSize <= 0f) Dcf.BotRight.i else 0
         val bb = Rect()
         if (axis == Axis.X) {
-            bb.min.put(innerRect.min.x, outerRect.max.y - borderSize - scrollbarSize)
+            bb.min.put(innerRect.min.x, max(outerRect.min.y, outerRect.max.y - borderSize - scrollbarSize))
             bb.max.put(innerRect.max.x, outerRect.max.y)
             roundingCorners = roundingCorners or Dcf.BotLeft
         } else {
-            bb.min.put(outerRect.max.x - borderSize - scrollbarSize, innerRect.min.y)
+            bb.min.put(max(outerRect.min.x, outerRect.max.x - borderSize - scrollbarSize), innerRect.min.y)
             bb.max.put(outerRect.max.x, window.innerRect.max.y)
             roundingCorners = roundingCorners or when {
                 window.flags has Wf.NoTitleBar && window.flags hasnt Wf.MenuBar -> Dcf.TopRight.i
