@@ -7,12 +7,8 @@ import glm_.max
 import glm_.vec4.Vec4
 import imgui.ImGui.calcListClipping
 import imgui.ImGui.colorConvertHSVtoRGB
-import imgui.ImGui.currentWindow
-import imgui.ImGui.currentWindowRead
-import imgui.ImGui.cursorPosY
 import imgui.ImGui.inputText
 import imgui.ImGui.setNextItemWidth
-import imgui.ImGui.style
 import imgui.imgui.g
 import imgui.internal.TabBar
 import imgui.internal.strlen

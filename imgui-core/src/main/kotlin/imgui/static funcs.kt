@@ -165,28 +165,34 @@ fun checkStacksSize(window: Window, write: Boolean) {
     val backup = window.dc.stackSizesBackup
     var ptr = 0
 
-    window.idStack.size.let {// Too few or too many PopID()/TreePop()
+    window.idStack.size.let {
+        // Too few or too many PopID()/TreePop()
         if (write) backup[ptr++] = it
         else assert(backup[ptr++] == it) { "PushID/PopID or TreeNode/TreePop Mismatch!" }
     }
-    window.dc.groupStack.size.let { // Too few or too many EndGroup()
+    window.dc.groupStack.size.let {
+        // Too few or too many EndGroup()
         if (write) backup[ptr++] = it
         else assert(backup[ptr++] == it) { "BeginGroup/EndGroup Mismatch!" }
     }
-    g.beginPopupStack.size.let { // Too few or too many EndMenu()/EndPopup()
+    g.beginPopupStack.size.let {
+        // Too few or too many EndMenu()/EndPopup()
         if (write) backup[ptr++] = it
         else assert(backup[ptr++] == it) { "BeginMenu/EndMenu or BeginPopup/EndPopup Mismatch" }
     }
     // For color, style and font stacks there is an incentive to use Push/Begin/Pop/.../End patterns, so we relax our checks a little to allow them.
-    g.colorModifiers.size.let { // Too few or too many PopStyleColor()
+    g.colorModifiers.size.let {
+        // Too few or too many PopStyleColor()
         if (write) backup[ptr++] = it
         else assert(backup[ptr++] >= it) { "PushStyleColor/PopStyleColor Mismatch!" }
     }
-    g.styleModifiers.size.let { // Too few or too many PopStyleVar()
+    g.styleModifiers.size.let {
+        // Too few or too many PopStyleVar()
         if (write) backup[ptr++] = it
         else assert(backup[ptr++] >= it) { "PushStyleVar/PopStyleVar Mismatch!" }
     }
-    g.fontStack.size.let { // Too few or too many PopFont()
+    g.fontStack.size.let {
+        // Too few or too many PopFont()
         if (write) backup[ptr++] = it
         else assert(backup[ptr++] >= it) { "PushFont/PopFont Mismatch!" }
     }
@@ -195,8 +201,15 @@ fun checkStacksSize(window: Window, write: Boolean) {
 
 fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean): Vec2 {  // TODO -> window class?
     val scroll = Vec2(window.scroll)
-    if (window.scrollTarget.x < Float.MAX_VALUE)
-        scroll.x = window.scrollTarget.x - window.scrollTargetCenterRatio.x * window.innerRect.width
+    if (window.scrollTarget.x < Float.MAX_VALUE) {
+        val crX = window.scrollTargetCenterRatio.x
+        var targetX = window.scrollTarget.x
+        if (snapOnEdges && crX <= 0f && targetX <= window.windowPadding.x)
+            targetX = 0f
+        else if (snapOnEdges && crX >= 1f && targetX >= window.contentSize.x + window.windowPadding.x + style.itemSpacing.x)
+            targetX = window.contentSize.x + window.windowPadding.x * 2f
+        scroll.x = targetX - crX * window.innerRect.width
+    }
     if (window.scrollTarget.y < Float.MAX_VALUE) {
         /*  'snap_on_edges' allows for a discontinuity at the edge of scrolling limits to take account of WindowPadding
             so that scrolling to make the last item visible scroll far enough to see the padding.         */
