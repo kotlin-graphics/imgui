@@ -196,13 +196,23 @@ interface imgui_internal {
     fun clearActiveId() = setActiveId(0, null)
 
     var hoveredId: ID
+        /** ~GetHoveredID */
         get() = if (g.hoveredId != 0) g.hoveredId else g.hoveredIdPreviousFrame
+        /** ~SetHoveredID */
         set(value) {
             g.hoveredId = value
             g.hoveredIdAllowOverlap = false
             if (value != 0 && g.hoveredIdPreviousFrame != value) {
                 g.hoveredIdTimer = 0f
                 g.hoveredIdNotActiveTimer = 0f
+            }
+            // [DEBUG] Item Picker tool!
+            // We perform the check here because SetHoveredID() is not frequently called (1~ time a frame), making
+            // the cost of this tool near-zero. We would get slightly better call-stack if we made the test in ItemAdd()
+            // but that would incur a slightly higher cost and may require us to hide this feature behind a define.
+            if (value != 0 && value == g.debugBreakItemId) {
+//                IM_DEBUG_BREAK() TODO?
+                g.debugBreakItemId = 0
             }
         }
 
