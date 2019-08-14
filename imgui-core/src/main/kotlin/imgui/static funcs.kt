@@ -231,7 +231,10 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean)
 
 fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 
-fun createNewWindowSettings(name: String) = WindowSettings(name).also { g.settingsWindows += it }
+fun createNewWindowSettings(name: String) =
+        WindowSettings(name.removePrefix("###")).also { // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
+            g.settingsWindows += it
+        }
 
 
 val viewportRect: Rect
