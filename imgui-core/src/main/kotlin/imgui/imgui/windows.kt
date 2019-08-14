@@ -444,7 +444,7 @@ interface imgui_windows {
                 innerClipRect.put(
                         minX = floor(0.5f + innerRect.min.x + max(floor(windowPadding.x * 0.5f), windowBorderSize)),
                         minY = floor(0.5f + innerRect.min.y + topBorderSize),
-                        maxX = floor(0.5f + innerRect.max.x - max(floor(windowPadding.y * 0.5f), windowBorderSize)),
+                        maxX = floor(0.5f + innerRect.max.x - max(floor(windowPadding.x * 0.5f), windowBorderSize)),
                         maxY = floor(0.5f + innerRect.max.y - windowBorderSize))
                 innerClipRect clipWithFull hostRect
             }
