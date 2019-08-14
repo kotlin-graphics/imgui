@@ -203,7 +203,7 @@ class DrawListSplitter {
         // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
         var newCmdBufferCount = 0
         var newIdxBufferCount = 0
-        var lastCmd = if (_count > 0 && drawList.cmdBuffer.isNotEmpty()) drawList.cmdBuffer.last() else null
+        var lastCmd = if (_count > 0 && _channels[0]._cmdBuffer.isNotEmpty()) _channels[0]._cmdBuffer.last() else null
         var idxOffset = lastCmd?.run { idxOffset + elemCount } ?: 0
         for (i in 1 until _count) {
             val ch = _channels[i]
@@ -1035,7 +1035,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         cmdBuffer.clear()
         idxBuffer.resize(0) // we dont assign because it wont create a new istance for sure
         vtxBuffer.resize(0)
-        flags = _data?.initialFlags ?: DrawListFlag.None.i
+        flags = _data.initialFlags
         _vtxCurrentOffset = 0
         _vtxCurrentIdx = 0
         _vtxWritePtr = 0
@@ -1348,8 +1348,4 @@ class DrawData {
         ret.displaySize = displaySize
         ret.totalIdxCount = totalIdxCount
         ret.totalVtxCount = totalVtxCount
-        ret.valid = valid
-
-        return ret
-    }
-}
+        ret.v
