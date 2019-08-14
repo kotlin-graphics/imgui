@@ -95,6 +95,7 @@ enum class DragFlag(val i: Int) { None(0), Vertical(1 shl 0) }
 infix fun Int.has(b: DragFlag) = and(b.i) != 0
 infix fun Int.hasnt(b: DragFlag) = and(b.i) == 0
 
+/** Flags: for Columns(), BeginColumns() */
 enum class ColumnsFlag(val i: ColumnsFlags) {
 
     None(0),
@@ -307,6 +308,7 @@ infix fun Int.shl(layer: NavLayer) = shl(layer.i)
 
 enum class PopupPositionPolicy { Default, ComboBox }
 
+/** Flags: for ImDrawList::AddRect(), AddRectFilled() etc. */
 enum class DrawCornerFlag(val i: DrawCornerFlags) {
     TopLeft(1 shl 0), // 0x1
     TopRight(1 shl 1), // 0x2
@@ -326,6 +328,7 @@ infix fun Int.and(b: DrawCornerFlag): DrawCornerFlags = and(b.i)
 infix fun Int.has(b: DrawCornerFlag) = (this and b.i) != 0
 infix fun Int.hasnt(b: DrawCornerFlag) = (this and b.i) == 0
 
+/** Flags: for ImDrawList */
 enum class DrawListFlag(val i: Int) {
     None(0),
     /** Lines are anti-aliased (*2 the number of triangles for 1.0f wide line, otherwise *3 the number of triangles) */

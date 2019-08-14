@@ -466,6 +466,8 @@ class FontAtlas {
     //-------------------------------------------
     // Members
     //-------------------------------------------
+
+    /** Flags: for ImFontAtlas */
     enum class FontAtlasFlag {
         None,
         /** Don't round the height to next power of two */
