@@ -16,7 +16,7 @@ import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.collapseButton
 import imgui.ImGui.defaultFont
 import imgui.ImGui.end
-import imgui.ImGui.frontMostPopupModal
+import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
@@ -219,7 +219,7 @@ interface imgui_main {
 
         // Background darkening/whitening
         g.dimBgRatio = when {
-            frontMostPopupModal != null || (g.navWindowingTarget != null && g.navWindowingHighlightAlpha > 0f) -> (g.dimBgRatio + io.deltaTime * 6f) min 1f
+            topMostPopupModal != null || (g.navWindowingTarget != null && g.navWindowingHighlightAlpha > 0f) -> (g.dimBgRatio + io.deltaTime * 6f) min 1f
             else -> (g.dimBgRatio - io.deltaTime * 10f) max 0f
         }
         g.mouseCursor = MouseCursor.Arrow
@@ -393,15 +393,15 @@ interface imgui_main {
         if (g.backgroundDrawList.vtxBuffer.hasRemaining())
             g.backgroundDrawList addTo g.drawDataBuilder.layers[0]
 
-        val windowsToRenderFrontMost = arrayOf(
+        val windowsToRenderTopMost = arrayOf(
                 g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
                 g.navWindowingList.getOrNull(0).takeIf { g.navWindowingTarget != null })
         g.windows
-                .filter { it.isActiveAndVisible && it.flags hasnt Wf.ChildWindow && it !== windowsToRenderFrontMost[0] && it !== windowsToRenderFrontMost[1] }
+                .filter { it.isActiveAndVisible && it.flags hasnt Wf.ChildWindow && it !== windowsToRenderTopMost[0] && it !== windowsToRenderTopMost[1] }
                 .forEach { it.addRootWindowToDrawData() }
-        windowsToRenderFrontMost
+        windowsToRenderTopMost
                 .filterNotNull()
-                .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the front-most window
+                .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the top-most window
                 .forEach { it.addRootWindowToDrawData() }
         g.drawDataBuilder.flattenIntoSingleLayer()
 

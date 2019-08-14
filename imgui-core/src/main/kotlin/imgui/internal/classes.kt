@@ -1024,7 +1024,7 @@ class Window(var context: Context, var name: String) {
     fun bringToFocusFront() {
         if (g.windowsFocusOrder.last() === this)
             return
-        for (i in g.windowsFocusOrder.size - 2 downTo 0) // We can ignore the front most window
+        for (i in g.windowsFocusOrder.size - 2 downTo 0) // We can ignore the top-most window
             if (g.windowsFocusOrder[i] === this) {
                 g.windowsFocusOrder.removeAt(i)
                 g.windowsFocusOrder += this
@@ -1037,7 +1037,7 @@ class Window(var context: Context, var name: String) {
         val currentFrontWindow = g.windows.last()
         if (currentFrontWindow === this || currentFrontWindow.rootWindow === this)
             return
-        for (i in g.windows.size - 2 downTo 0) // We can ignore the front most window
+        for (i in g.windows.size - 2 downTo 0) // We can ignore the top-most window
             if (g.windows[i] === this) {
                 g.windows.removeAt(i)
                 g.windows += this

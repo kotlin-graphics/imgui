@@ -11,7 +11,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.endColumns
 import imgui.ImGui.findBestWindowPosForPopup
 import imgui.ImGui.findWindowByName
-import imgui.ImGui.frontMostPopupModal
+import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.getColorU32
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
@@ -26,12 +26,7 @@ import imgui.imgui.imgui_main.Companion.updateManualResize
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
-import imgui.FocusedFlag as Ff
-import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
-import imgui.internal.ButtonFlag as Bf
-import imgui.internal.DrawCornerFlag as Dcf
-import imgui.internal.DrawListFlag as Dlf
 import imgui.internal.ItemFlag as If
 import imgui.internal.LayoutType as Lt
 
@@ -475,7 +470,7 @@ interface imgui_windows {
             pushClipRect(hostRect.min, hostRect.max, false)
 
             // Draw modal window background (darkens what is behind them, all viewports)
-            val dimBgForModal = flags has Wf.Modal && window === frontMostPopupModal && window.hiddenFramesCannotSkipItems <= 0
+            val dimBgForModal = flags has Wf.Modal && window === topMostPopupModal && window.hiddenFramesCannotSkipItems <= 0
             val dimBgForWindowList = g.navWindowingTargetAnim?.rootWindow === window
             if (dimBgForModal || dimBgForWindowList) {
                 val dimBgCol = getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
