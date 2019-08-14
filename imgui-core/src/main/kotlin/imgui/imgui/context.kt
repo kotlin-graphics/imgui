@@ -206,7 +206,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navScoringRectScreen = Rect()
     /** Metrics for debugging   */
     var navScoringCount = 0
-    /** When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed front-most.   */
+    /** When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed top-most.   */
     var navWindowingTarget: Window? = null
     /** Record of last valid NavWindowingTarget until DimBgRatio and NavWindowingHighlightAlpha becomes 0f */
     var navWindowingTargetAnim: Window? = null

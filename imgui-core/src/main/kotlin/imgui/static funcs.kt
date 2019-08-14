@@ -15,7 +15,7 @@ import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.end
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.findWindowByName
-import imgui.ImGui.frontMostPopupModal
+import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.getNavInputAmount2d
@@ -741,7 +741,7 @@ fun navUpdateWindowing() {
     var applyFocusWindow: Window? = null
     var applyToggleLayer = false
 
-    val modalWindow = frontMostPopupModal
+    val modalWindow = topMostPopupModal
     if (modalWindow != null) {
         g.navWindowingTarget = null
         return
@@ -781,7 +781,7 @@ fun navUpdateWindowing() {
                 g.navWindowingHighlightAlpha = 1f
             }
 
-            // Single press toggles NavLayer, long press with L/R apply actual focus on release (until then the window was merely rendered front-most)
+            // Single press toggles NavLayer, long press with L/R apply actual focus on release (until then the window was merely rendered top-most)
             if (!NavInput.Menu.isDown()) {
                 // Once button was held long enough we don't consider it a tap-to-toggle-layer press anymore.
                 g.navWindowingToggleLayer = g.navWindowingToggleLayer and (g.navWindowingHighlightAlpha < 1f)

@@ -148,7 +148,7 @@ interface imgui_windowsUtilities {
         }
     }
 
-    /** Set next window to be focused / front-most. call before Begin() */
+    /** Set next window to be focused / top-most. call before Begin() */
     fun setNextWindowFocus() {
         // Using a Cond member for consistency (may transition all of them to single flag set for fast Clear() op)
         g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasFocus
@@ -174,7 +174,7 @@ interface imgui_windowsUtilities {
     /** (not recommended) set current window collapsed state. prefer using SetNextWindowCollapsed().    */
     fun setWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.None) = g.currentWindow!!.setCollapsed(collapsed, cond)
 
-    /** (not recommended) set current window to be focused / front-most. prefer using SetNextWindowFocus(). */
+    /** (not recommended) set current window to be focused / top-most. prefer using SetNextWindowFocus(). */
     fun setWindowFocus() = g.currentWindow.focus()
 
     /** Set named window position.  */
@@ -186,6 +186,6 @@ interface imgui_windowsUtilities {
     /** Set named window collapsed state    */
     fun setWindowCollapsed(name: String, collapsed: Boolean, cond: Cond = Cond.None) = findWindowByName(name)?.setCollapsed(collapsed, cond)
 
-    /** Set named window to be focused / front-most. use NULL to remove focus.  */
+    /** Set named window to be focused / top-most. use NULL to remove focus.  */
     fun setWindowFocus(name: String) = findWindowByName(name).focus()
 }
