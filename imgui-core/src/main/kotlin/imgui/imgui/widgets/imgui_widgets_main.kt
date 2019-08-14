@@ -182,9 +182,14 @@ interface imgui_widgets_main {
         renderNavHighlight(totalBb, id)
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         renderFrame(checkBb.min, checkBb.max, col.u32, true, style.frameRounding)
-        if (v) {
+        val checkCol = Col.CheckMark.u32
+        if (window.dc.itemFlags has ItemFlag.MixedValue) {
+            // Undocumented tristate/mixed/indeterminate checkbox (#2644)
+            val pad = Vec2(1f max (squareSz / 3.6f).i.f, 1f max (squareSz / 3.6f).i.f)
+            window.drawList.addRectFilled(checkBb.min + pad, checkBb.max - pad, checkCol, style.frameRounding)
+        } else if (v) {
             val pad = 1f max (squareSz / 6f).i.f
-            renderCheckMark(checkBb.min + pad, Col.CheckMark.u32, squareSz - pad * 2f)
+            renderCheckMark(checkBb.min + pad, checkCol, squareSz - pad * 2f)
         }
 
         if (g.logEnabled) logRenderedText(totalBb.min, if (v) "[x]" else "[ ]")
