@@ -1265,7 +1265,7 @@ class Font {
             }
 
             // We ignore blank width at the end of the line (they can be skipped)
-            if (lineWidth + wordWidth >= wrapWidth) {
+            if (lineWidth + wordWidth > wrapWidth) {
                 // Words that cannot possibly fit within an entire line will be cut anywhere.
                 if (wordWidth < wrapWidth)
                     s = if (prevWordEnd != -1) prevWordEnd else wordEnd
