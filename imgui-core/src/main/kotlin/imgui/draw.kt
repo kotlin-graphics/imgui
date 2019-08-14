@@ -1035,7 +1035,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         cmdBuffer.clear()
         idxBuffer.resize(0) // we dont assign because it wont create a new istance for sure
         vtxBuffer.resize(0)
-        flags = _data.initialFlags
+        flags = _data?.initialFlags ?: DrawListFlag.None.i
         _vtxCurrentOffset = 0
         _vtxCurrentIdx = 0
         _vtxWritePtr = 0
