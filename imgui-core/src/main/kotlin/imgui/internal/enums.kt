@@ -132,7 +132,6 @@ infix fun Int.hasnt(b: SeparatorFlag) = (this and b.i) == 0
 /** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
  *  This is going to be exposed in imgui.h when stabilized enough. */
 enum class ItemFlag(@JvmField val i: Int) {
-    // @formatter:off
     NoTabStop(1 shl 0),  // false
     /** Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings. */
     ButtonRepeat(1 shl 1),  // false
@@ -142,8 +141,10 @@ enum class ItemFlag(@JvmField val i: Int) {
     NoNavDefaultFocus(1 shl 4),  // false
     /** MenuItem/Selectable() automatically closes current Popup window */
     SelectableDontClosePopup(1 shl 5),  // false
+    /** [BETA] Represent a mixed/indeterminate value, generally multi-selection where values differ. Currently only supported by Checkbox() (later should support all sorts of widgets) */
+    MixedValue(1 shl 6),  // false
+
     Default_(0)
-    // @formatter:on
 }
 
 infix fun ItemFlag.or(other: ItemFlag) = i or other.i
