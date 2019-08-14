@@ -57,7 +57,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
 
 //    void*         UserData;                 // = NULL               // Store your own data for retrieval by callbacks.
 
-    /** Load, rasterize and pack one or more fonts into a single texture.    */
+    /** Font atlas: load, rasterize and pack one or more fonts into a single texture.    */
     val fonts = sharedFontAtlas ?: FontAtlas()
     /** Global scale all fonts  */
     var fontGlobalScale = 1f
