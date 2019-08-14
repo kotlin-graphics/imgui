@@ -547,7 +547,7 @@ interface imgui_main {
             window = window.getParent()
             val scrollAllowed = window.flags hasnt Wf.NoScrollWithMouse && window.flags hasnt Wf.NoMouseInputs
             if (scrollAllowed && (io.mouseWheel != 0f || io.mouseWheelH != 0f) && !io.keyCtrl) {
-                val maxStep = (window.contentsRegionRect.size + window.windowPadding * 2f) * 0.67f
+                val maxStep = window.innerRect.size * 0.67f
 
                 // Vertical Mouse Wheel Scrolling (hold Shift to scroll horizontally)
                 if (io.mouseWheel != 0f && !io.keyShift) {
