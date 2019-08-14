@@ -333,6 +333,8 @@ class Columns {
     var hostCursorMaxPosX = 0f
     /** Backup of ClipRect at the time of BeginColumns() */
     var hostClipRect = Rect()
+    /** Backup of WorkRect at the time of BeginColumns() */
+    var hostWorkRect = Rect()
     var lineMinY = 0f
     var lineMaxY = 0f
     val columns = ArrayList<ColumnData>()
@@ -716,7 +718,7 @@ class Window(var context: Context, var name: String) {
 
     /** == Window->Rect() just after setup in Begin(). == window->Rect() for root window. */
     var outerRectClipped = Rect()
-    /** Inner rectangle (omit title bar, menu bar) */
+    /** Inner rectangle (omit title bar, menu bar, scroll bar) */
     var innerRect = Rect()
     /**  == InnerRect shrunk by WindowPadding*0.5f on each side, clipped within viewport or parent clip rect. */
     var innerClipRect = Rect()

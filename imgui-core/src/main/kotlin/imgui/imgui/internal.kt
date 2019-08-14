@@ -26,7 +26,6 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
-import imgui.ImGui.getColumnWidth
 import imgui.ImGui.indent
 import imgui.ImGui.io
 import imgui.ImGui.isItemActive
@@ -449,13 +448,10 @@ interface imgui_internal {
 
     /** [Internal] Absolute coordinate. Saner. This is not exposed until we finishing refactoring work rect features. */
     val contentRegionMaxAbs: Vec2
-        get() {
-            val window = g.currentWindow!!
-            val mx = Vec2(window.contentsRegionRect.max)
-            window.dc.currentColumns?.let {
-                mx.x = window.pos.x + getColumnOffset(it.current + 1) - window.windowPadding.x
-            }
-            return mx
+        get() = g.currentWindow!!.run {
+            val mx = Vec2(contentsRegionRect.max)
+            dc.currentColumns?.let { mx.x = workRect.max.x }
+            mx
         }
 
     /** Shrink excess width from a set of item, by removing width from the larger items first. */
@@ -964,13 +960,16 @@ interface imgui_internal {
         window.dc.currentColumns = columns
 
         // Set state for first column
-        columns.offMinX = window.dc.indent - style.itemSpacing.x
-        columns.offMaxX = max(window.workRect.max.x - window.pos.x, columns.offMinX + 1f)
-        columns.hostCursorPosY = window.dc.cursorPos.y
-        columns.hostCursorMaxPosX = window.dc.cursorMaxPos.x
-        columns.hostClipRect put window.clipRect
-        columns.lineMinY = window.dc.cursorPos.y
-        columns.lineMaxY = window.dc.cursorPos.y
+        columns.apply {
+            offMinX = window.dc.indent - style.itemSpacing.x
+            offMaxX = max(window.workRect.max.x - window.pos.x, offMinX + 1f)
+            hostCursorPosY = window.dc.cursorPos.y
+            hostCursorMaxPosX = window.dc.cursorMaxPos.x
+            hostClipRect put window.clipRect
+            hostWorkRect put window.workRect
+            lineMinY = window.dc.cursorPos.y
+            lineMaxY = window.dc.cursorPos.y
+        }
         window.dc.columnsOffset = 0f
         window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
 
@@ -998,7 +997,12 @@ interface imgui_internal {
             window.drawList.channelsSetCurrent(1)
             pushColumnClipRect(0)
         }
-        pushItemWidth(getColumnWidth() * 0.65f)
+
+        val offset0 = getColumnOffset(columns.current)
+        val offset1 = getColumnOffset(columns.current + 1)
+        val width = offset1 - offset0
+        pushItemWidth(width * 0.65f)
+        window.workRect.max.x = window.pos.x + offset1 - window.windowPadding.x
     }
 
     fun endColumns() {
@@ -1068,6 +1072,7 @@ interface imgui_internal {
         columns.isBeingResized = isBeingResized
 
         window.apply {
+            workRect put columns.hostWorkRect
             dc.currentColumns = null
             dc.columnsOffset = 0f
             dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
