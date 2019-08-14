@@ -31,7 +31,7 @@ interface imgui_widgets_text {
     /** raw text without formatting. Roughly equivalent to Text("%s", text) but:
      *  A) doesn't require null terminated string if 'text_end' is specified,
      *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
-    fun textUnformatted(text: String, textEnd: Int) = textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText.i)
+    fun textUnformatted(text: String, textEnd: Int = -1) = textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText.i)
 
     /** simple formatted text */
     fun text(fmt: String, vararg args: Any) = textV(fmt, args)
