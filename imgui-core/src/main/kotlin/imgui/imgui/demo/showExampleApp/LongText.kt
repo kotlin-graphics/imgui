@@ -37,7 +37,7 @@ object LongText {
         }
 
         ImGui.text("Printing unusually long amount of text.")
-        ImGui.combo("Test type", ::testType, "Single call to TextUnformatted()\u0000Multiple calls to Text(), clipped manually\u0000Multiple calls to Text(), not clipped (slow)\u0000")
+        ImGui.combo("Test type", ::testType, "Single call to TextUnformatted()\u0000Multiple calls to Text(), clipped\u0000Multiple calls to Text(), not clipped (slow)\u0000")
         ImGui.text("Buffer contents: %d lines, %d bytes", lines, log.length)
         if (ImGui.button("Clear")) { log.clear(); lines = 0; }
         ImGui.sameLine()

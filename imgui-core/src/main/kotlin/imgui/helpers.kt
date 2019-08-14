@@ -3,6 +3,7 @@ package imgui
 import glm_.bool
 import glm_.glm
 import glm_.i
+import glm_.max
 import glm_.vec4.Vec4
 import imgui.ImGui.calcListClipping
 import imgui.ImGui.colorConvertHSVtoRGB
@@ -12,6 +13,7 @@ import imgui.ImGui.cursorPosY
 import imgui.ImGui.inputText
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.style
+import imgui.imgui.g
 import imgui.internal.TabBar
 import imgui.internal.strlen
 import java.util.stream.Collectors
@@ -183,48 +185,52 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
 
     /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those
      *  items.  */
-    fun step() = when {
+    fun step(): Boolean {
+        val window = g.currentWindow!!
 
-        itemsCount == 0 || currentWindowRead!!.skipItems -> {
-            itemsCount = -1
-            false
-        }
-        /*  Step 0: the clipper let you process the first element, regardless of it being visible or not, so we can measure
-            the element height.     */
-        stepNo == 0 -> {
-            display = 0..1
-            startPosY = cursorPosY
-            stepNo = 1
-            true
-        }
-        /*  Step 1: the clipper infer height from first element, calculate the actual range of elements to display, and
-            position the cursor before the first element.     */
-        stepNo == 1 -> {
-            if (itemsCount == 1) {
+        return when {
+
+            itemsCount == 0 || window.skipItems -> {
                 itemsCount = -1
                 false
-            } else {
-                val itemsHeight = cursorPosY - startPosY
-                assert(itemsHeight > 0f) { "If this triggers, it means Item 0 hasn't moved the cursor vertically" }
-                begin(itemsCount - 1, itemsHeight)
-                display = display.start + 1..display.last + 1
+            }
+            /*  Step 0: the clipper let you process the first element, regardless of it being visible or not, so we can measure
+                the element height.     */
+            stepNo == 0 -> {
+                display = 0..1
+                startPosY = window.dc.cursorPos.y
+                stepNo = 1
+                true
+            }
+            /*  Step 1: the clipper infer height from first element, calculate the actual range of elements to display, and
+                position the cursor before the first element.     */
+            stepNo == 1 -> {
+                if (itemsCount == 1) {
+                    itemsCount = -1
+                    false
+                } else {
+                    val itemsHeight = window.dc.cursorPos.y - startPosY
+                    assert(itemsHeight > 0f) { "If this triggers, it means Item 0 hasn't moved the cursor vertically" }
+                    begin(itemsCount - 1, itemsHeight)
+                    display = display.start + 1..display.last + 1
+                    stepNo = 3
+                    true
+                }
+            }
+            /*  Step 2: dummy step only required if an explicit items_height was passed to constructor or Begin() and user still
+                call Step(). Does nothing and switch to Step 3.     */
+            stepNo == 2 -> {
+                assert(display.start >= 0 && display.last >= 0)
                 stepNo = 3
                 true
             }
-        }
-        /*  Step 2: dummy step only required if an explicit items_height was passed to constructor or Begin() and user still
-            call Step(). Does nothing and switch to Step 3.     */
-        stepNo == 2 -> {
-            assert(display.start >= 0 && display.last >= 0)
-            stepNo = 3
-            true
-        }
-        else -> {
-            /*  Step 3: the clipper validate that we have reached the expected Y position (corresponding to element
-                DisplayEnd), advance the cursor to the end of the list and then returns 'false' to end the loop.             */
-            if (stepNo == 3)
-                end()
-            false
+            else -> {
+                /*  Step 3: the clipper validate that we have reached the expected Y position (corresponding to element
+                    DisplayEnd), advance the cursor to the end of the list and then returns 'false' to end the loop.             */
+                if (stepNo == 3)
+                    end()
+                false
+            }
         }
     }
 
@@ -236,7 +242,9 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
      */
     fun begin(itemsCount: Int = -1, itemsHeight: Float = -1f) {
 
-        startPosY = cursorPosY
+        val window = g.currentWindow!!
+
+        startPosY = window.dc.cursorPos.y
         this.itemsHeight = itemsHeight
         this.itemsCount = itemsCount
         stepNo = 0
@@ -269,15 +277,12 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
                 FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would
                 stumble on the same issue.
                 The clipper should probably have a 4th step to display the last item in a regular manner.   */
-            cursorPosY = posY
-            val window = currentWindow
-            with(window.dc) {
-                // Setting those fields so that SetScrollHereY() can properly function after the end of our clipper usage.
-                cursorPosPrevLine.y = cursorPos.y - lineHeight
-                /*  If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a
-                    fourth step to let user process and display the last item in their list.             */
-                prevLineSize.y = lineHeight - style.itemSpacing.y
-                currentColumns?.lineMinY = window.dc.cursorPos.y // Setting this so that cell Y position are set properly
+            g.currentWindow!!.dc.apply {
+                cursorPos.y = posY
+                cursorMaxPos.y = cursorMaxPos.y max posY
+                cursorPosPrevLine.y = cursorPos.y - lineHeight  // Setting those fields so that SetScrollHereY() can properly function after the end of our clipper usage.
+                prevLineSize.y = (lineHeight - g.style.itemSpacing.y)      // If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a fourth step to let user process and display the last item in their list.
+                currentColumns?.lineMinY = cursorPos.y                         // Setting this so that cell Y position are set properly
             }
         }
     }
