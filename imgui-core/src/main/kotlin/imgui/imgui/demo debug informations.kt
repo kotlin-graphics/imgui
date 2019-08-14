@@ -56,7 +56,6 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.ImGui.windowDrawList
-import imgui.dsl.child
 import imgui.dsl.indent
 import imgui.dsl.menu
 import imgui.imgui.demo.ExampleApp
@@ -68,10 +67,6 @@ import kool.lim
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.reflect.KMutableProperty0
-import imgui.ColorEditFlag as Cef
-import imgui.InputTextFlag as Itf
-import imgui.SelectableFlag as Sf
-import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 
 /**
@@ -246,17 +241,16 @@ interface imgui_demoDebugInformations {
             checkbox("Show windows rectangles", ::showWindowsRects)
             sameLine()
             setNextItemWidth(fontSize * 12)
-            val rectsNames = arrayOf("OuterRect", "OuterRectClipped", "InnerRect", "InnerClipRect", "WorkRect", "Contents", "ContentsRegionRect")
             imgui_internal._i = showWindowsRectType.ordinal
-            showWindowsRects = showWindowsRects || combo("##rects_type", imgui_internal.Companion::_i, rectsNames)
-            showWindowsRectType = RT.values()[imgui_internal._i]
+            showWindowsRects = showWindowsRects || combo("##show_windows_rect_type", imgui_internal.Companion::_i, WRT.names)
+            showWindowsRectType = WRT.values()[imgui_internal._i]
             if (showWindowsRects)
                 g.navWindow?.let { nav ->
                     bulletText("'${nav.name}':")
                     indent()
-                    for (n in RT.values()) {
-                        val r = Funcs.getRect(nav, n)
-                        text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height, rectsNames[n.ordinal])
+                    for (rectN in WRT.values()) {
+                        val r = Funcs.getWindowRect(nav, rectN)
+                        text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height, WRT.names[rectN.ordinal])
                     }
                     unindent()
                 }
@@ -270,7 +264,7 @@ interface imgui_demoDebugInformations {
                     continue
                 val drawList = getForegroundDrawList(window)
                 if (showWindowsRects) {
-                    val r = Funcs.getRect(window, showWindowsRectType)
+                    val r = Funcs.getWindowRect(window, showWindowsRectType)
                     drawList.addRect(r.min, r.max, COL32(255, 0, 128, 255))
                 }
                 if (showWindowsBeginOrder && window.flags hasnt Wf.ChildWindow) {
@@ -353,11 +347,18 @@ interface imgui_demoDebugInformations {
 
     companion object {
 
-        enum class RT { OuterRect, OuterRectClipped, InnerRect, InnerClipRect, WorkRect, Contents, ContentsRegionRect }
+        /** Windows Rect Type */
+        enum class WRT {
+            OuterRect, OuterRectClipped, InnerRect, InnerClipRect, WorkRect, Contents, ContentsRegionRect;
+
+            companion object {
+                val names = values().map { it.name }
+            }
+        }
 
         var showWindowsBeginOrder = false
         var showWindowsRects = false
-        var showWindowsRectType = RT.InnerClipRect
+        var showWindowsRectType = WRT.InnerClipRect
         var showDrawcmdClipRects = true
 
         var showWindow = false
@@ -431,17 +432,17 @@ interface imgui_demoDebugInformations {
 
         object Funcs {
 
-            fun getRect(window: Window, rectType: RT): Rect = when (rectType) {
-                RT.OuterRect -> window.rect()
-                RT.OuterRectClipped -> window.outerRectClipped
-                RT.InnerRect -> window.innerRect
-                RT.InnerClipRect -> window.innerClipRect
-                RT.WorkRect -> window.workRect
-                RT.Contents -> {
+            fun getWindowRect(window: Window, rectType: WRT): Rect = when (rectType) {
+                WRT.OuterRect -> window.rect()
+                WRT.OuterRectClipped -> window.outerRectClipped
+                WRT.InnerRect -> window.innerRect
+                WRT.InnerClipRect -> window.innerClipRect
+                WRT.WorkRect -> window.workRect
+                WRT.Contents -> {
                     val min = window.innerRect.min - window.scroll + window.windowPadding
                     Rect(min, min + window.contentSize)
                 }
-                RT.ContentsRegionRect -> window.contentsRegionRect
+                WRT.ContentsRegionRect -> window.contentsRegionRect
                 else -> error("invalid")
             }
 
