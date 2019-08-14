@@ -41,7 +41,7 @@ interface imgui_childWindows {
      *  size == 0f: use remaining window size
      *  size < 0f: use remaining window size minus abs(size)
      *  size > 0f: fixed size. each axis can use a different mode, e.g. Vec2(0, 400).   */
-    fun beginChild(id: ID, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = 0): Boolean {
+    fun beginChild(id: ID, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = Wf.None.i): Boolean {
         assert(id != 0)
         return beginChildEx("", id, sizeArg, border, flags)
     }
