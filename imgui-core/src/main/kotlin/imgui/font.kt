@@ -401,7 +401,8 @@ class FontAtlas {
         /** Input, For custom font glyphs only (ID<0x10000): target font    */
         var font: Font? = null
 
-        val isPacked get() = x != 0xFFFF
+        val isPacked: Boolean
+            get() = x != 0xFFFF
     }
 
     /** Id needs to be >= 0x10000. Id >= 0x80000000 are reserved for ImGui and DrawList   */
