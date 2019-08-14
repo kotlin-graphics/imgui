@@ -1077,7 +1077,7 @@ class Window(var context: Context, var name: String) {
         scroll.x = newScrollX
     }
 
-    /** SetWindowScrollY */
+    /** ~SetWindowScrollY */
     fun setScrollY(newScrollY: Float) {
         scroll.y = newScrollY
     }
