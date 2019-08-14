@@ -34,6 +34,7 @@ private class ImGuiOpenGL3 {
 
     var f = 0f
     val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
+    // Our state
     var showAnotherWindow = false
     var showDemo = true
     var counter = 0

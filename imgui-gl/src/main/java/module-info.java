@@ -13,4 +13,5 @@ module com.github.kotlin_graphics.imgui_gl {
     requires com.github.kotlin_graphics.kotlin_unsigned;
 
     requires org.lwjgl.opengl;
+    requires org.lwjgl.glfw;
 }
