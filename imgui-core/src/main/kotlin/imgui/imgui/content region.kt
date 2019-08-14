@@ -15,7 +15,7 @@ interface imgui_contentRegion {
     val contentRegionMax: Vec2
         get() = g.currentWindow!!.run {
             val mx = contentsRegionRect.max - pos
-            dc.currentColumns?.let { mx.x = getColumnOffset(it.current + 1) - windowPadding.x }
+            dc.currentColumns?.let { mx.x = workRect.max.x - pos.x }
             mx
         }
 
@@ -25,13 +25,13 @@ interface imgui_contentRegion {
 
     /** content boundaries min (roughly (0,0)-Scroll), in window coordinates    */
     val windowContentRegionMin: Vec2
-        get() = currentWindowRead!!.run { contentsRegionRect.min - pos }
+        get() = g.currentWindow!!.run { contentsRegionRect.min - pos }
 
     /** content boundaries max (roughly (0,0)+Size-Scroll) where Size can be override with SetNextWindowContentSize(),
      * in window coordinates    */
     val windowContentRegionMax: Vec2
-        get() = currentWindowRead!!.run { contentsRegionRect.max - pos }
+        get() = g.currentWindow!!.run { contentsRegionRect.max - pos }
 
     val windowContentRegionWidth: Float
-        get() = currentWindowRead!!.contentsRegionRect.width
+        get() = g.currentWindow!!.contentsRegionRect.width
 }

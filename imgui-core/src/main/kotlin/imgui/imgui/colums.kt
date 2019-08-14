@@ -79,7 +79,13 @@ interface imgui_colums {
             dc.currLineTextBaseOffset = 0f
         }
         pushColumnClipRect(columns.current)     // FIXME-COLUMNS: Could it be an overwrite?
-        pushItemWidth(getColumnWidth() * 0.65f)  // FIXME-COLUMNS: Move on columns setup
+
+        // FIXME-COLUMNS: Share code with BeginColumns() - move code on columns setup.
+        val offset0 = getColumnOffset(columns.current)
+        val offset1 = getColumnOffset(columns.current + 1)
+        val width = offset1 - offset0
+        pushItemWidth(width * 0.65f)
+        window.workRect.max.x = window.pos.x + offset1 - window.windowPadding.x
     }
 
     /** get current column index    */
