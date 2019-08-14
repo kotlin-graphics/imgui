@@ -763,7 +763,7 @@ object showDemoWindowWidgets {
                 checkboxFlags("ImGuiInputTextFlags_ReadOnly", ::flags, Itf.ReadOnly.i)
                 checkboxFlags("ImGuiInputTextFlags_AllowTabInput", ::flags, Itf.AllowTabInput.i)
                 checkboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", ::flags, Itf.CtrlEnterForNewLine.i)
-                inputTextMultiline("##source", textMultiline, Vec2(-1f, textLineHeight * 16), flags)
+                inputTextMultiline("##source", textMultiline, Vec2(-Float.MIN_VALUE, textLineHeight * 16), flags)
             }
 
             treeNode("Filtered Text Input") {
@@ -814,7 +814,7 @@ object showDemoWindowWidgets {
                 static ImVector<char> my_str;
                 if (my_str.empty())
                     my_str.push_back(0);
-                Funcs::MyInputTextMultiline("##MyStr", &my_str, ImVec2(-1.0f, ImGui::GetTextLineHeight() * 16));
+                Funcs::MyInputTextMultiline("##MyStr", &my_str, ImVec2(-Float.MIN_VALUE, ImGui::GetTextLineHeight() * 16));
                 ImGui::Text("Data: %p\nSize: %d\nCapacity: %d", my_str.begin(), my_str.size(), my_str.capacity());
                 ImGui::TreePop();
             }*/
@@ -864,8 +864,8 @@ object showDemoWindowWidgets {
                     progressDir *= -1f
                 }
             }
-            /*  Typically we would use Vec2(-1f , 0f) to use all available width, or Vec2(width, 0f) for a specified width.
-                Vec2() uses itemWidth.  */
+            /*  Typically we would use Vec2(-1f , 0f) or ImVec2(-FLT_MIN,0.0f) to use all available width,
+                or Vec2(width, 0f) for a specified width. Vec2(0f, 0f) uses ItemWidth. */
             progressBar(progress, Vec2())
             sameLine(0f, style.itemInnerSpacing.x)
             text("Progress Bar")
