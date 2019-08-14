@@ -77,8 +77,7 @@ interface settingsIniUtilities {
             for (setting in g.settingsWindows) {
                 if (setting.pos.x == Float.MAX_VALUE) continue
                 // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
-                val name = setting.name.substringBefore("###")
-                it.println("[Window][$name]")   // TODO [%s][%s]\n", handler->TypeName, name
+                it.println("[Window][${setting.name}]")
                 it.println("Pos=${setting.pos.x},${setting.pos.y}")
                 it.println("Size=${setting.size.x.i},${setting.size.y.i}")
                 it.println("Collapsed=${setting.collapsed.i}")
