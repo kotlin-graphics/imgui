@@ -203,7 +203,7 @@ class DrawListSplitter {
         // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
         var newCmdBufferCount = 0
         var newIdxBufferCount = 0
-        var lastCmd = if (_count > 0 && _channels[0]._cmdBuffer.isNotEmpty()) _channels[0]._cmdBuffer.last() else null
+        var lastCmd = if (_count > 0 && drawList.cmdBuffer.isNotEmpty()) drawList.cmdBuffer.last() else null
         var idxOffset = lastCmd?.run { idxOffset + elemCount } ?: 0
         for (i in 1 until _count) {
             val ch = _channels[i]
