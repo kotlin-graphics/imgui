@@ -146,6 +146,8 @@ class DrawListSplitter {
         clear()
     }
 
+    fun destroy() = clearFreeMemory()
+
     fun clear() {
         _current = 0
         _count = 1
