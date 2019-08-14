@@ -513,8 +513,8 @@ object showDemoWindowLayout {
                 track = false
 
             var childW = (contentRegionAvail.x - 4 * style.itemSpacing.x) / 5
-            if (childW < 20f)
-                childW = 20f
+            if (childW < 1f)
+                childW = 1f
             pushId("##VerticalScrolling")
             for (i in 0..4) {
                 if (i > 0) sameLine()
