@@ -149,9 +149,9 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // Functions
 
     /** Queue new character input */
-    fun addInputCharacter(c: Char){
-        if(c.i in 1..65535)
-        inputQueueCharacters.add(c)
+    fun addInputCharacter(c: Char) {
+        if (c.i in 1..65535)
+            inputQueueCharacters.add(c)
     }
 
 //    IMGUI_API void  AddInputCharactersUTF8(const char* str);    // Queue new characters input from an UTF-8 string
@@ -489,6 +489,8 @@ class Style {
     var tabRounding = 4f
     /** Thickness of border around tabs. */
     var tabBorderSize = 0f
+    /** Side of the color button in the ColorEdit4 widget (left/right). Defaults to ImGuiDir_Right. */
+    var colorButtonPosition = Dir.Right
     /** Alignment of button text when button is larger than text. Defaults to (0.5f, 0.5f) (centered).   */
     var buttonTextAlign = Vec2(0.5f)
     /** Alignment of selectable text when selectable is larger than text. Defaults to (0,0) for top-left alignment. */
