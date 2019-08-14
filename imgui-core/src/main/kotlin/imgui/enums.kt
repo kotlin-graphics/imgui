@@ -766,6 +766,7 @@ enum class Col {
     Button,
     ButtonHovered,
     ButtonActive,
+    /** Header* colors are used for CollapsingHeader, TreeNode, Selectable, MenuItem */
     Header,
     HeaderHovered,
     HeaderActive,
