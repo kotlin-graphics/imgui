@@ -8,6 +8,7 @@ import imgui.ImGui.checkbox
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columnIndex
 import imgui.ImGui.columns
+import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.fontSize
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
@@ -114,6 +115,7 @@ object showDemoWindowColumns {
                     separator()
                 text("%c%c%c", 'a' + i, 'a' + i, 'a' + i)
                 text("Width %.2f", getColumnWidth())
+                text("Avail %.2f", contentRegionAvail.x)
                 text("Offset %.2f", getColumnOffset())
                 text("Long text that is likely to clip")
                 button("Button", Vec2(-Float.MIN_VALUE, 0f))
