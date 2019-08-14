@@ -648,10 +648,12 @@ interface imgui_windows {
                 if (window.outerRectClipped.min anyGreaterThanEqual window.outerRectClipped.max)
                     window.hiddenFramesCanSkipItems = 1
 
-            // Completely hide along with parent or if parent is collapsed
+            // Hide along with parent or if parent is collapsed
             parentWindow?.let {
-                if (it.collapsed || it.hidden)
+                if (it.collapsed || it.hiddenFramesCanSkipItems > 0)
                     window.hiddenFramesCanSkipItems = 1
+                if (it.collapsed || it.hiddenFramesCannotSkipItems > 0)
+                    window.hiddenFramesCannotSkipItems = 1
             }
         }
 
