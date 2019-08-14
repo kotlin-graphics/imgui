@@ -538,30 +538,40 @@ interface imgui_main {
             }
 
             // Mouse wheel scrolling
-            // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent (unless either ImGuiWindowFlags_NoInputs or ImGuiWindowFlags_NoScrollbar are also set).
-            tailrec fun Window.getParent(): Window {
-                val parent = parentWindow
-                return if (flags has Wf.ChildWindow && flags has Wf.NoScrollWithMouse && flags hasnt Wf.NoScrollbar && flags hasnt Wf.NoMouseInputs && parent != null) getParent() else this
+            // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent
+            // FIXME: Lock scrolling window while not moving (see #2604)
+
+            // Vertical Mouse Wheel scrolling
+            val wheelY = if (io.mouseWheel != 0f && !io.keyShift) io.mouseWheel else 0f
+            if (wheelY != 0f && !io.keyCtrl) {
+                tailrec fun Window.getParent(): Window = when {
+                    flags has Wf.ChildWindow && (scrollMax.y == 0f || (flags has Wf.NoScrollWithMouse && flags hasnt Wf.NoMouseInputs)) -> parentWindow!!.getParent()
+                    else -> this
+                }
+                window = g.hoveredWindow!!.getParent()
+                if (window.flags hasnt Wf.NoScrollWithMouse && window.flags hasnt Wf.NoMouseInputs) {
+                    val maxStep = window.innerRect.height * 0.67f
+                    val scrollStep = floor((5 * window.calcFontSize()) min maxStep)
+                    window.setScrollY(window.scroll.y - wheelY * scrollStep)
+                }
             }
 
-            window = window.getParent()
-            val scrollAllowed = window.flags hasnt Wf.NoScrollWithMouse && window.flags hasnt Wf.NoMouseInputs
-            if (scrollAllowed && (io.mouseWheel != 0f || io.mouseWheelH != 0f) && !io.keyCtrl) {
-                val maxStep = window.innerRect.size * 0.67f
-
-                // Vertical Mouse Wheel Scrolling (hold Shift to scroll horizontally)
-                if (io.mouseWheel != 0f && !io.keyShift) {
-                    val scrollStep = floor((5 * window.calcFontSize()) min maxStep.y)
-                    window.setScrollY(window.scroll.y - io.mouseWheel * scrollStep)
-                } else if (io.mouseWheel != 0f && io.keyShift) {
-                    val scrollStep = floor((2 * window.calcFontSize()) min maxStep.x)
-                    window.setScrollX(window.scroll.x - io.mouseWheel * scrollStep)
+            // Horizontal Mouse Wheel scrolling, or Vertical Mouse Wheel w/ Shift held
+            val wheelX = when {
+                io.mouseWheelH != 0f && !io.keyShift -> io.mouseWheelH
+                io.mouseWheel != 0f && io.keyShift -> io.mouseWheel
+                else -> 0f
+            }
+            if (wheelX != 0f && !io.keyCtrl) {
+                tailrec fun Window.getParent(): Window = when {
+                    flags has Wf.ChildWindow && (scrollMax.x == 0f || (flags has Wf.NoScrollWithMouse && flags hasnt Wf.NoMouseInputs)) -> parentWindow!!.getParent()
+                    else -> this
                 }
-
-                // Horizontal Mouse Wheel Scrolling (for hardware that supports it)
-                if (io.mouseWheelH != 0f && !io.keyShift) {
-                    val scrollStep = floor((2 * window.calcFontSize()) min maxStep.x)
-                    window.setScrollX(window.scroll.x - io.mouseWheelH * scrollStep)
+                window = g.hoveredWindow!!.getParent()
+                if (window.flags hasnt Wf.NoScrollWithMouse && window.flags hasnt Wf.NoMouseInputs) {
+                    val maxStep = window.innerRect.width * 0.67f
+                    val scrollStep = floor((2 * window.calcFontSize()) min maxStep)
+                    window.setScrollX(window.scroll.x - wheelX * scrollStep)
                 }
             }
         }
