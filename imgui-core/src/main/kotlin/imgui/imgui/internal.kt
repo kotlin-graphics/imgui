@@ -2435,12 +2435,12 @@ interface imgui_internal {
             window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledSelection
 
         // Render
-        val bgCol = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
         val textCol = Col.Text
         val textPos = frameBb.min + Vec2(textOffsetX, textBaseOffsetY)
         val navHighlightFlags: NavHighlightFlags = NavHighlightFlag.TypeThin.i
         if (displayFrame) {
             // Framed type
+            val bgCol = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             renderFrame(frameBb.min, frameBb.max, bgCol.u32, true, style.frameRounding)
             renderNavHighlight(frameBb, id, navHighlightFlags)
             renderArrow(window.drawList, frameBb.min + Vec2(padding.x, textBaseOffsetY), textCol.u32, if (isOpen) Dir.Down else Dir.Right, 1f)
@@ -2457,6 +2457,7 @@ interface imgui_internal {
         } else {
             // Unframed typed for tree nodes
             if (hovered || selected) {
+                val bgCol = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
                 renderFrame(frameBb.min, frameBb.max, bgCol.u32, false)
                 renderNavHighlight(frameBb, id, navHighlightFlags)
             }
