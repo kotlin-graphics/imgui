@@ -31,8 +31,6 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.imgui.g
-import imgui.imgui.imgui_demoDebugInformations.Companion.RT
-import imgui.imgui.imgui_internal
 import imgui.internal.*
 import imgui.internal.DrawCornerFlag as Dcf
 import uno.kotlin.getValue
@@ -40,7 +38,6 @@ import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
 import imgui.WindowFlag as Wf
-import imgui.internal.ButtonFlag as Bf
 
 /** Widgets: Combo Box
  *  - The new BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it, by creating e.g. Selectable() items.
