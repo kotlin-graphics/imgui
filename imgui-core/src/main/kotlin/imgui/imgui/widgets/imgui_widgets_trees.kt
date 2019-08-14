@@ -103,11 +103,6 @@ interface imgui_widgets_trees {
         popId()
     }
 
-    /** advance cursor x position by treeNodeToLabelSpacing    */
-    fun treeAdvanceToLabelPos() {
-        g.currentWindow!!.dc.cursorPos.x += treeNodeToLabelSpacing
-    }
-
     /** horizontal distance preceding label when using TreeNode*() or Bullet() == (g.FontSize + style.FramePadding.x*2)
      *  for a regular unframed TreeNode */
     val treeNodeToLabelSpacing: Float

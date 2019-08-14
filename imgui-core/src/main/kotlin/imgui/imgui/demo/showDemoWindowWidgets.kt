@@ -502,7 +502,7 @@ object showDemoWindowWidgets {
                         } else {
                             /*  Items 3..5 are Tree Leaves
                                 The only reason we use TreeNode at all is to allow selection of the leaf.
-                                Otherwise we can use BulletText() or TreeAdvanceToLabelPos()+Text().    */
+                                Otherwise we can use BulletText() or advance the cursor by GetTreeNodeToLabelSpacing() and call Text().    */
                             nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
                             treeNodeExV(i, nodeFlags, "Selectable Leaf $i")
                             if (isItemClicked()) nodeClicked = i
