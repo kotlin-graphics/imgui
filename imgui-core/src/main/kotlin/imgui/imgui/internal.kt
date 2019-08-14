@@ -639,7 +639,8 @@ interface imgui_internal {
         begin(windowName, null, flags or extraFlags)
     }
 
-    val frontMostPopupModal: Window?
+    /** ~GetTopMostPopupModal */
+    val topMostPopupModal: Window?
         get() {
             for (n in g.openPopupStack.size - 1 downTo 0)
                 g.openPopupStack[n].window?.let { if (it.flags has Wf.Modal) return it }
@@ -3751,7 +3752,7 @@ interface imgui_internal {
         }
 
         // Modal windows prevents cursor from hovering behind them.
-        val modalWindow = frontMostPopupModal
+        val modalWindow = topMostPopupModal
         if (modalWindow != null)
             if (g.hoveredRootWindow?.isChildOf(modalWindow) == false)
                 nullate()
@@ -3846,7 +3847,7 @@ interface imgui_internal {
                 if (io.configWindowsMoveFromTitleBarOnly && hovered.flags hasnt Wf.NoTitleBar)
                     if (io.mouseClickedPos[0] !in hovered.titleBarRect())
                         g.movingWindow = null
-            } else if (g.navWindow != null && frontMostPopupModal == null)
+            } else if (g.navWindow != null && topMostPopupModal == null)
                 null.focus()  // Clicking on void disable focus
         }
 
@@ -3854,9 +3855,9 @@ interface imgui_internal {
             Instead, focus will be restored to the window under the bottom-most closed popup.
             (The left mouse button path calls FocusWindow on the hovered window, which will lead NewFrame->ClosePopupsOverWindow to trigger)    */
         if (io.mouseClicked[1]) {
-            // Find the top-most window between HoveredWindow and the front most Modal Window.
+            // Find the top-most window between HoveredWindow and the top-most Modal Window.
             // This is where we can trim the popup stack.
-            val modal = frontMostPopupModal
+            val modal = topMostPopupModal
             var hoveredWindowAboveModal = false
             if (modal == null)
                 hoveredWindowAboveModal = true
