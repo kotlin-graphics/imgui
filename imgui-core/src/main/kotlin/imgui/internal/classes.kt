@@ -1346,7 +1346,7 @@ class TabBar {
         window.dc.cursorPos.x = barRect.min.x
 
         // Draw separator
-        val col = if (flags has TabBarFlag.IsFocused) Col.TabActive else Col.Tab
+        val col = if (flags has TabBarFlag.IsFocused) Col.TabActive else Col.TabUnfocusedActive
         val y = barRect.max.y - 1f
         run {
             val separatorMinX = barRect.min.x - floor(window.windowPadding.x * 0.5f)
