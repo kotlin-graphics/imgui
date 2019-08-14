@@ -108,8 +108,9 @@ interface imgui_widgets_colorEditorPicker {
         if (window.skipItems) return false
 
         val squareSz = frameHeight
-        val wExtra = if (flags_ has Cef.NoSmallPreview) 0f else squareSz + style.itemInnerSpacing.x
-        val wItemsAll = calcItemWidth() - wExtra
+        val wFull = calcItemWidth()
+        val wButton = if(flags_ has Cef.NoSmallPreview) 0f else squareSz + style.itemInnerSpacing.x
+        val wInputs = wFull - wButton
         val labelDisplayEnd = findRenderedTextEnd(label)
         g.nextItemData.clearFlags()
 
@@ -151,11 +152,15 @@ interface imgui_widgets_colorEditorPicker {
         var valueChanged = false
         var valueChangedAsFloat = false
 
+        val pos = Vec2(window.dc.cursorPos)
+        val inputsOffsetX = if(style.colorButtonPosition == Dir.Left) wButton else 0f
+        window.dc.cursorPos.x = pos.x + inputsOffsetX
+
         if (flags has (Cef.DisplayRGB or Cef.DisplayHSV) && flags hasnt Cef.NoInputs) {
 
             // RGB/HSV 0..255 Sliders
-            val wItemOne = glm.max(1f, ((wItemsAll - style.itemInnerSpacing.x * (components - 1)) / components).i.f)
-            val wItemLast = glm.max(1f, (wItemsAll - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
+            val wItemOne = glm.max(1f, ((wInputs - style.itemInnerSpacing.x * (components - 1)) / components).i.f)
+            val wItemLast = glm.max(1f, (wInputs - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
 
             val hidePrefix = wItemOne <= calcTextSize(if (flags has Cef.Float) "M:0.000" else "M:000").x
             val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.DisplayHSV) 2 else 1
@@ -179,7 +184,7 @@ interface imgui_widgets_colorEditorPicker {
             val text = if (alpha) "#%02X%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255), glm.clamp(i[3], 0, 255))
             else "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))
             val buf = text.toCharArray(CharArray(64))
-            setNextItemWidth(wItemsAll)
+            setNextItemWidth(wInputs)
             if (inputText("##Text", buf, Itf.CharsHexadecimal or Itf.CharsUppercase)) {
                 valueChanged = true
                 var p = 0
@@ -192,7 +197,12 @@ interface imgui_widgets_colorEditorPicker {
 
         var pickerActiveWindow: Window? = null
         if (flags hasnt Cef.NoSmallPreview) {
-            if (flags hasnt Cef.NoInputs) sameLine(0f, style.itemInnerSpacing.x)
+            val buttonOffsetX = when {
+                flags has Cef.NoInputs || style.colorButtonPosition == Dir.Left -> 0f
+                else -> wInputs + style.itemInnerSpacing.x
+            }
+            window.dc.cursorPos.put(pos.x + buttonOffsetX, pos.y)
+
             val colVec4 = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f)
             if (colorButton("##ColorButton", colVec4, flags))
                 if (flags hasnt Cef.NoPicker) { // Store current color and open a picker
@@ -219,7 +229,7 @@ interface imgui_widgets_colorEditorPicker {
         }
 
         if (0 != labelDisplayEnd && flags hasnt Cef.NoLabel) { // TODO check first comparison
-            sameLine(0f, style.itemInnerSpacing.x)
+            window.dc.cursorPos.put(pos.x + wFull + style.itemInnerSpacing.x, pos.y + style.framePadding.y)
             textEx(label, labelDisplayEnd)
         }
 
