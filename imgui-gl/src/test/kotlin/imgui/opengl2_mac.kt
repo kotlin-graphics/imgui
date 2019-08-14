@@ -30,6 +30,7 @@ private class ImGuiOpenGL2_Mac {
 
     var f = 0f
     val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
+    // Our state
     var showAnotherWindow = false
     var showDemo = true
     var counter = 0
@@ -44,7 +45,7 @@ private class ImGuiOpenGL2_Mac {
         // Setup window
         glfw {
             errorCallback = { error, description -> println("Glfw Error $error: $description") }
-            GLFW.glfwInit()
+            GLFW.glfwInit() // TODO remove glfw from module-info.class
             windowHint {
                 debug = DEBUG
                 context.version = "2.0"
