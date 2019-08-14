@@ -204,7 +204,7 @@ object showDemoWindowLayout {
                         columns(2)
                         for (i in 0..99) {
                             val text = "%03d".format(style.locale, i)
-                            button(text, Vec2(-1f, 0f))
+                            button(text, Vec2(-Float.MIN_VALUE, 0f))
                             nextColumn()
                         }
                     }

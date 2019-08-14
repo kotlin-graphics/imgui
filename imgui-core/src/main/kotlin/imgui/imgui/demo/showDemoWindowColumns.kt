@@ -74,7 +74,7 @@ object showDemoWindowColumns {
             separator()
             for (n in 0..13) {
                 selectable("Item $n")
-                //if (Button(label, ImVec2(-1,0))) {}
+                //if (ImGui::Button(label, ImVec2(-FLT_MIN,0.0f))) {}
                 nextColumn()
             }
             columns(1)
@@ -116,7 +116,7 @@ object showDemoWindowColumns {
                 text("Width %.2f", getColumnWidth())
                 text("Offset %.2f", getColumnOffset())
                 text("Long text that is likely to clip")
-                button("Button", Vec2(-1f, 0f))
+                button("Button", Vec2(-Float.MIN_VALUE, 0f))
                 nextColumn()
             }
             columns(1)
