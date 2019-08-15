@@ -253,6 +253,7 @@ interface imgui_parametersStacks {
     /** Calculate default item width given value passed to PushItemWidth() or SetNextItemWidth().
      *  The SetNextItemWidth() data is generally cleared/consumed by ItemAdd() or NextItemData.ClearFlags()
      *
+     *  width of item given pushed settings and current cursor position. NOT necessarily the width of last item unlike most 'Item' functions.
      *
      *  ~ GetNextItemWidth   */
     fun calcItemWidth(): Float {
