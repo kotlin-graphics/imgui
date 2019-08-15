@@ -158,6 +158,7 @@ interface imgui_widgets_columns {
         window.dc.currentColumns = columns
 
         val columnPadding = style.itemSpacing.x
+        val halfClipExtendX = floor((window.windowPadding.x * 0.5f) max window.windowBorderSize)
         columns.apply {
 
             hostCursorPosY = window.dc.cursorPos.y
@@ -166,13 +167,12 @@ interface imgui_widgets_columns {
             hostWorkRect put window.workRect
 
             // Set state for first column
+            // We aim so that the right-most column will have the same clipping width as other after being clipped by parent ClipRect
             offMinX = window.dc.indent - columnPadding
-            offMaxX = (window.workRect.max.x - window.pos.x) max (offMinX + 1f)
+            offMaxX = (window.workRect.max.x + halfClipExtendX - window.pos.x) max (offMinX + 1f)
             lineMinY = window.dc.cursorPos.y
             lineMaxY = lineMinY
         }
-        window.dc.columnsOffset = 0f
-        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
 
         // Clear data if columns count changed
         if (columns.columns.isNotEmpty() && columns.columns.size != columnsCount + 1)
@@ -199,10 +199,13 @@ interface imgui_widgets_columns {
             pushColumnClipRect(0)
         }
 
+        // We don't generally store Indent.x inside ColumnsOffset because it may be manipulated by the user.
         val offset0 = getColumnOffset(columns.current)
         val offset1 = getColumnOffset(columns.current + 1)
         val width = offset1 - offset0
         pushItemWidth(width * 0.65f)
+        window.dc.columnsOffset = 0f
+        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
         window.workRect.max.x = window.pos.x + offset1 - columnPadding
     }
 
