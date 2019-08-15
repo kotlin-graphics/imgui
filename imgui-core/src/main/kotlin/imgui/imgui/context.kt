@@ -342,9 +342,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
 
     // Tab bars
-    val tabBars = TabBarPool()
-    val currentTabBarStack = Stack<TabBarRef>()
     var currentTabBar: TabBar? = null
+    val tabBars = TabBarPool()
+    val currentTabBarStack = Stack<PtrOrIndex>()
     val shrinkWidthBuffer = ArrayList<ShrinkWidthItem>()
 
     //------------------------------------------------------------------
@@ -492,39 +492,46 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             io.iniFilename?.let(::saveIniSettingsToDisk)
 
         // Clear everything else
-        g.windows.forEach { it.destroy() }
-        g.windows.clear()
-        g.windowsFocusOrder.clear()
-        g.windowsSortBuffer.clear()
-        g.currentWindow = null
-        g.currentWindowStack.clear()
-        g.windowsById.clear()
-        g.navWindow = null
-        g.hoveredWindow = null
-        g.hoveredRootWindow = null
-        g.activeIdWindow = null
-        g.activeIdPreviousFrameWindow = null
-        g.movingWindow = null
-        g.settingsWindows.clear()
-        g.colorModifiers.clear()
-        g.styleModifiers.clear()
-        g.fontStack.clear()
-        g.openPopupStack.clear()
-        g.beginPopupStack.clear()
-        g.drawDataBuilder.clear()
-        g.backgroundDrawList.clearFreeMemory()
-        g.foregroundDrawList.clearFreeMemory()
-        g.privateClipboard = ""
-        g.inputTextState.textW = charArrayOf()
-        g.inputTextState.initialTextA = charArrayOf()
-        g.inputTextState.textA = charArrayOf()
+        g.apply {
+            windows.forEach { it.destroy() }
+            windows.clear()
+            windowsFocusOrder.clear()
+            windowsSortBuffer.clear()
+            currentWindow = null
+            currentWindowStack.clear()
+            windowsById.clear()
+            navWindow = null
+            hoveredWindow = null
+            hoveredRootWindow = null
+            activeIdWindow = null
+            activeIdPreviousFrameWindow = null
+            movingWindow = null
+            settingsWindows.clear()
+            colorModifiers.clear()
+            styleModifiers.clear()
+            fontStack.clear()
+            openPopupStack.clear()
+            beginPopupStack.clear()
+            drawDataBuilder.clear()
+            backgroundDrawList.clearFreeMemory()
+            foregroundDrawList.clearFreeMemory()
 
-        if (g.logFile != null) {
-            g.logFile = null
+            tabBars.clear()
+            currentTabBarStack.clear()
+            shrinkWidthBuffer.clear()
+
+            privateClipboard = ""
+            inputTextState.textW = charArrayOf()
+            inputTextState.initialTextA = charArrayOf()
+            inputTextState.textA = charArrayOf()
+
+            if (logFile != null) {
+                logFile = null
+            }
+            logBuffer.setLength(0)
+
+            initialized = false
         }
-        g.logBuffer.setLength(0)
-
-        g.initialized = false
     }
 
     companion object {
