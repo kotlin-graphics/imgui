@@ -272,11 +272,15 @@ interface imgui_widgets_main {
         return pressed
     }
 
-    /** shortcut to handle the above pattern when value is an integer */
+    /** shortcut to handle the above pattern when value is an integer
+     *
+     *  FIXME: This would work nicely if it was a public template, e.g. 'template<T> RadioButton(const char* label, T* v, T v_button)', but I'm not sure how we would expose it.. */
     fun radioButton(label: String, v: IntArray, vButton: Int): Boolean =
             radioButton(label, v[0] == vButton).also { if (it) v[0] = vButton }
 
-    /** shortcut to handle the above pattern when value is an integer */
+    /** shortcut to handle the above pattern when value is an integer
+     *
+     *  FIXME: This would work nicely if it was a public template, e.g. 'template<T> RadioButton(const char* label, T* v, T v_button)', but I'm not sure how we would expose it.. */
     fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int): Boolean =
             radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
 

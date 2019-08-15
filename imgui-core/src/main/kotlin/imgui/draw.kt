@@ -375,22 +375,22 @@ class DrawList(sharedData: DrawListSharedData?) {
      * @param a: upper-left
      * @param b: b: lower-right
      * (== upper-left + size)   */
-    fun addRect(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCornersFlags: Int = Dcf.All.i, thickness: Float = 1f) {
+    fun addRect(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCorners: DrawCornerFlags = Dcf.All.i, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
         if (flags has DrawListFlag.AntiAliasedLines)
-            pathRect(a + 0.5f, b - 0.5f, rounding, roundingCornersFlags)
+            pathRect(a + 0.5f, b - 0.5f, rounding, roundingCorners)
         else    // Better looking lower-right corner and rounded non-AA shapes.
-            pathRect(a + 0.5f, b - 0.49f, rounding, roundingCornersFlags)
+            pathRect(a + 0.5f, b - 0.49f, rounding, roundingCorners)
         pathStroke(col, true, thickness)
     }
 
     /** @param a: upper-left
      *  @param b: lower-right
      *  (== upper-left + size) */
-    fun addRectFilled(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCornersFlags: Int = Dcf.All.i) {
+    fun addRectFilled(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCorners: DrawCornerFlags = Dcf.All.i) {
         if (col hasnt COL32_A_MASK) return
         if (rounding > 0f) {
-            pathRect(a, b, rounding, roundingCornersFlags)
+            pathRect(a, b, rounding, roundingCorners)
             pathFillConvex(col)
         } else {
             primReserve(6, 4)
@@ -535,7 +535,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun addImageRounded(userTextureId: TextureID, a: Vec2, b: Vec2, uvA: Vec2, uvB: Vec2, col: Int, rounding: Float,
-                        roundingCorners: Int = Dcf.All.i) {
+                        roundingCorners: DrawCornerFlags = Dcf.All.i) {
         if (col hasnt COL32_A_MASK) return
 
         if (rounding <= 0f || roundingCorners hasnt Dcf.All) {
@@ -967,7 +967,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, roundingCorners: Int = Dcf.All.i) {
+    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, roundingCorners: DrawCornerFlags = Dcf.All.i) {
 
         var cond = ((roundingCorners and Dcf.Top) == Dcf.Top.i) || ((roundingCorners and Dcf.Bot) == Dcf.Bot.i) // TODO consider simplyfing
         var rounding = glm.min(rounding_, glm.abs(b.x - a.x) * (if (cond) 0.5f else 1f) - 1f)
