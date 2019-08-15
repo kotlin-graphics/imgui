@@ -1079,12 +1079,14 @@ class Window(var context: Context, var name: String) {
 
     /** SetWindowScrollX */
     fun setScrollX(newScrollX: Float) {
-        scroll.x = newScrollX
+        scrollTarget.x = newScrollX
+        scrollTargetCenterRatio.x = 0f
     }
 
     /** ~SetWindowScrollY */
     infix fun setScrollY(newScrollY: Float) {
-        scroll.y = newScrollY
+        scrollTarget.y = newScrollY
+        scrollTargetCenterRatio.y = 0f
     }
 
     fun getAllowedExtentRect(): Rect {
