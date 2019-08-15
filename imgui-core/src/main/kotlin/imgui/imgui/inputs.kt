@@ -5,6 +5,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.ImGui.calcTypematicPressedRepeatAmount
 import imgui.ImGui.io
+import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.style
 import imgui.MOUSE_INVALID
 import imgui.MouseCursor
@@ -78,10 +79,11 @@ interface imgui_inputsUtilities {
     fun isMouseReleased(button: Int): Boolean = io.mouseReleased[button]
 
     /** is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold */
-    fun isMouseDragging(button: Int = 0, lockThreshold_: Float = -1f): Boolean {
-        if (!io.mouseDown[button]) return false
-        val lockThreshold = if (lockThreshold_ < 0f) io.mouseDragThreshold else lockThreshold_
-        return io.mouseDragMaxDistanceSqr[button] >= lockThreshold * lockThreshold
+    fun isMouseDragging(button: Int = 0, lockThreshold: Float = -1f): Boolean {
+        assert(button in io.mouseDown.indices)
+        if (!io.mouseDown[button])
+            return false
+        return isMouseDragPastThreshold(button, lockThreshold)
     }
 
     /** Test if mouse cursor is hovering given rectangle

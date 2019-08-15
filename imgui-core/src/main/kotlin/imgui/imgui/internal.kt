@@ -915,6 +915,18 @@ interface imgui_internal {
         g.navDisableMouseHover = true
     }
 
+    /** [Internal] This doesn't test if the button is pressed */
+    fun isMouseDragPastThreshold(button: Int, lockThreshold_: Float): Boolean {
+
+        assert(button in io.mouseDown.indices)
+        if (!io.mouseDown[button])
+            return false
+        var lockThreshold = lockThreshold_
+        if (lockThreshold < 0f)
+            lockThreshold = io.mouseDragThreshold
+        return io.mouseDragMaxDistanceSqr[button] >= lockThreshold * lockThreshold
+    }
+
     fun beginDragDropTargetCustom(bb: Rect, id: ID): Boolean {
         if (!g.dragDropActive) return false
 
