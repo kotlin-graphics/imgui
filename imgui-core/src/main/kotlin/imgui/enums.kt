@@ -882,7 +882,7 @@ enum class StyleVar {
 /** Flags for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()
  *
  *  Flags: for ColorEdit4(), ColorPicker4() etc.    */
-enum class ColorEditFlag(@JvmField val i: Int) {
+enum class ColorEditFlag(@JvmField val i: ColorEditFlags) {
 
     None(0),
     /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (will only read 3 components from the input pointer). */

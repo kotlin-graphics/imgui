@@ -884,7 +884,7 @@ object showDemoWindowWidgets {
             checkbox("With Drag and Drop", ::dragAndDrop)
             checkbox("With Options Menu", ::optionsMenu); sameLine(); helpMarker("Right-click on the individual color widget to show options.")
             checkbox("With HDR", ::hdr); sameLine(); helpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.")
-            var miscFlags = if (hdr) Cef.HDR.i else 0
+            var miscFlags = if (hdr) Cef.HDR.i else Cef.None.i
             if (dragAndDrop) miscFlags = miscFlags or Cef.NoDragDrop
             if (alphaHalfPreview) miscFlags = miscFlags or Cef.AlphaPreviewHalf
             else if (alphaPreview) miscFlags = miscFlags or Cef.AlphaPreview
