@@ -71,14 +71,7 @@ interface imgui_main {
                 ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
 
     /** start a new Dear ImGui frame, you can submit any command from this point until NewFrame()/Render().  */
-    fun newFrame() {
-
-        ptrIndices = 0
-
-        assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
-
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            ImGuiTestEngineHook_PreNewFrame()
+    fun newFrameSanityChecks() { // TODO static?
 
         /*  Check user data
             (We pass an error message in the assert expression as a trick to get it visible to programmers who are not using a debugger,
@@ -103,6 +96,19 @@ interface imgui_main {
         // Perform simple check: the beta io.configWindowsResizeFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
         if (io.configWindowsResizeFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
             io.configWindowsResizeFromEdges = false
+    }
+
+    fun newFrame() {
+
+        ptrIndices = 0
+
+        assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
+
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            ImGuiTestEngineHook_PreNewFrame()
+
+        // Check and assert for various common IO and Configuration mistakes
+        newFrameSanityChecks()
 
         // Load settings on first frame (if not explicitly loaded manually before)
         if (!g.settingsLoaded) {
@@ -288,6 +294,22 @@ interface imgui_main {
         closePopupsOverWindow(g.navWindow, false)
 
         // [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack.
+        updateDebugToolItemPicker()
+
+        // Create implicit/fallback window - which we will only render it if the user has added something to it.
+        // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
+        // This fallback is particularly important as it avoid ImGui:: calls from crashing.
+        setNextWindowSize(Vec2(400), Cond.FirstUseEver)
+        begin("Debug##Default")
+        g.frameScopePushedImplicitWindow = true
+
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            ImGuiTestEngineHook_PostNewFrame()
+    }
+
+    /** [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack. */
+    fun updateDebugToolItemPicker() {
+
         g.debugItemPickerBreakId = 0
         if (g.debugItemPickerActive) {
 
@@ -306,17 +328,6 @@ interface imgui_main {
                 textColored(getStyleColorVec4(if (hoveredId != 0) Col.Text else Col.TextDisabled), "Click to break in debugger!")
             }
         }
-
-        /*  Create implicit/fallback window - which we will only render it if the user has added something to it.
-            We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
-            This fallback is particularly important as it avoid ImGui:: calls from crashing.
-         */
-        setNextWindowSize(Vec2(400), Cond.FirstUseEver)
-        begin("Debug##Default")
-        g.frameScopePushedImplicitWindow = true
-
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            ImGuiTestEngineHook_PostNewFrame()
     }
 
     /** Ends the Dear ImGui frame. automatically called by ::render(), you likely don't need to call that yourself directly.
