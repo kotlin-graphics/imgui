@@ -206,14 +206,6 @@ interface imgui_internal {
                 g.hoveredIdTimer = 0f
                 g.hoveredIdNotActiveTimer = 0f
             }
-            // [DEBUG] Item Picker tool!
-            // We perform the check here because SetHoveredID() is not frequently called (1~ time a frame), making
-            // the cost of this tool near-zero. We would get slightly better call-stack if we made the test in ItemAdd()
-            // but that would incur a slightly higher cost and may require us to hide this feature behind a define.
-            if (value != 0 && value == g.debugBreakItemId) {
-//                IM_DEBUG_BREAK() TODO?
-                g.debugBreakItemId = 0
-            }
         }
 
     fun keepAliveID(id: ID) {
