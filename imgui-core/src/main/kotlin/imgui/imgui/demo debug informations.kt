@@ -478,14 +478,15 @@ interface imgui_demoDebugInformations {
                     if (nodeOpen) treePop()
                     return
                 }
+                val fgDrawList = getForegroundDrawList(window)   // Render additional visuals into the top-most draw list
+                if (window != null && isItemHovered())
+                    fgDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
+
                 if (!nodeOpen)
                     return
 
-                val fgDrawList = getForegroundDrawList(window)   // Render additional visuals into the top-most draw list
-                window?.let {
-                    if (isItemHovered())
-                        fgDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
-                }
+                if (window?.wasActive == false)
+                    text("(Note: owning Window is inactive: DrawList is not being rendered!)")
 
                 var elemOffset = 0
                 for (i in drawList.cmdBuffer.indices) {
