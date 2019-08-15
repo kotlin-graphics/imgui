@@ -2907,7 +2907,7 @@ interface imgui_internal {
                             state.onKeyPressed(K.LINESTART or K.SHIFT)
                     state.onKeyPressed(K.BACKSPACE or kMask)
                 }
-                Key.Enter.isPressed || Key.EnterSecondary.isPressed -> {
+                Key.Enter.isPressed || Key.KeyPadEnter.isPressed -> {
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
                     if (!isMultiline || (ctrlEnterForNewLine && !io.keyCtrl) || (!ctrlEnterForNewLine && io.keyCtrl)) {
                         clearActiveId = true
