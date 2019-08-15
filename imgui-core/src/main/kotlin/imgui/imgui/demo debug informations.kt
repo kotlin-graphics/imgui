@@ -123,6 +123,8 @@ interface imgui_demoDebugInformations {
             end()
             return
         }
+
+        // Basic info
         text("Dear ImGui $version")
         separator()
         text("By Omar Cornut and all dear imgui contributors.")
@@ -268,6 +270,7 @@ interface imgui_demoDebugInformations {
             treePop()
         }
 
+        // Tool: Display windows Rectangles and Begin Order
         if (showWindowsRects || showWindowsBeginOrder)
             for (window in g.windows) {
                 if (!window.wasActive)
@@ -357,6 +360,8 @@ interface imgui_demoDebugInformations {
 
     companion object {
 
+        // State
+
         /** Windows Rect Type */
         enum class WRT {
             OuterRect, OuterRectClipped, InnerRect, InnerClipRect, WorkRect, Contents, ContentsRegionRect;
@@ -366,9 +371,9 @@ interface imgui_demoDebugInformations {
             }
         }
 
-        var showWindowsBeginOrder = false
         var showWindowsRects = false
         var showWindowsRectType = WRT.InnerClipRect
+        var showWindowsBeginOrder = false
         var showDrawcmdClipRects = true
 
         var showWindow = false
@@ -440,6 +445,12 @@ interface imgui_demoDebugInformations {
         }
 
 
+        // Helper functions to display common structures:
+        // - NodeDrawList
+        // - NodeColumns
+        // - NodeWindow
+        // - NodeWindows
+        // - NodeTabBar
         object Funcs {
 
             fun getWindowRect(window: Window, rectType: WRT): Rect = when (rectType) {
