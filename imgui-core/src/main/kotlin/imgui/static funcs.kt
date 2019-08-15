@@ -16,7 +16,6 @@ import imgui.ImGui.end
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.topMostPopupModal
-import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
@@ -57,8 +56,6 @@ import kotlin.reflect.KMutableProperty0
 import imgui.ConfigFlag as Cf
 import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
-
-
 
 
 //-----------------------------------------------------------------------------
@@ -216,7 +213,8 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean)
 fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 
 fun createNewWindowSettings(name: String) =
-        WindowSettings(name.removePrefix("###")).also { // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
+        WindowSettings(name.removePrefix("###")).also {
+            // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
             g.settingsWindows += it
         }
 
@@ -953,42 +951,40 @@ fun navUpdateMoveResult() {
 
 fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
 
-    if (g.navMoveDir == Dir.None)
+    val window = g.navWindow
+    if (g.navMoveDir != Dir.None || window == null)
+        return 0f
+    if (window.flags has Wf.NoNavInputs || g.navWindowingTarget != null || g.navLayer != NavLayer.Main)
+        return 0f
 
-        g.navWindow?.let { window ->
+    val pageUpHeld = Key.PageUp.isDown && allowedDirFlags has (1 shl Dir.Up)
+    val pageDownHeld = Key.PageDown.isDown && allowedDirFlags has (1 shl Dir.Down)
+    if (pageUpHeld != pageDownHeld) { // If either (not both) are pressed
 
-            if (window.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null && g.navLayer == NavLayer.Main) {
-
-                val pageUpHeld = Key.PageUp.isDown && allowedDirFlags has (1 shl Dir.Up.i)
-                val pageDownHeld = Key.PageDown.isDown && allowedDirFlags has (1 shl Dir.Down)
-                if (pageUpHeld != pageDownHeld) // If either (not both) are pressed
-                    if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {
-                        // Fallback manual-scroll when window has no navigable item
-                        if (Key.PageUp.isPressed)
-                            window.setScrollY(window.scroll.y - window.innerRect.height)
-                        else if (Key.PageDown.isPressed)
-                            window.setScrollY(window.scroll.y + window.innerRect.height)
-                    } else {
-                        val navRectRel = window.navRectRel[g.navLayer.i]
-                        val pageOffsetY = 0f max (window.innerRect.height - window.calcFontSize() + navRectRel.height)
-                        return when { // nav_scoring_rect_offset_y
-                            Key.PageUp.isPressed -> {
-                                g.navMoveDir = Dir.Down // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
-                                g.navMoveClipDir = Dir.Up
-                                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
-                                -pageOffsetY
-                            }
-                            Key.PageDown.isPressed -> {
-                                g.navMoveDir = Dir.Up // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
-                                g.navMoveClipDir = Dir.Down
-                                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
-                                +pageOffsetY
-                            }
-                            else -> 0f
-                        }
-                    }
+        if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {
+            // Fallback manual-scroll when window has no navigable item
+            if (Key.PageUp.isPressed(true))
+                window.setScrollY(window.scroll.y - window.innerRect.height)
+            else if (Key.PageDown.isPressed(true))
+                window.setScrollY(window.scroll.y + window.innerRect.height)
+        } else {
+            val navRectRel = window.navRectRel[g.navLayer.i]
+            val pageOffsetY = 0f max (window.innerRect.height-window.calcFontSize() * 1f+navRectRel.height)
+            var navScoringRectOffsetY = 0f
+            if (Key.PageUp.isPressed(true)) {
+                navScoringRectOffsetY = -pageOffsetY
+                g.navMoveDir = Dir.Down // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
+                g.navMoveClipDir = Dir.Up
+                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
+            } else if (Key.PageDown.isPressed(true)) {
+                navScoringRectOffsetY = +pageOffsetY
+                g.navMoveDir = Dir.Up // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
+                g.navMoveClipDir = Dir.Down
+                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
             }
+            return navScoringRectOffsetY
         }
+    }
     return 0f
 }
 
