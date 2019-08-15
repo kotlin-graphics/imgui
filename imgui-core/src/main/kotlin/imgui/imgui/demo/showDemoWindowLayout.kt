@@ -238,26 +238,37 @@ object showDemoWindowLayout {
 
         treeNode("Widgets Width") {
 
-            text("PushItemWidth(100)")
+            // Use SetNextItemWidth() to set the width of a single upcoming item.
+            // Use PushItemWidth()/PopItemWidth() to set the width of a group of items.
+            text("SetNextItemWidth/PushItemWidth(100)")
             sameLine(); helpMarker("Fixed width.")
-            withItemWidth(100) { dragFloat("float##1", ::f) }
+            setNextItemWidth(100f)
+            dragFloat("float##1", ::f)
 
-            text("PushItemWidth(GetWindowWidth() * 0.5f)")
+            text("SetNextItemWidth/PushItemWidth(GetWindowWidth() * 0.5f)")
             sameLine(); helpMarker("Half of window width.")
-            withItemWidth(windowWidth * 0.5f) { dragFloat("float##2", ::f) }
+            setNextItemWidth(windowWidth * 0.5f)
+            dragFloat("float##2", ::f)
 
             text("SetNextItemWidth/PushItemWidth(GetContentRegionAvail().x * 0.5f)")
             sameLine(); helpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
             setNextItemWidth(contentRegionAvail.x * 0.5f)
             dragFloat("float##3", ::f)
 
-            text("PushItemWidth(-100)")
+            text("SetNextItemWidth/PushItemWidth(-100)")
             sameLine(); helpMarker("Align to right edge minus 100")
-            withItemWidth(-100) { dragFloat("float##4", ::f) }
+            setNextItemWidth(-100f)
+            dragFloat("float##4", ::f)
 
-            text("PushItemWidth(-1)")
+            // Demonstrate using PushItemWidth to surround three items. Calling SetNextItemWidth() before each of them would have the same effect.
+            text("SetNextItemWidth/PushItemWidth(-1)")
             sameLine(); helpMarker("Align to right edge")
-            withItemWidth(-1) { dragFloat("float##5", ::f) }
+            pushItemWidth(-1)
+
+            dragFloat("##float5a", ::f)
+            dragFloat("##float5b", ::f)
+            dragFloat("##float5c", ::f)
+            popItemWidth()
         }
 
         treeNode("Basic Horizontal SimpleLayout") {
