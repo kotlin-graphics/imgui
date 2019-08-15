@@ -15,6 +15,8 @@ import imgui.ImGui.openPopup
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
+import imgui.ImGui.scrollMaxY
+import imgui.ImGui.scrollY
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHereY
@@ -70,8 +72,8 @@ object Log {
         val filter = TextFilter()
         /** Index to lines offset. We maintain this with AddLog() calls, allowing us to have a random access on lines */
         val lineOffsets = ArrayList<Int>()
+        /** Keep scrolling if already at the bottom */
         var autoScroll = true
-        var scrollToBottom = false
 
         init {
             clear()
@@ -83,10 +85,8 @@ object Log {
 
             for (i in oldSize until buf.length) {
                 if (buf[i] == '\n')
-                    lineOffsets.add(i + 1)
+                    lineOffsets += i + 1
             }
-            if (autoScroll)
-                scrollToBottom = true
         }
 
         fun draw(title: String, open: KMutableProperty0<Boolean>? = null) {
@@ -98,9 +98,7 @@ object Log {
 
             // Options menu
             if (beginPopup("Options")) {
-                if (checkbox("Auto-scroll", ::autoScroll))
-                    if (autoScroll)
-                        scrollToBottom = true
+                checkbox("Auto-scroll", ::autoScroll)
                 endPopup()
             }
 
@@ -147,8 +145,9 @@ object Log {
 
             popStyleVar()
 
-            if (scrollToBottom) setScrollHereY(1f)
-            scrollToBottom = false
+            if (autoScroll && scrollY >= scrollMaxY)
+                setScrollHereY(1f)
+
             endChild()
             end()
         }
