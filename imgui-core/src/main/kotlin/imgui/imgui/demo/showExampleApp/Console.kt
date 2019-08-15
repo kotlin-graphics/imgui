@@ -23,6 +23,8 @@ import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
+import imgui.ImGui.scrollMaxY
+import imgui.ImGui.scrollY
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setItemDefaultFocus
@@ -55,27 +57,22 @@ object Console {
     class ExampleAppConsole {
         val inputBuf = CharArray(256)
         val items = ArrayList<String>()
-        val commands = ArrayList<String>(Arrays.asList("HELP", "HISTORY", "CLEAR", "CLASSIFY"))
+        val commands = ArrayList<String>(Arrays.asList("HELP", "HISTORY", "CLEAR", "CLASSIFY")) // "classify" is only here to provide an example of "C"+[tab] completing to "CL" and displaying matches.
         val history = ArrayList<String>()
         /** -1: new line, 0..History.Size-1 browsing history. */
         var historyPos = -1
         val filter = TextFilter()
         var autoScroll = true
-        var scrollToBottom = true
+        var scrollToBottom = false
 
         init {
             addLog("Welcome to Dear ImGui!")
         }
 
-        fun clearLog() {
-            items.clear()
-            scrollToBottom = true
-        }
+        fun clearLog() = items.clear()
 
         fun addLog(fmt: String, vararg args: Any) {
             items.add(fmt.format(*args))
-            if (autoScroll)
-                scrollToBottom = true
         }
 
         fun draw(title: String, pOpen: KMutableProperty0<Boolean>) {
@@ -99,26 +96,20 @@ object Console {
             if (ImGui.smallButton("Add Dummy Text")) {
                 addLog("%d some text", items.size); addLog("some more text"); addLog("display very important message here!"); }
             sameLine()
-            if (ImGui.smallButton("Add Dummy Error")) {
-                addLog("[error] something went wrong"); }
+            if (ImGui.smallButton("Add Dummy Error"))
+                addLog("[error] something went wrong")
             sameLine()
-            if (ImGui.smallButton("Clear")) {
-                clearLog(); }
+            if (ImGui.smallButton("Clear"))
+                clearLog()
             sameLine()
             val copyToClipboard = ImGui.smallButton("Copy")
-            sameLine()
-            if (ImGui.smallButton("Scroll to bottom")) {
-                scrollToBottom = true
-            }
             //var t = 0.0; if (ImGui.time - t > 0.02f) { t = ImGui.time; addLog("Spam %f", t); }
 
             separator()
 
             // Options menu
             if (beginPopup("Options")) {
-                if (checkbox("Auto-scroll", ::autoScroll))
-                    if (autoScroll)
-                        scrollToBottom = true
+                checkbox("Auto-scroll", ::autoScroll)
                 endPopup()
             }
 
@@ -172,9 +163,10 @@ object Console {
             }
             if (copyToClipboard)
                 logFinish()
-            if (scrollToBottom)
+            if (scrollToBottom || (autoScroll && scrollY >= scrollMaxY))
                 setScrollHereY(1f)
             scrollToBottom = false
+
             popStyleVar()
             endChild()
             separator()
