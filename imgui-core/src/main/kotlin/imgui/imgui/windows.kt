@@ -497,6 +497,7 @@ interface imgui_windows {
             if (renderDecorationsInParent)
                 window.drawList = parentWindow!!.drawList
 
+            // Handle title bar, scrollbar, resize grips and resize borders
             val windowToHighlight = g.navWindowingTarget ?: g.navWindow
             val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
                     ?: false)
