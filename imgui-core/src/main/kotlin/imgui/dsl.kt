@@ -117,10 +117,9 @@ object dsl {
         ImGui.popAllowKeyboardFocus()
     }
 
-    inline fun withButtonRepeat(repeat: Boolean, block: () -> Unit) {
+    inline fun <R> withButtonRepeat(repeat: Boolean, block: () -> R): R {
         ImGui.pushButtonRepeat(repeat)
-        block()
-        ImGui.popButtonRepeat()
+        return block().also { ImGui.popButtonRepeat() }
     }
 
 
@@ -360,14 +359,14 @@ object dsl {
     // Drag and Drop
 
     inline fun dragDropSource(flags: DragDropFlags = 0, block: () -> Unit) {
-        if(ImGui.beginDragDropSource(flags)) {
+        if (ImGui.beginDragDropSource(flags)) {
             block()
             ImGui.endDragDropSource()
         }
     }
 
     inline fun dragDropTarget(block: () -> Unit) {
-        if(ImGui.beginDragDropTarget()) {
+        if (ImGui.beginDragDropTarget()) {
             block()
             ImGui.endDragDropTarget()
         }

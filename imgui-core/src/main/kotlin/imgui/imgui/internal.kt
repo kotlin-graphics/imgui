@@ -1592,8 +1592,6 @@ interface imgui_internal {
         var flags = flags_
         if (window.dc.itemFlags has If.ButtonRepeat) flags = flags or Bf.Repeat
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
-        if (pressed)
-            markItemEdited(id)
 
         // Render
         val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button

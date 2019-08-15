@@ -138,6 +138,7 @@ import imgui.dsl.popup
 import imgui.dsl.smallButton
 import imgui.dsl.tooltip
 import imgui.dsl.treeNode
+import imgui.dsl.withButtonRepeat
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
@@ -241,11 +242,13 @@ object showDemoWindowWidgets {
     var flags = Itf.AllowTabInput.i
 
     val bufs = Array(6) { CharArray(64) }
+
     object TextFilters {
         val filterImGuiLetters: InputTextCallback = { data: InputTextCallbackData ->
             !(data.eventChar.i < 256 && data.eventChar in "imgui")
         }
     }
+
     val bufPass = "password123".toCharArray(CharArray(64))
 
     /* Color/Picker Widgets */
@@ -1245,28 +1248,22 @@ object showDemoWindowWidgets {
             /*  Display the value of IsItemHovered() and other common item state functions. Note that the flags can be combined.
                 (because BulletText is an item itself and that would affect the output of ::isItemHovered
                 we pass all state in a single call to simplify the code).   */
-            radioButton("Text", ::itemType, 0)
-            radioButton("Button", ::itemType, 1)
-            radioButton("Checkbox", ::itemType, 2)
-            radioButton("SliderFloat", ::itemType, 3)
-            radioButton("InputText", ::itemType, 4)
-            radioButton("InputFloat3", ::itemType, 5)
-            radioButton("ColorEdit4", ::itemType, 6)
-            radioButton("MenuItem", ::itemType, 7)
-            radioButton("TreeNode (w/ double-click)", ::itemType, 8)
-            radioButton("ListBox", ::itemType, 9)
-            separator()
+            combo("Item Type", ::itemType, "Text\u0000Button\u0000Button (w/ repeat)\u0000Checkbox\u0000SliderFloat\u0000InputText\u0000InputFloat\u0000InputFloat3\u0000ColorEdit4\u0000MenuItem\u0000TreeNode (w/ double-click)\u0000ListBox\u0000")
+            sameLine()
+            helpMarker("Testing how various types of items are interacting with the IsItemXXX functions.")
             val ret = when (itemType) {
                 0 -> false.also { text("ITEM: Text") }   // Testing text items with no identifier/interaction
                 1 -> button("ITEM: Button")   // Testing button
-                2 -> checkbox("ITEM: Checkbox", ::b0)  // Testing checkbox
-                3 -> sliderFloat("ITEM: SliderFloat", col, 0, 0f, 1f)   // Testing basic item
-                4 -> inputText("ITEM: InputText", str)  // Testing input text (which handles tabbing)
-                5 -> inputFloat3("ITEM: InputFloat3", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
-                6 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
-                7 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
-                8 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen) // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
-                9 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                2 -> withButtonRepeat(true) { button("ITEM: Button") } // Testing button (with repeater)
+                3 -> checkbox("ITEM: Checkbox", ::b0) // Testing checkbox
+                4 -> sliderFloat("ITEM: SliderFloat", col, 0,0f, 1f)   // Testing basic item
+                5 -> inputText("ITEM: InputText", str) // Testing input text (which handles tabbing)
+                6 -> inputFloat("ITEM: InputFloat", col, 1f)  // Testing +/- buttons on scalar input
+                7 -> inputFloat3("ITEM: InputFloat3", col)  // Testing multi-component items (IsItemXXX flags are reported merged)
+                8 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
+                9 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
+                10 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen)   // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
+                11 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
                 else -> false
             }
             bulletText("Return value = $ret\n" +
