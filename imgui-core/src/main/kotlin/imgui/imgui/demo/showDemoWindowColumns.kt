@@ -9,6 +9,7 @@ import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columnIndex
 import imgui.ImGui.columns
 import imgui.ImGui.contentRegionAvail
+import imgui.ImGui.dragInt
 import imgui.ImGui.fontSize
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
@@ -22,6 +23,7 @@ import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowContentSize
 import imgui.ImGui.style
 import imgui.ImGui.text
@@ -49,6 +51,7 @@ object showDemoWindowColumns {
     /* Borders */
     var hBorders = true
     var vBorders = true
+    var columnsCount = 4
 
     /* Mixed Items */
     var foo = 1f
@@ -106,11 +109,15 @@ object showDemoWindowColumns {
 
         if (treeNode("Borders")) {
             // NB: Future columns API should allow automatic horizontal borders.
+            val linesCount = 3
+            setNextItemWidth(fontSize * 8)
+            dragInt("##columns_count", ::columnsCount, 0.1f, 1, 10, "%d columns")
+            sameLine()
             checkbox("horizontal", ::hBorders)
             sameLine()
             checkbox("vertical", ::vBorders)
-            columns(4, "", vBorders)
-            for (i in 0 until 4 * 3) {
+            columns(columnsCount, "", vBorders)
+            for (i in 0 until columnsCount * linesCount) {
                 if (hBorders && columnIndex == 0)
                     separator()
                 text("%c%c%c", 'a' + i, 'a' + i, 'a' + i)
