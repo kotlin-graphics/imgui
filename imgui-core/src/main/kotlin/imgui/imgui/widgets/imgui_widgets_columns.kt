@@ -156,21 +156,19 @@ interface imgui_widgets_columns {
         window.dc.currentColumns = columns
 
         // Set state for first column
-        // We aim so that the right-most column will have the same clipping width as other after being clipped by parent ClipRect
         val columnPadding = style.itemSpacing.x
-        val halfClipExtendX = floor((window.windowPadding.x * 0.5f) max window.windowBorderSize)
         columns.apply {
+            offMinX = window.dc.indent - columnPadding
+            offMaxX = (window.workRect.max.x - window.pos.x) max (offMinX + 1f)
             hostCursorPosY = window.dc.cursorPos.y
             hostCursorMaxPosX = window.dc.cursorMaxPos.x
             hostClipRect put window.clipRect
             hostWorkRect put window.workRect
-
-            offMinX = window.dc.indent - columnPadding + max(columnPadding - window.windowPadding.x, 0f)
-            offMaxX = min(window.workRect.max.x + columnPadding - max(columnPadding - window.windowPadding.x, 0f), window.workRect.max.x + halfClipExtendX) - window.pos.x
-            offMaxX = max(columns.offMaxX, columns.offMinX + 1f)
             lineMinY = window.dc.cursorPos.y
             lineMaxY = lineMinY
         }
+        window.dc.columnsOffset = 0f
+        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
 
         // Clear data if columns count changed
         if (columns.columns.isNotEmpty() && columns.columns.size != columnsCount + 1)
@@ -201,8 +199,6 @@ interface imgui_widgets_columns {
         val offset1 = getColumnOffset(columns.current + 1)
         val width = offset1 - offset0
         pushItemWidth(width * 0.65f)
-        window.dc.columnsOffset = columns.offMinX - window.dc.indent + columnPadding
-        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
         window.workRect.max.x = window.pos.x + offset1 - columnPadding
     }
 
@@ -234,7 +230,7 @@ interface imgui_widgets_columns {
             } else {
                 // New row/line
                 // Column 0 honor IndentX
-                dc.columnsOffset = columns.offMinX - window.dc.indent + columnPadding
+                dc.columnsOffset = 0f
                 drawList.channelsSetCurrent(1)
                 columns.current = 0
                 columns.lineMinY = columns.lineMaxY
