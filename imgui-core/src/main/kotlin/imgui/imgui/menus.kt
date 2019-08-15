@@ -88,7 +88,12 @@ interface imgui_widgets_menus {
     }
 
     /** Append to menu-bar of current window (requires WindowFlag.MenuBar flag set on parent window).
-     *  Only call endMenuBar() if this returns true!    */
+     *  Only call endMenuBar() if this returns true!
+     *
+     *  FIXME: Provided a rectangle perhaps e.g. a BeginMenuBarEx() could be used anywhere..
+     *  Currently the main responsibility of this function being to setup clip-rect + horizontal layout + menu navigation layer.
+     *  Ideally we also want this to be responsible for claiming space out of the main window scrolling rectangle, in which case ImGuiWindowFlags_MenuBar will become unnecessary.
+     *  Then later the same system could be used for multiple menu-bars, scrollbars, side-bars. */
     fun beginMenuBar(): Boolean {
 
         val window = currentWindow
@@ -96,7 +101,7 @@ interface imgui_widgets_menus {
         if (window.flags hasnt Wf.MenuBar) return false
 
         assert(!window.dc.menuBarAppending)
-        beginGroup() // Backup position on layer 0
+        beginGroup() // Backup position on layer 0 // FIXME: Misleading to use a group for that backup/restore
         pushId("##menubar")
 
         /*  We don't clip with current window clipping rectangle as it is already set to the area below. However we clip

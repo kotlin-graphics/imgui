@@ -50,6 +50,9 @@ val IMGUI_DEBUG_NAV_SCORING = false
 /** Display the reference navigation rectangle for each window */
 @JvmField
 val IMGUI_DEBUG_NAV_RECTS = false
+/** Save additional comments in .ini file */
+@JvmField
+val IMGUI_DEBUG_INI_SETTINGS = false
 
 // When using CTRL+TAB (or Gamepad Square+L/R) we delay the visual a little in order to reduce visual noise doing a fast switch.
 
