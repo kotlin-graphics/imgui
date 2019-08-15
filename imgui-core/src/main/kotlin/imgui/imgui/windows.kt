@@ -700,7 +700,9 @@ interface imgui_windows {
     }
 
 
-    /** per-window font scale. Adjust io.FontGlobalScale if you want to scale all windows   */
+    /** per-window font scale. Adjust io.FontGlobalScale if you want to scale all windows
+     *
+     *  set font scale. Adjust IO.FontGlobalScale if you want to scale all windows. This is an old API! For correct scaling, prefer to reload font + rebuild ImFontAtlas + call style.ScaleAllSizes(). */
     fun setWindowFontScale(scale: Float) = with(currentWindow) {
         fontWindowScale = scale
         g.drawListSharedData.fontSize = calcFontSize()
