@@ -64,6 +64,8 @@ const val NAV_WINDOWING_LIST_APPEAR_DELAY = 0.15f
 const val WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS = 4f
 /** Reduce visual noise by only highlighting the border after a certain time. */
 const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f
+/** Lock scrolled window (so it doesn't pick child windows that are scrolling through) for a certaint time, unless mouse moved. */
+const val WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER = 2f
 
 // Test engine hooks (imgui-test)
 @JvmField
@@ -81,7 +83,7 @@ var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID) -> Unit = { _, _ -> }
 @JvmField
 var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: ItemStatusFlags) -> Unit = { _, _, _ -> }
 @JvmField
-/** Custom log entry from user land into test log */
+        /** Custom log entry from user land into test log */
 var ImGuiTestEngineHook_Log: (g: Context, /*vararg*/ fmt: String) -> Unit = { g, fmt -> }
 
 @JvmField
