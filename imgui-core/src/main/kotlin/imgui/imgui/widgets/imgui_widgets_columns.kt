@@ -156,9 +156,10 @@ interface imgui_widgets_columns {
         window.dc.currentColumns = columns
 
         // Set state for first column
+        val columnPadding = style.itemSpacing.x
         columns.apply {
-            offMinX = window.dc.indent - style.itemSpacing.x
-            offMaxX = max(window.workRect.max.x - window.pos.x, offMinX + 1f)
+            offMinX = window.dc.indent - columnPadding
+            offMaxX = (window.workRect.max.x - window.pos.x) max (offMinX + 1f)
             hostCursorPosY = window.dc.cursorPos.y
             hostCursorMaxPosX = window.dc.cursorMaxPos.x
             hostClipRect put window.clipRect
@@ -198,7 +199,7 @@ interface imgui_widgets_columns {
         val offset1 = getColumnOffset(columns.current + 1)
         val width = offset1 - offset0
         pushItemWidth(width * 0.65f)
-        window.workRect.max.x = window.pos.x + offset1 - window.windowPadding.x
+        window.workRect.max.x = window.pos.x + offset1 - columnPadding
     }
 
     /** next column, defaults to current row or next row if the current row is finished */
@@ -218,15 +219,17 @@ interface imgui_widgets_columns {
         popItemWidth()
         popClipRect()
 
+        val columnPadding = style.itemSpacing.x
         with(window) {
             columns.lineMaxY = max(columns.lineMaxY, dc.cursorPos.y)
             if (++columns.current < columns.count) {
-                // Columns 1+ cancel out IndentX
+                // Columns 1+ ignore IndentX (by canceling it out)
                 // FIXME-COLUMNS: Unnecessary, could be locked?
-                dc.columnsOffset = getColumnOffset(columns.current) - dc.indent + style.itemSpacing.x
+                dc.columnsOffset = getColumnOffset(columns.current) - dc.indent + columnPadding
                 drawList.channelsSetCurrent(columns.current + 1)
             } else {
                 // New row/line
+                // Column 0 honor IndentX
                 dc.columnsOffset = 0f
                 drawList.channelsSetCurrent(1)
                 columns.current = 0
@@ -244,7 +247,7 @@ interface imgui_widgets_columns {
         val offset1 = getColumnOffset(columns.current + 1)
         val width = offset1 - offset0
         pushItemWidth(width * 0.65f)
-        window.workRect.max.x = window.pos.x + offset1 - window.windowPadding.x
+        window.workRect.max.x = window.pos.x + offset1 - columnPadding
     }
 
     fun endColumns() {
