@@ -442,7 +442,20 @@ infix fun Int.shl(b: Dir) = shl(b.i)
  *  A key identifier (ImGui-side enum) */
 enum class Key {
     Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
-    Space, Enter, Escape, A, C, V, X, Y, Z, Count;
+    Space, Enter, EnterSecondary, Escape,
+    /** for text edit CTRL+A: select all */
+    A,
+    /** for text edit CTRL+C: copy */
+    C,
+    /** for text edit CTRL+V: paste */
+    V,
+    /** for text edit CTRL+X: cut */
+    X,
+    /** for text edit CTRL+Y: redo */
+    Y,
+    /** for text edit CTRL+Z: undo */
+    Z,
+    Count;
 
     companion object {
         val COUNT = values().size
