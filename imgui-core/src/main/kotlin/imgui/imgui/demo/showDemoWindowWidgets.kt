@@ -178,6 +178,8 @@ object showDemoWindowWidgets {
     var f4 = 0.123f
     var f5 = 0f
     var angle = 0f
+    enum class Element { Fire, Earth, Air, Water }
+    var currentElement = Element.Fire.ordinal
     val col1 = floatArrayOf(1f, 0f, 0.2f)
     val col2 = floatArrayOf(0.4f, 0.7f, 0f, 0.5f)
     var listboxItemCurrent = 1
@@ -445,6 +447,13 @@ object showDemoWindowWidgets {
                 sliderFloat("slider float (curve)", ::f5, -10f, 10f, "%.4f", 2f)
 
                 sliderAngle("slider angle", ::angle)
+
+                // Using the format string to display a name instead of an integer.
+                // Here we completely omit '%d' from the format string, so it'll only display a name.
+                // This technique can also be used with DragInt().
+                val currentElementName = Element.values().getOrNull(currentElement)?.name ?: "Unknown"
+                sliderInt("slider enum", ::currentElement, 0, Element.values().lastIndex, currentElementName)
+                sameLine(); helpMarker("Using the format string parameter to display a name instead of the underlying integer.")
             }
 
             run {
