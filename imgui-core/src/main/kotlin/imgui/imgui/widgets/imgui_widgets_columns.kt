@@ -6,6 +6,7 @@ import imgui.Col
 import imgui.ColumnsFlags
 import imgui.ID
 import imgui.ImGui.buttonBehavior
+import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.getColumnOffset
@@ -54,7 +55,7 @@ interface imgui_widgets_columns {
     fun getColumnOffset(columnIndex_: Int = -1): Float {
 
         val window = currentWindowRead!!
-        val columns = window.dc.currentColumns!!
+        val columns = window.dc.currentColumns ?: return 0f
 
         val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
 
@@ -65,8 +66,8 @@ interface imgui_widgets_columns {
     /** get column width (in pixels). pass -1 to use current column   */
     fun getColumnWidth(columnIndex_: Int = -1): Float {
 
-        val window = currentWindowRead!!
-        val columns = window.dc.currentColumns!!
+        val window = g.currentWindow!!
+        val columns = window.dc.currentColumns ?: return contentRegionAvail.x
         val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
         return columns.getOffsetFrom(columns.columns[columnIndex + 1].offsetNorm - columns.columns[columnIndex].offsetNorm)
     }
