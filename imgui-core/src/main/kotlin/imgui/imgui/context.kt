@@ -419,7 +419,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var logDepthToExpandDefault = 2
 
     // Debug Tools
-    var debugBreakItemId: ID = 0
+
+    var debugItemPickerActive = false
+    /** Will call IM_DEBUG_BREAK() when encountering this id */
+    var debugItemPickerBreakId: ID = 0
 
 
     //------------------------------------------------------------------
