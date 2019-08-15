@@ -306,7 +306,8 @@ object StyleEditor {
                     image(atlas.texId, Vec2(atlas.texSize), Vec2(), Vec2(1), tintCol, borderCol)
                 }
 
-                if (dragFloat("this window scale", ::windowScale, 0.005f, 0.3f, 2f, "%.2f"))    // scale only this window
+                helpMarker("Those are old settings provided for convenience.\nHowever, the _correct_ way of scaling your UI is currently to reload your font at the designed size, rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.")
+                if (dragFloat("window scale", ::windowScale, 0.005f, 0.3f, 2f, "%.2f"))    // scale only this window
                     setWindowFontScale(windowScale)
                 dragFloat("global scale", io::fontGlobalScale, 0.005f, 0.3f, 2f, "%.2f") // scale everything
                 popItemWidth()

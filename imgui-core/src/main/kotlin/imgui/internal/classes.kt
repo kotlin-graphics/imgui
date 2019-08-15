@@ -743,7 +743,7 @@ class Window(var context: Context, var name: String) {
     val columnsStorage = ArrayList<Columns>()
     /** Index into SettingsWindow[] (indices are always valid as we only grow the array from the back) */
     var settingsIdx = -1
-    /** User scale multiplier per-window */
+    /** User scale multiplier per-window, via SetWindowFontScale() */
     var fontWindowScale = 1f
 
     var drawListInst = DrawList(context.drawListSharedData).apply { _ownerName = name }
@@ -836,7 +836,12 @@ class Window(var context: Context, var name: String) {
     /** We don't use g.FontSize because the window may be != g.CurrentWidow. */
     fun rect() = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
 
-    fun calcFontSize() = g.fontBaseSize * fontWindowScale
+    fun calcFontSize(): Float {
+        var scale = g.fontBaseSize * fontWindowScale
+        parentWindow?.let { scale *= it.fontWindowScale }
+        return scale
+    }
+
     val titleBarHeight
         get() = when {
             flags has Wf.NoTitleBar -> 0f
