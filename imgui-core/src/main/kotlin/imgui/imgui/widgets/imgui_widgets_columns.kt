@@ -176,6 +176,8 @@ interface imgui_widgets_columns {
             lineMinY = window.dc.cursorPos.y
             lineMaxY = lineMinY
         }
+        window.dc.columnsOffset = 0f
+        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
 
         // Clear data if columns count changed
         if (columns.columns.isNotEmpty() && columns.columns.size != columnsCount + 1)
