@@ -100,6 +100,9 @@ fun findHoveredWindow() {
 }
 
 fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).apply {
+
+    //IMGUI_DEBUG_LOG("CreateNewWindow '%s', flags = 0x%08X\n", name, flags);
+
     // Create window the first time
     this.flags = flags
     g.windowsById[id] = this
@@ -212,11 +215,17 @@ fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean)
 
 fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 
-fun createNewWindowSettings(name: String) =
-        WindowSettings(name.removePrefix("###")).also {
-            // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
-            g.settingsWindows += it
-        }
+fun createNewWindowSettings(name_: String): WindowSettings {
+    val name = when {
+        // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
+        // Preserve the full string when IMGUI_DEBUG_INI_SETTINGS is set to make .ini inspection easier.
+        !IMGUI_DEBUG_INI_SETTINGS -> name_.removePrefix("###")
+        else -> name_
+    }
+    return WindowSettings(name).also {
+        g.settingsWindows += it
+    }
+}
 
 
 val viewportRect: Rect
@@ -969,7 +978,7 @@ fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
                 window.setScrollY(window.scroll.y + window.innerRect.height)
         } else {
             val navRectRel = window.navRectRel[g.navLayer.i]
-            val pageOffsetY = 0f max (window.innerRect.height-window.calcFontSize() * 1f+navRectRel.height)
+            val pageOffsetY = 0f max (window.innerRect.height - window.calcFontSize() * 1f + navRectRel.height)
             var navScoringRectOffsetY = 0f
             if (Key.PageUp.isPressed(true)) {
                 navScoringRectOffsetY = -pageOffsetY
