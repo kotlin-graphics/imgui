@@ -468,6 +468,7 @@ interface imgui_internal {
 
     /** [Internal] Absolute coordinate. Saner. This is not exposed until we finishing refactoring work rect features. */
     val contentRegionMaxAbs: Vec2
+        /** ~GetContentRegionMaxAbs */
         get() = g.currentWindow!!.run {
             val mx = Vec2(contentsRegionRect.max)
             dc.currentColumns?.let { mx.x = workRect.max.x }

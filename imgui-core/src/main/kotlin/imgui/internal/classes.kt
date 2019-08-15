@@ -490,20 +490,15 @@ class NextItemData {
 
 class ShrinkWidthItem(var index: Int, var width: Float)
 
-class TabBarRef {
-    // Either field can be set, not both. Dock node tab bars are loose while BeginTabBar() ones are in a pool.
-    val ptr: TabBar?
-    val indexInMainPool: PoolIdx
+class PtrOrIndex(
+    /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
+    val ptr: TabBar?,
+    /** Usually index in a main pool. */
+    val index: PoolIdx) {
 
-    constructor(ptr: TabBar) {
-        this.ptr = ptr
-        indexInMainPool = PoolIdx(-1)
-    }
+    constructor(ptr: TabBar) : this(ptr, PoolIdx(-1))
 
-    constructor(indexInMainPool: PoolIdx) {
-        ptr = null
-        this.indexInMainPool = indexInMainPool
-    }
+    constructor(index: PoolIdx) : this(null, index)
 }
 
 /** Temporary storage for one window(, that's the data which in theory we could ditch at the end of the frame)

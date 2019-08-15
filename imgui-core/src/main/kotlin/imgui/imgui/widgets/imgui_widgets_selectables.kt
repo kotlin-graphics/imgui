@@ -115,7 +115,8 @@ interface imgui_widgets_selectables {
 
         val wasSelected = selected
 
-        val (pressed, hovered, held) = buttonBehavior(bb, id, buttonFlags)
+        val (pressed, h, held) = buttonBehavior(bb, id, buttonFlags)
+        var hovered = h
         /*  Hovering selectable with mouse updates navId accordingly so navigation can be resumed with gamepad/keyboard
             (this doesn't happen on most widgets)         */
         if (pressed || hovered)
@@ -134,6 +135,8 @@ interface imgui_widgets_selectables {
             window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledSelection
 
         // Render
+        if (held && flags has Sf.DrawHoveredWhenHeld)
+            hovered = true
         if (hovered || selected) {
             val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             renderFrame(bb.min, bb.max, col.u32, false, 0f)
