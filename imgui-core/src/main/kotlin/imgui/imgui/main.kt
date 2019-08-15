@@ -18,11 +18,14 @@ import imgui.ImGui.defaultFont
 import imgui.ImGui.end
 import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.getNavInputAmount2d
+import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
+import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.loadIniSettingsFromDisk
+import imgui.ImGui.mouseCursor
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.renderFrame
@@ -30,12 +33,16 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.scrollbar
 import imgui.ImGui.setCurrentFont
+import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
 import imgui.ImGui.style
+import imgui.ImGui.text
+import imgui.ImGui.textColored
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
+import imgui.dsl.tooltip
 import imgui.imgui.imgui_windows.Companion.getWindowBgColorIdxFromFlags
 import imgui.internal.*
 import org.lwjgl.system.Platform
@@ -279,6 +286,26 @@ interface imgui_main {
         g.currentWindowStack.clear()
         g.beginPopupStack.clear()
         closePopupsOverWindow(g.navWindow, false)
+
+        // [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack.
+        g.debugItemPickerBreakId = 0
+        if (g.debugItemPickerActive) {
+
+            val hoveredId = g.hoveredIdPreviousFrame
+            mouseCursor = MouseCursor.Hand
+            if (Key.Escape.isPressed)
+                g.debugItemPickerActive = false
+            if (isMouseClicked(0) && hoveredId != 0) {
+                g.debugItemPickerBreakId = hoveredId
+                g.debugItemPickerActive = false
+            }
+            setNextWindowBgAlpha(0.6f)
+            tooltip {
+                text("HoveredId: 0x%08X", hoveredId)
+                text("Press ESC to abort picking.");
+                textColored(getStyleColorVec4(if (hoveredId != 0) Col.Text else Col.TextDisabled), "Click to break in debugger!")
+            }
+        }
 
         /*  Create implicit/fallback window - which we will only render it if the user has added something to it.
             We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.

@@ -140,9 +140,13 @@ interface imgui_inputsUtilities {
 
     var mouseCursor: MouseCursor
         /** Get desired cursor type, reset in newFrame(), this is updated during the frame. valid before render().
-         *  If you use software rendering by setting io.mouseDrawCursor ImGui will render those for you */
+         *  If you use software rendering by setting io.mouseDrawCursor ImGui will render those for you
+         *
+         *  ~getMouseCursor  */
         get() = g.mouseCursor
-        /** set desired cursor type */
+        /** set desired cursor type
+         *
+         *  ~setMouseCursor */
         set(value) {
             g.mouseCursor = value
         }
