@@ -25,6 +25,7 @@ import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameCount
 import imgui.ImGui.getId
+import imgui.ImGui.getOffsetFrom
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
@@ -64,7 +65,6 @@ import imgui.dsl.indent
 import imgui.dsl.menu
 import imgui.imgui.demo.ExampleApp
 import imgui.imgui.demo.showExampleApp.StyleEditor
-import imgui.imgui.imgui_colums.Companion.offsetNormToPixels
 import imgui.imgui.imgui_miscellaneousUtilities.Companion.getForegroundDrawList
 import imgui.internal.*
 import kool.lim
@@ -555,7 +555,7 @@ interface imgui_demoDebugInformations {
                     return
                 bulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", columns.offMaxX - columns.offMinX, columns.offMinX, columns.offMaxX)
                 columns.columns.forEachIndexed { i, c ->
-                    bulletText("Column %02d: OffsetNorm %.3f (= %.1f px)", i, c.offsetNorm, offsetNormToPixels(columns, c.offsetNorm))
+                    bulletText("Column %02d: OffsetNorm %.3f (= %.1f px)", i, c.offsetNorm, columns getOffsetFrom c.offsetNorm)
                 }
                 treePop()
             }

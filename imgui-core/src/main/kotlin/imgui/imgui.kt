@@ -122,12 +122,11 @@ object ImGui :
         imgui_widgets_listBoxes,
         imgui_widgets_dataPlotting,
         imgui_widgets_menus,
+        imgui_widgets_columns,
 
         imgui_tooltips,
 
         imgui_popupsModals,
-
-        imgui_colums,
 
         imgui_tabBarsTabs,
 
