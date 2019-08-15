@@ -442,7 +442,7 @@ infix fun Int.shl(b: Dir) = shl(b.i)
  *  A key identifier (ImGui-side enum) */
 enum class Key {
     Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
-    Space, Enter, EnterSecondary, Escape,
+    Space, Enter, Escape, KeyPadEnter,
     /** for text edit CTRL+A: select all */
     A,
     /** for text edit CTRL+C: copy */
