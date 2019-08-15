@@ -563,7 +563,11 @@ interface imgui_demoDebugInformations {
                 treePop()
             }
 
-            fun nodeWindow(window: Window, label: String) {
+            fun nodeWindow(window: Window?, label: String) {
+                if (window == null) {
+                    bulletText("$label: NULL")
+                    return
+                }
                 if (!treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x%d", window.hashCode()))
                     return
                 val flags = window.flags
