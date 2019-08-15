@@ -23,6 +23,7 @@ import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTooltip
+import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getColumnOffset
@@ -205,14 +206,6 @@ interface imgui_internal {
                 g.hoveredIdTimer = 0f
                 g.hoveredIdNotActiveTimer = 0f
             }
-            // [DEBUG] Item Picker tool!
-            // We perform the check here because SetHoveredID() is not frequently called (1~ time a frame), making
-            // the cost of this tool near-zero. We would get slightly better call-stack if we made the test in ItemAdd()
-            // but that would incur a slightly higher cost and may require us to hide this feature behind a define.
-            if (value != 0 && value == g.debugBreakItemId) {
-//                IM_DEBUG_BREAK() TODO?
-                g.debugBreakItemId = 0
-            }
         }
 
     fun keepAliveID(id: ID) {
@@ -299,6 +292,13 @@ interface imgui_internal {
                     if (window == g.navWindow || (window.flags or g.navWindow!!.flags) has Wf.NavFlattened)
                         navProcessItem(window, navBbArg ?: bb, id)
         }
+
+        // [DEBUG] Item Picker tool, when enabling the "extended" version we perform the check in ItemAdd()
+        if (IMGUI_DEBUG_TOOL_ITEM_PICKER_EX && id == g.debugItemPickerBreakId) {
+            IM_DEBUG_BREAK()
+            g.debugItemPickerBreakId = 0
+        }
+
         val dc = g.currentWindow!!.dc.apply {
             lastItemId = id
             lastItemRect = bb
@@ -331,6 +331,17 @@ interface imgui_internal {
             window.dc.itemFlags has If.Disabled -> false
             else -> {
                 hoveredId = id
+
+                // [DEBUG] Item Picker tool!
+                // We perform the check here because SetHoveredID() is not frequently called (1~ time a frame), making
+                // the cost of this tool near-zero. We can get slightly better call-stack and support picking non-hovered
+                // items if we perform the test in ItemAdd(), but that would incur a small runtime cost.
+                // #define IMGUI_DEBUG_TOOL_ITEM_PICKER_EX in imconfig.h if you want this check to also be performed in ItemAdd().
+                if (g.debugItemPickerActive && g.hoveredIdPreviousFrame == id)
+                    foregroundDrawList.addRect(bb.min, bb.max, COL32(255, 255, 0, 255))
+                if (g.debugItemPickerBreakId == id)
+                    IM_DEBUG_BREAK()
+
                 true
             }
         }
@@ -951,17 +962,6 @@ interface imgui_internal {
     fun endDragDropTooltip() = endTooltip()
 
     // New Columns API (FIXME-WIP)
-
-
-
-
-
-
-
-
-
-
-
 
 
     // Tab Bars
@@ -3833,6 +3833,12 @@ interface imgui_internal {
                 val vertexUV = uvA + (vertexPos - a) * scale
                 vertexUV.to(drawList.vtxBuffer.data, i * DrawVert.size + Vec2.size)
             }
+    }
+
+    // Debug Tools
+
+    fun debugStartItemPicker() {
+        g.debugItemPickerActive = true
     }
 
     companion object {
