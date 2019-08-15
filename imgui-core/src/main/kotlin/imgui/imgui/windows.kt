@@ -322,7 +322,7 @@ interface imgui_windows {
             val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesCannotSkipItems == 0
             if (windowPosWithPivot)
             // Position given a pivot (e.g. for centering)
-                window.setPos(glm.max(style.displaySafeAreaPadding, window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot), Cond.None)
+                window.setPos(window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot, Cond.None)
             else if (flags has Wf.ChildMenu)
                 window.pos = findBestWindowPosForPopup(window)
             else if (flags has Wf.Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize)
