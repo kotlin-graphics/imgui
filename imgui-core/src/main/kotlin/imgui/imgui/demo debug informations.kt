@@ -15,6 +15,7 @@ import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.combo
 import imgui.ImGui.cursorScreenPos
+import imgui.ImGui.debugStartItemPicker
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
@@ -242,24 +243,9 @@ interface imgui_demoDebugInformations {
 
         if (treeNode("Tools")) {
 
+            // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
             if (button("Item Picker.."))
-                pickingEnabled = true
-            if (pickingEnabled)            {
-                val hoveredId = g.hoveredIdPreviousFrame
-                mouseCursor = MouseCursor.Hand
-                if (Key.Escape.isPressed)
-                    pickingEnabled = false
-                if (isMouseClicked(0) && hoveredId != 0)                {
-                    g.debugBreakItemId = hoveredId
-                    pickingEnabled = false
-                }
-                setNextWindowBgAlpha(0.5f)
-                beginTooltip()
-                text("HoveredId: 0x%08X", hoveredId)
-                text("Press ESC to abort picking.")
-                textColored(getStyleColorVec4(if(hoveredId != 0) Col.Text else Col.TextDisabled), "Click to break in debugger!")
-                endTooltip()
-            }
+                debugStartItemPicker()
 
             checkbox("Show windows begin order", ::showWindowsBeginOrder)
             checkbox("Show windows rectangles", ::showWindowsRects)
@@ -380,7 +366,6 @@ interface imgui_demoDebugInformations {
             }
         }
 
-        var pickingEnabled = false
         var showWindowsBeginOrder = false
         var showWindowsRects = false
         var showWindowsRectType = WRT.InnerClipRect

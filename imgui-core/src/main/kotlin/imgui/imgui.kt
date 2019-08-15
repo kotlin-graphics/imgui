@@ -69,6 +69,8 @@ const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f
 @JvmField
 var IMGUI_ENABLE_TEST_ENGINE = false
 @JvmField
+var IMGUI_DEBUG_TOOL_ITEM_PICKER_EX = false
+@JvmField
 var ImGuiTestEngineHook_PreNewFrame: () -> Unit = {}
 @JvmField
 var ImGuiTestEngineHook_PostNewFrame: () -> Unit = {}
@@ -250,3 +252,7 @@ infix fun CharArray.cmp(other: CharArray): Boolean {
 }
 
 internal typealias stak = Stack
+
+fun IM_DEBUG_BREAK() {
+
+}
