@@ -1204,6 +1204,14 @@ class Window(var context: Context, var name: String) {
         val sizeContents = calcContentSize()
         return calcSizeAfterConstraint(calcSizeAutoFit(sizeContents))
     }
+
+    /** ~StartLockWheelingWindow */
+    fun startLockWheeling() {
+        if (g.wheelingWindow === this) return
+        g.wheelingWindow = this
+        g.wheelingWindowRefMousePos put io.mousePos
+        g.wheelingWindowTimer = WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER
+    }
 }
 
 fun Window?.setCurrent() {
