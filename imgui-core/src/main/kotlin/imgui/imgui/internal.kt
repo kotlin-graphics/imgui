@@ -3216,9 +3216,8 @@ interface imgui_internal {
                         scrollY = glm.max(0f, cursorOffset.y - g.fontSize)
                     else if (cursorOffset.y - size.y >= scrollY)
                         scrollY = cursorOffset.y - size.y
-                    drawWindow.dc.cursorPos.y += drawWindow.scroll.y - scrollY   // Manipulate cursor pos immediately avoid a frame of lag
+                    drawPos.y += drawWindow.scroll.y - scrollY   // Manipulate cursor pos immediately avoid a frame of lag
                     drawWindow.scroll.y = scrollY
-                    drawPos.y = drawWindow.dc.cursorPos.y
                 }
 
                 state.cursorFollow = false
