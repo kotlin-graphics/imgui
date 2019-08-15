@@ -556,13 +556,29 @@ interface imgui_main {
         }
 
         fun updateMouseWheel() {
-            var window = g.hoveredWindow ?: return
-            if (window.collapsed) return
-            if (io.mouseWheel == 0f && io.mouseWheelH == 0f) return
+
+            // Reset the locked window if we move the mouse or after the timer elapses
+            if (g.wheelingWindow != null) {
+                g.wheelingWindowTimer -= io.deltaTime
+                if (isMousePosValid() && (io.mousePos - g.wheelingWindowRefMousePos).lengthSqr > io.mouseDragThreshold * io.mouseDragThreshold)
+                    g.wheelingWindowTimer = 0f
+                if (g.wheelingWindowTimer <= 0f) {
+                    g.wheelingWindow = null
+                    g.wheelingWindowTimer = 0f
+                }
+            }
+
+            if (io.mouseWheel == 0f && io.mouseWheelH == 0f)
+                return
+
+            var window = g.wheelingWindow ?: g.hoveredWindow
+            if (window == null || window.collapsed)
+                return
 
             // Zoom / Scale window
             // FIXME-OBSOLETE: This is an old feature, it still works but pretty much nobody is using it and may be best redesigned.
-            if (io.mouseWheel != 0f && io.keyCtrl && io.fontAllowUserScaling && !window.collapsed) {
+            if (io.mouseWheel != 0f && io.keyCtrl && io.fontAllowUserScaling) {
+                window.startLockWheeling()
                 val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
                 val scale = newFontScale / window.fontWindowScale
                 window.fontWindowScale = newFontScale
@@ -577,11 +593,11 @@ interface imgui_main {
 
             // Mouse wheel scrolling
             // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent
-            // FIXME: Lock scrolling window while not moving (see #2604)
 
             // Vertical Mouse Wheel scrolling
             val wheelY = if (io.mouseWheel != 0f && !io.keyShift) io.mouseWheel else 0f
             if (wheelY != 0f && !io.keyCtrl) {
+                window.startLockWheeling()
                 tailrec fun Window.getParent(): Window = when {
                     flags has Wf.ChildWindow && (scrollMax.y == 0f || (flags has Wf.NoScrollWithMouse && flags hasnt Wf.NoMouseInputs)) -> parentWindow!!.getParent()
                     else -> this
@@ -601,6 +617,7 @@ interface imgui_main {
                 else -> 0f
             }
             if (wheelX != 0f && !io.keyCtrl) {
+                window.startLockWheeling()
                 tailrec fun Window.getParent(): Window = when {
                     flags has Wf.ChildWindow && (scrollMax.x == 0f || (flags has Wf.NoScrollWithMouse && flags hasnt Wf.NoMouseInputs)) -> parentWindow!!.getParent()
                     else -> this
