@@ -19,7 +19,9 @@ interface imgui_contentRegion {
             mx
         }
 
-    /** == GetContentRegionMax() - GetCursorPos()   */
+    /** == GetContentRegionMax() - GetCursorPos()
+     *
+     *  ~GetContentRegionAvail  */
     val contentRegionAvail: Vec2
         get() = g.currentWindow!!.run { contentRegionMaxAbs - dc.cursorPos }
 
