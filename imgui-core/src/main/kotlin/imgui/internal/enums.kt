@@ -310,6 +310,7 @@ enum class PopupPositionPolicy { Default, ComboBox }
 
 /** Flags: for ImDrawList::AddRect(), AddRectFilled() etc. */
 enum class DrawCornerFlag(val i: DrawCornerFlags) {
+    None(0),
     TopLeft(1 shl 0), // 0x1
     TopRight(1 shl 1), // 0x2
     BotLeft(1 shl 2), // 0x4
