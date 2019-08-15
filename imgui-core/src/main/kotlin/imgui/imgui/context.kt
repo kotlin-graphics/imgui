@@ -101,6 +101,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Track the window we clicked on (in order to preserve focus). The actually window that is moved is generally MovingWindow->RootWindow. */
     var movingWindow: Window? = null
 
+    var wheelingWindow: Window? = null
+
+    var wheelingWindowRefMousePos: Vec2 = Vec2()
+
+    var wheelingWindowTimer = 0f
+
 
     // Item/widgets state and tracking information
 
