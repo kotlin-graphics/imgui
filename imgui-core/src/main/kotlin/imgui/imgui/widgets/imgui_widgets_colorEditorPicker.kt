@@ -720,9 +720,6 @@ interface imgui_widgets_colorEditorPicker {
             col.put(pF)
         }
 
-        if (pressed)
-            markItemEdited(id)
-
         return pressed
     }
 
