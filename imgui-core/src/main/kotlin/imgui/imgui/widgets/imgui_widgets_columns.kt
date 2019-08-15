@@ -112,6 +112,7 @@ interface imgui_widgets_columns {
     fun pushColumnsBackground() {
         val window = currentWindowRead!!
         val columns = window.dc.currentColumns!!
+        if (columns.count == 1) return
         window.drawList.channelsSetCurrent(0)
         val cmdSize = window.drawList.cmdBuffer.size
         pushClipRect(columns.hostClipRect.min, columns.hostClipRect.max, false)
@@ -121,6 +122,7 @@ interface imgui_widgets_columns {
     fun popColumnsBackground() {
         val window = currentWindowRead!!
         val columns = window.dc.currentColumns!!
+        if (columns.count == 1) return
         window.drawList.channelsSetCurrent(columns.current + 1)
         popClipRect()
     }
@@ -155,15 +157,17 @@ interface imgui_widgets_columns {
         columns.flags = flags
         window.dc.currentColumns = columns
 
-        // Set state for first column
         val columnPadding = style.itemSpacing.x
         columns.apply {
-            offMinX = window.dc.indent - columnPadding
-            offMaxX = (window.workRect.max.x - window.pos.x) max (offMinX + 1f)
+
             hostCursorPosY = window.dc.cursorPos.y
             hostCursorMaxPosX = window.dc.cursorMaxPos.x
             hostClipRect put window.clipRect
             hostWorkRect put window.workRect
+
+            // Set state for first column
+            offMinX = window.dc.indent - columnPadding
+            offMaxX = (window.workRect.max.x - window.pos.x) max (offMinX + 1f)
             lineMinY = window.dc.cursorPos.y
             lineMaxY = lineMinY
         }
