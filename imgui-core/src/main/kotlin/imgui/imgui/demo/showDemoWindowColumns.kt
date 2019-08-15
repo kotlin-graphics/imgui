@@ -111,7 +111,9 @@ object showDemoWindowColumns {
             // NB: Future columns API should allow automatic horizontal borders.
             val linesCount = 3
             setNextItemWidth(fontSize * 8)
-            dragInt("##columns_count", ::columnsCount, 0.1f, 1, 10, "%d columns")
+            dragInt("##columns_count", ::columnsCount, 0.1f, 2, 10, "%d columns")
+            if (columnsCount < 2)
+                columnsCount = 2
             sameLine()
             checkbox("horizontal", ::hBorders)
             sameLine()
