@@ -7,9 +7,8 @@ import imgui.ImGui.pushOverrideID
 import imgui.ImGui.style
 import imgui.internal.Rect
 import imgui.internal.TabBar
-import imgui.internal.TabBarRef
+import imgui.internal.PtrOrIndex
 import kotlin.reflect.KMutableProperty0
-import imgui.internal.ColumnsFlag as Cf
 
 /** Tab Bars, Tabs
  *  [BETA API] API may evolve!
@@ -104,14 +103,13 @@ interface imgui_tabBarsTabs {
 
     companion object {
 
-        val TabBarRef.tabBar: TabBar?
-            get() = ptr ?: g.tabBars[indexInMainPool]
+        val PtrOrIndex.tabBar: TabBar?
+            get() = ptr ?: g.tabBars[index]
 
-        val TabBar.tabBarRef: TabBarRef?
-            get() {
-                if (this in g.tabBars)
-                    return TabBarRef(g.tabBars.getIndex(this))
-                return TabBarRef(this)
+        val TabBar.tabBarRef: PtrOrIndex?
+            get() = when {
+                this in g.tabBars -> PtrOrIndex(g.tabBars.getIndex(this))
+                else -> PtrOrIndex(this)
             }
     }
 }
