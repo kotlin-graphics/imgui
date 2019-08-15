@@ -60,7 +60,6 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
 import imgui.TextEditState.K
-import imgui.imgui.imgui_colums.Companion.COLUMNS_HIT_RECT_HALF_WIDTH
 import imgui.imgui.widgets.*
 import imgui.internal.*
 import kool.lib.fill
@@ -953,179 +952,17 @@ interface imgui_internal {
 
     // New Columns API (FIXME-WIP)
 
-    /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
-    fun beginColumns(strId: String = "", columnsCount: Int, flags: ColumnsFlags) {
 
-        val window = currentWindow
 
-        assert(columnsCount >= 1)
-        assert(window.dc.currentColumns == null) { "Nested columns are currently not supported" }
 
-        // Acquire storage for the columns set
-        val id = getColumnsID(strId, columnsCount)
-        val columns = window.findOrCreateColumns(id)
-        assert(columns.id == id)
-        columns.current = 0
-        columns.count = columnsCount
-        columns.flags = flags
-        window.dc.currentColumns = columns
 
-        // Set state for first column
-        columns.apply {
-            offMinX = window.dc.indent - style.itemSpacing.x
-            offMaxX = max(window.workRect.max.x - window.pos.x, offMinX + 1f)
-            hostCursorPosY = window.dc.cursorPos.y
-            hostCursorMaxPosX = window.dc.cursorMaxPos.x
-            hostClipRect put window.clipRect
-            hostWorkRect put window.workRect
-            lineMinY = window.dc.cursorPos.y
-            lineMaxY = window.dc.cursorPos.y
-        }
-        window.dc.columnsOffset = 0f
-        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
 
-        // Clear data if columns count changed
-        if (columns.columns.isNotEmpty() && columns.columns.size != columnsCount + 1)
-            columns.columns.clear()
 
-        // Initialize default widths
-        columns.isFirstFrame = columns.columns.isEmpty()
-        if (columns.columns.isEmpty())
-            for (i in 0..columnsCount)
-                columns.columns += ColumnData().apply { offsetNorm = i / columnsCount.f }
 
-        for (n in 0 until columnsCount) {
-            // Compute clipping rectangle
-            val column = columns.columns[n]
-            val clipX1 = floor(0.5f + window.pos.x + getColumnOffset(n))
-            val clipX2 = floor(0.5f + window.pos.x + getColumnOffset(n + 1) - 1f)
-            column.clipRect = Rect(clipX1, -Float.MAX_VALUE, clipX2, +Float.MAX_VALUE)
-            column.clipRect clipWith window.clipRect
-        }
 
-        if (columns.count > 1) {
-            window.drawList.channelsSplit(1 + columns.count)
-            window.drawList.channelsSetCurrent(1)
-            pushColumnClipRect(0)
-        }
 
-        val offset0 = getColumnOffset(columns.current)
-        val offset1 = getColumnOffset(columns.current + 1)
-        val width = offset1 - offset0
-        pushItemWidth(width * 0.65f)
-        window.workRect.max.x = window.pos.x + offset1 - window.windowPadding.x
-    }
 
-    fun endColumns() {
 
-        val window = currentWindow
-        val columns = window.dc.currentColumns!! // ~IM_ASSERT(columns != NULL)
-
-        popItemWidth()
-        if (columns.count > 1) {
-            popClipRect()
-            window.drawList.channelsMerge()
-        }
-
-        val flags = columns.flags
-        columns.lineMaxY = columns.lineMaxY max window.dc.cursorPos.y
-        window.dc.cursorPos.y = columns.lineMaxY
-        if (flags hasnt Cf.GrowParentContentsSize)
-            window.dc.cursorMaxPos.x = columns.hostCursorMaxPosX  // Restore cursor max pos, as columns don't grow parent
-
-        // Draw columns borders and handle resize
-        // The IsBeingResized flag ensure we preserve pre-resize columns width so back-and-forth are not lossy
-        var isBeingResized = false
-        if (flags hasnt Cf.NoBorder && !window.skipItems) {
-            // We clip Y boundaries CPU side because very long triangles are mishandled by some GPU drivers.
-            val y1 = columns.hostCursorPosY max window.clipRect.min.y
-            val y2 = window.dc.cursorPos.y min window.clipRect.max.y
-            var draggingColumn = -1
-            for (n in 1 until columns.count) {
-                val column = columns.columns[n]
-                val x = window.pos.x + getColumnOffset(n)
-                val columnId = columns.id + n
-                val columnHitHw = COLUMNS_HIT_RECT_HALF_WIDTH
-                val columnHitRect = Rect(Vec2(x - columnHitHw, y1), Vec2(x + columnHitHw, y2))
-                keepAliveID(columnId)
-                if (isClippedEx(columnHitRect, columnId, false))
-                    continue
-
-                var hovered = false
-                var held = false
-                if (flags hasnt Cf.NoResize) {
-                    val (_, ho, he) = buttonBehavior(columnHitRect, columnId)
-                    hovered = ho
-                    held = he
-                    if (hovered || held)
-                        g.mouseCursor = MouseCursor.ResizeEW
-                    if (held && column.flags hasnt Cf.NoResize)
-                        draggingColumn = n
-                }
-
-                // Draw column
-                val col = if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator
-                val xi = x.i.f
-                window.drawList.addLine(Vec2(xi, y1 + 1f), Vec2(xi, y2), col.u32)
-            }
-
-            // Apply dragging after drawing the column lines, so our rendered lines are in sync with how items were displayed during the frame.
-            if (draggingColumn != -1) {
-                if (!columns.isBeingResized)
-                    for (n in 0..columns.count)
-                        columns.columns[n].offsetNormBeforeResize = columns.columns[n].offsetNorm
-                columns.isBeingResized = true
-                isBeingResized = true
-                val x = getDraggedColumnOffset(columns, draggingColumn)
-                setColumnOffset(draggingColumn, x)
-            }
-        }
-        columns.isBeingResized = isBeingResized
-
-        window.apply {
-            workRect put columns.hostWorkRect
-            dc.currentColumns = null
-            dc.columnsOffset = 0f
-            dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
-        }
-    }
-
-    fun pushColumnClipRect(columnIndex_: Int) {
-
-        val window = currentWindowRead!!
-        val columns = window.dc.currentColumns!!
-        val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
-
-        pushClipRect(columns.columns[columnIndex].clipRect.min, columns.columns[columnIndex].clipRect.max, false)
-    }
-
-    /** Get into the columns background draw command (which is generally the same draw command as before we called BeginColumns) */
-    fun pushColumnsBackground() {
-        val window = currentWindowRead!!
-        val columns = window.dc.currentColumns!!
-        window.drawList.channelsSetCurrent(0)
-        val cmdSize = window.drawList.cmdBuffer.size
-        pushClipRect(columns.hostClipRect.min, columns.hostClipRect.max, false)
-        assert(cmdSize == window.drawList.cmdBuffer.size) { "Being in channel 0 this should not have created an ImDrawCmd" }
-    }
-
-    fun popColumnsBackground() {
-        val window = currentWindowRead!!
-        val columns = window.dc.currentColumns!!
-        window.drawList.channelsSetCurrent(columns.current + 1)
-        popClipRect()
-    }
-
-    fun getColumnsID(strId: String, columnsCount: Int): ID {
-
-        val window = g.currentWindow!!
-
-        // Differentiate column ID with an arbitrary prefix for cases where users name their columns set the same as another widget.
-        // In addition, when an identifier isn't explicitly provided we include the number of columns in the hash to make it uniquer.
-        pushId(0x11223347 + if (strId.isNotEmpty()) 0 else columnsCount)
-        return window.getId(if (strId.isNotEmpty()) strId else "columns")
-                .also { popId() }
-    }
 
     // Tab Bars
 

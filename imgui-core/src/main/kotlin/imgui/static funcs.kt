@@ -34,7 +34,6 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.imgui.g
-import imgui.imgui.imgui_colums.Companion.COLUMNS_HIT_RECT_HALF_WIDTH
 import imgui.imgui.imgui_miscellaneousUtilities.Companion.getForegroundDrawList
 import imgui.imgui.navRestoreLayer
 import imgui.imgui.navScoreItem
@@ -60,22 +59,7 @@ import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
 
 
-fun getDraggedColumnOffset(columns: Columns, columnIndex: Int): Float {
-    /*  Active (dragged) column always follow mouse. The reason we need this is that dragging a column to the right edge
-        of an auto-resizing window creates a feedback loop because we store normalized positions. So while dragging we
-        enforce absolute positioning.   */
 
-    val window = g.currentWindow!!
-    assert(columnIndex > 0) { "We are not supposed to drag column 0." }
-    assert(g.activeId == columns.id + columnIndex/* as ID */)
-
-    var x = io.mousePos.x - g.activeIdClickOffset.x + COLUMNS_HIT_RECT_HALF_WIDTH - window.pos.x
-    x = glm.max(x, getColumnOffset(columnIndex - 1) + style.columnsMinSpacing)
-    if (columns.flags has ColumnsFlag.NoPreserveWidths)
-        x = glm.min(x, getColumnOffset(columnIndex + 1) - style.columnsMinSpacing)
-
-    return x
-}
 
 //-----------------------------------------------------------------------------
 // Internal API exposed in imgui_internal.h
