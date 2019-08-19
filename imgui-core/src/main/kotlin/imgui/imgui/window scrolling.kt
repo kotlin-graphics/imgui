@@ -1,7 +1,5 @@
 package imgui.imgui
 
-import glm_.f
-import glm_.i
 import imgui.ImGui
 
 /** Windows Scrolling */
@@ -55,22 +53,7 @@ interface imgui_windowScrolling {
         setScrollFromPosY(targetY, centerYRatio)
     }
 
-    /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position. */
-    fun setScrollFromPosX(localX: Float, centerXratio: Float) {
-        // We store a target position so centering can occur on the next frame when we are guaranteed to have a known window size
-        g.currentWindow!!.apply {
-            assert(centerXratio in 0f..1f)
-            scrollTarget.x = (localX + scroll.x).i.f
-            scrollTargetCenterRatio.x = centerXratio
-        }
-    }
+    fun setScrollFromPosX(localX: Float, centerXratio: Float) = g.currentWindow!!.setScrollFromPosX(localX, centerXratio)
 
-    /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.   */
-    fun setScrollFromPosY(localY: Float, centerYRatio: Float = 0.5f) = with(ImGui.currentWindow) {
-        /*  We store a target position so centering can occur on the next frame when we are guaranteed to have a known
-            window size         */
-        assert(centerYRatio in 0f..1f)
-        scrollTarget.y = (localY + scroll.y).i.f
-        scrollTargetCenterRatio.y = centerYRatio
-    }
+    fun setScrollFromPosY(localY: Float, centerYratio: Float) = g.currentWindow!!.setScrollFromPosY(localY, centerYratio)
 }

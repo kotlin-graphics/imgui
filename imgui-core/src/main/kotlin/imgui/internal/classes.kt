@@ -34,6 +34,7 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.selectable
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setItemAllowOverlap
+import imgui.ImGui.setScrollFromPosX
 import imgui.ImGui.setTooltip
 import imgui.ImGui.shrinkWidths
 import imgui.ImGui.style
@@ -491,10 +492,10 @@ class NextItemData {
 class ShrinkWidthItem(var index: Int, var width: Float)
 
 class PtrOrIndex(
-    /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
-    val ptr: TabBar?,
-    /** Usually index in a main pool. */
-    val index: PoolIdx) {
+        /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
+        val ptr: TabBar?,
+        /** Usually index in a main pool. */
+        val index: PoolIdx) {
 
     constructor(ptr: TabBar) : this(ptr, PoolIdx(-1))
 
@@ -829,7 +830,7 @@ class Window(var context: Context, var name: String) {
     }
 
     /** We don't use g.FontSize because the window may be != g.CurrentWidow. */
-    fun rect() = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
+    fun rect(): Rect = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
 
     fun calcFontSize(): Float {
         var scale = g.fontBaseSize * fontWindowScale
@@ -837,14 +838,14 @@ class Window(var context: Context, var name: String) {
         return scale
     }
 
-    val titleBarHeight
+    val titleBarHeight: Float
         get() = when {
             flags has Wf.NoTitleBar -> 0f
             else -> calcFontSize() + style.framePadding.y * 2f
         }
 
-    fun titleBarRect() = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight))
-    val menuBarHeight
+    fun titleBarRect(): Rect = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight))
+    val menuBarHeight: Float
         get() = when {
             flags has Wf.MenuBar -> dc.menuBarOffset.y + calcFontSize() + style.framePadding.y * 2f
             else -> 0f
@@ -1087,26 +1088,51 @@ class Window(var context: Context, var name: String) {
         scrollTargetCenterRatio.y = 0f
     }
 
+    fun calcNextScrollFromScrollTargetAndClamp(snapOnEdges: Boolean): Vec2 {
+        val scroll = Vec2(scroll)
+        if (scrollTarget.x < Float.MAX_VALUE) {
+            val crX = scrollTargetCenterRatio.x
+            var targetX = scrollTarget.x
+            if (snapOnEdges && crX <= 0f && targetX <= windowPadding.x)
+                targetX = 0f
+            else if (snapOnEdges && crX >= 1f && targetX >= contentSize.x + windowPadding.x + style.itemSpacing.x)
+                targetX = contentSize.x + windowPadding.x * 2f
+            scroll.x = targetX - crX * (sizeFull.x - scrollbarSizes.x)
+        }
+        if (scrollTarget.y < Float.MAX_VALUE) {
+            /*  'snap_on_edges' allows for a discontinuity at the edge of scrolling limits to take account of WindowPadding
+                so that scrolling to make the last item visible scroll far enough to see the padding.         */
+            val decorationUpHeight = titleBarHeight + menuBarHeight
+            val crY = scrollTargetCenterRatio.y
+            var targetY = scrollTarget.y
+            if (snapOnEdges && crY <= 0f && targetY <= windowPadding.y)
+                targetY = 0f
+            if (snapOnEdges && crY >= 1f && targetY >= contentSize.y + windowPadding.y + style.itemSpacing.y)
+                targetY = contentSize.y + windowPadding.y * 2f
+            scroll.y = targetY - crY * (sizeFull.y - scrollbarSizes.y - decorationUpHeight)
+        }
+        scroll maxAssign 0f
+        if (!collapsed && !skipItems) {
+            scroll.x = glm.min(scroll.x, scrollMax.x)
+            scroll.y = glm.min(scroll.y, scrollMax.y)
+        }
+        return scroll
+    }
+
     /** Scroll to keep newly navigated item fully into view */
-    infix fun scrollToBringItemIntoView(itemRect: Rect) {
+    infix fun scrollToBringRectIntoView(itemRect: Rect) {
         val windowRectRel = Rect(innerRect.min - 1, innerRect.max + 1)
         //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
         if (itemRect in windowRectRel) return
 
-        if (scrollbar.x && itemRect.min.x < windowRectRel.min.x) {
-            scrollTarget.x = itemRect.min.x - pos.x + scroll.x - style.itemSpacing.x
-            scrollTargetCenterRatio.x = 0f
-        } else if (scrollbar.x && itemRect.max.x >= windowRectRel.max.x) {
-            scrollTarget.x = itemRect.max.x - pos.x + scroll.x + style.itemSpacing.x
-            scrollTargetCenterRatio.x = 1f
-        }
-        if (itemRect.min.y < windowRectRel.min.y) {
-            scrollTarget.y = itemRect.min.y - pos.y + scroll.y - style.itemSpacing.y
-            scrollTargetCenterRatio.y = 0f
-        } else if (itemRect.max.y >= windowRectRel.max.y) {
-            scrollTarget.y = itemRect.max.y - pos.y + scroll.y + style.itemSpacing.y
-            scrollTargetCenterRatio.y = 1f
-        }
+        if (scrollbar.x && itemRect.min.x < windowRectRel.min.x)
+            setScrollFromPosX(itemRect.min.x - pos.x + style.itemSpacing.x, 0f)
+        else if (scrollbar.x && itemRect.max.x >= windowRectRel.max.x)
+            setScrollFromPosX(itemRect.max.x - pos.x + style.itemSpacing.x, 1f)
+        if (itemRect.min.y < windowRectRel.min.y)
+            setScrollFromPosY(itemRect.min.y - pos.y - style.itemSpacing.y, 0f)
+        else if (itemRect.max.y >= windowRectRel.max.y)
+            setScrollFromPosY(itemRect.max.y - pos.y + style.itemSpacing.y, 1f)
     }
 
     fun getAllowedExtentRect(): Rect {
@@ -1231,6 +1257,25 @@ class Window(var context: Context, var name: String) {
         g.wheelingWindow = this
         g.wheelingWindowRefMousePos put io.mousePos
         g.wheelingWindowTimer = WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER
+    }
+
+    /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position. */
+    fun setScrollFromPosX(localX: Float, centerXratio: Float) {
+        // We store a target position so centering can occur on the next frame when we are guaranteed to have a known window size
+        assert(centerXratio in 0f..1f)
+        scrollTarget.x = (localX + scroll.x).i.f
+        scrollTargetCenterRatio.x = centerXratio
+    }
+
+    /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.   */
+    fun setScrollFromPosY(localY_: Float, centerYRatio: Float = 0.5f) = with(ImGui.currentWindow) {
+        /*  We store a target position so centering can occur on the next frame when we are guaranteed to have a known
+            window size         */
+        assert(centerYRatio in 0f..1f)
+        val decorationUpHeight = titleBarHeight + menuBarHeight
+        val localY = localY_ - decorationUpHeight
+        scrollTarget.y = (localY + scroll.y).i.f
+        scrollTargetCenterRatio.y = centerYRatio
     }
 }
 
