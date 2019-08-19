@@ -844,7 +844,7 @@ fun navUpdateWindowingList() {
     setNextWindowSizeConstraints(Vec2(io.displaySize.x * 0.2f, io.displaySize.y * 0.2f), Vec2(Float.MAX_VALUE))
     setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Always, Vec2(0.5f))
     pushStyleVar(StyleVar.WindowPadding, style.windowPadding * 2f)
-    val flags = Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoResize or Wf.NoMove or Wf.NoMouseInputs or Wf.AlwaysAutoResize or Wf.NoSavedSettings
+    val flags = Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoResize or Wf.NoMove or Wf.NoInputs or Wf.AlwaysAutoResize or Wf.NoSavedSettings
     begin("###NavWindowingList", null, flags)
     for (n in g.windowsFocusOrder.lastIndex downTo 0) {
         val window = g.windowsFocusOrder[n]
@@ -852,7 +852,7 @@ fun navUpdateWindowingList() {
             continue
         var label = window.name
         val labelEnd = findRenderedTextEnd(label)
-        if (labelEnd != 0)
+        if (labelEnd == -1)
             label = window.fallbackWindowName
         selectable(label, target == window)
     }
