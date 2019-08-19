@@ -37,16 +37,42 @@ class TextEditState {
     /** after a double-click to select all, we ignore further mouse drags to update selection */
     var selectedAllMouseLock = false
 
-    // Temporarily set when active
+    /** Temporarily set when active */
     var userFlags: InputTextFlags = 0
+    /** Temporarily set when active */
     var userCallback: InputTextCallback? = null
+    /** Temporarily set when active */
     var userCallbackData: Any? = null
+
+    fun clearText() {
+        curLenW = 0
+        curLenA = 0
+        textW[0] = NUL
+        textA[0] = NUL
+        cursorClamp()
+    }
 
     fun clearFreeMemory() {
         textW = charArrayOf()
         textA = charArrayOf()
         initialTextA = charArrayOf()
     }
+
+    val undoAvailCount: Int
+        get() = stb.undostate.undoPoint
+
+    val redoAvailCount: Int
+        get() = UNDOSTATECOUNT - stb.undostate.redoPoint
+
+    /** Cannot be inline because we call in code in stb_textedit.h implementation */
+    fun onKeyPressed(key: Int) {
+        key(key)
+        cursorFollow = true
+        cursorAnimReset()
+    }
+
+
+    // Cursor & Selection
 
     /** After a user-input the cursor stays on for a while without blinking */
     fun cursorAnimReset() {
@@ -69,19 +95,6 @@ class TextEditState {
         stb.selectEnd = curLenW
         stb.cursor = curLenW
         stb.hasPreferredX = false
-    }
-
-    val undoAvailCount: Int
-        get() = stb.undostate.undoPoint
-
-    val redoAvailCount: Int
-        get() = UNDOSTATECOUNT - stb.undostate.redoPoint
-
-    /** Cannot be inline because we call in code in stb_textedit.h implementation */
-    fun onKeyPressed(key: Int) {
-        key(key)
-        cursorFollow = true
-        cursorAnimReset()
     }
 
 
