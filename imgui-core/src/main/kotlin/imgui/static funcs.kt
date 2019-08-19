@@ -22,6 +22,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
+import imgui.ImGui.navScrollToBringItemIntoView
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.selectable
@@ -385,29 +386,6 @@ fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remain
 //    return string.toCharArray(buf).size
 //}
 
-
-/** Scroll to keep newly navigated item fully into view
- *  NB: We modify rect_rel by the amount we scrolled for, so it is immediately updated. */
-fun navScrollToBringItemIntoView(window: Window, itemRect: Rect) {
-    val windowRectRel = Rect(window.innerRect.min - 1, window.innerRect.max + 1)
-    //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
-    if (itemRect in windowRectRel) return
-
-    if (window.scrollbar.x && itemRect.min.x < windowRectRel.min.x) {
-        window.scrollTarget.x = itemRect.min.x - window.pos.x + window.scroll.x - style.itemSpacing.x
-        window.scrollTargetCenterRatio.x = 0f
-    } else if (window.scrollbar.x && itemRect.max.x >= windowRectRel.max.x) {
-        window.scrollTarget.x = itemRect.max.x - window.pos.x + window.scroll.x + style.itemSpacing.x
-        window.scrollTargetCenterRatio.x = 1f
-    }
-    if (itemRect.min.y < windowRectRel.min.y) {
-        window.scrollTarget.y = itemRect.min.y - window.pos.y + window.scroll.y - style.itemSpacing.y
-        window.scrollTargetCenterRatio.y = 0f
-    } else if (itemRect.max.y >= windowRectRel.max.y) {
-        window.scrollTarget.y = itemRect.max.y - window.pos.y + window.scroll.y + style.itemSpacing.y
-        window.scrollTargetCenterRatio.y = 1f
-    }
-}
 
 fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, flags_: WindowFlags): Boolean {
 
