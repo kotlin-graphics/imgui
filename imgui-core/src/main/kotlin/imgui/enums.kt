@@ -224,7 +224,9 @@ enum class SelectableFlag(@JvmField val i: Int) {
 
     AllowItemOverlap(1 shl 24),
     /** Always show active when held, even is not hovered. This concept could probably be renamed/formalized somehow. */
-    DrawHoveredWhenHeld(1 shl 25);
+    DrawHoveredWhenHeld(1 shl 25),
+
+    SetNavIdOnHover(1 shl 26);
 
     infix fun or(other: SelectableFlag): SelectableFlags = i or other.i
 }
