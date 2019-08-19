@@ -459,7 +459,7 @@ interface imgui_windows {
             window.scrollMax.y = max(0f, window.contentSize.y + window.windowPadding.y * 2f - window.innerRect.height)
 
             // Apply scrolling
-            window.scroll = calcNextScrollFromScrollTargetAndClamp(window, true)
+            window.scroll = window.calcNextScrollFromScrollTargetAndClamp(true)
             window.scrollTarget put Float.MAX_VALUE
 
             /* ---------- DRAWING ---------- */
