@@ -183,36 +183,6 @@ fun checkStacksSize(window: Window, write: Boolean) {
     assert(ptr == window.dc.stackSizesBackup.size)
 }
 
-fun calcNextScrollFromScrollTargetAndClamp(window: Window, snapOnEdges: Boolean): Vec2 {  // TODO -> window class?
-    val scroll = Vec2(window.scroll)
-    if (window.scrollTarget.x < Float.MAX_VALUE) {
-        val crX = window.scrollTargetCenterRatio.x
-        var targetX = window.scrollTarget.x
-        if (snapOnEdges && crX <= 0f && targetX <= window.windowPadding.x)
-            targetX = 0f
-        else if (snapOnEdges && crX >= 1f && targetX >= window.contentSize.x + window.windowPadding.x + style.itemSpacing.x)
-            targetX = window.contentSize.x + window.windowPadding.x * 2f
-        scroll.x = targetX - crX * window.innerRect.width
-    }
-    if (window.scrollTarget.y < Float.MAX_VALUE) {
-        /*  'snap_on_edges' allows for a discontinuity at the edge of scrolling limits to take account of WindowPadding
-            so that scrolling to make the last item visible scroll far enough to see the padding.         */
-        val crY = window.scrollTargetCenterRatio.y
-        var targetY = window.scrollTarget.y
-        if (snapOnEdges && crY <= 0f && targetY <= window.windowPadding.y)
-            targetY = 0f
-        if (snapOnEdges && crY >= 1f && targetY >= window.contentSize.y + window.windowPadding.y + style.itemSpacing.y)
-            targetY = window.contentSize.y + window.windowPadding.y * 2f
-        scroll.y = targetY - crY * window.innerRect.height
-    }
-    scroll maxAssign 0f
-    if (!window.collapsed && !window.skipItems) {
-        scroll.x = glm.min(scroll.x, window.scrollMax.x)
-        scroll.y = glm.min(scroll.y, window.scrollMax.y)
-    }
-    return scroll
-}
-
 fun findWindowSettings(id: ID) = g.settingsWindows.firstOrNull { it.id == id }
 
 fun createNewWindowSettings(name_: String): WindowSettings {
@@ -918,14 +888,14 @@ fun navUpdateMoveResult() {
     // Scroll to keep newly navigated item fully into view.
     if (g.navLayer == NavLayer.Main) {
         val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
-        window scrollToBringItemIntoView rectAbs
+        window scrollToBringRectIntoView rectAbs
         // Estimate upcoming scroll so we can offset our result position so mouse position can be applied immediately after in NavUpdate()
-        val nextScroll = calcNextScrollFromScrollTargetAndClamp(window, false)
+        val nextScroll = window.calcNextScrollFromScrollTargetAndClamp(false)
         val deltaScroll = window.scroll - nextScroll
         result.rectRel.translate(deltaScroll)
         // Also scroll parent window to keep us into view if necessary (we could/should technically recurse back the whole the parent hierarchy).
         if (window.flags has Wf.ChildWindow)
-            window.parentWindow!! scrollToBringItemIntoView Rect(rectAbs.min + deltaScroll, rectAbs.max + deltaScroll)
+            window.parentWindow!! scrollToBringRectIntoView Rect(rectAbs.min + deltaScroll, rectAbs.max + deltaScroll)
     }
 
     clearActiveId()
