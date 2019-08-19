@@ -845,6 +845,28 @@ interface imgui_internal {
         }
     }
 
+    /** Scroll to keep newly navigated item fully into view */
+    fun navScrollToBringItemIntoView(window: Window, itemRect: Rect) {
+        val windowRectRel = Rect(window.innerRect.min - 1, window.innerRect.max + 1)
+        //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
+        if (itemRect in windowRectRel) return
+
+        if (window.scrollbar.x && itemRect.min.x < windowRectRel.min.x) {
+            window.scrollTarget.x = itemRect.min.x - window.pos.x + window.scroll.x - style.itemSpacing.x
+            window.scrollTargetCenterRatio.x = 0f
+        } else if (window.scrollbar.x && itemRect.max.x >= windowRectRel.max.x) {
+            window.scrollTarget.x = itemRect.max.x - window.pos.x + window.scroll.x + style.itemSpacing.x
+            window.scrollTargetCenterRatio.x = 1f
+        }
+        if (itemRect.min.y < windowRectRel.min.y) {
+            window.scrollTarget.y = itemRect.min.y - window.pos.y + window.scroll.y - style.itemSpacing.y
+            window.scrollTargetCenterRatio.y = 0f
+        } else if (itemRect.max.y >= windowRectRel.max.y) {
+            window.scrollTarget.y = itemRect.max.y - window.pos.y + window.scroll.y + style.itemSpacing.y
+            window.scrollTargetCenterRatio.y = 1f
+        }
+    }
+
     fun getNavInputAmount(n: NavInput, mode: InputReadMode): Float {    // TODO -> NavInput?
 
         val i = n.i
