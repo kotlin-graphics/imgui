@@ -1,9 +1,11 @@
+import static org.gradle.internal.os.OperatingSystem.current
+
 plugins {
     id 'maven'
     id 'java'
     id "org.jetbrains.kotlin.jvm"
     id "com.github.johnrengelman.shadow"
-    id 'org.openjfx.javafxplugin' version '0.0.8'
+//    id 'org.openjfx.javafxplugin' version '0.0.8'
 }
 
 ext.moduleName = "${group}.imgui_openjfx"
@@ -13,6 +15,11 @@ dependencies {
     implementation project(':imgui-core')
     implementation "$kx:uno-sdk:$uno_version"
     implementation "${kx}.glm:glm:$glm_version"
+
+    def platform = current().isWindows() ? 'win' : current().isLinux() ? 'linux' : 'mac'
+    ["base", "graphics"].each {
+        implementation "org.openjfx:javafx-$it:11:$platform"
+    }
 
     [""].each {
         String natives = "org.lwjgl:lwjgl$it:$lwjgl_version:natives-$lwjgl_natives"
@@ -75,9 +82,12 @@ compileTestKotlin {
 }
 
 compileJava {
-    dependsOn(':compileKotlin')
     doFirst {
-        options.compilerArgs = ['--module-path', classpath.asPath,]
+//        println("[$moduleName]classpath.asPath: $classpath.asPath")
+        options.compilerArgs = [
+                '--module-path', classpath.asPath,
+//                '--add-modules', 'javafx.graphics',
+        ]
         classpath = files()
     }
 }
