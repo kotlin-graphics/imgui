@@ -22,7 +22,6 @@ import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
-import imgui.ImGui.navScrollToBringItemIntoView
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.selectable
@@ -919,14 +918,14 @@ fun navUpdateMoveResult() {
     // Scroll to keep newly navigated item fully into view.
     if (g.navLayer == NavLayer.Main) {
         val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
-        navScrollToBringItemIntoView(window, rectAbs)
+        window scrollToBringItemIntoView rectAbs
         // Estimate upcoming scroll so we can offset our result position so mouse position can be applied immediately after in NavUpdate()
         val nextScroll = calcNextScrollFromScrollTargetAndClamp(window, false)
         val deltaScroll = window.scroll - nextScroll
         result.rectRel.translate(deltaScroll)
         // Also scroll parent window to keep us into view if necessary (we could/should technically recurse back the whole the parent hierarchy).
         if (window.flags has Wf.ChildWindow)
-            navScrollToBringItemIntoView(window.parentWindow!!, Rect(rectAbs.min + deltaScroll, rectAbs.max + deltaScroll))
+            window.parentWindow!! scrollToBringItemIntoView Rect(rectAbs.min + deltaScroll, rectAbs.max + deltaScroll)
     }
 
     clearActiveId()
