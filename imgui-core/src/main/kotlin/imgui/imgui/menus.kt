@@ -332,7 +332,10 @@ interface imgui_widgets_menus {
 
         val pos = Vec2(window.dc.cursorPos)
         val labelSize = calcTextSize(label, true)
-        val flags = Sf.PressedOnRelease or if (enabled) Sf.None else Sf.Disabled
+
+        // We've been using the equivalent of ImGuiSelectableFlags_SetNavIdOnHover on all Selectable() since early Nav system days (commit 43ee5d73),
+        // but I am unsure whether this should be kept at all. For now moved it to be an opt-in feature used by menus only.
+        val flags = Sf.PressedOnRelease or Sf.SetNavIdOnHover or if(enabled) Sf.None else Sf.Disabled
         val pressed: Boolean
         if (window.dc.layoutType == Lt.Horizontal) {
             /*  Mimic the exact layout spacing of beginMenu() to allow menuItem() inside a menu bar, which is a little 
