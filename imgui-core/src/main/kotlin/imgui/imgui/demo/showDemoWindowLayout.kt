@@ -135,7 +135,7 @@ object showDemoWindowLayout {
     val opened = BooleanArray(4) { true } // Persistent user state
 
     /* Scrolling */
-    var track = true
+    var enableTrack = true
     var trackItem = 50
     val names1 = arrayOf("Top", "25%%", "Center", "75%%", "Bottom") // double quote for ::format escaping
     val names2 = arrayOf("Left", "25%%", "Center", "75%%", "Right")
@@ -509,9 +509,9 @@ object showDemoWindowLayout {
             // Vertical scroll functions
             helpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given vertical position.")
 
-            checkbox("Track", ::track)
+            checkbox("Track", ::enableTrack)
             pushItemWidth(100)
-            sameLine(140); track = dragInt("##item", ::trackItem, 0.25f, 0, 99, "Item = %d") or track
+            sameLine(140); enableTrack = dragInt("##item", ::trackItem, 0.25f, 0, 99, "Item = %d") or enableTrack
 
             var scrollToOff = button("Scroll Offset")
             sameLine(140); scrollToOff = dragFloat("##off", ::scrollToOffPx, 1f, 0f, 9999f, "+%.0f px") or scrollToOff
@@ -521,7 +521,7 @@ object showDemoWindowLayout {
 
             popItemWidth()
             if (scrollToOff || scrollToPos)
-                track = false
+                enableTrack = false
 
             var childW = (contentRegionAvail.x - 4 * style.itemSpacing.x) / 5
             if (childW < 1f)
@@ -538,7 +538,7 @@ object showDemoWindowLayout {
                     if (scrollToPos)
                         setScrollFromPosY(cursorStartPos.y + scrollToPosPx, i * 0.25f)
                     for (item in 0..99)
-                        if (track && item == trackItem) {
+                        if (enableTrack && item == trackItem) {
                             textColored(Vec4(1, 1, 0, 1), "Item %d", item)
                             setScrollHereY(i * 0.25f) // 0.0f:top, 0.5f:center, 1.0f:bottom
                         } else
@@ -563,7 +563,7 @@ object showDemoWindowLayout {
                 if (scrollToPos)
                     setScrollFromPosX(cursorStartPos.x + scrollToPosPx, i * 0.25f)
                 for (item in 0..99) {
-                    if (track && item == trackItem) {
+                    if (enableTrack && item == trackItem) {
                         textColored(Vec4(1, 1, 0, 1), "Item $item")
                         setScrollHereX(i * 0.25f) // 0.0f:left, 0.5f:center, 1.0f:right
                     } else
