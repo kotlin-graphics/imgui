@@ -117,9 +117,9 @@ interface imgui_widgets_selectables {
 
         val (pressed, h, held) = buttonBehavior(bb, id, buttonFlags)
         var hovered = h
-        /*  Hovering selectable with mouse updates navId accordingly so navigation can be resumed with gamepad/keyboard
-            (this doesn't happen on most widgets)         */
-        if (pressed || hovered)
+
+        // Update NavId when clicking or when Hovering (this doesn't happen on most widgets), so navigation can be resumed with gamepad/keyboard
+        if (pressed || (hovered && flags has Sf.SetNavIdOnHover))
             if (!g.navDisableMouseHover && g.navWindow === window && g.navLayer == window.dc.navLayerCurrent) {
                 g.navDisableHighlight = true
                 setNavId(id, window.dc.navLayerCurrent)
