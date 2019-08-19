@@ -93,6 +93,7 @@ import imgui.ImGui.windowPos
 import imgui.ImGui.windowWidth
 import imgui.dsl.child
 import imgui.dsl.group
+import imgui.dsl.menuBar
 import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
@@ -136,6 +137,7 @@ object showDemoWindowLayout {
 
     /* Scrolling */
     var enableTrack = true
+    var enableExtraDecorations = false
     var trackItem = 50
     val names1 = arrayOf("Top", "25%%", "Center", "75%%", "Bottom") // double quote for ::format escaping
     val names2 = arrayOf("Left", "25%%", "Center", "75%%", "Right")
@@ -509,6 +511,10 @@ object showDemoWindowLayout {
             // Vertical scroll functions
             helpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given vertical position.")
 
+            checkbox("Decoration", ::enableExtraDecorations)
+            sameLine()
+            helpMarker("We expose this for testing because scrolling sometimes had issues with window decoration such as menu-bars.")
+
             checkbox("Track", ::enableTrack)
             pushItemWidth(100)
             sameLine(140); enableTrack = dragInt("##item", ::trackItem, 0.25f, 0, 99, "Item = %d") or enableTrack
@@ -517,7 +523,7 @@ object showDemoWindowLayout {
             sameLine(140); scrollToOff = dragFloat("##off", ::scrollToOffPx, 1f, 0f, 9999f, "+%.0f px") or scrollToOff
 
             var scrollToPos = button("Scroll To Pos")
-            sameLine(140); scrollToPos = dragFloat("##pos", ::scrollToPosPx, 1f, 0f, 9999f, "X/Y = %.0f px") or scrollToPos
+            sameLine(140); scrollToPos = dragFloat("##pos", ::scrollToPosPx, 1f, -10f, 9999f, "X/Y = %.0f px") or scrollToPos
 
             popItemWidth()
             if (scrollToOff || scrollToPos)
@@ -532,7 +538,9 @@ object showDemoWindowLayout {
                 group {
                     textUnformatted(names1[i])
 
-                    beginChild(getId(i), Vec2(childW, 200f), true)
+                    val childFlags = if(enableExtraDecorations) Wf.MenuBar else Wf.None
+                    beginChild(getId(i), Vec2(childW, 200f), true, childFlags.i)
+                    menuBar { textUnformatted("abc") }
                     if (scrollToOff)
                         scrollY = scrollToOffPx
                     if (scrollToPos)
@@ -557,7 +565,8 @@ object showDemoWindowLayout {
             pushId("##HorizontalScrolling")
             for (i in 0..4) {
                 val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
-                beginChild(getId(i), Vec2(-100f, childHeight), true, Wf.HorizontalScrollbar.i)
+                val childFlags = Wf.HorizontalScrollbar or if(enableExtraDecorations) Wf.AlwaysVerticalScrollbar else Wf.None
+                beginChild(getId(i), Vec2(-100f, childHeight), true, childFlags)
                 if (scrollToOff)
                     scrollX = scrollToOffPx
                 if (scrollToPos)
