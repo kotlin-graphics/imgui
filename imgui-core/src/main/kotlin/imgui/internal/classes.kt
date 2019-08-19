@@ -1072,16 +1072,41 @@ class Window(var context: Context, var name: String) {
     val isNavFocusable: Boolean
         get() = active && this === rootWindow && flags hasnt Wf.NoNavFocus
 
-    /** SetWindowScrollX */
+
+    // Scrolling
+
+    /** ~SetScrollX */
     fun setScrollX(newScrollX: Float) {
         scrollTarget.x = newScrollX
         scrollTargetCenterRatio.x = 0f
     }
 
-    /** ~SetWindowScrollY */
+    /** ~SetScrollY */
     infix fun setScrollY(newScrollY: Float) {
         scrollTarget.y = newScrollY
         scrollTargetCenterRatio.y = 0f
+    }
+
+    /** Scroll to keep newly navigated item fully into view */
+    infix fun scrollToBringItemIntoView(itemRect: Rect) {
+        val windowRectRel = Rect(innerRect.min - 1, innerRect.max + 1)
+        //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
+        if (itemRect in windowRectRel) return
+
+        if (scrollbar.x && itemRect.min.x < windowRectRel.min.x) {
+            scrollTarget.x = itemRect.min.x - pos.x + scroll.x - style.itemSpacing.x
+            scrollTargetCenterRatio.x = 0f
+        } else if (scrollbar.x && itemRect.max.x >= windowRectRel.max.x) {
+            scrollTarget.x = itemRect.max.x - pos.x + scroll.x + style.itemSpacing.x
+            scrollTargetCenterRatio.x = 1f
+        }
+        if (itemRect.min.y < windowRectRel.min.y) {
+            scrollTarget.y = itemRect.min.y - pos.y + scroll.y - style.itemSpacing.y
+            scrollTargetCenterRatio.y = 0f
+        } else if (itemRect.max.y >= windowRectRel.max.y) {
+            scrollTarget.y = itemRect.max.y - pos.y + scroll.y + style.itemSpacing.y
+            scrollTargetCenterRatio.y = 1f
+        }
     }
 
     fun getAllowedExtentRect(): Rect {
