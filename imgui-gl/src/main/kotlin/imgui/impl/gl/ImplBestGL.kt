@@ -1,4 +1,4 @@
-package imgui.impl
+package imgui.impl.gl
 
 import imgui.DrawData
 import org.lwjgl.opengl.GL

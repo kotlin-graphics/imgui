@@ -8,7 +8,7 @@
 //import imgui.Context
 //import imgui.DEBUG
 //import imgui.ImGui
-//import imgui.impl.ImplGL3
+//import imgui.impl.gl.ImplGL3
 //import imgui.impl.LwjglGlfw
 //import imgui.impl.LwjglGlfw.GlfwClientApi
 //import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT

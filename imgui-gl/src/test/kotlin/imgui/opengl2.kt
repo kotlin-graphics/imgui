@@ -8,8 +8,8 @@ import gln.checkError
 import gln.glClearColor
 import gln.glViewport
 import imgui.imgui.Context
-import imgui.impl.ImplGL2
-import imgui.impl2.ImplGlfw
+import imgui.impl.gl.ImplGL2
+import imgui.impl.glfw.ImplGlfw
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
