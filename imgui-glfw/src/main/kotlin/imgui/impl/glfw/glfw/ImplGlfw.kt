@@ -1,4 +1,4 @@
-package imgui.impl2
+package imgui.impl.glfw
 
 import glm_.b
 import glm_.c
