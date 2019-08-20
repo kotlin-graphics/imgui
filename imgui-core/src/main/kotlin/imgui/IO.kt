@@ -1,6 +1,9 @@
 package imgui
 
+import com.sun.jdi.Bootstrap
 import com.sun.jdi.VirtualMachine
+import com.sun.jdi.connect.AttachingConnector
+import com.sun.jdi.connect.Connector
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -594,19 +597,12 @@ object Debug {
 
     init {
         try {
-//            var ac: AttachingConnector? = null
-//            for (x in Bootstrap.virtualMachineManager().attachingConnectors()) {
-//                if (x.javaClass.name.toLowerCase().indexOf("socket") != -1) {
-//                    ac = x
-//                    break
-//                }
-//            }
-//            if (ac == null) {
-//                throw Error("No socket attaching connector found")
-//            }
-//            val connectArgs = HashMap<String, Argument>(ac.defaultArguments())
+//            val ac: AttachingConnector = Bootstrap.virtualMachineManager().attachingConnectors().find {
+//                it.javaClass.name.toLowerCase().indexOf("socket") != -1
+//            } ?: throw Error("No socket attaching connector found")
+//            val connectArgs = HashMap<String, Connector.Argument>(ac.defaultArguments())
 //            connectArgs["hostname"]!!.setValue("127.0.0.1")
-//            connectArgs["port"]!!.setValue(Integer.toString(3001))
+//            connectArgs["port"]!!.setValue(3001.toString())
 //            connectArgs["timeout"]!!.setValue("3000")
 //            vm = ac.attach(connectArgs)
         } catch (error: Exception) {
@@ -614,17 +610,14 @@ object Debug {
         }
     }
 
-    val instanceCounts
-        get() = when {
-            vm != null -> {
-                val now = System.nanoTime()
-                if ((now - lastUpdate) > updateInterval * 1e9) {
-                    cachedInstanceCounts = countInstances()
-                    lastUpdate = now
-                }
-                cachedInstanceCounts
+    val instanceCounts: Long
+        get() {
+            val now = System.nanoTime()
+            if ((now - lastUpdate) > updateInterval * 1e9) {
+                cachedInstanceCounts = countInstances()
+                lastUpdate = now
             }
-            else -> -1
+            return cachedInstanceCounts
         }
 
     private fun countInstances() = vm?.instanceCounts(vm?.allClasses())?.sum() ?: -1
