@@ -1,6 +1,7 @@
 package imgui.imgui
 
 import glm_.BYTES
+import glm_.asHexString
 import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -491,17 +492,17 @@ interface imgui_demoDebugInformations {
                 var elemOffset = 0
                 for (i in drawList.cmdBuffer.indices) {
                     val cmd = drawList.cmdBuffer[i]
-                    if (cmd.userCallback == null && cmd.elemCount == 0) continue
-                    if (cmd.userCallback != null) {
-                        bulletText("Callback %s, UserData %s", cmd.userCallback!!.toString(), String((cmd.userCallbackData
-                                ?: ByteBuffer.wrap(byteArrayOf())).array()))
+                    val cb = cmd.userCallback
+                    if (cb == null && cmd.elemCount == 0) continue
+                    if (cb != null) {
+                        bulletText("Callback %s, UserData %s", cb.toString(), String(cmd.userCallbackData!!.array()))
                         continue
                     }
                     val idxBuffer = drawList.idxBuffer.takeIf { it.hasRemaining() }
-                    val mode = if (idxBuffer != null) "indexed" else "non-indexed"
-                    var buf = "Draw %4d triangles, tex 0x%d, clip_rect (%4.0f,%4.0f)-(%4.0f,%4.0f)".format(
-                            cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
-                    val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), "%s", buf)
+                    val string = "Draw %4d triangles, tex 0x${cmd.textureId!!.asHexString}, clip_rect (%4.0f,%4.0f)-(%4.0f,%4.0f)"
+                            .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                    val buf = CharArray(300)
+                    val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
                     if (showDrawcmdClipRects && fgDrawList != null && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
                         val vtxsRect = Rect()
@@ -511,6 +512,7 @@ interface imgui_demoDebugInformations {
                         vtxsRect.floor(); fgDrawList.addRect(vtxsRect.min, vtxsRect.max, COL32(255, 255, 0, 255))
                     }
                     if (!cmdNodeOpen) continue
+
                     // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
                     text("ElemCount: ${cmd.elemCount}, ElemCount/3: ${cmd.elemCount / 3}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}")
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
@@ -518,19 +520,19 @@ interface imgui_demoDebugInformations {
                     while (clipper.step()) {
                         var idxI = elemOffset + clipper.display.start * 3
                         for (prim in clipper.display.start until clipper.display.last) {
+                            var bufP = 0
                             val trianglesPos = arrayListOf(Vec2(), Vec2(), Vec2())
                             for (n in 0 until 3) {
                                 val vtxI = idxBuffer?.get(idxI) ?: idxI
-                                val pos = Vec2(drawList.vtxBuffer.data, vtxI * DrawVert.size)
-                                val uv = Vec2(drawList.vtxBuffer.data, vtxI * DrawVert.size + Vec2.size)
-                                val col = drawList.vtxBuffer.data.getInt(vtxI * DrawVert.size + Vec2.size * 2)
-                                trianglesPos[n] = pos
+                                val v = drawList.vtxBuffer[vtxI]
+                                trianglesPos[n] = v.pos
                                 val name = if (n == 0) "elem" else "    "
-                                buf = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n".format(style.locale,
-                                        idxI, pos.x, pos.y, uv.x, uv.y, col)
-                                idxI++
+                                val s = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n"
+                                        .format(style.locale, idxI++, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
+                                s.toCharArray(buf, bufP)
+                                bufP += s.length
                             }
-                            selectable(buf, false)
+                            selectable(String(buf), false)
                             if (fgDrawList != null && isItemHovered()) {
                                 val backupFlags = fgDrawList.flags
                                 // Disable AA on triangle outlines at is more readable for very large and thin triangles.
@@ -570,7 +572,7 @@ interface imgui_demoDebugInformations {
                     bulletText("$label: NULL")
                     return
                 }
-                if (!treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x%d", window.hashCode()))
+                if (!treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x${window.hashCode().asHexString}"))
                     return
                 val flags = window.flags
                 nodeDrawList(window, window.drawList, "DrawList")
