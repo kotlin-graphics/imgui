@@ -4,7 +4,7 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.imgui.Context
 import imgui.impl.*
-import imgui.impl2.ImplGlfw
+import imgui.impl.glfw.ImplGlfw
 import kool.adr
 import kool.indices
 import kool.rem
