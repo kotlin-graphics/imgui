@@ -2191,7 +2191,7 @@ interface imgui_internal {
         else -> throw Error()
     }
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd: Int = findRenderedTextEnd(label)): Boolean {
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd: Int = -1): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
