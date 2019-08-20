@@ -39,23 +39,23 @@ object LongText {
         ImGui.text("Printing unusually long amount of text.")
         ImGui.combo("Test type", ::testType, "Single call to TextUnformatted()\u0000Multiple calls to Text(), clipped\u0000Multiple calls to Text(), not clipped (slow)\u0000")
         ImGui.text("Buffer contents: %d lines, %d bytes", lines, log.length)
-        if (ImGui.button("Clear")) { log.clear(); lines = 0; }
+        if (ImGui.button("Clear")) {
+            log.clear(); lines = 0; }
         ImGui.sameLine()
         if (ImGui.button("Add 1000 lines")) {
-            repeat(1000) {
-                log.append("%d The quick brown fox jumps over the lazy dog\n".format(lines + it))
-            }
+            for (i in 0..999)
+                log.append("%d The quick brown fox jumps over the lazy dog\n".format(lines + i))
             lines += 1000
         }
         beginChild("Log")
 
-        when(testType) {
+        when (testType) {
             0 -> textEx(log.toString())
             1 -> {
                 pushStyleVar(StyleVar.ItemSpacing, Vec2(0))
                 val clipper = ListClipper(lines)
-                while(clipper.step()) {
-                    for(i in clipper.display) {
+                while (clipper.step()) {
+                    for (i in clipper.display) {
                         ImGui.text("%d The quick brown fox jumps over the lazy dog".format(i))
                     }
                 }
@@ -63,7 +63,7 @@ object LongText {
             }
             2 -> {
                 pushStyleVar(StyleVar.ItemSpacing, Vec2(0, 1))
-                for(i in 0 until lines) {
+                for (i in 0 until lines) {
                     ImGui.text("%d The quick brown fox jumps over the lazy dog".format(i))
                 }
                 popStyleVar()
