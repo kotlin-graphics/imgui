@@ -558,7 +558,8 @@ interface imgui_demoDebugInformations {
             }
 
             fun nodeWindows(windows: ArrayList<Window>, label: String) {
-                if (!treeNode(label, "$label (${windows.size})")) return
+                if (!treeNode(label, "$label (${windows.size})"))
+                    return
                 for (i in 0 until windows.size)
                     nodeWindow(windows[i], "Window")
                 treePop()
