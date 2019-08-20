@@ -1,7 +1,6 @@
-package imgui.impl
+package imgui.impl.gl
 
 import glm_.BYTES
-import glm_.L
 import glm_.d
 import glm_.i
 import glm_.vec2.Vec2
@@ -18,9 +17,9 @@ import org.lwjgl.opengl.GL14C.GL_FUNC_ADD
 import org.lwjgl.opengl.GL14C.glBlendEquation
 import org.lwjgl.opengl.GL20C.*
 
-class ImplGL2_mac : GLInterface {
+class ImplGL2 : GLInterface {
 
-    init {
+    init { // Setup back-end capabilities flags
         io.backendRendererName = "imgui_impl_opengl2"
     }
 
@@ -57,7 +56,7 @@ class ImplGL2_mac : GLInterface {
 
         // Setup viewport, orthographic projection matrix
         // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
-        // DisplayMin is typically (0,0) for single viewport apps.
+        // DisplayPos is (0,0) for single viewport apps.
         glViewport(0, 0, fbWidth, fbHeight)
         GL11.glMatrixMode(GL11.GL_PROJECTION)
         GL11.glPushMatrix()

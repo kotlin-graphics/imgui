@@ -1,4 +1,4 @@
-package imgui.impl
+package imgui.impl.gl
 
 import glm_.*
 import glm_.vec2.Vec2
@@ -16,6 +16,7 @@ import gln.vertexArray.glVertexAttribPointer
 import imgui.*
 import imgui.ImGui.io
 import imgui.imgui.g
+import imgui.impl.mat
 import kool.*
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11C

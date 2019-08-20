@@ -4,12 +4,12 @@ import glm_.vec2.Vec2;
 import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
 import imgui.imgui.Context;
-import imgui.impl.ImplGL3;
-import imgui.impl2.ImplGlfw;
+import imgui.impl.gl.ImplGL3;
+import imgui.impl.glfw.ImplGlfw;
 
 import static imgui.ImguiKt.DEBUG;
 import static imgui.dsl_.button;
-import static imgui.impl.CommonGLKt.setGlslVersion;
+import static imgui.impl.gl.CommonGLKt.setGlslVersion;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;

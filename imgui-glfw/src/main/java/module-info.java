@@ -9,5 +9,5 @@ module com.github.kotlin_graphics.imgui_glfw {
 
     requires org.lwjgl.glfw;
 
-    exports imgui.impl2;
+    exports imgui.impl.glfw;
 }
