@@ -64,7 +64,7 @@ interface imgui_widgets_trees {
 
         val label = fmt.format(style.locale, *args)
 
-        return treeNodeBehavior(window.getId(strId), flags, label)
+        return treeNodeBehavior(window.getId(strId), flags, label, label.length)
     }
 
     fun treeNodeExV(ptrId: Any, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
@@ -74,7 +74,7 @@ interface imgui_widgets_trees {
 
         val label = fmt.format(style.locale, *args)
 
-        return treeNodeBehavior(window.getId(ptrId), flags, label)
+        return treeNodeBehavior(window.getId(ptrId), flags, label, label.length)
     }
 //    IMGUI_API void          TreePush(const char* str_id = NULL);                                    // ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for layout purpose
 
