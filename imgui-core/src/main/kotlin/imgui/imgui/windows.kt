@@ -44,7 +44,7 @@ import imgui.internal.LayoutType as Lt
  *    Windows   */
 interface imgui_windows {
 
-    fun begin_(name: String, pOpen: BooleanArray? = null, index: Int = 0, flags: WindowFlags = 0) = when (pOpen) {
+    fun begin(name: String, pOpen: BooleanArray?, index: Int, flags: WindowFlags): Boolean = when (pOpen) {
         null -> begin(name, null, flags)
         else -> withBoolean(pOpen, 0) { begin(name, it, flags) }
     }
