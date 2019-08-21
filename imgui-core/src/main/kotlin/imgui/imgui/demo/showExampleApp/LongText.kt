@@ -5,7 +5,6 @@ import imgui.Cond
 import imgui.ImGui
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
-import imgui.ImGui.begin_
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.popStyleVar
@@ -15,11 +14,6 @@ import imgui.ImGui.textEx
 import imgui.ListClipper
 import imgui.StyleVar
 import kotlin.reflect.KMutableProperty0
-import imgui.ColorEditFlag as Cef
-import imgui.InputTextFlag as Itf
-import imgui.SelectableFlag as Sf
-import imgui.TreeNodeFlag as Tnf
-import imgui.WindowFlag as Wf
 
 object LongText {
 

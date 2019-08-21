@@ -1,16 +1,10 @@
 package imgui.imgui.demo.showExampleApp
 
-import imgui.*
 import imgui.ImGui.begin
-import imgui.ImGui.begin_
 import imgui.ImGui.end
 import imgui.ImGui.sliderInt
 import imgui.ImGui.text
 import kotlin.reflect.KMutableProperty0
-import imgui.ColorEditFlag as Cef
-import imgui.InputTextFlag as Itf
-import imgui.SelectableFlag as Sf
-import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 
 object AutoResize {
