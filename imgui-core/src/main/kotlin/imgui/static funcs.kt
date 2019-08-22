@@ -890,12 +890,11 @@ fun navUpdateMoveResult() {
         val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
         window scrollToBringRectIntoView rectAbs
         // Estimate upcoming scroll so we can offset our result position so mouse position can be applied immediately after in NavUpdate()
-        val nextScroll = window.calcNextScrollFromScrollTargetAndClamp(false)
-        val deltaScroll = window.scroll - nextScroll
-        result.rectRel.translate(deltaScroll)
-        // Also scroll parent window to keep us into view if necessary (we could/should technically recurse back the whole the parent hierarchy).
-        if (window.flags has Wf.ChildWindow)
-            window.parentWindow!! scrollToBringRectIntoView Rect(rectAbs.min + deltaScroll, rectAbs.max + deltaScroll)
+        val deltaScroll = result.window!! scrollToBringRectIntoView rectAbs
+
+        // Offset our result position so mouse position can be applied immediately after in NavUpdate()
+        result.rectRel translateX -deltaScroll.x
+        result.rectRel translateY -deltaScroll.y
     }
 
     clearActiveId()
