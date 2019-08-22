@@ -17,10 +17,10 @@ ext{
     kotlin_version = '1.3.41'
     kotlintest_version = '3.3.3'
     kx = "com.github.kotlin-graphics"
-    uno_version = 'cb9073be566b5ca09e3a6d2a8edfb661a721c751'
+    uno_version = '3f32007ffe'
     vkk_version = '3854c790d9ff3579e6025426c477b7ee65e560ea'
-    gln_version = '1d4d577573c83aeec84a43a217db47b789b78f0d'
-    gli_version = 'ee261ae13251db0156178ce41b6c7ea92720387b'
+    gln_version = 'e6fd699b6723c770a4dd891119e33e6dca74961a'
+    gli_version = 'c8cb88947b77232beed84599fb7a01b5ce158f25'
     glm_version = '6048c31425ae6110258e4b42165f1e636f8b5603'
     unsigned_version = 'ba1b5c2ab0231aabbef753df5fa0d0de98142360'
     kool_version = 'd052c5e18a06642fcdf9f5942198ee9c4cee1a3f'
