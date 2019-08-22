@@ -1809,7 +1809,7 @@ class TabBar {
         val tabX1 = tab.offset + if (order > 0) -margin else 0f
         val tabX2 = tab.offset + tab.width + if (order + 1 < tabs.size) margin else 1f
         scrollingTargetDistToVisibility = 0f
-        if (scrollingTarget > tabX1) {
+        if (scrollingTarget > tabX1  || (tabX2 - tabX1 >= barRect.width)) {
             scrollingTargetDistToVisibility = (scrollingAnim - tabX2) max 0f
             scrollingTarget = tabX1
         } else if (scrollingTarget < tabX2 - barRect.width) {
