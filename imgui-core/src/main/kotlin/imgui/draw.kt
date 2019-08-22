@@ -361,44 +361,49 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     // -----------------------------------------------------------------------------------------------------------------
     // Primitives
+    // - For rectangular primitives, "p_min" and "p_max" represent the upper-left and lower-right corners.
     // -----------------------------------------------------------------------------------------------------------------
 
     /** JVM it's safe to pass directly Vec2 istances, they wont be modified */
-    fun addLine(a: Vec2, b: Vec2, col: Int, thickness: Float = 1f) {
+    fun addLine(p1: Vec2, p2: Vec2, col: Int, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
-        pathLineTo(a + Vec2(0.5f))
-        pathLineTo(b + Vec2(0.5f))
+        pathLineTo(p1 + Vec2(0.5f))
+        pathLineTo(p2 + Vec2(0.5f))
         pathStroke(col, false, thickness)
     }
 
-    /** we don't render 1 px sized rectangles properly.
-     * @param a: upper-left
-     * @param b: b: lower-right
+    /** Note we don't render 1 pixels sized rectangles properly.
+     * @param pMin: upper-left
+     * @param pMax: lower-right
      * (== upper-left + size)   */
-    fun addRect(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCorners: DrawCornerFlags = Dcf.All.i, thickness: Float = 1f) {
+    fun addRect(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, roundingCorners: DrawCornerFlags = Dcf.All.i, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
         if (flags has DrawListFlag.AntiAliasedLines)
-            pathRect(a + 0.5f, b - 0.5f, rounding, roundingCorners)
+            pathRect(pMin + 0.5f, pMax - 0.5f, rounding, roundingCorners)
         else    // Better looking lower-right corner and rounded non-AA shapes.
-            pathRect(a + 0.5f, b - 0.49f, rounding, roundingCorners)
+            pathRect(pMin + 0.5f, pMax - 0.49f, rounding, roundingCorners)
         pathStroke(col, true, thickness)
     }
 
-    /** @param a: upper-left
-     *  @param b: lower-right
+    /** @param pMin: upper-left
+     *  @param pMax: lower-right
      *  (== upper-left + size) */
-    fun addRectFilled(a: Vec2, b: Vec2, col: Int, rounding: Float = 0f, roundingCorners: DrawCornerFlags = Dcf.All.i) {
+    fun addRectFilled(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, roundingCorners: DrawCornerFlags = Dcf.All.i) {
         if (col hasnt COL32_A_MASK) return
         if (rounding > 0f) {
-            pathRect(a, b, rounding, roundingCorners)
+            pathRect(pMin, pMax, rounding, roundingCorners)
             pathFillConvex(col)
         } else {
             primReserve(6, 4)
-            primRect(a, b, col)
+            primRect(pMin, pMax, col)
         }
     }
 
-    fun addRectFilledMultiColor(a: Vec2, c: Vec2, colUprLeft: Int, colUprRight: Int, colBotRight: Int, colBotLeft: Int) {
+    /**
+     * @param pMin = upper-left
+     * @param pMax = lower-right
+     */
+    fun addRectFilledMultiColor(pMin: Vec2, pMax: Vec2, colUprLeft: Int, colUprRight: Int, colBotRight: Int, colBotLeft: Int) {
 
         if ((colUprLeft or colUprRight or colBotRight or colBotLeft) hasnt COL32_A_MASK) return
 
@@ -406,71 +411,71 @@ class DrawList(sharedData: DrawListSharedData?) {
         primReserve(6, 4)
         primWriteIdx(_vtxCurrentIdx); primWriteIdx(_vtxCurrentIdx + 1); primWriteIdx(_vtxCurrentIdx + 2)
         primWriteIdx(_vtxCurrentIdx); primWriteIdx(_vtxCurrentIdx + 2); primWriteIdx(_vtxCurrentIdx + 3)
-        primWriteVtx(a, uv, colUprLeft)
-        primWriteVtx(Vec2(c.x, a.y), uv, colUprRight)
-        primWriteVtx(c, uv, colBotRight)
-        primWriteVtx(Vec2(a.x, c.y), uv, colBotLeft)
+        primWriteVtx(pMin, uv, colUprLeft)
+        primWriteVtx(Vec2(pMax.x, pMin.y), uv, colUprRight)
+        primWriteVtx(pMax, uv, colBotRight)
+        primWriteVtx(Vec2(pMin.x, pMax.y), uv, colBotLeft)
     }
 
-    fun addQuad(a: Vec2, b: Vec2, c: Vec2, d: Vec2, col: Int, thickness: Float = 1f) {
+    fun addQuad(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, col: Int, thickness: Float = 1f) {
 
         if (col hasnt COL32_A_MASK) return
 
-        pathLineTo(a)
-        pathLineTo(b)
-        pathLineTo(c)
-        pathLineTo(d)
+        pathLineTo(p1)
+        pathLineTo(p2)
+        pathLineTo(p3)
+        pathLineTo(p4)
         pathStroke(col, true, thickness)
     }
 
-    fun addQuadFilled(a: Vec2, b: Vec2, c: Vec2, d: Vec2, col: Int) {
+    fun addQuadFilled(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, col: Int) {
 
         if (col hasnt COL32_A_MASK) return
 
-        pathLineTo(a)
-        pathLineTo(b)
-        pathLineTo(c)
-        pathLineTo(d)
+        pathLineTo(p1)
+        pathLineTo(p2)
+        pathLineTo(p3)
+        pathLineTo(p4)
         pathFillConvex(col)
     }
 
-    fun addTriangle(a: Vec2, b: Vec2, c: Vec2, col: Int, thickness: Float = 1f) {
+    fun addTriangle(p1: Vec2, p2: Vec2, p3: Vec2, col: Int, thickness: Float = 1f) {
 
         if (col hasnt COL32_A_MASK) return
 
-        pathLineTo(a)
-        pathLineTo(b)
-        pathLineTo(c)
+        pathLineTo(p1)
+        pathLineTo(p2)
+        pathLineTo(p3)
         pathStroke(col, true, thickness)
     }
 
-    fun addTriangleFilled(a: Vec2, b: Vec2, c: Vec2, col: Int) {
+    fun addTriangleFilled(p1: Vec2, p2: Vec2, p3: Vec2, col: Int) {
 
         if (col hasnt COL32_A_MASK) return
 
-        pathLineTo(a)
-        pathLineTo(b)
-        pathLineTo(c)
+        pathLineTo(p1)
+        pathLineTo(p2)
+        pathLineTo(p3)
         pathFillConvex(col)
     }
 
-    fun addCircle(centre: Vec2, radius: Float, col: Int, numSegments: Int = 12, thickness: Float = 1f) {
+    fun addCircle(center: Vec2, radius: Float, col: Int, numSegments: Int = 12, thickness: Float = 1f) {
 
         if (col hasnt COL32_A_MASK || numSegments <= 2) return
 
         // Because we are filling a closed shape we remove 1 from the count of segments/points
         val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
-        pathArcTo(centre, radius - 0.5f, 0f, aMax, numSegments - 1)
+        pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
         pathStroke(col, true, thickness)
     }
 
-    fun addCircleFilled(centre: Vec2, radius: Float, col: Int, numSegments: Int = 12) {
+    fun addCircleFilled(center: Vec2, radius: Float, col: Int, numSegments: Int = 12) {
 
         if (col hasnt COL32_A_MASK || numSegments <= 2) return
 
         // Because we are filling a closed shape we remove 1 from the count of segments/points
         val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
-        pathArcTo(centre, radius, 0f, aMax, numSegments - 1)
+        pathArcTo(center, radius, 0f, aMax, numSegments - 1)
         pathFillConvex(col)
     }
 
@@ -503,56 +508,6 @@ class DrawList(sharedData: DrawListSharedData?) {
             clipRect.w = glm.min(clipRect.w, cpuFineClipRect.w)
         }
         font.renderText(this, fontSize, pos, col, clipRect, text, textEnd, wrapWidth, cpuFineClipRect != null)
-    }
-
-    fun addImage(userTextureId: TextureID, a: Vec2, b: Vec2, uvA: Vec2 = Vec2(0), uvB: Vec2 = Vec2(1), col: Int = COL32_WHITE) {
-
-        if (col hasnt COL32_A_MASK) return
-
-        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
-        if (pushTextureId) pushTextureId(userTextureId)
-
-        primReserve(6, 4)
-        primRectUV(a, b, uvA, uvB, col)
-
-        if (pushTextureId) popTextureId()
-    }
-
-    fun addImageQuad(userTextureId: TextureID, a: Vec2, b: Vec2, c: Vec2, d: Vec2, uvA: Vec2 = Vec2(0), uvB: Vec2 = Vec2(1, 0),
-                     uvC: Vec2 = Vec2(1), uvD: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE) {
-
-        if (col hasnt COL32_A_MASK) return
-
-        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
-        if (pushTextureId)
-            pushTextureId(userTextureId)
-
-        primReserve(6, 4)
-        primQuadUV(a, b, c, d, uvA, uvB, uvC, uvD, col)
-
-        if (pushTextureId)
-            popTextureId()
-    }
-
-    fun addImageRounded(userTextureId: TextureID, a: Vec2, b: Vec2, uvA: Vec2, uvB: Vec2, col: Int, rounding: Float,
-                        roundingCorners: DrawCornerFlags = Dcf.All.i) {
-        if (col hasnt COL32_A_MASK) return
-
-        if (rounding <= 0f || roundingCorners hasnt Dcf.All) {
-            addImage(userTextureId, a, b, uvA, uvB, col)
-            return
-        }
-
-        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
-        if (pushTextureId) pushTextureId(userTextureId)
-
-        val vertStartIdx = vtxBuffer.size
-        pathRect(a, b, rounding, roundingCorners)
-        pathFillConvex(col)
-        val vertEndIdx = vtxBuffer.size
-        shadeVertsLinearUV(this, vertStartIdx, vertEndIdx, a, b, uvA, uvB, true)
-
-        if (pushTextureId) popTextureId()
     }
 
     /** TODO: Thickness anti-aliased lines cap are missing their AA fringe.
@@ -876,6 +831,65 @@ class DrawList(sharedData: DrawListSharedData?) {
 
 
     // -----------------------------------------------------------------------------------------------------------------
+    // Image primitives
+    // - Read FAQ to understand what ImTextureID is.
+    // - "p_min" and "p_max" represent the upper-left and lower-right corners of the rectangle.
+    // - "uv_min" and "uv_max" represent the normalized texture coordinates to use for those corners. Using (0,0)->(1,1) texture coordinates will generally display the entire texture.
+    // -----------------------------------------------------------------------------------------------------------------
+
+    fun addImage(userTextureId: TextureID, pMin: Vec2, pMax: Vec2,
+                 uvMin: Vec2 = Vec2(0), uvMax: Vec2 = Vec2(1), col: Int = COL32_WHITE) {
+
+        if (col hasnt COL32_A_MASK) return
+
+        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
+        if (pushTextureId) pushTextureId(userTextureId)
+
+        primReserve(6, 4)
+        primRectUV(pMin, pMax, uvMin, uvMax, col)
+
+        if (pushTextureId) popTextureId()
+    }
+
+    fun addImageQuad(userTextureId: TextureID, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2,
+                     uv1: Vec2 = Vec2(0), uv2: Vec2 = Vec2(1, 0),
+                     uv3: Vec2 = Vec2(1), uv4: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE) {
+
+        if (col hasnt COL32_A_MASK) return
+
+        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
+        if (pushTextureId)
+            pushTextureId(userTextureId)
+
+        primReserve(6, 4)
+        primQuadUV(p1, p2, p3, p4, uv1, uv2, uv3, uv4, col)
+
+        if (pushTextureId)
+            popTextureId()
+    }
+
+    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float,
+                        roundingCorners: DrawCornerFlags = Dcf.All.i) {
+        if (col hasnt COL32_A_MASK) return
+
+        if (rounding <= 0f || roundingCorners hasnt Dcf.All) {
+            addImage(userTextureId, pMin, pMax, uvMin, uvMax, col)
+            return
+        }
+
+        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
+        if (pushTextureId) pushTextureId(userTextureId)
+
+        val vertStartIdx = vtxBuffer.size
+        pathRect(pMin, pMax, rounding, roundingCorners)
+        pathFillConvex(col)
+        val vertEndIdx = vtxBuffer.size
+        shadeVertsLinearUV(this, vertStartIdx, vertEndIdx, pMin, pMax, uvMin, uvMax, true)
+
+        if (pushTextureId) popTextureId()
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
     // Stateful path API, add points then finish with PathFillConvex() or PathStroke()
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -893,29 +907,29 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** rounding_corners_flags: 4-bits corresponding to which corner to round   */
     fun pathStroke(col: Int, closed: Boolean, thickness: Float = 1.0f) = addPolyline(_path, col, closed, thickness).also { pathClear() }
 
-    fun pathArcTo(centre: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 10) {
+    fun pathArcTo(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 10) {
         if (radius == 0f) {
-            _path += centre
+            _path += center
             return
         }
         // Note that we are adding a point at both a_min and a_max.
         // If you are trying to draw a full closed circle you don't want the overlapping points!
         for (i in 0..numSegments) {
             val a = aMin + (i.f / numSegments) * (aMax - aMin)
-            _path += Vec2(centre.x + glm.cos(a) * radius, centre.y + glm.sin(a) * radius)
+            _path += Vec2(center.x + glm.cos(a) * radius, center.y + glm.sin(a) * radius)
         }
     }
 
     /** Use precomputed angles for a 12 steps circle    */
-    fun pathArcToFast(centre: Vec2, radius: Float, aMinOf12: Int, aMaxOf12: Int) {
+    fun pathArcToFast(center: Vec2, radius: Float, aMinOf12: Int, aMaxOf12: Int) {
 
         if (radius == 0f || aMinOf12 > aMaxOf12) {
-            _path += centre
+            _path += center
             return
         }
         for (a in aMinOf12..aMaxOf12) {
             val c = _data.circleVtx12[a % _data.circleVtx12.size]
-            _path += Vec2(centre.x + c.x * radius, centre.y + c.y * radius)
+            _path += Vec2(center.x + c.x * radius, center.y + c.y * radius)
         }
     }
 
