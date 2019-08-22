@@ -48,7 +48,7 @@ interface imgui_windows {
 
     fun begin(name: String, pOpen: BooleanArray?, index: Int, flags: WindowFlags): Boolean = when (pOpen) {
         null -> begin(name, null, flags)
-        else -> withBoolean(pOpen, 0) { begin(name, it, flags) }
+        else -> withBoolean(pOpen, index) { begin(name, it, flags) }
     }
 
     /**  Push a new Dear ImGui window to add widgets to:
