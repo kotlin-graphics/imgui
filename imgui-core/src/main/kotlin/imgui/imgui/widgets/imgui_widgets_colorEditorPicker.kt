@@ -10,6 +10,7 @@ import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.F32_TO_INT8_UNBOUND
 import imgui.ImGui.acceptDragDropPayload
 import imgui.ImGui.beginDragDropSource
@@ -109,7 +110,7 @@ interface imgui_widgets_colorEditorPicker {
 
         val squareSz = frameHeight
         val wFull = calcItemWidth()
-        val wButton = if(flags_ has Cef.NoSmallPreview) 0f else squareSz + style.itemInnerSpacing.x
+        val wButton = if (flags_ has Cef.NoSmallPreview) 0f else squareSz + style.itemInnerSpacing.x
         val wInputs = wFull - wButton
         val labelDisplayEnd = findRenderedTextEnd(label)
         g.nextItemData.clearFlags()
@@ -153,7 +154,7 @@ interface imgui_widgets_colorEditorPicker {
         var valueChangedAsFloat = false
 
         val pos = Vec2(window.dc.cursorPos)
-        val inputsOffsetX = if(style.colorButtonPosition == Dir.Left) wButton else 0f
+        val inputsOffsetX = if (style.colorButtonPosition == Dir.Left) wButton else 0f
         window.dc.cursorPos.x = pos.x + inputsOffsetX
 
         if (flags has (Cef.DisplayRGB or Cef.DisplayHSV) && flags hasnt Cef.NoInputs) {
@@ -304,11 +305,18 @@ interface imgui_widgets_colorEditorPicker {
      *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
      *  (In C++ the 'float col[4]' notation for a function argument is equivalent to 'float* col', we only specify a size to facilitate understanding of the code.)
      *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
-     *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)   */
+     *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
+     *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
     fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = 0, refCol: Vec4? = null): Boolean =
             colorPicker4(label, col to _fa, flags, refCol?.to(_fa2))
                     .also { col put _fa; refCol?.put(_fa2) }
 
+    /** ColorPicker
+     *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
+     *  (In C++ the 'float col[4]' notation for a function argument is equivalent to 'float* col', we only specify a size to facilitate understanding of the code.)
+     *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
+     *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
+     *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
     fun colorPicker4(label: String, col: FloatArray, flags_: ColorEditFlags = 0, refCol: FloatArray? = null): Boolean {
 
         val window = currentWindow
@@ -539,31 +547,34 @@ interface imgui_widgets_colorEditorPicker {
             }
         }
 
-        val hueColorF = Vec4(1)
-        colorConvertHSVtoRGB(H, 1f, 1f).apply { hueColorF.x = this[0]; hueColorF.y = this[1]; hueColorF.z = this[2] }
-        val hueColor32 = hueColorF.u32
-        val col32NoAlpha = Vec4(R, G, B, 1f).u32
+        val styleAlpha8 = F32_TO_INT8_SAT(style.alpha)
+        val colBlack = COL32(0, 0, 0, styleAlpha8)
+        val colWhite = COL32(255, 255, 255, styleAlpha8)
+        val colMidgrey = COL32(128, 128, 128, styleAlpha8)
+        val colHues = arrayOf(COL32(255, 0, 0, styleAlpha8), COL32(255, 255, 0, styleAlpha8), COL32(0, 255, 0, styleAlpha8), COL32(0, 255, 255, styleAlpha8), COL32(0, 0, 255, styleAlpha8), COL32(255, 0, 255, styleAlpha8), COL32(255, 0, 0, styleAlpha8))
 
-        val hueColors = arrayOf(COL32(255, 0, 0, 255), COL32(255, 255, 0, 255), COL32(0, 255, 0, 255),
-                COL32(0, 255, 255, 255), COL32(0, 0, 255, 255), COL32(255, 0, 255, 255), COL32(255, 0, 0, 255))
+        val hueColorF = Vec4 (1f, 1f, 1f, style.alpha); colorConvertHSVtoRGB(H, 1f, 1f, hueColorF::x, hueColorF::y, hueColorF::z)
+        val hueColor32 = hueColorF.u32
+        val userCol32StripedOfAlpha = Vec4(R, G, B, style.alpha).u32 // Important: this is still including the main rendering/style alpha!!
+
         val svCursorPos = Vec2()
 
         if (flags has Cef.PickerHueWheel) {
             // Render Hue Wheel
-            val aeps = 1.5f / wheelROuter   // Half a pixel arc length in radians (2pi cancels out).
+            val aeps = 0.5f / wheelROuter   // Half a pixel arc length in radians (2pi cancels out).
             val segmentPerArc = glm.max(4, (wheelROuter / 12).i)
             for (n in 0..5) {
                 val a0 = n / 6f * 2f * glm.PIf - aeps
                 val a1 = (n + 1f) / 6f * 2f * glm.PIf + aeps
                 val vertStartIdx = drawList.vtxBuffer.size
                 drawList.pathArcTo(wheelCenter, (wheelRInner + wheelROuter) * 0.5f, a0, a1, segmentPerArc)
-                drawList.pathStroke(COL32_WHITE, false, wheelThickness)
+                drawList.pathStroke(colWhite, false, wheelThickness)
                 val vertEndIdx = drawList.vtxBuffer.size
 
                 // Paint colors over existing vertices
                 val gradientP0 = Vec2(wheelCenter.x + a0.cos * wheelRInner, wheelCenter.y + a0.sin * wheelRInner)
                 val gradientP1 = Vec2(wheelCenter.x + a1.cos * wheelRInner, wheelCenter.y + a1.sin * wheelRInner)
-                shadeVertsLinearColorGradientKeepAlpha(drawList, vertStartIdx, vertEndIdx, gradientP0, gradientP1, hueColors[n], hueColors[n + 1])
+                shadeVertsLinearColorGradientKeepAlpha(drawList, vertStartIdx, vertEndIdx, gradientP0, gradientP1, colHues[n], colHues[n + 1])
             }
 
             // Render Cursor + preview on Hue Wheel
@@ -574,8 +585,8 @@ interface imgui_widgets_colorEditorPicker {
             val hueCursorRad = wheelThickness * if (valueChangedH) 0.65f else 0.55f
             val hueCursorSegments = glm.clamp((hueCursorRad / 1.4f).i, 9, 32)
             drawList.addCircleFilled(hueCursorPos, hueCursorRad, hueColor32, hueCursorSegments)
-            drawList.addCircle(hueCursorPos, hueCursorRad + 1, COL32(128, 128, 128, 255), hueCursorSegments)
-            drawList.addCircle(hueCursorPos, hueCursorRad, COL32_WHITE, hueCursorSegments)
+            drawList.addCircle(hueCursorPos, hueCursorRad + 1, colMidgrey, hueCursorSegments)
+            drawList.addCircle(hueCursorPos, hueCursorRad, colWhite, hueCursorSegments)
 
             // Render SV triangle (rotated according to hue)
             val tra = wheelCenter + trianglePa.rotate(cosHueAngle, sinHueAngle)
@@ -585,16 +596,16 @@ interface imgui_widgets_colorEditorPicker {
             drawList.primReserve(6, 6)
             drawList.primVtx(tra, uvWhite, hueColor32)
             drawList.primVtx(trb, uvWhite, hueColor32)
-            drawList.primVtx(trc, uvWhite, COL32_WHITE)
-            drawList.primVtx(tra, uvWhite, COL32_BLACK_TRANS)
-            drawList.primVtx(trb, uvWhite, COL32_BLACK)
-            drawList.primVtx(trc, uvWhite, COL32_BLACK_TRANS)
+            drawList.primVtx(trc, uvWhite, colWhite)
+            drawList.primVtx(tra, uvWhite, 0)
+            drawList.primVtx(trb, uvWhite, colWhite)
+            drawList.primVtx(trc, uvWhite, 0)
             drawList.addTriangle(tra, trb, trc, COL32(128, 128, 128, 255), 1.5f)
             svCursorPos put trc.lerp(tra, saturate(S)).lerp(trb, saturate(1 - V))
         } else if (flags has Cef.PickerHueBar) {
             // Render SV Square
-            drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_WHITE, hueColor32, hueColor32, COL32_WHITE)
-            drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, COL32_BLACK_TRANS, COL32_BLACK_TRANS, COL32_BLACK, COL32_BLACK)
+            drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, colWhite, hueColor32, hueColor32, colWhite)
+            drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, 0, 0, colBlack, colBlack)
             renderFrameBorder(pickerPos, pickerPos + svPickerSize, 0f)
             // Sneakily prevent the circle to stick out too much
             svCursorPos.x = glm.clamp((pickerPos.x + saturate(S) * svPickerSize + 0.5f).i.f, pickerPos.x + 2, pickerPos.x + svPickerSize - 2)
@@ -604,28 +615,28 @@ interface imgui_widgets_colorEditorPicker {
             for (i in 0..5) {
                 val a = Vec2(bar0PosX, pickerPos.y + i * (svPickerSize / 6))
                 val c = Vec2(bar0PosX + barsWidth, pickerPos.y + (i + 1) * (svPickerSize / 6))
-                drawList.addRectFilledMultiColor(a, c, hueColors[i], hueColors[i], hueColors[i + 1], hueColors[i + 1])
+                drawList.addRectFilledMultiColor(a, c, colHues[i], colHues[i], colHues[i + 1], colHues[i + 1])
             }
             val bar0LineY = (pickerPos.y + H * svPickerSize + 0.5f).i.f
             renderFrameBorder(Vec2(bar0PosX, pickerPos.y), Vec2(bar0PosX + barsWidth, pickerPos.y + svPickerSize), 0f)
-            renderArrowsForVerticalBar(drawList, Vec2(bar0PosX - 1, bar0LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f)
+            renderArrowsForVerticalBar(drawList, Vec2(bar0PosX - 1, bar0LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f, style.alpha)
         }
 
         // Render cursor/preview circle (clamp S/V within 0..1 range because floating points colors may lead HSV values to be out of range)
         val svCursorRad = if (valueChangedSv) 10f else 6f
-        drawList.addCircleFilled(svCursorPos, svCursorRad, col32NoAlpha, 12)
-        drawList.addCircle(svCursorPos, svCursorRad + 1, COL32(128, 128, 128, 255), 12)
-        drawList.addCircle(svCursorPos, svCursorRad, COL32_WHITE, 12)
+        drawList.addCircleFilled(svCursorPos, svCursorRad, userCol32StripedOfAlpha, 12)
+        drawList.addCircle(svCursorPos, svCursorRad + 1, colMidgrey, 12)
+        drawList.addCircle(svCursorPos, svCursorRad, colWhite, 12)
 
         // Render alpha bar
         if (alphaBar) {
             val alpha = saturate(col[3])
             val bar1Bb = Rect(bar1PosX, pickerPos.y, bar1PosX + barsWidth, pickerPos.y + svPickerSize)
-            renderColorRectWithAlphaCheckerboard(bar1Bb.min, bar1Bb.max, COL32(0, 0, 0, 0), bar1Bb.width / 2f, Vec2())
-            drawList.addRectFilledMultiColor(bar1Bb.min, bar1Bb.max, col32NoAlpha, col32NoAlpha, col32NoAlpha wo COL32_A_MASK, col32NoAlpha wo COL32_A_MASK)
+            renderColorRectWithAlphaCheckerboard(bar1Bb.min, bar1Bb.max, 0, bar1Bb.width / 2f, Vec2())
+            drawList.addRectFilledMultiColor(bar1Bb.min, bar1Bb.max, userCol32StripedOfAlpha, userCol32StripedOfAlpha, userCol32StripedOfAlpha wo COL32_A_MASK, userCol32StripedOfAlpha wo COL32_A_MASK)
             val bar1LineY = (pickerPos.y + (1f - alpha) * svPickerSize + 0.5f)
             renderFrameBorder(bar1Bb.min, bar1Bb.max, 0f)
-            renderArrowsForVerticalBar(drawList, Vec2(bar1PosX - 1, bar1LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f)
+            renderArrowsForVerticalBar(drawList, Vec2(bar1PosX - 1, bar1LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f, style.alpha)
         }
 
         endGroup()
