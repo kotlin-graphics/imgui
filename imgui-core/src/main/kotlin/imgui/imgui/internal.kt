@@ -478,8 +478,11 @@ interface imgui_internal {
     /** Shrink excess width from a set of item, by removing width from the larger items first. */
     fun shrinkWidths(items: ArrayList<ShrinkWidthItem>, widthExcess_: Float) {
         val count = items.size
-        if (count > 1)
-            items.sortWith(shrinkWidthItemComparer)
+        if (count == 1) {
+            items[0].width -= widthExcess_
+            return
+        }
+        items.sortWith(shrinkWidthItemComparer)
         var countSameWidth = 1
         var widthExcess = widthExcess_
         while (widthExcess > 0f && countSameWidth < count) {
