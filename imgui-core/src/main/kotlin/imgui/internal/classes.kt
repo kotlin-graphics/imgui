@@ -34,7 +34,6 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.selectable
 import imgui.ImGui.setActiveId
 import imgui.ImGui.setItemAllowOverlap
-import imgui.ImGui.setScrollFromPosX
 import imgui.ImGui.setTooltip
 import imgui.ImGui.shrinkWidths
 import imgui.ImGui.style
@@ -1120,19 +1119,29 @@ class Window(var context: Context, var name: String) {
     }
 
     /** Scroll to keep newly navigated item fully into view */
-    infix fun scrollToBringRectIntoView(itemRect: Rect) {
-        val windowRectRel = Rect(innerRect.min - 1, innerRect.max + 1)
+    infix fun scrollToBringRectIntoView(itemRect: Rect): Vec2 {
+        val windowRect = Rect(innerRect.min - 1, innerRect.max + 1)
         //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
-        if (itemRect in windowRectRel) return
+        val deltaScroll = Vec2()
+        if (!windowRect.contains(itemRect))        {
+            if (scrollbar.x && itemRect.min.x < windowRect.min.x)
+                setScrollFromPosX(itemRect.min.x - pos.x + style.itemSpacing.x, 0f)
+            else if (scrollbar.x && itemRect.max.x >= windowRect.max.x)
+                setScrollFromPosX(itemRect.max.x - pos.x + style.itemSpacing.x, 1f)
+            if (itemRect.min.y < windowRect.min.y)
+                setScrollFromPosY(itemRect.min.y - pos.y - style.itemSpacing.y, 0f)
+            else if (itemRect.max.y >= windowRect.max.y)
+                setScrollFromPosY(itemRect.max.y - pos.y + style.itemSpacing.y, 1f)
 
-        if (scrollbar.x && itemRect.min.x < windowRectRel.min.x)
-            setScrollFromPosX(itemRect.min.x - pos.x + style.itemSpacing.x, 0f)
-        else if (scrollbar.x && itemRect.max.x >= windowRectRel.max.x)
-            setScrollFromPosX(itemRect.max.x - pos.x + style.itemSpacing.x, 1f)
-        if (itemRect.min.y < windowRectRel.min.y)
-            setScrollFromPosY(itemRect.min.y - pos.y - style.itemSpacing.y, 0f)
-        else if (itemRect.max.y >= windowRectRel.max.y)
-            setScrollFromPosY(itemRect.max.y - pos.y + style.itemSpacing.y, 1f)
+            val nextScroll = calcNextScrollFromScrollTargetAndClamp(false)
+            deltaScroll put (nextScroll - scroll)
+        }
+
+        // Also scroll parent window to keep us into view if necessary
+        if (flags has Wf.ChildWindow)
+            deltaScroll += parentWindow!! scrollToBringRectIntoView Rect(itemRect.min - deltaScroll, itemRect.max - deltaScroll)
+
+        return deltaScroll
     }
 
     fun getAllowedExtentRect(): Rect {
