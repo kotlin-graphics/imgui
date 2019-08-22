@@ -4,6 +4,7 @@ import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.F32_TO_INT8_SAT
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
@@ -143,11 +144,14 @@ interface imgui_widgets_text {
 
     companion object {
 
-        fun renderArrowsForVerticalBar(drawList: DrawList, pos: Vec2, halfSz: Vec2, barW: Float) {
-            renderArrowPointingAt(drawList, Vec2(pos.x + halfSz.x + 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Right, COL32_BLACK)
-            renderArrowPointingAt(drawList, Vec2(pos.x + halfSz.x, pos.y), halfSz, Dir.Right, COL32_WHITE)
-            renderArrowPointingAt(drawList, Vec2(pos.x + barW - halfSz.x - 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Left, COL32_BLACK)
-            renderArrowPointingAt(drawList, Vec2(pos.x + barW - halfSz.x, pos.y), halfSz, Dir.Left, COL32_WHITE)
+        fun renderArrowsForVerticalBar(drawList: DrawList, pos: Vec2, halfSz: Vec2, barW: Float, alpha: Float) {
+            val alpha8 = F32_TO_INT8_SAT(alpha)
+            // @formatter:off
+            renderArrowPointingAt(drawList, Vec2(pos.x + halfSz.x + 1,        pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Right, COL32(0, 0, 0, alpha8))
+            renderArrowPointingAt(drawList, Vec2(pos.x + halfSz.x,            pos.y), halfSz,                           Dir.Right, COL32(255, 255, 255, alpha8))
+            renderArrowPointingAt(drawList, Vec2(pos.x + barW - halfSz.x - 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Left,  COL32(0, 0, 0, alpha8))
+            renderArrowPointingAt(drawList, Vec2(pos.x + barW - halfSz.x,     pos.y), halfSz,                           Dir.Left,  COL32(255, 255,255, alpha8))
+            // @formatter:on
         }
     }
 }
