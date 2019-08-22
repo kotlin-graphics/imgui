@@ -3,7 +3,6 @@ package imgui.imgui
 import gli_.has
 import gli_.hasnt
 import glm_.f
-import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
@@ -264,7 +263,7 @@ interface imgui_windows {
             /* ---------- SIZE ---------- */
 
             // Calculate auto-fit size, handle automatic resize
-            val sizeAutoFit = window.calcSizeAutoFit(window.contentSize)
+            val sizeAutoFit = window.calcAutoFitSize(window.contentSize)
             var useCurrentSizeForScrollbarX = windowJustCreated
             var useCurrentSizeForScrollbarY = windowJustCreated
             if (flags has Wf.AlwaysAutoResize && !window.collapsed) {

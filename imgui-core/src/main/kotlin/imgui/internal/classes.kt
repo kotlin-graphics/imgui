@@ -953,7 +953,7 @@ class Window(var context: Context, var name: String) {
         return newSize
     }
 
-    fun calcSizeAutoFit(sizeContents: Vec2): Vec2 {
+    fun calcAutoFitSize(sizeContents: Vec2): Vec2 {
         val sizeDecorations = Vec2(0f, titleBarHeight + menuBarHeight)
         val sizePad = windowPadding * 2f
         val sizeDesired = sizeContents + sizePad + sizeDecorations
@@ -1255,9 +1255,12 @@ class Window(var context: Context, var name: String) {
             rootWindowForNav = rootWindowForNav!!.parentWindow!! // ~assert
     }
 
+    /** ~CalcWindowExpectedSize */
     fun calcExpectedSize(): Vec2 {
         val sizeContents = calcContentSize()
-        return calcSizeAfterConstraint(calcSizeAutoFit(sizeContents))
+        val sizeAutoFit = calcAutoFitSize(sizeContents)
+        val sizeFinal = calcSizeAfterConstraint(sizeAutoFit)
+        return sizeFinal
     }
 
     /** ~StartLockWheelingWindow */
