@@ -117,7 +117,8 @@ class DrawChannel {
 
     fun clear() {
         _cmdBuffer.clear()
-        _idxBuffer.clear()
+        _idxBuffer.free()
+        _idxBuffer = IntBuffer(0)
     }
 }
 
