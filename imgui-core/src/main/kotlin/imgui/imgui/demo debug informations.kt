@@ -35,6 +35,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.logFinish
+import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
 import imgui.ImGui.mouseCursor
@@ -136,8 +137,10 @@ interface imgui_demoDebugInformations {
 
             val copyToClipboard = button("Copy to clipboard")
             beginChildFrame(getId("cfginfos"), Vec2(0, textLineHeightWithSpacing * 18), Wf.NoMove.i)
-            if (copyToClipboard)
+            if (copyToClipboard) {
                 logToClipboard()
+                logText("```\n") // Back quotes will make the text appears without formatting when pasting to GitHub
+            }
 
             text("Dear ImGui $version ($IMGUI_VERSION_NUM)")
             separator()
@@ -178,8 +181,10 @@ interface imgui_demoDebugInformations {
             text("style.itemSpacing: %.2f,%.2f", style.itemSpacing.x, style.itemSpacing.y)
             text("style.itemInnerSpacing: %.2f,%.2f", style.itemInnerSpacing.x, style.itemInnerSpacing.y)
 
-            if (copyToClipboard)
+            if (copyToClipboard) {
+                logText("\n```\n")
                 logFinish()
+            }
             endChildFrame()
         }
         end()

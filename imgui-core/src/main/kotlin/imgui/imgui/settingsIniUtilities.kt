@@ -42,8 +42,8 @@ interface settingsIniUtilities {
                 settings = findWindowSettings(typeHash) ?: createNewWindowSettings(name)
             } else settings?.apply {
                 when {
-                    s.startsWith("Pos") -> pos.put(s.substring(4).split(","))
-                    s.startsWith("Size") -> size put glm.max(Vec2i(s.substring(5).split(",")), style.windowMinSize)
+                    s.startsWith("Pos") -> pos put s.substring(4).split(",")
+                    s.startsWith("Size") -> size put s.substring(5).split(",")
                     s.startsWith("Collapsed") -> collapsed = s.substring(10).toBoolean()
                 }
             }
@@ -75,7 +75,6 @@ interface settingsIniUtilities {
         //  Write .ini file
         File(Paths.get(iniFilename).toUri()).printWriter().use {
             for (setting in g.settingsWindows) {
-                if (setting.pos.x == Float.MAX_VALUE) continue
                 // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
                 it.println("[Window][${setting.name}]")
                 it.println("Pos=${setting.pos.x},${setting.pos.y}")
