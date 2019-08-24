@@ -968,7 +968,7 @@ interface imgui_internal {
         columns.offMaxX = max(window.workRect.max.x - window.pos.x, columns.offMinX + 1f)
         columns.hostCursorPosY = window.dc.cursorPos.y
         columns.hostCursorMaxPosX = window.dc.cursorMaxPos.x
-        columns.hostClipRect = window.clipRect
+        columns.hostClipRect put window.clipRect
         columns.lineMinY = window.dc.cursorPos.y
         columns.lineMaxY = window.dc.cursorPos.y
         window.dc.columnsOffset = 0f
