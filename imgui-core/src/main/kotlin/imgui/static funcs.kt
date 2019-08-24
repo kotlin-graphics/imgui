@@ -112,14 +112,14 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
 
     // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
     if (flags hasnt Wf.NoSavedSettings) {
-        findWindowSettings(id)?.let { s ->
+        findWindowSettings(id)?.let { settings ->
             //  Retrieve settings from .ini file
-            settingsIdx = g.settingsWindows.indexOf(s)
+            settingsIdx = g.settingsWindows.indexOf(settings)
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
-            pos = floor(s.pos)
-            collapsed = s.collapsed
-            if (s.size.lengthSqr > 0.00001f)
-                size put floor(s.size)
+            pos put settings.pos
+            collapsed = settings.collapsed
+            if (settings.size allGreaterThan 0f)
+                size put settings.size
         }
     }
     sizeFull = floor(size)
