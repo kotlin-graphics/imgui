@@ -4,7 +4,6 @@ import com.jogamp.opengl.GL2ES3
 import com.jogamp.opengl.GL3
 import glm_.BYTES
 import glm_.mat4x4.Mat4
-import gln.GlBufferEnum
 import gln.glf.semantic
 import kool.ByteBuffer
 import kool.IntBuffer
@@ -70,15 +69,6 @@ val fragmentShader: String
 
 
 val mouseJustPressed = BooleanArray(5)
-
-enum class Buffer : GlBufferEnum { Vertex, Element;
-
-    companion object {
-        val MAX = values().size
-    }
-}
-
-val bufferName = IntBuffer<Buffer>()
 
 /*  JVM differs. We are not yet doing this because no user case. If ever needed: https://github.com/ocornut/imgui/compare/a1a36e762eac707cc3f9c81ec5af7150f6620c4c...d7f97922b883aec0c873e0e405c46b154d382120
 
