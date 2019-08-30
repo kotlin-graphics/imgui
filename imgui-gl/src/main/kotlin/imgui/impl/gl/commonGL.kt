@@ -1,7 +1,6 @@
 package imgui.impl.gl
 
 import glm_.L
-import gln.GlBufferEnum
 import gln.ShaderType.Companion.FRAGMENT_SHADER
 import gln.ShaderType.Companion.VERTEX_SHADER
 import gln.buffer.GlBufferDsl
@@ -145,7 +144,7 @@ fun createProgram(): GlProgram {
 }
 
 
-enum class Buffer : GlBufferEnum {
+enum class Buffer {
     Vertex, Element;
 
     companion object {
@@ -162,11 +161,3 @@ val bufferName = IntBuffer<Buffer>()
 val vaoName = IntBuffer(1)
 
 val fontTexture = IntBuffer(1)
-
-
-
-fun GlBuffers.delete() = GL30C.glDeleteBuffers(names)
-fun GlBufferDsl.subData(offset: Int, size: Int, data: ByteBuffer) = GL15C.nglBufferSubData(target.i, offset.L, size.L, data.adr)
-fun GlBufferDsl.subData(offset: Int, size: Int, data: IntBuffer) = GL15C.nglBufferSubData(target.i, offset.L, size.L, data.adr)
-
-
