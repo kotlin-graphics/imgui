@@ -22,6 +22,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.text
 import imgui.dsl.button
+import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import imgui.internal.DrawCornerFlag
 import imgui.internal.or
 import kotlin.reflect.KMutableProperty0
@@ -46,7 +47,6 @@ object CustomRendering {
     /** Demonstrate using the low-level ImDrawList to draw custom shapes.   */
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
-        setNextWindowSize(Vec2(350, 560), Cond.FirstUseEver)
         if (!begin("Example: Custom rendering", open)) {
             end()
             return
@@ -169,7 +169,9 @@ object CustomRendering {
 
             if (beginTabItem("BG/FG draw lists")) {
                 checkbox("Draw in Background draw list", ::drawBg)
+                sameLine(); helpMarker("The Background draw list will be rendered below every Dear ImGui windows.")
                 checkbox("Draw in Foreground draw list", ::drawFg)
+                sameLine(); helpMarker("The Foreground draw list will be rendered over every Dear ImGui windows.")
                 val windowPos = ImGui.windowPos
                 val windowSize = ImGui.windowSize
                 val windowCenter = Vec2(windowPos.x + windowSize.x * 0.5f, windowPos.y + windowSize.y * 0.5f)
