@@ -43,6 +43,7 @@ import imgui.ImGui.tabItemLabelAndCloseButton
 import imgui.imgui.Context
 import imgui.imgui.g
 import imgui.imgui.imgui_tabBarsTabs.Companion.tabBarRef
+import kool.cap
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
@@ -696,10 +697,10 @@ class Window(var context: Context, var name: String) {
     var setWindowPosPivot = Vec2(Float.MAX_VALUE)
 
 
+    /** ID stack. ID are hashes seeded with the value at the top of the stack. (In theory this should be in the TempData structure)   */
+    val idStack = Stack<ID>()
     /** Temporary per-window data, reset at the beginning of the frame. This used to be called DrawContext, hence the "DC" variable name.  */
     var dc = WindowTempData()
-    /** ID stack. ID are hashes seeded with the value at the top of the stack   */
-    val idStack = Stack<ID>()
 
     init {
         idStack += id
@@ -727,6 +728,8 @@ class Window(var context: Context, var name: String) {
 
     /** Last frame number the window was Active. */
     var lastFrameActive = -1
+
+    var lastTimeActive = -1f
 
     var itemWidthDefault = 0f
 
@@ -762,6 +765,10 @@ class Window(var context: Context, var name: String) {
     /** Reference rectangle, in window relative space   */
     val navRectRel = Array(NavLayer.COUNT) { Rect() }
 
+
+    var memoryCompacted = false
+    var memoryDrawListIdxCapacity = 0
+    var memoryDrawListVtxCapacity = 0
 
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
     fun getId(str: String, end: Int = 0): ID {
@@ -1123,7 +1130,7 @@ class Window(var context: Context, var name: String) {
         val windowRect = Rect(innerRect.min - 1, innerRect.max + 1)
         //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
         val deltaScroll = Vec2()
-        if (!windowRect.contains(itemRect))        {
+        if (!windowRect.contains(itemRect)) {
             if (scrollbar.x && itemRect.min.x < windowRect.min.x)
                 setScrollFromPosX(itemRect.min.x - pos.x + style.itemSpacing.x, 0f)
             else if (scrollbar.x && itemRect.max.x >= windowRect.max.x)
@@ -1288,6 +1295,42 @@ class Window(var context: Context, var name: String) {
         val localY = localY_ - decorationUpHeight
         scrollTarget.y = (localY + scroll.y).i.f
         scrollTargetCenterRatio.y = centerYRatio
+    }
+
+    /** Free up/compact internal window buffers, we can use this when a window becomes unused.
+     *  This is currently unused by the library, but you may call this yourself for easy GC.
+     *  Not freed:
+     *  - ImGuiWindow, ImGuiWindowSettings, Name
+     *  - StateStorage, ColumnsStorage (may hold useful data)
+     *  This should have no noticeable visual effect. When the window reappear however, expect new allocation/buffer growth/copy cost.
+     *
+     *  ~gcCompactTransientWindowBuffers */
+    fun gcCompactTransientWindowBuffers() {
+        memoryCompacted = true
+        memoryDrawListIdxCapacity = drawList.idxBuffer.cap
+        memoryDrawListVtxCapacity = drawList.vtxBuffer.cap
+        idStack.clear()
+        drawList.clearFreeMemory()
+        dc.apply {
+            childWindows.clear()
+            itemFlagsStack.clear()
+            itemWidthStack.clear()
+            textWrapPosStack.clear()
+            groupStack.clear()
+        }
+    }
+
+    /** ~GcAwakeTransientWindowBuffers */
+    fun gcAwakeTransientBuffers() {
+        // We stored capacity of the ImDrawList buffer to reduce growth-caused allocation/copy when awakening.
+        // The other buffers tends to amortize much faster.
+        memoryCompacted = false
+        drawList.apply {
+            idxBuffer = idxBuffer reserve memoryDrawListIdxCapacity
+            vtxBuffer = vtxBuffer reserve memoryDrawListVtxCapacity
+        }
+        memoryDrawListIdxCapacity = 0
+        memoryDrawListVtxCapacity = 0
     }
 }
 
@@ -1812,7 +1855,7 @@ class TabBar {
         val tabX1 = tab.offset + if (order > 0) -margin else 0f
         val tabX2 = tab.offset + tab.width + if (order + 1 < tabs.size) margin else 1f
         scrollingTargetDistToVisibility = 0f
-        if (scrollingTarget > tabX1  || (tabX2 - tabX1 >= barRect.width)) {
+        if (scrollingTarget > tabX1 || (tabX2 - tabX1 >= barRect.width)) {
             scrollingTargetDistToVisibility = (scrollingAnim - tabX2) max 0f
             scrollingTarget = tabX1
         } else if (scrollingTarget < tabX2 - barRect.width) {

@@ -66,7 +66,7 @@ inline class DrawVert_Buffer(val data: ByteBuffer) {
         return if (newCapacity > sz) newCapacity else sz
     }
 
-    fun reserve(newCapacity: Int): DrawVert_Buffer {
+    infix fun reserve(newCapacity: Int): DrawVert_Buffer {
         if (newCapacity <= cap)
             return this
         val newData = ByteBuffer(newCapacity * DrawVert.size)
@@ -87,7 +87,7 @@ infix fun IntBuffer.growCapacity(sz: Int): Int {
     return if (newCapacity > sz) newCapacity else sz
 }
 
-fun IntBuffer.reserve(newCapacity: Int): IntBuffer {
+infix fun IntBuffer.reserve(newCapacity: Int): IntBuffer {
     if (newCapacity <= cap)
         return this
     val newData = IntBuffer(newCapacity)
