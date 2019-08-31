@@ -1411,9 +1411,12 @@ class TabBar {
     var currFrameVisible = -1
     var prevFrameVisible = -1
     var barRect = Rect()
-    var contentsHeight = 0f
+    /** Record the height of contents submitted below the tab bar */
+    var lastTabContentHeight = 0f
     /** Distance from BarRect.Min.x, locked during layout */
     var offsetMax = 0f
+    /** Ideal offset if all tabs were visible and not clipped */
+    var offsetMaxIdeal = 0f
     /** Distance from BarRect.Min.x, incremented with each BeginTabItem() call, not used if ImGuiTabBarFlags_Reorderable if set. */
     var offsetNextTab = 0f
     var scrollingAnim = 0f
@@ -1477,7 +1480,7 @@ class TabBar {
         currFrameVisible = g.frameCount
 
         // Layout
-        itemSize(Vec2(0f /*offsetMax*/, barRect.height)) // Don't feed width back
+        itemSize(Vec2(offsetMaxIdeal, barRect.height))
         window.dc.cursorPos.x = barRect.min.x
 
         // Draw separator
@@ -1780,14 +1783,17 @@ class TabBar {
 
         // Layout all active tabs
         var offsetX = initialOffsetX
+        var offsetXideal = offsetX
         offsetNextTab = offsetX // This is used by non-reorderable tab bar where the submission order is always honored.
         for (tab in tabs) {
             tab.offset = offsetX
             if (scrollTrackSelectedTabID == 0 && g.navJustMovedToId == tab.id)
                 scrollTrackSelectedTabID = tab.id
             offsetX += tab.width + style.itemInnerSpacing.x
+            offsetXideal += tab.widthContents + style.itemInnerSpacing.x
         }
         offsetMax = (offsetX - style.itemInnerSpacing.x) max 0f
+        offsetMaxIdeal = (offsetXideal - style.itemInnerSpacing.x) max 0f
 
         // Horizontal scrolling buttons
         val scrollingButtons = offsetMax > barRect.width && tabs.size > 1 && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll
