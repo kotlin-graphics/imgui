@@ -1076,7 +1076,7 @@ interface imgui_internal {
         // Hide anything after a '##' string
         val textDisplayEnd = when {
             hideTextAfterHash -> findRenderedTextEnd(text, textEnd)
-            textEnd == 0 -> text.length
+            textEnd == -1 -> text.length
             else -> textEnd
         }
 
@@ -2191,7 +2191,7 @@ interface imgui_internal {
         else -> throw Error()
     }
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd: Int = -1): Boolean {
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd_: Int = -1): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -2199,6 +2199,7 @@ interface imgui_internal {
         val displayFrame = flags has Tnf.Framed
         val padding = if (displayFrame || flags has Tnf.FramePadding) Vec2(style.framePadding) else Vec2(style.framePadding.x, 0f)
 
+        val labelEnd = if (labelEnd_ == -1) findRenderedTextEnd(label) else labelEnd_
         val labelSize = calcTextSize(label, labelEnd, false)
 
         // We vertically grow up to current line height up the typical widget height.
