@@ -50,13 +50,16 @@ fun <N> dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<N>,
         }
     }
 
-    val hasMinMax = vMin != vMax
     val range = vMax - vMin
-    val isPower = power != 1f && isDecimal && hasMinMax && range < maxDecimal as N
+    val isClamped = vMin < vMax
+    val isPower = power != 1f && isDecimal && isClamped && (range.f < Float.MAX_VALUE)
+    val isLocked = vMin > vMax
+    if (isLocked)
+        return false
 
     // Default tweak speed
     var vSpeed = vSpeed_
-    if (vSpeed == 0f && hasMinMax && range < maxDecimal as N)
+    if (vSpeed == 0f && isClamped && range < maxDecimal as N)
         vSpeed = range.f * g.dragSpeedDefaultRatio
 
     // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
@@ -82,7 +85,7 @@ fun <N> dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<N>,
         Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
         so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
     val isJustActivated = g.activeIdIsJustActivated
-    val isAlreadyPastLimitsAndPushingOutward = hasMinMax && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
+    val isAlreadyPastLimitsAndPushingOutward = isClamped && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
     val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
     if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
         g.dragCurrentAccum = 0f
@@ -147,7 +150,7 @@ fun <N> dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<N>,
 
 
     // Clamp values (+ handle overflow/wrap-around for integer types)
-    if (v != vCur && hasMinMax) {
+    if (v != vCur && isClamped) {
         if (vCur < vMin || (vCur > v && adjustDelta < 0f && !isDecimal))
             vCur = vMin
         if (vCur > vMax || (vCur < v && adjustDelta > 0f && !isDecimal))
