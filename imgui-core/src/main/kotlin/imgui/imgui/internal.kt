@@ -26,7 +26,6 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
-import imgui.ImGui.getColumnOffset
 import imgui.ImGui.indent
 import imgui.ImGui.io
 import imgui.ImGui.isItemActive
@@ -37,12 +36,10 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.logText
 import imgui.ImGui.openPopup
-import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
@@ -52,7 +49,6 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.selectable
 import imgui.ImGui.separatorEx
-import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.setNextWindowPos
@@ -73,7 +69,6 @@ import unsigned.Ushort
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.regex.Pattern
-import kotlin.Comparator
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -85,7 +80,6 @@ import imgui.InputTextFlag as Itf
 import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
-import imgui.internal.ColumnsFlag as Cf
 import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.ItemFlag as If
 import imgui.internal.LayoutType as Lt
@@ -486,17 +480,30 @@ interface imgui_internal {
         var countSameWidth = 1
         var widthExcess = widthExcess_
         while (widthExcess > 0f && countSameWidth < count) {
-            while (countSameWidth < count && items[0].width == items[countSameWidth].width)
+            while (countSameWidth < count && items[0].width <= items[countSameWidth].width)
                 countSameWidth++
-            val widthToRemovePerItemMax = when {
+            val maxWidthToRemovePerItem = when {
                 countSameWidth < count -> items[0].width - items[countSameWidth].width
                 else -> items[0].width - 1f
             }
-            val widthToRemovePerItem = (widthExcess / countSameWidth) min widthToRemovePerItemMax
+            val widthToRemovePerItem = (widthExcess / countSameWidth) min maxWidthToRemovePerItem
             for (itemN in 0 until countSameWidth)
                 items[itemN].width -= widthToRemovePerItem
             widthExcess -= widthToRemovePerItem * countSameWidth
         }
+
+        // Round width and redistribute remainder left-to-right (could make it an option of the function?)
+        // Ensure that e.g. the right-most tab of a shrunk tab-bar always reaches exactly at the same distance from the right-most edge of the tab bar separator.
+        widthExcess = 0f
+        repeat(count) {
+            val widthRounded = floor(items[it].width)
+            widthExcess += items[it].width - widthRounded
+            items[it].width = widthRounded
+        }
+        if (widthExcess > 0f)
+            for (n in 0 until count)
+                if (items[n].index < (widthExcess + 0.01f).i)
+                    items[n].width += 1f
     }
 
     // Logging/Capture
