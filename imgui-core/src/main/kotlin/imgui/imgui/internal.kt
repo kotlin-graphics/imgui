@@ -2646,9 +2646,8 @@ interface imgui_internal {
             beginGroup()
         val id = window.getId(label)
         val labelSize = calcTextSize(label, -1, true)
-        val size = calcItemSize(sizeArg, calcItemWidth(),
-                // Arbitrary default of 8 lines high for multi-line
-                (if (isMultiline) textLineHeight * 8f else labelSize.y) + style.framePadding.y * 2f)
+        val h = if (isMultiline) textLineHeight * 8f else labelSize.y
+        val size = calcItemSize(sizeArg, g.fontSize, h + style.framePadding.y * 2f) // Arbitrary default of 8 lines high for multi-line
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
