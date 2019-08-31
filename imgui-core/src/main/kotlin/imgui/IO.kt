@@ -91,7 +91,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var configWindowsResizeFromEdges = true
     /** [BETA] Set to true to only allow moving windows when clicked+dragged from the title bar. Windows without a title bar are not affected. */
     var configWindowsMoveFromTitleBarOnly = false
-    /** [BETA] Compact window memory usage when unused. Set to 0.0f to disable. */
+    /** [BETA] Compact window memory usage when unused. Set to -1.0f to disable. */
     var configWindowsMemoryCompactTimer = 60f
 
     //------------------------------------------------------------------
