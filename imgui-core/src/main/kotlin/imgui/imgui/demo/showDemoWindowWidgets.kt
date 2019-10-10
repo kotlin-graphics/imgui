@@ -1156,7 +1156,7 @@ object showDemoWindowWidgets {
                 sameLine()
                 withId("set2") {
                     val rows = 3
-                    val smallSliderSize = Vec2(18, (160f - (rows - 1) * spacing) / rows)
+                    val smallSliderSize = Vec2(18, ((160f - (rows - 1) * spacing) / rows).i.f)
                     for (nx in 0..3) {
                         if (nx > 0) sameLine()
                         group {

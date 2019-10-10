@@ -28,6 +28,7 @@ import imgui.Ref
 import imgui.imgui.g
 import imgui.imgui.withInt
 import imgui.internal.Rect
+import imgui.internal.floor
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -118,7 +119,7 @@ interface imgui_widgets_listBoxes {
         val heightInItemsF = heightInItems + if (heightInItems < itemsCount) 0.25f else 0f
         /*  We include ItemSpacing.y so that a list sized for the exact number of items doesn't make a scrollbar
             appears. We could also enforce that by passing a flag to BeginChild().         */
-        val size = Vec2(0f, textLineHeightWithSpacing * heightInItemsF + style.itemSpacing.y * 2f)
+        val size = Vec2(0f, floor(textLineHeightWithSpacing * heightInItemsF + style.itemSpacing.y * 2f))
         return listBoxHeader(label, size)
     }
 

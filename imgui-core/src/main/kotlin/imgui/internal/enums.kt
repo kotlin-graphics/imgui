@@ -275,7 +275,8 @@ enum class NavMoveFlag {
      *  if we are pressing PageDown from the bottom-most item we need to stay in place) */
     AllowCurrentNavId,
     /** Store alternate result in NavMoveResultLocalVisibleSet that only comprise elements that are already fully visible.; */
-    AlsoScoreVisibleSet;
+    AlsoScoreVisibleSet,
+    ScrollToEdge;
 
     val i = if (ordinal == 0) 0 else 1 shl ordinal
 

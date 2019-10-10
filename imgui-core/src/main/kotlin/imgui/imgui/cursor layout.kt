@@ -63,8 +63,10 @@ interface imgui_cursorLayout {
             val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + thicknessDraw))
             itemSize(Vec2(0f, thicknessLayout))
             if (!itemAdd(bb, 0)) {
-                if (columns != null)
+                columns?.let {
                     popColumnsBackground()
+                    it.lineMinY = window.dc.cursorPos.y
+                }
                 return
             }
 

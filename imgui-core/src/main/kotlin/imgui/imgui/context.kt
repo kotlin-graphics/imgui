@@ -259,7 +259,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navMoveDir = Dir.None
     /** Direction of the move request (left/right/up/down), direction of the previous move request  */
     var navMoveDirLast = Dir.None
-
+    /** FIXME-NAV: Describe the purpose of this better. Might want to rename? */
     var navMoveClipDir = Dir.None
     /** Best move request candidate within NavWindow    */
     var navMoveResultLocal = NavMoveResult()
