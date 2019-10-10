@@ -596,7 +596,8 @@ fun navUpdate() {
         g.navMoveRequestForward = NavForward.ForwardActive
     }
 
-    // Update PageUp/PageDown scroll
+    // Update PageUp/PageDown/Home/End scroll
+    // FIXME-NAV: Consider enabling those keys even without the master ImGuiConfigFlags_NavEnableKeyboard flag?
     val navScoringRectOffsetY = when {
         navKeyboardActive -> navUpdatePageUpPageDown(allowedDirFlags)
         else -> 0f
@@ -833,7 +834,7 @@ fun navUpdateWindowing() {
 }
 
 /** Overlay displayed when using CTRL+TAB. Called by EndFrame(). */
-fun navUpdateWindowingList() {
+fun navUpdateWindowingOverlay() {
 
     val target = g.navWindowingTarget!! // ~ assert
 
@@ -887,10 +888,15 @@ fun navUpdateMoveResult() {
     assert(g.navWindow != null)
     // Scroll to keep newly navigated item fully into view.
     if (g.navLayer == NavLayer.Main) {
-        val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
-        window scrollToBringRectIntoView rectAbs
-        // Estimate upcoming scroll so we can offset our result position so mouse position can be applied immediately after in NavUpdate()
-        val deltaScroll = result.window!! scrollToBringRectIntoView rectAbs
+        val deltaScroll = Vec2()
+        if (g.navMoveRequestFlags has NavMoveFlag.ScrollToEdge) {
+            val scrollTarget = if (g.navMoveDir == Dir.Up) window.scrollMax.y else 0f
+            deltaScroll.y = window.scroll.y - scrollTarget
+            window setScrollY scrollTarget
+        } else {
+            val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
+            deltaScroll put window.scrollToBringRectIntoView(rectAbs)
+        }
 
         // Offset our result position so mouse position can be applied immediately after in NavUpdate()
         result.rectRel translateX -deltaScroll.x
@@ -904,6 +910,7 @@ fun navUpdateMoveResult() {
     g.navMoveFromClampedRefRect = false
 }
 
+/** Handle PageUp/PageDown/Home/End keys */
 fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
 
     val window = g.navWindow
@@ -914,28 +921,53 @@ fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
 
     val pageUpHeld = Key.PageUp.isDown && allowedDirFlags has (1 shl Dir.Up)
     val pageDownHeld = Key.PageDown.isDown && allowedDirFlags has (1 shl Dir.Down)
-    if (pageUpHeld != pageDownHeld) { // If either (not both) are pressed
+    val homePressed = Key.Home.isPressed && allowedDirFlags has (1 shl Dir.Up)
+    val endPressed = Key.End.isPressed && allowedDirFlags has (1 shl Dir.Down)
+    if (pageUpHeld != pageDownHeld || homePressed != endPressed) { // If either (not both) are pressed
 
         if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {
             // Fallback manual-scroll when window has no navigable item
-            if (Key.PageUp.isPressed(true))
-                window.setScrollY(window.scroll.y - window.innerRect.height)
-            else if (Key.PageDown.isPressed(true))
-                window.setScrollY(window.scroll.y + window.innerRect.height)
+            when {
+                Key.PageUp.isPressed(true) -> window.setScrollY(window.scroll.y - window.innerRect.height)
+                Key.PageDown.isPressed(true) -> window.setScrollY(window.scroll.y + window.innerRect.height)
+                homePressed -> window.setScrollY(0f)
+                endPressed -> window.setScrollY(window.scrollMax.y)
+            }
         } else {
             val navRectRel = window.navRectRel[g.navLayer.i]
             val pageOffsetY = 0f max (window.innerRect.height - window.calcFontSize() * 1f + navRectRel.height)
             var navScoringRectOffsetY = 0f
             if (Key.PageUp.isPressed(true)) {
                 navScoringRectOffsetY = -pageOffsetY
-                g.navMoveDir = Dir.Down // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
+                g.navMoveDir = Dir.Down // Because our scoring rect is offset up, we request the down direction (so we can always land on the last item)
                 g.navMoveClipDir = Dir.Up
                 g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
             } else if (Key.PageDown.isPressed(true)) {
                 navScoringRectOffsetY = +pageOffsetY
-                g.navMoveDir = Dir.Up // Because our scoring rect is offset, we intentionally request the opposite direction (so we can always land on the last item)
+                g.navMoveDir = Dir.Up // Because our scoring rect is offset down, we request the up direction (so we can always land on the last item)
                 g.navMoveClipDir = Dir.Down
                 g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
+            } else if (homePressed) {
+                // FIXME-NAV: handling of Home/End is assuming that the top/bottom most item will be visible with Scroll.y == 0/ScrollMax.y
+                // Scrolling will be handled via the ImGuiNavMoveFlags_ScrollToEdge flag, we don't scroll immediately to avoid scrolling happening before nav result.
+                // Preserve current horizontal position if we have any.
+                navRectRel.min.y = -window.scroll.y
+                navRectRel.max.y = -window.scroll.y
+                if (navRectRel.isInverted) {
+                    navRectRel.min.x = 0f
+                    navRectRel.max.x = 0f
+                }
+                g.navMoveDir = Dir.Down
+                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
+            } else if (endPressed) {
+                navRectRel.min.y = window.scrollMax.y + window.sizeFull.y - window.scroll.y
+                navRectRel.max.y = window.scrollMax.y + window.sizeFull.y - window.scroll.y
+                if (navRectRel.isInverted) {
+                    navRectRel.min.x = 0f
+                    navRectRel.max.x = 0f
+                }
+                g.navMoveDir = Dir.Up
+                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
             }
             return navScoringRectOffsetY
         }
