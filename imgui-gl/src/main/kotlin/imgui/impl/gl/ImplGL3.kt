@@ -53,7 +53,7 @@ class ImplGL3 : GLInterface {
     override fun shutdown() = destroyDeviceObjects()
 
     override fun newFrame() {
-        if (fontTexture[0] == 0)
+        if (program.isInvalid)
             createDeviceObjects()
     }
 
