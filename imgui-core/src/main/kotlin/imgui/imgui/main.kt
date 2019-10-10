@@ -368,7 +368,7 @@ interface imgui_main {
 
         // Show CTRL+TAB list window
         if (g.navWindowingTarget != null)
-            navUpdateWindowingList()
+            navUpdateWindowingOverlay()
 
         // Drag and Drop: Elapse payload (if delivered, or if source stops being submitted)
         if (g.dragDropActive) {
