@@ -1539,7 +1539,7 @@ class TabBar {
         val bb = Rect(pos, pos + size)
 
         // We don't have CPU clipping primitives to clip the CloseButton (until it becomes a texture), so need to add an extra draw call (temporary in the case of vertical animation)
-        val wantClipRect = bb.min.x < barRect.min.x || bb.max.x >= barRect.max.x
+        val wantClipRect = bb.min.x < barRect.min.x || bb.max.x > barRect.max.x
         if (wantClipRect)
             pushClipRect(Vec2(bb.min.x max barRect.min.x, bb.min.y - 1), Vec2(barRect.max.x, bb.max.y), true)
 
