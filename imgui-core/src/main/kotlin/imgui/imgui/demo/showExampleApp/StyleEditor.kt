@@ -253,7 +253,8 @@ object StyleEditor {
                         |(Glimmer of hope: the atlas system should hopefully be rewritten in the future to make scaling more natural and automatic.)""".trimMargin())
                         inputFloat("Font offset", font.displayOffset::y, 1f, 1f)
                         text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
-                        text("Fallback character: '${font.fallbackChar}' (${font.fallbackChar.i})")
+                        text("Fallback character: '${font.fallbackChar}' (U+%04X)", font.fallbackChar)
+                        text("Ellipsis character: '${font.ellipsisChar}' (U+%04X)", font.ellipsisChar)
                         val side = sqrt(font.metricsTotalSurface.f).i
                         text("Texture surface: ${font.metricsTotalSurface} pixels (approx) ~ ${side}x$side")
                         for (c in 0 until font.configDataCount)
