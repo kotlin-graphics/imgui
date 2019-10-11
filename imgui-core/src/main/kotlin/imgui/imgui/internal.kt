@@ -1147,35 +1147,30 @@ interface imgui_internal {
             val font = drawList._data.font!!
             val fontSize = drawList._data.fontSize
             val textEndEllipsis = intArrayOf(-1)
-            val glyph: FontGlyph
-            var ellipsisCharNum = 1
-            var ellipsisCodepoint = font.ellipsisCodePoint
 
-            if (ellipsisCodepoint != -1)
-                glyph = font.findGlyph(ellipsisCodepoint)!!
-            else {
-                ellipsisCodepoint = '.'.i
-                glyph = font.findGlyph(ellipsisCodepoint)!!
-                ellipsisCharNum = 3
+            var ellipsisChar = font.ellipsisChar
+            var ellipsisCharCount = 1
+            if (ellipsisChar == '\uffff') {
+                ellipsisChar = '.'
+                ellipsisCharCount = 3
             }
+            val glyph = font.findGlyph(ellipsisChar)!!
 
             var ellipsisGlyphWidth = glyph.x1       // Width of the glyph with no padding on either side
-            var ellipsisWidth = ellipsisGlyphWidth  // Full width of entire ellipsis
+            var ellipsisTotalWidth = ellipsisGlyphWidth  // Full width of entire ellipsis
             var pushLeft = 1f
 
-            if (ellipsisCharNum > 1) {
+            if (ellipsisCharCount > 1) {
+                // Full ellipsis size without free spacing after it.
                 val spacingBetweenDots = 1f * (drawList._data.fontSize / font.fontSize)
                 ellipsisGlyphWidth = glyph.x1 - glyph.x0 + spacingBetweenDots
-                // Full ellipsis size without free spacing after it.
-                ellipsisWidth = ellipsisGlyphWidth * ellipsisCharNum.f - spacingBetweenDots
-                if (glyph.x0 > 1f) {
-                    // Pushing ellipsis to the left will be accomplished by rendering the dot (X0).
-                    pushLeft = 0f
-                }
+                ellipsisTotalWidth = ellipsisGlyphWidth * ellipsisCharCount.f - spacingBetweenDots
+                if (glyph.x0 > 1f)
+                    pushLeft = 0f // Pushing ellipsis to the left will be accomplished by rendering the dot (X0).
             }
 
-            val textWidth = max((posMax.x - ellipsisWidth) - posMin.x, 1f)
-            var textSizeClippedX = font.calcTextSizeA(fontSize, textWidth, 0f, text, textEndFull, textEndEllipsis).x
+            val textAvailWidth = max((posMax.x - ellipsisTotalWidth) - posMin.x, 1f)
+            var textSizeClippedX = font.calcTextSizeA(fontSize, textAvailWidth, 0f, text, textEndFull, textEndEllipsis).x
 
             if (0 == textEndEllipsis[0] && textEndEllipsis[0] < textEndFull) {
                 // Always display at least 1 character if there's no room for character + ellipsis
@@ -1183,7 +1178,7 @@ interface imgui_internal {
                 textSizeClippedX = font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text, textEndEllipsis[0]).x
             }
             while (textEndEllipsis[0] > 0 && text[textEndEllipsis[0] - 1].isBlankA) {
-                // Trim trailing space before ellipsis
+                // Trim trailing space before ellipsis (FIXME: Supporting non-ascii blanks would be nice, for this we need a function to backtrack in UTF-8 text)
                 textEndEllipsis[0]--
                 textSizeClippedX -= font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text.substring(textEndEllipsis[0]), textEndEllipsis[0] + 1).x // Ascii blanks are always 1 byte
             }
@@ -1201,10 +1196,9 @@ interface imgui_internal {
                 TODO()
 //                textEndEllipsis[0] += ImTextCharFromUtf8(& c, text_end_ellipsis, text_end_full);
 //                if (c && !ImCharIsBlankW(c)) {
-//                    const ImFontGlyph * hidden_glyph = font->FindGlyph(c);
 //                    // Free space after first invisible glyph
+//                    const ImFontGlyph* hidden_glyph = font->FindGlyph((ImWchar)c);
 //                    extra_spacing = hidden_glyph->AdvanceX-hidden_glyph->X1;
-//                    c = 0;
 //                    text_end_ellipsis += ImTextCharFromUtf8(& c, text_end_ellipsis, text_end_full);
 //                    if (c && !ImCharIsBlankW(c)) {
 //                        hidden_glyph = font->FindGlyph(text_end_ellipsis[1]);
@@ -1220,11 +1214,11 @@ interface imgui_internal {
 //
 //                if (extra_spacing > 0) {
 //                    // Repeat calculation hoping that we will get extra character visible
-//                    text_width += extra_spacing;
+//                    text_avail_width  += extra_spacing;
 //                    // Text length calculation is essentially an optimized version of this:
 //                    //   text_size_clipped_x = font->CalcTextSizeA(font_size, text_width, 0.0f, text, text_end_full, &text_end_ellipsis).x;
 //                    // It avoids calculating entire width of the string.
-//                    text_size_clipped_x += font->CalcTextSizeA(font_size, text_width-text_size_clipped_x, 0.0f, text_end_ellipsis_prev, text_end_full, &text_end_ellipsis).x;
+//                    text_size_clipped_x += font->CalcTextSizeA(font_size, text_avail_width -text_size_clipped_x, 0.0f, text_end_ellipsis_prev, text_end_full, &text_end_ellipsis).x;
 //                } else
 //                    text_end_ellipsis = text_end_ellipsis_prev;
             }
@@ -1235,12 +1229,11 @@ interface imgui_internal {
             // ellipsis character contained in the font. If we render ellipsis manually space is already adequate and extra
             // spacing is not needed.
             var ellipsisX = posMin.x + textSizeClippedX + pushLeft
-            if (ellipsisX + ellipsisWidth - pushLeft <= ellipsisMaxX)            {
-                for (i in 0 until ellipsisCharNum)                {
-                    font.renderChar(drawList, fontSize, Vec2(ellipsisX, posMin.y), Col.Text.u32, ellipsisCodepoint.c)
+            if (ellipsisX + ellipsisTotalWidth - pushLeft <= ellipsisMaxX)
+                for (i in 0 until ellipsisCharCount) {
+                    font.renderChar(drawList, fontSize, Vec2(ellipsisX, posMin.y), Col.Text.u32, ellipsisChar)
                     ellipsisX += ellipsisGlyphWidth
                 }
-            }
         } else
             renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndFull, textSize, Vec2())
 
