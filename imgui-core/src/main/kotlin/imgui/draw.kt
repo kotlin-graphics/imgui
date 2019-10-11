@@ -243,6 +243,7 @@ class DrawListSplitter {
         }
         drawList._idxWritePtr = idxWrite
         drawList.updateClipRect() // We call this instead of AddDrawCmd(), so that empty channels won't produce an extra draw call.
+        drawList.updateTextureID()
         _count = 1
     }
 
