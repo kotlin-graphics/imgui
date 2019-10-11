@@ -122,6 +122,10 @@ interface imgui_internal {
     val defaultFont: Font
         get() = io.fontDefault ?: io.fonts.fonts[0]
 
+    fun getForegroundDrawList(window: Window?): DrawList {
+        return g.foregroundDrawList // This seemingly unnecessary wrapper simplifies compatibility between the 'master' and 'docking' branches.
+    }
+
     fun markIniSettingsDirty() {
         if (g.settingsDirtyTimer <= 0f) g.settingsDirtyTimer = io.iniSavingRate
     }

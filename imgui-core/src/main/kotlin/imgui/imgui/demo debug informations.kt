@@ -26,6 +26,7 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameCount
+import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getId
 import imgui.ImGui.getOffsetFrom
 import imgui.ImGui.getStyleColorVec4
@@ -68,7 +69,6 @@ import imgui.dsl.indent
 import imgui.dsl.menu
 import imgui.imgui.demo.ExampleApp
 import imgui.imgui.demo.showExampleApp.StyleEditor
-import imgui.imgui.imgui_miscellaneousUtilities.Companion.getForegroundDrawList
 import imgui.internal.*
 import kool.lim
 import java.nio.ByteBuffer

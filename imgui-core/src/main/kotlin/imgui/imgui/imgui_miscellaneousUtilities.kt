@@ -131,9 +131,4 @@ interface imgui_miscellaneousUtilities {
 
     /** Always call EndChildFrame() regardless of BeginChildFrame() return values (which indicates a collapsed/clipped window)  */
     fun endChildFrame() = endChild()
-
-    companion object {
-        /** This seemingly unnecessary wrapper simplifies compatibility between the 'master' and 'docking' branches. */
-        fun getForegroundDrawList(window: Window?): DrawList = g.foregroundDrawList
-    }
 }
