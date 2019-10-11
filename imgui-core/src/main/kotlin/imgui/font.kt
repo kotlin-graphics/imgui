@@ -72,7 +72,7 @@ class FontConfig {
      *  more readable.  */
     var rasterizerMultiply = 1f
     /** Explicitly specify unicode codepoint of ellipsis character. When fonts are being merged first specified ellipsis will be used. */
-    var ellipsisCodePoint = -1
+    var ellipsisChar = '\uffff'
 
     // [Internal]
     /** Name (strictly to ease debugging)   */
@@ -151,8 +151,8 @@ class FontAtlas {
             fontCfg.fontDataOwnedByAtlas = true
 //            memcpy(new_font_cfg.FontData, font_cfg->FontData, (size_t)new_font_cfg.FontDataSize) TODO check, same object?
 
-        if (fontCfg.dstFont!!.ellipsisCodePoint == -1)
-            fontCfg.dstFont!!.ellipsisCodePoint = fontCfg.ellipsisCodePoint
+        if (fontCfg.dstFont!!.ellipsisChar == '\uffff')
+            fontCfg.dstFont!!.ellipsisChar = fontCfg.ellipsisChar
 
         // Invalidate texture
         clearTexData()
@@ -171,7 +171,7 @@ class FontAtlas {
 
         if (fontCfg.sizePixels <= 0f) fontCfg.sizePixels = 13f
         if (fontCfg.name.isEmpty()) fontCfg.name = "ProggyClean.ttf, ${fontCfg.sizePixels.i}px"
-        fontCfg.ellipsisCodePoint = 0x0085
+        fontCfg.ellipsisChar = '\u0085'
 
         val ttfCompressedBase85 = proggyCleanTtfCompressedDataBase85
         val glyphRanges = fontCfg.glyphRanges.takeIf { it.isNotEmpty() } ?: glyphRanges.default
@@ -934,13 +934,11 @@ class FontAtlas {
 
         // Ellipsis character is required for rendering elided text. We prefer using U+2026 (horizontal ellipsis).
         // However some old fonts may contain ellipsis at U+0085. Here we auto-detect most suitable ellipsis character.
-        fonts.filter { it.ellipsisCodePoint == -1 }.forEach { font ->
-            val ellipsisVariants = intArrayOf(0x2026, 0x0085, 0)
-            var j = 0
-            while (ellipsisVariants[j] != 0) {
-                val ellipsisCodepoint = ellipsisVariants[j++]
-                if (font.findGlyph(ellipsisCodepoint) != font.fallbackGlyph) { // Verify glyph exists
-                    font.ellipsisCodePoint = ellipsisCodepoint
+        // FIXME: Also note that 0x2026 is currently seldomly included in our font ranges. Because of this we are more likely to use three individual dots.
+        fonts.filter { it.ellipsisChar == '\uffff' }.forEach { font ->
+            for (ellipsisVariant in charArrayOf('\u2026', '\u0085')) {
+                if(font.findGlyphNoFallback(ellipsisVariant) != null) { // Verify glyph exists
+                    font.ellipsisChar = ellipsisVariant
                     break
                 }
             }
@@ -1083,13 +1081,15 @@ class Font {
     val configData = ArrayList<FontConfig>()    // 4-8   // in  //
     /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
     var configDataCount = 0                     // 2     // in  // ~ 1
-    /** Replacement glyph if one isn't found. Only set via SetFallbackChar()    */
+    /** Replacement character if a glyph isn't found. Only set via SetFallbackChar()    */
     var fallbackChar = '?'                      // 2     // in  // = '?'
         /** ~SetFallbackChar */
         set(value) {
             field = value
             buildLookupTable()
         }
+    /** Override a codepoint used for ellipsis rendering. */
+    var ellipsisChar = '\uffff'                 // out //
     /** Base font scale, multiplied by the per-window font scale which you can adjust with SetWindowFontScale()   */
     var scale = 1f                              // 4     // in  // = 1.f
     /** Ascent: distance from top to bottom of e.g. 'A' [0..FontSize]   */
@@ -1100,8 +1100,6 @@ class Font {
     var metricsTotalSurface = 0                 // 4     // out
 
     var dirtyLookupTables = true                // 1     // out //
-    /** Override a codepoint used for ellipsis rendering. */
-    var ellipsisCodePoint = -1                  // out //
 
     // @formatter:on
 
