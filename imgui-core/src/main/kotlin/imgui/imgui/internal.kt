@@ -26,7 +26,6 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
-import imgui.ImGui.getColumnOffset
 import imgui.ImGui.indent
 import imgui.ImGui.io
 import imgui.ImGui.isItemActive
@@ -37,12 +36,10 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.logText
 import imgui.ImGui.openPopup
-import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
 import imgui.ImGui.popId
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
@@ -52,7 +49,6 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.selectable
 import imgui.ImGui.separatorEx
-import imgui.ImGui.setColumnOffset
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.setNextWindowPos
@@ -85,7 +81,6 @@ import imgui.InputTextFlag as Itf
 import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
-import imgui.internal.ColumnsFlag as Cf
 import imgui.internal.DrawCornerFlag as Dcf
 import imgui.internal.ItemFlag as If
 import imgui.internal.LayoutType as Lt
@@ -1149,15 +1144,39 @@ interface imgui_internal {
                 min   max   ellipsis_max
                          <-> this is generally some padding value
              */
-            // FIXME-STYLE: RenderPixelEllipsis() style should use actual font data.
             val font = drawList._data.font!!
             val fontSize = drawList._data.fontSize
-            val ellipsisDotCount = 3
-            val ellipsisWidth = (1f + 1f) * ellipsisDotCount - 1f
             val textEndEllipsis = intArrayOf(-1)
+            val glyph: FontGlyph
+            var ellipsisCharNum = 1
+            var ellipsisCodepoint = font.ellipsisCodePoint
+
+            if (ellipsisCodepoint != -1)
+                glyph = font.findGlyph(ellipsisCodepoint)!!
+            else {
+                ellipsisCodepoint = '.'.i
+                glyph = font.findGlyph(ellipsisCodepoint)!!
+                ellipsisCharNum = 3
+            }
+
+            var ellipsisGlyphWidth = glyph.x1       // Width of the glyph with no padding on either side
+            var ellipsisWidth = ellipsisGlyphWidth  // Full width of entire ellipsis
+            var pushLeft = 1f
+
+            if (ellipsisCharNum > 1) {
+                val spacingBetweenDots = 1f * (drawList._data.fontSize / font.fontSize)
+                ellipsisGlyphWidth = glyph.x1 - glyph.x0 + spacingBetweenDots
+                // Full ellipsis size without free spacing after it.
+                ellipsisWidth = ellipsisGlyphWidth * ellipsisCharNum.f - spacingBetweenDots
+                if (glyph.x0 > 1f) {
+                    // Pushing ellipsis to the left will be accomplished by rendering the dot (X0).
+                    pushLeft = 0f
+                }
+            }
 
             val textWidth = max((posMax.x - ellipsisWidth) - posMin.x, 1f)
             var textSizeClippedX = font.calcTextSizeA(fontSize, textWidth, 0f, text, textEndFull, textEndEllipsis).x
+
             if (0 == textEndEllipsis[0] && textEndEllipsis[0] < textEndFull) {
                 // Always display at least 1 character if there's no room for character + ellipsis
                 textEndEllipsis[0] = text.countUtf8BytesFromChar(textEndFull)
@@ -1168,11 +1187,60 @@ interface imgui_internal {
                 textEndEllipsis[0]--
                 textSizeClippedX -= font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text.substring(textEndEllipsis[0]), textEndEllipsis[0] + 1).x // Ascii blanks are always 1 byte
             }
+
+            if (textEndEllipsis[0] != textEndFull) {
+                //   +---- First invisible character we arrived at.
+                //  /  +-- Character that we hope to be first invisible.
+                // [l][i]
+                //  ||||
+                //   \ \__ extra_spacing when two characters got hidden
+                //    \___ extra_spacing when one character got hidden
+                var c = 0
+                val extraSpacing = 0f
+                var textEndEllipsisPrev = textEndEllipsis[0]
+                TODO()
+//                textEndEllipsis[0] += ImTextCharFromUtf8(& c, text_end_ellipsis, text_end_full);
+//                if (c && !ImCharIsBlankW(c)) {
+//                    const ImFontGlyph * hidden_glyph = font->FindGlyph(c);
+//                    // Free space after first invisible glyph
+//                    extra_spacing = hidden_glyph->AdvanceX-hidden_glyph->X1;
+//                    c = 0;
+//                    text_end_ellipsis += ImTextCharFromUtf8(& c, text_end_ellipsis, text_end_full);
+//                    if (c && !ImCharIsBlankW(c)) {
+//                        hidden_glyph = font->FindGlyph(text_end_ellipsis[1]);
+//                        // Space before next invisible glyph. This intentionally ignores space from the first invisible
+//                        // glyph as that space will serve as spacing between ellipsis and last visible character. Without
+//                        // doing this we may get into awkward situations where ellipsis pretty much sticks to the last
+//                        // visible character. This issue manifests with the default font for word "Brocolli" there both i
+//                        // and l are very thin. Unfortunately this makes fonts with wider gaps (like monospace) look a bit
+//                        // worse, but it is a fair middle ground.
+//                        extra_spacing = hidden_glyph->X0;
+//                    }
+//                }
+//
+//                if (extra_spacing > 0) {
+//                    // Repeat calculation hoping that we will get extra character visible
+//                    text_width += extra_spacing;
+//                    // Text length calculation is essentially an optimized version of this:
+//                    //   text_size_clipped_x = font->CalcTextSizeA(font_size, text_width, 0.0f, text, text_end_full, &text_end_ellipsis).x;
+//                    // It avoids calculating entire width of the string.
+//                    text_size_clipped_x += font->CalcTextSizeA(font_size, text_width-text_size_clipped_x, 0.0f, text_end_ellipsis_prev, text_end_full, &text_end_ellipsis).x;
+//                } else
+//                    text_end_ellipsis = text_end_ellipsis_prev;
+            }
+
             renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndEllipsis[0], textSize, Vec2())
 
-            val ellipsisX = posMin.x + textSizeClippedX + 1f
-            if (ellipsisX + ellipsisWidth - 1f <= ellipsisMaxX)
-                renderPixelEllipsis(drawList, Vec2(ellipsisX, posMin.y), Col.Text.u32, ellipsisDotCount)
+            // This variable pushes ellipsis to the left from last visible character. This is mostly useful when rendering
+            // ellipsis character contained in the font. If we render ellipsis manually space is already adequate and extra
+            // spacing is not needed.
+            var ellipsisX = posMin.x + textSizeClippedX + pushLeft
+            if (ellipsisX + ellipsisWidth - pushLeft <= ellipsisMaxX)            {
+                for (i in 0 until ellipsisCharNum)                {
+                    font.renderChar(drawList, fontSize, Vec2(ellipsisX, posMin.y), Col.Text.u32, ellipsisCodepoint.c)
+                    ellipsisX += ellipsisGlyphWidth
+                }
+            }
         } else
             renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndFull, textSize, Vec2())
 
@@ -1353,17 +1421,6 @@ interface imgui_internal {
             }
         }
         drawList.pathFillConvex(col)
-    }
-
-    /** FIXME: Rendering an ellipsis "..." is a surprisingly tricky problem for us... we cannot rely on font glyph having it,
-     *  and regular dot are typically too wide. If we render a dot/shape ourselves it comes with the risk that it wouldn't match
-     *  the boldness or positioning of what the font uses... */
-    fun renderPixelEllipsis(drawList: DrawList, pos: Vec2, col: Int, count: Int) {
-        val font = drawList._data.font!!
-        val fontScale = drawList._data.fontSize / font.fontSize
-        pos.y += (font.displayOffset.y + font.ascent * fontScale + 0.5f - 1f).i.f
-        for (dotN in 0 until count)
-            drawList.addRectFilled(Vec2(pos.x + dotN * 2f, pos.y), Vec2(pos.x + dotN * 2f + 1f, pos.y + 1f), col)
     }
 
     /** Find the optional ## from which we stop displaying text.    */
