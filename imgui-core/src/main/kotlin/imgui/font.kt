@@ -24,7 +24,6 @@ import unsigned.toULong
 import java.nio.ByteBuffer
 import kotlin.math.floor
 import kotlin.math.sqrt
-import imgui.plusAssign
 import uno.kotlin.plusAssign
 
 
@@ -72,6 +71,8 @@ class FontConfig {
     /** Brighten (>1.0f) or darken (<1.0f) font output. Brightening small fonts may be a good workaround to make them
      *  more readable.  */
     var rasterizerMultiply = 1f
+    /** Explicitly specify unicode codepoint of ellipsis character. When fonts are being merged first specified ellipsis will be used. */
+    var ellipsisCodePoint = -1
 
     // [Internal]
     /** Name (strictly to ease debugging)   */
@@ -150,6 +151,9 @@ class FontAtlas {
             fontCfg.fontDataOwnedByAtlas = true
 //            memcpy(new_font_cfg.FontData, font_cfg->FontData, (size_t)new_font_cfg.FontDataSize) TODO check, same object?
 
+        if (fontCfg.dstFont!!.ellipsisCodePoint == -1)
+            fontCfg.dstFont!!.ellipsisCodePoint = fontCfg.ellipsisCodePoint
+
         // Invalidate texture
         clearTexData()
         return fontCfg.dstFont!!
@@ -167,6 +171,7 @@ class FontAtlas {
 
         if (fontCfg.sizePixels <= 0f) fontCfg.sizePixels = 13f
         if (fontCfg.name.isEmpty()) fontCfg.name = "ProggyClean.ttf, ${fontCfg.sizePixels.i}px"
+        fontCfg.ellipsisCodePoint = 0x0085
 
         val ttfCompressedBase85 = proggyCleanTtfCompressedDataBase85
         val glyphRanges = fontCfg.glyphRanges.takeIf { it.isNotEmpty() } ?: glyphRanges.default
@@ -926,6 +931,20 @@ class FontAtlas {
         }
         // Build all fonts lookup tables
         fonts.filter { it.dirtyLookupTables }.forEach { it.buildLookupTable() }
+
+        // Ellipsis character is required for rendering elided text. We prefer using U+2026 (horizontal ellipsis).
+        // However some old fonts may contain ellipsis at U+0085. Here we auto-detect most suitable ellipsis character.
+        fonts.filter { it.ellipsisCodePoint == -1 }.forEach { font ->
+            val ellipsisVariants = intArrayOf(0x2026, 0x0085, 0)
+            var j = 0
+            while (ellipsisVariants[j] != 0) {
+                val ellipsisCodepoint = ellipsisVariants[j++]
+                if (font.findGlyph(ellipsisCodepoint) != font.fallbackGlyph) { // Verify glyph exists
+                    font.ellipsisCodePoint = ellipsisCodepoint
+                    break
+                }
+            }
+        }
     }
 
     fun buildRenderDefaultTexData() {
@@ -1081,6 +1100,8 @@ class Font {
     var metricsTotalSurface = 0                 // 4     // out
 
     var dirtyLookupTables = true                // 1     // out //
+    /** Override a codepoint used for ellipsis rendering. */
+    var ellipsisCodePoint = -1                  // out //
 
     // @formatter:on
 
@@ -1103,7 +1124,7 @@ class Font {
     fun calcTextSizeA(size: Float, maxWidth: Float, wrapWidth: Float, text: String, textEnd_: Int = text.length,
                       remaining: IntArray? = null): Vec2 { // utf8
 
-        val textEnd = if(textEnd_ == -1) text.length else textEnd_
+        val textEnd = if (textEnd_ == -1) text.length else textEnd_
 
         val lineHeight = size
         val scale = size / fontSize
