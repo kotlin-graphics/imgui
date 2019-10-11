@@ -452,7 +452,7 @@ class Style {
     var windowMinSize = Vec2i(32)
     /** Alignment for title bar text    */
     var windowTitleAlign = Vec2(0f, 0.5f)
-    /** Side of the collapsing/docking button in the title bar (left/right). Defaults to ImGuiDir_Left. */
+    /** Side of the collapsing/docking button in the title bar (None/Left/Right). Defaults to ImGuiDir_Left. */
     var windowMenuButtonPosition = Dir.Left
     /** Radius of child window corners rounding. Set to 0.0f to have rectangular child windows.  */
     var childRounding = 0f

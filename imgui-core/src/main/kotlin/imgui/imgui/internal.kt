@@ -1186,7 +1186,6 @@ interface imgui_internal {
 
             // Render text, render ellipsis
             renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndEllipsis[0], textSize, Vec2())
-
             var ellipsisX = posMin.x + textSizeClippedX
             if (ellipsisX + ellipsisTotalWidth <= ellipsisMaxX)
                 for (i in 0 until ellipsisCharCount) {
