@@ -85,7 +85,7 @@ interface imgui_main {
         assert(style.curveTessellationTol > 0f) { "Invalid style setting!" }
         assert(style.alpha in 0f..1f) { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)!" }
         assert(style.windowMinSize allGreaterThanEqual 1) { "Invalid style setting." }
-        assert(style.windowMenuButtonPosition == Dir.Left || style.windowMenuButtonPosition == Dir.Right)
+        assert(style.windowMenuButtonPosition == Dir.None || g.style.windowMenuButtonPosition == Dir.Left || style.windowMenuButtonPosition == Dir.Right)
         for (n in 0 until Key.COUNT)
             assert(io.keyMap[n] >= -1 && io.keyMap[n] < io.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
 
@@ -866,7 +866,7 @@ interface imgui_main {
             val flags = window.flags
 
             val hasCloseButton = pOpen != null
-            val hasCollapseButton = flags hasnt Wf.NoCollapse
+            val hasCollapseButton = flags hasnt Wf.NoCollapse && style.windowMenuButtonPosition != Dir.None
 
             // Close & Collapse button are on the Menu NavLayer and don't default focus (unless there's nothing else on that layer)
             val itemFlagsBackup = window.dc.itemFlags

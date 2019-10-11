@@ -60,9 +60,6 @@ import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import imgui.imgui.imgui_internal
 import kotlin.math.sqrt
 import imgui.ColorEditFlag as Cef
-import imgui.InputTextFlag as Itf
-import imgui.SelectableFlag as Sf
-import imgui.TreeNodeFlag as Tnf
 import imgui.WindowFlag as Wf
 
 object StyleEditor {
@@ -156,9 +153,9 @@ object StyleEditor {
                 text("Alignment")
                 sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
                 run {
-                    imgui_internal._i = style.windowMenuButtonPosition.i
-                    combo("WindowMenuButtonPosition", imgui_internal.Companion::_i, "Left\u0000Right\u0000")
-                    style.windowMenuButtonPosition = Dir.values().first { it.i == imgui_internal._i }
+                    imgui_internal._i = style.windowMenuButtonPosition.i + 1
+                    if (combo("WindowMenuButtonPosition", imgui_internal.Companion::_i, "None${NUL}Left${NUL}Right${NUL}"))
+                        style.windowMenuButtonPosition = Dir.values().first { it.i == imgui_internal._i - 1 }
                 }
                 run {
                     imgui_internal._i = style.colorButtonPosition.i
