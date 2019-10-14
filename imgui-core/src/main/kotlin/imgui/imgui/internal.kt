@@ -2217,29 +2217,35 @@ interface imgui_internal {
         val labelSize = calcTextSize(label, labelEnd, false)
 
         // We vertically grow up to current line height up the typical widget height.
-        val textBaseOffsetY = glm.max(padding.y, window.dc.currLineTextBaseOffset) // Latch before ItemSize changes it
         val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
-        val frameBb = Rect(window.dc.cursorPos, Vec2(window.workRect.max.x, window.dc.cursorPos.y + frameHeight))
+        val frameBb = Rect(
+                x1 = if (flags has Tnf.SpanFullWidth) window.workRect.min.x else window.dc.cursorPos.x,
+                y1 = window.dc.cursorPos.y,
+                x2 = window.workRect.max.x,
+                y2 = window.dc.cursorPos.y + frameHeight)
         if (displayFrame) {
-            // Framed header expand a little outside the default padding
+            // Framed header expand a little outside the default padding, to the edge of InnerClipRect
+            // (FIXME: May remove this at some point and make InnerClipRect align with WindowPadding.x instead of WindowPadding.x*0.5f)
             frameBb.min.x -= (window.windowPadding.x * 0.5f - 1f).i.f
             frameBb.max.x += (window.windowPadding.x * 0.5f).i.f
         }
 
-        val textOffsetX = g.fontSize + padding.x * if (displayFrame) 3 else 2   // Collapser arrow width + Spacing
-        val textWidth = g.fontSize + if (labelSize.x > 0f) labelSize.x + padding.x * 2 else 0f   // Include collapser
-        itemSize(Vec2(textWidth, frameHeight), textBaseOffsetY)
+        val textOffsetX = g.fontSize + padding.x * if (displayFrame) 3 else 2                   // Collapser arrow width + Spacing
+        val textOffsetY = padding.y max window.dc.currLineTextBaseOffset                        // Latch before ItemSize changes it
+        val textWidth = g.fontSize + if (labelSize.x > 0f) labelSize.x + padding.x * 2 else 0f  // Include collapser
+        val textPos = Vec2(window.dc.cursorPos.x + textOffsetX, window.dc.cursorPos.y + textOffsetY)
+        itemSize(Vec2(textWidth, frameHeight), textOffsetY)
 
-        /*  For regular tree nodes, we arbitrary allow to click past 2 worth of ItemSpacing
-            (Ideally we'd want to add a flag for the user to specify if we want the hit test to be done up to the
-            right side of the content or not)         */
-        val interactBb = if (displayFrame) Rect(frameBb) else Rect(frameBb.min.x, frameBb.min.y, frameBb.min.x + textWidth + style.itemSpacing.x * 2, frameBb.max.y)
-        var isOpen = treeNodeBehaviorIsOpen(id, flags)
-        val isLeaf = flags has Tnf.Leaf
+        // For regular tree nodes, we arbitrary allow to click past 2 worth of ItemSpacing
+        val interactBb = Rect(frameBb)
+        if (!displayFrame && flags hasnt (Tnf.SpanAvailWidth or Tnf.SpanFullWidth))
+            interactBb.max.x = frameBb.min.x + textWidth + style.itemSpacing.x * 2f
 
         /*  Store a flag for the current depth to tell if we will allow closing this node when navigating one of its child.
             For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
             This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero. */
+        val isLeaf = flags has Tnf.Leaf
+        var isOpen = treeNodeBehaviorIsOpen(id, flags)
         if (isOpen && !g.navIdIsAlive && flags has Tnf.NavLeftJumpsBackHere && flags hasnt Tnf.NoTreePushOnOpen)
             window.dc.treeStoreMayJumpToParentOnPop = window.dc.treeStoreMayJumpToParentOnPop or (1 shl window.dc.treeDepth)
 
@@ -2309,14 +2315,13 @@ interface imgui_internal {
 
         // Render
         val textCol = Col.Text
-        val textPos = frameBb.min + Vec2(textOffsetX, textBaseOffsetY)
         val navHighlightFlags: NavHighlightFlags = NavHighlightFlag.TypeThin.i
         if (displayFrame) {
             // Framed type
             val bgCol = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             renderFrame(frameBb.min, frameBb.max, bgCol.u32, true, style.frameRounding)
             renderNavHighlight(frameBb, id, navHighlightFlags)
-            renderArrow(window.drawList, frameBb.min + Vec2(padding.x, textBaseOffsetY), textCol.u32, if (isOpen) Dir.Down else Dir.Right, 1f)
+            renderArrow(window.drawList,  Vec2(textPos.x - textOffsetX + padding.x, textPos.y), textCol.u32, if (isOpen) Dir.Down else Dir.Right, 1f)
             if (flags has Tnf._ClipLabelForTrailingButton)
                 frameBb.max.x -= g.fontSize + style.framePadding.x
             if (g.logEnabled) {
@@ -2335,9 +2340,9 @@ interface imgui_internal {
                 renderNavHighlight(frameBb, id, navHighlightFlags)
             }
             if (flags has Tnf.Bullet)
-                renderBullet(window.drawList, frameBb.min + Vec2(textOffsetX * 0.5f, g.fontSize * 0.5f + textBaseOffsetY), textCol.u32)
+                renderBullet(window.drawList, Vec2(textPos.x - textOffsetX * 0.5f, textPos.y + g.fontSize * 0.5f), textCol.u32)
             else if (!isLeaf)
-                renderArrow(window.drawList, frameBb.min + Vec2(padding.x, g.fontSize * 0.15f + textBaseOffsetY), textCol.u32, if (isOpen) Dir.Down else Dir.Right, 0.7f)
+                renderArrow(window.drawList, Vec2(textPos.x - textOffsetX + padding.x, textPos.y + g.fontSize * 0.15f), textCol.u32, if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
             renderText(textPos, label, labelEnd, false)
