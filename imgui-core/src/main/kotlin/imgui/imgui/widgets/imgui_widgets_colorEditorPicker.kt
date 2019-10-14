@@ -145,8 +145,12 @@ interface imgui_widgets_colorEditorPicker {
         val f = floatArrayOf(col[0], col[1], col[2], if (alpha) col[3] else 1f)
         if (flags has Cef.InputHSV && flags has Cef.DisplayRGB)
             f.hsvToRGB()
-        else if (flags has Cef.InputRGB && flags has Cef.DisplayHSV)
+        else if (flags has Cef.InputRGB && flags has Cef.DisplayHSV) {
             f.rgbToHSV()
+            // Hue is lost when converting from greyscale rgb (saturation=0). Restore it.
+            if (f[1] == 0f && g.colorEditLastActiveColor[0] == col[0] && g.colorEditLastActiveColor[1] == col[1] && g.colorEditLastActiveColor[2] == col[2])
+                f[0] = g.colorEditLastHue
+        }
 
         val i = IntArray(4) { F32_TO_INT8_UNBOUND(f[it]) }
 
@@ -175,15 +179,15 @@ interface imgui_widgets_colorEditorPicker {
                 val disableHueEdit = n == 0 && flags has Cef.DisplayHSV && i[1] == 0
                 valueChanged = when {
                     flags has Cef.Float -> {
-                        val vMin = if(disableHueEdit) Float.MAX_VALUE else 0f
-                        val vMax = if(disableHueEdit) -Float.MAX_VALUE else if(hdr) 0f else 1f
+                        val vMin = if (disableHueEdit) Float.MAX_VALUE else 0f
+                        val vMax = if (disableHueEdit) -Float.MAX_VALUE else if (hdr) 0f else 1f
                         // operands inverted to have dragScalar always executed, no matter valueChanged
                         valueChangedAsFloat = dragScalar(ids[n], f, n, 1f / 255f, vMin, vMax, fmtTableFloat[fmtIdx][n]) || valueChanged
                         valueChangedAsFloat
                     }
                     else -> {
-                        val vMin = if(disableHueEdit) Int.MAX_VALUE else 0
-                        val vMax = if(disableHueEdit) Int.MIN_VALUE else if (hdr) 0 else 255
+                        val vMin = if (disableHueEdit) Int.MAX_VALUE else 0
+                        val vMax = if (disableHueEdit) Int.MIN_VALUE else if (hdr) 0 else 255
                         dragInt(ids[n], i, n, 1f, vMin, vMax, fmtTableInt[fmtIdx][n]) || valueChanged
                     }
                 }
@@ -247,8 +251,13 @@ interface imgui_widgets_colorEditorPicker {
         // Convert back
         if (valueChanged && pickerActiveWindow == null) {
             if (!valueChangedAsFloat) for (n in 0..3) f[n] = i[n] / 255f
-            if (flags has Cef.DisplayHSV && flags has Cef.InputRGB)
+            if (flags has Cef.DisplayHSV && flags has Cef.InputRGB) {
+                g.colorEditLastHue = f[0]
                 f.hsvToRGB()
+                g.colorEditLastActiveColor[0] = f[0]
+                g.colorEditLastActiveColor[1] = f[1]
+                g.colorEditLastActiveColor[2] = f[2]
+            }
             if (flags has Cef.DisplayRGB && flags has Cef.InputHSV)
                 f.rgbToHSV()
             col[0] = f[0]
@@ -385,8 +394,12 @@ interface imgui_widgets_colorEditorPicker {
 
         val hsv = FloatArray(3) { col[it] }
         val rgb = FloatArray(3) { col[it] }
-        if (flags has Cef.InputRGB)
+        if (flags has Cef.InputRGB) {
             colorConvertRGBtoHSV(rgb, hsv)
+            // Hue is lost when converting from greyscale rgb (saturation=0). Restore it.
+            if (hsv[1] == 0f && g.colorEditLastActiveColor[0] == col[0] && g.colorEditLastActiveColor[1] == col[1] && g.colorEditLastActiveColor[2] == col[2])
+                hsv[0] = g.colorEditLastHue
+        }
         else if (flags has Cef.InputHSV)
             colorConvertHSVtoRGB(hsv, rgb)
         var (H, S, V) = hsv
@@ -494,8 +507,13 @@ interface imgui_widgets_colorEditorPicker {
 
         // Convert back color to RGB
         if (valueChangedH || valueChangedSv)
-            if (flags has Cef.InputRGB)
+            if (flags has Cef.InputRGB) {
                 colorConvertHSVtoRGB(if (H >= 1f) H - 10 * 1e-6f else H, if (S > 0f) S else 10 * 1e-6f, if (V > 0f) V else 1e-6f, col)
+                g.colorEditLastHue = H
+                g.colorEditLastActiveColor [0] = col[0]
+                g.colorEditLastActiveColor [1] = col[1]
+                g.colorEditLastActiveColor [2] = col[2]
+            }
             else if (flags has Cef.InputHSV) {
                 col[0] = H
                 col[1] = S
@@ -540,11 +558,13 @@ interface imgui_widgets_colorEditorPicker {
                 R = col[0]
                 G = col[1]
                 B = col[2]
+                val preserveHue = H
                 colorConvertRGBtoHSV(R, G, B).let {
                     H = it[0]
                     S = it[1]
                     V = it[2]
                 }
+                H = preserveHue     // Avoids picker losing hue value for 1 frame glitch.
             } else if (flags has Cef.InputHSV) {
                 H = col[0]
                 S = col[1]
@@ -563,7 +583,7 @@ interface imgui_widgets_colorEditorPicker {
         val colMidgrey = COL32(128, 128, 128, styleAlpha8)
         val colHues = arrayOf(COL32(255, 0, 0, styleAlpha8), COL32(255, 255, 0, styleAlpha8), COL32(0, 255, 0, styleAlpha8), COL32(0, 255, 255, styleAlpha8), COL32(0, 0, 255, styleAlpha8), COL32(255, 0, 255, styleAlpha8), COL32(255, 0, 0, styleAlpha8))
 
-        val hueColorF = Vec4 (1f, 1f, 1f, style.alpha); colorConvertHSVtoRGB(H, 1f, 1f, hueColorF::x, hueColorF::y, hueColorF::z)
+        val hueColorF = Vec4(1f, 1f, 1f, style.alpha); colorConvertHSVtoRGB(H, 1f, 1f, hueColorF::x, hueColorF::y, hueColorF::z)
         val hueColor32 = hueColorF.u32
         val userCol32StripedOfAlpha = Vec4(R, G, B, style.alpha).u32 // Important: this is still including the main rendering/style alpha!!
 

@@ -28,8 +28,7 @@ import imgui.Ref
 import imgui.imgui.g
 import imgui.imgui.withInt
 import imgui.internal.Rect
-import kool.getValue
-import kool.internal.floor
+import imgui.internal.floor
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
