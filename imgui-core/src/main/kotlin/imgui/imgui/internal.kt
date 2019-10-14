@@ -1488,11 +1488,11 @@ interface imgui_internal {
     fun renderBullet(drawList: DrawList, pos: Vec2, col: Int) =
             drawList.addCircleFilled(pos, drawList._data.fontSize * 0.2f, col, 8)
 
-    fun renderMouseCursor(drawList: DrawList, pos: Vec2, scale: Float, mouseCursor: MouseCursor) {
-        if (mouseCursor == MouseCursor.None) return
-        val colShadow = COL32(0, 0, 0, 48)
-        val colBorder = COL32(0, 0, 0, 255)          // Black
-        val colFill = COL32(255, 255, 255, 255)    // White
+    fun renderMouseCursor(drawList: DrawList, pos: Vec2, scale: Float, mouseCursor: MouseCursor,
+                          colFill: Int, colBorder: Int, colShadow: Int) {
+        if (mouseCursor == MouseCursor.None)
+            return
+
         val fontAtlas = drawList._data.font!!.containerAtlas
         val offset = Vec2()
         val size = Vec2()
