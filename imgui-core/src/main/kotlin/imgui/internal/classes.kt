@@ -525,7 +525,7 @@ class WindowTempData {
 
     var treeDepth = 0
     /** Store a copy of !g.NavIdIsAlive for TreeDepth 0..31.. Could be turned into a ImU64 if necessary. */
-    var treeStoreMayJumpToParentOnPop = 0
+    var treeMayJumpToParentOnPopMask = 0
 
     var lastItemId: ID = 0
     /** ItemStatusFlag */
